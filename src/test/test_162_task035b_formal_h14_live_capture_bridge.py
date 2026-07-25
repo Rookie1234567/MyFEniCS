@@ -17,8 +17,11 @@ from src.adaptivity.actual_physical_discrete_gradient_authority import (
 from src.adaptivity.complement_schur_channel_dwr import ChannelGoal
 from src.adaptivity.formal_h14_live_capture_bridge import (
     assess_formal_h14_live_capture_readiness,
+    bind_collective_live_observers,
     build_formal_h14_live_hook_bundle,
     capture_complete_missing_rhs,
+    capture_distributed_reduced_matrix_content_identity,
+    capture_formal_assembly_run_identity,
     capture_live_full_p6_dtn_modes,
     capture_live_generalized_recovery,
     capture_live_nine_focus_goals,
@@ -163,14 +166,14 @@ def _actual_discrete_gradient() -> ActualPhysicalDiscreteGradientAuthority:
     matrix_gradient_hash = "5" * 64
     return ActualPhysicalDiscreteGradientAuthority(
         rules=(rule,),
-        evidence_class="actual_pde",
+        evidence_class="analytic_fixture",
         catalog_sha256=_CATALOG,
         trace_geometry_sha256=_TRACE_GEOMETRY,
         ordered_trace_basis_sha256=_TRACE_BASIS,
         ordered_scalar_basis_sha256=_SCALAR_BASIS,
-        actual_scalar_space_on_same_mesh=True,
-        actual_discrete_gradient_coefficients=True,
-        actual_periodic_floquet_pullback=True,
+        actual_scalar_space_on_same_mesh=False,
+        actual_discrete_gradient_coefficients=False,
+        actual_periodic_floquet_pullback=False,
         dolfinx_version="0.10.0",
         basix_version="0.10.0",
         petsc_scalar_type="complex128",
@@ -186,9 +189,8 @@ def _actual_discrete_gradient() -> ActualPhysicalDiscreteGradientAuthority:
         audit=MappingProxyType(
             {
                 "pass": True,
-                "evidence_origin": (
-                    "internally_assembled_dolfinx_interpolation_and_gradient"
-                ),
+                "evidence_origin": "analytic_fixture_only",
+                "actual_pde_claimed": False,
                 "authority_sha256": authority_hash,
                 "interpolation_matrix_sha256": interpolation_hash,
                 "discrete_gradient_matrix_sha256": matrix_gradient_hash,
@@ -254,14 +256,16 @@ def _action_layout() -> PhysicalMissingP6ActionLayout:
 
 def _generalized_system(
     action_layout: PhysicalMissingP6ActionLayout,
+    communicator: MPI.Intracomm = MPI.COMM_SELF,
 ) -> AssemblyTimeCondensedSystem:
     matrix = PETSc.Mat().createAIJ(
         size=(action_layout.low_dimension, action_layout.low_dimension),
         nnz=1,
-        comm=MPI.COMM_SELF,
+        comm=communicator,
     )
     matrix.setUp()
-    for row in range(action_layout.low_dimension):
+    row_start, row_end = matrix.getOwnershipRange()
+    for row in range(row_start, row_end):
         matrix.setValue(row, row, PETSc.ScalarType(1.0))
     matrix.assemble()
 
@@ -482,7 +486,7 @@ def _focus_bundle_and_reports(
         )
         reports[label] = {
             "pass": False,
-            "actual_discrete_system": True,
+            "actual_discrete_system": False,
             "goal": {
                 "label": label,
                 "side": side,
@@ -523,7 +527,8 @@ def _focus_bundle_and_reports(
             audit=MappingProxyType(
                 {
                     "pass": True,
-                    "evidence_class": "actual_pde",
+                    "evidence_class": "analytic_fixture",
+                    "actual_pde_claimed": False,
                 }
             ),
         ),
@@ -536,7 +541,7 @@ def _complete_capture_set(
 ):
     action = _action_layout()
     discrete_gradient = _actual_discrete_gradient()
-    condensed = _generalized_system(action)
+    condensed = _generalized_system(action, communicator)
     recovery = capture_live_generalized_recovery(
         condensed_system=condensed,
         action_layout=action,
@@ -630,6 +635,61 @@ def _complete_capture_set(
     return condensed, captures
 
 
+def _production_identity_set(
+    captures,
+    communicator: MPI.Intracomm,
+):
+    matrix = captures["recovery"].condensed_system.matrix
+    solution = matrix.createVecRight()
+    start, end = solution.getOwnershipRange()
+    for row in range(start, end):
+        solution.setValue(
+            row,
+            PETSc.ScalarType(0.125 * (row + 1) + 0.01j * row),
+        )
+    solution.assemble()
+    rhs = matrix.createVecLeft()
+    matrix.mult(solution, rhs)
+    formal_identity = capture_formal_assembly_run_identity(
+        recovery=captures["recovery"],
+        local_schur=captures["local_schur"],
+        reduced_rhs=rhs,
+        reduced_solution=solution,
+        run_token=np.asarray(
+            [20260725, matrix.getSize()[0], communicator.size],
+            dtype=np.int64,
+        ),
+        communicator=communicator,
+    )
+    matrix_identity = capture_distributed_reduced_matrix_content_identity(
+        recovery=captures["recovery"],
+        communicator=communicator,
+    )
+    observer = bind_collective_live_observers(
+        **captures,
+        formal_assembly_run_identity=formal_identity,
+        distributed_reduced_matrix_content_identity=matrix_identity,
+        observer_packet=np.asarray(
+            [
+                communicator.rank,
+                communicator.size,
+                matrix.getSize()[0],
+                formal_identity.relative_residual,
+            ],
+            dtype=np.float64,
+        ),
+        communicator=communicator,
+    )
+    return (
+        {
+            "formal_assembly_run_identity": formal_identity,
+            "distributed_reduced_matrix_content_identity": matrix_identity,
+            "collective_live_observer_binding": observer,
+        },
+        (rhs, solution),
+    )
+
+
 def test_missing_or_wrong_typed_live_capture_is_fail_closed() -> None:
     readiness = assess_formal_h14_live_capture_readiness()
     assert readiness.formal_actual_pde_ready is False
@@ -644,6 +704,11 @@ def test_missing_or_wrong_typed_live_capture_is_fail_closed() -> None:
         "generalized_recovery",
         "collective_validation_communicator",
     }
+    assert set(readiness.missing_production_identities) == {
+        "formal_assembly_run_identity",
+        "distributed_reduced_matrix_content_identity",
+        "collective_live_observer_binding",
+    }
     with pytest.raises(RuntimeError, match="bundle remains fail-closed"):
         build_formal_h14_live_hook_bundle()
 
@@ -653,6 +718,18 @@ def test_missing_or_wrong_typed_live_capture_is_fail_closed() -> None:
     )
     assert wrong.formal_actual_pde_ready is False
     assert "actual_discrete_gradient_wrong_type" in wrong.identity_mismatches
+    spoofed = assess_formal_h14_live_capture_readiness(
+        formal_assembly_run_identity=True,  # type: ignore[arg-type]
+        distributed_reduced_matrix_content_identity=True,  # type: ignore[arg-type]
+        collective_live_observer_binding=True,  # type: ignore[arg-type]
+        communicator=MPI.COMM_SELF,
+    )
+    assert spoofed.typed_capture_contract_complete is False
+    assert {
+        "formal_assembly_run_identity_wrong_type",
+        "distributed_reduced_matrix_content_identity_wrong_type",
+        "collective_live_observer_binding_wrong_type",
+    }.issubset(spoofed.identity_mismatches)
 
 
 def test_capture_factories_have_no_caller_readiness_booleans() -> None:
@@ -662,6 +739,9 @@ def test_capture_factories_have_no_caller_readiness_booleans() -> None:
         capture_complete_missing_rhs,
         capture_live_nine_focus_goals,
         capture_live_generalized_recovery,
+        capture_formal_assembly_run_identity,
+        capture_distributed_reduced_matrix_content_identity,
+        bind_collective_live_observers,
         assess_formal_h14_live_capture_readiness,
         build_formal_h14_live_hook_bundle,
     )
@@ -687,19 +767,20 @@ def test_capture_factories_have_no_caller_readiness_booleans() -> None:
     MPI.COMM_WORLD.size != 1,
     reason="serial typed formal-live-capture contract",
 )
-def test_complete_typed_capture_contract_cannot_become_formal_ready() -> None:
+def test_complete_typed_contract_builds_without_claiming_actual_pde() -> None:
     condensed, captures = _complete_capture_set()
+    vectors = ()
     try:
-        readiness = assess_formal_h14_live_capture_readiness(
+        capability_only = assess_formal_h14_live_capture_readiness(
             **captures,
             communicator=MPI.COMM_SELF,
         )
-        assert readiness.capability_snapshot_complete is True
-        assert readiness.typed_capture_contract_complete is False
-        assert readiness.formal_actual_pde_ready is False
-        assert readiness.missing_capabilities == ()
-        assert readiness.identity_mismatches == ()
-        assert set(readiness.audit["production_hooks_missing"]) == {
+        assert capability_only.capability_snapshot_complete is True
+        assert capability_only.typed_capture_contract_complete is False
+        assert capability_only.formal_actual_pde_ready is False
+        assert capability_only.missing_capabilities == ()
+        assert capability_only.identity_mismatches == ()
+        assert set(capability_only.audit["production_hooks_missing"]) == {
             "formal_assembly_run_identity",
             "distributed_reduced_matrix_content_identity",
             "collective_live_observer_binding",
@@ -713,22 +794,139 @@ def test_complete_typed_capture_contract_cannot_become_formal_ready() -> None:
                 communicator=MPI.COMM_SELF,
             )
 
+        production, vectors = _production_identity_set(
+            captures,
+            MPI.COMM_SELF,
+        )
+        readiness = assess_formal_h14_live_capture_readiness(
+            **captures,
+            **production,
+            communicator=MPI.COMM_SELF,
+        )
+        assert readiness.capability_snapshot_complete is True
+        assert readiness.typed_capture_contract_complete is True
+        assert readiness.formal_actual_pde_ready is False
+        assert readiness.missing_production_identities == ()
+        assert readiness.identity_mismatches == ()
+        assert captures["discrete_gradient"].evidence_class == "analytic_fixture"
+        bundle = build_formal_h14_live_hook_bundle(
+            **captures,
+            **production,
+            communicator=MPI.COMM_SELF,
+        )
+        assert bundle.evidence_class == "typed_production_contract_ready"
+        assert bundle.audit["formal_actual_pde_ready"] is False
+        assert bundle.audit["actual_pde_claimed"] is False
+        assert bundle.audit["runner_wired"] is False
+
         for name in captures:
             incomplete = dict(captures)
             incomplete[name] = None
             rejected = assess_formal_h14_live_capture_readiness(
                 **incomplete,
+                **production,
                 communicator=MPI.COMM_SELF,
             )
             assert rejected.formal_actual_pde_ready is False
             assert rejected.typed_capture_contract_complete is False
 
+        for name in production:
+            incomplete_production = dict(production)
+            incomplete_production[name] = None
+            rejected = assess_formal_h14_live_capture_readiness(
+                **captures,
+                **incomplete_production,
+                communicator=MPI.COMM_SELF,
+            )
+            assert rejected.typed_capture_contract_complete is False
+
+        with pytest.raises(
+            RuntimeError,
+            match="run token",
+        ):
+            capture_formal_assembly_run_identity(
+                recovery=captures["recovery"],
+                local_schur=captures["local_schur"],
+                reduced_rhs=vectors[0],
+                reduced_solution=vectors[1],
+                run_token=np.asarray([True, False]),
+                communicator=MPI.COMM_SELF,
+            )
         with pytest.raises(RuntimeError, match="payload hash"):
             replace(
                 captures["dtn_modes"],
                 provenance_sha256="0" * 64,
             )
     finally:
+        for vector in vectors:
+            vector.destroy()
+        condensed.destroy()
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 1,
+    reason="serial production-identity tamper contract",
+)
+def test_production_identities_recompute_live_mat_vec_and_packet_content() -> None:
+    condensed, captures = _complete_capture_set()
+    production, vectors = _production_identity_set(
+        captures,
+        MPI.COMM_SELF,
+    )
+    rhs, solution = vectors
+    try:
+        with pytest.raises(RuntimeError, match="content identity is stale"):
+            replace(
+                production["formal_assembly_run_identity"],
+                run_token_sha256="0" * 64,
+            )
+        matrix_identity = production[
+            "distributed_reduced_matrix_content_identity"
+        ]
+        changed_values = np.array(matrix_identity.values, copy=True)
+        changed_values[0] += 0.5
+        with pytest.raises(RuntimeError, match="numerical snapshot is stale"):
+            replace(matrix_identity, values=changed_values)
+        observer = production["collective_live_observer_binding"]
+        with pytest.raises(RuntimeError, match="content identity is stale"):
+            replace(
+                observer,
+                observer_packet=observer.observer_packet + 1.0,
+            )
+
+        old_solution = solution.getValue(0)
+        solution.setValue(0, old_solution + PETSc.ScalarType(0.25))
+        solution.assemble()
+        vector_drift = assess_formal_h14_live_capture_readiness(
+            **captures,
+            **production,
+            communicator=MPI.COMM_SELF,
+        )
+        assert vector_drift.typed_capture_contract_complete is False
+        assert "formal_assembly_run_numerical_identity_invalid" in (
+            vector_drift.identity_mismatches
+        )
+        solution.setValue(0, old_solution)
+        solution.assemble()
+
+        matrix = condensed.matrix
+        old_matrix_value = matrix.getValue(0, 0)
+        matrix.setValue(0, 0, old_matrix_value + PETSc.ScalarType(0.5))
+        matrix.assemble()
+        matrix_drift = assess_formal_h14_live_capture_readiness(
+            **captures,
+            **production,
+            communicator=MPI.COMM_SELF,
+        )
+        assert matrix_drift.typed_capture_contract_complete is False
+        assert "distributed_matrix_numerical_identity_invalid" in (
+            matrix_drift.identity_mismatches
+        )
+        matrix.setValue(0, 0, old_matrix_value)
+        matrix.assemble()
+    finally:
+        rhs.destroy()
+        solution.destroy()
         condensed.destroy()
 
 
@@ -1173,4 +1371,179 @@ def test_rank_component_presence_mismatch_fails_collectively() -> None:
         assert readiness.capability_snapshot_complete is False
         assert "rank_component_presence_mismatch" in (readiness.identity_mismatches)
     finally:
+        condensed.destroy()
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2,
+    reason="MPI2 typed production identity contract",
+)
+def test_mpi2_typed_contract_and_one_rank_vec_drift_fail_collectively() -> None:
+    communicator = MPI.COMM_WORLD
+    condensed, captures = _complete_capture_set(communicator)
+    production, vectors = _production_identity_set(captures, communicator)
+    rhs, solution = vectors
+    try:
+        readiness = assess_formal_h14_live_capture_readiness(
+            **captures,
+            **production,
+            communicator=communicator,
+        )
+        assert readiness.capability_snapshot_complete is True
+        assert readiness.typed_capture_contract_complete is True
+        assert readiness.formal_actual_pde_ready is False
+        bundle = build_formal_h14_live_hook_bundle(
+            **captures,
+            **production,
+            communicator=communicator,
+        )
+        assert bundle.evidence_class == "typed_production_contract_ready"
+        assert len(
+            set(
+                communicator.allgather(
+                    production[
+                        "distributed_reduced_matrix_content_identity"
+                    ].global_content_sha256
+                )
+            )
+        ) == 1
+        assert len(
+            set(
+                communicator.allgather(
+                    production[
+                        "collective_live_observer_binding"
+                    ].collective_content_sha256
+                )
+            )
+        ) == 1
+
+        start, end = solution.getOwnershipRange()
+        if communicator.rank == 0:
+            assert end > start
+            solution.setValue(
+                start,
+                solution.getValue(start) + PETSc.ScalarType(0.125),
+            )
+        solution.assemble()
+        drifted = assess_formal_h14_live_capture_readiness(
+            **captures,
+            **production,
+            communicator=communicator,
+        )
+        assert drifted.typed_capture_contract_complete is False
+        assert "formal_assembly_run_numerical_identity_invalid" in (
+            drifted.identity_mismatches
+        )
+        assert all(
+            communicator.allgather(
+                not drifted.typed_capture_contract_complete
+            )
+        )
+    finally:
+        rhs.destroy()
+        solution.destroy()
+        condensed.destroy()
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2,
+    reason="MPI2 rank-local production preflight contract",
+)
+def test_mpi2_one_rank_invalid_numeric_content_fails_without_divergence() -> None:
+    communicator = MPI.COMM_WORLD
+    condensed, captures = _complete_capture_set(communicator)
+    production, vectors = _production_identity_set(captures, communicator)
+    rhs, solution = vectors
+    try:
+        observer_packet = np.asarray(
+            [communicator.rank, communicator.size, 1.0],
+            dtype=np.float64,
+        )
+        if communicator.rank == 0:
+            observer_packet[-1] = np.nan
+        with pytest.raises(
+            RuntimeError,
+            match="collective rank-local preflight failed",
+        ) as observer_error:
+            bind_collective_live_observers(
+                **captures,
+                formal_assembly_run_identity=(
+                    production["formal_assembly_run_identity"]
+                ),
+                distributed_reduced_matrix_content_identity=(
+                    production[
+                        "distributed_reduced_matrix_content_identity"
+                    ]
+                ),
+                observer_packet=observer_packet,
+                communicator=communicator,
+            )
+        observer_summaries = communicator.allgather(
+            str(observer_error.value)
+        )
+        assert len(set(observer_summaries)) == 1
+        assert '"rank":0' in observer_summaries[0]
+        assert "finite non-boolean numerical vector" in observer_summaries[0]
+
+        solution_start, solution_end = solution.getOwnershipRange()
+        if communicator.rank == 0:
+            assert solution_end > solution_start
+            solution.setValue(
+                solution_start,
+                PETSc.ScalarType(complex(np.nan, 0.0)),
+            )
+        solution.assemble()
+        with pytest.raises(
+            RuntimeError,
+            match="collective rank-local preflight failed",
+        ) as vector_error:
+            capture_formal_assembly_run_identity(
+                recovery=captures["recovery"],
+                local_schur=captures["local_schur"],
+                reduced_rhs=rhs,
+                reduced_solution=solution,
+                run_token=np.asarray([20260725, 2], dtype=np.int64),
+                communicator=communicator,
+            )
+        vector_summaries = communicator.allgather(str(vector_error.value))
+        assert len(set(vector_summaries)) == 1
+        assert '"rank":0' in vector_summaries[0]
+        assert "formal reduced solution PETSc content is invalid" in (
+            vector_summaries[0]
+        )
+        vector_readiness = assess_formal_h14_live_capture_readiness(
+            **captures,
+            **production,
+            communicator=communicator,
+        )
+        assert vector_readiness.typed_capture_contract_complete is False
+        assert "formal_assembly_run_numerical_identity_invalid" in (
+            vector_readiness.identity_mismatches
+        )
+
+        matrix = condensed.matrix
+        if communicator.rank == 0:
+            matrix.setValue(
+                0,
+                0,
+                PETSc.ScalarType(complex(np.nan, 0.0)),
+            )
+        matrix.assemble()
+        with pytest.raises(
+            RuntimeError,
+            match="collective rank-local preflight failed",
+        ) as matrix_error:
+            capture_distributed_reduced_matrix_content_identity(
+                recovery=captures["recovery"],
+                communicator=communicator,
+            )
+        matrix_summaries = communicator.allgather(str(matrix_error.value))
+        assert len(set(matrix_summaries)) == 1
+        assert '"rank":0' in matrix_summaries[0]
+        assert "distributed reduced matrix CSR content is invalid" in (
+            matrix_summaries[0]
+        )
+    finally:
+        rhs.destroy()
+        solution.destroy()
         condensed.destroy()

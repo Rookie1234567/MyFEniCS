@@ -1,17 +1,18 @@
-"""Fail-closed aggregation of capability-only h14 numerical snapshots.
+"""Fail-closed aggregation of typed h14 numerical snapshots.
 
 This module does not add hooks to the assembly, DtN, or runner paths.  It
 turns caller-supplied numerical objects into content-bound capability
-snapshots and checks source/mesh/catalog/operator/communicator consistency.
+snapshots and typed production identities, then checks
+source/mesh/catalog/operator/communicator consistency.
 
 No ``captured=True`` or ``formal=True`` argument exists.  Readiness follows
 only from typed numerical payloads, their recomputed hashes, and cross-object
 identity checks.  Caller declarations such as ``actual_pde`` or
 ``physical_condensation_used`` are hashed for diagnostics but never qualify
-evidence.  Even a complete capability snapshot leaves the typed formal
-contract incomplete: production assembly/run identity, distributed matrix
-content identity, and collective live-observer binding do not yet exist.
-Consequently this module never constructs a formal runner hook bundle.
+evidence.  The production identities require a live PETSc matrix and vectors,
+a numerical run token, distributed CSR values, and collective observer packet
+values.  A complete bundle means only ``typed_production_contract_ready``; it
+does not claim that an actual PDE run occurred and is not wired to a runner.
 """
 
 from __future__ import annotations
@@ -22,10 +23,11 @@ import json
 from numbers import Integral, Real
 import re
 from types import MappingProxyType
-from typing import Any, Hashable, Mapping, Sequence
+from typing import Any, Callable, Hashable, Mapping, Sequence
 
 import numpy as np
 from mpi4py import MPI
+from petsc4py import PETSc
 
 from src.adaptivity.actual_physical_discrete_gradient_authority import (
     ActualPhysicalDiscreteGradientAuthority,
@@ -58,12 +60,9 @@ _RHS_COMPONENTS = (
     "incident_traction",
     "dtn_incident_auxiliary",
 )
-_PRODUCTION_HOOKS_MISSING = (
-    "formal_assembly_run_identity",
-    "distributed_reduced_matrix_content_identity",
-    "collective_live_observer_binding",
-)
 _CAPABILITY_EVIDENCE = "capability_only"
+_PRODUCTION_IDENTITY_EVIDENCE = "typed_production_identity"
+_TYPED_CONTRACT_EVIDENCE = "typed_production_contract_ready"
 _FOCUS: Mapping[str, tuple[str, str, int, str]] = MappingProxyType(
     {
         "T_m-4_n0_s_power": ("real_power", "bottom", -4, "power"),
@@ -349,6 +348,457 @@ def _validate_stored_collective(
         != expected_collective
     ):
         raise RuntimeError(f"{namespace} collective capture hash is stale")
+
+
+def _communicator_matches(
+    left: MPI.Intracomm,
+    right: MPI.Intracomm,
+) -> bool:
+    return MPI.Comm.Compare(left, right) in {
+        MPI.IDENT,
+        MPI.CONGRUENT,
+    }
+
+
+def _collective_rank_local_preflight(
+    communicator: MPI.Intracomm,
+    *,
+    namespace: str,
+    inspect_local_content: Callable[[], Any],
+) -> Any:
+    """Synchronize rank-local validation before entering another collective."""
+
+    local_value: Any = None
+    local_exception: Exception | None = None
+    try:
+        local_value = inspect_local_content()
+        error: Mapping[str, Any] | None = None
+    except Exception as exc:
+        local_exception = exc
+        normalized_message = re.sub(
+            r"0x[0-9a-fA-F]+",
+            "0xADDR",
+            " ".join(str(exc).split()),
+        )
+        error = {
+            "exception_type": type(exc).__name__,
+            "message": normalized_message,
+            "message_sha256": hashlib.sha256(
+                normalized_message.encode("utf-8")
+            ).hexdigest(),
+        }
+    packet = {
+        "rank": int(communicator.rank),
+        "world_rank": int(MPI.COMM_WORLD.rank),
+        "error": error,
+    }
+    packets = tuple(communicator.allgather(packet))
+    failures = tuple(
+        {
+            "rank": int(item["rank"]),
+            "world_rank": int(item["world_rank"]),
+            **dict(item["error"]),
+        }
+        for item in packets
+        if item["error"] is not None
+    )
+    if failures:
+        summary = json.dumps(
+            failures,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+        )
+        message = (
+            f"{namespace} collective rank-local preflight failed: {summary}"
+        )
+        if local_exception is not None:
+            raise RuntimeError(message) from local_exception
+        raise RuntimeError(message)
+    return local_value
+
+
+def _numeric_run_token(
+    run_token: np.ndarray,
+) -> np.ndarray:
+    """Freeze a non-boolean numerical token carried by the live run."""
+
+    if not isinstance(run_token, np.ndarray):
+        raise TypeError("run token must be a numerical ndarray")
+    token = np.asarray(run_token)
+    if (
+        token.ndim != 1
+        or token.size < 2
+        or not np.issubdtype(token.dtype, np.number)
+        or np.issubdtype(token.dtype, np.bool_)
+        or not np.all(np.isfinite(token))
+    ):
+        raise ValueError(
+            "run token must be a finite non-boolean numerical vector"
+        )
+    result = np.array(token, copy=True, order="C")
+    result.setflags(write=False)
+    return result
+
+
+def _petsc_matrix_local_content(
+    matrix: PETSc.Mat,
+) -> Mapping[str, Any]:
+    if not isinstance(matrix, PETSc.Mat):
+        raise TypeError("distributed reduced matrix must be a PETSc Mat")
+    try:
+        matrix_shape = tuple(map(int, matrix.getSize()))
+        ownership = tuple(map(int, matrix.getOwnershipRange()))
+        column_ownership = tuple(
+            map(int, matrix.getOwnershipRangeColumn())
+        )
+        row_offsets, column_indices, values = matrix.getValuesCSR()
+        matrix_state = int(matrix.stateGet())
+    except Exception as exc:
+        raise RuntimeError(
+            "distributed reduced matrix lacks inspectable PETSc CSR content"
+        ) from exc
+    rows = np.asarray(row_offsets, dtype=np.int64)
+    columns = np.asarray(column_indices, dtype=np.int64)
+    coefficients = np.asarray(values, dtype=np.complex128)
+    local_rows = int(ownership[1] - ownership[0])
+    if (
+        len(matrix_shape) != 2
+        or min(matrix_shape) <= 0
+        or len(ownership) != 2
+        or len(column_ownership) != 2
+        or rows.shape != (local_rows + 1,)
+        or rows[0] != 0
+        or np.any(np.diff(rows) < 0)
+        or int(rows[-1]) != columns.size
+        or columns.size != coefficients.size
+        or np.any(columns < 0)
+        or np.any(columns >= matrix_shape[1])
+        or not np.all(np.isfinite(coefficients))
+    ):
+        raise RuntimeError("distributed reduced matrix CSR content is invalid")
+    frozen_rows = _freeze(rows)
+    frozen_columns = _freeze(columns)
+    frozen_coefficients = _freeze(coefficients)
+    return MappingProxyType(
+        {
+            "matrix_shape": matrix_shape,
+            "ownership_range": ownership,
+            "column_ownership_range": column_ownership,
+            "row_offsets": frozen_rows,
+            "column_indices": frozen_columns,
+            "values": frozen_coefficients,
+            "matrix_state": matrix_state,
+        }
+    )
+
+
+def _petsc_vector_local_content(
+    vector: PETSc.Vec,
+    *,
+    label: str,
+) -> Mapping[str, Any]:
+    if not isinstance(vector, PETSc.Vec):
+        raise TypeError(f"{label} must be a PETSc Vec")
+    try:
+        global_size = int(vector.getSize())
+        ownership = tuple(map(int, vector.getOwnershipRange()))
+        values = np.asarray(
+            vector.getArray(readonly=True),
+            dtype=np.complex128,
+        ).copy()
+        vector_state = int(vector.stateGet())
+    except Exception as exc:
+        raise RuntimeError(f"{label} lacks inspectable PETSc content") from exc
+    if (
+        global_size <= 0
+        or len(ownership) != 2
+        or values.shape != (ownership[1] - ownership[0],)
+        or not np.all(np.isfinite(values))
+    ):
+        raise RuntimeError(f"{label} PETSc content is invalid")
+    values.setflags(write=False)
+    content_sha256 = _hash(
+        {
+            "schema": "task035b.petsc-vector-local-content.v1",
+            "label": label,
+            "global_size": global_size,
+            "ownership_range": ownership,
+            "values": values,
+            "vector_state": vector_state,
+        }
+    )
+    return MappingProxyType(
+        {
+            "global_size": global_size,
+            "ownership_range": ownership,
+            "values": values,
+            "vector_state": vector_state,
+            "content_sha256": content_sha256,
+        }
+    )
+
+
+def _formal_assembly_run_local_sha256(
+    *,
+    run_token_sha256: str,
+    source_commit: str,
+    mesh_sha256: str,
+    catalog_sha256: str,
+    trace_geometry_sha256: str,
+    ordered_trace_basis_sha256: str,
+    provenance_sha256: str,
+    reduced_operator_sha256: str,
+    recovery_capture_sha256: str,
+    local_schur_capture_sha256: str,
+    matrix_local_content_sha256: str,
+    rhs_local_content_sha256: str,
+    solution_local_content_sha256: str,
+    residual_local_content_sha256: str,
+    relative_residual: float,
+    matrix_state: int,
+    matrix_shape: tuple[int, int],
+    communicator_content_sha256: str,
+    local_rank: int,
+    world_rank: int,
+) -> str:
+    return _hash(
+        {
+            "schema": "task035b.formal-assembly-run-local-content.v1",
+            "evidence_class": _PRODUCTION_IDENTITY_EVIDENCE,
+            "run_token_sha256": _sha256(
+                run_token_sha256,
+                label="formal run token hash",
+            ),
+            "source_commit": _source_sha(source_commit),
+            "mesh_sha256": _sha256(mesh_sha256, label="formal run mesh hash"),
+            "catalog_sha256": _sha256(
+                catalog_sha256,
+                label="formal run catalog hash",
+            ),
+            "trace_geometry_sha256": _sha256(
+                trace_geometry_sha256,
+                label="formal run trace geometry hash",
+            ),
+            "ordered_trace_basis_sha256": _sha256(
+                ordered_trace_basis_sha256,
+                label="formal run trace basis hash",
+            ),
+            "provenance_sha256": _sha256(
+                provenance_sha256,
+                label="formal run provenance hash",
+            ),
+            "reduced_operator_sha256": _sha256(
+                reduced_operator_sha256,
+                label="formal run operator hash",
+            ),
+            "recovery_capture_sha256": _sha256(
+                recovery_capture_sha256,
+                label="formal run recovery hash",
+            ),
+            "local_schur_capture_sha256": _sha256(
+                local_schur_capture_sha256,
+                label="formal run local Schur hash",
+            ),
+            "matrix_local_content_sha256": _sha256(
+                matrix_local_content_sha256,
+                label="formal run matrix content hash",
+            ),
+            "rhs_local_content_sha256": _sha256(
+                rhs_local_content_sha256,
+                label="formal run RHS content hash",
+            ),
+            "solution_local_content_sha256": _sha256(
+                solution_local_content_sha256,
+                label="formal run solution content hash",
+            ),
+            "residual_local_content_sha256": _sha256(
+                residual_local_content_sha256,
+                label="formal run residual content hash",
+            ),
+            "relative_residual": float(relative_residual),
+            "matrix_state": int(matrix_state),
+            "matrix_shape": [int(value) for value in matrix_shape],
+            "communicator_content_sha256": _sha256(
+                communicator_content_sha256,
+                label="formal run communicator hash",
+            ),
+            "local_rank": int(local_rank),
+            "world_rank": int(world_rank),
+        }
+    )
+
+
+def _distributed_matrix_local_sha256(
+    *,
+    source_commit: str,
+    mesh_sha256: str,
+    provenance_sha256: str,
+    reduced_operator_sha256: str,
+    recovery_capture_sha256: str,
+    matrix_shape: tuple[int, int],
+    ownership_range: tuple[int, int],
+    row_offsets: np.ndarray,
+    column_indices: np.ndarray,
+    values: np.ndarray,
+    matrix_state: int,
+    local_rank: int,
+    world_rank: int,
+) -> str:
+    return _hash(
+        {
+            "schema": "task035b.distributed-reduced-matrix-local-content.v1",
+            "evidence_class": _PRODUCTION_IDENTITY_EVIDENCE,
+            "source_commit": _source_sha(source_commit),
+            "mesh_sha256": _sha256(mesh_sha256, label="matrix mesh hash"),
+            "provenance_sha256": _sha256(
+                provenance_sha256,
+                label="matrix provenance hash",
+            ),
+            "reduced_operator_sha256": _sha256(
+                reduced_operator_sha256,
+                label="matrix operator hash",
+            ),
+            "recovery_capture_sha256": _sha256(
+                recovery_capture_sha256,
+                label="matrix recovery hash",
+            ),
+            "matrix_shape": [int(value) for value in matrix_shape],
+            "ownership_range": [int(value) for value in ownership_range],
+            "row_offsets": np.asarray(row_offsets, dtype=np.int64),
+            "column_indices": np.asarray(column_indices, dtype=np.int64),
+            "values": np.asarray(values, dtype=np.complex128),
+            "matrix_state": int(matrix_state),
+            "local_rank": int(local_rank),
+            "world_rank": int(world_rank),
+        }
+    )
+
+
+def _validate_distributed_matrix_packets(
+    *,
+    communicator_identity: Mapping[str, Any],
+    packets: Sequence[Mapping[str, Any]],
+    matrix_shape: tuple[int, int],
+) -> tuple[Mapping[str, Any], ...]:
+    size = _exact_integer(communicator_identity.get("size"))
+    world_ranks = tuple(
+        map(int, communicator_identity.get("ordered_world_ranks", ()))
+    )
+    frozen_packets = tuple(_freeze(packet) for packet in packets)
+    if (
+        size is None
+        or size <= 0
+        or len(world_ranks) != size
+        or len(frozen_packets) != size
+    ):
+        raise RuntimeError("distributed matrix communicator is invalid")
+    expected_start = 0
+    for rank, packet in enumerate(frozen_packets):
+        start = _exact_integer(packet.get("ownership_start"))
+        end = _exact_integer(packet.get("ownership_end"))
+        local_nnz = _exact_integer(packet.get("local_nnz"))
+        if (
+            _exact_integer(packet.get("rank")) != rank
+            or _exact_integer(packet.get("world_rank")) != world_ranks[rank]
+            or start is None
+            or end is None
+            or start != expected_start
+            or end < start
+            or local_nnz is None
+            or local_nnz < 0
+        ):
+            raise RuntimeError(
+                "distributed matrix ownership/packet content is invalid"
+            )
+        _sha256(
+            str(packet.get("local_content_sha256", "")),
+            label="distributed matrix local content hash",
+        )
+        expected_start = end
+    if expected_start != int(matrix_shape[0]):
+        raise RuntimeError(
+            "distributed matrix row ownership does not cover the matrix"
+        )
+    return frozen_packets
+
+
+def _distributed_matrix_global_sha256(
+    *,
+    communicator_identity: Mapping[str, Any],
+    packets: Sequence[Mapping[str, Any]],
+    matrix_shape: tuple[int, int],
+    reduced_operator_sha256: str,
+) -> str:
+    return _hash(
+        {
+            "schema": "task035b.distributed-reduced-matrix-global-content.v1",
+            "evidence_class": _PRODUCTION_IDENTITY_EVIDENCE,
+            "communicator": communicator_identity,
+            "packets": packets,
+            "matrix_shape": [int(value) for value in matrix_shape],
+            "reduced_operator_sha256": _sha256(
+                reduced_operator_sha256,
+                label="distributed matrix operator hash",
+            ),
+        }
+    )
+
+
+def _observer_local_sha256(
+    *,
+    component_hashes: Mapping[str, str],
+    observer_packet: np.ndarray,
+    source_commit: str,
+    mesh_sha256: str,
+    provenance_sha256: str,
+    reduced_operator_sha256: str,
+    communicator_content_sha256: str,
+    local_rank: int,
+    world_rank: int,
+) -> str:
+    expected = {
+        "actual_discrete_gradient",
+        "physical_action_layout",
+        "live_local_schur",
+        "full_p6_dtn_modes",
+        "complete_b_H",
+        "nine_focus_goals",
+        "generalized_recovery",
+        "formal_assembly_run_identity",
+        "distributed_reduced_matrix_content_identity",
+    }
+    if set(component_hashes) != expected:
+        raise RuntimeError("live-observer component inventory is not exact")
+    validated = {
+        name: _sha256(value, label=f"{name} observer hash")
+        for name, value in component_hashes.items()
+    }
+    packet = _numeric_run_token(observer_packet)
+    return _hash(
+        {
+            "schema": "task035b.collective-live-observer-local-content.v1",
+            "evidence_class": _PRODUCTION_IDENTITY_EVIDENCE,
+            "source_commit": _source_sha(source_commit),
+            "mesh_sha256": _sha256(mesh_sha256, label="observer mesh hash"),
+            "provenance_sha256": _sha256(
+                provenance_sha256,
+                label="observer provenance hash",
+            ),
+            "reduced_operator_sha256": _sha256(
+                reduced_operator_sha256,
+                label="observer operator hash",
+            ),
+            "communicator_content_sha256": _sha256(
+                communicator_content_sha256,
+                label="observer communicator hash",
+            ),
+            "local_rank": int(local_rank),
+            "world_rank": int(world_rank),
+            "component_hashes": validated,
+            "observer_packet": packet,
+        }
+    )
 
 
 def _capture_provenance(
@@ -1415,14 +1865,1127 @@ class LiveGeneralizedRecoveryCapture:
         object.__setattr__(self, "audit", _freeze(self.audit))
 
 
+def _recomputed_capability_component_hashes(
+    *,
+    discrete_gradient: ActualPhysicalDiscreteGradientAuthority,
+    action_layout: PhysicalMissingP6ActionLayout,
+    local_schur: LiveFullP6LocalSchurCapture,
+    dtn_modes: LiveFullP6DtnModeCapture,
+    complete_rhs: LiveCompleteMissingRhsCapture,
+    focus_goals: LiveNineFocusGoalCapture,
+    recovery: LiveGeneralizedRecoveryCapture,
+) -> Mapping[str, str]:
+    """Recompute all seven capability identities from numerical payloads."""
+
+    discrete_gradient_hash = _hash(
+        {
+            "schema": "task035b.capability-discrete-gradient-snapshot.v1",
+            "payload": discrete_gradient,
+        }
+    )
+    action_layout_hash = _hash(
+        {
+            "schema": "task035b.capability-action-layout-snapshot.v1",
+            "payload": action_layout,
+        }
+    )
+    local_schur_hash = _local_schur_payload_sha256(
+        schur_by_class=local_schur.schur_by_class,
+        cell_class_keys=local_schur.cell_class_keys,
+        storage_trace_rows_per_cell=local_schur.storage_trace_rows_per_cell,
+        provenance_sha256=local_schur.provenance_sha256,
+    )
+    _inventory_hash, dtn_hash, incident = _dtn_content(
+        modes=dtn_modes.modes,
+        retained_trace_rows=dtn_modes.retained_trace_rows,
+        low_dimension=dtn_modes.low_dimension,
+        high_dimension=dtn_modes.high_dimension,
+        provenance_sha256=dtn_modes.provenance_sha256,
+        reduced_operator_sha256=dtn_modes.reduced_operator_sha256,
+    )
+    rhs_hash, rhs_error = _complete_rhs_content(
+        complete=complete_rhs.complete,
+        components=complete_rhs.components,
+        low_dimension=complete_rhs.low_dimension,
+        high_dimension=complete_rhs.high_dimension,
+        provenance_sha256=complete_rhs.provenance_sha256,
+        reduced_operator_sha256=complete_rhs.reduced_operator_sha256,
+        dtn_projected_payload_sha256=(
+            complete_rhs.dtn_projected_payload_sha256
+        ),
+        closure_tolerance=complete_rhs.closure_tolerance,
+    )
+    report_hash, goal_hash = _focus_goal_content(
+        goals=focus_goals.goals,
+        goal_reports=focus_goals.goal_reports,
+        low_dimension=focus_goals.low_dimension,
+        high_dimension=focus_goals.high_dimension,
+        provenance_sha256=focus_goals.provenance_sha256,
+        reduced_operator_sha256=focus_goals.reduced_operator_sha256,
+        communicator_identity=focus_goals.communicator_identity,
+    )
+    operator_hash, expansion_hash, recovery_hash = (
+        _condensed_recovery_content(
+            condensed_system=recovery.condensed_system,
+            provenance_sha256=recovery.provenance_sha256,
+            catalog_sha256=recovery.catalog_sha256,
+            trace_geometry_sha256=recovery.trace_geometry_sha256,
+            ordered_trace_basis_sha256=recovery.ordered_trace_basis_sha256,
+        )
+    )
+    if (
+        discrete_gradient.audit.get("authority_sha256")
+        != discrete_gradient.authority_sha256
+        or action_layout.audit.get("full_p6_trace_matrix_materialized")
+        is not False
+        or local_schur_hash != local_schur.local_capture_sha256
+        or dtn_hash != dtn_modes.projected_payload_sha256
+        or not np.array_equal(incident, dtn_modes.missing_incident_rhs)
+        or rhs_hash != complete_rhs.complete_rhs_sha256
+        or rhs_error != complete_rhs.decomposition_relative_error
+        or report_hash != focus_goals.goal_report_sha256
+        or goal_hash != focus_goals.goal_payload_sha256
+        or operator_hash != recovery.reduced_operator_sha256
+        or expansion_hash != recovery.trace_expansion_sha256
+        or recovery_hash != recovery.recovery_capture_sha256
+    ):
+        raise RuntimeError("capability component content identity is stale")
+    return MappingProxyType(
+        {
+            "actual_discrete_gradient": discrete_gradient_hash,
+            "physical_action_layout": action_layout_hash,
+            "live_local_schur": local_schur_hash,
+            "full_p6_dtn_modes": dtn_hash,
+            "complete_b_H": rhs_hash,
+            "nine_focus_goals": goal_hash,
+            "generalized_recovery": recovery_hash,
+        }
+    )
+
+
+def _formal_run_final_local_content(
+    *,
+    recovery: LiveGeneralizedRecoveryCapture,
+    token_hash: str,
+    current_operator: str,
+    current_recovery: str,
+    current_local_schur: str,
+    matrix_local_hash: str,
+    rhs_content: Mapping[str, Any],
+    solution_content: Mapping[str, Any],
+    residual_content: Mapping[str, Any],
+    residual_norm: float,
+    rhs_norm: float,
+    matrix_content: Mapping[str, Any],
+    matrix_shape: tuple[int, int],
+    communicator_identity: Mapping[str, Any],
+    communicator: MPI.Intracomm,
+) -> Mapping[str, Any]:
+    relative_residual = float(residual_norm) / max(float(rhs_norm), 1.0)
+    if not np.isfinite(relative_residual):
+        raise FloatingPointError("formal reduced residual is non-finite")
+    local_hash = _formal_assembly_run_local_sha256(
+        run_token_sha256=token_hash,
+        source_commit=recovery.source_commit,
+        mesh_sha256=recovery.mesh_sha256,
+        catalog_sha256=recovery.catalog_sha256,
+        trace_geometry_sha256=recovery.trace_geometry_sha256,
+        ordered_trace_basis_sha256=recovery.ordered_trace_basis_sha256,
+        provenance_sha256=recovery.provenance_sha256,
+        reduced_operator_sha256=current_operator,
+        recovery_capture_sha256=current_recovery,
+        local_schur_capture_sha256=current_local_schur,
+        matrix_local_content_sha256=matrix_local_hash,
+        rhs_local_content_sha256=rhs_content["content_sha256"],
+        solution_local_content_sha256=solution_content["content_sha256"],
+        residual_local_content_sha256=residual_content["content_sha256"],
+        relative_residual=relative_residual,
+        matrix_state=matrix_content["matrix_state"],
+        matrix_shape=matrix_shape,
+        communicator_content_sha256=(
+            communicator_identity["content_sha256"]
+        ),
+        local_rank=communicator.rank,
+        world_rank=MPI.COMM_WORLD.rank,
+    )
+    return MappingProxyType(
+        {
+            "relative_residual": relative_residual,
+            "local_content_sha256": local_hash,
+        }
+    )
+
+
+def _current_formal_assembly_run_content(
+    *,
+    recovery: LiveGeneralizedRecoveryCapture,
+    local_schur: LiveFullP6LocalSchurCapture,
+    reduced_rhs: PETSc.Vec,
+    reduced_solution: PETSc.Vec,
+    run_token: np.ndarray,
+    communicator: MPI.Intracomm,
+) -> Mapping[str, Any]:
+    """Recompute one assembly/run identity from live Mat/Vec values."""
+
+    def inspect_initial_local_content() -> Mapping[str, Any]:
+        matrix = recovery.condensed_system.matrix
+        matrix_comm = matrix.getComm().tompi4py()
+        rhs_comm = reduced_rhs.getComm().tompi4py()
+        solution_comm = reduced_solution.getComm().tompi4py()
+        if not all(
+            _communicator_matches(communicator, current)
+            for current in (matrix_comm, rhs_comm, solution_comm)
+        ):
+            raise RuntimeError(
+                "formal assembly/run PETSc communicator mismatch"
+            )
+        if (
+            recovery.source_commit != local_schur.source_commit
+            or recovery.mesh_sha256 != local_schur.mesh_sha256
+            or recovery.provenance_sha256 != local_schur.provenance_sha256
+        ):
+            raise RuntimeError(
+                "formal assembly/run source or mesh identity mismatch"
+            )
+        token = _numeric_run_token(run_token)
+        token_hash = _hash(
+            {
+                "schema": "task035b.formal-run-numerical-token.v1",
+                "run_token": token,
+            }
+        )
+        matrix_content = _petsc_matrix_local_content(matrix)
+        rhs_content = _petsc_vector_local_content(
+            reduced_rhs,
+            label="formal reduced RHS",
+        )
+        solution_content = _petsc_vector_local_content(
+            reduced_solution,
+            label="formal reduced solution",
+        )
+        matrix_shape = tuple(matrix_content["matrix_shape"])
+        if (
+            rhs_content["global_size"] != matrix_shape[0]
+            or solution_content["global_size"] != matrix_shape[1]
+            or tuple(rhs_content["ownership_range"])
+            != tuple(matrix_content["ownership_range"])
+            or tuple(solution_content["ownership_range"])
+            != tuple(matrix_content["column_ownership_range"])
+        ):
+            raise RuntimeError("formal assembly/run Mat/Vec layout mismatch")
+        current_operator, _expansion, current_recovery = (
+            _condensed_recovery_content(
+                condensed_system=recovery.condensed_system,
+                provenance_sha256=recovery.provenance_sha256,
+                catalog_sha256=recovery.catalog_sha256,
+                trace_geometry_sha256=recovery.trace_geometry_sha256,
+                ordered_trace_basis_sha256=(
+                    recovery.ordered_trace_basis_sha256
+                ),
+            )
+        )
+        current_local_schur = _local_schur_payload_sha256(
+            schur_by_class=local_schur.schur_by_class,
+            cell_class_keys=local_schur.cell_class_keys,
+            storage_trace_rows_per_cell=(
+                local_schur.storage_trace_rows_per_cell
+            ),
+            provenance_sha256=local_schur.provenance_sha256,
+        )
+        if (
+            current_operator != recovery.reduced_operator_sha256
+            or current_recovery != recovery.recovery_capture_sha256
+            or current_local_schur != local_schur.local_capture_sha256
+        ):
+            raise RuntimeError("formal assembly/run upstream content is stale")
+        matrix_local_hash = _distributed_matrix_local_sha256(
+            source_commit=recovery.source_commit,
+            mesh_sha256=recovery.mesh_sha256,
+            provenance_sha256=recovery.provenance_sha256,
+            reduced_operator_sha256=current_operator,
+            recovery_capture_sha256=current_recovery,
+            matrix_shape=matrix_shape,
+            ownership_range=tuple(matrix_content["ownership_range"]),
+            row_offsets=matrix_content["row_offsets"],
+            column_indices=matrix_content["column_indices"],
+            values=matrix_content["values"],
+            matrix_state=matrix_content["matrix_state"],
+            local_rank=communicator.rank,
+            world_rank=MPI.COMM_WORLD.rank,
+        )
+        return MappingProxyType(
+            {
+                "matrix": matrix,
+                "token": token,
+                "token_hash": token_hash,
+                "matrix_content": matrix_content,
+                "rhs_content": rhs_content,
+                "solution_content": solution_content,
+                "matrix_shape": matrix_shape,
+                "current_operator": current_operator,
+                "current_recovery": current_recovery,
+                "current_local_schur": current_local_schur,
+                "matrix_local_hash": matrix_local_hash,
+            }
+        )
+
+    initial = _collective_rank_local_preflight(
+        communicator,
+        namespace="formal_assembly_run_initial_content",
+        inspect_local_content=inspect_initial_local_content,
+    )
+    matrix = initial["matrix"]
+    token = initial["token"]
+    token_hash = initial["token_hash"]
+    matrix_content = initial["matrix_content"]
+    rhs_content = initial["rhs_content"]
+    solution_content = initial["solution_content"]
+    matrix_shape = initial["matrix_shape"]
+    current_operator = initial["current_operator"]
+    current_recovery = initial["current_recovery"]
+    current_local_schur = initial["current_local_schur"]
+    matrix_local_hash = initial["matrix_local_hash"]
+    residual = _collective_rank_local_preflight(
+        communicator,
+        namespace="formal_assembly_run_residual_allocation",
+        inspect_local_content=reduced_rhs.duplicate,
+    )
+    try:
+        matrix.mult(reduced_solution, residual)
+        residual_content = _collective_rank_local_preflight(
+            communicator,
+            namespace="formal_assembly_run_residual_content",
+            inspect_local_content=lambda: (
+                residual.axpy(PETSc.ScalarType(-1.0), reduced_rhs),
+                _petsc_vector_local_content(
+                    residual,
+                    label="formal explicit reduced residual",
+                ),
+            )[1],
+        )
+        residual_norm = float(residual.norm(PETSc.NormType.NORM_2))
+        rhs_norm = float(reduced_rhs.norm(PETSc.NormType.NORM_2))
+    finally:
+        residual.destroy()
+    communicator_identity = mpi_communicator_content_identity(communicator)
+    final_local = _collective_rank_local_preflight(
+        communicator,
+        namespace="formal_assembly_run_final_content",
+        inspect_local_content=lambda: _formal_run_final_local_content(
+            recovery=recovery,
+            token_hash=token_hash,
+            current_operator=current_operator,
+            current_recovery=current_recovery,
+            current_local_schur=current_local_schur,
+            matrix_local_hash=matrix_local_hash,
+            rhs_content=rhs_content,
+            solution_content=solution_content,
+            residual_content=residual_content,
+            residual_norm=residual_norm,
+            rhs_norm=rhs_norm,
+            matrix_content=matrix_content,
+            matrix_shape=matrix_shape,
+            communicator_identity=communicator_identity,
+            communicator=communicator,
+        ),
+    )
+    relative_residual = final_local["relative_residual"]
+    local_hash = final_local["local_content_sha256"]
+    stored_communicator, packets, collective_hash = _collective_snapshot(
+        communicator,
+        namespace="formal_assembly_run",
+        local_payload_sha256=local_hash,
+    )
+    return MappingProxyType(
+        {
+            "run_token": token,
+            "run_token_sha256": token_hash,
+            "matrix_local_content_sha256": matrix_local_hash,
+            "rhs_local_content_sha256": rhs_content["content_sha256"],
+            "solution_local_content_sha256": (
+                solution_content["content_sha256"]
+            ),
+            "residual_local_content_sha256": (
+                residual_content["content_sha256"]
+            ),
+            "relative_residual": relative_residual,
+            "matrix_state": matrix_content["matrix_state"],
+            "matrix_shape": matrix_shape,
+            "local_content_sha256": local_hash,
+            "communicator_identity": stored_communicator,
+            "collective_packets": packets,
+            "collective_content_sha256": collective_hash,
+        }
+    )
+
+
+def _current_distributed_matrix_content(
+    *,
+    recovery: LiveGeneralizedRecoveryCapture,
+    matrix: PETSc.Mat,
+    communicator: MPI.Intracomm,
+) -> Mapping[str, Any]:
+    """Recompute distributed CSR and its exact row-ownership packet set."""
+
+    def inspect_local_matrix() -> Mapping[str, Any]:
+        if matrix is not recovery.condensed_system.matrix:
+            raise RuntimeError(
+                "matrix identity is not bound to recovery matrix"
+            )
+        if not _communicator_matches(
+            communicator,
+            matrix.getComm().tompi4py(),
+        ):
+            raise RuntimeError("distributed matrix communicator mismatch")
+        matrix_content = _petsc_matrix_local_content(matrix)
+        current_operator, _expansion, current_recovery = (
+            _condensed_recovery_content(
+                condensed_system=recovery.condensed_system,
+                provenance_sha256=recovery.provenance_sha256,
+                catalog_sha256=recovery.catalog_sha256,
+                trace_geometry_sha256=recovery.trace_geometry_sha256,
+                ordered_trace_basis_sha256=(
+                    recovery.ordered_trace_basis_sha256
+                ),
+            )
+        )
+        matrix_shape = tuple(matrix_content["matrix_shape"])
+        local_hash = _distributed_matrix_local_sha256(
+            source_commit=recovery.source_commit,
+            mesh_sha256=recovery.mesh_sha256,
+            provenance_sha256=recovery.provenance_sha256,
+            reduced_operator_sha256=current_operator,
+            recovery_capture_sha256=current_recovery,
+            matrix_shape=matrix_shape,
+            ownership_range=tuple(matrix_content["ownership_range"]),
+            row_offsets=matrix_content["row_offsets"],
+            column_indices=matrix_content["column_indices"],
+            values=matrix_content["values"],
+            matrix_state=matrix_content["matrix_state"],
+            local_rank=communicator.rank,
+            world_rank=MPI.COMM_WORLD.rank,
+        )
+        return MappingProxyType(
+            {
+                "matrix_content": matrix_content,
+                "current_operator": current_operator,
+                "matrix_shape": matrix_shape,
+                "local_content_sha256": local_hash,
+            }
+        )
+
+    local = _collective_rank_local_preflight(
+        communicator,
+        namespace="distributed_reduced_matrix_content",
+        inspect_local_content=inspect_local_matrix,
+    )
+    matrix_content = local["matrix_content"]
+    current_operator = local["current_operator"]
+    matrix_shape = local["matrix_shape"]
+    local_hash = local["local_content_sha256"]
+    communicator_identity = mpi_communicator_content_identity(communicator)
+    packet = {
+        "rank": int(communicator.rank),
+        "world_rank": int(MPI.COMM_WORLD.rank),
+        "ownership_start": int(matrix_content["ownership_range"][0]),
+        "ownership_end": int(matrix_content["ownership_range"][1]),
+        "local_nnz": int(len(matrix_content["column_indices"])),
+        "local_content_sha256": local_hash,
+    }
+    packets = _validate_distributed_matrix_packets(
+        communicator_identity=communicator_identity,
+        packets=tuple(communicator.allgather(packet)),
+        matrix_shape=matrix_shape,
+    )
+    global_hash = _distributed_matrix_global_sha256(
+        communicator_identity=communicator_identity,
+        packets=packets,
+        matrix_shape=matrix_shape,
+        reduced_operator_sha256=current_operator,
+    )
+    return MappingProxyType(
+        {
+            **dict(matrix_content),
+            "local_content_sha256": local_hash,
+            "global_content_sha256": global_hash,
+            "communicator_identity": _freeze(communicator_identity),
+            "collective_packets": packets,
+        }
+    )
+
+
+@dataclass(frozen=True)
+class FormalAssemblyRunIdentity:
+    """Live Mat/Vec/run-token identity; not an actual-PDE success claim."""
+
+    recovery: LiveGeneralizedRecoveryCapture
+    local_schur: LiveFullP6LocalSchurCapture
+    reduced_rhs: PETSc.Vec
+    reduced_solution: PETSc.Vec
+    run_token: np.ndarray
+    run_token_sha256: str
+    matrix_local_content_sha256: str
+    rhs_local_content_sha256: str
+    solution_local_content_sha256: str
+    residual_local_content_sha256: str
+    relative_residual: float
+    matrix_state: int
+    matrix_shape: tuple[int, int]
+    local_content_sha256: str
+    collective_content_sha256: str
+    communicator_identity: Mapping[str, Any]
+    collective_packets: tuple[Mapping[str, Any], ...]
+    evidence_class: str
+    audit: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        if self.evidence_class != _PRODUCTION_IDENTITY_EVIDENCE:
+            raise ValueError("assembly/run identity evidence class is invalid")
+        communicator = self.recovery.condensed_system.matrix.getComm().tompi4py()
+        current = _current_formal_assembly_run_content(
+            recovery=self.recovery,
+            local_schur=self.local_schur,
+            reduced_rhs=self.reduced_rhs,
+            reduced_solution=self.reduced_solution,
+            run_token=self.run_token,
+            communicator=communicator,
+        )
+        hash_fields = (
+            "run_token_sha256",
+            "matrix_local_content_sha256",
+            "rhs_local_content_sha256",
+            "solution_local_content_sha256",
+            "residual_local_content_sha256",
+            "local_content_sha256",
+            "collective_content_sha256",
+        )
+        for field_name in hash_fields:
+            supplied = _sha256(
+                getattr(self, field_name),
+                label=field_name.replace("_", " "),
+            )
+            object.__setattr__(self, field_name, supplied)
+            if supplied != current[field_name]:
+                raise RuntimeError("formal assembly/run content identity is stale")
+        if (
+            float(self.relative_residual) != current["relative_residual"]
+            or int(self.matrix_state) != current["matrix_state"]
+            or tuple(map(int, self.matrix_shape))
+            != tuple(current["matrix_shape"])
+            or dict(self.communicator_identity)
+            != dict(current["communicator_identity"])
+            or tuple(dict(item) for item in self.collective_packets)
+            != tuple(dict(item) for item in current["collective_packets"])
+        ):
+            raise RuntimeError("formal assembly/run numerical snapshot is stale")
+        object.__setattr__(self, "run_token", current["run_token"])
+        object.__setattr__(
+            self,
+            "communicator_identity",
+            current["communicator_identity"],
+        )
+        object.__setattr__(
+            self,
+            "collective_packets",
+            current["collective_packets"],
+        )
+        object.__setattr__(self, "audit", _freeze(self.audit))
+
+
+@dataclass(frozen=True)
+class DistributedReducedMatrixContentIdentity:
+    """Exact distributed CSR identity of the live reduced PETSc matrix."""
+
+    recovery: LiveGeneralizedRecoveryCapture
+    matrix: PETSc.Mat
+    matrix_shape: tuple[int, int]
+    ownership_range: tuple[int, int]
+    column_ownership_range: tuple[int, int]
+    row_offsets: np.ndarray
+    column_indices: np.ndarray
+    values: np.ndarray
+    matrix_state: int
+    local_content_sha256: str
+    global_content_sha256: str
+    communicator_identity: Mapping[str, Any]
+    collective_packets: tuple[Mapping[str, Any], ...]
+    evidence_class: str
+    audit: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        if self.evidence_class != _PRODUCTION_IDENTITY_EVIDENCE:
+            raise ValueError("distributed matrix evidence class is invalid")
+        communicator = self.matrix.getComm().tompi4py()
+        current = _current_distributed_matrix_content(
+            recovery=self.recovery,
+            matrix=self.matrix,
+            communicator=communicator,
+        )
+        for field_name in (
+            "local_content_sha256",
+            "global_content_sha256",
+        ):
+            supplied = _sha256(
+                getattr(self, field_name),
+                label=field_name.replace("_", " "),
+            )
+            object.__setattr__(self, field_name, supplied)
+            if supplied != current[field_name]:
+                raise RuntimeError("distributed matrix content identity is stale")
+        if (
+            tuple(map(int, self.matrix_shape))
+            != tuple(current["matrix_shape"])
+            or tuple(map(int, self.ownership_range))
+            != tuple(current["ownership_range"])
+            or tuple(map(int, self.column_ownership_range))
+            != tuple(current["column_ownership_range"])
+            or int(self.matrix_state) != current["matrix_state"]
+            or not np.array_equal(self.row_offsets, current["row_offsets"])
+            or not np.array_equal(
+                self.column_indices,
+                current["column_indices"],
+            )
+            or not np.array_equal(self.values, current["values"])
+            or dict(self.communicator_identity)
+            != dict(current["communicator_identity"])
+            or tuple(dict(item) for item in self.collective_packets)
+            != tuple(dict(item) for item in current["collective_packets"])
+        ):
+            raise RuntimeError("distributed matrix numerical snapshot is stale")
+        for field_name in ("row_offsets", "column_indices", "values"):
+            object.__setattr__(self, field_name, current[field_name])
+        object.__setattr__(
+            self,
+            "communicator_identity",
+            current["communicator_identity"],
+        )
+        object.__setattr__(
+            self,
+            "collective_packets",
+            current["collective_packets"],
+        )
+        object.__setattr__(self, "audit", _freeze(self.audit))
+
+
+def _validated_formal_assembly_run_identity(
+    identity: FormalAssemblyRunIdentity,
+    *,
+    communicator: MPI.Intracomm,
+) -> Mapping[str, Any]:
+    def validate_evidence_class() -> None:
+        if identity.evidence_class != _PRODUCTION_IDENTITY_EVIDENCE:
+            raise RuntimeError("formal assembly/run evidence class drifted")
+
+    _collective_rank_local_preflight(
+        communicator,
+        namespace="formal_assembly_run_identity_type",
+        inspect_local_content=validate_evidence_class,
+    )
+    current = _current_formal_assembly_run_content(
+        recovery=identity.recovery,
+        local_schur=identity.local_schur,
+        reduced_rhs=identity.reduced_rhs,
+        reduced_solution=identity.reduced_solution,
+        run_token=identity.run_token,
+        communicator=communicator,
+    )
+    fields_to_match = (
+        "run_token_sha256",
+        "matrix_local_content_sha256",
+        "rhs_local_content_sha256",
+        "solution_local_content_sha256",
+        "residual_local_content_sha256",
+        "local_content_sha256",
+        "collective_content_sha256",
+        "relative_residual",
+        "matrix_state",
+        "matrix_shape",
+    )
+    def validate_stored_identity() -> None:
+        if any(
+            getattr(identity, field_name) != current[field_name]
+            for field_name in fields_to_match
+        ):
+            raise RuntimeError(
+                "formal assembly/run live numerical content drifted"
+            )
+        if (
+            dict(identity.communicator_identity)
+            != dict(current["communicator_identity"])
+            or tuple(dict(item) for item in identity.collective_packets)
+            != tuple(dict(item) for item in current["collective_packets"])
+            or identity.audit.get("actual_pde_claimed") is not False
+            or identity.audit.get("runner_wired") is not False
+        ):
+            raise RuntimeError(
+                "formal assembly/run collective identity drifted"
+            )
+
+    _collective_rank_local_preflight(
+        communicator,
+        namespace="formal_assembly_run_stored_identity",
+        inspect_local_content=validate_stored_identity,
+    )
+    return current
+
+
+def _validated_distributed_matrix_identity(
+    identity: DistributedReducedMatrixContentIdentity,
+    *,
+    communicator: MPI.Intracomm,
+) -> Mapping[str, Any]:
+    def validate_evidence_class() -> None:
+        if identity.evidence_class != _PRODUCTION_IDENTITY_EVIDENCE:
+            raise RuntimeError("distributed matrix evidence class drifted")
+
+    _collective_rank_local_preflight(
+        communicator,
+        namespace="distributed_matrix_identity_type",
+        inspect_local_content=validate_evidence_class,
+    )
+    current = _current_distributed_matrix_content(
+        recovery=identity.recovery,
+        matrix=identity.matrix,
+        communicator=communicator,
+    )
+    def validate_stored_identity() -> None:
+        if (
+            identity.local_content_sha256
+            != current["local_content_sha256"]
+            or identity.global_content_sha256
+            != current["global_content_sha256"]
+            or tuple(identity.matrix_shape) != tuple(current["matrix_shape"])
+            or tuple(identity.ownership_range)
+            != tuple(current["ownership_range"])
+            or tuple(identity.column_ownership_range)
+            != tuple(current["column_ownership_range"])
+            or identity.matrix_state != current["matrix_state"]
+            or not np.array_equal(
+                identity.row_offsets,
+                current["row_offsets"],
+            )
+            or not np.array_equal(
+                identity.column_indices,
+                current["column_indices"],
+            )
+            or not np.array_equal(identity.values, current["values"])
+            or dict(identity.communicator_identity)
+            != dict(current["communicator_identity"])
+            or tuple(dict(item) for item in identity.collective_packets)
+            != tuple(dict(item) for item in current["collective_packets"])
+            or identity.audit.get("actual_pde_claimed") is not False
+        ):
+            raise RuntimeError(
+                "distributed matrix live numerical content drifted"
+            )
+
+    _collective_rank_local_preflight(
+        communicator,
+        namespace="distributed_matrix_stored_identity",
+        inspect_local_content=validate_stored_identity,
+    )
+    return current
+
+
+def _current_collective_live_observer_content(
+    *,
+    discrete_gradient: ActualPhysicalDiscreteGradientAuthority,
+    action_layout: PhysicalMissingP6ActionLayout,
+    local_schur: LiveFullP6LocalSchurCapture,
+    dtn_modes: LiveFullP6DtnModeCapture,
+    complete_rhs: LiveCompleteMissingRhsCapture,
+    focus_goals: LiveNineFocusGoalCapture,
+    recovery: LiveGeneralizedRecoveryCapture,
+    formal_assembly_run_identity: FormalAssemblyRunIdentity,
+    distributed_reduced_matrix_content_identity: (
+        DistributedReducedMatrixContentIdentity
+    ),
+    observer_packet: np.ndarray,
+    communicator: MPI.Intracomm,
+) -> Mapping[str, Any]:
+    """Bind all live observers to one collective numerical packet."""
+
+    def inspect_local_observer_inputs() -> Mapping[str, Any]:
+        if (
+            formal_assembly_run_identity.recovery is not recovery
+            or formal_assembly_run_identity.local_schur is not local_schur
+            or distributed_reduced_matrix_content_identity.recovery
+            is not recovery
+            or distributed_reduced_matrix_content_identity.matrix
+            is not recovery.condensed_system.matrix
+        ):
+            raise RuntimeError(
+                "live observer production-object binding differs"
+            )
+        provenance_values = {
+            local_schur.provenance_sha256,
+            dtn_modes.provenance_sha256,
+            complete_rhs.provenance_sha256,
+            focus_goals.provenance_sha256,
+            recovery.provenance_sha256,
+        }
+        operator_values = {
+            dtn_modes.reduced_operator_sha256,
+            complete_rhs.reduced_operator_sha256,
+            focus_goals.reduced_operator_sha256,
+            recovery.reduced_operator_sha256,
+        }
+        if (
+            len(provenance_values) != 1
+            or len(operator_values) != 1
+            or local_schur.source_commit != recovery.source_commit
+            or dtn_modes.source_commit != recovery.source_commit
+            or local_schur.mesh_sha256 != recovery.mesh_sha256
+            or dtn_modes.mesh_sha256 != recovery.mesh_sha256
+            or action_layout.catalog_sha256 != recovery.catalog_sha256
+            or discrete_gradient.catalog_sha256 != recovery.catalog_sha256
+        ):
+            raise RuntimeError(
+                "live observer source/mesh/operator identity differs"
+            )
+        capability_hashes = _recomputed_capability_component_hashes(
+            discrete_gradient=discrete_gradient,
+            action_layout=action_layout,
+            local_schur=local_schur,
+            dtn_modes=dtn_modes,
+            complete_rhs=complete_rhs,
+            focus_goals=focus_goals,
+            recovery=recovery,
+        )
+        return MappingProxyType(
+            {
+                "capability_hashes": capability_hashes,
+                "observer_packet": _numeric_run_token(observer_packet),
+            }
+        )
+
+    local_inputs = _collective_rank_local_preflight(
+        communicator,
+        namespace="collective_live_observer_inputs",
+        inspect_local_content=inspect_local_observer_inputs,
+    )
+    capability_hashes = local_inputs["capability_hashes"]
+    packet = local_inputs["observer_packet"]
+    formal_current = _validated_formal_assembly_run_identity(
+        formal_assembly_run_identity,
+        communicator=communicator,
+    )
+    matrix_current = _validated_distributed_matrix_identity(
+        distributed_reduced_matrix_content_identity,
+        communicator=communicator,
+    )
+    component_hashes = {
+        **dict(capability_hashes),
+        "formal_assembly_run_identity": (
+            formal_current["local_content_sha256"]
+        ),
+        "distributed_reduced_matrix_content_identity": (
+            matrix_current["local_content_sha256"]
+        ),
+    }
+    communicator_identity = mpi_communicator_content_identity(communicator)
+    local_hash = _collective_rank_local_preflight(
+        communicator,
+        namespace="collective_live_observer_local_hash",
+        inspect_local_content=lambda: _observer_local_sha256(
+            component_hashes=component_hashes,
+            observer_packet=packet,
+            source_commit=recovery.source_commit,
+            mesh_sha256=recovery.mesh_sha256,
+            provenance_sha256=recovery.provenance_sha256,
+            reduced_operator_sha256=recovery.reduced_operator_sha256,
+            communicator_content_sha256=(
+                communicator_identity["content_sha256"]
+            ),
+            local_rank=communicator.rank,
+            world_rank=MPI.COMM_WORLD.rank,
+        ),
+    )
+    stored_communicator, packets, collective_hash = _collective_snapshot(
+        communicator,
+        namespace="collective_live_observer",
+        local_payload_sha256=local_hash,
+    )
+    return MappingProxyType(
+        {
+            "observer_packet": packet,
+            "component_hashes": MappingProxyType(component_hashes),
+            "local_content_sha256": local_hash,
+            "collective_content_sha256": collective_hash,
+            "communicator_identity": stored_communicator,
+            "collective_packets": packets,
+        }
+    )
+
+
+@dataclass(frozen=True)
+class CollectiveLiveObserverBinding:
+    """Collective numerical binding of all seven snapshots and two identities."""
+
+    discrete_gradient: ActualPhysicalDiscreteGradientAuthority
+    action_layout: PhysicalMissingP6ActionLayout
+    local_schur: LiveFullP6LocalSchurCapture
+    dtn_modes: LiveFullP6DtnModeCapture
+    complete_rhs: LiveCompleteMissingRhsCapture
+    focus_goals: LiveNineFocusGoalCapture
+    recovery: LiveGeneralizedRecoveryCapture
+    formal_assembly_run_identity: FormalAssemblyRunIdentity
+    distributed_reduced_matrix_content_identity: (
+        DistributedReducedMatrixContentIdentity
+    )
+    observer_packet: np.ndarray
+    component_hashes: Mapping[str, str]
+    local_content_sha256: str
+    collective_content_sha256: str
+    communicator_identity: Mapping[str, Any]
+    collective_packets: tuple[Mapping[str, Any], ...]
+    evidence_class: str
+    audit: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        if self.evidence_class != _PRODUCTION_IDENTITY_EVIDENCE:
+            raise ValueError("collective observer evidence class is invalid")
+        communicator = self.recovery.condensed_system.matrix.getComm().tompi4py()
+        current = _current_collective_live_observer_content(
+            discrete_gradient=self.discrete_gradient,
+            action_layout=self.action_layout,
+            local_schur=self.local_schur,
+            dtn_modes=self.dtn_modes,
+            complete_rhs=self.complete_rhs,
+            focus_goals=self.focus_goals,
+            recovery=self.recovery,
+            formal_assembly_run_identity=(
+                self.formal_assembly_run_identity
+            ),
+            distributed_reduced_matrix_content_identity=(
+                self.distributed_reduced_matrix_content_identity
+            ),
+            observer_packet=self.observer_packet,
+            communicator=communicator,
+        )
+        for field_name in (
+            "local_content_sha256",
+            "collective_content_sha256",
+        ):
+            supplied = _sha256(
+                getattr(self, field_name),
+                label=field_name.replace("_", " "),
+            )
+            object.__setattr__(self, field_name, supplied)
+            if supplied != current[field_name]:
+                raise RuntimeError("collective observer content identity is stale")
+        if (
+            dict(self.component_hashes) != dict(current["component_hashes"])
+            or dict(self.communicator_identity)
+            != dict(current["communicator_identity"])
+            or tuple(dict(item) for item in self.collective_packets)
+            != tuple(dict(item) for item in current["collective_packets"])
+            or self.audit.get("actual_pde_claimed") is not False
+            or self.audit.get("runner_wired") is not False
+        ):
+            raise RuntimeError("collective observer numerical snapshot is stale")
+        object.__setattr__(
+            self,
+            "observer_packet",
+            current["observer_packet"],
+        )
+        object.__setattr__(
+            self,
+            "component_hashes",
+            current["component_hashes"],
+        )
+        object.__setattr__(
+            self,
+            "communicator_identity",
+            current["communicator_identity"],
+        )
+        object.__setattr__(
+            self,
+            "collective_packets",
+            current["collective_packets"],
+        )
+        object.__setattr__(self, "audit", _freeze(self.audit))
+
+
+def capture_formal_assembly_run_identity(
+    *,
+    recovery: LiveGeneralizedRecoveryCapture,
+    local_schur: LiveFullP6LocalSchurCapture,
+    reduced_rhs: PETSc.Vec,
+    reduced_solution: PETSc.Vec,
+    run_token: np.ndarray,
+    communicator: MPI.Intracomm,
+) -> FormalAssemblyRunIdentity:
+    """Capture actual PETSc Mat/Vec/run-token numerical content."""
+
+    current = _current_formal_assembly_run_content(
+        recovery=recovery,
+        local_schur=local_schur,
+        reduced_rhs=reduced_rhs,
+        reduced_solution=reduced_solution,
+        run_token=run_token,
+        communicator=communicator,
+    )
+    return FormalAssemblyRunIdentity(
+        recovery=recovery,
+        local_schur=local_schur,
+        reduced_rhs=reduced_rhs,
+        reduced_solution=reduced_solution,
+        run_token=current["run_token"],
+        run_token_sha256=current["run_token_sha256"],
+        matrix_local_content_sha256=(
+            current["matrix_local_content_sha256"]
+        ),
+        rhs_local_content_sha256=current["rhs_local_content_sha256"],
+        solution_local_content_sha256=(
+            current["solution_local_content_sha256"]
+        ),
+        residual_local_content_sha256=(
+            current["residual_local_content_sha256"]
+        ),
+        relative_residual=current["relative_residual"],
+        matrix_state=current["matrix_state"],
+        matrix_shape=current["matrix_shape"],
+        local_content_sha256=current["local_content_sha256"],
+        collective_content_sha256=current["collective_content_sha256"],
+        communicator_identity=current["communicator_identity"],
+        collective_packets=current["collective_packets"],
+        evidence_class=_PRODUCTION_IDENTITY_EVIDENCE,
+        audit=MappingProxyType(
+            {
+                "schema_version": (
+                    "task035b.formal-assembly-run-identity.v1"
+                ),
+                "status": "live_mat_vec_run_token_content_bound",
+                "identity_only_not_residual_gate": True,
+                "actual_pde_claimed": False,
+                "runner_wired": False,
+                "caller_semantic_booleans_accepted": False,
+                "ordinary_default_changed": False,
+            }
+        ),
+    )
+
+
+def capture_distributed_reduced_matrix_content_identity(
+    *,
+    recovery: LiveGeneralizedRecoveryCapture,
+    communicator: MPI.Intracomm,
+) -> DistributedReducedMatrixContentIdentity:
+    """Capture exact owned CSR values from the live reduced PETSc matrix."""
+
+    matrix = recovery.condensed_system.matrix
+    current = _current_distributed_matrix_content(
+        recovery=recovery,
+        matrix=matrix,
+        communicator=communicator,
+    )
+    return DistributedReducedMatrixContentIdentity(
+        recovery=recovery,
+        matrix=matrix,
+        matrix_shape=current["matrix_shape"],
+        ownership_range=current["ownership_range"],
+        column_ownership_range=current["column_ownership_range"],
+        row_offsets=current["row_offsets"],
+        column_indices=current["column_indices"],
+        values=current["values"],
+        matrix_state=current["matrix_state"],
+        local_content_sha256=current["local_content_sha256"],
+        global_content_sha256=current["global_content_sha256"],
+        communicator_identity=current["communicator_identity"],
+        collective_packets=current["collective_packets"],
+        evidence_class=_PRODUCTION_IDENTITY_EVIDENCE,
+        audit=MappingProxyType(
+            {
+                "schema_version": (
+                    "task035b.distributed-reduced-matrix-identity.v1"
+                ),
+                "status": "live_distributed_csr_content_bound",
+                "actual_pde_claimed": False,
+                "caller_semantic_booleans_accepted": False,
+                "ordinary_default_changed": False,
+            }
+        ),
+    )
+
+
+def bind_collective_live_observers(
+    *,
+    discrete_gradient: ActualPhysicalDiscreteGradientAuthority,
+    action_layout: PhysicalMissingP6ActionLayout,
+    local_schur: LiveFullP6LocalSchurCapture,
+    dtn_modes: LiveFullP6DtnModeCapture,
+    complete_rhs: LiveCompleteMissingRhsCapture,
+    focus_goals: LiveNineFocusGoalCapture,
+    recovery: LiveGeneralizedRecoveryCapture,
+    formal_assembly_run_identity: FormalAssemblyRunIdentity,
+    distributed_reduced_matrix_content_identity: (
+        DistributedReducedMatrixContentIdentity
+    ),
+    observer_packet: np.ndarray,
+    communicator: MPI.Intracomm,
+) -> CollectiveLiveObserverBinding:
+    """Bind collective numerical observer packets to all upstream objects."""
+
+    current = _current_collective_live_observer_content(
+        discrete_gradient=discrete_gradient,
+        action_layout=action_layout,
+        local_schur=local_schur,
+        dtn_modes=dtn_modes,
+        complete_rhs=complete_rhs,
+        focus_goals=focus_goals,
+        recovery=recovery,
+        formal_assembly_run_identity=formal_assembly_run_identity,
+        distributed_reduced_matrix_content_identity=(
+            distributed_reduced_matrix_content_identity
+        ),
+        observer_packet=observer_packet,
+        communicator=communicator,
+    )
+    return CollectiveLiveObserverBinding(
+        discrete_gradient=discrete_gradient,
+        action_layout=action_layout,
+        local_schur=local_schur,
+        dtn_modes=dtn_modes,
+        complete_rhs=complete_rhs,
+        focus_goals=focus_goals,
+        recovery=recovery,
+        formal_assembly_run_identity=formal_assembly_run_identity,
+        distributed_reduced_matrix_content_identity=(
+            distributed_reduced_matrix_content_identity
+        ),
+        observer_packet=current["observer_packet"],
+        component_hashes=current["component_hashes"],
+        local_content_sha256=current["local_content_sha256"],
+        collective_content_sha256=current["collective_content_sha256"],
+        communicator_identity=current["communicator_identity"],
+        collective_packets=current["collective_packets"],
+        evidence_class=_PRODUCTION_IDENTITY_EVIDENCE,
+        audit=MappingProxyType(
+            {
+                "schema_version": (
+                    "task035b.collective-live-observer-binding.v1"
+                ),
+                "status": "collective_numerical_observer_content_bound",
+                "actual_pde_claimed": False,
+                "runner_wired": False,
+                "caller_semantic_booleans_accepted": False,
+                "ordinary_default_changed": False,
+            }
+        ),
+    )
+
+
 @dataclass(frozen=True)
 class H14LiveCaptureReadiness:
-    """Non-throwing completeness report used before formal hook assembly."""
+    """Non-throwing typed-contract report; never an actual-PDE Gate."""
 
     formal_actual_pde_ready: bool
     typed_capture_contract_complete: bool
     capability_snapshot_complete: bool
     missing_capabilities: tuple[str, ...]
+    missing_production_identities: tuple[str, ...]
+    capability_identity_mismatches: tuple[str, ...]
     identity_mismatches: tuple[str, ...]
     component_hashes: Mapping[str, str]
     audit: Mapping[str, Any]
@@ -1432,23 +2995,31 @@ class H14LiveCaptureReadiness:
             raise ValueError(
                 "typed captures cannot establish formal actual-PDE readiness"
             )
-        if self.typed_capture_contract_complete is not False:
-            raise ValueError(
-                "capability snapshots cannot complete the typed formal contract"
-            )
-        complete = bool(self.capability_snapshot_complete)
-        if complete != (not self.missing_capabilities and not self.identity_mismatches):
+        capability_complete = bool(self.capability_snapshot_complete)
+        expected_capability = (
+            not self.missing_capabilities
+            and not self.capability_identity_mismatches
+        )
+        if capability_complete != expected_capability:
             raise ValueError("live-capture readiness is internally inconsistent")
+        expected_typed = (
+            capability_complete
+            and not self.missing_production_identities
+            and not self.identity_mismatches
+        )
+        if bool(self.typed_capture_contract_complete) != expected_typed:
+            raise ValueError("typed production contract state is inconsistent")
         object.__setattr__(
             self,
             "component_hashes",
             MappingProxyType(dict(self.component_hashes)),
         )
+        object.__setattr__(self, "audit", _freeze(self.audit))
 
 
 @dataclass(frozen=True)
 class FormalH14LiveHookBundle:
-    """Reserved formal bundle; construction is disabled until hooks exist."""
+    """Typed production contract bundle; not a formal actual-PDE result."""
 
     discrete_gradient: ActualPhysicalDiscreteGradientAuthority
     action_layout: PhysicalMissingP6ActionLayout
@@ -1457,15 +3028,86 @@ class FormalH14LiveHookBundle:
     complete_rhs: LiveCompleteMissingRhsCapture
     focus_goals: LiveNineFocusGoalCapture
     recovery: LiveGeneralizedRecoveryCapture
+    formal_assembly_run_identity: FormalAssemblyRunIdentity
+    distributed_reduced_matrix_content_identity: (
+        DistributedReducedMatrixContentIdentity
+    )
+    collective_live_observer_binding: CollectiveLiveObserverBinding
+    communicator: MPI.Intracomm
     evidence_class: str
     hook_bundle_sha256: str
     audit: Mapping[str, Any]
 
     def __post_init__(self) -> None:
-        raise RuntimeError(
-            "formal h14 hook bundle is disabled until production assembly, "
-            "distributed-matrix, and collective-observer identities exist"
+        if self.evidence_class != _TYPED_CONTRACT_EVIDENCE:
+            raise ValueError("h14 hook bundle evidence class is invalid")
+        readiness = assess_formal_h14_live_capture_readiness(
+            discrete_gradient=self.discrete_gradient,
+            action_layout=self.action_layout,
+            local_schur=self.local_schur,
+            dtn_modes=self.dtn_modes,
+            complete_rhs=self.complete_rhs,
+            focus_goals=self.focus_goals,
+            recovery=self.recovery,
+            formal_assembly_run_identity=(
+                self.formal_assembly_run_identity
+            ),
+            distributed_reduced_matrix_content_identity=(
+                self.distributed_reduced_matrix_content_identity
+            ),
+            collective_live_observer_binding=(
+                self.collective_live_observer_binding
+            ),
+            communicator=self.communicator,
         )
+        if (
+            not readiness.typed_capture_contract_complete
+            or readiness.formal_actual_pde_ready
+        ):
+            raise RuntimeError("h14 typed hook bundle is not content complete")
+        expected_hash = _hash(
+            {
+                "schema": "task035b.typed-h14-live-hook-bundle.v1",
+                "evidence_class": _TYPED_CONTRACT_EVIDENCE,
+                "source_commit": self.recovery.source_commit,
+                "mesh_sha256": self.recovery.mesh_sha256,
+                "provenance_sha256": self.recovery.provenance_sha256,
+                "reduced_operator_sha256": (
+                    self.recovery.reduced_operator_sha256
+                ),
+                "formal_assembly_run_collective_sha256": (
+                    self.formal_assembly_run_identity.collective_content_sha256
+                ),
+                "distributed_matrix_global_sha256": (
+                    self.distributed_reduced_matrix_content_identity
+                    .global_content_sha256
+                ),
+                "collective_live_observer_sha256": (
+                    self.collective_live_observer_binding
+                    .collective_content_sha256
+                ),
+            }
+        )
+        supplied_hash = _sha256(
+            self.hook_bundle_sha256,
+            label="typed h14 hook bundle hash",
+        )
+        if supplied_hash != expected_hash:
+            raise RuntimeError("typed h14 hook bundle hash is stale")
+        if (
+            self.audit.get("typed_production_contract_ready") is not True
+            or self.audit.get("formal_actual_pde_ready") is not False
+            or self.audit.get("actual_pde_claimed") is not False
+            or self.audit.get("runner_wired") is not False
+            or self.audit.get("ordinary_default_changed") is not False
+        ):
+            raise RuntimeError("typed h14 hook bundle audit is invalid")
+        object.__setattr__(
+            self,
+            "hook_bundle_sha256",
+            supplied_hash,
+        )
+        object.__setattr__(self, "audit", _freeze(self.audit))
 
 
 def snapshot_live_full_p6_local_schur_capture(
@@ -2044,9 +3686,16 @@ def assess_formal_h14_live_capture_readiness(
     complete_rhs: LiveCompleteMissingRhsCapture | None = None,
     focus_goals: LiveNineFocusGoalCapture | None = None,
     recovery: LiveGeneralizedRecoveryCapture | None = None,
+    formal_assembly_run_identity: FormalAssemblyRunIdentity | None = None,
+    distributed_reduced_matrix_content_identity: (
+        DistributedReducedMatrixContentIdentity | None
+    ) = None,
+    collective_live_observer_binding: (
+        CollectiveLiveObserverBinding | None
+    ) = None,
     communicator: MPI.Intracomm | None = None,
 ) -> H14LiveCaptureReadiness:
-    """Validate capability snapshots; never promote them to formal evidence."""
+    """Validate the typed contract without claiming an actual PDE result."""
 
     supplied = {
         "actual_discrete_gradient": (
@@ -2078,9 +3727,28 @@ def assess_formal_h14_live_capture_readiness(
             LiveGeneralizedRecoveryCapture,
         ),
     }
+    production_supplied = {
+        "formal_assembly_run_identity": (
+            formal_assembly_run_identity,
+            FormalAssemblyRunIdentity,
+        ),
+        "distributed_reduced_matrix_content_identity": (
+            distributed_reduced_matrix_content_identity,
+            DistributedReducedMatrixContentIdentity,
+        ),
+        "collective_live_observer_binding": (
+            collective_live_observer_binding,
+            CollectiveLiveObserverBinding,
+        ),
+    }
     wrong_types = tuple(
         name
         for name, (value, expected) in supplied.items()
+        if value is not None and not isinstance(value, expected)
+    )
+    production_wrong_types = tuple(
+        name
+        for name, (value, expected) in production_supplied.items()
         if value is not None and not isinstance(value, expected)
     )
     if "actual_discrete_gradient" in wrong_types:
@@ -2097,6 +3765,15 @@ def assess_formal_h14_live_capture_readiness(
         focus_goals = None
     if "generalized_recovery" in wrong_types:
         recovery = None
+    if "formal_assembly_run_identity" in production_wrong_types:
+        formal_assembly_run_identity = None
+    if (
+        "distributed_reduced_matrix_content_identity"
+        in production_wrong_types
+    ):
+        distributed_reduced_matrix_content_identity = None
+    if "collective_live_observer_binding" in production_wrong_types:
+        collective_live_observer_binding = None
     components = {
         "actual_discrete_gradient": discrete_gradient,
         "physical_action_layout": action_layout,
@@ -2454,33 +4131,219 @@ def assess_formal_h14_live_capture_readiness(
         ):
             mismatches.append("dtn_recovery_provenance_mismatch")
 
-    unique_mismatches = tuple(dict.fromkeys(mismatches))
-    capability_complete = not missing and not unique_mismatches
-    ready = False
+    capability_mismatches = tuple(dict.fromkeys(mismatches))
+    capability_complete = not missing and not capability_mismatches
+    production_components = {
+        "formal_assembly_run_identity": formal_assembly_run_identity,
+        "distributed_reduced_matrix_content_identity": (
+            distributed_reduced_matrix_content_identity
+        ),
+        "collective_live_observer_binding": (
+            collective_live_observer_binding
+        ),
+    }
+    production_missing = tuple(
+        name
+        for name, value in production_components.items()
+        if value is None
+    )
+    production_mismatches: list[str] = [
+        f"{name}_wrong_type" for name in production_wrong_types
+    ]
+    production_presence_consistent = False
+    if communicator is not None:
+        local_presence = tuple(
+            name
+            for name, value in production_components.items()
+            if value is not None
+        )
+        production_presence_packets = tuple(
+            communicator.allgather(local_presence)
+        )
+        production_presence_consistent = (
+            len(set(production_presence_packets)) == 1
+        )
+        if not production_presence_consistent:
+            production_mismatches.append(
+                "rank_production_identity_presence_mismatch"
+            )
+    if (
+        communicator is not None
+        and production_presence_consistent
+        and formal_assembly_run_identity is not None
+    ):
+        try:
+            formal_current = _validated_formal_assembly_run_identity(
+                formal_assembly_run_identity,
+                communicator=communicator,
+            )
+            hashes["formal_assembly_run_identity"] = (
+                formal_current["collective_content_sha256"]
+            )
+            if (
+                recovery is not None
+                and formal_assembly_run_identity.recovery is not recovery
+            ) or (
+                local_schur is not None
+                and formal_assembly_run_identity.local_schur
+                is not local_schur
+            ):
+                production_mismatches.append(
+                    "formal_assembly_run_upstream_object_mismatch"
+                )
+        except Exception:
+            hashes["formal_assembly_run_identity"] = ""
+            production_mismatches.append(
+                "formal_assembly_run_numerical_identity_invalid"
+            )
+    if (
+        communicator is not None
+        and production_presence_consistent
+        and distributed_reduced_matrix_content_identity is not None
+    ):
+        try:
+            matrix_current = _validated_distributed_matrix_identity(
+                distributed_reduced_matrix_content_identity,
+                communicator=communicator,
+            )
+            hashes["distributed_reduced_matrix_content_identity"] = (
+                matrix_current["global_content_sha256"]
+            )
+            if (
+                recovery is not None
+                and distributed_reduced_matrix_content_identity.recovery
+                is not recovery
+            ):
+                production_mismatches.append(
+                    "distributed_matrix_recovery_object_mismatch"
+                )
+        except Exception:
+            hashes["distributed_reduced_matrix_content_identity"] = ""
+            production_mismatches.append(
+                "distributed_matrix_numerical_identity_invalid"
+            )
+    if (
+        communicator is not None
+        and production_presence_consistent
+        and collective_live_observer_binding is not None
+    ):
+        observer = collective_live_observer_binding
+        try:
+            observer_current = _current_collective_live_observer_content(
+                discrete_gradient=observer.discrete_gradient,
+                action_layout=observer.action_layout,
+                local_schur=observer.local_schur,
+                dtn_modes=observer.dtn_modes,
+                complete_rhs=observer.complete_rhs,
+                focus_goals=observer.focus_goals,
+                recovery=observer.recovery,
+                formal_assembly_run_identity=(
+                    observer.formal_assembly_run_identity
+                ),
+                distributed_reduced_matrix_content_identity=(
+                    observer.distributed_reduced_matrix_content_identity
+                ),
+                observer_packet=observer.observer_packet,
+                communicator=communicator,
+            )
+            hashes["collective_live_observer_binding"] = (
+                observer_current["collective_content_sha256"]
+            )
+            if (
+                observer.local_content_sha256
+                != observer_current["local_content_sha256"]
+                or observer.collective_content_sha256
+                != observer_current["collective_content_sha256"]
+                or dict(observer.component_hashes)
+                != dict(observer_current["component_hashes"])
+                or dict(observer.communicator_identity)
+                != dict(observer_current["communicator_identity"])
+                or tuple(dict(item) for item in observer.collective_packets)
+                != tuple(
+                    dict(item)
+                    for item in observer_current["collective_packets"]
+                )
+            ):
+                production_mismatches.append(
+                    "collective_observer_numerical_identity_invalid"
+                )
+            expected_objects = (
+                (observer.discrete_gradient, discrete_gradient),
+                (observer.action_layout, action_layout),
+                (observer.local_schur, local_schur),
+                (observer.dtn_modes, dtn_modes),
+                (observer.complete_rhs, complete_rhs),
+                (observer.focus_goals, focus_goals),
+                (observer.recovery, recovery),
+                (
+                    observer.formal_assembly_run_identity,
+                    formal_assembly_run_identity,
+                ),
+                (
+                    observer.distributed_reduced_matrix_content_identity,
+                    distributed_reduced_matrix_content_identity,
+                ),
+            )
+            if any(
+                supplied_object is not None
+                and observed_object is not supplied_object
+                for observed_object, supplied_object in expected_objects
+            ):
+                production_mismatches.append(
+                    "collective_observer_upstream_object_mismatch"
+                )
+        except Exception:
+            hashes["collective_live_observer_binding"] = ""
+            production_mismatches.append(
+                "collective_observer_numerical_identity_invalid"
+            )
+    unique_mismatches = tuple(
+        dict.fromkeys((*capability_mismatches, *production_mismatches))
+    )
+    typed_complete = (
+        capability_complete
+        and not production_missing
+        and not unique_mismatches
+    )
     return H14LiveCaptureReadiness(
-        formal_actual_pde_ready=ready,
-        typed_capture_contract_complete=False,
+        formal_actual_pde_ready=False,
+        typed_capture_contract_complete=typed_complete,
         capability_snapshot_complete=capability_complete,
         missing_capabilities=missing,
+        missing_production_identities=production_missing,
+        capability_identity_mismatches=capability_mismatches,
         identity_mismatches=unique_mismatches,
         component_hashes=hashes,
         audit=MappingProxyType(
             {
-                "schema_version": ("task035b.formal-h14-capability-readiness.v2"),
-                "status": (
-                    "capability_snapshot_complete_formal_hooks_missing"
-                    if capability_complete
-                    else "capability_snapshot_incomplete"
+                "schema_version": (
+                    "task035b.formal-h14-typed-contract-readiness.v3"
                 ),
-                "formal_actual_pde_ready": ready,
-                "typed_capture_contract_complete": False,
+                "status": (
+                    "typed_production_contract_ready"
+                    if typed_complete
+                    else (
+                        "capability_snapshot_complete_production_identity_missing"
+                        if capability_complete
+                        else "capability_snapshot_incomplete"
+                    )
+                ),
+                "formal_actual_pde_ready": False,
+                "typed_capture_contract_complete": typed_complete,
                 "capability_snapshot_complete": capability_complete,
-                "evidence_class": _CAPABILITY_EVIDENCE,
-                "production_hooks_missing": list(_PRODUCTION_HOOKS_MISSING),
+                "evidence_class": (
+                    _TYPED_CONTRACT_EVIDENCE
+                    if typed_complete
+                    else _CAPABILITY_EVIDENCE
+                ),
+                "production_hooks_missing": list(production_missing),
+                "missing_production_identities": list(production_missing),
                 "missing_capabilities": list(missing),
                 "identity_mismatches": list(unique_mismatches),
                 "caller_readiness_booleans_used_for_formal_qualification": (False),
                 "formal_candidate_passed": False,
+                "actual_pde_claimed": False,
+                "runner_wired": False,
                 "candidate_PDE_resolve_required": True,
                 "full_p6_trace_matrix_materialized": False,
                 "inactive_missing_p6_rows_allocated": 0,
@@ -2499,9 +4362,16 @@ def build_formal_h14_live_hook_bundle(
     complete_rhs: LiveCompleteMissingRhsCapture | None = None,
     focus_goals: LiveNineFocusGoalCapture | None = None,
     recovery: LiveGeneralizedRecoveryCapture | None = None,
+    formal_assembly_run_identity: FormalAssemblyRunIdentity | None = None,
+    distributed_reduced_matrix_content_identity: (
+        DistributedReducedMatrixContentIdentity | None
+    ) = None,
+    collective_live_observer_binding: (
+        CollectiveLiveObserverBinding | None
+    ) = None,
     communicator: MPI.Intracomm | None = None,
 ) -> FormalH14LiveHookBundle:
-    """Fail closed until the missing production identities are implemented."""
+    """Build only the typed contract; do not claim a formal PDE solve."""
 
     readiness = assess_formal_h14_live_capture_readiness(
         discrete_gradient=discrete_gradient,
@@ -2511,19 +4381,111 @@ def build_formal_h14_live_hook_bundle(
         complete_rhs=complete_rhs,
         focus_goals=focus_goals,
         recovery=recovery,
+        formal_assembly_run_identity=formal_assembly_run_identity,
+        distributed_reduced_matrix_content_identity=(
+            distributed_reduced_matrix_content_identity
+        ),
+        collective_live_observer_binding=(
+            collective_live_observer_binding
+        ),
         communicator=communicator,
     )
-    raise RuntimeError(
-        "formal h14 bundle remains fail-closed: "
-        f"typed_capture_contract_complete="
-        f"{readiness.typed_capture_contract_complete}, "
-        f"missing={readiness.missing_capabilities}, "
-        f"mismatches={readiness.identity_mismatches}, "
-        f"production_hooks_missing={_PRODUCTION_HOOKS_MISSING}"
+    required = (
+        discrete_gradient,
+        action_layout,
+        local_schur,
+        dtn_modes,
+        complete_rhs,
+        focus_goals,
+        recovery,
+        formal_assembly_run_identity,
+        distributed_reduced_matrix_content_identity,
+        collective_live_observer_binding,
+        communicator,
+    )
+    if not readiness.typed_capture_contract_complete or any(
+        value is None for value in required
+    ):
+        raise RuntimeError(
+            "formal h14 bundle remains fail-closed: "
+            f"typed_capture_contract_complete="
+            f"{readiness.typed_capture_contract_complete}, "
+            f"missing={readiness.missing_capabilities}, "
+            f"missing_production="
+            f"{readiness.missing_production_identities}, "
+            f"mismatches={readiness.identity_mismatches}"
+        )
+    assert discrete_gradient is not None
+    assert action_layout is not None
+    assert local_schur is not None
+    assert dtn_modes is not None
+    assert complete_rhs is not None
+    assert focus_goals is not None
+    assert recovery is not None
+    assert formal_assembly_run_identity is not None
+    assert distributed_reduced_matrix_content_identity is not None
+    assert collective_live_observer_binding is not None
+    assert communicator is not None
+    bundle_hash = _hash(
+        {
+            "schema": "task035b.typed-h14-live-hook-bundle.v1",
+            "evidence_class": _TYPED_CONTRACT_EVIDENCE,
+            "source_commit": recovery.source_commit,
+            "mesh_sha256": recovery.mesh_sha256,
+            "provenance_sha256": recovery.provenance_sha256,
+            "reduced_operator_sha256": recovery.reduced_operator_sha256,
+            "formal_assembly_run_collective_sha256": (
+                formal_assembly_run_identity.collective_content_sha256
+            ),
+            "distributed_matrix_global_sha256": (
+                distributed_reduced_matrix_content_identity
+                .global_content_sha256
+            ),
+            "collective_live_observer_sha256": (
+                collective_live_observer_binding.collective_content_sha256
+            ),
+        }
+    )
+    return FormalH14LiveHookBundle(
+        discrete_gradient=discrete_gradient,
+        action_layout=action_layout,
+        local_schur=local_schur,
+        dtn_modes=dtn_modes,
+        complete_rhs=complete_rhs,
+        focus_goals=focus_goals,
+        recovery=recovery,
+        formal_assembly_run_identity=formal_assembly_run_identity,
+        distributed_reduced_matrix_content_identity=(
+            distributed_reduced_matrix_content_identity
+        ),
+        collective_live_observer_binding=(
+            collective_live_observer_binding
+        ),
+        communicator=communicator,
+        evidence_class=_TYPED_CONTRACT_EVIDENCE,
+        hook_bundle_sha256=bundle_hash,
+        audit=MappingProxyType(
+            {
+                "schema_version": (
+                    "task035b.typed-h14-live-hook-bundle.v1"
+                ),
+                "typed_production_contract_ready": True,
+                "formal_actual_pde_ready": False,
+                "actual_pde_claimed": False,
+                "runner_wired": False,
+                "candidate_PDE_resolve_required": True,
+                "full_p6_trace_matrix_materialized": False,
+                "inactive_missing_p6_rows_allocated": 0,
+                "ordinary_default_changed": False,
+            }
+        ),
     )
 
 
 __all__ = [
+    "CollectiveLiveObserverBinding",
+    "DistributedReducedMatrixContentIdentity",
+    "FormalAssemblyRunIdentity",
     "FormalH14LiveHookBundle",
     "H14LiveCaptureReadiness",
     "LiveCompleteMissingRhsCapture",
@@ -2532,8 +4494,11 @@ __all__ = [
     "LiveGeneralizedRecoveryCapture",
     "LiveNineFocusGoalCapture",
     "assess_formal_h14_live_capture_readiness",
+    "bind_collective_live_observers",
     "build_formal_h14_live_hook_bundle",
     "capture_complete_missing_rhs",
+    "capture_distributed_reduced_matrix_content_identity",
+    "capture_formal_assembly_run_identity",
     "capture_live_full_p6_dtn_modes",
     "capture_live_generalized_recovery",
     "capture_live_nine_focus_goals",
