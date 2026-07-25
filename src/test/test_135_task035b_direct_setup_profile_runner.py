@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 from benchmarks.run_task035b_direct_setup_profile import (
+    _cache_pairs,
     _classify_profile,
     _direct_config,
     _dry_run_plan,
@@ -132,6 +133,24 @@ def _worker_result() -> dict:
 
 
 class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
+    def test_cache_pair_inventory_distinguishes_raw_and_condensed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "raw_tensor_a.json").touch()
+            (root / "raw_tensor_a.npy").touch()
+            (root / "raw_tensor_incomplete.json").touch()
+            (root / "condensed_class_b.json").touch()
+            (root / "condensed_class_b.npz").touch()
+            (root / "condensed_class_incomplete.npz").touch()
+            self.assertEqual(
+                _cache_pairs(root, prefix="raw_tensor"),
+                ["raw_tensor_a"],
+            )
+            self.assertEqual(
+                _cache_pairs(root, prefix="condensed_class"),
+                ["condensed_class_b"],
+            )
+
     def test_default_is_dry_run_and_describes_cold_warm_protocol(self) -> None:
         args = _parse_args([])
         plan = _dry_run_plan(args)

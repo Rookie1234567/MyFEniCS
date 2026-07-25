@@ -1,0 +1,111 @@
+{
+  "schema_version": "task035b.infrastructure-negative.v1",
+  "benchmark_id": "task035b_h15_direct_cold_mpi8_parent_record_writer",
+  "status": "failed",
+  "classification": "infrastructure_negative",
+  "failure_stage": "parent_record_write",
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "commit_sha": "c9162246ee7d217b620ef37cfd5a369f2fd984ac",
+    "source_was_clean_for_pde": true
+  },
+  "request": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 15.0,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "mpi_size": 8,
+    "cache_state": "cold",
+    "direct_solver": "MUMPS"
+  },
+  "command": [
+    "python",
+    "-m",
+    "benchmarks.run_task035b_direct_setup_profile",
+    "--execute-pde",
+    "--mpi-size",
+    "8",
+    "--cache-state",
+    "cold",
+    "--cache-directory",
+    "benchmarks/artifacts/task035b/direct_setup_profile/condensed_setup_cache/c9162246_mpi8"
+  ],
+  "failure": {
+    "exception_type": "TypeError",
+    "message": "_cache_pairs() missing 1 required keyword-only argument: 'prefix'",
+    "location": "benchmarks/run_task035b_direct_setup_profile.py:_run_parent",
+    "cause": "The final cache inventory called the now-prefix-qualified helper without selecting the raw-tensor or condensed-class namespace.",
+    "pde_worker_completed": true,
+    "formal_watchdog_summary_issued": false,
+    "formal_profile_pass": false
+  },
+  "raw_pde_summary_not_promoted_to_formal_profile": {
+    "case_status": "completed",
+    "official_result_in_worker_summary": true,
+    "full3d_equivalent_dofs": 74890,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9195812,
+    "full_explicit_true_residual": 1.094417220407627e-11,
+    "R00_total": 0.000755888313598125,
+    "R_total": 0.0007650243181126006,
+    "T_total": 0.6026851467960261,
+    "A_closure": 0.3965498288858612,
+    "common_solver_seconds": 54.55355677899206
+  },
+  "raw_resource_summary_not_promoted_to_formal_profile": {
+    "sample_count": 199,
+    "observed_worker_rank_count": 8,
+    "max_process_tree_rss_mb": 4844.87109375,
+    "max_process_tree_rss_gib": 4.731319427490234,
+    "max_worker_rank_pss_sum_mb": 3991.44140625,
+    "max_worker_rank_uss_sum_mb": 3871.7109375,
+    "max_worker_rank_shared_sum_mb": 1655.52734375,
+    "max_process_tree_swap_mb": 0.0,
+    "max_worker_rank_thread_count_sum": 400,
+    "per_rank_peak_thread_count": 50,
+    "thread_runtime_observation": "All eight ranks exposed 50 python threads; 47 per rank were observed in futex_do_wait. Loaded native runtimes included libgomp, TBB, BLAS/LAPACK, ScaLAPACK and MUMPS. This is evidence of dormant native thread pools, not 400 simultaneously active compute threads.",
+    "memory_scope": "raw simultaneous Linux MPI process-tree and per-rank smaps_rollup samples",
+    "resource_authority_status": "preserved_raw_telemetry_only"
+  },
+  "cache_evidence": {
+    "directory": "benchmarks/artifacts/task035b/direct_setup_profile/condensed_setup_cache/c9162246_mpi8",
+    "raw_tensor_hit_count": 0,
+    "raw_tensor_miss_count": 6,
+    "raw_tensor_write_count": 6,
+    "condensed_class_hit_count_sum": 0,
+    "condensed_class_miss_count_sum": 110,
+    "condensed_class_write_count_sum": 110,
+    "cache_source_sha_bound": true,
+    "reuse_for_later_formal_sha": false
+  },
+  "raw_evidence": {
+    "run_directory": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020142Z",
+    "worker_result": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020142Z/worker_result.json",
+      "sha256": "7a6e431be5cba92634c4920ee71618660d485f0eb919c340d0078e7cedda1d92"
+    },
+    "memory_timeline": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020142Z/memory_timeline.csv",
+      "sha256": "3702433188171ad61833fdfe2ca379dd23d6c5a426df8757b1041ebe770ebcb2"
+    },
+    "solve_summary": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020142Z/solve/run_summary.json",
+      "sha256": "6000df0dd77d3c1e8886a2aeb6d869311f5de0cf25a9c8c25cc46f98c8fd0b16"
+    },
+    "progress": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020142Z/solve/progress_3d.jsonl",
+      "sha256": "bfb434a07a7b89f1ddcc52a307df2bec08ef52f113a41365de49f3c6bcf4639f"
+    },
+    "stdout": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020142Z/worker_stdout.txt",
+      "sha256": "e717747983617cbe59cacc6afb826af6bc899706acff949a98dfaa8afcb30a19"
+    }
+  },
+  "preservation_and_recovery": {
+    "historical_artifacts_deleted": false,
+    "failed_cache_deleted": false,
+    "runner_fix": "Inventory raw_tensor and condensed_class cache pairs independently and cover both namespaces with a regression test.",
+    "formal_rerun_policy": "Use a new clean source SHA and a new nonexistent SHA-bound cache directory for the replacement cold run, then use only that directory for its warm pair."
+  }
+}

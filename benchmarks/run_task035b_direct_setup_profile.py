@@ -1438,7 +1438,16 @@ def _run_parent(args: argparse.Namespace) -> int:
             "memory_timeline_sha256": _sha256(timeline_path),
             "stdout": _path_from_root(stdout_path),
             "stdout_sha256": _sha256(stdout_path),
-            "cache_pairs_after": _cache_pairs(cache_directory),
+            "cache_pairs_after": {
+                "raw_tensor": _cache_pairs(
+                    cache_directory,
+                    prefix="raw_tensor",
+                ),
+                "condensed_class": _cache_pairs(
+                    cache_directory,
+                    prefix="condensed_class",
+                ),
+            },
         },
     }
     record_path.parent.mkdir(parents=True, exist_ok=True)
