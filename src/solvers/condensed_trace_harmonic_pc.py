@@ -8,8 +8,10 @@ replicated dense interface-Schur LU are retained and fully inventoried.
 
 The PETSc implementation is an analytic/MPI qualification prototype.  Setup
 gathers only the declared block and interface submatrices to block owners.
-Apply currently replicates full work vectors; that limitation is reported
-explicitly and must be removed before a large production PDE run.
+Apply exchanges block entries only with their declared owners, replicates only
+the small interface vector, and scatters block solutions back to the PETSc
+row owners.  A production trace-harmonic partition builder is still required
+before a large PDE run.
 """
 
 from __future__ import annotations
@@ -381,6 +383,35 @@ def _assemble_ordered_rows(
     return result
 
 
+def _assemble_ordered_vector(
+    row_order: np.ndarray,
+    packets: Sequence[tuple[np.ndarray, np.ndarray]],
+    *,
+    name: str,
+) -> np.ndarray:
+    result = np.empty(row_order.size, dtype=np.complex128)
+    covered = np.zeros(row_order.size, dtype=bool)
+    for rows, values in packets:
+        rows = np.asarray(rows, dtype=PETSc.IntType)
+        values = np.asarray(values, dtype=np.complex128)
+        if values.shape != (rows.size,):
+            raise RuntimeError(f"{name} packet has an inconsistent shape")
+        if rows.size == 0:
+            continue
+        positions = np.searchsorted(row_order, rows)
+        if np.any(positions >= row_order.size) or not np.array_equal(
+            row_order[positions], rows
+        ):
+            raise RuntimeError(f"{name} packet contains undeclared rows")
+        if np.any(covered[positions]):
+            raise RuntimeError(f"{name} packet contains multiply owned rows")
+        result[positions] = values
+        covered[positions] = True
+    if not np.all(covered):
+        raise RuntimeError(f"{name} did not receive every declared row")
+    return result
+
+
 def _owned_submatrix_rows(
     operator: PETSc.Mat,
     requested_rows: np.ndarray,
@@ -425,6 +456,27 @@ class PetscTraceHarmonicBlockSchurPc:
         self.comm_size = int(self.comm.size)
         self.matrix_rows = int(rows)
         self.ownership_start, self.ownership_end = operator.getOwnershipRange()
+        self.ownership_start = int(self.ownership_start)
+        self.ownership_end = int(self.ownership_end)
+        self.ownership_ranges = tuple(
+            (int(start), int(end))
+            for start, end in self.comm.allgather(
+                (self.ownership_start, self.ownership_end)
+            )
+        )
+        if self.ownership_ranges[0][0] != 0:
+            raise RuntimeError("PETSc row ownership does not start at zero")
+        for previous, current in zip(
+            self.ownership_ranges[:-1],
+            self.ownership_ranges[1:],
+            strict=True,
+        ):
+            if previous[1] != current[0]:
+                raise RuntimeError(
+                    "PETSc row ownership ranges are not contiguous"
+                )
+        if self.ownership_ranges[-1][1] != self.matrix_rows:
+            raise RuntimeError("PETSc row ownership does not cover the matrix")
         self.block_owners = partition.owners_for_size(self.comm_size)
         self._destroyed = False
         self._owned_factors: dict[int, _OwnedBlockFactor] = {}
@@ -432,6 +484,9 @@ class PetscTraceHarmonicBlockSchurPc:
         self.apply_count = 0
         self.apply_seconds = 0.0
         self.vector_collective_seconds = 0.0
+        self.interface_collective_seconds = 0.0
+        self.block_rhs_exchange_seconds = 0.0
+        self.block_solution_exchange_seconds = 0.0
         self.block_solve_seconds = 0.0
         self.coarse_solve_seconds = 0.0
 
@@ -588,21 +643,169 @@ class PetscTraceHarmonicBlockSchurPc:
             "absolute_tolerance": float(absolute_tolerance),
         }
 
-    def _gather_vector(self, vector: PETSc.Vec) -> np.ndarray:
-        start, end = vector.getOwnershipRange()
+    def _local_vector_state(
+        self,
+        vector: PETSc.Vec,
+    ) -> tuple[int, int, np.ndarray]:
+        start, end = map(int, vector.getOwnershipRange())
         if vector.getSize() != self.matrix_rows:
             raise ValueError("trace-harmonic vector has the wrong global size")
-        packet = (
-            int(start),
-            int(end),
-            np.asarray(
-                vector.getArray(readonly=True), dtype=np.complex128
-            ).copy(),
+        if (start, end) != (self.ownership_start, self.ownership_end):
+            raise RuntimeError(
+                "trace-harmonic vector ownership differs from the operator"
+            )
+        values = np.asarray(
+            vector.getArray(readonly=True), dtype=np.complex128
         )
-        full = np.empty(self.matrix_rows, dtype=np.complex128)
-        for packet_start, packet_end, values in self.comm.allgather(packet):
-            full[packet_start:packet_end] = values
-        return full
+        if values.shape != (end - start,):
+            raise RuntimeError(
+                "trace-harmonic local vector shape is inconsistent"
+            )
+        if not np.all(np.isfinite(values)):
+            raise FloatingPointError(
+                "trace-harmonic vector contains NaN or Inf"
+            )
+        return start, end, values
+
+    def _gather_interface_values(
+        self,
+        *,
+        start: int,
+        end: int,
+        local_values: np.ndarray,
+    ) -> np.ndarray:
+        gamma = self.partition.interface_rows
+        owned = gamma[(gamma >= start) & (gamma < end)]
+        packet = (
+            owned.copy(),
+            local_values[owned - start].copy(),
+        )
+        return _assemble_ordered_vector(
+            gamma,
+            self.comm.allgather(packet),
+            name="trace-harmonic interface source",
+        )
+
+    def _exchange_block_rhs(
+        self,
+        *,
+        start: int,
+        end: int,
+        local_values: np.ndarray,
+    ) -> dict[int, np.ndarray]:
+        send: list[list[tuple[int, np.ndarray, np.ndarray]]] = [
+            [] for _ in range(self.comm_size)
+        ]
+        for number, (block, owner) in enumerate(
+            zip(
+                self.partition.local_blocks,
+                self.block_owners,
+                strict=True,
+            )
+        ):
+            rows = block[(block >= start) & (block < end)]
+            if rows.size:
+                send[owner].append(
+                    (
+                        number,
+                        rows.copy(),
+                        local_values[rows - start].copy(),
+                    )
+                )
+        received = self.comm.alltoall(send)
+        packets_by_block: dict[
+            int, list[tuple[np.ndarray, np.ndarray]]
+        ] = {}
+        for source_packets in received:
+            for number, rows, values in source_packets:
+                packets_by_block.setdefault(int(number), []).append(
+                    (
+                        np.asarray(rows, dtype=PETSc.IntType),
+                        np.asarray(values, dtype=np.complex128),
+                    )
+                )
+        expected = set(self._owned_factors)
+        if set(packets_by_block) != expected:
+            raise RuntimeError(
+                "trace-harmonic block RHS exchange differs from owner "
+                "inventory"
+            )
+        return {
+            number: _assemble_ordered_vector(
+                factor.rows,
+                packets_by_block[number],
+                name=f"trace-harmonic block {number} source",
+            )
+            for number, factor in self._owned_factors.items()
+        }
+
+    def _scatter_block_solutions(
+        self,
+        block_solutions: dict[int, np.ndarray],
+        interface_solution: np.ndarray,
+        target: PETSc.Vec,
+    ) -> None:
+        send: list[list[tuple[np.ndarray, np.ndarray]]] = [
+            [] for _ in range(self.comm_size)
+        ]
+        for number, values in block_solutions.items():
+            rows = self._owned_factors[number].rows
+            if values.shape != (rows.size,) or not np.all(
+                np.isfinite(values)
+            ):
+                raise RuntimeError(
+                    f"trace-harmonic block {number} solution is invalid"
+                )
+            for destination, (start, end) in enumerate(
+                self.ownership_ranges
+            ):
+                mask = (rows >= start) & (rows < end)
+                if np.any(mask):
+                    send[destination].append(
+                        (rows[mask].copy(), values[mask].copy())
+                    )
+        received = self.comm.alltoall(send)
+        start, end = map(int, target.getOwnershipRange())
+        if (start, end) != (self.ownership_start, self.ownership_end):
+            raise RuntimeError(
+                "trace-harmonic target ownership differs from the operator"
+            )
+        local = target.getArray()
+        local[:] = PETSc.ScalarType(0.0)
+        covered = np.zeros(end - start, dtype=bool)
+        for source_packets in received:
+            for rows, values in source_packets:
+                rows = np.asarray(rows, dtype=PETSc.IntType)
+                values = np.asarray(values, dtype=np.complex128)
+                if values.shape != (rows.size,):
+                    raise RuntimeError(
+                        "trace-harmonic solution packet shape is inconsistent"
+                    )
+                if np.any(rows < start) or np.any(rows >= end):
+                    raise RuntimeError(
+                        "trace-harmonic solution packet reached the wrong owner"
+                    )
+                positions = rows - start
+                if np.any(covered[positions]):
+                    raise RuntimeError(
+                        "trace-harmonic solution row was multiply supplied"
+                    )
+                local[positions] = values
+                covered[positions] = True
+        gamma = self.partition.interface_rows
+        local_gamma = gamma[(gamma >= start) & (gamma < end)]
+        gamma_positions = np.searchsorted(gamma, local_gamma)
+        local_positions = local_gamma - start
+        if np.any(covered[local_positions]):
+            raise RuntimeError(
+                "trace-harmonic interface and block solution rows overlap"
+            )
+        local[local_positions] = interface_solution[gamma_positions]
+        covered[local_positions] = True
+        if not np.all(covered):
+            raise RuntimeError(
+                "trace-harmonic solution exchange did not cover local rows"
+            )
 
     def apply(
         self,
@@ -613,11 +816,27 @@ class PetscTraceHarmonicBlockSchurPc:
         if self._destroyed:
             raise RuntimeError("trace-harmonic preconditioner has been destroyed")
         started = time.perf_counter()
+        start, end, local_values = self._local_vector_state(source)
+
         collective_started = time.perf_counter()
-        source_values = self._gather_vector(source)
-        self.vector_collective_seconds += float(
-            time.perf_counter() - collective_started
+        interface_source = self._gather_interface_values(
+            start=start,
+            end=end,
+            local_values=local_values,
         )
+        interface_elapsed = float(time.perf_counter() - collective_started)
+        self.interface_collective_seconds += interface_elapsed
+        self.vector_collective_seconds += interface_elapsed
+
+        exchange_started = time.perf_counter()
+        owned_rhs = self._exchange_block_rhs(
+            start=start,
+            end=end,
+            local_values=local_values,
+        )
+        rhs_exchange_elapsed = float(time.perf_counter() - exchange_started)
+        self.block_rhs_exchange_seconds += rhs_exchange_elapsed
+        self.vector_collective_seconds += rhs_exchange_elapsed
 
         gamma = self.partition.interface_rows
         coarse_rhs_contribution = np.zeros(gamma.size, dtype=np.complex128)
@@ -626,7 +845,7 @@ class PetscTraceHarmonicBlockSchurPc:
         for number, factor in self._owned_factors.items():
             initial = sla.lu_solve(
                 factor.factor,
-                source_values[factor.rows],
+                owned_rhs[number],
                 check_finite=True,
             )
             local_initial[number] = initial
@@ -639,23 +858,31 @@ class PetscTraceHarmonicBlockSchurPc:
         coarse_started = time.perf_counter()
         interface_solution = sla.lu_solve(
             self._coarse_lu,
-            source_values[gamma] - coarse_rhs_contribution,
+            interface_source - coarse_rhs_contribution,
             check_finite=True,
         )
         self.coarse_solve_seconds += float(time.perf_counter() - coarse_started)
 
         block_started = time.perf_counter()
-        block_result = np.zeros(self.matrix_rows, dtype=np.complex128)
+        block_solutions: dict[int, np.ndarray] = {}
         for number, factor in self._owned_factors.items():
-            block_result[factor.rows] = (
+            block_solutions[number] = (
                 local_initial[number]
                 + factor.harmonic @ interface_solution
             )
-        self.comm.Allreduce(MPI.IN_PLACE, block_result, op=MPI.SUM)
-        block_result[gamma] = interface_solution
         self.block_solve_seconds += float(time.perf_counter() - block_started)
-        local_start, local_end = target.getOwnershipRange()
-        target.getArray()[:] = block_result[local_start:local_end]
+
+        exchange_started = time.perf_counter()
+        self._scatter_block_solutions(
+            block_solutions,
+            interface_solution,
+            target,
+        )
+        solution_exchange_elapsed = float(
+            time.perf_counter() - exchange_started
+        )
+        self.block_solution_exchange_seconds += solution_exchange_elapsed
+        self.vector_collective_seconds += solution_exchange_elapsed
         self.apply_count += 1
         self.apply_seconds += float(time.perf_counter() - started)
 
@@ -729,7 +956,7 @@ class PetscTraceHarmonicBlockSchurPc:
         coarse_lu_bytes = int(
             self._coarse_lu[0].nbytes + self._coarse_lu[1].nbytes
         )
-        full_vector_bytes = self.matrix_rows * np.dtype(np.complex128).itemsize
+        scalar_bytes = np.dtype(np.complex128).itemsize
         return {
             "schema_version": "task035b.petsc-trace-harmonic-block-schur-pc.v1",
             "strategy": (
@@ -742,6 +969,11 @@ class PetscTraceHarmonicBlockSchurPc:
             "apply_count": self.apply_count,
             "apply_seconds": self.apply_seconds,
             "vector_collective_seconds": self.vector_collective_seconds,
+            "interface_collective_seconds": self.interface_collective_seconds,
+            "block_rhs_exchange_seconds": self.block_rhs_exchange_seconds,
+            "block_solution_exchange_seconds": (
+                self.block_solution_exchange_seconds
+            ),
             "block_solve_seconds": self.block_solve_seconds,
             "coarse_solve_seconds": self.coarse_solve_seconds,
             "local_dense_factor_count": len(self.partition.local_blocks),
@@ -762,17 +994,25 @@ class PetscTraceHarmonicBlockSchurPc:
             ),
             "coarse_dense_lu_bytes_per_replica": coarse_lu_bytes,
             "coarse_dense_lu_replica_count": self.comm_size,
-            "replicated_full_vector_workspace": True,
-            "replicated_full_vector_bytes_per_vector_per_rank": (
-                full_vector_bytes
+            "replicated_full_vector_workspace": False,
+            "replicated_full_vector_bytes_per_vector_per_rank": 0,
+            "replicated_interface_vector_workspace": True,
+            "replicated_interface_vector_bytes_per_rank": int(
+                self.partition.interface_rows.size * scalar_bytes
             ),
-            "prototype_apply_replicated_full_vectors": 2,
+            "prototype_apply_replicated_full_vectors": 0,
             "prototype_rank_workspace_upper_bound_bytes": (
-                2 * full_vector_bytes
+                self.partition.interface_rows.size * scalar_bytes
+            ),
+            "block_rhs_exchange": (
+                "sparse_alltoall_to_declared_block_owner"
+            ),
+            "block_solution_exchange": (
+                "sparse_alltoall_to_petsc_row_owner"
             ),
             "production_scalability_gate": (
-                "not_passed_full_vector_replication_must_be_replaced_by_"
-                "interface_and_owner_neighborhood_exchange"
+                "distributed_apply_passed_"
+                "production_partition_builder_missing"
             ),
             "explicit_residual_reports": [
                 dict(report) for report in self._explicit_residual_reports
@@ -879,9 +1119,13 @@ def trace_harmonic_block_schur_contract() -> dict[str, Any]:
             "small_replicated_dense_interface_schur_lu",
         ],
         "inactive_modes_enter_matrix": False,
+        "distributed_apply": (
+            "block_rhs_to_declared_owner_and_solution_to_petsc_row_owner"
+        ),
+        "replicated_full_vector_workspace": False,
+        "replicated_interface_vector_workspace": True,
         "prototype_limitation": (
-            "apply_replicates_full_vectors; production neighborhood exchange "
-            "not yet implemented"
+            "production trace-harmonic partition builder not yet implemented"
         ),
         "candidate_promotion": False,
         "heavy_pde_rerun": False,

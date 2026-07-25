@@ -37,7 +37,7 @@ def test_typed_profile_preserves_prototype_and_factor_blockers() -> None:
     assert profile.ksp_type == "fgmres"
     assert profile.requires_trace_harmonic_partition is True
     assert profile.production_execution_enabled is False
-    assert profile.prototype_replicates_full_vectors is True
+    assert profile.prototype_replicates_full_vectors is False
     assert contract["configured_programmatically"] is True
     assert contract["raw_petsc_options_accepted"] is False
     assert contract["ordinary_default_changed"] is False
@@ -49,7 +49,7 @@ def test_typed_profile_preserves_prototype_and_factor_blockers() -> None:
         == "task035b.trace-harmonic-partition.v1"
     )
     assert gate["production_partition_builder_available"] is False
-    assert gate["prototype_replicates_full_vectors"] is True
+    assert gate["prototype_replicates_full_vectors"] is False
     assert gate["full_vector_replication_allowed_for_formal_pde"] is False
     assert gate["production_execution_enabled"] is False
     assert gate["fail_closed_before_profile_configuration"] is True
@@ -59,8 +59,9 @@ def test_typed_profile_preserves_prototype_and_factor_blockers() -> None:
     assert factors["small_replicated_interface_schur_lu_disclosed"] is True
     assert factors["strictly_factorless"] is False
     assert factors["complete_factor_inventory_required"] is True
+    assert prototype["replicated_full_vector_workspace"] is False
     assert prototype["prototype_limitation"].startswith(
-        "apply_replicates_full_vectors"
+        "production trace-harmonic partition builder"
     )
     assert prototype["formal_pde_status"] == "not_run"
     assert prototype["candidate_promotion"] is False
@@ -91,7 +92,7 @@ def test_dry_plan_exposes_opt_in_but_execute_pde_is_rejected(
     assert plan["raw_petsc_options_accepted"] is False
     gate = plan["trace_harmonic_capability_gate"]
     assert gate["production_partition_builder_available"] is False
-    assert gate["prototype_apply_replicates_full_vectors"] is True
+    assert gate["prototype_apply_replicates_full_vectors"] is False
     assert gate["execute_pde_enabled"] is False
     assert gate["formal_pde_status"] == "not_run"
     assert gate["candidate_promotion"] is False

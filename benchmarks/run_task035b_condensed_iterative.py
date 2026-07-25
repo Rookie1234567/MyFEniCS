@@ -275,11 +275,11 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
                 "task035b.trace-harmonic-partition.v1"
             ),
             "production_partition_builder_available": False,
-            "prototype_apply_replicates_full_vectors": True,
+            "prototype_apply_replicates_full_vectors": False,
             "full_vector_replication_allowed_for_formal_pde": False,
             "production_scalability_gate": (
-                "not_passed_full_vector_replication_must_be_replaced_by_"
-                "interface_and_owner_neighborhood_exchange"
+                "distributed_apply_passed_"
+                "production_partition_builder_missing"
             ),
             "execute_pde_enabled": False,
             "formal_pde_status": "not_run",

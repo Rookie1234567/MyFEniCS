@@ -214,7 +214,14 @@ def test_petsc_action_is_exact_and_factor_inventory_is_complete() -> None:
         assert diagnostics["global_fine_factor_free"] is True
         assert diagnostics["strictly_factorless"] is False
         assert diagnostics["all_factor_storage_disclosed"] is True
-        assert diagnostics["replicated_full_vector_workspace"] is True
+        assert diagnostics["replicated_full_vector_workspace"] is False
+        assert diagnostics["prototype_apply_replicated_full_vectors"] == 0
+        assert diagnostics["replicated_interface_vector_workspace"] is True
+        assert (
+            diagnostics["production_scalability_gate"]
+            == "distributed_apply_passed_"
+            "production_partition_builder_missing"
+        )
         assert diagnostics["formal_pde_status"] == "not_run"
         assert diagnostics["explicit_residual_reports"][-1]["pass"] is True
     finally:
@@ -268,6 +275,8 @@ def test_typed_contract_is_opt_in_and_does_not_promote_a_pde_result() -> None:
     assert contract["heavy_pde_rerun"] is False
     assert contract["global_sparse_direct_factor_nnz"] == 0
     assert contract["strictly_factorless"] is False
+    assert contract["replicated_full_vector_workspace"] is False
+    assert contract["replicated_interface_vector_workspace"] is True
     assert "physical_z_slab_ilu" in contract[
         "fundamentally_distinct_from_closed_lanes"
     ]

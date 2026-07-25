@@ -113,13 +113,10 @@ _PROFILES = {
         ),
         restart=40,
         relative_tolerance=1.0e-10,
-        evidence_status=(
-            "capability_only_requires_production_partition_and_"
-            "distributed_apply"
-        ),
+        evidence_status="capability_only_requires_production_partition",
         requires_trace_harmonic_partition=True,
         production_execution_enabled=False,
-        prototype_replicates_full_vectors=True,
+        prototype_replicates_full_vectors=False,
     ),
 }
 
