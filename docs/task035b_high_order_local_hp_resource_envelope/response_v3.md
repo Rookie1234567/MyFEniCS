@@ -7,7 +7,8 @@ response_status = PARTIAL_WITH_CONTROLLED_NEGATIVES
 execution_branch = codex/20260723-task35b-high-order-local-hp-resource-envelope
 review_v2_commit = d547e9d7e903e9e8639346715770e56f9c17e86d
 evidence_source_through = cf14e84f4a0f9216b6139a146eba78cdcfd45bb9
-final_tested_delivery_head = to_be_reported_after_final_validation
+final_tested_source_head = 56ed6cdb44e90a820274092ac6661c1e6a95f934
+metadata_delivery_head = documentation-only successor reported in Git handoff
 geometry_scope = Task034 fixed rectangular block grating only
 best_in_budget_candidate = fixed_p5trace_p6interior_h13_directional_z
 best_candidate_full3d_equivalent_dofs = 89740
@@ -452,21 +453,34 @@ controlled-negative、formal-not-pass 和 stopped/not-run lanes；没有删除
 
 ## 12. Final validation
 
-`FINAL_VALIDATION_TO_BE_FILLED_BY_ROOT`
-
-下表必须由最终整合者在所有并行改动完成后填写；本 response 不虚构最终测试
-计数、最终 HEAD 或工作树状态。
-
 | final Gate | result |
 |---|---|
-| final tested/delivery HEAD | `to_be_reported_after_final_validation` |
+| final tested source/evidence HEAD | `56ed6cdb44e90a820274092ac6661c1e6a95f934` |
+| metadata delivery HEAD | documentation-only successor；精确 SHA 由最终 Git handoff 报告，避免文档自引用 |
 | evidence source included through | `cf14e84f4a0f9216b6139a146eba78cdcfd45bb9` |
-| targeted Task035b tests | `to_be_reported_after_final_validation` |
-| MPI-focused regression | `to_be_reported_after_final_validation` |
-| full repository pytest | `to_be_reported_after_final_validation` |
-| Ruff | `to_be_reported_after_final_validation` |
-| compileall | `to_be_reported_after_final_validation` |
-| JSON/schema/hash checks | `to_be_reported_after_final_validation` |
-| Markdown links/evidence paths | `to_be_reported_after_final_validation` |
-| diff-check | `to_be_reported_after_final_validation` |
-| final worktree status | `to_be_reported_after_final_validation` |
+| targeted Task035b serial | `491 passed, 28 skipped in 507.27 s` at `b2545bac516afcf41f3a3fd12303cfb8aa50a511`；全部再次包含于 final full-repository pass |
+| MPI2 final-source regression | each rank `95 passed, 24 skipped in 151.72/151.64 s` |
+| MPI8 final-source smoke | eight ranks each `1 passed in 1.94–2.01 s` |
+| Task034/035 targeted regression | `245 passed, 3 skipped in 67.82 s` at `1d8b190b119677413d70f46d54d9e6bc45b23855`；全部再次包含于 final full-repository pass |
+| full repository pytest | **`1130 passed, 49 skipped in 884.08 s`** at final tested source HEAD |
+| Ruff | Review V2 以来 95 个 changed-Python files pass；full-repository 仍有 5 个未改文件中的 15 个 inherited findings |
+| compileall | `src`、`benchmarks`、root `conftest.py` pass |
+| JSON/schema/hash checks | 992 tracked JSON parse；68/68 unique JSON/CSV rows；63 hash-bound records recompute |
+| documentation/evidence | 48 documentation/record tests pass；response 60 个 evidence paths resolve；无 capability-v4 |
+| diff-check | pass |
+| tested-HEAD worktree | clean before this metadata-only writeback |
+
+验证过程保留了真实失败与修复链：
+
+1. 首次 focused combined run 为 `489 passed, 28 skipped, 2 errors`，暴露
+   cross-module fixture 在组合收集时未注册；
+2. 直接修改 `test_171` 后为 `490 passed, 28 skipped, 1 failed`，暴露历史
+   capability-v2 测试哈希漂移；最终改为 root `conftest.py` 注册并恢复原哈希；
+3. 首次 Task034/035 regression 为 `243 passed, 3 skipped, 2 failed`，暴露
+   Task035b geometry successor binding 落后于当前 mesh source；冻结 Task035
+   manifest 未改写，只追加 current Review V2 successor；
+4. 首次 full-repository collection 因 `src/test/` 下的 non-top-level
+   conftest fail-fast；移动到 repository-root 后 1179 项完整收集并通过
+   上述全仓 Gate。
+
+这些都是测试/治理负证据，不是 PDE accuracy failure；均未删除或重分类。

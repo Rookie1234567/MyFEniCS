@@ -19,6 +19,52 @@ cd /home/Projects/MyFEniCS
 source scripts/activate_myfenics_wsl.sh
 ```
 
+## Review V2 最终验证
+
+```text
+final tested source/evidence head =
+56ed6cdb44e90a820274092ac6661c1e6a95f934
+metadata delivery head =
+documentation-only successor reported in final Git handoff
+```
+
+| layer | command scope | result |
+|---|---|---|
+| ABI preflight | qualified activation、Python、PETSc identity | pass；Python `3.12.3`、PETSc `complex128/int32` |
+| Task035b focused serial | DtN modes、structured axis、全部 `test_*task035b*.py` | **`491 passed, 28 skipped in 507.27 s`** at `b2545ba`；final full pytest 再覆盖 |
+| Task035b MPI2，final source | selective trace、DtN、Schur、recovery、partition、matrix-free | each rank **`95 passed, 24 skipped in 151.72/151.64 s`** |
+| Task035b MPI8，final source | fixed rectangular DtN end-to-end smoke | each rank **`1 passed in 1.94–2.01 s`** |
+| Task034/035 regression，final | Case093、Phase A–D、tetra、DWR/R5、Review V5/V6 | **`245 passed, 3 skipped in 67.82 s`** at `1d8b190`；final full pytest 再覆盖 |
+| full repository，final tested HEAD | qualified complex ABI、1179 collected | **`1130 passed, 49 skipped in 884.08 s`** |
+| changed-Python Ruff | Review V2 commit `d547e9d7` 到 final tested HEAD 的 95 个 Python files | pass |
+| compileall | `src`、`benchmarks`、root `conftest.py` | pass |
+| JSON/candidate audit | tracked JSON、candidate identity、record hashes | 992 JSON parse；68/68 unique rows；63 hash-bound records pass |
+| documentation/evidence | contracts、record tests、response links | 48 tests pass；60 evidence paths pass；capability-v4 absent |
+| `git diff --check` | final tested HEAD | pass |
+| worktree | before metadata-only writeback | clean |
+
+全仓 Ruff 仍报告 15 个 inherited findings，位于本轮未修改的
+`src/postprocessing/diffraction_3d.py`、`full3d_reference.py`、
+`hybrid_field_reconstruction.py`、`solve_maxwell_3d_common_old.py` 和
+`run_3d_memory_profile.py`。changed-Python scoped Ruff 全部通过；本轮不把
+无关数值重构混入 Task035b。
+
+### Review V2 验证失败与修复链
+
+| attempt | observed result | preserved root cause / action |
+|---|---|---|
+| focused combined，first | `489 passed, 28 skipped, 2 errors in 498.46 s` | `test_171` cross-module fixture 在组合收集时未注册 |
+| focused combined，second | `490 passed, 28 skipped, 1 failed in 509.86 s` | 直接导入 fixture 改变历史 capability-v2 绑定的 test hash；撤回该做法 |
+| focused combined，final | `491 passed, 28 skipped in 507.27 s` | root-level shared plugin registration；历史 `test_171` hash 恢复 |
+| Task034/035，first | `243 passed, 3 skipped, 2 failed in 68.61 s` | current `mesh_builder_3d.py` successor 未绑定；不改冻结 manifest，只追加 Review V2 successor |
+| Task034/035，final | `245 passed, 3 skipped in 67.82 s` | governance binding pass |
+| full repository，first | collection error；0 tests executed | `pytest_plugins` 位于 `src/test/` 下的 non-top-level conftest |
+| full repository，final | `1130 passed, 49 skipped in 884.08 s` | plugin registration moved to repository-root `conftest.py` |
+
+上述失败属于测试收集、历史哈希和 governance 证据，不是 PDE accuracy
+failure；原始输出和修复语义均保留。最终收口没有重跑 heavy PDE，没有修改
+ordinary default，也没有 merge `master`。
+
 ## Review V1 最终验证
 
 ```text
