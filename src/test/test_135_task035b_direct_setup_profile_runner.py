@@ -12,6 +12,7 @@ from benchmarks.run_task035b_direct_setup_profile import (
     _cache_pairs,
     _classify_profile,
     _direct_config,
+    _dtn_nonoverlapping_timing_ledger_checks,
     _dry_run_plan,
     _extract_setup_evidence,
     _parse_args,
@@ -184,6 +185,9 @@ def _worker_result() -> dict:
                 factor_event_audit
             ),
             "stage4_dtn_ksp_solve_seconds": 0.5,
+            "stage4_dtn_base_matrix_assembly_seconds": 7.0,
+            "stage4_dtn_base_rhs_assembly_seconds": 0.1,
+            "stage4_dtn_augmented_block_copy_seconds": 0.0,
             "stage4_dtn_bilinear_form_compile_seconds": 0.0,
             "stage4_dtn_bilinear_form_compile_"
             "skipped_by_affine_backend": True,
@@ -199,8 +203,12 @@ def _worker_result() -> dict:
             "stage4_dtn_persistent_reduced_modal_bundle_restores": 80,
             "stage4_dtn_modal_block_insert_seconds": 0.1,
             "stage4_dtn_augmented_matrix_finalize_seconds": 0.3,
+            "stage4_dtn_cell_interior_rhs_prepare_and_"
+            "cache_release_seconds": 0.1,
             "stage4_dtn_warm_persistent_cache_heap_trim_seconds": 0.07,
+            "stage4_dtn_linear_solve_seconds": 6.55,
             "stage4_dtn_cell_static_condensation_recovery_seconds": 0.4,
+            "stage4_dtn_matrix_free_full_residual_seconds": 2.88,
             "stage4_dtn_solution_backsubstitution_seconds": 0.05,
             "R00_total": 0.72,
             "R_total": 0.8,
@@ -516,6 +524,43 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             0.06,
         )
         self.assertEqual(timings["dtn"]["non_ksp_derived"], 13.5)
+        ledger = timings["dtn"]["nonoverlapping_ledger"]
+        self.assertEqual(
+            ledger["schema_version"],
+            "task035b.dtn-nonoverlapping-timing-ledger.v1",
+        )
+        self.assertEqual(
+            ledger["attributed_component_sum_seconds"],
+            19.95,
+        )
+        self.assertAlmostEqual(
+            ledger["unattributed_remainder_seconds"],
+            0.05,
+        )
+        self.assertAlmostEqual(
+            ledger["non_ksp_seconds"][
+                "outer_minus_ksp_setup_and_backsolve"
+            ],
+            13.5,
+        )
+        self.assertAlmostEqual(
+            ledger["non_ksp_seconds"][
+                "attributed_components_including_linear_wrapper_overhead"
+            ],
+            13.45,
+        )
+        self.assertTrue(
+            ledger[
+                "nested_values_must_not_be_added_to_top_level_components"
+            ]
+        )
+        self.assertTrue(
+            all(
+                evidence[
+                    "dtn_nonoverlapping_timing_ledger_checks"
+                ].values()
+            )
+        )
         self.assertEqual(
             timings["dtn"]["persistent_surface_cache_read"],
             0.15,
@@ -542,6 +587,52 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
                 "construction_count_sum"
             ],
             0,
+        )
+
+    def test_dtn_timing_ledger_fails_closed_on_missing_component(self) -> None:
+        worker = _worker_result()
+        del worker["summary"][
+            "stage4_dtn_matrix_free_full_residual_seconds"
+        ]
+        evidence = _extract_setup_evidence(worker)
+        ledger = evidence["dtn_nonoverlapping_timing_ledger"]
+        checks = evidence["dtn_nonoverlapping_timing_ledger_checks"]
+        self.assertEqual(
+            ledger["missing_components"],
+            ["matrix_free_full_explicit_residual"],
+        )
+        self.assertIsNone(
+            ledger["attributed_component_sum_seconds"]
+        )
+        self.assertFalse(
+            checks["dtn_timing_all_required_components_present"]
+        )
+        self.assertFalse(
+            checks["dtn_timing_component_sum_independently_verified"]
+        )
+        self.assertFalse(
+            checks[
+                "dtn_timing_unattributed_remainder_"
+                "independently_verified"
+            ]
+        )
+
+    def test_dtn_timing_ledger_independent_checks_reject_mutation(self) -> None:
+        evidence = _extract_setup_evidence(_worker_result())
+        ledger = copy.deepcopy(
+            evidence["dtn_nonoverlapping_timing_ledger"]
+        )
+        ledger["attributed_component_sum_seconds"] += 1.0
+        ledger["unattributed_remainder_seconds"] -= 1.0
+        checks = _dtn_nonoverlapping_timing_ledger_checks(ledger)
+        self.assertFalse(
+            checks["dtn_timing_component_sum_independently_verified"]
+        )
+        self.assertFalse(
+            checks[
+                "dtn_timing_unattributed_remainder_"
+                "independently_verified"
+            ]
         )
 
     def test_warm_classification_requires_all_cache_layers(self) -> None:

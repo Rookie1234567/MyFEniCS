@@ -851,6 +851,362 @@ def _sum_available(*values: float | None) -> float | None:
     return sum(available) if available else None
 
 
+DTN_NONOVERLAPPING_TIMING_COMPONENTS = (
+    (
+        "base_condensed_matrix_assembly",
+        "stage4_dtn_base_matrix_assembly_seconds",
+    ),
+    ("base_rhs_assembly", "stage4_dtn_base_rhs_assembly_seconds"),
+    ("augmented_block_copy", "stage4_dtn_augmented_block_copy_seconds"),
+    (
+        "incident_source_vector",
+        "stage4_dtn_incident_source_vector_seconds",
+    ),
+    (
+        "surface_form_and_cache_setup",
+        "stage4_dtn_surface_form_and_cache_setup_seconds",
+    ),
+    ("modal_loop", "stage4_dtn_modal_loop_seconds"),
+    (
+        "augmented_matrix_finalize",
+        "stage4_dtn_augmented_matrix_finalize_seconds",
+    ),
+    (
+        "cell_interior_rhs_prepare_and_cache_release",
+        "stage4_dtn_cell_interior_rhs_prepare_and_cache_release_seconds",
+    ),
+    (
+        "warm_persistent_cache_heap_trim",
+        "stage4_dtn_warm_persistent_cache_heap_trim_seconds",
+    ),
+    ("linear_solve_wrapper", "stage4_dtn_linear_solve_seconds"),
+    (
+        "cell_static_condensation_recovery",
+        "stage4_dtn_cell_static_condensation_recovery_seconds",
+    ),
+    (
+        "matrix_free_full_explicit_residual",
+        "stage4_dtn_matrix_free_full_residual_seconds",
+    ),
+    (
+        "solution_backsubstitution",
+        "stage4_dtn_solution_backsubstitution_seconds",
+    ),
+)
+
+
+def _dtn_nonoverlapping_timing_ledger(
+    summary: dict[str, Any],
+    outer: dict[str, Any],
+) -> dict[str, Any]:
+    """Derive a nonoverlapping DtN wall-time ledger.
+
+    The solver exposes both sequential top-level regions and useful nested
+    details.  The latter must not be added to the former.  This profiler-owned
+    ledger names the sequential regions explicitly, retains the nested values
+    as diagnostics, and leaves the small uninstrumented tail visible instead
+    of silently assigning it to setup or MUMPS.
+    """
+
+    outer_seconds = _number(
+        outer,
+        "stage4_dtn_port_assembly_and_solve",
+    )
+    components = {
+        name: _number(summary, source_key)
+        for name, source_key in DTN_NONOVERLAPPING_TIMING_COMPONENTS
+    }
+    missing = [
+        name for name, value in components.items() if value is None
+    ]
+    component_sum = (
+        None
+        if missing
+        else float(sum(float(value) for value in components.values()))
+    )
+    unattributed = (
+        None
+        if outer_seconds is None or component_sum is None
+        else float(outer_seconds - component_sum)
+    )
+    ksp_setup = _number(summary, "stage4_dtn_ksp_setup_seconds")
+    ksp_solve = _number(summary, "stage4_dtn_ksp_solve_seconds")
+    linear_wrapper = components["linear_solve_wrapper"]
+    linear_wrapper_overhead = (
+        None
+        if (
+            linear_wrapper is None
+            or ksp_setup is None
+            or ksp_solve is None
+        )
+        else float(linear_wrapper - ksp_setup - ksp_solve)
+    )
+    non_ksp_outer = (
+        None
+        if (
+            outer_seconds is None
+            or ksp_setup is None
+            or ksp_solve is None
+        )
+        else float(outer_seconds - ksp_setup - ksp_solve)
+    )
+    non_ksp_attributed = (
+        None
+        if (
+            component_sum is None
+            or linear_wrapper is None
+            or linear_wrapper_overhead is None
+        )
+        else float(
+            component_sum
+            - linear_wrapper
+            + linear_wrapper_overhead
+        )
+    )
+    non_ksp_unattributed = (
+        None
+        if non_ksp_outer is None or non_ksp_attributed is None
+        else float(non_ksp_outer - non_ksp_attributed)
+    )
+    return {
+        "schema_version": "task035b.dtn-nonoverlapping-timing-ledger.v1",
+        "provenance": (
+            "derived only by the explicit Task035b direct setup profiler "
+            "from sequential core wall timers"
+        ),
+        "outer_seconds": outer_seconds,
+        "component_order": [
+            name for name, _ in DTN_NONOVERLAPPING_TIMING_COMPONENTS
+        ],
+        "components_seconds": components,
+        "missing_components": missing,
+        "all_required_components_present": not missing,
+        "attributed_component_sum_seconds": component_sum,
+        "unattributed_remainder_seconds": unattributed,
+        "unattributed_fraction_of_outer": (
+            None
+            if (
+                unattributed is None
+                or outer_seconds is None
+                or outer_seconds <= 0.0
+            )
+            else float(unattributed / outer_seconds)
+        ),
+        "non_ksp_seconds": {
+            "outer_minus_ksp_setup_and_backsolve": non_ksp_outer,
+            "attributed_components_including_linear_wrapper_overhead": (
+                non_ksp_attributed
+            ),
+            "unattributed_remainder": non_ksp_unattributed,
+        },
+        "linear_solve_nested_seconds": {
+            "ksp_setup": ksp_setup,
+            "ksp_backsolve": ksp_solve,
+            "wrapper_overhead": linear_wrapper_overhead,
+            "parent_component": "linear_solve_wrapper",
+        },
+        "surface_setup_nested_seconds": {
+            "reduced_operator_identity": _number(
+                summary,
+                "stage4_dtn_reduced_operator_identity_seconds",
+            ),
+            "parent_component": "surface_form_and_cache_setup",
+        },
+        "modal_loop_nested_seconds": {
+            "modal_vector_assembly": _number(
+                summary,
+                "stage4_dtn_modal_vector_assembly_seconds",
+            ),
+            "persistent_reduced_modal_bundle_restore": _number(
+                summary,
+                "stage4_dtn_persistent_reduced_modal_bundle_restore_seconds",
+            ),
+            "persistent_reduced_modal_bundle_restore_is_subset_of_"
+            "modal_vector_assembly": True,
+            "persistent_full_vector_restore": _number(
+                summary,
+                "stage4_dtn_persistent_vector_restore_seconds",
+            ),
+            "modal_block_insertion": _number(
+                summary,
+                "stage4_dtn_modal_block_insert_seconds",
+            ),
+            "parent_component": "modal_loop",
+        },
+        "nested_values_must_not_be_added_to_top_level_components": True,
+        "ordinary_default_changed": False,
+    }
+
+
+def _dtn_nonoverlapping_timing_ledger_checks(
+    ledger: dict[str, Any],
+) -> dict[str, bool]:
+    """Independently recompute the profiler-owned ledger closure."""
+
+    expected_order = [
+        name for name, _ in DTN_NONOVERLAPPING_TIMING_COMPONENTS
+    ]
+    components = ledger.get("components_seconds")
+    components = components if isinstance(components, dict) else {}
+
+    def _finite(value: Any) -> bool:
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+        )
+
+    component_inventory = (
+        ledger.get("component_order") == expected_order
+        and list(components) == expected_order
+    )
+    component_values = (
+        component_inventory
+        and all(
+            _finite(components.get(name))
+            and float(components[name]) >= 0.0
+            for name in expected_order
+        )
+    )
+    recomputed_sum = (
+        sum(float(components[name]) for name in expected_order)
+        if component_values
+        else None
+    )
+    declared_sum = ledger.get("attributed_component_sum_seconds")
+    outer_seconds = ledger.get("outer_seconds")
+    remainder = ledger.get("unattributed_remainder_seconds")
+    closure_tolerance = (
+        None
+        if not _finite(outer_seconds)
+        else max(0.1, 0.01 * float(outer_seconds))
+    )
+    sum_matches = bool(
+        recomputed_sum is not None
+        and _finite(declared_sum)
+        and math.isclose(
+            float(declared_sum),
+            recomputed_sum,
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        )
+    )
+    remainder_matches = bool(
+        sum_matches
+        and _finite(outer_seconds)
+        and _finite(remainder)
+        and math.isclose(
+            float(remainder),
+            float(outer_seconds) - recomputed_sum,
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        )
+    )
+    remainder_is_small = bool(
+        remainder_matches
+        and closure_tolerance is not None
+        and abs(float(remainder)) <= closure_tolerance
+    )
+
+    linear = ledger.get("linear_solve_nested_seconds")
+    linear = linear if isinstance(linear, dict) else {}
+    non_ksp = ledger.get("non_ksp_seconds")
+    non_ksp = non_ksp if isinstance(non_ksp, dict) else {}
+    linear_nested_values = [
+        linear.get("ksp_setup"),
+        linear.get("ksp_backsolve"),
+        linear.get("wrapper_overhead"),
+    ]
+    linear_nested_closes = bool(
+        all(_finite(value) for value in linear_nested_values)
+        and _finite(components.get("linear_solve_wrapper"))
+        and math.isclose(
+            sum(float(value) for value in linear_nested_values),
+            float(components["linear_solve_wrapper"]),
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        )
+    )
+    non_ksp_values = [
+        non_ksp.get("outer_minus_ksp_setup_and_backsolve"),
+        non_ksp.get(
+            "attributed_components_including_linear_wrapper_overhead"
+        ),
+        non_ksp.get("unattributed_remainder"),
+    ]
+    non_ksp_closes = bool(
+        all(_finite(value) for value in non_ksp_values)
+        and math.isclose(
+            float(non_ksp_values[0]),
+            float(non_ksp_values[1]) + float(non_ksp_values[2]),
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        )
+    )
+
+    surface = ledger.get("surface_setup_nested_seconds")
+    surface = surface if isinstance(surface, dict) else {}
+    surface_nested_within_parent = bool(
+        _finite(surface.get("reduced_operator_identity"))
+        and _finite(components.get("surface_form_and_cache_setup"))
+        and 0.0
+        <= float(surface["reduced_operator_identity"])
+        <= float(components["surface_form_and_cache_setup"]) + 1.0e-12
+    )
+    modal = ledger.get("modal_loop_nested_seconds")
+    modal = modal if isinstance(modal, dict) else {}
+    modal_nonoverlapping_children = [
+        modal.get("modal_vector_assembly"),
+        modal.get("persistent_full_vector_restore"),
+        modal.get("modal_block_insertion"),
+    ]
+    modal_nested_within_parent = bool(
+        all(_finite(value) for value in modal_nonoverlapping_children)
+        and _finite(components.get("modal_loop"))
+        and sum(float(value) for value in modal_nonoverlapping_children)
+        <= float(components["modal_loop"]) + 1.0e-12
+        and modal.get(
+            "persistent_reduced_modal_bundle_restore_is_subset_of_"
+            "modal_vector_assembly"
+        )
+        is True
+    )
+    return {
+        "dtn_timing_ledger_schema": (
+            ledger.get("schema_version")
+            == "task035b.dtn-nonoverlapping-timing-ledger.v1"
+            and ledger.get("ordinary_default_changed") is False
+        ),
+        "dtn_timing_component_inventory_exact": component_inventory,
+        "dtn_timing_all_required_components_present": (
+            ledger.get("all_required_components_present") is True
+            and ledger.get("missing_components") == []
+        ),
+        "dtn_timing_component_values_finite_nonnegative": component_values,
+        "dtn_timing_component_sum_independently_verified": sum_matches,
+        "dtn_timing_unattributed_remainder_independently_verified": (
+            remainder_matches
+        ),
+        "dtn_timing_unattributed_remainder_within_one_percent_or_0p1s": (
+            remainder_is_small
+        ),
+        "dtn_timing_linear_nested_closure": linear_nested_closes,
+        "dtn_timing_non_ksp_closure": non_ksp_closes,
+        "dtn_timing_surface_nested_within_parent": (
+            surface_nested_within_parent
+        ),
+        "dtn_timing_modal_nested_within_parent": (
+            modal_nested_within_parent
+        ),
+        "dtn_timing_nested_overlap_disclosed": (
+            ledger.get(
+                "nested_values_must_not_be_added_to_top_level_components"
+            )
+            is True
+        ),
+    }
+
+
 def _full_true_residual(summary: dict[str, Any]) -> float | None:
     cell = summary.get("cell_static_condensation") or {}
     residual = cell.get("full_explicit_true_residual")
@@ -916,6 +1272,10 @@ def _extract_setup_evidence(
     ksp_setup = _number(summary, "stage4_dtn_ksp_setup_seconds")
     ksp_solve = _number(summary, "stage4_dtn_ksp_solve_seconds")
     dtn_outer = _number(outer, "stage4_dtn_port_assembly_and_solve")
+    dtn_timing_ledger = _dtn_nonoverlapping_timing_ledger(
+        summary,
+        outer,
+    )
     dtn_non_ksp = (
         None
         if dtn_outer is None or ksp_setup is None or ksp_solve is None
@@ -1051,10 +1411,21 @@ def _extract_setup_evidence(
         "recovery_cache_lifecycle": cell.get(
             "recovery_cache_lifecycle"
         ),
+        "dtn_nonoverlapping_timing_ledger": dtn_timing_ledger,
+        "dtn_nonoverlapping_timing_ledger_checks": (
+            _dtn_nonoverlapping_timing_ledger_checks(
+                dtn_timing_ledger
+            )
+        ),
         "timing_coverage": {
             "nonoverlapping_outer_stages": (
                 "timings_seconds fields are mutually staged by the common "
                 "case flow"
+            ),
+            "nonoverlapping_dtn_ledger": (
+                "dtn_nonoverlapping_timing_ledger names every sequential "
+                "top-level region, keeps an explicit uninstrumented "
+                "remainder, and independently checks closure"
             ),
             "granular_condensation_fields": (
                 "granular fields overlap the outer DtN stage and must not be "
@@ -1205,6 +1576,7 @@ def _extract_setup_evidence(
             "dtn": {
                 "outer_assembly_solve_recovery": dtn_outer,
                 "non_ksp_derived": dtn_non_ksp,
+                "nonoverlapping_ledger": dtn_timing_ledger,
                 "surface_form_and_cache_setup": _number(
                     summary,
                     "stage4_dtn_surface_form_and_cache_setup_seconds",
@@ -1642,6 +2014,11 @@ def _classify_profile(
         evidence,
         expected_mpi_size=int(expected_mpi_size),
     )
+    dtn_timing_ledger_checks = (
+        _dtn_nonoverlapping_timing_ledger_checks(
+            evidence.get("dtn_nonoverlapping_timing_ledger") or {}
+        )
+    )
     topology = {
         "fixed_rectangular_hexa_h15": (
             evidence.get("mesh_cell_type") == "hexahedron"
@@ -2038,6 +2415,7 @@ def _classify_profile(
             isinstance(smaps_swap, (int, float))
             and float(smaps_swap) == 0.0
         ),
+        **dtn_timing_ledger_checks,
         **factor_event_checks,
         **topology,
         **cache_checks,
