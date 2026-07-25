@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
+import time
 from typing import Any
 
 import basix
@@ -182,6 +183,81 @@ def _flatten_entity_dofs(
     )
 
 
+def _selected_interpolation_operator(
+    source: basix.finite_element.FiniteElement,
+    target: basix.finite_element.FiniteElement,
+    source_dofs: np.ndarray,
+) -> np.ndarray:
+    """Form only requested columns of a same-map Basix interpolation.
+
+    ``basix.compute_interpolation_operator`` tabulates every source basis
+    function at the target interpolation points and then applies the target
+    interpolation matrix.  The fixed-trace constructor only consumes the
+    edge/face columns of the trace element and the cell-interior columns of
+    the interior element.  Forming just those columns avoids two large,
+    immediately discarded dense blocks.
+
+    This helper is deliberately limited to the derivative-free, equal-value,
+    equal-map case used by the hexahedral N1curl constructor.  The ordinary
+    qualified element path continues to call Basix's reference routine.
+    """
+
+    selected = np.asarray(source_dofs, dtype=np.int32)
+    if selected.ndim != 1:
+        raise ValueError("selected interpolation DoFs must be one-dimensional")
+    if len(np.unique(selected)) != len(selected):
+        raise ValueError("selected interpolation DoFs must be unique")
+    if len(selected) and (
+        int(np.min(selected)) < 0
+        or int(np.max(selected)) >= int(source.dim)
+    ):
+        raise ValueError("selected interpolation DoF is outside the source")
+    if int(source.interpolation_nderivs) != 0:
+        raise NotImplementedError(
+            "selected interpolation currently requires derivative-free "
+            "source moments"
+        )
+    if int(target.interpolation_nderivs) != 0:
+        raise NotImplementedError(
+            "selected interpolation currently requires derivative-free "
+            "target moments"
+        )
+    if tuple(source.value_shape) != tuple(target.value_shape):
+        raise ValueError(
+            "selected interpolation requires identical source/target "
+            "value shape"
+        )
+    if source.map_type != target.map_type:
+        raise ValueError(
+            "selected interpolation requires identical source/target maps"
+        )
+
+    points = np.asarray(target.points)
+    tabulated = np.asarray(source.tabulate(0, points)[0])
+    value_size = int(np.prod(source.value_shape, dtype=np.int64))
+    expected_shape = (len(points), int(source.dim), value_size)
+    if tuple(tabulated.shape) != expected_shape:
+        raise RuntimeError(
+            "selected interpolation tabulation shape changed: "
+            f"observed={tabulated.shape}, expected={expected_shape}"
+        )
+    interpolation_matrix = np.asarray(target.interpolation_matrix)
+    expected_columns = len(points) * value_size
+    if tuple(interpolation_matrix.shape) != (
+        int(target.dim),
+        expected_columns,
+    ):
+        raise RuntimeError(
+            "selected interpolation matrix shape changed: "
+            f"observed={interpolation_matrix.shape}, "
+            f"expected={(int(target.dim), expected_columns)}"
+        )
+    selected_values = np.ascontiguousarray(
+        tabulated[:, selected, :].transpose(2, 0, 1)
+    ).reshape(expected_columns, len(selected))
+    return np.asarray(interpolation_matrix @ selected_values)
+
+
 @lru_cache(maxsize=16)
 def _create_trace_interior_element_data(
     trace_degree: int,
@@ -194,29 +270,69 @@ def _create_trace_interior_element_data(
 ]:
     """Build one H(curl) element with independent trace/interior orders."""
 
+    total_started = time.perf_counter()
+    trace_element_started = time.perf_counter()
     trace_element = _standard_hexa_hcurl(trace_degree)
+    trace_element_seconds = time.perf_counter() - trace_element_started
+    interior_element_started = time.perf_counter()
     interior_element = _standard_hexa_hcurl(cell_interior_degree)
+    interior_element_seconds = (
+        time.perf_counter() - interior_element_started
+    )
     if trace_degree == cell_interior_degree:
+        qualification_started = time.perf_counter()
+        condition_number = (
+            float(np.linalg.cond(trace_element.coefficient_matrix))
+            if qualification_audit
+            else None
+        )
+        qualification_seconds = (
+            time.perf_counter() - qualification_started
+        )
         return (
             trace_element,
             {
                 "polynomial_subspace_rank": int(trace_element.dim),
-                "coefficient_matrix_condition_number": (
-                    float(
-                        np.linalg.cond(trace_element.coefficient_matrix)
-                    )
-                    if qualification_audit
-                    else None
-                ),
+                "coefficient_matrix_condition_number": condition_number,
                 "custom": False,
                 "qualification_audit_executed": bool(
                     qualification_audit
                 ),
+                "construction_profile": {
+                    "schema_version": (
+                        "task035b.fixed-trace-element-cold-build-profile.v1"
+                    ),
+                    "status": "standard_element_reused",
+                    "strategy": "standard_equal_degree",
+                    "polynomial_element_reused": True,
+                    "selected_interpolation_enabled": False,
+                    "numerical_identity_contract": (
+                        "ordinary Basix standard element"
+                    ),
+                    "stage_seconds": {
+                        "standard_trace_element": float(
+                            trace_element_seconds
+                        ),
+                        "standard_interior_element": float(
+                            interior_element_seconds
+                        ),
+                        "qualification": float(qualification_seconds),
+                        "total": float(
+                            time.perf_counter() - total_started
+                        ),
+                    },
+                },
             },
             None,
         )
-    polynomial_element = _standard_hexa_hcurl(
-        max(trace_degree, cell_interior_degree)
+
+    # The maximum-order polynomial element is already one of the two source
+    # elements. Reusing that immutable Basix object is bitwise equivalent to
+    # constructing a duplicate and removes one high-order element build.
+    polynomial_element = (
+        trace_element
+        if trace_degree > cell_interior_degree
+        else interior_element
     )
     tdim = 3
     trace_dofs = _flatten_entity_dofs(trace_element, range(tdim))
@@ -224,23 +340,59 @@ def _create_trace_interior_element_data(
         interior_element.entity_dofs[tdim][0],
         dtype=np.int32,
     )
-    trace_to_polynomial = basix.compute_interpolation_operator(
-        trace_element,
-        polynomial_element,
+    trace_interpolation_started = time.perf_counter()
+    if qualification_audit:
+        trace_to_polynomial = basix.compute_interpolation_operator(
+            trace_element,
+            polynomial_element,
+        )[:, trace_dofs]
+        trace_interpolation_strategy = "basix_full_reference_then_select"
+    else:
+        trace_to_polynomial = _selected_interpolation_operator(
+            trace_element,
+            polynomial_element,
+            trace_dofs,
+        )
+        trace_interpolation_strategy = (
+            "public_basix_tabulation_selected_columns"
+        )
+    trace_interpolation_seconds = (
+        time.perf_counter() - trace_interpolation_started
     )
-    interior_to_polynomial = basix.compute_interpolation_operator(
-        interior_element,
-        polynomial_element,
+    interior_interpolation_started = time.perf_counter()
+    if qualification_audit:
+        interior_to_polynomial = basix.compute_interpolation_operator(
+            interior_element,
+            polynomial_element,
+        )[:, interior_dofs]
+        interior_interpolation_strategy = (
+            "basix_full_reference_then_select"
+        )
+    else:
+        interior_to_polynomial = _selected_interpolation_operator(
+            interior_element,
+            polynomial_element,
+            interior_dofs,
+        )
+        interior_interpolation_strategy = (
+            "public_basix_tabulation_selected_columns"
+        )
+    interior_interpolation_seconds = (
+        time.perf_counter() - interior_interpolation_started
     )
+    nodal_coefficients_started = time.perf_counter()
     nodal_coefficients = np.vstack(
         (
-            trace_to_polynomial[:, trace_dofs].T
-            @ polynomial_element.coefficient_matrix,
-            interior_to_polynomial[:, interior_dofs].T
+            trace_to_polynomial.T @ polynomial_element.coefficient_matrix,
+            interior_to_polynomial.T
             @ polynomial_element.coefficient_matrix,
         )
     )
+    nodal_coefficients_seconds = (
+        time.perf_counter() - nodal_coefficients_started
+    )
     expected_dimension = len(trace_dofs) + len(interior_dofs)
+    qualification_started = time.perf_counter()
     polynomial_rank = (
         int(np.linalg.matrix_rank(nodal_coefficients))
         if qualification_audit
@@ -250,10 +402,16 @@ def _create_trace_interior_element_data(
         raise RuntimeError(
             "mixed trace/interior polynomial subspace is rank deficient"
         )
+    qualification_rank_seconds = (
+        time.perf_counter() - qualification_started
+    )
+    qr_started = time.perf_counter()
     orthogonal_columns, _ = np.linalg.qr(
         nodal_coefficients.T,
         mode="reduced",
     )
+    qr_seconds = time.perf_counter() - qr_started
+    interpolation_payload_started = time.perf_counter()
     interpolation_points: list[list[np.ndarray]] = []
     interpolation_matrices: list[list[np.ndarray]] = []
     for dimension in range(tdim + 1):
@@ -266,6 +424,9 @@ def _create_trace_interior_element_data(
         interpolation_matrices.append(
             [np.asarray(values).copy() for values in source.M[dimension]]
         )
+    interpolation_payload_seconds = (
+        time.perf_counter() - interpolation_payload_started
+    )
     constructor = {
         "cell_type": basix.CellType.hexahedron,
         "value_shape": tuple(polynomial_element.value_shape),
@@ -283,6 +444,7 @@ def _create_trace_interior_element_data(
         "embedded_superdegree": polynomial_element.embedded_superdegree,
         "polyset_type": polynomial_element.polyset_type,
     }
+    custom_element_started = time.perf_counter()
     custom = basix.create_custom_element(
         constructor["cell_type"],
         constructor["value_shape"],
@@ -297,6 +459,8 @@ def _create_trace_interior_element_data(
         constructor["embedded_superdegree"],
         constructor["polyset_type"],
     )
+    custom_element_seconds = time.perf_counter() - custom_element_started
+    identity_checks_started = time.perf_counter()
     if custom.dim != expected_dimension:
         raise RuntimeError("mixed trace/interior element dimension does not close")
     custom_trace = _flatten_entity_dofs(custom, range(tdim))
@@ -314,6 +478,10 @@ def _create_trace_interior_element_data(
         raise RuntimeError(
             "mixed trace/interior element did not retain trace-first numbering"
         )
+    identity_checks_seconds = (
+        time.perf_counter() - identity_checks_started
+    )
+    total_seconds = time.perf_counter() - total_started
     return (
         custom,
         {
@@ -327,6 +495,61 @@ def _create_trace_interior_element_data(
             "qualification_audit_executed": bool(
                 qualification_audit
             ),
+            "construction_profile": {
+                "schema_version": (
+                    "task035b.fixed-trace-element-cold-build-profile.v1"
+                ),
+                "status": "custom_element_built",
+                "strategy": (
+                    "basix_reference_full_interpolation"
+                    if qualification_audit
+                    else "selected_public_interpolation_v1"
+                ),
+                "polynomial_element_reused": True,
+                "selected_interpolation_enabled": not bool(
+                    qualification_audit
+                ),
+                "trace_interpolation_strategy": (
+                    trace_interpolation_strategy
+                ),
+                "interior_interpolation_strategy": (
+                    interior_interpolation_strategy
+                ),
+                "numerical_identity_contract": (
+                    "selected columns reconstruct the public Basix "
+                    "interpolation operator exactly on the qualified ABI"
+                ),
+                "stage_seconds": {
+                    "standard_trace_element": float(
+                        trace_element_seconds
+                    ),
+                    "standard_interior_element": float(
+                        interior_element_seconds
+                    ),
+                    "duplicate_polynomial_element": 0.0,
+                    "trace_interpolation": float(
+                        trace_interpolation_seconds
+                    ),
+                    "interior_interpolation": float(
+                        interior_interpolation_seconds
+                    ),
+                    "nodal_coefficient_formation": float(
+                        nodal_coefficients_seconds
+                    ),
+                    "qualification_rank": float(
+                        qualification_rank_seconds
+                    ),
+                    "dense_qr": float(qr_seconds),
+                    "interpolation_payload_copy": float(
+                        interpolation_payload_seconds
+                    ),
+                    "basix_create_custom_element": float(
+                        custom_element_seconds
+                    ),
+                    "identity_checks": float(identity_checks_seconds),
+                    "total": float(total_seconds),
+                },
+            },
         },
         constructor,
     )
@@ -588,6 +811,7 @@ def persistent_fixed_trace_hcurl_ufl_element(
             )
         return fixed_trace_element_build(
             custom,
+            build_audit=audit.get("construction_profile"),
             **constructor,
         )
 

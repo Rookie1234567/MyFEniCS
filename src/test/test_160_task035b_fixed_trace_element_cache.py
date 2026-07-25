@@ -10,14 +10,19 @@ import unittest
 from unittest import mock
 
 from mpi4py import MPI
+import basix
+import basix.ufl
 import numpy as np
 
+from src.adaptivity.fast_custom_element_ufl import custom_element_sha256
 from src.adaptivity.fixed_trace_element_cache import (
     fixed_trace_element_build,
     load_or_build_fixed_trace_element,
 )
 from src.adaptivity.hcurl_regionwise_p import (
     _create_trace_interior_element_data,
+    _flatten_entity_dofs,
+    _selected_interpolation_operator,
 )
 
 
@@ -35,7 +40,11 @@ def _build(trace_degree: int, interior_degree: int):
         raise AssertionError("lightweight cache fixture ran qualification")
     if constructor is None:
         raise AssertionError("cache fixture lacks custom constructor payload")
-    return fixed_trace_element_build(element, **constructor)
+    return fixed_trace_element_build(
+        element,
+        build_audit=audit["construction_profile"],
+        **constructor,
+    )
 
 
 @contextmanager
@@ -57,6 +66,93 @@ def _shared_temporary_directory():
 
 
 class Task035bFixedTraceElementCacheTests(unittest.TestCase):
+    def test_selected_interpolation_matches_complete_basix_operator_exactly(
+        self,
+    ) -> None:
+        trace_element = basix.ufl.element(
+            "N1curl",
+            "hexahedron",
+            2,
+        ).basix_element
+        polynomial_element = basix.ufl.element(
+            "N1curl",
+            "hexahedron",
+            3,
+        ).basix_element
+        selections = (
+            (
+                trace_element,
+                _flatten_entity_dofs(trace_element, range(3)),
+            ),
+            (
+                polynomial_element,
+                np.asarray(
+                    polynomial_element.entity_dofs[3][0],
+                    dtype=np.int32,
+                ),
+            ),
+        )
+        for source, selected in selections:
+            with self.subTest(source_degree=source.degree):
+                reference = basix.compute_interpolation_operator(
+                    source,
+                    polynomial_element,
+                )[:, selected]
+                actual = _selected_interpolation_operator(
+                    source,
+                    polynomial_element,
+                    selected,
+                )
+                np.testing.assert_array_equal(actual, reference)
+
+    def test_fast_constructor_matches_reference_element_exactly(self) -> None:
+        reference, reference_audit, _ = (
+            _create_trace_interior_element_data.__wrapped__(
+                2,
+                3,
+                True,
+            )
+        )
+        fast, fast_audit, constructor = (
+            _create_trace_interior_element_data.__wrapped__(
+                2,
+                3,
+                False,
+            )
+        )
+        self.assertIsNotNone(constructor)
+        self.assertEqual(fast.hash(), reference.hash())
+        self.assertEqual(
+            custom_element_sha256(fast),
+            custom_element_sha256(reference),
+        )
+        points = np.asarray(
+            ((0.17, 0.23, 0.31), (0.61, 0.47, 0.73)),
+            dtype=np.float64,
+        )
+        np.testing.assert_array_equal(
+            fast.tabulate(1, points),
+            reference.tabulate(1, points),
+        )
+        self.assertEqual(
+            reference_audit["construction_profile"]["strategy"],
+            "basix_reference_full_interpolation",
+        )
+        profile = fast_audit["construction_profile"]
+        self.assertEqual(
+            profile["strategy"],
+            "selected_public_interpolation_v1",
+        )
+        self.assertTrue(profile["polynomial_element_reused"])
+        self.assertTrue(profile["selected_interpolation_enabled"])
+        self.assertEqual(
+            profile["stage_seconds"]["duplicate_polynomial_element"],
+            0.0,
+        )
+        for value in profile["stage_seconds"].values():
+            self.assertTrue(np.isfinite(value))
+            self.assertGreaterEqual(value, 0.0)
+
     def test_collective_cold_write_and_warm_restore_match(self) -> None:
         with _shared_temporary_directory() as directory:
             cold, cold_audit = load_or_build_fixed_trace_element(
@@ -78,6 +174,24 @@ class Task035bFixedTraceElementCacheTests(unittest.TestCase):
                 cold_audit["serialization"],
                 "json_plus_npz_allow_pickle_false",
             )
+            cold_profile = cold_audit["cold_builder_profile"]
+            self.assertEqual(
+                cold_profile["schema_version"],
+                "task035b.fixed-trace-element-cold-build-profile.v1",
+            )
+            self.assertEqual(
+                cold_profile["strategy"],
+                "selected_public_interpolation_v1",
+            )
+            self.assertEqual(
+                cold_profile["aggregation"],
+                "per_stage_MPI_MAX",
+            )
+            self.assertEqual(cold_profile["mpi_rank_count"], COMM.size)
+            self.assertLessEqual(
+                cold_profile["stage_seconds_max"]["total"],
+                cold_audit["build_seconds_max"],
+            )
 
             def forbidden_builder(_trace_degree: int, _interior_degree: int):
                 raise AssertionError("warm restore called the element builder")
@@ -96,6 +210,7 @@ class Task035bFixedTraceElementCacheTests(unittest.TestCase):
                 "persistent_fixed_trace_element_cache_hit",
             )
             self.assertTrue(warm_audit["cache_hit_on_all_ranks"])
+            self.assertIsNone(warm_audit["cold_builder_profile"])
             self.assertEqual(
                 warm_audit["element_signature_sha256"],
                 cold_audit["element_signature_sha256"],

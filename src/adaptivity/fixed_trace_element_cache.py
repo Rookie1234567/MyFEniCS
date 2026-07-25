@@ -49,6 +49,7 @@ class FixedTraceElementBuild:
     element: basix.finite_element.FiniteElement
     payload_metadata: dict[str, Any]
     payload_arrays: dict[str, np.ndarray]
+    build_audit: dict[str, Any] | None = None
 
 
 def _full_source_sha(value: str) -> str:
@@ -126,6 +127,7 @@ def fixed_trace_element_build(
     embedded_subdegree: int,
     embedded_superdegree: int,
     polyset_type: Any,
+    build_audit: dict[str, Any] | None = None,
 ) -> FixedTraceElementBuild:
     """Capture the exact inputs used for the first custom-element build.
 
@@ -168,6 +170,9 @@ def fixed_trace_element_build(
         element=element,
         payload_metadata=metadata,
         payload_arrays=arrays,
+        build_audit=(
+            None if build_audit is None else dict(build_audit)
+        ),
     )
 
 
@@ -500,6 +505,7 @@ def load_or_build_fixed_trace_element(
         build_error: str | None = None
         element: basix.finite_element.FiniteElement | None = None
         signature = ""
+        build_audit_local: dict[str, Any] | None = None
         build_started = time.perf_counter()
         try:
             build = builder(trace_degree, interior_degree)
@@ -510,6 +516,7 @@ def load_or_build_fixed_trace_element(
                 )
             element = build.element
             signature = custom_element_sha256(element)
+            build_audit_local = build.build_audit
         except Exception as exc:
             build_error = f"{type(exc).__name__}: {exc}"
         build_seconds_local = time.perf_counter() - build_started
@@ -526,6 +533,63 @@ def load_or_build_fixed_trace_element(
             raise RuntimeError(
                 "fixed-trace element construction differs across MPI ranks"
             )
+        build_audits = tuple(comm.allgather(build_audit_local))
+        if any(audit is None for audit in build_audits):
+            if not all(audit is None for audit in build_audits):
+                raise RuntimeError(
+                    "fixed-trace element build audit presence differs "
+                    "across MPI ranks"
+                )
+            cold_builder_profile = None
+        else:
+            typed_audits = tuple(
+                dict(audit) for audit in build_audits if audit is not None
+            )
+            structural_audits = []
+            timing_audits = []
+            for audit in typed_audits:
+                stage_seconds = audit.pop("stage_seconds", None)
+                if not isinstance(stage_seconds, dict):
+                    raise RuntimeError(
+                        "fixed-trace element build audit lacks stage timings"
+                    )
+                structural_audits.append(audit)
+                timing_audits.append(stage_seconds)
+            encoded_structural = {
+                json.dumps(
+                    audit,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=True,
+                    allow_nan=False,
+                )
+                for audit in structural_audits
+            }
+            if len(encoded_structural) != 1:
+                raise RuntimeError(
+                    "fixed-trace element build strategy differs across ranks"
+                )
+            timing_keys = tuple(sorted(timing_audits[0]))
+            if any(tuple(sorted(timing)) != timing_keys for timing in timing_audits):
+                raise RuntimeError(
+                    "fixed-trace element build timing inventory differs "
+                    "across ranks"
+                )
+            stage_seconds_max: dict[str, float] = {}
+            for key in timing_keys:
+                values = [float(timing[key]) for timing in timing_audits]
+                if any(not np.isfinite(value) or value < 0.0 for value in values):
+                    raise RuntimeError(
+                        "fixed-trace element build timing is not finite and "
+                        f"nonnegative: stage={key}, values={values}"
+                    )
+                stage_seconds_max[key] = max(values)
+            cold_builder_profile = {
+                **structural_audits[0],
+                "stage_seconds_max": stage_seconds_max,
+                "mpi_rank_count": int(comm.size),
+                "aggregation": "per_stage_MPI_MAX",
+            }
         write_seconds_local = 0.0
         publication = {}
         if mode == "read_write":
@@ -563,6 +627,8 @@ def load_or_build_fixed_trace_element(
                     f"on all MPI ranks: {visibility}"
                 )
             status = "persistent_fixed_trace_element_cache_cold_write"
+    if cache_hit:
+        cold_builder_profile = None
 
     from mpi4py import MPI
 
@@ -599,6 +665,7 @@ def load_or_build_fixed_trace_element(
         ),
         "payload_array_count": publication.get("payload_array_count"),
         "payload_bytes": publication.get("payload_bytes"),
+        "cold_builder_profile": cold_builder_profile,
         "serialization": "json_plus_npz_allow_pickle_false",
         "ordinary_default_changed": False,
         "publication_lock": "exclusive_identity_lockfile",
