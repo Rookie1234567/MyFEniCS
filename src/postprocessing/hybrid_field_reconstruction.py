@@ -469,55 +469,114 @@ class ModalFieldReconstructor:
                 dtype=np.complex128,
             )
             length_nm = self.top_z_nm - self.bottom_z_nm
-            continuous_factors = np.exp(1j * beta * length_nm)
-            predicted_top_coefficients = (
-                bottom_coefficients * continuous_factors
+            count = self.mode_count_per_direction
+            forward_factors = np.exp(1j * beta[:count] * length_nm)
+            backward_factors = np.exp(-1j * beta[count:] * length_nm)
+            predicted_top_forward = (
+                bottom_coefficients[:count] * forward_factors
+            )
+            predicted_bottom_backward = (
+                top_coefficients[count:] * backward_factors
+            )
+            stable_top_coefficients = np.concatenate(
+                (predicted_top_forward, top_coefficients[count:])
+            )
+            stable_bottom_coefficients = np.concatenate(
+                (bottom_coefficients[:count], predicted_bottom_backward)
             )
             predicted_top_electric = (
-                electric_matrix @ predicted_top_coefficients
+                electric_matrix @ stable_top_coefficients
             ).reshape(electric[interface_indices["top"], ..., :2].shape)
             predicted_top_magnetic = (
-                magnetic_matrix @ predicted_top_coefficients
+                magnetic_matrix @ stable_top_coefficients
             ).reshape(magnetic[interface_indices["top"], ..., :2].shape)
-            coefficient_scale = max(
-                float(np.linalg.norm(predicted_top_coefficients)),
-                float(np.linalg.norm(top_coefficients)),
+            predicted_bottom_electric = (
+                electric_matrix @ stable_bottom_coefficients
+            ).reshape(electric[interface_indices["bottom"], ..., :2].shape)
+            predicted_bottom_magnetic = (
+                magnetic_matrix @ stable_bottom_coefficients
+            ).reshape(magnetic[interface_indices["bottom"], ..., :2].shape)
+
+            def coefficient_error(
+                predicted: np.ndarray,
+                observed: np.ndarray,
+            ) -> float:
+                scale = max(
+                    float(np.linalg.norm(predicted)),
+                    float(np.linalg.norm(observed)),
+                    1.0e-30,
+                )
+                return float(np.linalg.norm(predicted - observed) / scale)
+
+            def largest_mode_diagnostics(
+                predicted: np.ndarray,
+                observed: np.ndarray,
+                mode_beta: np.ndarray,
+                *,
+                direction: str,
+                offset: int,
+            ) -> list[dict[str, object]]:
+                significant = np.argsort(
+                    np.maximum(np.abs(predicted), np.abs(observed))
+                )[-12:][::-1]
+                diagnostics = []
+                for local_index in significant:
+                    predicted_value = predicted[int(local_index)]
+                    observed_value = observed[int(local_index)]
+                    diagnostics.append(
+                        {
+                            "mode_index": int(offset + local_index),
+                            "direction": direction,
+                            "beta_per_nm": [
+                                float(mode_beta[local_index].real),
+                                float(mode_beta[local_index].imag),
+                            ],
+                            "predicted_coefficient_abs": float(
+                                abs(predicted_value)
+                            ),
+                            "projected_coefficient_abs": float(
+                                abs(observed_value)
+                            ),
+                            "phase_delta_rad": float(
+                                np.angle(observed_value / predicted_value)
+                                if abs(predicted_value) > 1.0e-30
+                                else np.nan
+                            ),
+                        }
+                    )
+                return diagnostics
+
+            forward_report = {
+                "coefficient_relative_l2": coefficient_error(
+                    predicted_top_forward,
+                    top_coefficients[:count],
+                ),
+                "largest_projected_modes": largest_mode_diagnostics(
+                    predicted_top_forward,
+                    top_coefficients[:count],
+                    beta[:count],
+                    direction="forward",
+                    offset=0,
+                ),
+            }
+            backward_report = {
+                "coefficient_relative_l2": coefficient_error(
+                    predicted_bottom_backward,
+                    bottom_coefficients[count:],
+                ),
+                "largest_projected_modes": largest_mode_diagnostics(
+                    predicted_bottom_backward,
+                    bottom_coefficients[count:],
+                    beta[count:],
+                    direction="backward",
+                    offset=count,
+                ),
+            }
+            max_stable_factor = max(
+                float(np.max(np.abs(forward_factors), initial=0.0)),
+                float(np.max(np.abs(backward_factors), initial=0.0)),
                 1.0e-30,
             )
-            coefficient_difference = (
-                predicted_top_coefficients - top_coefficients
-            )
-            significant = np.argsort(
-                np.maximum(
-                    np.abs(predicted_top_coefficients),
-                    np.abs(top_coefficients),
-                )
-            )[-12:][::-1]
-            modal_diagnostics = []
-            for index in significant:
-                predicted = predicted_top_coefficients[int(index)]
-                observed = top_coefficients[int(index)]
-                modal_diagnostics.append(
-                    {
-                        "mode_index": int(index),
-                        "direction": (
-                            "forward"
-                            if index < self.mode_count_per_direction
-                            else "backward"
-                        ),
-                        "beta_per_nm": [
-                            float(beta[index].real),
-                            float(beta[index].imag),
-                        ],
-                        "predicted_top_coefficient_abs": float(abs(predicted)),
-                        "projected_top_coefficient_abs": float(abs(observed)),
-                        "phase_delta_rad": float(
-                            np.angle(observed / predicted)
-                            if abs(predicted) > 1.0e-30
-                            else np.nan
-                        ),
-                    }
-                )
             payload = {
                 "schema_version": (
                     "task035c.sampled-full3d-trace-modal-oracle.v1"
@@ -531,25 +590,30 @@ class ModalFieldReconstructor:
                     "bottom": bottom_fit,
                     "top": top_fit,
                 },
-                "bottom_to_top_continuous_propagation": {
+                "continuous_propagation": {
                     "length_nm": float(length_nm),
-                    "coefficient_relative_l2": float(
-                        np.linalg.norm(coefficient_difference)
-                        / coefficient_scale
-                    ),
-                    "electric_tangential": relative_sample_error(
-                        predicted_top_electric,
-                        electric[interface_indices["top"], ..., :2],
-                    ),
-                    "magnetic_tangential": relative_sample_error(
-                        predicted_top_magnetic,
-                        magnetic[interface_indices["top"], ..., :2],
-                    ),
-                    "diagnostic_uses_growing_inverse_factors": bool(
-                        np.max(np.abs(continuous_factors), initial=0.0)
-                        > 1.0 + 1.0e-12
-                    ),
-                    "largest_projected_modes": modal_diagnostics,
+                    "forward_bottom_to_top": forward_report,
+                    "backward_top_to_bottom": backward_report,
+                    "stable_two_sided_reconstruction": {
+                        "top_electric_tangential": relative_sample_error(
+                            predicted_top_electric,
+                            electric[interface_indices["top"], ..., :2],
+                        ),
+                        "top_magnetic_tangential": relative_sample_error(
+                            predicted_top_magnetic,
+                            magnetic[interface_indices["top"], ..., :2],
+                        ),
+                        "bottom_electric_tangential": relative_sample_error(
+                            predicted_bottom_electric,
+                            electric[interface_indices["bottom"], ..., :2],
+                        ),
+                        "bottom_magnetic_tangential": relative_sample_error(
+                            predicted_bottom_magnetic,
+                            magnetic[interface_indices["bottom"], ..., :2],
+                        ),
+                    },
+                    "max_stable_factor_magnitude": max_stable_factor,
+                    "diagnostic_uses_growing_inverse_factors": False,
                 },
                 "authority_boundary": (
                     "bounded 40x20 sampled interface oracle; not an exact "

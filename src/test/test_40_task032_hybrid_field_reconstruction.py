@@ -139,10 +139,23 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
             report["interfaces"]["top"]["electric_tangential"]["relative_l2"],
             1.0e-12,
         )
-        propagation = report["bottom_to_top_continuous_propagation"]
-        self.assertLess(propagation["coefficient_relative_l2"], 1.0e-12)
+        propagation = report["continuous_propagation"]
         self.assertLess(
-            propagation["magnetic_tangential"]["relative_l2"],
+            propagation["forward_bottom_to_top"][
+                "coefficient_relative_l2"
+            ],
+            1.0e-12,
+        )
+        self.assertLess(
+            propagation["backward_top_to_bottom"][
+                "coefficient_relative_l2"
+            ],
+            1.0e-12,
+        )
+        self.assertLess(
+            propagation["stable_two_sided_reconstruction"][
+                "top_magnetic_tangential"
+            ]["relative_l2"],
             1.0e-12,
         )
 
