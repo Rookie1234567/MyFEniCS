@@ -25,6 +25,9 @@ from ..common.modes_3d import (
     outgoing_port_modes_3d,
 )
 from ..constraints.floquet_3d import DoubleFloquet3DData
+from ..constraints.selective_p6_trace_expansion import (
+    ActualSelectiveP6TraceExpansion,
+)
 from .common_3d_solve import (
     CondensedIterativeSolveFailure,
     DirectSolveFailure,
@@ -61,6 +64,7 @@ from .hcurl_cell_static_condensation import (
 )
 from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
+    CallerTraceExpansion,
     assembly_time_dual_recovery_context,
     build_unconstrained_assembly_time_condensation,
     cell_interior_schur_bilinear,
@@ -2731,6 +2735,383 @@ def _live_full_p6_local_schur_capture_request(
     return FullP6LocalSchurClassCollector(), audit
 
 
+def _assembly_time_trace_constraint_kwargs(
+    *,
+    function_space,
+    mesh_data,
+    cfg: SimulationConfig3D,
+    floquet_data: DoubleFloquet3DData,
+    actual_selective_trace_expansion: (
+        ActualSelectiveP6TraceExpansion | None
+    ),
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """Choose exactly one complete trace pullback for assembly-time insertion.
+
+    The ordinary path returns the existing Floquet MPC unchanged.  The opt-in
+    path accepts only the typed, full-p6-storage selective bridge and omits the
+    MPC keyword entirely: that bridge already contains the transitive periodic
+    and Floquet pullback, so applying the MPC as well would constrain and
+    backsubstitute the same trace twice.
+    """
+
+    if actual_selective_trace_expansion is None:
+        return {"mpc": floquet_data.mpc}, None
+
+    comm = mesh_data.mesh.comm
+    local_error: str | None = None
+    identity_packet: dict[str, Any] | None = None
+    owned_active_rows = np.empty(0, dtype=PETSc.IntType)
+    try:
+        import basix
+
+        bridge = actual_selective_trace_expansion
+        if not isinstance(bridge, ActualSelectiveP6TraceExpansion):
+            raise TypeError(
+                "selective trace request must be "
+                "ActualSelectiveP6TraceExpansion"
+            )
+        if function_space.mesh is not mesh_data.mesh:
+            raise ValueError(
+                "selective trace storage space and Stage-4 mesh differ"
+            )
+        if (
+            not cfg.stage4_assembly_time_cell_static_condensation
+            or not cfg.stage4_cell_static_condensation
+            or not cfg.stage4_floquet_slave_elimination
+        ):
+            raise ValueError(
+                "selective trace requires assembly-time cell condensation "
+                "and Floquet-independent trace numbering"
+            )
+        if cfg.stage4_regionwise_interior_p:
+            raise ValueError(
+                "selective trace and regionwise interior-p cannot be combined"
+            )
+        if cfg.nedelec_reduced_trace_enabled:
+            raise ValueError(
+                "selective trace requires a standard full-p6 storage space, "
+                "not a fixed reduced-trace element"
+            )
+        if (
+            cfg.nedelec_trace_degree_resolved != 6
+            or cfg.nedelec_interior_degree_resolved != 6
+        ):
+            raise ValueError(
+                "selective trace storage degrees must be p6 trace/p6 interior"
+            )
+        if _use_zero_order_local_robin_dtn(cfg):
+            raise ValueError(
+                "selective trace is unsupported by the zero-order local "
+                "Robin shortcut"
+            )
+
+        actual_element = function_space.element.basix_element
+        reference_element = basix.create_element(
+            basix.ElementFamily.N1E,
+            basix.CellType.hexahedron,
+            6,
+            basix.LagrangeVariant.legendre,
+        )
+        interior_dofs = np.asarray(
+            actual_element.entity_dofs[3][0],
+            dtype=np.int64,
+        )
+        trace_dimension = int(actual_element.dim - len(interior_dofs))
+        if (
+            "hexahedron" not in str(function_space.mesh.basix_cell()).lower()
+            or int(actual_element.dim) != 882
+            or actual_element.hash() != reference_element.hash()
+            or trace_dimension != 432
+            or len(interior_dofs) != 450
+            or actual_element.map_type != basix.MapType.covariantPiola
+            or not all(
+                len(dofs) == 6 for dofs in actual_element.entity_dofs[1]
+            )
+            or not all(
+                len(dofs) == 60 for dofs in actual_element.entity_dofs[2]
+            )
+        ):
+            raise ValueError(
+                "selective trace storage is not the qualified standard "
+                "covariant-Piola p6 hexahedral element"
+            )
+
+        caller = bridge.caller_trace_expansion
+        if not isinstance(caller, CallerTraceExpansion):
+            raise TypeError(
+                "selective trace bridge does not contain CallerTraceExpansion"
+            )
+        bridge_audit = dict(bridge.audit)
+        caller_audit = dict(caller.qualification_audit)
+        required_bridge_checks = dict(bridge_audit.get("checks", {}))
+        required_hashes = {
+            "catalog_sha256": bridge_audit.get("catalog_sha256"),
+            "selection_sha256": bridge_audit.get("selection_sha256"),
+            "trace_geometry_sha256": caller_audit.get(
+                "trace_geometry_sha256"
+            ),
+            "ordered_trace_basis_sha256": caller_audit.get(
+                "ordered_trace_basis_sha256"
+            ),
+        }
+        invalid_hashes = [
+            name
+            for name, value in required_hashes.items()
+            if (
+                not isinstance(value, str)
+                or len(value) != 64
+                or any(character not in "0123456789abcdef" for character in value)
+            )
+        ]
+        if invalid_hashes:
+            raise ValueError(
+                "selective trace identities are invalid: "
+                + ", ".join(invalid_hashes)
+            )
+        if (
+            bridge_audit.get("schema_version")
+            != "task035b.actual-selective-p6-trace-expansion-bridge.v1"
+            or bridge_audit.get("pass") is not True
+            or bridge_audit.get("mpi_size") != int(comm.size)
+            or bridge_audit.get("matrix_constructed") is not False
+            or bridge_audit.get("local_tensor_constructed") is not False
+            or bridge_audit.get("inactive_missing_petsc_rows") != 0
+            or bridge_audit.get("ordinary_default_changed") is not False
+            or not required_bridge_checks
+            or not all(value is True for value in required_bridge_checks.values())
+        ):
+            raise ValueError(
+                "selective trace bridge audit is incomplete or stale"
+            )
+        if (
+            caller_audit.get("schema_version")
+            != "task035b.actual-physical-selective-p6-trace-expansion.v1"
+            or caller_audit.get("pass") is not True
+            or caller_audit.get("owner_aware_contiguous_petsc_rows") is not True
+            or caller_audit.get("inactive_modes_have_no_petsc_rows") is not True
+            or caller_audit.get("full_trace_matrix_constructed") is not False
+            or caller_audit.get("ordinary_default_changed") is not False
+            or caller_audit.get("catalog_sha256")
+            != required_hashes["catalog_sha256"]
+            or caller_audit.get("selection_sha256")
+            != required_hashes["selection_sha256"]
+        ):
+            raise ValueError(
+                "selective trace caller qualification is incomplete or stale"
+            )
+
+        full_rows = int(
+            function_space.dofmap.index_map.size_global
+            * function_space.dofmap.index_map_bs
+        )
+        global_cells = int(
+            function_space.mesh.topology.index_map(
+                function_space.mesh.topology.dim
+            ).size_global
+        )
+        expected_storage_trace_rows = full_rows - 450 * global_cells
+        active_rows = int(bridge.active_rows)
+        selected_rows = int(bridge.selected_missing_rows)
+        base_rows = int(bridge.p5_periodic_quotient_rows)
+        if (
+            int(bridge.full_p6_storage_trace_rows)
+            != expected_storage_trace_rows
+            or int(caller.full_trace_rows) != expected_storage_trace_rows
+            or bridge_audit.get("full_p6_storage_trace_rows")
+            != expected_storage_trace_rows
+            or bridge_audit.get("full_p6_storage_local_dimension") != 882
+            or bridge_audit.get("full_p6_storage_local_trace_dimension") != 432
+            or bridge_audit.get("full_p6_storage_local_interior_dimension") != 450
+            or int(caller.active_rows) != active_rows
+            or bridge_audit.get("active_rows") != active_rows
+            or base_rows + selected_rows != active_rows
+            or selected_rows <= 0
+            or active_rows >= expected_storage_trace_rows
+            or bridge_audit.get("inactive_missing_orbit_count", 0) <= 0
+            or len(bridge.base_logical_rows) != base_rows
+            or len(bridge.selected_missing_logical_rows) != selected_rows
+        ):
+            raise ValueError(
+                "selective trace storage or active-row identity does not close"
+            )
+
+        storage_expansion = dict(bridge.storage_expansion_by_original)
+        caller_expansion = dict(caller.expansion_by_original)
+        if (
+            len(storage_expansion) != expected_storage_trace_rows
+            or set(storage_expansion) != set(caller_expansion)
+        ):
+            raise ValueError(
+                "selective trace storage pullback row inventory is incomplete"
+            )
+        for original, (bridge_rows, bridge_coefficients) in (
+            storage_expansion.items()
+        ):
+            caller_rows, caller_coefficients = caller_expansion[original]
+            if (
+                not np.array_equal(bridge_rows, caller_rows)
+                or not np.array_equal(
+                    bridge_coefficients,
+                    caller_coefficients,
+                )
+            ):
+                raise ValueError(
+                    "selective trace bridge and caller pullback content differ"
+                )
+        referenced_rows = {
+            int(row)
+            for rows, _coefficients in caller_expansion.values()
+            for row in rows
+        }
+        if referenced_rows != set(range(active_rows)):
+            raise ValueError(
+                "selective trace pullback does not cover every active row"
+            )
+
+        owned_cells = int(
+            function_space.mesh.topology.index_map(
+                function_space.mesh.topology.dim
+            ).size_local
+        )
+        cell_expansions = tuple(bridge.owned_cell_expansions)
+        if (
+            bridge_audit.get("owned_cell_count") != owned_cells
+            or len(cell_expansions) != owned_cells
+            or {int(cell.local_cell) for cell in cell_expansions}
+            != set(range(owned_cells))
+            or any(
+                len(cell.storage_original_dofs) != 432
+                or cell.coefficient_matrix.shape[0] != 432
+                or np.any(cell.active_rows < 0)
+                or np.any(cell.active_rows >= active_rows)
+                for cell in cell_expansions
+            )
+        ):
+            raise ValueError(
+                "selective trace owned-cell storage identity is inconsistent"
+            )
+
+        owned_active_rows = np.asarray(
+            caller.owned_active_rows,
+            dtype=PETSc.IntType,
+        )
+        if (
+            owned_active_rows.ndim != 1
+            or len(np.unique(owned_active_rows)) != len(owned_active_rows)
+            or (
+                len(owned_active_rows)
+                and (
+                    int(owned_active_rows[0]) < 0
+                    or int(owned_active_rows[-1]) >= active_rows
+                    or np.any(np.diff(owned_active_rows) != 1)
+                )
+            )
+        ):
+            raise ValueError(
+                "selective trace local active-row ownership is invalid"
+            )
+        identity_packet = {
+            **required_hashes,
+            "full_storage_trace_rows": expected_storage_trace_rows,
+            "active_rows": active_rows,
+            "selected_missing_rows": selected_rows,
+            "owned_active_rows": owned_active_rows.astype(np.int64).tolist(),
+        }
+    except Exception as error:
+        local_error = f"{type(error).__name__}: {error}"
+
+    errors = comm.allgather(local_error)
+    if any(error is not None for error in errors):
+        raise ValueError(
+            "actual selective-p6 trace request failed collectively: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(errors)
+                if error is not None
+            )
+        )
+    assert identity_packet is not None
+    packets = comm.allgather(identity_packet)
+    collective_identity = {
+        key: packets[0][key]
+        for key in (
+            "catalog_sha256",
+            "selection_sha256",
+            "trace_geometry_sha256",
+            "ordered_trace_basis_sha256",
+            "full_storage_trace_rows",
+            "active_rows",
+            "selected_missing_rows",
+        )
+    }
+    if any(
+        any(packet[key] != value for key, value in collective_identity.items())
+        for packet in packets
+    ):
+        raise ValueError(
+            "actual selective-p6 trace identities differ across MPI ranks"
+        )
+    owned_packets = [
+        np.asarray(packet["owned_active_rows"], dtype=np.int64)
+        for packet in packets
+    ]
+    ownership_error: str | None = None
+    offset = 0
+    for rank, rows in enumerate(owned_packets):
+        expected = np.arange(offset, offset + len(rows), dtype=np.int64)
+        if not np.array_equal(rows, expected):
+            ownership_error = (
+                "selective trace owner rows are not contiguous at rank "
+                f"{rank}"
+            )
+            break
+        offset += len(rows)
+    if offset != int(identity_packet["active_rows"]):
+        ownership_error = (
+            "selective trace owner-row counts do not close active rows"
+        )
+    if ownership_error is not None:
+        raise ValueError(ownership_error)
+
+    bridge = actual_selective_trace_expansion
+    audit = {
+        "schema_version": (
+            "task035b.actual-selective-p6-trace-stage4-request.v1"
+        ),
+        "status": "actual_selective_p6_trace_stage4_request_accepted",
+        "pass": True,
+        "mpi_size": int(comm.size),
+        "storage_element": "standard_full_p6_n1curl_hexahedron",
+        "full_p6_storage_trace_rows": int(
+            identity_packet["full_storage_trace_rows"]
+        ),
+        "active_rows": int(identity_packet["active_rows"]),
+        "selected_missing_rows": int(
+            identity_packet["selected_missing_rows"]
+        ),
+        "catalog_sha256": identity_packet["catalog_sha256"],
+        "selection_sha256": identity_packet["selection_sha256"],
+        "trace_geometry_sha256": identity_packet["trace_geometry_sha256"],
+        "ordered_trace_basis_sha256": (
+            identity_packet["ordered_trace_basis_sha256"]
+        ),
+        "constraint_argument": "caller_trace_expansion",
+        "legacy_mpc_passed_to_condensation": False,
+        "complete_periodic_floquet_pullback_owned_by_caller": True,
+        "post_recovery_mpc_backsubstitution_forbidden": True,
+        "full_p6_trace_matrix_materialized": False,
+        "inactive_missing_p6_rows_allocated": 0,
+        "formal_candidate_passed": False,
+        "selection_authority": bridge.caller_trace_expansion.qualification_audit[
+            "selection_authority"
+        ],
+        "ordinary_default_changed": False,
+    }
+    return {
+        "caller_trace_expansion": bridge.caller_trace_expansion,
+    }, audit
+
+
 def _build_assembly_time_condensation_with_request(
     compiled_form,
     function_space,
@@ -2780,6 +3161,9 @@ def solve_stage4_dtn_port_total_field(
     out_dir: Path,
     log,
     started: float | None = None,
+    actual_selective_trace_expansion: (
+        ActualSelectiveP6TraceExpansion | None
+    ) = None,
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports."""
 
@@ -2877,6 +3261,14 @@ def solve_stage4_dtn_port_total_field(
             "Task035b regionwise interior-p requires the fixed rectangular "
             "target, a reduced-trace element, and assembly-time condensation"
         )
+    if (
+        actual_selective_trace_expansion is not None
+        and _use_zero_order_local_robin_dtn(cfg)
+    ):
+        raise ValueError(
+            "actual selective-p6 trace expansion is unsupported by the "
+            "zero-order local Robin shortcut"
+        )
     if _use_zero_order_local_robin_dtn(cfg):
         return _solve_zero_order_local_robin_dtn(
             a=a,
@@ -2900,6 +3292,22 @@ def solve_stage4_dtn_port_total_field(
     timing_details[
         "stage4_live_full_p6_local_schur_capture_request"
     ] = full_p6_local_schur_request_audit
+    (
+        trace_constraint_kwargs,
+        actual_selective_trace_request_audit,
+    ) = _assembly_time_trace_constraint_kwargs(
+        function_space=V,
+        mesh_data=mesh_data,
+        cfg=cfg,
+        floquet_data=floquet_data,
+        actual_selective_trace_expansion=(
+            actual_selective_trace_expansion
+        ),
+    )
+    if actual_selective_trace_request_audit is not None:
+        timing_details[
+            "stage4_actual_selective_p6_trace_request"
+        ] = actual_selective_trace_request_audit
     modes = outgoing_port_modes_3d(cfg)
     n_aux = len(modes)
     if n_aux == 0:
@@ -2998,7 +3406,7 @@ def solve_stage4_dtn_port_total_field(
                 full_p6_storage_local_schur_observer=(
                     full_p6_local_schur_collector
                 ),
-                mpc=floquet_data.mpc,
+                **trace_constraint_kwargs,
                 appended_global_rows=n_aux,
                 appended_support_owned_cell_groups=(
                     _owned_cells_adjacent_to_facet_tag(
@@ -4805,6 +5213,10 @@ def solve_stage4_dtn_port_total_field(
             }
         ),
     }
+    if actual_selective_trace_request_audit is not None:
+        goal_context["actual_selective_p6_trace_expansion"] = dict(
+            actual_selective_trace_request_audit
+        )
     if boundary_referenced_modes_present:
         goal_context.update(
             {

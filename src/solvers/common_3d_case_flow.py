@@ -671,6 +671,39 @@ def _solve_standard_linear_problem(
     return E, problem, solver_backend
 
 
+def _invoke_actual_selective_trace_expansion_factory(
+    factory: Callable[..., Any] | None,
+    *,
+    function_space,
+    mesh_data,
+    config: SimulationConfig3D,
+    floquet_data: DoubleFloquet3DData | None,
+):
+    """Invoke the explicit research hook without embedding selection policy."""
+
+    if factory is None:
+        return None
+    if not callable(factory):
+        raise TypeError(
+            "actual_selective_trace_expansion_factory must be callable"
+        )
+    if floquet_data is None:
+        raise RuntimeError(
+            "actual selective trace expansion requires finalized Floquet data"
+        )
+    expansion = factory(
+        function_space=function_space,
+        mesh_data=mesh_data,
+        config=config,
+        floquet_data=floquet_data,
+    )
+    if expansion is None:
+        raise TypeError(
+            "actual selective trace expansion factory returned None"
+        )
+    return expansion
+
+
 def run_prepared_3d_case_flow(
     cfg: SimulationConfig3D,
     out_dir: Path,
@@ -685,6 +718,9 @@ def run_prepared_3d_case_flow(
     run_diffraction_postprocess: bool = False,
     solution_observer: Callable[..., None] | None = None,
     mesh_data_override: AirBox3DMesh | None = None,
+    actual_selective_trace_expansion_factory: (
+        Callable[..., Any] | None
+    ) = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
 
@@ -695,12 +731,24 @@ def run_prepared_3d_case_flow(
     the ordinary solver path leaves it unset.
     ``mesh_data_override`` is a default-off research hook for solving on an
     already audited conforming mesh; ordinary callers continue to build a mesh.
+    ``actual_selective_trace_expansion_factory`` is a default-off research hook
+    that receives the current storage space/mesh/Floquet identity and returns a
+    typed, already selected trace expansion.  Selection policy remains outside
+    this shared solver flow.
     """
 
     if cfg.stage_case != expected_stage_case:
         raise ValueError(f"This solver accepts only stage_case={expected_stage_case!r}.")
     if not np.issubdtype(default_scalar_type, np.complexfloating):
         raise RuntimeError("The 3D Maxwell solver requires complex-mode DOLFINx/PETSc.")
+    if actual_selective_trace_expansion_factory is not None and (
+        not solve_stage4_dtn_port
+        or not callable(actual_selective_trace_expansion_factory)
+    ):
+        raise ValueError(
+            "actual selective trace expansion factory requires the Stage-4 "
+            "DtN flow and must be callable"
+        )
 
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = MPI.COMM_WORLD
@@ -936,6 +984,25 @@ def run_prepared_3d_case_flow(
         dofs=num_dofs,
         constraints=None if floquet_data is None else floquet_data.num_constraints,
     )
+    actual_selective_trace_expansion = None
+    if actual_selective_trace_expansion_factory is not None:
+        selective_trace_started = _start_timed_stage(comm)
+        actual_selective_trace_expansion = (
+            _invoke_actual_selective_trace_expansion_factory(
+                actual_selective_trace_expansion_factory,
+                function_space=V,
+                mesh_data=mesh_data,
+                config=cfg,
+                floquet_data=floquet_data,
+            )
+        )
+        _finish_timed_stage(
+            comm,
+            timings,
+            "actual_selective_trace_expansion_factory",
+            selective_trace_started,
+            log,
+        )
     _write_progress_event(
         out_dir,
         comm,
@@ -1017,6 +1084,15 @@ def run_prepared_3d_case_flow(
             raise RuntimeError("Stage-4 dtn_port requires Floquet MPC data.")
         stage_start = _start_timed_stage(comm)
         try:
+            selective_trace_solver_kwargs = (
+                {}
+                if actual_selective_trace_expansion is None
+                else {
+                    "actual_selective_trace_expansion": (
+                        actual_selective_trace_expansion
+                    )
+                }
+            )
             dtn_result = solve_stage4_dtn_port_total_field(
                 a=a,
                 L=L,
@@ -1028,6 +1104,7 @@ def run_prepared_3d_case_flow(
                 out_dir=out_dir,
                 log=log,
                 started=started,
+                **selective_trace_solver_kwargs,
             )
         except (
             CondensedIterativeSolveFailure,
