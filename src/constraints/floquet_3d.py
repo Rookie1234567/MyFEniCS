@@ -57,6 +57,7 @@ class DoubleFloquet3DData:
     communication_bytes_received_current: int = 0
     used_full_boundary_gather: bool = False
     created_dense_boundary_square: bool = False
+    phase_independent_topology: Any | None = None
 
 
 def _mesh_is_hexahedron(msh) -> bool:
@@ -2007,6 +2008,7 @@ def _build_double_floquet_mpc_high_order(
         ),
         used_full_boundary_gather=used_full_boundary_gather,
         created_dense_boundary_square=created_dense_boundary_square,
+        phase_independent_topology=constraint_data.topology,
     )
 
 

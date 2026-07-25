@@ -279,6 +279,11 @@ class Task033HighOrderFloquetTopologyTests(unittest.TestCase):
                     result.orientation_factor_stats["mapping_kind"],
                     f"distributed_exact_{expected_mode}",
                 )
+                self.assertIsNotNone(result.phase_independent_topology)
+                self.assertEqual(
+                    result.phase_independent_topology.key.degree,
+                    degree,
+                )
 
     def test_fixed_target_hexa_p5_p6_public_dispatcher_is_sparse(self) -> None:
         for degree in (5, 6):
@@ -293,6 +298,11 @@ class Task033HighOrderFloquetTopologyTests(unittest.TestCase):
                 self.assertFalse(result.used_full_boundary_gather)
                 self.assertFalse(result.created_dense_boundary_square)
                 self.assertEqual(result.num_face_transform_fits, 0)
+                self.assertIsNotNone(result.phase_independent_topology)
+                self.assertEqual(
+                    result.phase_independent_topology.key.degree,
+                    degree,
+                )
 
     def test_generic_hexa_p5_remains_fail_closed(self) -> None:
         cfg, mesh_data, V = _fixture(5)
