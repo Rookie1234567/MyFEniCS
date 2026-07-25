@@ -325,6 +325,12 @@ def _clear_official_field_outputs(out_dir: Path, comm) -> None:
             "E_3d_numerical.bp",
             "H_3d_A_per_m_from_curl.bp",
             "vtx_3d_warning.txt",
+            "port_power.json",
+            "port_power.csv",
+            "dtn_port_power_metrics_3d.json",
+            "dtn_port_diffraction_orders_3d.json",
+            "dtn_port_diffraction_orders_3d.csv",
+            "dtn_auxiliary_amplitudes_3d.json",
         )
         for pattern in patterns:
             for path in out_dir.glob(pattern):

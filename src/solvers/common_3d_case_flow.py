@@ -46,6 +46,7 @@ from .common_3d_postprocess import (
     _stage4_scattered_pml_metrics,
 )
 from .common_3d_solve import (
+    CondensedIterativeSolveFailure,
     DirectSolveFailure,
     _assembled_rhs_norm,
     _cleanup_mumps_ooc_directory_on_success,
@@ -258,7 +259,7 @@ def _parallel_lu_failure_summary(
     _write_case_outputs(out_dir, summary, log_lines, comm)
     return summary
 
-def _direct_solve_failure_summary(
+def _linear_solve_failure_summary(
     *,
     cfg: SimulationConfig3D,
     out_dir: Path,
@@ -270,7 +271,7 @@ def _direct_solve_failure_summary(
     petsc_options: dict[str, Any],
     selected_parallel_lu: str | None,
     dot_k_p: complex,
-    failure: DirectSolveFailure,
+    failure: DirectSolveFailure | CondensedIterativeSolveFailure,
     num_cells: int,
     num_dofs: int,
     floquet_data: DoubleFloquet3DData | None,
@@ -284,8 +285,19 @@ def _direct_solve_failure_summary(
     boundary_dofs_global: int,
     ooc_info: dict[str, Any],
 ) -> dict[str, Any]:
-    """Write a diagnostic summary when PETSc direct LU raises before solution."""
+    """Write a path-specific diagnostic summary for a PETSc solve exception."""
 
+    iterative_failure = isinstance(
+        failure, CondensedIterativeSolveFailure
+    )
+    failure_label = (
+        "condensed iterative solve" if iterative_failure else "direct LU"
+    )
+    default_reason_name = (
+        "PETSC_CONDENSED_ITERATIVE_SOLVE_EXCEPTION"
+        if iterative_failure
+        else "PETSC_DIRECT_SOLVE_EXCEPTION"
+    )
     _clear_official_field_outputs(out_dir, comm)
     matrix_stats = None
     linear_system_diagnostics = {}
@@ -310,7 +322,7 @@ def _direct_solve_failure_summary(
             reason = int(failure.ksp.getConvergedReason())
             reason_name = _ksp_reason_name(reason)
         except Exception:
-            reason_name = "PETSC_DIRECT_SOLVE_EXCEPTION"
+            reason_name = default_reason_name
         try:
             iterations = int(failure.ksp.getIterationNumber())
         except Exception:
@@ -362,7 +374,11 @@ def _direct_solve_failure_summary(
         "stage": _stage_label(cfg),
         **_summary_base_fields(cfg, comm),
         "config": cfg.as_jsonable(),
-        "case_status": "failed_direct_lu_exception",
+        "case_status": (
+            "failed_condensed_iterative_exception"
+            if iterative_failure
+            else "failed_direct_lu_exception"
+        ),
         "official_result": False,
         "diagnostic_only": True,
         "postprocess_skipped": True,
@@ -382,7 +398,12 @@ def _direct_solve_failure_summary(
         else matrix_stats.get("matrix_rows"),
         "petsc_scalar_type": str(PETSc.ScalarType),
         "dolfinx_default_scalar_type": str(default_scalar_type),
-        "solver_backend": failure.solver_backend or "3D Maxwell direct LU path",
+        "solver_backend": failure.solver_backend
+        or (
+            "PETSc assembled condensed iterative path"
+            if iterative_failure
+            else "3D Maxwell direct LU path"
+        ),
         "field_formulation": field_formulation,
         "stage4_boundary_model": cfg.stage4_boundary_model.lower() if cfg.stage_case.startswith("stage4_") else None,
         "stage4_dtn_port_enabled": bool(solve_stage4_dtn_port),
@@ -396,18 +417,41 @@ def _direct_solve_failure_summary(
         "domain_tag_volumes": domain_tag_volumes,
         "rhs_source_norm": None,
         "unconstrained_rhs_norm": unconstrained_rhs_norm,
-        "linear_solve_method": "direct_lu",
-        "petsc_direct_solver_profile": cfg.petsc_direct_solver_profile_requested,
-        "linear_solve_petsc_options": petsc_options,
+        "linear_solve_method": (
+            "assembled_condensed_iterative"
+            if iterative_failure
+            else "direct_lu"
+        ),
+        "petsc_direct_solver_profile": (
+            None
+            if iterative_failure
+            else cfg.petsc_direct_solver_profile_requested
+        ),
+        "stage4_condensed_iterative_profile": (
+            cfg.stage4_condensed_iterative_profile
+            if iterative_failure
+            else None
+        ),
+        "linear_solve_petsc_options": (
+            {} if iterative_failure else petsc_options
+        ),
+        "iterative_raw_petsc_options_ignored": iterative_failure,
         "linear_solve_disabled_reason": None,
-        "direct_solve_exception": error_diagnostics,
+        **(
+            {"condensed_iterative_solve_exception": error_diagnostics}
+            if iterative_failure
+            else {"direct_solve_exception": error_diagnostics}
+        ),
         "actual_ksp_type": ksp_type,
         "actual_pc_type": pc_type,
         "actual_pc_factor_solver_type": pc_factor_solver_type,
-        "selected_parallel_lu_solver_type": selected_parallel_lu,
+        "selected_parallel_lu_solver_type": (
+            None if iterative_failure else selected_parallel_lu
+        ),
         "ksp_converged": False,
         "ksp_converged_reason": reason,
-        "ksp_converged_reason_name": reason_name or "PETSC_DIRECT_SOLVE_EXCEPTION",
+        "ksp_converged_reason_name": reason_name
+        or default_reason_name,
         "ksp_iterations": iterations,
         "solver_residual_norm": residual_norm,
         **linear_system_diagnostics,
@@ -453,7 +497,10 @@ def _direct_solve_failure_summary(
         "max_rss_mb": _global_max_rss_mb(comm),
         "total_peak_rss_mb": _global_total_peak_rss_mb(comm),
     }
-    log(f"WARNING: direct LU failed at {failure.failure_stage}: {failure}")
+    log(
+        f"WARNING: {failure_label} failed at "
+        f"{failure.failure_stage}: {failure}"
+    )
     log(f"PETSc error diagnostics = {error_diagnostics}")
     _log_solver_summary(summary, log)
     log(f"elapsed seconds = {elapsed:.3f}")
@@ -982,7 +1029,10 @@ def run_prepared_3d_case_flow(
                 log=log,
                 started=started,
             )
-        except DirectSolveFailure as failure:
+        except (
+            CondensedIterativeSolveFailure,
+            DirectSolveFailure,
+        ) as failure:
             _finish_timed_stage(
                 comm,
                 timings,
@@ -990,7 +1040,7 @@ def run_prepared_3d_case_flow(
                 stage_start,
                 log,
             )
-            return _direct_solve_failure_summary(
+            return _linear_solve_failure_summary(
                 cfg=cfg,
                 out_dir=out_dir,
                 comm=comm,
@@ -1038,7 +1088,7 @@ def run_prepared_3d_case_flow(
                 log,
             )
         except DirectSolveFailure as failure:
-            return _direct_solve_failure_summary(
+            return _linear_solve_failure_summary(
                 cfg=cfg,
                 out_dir=out_dir,
                 comm=comm,
@@ -1325,12 +1375,27 @@ def run_prepared_3d_case_flow(
         )
 
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
-    converged = (reason > 0) and not diagnostic_only_result
     linear_solve_method = (
         "direct_lu"
         if dtn_solver_info is None
         else dtn_solver_info.get("linear_solve_method", "direct_lu")
     )
+    ksp_converged = (reason > 0) and not diagnostic_only_result
+    condensed_iterative_audit = (
+        {}
+        if dtn_solver_info is None
+        else dtn_solver_info.get("condensed_iterative") or {}
+    )
+    iterative_output_eligible = (
+        linear_solve_method != "assembled_condensed_iterative"
+        or condensed_iterative_audit.get("official_output_eligible") is True
+    )
+    iterative_residual_rejected = bool(
+        ksp_converged
+        and linear_solve_method == "assembled_condensed_iterative"
+        and not iterative_output_eligible
+    )
+    converged = ksp_converged and iterative_output_eligible
     stage4_boundary_model = cfg.stage4_boundary_model.lower() if cfg.stage_case.startswith("stage4_") else None
     summary = {
         "case_name": cfg.case_name,
@@ -1341,6 +1406,8 @@ def run_prepared_3d_case_flow(
         if assemble_only_result
         else "diagnostic_factorization_only"
         if factorization_only_result
+        else "failed_iterative_true_residual"
+        if iterative_residual_rejected
         else "completed"
         if converged
         else "failed_not_converged",
@@ -1353,6 +1420,11 @@ def run_prepared_3d_case_flow(
         if assemble_only_result
         else "Matrix diagnostics factorization-only mode stopped after KSPSetUp/LU; KSPSolve and postprocess were skipped."
         if factorization_only_result
+        else (
+            "Condensed iterative KSP converged, but the full recovered true "
+            "residual did not pass <= 1e-9; official outputs were rejected."
+        )
+        if iterative_residual_rejected
         else "PETSc KSP did not converge.",
         "num_mesh_cells": int(num_cells),
         "num_nedelec_dofs": int(num_dofs),
@@ -1503,7 +1575,7 @@ def run_prepared_3d_case_flow(
             if linear_solve_method == "direct_lu"
             else None
         ),
-        "ksp_converged": converged,
+        "ksp_converged": ksp_converged,
         "ksp_converged_reason": reason,
         "ksp_converged_reason_name": reason_name,
         "ksp_iterations": iterations,
@@ -1625,6 +1697,12 @@ def run_prepared_3d_case_flow(
             log(
                 "Matrix diagnostics factorization-only mode: KSPSetUp/LU completed; "
                 "KSPSolve and field postprocess were skipped."
+            )
+        elif iterative_residual_rejected:
+            log(
+                "WARNING: condensed iterative KSP converged, but the full "
+                "recovered true residual failed <= 1e-9; official outputs "
+                "were rejected."
             )
         else:
             log("WARNING: PETSc KSP did not converge.")

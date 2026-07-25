@@ -20,6 +20,7 @@ the default elsewhere.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import gc
 import hashlib
 import json
 import os
@@ -1495,6 +1496,63 @@ def _canonical_condensed_class_arrays(
     return canonical, None
 
 
+def _restore_condensed_projection_aliases(
+    arrays: dict[str, np.ndarray],
+    *,
+    interior_policy: str,
+    high_interior_identity: np.ndarray,
+) -> tuple[dict[str, np.ndarray] | None, str | None, int]:
+    """Restore projection aliases lost by the flat persistent payload.
+
+    The cold construction owns one projection backing store per algebraic
+    embedding, but the v1 NPZ payload serializes each logical array
+    independently.  Re-establish the exact cold ownership graph only after the
+    payload checksum has passed.  A cache entry whose arrays do not satisfy the
+    policy identity is rejected and recomputed.
+    """
+
+    rhs = arrays["rhs_projection"]
+    solution = arrays["solution_embedding"]
+    residual = arrays["residual_projection"]
+    if interior_policy == "high":
+        identity = np.asarray(high_interior_identity, dtype=np.float64)
+        for name, array in (
+            ("rhs_projection", rhs),
+            ("solution_embedding", solution),
+            ("residual_projection", residual),
+        ):
+            if not np.array_equal(array, identity):
+                return (
+                    None,
+                    f"{name}_high_identity_alias_mismatch",
+                    0,
+                )
+        bytes_elided = int(rhs.nbytes + solution.nbytes + residual.nbytes)
+        arrays["rhs_projection"] = identity
+        arrays["solution_embedding"] = identity
+        arrays["residual_projection"] = identity
+        return arrays, None, bytes_elided
+    if interior_policy == "low":
+        solution_transpose = solution.T
+        if not np.array_equal(rhs, solution_transpose):
+            return (
+                None,
+                "rhs_projection_low_transpose_alias_mismatch",
+                0,
+            )
+        if not np.array_equal(residual, solution_transpose):
+            return (
+                None,
+                "residual_projection_low_transpose_alias_mismatch",
+                0,
+            )
+        bytes_elided = int(rhs.nbytes + residual.nbytes)
+        arrays["rhs_projection"] = solution_transpose
+        arrays["residual_projection"] = solution_transpose
+        return arrays, None, bytes_elided
+    return None, "projection_alias_interior_policy_invalid", 0
+
+
 def _condensed_class_content_sha256(
     arrays: Mapping[str, np.ndarray],
 ) -> str:
@@ -1566,7 +1624,7 @@ def _load_persistent_condensed_class(
     try:
         with np.load(path, allow_pickle=False) as archive:
             loaded = {
-                name: np.asarray(archive[name]).copy()
+                name: np.asarray(archive[name])
                 for name in archive.files
             }
     except (OSError, ValueError, KeyError, EOFError, BadZipFile):
@@ -2667,6 +2725,8 @@ def build_unconstrained_assembly_time_condensation(
     local_condensed_cache_read_bytes = 0
     local_condensed_cache_write_bytes = 0
     local_condensed_class_constructions = 0
+    local_condensed_projection_alias_restore_count = 0
+    local_condensed_projection_alias_bytes_elided = 0
     local_condensed_cache_miss_reasons: dict[str, int] = {}
     local_condensed_cache_error = None
     raw_tensor_sha_by_policy_key: dict[tuple[Any, ...], str] = {}
@@ -2807,7 +2867,32 @@ def build_unconstrained_assembly_time_condensation(
                         + 1
                     )
                 else:
-                    local_condensed_cache_hits += 1
+                    (
+                        class_arrays,
+                        alias_reason,
+                        alias_bytes_elided,
+                    ) = _restore_condensed_projection_aliases(
+                        class_arrays,
+                        interior_policy=interior_policy,
+                        high_interior_identity=high_interior_identity,
+                    )
+                    if class_arrays is None:
+                        assert alias_reason is not None
+                        local_condensed_cache_miss_reasons[
+                            alias_reason
+                        ] = (
+                            local_condensed_cache_miss_reasons.get(
+                                alias_reason,
+                                0,
+                            )
+                            + 1
+                        )
+                    else:
+                        local_condensed_cache_hits += 1
+                        local_condensed_projection_alias_restore_count += 1
+                        local_condensed_projection_alias_bytes_elided += int(
+                            alias_bytes_elided
+                        )
             else:
                 local_condensed_cache_miss_reasons["refresh_forced"] = (
                     local_condensed_cache_miss_reasons.get(
@@ -3209,6 +3294,18 @@ def build_unconstrained_assembly_time_condensation(
         condensed_cache_write_count = int(
             comm.allreduce(local_condensed_cache_writes, op=MPI.SUM)
         )
+        condensed_projection_alias_restore_count = int(
+            comm.allreduce(
+                local_condensed_projection_alias_restore_count,
+                op=MPI.SUM,
+            )
+        )
+        condensed_projection_alias_bytes_elided = int(
+            comm.allreduce(
+                local_condensed_projection_alias_bytes_elided,
+                op=MPI.SUM,
+            )
+        )
         condensed_cache_read_attempt_count = int(
             comm.allreduce(
                 local_condensed_cache_read_attempts,
@@ -3264,6 +3361,8 @@ def build_unconstrained_assembly_time_condensation(
         condensed_cache_hit_count = 0
         condensed_cache_miss_count = 0
         condensed_cache_write_count = 0
+        condensed_projection_alias_restore_count = 0
+        condensed_projection_alias_bytes_elided = 0
         condensed_cache_read_attempt_count = 0
         condensed_cache_raw_tensor_hash_count = 0
         condensed_cache_read_seconds = 0.0
@@ -3278,6 +3377,14 @@ def build_unconstrained_assembly_time_condensation(
         raise RuntimeError(
             "persistent condensed class hits plus misses do not match "
             "rank-local oriented class uses"
+        )
+    if (
+        condensed_projection_alias_restore_count
+        != condensed_cache_hit_count
+    ) and condensed_cache_enabled:
+        raise RuntimeError(
+            "every persistent condensed class hit must restore its "
+            "policy-bound projection aliases"
         )
     persistent_condensed_class_cache_audit = {
         "schema_version": (
@@ -3324,6 +3431,21 @@ def build_unconstrained_assembly_time_condensation(
         "arrays_restored_on_hit": sorted(
             _CONDENSED_CLASS_ARRAY_DTYPES
         ),
+        "projection_alias_restore_policy": {
+            "high": "one_rank_shared_high_interior_identity",
+            "low": (
+                "stored_solution_embedding_with_rhs_and_residual_"
+                "transpose_views"
+            ),
+        },
+        "projection_alias_restore_count_sum": (
+            condensed_projection_alias_restore_count
+        ),
+        "projection_alias_retained_bytes_elided_sum": (
+            condensed_projection_alias_bytes_elided
+        ),
+        "projection_alias_validation_is_fail_closed": True,
+        "npz_member_extra_copy": False,
         "stages_skipped_on_hit": [
             "cell_tensor_orientation",
             "Aii_factorization",
@@ -3878,6 +4000,121 @@ def prepare_cell_interior_rhs_recovery(
     return audit
 
 
+def trim_warm_persistent_condensed_cache_heap(
+    condensed: AssemblyTimeCondensedSystem,
+) -> dict[str, Any]:
+    """Return freed warm-cache heap pages before global solver setup.
+
+    This helper is intentionally inert for the ordinary cache-off path and for
+    a cold persistent-cache build.  It must be called only after
+    :func:`prepare_cell_interior_rhs_recovery` has released the non-primal
+    class caches; the Stage-4 caller owns that lifecycle point.
+    """
+
+    cache_audit = condensed.build_audit.get(
+        "persistent_condensed_class_cache"
+    )
+    if not isinstance(cache_audit, dict):
+        raise RuntimeError("persistent condensed cache audit is unavailable")
+    previous = cache_audit.get("warm_restore_heap_trim_before_ksp")
+    if isinstance(previous, dict):
+        return previous
+
+    enabled = bool(cache_audit.get("enabled"))
+    hit_count = int(cache_audit.get("hit_count_sum") or 0)
+    eligible = enabled and hit_count > 0
+    audit: dict[str, Any] = {
+        "schema_version": (
+            "task035b.persistent-condensed-warm-heap-trim.v1"
+        ),
+        "eligible": eligible,
+        "called": False,
+        "cache_enabled": enabled,
+        "cache_hit_count_sum": hit_count,
+        "reason": (
+            None
+            if eligible
+            else "cache_disabled"
+            if not enabled
+            else "no_warm_cache_hits"
+        ),
+        "ordinary_default_changed": False,
+    }
+    if not eligible:
+        cache_audit["warm_restore_heap_trim_before_ksp"] = audit
+        return audit
+
+    lifecycle = condensed.build_audit.get("recovery_cache_lifecycle")
+    if (
+        not isinstance(lifecycle, dict)
+        or not lifecycle.get("release_nonprimal_caches")
+    ):
+        raise RuntimeError(
+            "warm persistent cache heap trim requires released non-primal "
+            "recovery caches"
+        )
+    retained_nonprimal = {
+        "interior_lu_by_class": condensed.interior_lu_by_class,
+        "interior_rhs_projection_by_class": (
+            condensed.interior_rhs_projection_by_class
+        ),
+        "interior_solution_embedding_by_class": (
+            condensed.interior_solution_embedding_by_class
+        ),
+        "dual_interior_from_trace_by_class": (
+            condensed.dual_interior_from_trace_by_class
+        ),
+    }
+    if any(retained_nonprimal.values()):
+        raise RuntimeError(
+            "warm persistent cache heap trim found retained non-primal caches"
+        )
+
+    collected_local = int(gc.collect())
+    from .common_3d_utils import _trim_process_heap
+
+    local_trim = _trim_process_heap()
+    comm = condensed.matrix.getComm().tompi4py()
+    trim_by_rank = comm.allgather(dict(local_trim))
+
+    def optional_sum(name: str) -> float | None:
+        values = [entry.get(name) for entry in trim_by_rank]
+        if any(value is None for value in values):
+            return None
+        return float(sum(float(value) for value in values))
+
+    audit.update(
+        {
+            "called": True,
+            "reason": None,
+            "gc_collected_objects_rank_sum": int(
+                comm.allreduce(collected_local, op=MPI.SUM)
+            ),
+            "implementation": "gc_collect_then_glibc_malloc_trim",
+            "heap_trim_implementation": local_trim.get("implementation"),
+            "supported_on_all_ranks": all(
+                bool(entry.get("supported")) for entry in trim_by_rank
+            ),
+            "succeeded_on_all_ranks": all(
+                bool(entry.get("succeeded")) for entry in trim_by_rank
+            ),
+            "return_codes_by_rank": [
+                (
+                    None
+                    if entry.get("return_code") is None
+                    else int(entry["return_code"])
+                )
+                for entry in trim_by_rank
+            ],
+            "sum_rss_before_mb": optional_sum("rss_before_mb"),
+            "sum_rss_after_mb": optional_sum("rss_after_mb"),
+            "sum_rss_released_mb": optional_sum("rss_released_mb"),
+        }
+    )
+    cache_audit["warm_restore_heap_trim_before_ksp"] = audit
+    return audit
+
+
 def recover_owned_cell_interiors(
     condensed: AssemblyTimeCondensedSystem,
     active_trace_values: np.ndarray,
@@ -4353,4 +4590,5 @@ __all__ = [
     "recover_full_dual_from_active_trace",
     "recover_owned_cell_interiors",
     "register_appended_dual_interior_coupling",
+    "trim_warm_persistent_condensed_cache_heap",
 ]

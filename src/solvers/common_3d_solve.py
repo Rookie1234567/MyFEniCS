@@ -16,7 +16,7 @@ from dolfinx.fem import petsc as fem_petsc
 from ..common.config_3d import SimulationConfig3D
 
 
-class DirectSolveFailure(RuntimeError):
+class _PetscSolveFailure(RuntimeError):
     """Carry PETSc objects far enough to write a diagnostic summary."""
 
     def __init__(
@@ -52,6 +52,14 @@ class DirectSolveFailure(RuntimeError):
             if obj is not None and getattr(obj, "handle", 0):
                 obj.destroy()
             setattr(self, name, None)
+
+
+class DirectSolveFailure(_PetscSolveFailure):
+    """PETSc failure from the direct-LU path."""
+
+
+class CondensedIterativeSolveFailure(_PetscSolveFailure):
+    """PETSc failure from the opt-in condensed iterative path."""
 
 
 def _direct_lu_petsc_options() -> dict[str, Any]:

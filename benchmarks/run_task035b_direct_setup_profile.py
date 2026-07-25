@@ -946,6 +946,10 @@ def _extract_setup_evidence(
                     "stage4_dtn_cell_interior_rhs_"
                     "prepare_and_cache_release_seconds",
                 ),
+                "warm_persistent_cache_heap_trim": _number(
+                    summary,
+                    "stage4_dtn_warm_persistent_cache_heap_trim_seconds",
+                ),
                 "cell_interior": _number(
                     summary,
                     "stage4_dtn_cell_static_condensation_recovery_seconds",

@@ -25,6 +25,7 @@ from ..common.modes_3d import (
 )
 from ..constraints.floquet_3d import DoubleFloquet3DData
 from .common_3d_solve import (
+    CondensedIterativeSolveFailure,
     DirectSolveFailure,
     _petsc_factor_inventory,
     _petsc_matrix_stats,
@@ -46,6 +47,7 @@ from .hcurl_assembly_time_condensation import (
     prepare_cell_interior_rhs_recovery,
     recover_owned_cell_interiors,
     register_appended_dual_interior_coupling,
+    trim_warm_persistent_condensed_cache_heap,
     _orient_cell_tensor,
 )
 from .mpc_form_action import MpcFormActionContext
@@ -56,6 +58,16 @@ DTN_PORT_MODAL_POWER_SOURCE = "dtn_port_modal_amplitudes"
 DTN_PORT_MODAL_REFERENCE = (
     "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation"
 )
+
+
+def _petsc_solve_failure_type(iterative_profile: str | None):
+    """Select path-specific failure semantics without changing direct behavior."""
+
+    return (
+        CondensedIterativeSolveFailure
+        if iterative_profile is not None
+        else DirectSolveFailure
+    )
 
 
 def _complex_text(value: complex) -> str:
@@ -1351,7 +1363,8 @@ def _solve_augmented_system(
                 sub_ksp.getPC().setFactorLevels(0)
             ksp.setUp()
     except PETSc.Error as exc:
-        raise DirectSolveFailure(
+        failure_type = _petsc_solve_failure_type(iterative_profile)
+        raise failure_type(
             (
                 "PETSc condensed iterative preconditioner setup failed."
                 if iterative_profile is not None
@@ -1475,7 +1488,8 @@ def _solve_augmented_system(
     try:
         ksp.solve(b_aug, x_aug)
     except PETSc.Error as exc:
-        raise DirectSolveFailure(
+        failure_type = _petsc_solve_failure_type(iterative_profile)
+        raise failure_type(
             (
                 "PETSc condensed iterative solve raised an error."
                 if iterative_profile is not None
@@ -1664,6 +1678,25 @@ def _linear_residual(A: PETSc.Mat, b: PETSc.Vec, x: PETSc.Vec) -> dict[str, floa
             "linear_system_residual_norm": None,
             "linear_system_relative_residual": None,
         }
+
+
+def _iterative_official_output_eligible(
+    iterative_profile: str | None,
+    *,
+    converged_reason: int,
+    full_relative_residual: Any,
+) -> bool:
+    """Require a converged KSP and official residual before iterative outputs."""
+
+    if iterative_profile is None:
+        return True
+    return bool(
+        converged_reason > 0
+        and isinstance(full_relative_residual, (int, float))
+        and not isinstance(full_relative_residual, bool)
+        and np.isfinite(float(full_relative_residual))
+        and float(full_relative_residual) <= 1.0e-9
+    )
 
 
 def _write_port_outputs(
@@ -2772,6 +2805,21 @@ def solve_stage4_dtn_port_total_field(
                 op=MPI.MAX,
             )
         )
+        warm_cache_trim_started = time.perf_counter()
+        warm_cache_trim = trim_warm_persistent_condensed_cache_heap(
+            assembly_time_system
+        )
+        timing_details[
+            "stage4_dtn_warm_persistent_cache_heap_trim_seconds"
+        ] = float(
+            comm.allreduce(
+                time.perf_counter() - warm_cache_trim_started,
+                op=MPI.MAX,
+            )
+        )
+        recovery_cache_lifecycle[
+            "warm_persistent_condensed_cache_heap_trim"
+        ] = warm_cache_trim
         _write_progress_event(
             out_dir,
             comm,
@@ -2788,6 +2836,9 @@ def solve_stage4_dtn_port_total_field(
             extra={
                 "recovery_cache_lifecycle": (
                     recovery_cache_lifecycle
+                ),
+                "warm_persistent_condensed_cache_heap_trim": (
+                    warm_cache_trim
                 ),
             },
         )
@@ -2992,7 +3043,7 @@ def solve_stage4_dtn_port_total_field(
             factorization_only=cfg.matrix_diagnostics_factorization_only,
             iterative_profile=cfg.stage4_condensed_iterative_profile,
         )
-    except DirectSolveFailure as exc:
+    except (CondensedIterativeSolveFailure, DirectSolveFailure) as exc:
         exc.timing_details.update(timing_details)
         exc.extra_summary.setdefault("solver_info", {})
         exc.extra_summary["solver_info"].update(
@@ -3175,13 +3226,18 @@ def solve_stage4_dtn_port_total_field(
         )
     else:
         linear_residual = _linear_residual(A_aug, b_aug, x_aug)
+    full_relative_residual = linear_residual.get(
+        "linear_system_relative_residual"
+    )
+    iterative_output_eligible = _iterative_official_output_eligible(
+        cfg.stage4_condensed_iterative_profile,
+        converged_reason=int(ksp.getConvergedReason()),
+        full_relative_residual=full_relative_residual,
+    )
     condensed_iterative_audit = ksp_telemetry.get(
         "condensed_iterative"
     )
     if isinstance(condensed_iterative_audit, dict):
-        full_relative_residual = linear_residual.get(
-            "linear_system_relative_residual"
-        )
         checks = condensed_iterative_audit[
             "formal_first_screen_checks"
         ]
@@ -3193,6 +3249,20 @@ def solve_stage4_dtn_port_total_field(
         condensed_iterative_audit[
             "full_explicit_true_residual"
         ] = linear_residual
+        condensed_iterative_audit[
+            "official_output_eligible"
+        ] = iterative_output_eligible
+        condensed_iterative_audit["official_output_gate"] = {
+            "ksp_converged_reason_positive": bool(
+                int(ksp.getConvergedReason()) > 0
+            ),
+            "full_explicit_true_residual_le_1e-9": checks[
+                "full_explicit_true_residual_le_1e-9"
+            ],
+            "official_port_and_field_outputs_persisted": (
+                iterative_output_eligible
+            ),
+        }
         condensed_iterative_audit["screen_status"] = (
             "assembled_factor_free_first_screen_pass"
             if checks["pass"]
@@ -3285,19 +3355,68 @@ def solve_stage4_dtn_port_total_field(
             ),
         }
     port_metrics.update(timing_details)
-    _write_port_outputs(out_dir, cfg, modes, aux_values, incident_projections, port_metrics, comm)
+    if cfg.stage4_condensed_iterative_profile is not None:
+        port_metrics["iterative_official_output_eligible"] = (
+            iterative_output_eligible
+        )
+        port_metrics["iterative_output_semantics"] = (
+            "official_persisted"
+            if iterative_output_eligible
+            else "diagnostic_in_memory_only_not_persisted"
+        )
+    if iterative_output_eligible:
+        _write_port_outputs(
+            out_dir,
+            cfg,
+            modes,
+            aux_values,
+            incident_projections,
+            port_metrics,
+            comm,
+        )
     _write_progress_event(
         out_dir,
         comm,
-        stage="after_official_rta",
-        status="end",
+        stage=(
+            "after_official_rta"
+            if iterative_output_eligible
+            else "iterative_port_outputs_rejected"
+        ),
+        status="end" if iterative_output_eligible else "controlled_negative",
         started=started,
         dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
         constraints=floquet_data.num_constraints,
         petsc_options=petsc_options,
         extra={
-            "R_total": port_metrics.get("R_total"),
-            "T_total": port_metrics.get("T_total"),
+            "R_total": (
+                port_metrics.get("R_total")
+                if iterative_output_eligible
+                else None
+            ),
+            "T_total": (
+                port_metrics.get("T_total")
+                if iterative_output_eligible
+                else None
+            ),
+            **(
+                {
+                    "diagnostic_R_total_not_persisted": (
+                        None
+                        if iterative_output_eligible
+                        else port_metrics.get("R_total")
+                    ),
+                    "diagnostic_T_total_not_persisted": (
+                        None
+                        if iterative_output_eligible
+                        else port_metrics.get("T_total")
+                    ),
+                    "iterative_official_output_eligible": (
+                        iterative_output_eligible
+                    ),
+                }
+                if cfg.stage4_condensed_iterative_profile is not None
+                else {}
+            ),
         },
     )
 

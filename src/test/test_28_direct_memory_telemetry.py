@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import csv
+from dataclasses import replace
 import json
 import os
 from pathlib import Path
 import tempfile
+import time
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from benchmarks.run_task035b_condensed_iterative import _iterative_config
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
     _add_cpu_core_equivalents,
@@ -29,16 +33,25 @@ from benchmarks.run_direct_memory_forensics import (
     _two_point_power_law_prediction,
     _validate_h2_gate,
 )
+from src.solvers.common_3d_case_flow import (
+    _linear_solve_failure_summary,
+)
 from src.solvers.common_3d_solve import (
+    CondensedIterativeSolveFailure,
     DirectSolveFailure,
     _petsc_factor_inventory,
     _petsc_matrix_stats,
 )
 from src.solvers.common_3d_utils import (
     _cgroup_memory_fields,
+    _clear_official_field_outputs,
     _current_rss_mb,
 )
-from src.solvers.dtn_port_3d import _solve_augmented_system
+from src.solvers.dtn_port_3d import (
+    _iterative_official_output_eligible,
+    _petsc_solve_failure_type,
+    _solve_augmented_system,
+)
 
 
 class DirectMemoryTelemetryTests(unittest.TestCase):
@@ -126,6 +139,194 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         self.assertEqual([obj.destroy_count for obj in objects], [1, 1, 1, 1])
         self.assertIsNone(failure.A)
         self.assertIsNone(failure.ksp)
+
+    def test_condensed_iterative_failure_semantics_are_distinct(self) -> None:
+        self.assertIs(
+            _petsc_solve_failure_type(None),
+            DirectSolveFailure,
+        )
+        self.assertIs(
+            _petsc_solve_failure_type("gmres_jacobi"),
+            CondensedIterativeSolveFailure,
+        )
+        failure = CondensedIterativeSolveFailure(
+            "iterative diagnostic",
+            failure_stage="stage4_dtn_augmented_solve",
+            petsc_error=RuntimeError("unit_test"),
+        )
+        self.assertNotIsInstance(failure, DirectSolveFailure)
+
+    def test_iterative_exception_summary_is_not_direct_lu(self) -> None:
+        cfg = _iterative_config("gmres_jacobi", h_nm=15.0)
+        mesh_data = SimpleNamespace(
+            mesh_cell_type_resolved="hexahedron",
+            mesh_cells_resolved=(6, 2, 10),
+            mesh_spacing_mode_resolved="uniform",
+            mesh_axis_cell_stats={},
+            material_plane_alignment={},
+        )
+        failure = CondensedIterativeSolveFailure(
+            "iterative setup failed",
+            failure_stage="stage4_dtn_augmented_ksp_setup",
+            petsc_error=RuntimeError("unit_test"),
+            solver_backend="PETSc assembled condensed iterative",
+        )
+        log_lines: list[str] = []
+        with tempfile.TemporaryDirectory() as tmp:
+            summary = _linear_solve_failure_summary(
+                cfg=cfg,
+                out_dir=Path(tmp),
+                comm=MPI.COMM_SELF,
+                timings={},
+                started=time.perf_counter(),
+                log=log_lines.append,
+                log_lines=log_lines,
+                petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
+                selected_parallel_lu="mumps",
+                dot_k_p=0.0j,
+                failure=failure,
+                num_cells=120,
+                num_dofs=74890,
+                floquet_data=None,
+                mesh_data=mesh_data,
+                domain_tag_volumes={},
+                unconstrained_rhs_norm=None,
+                unconstrained_matrix_stats=None,
+                field_formulation="layered_scattered",
+                solve_stage4_dtn_port=True,
+                raw_boundary_dofs_global=0,
+                boundary_dofs_global=0,
+                ooc_info={},
+            )
+        self.assertEqual(
+            summary["case_status"],
+            "failed_condensed_iterative_exception",
+        )
+        self.assertEqual(
+            summary["linear_solve_method"],
+            "assembled_condensed_iterative",
+        )
+        self.assertIsNone(summary["petsc_direct_solver_profile"])
+        self.assertEqual(summary["linear_solve_petsc_options"], {})
+        self.assertTrue(summary["iterative_raw_petsc_options_ignored"])
+        self.assertIsNone(summary["selected_parallel_lu_solver_type"])
+        self.assertIn("condensed_iterative_solve_exception", summary)
+        self.assertNotIn("direct_solve_exception", summary)
+
+    def test_direct_exception_summary_remains_direct_lu(self) -> None:
+        cfg = replace(
+            _iterative_config("gmres_jacobi", h_nm=15.0),
+            stage4_condensed_iterative_profile=None,
+        )
+        mesh_data = SimpleNamespace(
+            mesh_cell_type_resolved="hexahedron",
+            mesh_cells_resolved=(6, 2, 10),
+            mesh_spacing_mode_resolved="uniform",
+            mesh_axis_cell_stats={},
+            material_plane_alignment={},
+        )
+        failure = DirectSolveFailure(
+            "direct setup failed",
+            failure_stage="stage4_dtn_augmented_ksp_setup",
+            petsc_error=RuntimeError("unit_test"),
+            solver_backend="PETSc direct LU",
+        )
+        log_lines: list[str] = []
+        with tempfile.TemporaryDirectory() as tmp:
+            summary = _linear_solve_failure_summary(
+                cfg=cfg,
+                out_dir=Path(tmp),
+                comm=MPI.COMM_SELF,
+                timings={},
+                started=time.perf_counter(),
+                log=log_lines.append,
+                log_lines=log_lines,
+                petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
+                selected_parallel_lu="mumps",
+                dot_k_p=0.0j,
+                failure=failure,
+                num_cells=120,
+                num_dofs=74890,
+                floquet_data=None,
+                mesh_data=mesh_data,
+                domain_tag_volumes={},
+                unconstrained_rhs_norm=None,
+                unconstrained_matrix_stats=None,
+                field_formulation="layered_scattered",
+                solve_stage4_dtn_port=True,
+                raw_boundary_dofs_global=0,
+                boundary_dofs_global=0,
+                ooc_info={},
+            )
+        self.assertEqual(summary["case_status"], "failed_direct_lu_exception")
+        self.assertEqual(summary["linear_solve_method"], "direct_lu")
+        self.assertEqual(
+            summary["petsc_direct_solver_profile"],
+            cfg.petsc_direct_solver_profile_requested,
+        )
+        self.assertEqual(
+            summary["linear_solve_petsc_options"]["pc_type"],
+            "lu",
+        )
+        self.assertEqual(
+            summary["selected_parallel_lu_solver_type"],
+            "mumps",
+        )
+        self.assertIn("direct_solve_exception", summary)
+        self.assertNotIn("condensed_iterative_solve_exception", summary)
+
+    def test_iterative_official_outputs_require_ksp_and_true_residual(
+        self,
+    ) -> None:
+        self.assertTrue(
+            _iterative_official_output_eligible(
+                None,
+                converged_reason=-3,
+                full_relative_residual=None,
+            )
+        )
+        self.assertFalse(
+            _iterative_official_output_eligible(
+                "gmres_jacobi",
+                converged_reason=-3,
+                full_relative_residual=1.0e-12,
+            )
+        )
+        self.assertFalse(
+            _iterative_official_output_eligible(
+                "gmres_jacobi",
+                converged_reason=2,
+                full_relative_residual=2.0e-9,
+            )
+        )
+        self.assertTrue(
+            _iterative_official_output_eligible(
+                "gmres_jacobi",
+                converged_reason=2,
+                full_relative_residual=1.0e-10,
+            )
+        )
+
+    def test_failure_cleanup_removes_port_and_amplitude_outputs(self) -> None:
+        official_names = (
+            "port_power.json",
+            "port_power.csv",
+            "dtn_port_power_metrics_3d.json",
+            "dtn_port_diffraction_orders_3d.json",
+            "dtn_port_diffraction_orders_3d.csv",
+            "dtn_auxiliary_amplitudes_3d.json",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in official_names:
+                (root / name).write_text("diagnostic", encoding="utf-8")
+            retained = root / "run_summary.json"
+            retained.write_text("{}", encoding="utf-8")
+            _clear_official_field_outputs(root, MPI.COMM_SELF)
+            self.assertFalse(
+                any((root / name).exists() for name in official_names)
+            )
+            self.assertTrue(retained.is_file())
 
     def test_memory_snapshot_schema(self) -> None:
         self.assertIsNotNone(_current_rss_mb())

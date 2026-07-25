@@ -60,6 +60,7 @@ def _worker_result() -> dict:
             "stage4_dtn_modal_vector_assembly_seconds": 1.7,
             "stage4_dtn_modal_block_insert_seconds": 0.1,
             "stage4_dtn_augmented_matrix_finalize_seconds": 0.3,
+            "stage4_dtn_warm_persistent_cache_heap_trim_seconds": 0.07,
             "stage4_dtn_cell_static_condensation_recovery_seconds": 0.4,
             "stage4_dtn_solution_backsubstitution_seconds": 0.05,
             "R00_total": 0.72,
@@ -267,6 +268,10 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             0.06,
         )
         self.assertEqual(timings["dtn"]["non_ksp_derived"], 13.5)
+        self.assertEqual(
+            timings["recovery"]["warm_persistent_cache_heap_trim"],
+            0.07,
+        )
         self.assertEqual(
             evidence["cell_static_raw_tensor_evaluations"],
             0,

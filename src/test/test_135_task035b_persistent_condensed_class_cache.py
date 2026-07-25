@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 import ufl
@@ -19,6 +20,7 @@ from src.solvers.hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
     prepare_cell_interior_rhs_recovery,
     recover_owned_cell_interiors,
+    trim_warm_persistent_condensed_cache_heap,
 )
 
 
@@ -108,6 +110,111 @@ def _matrix_relative_difference(left, right) -> float:
 
 
 class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
+    def test_policy_bound_projection_alias_restore(self) -> None:
+        identity = np.eye(3, dtype=np.float64)
+
+        def high_arrays() -> dict[str, np.ndarray]:
+            return {
+                "rhs_projection": identity.copy(),
+                "solution_embedding": identity.copy(),
+                "residual_projection": identity.copy(),
+            }
+
+        first, reason, bytes_elided = (
+            assembly_time._restore_condensed_projection_aliases(
+                high_arrays(),
+                interior_policy="high",
+                high_interior_identity=identity,
+            )
+        )
+        second, second_reason, second_bytes_elided = (
+            assembly_time._restore_condensed_projection_aliases(
+                high_arrays(),
+                interior_policy="high",
+                high_interior_identity=identity,
+            )
+        )
+        self.assertIsNone(reason)
+        self.assertIsNone(second_reason)
+        self.assertEqual(bytes_elided, 3 * identity.nbytes)
+        self.assertEqual(second_bytes_elided, bytes_elided)
+        assert first is not None
+        assert second is not None
+        for restored in (first, second):
+            self.assertIs(restored["rhs_projection"], identity)
+            self.assertIs(restored["solution_embedding"], identity)
+            self.assertIs(restored["residual_projection"], identity)
+
+        invalid_high = high_arrays()
+        invalid_high["rhs_projection"][0, 0] = 2.0
+        restored, reason, bytes_elided = (
+            assembly_time._restore_condensed_projection_aliases(
+                invalid_high,
+                interior_policy="high",
+                high_interior_identity=identity,
+            )
+        )
+        self.assertIsNone(restored)
+        self.assertEqual(
+            reason,
+            "rhs_projection_high_identity_alias_mismatch",
+        )
+        self.assertEqual(bytes_elided, 0)
+
+        solution = np.arange(8, dtype=np.float64).reshape((4, 2))
+        low_arrays = {
+            "rhs_projection": solution.T.copy(),
+            "solution_embedding": solution.copy(),
+            "residual_projection": solution.T.copy(),
+        }
+        restored, reason, bytes_elided = (
+            assembly_time._restore_condensed_projection_aliases(
+                low_arrays,
+                interior_policy="low",
+                high_interior_identity=identity,
+            )
+        )
+        self.assertIsNone(reason)
+        assert restored is not None
+        self.assertEqual(
+            bytes_elided,
+            2 * solution.T.nbytes,
+        )
+        self.assertIs(
+            restored["rhs_projection"],
+            restored["residual_projection"],
+        )
+        self.assertTrue(
+            np.shares_memory(
+                restored["rhs_projection"],
+                restored["solution_embedding"],
+            )
+        )
+        np.testing.assert_array_equal(
+            restored["rhs_projection"],
+            restored["solution_embedding"].T,
+        )
+
+        invalid_low = {
+            "rhs_projection": solution.T.copy(),
+            "solution_embedding": solution.copy(),
+            "residual_projection": solution.T.copy(),
+        }
+        invalid_low["residual_projection"][0, 0] += 1.0
+        restored, reason, bytes_elided = (
+            assembly_time._restore_condensed_projection_aliases(
+                invalid_low,
+                interior_policy="low",
+                high_interior_identity=identity,
+            )
+        )
+        self.assertIsNone(restored)
+        self.assertEqual(
+            reason,
+            "residual_projection_low_transpose_alias_mismatch",
+        )
+        self.assertEqual(bytes_elided, 0)
+
     def test_identity_binds_operator_tensor_orientation_policy_and_rank(
         self,
     ) -> None:
@@ -255,6 +362,35 @@ class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
                 warm.build_audit["schur_product_seconds_max"],
                 0.0,
             )
+            self.assertEqual(
+                warm_audit["projection_alias_restore_count_sum"],
+                warm_audit["hit_count_sum"],
+            )
+            self.assertGreater(
+                warm_audit[
+                    "projection_alias_retained_bytes_elided_sum"
+                ],
+                0,
+            )
+            class_key = next(
+                iter(warm.interior_rhs_projection_by_class)
+            )
+            self.assertIs(
+                warm.interior_rhs_projection_by_class[class_key],
+                warm.interior_solution_embedding_by_class[class_key],
+            )
+            self.assertIs(
+                warm.interior_rhs_projection_by_class[class_key],
+                warm.interior_residual_projection_by_class[class_key],
+            )
+            self.assertEqual(
+                warm.build_audit["native_object_ledger"][
+                    "retained_rank_sum_total_bytes"
+                ],
+                cold.build_audit["native_object_ledger"][
+                    "retained_rank_sum_total_bytes"
+                ],
+            )
             self.assertLess(
                 _matrix_relative_difference(warm.matrix, cold.matrix),
                 1.0e-14,
@@ -302,6 +438,31 @@ class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
                 full_rhs,
                 release_nonprimal_caches=True,
             )
+            trim_result = {
+                "implementation": "glibc_malloc_trim",
+                "supported": True,
+                "succeeded": True,
+                "return_code": 1,
+                "rss_before_mb": 100.0,
+                "rss_after_mb": 90.0,
+                "rss_released_mb": 10.0,
+                "reason": None,
+            }
+            with mock.patch(
+                "src.solvers.common_3d_utils._trim_process_heap",
+                return_value=trim_result,
+            ) as trim:
+                trim_audit = trim_warm_persistent_condensed_cache_heap(
+                    warm
+                )
+            trim.assert_called_once_with()
+            self.assertTrue(trim_audit["eligible"])
+            self.assertTrue(trim_audit["called"])
+            self.assertTrue(trim_audit["supported_on_all_ranks"])
+            self.assertTrue(trim_audit["succeeded_on_all_ranks"])
+            self.assertEqual(trim_audit["return_codes_by_rank"], [1])
+            self.assertEqual(trim_audit["sum_rss_released_mb"], 10.0)
+            self.assertFalse(trim_audit["ordinary_default_changed"])
             after = recover_owned_cell_interiors(
                 warm,
                 active,
@@ -394,6 +555,100 @@ class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
             warm.destroy()
             cold.destroy()
 
+    def test_high_alias_corruption_is_a_fail_closed_cache_miss(
+        self,
+    ) -> None:
+        cell_tags, V, compiled = _one_cell_problem()
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_directory = Path(tmp) / "condensed_cache"
+            cold = build_unconstrained_assembly_time_condensation(
+                compiled,
+                V,
+                cell_tags,
+                persistent_cache_directory=cache_directory,
+                persistent_cache_source_sha="d" * 40,
+                persistent_cache_mode="read_write",
+            )
+            payload = next(cache_directory.glob("condensed_class_*.npz"))
+            manifest_path = payload.with_suffix(".json")
+            with np.load(payload, allow_pickle=False) as archive:
+                arrays = {
+                    name: np.asarray(archive[name]).copy()
+                    for name in archive.files
+                }
+            arrays["rhs_projection"][0, 0] += 1.0
+            with payload.open("wb") as stream:
+                np.savez(stream, **arrays)
+            manifest = json.loads(
+                manifest_path.read_text(encoding="utf-8")
+            )
+            manifest["payload_size_bytes"] = int(payload.stat().st_size)
+            manifest["content_sha256"] = (
+                assembly_time._condensed_class_content_sha256(arrays)
+            )
+            manifest_path.write_text(
+                json.dumps(
+                    manifest,
+                    ensure_ascii=True,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            recomputed = build_unconstrained_assembly_time_condensation(
+                compiled,
+                V,
+                cell_tags,
+                persistent_cache_directory=cache_directory,
+                persistent_cache_source_sha="d" * 40,
+                persistent_cache_mode="read_only",
+            )
+            audit = recomputed.build_audit[
+                "persistent_condensed_class_cache"
+            ]
+            self.assertEqual(audit["hit_count_sum"], 0)
+            self.assertEqual(audit["miss_count_sum"], 1)
+            self.assertEqual(audit["construction_count_sum"], 1)
+            self.assertEqual(
+                audit["miss_reasons"],
+                {"rhs_projection_high_identity_alias_mismatch": 1},
+            )
+            self.assertEqual(
+                audit["projection_alias_restore_count_sum"],
+                0,
+            )
+            self.assertLess(
+                _matrix_relative_difference(
+                    recomputed.matrix,
+                    cold.matrix,
+                ),
+                1.0e-14,
+            )
+            recomputed.destroy()
+            cold.destroy()
+
+    def test_heap_trim_is_inert_for_ordinary_cache_off_path(
+        self,
+    ) -> None:
+        cell_tags, V, compiled = _one_cell_problem()
+        ordinary = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            cell_tags,
+        )
+        with mock.patch(
+            "src.solvers.common_3d_utils._trim_process_heap",
+        ) as trim:
+            audit = trim_warm_persistent_condensed_cache_heap(ordinary)
+        trim.assert_not_called()
+        self.assertFalse(audit["eligible"])
+        self.assertFalse(audit["called"])
+        self.assertEqual(audit["reason"], "cache_disabled")
+        self.assertFalse(audit["ordinary_default_changed"])
+        ordinary.destroy()
+
     @unittest.skipUnless(
         MPI.COMM_WORLD.size == 2,
         "MPI2 rank-bound persistent cache check",
@@ -461,6 +716,16 @@ class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
             self.assertEqual(warm_audit["miss_count_sum"], 0)
             self.assertEqual(warm_audit["construction_count_sum"], 0)
             self.assertEqual(warm_audit["read_attempt_count_sum"], 2)
+            self.assertEqual(
+                warm_audit["projection_alias_restore_count_sum"],
+                warm_audit["hit_count_sum"],
+            )
+            self.assertGreater(
+                warm_audit[
+                    "projection_alias_retained_bytes_elided_sum"
+                ],
+                0,
+            )
             self.assertEqual(warm.build_audit["orientation_seconds_max"], 0.0)
             self.assertEqual(warm.build_audit["aii_factor_seconds_max"], 0.0)
             self.assertEqual(warm.build_audit["aii_solve_seconds_max"], 0.0)
