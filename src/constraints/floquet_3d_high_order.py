@@ -11,6 +11,7 @@ from mpi4py import MPI
 from dolfinx import cpp, mesh
 
 from ..common.config_3d import SimulationConfig3D
+from ..geometry.tetra_mesh_audit import canonical_entity_key
 from .high_order_floquet_trace import (
     FloquetTopologyCache,
     FloquetTopologyKey,
@@ -118,6 +119,7 @@ def _build_entity_dof_map(
     msh.topology.create_connectivity(entity_dim, tdim)
     cell_to_entity = msh.topology.connectivity(tdim, entity_dim)
     cell_map = msh.topology.index_map(tdim)
+    entity_map = msh.topology.index_map(entity_dim)
     num_cells = cell_map.size_local + cell_map.num_ghosts
     entity_dofs = [
         V.dofmap.dof_layout.entity_dofs(entity_dim, local_entity)
@@ -149,8 +151,14 @@ def _build_entity_dof_map(
                 dtype=np.int32,
             )
             global_dofs, owners, owned = _local_dof_global_info(V, local_dofs)
+            global_entity_id = int(
+                entity_map.local_to_global(
+                    np.asarray([entity], dtype=np.int32)
+                )[0]
+            )
             record = {
                 "entity": int(entity),
+                "physical_global_entity_id": global_entity_id,
                 "local_dofs": local_dofs,
                 "global_dofs": global_dofs,
                 "owners": owners,
@@ -253,6 +261,7 @@ def _build_periodic_entity_records(
     geometry = cpp.mesh.entities_to_geometry(
         msh._cpp_object, entity_dim, entities, True
     )
+    tolerance = _geometry_tolerance(cfg)
     records: list[dict[str, object]] = []
     for entity, midpoint, geometry_dofs in zip(
         entities, midpoints, geometry, strict=True
@@ -271,6 +280,10 @@ def _build_periodic_entity_records(
             "cell_type": str(msh.basix_cell()).lower(),
             "midpoint": np.asarray(midpoint, dtype=np.float64),
             "geometry_coords": coords,
+            "entity_geometry_key": canonical_entity_key(
+                coords,
+                tolerance,
+            ),
         }
         if int(entity_dim) == 1:
             if coords.shape[0] < 2:
@@ -406,6 +419,14 @@ def _json_packet(
         "midpoint": [float(value) for value in midpoint],
         "entity_dim": int(entity_dim),
         "entity_kind": "edge" if int(entity_dim) == 1 else "face",
+        "physical_global_entity_id": int(
+            record["physical_global_entity_id"]
+        ),
+        "entity_geometry_key": [
+            list(point)
+            for point in record["entity_geometry_key"]  # type: ignore[union-attr]
+        ],
+        "cell_type": str(record["cell_type"]),
     }
     if int(entity_dim) == 1:
         packet["tangent"] = [
@@ -529,6 +550,9 @@ def _pair_entity_blocks(
                 ),
             )
             entity_kind = "edge"
+            vertex_permutation = (
+                (1, 0) if tangent_dot < 0.0 else (0, 1)
+            )
         else:
             shifted_coords = (
                 np.asarray(record["geometry_coords"], dtype=np.float64) - shift
@@ -541,6 +565,7 @@ def _pair_entity_blocks(
                 else face_coefficient_transform(degree, permutation)
             )
             entity_kind = "face"
+            vertex_permutation = permutation
         blocks.append(
             PhaseIndependentConstraintBlock(
                 kind=kind,  # type: ignore[arg-type]
@@ -561,6 +586,22 @@ def _pair_entity_blocks(
                 touches_owned_cell=bool(record["touches_owned_cell"]),
                 entity_kind=entity_kind,  # type: ignore[arg-type]
                 pair_error=pair_error,
+                slave_entity_id=int(record["physical_global_entity_id"]),
+                master_entity_id=int(master["physical_global_entity_id"]),
+                slave_entity_geometry_key=tuple(
+                    tuple(int(component) for component in point)
+                    for point in record["entity_geometry_key"]  # type: ignore[union-attr]
+                ),
+                master_entity_geometry_key=tuple(
+                    tuple(int(component) for component in point)
+                    for point in master["entity_geometry_key"]
+                ),
+                periodic_pair_key=tuple(
+                    int(value)
+                    for value in replies_by_token[token]["pair_key"]
+                ),
+                entity_vertex_permutation=vertex_permutation,
+                cell_type=str(record["cell_type"]),
             )
         )
     return blocks, metrics

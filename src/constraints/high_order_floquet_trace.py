@@ -16,6 +16,10 @@ from basix.ufl import element
 
 PhaseKind = Literal["x", "y", "corner"]
 EntityKind = Literal["edge", "face"]
+EntityGeometryKey = tuple[tuple[int, int, int], ...]
+
+_PHASE_KIND_ORDER = {"x": 0, "y": 1, "corner": 2}
+_ENTITY_KIND_ORDER = {"edge": 0, "face": 1}
 
 
 @dataclass(frozen=True)
@@ -375,6 +379,13 @@ class PhaseIndependentConstraintBlock:
     touches_owned_cell: bool = False
     entity_kind: EntityKind = "edge"
     pair_error: float = 0.0
+    slave_entity_id: int | None = None
+    master_entity_id: int | None = None
+    slave_entity_geometry_key: EntityGeometryKey = ()
+    master_entity_geometry_key: EntityGeometryKey = ()
+    periodic_pair_key: tuple[int, ...] = ()
+    entity_vertex_permutation: tuple[int, ...] = ()
+    cell_type: str = ""
 
     def __post_init__(self) -> None:
         matrix = np.asarray(self.coefficient_transform, dtype=np.complex128)
@@ -400,6 +411,126 @@ class PhaseIndependentConstraintBlock:
             raise ValueError(f"Unsupported trace entity kind {self.entity_kind!r}.")
         if float(self.pair_error) < 0.0:
             raise ValueError("Periodic entity pairing error cannot be negative.")
+        identity_fields_present = (
+            self.slave_entity_id is not None,
+            self.master_entity_id is not None,
+            bool(self.slave_entity_geometry_key),
+            bool(self.master_entity_geometry_key),
+            bool(self.periodic_pair_key),
+            bool(self.entity_vertex_permutation),
+            bool(self.cell_type),
+        )
+        if any(identity_fields_present) and not all(identity_fields_present):
+            raise ValueError(
+                "Physical periodic entity identity must provide both entity IDs, "
+                "both geometry keys, pair key, vertex permutation, and cell type."
+            )
+        if all(identity_fields_present):
+            slave_entity_id = int(self.slave_entity_id)  # type: ignore[arg-type]
+            master_entity_id = int(self.master_entity_id)  # type: ignore[arg-type]
+            if slave_entity_id < 0 or master_entity_id < 0:
+                raise ValueError("Physical periodic entity IDs must be nonnegative.")
+            if slave_entity_id == master_entity_id:
+                raise ValueError(
+                    "A periodic slave and master cannot share one physical entity ID."
+                )
+            slave_key = _normalize_entity_geometry_key(
+                self.slave_entity_geometry_key,
+                label="slave entity geometry key",
+            )
+            master_key = _normalize_entity_geometry_key(
+                self.master_entity_geometry_key,
+                label="master entity geometry key",
+            )
+            if slave_key == master_key:
+                raise ValueError(
+                    "Periodic slave/master physical geometry keys must differ."
+                )
+            pair_key = tuple(int(value) for value in self.periodic_pair_key)
+            if len(pair_key) != 6:
+                raise ValueError(
+                    "A 3D periodic entity pair key must contain six integers."
+                )
+            expected_dimension = 1 if self.entity_kind == "edge" else 2
+            if pair_key[0] != expected_dimension:
+                raise ValueError(
+                    "Periodic pair-key entity dimension disagrees with entity kind."
+                )
+            expected_kind_code = {"x": 1, "y": 2, "corner": 3}[self.kind]
+            if pair_key[1] != expected_kind_code:
+                raise ValueError(
+                    "Periodic pair-key direction disagrees with block kind."
+                )
+            permutation = tuple(
+                int(value) for value in self.entity_vertex_permutation
+            )
+            expected_vertices = (
+                {2}
+                if self.entity_kind == "edge"
+                else ({3} if "tetrahedron" in self.cell_type else {4})
+            )
+            if (
+                len(permutation) not in expected_vertices
+                or sorted(permutation) != list(range(len(permutation)))
+            ):
+                raise ValueError(
+                    "Periodic entity vertex permutation is invalid for its "
+                    "entity kind/cell type."
+                )
+            cell_type = _normalize_cell_type(self.cell_type)
+            if self.entity_kind == "face" and self.kind == "corner":
+                raise ValueError("Periodic faces do not use corner relations.")
+            object.__setattr__(self, "slave_entity_id", slave_entity_id)
+            object.__setattr__(self, "master_entity_id", master_entity_id)
+            object.__setattr__(
+                self,
+                "slave_entity_geometry_key",
+                slave_key,
+            )
+            object.__setattr__(
+                self,
+                "master_entity_geometry_key",
+                master_key,
+            )
+            object.__setattr__(self, "periodic_pair_key", pair_key)
+            object.__setattr__(
+                self,
+                "entity_vertex_permutation",
+                permutation,
+            )
+            object.__setattr__(self, "cell_type", cell_type)
+
+    @property
+    def has_physical_entity_identity(self) -> bool:
+        """Whether this block carries the complete opt-in physical identity."""
+
+        return self.slave_entity_id is not None
+
+
+def _normalize_entity_geometry_key(
+    key: Iterable[Iterable[int]],
+    *,
+    label: str,
+) -> EntityGeometryKey:
+    normalized = tuple(
+        tuple(int(component) for component in point) for point in key
+    )
+    if not normalized or any(len(point) != 3 for point in normalized):
+        raise ValueError(f"{label} must contain nonempty three-component points.")
+    if len(set(normalized)) != len(normalized):
+        raise ValueError(f"{label} contains duplicate physical vertices.")
+    if tuple(sorted(normalized)) != normalized:
+        raise ValueError(f"{label} must use canonical sorted vertex order.")
+    return normalized
+
+
+def _normalize_cell_type(value: str) -> str:
+    normalized = str(value).lower()
+    if "tetrahedron" in normalized:
+        return "tetrahedron"
+    if "hexahedron" in normalized:
+        return "hexahedron"
+    raise ValueError(f"Unsupported physical periodic cell type {value!r}.")
 
 
 @dataclass(frozen=True)
@@ -428,6 +559,169 @@ class FloquetTraceTopology:
             phase_by_kind[block.kind] * block.coefficient_transform
             for block in self.blocks
         )
+
+
+@dataclass(frozen=True, order=True)
+class MissingP6TraceOrbitRelationInput:
+    """One physical periodic relation, ready for p6-transform composition."""
+
+    entity_kind: EntityKind
+    direction: PhaseKind
+    slave_entity_id: int
+    master_entity_id: int
+    slave_entity_geometry_key: EntityGeometryKey
+    master_entity_geometry_key: EntityGeometryKey
+    periodic_pair_key: tuple[int, ...]
+    entity_vertex_permutation: tuple[int, ...]
+    cell_type: str
+
+
+@dataclass(frozen=True)
+class MissingP6TraceOrbitIdentityInput:
+    """Mesh-bound relations; no p6 basis, DWR, rows, or matrix are created."""
+
+    mesh_sha256: str
+    relations: tuple[MissingP6TraceOrbitRelationInput, ...]
+    input_sha256: str
+    scope: str = "identity_only_no_basis_dwr_rows_or_matrix"
+
+
+def _validated_sha256(value: str) -> str:
+    normalized = str(value).lower()
+    try:
+        valid = len(normalized) == 64 and len(bytes.fromhex(normalized)) == 32
+    except ValueError:
+        valid = False
+    if not valid:
+        raise ValueError("mesh_sha256 must contain 64 hexadecimal characters.")
+    return normalized
+
+
+def _block_identity_tuple(block: PhaseIndependentConstraintBlock) -> tuple:
+    if not block.has_physical_entity_identity:
+        raise RuntimeError(
+            "Floquet topology lacks physical entity identity required for "
+            "missing-p6 orbit closure."
+        )
+    if block.cell_type != "hexahedron":
+        raise NotImplementedError(
+            "Missing-p6 orbit identity is qualified only for hexahedra."
+        )
+    return (
+        block.entity_kind,
+        block.kind,
+        int(block.slave_entity_id),  # type: ignore[arg-type]
+        int(block.master_entity_id),  # type: ignore[arg-type]
+        block.slave_entity_geometry_key,
+        block.master_entity_geometry_key,
+        block.periodic_pair_key,
+        block.entity_vertex_permutation,
+        block.cell_type,
+    )
+
+
+def build_missing_p6_trace_orbit_identity_input(
+    topology: FloquetTraceTopology,
+    *,
+    mesh_sha256: str,
+    comm: object,
+) -> MissingP6TraceOrbitIdentityInput:
+    """Canonicalize actual p5 periodic entities into an MPI-complete seed.
+
+    DOLFINx global topology IDs are paired with partition-independent physical
+    geometry keys.  The bridge stops before p6 intertwining, Floquet pullback,
+    active numbering, DWR, or matrix construction.
+    """
+
+    mesh_sha256 = _validated_sha256(mesh_sha256)
+    if int(topology.key.degree) != 5:
+        raise ValueError("Missing-p6 orbit identity requires retained degree p5.")
+    if not hasattr(comm, "allgather"):
+        raise TypeError("comm must provide an MPI-compatible allgather method.")
+    metadata = (
+        mesh_sha256,
+        str(topology.key.element_family),
+        int(topology.key.degree),
+        str(topology.key.orientation_schema),
+    )
+    if any(
+        value != metadata
+        for value in comm.allgather(metadata)  # type: ignore[attr-defined]
+    ):
+        raise RuntimeError("Missing-p6 orbit metadata differs across MPI ranks.")
+
+    local_rows = [_block_identity_tuple(block) for block in topology.blocks]
+    rows = [
+        row
+        for packet in comm.allgather(local_rows)  # type: ignore[attr-defined]
+        for row in packet
+    ]
+    if not rows:
+        raise RuntimeError("Missing-p6 orbit input has no periodic relations.")
+
+    relations_by_geometry: dict[tuple, tuple] = {}
+    for row in rows:
+        relation_key = (row[0], row[1], row[4], row[5])
+        previous = relations_by_geometry.setdefault(relation_key, row)
+        if previous != row:
+            raise RuntimeError(
+                "MPI copies disagree on a physical periodic entity relation."
+            )
+    unique_rows = tuple(relations_by_geometry.values())
+    relations = tuple(
+        MissingP6TraceOrbitRelationInput(
+            entity_kind=row[0],
+            direction=row[1],
+            slave_entity_id=row[2],
+            master_entity_id=row[3],
+            slave_entity_geometry_key=row[4],
+            master_entity_geometry_key=row[5],
+            periodic_pair_key=row[6],
+            entity_vertex_permutation=row[7],
+            cell_type=row[8],
+        )
+        for row in sorted(
+            unique_rows,
+            key=lambda value: (
+                _ENTITY_KIND_ORDER[value[0]],
+                _PHASE_KIND_ORDER[value[1]],
+                value[4],
+                value[5],
+            ),
+        )
+    )
+    payload = {
+        "schema": "task035b.missing-p6-trace-orbit-identity.v1",
+        "mesh_sha256": mesh_sha256,
+        "element_family": str(topology.key.element_family),
+        "orientation_schema": str(topology.key.orientation_schema),
+        "relations": [
+            (
+                relation.entity_kind,
+                relation.direction,
+                relation.slave_entity_id,
+                relation.master_entity_id,
+                relation.slave_entity_geometry_key,
+                relation.master_entity_geometry_key,
+                relation.periodic_pair_key,
+                relation.entity_vertex_permutation,
+                relation.cell_type,
+            )
+            for relation in relations
+        ],
+    }
+    input_sha256 = hashlib.sha256(
+        json.dumps(
+            payload,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("ascii")
+    ).hexdigest()
+    return MissingP6TraceOrbitIdentityInput(
+        mesh_sha256=mesh_sha256,
+        relations=relations,
+        input_sha256=input_sha256,
+    )
 
 
 class FloquetTopologyCache:
@@ -627,6 +921,9 @@ def distributed_match_periodic_records(
                     "tangent",
                     "geometry_coords",
                     "normal_axis",
+                    "physical_global_entity_id",
+                    "entity_geometry_key",
+                    "cell_type",
                 )
                 if name in master
             }
