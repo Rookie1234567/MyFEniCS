@@ -215,7 +215,7 @@ class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
         )
         self.assertEqual(bytes_elided, 0)
 
-    def test_identity_binds_operator_tensor_orientation_policy_and_rank(
+    def test_identity_binds_content_but_not_mpi_partition(
         self,
     ) -> None:
         common = {
@@ -264,9 +264,10 @@ class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
         self.assertEqual(baseline, repeated)
         self.assertEqual(payload, repeated_payload)
         self.assertEqual(
-            payload["mpi_partition"],
-            {"size": 4, "rank": 2},
+            payload["schema_version"],
+            "task035b.persistent-condensed-class-identity.v2",
         )
+        self.assertNotIn("mpi_partition", payload)
 
         variants = [
             {**common, "source_sha": "b" * 40},
@@ -298,8 +299,6 @@ class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
                 ),
             },
             {**common, "storage_element_hash": 102},
-            {**common, "mpi_rank": 1},
-            {**common, "mpi_size": 8},
         ]
         for variant in variants:
             digest, _variant_payload = (
@@ -308,6 +307,28 @@ class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
                 )
             )
             self.assertNotEqual(baseline, digest)
+
+        for mpi_size, mpi_rank in ((1, 0), (2, 1), (8, 0), (8, 7)):
+            digest, variant_payload = (
+                assembly_time._persistent_condensed_class_identity(
+                    **{
+                        **common,
+                        "mpi_size": mpi_size,
+                        "mpi_rank": mpi_rank,
+                    }
+                )
+            )
+            self.assertEqual(baseline, digest)
+            self.assertEqual(payload, variant_payload)
+
+        with self.assertRaisesRegex(ValueError, "MPI size"):
+            assembly_time._persistent_condensed_class_identity(
+                **{**common, "mpi_size": 0, "mpi_rank": 0}
+            )
+        with self.assertRaisesRegex(ValueError, "MPI rank"):
+            assembly_time._persistent_condensed_class_identity(
+                **{**common, "mpi_size": 2, "mpi_rank": 2}
+            )
 
     def test_warm_hit_skips_dense_stages_and_supports_rhs_lifecycle(
         self,
@@ -651,9 +672,123 @@ class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
 
     @unittest.skipUnless(
         MPI.COMM_WORLD.size == 2,
-        "MPI2 rank-bound persistent cache check",
+        "MPI2 shared content-addressed persistent cache check",
     )
-    def test_mpi2_shared_directory_uses_disjoint_rank_artifacts(
+    def test_mpi2_identical_writers_publish_one_valid_artifact(
+        self,
+    ) -> None:
+        comm = MPI.COMM_WORLD
+        temporary = (
+            tempfile.mkdtemp(prefix="task035b-condensed-cache-writers-")
+            if comm.rank == 0
+            else None
+        )
+        cache_directory = Path(comm.bcast(temporary, root=0))
+        identity_sha256, identity = (
+            assembly_time._persistent_condensed_class_identity(
+                source_sha="e" * 40,
+                operator_identity={
+                    "raw_tensor_backend": "unit-test",
+                    "form_signature": "shared-writer",
+                },
+                raw_key=(1, 1.0, 1.0, 1.0),
+                raw_tensor_content_sha256=(
+                    assembly_time._raw_tensor_content_sha256(
+                        np.eye(2, dtype=np.complex128)
+                    )
+                ),
+                cell_permutation=0,
+                interior_policy="high",
+                storage_element_hash=101,
+                policy_element_hash=101,
+                trace_positions=np.asarray([0], dtype=np.int32),
+                high_interior_positions=np.asarray([1], dtype=np.int32),
+                active_trace_positions=np.asarray([0], dtype=np.int32),
+                active_interior_positions=np.asarray(
+                    [1],
+                    dtype=np.int32,
+                ),
+                low_to_reduced_content_sha256=None,
+                mpi_size=comm.size,
+                mpi_rank=comm.rank,
+            )
+        )
+        expected_shapes = (
+            assembly_time._condensed_class_expected_shapes(
+                high_interior_dimension=1,
+                trace_dimension=1,
+                active_interior_dimension=1,
+            )
+        )
+        arrays = {
+            "schur": np.asarray([[2.0 + 0.5j]], dtype=np.complex128),
+            "interior_from_trace": np.asarray(
+                [[-0.25 + 0.1j]],
+                dtype=np.complex128,
+            ),
+            "lu_values": np.asarray(
+                [[3.0 - 0.2j]],
+                dtype=np.complex128,
+            ),
+            "lu_pivots": np.asarray([0], dtype=np.int32),
+            "rhs_projection": np.asarray([[1.0]], dtype=np.float64),
+            "solution_embedding": np.asarray([[1.0]], dtype=np.float64),
+            "dual_interior_from_trace": np.asarray(
+                [[-0.2 - 0.05j]],
+                dtype=np.complex128,
+            ),
+            "residual_projection": np.asarray(
+                [[1.0]],
+                dtype=np.float64,
+            ),
+        }
+        payload = cache_directory / (
+            f"condensed_class_{identity_sha256}.npz"
+        )
+        manifest = payload.with_suffix(".json")
+        try:
+            comm.Barrier()
+            assembly_time._write_persistent_condensed_class(
+                payload,
+                arrays,
+                manifest_path=manifest,
+                identity_sha256=identity_sha256,
+                identity_payload=identity,
+                expected_shapes=expected_shapes,
+                rank=comm.rank,
+            )
+            comm.Barrier()
+            loaded, reason = (
+                assembly_time._load_persistent_condensed_class(
+                    payload,
+                    manifest_path=manifest,
+                    expected_identity_sha256=identity_sha256,
+                    expected_identity_payload=identity,
+                    expected_shapes=expected_shapes,
+                )
+            )
+            self.assertIsNone(reason)
+            assert loaded is not None
+            for name, expected in arrays.items():
+                np.testing.assert_array_equal(loaded[name], expected)
+            temporary_files = (
+                sorted(path.name for path in cache_directory.glob(".*.tmp"))
+                if comm.rank == 0
+                else None
+            )
+            temporary_files = comm.bcast(temporary_files, root=0)
+            self.assertEqual(temporary_files, [])
+        finally:
+            comm.Barrier()
+            if comm.rank == 0:
+                shutil.rmtree(cache_directory)
+            comm.Barrier()
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 2,
+        "MPI2 rank-independent persistent cache check",
+    )
+    def test_mpi2_shared_directory_reuses_oriented_class_artifacts(
         self,
     ) -> None:
         comm = MPI.COMM_WORLD
@@ -676,30 +811,63 @@ class TestTask035bPersistentCondensedClassCache(unittest.TestCase):
             cold_audit = cold.build_audit[
                 "persistent_condensed_class_cache"
             ]
-            self.assertEqual(cold_audit["hit_count_sum"], 0)
-            self.assertEqual(cold_audit["miss_count_sum"], 2)
-            self.assertEqual(cold_audit["write_count_sum"], 2)
+            self.assertEqual(
+                cold_audit["hit_count_sum"]
+                + cold_audit["miss_count_sum"],
+                2,
+            )
+            self.assertGreaterEqual(cold_audit["miss_count_sum"], 1)
+            self.assertEqual(
+                cold_audit["write_count_sum"],
+                cold_audit["miss_count_sum"],
+            )
+            self.assertEqual(
+                cold_audit["construction_count_sum"],
+                cold_audit["miss_count_sum"],
+            )
             self.assertEqual(cold_audit["read_attempt_count_sum"], 2)
+            self.assertFalse(
+                cold_audit["identity_is_rank_partition_bound"]
+            )
+            self.assertTrue(cold_audit["cross_mpi_identity_eligible"])
+            self.assertTrue(cold_audit["cross_mpi_partition_reuse"])
+            self.assertFalse(
+                cold_audit["concurrent_independent_job_locking"]
+            )
+            self.assertTrue(
+                cold_audit[
+                    "identity_or_payload_mismatch_is_fail_closed"
+                ]
+            )
             comm.Barrier()
-            if comm.rank == 0:
-                manifests = sorted(
-                    cache_directory.glob("condensed_class_*.json")
-                )
-                self.assertEqual(len(manifests), 2)
-                partitions = set()
-                for manifest_path in manifests:
-                    with manifest_path.open(
-                        "r",
-                        encoding="utf-8",
-                    ) as stream:
-                        manifest = json.load(stream)
-                    partitions.add(
-                        (
-                            manifest["identity"]["mpi_partition"]["size"],
-                            manifest["identity"]["mpi_partition"]["rank"],
-                        )
+            manifest_identities = (
+                [
+                    json.loads(path.read_text(encoding="utf-8"))
+                    for path in sorted(
+                        cache_directory.glob("condensed_class_*.json")
                     )
-                self.assertEqual(partitions, {(2, 0), (2, 1)})
+                ]
+                if comm.rank == 0
+                else None
+            )
+            manifest_identities = comm.bcast(
+                manifest_identities,
+                root=0,
+            )
+            self.assertEqual(len(manifest_identities), 2)
+            for manifest in manifest_identities:
+                self.assertEqual(
+                    manifest["schema_version"],
+                    "task035b.condensed-class-cache-manifest.v2",
+                )
+                self.assertEqual(
+                    manifest["identity"]["schema_version"],
+                    "task035b.persistent-condensed-class-identity.v2",
+                )
+                self.assertNotIn(
+                    "mpi_partition",
+                    manifest["identity"],
+                )
 
             warm = build_unconstrained_assembly_time_condensation(
                 compiled,

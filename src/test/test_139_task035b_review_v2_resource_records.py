@@ -109,3 +109,31 @@ def test_iterative_failed_output_caveat_disqualifies_stale_port_files() -> None:
     assert corrective["nonconverged_port_files_persisted"] is False
     assert corrective["direct_path_semantics_changed"] is False
     assert record["ordinary_default_changed"] is False
+
+
+def test_rank_partition_warm_cache_negative_is_preserved() -> None:
+    record = _record(
+        "h15_condensed_cache_rank_partition_controlled_negative_v1.json"
+    )
+    cold = record["cold"]
+    warm = record["warm"]
+    root_cause = record["root_cause"]
+
+    assert record["pass"] is False
+    assert cold["status"].endswith("_pass")
+    assert warm["status"] == "controlled_negative_direct_setup_profile"
+    assert warm["official_physics_result"] is True
+    assert warm["full_explicit_true_residual"] <= 1.0e-9
+    assert warm["raw_tensor_cache_hits"] == 6
+    assert warm["condensed_class_cache_hits"] == 4
+    assert warm["condensed_class_constructions"] == 110
+    assert warm["warm_heap_trim"]["succeeded_on_all_ranks"] is True
+    assert warm["warm_heap_trim"]["sum_rss_released_mb"] > 1300.0
+    assert record["comparison"]["projection_alias_memory_defect_fixed"] is True
+    assert record["comparison"]["warm_build_10_second_preferred_target_pass"] is False
+    assert root_cause["cold_condensed_manifest_count"] == 110
+    assert root_cause["rank_independent_logical_identity_count"] == 106
+    assert root_cause["logical_identities_present_on_two_cold_ranks"] == 4
+    assert record["decision"]["historical_artifacts_deleted"] is False
+    assert record["decision"]["candidate_promotion"] is False
+    assert record["ordinary_default_changed"] is False

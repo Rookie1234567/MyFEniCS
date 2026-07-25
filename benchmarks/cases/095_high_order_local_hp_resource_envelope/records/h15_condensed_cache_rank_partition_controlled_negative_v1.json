@@ -1,0 +1,111 @@
+{
+  "schema_version": "task035b.condensed-cache-rank-partition-negative.v1",
+  "benchmark_id": "task035b_h15_condensed_cache_new_process_rank_partition_mpi8",
+  "status": "controlled_negative_warm_cache_identity",
+  "classification": "controlled_negative_actionable_cache_identity_defect",
+  "pass": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "commit_sha": "228829b79169a7adb81184f62db443bba6cd57be",
+    "clean_and_stable_for_both_runs": true
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 15.0,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "mpi_size": 8,
+    "full3d_equivalent_dofs": 74890,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9195812,
+    "cache_directory": "benchmarks/artifacts/task035b/direct_setup_profile/condensed_setup_cache/228829b79169a7adb81184f62db443bba6cd57be"
+  },
+  "cold": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "common_solver_seconds": 54.25654408300761,
+    "condensed_build_non_ksp_seconds": 25.99382036397583,
+    "mumps_symbolic_numeric_seconds": 6.563084449997405,
+    "max_process_tree_rss_gib": 4.653820037841797,
+    "max_worker_rank_pss_sum_mb": 3911.068359375,
+    "max_worker_rank_uss_sum_mb": 3791.46484375,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 7.635626364364999e-12,
+    "R_total": 0.000765024318115331,
+    "T_total": 0.602685146795767,
+    "A_closure": 0.3965498288861177,
+    "raw_tensor_cache_hits": 0,
+    "raw_tensor_cache_misses": 6,
+    "condensed_class_cache_hits": 0,
+    "condensed_class_cache_misses": 110,
+    "condensed_class_constructions": 110,
+    "watchdog": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T025020Z/watchdog_summary.json",
+      "sha256": "6c10c55e1440b25c28efaf43a273ee8ad3e4efe219365a1a8bbf49028e612f4f"
+    }
+  },
+  "warm": {
+    "status": "controlled_negative_direct_setup_profile",
+    "formal_profile_pass": false,
+    "profile_failures": [
+      "warm_condensed_class_cache_hit_without_recompute"
+    ],
+    "common_solver_seconds": 47.28654144500615,
+    "condensed_build_non_ksp_seconds": 18.954224264016375,
+    "mumps_symbolic_numeric_seconds": 6.644658281991724,
+    "max_process_tree_rss_gib": 4.6818695068359375,
+    "max_worker_rank_pss_sum_mb": 3938.60546875,
+    "max_worker_rank_uss_sum_mb": 3818.58984375,
+    "max_process_tree_swap_mb": 0.0,
+    "official_physics_result": true,
+    "full_explicit_true_residual": 1.7055470155127387e-11,
+    "R_total": 0.0007650243181131391,
+    "T_total": 0.6026851467955362,
+    "A_closure": 0.3965498288863507,
+    "raw_tensor_cache_hits": 6,
+    "raw_tensor_cache_misses": 0,
+    "condensed_class_cache_hits": 4,
+    "condensed_class_cache_misses": 110,
+    "condensed_class_constructions": 110,
+    "condensed_class_miss_reasons": {
+      "artifact_or_manifest_missing": 110
+    },
+    "projection_alias_restore_count": 4,
+    "projection_alias_retained_bytes_elided": 19440000,
+    "warm_heap_trim": {
+      "called": true,
+      "succeeded_on_all_ranks": true,
+      "sum_rss_before_mb": 3993.84375,
+      "sum_rss_after_mb": 2635.98046875,
+      "sum_rss_released_mb": 1357.86328125
+    },
+    "watchdog": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_mpi8_20260725T025205Z/watchdog_summary.json",
+      "sha256": "125a542f716c4d25b9b2c7798165346b19ed1b0fd7c3100a9a07878176aa55dc"
+    }
+  },
+  "comparison": {
+    "physical_closure_pass": true,
+    "warm_minus_cold_rss_gib": 0.028049468994140625,
+    "warm_rss_increase_percent": 0.602724407151971,
+    "projection_alias_memory_defect_fixed": true,
+    "warm_build_10_second_preferred_target_pass": false,
+    "warm_all_condensed_classes_hit_without_recompute": false
+  },
+  "root_cause": {
+    "status": "measured_and_code_audited",
+    "cold_condensed_manifest_count": 110,
+    "rank_independent_logical_identity_count": 106,
+    "logical_identities_present_on_two_cold_ranks": 4,
+    "old_identity_schema": "task035b.persistent-condensed-class-identity.v1",
+    "defect": "The local oriented tensor, Aii factor and Schur data are independent of MPI ownership, but the v1 artifact digest includes mpi_size and mpi_rank. A new-process mesh partition assigns most identical physical classes to different ranks, so valid files have different names and are reported missing.",
+    "evidence": "The fresh warm process found all 6 rank-independent raw tensors, but only 4 of 114 rank-local condensed-class uses matched a v1 rank-bound filename. The four matches equal the number of logical cold identities represented on two ranks; the other 110 uses were recomputed."
+  },
+  "decision": {
+    "historical_artifacts_deleted": false,
+    "cache_lane_remains_open": true,
+    "next_minimal_action": "Make condensed-class identity rank and MPI-size independent while retaining source, operator, tensor content, cell permutation, element/policy and ABI hashes. Keep unique temporary writers and manifest-last checksum validation fail-closed, then run one fresh SHA-bound cold/warm MPI8 pair.",
+    "candidate_promotion": false
+  },
+  "scope_limit": "This is a cache implementation negative, not a physics failure and not a Task035b 12/12 candidate."
+}

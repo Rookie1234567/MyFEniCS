@@ -28,6 +28,7 @@ from pathlib import Path
 from time import perf_counter
 from types import MappingProxyType
 from typing import Any, Mapping
+from uuid import uuid4
 from zipfile import BadZipFile
 
 import numpy as np
@@ -1352,10 +1353,24 @@ def _persistent_condensed_class_identity(
     mpi_size: int,
     mpi_rank: int,
 ) -> tuple[str, dict[str, Any]]:
-    """Return the fixed, rank-partition-bound oriented-class identity."""
+    """Return the fixed, rank-independent oriented-class identity.
+
+    ``mpi_size`` and ``mpi_rank`` are checked as caller-runtime metadata but
+    deliberately excluded from the v2 content identity.  An identical
+    oriented class can therefore be reused after repartitioning or by a
+    different MPI size.
+    """
 
     if interior_policy not in {"high", "low"}:
         raise ValueError("condensed class interior policy must be high or low")
+    mpi_size = int(mpi_size)
+    mpi_rank = int(mpi_rank)
+    if mpi_size < 1:
+        raise ValueError("condensed class MPI size must be positive")
+    if mpi_rank < 0 or mpi_rank >= mpi_size:
+        raise ValueError(
+            "condensed class MPI rank must lie in [0, mpi_size)"
+        )
     raw_tensor_content_sha256 = str(raw_tensor_content_sha256).lower()
     if len(raw_tensor_content_sha256) != 64 or any(
         character not in "0123456789abcdef"
@@ -1378,7 +1393,7 @@ def _persistent_condensed_class_identity(
             )
     payload = {
         "schema_version": (
-            "task035b.persistent-condensed-class-identity.v1"
+            "task035b.persistent-condensed-class-identity.v2"
         ),
         "source_commit_sha": str(source_sha),
         "operator_identity": dict(operator_identity),
@@ -1412,13 +1427,6 @@ def _persistent_condensed_class_identity(
             "int_dtype": np.dtype(PETSc.IntType).str,
             "numpy_version": np.__version__,
             "scipy_version": scipy_version,
-        },
-        # The same physical class may be consumed by multiple MPI ranks.
-        # Binding each artifact to one deterministic rank partition prevents
-        # same-job writers from targeting the same files.
-        "mpi_partition": {
-            "size": int(mpi_size),
-            "rank": int(mpi_rank),
         },
     }
     canonical = json.dumps(
@@ -1591,7 +1599,7 @@ def _load_persistent_condensed_class(
         return None, "manifest_not_an_object"
     if (
         manifest.get("schema_version")
-        != "task035b.condensed-class-cache-manifest.v1"
+        != "task035b.condensed-class-cache-manifest.v2"
     ):
         return None, "manifest_schema_mismatch"
     if manifest.get("identity_sha256") != expected_identity_sha256:
@@ -1673,7 +1681,9 @@ def _write_persistent_condensed_class(
             "cannot persist invalid condensed class arrays: "
             f"{reason}"
         )
-    temporary_suffix = f"rank{rank}.pid{os.getpid()}.tmp"
+    temporary_suffix = (
+        f"rank{rank}.pid{os.getpid()}.{uuid4().hex}.tmp"
+    )
     temporary_payload = path.with_name(
         f".{path.name}.{temporary_suffix}"
     )
@@ -1687,7 +1697,7 @@ def _write_persistent_condensed_class(
             os.fsync(stream.fileno())
         manifest = {
             "schema_version": (
-                "task035b.condensed-class-cache-manifest.v1"
+                "task035b.condensed-class-cache-manifest.v2"
             ),
             "identity_sha256": identity_sha256,
             "identity": dict(identity_payload),
@@ -3388,7 +3398,7 @@ def build_unconstrained_assembly_time_condensation(
         )
     persistent_condensed_class_cache_audit = {
         "schema_version": (
-            "task035b.persistent-condensed-class-cache.v1"
+            "task035b.persistent-condensed-class-cache.v2"
         ),
         "enabled": condensed_cache_enabled,
         "mode": condensed_cache_mode,
@@ -3407,8 +3417,14 @@ def build_unconstrained_assembly_time_condensation(
             "interior_policy",
             "regionwise_embedding_content",
             "numpy_scipy_scalar_int_abi",
-            "mpi_size_and_rank_partition",
         ],
+        "identity_excludes": [
+            "mpi_size",
+            "mpi_rank",
+            "mesh_partition_ownership",
+        ],
+        "identity_is_rank_partition_bound": False,
+        "cross_mpi_identity_eligible": True,
         "hit_count_sum": condensed_cache_hit_count,
         "miss_count_sum": condensed_cache_miss_count,
         "read_attempt_count_sum": condensed_cache_read_attempt_count,
@@ -3457,22 +3473,35 @@ def build_unconstrained_assembly_time_condensation(
         "content_checksum_verified": True,
         "pickle_used": False,
         "same_mpi_job_write_race_prevention": (
-            "artifact_identity_is_bound_to_mpi_size_and_rank"
+            "unique_rank_pid_uuid_temporary_files_and_manifest_last_"
+            "logical_array_checksum"
         ),
         "mpi_size": int(comm.size),
-        "artifact_partition": "one key namespace per MPI rank",
-        "cross_mpi_partition_reuse": False,
+        "artifact_partition": (
+            "content_addressed_oriented_class_namespace_shared_across_"
+            "ranks_and_mpi_sizes"
+        ),
+        "cross_mpi_partition_reuse": True,
+        "cross_mpi_reuse_scope": (
+            "identical_source_operator_raw_tensor_orientation_policy_"
+            "element_and_abi_identity"
+        ),
         "concurrent_independent_job_locking": False,
         "concurrent_independent_job_behavior": (
+            "unique_temporary_payload_and_manifest_per_writer; "
             "last_writer_wins_only_for_identical_identity; readers "
             "verify manifest-last logical-array checksum and otherwise "
-            "recompute"
+            "fail_closed_to_local_recompute"
         ),
+        "identity_or_payload_mismatch_is_fail_closed": True,
         "cache_scope_limitations": [
-            "rank-partition-bound artifacts do not warm-start another "
-            "MPI size",
+            "cross-MPI reuse requires the same oriented-class content "
+            "identity; repartitioning may change which classes a rank "
+            "requests",
             "raw tensor loading and trace matrix insertion still run",
-            "no cross-job advisory lock",
+            "no same-job or cross-job advisory lock",
+            "a transient publication mismatch is a cache miss and local "
+            "recompute",
             "no automatic cache eviction or disk-quota policy",
         ],
         "compatible_with_prepared_rhs_recovery_lifecycle": True,
