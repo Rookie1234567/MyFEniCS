@@ -163,6 +163,20 @@ TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES = frozenset(
         *TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES,
     }
 )
+TASK035B_STATIC_HYBRID_RESOURCE_COMPATIBLE_FILES = frozenset(
+    {
+        "benchmarks/run_task032_phase6_augmented.py",
+        "benchmarks/run_task033_full3d_watchdog.py",
+        "benchmarks/run_task033_memory_watchdog.py",
+        "src/coupling/hybrid_internal_modes.py",
+        "src/postprocessing/hybrid_field_reconstruction.py",
+        "src/solvers/hybrid_fem_modal_augmented_direct.py",
+        "src/solvers/hybrid_fem_modal_schur_direct.py",
+        "src/solvers/hybrid_local_dtn.py",
+        "src/solvers/hybrid_local_static_condensation.py",
+        "src/solvers/hybrid_static_field_recovery.py",
+    }
+)
 
 
 def _git(*args: str) -> str | None:
@@ -279,6 +293,7 @@ def _task034_authority_source_compatibility(
     h_nm: float,
     polarization_kind: str = "s",
     current_source_sha: str | None,
+    assembly_backend: str = "standard_full",
 ) -> dict[str, Any]:
     """Audit a Case092 measured authority against the current clean source."""
 
@@ -334,6 +349,11 @@ def _task034_authority_source_compatibility(
     def allowed(path: str) -> bool:
         return bool(
             path in TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES
+            or (
+                assembly_backend == "assembly_time_static_condensed"
+                and path
+                in TASK035B_STATIC_HYBRID_RESOURCE_COMPATIBLE_FILES
+            )
             or path.startswith(
                 "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
             )
@@ -351,6 +371,14 @@ def _task034_authority_source_compatibility(
         for path in changed_paths
         if path in TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES
     ]
+    static_resource_compatible = [
+        path
+        for path in changed_paths
+        if (
+            assembly_backend == "assembly_time_static_condensed"
+            and path in TASK035B_STATIC_HYBRID_RESOURCE_COMPATIBLE_FILES
+        )
+    ]
     failures = []
     if merge_base != reference_source_sha:
         failures.append("reference_source_is_not_ancestor_of_current_source")
@@ -366,6 +394,10 @@ def _task034_authority_source_compatibility(
         "changed_paths": changed_paths,
         "disallowed_changed_paths": disallowed,
         "component_disjoint_numerical_changed_paths": component_disjoint,
+        "static_hybrid_resource_compatible_changed_paths": (
+            static_resource_compatible
+        ),
+        "assembly_backend": assembly_backend,
         "failures": failures,
     }
 
@@ -1354,6 +1386,9 @@ def run(args: argparse.Namespace) -> int:
                     h_nm=args.h_nm,
                     polarization_kind=args.polarization_kind,
                     current_source_sha=source_before.get("commit_sha"),
+                    assembly_backend=(
+                        args.stage4_full3d_assembly_backend
+                    ),
                 )
             )
             full3d_path = args.full3d_reference
