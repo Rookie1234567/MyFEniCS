@@ -484,6 +484,7 @@ def _numeric_max(
 def _telemetry_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     observed_ranks: set[int] = set()
     per_rank: dict[int, dict[str, float]] = {}
+    per_rank_thread_runtime: dict[int, dict[str, Any]] = {}
     smaps_readable_counts: list[int] = []
     for row in rows:
         if isinstance(
@@ -532,6 +533,25 @@ def _telemetry_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
                             peaks.get(field, 0.0),
                             float(value),
                         )
+        try:
+            runtime_rows = json.loads(
+                str(row.get("worker_rank_thread_runtime_json", "[]"))
+            )
+        except json.JSONDecodeError:
+            runtime_rows = []
+        if isinstance(runtime_rows, list):
+            for entry in runtime_rows:
+                if not isinstance(entry, dict) or not isinstance(
+                    entry.get("rank"),
+                    int,
+                ):
+                    continue
+                rank = int(entry["rank"])
+                previous = per_rank_thread_runtime.get(rank)
+                if previous is None or int(
+                    entry.get("thread_count_observed", 0)
+                ) > int(previous.get("thread_count_observed", 0)):
+                    per_rank_thread_runtime[rank] = entry
     process_tree_rss = _numeric_max(rows, "mpi_process_tree_rss_mb")
     return {
         "sample_count": len(rows),
@@ -587,6 +607,10 @@ def _telemetry_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         ),
         "per_rank_smaps_rollup_peaks_mb": {
             str(rank): fields for rank, fields in sorted(per_rank.items())
+        },
+        "per_rank_peak_thread_runtime": {
+            str(rank): entry
+            for rank, entry in sorted(per_rank_thread_runtime.items())
         },
         "smaps_rollup_all_expected_ranks_readable_at_least_once": (
             bool(smaps_readable_counts)

@@ -41,6 +41,7 @@ TIMELINE_FIELDS = (
     "worker_rank_smaps_readable_count",
     "worker_rank_cpu_affinity_json",
     "worker_rank_thread_count_sum",
+    "worker_rank_thread_runtime_json",
     "mpi_process_tree_thread_count",
     "worker_rank_cpu_seconds",
     "mpi_process_tree_cpu_seconds",
@@ -228,6 +229,75 @@ def _read_smaps_rollup(path: Path) -> dict[str, float] | None:
     }
 
 
+def _read_thread_runtime(path: Path) -> dict[str, Any] | None:
+    """Identify Linux thread states and loaded native parallel runtimes."""
+
+    name_counts: dict[str, int] = {}
+    wchan_counts: dict[str, int] = {}
+    try:
+        tasks = list((path / "task").iterdir())
+    except OSError:
+        return None
+    for task in tasks:
+        if not task.name.isdigit():
+            continue
+        try:
+            name = (task / "comm").read_text(
+                encoding="utf-8",
+                errors="ignore",
+            ).strip()
+        except OSError:
+            name = "unreadable"
+        try:
+            wchan = (task / "wchan").read_text(
+                encoding="utf-8",
+                errors="ignore",
+            ).strip()
+        except OSError:
+            wchan = "unreadable"
+        name_counts[name or "empty"] = name_counts.get(name or "empty", 0) + 1
+        wchan_counts[wchan or "empty"] = (
+            wchan_counts.get(wchan or "empty", 0) + 1
+        )
+    parallel_library_tokens = (
+        "blas",
+        "lapack",
+        "gomp",
+        "iomp",
+        "openmp",
+        "mkl",
+        "tbb",
+        "mumps",
+        "scalapack",
+        "hdf5",
+    )
+    libraries: set[str] = set()
+    try:
+        map_lines = (path / "maps").read_text(
+            encoding="utf-8",
+            errors="ignore",
+        ).splitlines()
+    except OSError:
+        map_lines = []
+    for line in map_lines:
+        fields = line.split()
+        if not fields:
+            continue
+        candidate = fields[-1]
+        lowered = candidate.lower()
+        if candidate.startswith("/") and any(
+            token in lowered for token in parallel_library_tokens
+        ):
+            libraries.add(candidate)
+    return {
+        "thread_count_observed": int(sum(name_counts.values())),
+        "thread_name_counts": dict(sorted(name_counts.items())),
+        "thread_wchan_counts": dict(sorted(wchan_counts.items())),
+        "loaded_parallel_runtime_libraries": sorted(libraries),
+        "measurement_scope": "one Linux process",
+    }
+
+
 def _read_processes() -> dict[int, dict[str, Any]]:
     processes: dict[int, dict[str, Any]] = {}
     proc = Path("/proc")
@@ -325,6 +395,11 @@ def _read_processes() -> dict[int, dict[str, Any]]:
             if rank is not None
             else None
         )
+        thread_runtime = (
+            _read_thread_runtime(entry)
+            if rank is not None and thread_count > 8
+            else None
+        )
         processes[pid] = {
             "pid": pid,
             "ppid": ppid,
@@ -336,6 +411,7 @@ def _read_processes() -> dict[int, dict[str, Any]]:
             "cmdline": cmdline,
             "worker_rank": rank,
             "smaps_rollup": smaps_rollup,
+            "thread_runtime": thread_runtime,
             "read_bytes": io_fields.get("read_bytes", 0),
             "write_bytes": io_fields.get("write_bytes", 0),
             "blkio_delay_seconds": blkio_delay_seconds,
@@ -403,6 +479,7 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
                 "thread_count": item["thread_count"],
                 "cpu_seconds": item["cpu_seconds"],
                 "smaps_rollup": item["smaps_rollup"],
+                "thread_runtime": item["thread_runtime"],
             }
             for item in processes.values()
             if item["worker_rank"] is not None
@@ -472,6 +549,18 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
         ),
         "worker_rank_thread_count_sum": sum(
             item["thread_count"] for item in worker_ranks
+        ),
+        "worker_rank_thread_runtime_json": json.dumps(
+            [
+                {
+                    "rank": item["rank"],
+                    "pid": item["pid"],
+                    **item["thread_runtime"],
+                }
+                for item in worker_ranks
+                if isinstance(item.get("thread_runtime"), dict)
+            ],
+            separators=(",", ":"),
         ),
         "mpi_process_tree_thread_count": sum(
             processes[pid]["thread_count"] for pid in tree if pid in processes

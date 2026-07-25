@@ -22,6 +22,7 @@ from benchmarks.run_direct_memory_forensics import (
     _numeric_gate,
     _parse_args,
     _read_smaps_rollup,
+    _read_thread_runtime,
     _sample,
     _source_provenance,
     _task29_direct_config,
@@ -146,6 +147,18 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         self.assertGreater(rollup["rss_mb"], 0.0)
         self.assertGreater(rollup["pss_mb"], 0.0)
         self.assertGreaterEqual(rollup["uss_mb"], 0.0)
+
+    def test_linux_thread_runtime_is_auditable(self) -> None:
+        runtime = _read_thread_runtime(Path("/proc/self"))
+        self.assertIsInstance(runtime, dict)
+        assert runtime is not None
+        self.assertGreaterEqual(runtime["thread_count_observed"], 1)
+        self.assertTrue(runtime["thread_name_counts"])
+        self.assertTrue(runtime["thread_wchan_counts"])
+        self.assertIsInstance(
+            runtime["loaded_parallel_runtime_libraries"],
+            list,
+        )
 
     def test_stage_marker_reads_last_complete_json_event(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

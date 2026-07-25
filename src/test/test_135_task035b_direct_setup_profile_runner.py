@@ -255,6 +255,12 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
                 "worker_rank_shared_sum_mb": 6.0,
                 "worker_rank_smaps_swap_sum_mb": 0.0,
                 "worker_rank_thread_count_sum": 2,
+                "worker_rank_thread_runtime_json": (
+                    '[{"rank":1,"thread_count_observed":50,'
+                    '"thread_name_counts":{"python":50},'
+                    '"thread_wchan_counts":{"futex_wait_queue":49},'
+                    '"loaded_parallel_runtime_libraries":["libblas.so"]}]'
+                ),
                 "worker_rank_cpu_core_equivalents": 1.0,
                 "mpi_process_tree_rss_mb": 30.0,
                 "mpi_process_tree_swap_mb": 0.0,
@@ -272,6 +278,12 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             8.0,
         )
         self.assertEqual(summary["max_container_cgroup_peak_mb"], 40.0)
+        self.assertEqual(
+            summary["per_rank_peak_thread_runtime"]["1"][
+                "thread_count_observed"
+            ],
+            50,
+        )
         self.assertTrue(
             summary[
                 "smaps_rollup_all_expected_ranks_readable_at_least_once"

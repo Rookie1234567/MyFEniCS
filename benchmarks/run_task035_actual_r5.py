@@ -2157,6 +2157,7 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     worker_counts = []
     smaps_readable_counts = []
     per_rank_smaps_peaks: dict[int, dict[str, float]] = {}
+    per_rank_thread_runtime: dict[int, dict[str, Any]] = {}
     for row in rows:
         try:
             workers = json.loads(str(row.get("worker_rank_rss_mb_json", "[]")))
@@ -2178,7 +2179,7 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         except json.JSONDecodeError:
             smaps_rows = []
         if not isinstance(smaps_rows, list):
-            continue
+            smaps_rows = []
         for entry in smaps_rows:
             if not isinstance(entry, dict) or not isinstance(
                 entry.get("rank"),
@@ -2202,6 +2203,25 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
                         peaks.get(field, 0.0),
                         float(value),
                     )
+        try:
+            runtime_rows = json.loads(
+                str(row.get("worker_rank_thread_runtime_json", "[]"))
+            )
+        except json.JSONDecodeError:
+            runtime_rows = []
+        if isinstance(runtime_rows, list):
+            for entry in runtime_rows:
+                if not isinstance(entry, dict) or not isinstance(
+                    entry.get("rank"),
+                    int,
+                ):
+                    continue
+                rank = int(entry["rank"])
+                previous = per_rank_thread_runtime.get(rank)
+                if previous is None or int(
+                    entry.get("thread_count_observed", 0)
+                ) > int(previous.get("thread_count_observed", 0)):
+                    per_rank_thread_runtime[rank] = entry
     return {
         "sample_count": len(rows),
         "max_process_tree_rss_mb": process_tree,
@@ -2224,6 +2244,10 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "per_rank_smaps_rollup_peaks_mb": {
             str(rank): values
             for rank, values in sorted(per_rank_smaps_peaks.items())
+        },
+        "per_rank_peak_thread_runtime": {
+            str(rank): entry
+            for rank, entry in sorted(per_rank_thread_runtime.items())
         },
         "smaps_rollup_all_ranks_readable_at_least_once": bool(
             worker_counts
