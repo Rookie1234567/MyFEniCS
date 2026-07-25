@@ -915,6 +915,46 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                             ]
                         )
 
+    def test_static_hybrid_cli_requires_hash_bound_fresh_reference(self) -> None:
+        base = [
+            "--target", "hybrid",
+            "--case-label", "static_h1a",
+            "--degree", "2",
+            "--h-nm", "5",
+            "--mpi-size", "1",
+            "--requested-modes", "120",
+            "--candidate-modes", "240",
+            "--full3d-reference", "fresh_static.json",
+            "--stage4-full3d-assembly-backend",
+            "assembly_time_static_condensed",
+            "--verified-clean-sha", "f" * 40,
+        ]
+        args = _parse_args(
+            [*base, "--full3d-reference-sha256", "a" * 64]
+        )
+        self.assertEqual(
+            args.stage4_full3d_assembly_backend,
+            "assembly_time_static_condensed",
+        )
+        self.assertEqual(args.full3d_reference_sha256, "a" * 64)
+        with self.assertRaises(SystemExit):
+            _parse_args(base)
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--target", "hybrid",
+                    "--case-label", "standard",
+                    "--degree", "2",
+                    "--h-nm", "5",
+                    "--mpi-size", "1",
+                    "--requested-modes", "120",
+                    "--candidate-modes", "240",
+                    "--full3d-reference", "standard.json",
+                    "--full3d-reference-sha256", "a" * 64,
+                    "--verified-clean-sha", "f" * 40,
+                ]
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

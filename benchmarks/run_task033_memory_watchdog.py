@@ -177,6 +177,12 @@ TASK035B_STATIC_HYBRID_RESOURCE_COMPATIBLE_FILES = frozenset(
         "src/solvers/hybrid_static_field_recovery.py",
     }
 )
+TASK035B_STATIC_FULL3D_ANCHOR_COMPATIBLE_FILES = frozenset(
+    {
+        "benchmarks/run_task033_memory_watchdog.py",
+        "benchmarks/task034_workstation_resource_gates.py",
+    }
+)
 
 
 def _git(*args: str) -> str | None:
@@ -399,6 +405,340 @@ def _task034_authority_source_compatibility(
         ),
         "assembly_backend": assembly_backend,
         "failures": failures,
+    }
+
+
+def _valid_hex_digest(value: object, length: int) -> bool:
+    return bool(
+        isinstance(value, str)
+        and len(value) == length
+        and all(character in "0123456789abcdefABCDEF" for character in value)
+    )
+
+
+def _task035b_static_full3d_anchor_gate(
+    record: Mapping[str, Any] | None,
+    *,
+    expected_sha256: str | None,
+    observed_sha256: str | None,
+    degree: int,
+    h_nm: float,
+    mpi_size: int,
+    polarization_kind: str,
+    current_source_sha: str | None,
+) -> dict[str, Any]:
+    """Qualify a fresh same-p/h static Full3D resource anchor.
+
+    Case092 remains the tracked workstation limit and prediction authority.
+    The opt-in static Hybrid route binds its measured matrix and memory identity
+    to this fresh watchdog record instead of the historical standard matrix.
+    """
+
+    payload = record if isinstance(record, Mapping) else {}
+    source = payload.get("source")
+    source = source if isinstance(source, Mapping) else {}
+    qualification = payload.get("qualification")
+    qualification = (
+        qualification if isinstance(qualification, Mapping) else {}
+    )
+    qualification_checks = qualification.get("checks")
+    qualification_checks = (
+        qualification_checks
+        if isinstance(qualification_checks, Mapping)
+        else {}
+    )
+    calibration = payload.get("calibration")
+    calibration = calibration if isinstance(calibration, Mapping) else {}
+    summary = payload.get("solver_summary")
+    summary = summary if isinstance(summary, Mapping) else {}
+    config = summary.get("config")
+    config = config if isinstance(config, Mapping) else {}
+    matrix = summary.get("matrix_stats")
+    matrix = matrix if isinstance(matrix, Mapping) else {}
+    factor_inventory = summary.get("stage4_dtn_factor_inventory")
+    factor_inventory = (
+        factor_inventory if isinstance(factor_inventory, Mapping) else {}
+    )
+    factor_matrix = factor_inventory.get("matrix_stats")
+    factor_matrix = (
+        factor_matrix if isinstance(factor_matrix, Mapping) else {}
+    )
+    condensation = summary.get("cell_static_condensation")
+    condensation = (
+        condensation if isinstance(condensation, Mapping) else {}
+    )
+    recovery = condensation.get("recovery")
+    recovery = recovery if isinstance(recovery, Mapping) else {}
+    residual = condensation.get("full_explicit_true_residual")
+    residual = residual if isinstance(residual, Mapping) else {}
+    resource = payload.get("resource_authority")
+    resource = resource if isinstance(resource, Mapping) else {}
+
+    reference_source_sha = source.get("commit_sha")
+    source_sha_valid = bool(
+        _valid_hex_digest(reference_source_sha, 40)
+        and _valid_hex_digest(current_source_sha, 40)
+    )
+    if source_sha_valid and reference_source_sha == current_source_sha:
+        merge_base = reference_source_sha
+        changed_paths: list[str] = []
+        rendered_paths: str | None = ""
+    elif source_sha_valid:
+        merge_base = _git(
+            "merge-base", str(reference_source_sha), str(current_source_sha)
+        )
+        rendered_paths = _git(
+            "diff",
+            "--name-only",
+            f"{reference_source_sha}..{current_source_sha}",
+        )
+        changed_paths = (
+            [] if rendered_paths is None else rendered_paths.splitlines()
+        )
+    else:
+        merge_base = None
+        rendered_paths = None
+        changed_paths = []
+    disallowed_changed_paths = [
+        path
+        for path in changed_paths
+        if not (
+            path in TASK035B_STATIC_FULL3D_ANCHOR_COMPATIBLE_FILES
+            or path.startswith("docs/")
+            or path.startswith("src/test/")
+        )
+    ]
+    source_compatibility_checks = {
+        "source_sha_valid": source_sha_valid,
+        "reference_source_is_ancestor": bool(
+            source_sha_valid and merge_base == reference_source_sha
+        ),
+        "source_diff_readable": rendered_paths is not None,
+        "only_resource_contract_or_non_numerical_changes": not (
+            disallowed_changed_paths
+        ),
+    }
+    source_compatibility_failures = [
+        name
+        for name, passed in source_compatibility_checks.items()
+        if not passed
+    ]
+    source_compatibility = {
+        "pass": not source_compatibility_failures,
+        "reference_source_sha": reference_source_sha,
+        "current_source_sha": current_source_sha,
+        "reference_source_is_ancestor": bool(
+            source_sha_valid and merge_base == reference_source_sha
+        ),
+        "changed_paths": changed_paths,
+        "disallowed_changed_paths": disallowed_changed_paths,
+        "checks": source_compatibility_checks,
+        "failures": source_compatibility_failures,
+    }
+
+    relative_residual = residual.get("linear_system_relative_residual")
+    interior_residual = residual.get(
+        "eliminated_cell_interior_max_abs_residual"
+    )
+    rows = matrix.get("matrix_rows")
+    assembled_nnz = matrix.get("matrix_nnz_used")
+    factor_nnz = factor_matrix.get("matrix_nnz_used")
+    peak_memory_gib = resource.get("memory_authority_gib")
+    elapsed_seconds = summary.get("elapsed_seconds")
+    reference_planes = config.get("full3d_reference_plane_z")
+    reference_planes = (
+        reference_planes if isinstance(reference_planes, list) else []
+    )
+    checks = {
+        "object_present": bool(payload),
+        "schema_identity": bool(
+            payload.get("schema_version") == "task033.full3d-watchdog.v1"
+            and payload.get("benchmark_id") == "task033_target_full3d_watchdog"
+        ),
+        "record_hash_expected_valid": _valid_hex_digest(expected_sha256, 64),
+        "record_hash_observed_valid": _valid_hex_digest(observed_sha256, 64),
+        "record_hash_matches_expected": bool(
+            expected_sha256 == observed_sha256
+        ),
+        "same_discretization_identity": bool(
+            payload.get("degree") == degree
+            and math.isclose(
+                float(payload.get("h_nm", math.nan)), float(h_nm)
+            )
+            and payload.get("mpi_size") == mpi_size
+            and payload.get("polarization_kind") == polarization_kind
+            and config.get("nedelec_degree") == degree
+            and math.isclose(
+                float(config.get("mesh_target_size", math.nan)), float(h_nm)
+            )
+        ),
+        "fixed_task034_physics_identity": bool(
+            summary.get("stage_case") == "stage4_block_grating"
+            and summary.get("geometry_kind") == "rectangular_block_grating"
+            and math.isclose(float(config.get("lambda0", math.nan)), 13.5)
+            and math.isclose(
+                float(config.get("incident_theta_deg", math.nan)), 80.0
+            )
+            and math.isclose(
+                float(config.get("incident_phi_deg", math.nan)), 0.0
+            )
+            and math.isclose(float(config.get("period_x", math.nan)), 50.0)
+            and math.isclose(float(config.get("period_y", math.nan)), 25.0)
+            and math.isclose(float(config.get("z_min", math.nan)), -10.0)
+            and math.isclose(float(config.get("z_max", math.nan)), 130.0)
+            and math.isclose(
+                float(config.get("grating_height", math.nan)), 120.0
+            )
+            and math.isclose(
+                float(config.get("grating_width_x", math.nan)), 17.0
+            )
+            and math.isclose(
+                float(config.get("grating_width_y", math.nan)), 25.0
+            )
+            and config.get("n_substrate")
+            == [0.999002304859, 0.00182649365]
+            and config.get("n_grating")
+            == [0.999002304859, 0.00182649365]
+            and config.get("use_floquet_xy") is True
+            and config.get("stage4_boundary_model") == "dtn_port"
+            and config.get("stage4_dtn_assembly") == "auxiliary"
+            and config.get("scattering_background") == "layered"
+        ),
+        "full_solve_pass": bool(
+            payload.get("run_kind") == "full-solve"
+            and payload.get("status") == "full3d_reference_pass"
+            and payload.get("return_code") == 0
+            and qualification.get("pass") is True
+            and qualification.get("failures") == []
+        ),
+        "qualification_checks_complete": bool(
+            qualification_checks.get("process_completed") is True
+            and qualification_checks.get("live_authority_readable") is True
+            and qualification_checks.get("all_expected_mpi_ranks_observed")
+            is True
+            and qualification_checks.get("official_result") is True
+            and qualification_checks.get("ksp_converged") is True
+            and qualification_checks.get("true_residual_le_1e-9") is True
+            and qualification_checks.get("reference_exported") is True
+            and qualification_checks.get("swap_policy_satisfied") is True
+            and qualification_checks.get("source_stable_and_clean_after")
+            is True
+        ),
+        "static_backend_identity": bool(
+            payload.get("stage4_full3d_assembly_backend_requested")
+            == "assembly_time_static_condensed"
+            and payload.get("stage4_full3d_assembly_backend_actual")
+            == "assembly_time_static_condensed"
+            and summary.get("stage4_full3d_assembly_backend_actual")
+            == "assembly_time_static_condensed"
+            and condensation.get("ordinary_default_changed") is False
+        ),
+        "official_result_and_reference_export": bool(
+            summary.get("official_result") is True
+            and summary.get("case_status") == "completed"
+            and config.get("full3d_reference_export") is True
+            and any(math.isclose(float(value), 10.0) for value in reference_planes)
+            and any(
+                math.isclose(float(value), 110.0)
+                for value in reference_planes
+            )
+        ),
+        "raw_artifact_hashes_present": bool(
+            _valid_hex_digest(payload.get("solver_summary_sha256"), 64)
+            and _valid_hex_digest(payload.get("progress_sha256"), 64)
+            and _valid_hex_digest(payload.get("timeline_sha256"), 64)
+        ),
+        "source_record_clean_and_stable": bool(
+            source.get("tracked_source_dirty") is False
+            and source.get("stable_and_clean_after") is True
+            and source.get("commit_sha") == source.get("verified_clean_sha")
+            and source.get("head_after_sha") == source.get("commit_sha")
+        ),
+        "source_compatible_with_current": source_compatibility["pass"],
+        "no_swap": payload.get("no_swap") is True,
+        "not_resource_terminated": bool(
+            payload.get("terminated_for_memory") is False
+            and payload.get("terminated_for_timeout") is False
+            and payload.get("terminated_for_authority_unreadable") is False
+        ),
+        "exact_positive_rows": bool(
+            type(rows) is int
+            and rows > 0
+            and calibration.get("exact_rows") == rows
+        ),
+        "exact_positive_assembled_nnz": bool(
+            isinstance(assembled_nnz, (int, float))
+            and assembled_nnz > 0
+            and calibration.get("exact_assembled_nnz") == assembled_nnz
+        ),
+        "factor_inventory_positive": bool(
+            factor_inventory.get("available") is True
+            and isinstance(factor_nnz, (int, float))
+            and factor_nnz > 0
+        ),
+        "peak_memory_positive": bool(
+            isinstance(peak_memory_gib, (int, float))
+            and math.isfinite(float(peak_memory_gib))
+            and peak_memory_gib > 0
+        ),
+        "full_explicit_true_residual": bool(
+            isinstance(relative_residual, (int, float))
+            and math.isfinite(float(relative_residual))
+            and 0.0 <= relative_residual <= 1.0e-9
+            and isinstance(interior_residual, (int, float))
+            and math.isfinite(float(interior_residual))
+            and 0.0 <= interior_residual <= 1.0e-9
+            and residual.get("full_global_matrix_allocated_for_residual")
+            is False
+            and residual.get("full_trace_matrix_allocated_for_residual")
+            is False
+        ),
+        "physical_row_reduction_and_recovery": bool(
+            condensation.get("full_global_matrix_allocated") is False
+            and condensation.get("full_trace_matrix_allocated") is False
+            and condensation.get("inactive_max_p_rows_retained_in_matrix")
+            is False
+            and recovery.get("status")
+            == "full_field_recovered_without_full_global_matrix"
+            and recovery.get("full_global_matrix_allocated") is False
+            and recovery.get("full_trace_matrix_allocated") is False
+        ),
+        "elapsed_seconds_positive": bool(
+            isinstance(elapsed_seconds, (int, float))
+            and math.isfinite(float(elapsed_seconds))
+            and elapsed_seconds > 0
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    anchor = {
+        "role": "task035b_fresh_static_full3d_resource_anchor",
+        "source_sha": reference_source_sha,
+        "watchdog_record_sha256": observed_sha256,
+        "descriptor_sha256": expected_sha256,
+        "reference_input_kind": "fresh_static_full3d_watchdog_record",
+        "status": payload.get("status"),
+        "qualification_pass": qualification.get("pass"),
+        "no_swap": payload.get("no_swap"),
+        "peak_memory_gib": peak_memory_gib,
+        "true_relative_residual": relative_residual,
+        "exact_rows": rows,
+        "exact_assembled_nnz": assembled_nnz,
+        "factor_nnz": factor_nnz,
+        "elapsed_seconds": elapsed_seconds,
+        "degree": payload.get("degree"),
+        "h_nm": payload.get("h_nm"),
+        "mpi_size": payload.get("mpi_size"),
+        "polarization_kind": payload.get("polarization_kind"),
+        "assembly_backend": payload.get(
+            "stage4_full3d_assembly_backend_actual"
+        ),
+    }
+    return {
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "anchor": anchor,
+        "source_compatibility": source_compatibility,
     }
 
 
@@ -997,6 +1337,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         help="Explicit same-p/h full3D descriptor for Hybrid field closure.",
     )
+    parser.add_argument(
+        "--full3d-reference-sha256",
+        help=(
+            "Expected SHA-256 of a fresh static Full3D watchdog record. "
+            "Required only by the opt-in static-condensed Hybrid backend."
+        ),
+    )
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
     parser.add_argument(
         "--polarization-kind", choices=("s", "p"), default="s"
@@ -1074,6 +1421,31 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--target qep requires --material-kind.")
     if args.target == "hybrid" and args.requested_modes < 2:
         parser.error("Hybrid requested modes must be at least two.")
+    static_backend = (
+        args.stage4_full3d_assembly_backend
+        == "assembly_time_static_condensed"
+    )
+    if static_backend:
+        if args.target != "hybrid":
+            parser.error(
+                "The static-condensed assembly backend is currently qualified "
+                "only for Hybrid watchdog shards."
+            )
+        if args.full3d_reference is None:
+            parser.error(
+                "The static-condensed Hybrid backend requires a fresh same-p/h "
+                "--full3d-reference."
+            )
+        if not _valid_hex_digest(args.full3d_reference_sha256, 64):
+            parser.error(
+                "The static-condensed Hybrid backend requires an explicit "
+                "64-hex --full3d-reference-sha256."
+            )
+    elif args.full3d_reference_sha256 is not None:
+        parser.error(
+            "--full3d-reference-sha256 is reserved for the opt-in "
+            "static-condensed Hybrid backend."
+        )
     if not 0.0 < args.incident_grazing_deg < 90.0:
         parser.error("--incident-grazing-deg must lie strictly between 0 and 90.")
     if args.candidate_modes < args.requested_modes:
@@ -1379,7 +1751,7 @@ def run(args: argparse.Namespace) -> int:
             )
             authority, authority_read_error = _read_json_object(authority_path)
             authority_observed_sha256 = _sha256(authority_path)
-            authority_source_compatibility = (
+            historical_authority_source_compatibility = (
                 _task034_authority_source_compatibility(
                     authority,
                     degree=args.degree,
@@ -1397,6 +1769,32 @@ def run(args: argparse.Namespace) -> int:
             full3d_path = None if full3d_path is None else full3d_path.resolve()
             full3d_reference_sha256 = (
                 None if full3d_path is None else _sha256(full3d_path)
+            )
+            fresh_static_record, fresh_static_read_error = (
+                _read_json_object(full3d_path)
+                if args.stage4_full3d_assembly_backend
+                == "assembly_time_static_condensed"
+                else (None, None)
+            )
+            fresh_static_anchor_gate = (
+                _task035b_static_full3d_anchor_gate(
+                    fresh_static_record,
+                    expected_sha256=args.full3d_reference_sha256,
+                    observed_sha256=full3d_reference_sha256,
+                    degree=args.degree,
+                    h_nm=args.h_nm,
+                    mpi_size=args.mpi_size,
+                    polarization_kind=args.polarization_kind,
+                    current_source_sha=source_before.get("commit_sha"),
+                )
+                if args.stage4_full3d_assembly_backend
+                == "assembly_time_static_condensed"
+                else None
+            )
+            active_source_compatibility = (
+                fresh_static_anchor_gate["source_compatibility"]
+                if fresh_static_anchor_gate is not None
+                else historical_authority_source_compatibility
             )
             resource_anchor_path = args.task034_workstation_resource_anchor
             if (
@@ -1475,13 +1873,15 @@ def run(args: argparse.Namespace) -> int:
                 mpi_size=args.mpi_size,
                 available_physical_core_count=_available_physical_core_count(),
                 current_source_sha=source_before.get("commit_sha"),
-                source_compatibility=authority_source_compatibility,
+                source_compatibility=active_source_compatibility,
                 source_clean_verified=source_before["source_clean_verified"],
                 authority_is_canonical=authority_is_canonical,
                 authority_is_tracked=authority_is_tracked,
                 external_watchdog_active=True,
                 full3d_reference_sha256=full3d_reference_sha256,
                 resource_anchor_sha256=resource_anchor_sha256,
+                assembly_backend=args.stage4_full3d_assembly_backend,
+                measured_full3d_anchor=fresh_static_anchor_gate,
                 m160_funnel_evidence=m160_funnel_evidence,
                 expected_m160_funnel_sha256=(
                     args.m160_funnel_evidence_sha256
@@ -1503,6 +1903,15 @@ def run(args: argparse.Namespace) -> int:
                     ),
                     "full3d_reference_observed_sha256": (
                         full3d_reference_sha256
+                    ),
+                    "full3d_reference_expected_sha256": (
+                        args.full3d_reference_sha256
+                    ),
+                    "fresh_static_reference_read_error": (
+                        fresh_static_read_error
+                    ),
+                    "historical_authority_source_compatibility": (
+                        historical_authority_source_compatibility
                     ),
                     "resource_anchor_path": (
                         None

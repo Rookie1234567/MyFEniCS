@@ -15,6 +15,7 @@ from benchmarks.run_task033_memory_watchdog import (
     _task034_terminal_record_is_complete,
     _task034_terminal_worker_drain,
     _task034_authority_source_compatibility,
+    _task035b_static_full3d_anchor_gate,
 )
 from benchmarks.task033_resource_gates import scaled_gate_limits
 from benchmarks.task034_workstation_resource_gates import (
@@ -145,6 +146,211 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         kwargs.update(overrides)
         return task034_workstation_hybrid_launch_gate(
             self.authority, **kwargs
+        )
+
+    @staticmethod
+    def _fresh_static_record(*, source_sha: str) -> dict:
+        return {
+            "schema_version": "task033.full3d-watchdog.v1",
+            "benchmark_id": "task033_target_full3d_watchdog",
+            "solver_summary_sha256": "1" * 64,
+            "progress_sha256": "2" * 64,
+            "timeline_sha256": "3" * 64,
+            "degree": 2,
+            "h_nm": 5.0,
+            "mpi_size": 8,
+            "polarization_kind": "s",
+            "run_kind": "full-solve",
+            "status": "full3d_reference_pass",
+            "return_code": 0,
+            "no_swap": True,
+            "terminated_for_memory": False,
+            "terminated_for_timeout": False,
+            "terminated_for_authority_unreadable": False,
+            "stage4_full3d_assembly_backend_requested": (
+                "assembly_time_static_condensed"
+            ),
+            "stage4_full3d_assembly_backend_actual": (
+                "assembly_time_static_condensed"
+            ),
+            "source": {
+                "commit_sha": source_sha,
+                "verified_clean_sha": source_sha,
+                "head_after_sha": source_sha,
+                "tracked_source_dirty": False,
+                "stable_and_clean_after": True,
+            },
+            "qualification": {
+                "pass": True,
+                "failures": [],
+                "checks": {
+                    "process_completed": True,
+                    "live_authority_readable": True,
+                    "all_expected_mpi_ranks_observed": True,
+                    "official_result": True,
+                    "ksp_converged": True,
+                    "true_residual_le_1e-9": True,
+                    "reference_exported": True,
+                    "swap_policy_satisfied": True,
+                    "source_stable_and_clean_after": True,
+                },
+            },
+            "calibration": {
+                "exact_rows": 30_800,
+                "exact_assembled_nnz": 3_229_040.0,
+            },
+            "resource_authority": {
+                "memory_authority_gib": 2.7627029418945312,
+            },
+            "solver_summary": {
+                "stage_case": "stage4_block_grating",
+                "geometry_kind": "rectangular_block_grating",
+                "official_result": True,
+                "case_status": "completed",
+                "stage4_full3d_assembly_backend_actual": (
+                    "assembly_time_static_condensed"
+                ),
+                "elapsed_seconds": 11.617,
+                "config": {
+                    "lambda0": 13.5,
+                    "incident_theta_deg": 80.0,
+                    "incident_phi_deg": 0.0,
+                    "period_x": 50.0,
+                    "period_y": 25.0,
+                    "z_min": -10.0,
+                    "z_max": 130.0,
+                    "grating_height": 120.0,
+                    "grating_width_x": 17.0,
+                    "grating_width_y": 25.0,
+                    "n_substrate": [0.999002304859, 0.00182649365],
+                    "n_grating": [0.999002304859, 0.00182649365],
+                    "use_floquet_xy": True,
+                    "stage4_boundary_model": "dtn_port",
+                    "stage4_dtn_assembly": "auxiliary",
+                    "scattering_background": "layered",
+                    "nedelec_degree": 2,
+                    "mesh_target_size": 5.0,
+                    "full3d_reference_export": True,
+                    "full3d_reference_plane_z": [10.0, 110.0],
+                },
+                "matrix_stats": {
+                    "matrix_rows": 30_800,
+                    "matrix_nnz_used": 3_229_040.0,
+                },
+                "stage4_dtn_factor_inventory": {
+                    "available": True,
+                    "matrix_stats": {
+                        "matrix_rows": 30_800,
+                        "matrix_nnz_used": 26_995_728.0,
+                    },
+                },
+                "cell_static_condensation": {
+                    "ordinary_default_changed": False,
+                    "full_global_matrix_allocated": False,
+                    "full_trace_matrix_allocated": False,
+                    "inactive_max_p_rows_retained_in_matrix": False,
+                    "recovery": {
+                        "status": (
+                            "full_field_recovered_without_full_global_matrix"
+                        ),
+                        "full_global_matrix_allocated": False,
+                        "full_trace_matrix_allocated": False,
+                    },
+                    "full_explicit_true_residual": {
+                        "linear_system_relative_residual": 8.21e-12,
+                        "eliminated_cell_interior_max_abs_residual": 5.9e-14,
+                        "full_global_matrix_allocated_for_residual": False,
+                        "full_trace_matrix_allocated_for_residual": False,
+                    },
+                },
+            },
+        }
+
+    def test_fresh_static_full3d_anchor_is_fail_closed_and_launchable(self) -> None:
+        source_sha = "a" * 40
+        record_sha = "b" * 64
+        fresh = _task035b_static_full3d_anchor_gate(
+            self._fresh_static_record(source_sha=source_sha),
+            expected_sha256=record_sha,
+            observed_sha256=record_sha,
+            degree=2,
+            h_nm=5.0,
+            mpi_size=8,
+            polarization_kind="s",
+            current_source_sha=source_sha,
+        )
+        self.assertTrue(fresh["pass"], fresh["failures"])
+        gate = self._gate(
+            degree=2,
+            h_nm=5.0,
+            mpi_size=8,
+            requested_modes=120,
+            candidate_modes=240,
+            current_source_sha=source_sha,
+            source_compatibility=fresh["source_compatibility"],
+            full3d_reference_sha256=record_sha,
+            assembly_backend="assembly_time_static_condensed",
+            measured_full3d_anchor=fresh,
+        )
+        self.assertTrue(gate["pass"], gate["failures"])
+        self.assertEqual(
+            gate["resource_anchor_kind"], "fresh_full3d_reference"
+        )
+
+        missing = self._gate(
+            degree=2,
+            h_nm=5.0,
+            requested_modes=120,
+            candidate_modes=240,
+            assembly_backend="assembly_time_static_condensed",
+            full3d_reference_sha256=record_sha,
+        )
+        self.assertFalse(missing["pass"])
+        self.assertIn(
+            "static_backend_requires_fresh_anchor", missing["failures"]
+        )
+        wrong_default = self._gate(
+            degree=2,
+            h_nm=5.0,
+            requested_modes=120,
+            candidate_modes=240,
+            measured_full3d_anchor=fresh,
+            full3d_reference_sha256=record_sha,
+        )
+        self.assertFalse(wrong_default["pass"])
+        self.assertIn(
+            "standard_backend_rejects_fresh_anchor",
+            wrong_default["failures"],
+        )
+
+        bad_hash = _task035b_static_full3d_anchor_gate(
+            self._fresh_static_record(source_sha=source_sha),
+            expected_sha256="c" * 64,
+            observed_sha256=record_sha,
+            degree=2,
+            h_nm=5.0,
+            mpi_size=8,
+            polarization_kind="s",
+            current_source_sha=source_sha,
+        )
+        self.assertFalse(bad_hash["pass"])
+        self.assertIn("record_hash_matches_expected", bad_hash["failures"])
+
+        wrong_physics = self._fresh_static_record(source_sha=source_sha)
+        wrong_physics["solver_summary"]["config"]["period_x"] = 51.0
+        bad_physics = _task035b_static_full3d_anchor_gate(
+            wrong_physics,
+            expected_sha256=record_sha,
+            observed_sha256=record_sha,
+            degree=2,
+            h_nm=5.0,
+            mpi_size=8,
+            polarization_kind="s",
+            current_source_sha=source_sha,
+        )
+        self.assertFalse(bad_physics["pass"])
+        self.assertIn(
+            "fixed_task034_physics_identity", bad_physics["failures"]
         )
 
     def test_explicit_workstation_gate_passes_complete_p3_h3_evidence(self) -> None:
