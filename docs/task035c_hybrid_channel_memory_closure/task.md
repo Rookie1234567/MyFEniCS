@@ -2,7 +2,7 @@
 
 ## 1. 上位权威
 
-本任务的完整范围、诊断顺序、模型矩阵、成功 Gate 和停止规则由以下文件确定：
+完整范围、诊断顺序、成功 Gate 和停止规则由以下文件确定：
 
 ```text
 docs/task035b_high_order_local_hp_resource_envelope/review_report_v4.md
@@ -24,16 +24,16 @@ Codex 开始前必须完整阅读：
 
 只解决两个问题：
 
-1. 定位并修复 Full3D 与 Hybrid 在12个显著衍射级功率和复振幅上的误差；
+1. 定位并修复 Full3D 与 Hybrid 在 12 个显著衍射级功率和复振幅上的误差；
 2. 解释并修复 static Hybrid 减少 rows/NNZ 但不降低峰值内存、且 modal coupling 明显变慢的问题。
 
-不得用更大的 M、更多参数扫描或更重模型替代根因分析。
+不得用更大的 M、参数盲扫或 h13 自适应替代根因分析。
 
 ## 3. 强制模型
 
 ### Model A：p2/h5
 
-用于低成本逐组件诊断，至少保留：
+用于低成本逐组件诊断：
 
 ```text
 Full3D standard
@@ -42,15 +42,22 @@ Hybrid standard M120/M160
 Hybrid static M120/M160
 ```
 
-### Model B：p3/h7.5
+### Model B：p6/h10
 
-作为已有高阶等精度证据的强制 authority，重新执行同样四路比较，并使用本任务严格的12通道功率和12通道复振幅 Gate。
+Task035c 不计算 `p3/h7.5`。强制高阶 authority 为：
 
-`p3/h7.5` 不是 continuum truth；需要同时对照 p6/h10/reference-v1 趋势。
+```text
+Full3D standard p6/h10
+Full3D static p6/h10
+Hybrid standard p6/h10 M120/M160
+Hybrid static p6/h10 M120/M160
+```
 
-### Conditional Model C
+`p6/h10` 是当前 FEniCS best available global-p discrete reference，并与 COMSOL 高阶趋势接近，但仍不是 continuum truth。最终相关修改后，必须在同一 final source 上重新运行必要 anchor。
 
-只有 p3/h7.5 已给出明确根因且资源预估安全时，才允许增加 p6/global-p 诊断点。
+历史 p6/h10 资源记录只用于预检：full-matrix 峰值约 35 GiB，assembly-time static 约 16–20 GiB。p6/h10 是强制模型，不能仅以“模型较重”为由跳过；一次只运行一个 heavy case并启用 watchdog。
+
+旧版条件 p6 Model C 已取消。只有 p6/h10 诊断明确需要时，才允许增加 M240、modal cross-section 加密或更高 modal basis order。
 
 ## 4. 执行顺序
 
@@ -62,29 +69,29 @@ Hybrid static M120/M160
 6. 建立 standard/static Hybrid 同时峰值对象账本；
 7. 审计 cell-interior tangential trace 及 interior-to-modal coupling 是否理论上应为零；
 8. 仅对数学上必要的 modal correction 做 classwise/batched、blocked/streamed 和生命周期优化；
-9. 先通过 p2/h5 诊断闭环，再运行 p3/h7.5 正式 authority。
+9. 先完成 p2/h5 根因闭环，再运行 p6/h10 正式精度与资源 authority。
 
-## 5. 精度成功 Gate
+## 5. 精度 Gate
 
-p3/h7.5 必须同时通过：
+p2/h5 必须做到以下之一：
 
-- standard Full3D ↔ static Full3D：12/12 powers + 12/12 amplitudes；
+- 修复后达到 12/12 powers + 12/12 amplitudes；或
+- 以 modal mesh/p 的定量收敛证明原 basis 未解析，并在独立收敛 basis 上达到 12/12 + 12/12。
+
+p6/h10 必须在同一 p/h/M 与 final source 下通过：
+
+- standard Full3D ↔ static Full3D：12/12 + 12/12；
 - standard Hybrid ↔ static Hybrid：12/12 + 12/12；
 - corrected Full3D ↔ corrected Hybrid：12/12 + 12/12；
 - R/T/A、Avolume、energy closure、full explicit residual；
 - interface E/H 和 selected field planes；
-- M120→M160；只有证据需要时才进入 M240。
+- M120→M160；只有证据需要时进入 M240。
 
 不得放宽 Task035b reference-v1 tolerance。
 
-p2/h5 必须 either：
+## 6. 内存与时间 Gate
 
-- 修复后达到12/12 + 12/12；或
-- 以跨 modal mesh/p 的定量收敛证明当前 basis 未解析，并在 independently converged modal basis 上达到12/12 + 12/12。
-
-## 6. 内存与时间成功 Gate
-
-以 p3/h7.5 为主要资源 authority，同物理、p/h/M、MPI和输出合同下：
+以 p6/h10 为主要资源 authority，同物理、p/h/M、MPI和输出合同下：
 
 ```text
 mandatory static-Hybrid peak reduction >= 15%
@@ -99,12 +106,14 @@ total time <= 1.35x standard
 - fill 的变化有解释且不再抵消收益；
 - 无长期 `N_FE × M` dense payload；
 - 报告 RSS/PSS/USS/cgroup/swap 和峰值对象共存；
+- 至少比较合理的两个或三个 MPI 规模；
 - ordinary default 仍为 `standard_full`。
 
 ## 7. 非目标
 
 本任务不开展：
 
+- `p3/h7.5`；
 - h13 Hybrid h/p 自适应；
 - 0.7 nm 资源外推；
 - irregular geometry；
@@ -112,12 +121,13 @@ total time <= 1.35x standard
 - production selective trace；
 - 新 condensed iterative profile。
 
-只有 Task035c 同时完成逐通道精度和内存闭合后，才重新开放上述后续工作。
+只有 Task035c 同时完成逐通道精度和 p6/h10 内存闭合后，才重新开放后续自适应研究。
 
 ## 8. 交付
 
 必须维护：
 
+- `README.md`；
 - `outcomes/summary.md`；
 - `outcomes/test_summary.md`；
 - 根因诊断、对象生命周期和模型对照表；
