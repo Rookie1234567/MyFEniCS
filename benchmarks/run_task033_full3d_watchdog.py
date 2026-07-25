@@ -123,6 +123,9 @@ def _full3d_config(args: argparse.Namespace):
         cfg,
         polarization_kind=args.polarization_kind,
         custom_polarization=None,
+        stage4_full3d_assembly_backend=(
+            args.stage4_full3d_assembly_backend
+        ),
         petsc_direct_solver_profile=args.profile,
         matrix_diagnostics_assemble_only=args.run_kind == "assembly-only",
         matrix_diagnostics_factorization_only=factorization_only,
@@ -172,6 +175,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--profile",
         choices=("default", "mumps_ooc", "mumps_blr"),
         default="default",
+    )
+    parser.add_argument(
+        "--stage4-full3d-assembly-backend",
+        choices=("standard_full", "assembly_time_static_condensed"),
+        default="standard_full",
     )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
@@ -234,6 +242,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.degree == 4 and math.isclose(args.h_nm, 3.0)
     ):
         parser.error("--task034-p4-h3-added-point is restricted to p4/h3.")
+    if (
+        args.stage4_full3d_assembly_backend
+        == "assembly_time_static_condensed"
+        and args.run_kind != "full-solve"
+    ):
+        parser.error(
+            "assembly_time_static_condensed requires --run-kind full-solve "
+            "for mandatory recovery and explicit residual."
+        )
     return args
 
 
@@ -573,6 +590,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         args.run_kind,
         "--profile",
         args.profile,
+        "--stage4-full3d-assembly-backend",
+        args.stage4_full3d_assembly_backend,
         "--run-dir",
         str(run_dir),
     ]
@@ -720,6 +739,12 @@ def _run_parent(args: argparse.Namespace) -> int:
         "run_kind": args.run_kind,
         "mpi_size": args.mpi_size,
         "profile": args.profile,
+        "stage4_full3d_assembly_backend_requested": (
+            args.stage4_full3d_assembly_backend
+        ),
+        "stage4_full3d_assembly_backend_actual": solver_summary.get(
+            "stage4_full3d_assembly_backend_actual"
+        ),
         "command": command,
         "source": {
             **source_before,

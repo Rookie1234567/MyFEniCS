@@ -118,10 +118,16 @@ def _sample_distributed_2d(function, points_xy: np.ndarray) -> np.ndarray:
 
 def assign_local_total_electric_field(
     system: HybridLocalDtnSystem,
-    augmented_solution: PETSc.Vec,
+    augmented_solution,
 ):
     """Back-substitute one local MPC solution into its physical H(curl) field."""
 
+    if isinstance(augmented_solution, fem.Function):
+        if augmented_solution.function_space.mesh is not system.V.mesh:
+            raise ValueError(
+                "Recovered Hybrid field belongs to a different local mesh."
+            )
+        return augmented_solution
     if augmented_solution.getSize() != system.global_size:
         raise ValueError("Local augmented solution and Hybrid local system sizes differ.")
     return _assign_fe_solution_from_augmented(

@@ -22,7 +22,11 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - Windows host path
     resource = None
 
-from src.common.config_3d import target_stage4_config
+from src.common.config_3d import (
+    ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+    STANDARD_FULL_ASSEMBLY_BACKEND,
+    target_stage4_config,
+)
 from src.common.distributed_matrix_diagnostics import (
     distributed_active_column_count,
 )
@@ -614,6 +618,18 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--h-nm", type=float, default=5.0)
     parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4), default=2)
     parser.add_argument(
+        "--stage4-full3d-assembly-backend",
+        choices=(
+            STANDARD_FULL_ASSEMBLY_BACKEND,
+            ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+        ),
+        default=STANDARD_FULL_ASSEMBLY_BACKEND,
+        help=(
+            "Single public local-FE assembly port. Static condensation is "
+            "explicit opt-in; standard_full remains the ordinary default."
+        ),
+    )
+    parser.add_argument(
         "--full3d-reference",
         type=Path,
         help=(
@@ -779,6 +795,11 @@ def main() -> None:
     total_started = time.perf_counter()
     timings: dict[str, float] = {}
     cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
+    cfg.stage4_full3d_assembly_backend = (
+        args.stage4_full3d_assembly_backend
+    )
+    cfg.matrix_diagnostics_assemble_only = False
+    cfg.matrix_diagnostics_factorization_only = False
     cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
     cfg.polarization_kind = args.polarization_kind
     operators = None
@@ -879,6 +900,9 @@ def main() -> None:
                 "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
                 "full_field_or_mode_vector_gather": False,
                 "primary_solver_path": args.solver_path,
+                "stage4_full3d_assembly_backend_requested": (
+                    args.stage4_full3d_assembly_backend
+                ),
                 "task33_variant": True,
                 "provenance": (
                     "clean_task033_finite_spectrum_capacity_negative"
@@ -1147,7 +1171,12 @@ def main() -> None:
             timings["primary_system_build"] = _max_elapsed(comm, started)
             timings["monolithic_assembly"] = timings["primary_system_build"]
             progress("Task32 Phase6: monolithic augmented AIJ complete")
-            solution = solve_hybrid_augmented_direct(system, bottom, top)
+            solution = solve_hybrid_augmented_direct(
+                system,
+                bottom,
+                top,
+                coupling,
+            )
         else:
             builder = (
                 build_hybrid_modal_schur_direct_system
@@ -1384,16 +1413,16 @@ def main() -> None:
             cfg,
             bottom,
             top,
-            solution.bottom,
-            solution.top,
+            solution.bottom_physical,
+            solution.top_physical,
             interface_samples,
         )
         absorption = hybrid_volume_absorption(
             cfg,
             bottom,
             top,
-            solution.bottom,
-            solution.top,
+            solution.bottom_physical,
+            solution.top_physical,
             reconstructor,
             solution.modal_amplitudes,
             incident_power=float(port_power["incident_power_code_units"]),
@@ -1541,6 +1570,49 @@ def main() -> None:
             ),
             "external_port_rta_finite": finite_rta,
         }
+        if solution.bottom_recovered is not None:
+            if solution.top_recovered is None:
+                raise RuntimeError(
+                    "Hybrid static recovery completed on only one local side."
+                )
+            recovered_sides = (
+                solution.bottom_recovered,
+                solution.top_recovered,
+            )
+            gates.update(
+                {
+                    "condensed_full_operator_relative_residual_le_1e-9": (
+                        max(
+                            item.full_operator_residual[
+                                "linear_system_relative_residual"
+                            ]
+                            for item in recovered_sides
+                        )
+                        <= 1.0e-9
+                    ),
+                    "condensed_eliminated_interior_max_residual_le_1e-9": (
+                        max(
+                            item.full_operator_residual[
+                                "eliminated_cell_interior_max_abs_residual"
+                            ]
+                            for item in recovered_sides
+                        )
+                        <= 1.0e-9
+                    ),
+                    "condensed_full_surface_mode_matrix_not_retained": all(
+                        not item.streaming_audit[
+                            "full_surface_mode_matrix_retained"
+                        ]
+                        for item in recovered_sides
+                    ),
+                    "condensed_full_global_matrix_not_allocated": all(
+                        not item.streaming_audit[
+                            "full_global_matrix_allocated"
+                        ]
+                        for item in recovered_sides
+                    ),
+                }
+            )
         if physical_fields is not None:
             interface_physical = physical_fields["interface_continuity"]
             absorption_physical = physical_fields["volume_absorption"]
@@ -1709,6 +1781,9 @@ def main() -> None:
                 "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
                 "full_field_or_mode_vector_gather": False,
                 "primary_solver_path": args.solver_path,
+                "stage4_full3d_assembly_backend_requested": (
+                    args.stage4_full3d_assembly_backend
+                ),
                 "task33_variant": task33_variant,
                 "provenance": (
                     (
@@ -1814,6 +1889,29 @@ def main() -> None:
                 ),
                 "bottom_global_size": bottom.global_size,
                 "top_global_size": top.global_size,
+                "assembly_backend_requested": (
+                    args.stage4_full3d_assembly_backend
+                ),
+                "bottom_assembly_backend_actual": (
+                    bottom.assembly_backend_actual
+                ),
+                "top_assembly_backend_actual": top.assembly_backend_actual,
+                "bottom_assembly_backend_qualification": (
+                    bottom.assembly_backend_qualification
+                ),
+                "top_assembly_backend_qualification": (
+                    top.assembly_backend_qualification
+                ),
+                "bottom_static_condensation": (
+                    bottom.static_condensation.metadata.to_dict()
+                    if bottom.static_condensation is not None
+                    else None
+                ),
+                "top_static_condensation": (
+                    top.static_condensation.metadata.to_dict()
+                    if top.static_condensation is not None
+                    else None
+                ),
                 "bottom_local_fe_dofs": bottom.n_fe,
                 "top_local_fe_dofs": top.n_fe,
                 "bottom_local_mesh_cells": list(bottom.local_mesh.mesh_cells),
@@ -1830,6 +1928,31 @@ def main() -> None:
                 "internal_unknown_count": coupling.internal_unknown_count,
                 "qep_to_interface_quadrature_degree": (
                     coupling.interface_quadrature_degree
+                ),
+                "cell_interior_modal_correction_norms": {
+                    side: {
+                        "positive_frobenius": float(
+                            np.linalg.norm(
+                                block.positive_interior_correction
+                            )
+                        ),
+                        "negative_frobenius": float(
+                            np.linalg.norm(
+                                block.negative_interior_correction
+                            )
+                        ),
+                        "modal_rhs_l2": float(
+                            np.linalg.norm(block.modal_rhs_correction)
+                        ),
+                    }
+                    for side, block in (
+                        ("bottom", coupling.bottom),
+                        ("top", coupling.top),
+                    )
+                },
+                "full_surface_mode_vectors_retained": bool(
+                    coupling.bottom.full_surface_mode_vectors_retained
+                    or coupling.top.full_surface_mode_vectors_retained
                 ),
                 "dense_interface_square_formed": (
                     system.dense_interface_square_formed
@@ -1877,6 +2000,32 @@ def main() -> None:
                 "recovery_seconds": getattr(solution, "recovery_seconds", None),
                 "recovery_factor_setup_seconds": getattr(
                     solution, "recovery_factor_setup_seconds", {}
+                ),
+                "bottom_static_recovery": (
+                    None
+                    if solution.bottom_recovered is None
+                    else {
+                        "recovery": (
+                            solution.bottom_recovered.recovery_audit
+                        ),
+                        "full_operator_residual": (
+                            solution.bottom_recovered.full_operator_residual
+                        ),
+                        "streaming": (
+                            solution.bottom_recovered.streaming_audit
+                        ),
+                    }
+                ),
+                "top_static_recovery": (
+                    None
+                    if solution.top_recovered is None
+                    else {
+                        "recovery": solution.top_recovered.recovery_audit,
+                        "full_operator_residual": (
+                            solution.top_recovered.full_operator_residual
+                        ),
+                        "streaming": solution.top_recovered.streaming_audit,
+                    }
                 ),
             },
             "validation": validation,
@@ -1955,8 +2104,7 @@ def main() -> None:
             coupling.destroy()
         for local_system in (bottom, top):
             if local_system is not None:
-                local_system.A.destroy()
-                local_system.b.destroy()
+                local_system.destroy()
         if positive is not None:
             positive.destroy()
         if negative is not None:

@@ -27,7 +27,11 @@ from ..modes.mode_classification import (
     ClassifiedBiorthogonalMode,
 )
 from ..modes.stable_propagation import TwoSidedPropagation, build_two_sided_propagation
-from ..solvers.dtn_port_3d import _assemble_mpc_form_vector, _vec_nonzero_owned_entries
+from ..solvers.dtn_port_3d import (
+    _assemble_mpc_form_vector,
+    _assemble_unconstrained_form_vector,
+    _vec_nonzero_owned_entries,
+)
 from ..solvers.hybrid_local_dtn import HybridLocalDtnSystem
 from .modal_trace_projection import (
     ModalTraceProjection,
@@ -49,6 +53,10 @@ class HybridInterfaceModeBlocks:
     local_fem_outward_normal_sign: int
     lifted_query_points: int
     quadrature_degree: int
+    positive_interior_correction: np.ndarray
+    negative_interior_correction: np.ndarray
+    modal_rhs_correction: np.ndarray
+    full_surface_mode_vectors_retained: bool = False
     full_field_or_mode_gathered: bool = False
 
     def destroy(self) -> None:
@@ -69,6 +77,9 @@ class HybridInternalModeCoupling:
     positive_projection_identity_error: float
     mode_count_per_direction: int
     interface_quadrature_degree: int
+    spaces: CrossSectionSpaces
+    positive_basis: BiorthogonalModeBasis
+    negative_basis: BiorthogonalModeBasis
     full_field_or_mode_gathered: bool = False
     dense_interface_square_formed: bool = False
 
@@ -482,6 +493,16 @@ class _ReusableInterfaceLifter:
         return self.target, queries
 
 
+@dataclass
+class _InterfaceSurfaceLoadEntries:
+    matrix_rows: np.ndarray
+    matrix_values: np.ndarray
+    overlap_rows: np.ndarray
+    overlap_values: np.ndarray
+    full_vector: PETSc.Vec | None
+    queries: int
+
+
 class _ReusableInterfaceSurfaceLoad:
     """Compile one interface load form and update only its lifted coefficient."""
 
@@ -511,18 +532,72 @@ class _ReusableInterfaceSurfaceLoad:
             },
         )
 
+    def assemble(
+        self,
+        source: fem.Function,
+        *,
+        role: str,
+    ) -> _InterfaceSurfaceLoadEntries:
+        _lifted, queries = self.lifter.lift(source)
+        overlap_vector = _assemble_mpc_form_vector(
+            self.form, self.system.floquet_data.mpc
+        )
+        overlap_rows, overlap_values = _vec_nonzero_owned_entries(
+            overlap_vector
+        )
+        if self.system.static_condensation is None:
+            overlap_vector.destroy()
+            return _InterfaceSurfaceLoadEntries(
+                matrix_rows=overlap_rows,
+                matrix_values=overlap_values,
+                overlap_rows=overlap_rows,
+                overlap_values=overlap_values,
+                full_vector=None,
+                queries=queries,
+            )
+        full_vector = _assemble_unconstrained_form_vector(self.form)
+        try:
+            reduced = self.system.static_condensation.reduce_surface_vector(
+                full_vector,
+                role=role,
+            )
+            matrix_rows, matrix_values = _vec_nonzero_owned_entries(reduced)
+            reduced.destroy()
+        except Exception:
+            full_vector.destroy()
+            overlap_vector.destroy()
+            raise
+        overlap_vector.destroy()
+        return _InterfaceSurfaceLoadEntries(
+            matrix_rows=matrix_rows,
+            matrix_values=matrix_values,
+            overlap_rows=overlap_rows,
+            overlap_values=overlap_values,
+            full_vector=full_vector,
+            queries=queries,
+        )
+
     def assemble_entries(
         self, source: fem.Function
     ) -> tuple[np.ndarray, np.ndarray, int]:
+        entries = self.assemble(source, role="load_column")
+        if entries.full_vector is not None:
+            entries.full_vector.destroy()
+        return entries.matrix_rows, entries.matrix_values, entries.queries
+
+    def assemble_full_vector(
+        self,
+        source: fem.Function,
+    ) -> tuple[PETSc.Vec, int]:
+        """Assemble one full-space interface load for streaming recovery."""
+
+        if self.system.static_condensation is None:
+            raise ValueError(
+                "Full-space Hybrid interface loads are recovery-only and "
+                "require assembly-time static condensation."
+            )
         _lifted, queries = self.lifter.lift(source)
-        vector = _assemble_mpc_form_vector(
-            self.form, self.system.floquet_data.mpc
-        )
-        try:
-            rows, values = _vec_nonzero_owned_entries(vector)
-            return rows, values, queries
-        finally:
-            vector.destroy()
+        return _assemble_unconstrained_form_vector(self.form), queries
 
 
 def _surface_load_entries(
@@ -633,7 +708,16 @@ def _build_projection_matrix(
     surface_load: _ReusableInterfaceSurfaceLoad,
     trace_lifter: _ReusableInterfaceLifter,
     log=None,
-) -> tuple[PETSc.Mat, int, np.ndarray, float, float]:
+) -> tuple[
+    PETSc.Mat,
+    int,
+    np.ndarray,
+    float,
+    float,
+    tuple[PETSc.Vec, ...],
+    np.ndarray,
+    np.ndarray,
+]:
     comm = system.local_mesh.mesh.comm
     mode_count = len(projection.left_traces)
     local_mode_rows = mode_count if comm.rank == comm.size - 1 else 0
@@ -645,10 +729,22 @@ def _build_projection_matrix(
         local_cols=system.A.getLocalSize()[1],
     )
     raw_entries = []
-    for index, left in enumerate(projection.left_traces):
-        if log is not None:
-            log(f"Task32 {system.side}: assembling left surface load {index + 1}/{mode_count}")
-        raw_entries.append(surface_load.assemble_entries(left))
+    try:
+        for index, left in enumerate(projection.left_traces):
+            if log is not None:
+                log(
+                    f"Task32 {system.side}: assembling left surface load "
+                    f"{index + 1}/{mode_count}"
+                )
+            raw_entries.append(
+                surface_load.assemble(left, role="row_functional")
+            )
+    except Exception:
+        for entries in raw_entries:
+            if entries.full_vector is not None:
+                entries.full_vector.destroy()
+        matrix.destroy()
+        raise
     lift_queries = 0
 
     def raw_overlap_matrix(traces: Sequence[fem.Function]) -> np.ndarray:
@@ -667,7 +763,9 @@ def _build_projection_matrix(
             system.floquet_data.mpc.homogenize(field)
             field.x.scatter_forward()
             field_vector = field.x.petsc_vec
-            for row, (columns, coefficients, _queries) in enumerate(raw_entries):
+            for row, entries in enumerate(raw_entries):
+                columns = entries.overlap_rows
+                coefficients = entries.overlap_values
                 local = (
                     complex(
                         np.vdot(
@@ -688,6 +786,9 @@ def _build_projection_matrix(
     gram_condition = float(np.linalg.cond(surface_gram))
     if not np.isfinite(gram_condition) or gram_condition > 1.0e12:
         matrix.destroy()
+        for entries in raw_entries:
+            if entries.full_vector is not None:
+                entries.full_vector.destroy()
         raise RuntimeError(
             f"{system.side} lifted interface Gram is ill-conditioned: "
             f"{gram_condition:.6e}."
@@ -698,7 +799,9 @@ def _build_projection_matrix(
     )
     negative_mapping = inverse_gram @ negative_raw
     for row in range(mode_count):
-        for left_index, (columns, values, _queries) in enumerate(raw_entries):
+        for left_index, entries in enumerate(raw_entries):
+            columns = entries.matrix_rows
+            values = entries.matrix_values
             coefficient = complex(inverse_gram[row, left_index])
             if len(columns) and abs(coefficient) > 0.0:
                 matrix.setValues(
@@ -708,12 +811,47 @@ def _build_projection_matrix(
                     addv=PETSc.InsertMode.ADD_VALUES,
                 )
     matrix.assemble()
+    full_left_vectors = tuple(
+        entries.full_vector
+        for entries in raw_entries
+        if entries.full_vector is not None
+    )
+    if system.static_condensation is None:
+        modal_rhs_correction = np.zeros(mode_count, dtype=np.complex128)
+    else:
+        if len(full_left_vectors) != mode_count:
+            matrix.destroy()
+            for vector in full_left_vectors:
+                vector.destroy()
+            raise RuntimeError(
+                "Hybrid static projection lost a full-space left vector."
+            )
+        if system.full_fe_rhs is None:
+            matrix.destroy()
+            for vector in full_left_vectors:
+                vector.destroy()
+            raise RuntimeError(
+                "Hybrid static projection requires the full local FE RHS."
+            )
+        modal_rhs_correction = -inverse_gram @ np.asarray(
+            [
+                system.static_condensation.interior_cross_bilinear(
+                    vector,
+                    system.full_fe_rhs,
+                )
+                for vector in full_left_vectors
+            ],
+            dtype=np.complex128,
+        )
     return (
         matrix,
-        int(sum(item[2] for item in raw_entries) + lift_queries),
+        int(sum(item.queries for item in raw_entries) + lift_queries),
         negative_mapping,
         gram_condition,
         positive_identity_error,
+        full_left_vectors,
+        inverse_gram,
+        modal_rhs_correction,
     )
 
 
@@ -722,7 +860,9 @@ def _build_traction_matrix(
     modes: Sequence[ClassifiedBiorthogonalMode],
     traction_evaluator: _ReusableModeTractionEvaluator,
     surface_load: _ReusableInterfaceSurfaceLoad,
-) -> tuple[PETSc.Mat, int]:
+    full_left_vectors: tuple[PETSc.Vec, ...],
+    inverse_gram: np.ndarray,
+) -> tuple[PETSc.Mat, int, np.ndarray]:
     comm = system.local_mesh.mesh.comm
     mode_count = len(modes)
     local_mode_cols = mode_count if comm.rank == comm.size - 1 else 0
@@ -734,24 +874,55 @@ def _build_traction_matrix(
         local_cols=local_mode_cols,
     )
     query_count = 0
+    raw_interior_correction = np.zeros(
+        (inverse_gram.shape[1], mode_count),
+        dtype=np.complex128,
+    )
     sign = system.local_mesh.local_interface_outward_normal_sign
-    for column, mode in enumerate(modes):
-        traction = traction_evaluator.evaluate(
-            mode,
-            local_outward_normal_sign=sign,
-        )
-        rows, values, queries = surface_load.assemble_entries(traction)
-        query_count += queries
-        if len(rows):
-            # Existing Stage-4 DtN convention inserts -traction in the FE row.
-            matrix.setValues(
-                rows,
-                np.asarray([column], dtype=PETSc.IntType),
-                (-values).reshape((len(rows), 1)),
-                addv=PETSc.InsertMode.ADD_VALUES,
+    try:
+        for column, mode in enumerate(modes):
+            traction = traction_evaluator.evaluate(
+                mode,
+                local_outward_normal_sign=sign,
             )
+            entries = surface_load.assemble(traction, role="load_column")
+            query_count += entries.queries
+            if entries.full_vector is not None:
+                if system.static_condensation is None:
+                    entries.full_vector.destroy()
+                    raise RuntimeError(
+                        "Standard Hybrid traction unexpectedly retained a "
+                        "full vector."
+                    )
+                try:
+                    for row, left_vector in enumerate(full_left_vectors):
+                        raw_interior_correction[row, column] = (
+                            system.static_condensation.interior_cross_bilinear(
+                                left_vector,
+                                entries.full_vector,
+                            )
+                        )
+                finally:
+                    entries.full_vector.destroy()
+            if len(entries.matrix_rows):
+                # Existing Stage-4 DtN convention inserts -traction in the FE row.
+                matrix.setValues(
+                    entries.matrix_rows,
+                    np.asarray([column], dtype=PETSc.IntType),
+                    (-entries.matrix_values).reshape(
+                        (len(entries.matrix_rows), 1)
+                    ),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+    except Exception:
+        matrix.destroy()
+        raise
     matrix.assemble()
-    return matrix, query_count
+    return (
+        matrix,
+        query_count,
+        inverse_gram @ raw_interior_correction,
+    )
 
 
 def _build_interface_blocks(
@@ -776,6 +947,9 @@ def _build_interface_blocks(
         negative_mapping,
         trace_gram_condition,
         positive_identity_error,
+        full_left_vectors,
+        inverse_gram,
+        modal_rhs_correction,
     ) = _build_projection_matrix(
         system,
         projection,
@@ -786,14 +960,45 @@ def _build_interface_blocks(
     )
     if log is not None:
         log(f"Task32 {system.side}: assembling positive traction columns")
-    positive_traction, positive_queries = _build_traction_matrix(
-        system, positive_basis.modes, traction_evaluator, surface_load
-    )
-    if log is not None:
-        log(f"Task32 {system.side}: assembling negative traction columns")
-    negative_traction, negative_queries = _build_traction_matrix(
-        system, negative_basis.modes, traction_evaluator, surface_load
-    )
+    positive_traction = None
+    negative_traction = None
+    try:
+        (
+            positive_traction,
+            positive_queries,
+            positive_interior_correction,
+        ) = _build_traction_matrix(
+            system,
+            positive_basis.modes,
+            traction_evaluator,
+            surface_load,
+            full_left_vectors,
+            inverse_gram,
+        )
+        if log is not None:
+            log(f"Task32 {system.side}: assembling negative traction columns")
+        (
+            negative_traction,
+            negative_queries,
+            negative_interior_correction,
+        ) = _build_traction_matrix(
+            system,
+            negative_basis.modes,
+            traction_evaluator,
+            surface_load,
+            full_left_vectors,
+            inverse_gram,
+        )
+    except Exception:
+        if positive_traction is not None:
+            positive_traction.destroy()
+        if negative_traction is not None:
+            negative_traction.destroy()
+        projection_matrix.destroy()
+        raise
+    finally:
+        for vector in full_left_vectors:
+            vector.destroy()
     if log is not None:
         log(f"Task32 {system.side}: internal interface blocks complete")
     return HybridInterfaceModeBlocks(
@@ -811,6 +1016,10 @@ def _build_interface_blocks(
             projection_queries + positive_queries + negative_queries
         ),
         quadrature_degree=surface_load.quadrature_policy.selected_degree,
+        positive_interior_correction=positive_interior_correction,
+        negative_interior_correction=negative_interior_correction,
+        modal_rhs_correction=modal_rhs_correction,
+        full_surface_mode_vectors_retained=False,
     )
 
 
@@ -829,6 +1038,13 @@ def build_hybrid_internal_mode_coupling(
 
     if bottom_system.side != "bottom" or top_system.side != "top":
         raise ValueError("Hybrid local systems must be ordered bottom, top.")
+    if (
+        bottom_system.assembly_backend_actual
+        != top_system.assembly_backend_actual
+    ):
+        raise ValueError(
+            "Hybrid bottom/top local assembly backends must match."
+        )
     mode_count = len(positive_basis.modes)
     if mode_count == 0 or len(negative_basis.modes) != mode_count:
         raise ValueError("Positive and negative internal bases need equal nonzero size.")
@@ -974,6 +1190,9 @@ def build_hybrid_internal_mode_coupling(
             ),
             mode_count_per_direction=mode_count,
             interface_quadrature_degree=bottom.quadrature_degree,
+            spaces=spaces,
+            positive_basis=positive_basis,
+            negative_basis=negative_basis,
         )
     except Exception:
         if bottom is not None:

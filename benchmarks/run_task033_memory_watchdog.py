@@ -521,6 +521,8 @@ def _worker_command(
         str(args.candidate_modes),
         "--solver-path",
         args.solver_path,
+        "--stage4-full3d-assembly-backend",
+        args.stage4_full3d_assembly_backend,
         "--comparison-solver-path",
         args.comparison_solver_path,
         "--verified-clean-sha",
@@ -933,6 +935,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--solver-path",
         choices=("augmented", "modal-schur-fast", "modal-schur-memory-minimal"),
         default="modal-schur-memory-minimal",
+    )
+    parser.add_argument(
+        "--stage4-full3d-assembly-backend",
+        choices=("standard_full", "assembly_time_static_condensed"),
+        default="standard_full",
     )
     parser.add_argument("--compare-modal-schur", action="store_true")
     parser.add_argument(
