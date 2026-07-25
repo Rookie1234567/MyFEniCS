@@ -27,11 +27,13 @@ from pathlib import Path
 from time import perf_counter
 from types import MappingProxyType
 from typing import Any, Mapping
+from zipfile import BadZipFile
 
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 from scipy import sparse
+from scipy import __version__ as scipy_version
 from scipy.linalg import lu_factor, lu_solve
 
 
@@ -1294,6 +1296,425 @@ def _write_persistent_raw_tensor(
                 pass
 
 
+_CONDENSED_CLASS_ARRAY_DTYPES = MappingProxyType(
+    {
+        "schur": np.dtype(np.complex128),
+        "interior_from_trace": np.dtype(np.complex128),
+        "lu_values": np.dtype(np.complex128),
+        "lu_pivots": np.dtype(np.int32),
+        "rhs_projection": np.dtype(np.float64),
+        "solution_embedding": np.dtype(np.float64),
+        "dual_interior_from_trace": np.dtype(np.complex128),
+        "residual_projection": np.dtype(np.float64),
+    }
+)
+
+
+def _numeric_array_content_sha256(
+    array: np.ndarray,
+    *,
+    namespace: bytes,
+) -> str:
+    canonical = np.ascontiguousarray(array)
+    metadata = json.dumps(
+        {
+            "shape": list(canonical.shape),
+            "dtype": canonical.dtype.str,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("ascii")
+    digest = hashlib.sha256()
+    digest.update(namespace)
+    digest.update(b"\0")
+    digest.update(metadata)
+    digest.update(b"\0")
+    digest.update(canonical.tobytes(order="C"))
+    return digest.hexdigest()
+
+
+def _persistent_condensed_class_identity(
+    *,
+    source_sha: str,
+    operator_identity: Mapping[str, Any],
+    raw_key: tuple[Any, ...],
+    raw_tensor_content_sha256: str,
+    cell_permutation: int,
+    interior_policy: str,
+    storage_element_hash: int,
+    policy_element_hash: int,
+    trace_positions: np.ndarray,
+    high_interior_positions: np.ndarray,
+    active_trace_positions: np.ndarray,
+    active_interior_positions: np.ndarray,
+    low_to_reduced_content_sha256: str | None,
+    mpi_size: int,
+    mpi_rank: int,
+) -> tuple[str, dict[str, Any]]:
+    """Return the fixed, rank-partition-bound oriented-class identity."""
+
+    if interior_policy not in {"high", "low"}:
+        raise ValueError("condensed class interior policy must be high or low")
+    raw_tensor_content_sha256 = str(raw_tensor_content_sha256).lower()
+    if len(raw_tensor_content_sha256) != 64 or any(
+        character not in "0123456789abcdef"
+        for character in raw_tensor_content_sha256
+    ):
+        raise ValueError(
+            "condensed class raw tensor identity must be a SHA256 digest"
+        )
+    if low_to_reduced_content_sha256 is not None:
+        low_to_reduced_content_sha256 = str(
+            low_to_reduced_content_sha256
+        ).lower()
+        if len(low_to_reduced_content_sha256) != 64 or any(
+            character not in "0123456789abcdef"
+            for character in low_to_reduced_content_sha256
+        ):
+            raise ValueError(
+                "condensed class regionwise embedding identity must be "
+                "a SHA256 digest"
+            )
+    payload = {
+        "schema_version": (
+            "task035b.persistent-condensed-class-identity.v1"
+        ),
+        "source_commit_sha": str(source_sha),
+        "operator_identity": dict(operator_identity),
+        "class_identity": {
+            "raw_key": list(raw_key),
+            "raw_tensor_content_sha256": raw_tensor_content_sha256,
+            "cell_permutation": int(cell_permutation),
+            "interior_policy": interior_policy,
+        },
+        "element_identity": {
+            "storage_element_hash": int(storage_element_hash),
+            "policy_element_hash": int(policy_element_hash),
+            "trace_positions": [
+                int(value) for value in trace_positions
+            ],
+            "high_interior_positions": [
+                int(value) for value in high_interior_positions
+            ],
+            "active_trace_positions": [
+                int(value) for value in active_trace_positions
+            ],
+            "active_interior_positions": [
+                int(value) for value in active_interior_positions
+            ],
+            "low_to_reduced_content_sha256": (
+                low_to_reduced_content_sha256
+            ),
+        },
+        "abi_identity": {
+            "scalar_dtype": np.dtype(np.complex128).str,
+            "int_dtype": np.dtype(PETSc.IntType).str,
+            "numpy_version": np.__version__,
+            "scipy_version": scipy_version,
+        },
+        # The same physical class may be consumed by multiple MPI ranks.
+        # Binding each artifact to one deterministic rank partition prevents
+        # same-job writers from targeting the same files.
+        "mpi_partition": {
+            "size": int(mpi_size),
+            "rank": int(mpi_rank),
+        },
+    }
+    canonical = json.dumps(
+        payload,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest(), payload
+
+
+def _condensed_class_expected_shapes(
+    *,
+    high_interior_dimension: int,
+    trace_dimension: int,
+    active_interior_dimension: int,
+) -> dict[str, tuple[int, ...]]:
+    high_interior_dimension = int(high_interior_dimension)
+    trace_dimension = int(trace_dimension)
+    active_interior_dimension = int(active_interior_dimension)
+    return {
+        "schur": (trace_dimension, trace_dimension),
+        "interior_from_trace": (
+            high_interior_dimension,
+            trace_dimension,
+        ),
+        "lu_values": (
+            active_interior_dimension,
+            active_interior_dimension,
+        ),
+        "lu_pivots": (active_interior_dimension,),
+        "rhs_projection": (
+            active_interior_dimension,
+            high_interior_dimension,
+        ),
+        "solution_embedding": (
+            high_interior_dimension,
+            active_interior_dimension,
+        ),
+        "dual_interior_from_trace": (
+            high_interior_dimension,
+            trace_dimension,
+        ),
+        "residual_projection": (
+            active_interior_dimension,
+            high_interior_dimension,
+        ),
+    }
+
+
+def _canonical_condensed_class_arrays(
+    arrays: Mapping[str, np.ndarray],
+    *,
+    expected_shapes: Mapping[str, tuple[int, ...]],
+) -> tuple[dict[str, np.ndarray] | None, str | None]:
+    required = set(_CONDENSED_CLASS_ARRAY_DTYPES)
+    if set(arrays) != required:
+        return None, "payload_array_names_mismatch"
+    canonical: dict[str, np.ndarray] = {}
+    for name in sorted(required):
+        array = np.asarray(arrays[name])
+        if array.dtype != _CONDENSED_CLASS_ARRAY_DTYPES[name]:
+            return None, f"{name}_dtype_mismatch"
+        if array.shape != tuple(expected_shapes[name]):
+            return None, f"{name}_shape_mismatch"
+        if not np.all(np.isfinite(array)):
+            return None, f"{name}_nonfinite"
+        canonical[name] = np.ascontiguousarray(array)
+    pivots = canonical["lu_pivots"]
+    if len(pivots) and (
+        int(pivots.min()) < 0
+        or int(pivots.max()) >= len(pivots)
+    ):
+        return None, "lu_pivots_out_of_range"
+    return canonical, None
+
+
+def _condensed_class_content_sha256(
+    arrays: Mapping[str, np.ndarray],
+) -> str:
+    digest = hashlib.sha256()
+    digest.update(b"task035b.condensed-class-content.v1\0")
+    for name in sorted(arrays):
+        array = np.ascontiguousarray(arrays[name])
+        digest.update(name.encode("ascii"))
+        digest.update(b"\0")
+        digest.update(
+            _numeric_array_content_sha256(
+                array,
+                namespace=b"task035b.condensed-class-array.v1",
+            ).encode("ascii")
+        )
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def _load_persistent_condensed_class(
+    path: Path,
+    *,
+    manifest_path: Path,
+    expected_identity_sha256: str,
+    expected_identity_payload: Mapping[str, Any],
+    expected_shapes: Mapping[str, tuple[int, ...]],
+) -> tuple[dict[str, np.ndarray] | None, str | None]:
+    if not path.is_file() or not manifest_path.is_file():
+        return None, "artifact_or_manifest_missing"
+    try:
+        with manifest_path.open("r", encoding="utf-8") as stream:
+            manifest = json.load(stream)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None, "manifest_unreadable"
+    if not isinstance(manifest, dict):
+        return None, "manifest_not_an_object"
+    if (
+        manifest.get("schema_version")
+        != "task035b.condensed-class-cache-manifest.v1"
+    ):
+        return None, "manifest_schema_mismatch"
+    if manifest.get("identity_sha256") != expected_identity_sha256:
+        return None, "identity_sha256_mismatch"
+    try:
+        manifest_identity_json = json.dumps(
+            manifest.get("identity"),
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        expected_identity_json = json.dumps(
+            dict(expected_identity_payload),
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    except (TypeError, ValueError):
+        return None, "identity_payload_unserializable"
+    if manifest_identity_json != expected_identity_json:
+        return None, "identity_payload_mismatch"
+    if manifest.get("payload_filename") != path.name:
+        return None, "payload_filename_mismatch"
+    try:
+        payload_size = int(path.stat().st_size)
+    except OSError:
+        return None, "payload_stat_failed"
+    if manifest.get("payload_size_bytes") != payload_size:
+        return None, "payload_size_mismatch"
+    try:
+        with np.load(path, allow_pickle=False) as archive:
+            loaded = {
+                name: np.asarray(archive[name]).copy()
+                for name in archive.files
+            }
+    except (OSError, ValueError, KeyError, EOFError, BadZipFile):
+        return None, "payload_unreadable"
+    canonical, reason = _canonical_condensed_class_arrays(
+        loaded,
+        expected_shapes=expected_shapes,
+    )
+    if canonical is None:
+        assert reason is not None
+        return None, reason
+    manifest_arrays = manifest.get("arrays")
+    expected_arrays = {
+        name: {
+            "shape": list(array.shape),
+            "dtype": array.dtype.str,
+        }
+        for name, array in sorted(canonical.items())
+    }
+    if manifest_arrays != expected_arrays:
+        return None, "manifest_array_metadata_mismatch"
+    if (
+        manifest.get("content_sha256")
+        != _condensed_class_content_sha256(canonical)
+    ):
+        return None, "payload_checksum_mismatch"
+    return canonical, None
+
+
+def _write_persistent_condensed_class(
+    path: Path,
+    arrays: Mapping[str, np.ndarray],
+    *,
+    manifest_path: Path,
+    identity_sha256: str,
+    identity_payload: Mapping[str, Any],
+    expected_shapes: Mapping[str, tuple[int, ...]],
+    rank: int,
+) -> None:
+    canonical, reason = _canonical_condensed_class_arrays(
+        arrays,
+        expected_shapes=expected_shapes,
+    )
+    if canonical is None:
+        raise ValueError(
+            "cannot persist invalid condensed class arrays: "
+            f"{reason}"
+        )
+    temporary_suffix = f"rank{rank}.pid{os.getpid()}.tmp"
+    temporary_payload = path.with_name(
+        f".{path.name}.{temporary_suffix}"
+    )
+    temporary_manifest = manifest_path.with_name(
+        f".{manifest_path.name}.{temporary_suffix}"
+    )
+    try:
+        with temporary_payload.open("wb") as stream:
+            np.savez(stream, **canonical)
+            stream.flush()
+            os.fsync(stream.fileno())
+        manifest = {
+            "schema_version": (
+                "task035b.condensed-class-cache-manifest.v1"
+            ),
+            "identity_sha256": identity_sha256,
+            "identity": dict(identity_payload),
+            "payload_filename": path.name,
+            "payload_size_bytes": int(
+                temporary_payload.stat().st_size
+            ),
+            "arrays": {
+                name: {
+                    "shape": list(array.shape),
+                    "dtype": array.dtype.str,
+                }
+                for name, array in sorted(canonical.items())
+            },
+            "content_sha256": _condensed_class_content_sha256(
+                canonical
+            ),
+            "pickle_used": False,
+        }
+        with temporary_manifest.open(
+            "w",
+            encoding="utf-8",
+        ) as stream:
+            json.dump(
+                manifest,
+                stream,
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        # Publish the manifest last.  Readers never accept a payload without
+        # the matching logical-array checksum.
+        os.replace(temporary_payload, path)
+        os.replace(temporary_manifest, manifest_path)
+    finally:
+        for temporary in (temporary_payload, temporary_manifest):
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
+
+
+def _raw_tensor_policy_identity(
+    compiled_form,
+    kernels: Mapping[int, Any],
+    dimension: int,
+    policy_element,
+    *,
+    affine_isotropic_tensor_spec,
+) -> dict[str, Any]:
+    signature: dict[str, Any] = {
+        "dimension": int(dimension),
+        "kernel_ids": tuple(sorted(int(key) for key in kernels)),
+        "dtype": str(
+            np.dtype(np.complex128)
+            if compiled_form is None
+            else np.dtype(compiled_form.dtype)
+        ),
+        "element_hash": int(policy_element.hash()),
+    }
+    if affine_isotropic_tensor_spec is None:
+        if compiled_form is None:
+            raise ValueError(
+                "FFCx raw tensor backend requires a compiled form"
+            )
+        signature["ufcx_form_signature"] = (
+            compiled_form.module.ffi.string(
+                compiled_form.ufcx_form.signature
+            ).decode("ascii")
+        )
+        signature["raw_tensor_backend"] = "compiled_ffcx_cell_kernel"
+    else:
+        signature["ufcx_form_signature"] = None
+        signature["raw_tensor_backend"] = (
+            "affine_isotropic_reference_gram_v1"
+        )
+        signature["affine_isotropic_tensor_spec"] = (
+            affine_isotropic_tensor_spec.identity(policy_element)
+        )
+    return signature
+
+
 def _global_raw_tensor_cache(
     comm,
     local_class_coordinates: dict[tuple[Any, ...], np.ndarray],
@@ -1360,36 +1781,15 @@ def _global_raw_tensor_cache(
         dimension,
         policy_element,
     ) in policy_forms.items():
-        signature = {
-            "dimension": int(dimension),
-            "kernel_ids": tuple(sorted(int(key) for key in kernels)),
-            "dtype": str(
-                np.dtype(np.complex128)
-                if policy_compiled_form is None
-                else np.dtype(policy_compiled_form.dtype)
+        local_policy_signature[policy] = _raw_tensor_policy_identity(
+            policy_compiled_form,
+            kernels,
+            dimension,
+            policy_element,
+            affine_isotropic_tensor_spec=(
+                affine_isotropic_tensor_spec
             ),
-            "element_hash": int(policy_element.hash()),
-        }
-        if affine_isotropic_tensor_spec is None:
-            if policy_compiled_form is None:
-                raise ValueError(
-                    "FFCx raw tensor backend requires a compiled form"
-                )
-            signature["ufcx_form_signature"] = (
-                policy_compiled_form.module.ffi.string(
-                    policy_compiled_form.ufcx_form.signature
-                ).decode("ascii")
-            )
-            signature["raw_tensor_backend"] = "compiled_ffcx_cell_kernel"
-        else:
-            signature["ufcx_form_signature"] = None
-            signature["raw_tensor_backend"] = (
-                "affine_isotropic_reference_gram_v1"
-            )
-            signature["affine_isotropic_tensor_spec"] = (
-                affine_isotropic_tensor_spec.identity(policy_element)
-            )
-        local_policy_signature[policy] = signature
+        )
     policy_signatures = comm.allgather(local_policy_signature)
     if any(
         signature != policy_signatures[0]
@@ -2205,6 +2605,39 @@ def build_unconstrained_assembly_time_condensation(
     except Exception:
         condensed.destroy()
         raise
+    condensed_cache_mode = str(persistent_cache_mode).lower()
+    condensed_cache_enabled = condensed_cache_mode != "off"
+    condensed_cache_directory = (
+        None
+        if not condensed_cache_enabled
+        else Path(persistent_cache_directory).resolve()
+    )
+    condensed_cache_source_sha = (
+        None
+        if not condensed_cache_enabled
+        else str(persistent_cache_source_sha).lower()
+    )
+    policy_operator_identities = (
+        {
+            policy: _raw_tensor_policy_identity(
+                policy_compiled_form,
+                policy_kernels,
+                policy_dimension,
+                policy_element,
+                affine_isotropic_tensor_spec=(
+                    affine_isotropic_tensor_spec
+                ),
+            )
+            for policy, (
+                policy_compiled_form,
+                policy_kernels,
+                policy_dimension,
+                policy_element,
+            ) in policy_forms.items()
+        }
+        if condensed_cache_enabled
+        else {}
+    )
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
     lu_cache: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]] = {}
@@ -2224,6 +2657,29 @@ def build_unconstrained_assembly_time_condensation(
     local_schur_product_seconds = 0.0
     local_constraint_seconds = 0.0
     local_insert_seconds = 0.0
+    local_condensed_cache_read_seconds = 0.0
+    local_condensed_cache_write_seconds = 0.0
+    local_condensed_cache_identity_seconds = 0.0
+    local_condensed_cache_read_attempts = 0
+    local_condensed_cache_hits = 0
+    local_condensed_cache_misses = 0
+    local_condensed_cache_writes = 0
+    local_condensed_cache_read_bytes = 0
+    local_condensed_cache_write_bytes = 0
+    local_condensed_class_constructions = 0
+    local_condensed_cache_miss_reasons: dict[str, int] = {}
+    local_condensed_cache_error = None
+    raw_tensor_sha_by_policy_key: dict[tuple[Any, ...], str] = {}
+    low_to_reduced_sha256 = None
+    if condensed_cache_enabled and low_to_reduced is not None:
+        identity_started = perf_counter()
+        low_to_reduced_sha256 = _numeric_array_content_sha256(
+            np.asarray(low_to_reduced, dtype=np.float64),
+            namespace=b"task035b.low-to-reduced.v1",
+        )
+        local_condensed_cache_identity_seconds += (
+            perf_counter() - identity_started
+        )
     bulk_inserter = (
         _DenseBlockBatchInserter(condensed)
         if bulk_cell_block_insertion
@@ -2242,7 +2698,151 @@ def build_unconstrained_assembly_time_condensation(
             interior_policy,
         )
         schur = schur_cache.get(class_key)
+        cache_path = None
+        manifest_path = None
+        identity_digest = None
+        identity_payload = None
+        expected_shapes = None
+        if schur is None and condensed_cache_enabled:
+            if interior_policy == "low":
+                assert low_element is not None
+                assert low_to_reduced is not None
+                assert low_interior_positions is not None
+                assert low_trace_positions is not None
+                active_interior_identity_positions = (
+                    low_interior_positions
+                )
+                active_trace_identity_positions = low_trace_positions
+                policy_element = low_element
+                identity_low_to_reduced_sha256 = (
+                    low_to_reduced_sha256
+                )
+            else:
+                active_interior_identity_positions = interior_positions
+                active_trace_identity_positions = trace_positions
+                policy_element = basix_element
+                identity_low_to_reduced_sha256 = None
+            expected_shapes = _condensed_class_expected_shapes(
+                high_interior_dimension=len(interior_positions),
+                trace_dimension=len(trace_positions),
+                active_interior_dimension=len(
+                    active_interior_identity_positions
+                ),
+            )
+            assert condensed_cache_directory is not None
+            assert condensed_cache_source_sha is not None
+            identity_started = perf_counter()
+            raw_tensor_sha256 = raw_tensor_sha_by_policy_key.get(
+                policy_raw_key
+            )
+            if raw_tensor_sha256 is None:
+                raw_tensor_sha256 = _raw_tensor_content_sha256(tensor)
+                raw_tensor_sha_by_policy_key[policy_raw_key] = (
+                    raw_tensor_sha256
+                )
+            identity_digest, identity_payload = (
+                _persistent_condensed_class_identity(
+                    source_sha=condensed_cache_source_sha,
+                    operator_identity=(
+                        policy_operator_identities[interior_policy]
+                    ),
+                    raw_key=tuple(raw_key),
+                    raw_tensor_content_sha256=raw_tensor_sha256,
+                    cell_permutation=int(cell_permutations[cell]),
+                    interior_policy=interior_policy,
+                    storage_element_hash=int(basix_element.hash()),
+                    policy_element_hash=int(policy_element.hash()),
+                    trace_positions=trace_positions,
+                    high_interior_positions=interior_positions,
+                    active_trace_positions=(
+                        active_trace_identity_positions
+                    ),
+                    active_interior_positions=(
+                        active_interior_identity_positions
+                    ),
+                    low_to_reduced_content_sha256=(
+                        identity_low_to_reduced_sha256
+                    ),
+                    mpi_size=comm.size,
+                    mpi_rank=comm.rank,
+                )
+            )
+            local_condensed_cache_identity_seconds += (
+                perf_counter() - identity_started
+            )
+            cache_path = condensed_cache_directory / (
+                f"condensed_class_{identity_digest}.npz"
+            )
+            manifest_path = cache_path.with_suffix(".json")
+            class_arrays = None
+            if condensed_cache_mode != "refresh":
+                local_condensed_cache_read_attempts += 1
+                for artifact in (cache_path, manifest_path):
+                    try:
+                        local_condensed_cache_read_bytes += int(
+                            artifact.stat().st_size
+                        )
+                    except OSError:
+                        pass
+                cache_started = perf_counter()
+                class_arrays, miss_reason = (
+                        _load_persistent_condensed_class(
+                            cache_path,
+                            manifest_path=manifest_path,
+                            expected_identity_sha256=identity_digest,
+                            expected_identity_payload=identity_payload,
+                            expected_shapes=expected_shapes,
+                        )
+                )
+                local_condensed_cache_read_seconds += (
+                    perf_counter() - cache_started
+                )
+                if class_arrays is None:
+                    assert miss_reason is not None
+                    local_condensed_cache_miss_reasons[miss_reason] = (
+                        local_condensed_cache_miss_reasons.get(
+                            miss_reason,
+                            0,
+                        )
+                        + 1
+                    )
+                else:
+                    local_condensed_cache_hits += 1
+            else:
+                local_condensed_cache_miss_reasons["refresh_forced"] = (
+                    local_condensed_cache_miss_reasons.get(
+                        "refresh_forced",
+                        0,
+                    )
+                    + 1
+                )
+            if class_arrays is not None:
+                schur_cache[class_key] = class_arrays["schur"]
+                recovery_cache[class_key] = class_arrays[
+                    "interior_from_trace"
+                ]
+                lu_cache[class_key] = (
+                    class_arrays["lu_values"],
+                    class_arrays["lu_pivots"],
+                )
+                rhs_projection_cache[class_key] = class_arrays[
+                    "rhs_projection"
+                ]
+                solution_embedding_cache[class_key] = class_arrays[
+                    "solution_embedding"
+                ]
+                dual_recovery_cache[class_key] = class_arrays[
+                    "dual_interior_from_trace"
+                ]
+                residual_projection_cache[class_key] = class_arrays[
+                    "residual_projection"
+                ]
+                schur = class_arrays["schur"]
         if schur is None:
+            local_condensed_class_constructions += 1
+            local_condensed_cache_misses += int(
+                condensed_cache_enabled
+            )
             schur_started = perf_counter()
             orientation_started = perf_counter()
             oriented = tensor.copy()
@@ -2396,6 +2996,73 @@ def build_unconstrained_assembly_time_condensation(
             residual_projection_cache[class_key] = (
                 interior_embedding_from_interior.T
             )
+            if (
+                cache_path is not None
+                and manifest_path is not None
+                and identity_digest is not None
+                and identity_payload is not None
+                and expected_shapes is not None
+                and condensed_cache_mode in {"read_write", "refresh"}
+                and local_condensed_cache_error is None
+            ):
+                class_arrays = {
+                    "schur": np.ascontiguousarray(
+                        schur_cache[class_key],
+                        dtype=np.complex128,
+                    ),
+                    "interior_from_trace": np.ascontiguousarray(
+                        recovery_cache[class_key],
+                        dtype=np.complex128,
+                    ),
+                    "lu_values": np.ascontiguousarray(
+                        lu_cache[class_key][0],
+                        dtype=np.complex128,
+                    ),
+                    "lu_pivots": np.ascontiguousarray(
+                        lu_cache[class_key][1],
+                        dtype=np.int32,
+                    ),
+                    "rhs_projection": np.ascontiguousarray(
+                        rhs_projection_cache[class_key],
+                        dtype=np.float64,
+                    ),
+                    "solution_embedding": np.ascontiguousarray(
+                        solution_embedding_cache[class_key],
+                        dtype=np.float64,
+                    ),
+                    "dual_interior_from_trace": np.ascontiguousarray(
+                        dual_recovery_cache[class_key],
+                        dtype=np.complex128,
+                    ),
+                    "residual_projection": np.ascontiguousarray(
+                        residual_projection_cache[class_key],
+                        dtype=np.float64,
+                    ),
+                }
+                cache_started = perf_counter()
+                try:
+                    _write_persistent_condensed_class(
+                        cache_path,
+                        class_arrays,
+                        manifest_path=manifest_path,
+                        identity_sha256=identity_digest,
+                        identity_payload=identity_payload,
+                        expected_shapes=expected_shapes,
+                        rank=comm.rank,
+                    )
+                    local_condensed_cache_writes += 1
+                    local_condensed_cache_write_bytes += int(
+                        cache_path.stat().st_size
+                        + manifest_path.stat().st_size
+                    )
+                except Exception as error:
+                    local_condensed_cache_error = (
+                        f"{type(error).__name__}: {error}"
+                    )
+                finally:
+                    local_condensed_cache_write_seconds += (
+                        perf_counter() - cache_started
+                    )
         trace_original = original_dofs[trace_positions]
         active_ids, local_expansion, identity_expansion = cell_trace_data[cell]
         constraint_started = perf_counter()
@@ -2436,6 +3103,22 @@ def build_unconstrained_assembly_time_condensation(
                 cell_permutation=int(cell_permutations[cell]),
                 interior_policy=interior_policy,
                 class_key=class_key,
+            )
+        )
+    condensed_cache_errors = (
+        comm.allgather(local_condensed_cache_error)
+        if condensed_cache_enabled
+        else (None,) * comm.size
+    )
+    if any(error is not None for error in condensed_cache_errors):
+        condensed.destroy()
+        raise RuntimeError(
+            "persistent condensed class cache write failed after local "
+            "construction: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(condensed_cache_errors)
+                if error is not None
             )
         )
     if bulk_inserter is None:
@@ -2509,6 +3192,170 @@ def build_unconstrained_assembly_time_condensation(
         raw_cache_audit["raw_tensor_kernel_evaluation_count"]
     )
     oriented_class_count = int(comm.allreduce(len(schur_cache), op=MPI.SUM))
+    condensed_cache_miss_reasons: dict[str, int] = {}
+    if condensed_cache_enabled:
+        condensed_class_construction_count = int(
+            comm.allreduce(
+                local_condensed_class_constructions,
+                op=MPI.SUM,
+            )
+        )
+        condensed_cache_hit_count = int(
+            comm.allreduce(local_condensed_cache_hits, op=MPI.SUM)
+        )
+        condensed_cache_miss_count = int(
+            comm.allreduce(local_condensed_cache_misses, op=MPI.SUM)
+        )
+        condensed_cache_write_count = int(
+            comm.allreduce(local_condensed_cache_writes, op=MPI.SUM)
+        )
+        condensed_cache_read_attempt_count = int(
+            comm.allreduce(
+                local_condensed_cache_read_attempts,
+                op=MPI.SUM,
+            )
+        )
+        condensed_cache_raw_tensor_hash_count = int(
+            comm.allreduce(
+                len(raw_tensor_sha_by_policy_key),
+                op=MPI.SUM,
+            )
+        )
+        for rank_reasons in comm.allgather(
+            local_condensed_cache_miss_reasons
+        ):
+            for reason, count in rank_reasons.items():
+                condensed_cache_miss_reasons[reason] = (
+                    condensed_cache_miss_reasons.get(reason, 0)
+                    + int(count)
+                )
+        condensed_cache_read_seconds = float(
+            comm.allreduce(
+                local_condensed_cache_read_seconds,
+                op=MPI.MAX,
+            )
+        )
+        condensed_cache_identity_seconds = float(
+            comm.allreduce(
+                local_condensed_cache_identity_seconds,
+                op=MPI.MAX,
+            )
+        )
+        condensed_cache_write_seconds = float(
+            comm.allreduce(
+                local_condensed_cache_write_seconds,
+                op=MPI.MAX,
+            )
+        )
+        condensed_cache_read_bytes = int(
+            comm.allreduce(
+                local_condensed_cache_read_bytes,
+                op=MPI.SUM,
+            )
+        )
+        condensed_cache_write_bytes = int(
+            comm.allreduce(
+                local_condensed_cache_write_bytes,
+                op=MPI.SUM,
+            )
+        )
+    else:
+        condensed_class_construction_count = oriented_class_count
+        condensed_cache_hit_count = 0
+        condensed_cache_miss_count = 0
+        condensed_cache_write_count = 0
+        condensed_cache_read_attempt_count = 0
+        condensed_cache_raw_tensor_hash_count = 0
+        condensed_cache_read_seconds = 0.0
+        condensed_cache_identity_seconds = 0.0
+        condensed_cache_write_seconds = 0.0
+        condensed_cache_read_bytes = 0
+        condensed_cache_write_bytes = 0
+    if (
+        condensed_cache_hit_count + condensed_cache_miss_count
+        != oriented_class_count
+    ) and condensed_cache_enabled:
+        raise RuntimeError(
+            "persistent condensed class hits plus misses do not match "
+            "rank-local oriented class uses"
+        )
+    persistent_condensed_class_cache_audit = {
+        "schema_version": (
+            "task035b.persistent-condensed-class-cache.v1"
+        ),
+        "enabled": condensed_cache_enabled,
+        "mode": condensed_cache_mode,
+        "source_commit_sha": condensed_cache_source_sha,
+        "directory": (
+            None
+            if condensed_cache_directory is None
+            else str(condensed_cache_directory)
+        ),
+        "identity_binds": [
+            "source_commit_sha",
+            "operator_or_analytic_spec",
+            "element_hash_and_dof_partitions",
+            "raw_tensor_logical_content_sha256",
+            "cell_permutation",
+            "interior_policy",
+            "regionwise_embedding_content",
+            "numpy_scipy_scalar_int_abi",
+            "mpi_size_and_rank_partition",
+        ],
+        "hit_count_sum": condensed_cache_hit_count,
+        "miss_count_sum": condensed_cache_miss_count,
+        "read_attempt_count_sum": condensed_cache_read_attempt_count,
+        "raw_tensor_content_hash_count_sum": (
+            condensed_cache_raw_tensor_hash_count
+        ),
+        "raw_tensor_content_hash_dedup_policy": (
+            "once_per_rank_local_policy_raw_class"
+        ),
+        "construction_count_sum": condensed_class_construction_count,
+        "write_count_sum": condensed_cache_write_count,
+        "miss_reasons": condensed_cache_miss_reasons,
+        "read_seconds_max": condensed_cache_read_seconds,
+        "identity_and_key_seconds_max": (
+            condensed_cache_identity_seconds
+        ),
+        "write_seconds_max": condensed_cache_write_seconds,
+        "read_bytes_sum": condensed_cache_read_bytes,
+        "write_bytes_sum": condensed_cache_write_bytes,
+        "arrays_restored_on_hit": sorted(
+            _CONDENSED_CLASS_ARRAY_DTYPES
+        ),
+        "stages_skipped_on_hit": [
+            "cell_tensor_orientation",
+            "Aii_factorization",
+            "Aii_primal_and_adjoint_solves",
+            "Schur_product",
+            "recovery_projection_construction",
+        ],
+        "manifest_published_after_payload": True,
+        "content_checksum_verified": True,
+        "pickle_used": False,
+        "same_mpi_job_write_race_prevention": (
+            "artifact_identity_is_bound_to_mpi_size_and_rank"
+        ),
+        "mpi_size": int(comm.size),
+        "artifact_partition": "one key namespace per MPI rank",
+        "cross_mpi_partition_reuse": False,
+        "concurrent_independent_job_locking": False,
+        "concurrent_independent_job_behavior": (
+            "last_writer_wins_only_for_identical_identity; readers "
+            "verify manifest-last logical-array checksum and otherwise "
+            "recompute"
+        ),
+        "cache_scope_limitations": [
+            "rank-partition-bound artifacts do not warm-start another "
+            "MPI size",
+            "raw tensor loading and trace matrix insertion still run",
+            "no cross-job advisory lock",
+            "no automatic cache eviction or disk-quota policy",
+        ],
+        "compatible_with_prepared_rhs_recovery_lifecycle": True,
+        "ordinary_default_changed": False,
+    }
     native_object_ledger = _python_visible_native_array_ledger(
         comm,
         {
@@ -2629,6 +3476,12 @@ def build_unconstrained_assembly_time_condensation(
             "axis_aligned_affine_geometry_verified": True,
             **raw_cache_audit,
             "oriented_schur_class_count_sum": oriented_class_count,
+            "oriented_schur_class_construction_count_sum": (
+                condensed_class_construction_count
+            ),
+            "persistent_condensed_class_cache": (
+                persistent_condensed_class_cache_audit
+            ),
             "cell_kernel_evaluation_fraction": float(
                 raw_kernel_evaluation_count / max(global_cells, 1)
             ),

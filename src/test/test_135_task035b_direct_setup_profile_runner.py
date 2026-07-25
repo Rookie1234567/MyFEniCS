@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 from benchmarks.run_task035b_direct_setup_profile import (
+    _classify_profile,
     _direct_config,
     _dry_run_plan,
     _extract_setup_evidence,
@@ -101,6 +102,17 @@ def _worker_result() -> dict:
                     "read_seconds_max": 0.08,
                     "write_seconds_max": 0.0,
                 },
+                "persistent_condensed_class_cache": {
+                    "enabled": True,
+                    "mode": "read_only",
+                    "hit_count_sum": 4,
+                    "miss_count_sum": 0,
+                    "construction_count_sum": 0,
+                    "write_count_sum": 0,
+                    "read_seconds_max": 0.04,
+                    "identity_and_key_seconds_max": 0.01,
+                    "write_seconds_max": 0.0,
+                },
                 "native_object_ledger": {
                     "python_visible_retained_bytes": 1000,
                 },
@@ -133,6 +145,11 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
         self.assertTrue(
             plan["explicit_opt_ins"][
                 "persistent_sha_bound_raw_tensor_cache"
+            ]
+        )
+        self.assertTrue(
+            plan["explicit_opt_ins"][
+                "persistent_sha_bound_condensed_class_cache"
             ]
         )
 
@@ -221,6 +238,10 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
         self.assertIsNone(timings["mumps"]["numeric"])
         self.assertEqual(timings["aii_and_schur"]["aii_factor"], 2.0)
         self.assertEqual(
+            timings["aii_and_schur"]["persistent_class_read"],
+            0.04,
+        )
+        self.assertEqual(
             timings["preallocation_and_insertion"][
                 "trace_preallocation"
             ],
@@ -232,6 +253,54 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             0,
         )
         self.assertEqual(evidence["full_true_residual"], 2.0e-10)
+        self.assertEqual(
+            evidence["cache_audit"]["condensed_class"][
+                "construction_count_sum"
+            ],
+            0,
+        )
+
+    def test_warm_classification_requires_both_cache_layers(self) -> None:
+        evidence = _extract_setup_evidence(_worker_result())
+        telemetry = {
+            "observed_worker_rank_count": 8,
+            "max_process_tree_swap_mb": 0.0,
+            "max_worker_rank_smaps_swap_sum_mb": 0.0,
+        }
+        result = _classify_profile(
+            evidence,
+            telemetry,
+            cache_state="warm",
+            source_sha="a" * 40,
+            expected_mpi_size=8,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            telemetry_readable=True,
+            source_stable_and_clean_after=True,
+        )
+        self.assertTrue(result["formal_profile_pass"])
+
+        evidence["cache_audit"]["condensed_class"][
+            "construction_count_sum"
+        ] = 1
+        invalid = _classify_profile(
+            evidence,
+            telemetry,
+            cache_state="warm",
+            source_sha="a" * 40,
+            expected_mpi_size=8,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            telemetry_readable=True,
+            source_stable_and_clean_after=True,
+        )
+        self.assertFalse(invalid["formal_profile_pass"])
+        self.assertIn(
+            "warm_condensed_class_cache_hit_without_recompute",
+            invalid["failures"],
+        )
 
     def test_watchdog_summary_preserves_pss_uss_and_cgroup(self) -> None:
         rows = [

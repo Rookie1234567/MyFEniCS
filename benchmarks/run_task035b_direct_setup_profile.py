@@ -5,7 +5,8 @@ Stage-4 solver.  The default action is a dry-run plan.  A PDE is started only
 with ``--execute-pde`` and only from a clean full-SHA checkout on the reviewed
 Task035b branch.
 
-Cold and warm profiles deliberately share a SHA-bound raw-tensor cache:
+Cold and warm profiles deliberately share SHA-bound raw-tensor and
+oriented-condensed-class caches:
 
 * ``--cache-state cold`` requires a cache directory that does not yet exist
   and uses the core ``read_write`` mode;
@@ -212,6 +213,7 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             "fast_fixed_trace_setup": True,
             "affine_isotropic_reference_tensor": True,
             "persistent_sha_bound_raw_tensor_cache": True,
+            "persistent_sha_bound_condensed_class_cache": True,
             "direct_mumps": True,
             "solver_release_before_postprocess": True,
         },
@@ -667,7 +669,10 @@ def _extract_setup_evidence(
     worker_timings = worker_result.get("worker_timings_seconds") or {}
     outer = summary.get("timings_seconds") or {}
     cell = summary.get("cell_static_condensation") or {}
-    cache = cell.get("raw_tensor_persistent_cache") or {}
+    raw_cache = cell.get("raw_tensor_persistent_cache") or {}
+    condensed_cache = (
+        cell.get("persistent_condensed_class_cache") or {}
+    )
     matrix = summary.get("matrix_stats") or {}
     config = summary.get("config") or {}
     factor = summary.get("stage4_dtn_factor_inventory") or {}
@@ -754,7 +759,10 @@ def _extract_setup_evidence(
                 False,
             ),
         },
-        "cache_audit": cache,
+        "cache_audit": {
+            "raw_tensor": raw_cache,
+            "condensed_class": condensed_cache,
+        },
         "cell_static_raw_tensor_evaluations": cell.get(
             "raw_tensor_kernel_evaluation_count"
         ),
@@ -832,15 +840,27 @@ def _extract_setup_evidence(
                     "affine_class_combination_seconds_max",
                 ),
                 "persistent_cache_read": _number(
-                    cache,
+                    raw_cache,
                     "read_seconds_max",
                 ),
                 "persistent_cache_write": _number(
-                    cache,
+                    raw_cache,
                     "write_seconds_max",
                 ),
             },
             "aii_and_schur": {
+                "persistent_class_identity_and_key": _number(
+                    condensed_cache,
+                    "identity_and_key_seconds_max",
+                ),
+                "persistent_class_read": _number(
+                    condensed_cache,
+                    "read_seconds_max",
+                ),
+                "persistent_class_write": _number(
+                    condensed_cache,
+                    "write_seconds_max",
+                ),
                 "orientation": _number(
                     cell,
                     "orientation_seconds_max",
@@ -973,6 +993,8 @@ def _classify_profile(
 ) -> dict[str, Any]:
     config = evidence.get("configuration_identity") or {}
     cache = evidence.get("cache_audit") or {}
+    raw_cache = cache.get("raw_tensor") or {}
+    condensed_cache = cache.get("condensed_class") or {}
     topology = {
         "fixed_rectangular_hexa_h15": (
             evidence.get("mesh_cell_type") == "hexahedron"
@@ -995,27 +1017,52 @@ def _classify_profile(
         ),
     }
     cache_checks = {
-        "cache_enabled": cache.get("enabled") is True,
+        "raw_tensor_cache_enabled": raw_cache.get("enabled") is True,
+        "condensed_class_cache_enabled": (
+            condensed_cache.get("enabled") is True
+        ),
         "cache_mode_identity": (
-            cache.get("mode") == CACHE_MODES[cache_state]
+            raw_cache.get("mode") == CACHE_MODES[cache_state]
+            and condensed_cache.get("mode") == CACHE_MODES[cache_state]
             and config.get("cache_mode") == CACHE_MODES[cache_state]
         ),
         "cache_source_sha_identity": config.get("cache_source_sha")
         == source_sha,
-        "cold_cache_wrote_entries": (
+        "cold_raw_tensor_cache_wrote_entries": (
             cache_state != "cold"
             or (
-                isinstance(cache.get("write_count"), int)
-                and cache["write_count"] > 0
+                isinstance(raw_cache.get("write_count"), int)
+                and raw_cache["write_count"] > 0
             )
         ),
-        "warm_cache_hit_without_tensor_recompute": (
+        "cold_condensed_class_cache_wrote_entries": (
+            cache_state != "cold"
+            or (
+                isinstance(
+                    condensed_cache.get("write_count_sum"),
+                    int,
+                )
+                and condensed_cache["write_count_sum"] > 0
+            )
+        ),
+        "warm_raw_tensor_cache_hit_without_recompute": (
             cache_state != "warm"
             or (
-                isinstance(cache.get("hit_count"), int)
-                and cache["hit_count"] > 0
+                isinstance(raw_cache.get("hit_count"), int)
+                and raw_cache["hit_count"] > 0
                 and evidence.get("cell_static_raw_tensor_evaluations", 0)
                 == 0
+            )
+        ),
+        "warm_condensed_class_cache_hit_without_recompute": (
+            cache_state != "warm"
+            or (
+                isinstance(
+                    condensed_cache.get("hit_count_sum"),
+                    int,
+                )
+                and condensed_cache["hit_count_sum"] > 0
+                and condensed_cache.get("construction_count_sum") == 0
             )
         ),
     }
@@ -1105,10 +1152,11 @@ def _classify_profile(
     }
 
 
-def _cache_pairs(cache_directory: Path) -> list[str]:
+def _cache_pairs(cache_directory: Path, *, prefix: str) -> list[str]:
     pairs: list[str] = []
-    for manifest in sorted(cache_directory.glob("raw_tensor_*.json")):
-        array = manifest.with_suffix(".npy")
+    suffix = ".npy" if prefix == "raw_tensor" else ".npz"
+    for manifest in sorted(cache_directory.glob(f"{prefix}_*.json")):
+        array = manifest.with_suffix(suffix)
         if array.is_file():
             pairs.append(manifest.stem)
     return pairs
@@ -1121,7 +1169,7 @@ def _resolve_cache_directory(
     path = (
         args.cache_directory
         if args.cache_directory is not None
-        else args.artifact_root / "raw_tensor_cache" / source_sha
+        else args.artifact_root / "condensed_setup_cache" / source_sha
     )
     resolved = path.resolve()
     if str(resolved).startswith("/mnt/"):
@@ -1137,10 +1185,15 @@ def _resolve_cache_directory(
             raise SystemExit(
                 f"warm cache directory does not exist: {resolved}"
             )
-        if not _cache_pairs(resolved):
+        if not _cache_pairs(resolved, prefix="raw_tensor"):
+            raise SystemExit(
+                "warm cache requires at least one complete SHA-bound raw "
+                f"tensor manifest/array pair: {resolved}"
+            )
+        if not _cache_pairs(resolved, prefix="condensed_class"):
             raise SystemExit(
                 "warm cache requires at least one complete SHA-bound "
-                f"manifest/array pair: {resolved}"
+                f"condensed-class manifest/array pair: {resolved}"
             )
     return resolved
 
