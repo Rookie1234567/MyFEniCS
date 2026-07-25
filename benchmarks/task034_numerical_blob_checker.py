@@ -72,6 +72,11 @@ INTENTIONAL_CLASSIFICATIONS = {
         "reason": "batched QEP overlap evaluation reuses MatMult actions and performs the final cancellation in extended precision; Hybrid QEP/PDE anchors must be rerun",
         "requires_corresponding_pde_rerun": True,
     },
+    "src/coupling/hybrid_internal_modes.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Review V3 adds opt-in left/right cell-interior Schur corrections to Hybrid modal coupling and RHS; fresh p2/h5 MPI8 standard/static M120/M160 anchors were run while the standard backend remains unchanged",
+        "requires_corresponding_pde_rerun": True,
+    },
     "src/postprocessing/hybrid_field_reconstruction.py": {
         "classification": "documentation/test only",
         "reason": "selective integration removes one unused type-only import; executable reconstruction code is byte-for-byte unchanged",
@@ -95,6 +100,11 @@ INTENTIONAL_CLASSIFICATIONS = {
     "src/solvers/hcurl_cell_static_condensation.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
         "reason": "Task035b introduces exact per-cell interior elimination and verified zero-RHS identity Floquet-slave removal into a physically smaller trace matrix without max-p zero masking",
+        "requires_corresponding_pde_rerun": True,
+    },
+    "src/solvers/hybrid_local_dtn.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Review V3 adds the explicit assembly-time static-condensed local-FE backend with retained external/interface trace, streaming recovery, and eliminated-equation residual; fresh p2/h5 MPI8 Full3D/Hybrid anchors were run",
         "requires_corresponding_pde_rerun": True,
     },
     "src/solvers/hybrid_fem_modal_schur_direct.py": {

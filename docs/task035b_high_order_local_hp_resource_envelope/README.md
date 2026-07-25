@@ -5,14 +5,17 @@
 ```text
 task = Task035b
 status = PARTIAL_WITH_CONTROLLED_NEGATIVES
-execution_branch = codex/20260723-task35b-high-order-local-hp-resource-envelope
+execution_branch = codex/20260726-task35b-high-order-local-hp-resource-envelope
 stacked_base = Task035 Review V6 commit 81c714b236e9c362df8783382f1d40a5cd888cd5
 geometry_scope = Task034 fixed rectangular block grating only
 irregular_geometry_research = out_of_scope_by_user
-master_merge = not_authorized
+selective_master_merge = completed_at_1fb144d3ca50208c22b5f0733e140bfac8d9c47c
 ```
 
-Task035b 从 Task035 已完成的真实 DWR、周期 tetra、自适应循环和高阶 p4/p5/p6 证据继续，不从 `master` 重新移植。Task035 原分支保留为审查基线；Task035b 的代码、records、outcomes 和 response 全部写在本 stacked branch。
+历史 Task035b 从 Task035 已完成的真实 DWR、周期 tetra、自适应循环和
+高阶 p4/p5/p6 证据继续。Review V3 已把审查通过的文件级闭包选择性合入
+`master`，并从合并后的干净 master 创建当前 20260726 分支；旧 20260723
+stacked branch 保留为完整研究档案，没有整体 merge。
 
 当前任务只研究固定规则结构。斜侧壁、圆角、缺口、粗糙度及其他假设性不规则几何全部移出本任务；等未来真实结构明确后再单独立项。资源模型中的保守 Hybrid factor 只作规划敏感性，不授权不规则几何 PDE。
 
@@ -32,6 +35,7 @@ Task035b 从 Task035 已完成的真实 DWR、周期 tetra、自适应循环和�
 - [`task_scope_addendum_v1.md`](task_scope_addendum_v1.md)
 - [`review_report_v1.md`](review_report_v1.md)
 - [`review_report_v2.md`](review_report_v2.md)
+- [`review_report_v3.md`](review_report_v3.md)
 - [`response_v2.md`](response_v2.md)
 - [`response_v3.md`](response_v3.md)
 - [`../task035_hcurl_goal_oriented_adaptivity/review_report_v6.md`](../task035_hcurl_goal_oriented_adaptivity/review_report_v6.md)
@@ -74,6 +78,16 @@ iterative screen 均在 200 iterations 不收敛，作为 controlled negatives
 因此当前仍没有 Hybrid-eligible same-error candidate；Hybrid closure、
 M funnel、external DtN funnel 和 0.7 nm resource model v3 保持
 `not_run_by_selected_candidate_gate`。
+
+Review V3 完成文件级选择性合并后，新分支已实现 local-FE static
+condensation + Hybrid。p2/h5 H1-A 的 standard/static 等价和
+M120→M160 均为 12/12 power + 12/12 amplitude，但 static Full3D
+与 static Hybrid 的同离散闭合只有 3/12 + 2/12；按 strict absolute audit
+是 2/12 + 2/12。因此 H1-A 以 controlled negative 收口，H1-B、H1-C、
+h13 seed 和 adaptive Hybrid 均按 Review prerequisite 未运行。详见：
+
+- [`outcomes/hybrid_static_condensation_h1.md`](outcomes/hybrid_static_condensation_h1.md)
+- [`response_v5.md`](response_v5.md)
 
 - [`outcomes/summary.md`](outcomes/summary.md)
 - [`outcomes/regular_geometry_compression.md`](outcomes/regular_geometry_compression.md)
