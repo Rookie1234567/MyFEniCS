@@ -148,21 +148,21 @@ bottom local 3D FEM
 Task032 的正式物理资格只覆盖主点；M4 的 1–10° S/P 30/30 结果是 parameter-interface smoke，
 不能升级为整个范围的截断或生产资格。材料保持固定。
 
-### Task033
+### 历史规划阶段 A（旧称 Task033，编号映射已过期）
 
 保留上下 exact complex 3D FEM，在 13.5 nm、固定材料下构造 local h/p 自适应与
 interface-position/buffer budget；同等 observable error 的 local DoF 至少下降 3x、优选 5x。
 当前不加入材料扰动样本。
 
-### Task034
+### 历史规划阶段 B（旧称 Task034，编号映射已过期）
 
 构造不依赖 y 不变性的 scalable generic 2D modal core：distributed ownership、streamed/blocked
 right-left modes、adaptive M、block/matrix-free projection/Schur，禁止 replicated M² 和 all-mode
 dense multi-RHS。pure-modal/y-sector 只作当前简单 geometry 可选诊断。
 
-### Task035
+### 历史规划阶段 C（旧称 Task035，编号映射已过期）
 
-针对 Task033 + Task034 的最终 hybrid-adaptive 离散系统构造 matrix-free、low-memory 参数鲁棒
+针对上述历史规划阶段 A + B 的最终 hybrid-adaptive 离散系统构造 matrix-free、low-memory 参数鲁棒
 迭代法。鲁棒性首先指：
 
 ```text
@@ -175,7 +175,7 @@ dense multi-RHS。pure-modal/y-sector 只作当前简单 geometry 可选诊断�
 
 ### 后续独立任务：wavelength continuation to 0.7 nm
 
-只有 Task032–Task035 与后续独立任务 在 13.5 nm 下完成正确性、内存和求解鲁棒性验证后，才启动：
+只有 Task032、上述三个历史规划阶段与后续独立任务在 13.5 nm 下完成正确性、内存和求解鲁棒性验证后，才启动：
 
 ```text
 13.5 nm
@@ -186,6 +186,12 @@ dense multi-RHS。pure-modal/y-sector 只作当前简单 geometry 可选诊断�
 ```
 
 从 后续 wavelength continuation 独立任务 开始，每个波长再更新对应的材料复折射率、传播衍射级、截面本征模和资源预算。
+
+> **当前编号权威（2026-07-21）**：本节原 Task033–Task035 标签只是早期路线规划，
+> 不再定义当前任务编号。当前正式映射由各任务目录中的 `task.md` 和用户指令确定：
+> Task033 为高阶 Floquet、Hybrid 与等精度阶段性收口；Task034 为工作站 WSL、固定几何
+> p/h 收敛、p4/h5 参考及受控 adaptive 研究；Task035 为 H(curl) 场/目标量驱动自适应与
+> hp 策略。该更正只在 Task035 执行分支提交，不回写其创建基线的 `master`。
 
 ---
 

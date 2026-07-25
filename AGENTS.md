@@ -134,6 +134,15 @@
 
 同一物理量必须定义清楚。例如三维零级反射应优先分别报告 `R00_s`、`R00_p` 和两者之和 `R00_total`，避免含糊的 `R(0,0)`。
 
+### 9.1 通俗解释原则
+
+- `outcomes/summary.md`、`response_vN.md`、`review_report_vN.md` 和面向审阅的技术文档，不得默认读者已经理解有限元、电磁仿真、求解器或软件工程术语。
+- 首次引入新的方法、算法、优化策略或数据指标时，除了给出专业名称，还必须先用通俗语言说明：它解决什么问题、为什么需要它、改变了计算流程中的哪一步、带来什么收益，以及付出什么代价。
+- 不得只写 `static condensation`、`DWR`、`selective trace`、`preallocation`、`warm cache` 等名词后直接给结论；至少首次出现时说明其物理或数学含义和工程作用。
+- 结果表格及其相邻说明必须让读者知道：模型是什么、使用什么方法得到、为什么比较它、指标代表什么，以及成功、失败或未完成的具体原因。
+- 负结果不能只记录 `failed`、`controlled_negative` 或通过数，例如“10/12”；必须列出未通过的具体物理量、实际数值、参考或限值，并给出直观原因和证据入口。
+- 文档目标是让没有参与具体开发过程的研究人员，也能仅凭文档理解研究对象、算法流程、关键决策、结果边界和下一步。
+
 ## 10. Selective merge
 
 最终 manifest 必须按依赖组而不是只按文件罗列：
@@ -146,3 +155,81 @@
 - do-not-merge。
 
 每项应说明数值行为是否改变、依赖文件、对应测试、fresh PDE evidence 和建议合入顺序。研究负结果可以保留为文档证据，但不得把未资格化研究路径提升为 production default。
+
+## 11. Windows Codex 客户端与 WSL 执行后端
+
+当当前任务指定 WSL/Linux 环境时：
+
+- 用户可以并将继续使用 **Windows Codex 客户端**作为唯一交互界面；不得要求用户改用 Linux Codex CLI、VS Code、浏览器或其他前端。
+- Windows Codex 客户端可以通过其 WSL 执行能力，或显式调用 `wsl.exe -d Ubuntu -- bash -lc '...'`，在 WSL 中运行项目命令。Windows 客户端本身是 `.exe` 不构成环境混用。
+- 仓库和重型 artifact 必须位于 WSL Linux 文件系统（优先 `/home/...`），不得在 `/mnt/c`、`/mnt/d` 或 Windows 网络映射目录执行正式测试和 MPI/PDE。
+- 实际执行项目命令的 `python`、`git`、`mpiexec`、PETSc/SLEPc、DOLFINx 必须是 WSL/Linux 版本；不得使用 Windows Python、Windows Git、Windows MPI 或 Windows 仓库副本。
+- Windows Codex 客户端每次启动 WSL 命令时，都应把 `cd`、activation、ABI preflight 和实际命令放在同一个 WSL shell 中；不得依赖上一次命令中的 `source`、`cd`、`ssh-agent` 或环境变量继续有效。
+- 不得从已经位于 WSL 内的 shell 再嵌套调用 `wsl.exe`。
+- 不得从 Windows 外层给正常需要数分钟的 pytest、MPI 或 PDE 设置未经论证的短 timeout。
+- 不得把“用户没有使用 Linux Codex CLI”或“Windows Codex 客户端本身是 Windows 程序”作为任务 blocker。
+
+## 12. 单一 Python 与资格化 activation
+
+- WSL 任务的仓库级权威入口是 tracked 脚本 `scripts/activate_myfenics_wsl.sh`；本地别名可以调用它，但不得成为唯一、不可审查的入口。
+- 从 Windows Codex 客户端执行时，推荐把完整命令封装为：
+
+```powershell
+wsl.exe -d Ubuntu -- bash -lc 'cd /home/Projects/MyFEniCS && source scripts/activate_myfenics_wsl.sh && python -m pytest -q ...'
+```
+
+- 若命令已经在 WSL shell 中，则使用：
+
+```bash
+bash -lc 'cd /home/Projects/MyFEniCS && source scripts/activate_myfenics_wsl.sh && python -m pytest -q ...'
+```
+
+- 禁止直接使用 `.venv/bin/python -m pytest`、系统 `/usr/bin/python3`、Windows Python 或未 activation 的裸 `pytest` 来替代资格化 activation；直接调用虚拟环境解释器并不会自动设置 complex PETSc/SLEPc、`PYTHONPATH`、`LD_LIBRARY_PATH` 或项目 marker。
+- 在任何耗时测试前先运行轻量 ABI preflight，并确认：
+  - `_MYFENICS_WSL_QUALIFIED_ACTIVATION=1`；
+  - `sys.executable` 位于当前仓库 `.venv`；
+  - `PETSc.ScalarType` 为 `numpy.complex128`；
+  - `petsc4py`、`slepc4py`、`dolfinx`、`mpi4py` 来自同一 Linux ABI 栈；
+  - 实际执行路径中不存在 Windows Python/MPI/Git 污染。
+- preflight 失败时，必须在启动 pytest、MPI 或 PDE 前立即停止；不得先运行整套测试，再用大量 real/complex 错误反推环境问题。
+
+## 13. 密钥、密码与交互提示
+
+- Codex 不得代替用户输入、记录、回显或推测任何 sudo 密码、SSH 私钥口令、GitHub 凭据、OpenAI/API 密钥或其他 secret。
+- Codex 不得执行一个可能等待密码的命令后静默卡住。执行 `sudo`、`ssh-add`、`git fetch/push`、包安装或其他可能交互的操作前，先使用非交互探针：
+
+```bash
+sudo -n true
+ssh-add -l
+env GIT_TERMINAL_PROMPT=0 git ls-remote origin HEAD
+```
+
+- 若探针失败，立即停止并向用户给出一段可直接复制的人工准备命令，说明将出现哪一种提示以及应输入哪一种凭据；用户准备完成后再继续。
+- `sudo` 提示只由用户在 WSL Ubuntu 终端输入 Ubuntu 账户密码；SSH 提示只由用户输入对应私钥的 passphrase；Codex/ChatGPT 对话中不得粘贴这些内容。
+- 优先使用 WSL 内的 `ssh-agent` 缓存 Git SSH key passphrase，避免每次 push 重复输入。不得混用 Windows ssh-agent 与 WSL ssh-agent。
+- 若任务不需要安装系统包，不得主动运行 `sudo`。若不需要网络或 push，不得主动触发认证。
+
+## 14. 防卡死、超时与测试金字塔
+
+- 不得给正常需要数分钟的 full pytest、MPI、factorization 或 PDE 设置 5 秒、30 秒等任意短外层 timeout。timeout 只能用于任务书明确的资源 Gate，并必须记录预期时长和终止语义。
+- 长命令启动前说明预计时长、输出位置和判定条件；能够输出 heartbeat、阶段日志或进程状态时应启用。
+- 命令长时间无输出时，先区分：
+  - 等待密码/确认提示；
+  - 仍在消耗 CPU/内存的正常计算；
+  - MPI 子进程存活但父进程等待；
+  - 真正死锁或失联。
+  在未检查进程树、CPU、日志和 prompt 前不得直接重复启动同一任务。
+- 测试采用金字塔：
+  1. 每个小改动只运行最小 pure-Python/单 fixture targeted tests；
+  2. 每个组件阶段运行相关 serial/MPI2/MPI4 tests；
+  3. 阶段收口运行 Task-focused suite；
+  4. 只有在阶段 Gate 或最终交付前运行一次 full repository pytest。
+- 已通过且由相同 source SHA、环境 ID、artifact hash 和 ABI 绑定的昂贵 Gate，不得因无关文档/元数据修改重复执行。只有相关输入变化时才重新资格化。
+- 明确、局部、无歧义的文档、schema、scaffold、lint 或元数据错误，应先局部修复并 targeted rerun；不得自动触发环境重装、全量 artifact 校验或重型 PDE。
+
+## 15. 文档收敛
+
+- 当前任务的执行规则优先维护在任务目录的 `AGENTS.md`，审查要求优先维护在最新 `review_report_vN.md`。
+- 用户或 ChatGPT 对尚未执行完的最新 review 作澄清时，应直接合并回该 review；不要为每次措辞修正创建新的 addendum、补充说明或平行权威文件。
+- 临时补充文件的内容一旦并入主 review，应删除临时文件，避免 Codex同时读取多个相互覆盖的执行权威。
+- 只有新增独立任务范围、需要保留不可变历史或主 review 已被后续 response正式回应时，才新建 addendum 或下一版 review。

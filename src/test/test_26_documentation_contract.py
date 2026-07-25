@@ -42,7 +42,7 @@ CORE_WALKTHROUGH = (
     "33_workstation_fgmres_runtime.md",
 )
 
-CASES = {
+QUALIFIED_OR_FROZEN_CASES = {
     "001_2d_tm_pml_floquet",
     "002_2d_tm_dtn_equivalence",
     "003_2d_te_tm_complex_absorption",
@@ -64,6 +64,11 @@ CASES = {
     "091_hybrid_hp_adaptivity_feasibility",
     "092_workstation_wsl_adaptive_scalability",
     "093_fixed_geometry_ph_convergence_mpi",
+}
+STAGING_OR_IN_PROGRESS_CASES: set[str] = set()
+ACTIVE_RESEARCH_CASES = {
+    "094_hcurl_goal_oriented_adaptivity",
+    "095_high_order_local_hp_resource_envelope",
 }
 
 RECORDED_CASES = {
@@ -266,7 +271,12 @@ class DocumentationContractTests(unittest.TestCase):
     def test_numbered_benchmark_cases_use_case_contained_contracts(self):
         cases_root = ROOT / "benchmarks" / "cases"
         observed = {path.name for path in cases_root.iterdir() if path.is_dir()}
-        self.assertEqual(observed, CASES)
+        self.assertEqual(
+            observed,
+            QUALIFIED_OR_FROZEN_CASES
+            | STAGING_OR_IN_PROGRESS_CASES
+            | ACTIVE_RESEARCH_CASES,
+        )
         required_sections = (
             "## 物理问题",
             "## 参数说明",
@@ -277,7 +287,7 @@ class DocumentationContractTests(unittest.TestCase):
             "## 结果解释",
             "## 限制",
         )
-        for case in sorted(CASES):
+        for case in sorted(QUALIFIED_OR_FROZEN_CASES):
             folder = cases_root / case
             text = _read(folder / "README.md")
             expected = _load(folder / "expected.json")
@@ -289,6 +299,96 @@ class DocumentationContractTests(unittest.TestCase):
                     self.assertIn(section, text)
                 self.assertIsInstance(expected.get("status"), str)
                 self.assertTrue(expected["status"])
+
+        staging_identity = {
+            "status": "phase_a_in_progress",
+            "canonical": False,
+            "production_qualified": False,
+            "pde_run": False,
+            "phase_b_or_later_results": "not_available",
+        }
+        for case in sorted(STAGING_OR_IN_PROGRESS_CASES):
+            folder = cases_root / case
+            with self.subTest(case=case):
+                for name in (
+                    "README.md",
+                    "config.json",
+                    "expected.json",
+                    "test_command.txt",
+                    "records/base_manifest.json",
+                ):
+                    self.assertTrue((folder / name).is_file(), name)
+                config = _load(folder / "config.json")
+                expected = _load(folder / "expected.json")
+                for key, value in staging_identity.items():
+                    self.assertEqual(config.get(key), value, key)
+                    self.assertEqual(expected.get(key), value, key)
+                readme = _read(folder / "README.md")
+                self.assertIn("## 升级条件", readme)
+                self.assertIn("staging", readme)
+                command = _read(folder / "test_command.txt").strip()
+                self.assertEqual(
+                    command,
+                    "python -m benchmarks.task035_case094",
+                )
+                self.assertNotIn("mpiexec", command)
+                self.assertNotIn("run_3d", command)
+
+        for case in sorted(ACTIVE_RESEARCH_CASES):
+            folder = cases_root / case
+            with self.subTest(case=case):
+                for name in (
+                    "README.md",
+                    "config.json",
+                    "test_command.txt",
+                    "records",
+                ):
+                    self.assertTrue((folder / name).exists(), name)
+                config = _load(folder / "config.json")
+                self.assertFalse(config["ordinary_default_changed"])
+                if case.startswith("094_"):
+                    self.assertTrue(
+                        (folder / "expected.json").is_file(),
+                        "expected.json",
+                    )
+                    self.assertEqual(
+                        config["status"],
+                        (
+                            "accepted_research_infrastructure_with_"
+                            "controlled_negatives"
+                        ),
+                    )
+                    self.assertFalse(config["canonical"])
+                    self.assertFalse(config["production_qualified"])
+                    self.assertTrue(config["pde_run"])
+                    self.assertIn(
+                        "true_discrete_adjoint_and_DWR",
+                        config["accepted_capabilities"],
+                    )
+                    self.assertIn(
+                        "automatic_production_hp",
+                        config["not_promoted"],
+                    )
+                else:
+                    self.assertEqual(config["geometry_scope"], "fixed_only")
+                    self.assertEqual(config["degrees"], [4, 5, 6])
+                    self.assertEqual(config["mpi_size"], 8)
+                    irregular = config["irregular_geometry"]
+                    self.assertEqual(
+                        irregular["status"],
+                        "out_of_scope_by_user",
+                    )
+                    self.assertFalse(irregular["run"])
+                    self.assertFalse(irregular["completion_gate"])
+                records = sorted((folder / "records").glob("*.json"))
+                self.assertGreaterEqual(len(records), 2)
+                readme = _read(folder / "README.md")
+                if case.startswith("095_"):
+                    self.assertIn(
+                        "fixed rectangular block grating",
+                        readme,
+                    )
+                self.assertIn("MPI8", readme)
 
     def test_recorded_and_test_backed_case_files_are_explicit(self):
         cases_root = ROOT / "benchmarks" / "cases"

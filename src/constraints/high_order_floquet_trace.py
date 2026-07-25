@@ -16,6 +16,10 @@ from basix.ufl import element
 
 PhaseKind = Literal["x", "y", "corner"]
 EntityKind = Literal["edge", "face"]
+EntityGeometryKey = tuple[tuple[int, int, int], ...]
+
+_PHASE_KIND_ORDER = {"x": 0, "y": 1, "corner": 2}
+_ENTITY_KIND_ORDER = {"edge": 0, "face": 1}
 
 
 @dataclass(frozen=True)
@@ -31,17 +35,32 @@ class HighOrderTraceLayout:
     quadrilateral_n1curl_dimension: int
 
 
-@lru_cache(maxsize=4)
+@dataclass(frozen=True)
+class TetrahedralTraceLayout:
+    """Degree-generic simplex N1curl trace layout."""
+
+    degree: int
+    tetrahedron_dimension: int
+    edge_dofs: int
+    face_interior_dofs: int
+    cell_interior_dofs: int
+    face_trace_dofs: int
+    triangle_n1curl_dimension: int
+
+
+@lru_cache(maxsize=6)
 def high_order_trace_layout(degree: int) -> HighOrderTraceLayout:
-    """Read and cross-check the p1--p4 Basix entity layout.
+    """Read and cross-check the p1--p6 Basix entity layout.
 
     Formulas are checks, not the source of the production layout.  The actual
     entity sizes come from the Basix element shipped in the qualified image.
     """
 
     degree = int(degree)
-    if degree not in {1, 2, 3, 4}:
-        raise ValueError(f"Task033 qualifies N1curl degrees 1--4, got {degree}.")
+    if degree not in {1, 2, 3, 4, 5, 6}:
+        raise ValueError(
+            f"Task033/Task035b qualifies hexa N1curl degrees 1--6, got {degree}."
+        )
     hexa = element("N1curl", "hexahedron", degree).basix_element
     quadrilateral = element("N1curl", "quadrilateral", degree).basix_element
     edge_counts = {len(dofs) for dofs in hexa.entity_dofs[1]}
@@ -87,6 +106,61 @@ def high_order_trace_layout(degree: int) -> HighOrderTraceLayout:
         cell_interior_dofs=int(cell_interior_dofs),
         face_trace_dofs=int(face_trace_dofs),
         quadrilateral_n1curl_dimension=int(quadrilateral.dim),
+    )
+
+
+@lru_cache(maxsize=6)
+def tetrahedral_trace_layout(degree: int) -> TetrahedralTraceLayout:
+    """Read and cross-check the p1--p6 tetrahedral N1curl entity layout."""
+
+    degree = int(degree)
+    if degree not in {1, 2, 3, 4, 5, 6}:
+        raise ValueError(f"Task035 qualifies tetra N1curl degrees 1--6, got {degree}.")
+    tetrahedron = element("N1curl", "tetrahedron", degree).basix_element
+    triangle = element("N1curl", "triangle", degree).basix_element
+    edge_counts = {len(dofs) for dofs in tetrahedron.entity_dofs[1]}
+    face_counts = {len(dofs) for dofs in tetrahedron.entity_dofs[2]}
+    cell_counts = {len(dofs) for dofs in tetrahedron.entity_dofs[3]}
+    if len(edge_counts) != 1 or len(face_counts) != 1 or len(cell_counts) != 1:
+        raise RuntimeError(
+            "Basix returned a non-uniform tetrahedron N1curl entity layout."
+        )
+    edge_dofs = edge_counts.pop()
+    face_interior_dofs = face_counts.pop()
+    cell_interior_dofs = cell_counts.pop()
+    face_trace_dofs = 3 * edge_dofs + face_interior_dofs
+    expected = {
+        "tetrahedron_dimension": degree * (degree + 2) * (degree + 3) // 2,
+        "edge_dofs": degree,
+        "face_interior_dofs": degree * (degree - 1),
+        "cell_interior_dofs": degree * (degree - 1) * (degree - 2) // 2,
+        "face_trace_dofs": degree * (degree + 2),
+    }
+    observed = {
+        "tetrahedron_dimension": int(tetrahedron.dim),
+        "edge_dofs": int(edge_dofs),
+        "face_interior_dofs": int(face_interior_dofs),
+        "cell_interior_dofs": int(cell_interior_dofs),
+        "face_trace_dofs": int(face_trace_dofs),
+    }
+    if observed != expected:
+        raise RuntimeError(
+            "Basix simplex N1curl semantics changed; refusing to infer a trace layout: "
+            f"observed={observed}, expected={expected}."
+        )
+    if int(triangle.dim) != face_trace_dofs:
+        raise RuntimeError(
+            "The tetrahedron face trace and triangle N1curl degree semantics disagree: "
+            f"3D trace={face_trace_dofs}, 2D dimension={triangle.dim}."
+        )
+    return TetrahedralTraceLayout(
+        degree=degree,
+        tetrahedron_dimension=int(tetrahedron.dim),
+        edge_dofs=int(edge_dofs),
+        face_interior_dofs=int(face_interior_dofs),
+        cell_interior_dofs=int(cell_interior_dofs),
+        face_trace_dofs=int(face_trace_dofs),
+        triangle_n1curl_dimension=int(triangle.dim),
     )
 
 
@@ -143,7 +217,45 @@ def quadrilateral_face_info(vertex_permutation: Iterable[int]) -> int:
         ) from exc
 
 
-@lru_cache(maxsize=4)
+@lru_cache(maxsize=1)
+def triangle_s3_vertex_permutations() -> dict[tuple[int, int, int], int]:
+    """Return Basix's six triangle orientation permutations."""
+
+    p1 = basix.create_element(
+        ElementFamily.P,
+        CellType.tetrahedron,
+        1,
+        LagrangeVariant.equispaced,
+    )
+    reference = np.asarray(p1.entity_closure_dofs[2][0], dtype=np.int32)
+    if reference.shape != (3,):
+        raise RuntimeError(f"Expected three P1 triangle closure dofs, got {reference}.")
+    mapping: dict[tuple[int, int, int], int] = {}
+    for face_info in range(6):
+        permuted = reference.copy()
+        p1.permute_subentity_closure(permuted, face_info, CellType.triangle)
+        local_permutation = tuple(
+            int(np.where(reference == value)[0][0]) for value in permuted
+        )
+        if local_permutation in mapping:
+            raise RuntimeError("Basix returned duplicate triangle S3 permutations.")
+        mapping[local_permutation] = face_info  # type: ignore[index]
+    if len(mapping) != 6:
+        raise RuntimeError(f"Expected six triangle S3 permutations, got {len(mapping)}.")
+    return mapping
+
+
+def triangle_face_info(vertex_permutation: Iterable[int]) -> int:
+    permutation = tuple(int(value) for value in vertex_permutation)
+    if len(permutation) != 3 or sorted(permutation) != [0, 1, 2]:
+        raise ValueError(f"Expected a triangle vertex permutation, got {permutation}.")
+    try:
+        return triangle_s3_vertex_permutations()[permutation]  # type: ignore[index]
+    except KeyError as exc:  # pragma: no cover - every S3 permutation is valid
+        raise ValueError(f"Permutation {permutation} is not a triangle symmetry.") from exc
+
+
+@lru_cache(maxsize=6)
 def _entity_transformations(degree: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     high_order_trace_layout(degree)
     hexa = element("N1curl", "hexahedron", int(degree)).basix_element
@@ -157,12 +269,36 @@ def _entity_transformations(degree: int) -> tuple[np.ndarray, np.ndarray, np.nda
     return interval, quadrilateral[0], quadrilateral[1]
 
 
+@lru_cache(maxsize=6)
+def _tetrahedral_entity_transformations(
+    degree: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    tetrahedral_trace_layout(degree)
+    tetrahedron = element("N1curl", "tetrahedron", int(degree)).basix_element
+    transformations = tetrahedron.entity_transformations()
+    interval = np.asarray(transformations["interval"][0], dtype=np.float64)
+    triangle = np.asarray(transformations["triangle"], dtype=np.float64)
+    if triangle.shape[0] != 2:
+        raise RuntimeError(
+            "Basix must provide rotation and reflection generators for triangle faces."
+        )
+    return interval, triangle[0], triangle[1]
+
+
 def edge_coefficient_transform(
-    degree: int, *, reversed_orientation: bool
+    degree: int,
+    *,
+    reversed_orientation: bool,
+    cell_type: str = "hexahedron",
 ) -> np.ndarray:
     """Map canonical master edge coefficients into slave coefficient ordering."""
 
-    interval, _rotation, _reflection = _entity_transformations(int(degree))
+    if cell_type == "tetrahedron":
+        interval, _rotation, _reflection = _tetrahedral_entity_transformations(
+            int(degree)
+        )
+    else:
+        interval, _rotation, _reflection = _entity_transformations(int(degree))
     if not reversed_orientation:
         return np.eye(interval.shape[0], dtype=np.complex128)
     # Basix T matrices transform basis data.  Coefficients therefore use T^T.
@@ -194,6 +330,34 @@ def face_coefficient_transform(
     )
 
 
+def triangle_face_basis_transform(degree: int, face_info: int) -> np.ndarray:
+    """Compose the Basix triangle face basis transform for one S3 orientation."""
+
+    if not 0 <= int(face_info) < 6:
+        raise ValueError(f"Triangle face_info must be in [0, 5], got {face_info}.")
+    _interval, rotation, reflection = _tetrahedral_entity_transformations(
+        int(degree)
+    )
+    transform = np.eye(rotation.shape[0], dtype=np.float64)
+    if int(face_info) & 1:
+        transform = reflection @ transform
+    for _ in range((int(face_info) >> 1) % 3):
+        transform = rotation @ transform
+    return transform
+
+
+def triangle_face_coefficient_transform(
+    degree: int, vertex_permutation: Iterable[int]
+) -> np.ndarray:
+    """Map canonical master triangle-face coefficients into slave ordering."""
+
+    face_info = triangle_face_info(vertex_permutation)
+    return np.asarray(
+        triangle_face_basis_transform(int(degree), face_info).T,
+        dtype=np.complex128,
+    )
+
+
 @dataclass(frozen=True)
 class FloquetTopologyKey:
     mesh_token: Hashable
@@ -215,6 +379,13 @@ class PhaseIndependentConstraintBlock:
     touches_owned_cell: bool = False
     entity_kind: EntityKind = "edge"
     pair_error: float = 0.0
+    slave_entity_id: int | None = None
+    master_entity_id: int | None = None
+    slave_entity_geometry_key: EntityGeometryKey = ()
+    master_entity_geometry_key: EntityGeometryKey = ()
+    periodic_pair_key: tuple[int, ...] = ()
+    entity_vertex_permutation: tuple[int, ...] = ()
+    cell_type: str = ""
 
     def __post_init__(self) -> None:
         matrix = np.asarray(self.coefficient_transform, dtype=np.complex128)
@@ -240,6 +411,126 @@ class PhaseIndependentConstraintBlock:
             raise ValueError(f"Unsupported trace entity kind {self.entity_kind!r}.")
         if float(self.pair_error) < 0.0:
             raise ValueError("Periodic entity pairing error cannot be negative.")
+        identity_fields_present = (
+            self.slave_entity_id is not None,
+            self.master_entity_id is not None,
+            bool(self.slave_entity_geometry_key),
+            bool(self.master_entity_geometry_key),
+            bool(self.periodic_pair_key),
+            bool(self.entity_vertex_permutation),
+            bool(self.cell_type),
+        )
+        if any(identity_fields_present) and not all(identity_fields_present):
+            raise ValueError(
+                "Physical periodic entity identity must provide both entity IDs, "
+                "both geometry keys, pair key, vertex permutation, and cell type."
+            )
+        if all(identity_fields_present):
+            slave_entity_id = int(self.slave_entity_id)  # type: ignore[arg-type]
+            master_entity_id = int(self.master_entity_id)  # type: ignore[arg-type]
+            if slave_entity_id < 0 or master_entity_id < 0:
+                raise ValueError("Physical periodic entity IDs must be nonnegative.")
+            if slave_entity_id == master_entity_id:
+                raise ValueError(
+                    "A periodic slave and master cannot share one physical entity ID."
+                )
+            slave_key = _normalize_entity_geometry_key(
+                self.slave_entity_geometry_key,
+                label="slave entity geometry key",
+            )
+            master_key = _normalize_entity_geometry_key(
+                self.master_entity_geometry_key,
+                label="master entity geometry key",
+            )
+            if slave_key == master_key:
+                raise ValueError(
+                    "Periodic slave/master physical geometry keys must differ."
+                )
+            pair_key = tuple(int(value) for value in self.periodic_pair_key)
+            if len(pair_key) != 6:
+                raise ValueError(
+                    "A 3D periodic entity pair key must contain six integers."
+                )
+            expected_dimension = 1 if self.entity_kind == "edge" else 2
+            if pair_key[0] != expected_dimension:
+                raise ValueError(
+                    "Periodic pair-key entity dimension disagrees with entity kind."
+                )
+            expected_kind_code = {"x": 1, "y": 2, "corner": 3}[self.kind]
+            if pair_key[1] != expected_kind_code:
+                raise ValueError(
+                    "Periodic pair-key direction disagrees with block kind."
+                )
+            permutation = tuple(
+                int(value) for value in self.entity_vertex_permutation
+            )
+            expected_vertices = (
+                {2}
+                if self.entity_kind == "edge"
+                else ({3} if "tetrahedron" in self.cell_type else {4})
+            )
+            if (
+                len(permutation) not in expected_vertices
+                or sorted(permutation) != list(range(len(permutation)))
+            ):
+                raise ValueError(
+                    "Periodic entity vertex permutation is invalid for its "
+                    "entity kind/cell type."
+                )
+            cell_type = _normalize_cell_type(self.cell_type)
+            if self.entity_kind == "face" and self.kind == "corner":
+                raise ValueError("Periodic faces do not use corner relations.")
+            object.__setattr__(self, "slave_entity_id", slave_entity_id)
+            object.__setattr__(self, "master_entity_id", master_entity_id)
+            object.__setattr__(
+                self,
+                "slave_entity_geometry_key",
+                slave_key,
+            )
+            object.__setattr__(
+                self,
+                "master_entity_geometry_key",
+                master_key,
+            )
+            object.__setattr__(self, "periodic_pair_key", pair_key)
+            object.__setattr__(
+                self,
+                "entity_vertex_permutation",
+                permutation,
+            )
+            object.__setattr__(self, "cell_type", cell_type)
+
+    @property
+    def has_physical_entity_identity(self) -> bool:
+        """Whether this block carries the complete opt-in physical identity."""
+
+        return self.slave_entity_id is not None
+
+
+def _normalize_entity_geometry_key(
+    key: Iterable[Iterable[int]],
+    *,
+    label: str,
+) -> EntityGeometryKey:
+    normalized = tuple(
+        tuple(int(component) for component in point) for point in key
+    )
+    if not normalized or any(len(point) != 3 for point in normalized):
+        raise ValueError(f"{label} must contain nonempty three-component points.")
+    if len(set(normalized)) != len(normalized):
+        raise ValueError(f"{label} contains duplicate physical vertices.")
+    if tuple(sorted(normalized)) != normalized:
+        raise ValueError(f"{label} must use canonical sorted vertex order.")
+    return normalized
+
+
+def _normalize_cell_type(value: str) -> str:
+    normalized = str(value).lower()
+    if "tetrahedron" in normalized:
+        return "tetrahedron"
+    if "hexahedron" in normalized:
+        return "hexahedron"
+    raise ValueError(f"Unsupported physical periodic cell type {value!r}.")
 
 
 @dataclass(frozen=True)
@@ -268,6 +559,169 @@ class FloquetTraceTopology:
             phase_by_kind[block.kind] * block.coefficient_transform
             for block in self.blocks
         )
+
+
+@dataclass(frozen=True, order=True)
+class MissingP6TraceOrbitRelationInput:
+    """One physical periodic relation, ready for p6-transform composition."""
+
+    entity_kind: EntityKind
+    direction: PhaseKind
+    slave_entity_id: int
+    master_entity_id: int
+    slave_entity_geometry_key: EntityGeometryKey
+    master_entity_geometry_key: EntityGeometryKey
+    periodic_pair_key: tuple[int, ...]
+    entity_vertex_permutation: tuple[int, ...]
+    cell_type: str
+
+
+@dataclass(frozen=True)
+class MissingP6TraceOrbitIdentityInput:
+    """Mesh-bound relations; no p6 basis, DWR, rows, or matrix are created."""
+
+    mesh_sha256: str
+    relations: tuple[MissingP6TraceOrbitRelationInput, ...]
+    input_sha256: str
+    scope: str = "identity_only_no_basis_dwr_rows_or_matrix"
+
+
+def _validated_sha256(value: str) -> str:
+    normalized = str(value).lower()
+    try:
+        valid = len(normalized) == 64 and len(bytes.fromhex(normalized)) == 32
+    except ValueError:
+        valid = False
+    if not valid:
+        raise ValueError("mesh_sha256 must contain 64 hexadecimal characters.")
+    return normalized
+
+
+def _block_identity_tuple(block: PhaseIndependentConstraintBlock) -> tuple:
+    if not block.has_physical_entity_identity:
+        raise RuntimeError(
+            "Floquet topology lacks physical entity identity required for "
+            "missing-p6 orbit closure."
+        )
+    if block.cell_type != "hexahedron":
+        raise NotImplementedError(
+            "Missing-p6 orbit identity is qualified only for hexahedra."
+        )
+    return (
+        block.entity_kind,
+        block.kind,
+        int(block.slave_entity_id),  # type: ignore[arg-type]
+        int(block.master_entity_id),  # type: ignore[arg-type]
+        block.slave_entity_geometry_key,
+        block.master_entity_geometry_key,
+        block.periodic_pair_key,
+        block.entity_vertex_permutation,
+        block.cell_type,
+    )
+
+
+def build_missing_p6_trace_orbit_identity_input(
+    topology: FloquetTraceTopology,
+    *,
+    mesh_sha256: str,
+    comm: object,
+) -> MissingP6TraceOrbitIdentityInput:
+    """Canonicalize actual p5 periodic entities into an MPI-complete seed.
+
+    DOLFINx global topology IDs are paired with partition-independent physical
+    geometry keys.  The bridge stops before p6 intertwining, Floquet pullback,
+    active numbering, DWR, or matrix construction.
+    """
+
+    mesh_sha256 = _validated_sha256(mesh_sha256)
+    if int(topology.key.degree) != 5:
+        raise ValueError("Missing-p6 orbit identity requires retained degree p5.")
+    if not hasattr(comm, "allgather"):
+        raise TypeError("comm must provide an MPI-compatible allgather method.")
+    metadata = (
+        mesh_sha256,
+        str(topology.key.element_family),
+        int(topology.key.degree),
+        str(topology.key.orientation_schema),
+    )
+    if any(
+        value != metadata
+        for value in comm.allgather(metadata)  # type: ignore[attr-defined]
+    ):
+        raise RuntimeError("Missing-p6 orbit metadata differs across MPI ranks.")
+
+    local_rows = [_block_identity_tuple(block) for block in topology.blocks]
+    rows = [
+        row
+        for packet in comm.allgather(local_rows)  # type: ignore[attr-defined]
+        for row in packet
+    ]
+    if not rows:
+        raise RuntimeError("Missing-p6 orbit input has no periodic relations.")
+
+    relations_by_geometry: dict[tuple, tuple] = {}
+    for row in rows:
+        relation_key = (row[0], row[1], row[4], row[5])
+        previous = relations_by_geometry.setdefault(relation_key, row)
+        if previous != row:
+            raise RuntimeError(
+                "MPI copies disagree on a physical periodic entity relation."
+            )
+    unique_rows = tuple(relations_by_geometry.values())
+    relations = tuple(
+        MissingP6TraceOrbitRelationInput(
+            entity_kind=row[0],
+            direction=row[1],
+            slave_entity_id=row[2],
+            master_entity_id=row[3],
+            slave_entity_geometry_key=row[4],
+            master_entity_geometry_key=row[5],
+            periodic_pair_key=row[6],
+            entity_vertex_permutation=row[7],
+            cell_type=row[8],
+        )
+        for row in sorted(
+            unique_rows,
+            key=lambda value: (
+                _ENTITY_KIND_ORDER[value[0]],
+                _PHASE_KIND_ORDER[value[1]],
+                value[4],
+                value[5],
+            ),
+        )
+    )
+    payload = {
+        "schema": "task035b.missing-p6-trace-orbit-identity.v1",
+        "mesh_sha256": mesh_sha256,
+        "element_family": str(topology.key.element_family),
+        "orientation_schema": str(topology.key.orientation_schema),
+        "relations": [
+            (
+                relation.entity_kind,
+                relation.direction,
+                relation.slave_entity_id,
+                relation.master_entity_id,
+                relation.slave_entity_geometry_key,
+                relation.master_entity_geometry_key,
+                relation.periodic_pair_key,
+                relation.entity_vertex_permutation,
+                relation.cell_type,
+            )
+            for relation in relations
+        ],
+    }
+    input_sha256 = hashlib.sha256(
+        json.dumps(
+            payload,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("ascii")
+    ).hexdigest()
+    return MissingP6TraceOrbitIdentityInput(
+        mesh_sha256=mesh_sha256,
+        relations=relations,
+        input_sha256=input_sha256,
+    )
 
 
 class FloquetTopologyCache:
@@ -467,6 +921,9 @@ def distributed_match_periodic_records(
                     "tangent",
                     "geometry_coords",
                     "normal_axis",
+                    "physical_global_entity_id",
+                    "entity_geometry_key",
+                    "cell_type",
                 )
                 if name in master
             }

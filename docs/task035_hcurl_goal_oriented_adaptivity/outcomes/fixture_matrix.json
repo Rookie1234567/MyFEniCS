@@ -1,0 +1,100 @@
+{
+  "schema_version": "task035.fixture-matrix.v2",
+  "status": "phase_cd_complete_controlled_negative",
+  "canonical": false,
+  "production_qualified": false,
+  "pde_run": false,
+  "target_grating_run": false,
+  "phase_b_algebraic_precursor": "pass",
+  "phase_b_real_fixture_minimum_gate": "pass",
+  "phase_c_low_cost_unlocked": true,
+  "phase_c_formal_completion": "complete_controlled_negative",
+  "B3_material_interface_corner": "component_fixture_pass",
+  "B4_hybrid_trace_M_DtN_QEP": "component_fixture_pass",
+  "phase_d_internal_gate": "complete",
+  "production_estimator_selected": false,
+  "production_backend_selected": false,
+  "phase_e_unlocked": false,
+  "real_fe_fixture_identity": {
+    "1": "pass",
+    "2": "pass"
+  },
+  "mpi_component_tests": {
+    "1": "pass",
+    "2": "pass",
+    "4": "pass"
+  },
+  "methods": [
+    {
+      "id": "R1",
+      "name": "standard residual/jump",
+      "status": "target_artifact_sampled_proxy_controlled_negative",
+      "fixtures": [1, 2],
+      "decision": "not_selected_for_production_marking_negative_local_correlation"
+    },
+    {
+      "id": "R2",
+      "name": "kh/p resolution diagnostic",
+      "status": "resolution_diagnostic_pass",
+      "fixtures": [1, 2],
+      "decision": "diagnostic_only_never_rescales_R1"
+    },
+    {
+      "id": "R3",
+      "name": "recovery H(curl)",
+      "status": "algebraic_precursor_pass",
+      "fixtures": [3],
+      "decision": "eligible_for_phase_c_low_cost_screen"
+    },
+    {
+      "id": "R4",
+      "name": "equilibrated patch estimator",
+      "status": "formula_defined",
+      "fixtures": [3],
+      "decision": "constrained_equilibration_pending"
+    },
+    {
+      "id": "R5",
+      "name": "hierarchical/two-level estimator",
+      "status": "target_artifact_discrete_two_level_proxy_pass_nonformal",
+      "fixtures": [2, 3],
+      "decision": "not_selected_formal_hierarchical_FE_R5_missing"
+    },
+    {
+      "id": "G1",
+      "name": "DWR total R/T/A",
+      "status": "algebraic_precursor_pass",
+      "fixtures": [2],
+      "decision": "not_qualified_actual_discrete_adjoint_missing"
+    },
+    {
+      "id": "G2",
+      "name": "DWR R00/order amplitudes",
+      "status": "real_fe_goal_derivative_pass_B2",
+      "fixtures": [2],
+      "decision": "not_qualified_actual_discrete_adjoint_missing"
+    },
+    {
+      "id": "B1",
+      "name": "DtN truncation split",
+      "status": "target_artifact_sample_split_pass_nonformal",
+      "fixtures": [2],
+      "decision": "diagnostic_split_only_not_production_marking"
+    },
+    {
+      "id": "M1",
+      "name": "internal mode truncation split",
+      "status": "measured_hybrid_M_split_component_pass",
+      "fixtures": [4],
+      "decision": "component_pass_not_production_estimator"
+    }
+  ],
+  "limitations": [
+    "target artifact sampled R1 and discrete two-level R5 are nonformal proxies",
+    "R4 constrained equilibration is not implemented",
+    "actual discrete adjoint is not implemented",
+    "strip/tensor physical gates failed and conforming-hexa locality is blocked",
+    "tetra marked refinement is a research control only",
+    "no production estimator/backend, target-grating PDE, adaptive cycle, or heavy qualification"
+  ]
+}

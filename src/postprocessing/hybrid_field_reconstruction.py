@@ -13,7 +13,7 @@ from petsc4py import PETSc
 
 from ..common.config_3d import SimulationConfig3D
 from ..modes.cross_section_spaces import CrossSectionMesh, CrossSectionSpaces
-from ..modes.mode_classification import BiorthogonalModeBasis, ClassifiedBiorthogonalMode
+from ..modes.mode_classification import BiorthogonalModeBasis
 from ..solvers.dtn_port_3d import _assign_fe_solution_from_augmented
 from ..solvers.hybrid_local_dtn import HybridLocalDtnSystem
 from .full3d_reference import _sample_distributed_function

@@ -9,7 +9,13 @@ from .common_3d_case_flow import run_prepared_3d_case_flow
 STAGE4B_CASES = frozenset({"stage4_block_grating"})
 
 
-def run_stage4b_block_grating_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, object]:
+def run_stage4b_block_grating_3d_case(
+    cfg: SimulationConfig3D,
+    out_dir: Path,
+    *,
+    solution_observer=None,
+    mesh_data_override=None,
+) -> dict[str, object]:
     """Run Stage 4B: rectangular block grating with 3D DtN total-field ports.
 
     Case flow:
@@ -33,6 +39,8 @@ def run_stage4b_block_grating_3d_case(cfg: SimulationConfig3D, out_dir: Path) ->
         field_formulation="total_field_dtn_port",
         solve_stage4_dtn_port=True,
         apply_strong_boundary_bc=False,
+        solution_observer=solution_observer,
+        mesh_data_override=mesh_data_override,
     )
 
 

@@ -1,0 +1,336 @@
+{
+  "schema_version": "task035b.h15-memory-floor-factor-inventory-ledger.v2",
+  "benchmark_id": "task035b_h15_direct_and_factor_free_memory_evidence_ledger",
+  "status": "bounded_memory_evidence_ledger_completed",
+  "classification": "positive_memory_semantics_audit_with_iterative_controlled_negatives",
+  "pass": true,
+  "record_semantics": "pass means the evidence ledger is internally closed and hash-bound; it does not mean that an iterative profile passed its accuracy screen or that a mathematical/software memory floor was measured",
+  "heavy_pde_rerun": false,
+  "candidate_promotion": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "review_v2_commit_sha": "d547e9d7e903e9e8639346715770e56f9c17e86d",
+    "ledger_audited_head_sha": "7e4a2eb4ab5096d88b9e79b176b1e3778767caa4",
+    "formal_direct_and_legacy_iterative_run_sha": "54622497c58758de74879f80a98c11ec8f83a61c",
+    "authority_records": [
+      {
+        "role": "measured_direct_mpi1_2_4_8_rank_study",
+        "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_direct_mpi1_2_4_8_resource_floor_v1.json",
+        "sha256": "f6b523fc72808886e025d2a7f1c0d8d26a0e176a5e46cd3d8f9208ac95d77654"
+      },
+      {
+        "role": "measured_legacy_factor_free_iterative_screens",
+        "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_factor_free_iterative_mpi8_v1.json",
+        "sha256": "ce7a7bd6932725987a5d3583df29396a027c661bcc80514f8dd33af5118edc2b"
+      },
+      {
+        "role": "direct_thread_stage_and_memory_scope_audit",
+        "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_solve_thread_memory_semantics_audit_v1.json",
+        "sha256": "a1cc741087dee7e36c9ea3cc9c5c3fa0ec92960ccf186beec2035008b3dbf1f7"
+      }
+    ],
+    "typed_physics_aware_profile": {
+      "introduced_commit_sha": "ffc0d6f833f0ebaa31241083b5a2f0f4830f11cc",
+      "profile": "fgmres_dtn_trace_deflation",
+      "profile_source": {
+        "path": "src/solvers/condensed_iterative_profiles.py",
+        "sha256": "2b3f9ec9ea6e7952abf0801bfd10351a0536da4a1b47dfcbf77211dfda136f22"
+      },
+      "runner_source": {
+        "path": "benchmarks/run_task035b_condensed_iterative.py",
+        "sha256": "4807dab716a6f69176856e644f5722e00faa279b228e08006a3979fce3eabc4e"
+      }
+    }
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "mesh_cell_type": "hexahedron",
+    "h_nm": 15.0,
+    "mesh_cells_resolved": [
+      6,
+      2,
+      10
+    ],
+    "num_mesh_cells": 120,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "full3d_equivalent_dofs": 74890,
+    "active_trace_rows": 16800,
+    "dtn_auxiliary_rows": 80,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9195812,
+    "matrix_nnz_allocated": 9484580
+  },
+  "measurement_definitions": {
+    "process_tree_rss": "Simultaneous RSS sum for mpiexec and all live descendants; shared mappings may be counted in more than one process.",
+    "worker_rank_pss": "Sum of /proc/<rank>/smaps_rollup Pss for MPI workers; shared pages are apportioned, but mpiexec and launcher processes are excluded.",
+    "worker_rank_uss": "Sum of Private_Clean, Private_Dirty and Private_Hugetlb for MPI workers; launcher processes are excluded.",
+    "native_numpy_ledger": "Exact unique NumPy backing-store bytes for named condensation caches only; this excludes PETSc, MUMPS, DOLFINx, Basix, Python allocator and BLAS/LAPACK workspaces.",
+    "matrix_memory_estimate": "Derived 24-byte-per-allocated-AIJ-entry planning proxy plus row-pointer storage; PETSc MatInfo.memory was zero and therefore did not provide actual native object bytes.",
+    "factor_memory_estimate": "Derived 24-byte-per-reported-factor-NNZ planning proxy plus row-pointer storage; it is not an exact MUMPS symbolic, numeric or workspace measurement.",
+    "cgroup": "The observed /init.scope cgroup is not a dedicated job cgroup. Its memory.current and memory.peak include unrelated WSL processes and are diagnostic only.",
+    "independent_maxima": "RSS, PSS, USS, native-object totals, matrix/factor estimates, cgroup values and allocator-release deltas can come from different stages or scopes and must not be added."
+  },
+  "direct_rank_study": {
+    "status": "measured_direct_profiles_all_residual_qualified",
+    "cache_state": "cold",
+    "solver": "MUMPS",
+    "rows": [
+      {
+        "mpi_size": 1,
+        "timeline_sha256": "21709c2587cb2d5328820f676337e810838a76f0ea5265aa792ec234f7931d98",
+        "worker_result_sha256": "cdb8890063dcdc212dac5481c56cd36c6cdb070520401b72896dd8549d8f35f3",
+        "process_tree_peak_gib": 1.2952156066894531,
+        "worker_rank_pss_peak_gib": 1.2571754455566406,
+        "worker_rank_uss_peak_gib": 1.2427177429199219,
+        "factor_peak_stage": "after_ksp_solve",
+        "matrix_memory_estimate_bytes": 220834536,
+        "factor_nnz": 26854000,
+        "factor_memory_estimate_bytes": 644631048,
+        "native_numpy_build_rank_sum_bytes": 164846600,
+        "native_numpy_retained_rank_sum_bytes": 93566600,
+        "recovery_native_before_rank_sum_bytes": 93081600,
+        "recovery_native_after_rank_sum_bytes": 29124000,
+        "malloc_trim_rss_released_mb": 310.58203125,
+        "process_tree_swap_mb": 0.0,
+        "full_explicit_true_residual": 5.117696380077406e-12
+      },
+      {
+        "mpi_size": 2,
+        "timeline_sha256": "0f889b6b893c5f94ec7fe8d42ba5926dcf83068d0050b94b05464a2c322c8120",
+        "worker_result_sha256": "876f16606411ab1963df7b1634164c3b4e77f67ad02a7629d872b4d62a7c2b00",
+        "process_tree_peak_gib": 2.1582374572753906,
+        "worker_rank_pss_peak_gib": 2.0129613876342773,
+        "worker_rank_uss_peak_gib": 1.9178657531738281,
+        "factor_peak_stage": "after_ksp_solve",
+        "matrix_memory_estimate_bytes": 220834536,
+        "factor_nnz": 28507400,
+        "factor_memory_estimate_bytes": 684312648,
+        "native_numpy_build_rank_sum_bytes": 463941920,
+        "native_numpy_retained_rank_sum_bytes": 330021920,
+        "recovery_native_before_rank_sum_bytes": 329117400,
+        "recovery_native_after_rank_sum_bytes": 97704000,
+        "malloc_trim_rss_released_mb": 627.42578125,
+        "process_tree_swap_mb": 0.0,
+        "full_explicit_true_residual": 1.3664111036792113e-11
+      },
+      {
+        "mpi_size": 4,
+        "timeline_sha256": "72f15c73ad68f24a88b204db67e40840419d9ceab1edcd1749795ea82b47eaea",
+        "worker_result_sha256": "8e7bb16c602e34edccfca3b66e5740ca27aa5bb4bb6ef64f098c954b5fda2715",
+        "process_tree_peak_gib": 3.0999755859375,
+        "worker_rank_pss_peak_gib": 2.7230567932128906,
+        "worker_rank_uss_peak_gib": 2.6122207641601562,
+        "factor_peak_stage": "after_ksp_solve",
+        "matrix_memory_estimate_bytes": 220834536,
+        "factor_nnz": 26575000,
+        "factor_memory_estimate_bytes": 637935048,
+        "native_numpy_build_rank_sum_bytes": 837083760,
+        "native_numpy_retained_rank_sum_bytes": 598763760,
+        "recovery_native_before_rank_sum_bytes": 597020400,
+        "recovery_native_after_rank_sum_bytes": 176544000,
+        "malloc_trim_rss_released_mb": 934.34375,
+        "process_tree_swap_mb": 0.0,
+        "full_explicit_true_residual": 4.9636555868585196e-12
+      },
+      {
+        "mpi_size": 8,
+        "timeline_sha256": "d1e75ab1f5fb34ae30fd497d4e2b46c57a36e0e75e31a647d3bb5bc163288211",
+        "worker_result_sha256": "57b077be66ff2cd42f1a08f32b277bc7945123dfe58aefcecfb2188773c046c5",
+        "process_tree_peak_gib": 4.7111053466796875,
+        "worker_rank_pss_peak_gib": 3.8758020401000977,
+        "worker_rank_uss_peak_gib": 3.758453369140625,
+        "factor_peak_stage": "after_ksp_solve",
+        "matrix_memory_estimate_bytes": 220834536,
+        "factor_nnz": 27916600,
+        "factor_memory_estimate_bytes": 670133448,
+        "native_numpy_build_rank_sum_bytes": 1187304080,
+        "native_numpy_retained_rank_sum_bytes": 848904080,
+        "recovery_native_before_rank_sum_bytes": 845478000,
+        "recovery_native_after_rank_sum_bytes": 252144000,
+        "malloc_trim_rss_released_mb": 1370.33203125,
+        "process_tree_swap_mb": 0.0,
+        "full_explicit_true_residual": 7.410422249147878e-12
+      }
+    ],
+    "interpretation": {
+      "historical_5p8_to_6p4_gib_is_a_memory_floor": false,
+      "best_observed_direct_rank_point": "MPI1",
+      "best_observed_direct_process_tree_peak_gib": 1.2952156066894531,
+      "best_observed_direct_point_is_a_theoretical_floor": false,
+      "best_observed_direct_point_is_a_software_stack_floor": false,
+      "best_observed_direct_point_is_a_factor_free_floor": false,
+      "mpi8_over_mpi1_process_tree_rss_ratio": 3.637313604274106,
+      "reason": "MPI1 is only the lowest measured direct point for this four-rank cold-profile study. Rank replication changes runtime, cache, matrix-distribution, MUMPS and allocator lifecycles, so no componentwise or asymptotic floor follows from this minimum."
+    }
+  },
+  "measured_assembled_iterative_controls": {
+    "status": "two_controlled_negative_mpi8_screens",
+    "matrix_free": false,
+    "profiles": [
+      {
+        "profile": "gmres_jacobi",
+        "mpi_size": 8,
+        "global_fine_sparse_factor_nnz": 0,
+        "mumps_symbolic_or_numeric_created": false,
+        "process_tree_peak_gib": 3.9212112426757812,
+        "worker_rank_pss_peak_gib": 3.11191463470459,
+        "worker_rank_uss_peak_gib": 2.9990577697753906,
+        "process_tree_swap_mb": 0.0,
+        "iterations": 200,
+        "terminal_explicit_reduced_relative_residual": 0.8616624409266606,
+        "full_recovered_true_residual": 0.8616614736453792,
+        "accuracy_pass": false,
+        "official_result": false
+      },
+      {
+        "profile": "fgmres_asm_ilu",
+        "mpi_size": 8,
+        "global_fine_sparse_factor_nnz": 0,
+        "local_subdomain_ilu_active": true,
+        "mumps_symbolic_or_numeric_created": false,
+        "process_tree_peak_gib": 4.461772918701172,
+        "worker_rank_pss_peak_gib": 3.645510673522949,
+        "worker_rank_uss_peak_gib": 3.5315589904785156,
+        "process_tree_swap_mb": 0.0,
+        "iterations": 200,
+        "terminal_explicit_reduced_relative_residual": 0.9996606193679306,
+        "full_recovered_true_residual": 0.9996594971732532,
+        "accuracy_pass": false,
+        "official_result": false
+      }
+    ],
+    "interpretation": {
+      "factor_free_fine_operator_automatically_beats_best_direct_rank_memory": false,
+      "factor_free_accuracy_qualified_memory_floor_measured": false,
+      "reason": "Both assembled iterative screens omitted the global MUMPS factor but failed the residual screen. Their peaks are valid controlled-negative process measurements, not successful-solve memory minima, and both exceed the measured MPI1 direct peak."
+    }
+  },
+  "typed_physics_aware_profile_v2": {
+    "profile": "fgmres_dtn_trace_deflation",
+    "status": "implemented_and_contract_tested_but_not_formally_measured_at_ledger_head",
+    "configured_programmatically": true,
+    "raw_petsc_options_accepted": false,
+    "assembled_reduced_operator": true,
+    "matrix_free": false,
+    "fine_operator_factor_free_by_contract": true,
+    "global_fine_sparse_factor_nnz_required": 0,
+    "mumps_symbolic_or_numeric_created_required": false,
+    "strictly_factorless_preconditioner": false,
+    "retained_factor": "small replicated dense Galerkin coarse LU",
+    "expected_h15_coarse_dimension": 80,
+    "derived_coarse_dense_matrix_payload_bytes": 102400,
+    "coarse_dense_lu_and_workspace_bytes": null,
+    "formal_process_tree_peak_gib": null,
+    "formal_worker_rank_pss_peak_gib": null,
+    "formal_worker_rank_uss_peak_gib": null,
+    "formal_iterations": null,
+    "formal_full_recovered_true_residual": null,
+    "formal_screen_status": "not_run",
+    "memory_claim": "No measured memory advantage or successful factor-free floor is claimed before the formal profile runs and passes its residual contract."
+  },
+  "component_coverage_ledger": [
+    {
+      "component": "runtime_floor",
+      "measurement_status": "not_isolated",
+      "available_evidence": "process_start and later stage RSS/PSS/USS samples",
+      "limitation": "imports, shared libraries, MPI launcher and allocator warmup overlap; no isolated runtime-only steady-state measurement"
+    },
+    {
+      "component": "mesh_and_function_space",
+      "measurement_status": "stage_peaks_observed_not_object_attributed",
+      "available_evidence": "timeline stage RSS/PSS/USS and setup timings",
+      "limitation": "stage deltas include retained imports, caches and allocator effects and are not mesh/space object bytes"
+    },
+    {
+      "component": "local_tensors_aii_schur_and_recovery_caches",
+      "measurement_status": "partial_exact_numpy_backing_store",
+      "available_evidence": "named native NumPy cache categories before and after release",
+      "limitation": "Python containers, SciPy/BLAS workspaces and non-NumPy native allocations are excluded"
+    },
+    {
+      "component": "petsc_matrix_and_vectors",
+      "measurement_status": "derived_matrix_proxy_only",
+      "available_evidence": "rows, used/allocated NNZ and 220834536-byte planning estimate",
+      "limitation": "PETSc MatInfo.memory returned zero; actual PETSc Mat/Vec native bytes and communication buffers are not measured"
+    },
+    {
+      "component": "mumps_symbolic_numeric_workspace_and_factor",
+      "measurement_status": "factor_nnz_measured_bytes_derived",
+      "available_evidence": "factor NNZ, raw INFOG/RINFOG, KSP stage peaks and a 24-byte-per-NNZ planning estimate",
+      "limitation": "symbolic, numeric, workspace and factor bytes are not independently measured; raw MUMPS indices are not assigned unverified semantics"
+    },
+    {
+      "component": "recovery_and_postprocess",
+      "measurement_status": "partial_lifecycle_and_stage_peaks",
+      "available_evidence": "recovery cache before/after NumPy bytes and postprocess RSS/PSS/USS stages",
+      "limitation": "field/VTK object bytes and the dormant postprocess thread-pool contribution are not isolated"
+    },
+    {
+      "component": "allocator_retention",
+      "measurement_status": "malloc_trim_delta_measured_malloc_info_missing",
+      "available_evidence": "per-run aggregate RSS before/after glibc malloc_trim",
+      "limitation": "malloc_info arenas, thread stacks, Python pymalloc and native allocator ownership are not separately captured"
+    },
+    {
+      "component": "cgroup",
+      "measurement_status": "diagnostic_non_authority",
+      "available_evidence": "/init.scope memory.current/peak and swap",
+      "limitation": "the cgroup is not dedicated to the MPI job and includes unrelated WSL processes"
+    }
+  ],
+  "open_measurement_gaps": [
+    "dedicated job cgroup memory.current and memory.peak",
+    "launcher-inclusive PSS and USS",
+    "actual PETSc Mat, Vec and communication-buffer native bytes",
+    "MUMPS symbolic, numeric-factor and workspace bytes as separate verified quantities",
+    "Python heap versus non-NumPy native heap",
+    "DOLFINx, Basix, SciPy, BLAS and LAPACK native allocations",
+    "glibc malloc_info arena and retained-heap breakdown",
+    "per-thread stack reservation and committed pages",
+    "VTK/PyVista field-object and postprocess-pool bytes",
+    "formal memory and residual evidence for fgmres_dtn_trace_deflation",
+    "successful factor-free best-workstation-rank comparison",
+    "matrix-free Schur plus Floquet plus DtN action memory evidence"
+  ],
+  "non_additivity_rules": {
+    "rss_plus_pss_or_uss": "forbidden",
+    "rss_plus_native_numpy_ledger": "forbidden",
+    "rss_plus_matrix_or_factor_proxy": "forbidden",
+    "independent_stage_maxima_sum": "forbidden",
+    "cgroup_plus_process_tree": "forbidden",
+    "factor_proxy_subtracted_from_peak_as_iterative_prediction": "forbidden",
+    "reason": "These fields overlap in address-space content, differ in scope, or occur at non-simultaneous lifecycle stages."
+  },
+  "qualification": {
+    "pass": true,
+    "checks": {
+      "authority_records_hash_bound": true,
+      "all_four_direct_rank_points_present": true,
+      "all_direct_true_residuals_le_1e-9": true,
+      "all_measured_points_zero_swap": true,
+      "direct_rss_pss_uss_scopes_disclosed": true,
+      "native_numpy_scope_and_exclusions_disclosed": true,
+      "matrix_and_factor_proxy_semantics_disclosed": true,
+      "cgroup_non_authority_disclosed": true,
+      "historical_5p8_to_6p4_gib_floor_rejected": true,
+      "mpi1_not_promoted_to_theoretical_or_factor_free_floor": true,
+      "legacy_iterative_accuracy_failures_preserved": true,
+      "typed_profile_dense_coarse_factor_disclosed": true,
+      "typed_profile_formal_measurements_left_null": true,
+      "matrix_free_not_claimed": true,
+      "ordinary_default_unchanged": true
+    }
+  },
+  "decision": {
+    "best_observed_direct_memory_point": "MPI1 at 1.2952156066894531 GiB process-tree RSS",
+    "current_accuracy_qualified_factor_free_memory_floor": null,
+    "historical_5p8_to_6p4_gib_is_a_floor": false,
+    "mpi1_1p295_gib_is_a_floor": false,
+    "legacy_jacobi_or_asm_iterative_lane_reopened": false,
+    "physics_aware_typed_profile_requires_formal_measurement": true,
+    "matrix_free_status": "not_run",
+    "ordinary_default_changed": false
+  }
+}

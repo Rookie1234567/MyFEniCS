@@ -1,0 +1,10 @@
+method_id,method,status,fixtures,serial,mpi2,mpi4,canonical,production_qualified,pde_run,decision
+R1,standard residual/jump,target_artifact_sampled_proxy_controlled_negative,1;2,pass,pass,not_required,false,false,false,not_selected_for_production_marking_negative_local_correlation
+R2,kh/p resolution diagnostic,resolution_diagnostic_pass,1;2,pass,pass,not_required,false,false,false,diagnostic_only_never_rescales_R1
+R3,recovery H(curl),algebraic_precursor_pass,3,pass,pass,pass,false,false,false,research_lane_not_selected
+R4,equilibrated patch estimator,formula_defined,3,pass,pass,pass,false,false,false,constrained_equilibration_pending
+R5,hierarchical/two-level estimator,target_artifact_discrete_two_level_proxy_pass_nonformal,2;3,pass,pass,pass,false,false,false,not_selected_formal_hierarchical_FE_R5_missing
+G1,DWR total R/T/A,algebraic_precursor_pass,2,pass,pass,pass,false,false,false,not_qualified_actual_discrete_adjoint_missing
+G2,DWR R00/order amplitudes,real_fe_goal_derivative_pass_B2,2,pass,pass,not_required,false,false,false,not_qualified_actual_discrete_adjoint_missing
+B1,DtN truncation split,target_artifact_sample_split_pass_nonformal,2,pass,pass,not_required,false,false,false,diagnostic_split_only_not_production_marking
+M1,internal mode truncation split,measured_hybrid_M_split_component_pass,4,pass,pass,pass,false,false,false,component_pass_not_production_estimator

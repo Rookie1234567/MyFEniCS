@@ -1,0 +1,60 @@
+{
+  "schema_version": "task035.case094.compact-authority.v2",
+  "case_id": "094_hcurl_goal_oriented_adaptivity",
+  "lifecycle": "review_v6_research_closeout",
+  "status": "accepted_research_infrastructure_with_controlled_negatives",
+  "canonical": false,
+  "production_qualified": false,
+  "pde_run": true,
+  "ordinary_default_changed": false,
+  "checker": {
+    "command": "python -m benchmarks.task035_case094",
+    "hermetic": true,
+    "reads_ignored_artifacts": false,
+    "starts_pde": false
+  },
+  "authority_records": [
+    {
+      "path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/base_manifest.json",
+      "sha256": "eeb98e20634b540a7053d58e30c6b2d5ce1c357b49f27935e6e2bf2641403727",
+      "expected_status": "phase_a_gate_pass"
+    },
+    {
+      "path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p7_cycle1_full_periodic_closure_mpi8.json",
+      "sha256": "ca21d21ccbb9d7ed79b8be3d0b99153f59e77b414ae754a284d47a26ee0e900f",
+      "expected_status": "actual_dwr_adaptive_cycles_pass"
+    },
+    {
+      "path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_uniform_tetra_level1_p4_p5_mpi8.json",
+      "sha256": "6a11852334052a91872674bf7db77d551ca553ec1e0563a1b88c76f5a90331f1",
+      "expected_status": "actual_uniform_tetra_control_pass"
+    },
+    {
+      "path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h37p5_theta0p7_cycle1_full_periodic_closure_mpi8.json",
+      "sha256": "95097cc9e7378497ed2c6f2e535967b08954dfbc8608b5fdd51db560de8e7676",
+      "expected_status": "actual_dwr_adaptive_cycles_pass"
+    },
+    {
+      "path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_multigoal_normalized_tetra_p4_p5_h37p5_theta0p7_cycle1_full_periodic_closure_mpi8.json",
+      "sha256": "f8411f43260fe0136ab148656afd2faa6d786a307ecb9fb7d854de6f2fe9de3d",
+      "expected_status": "actual_dwr_adaptive_cycles_pass"
+    },
+    {
+      "path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_hp_budget_theta0p4_tetra_p5_p6_h50_mpi8.json",
+      "sha256": "8a579b5141e12ac3f029b2ff72ba3d597da46ea2d0a96757593ef191e77c938c",
+      "expected_status": "actual_common_mesh_angle_sweep_pass"
+    }
+  ],
+  "accepted_capabilities": [
+    "periodic_tetra_mesh_audit_and_refinement",
+    "deterministic_periodic_marking",
+    "true_discrete_adjoint_and_DWR",
+    "uniform_tetra_control",
+    "same_origin_h_vs_p_research_comparison"
+  ],
+  "not_promoted": [
+    "automatic_production_hp",
+    "tetra_static_condensation",
+    "mixed_cell_mesh"
+  ]
+}

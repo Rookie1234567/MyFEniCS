@@ -29,12 +29,19 @@ TIMELINE_FIELDS = (
     "stage",
     "stage_status",
     "worker_rank_rss_sum_mb",
+    "worker_rank_pss_sum_mb",
+    "worker_rank_uss_sum_mb",
+    "worker_rank_shared_sum_mb",
+    "worker_rank_smaps_swap_sum_mb",
     "mpi_process_tree_rss_mb",
     "mpi_process_tree_swap_mb",
     "container_process_rss_sum_mb",
     "worker_rank_rss_mb_json",
+    "worker_rank_smaps_rollup_json",
+    "worker_rank_smaps_readable_count",
     "worker_rank_cpu_affinity_json",
     "worker_rank_thread_count_sum",
+    "worker_rank_thread_runtime_json",
     "mpi_process_tree_thread_count",
     "worker_rank_cpu_seconds",
     "mpi_process_tree_cpu_seconds",
@@ -159,6 +166,138 @@ def _vmstat_swap_pages() -> tuple[int | None, int | None]:
     return values.get("pswpin"), values.get("pswpout")
 
 
+def _read_smaps_rollup(path: Path) -> dict[str, float] | None:
+    """Read proportional and private memory for one Linux process."""
+
+    wanted = {
+        "Rss",
+        "Pss",
+        "Private_Clean",
+        "Private_Dirty",
+        "Private_Hugetlb",
+        "Shared_Clean",
+        "Shared_Dirty",
+        "Shared_Hugetlb",
+        "Anonymous",
+        "Swap",
+        "SwapPss",
+    }
+    values_kib: dict[str, int] = {}
+    try:
+        lines = path.read_text(
+            encoding="utf-8",
+            errors="ignore",
+        ).splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        if ":" not in line:
+            continue
+        key, text = line.split(":", 1)
+        if key not in wanted:
+            continue
+        try:
+            values_kib[key] = int(text.split()[0])
+        except (IndexError, ValueError):
+            return None
+    if "Pss" not in values_kib or "Rss" not in values_kib:
+        return None
+    private_kib = sum(
+        values_kib.get(key, 0)
+        for key in (
+            "Private_Clean",
+            "Private_Dirty",
+            "Private_Hugetlb",
+        )
+    )
+    shared_kib = sum(
+        values_kib.get(key, 0)
+        for key in (
+            "Shared_Clean",
+            "Shared_Dirty",
+            "Shared_Hugetlb",
+        )
+    )
+    return {
+        "rss_mb": values_kib["Rss"] / 1024.0,
+        "pss_mb": values_kib["Pss"] / 1024.0,
+        "uss_mb": private_kib / 1024.0,
+        "shared_mb": shared_kib / 1024.0,
+        "anonymous_mb": values_kib.get("Anonymous", 0) / 1024.0,
+        "swap_mb": values_kib.get("Swap", 0) / 1024.0,
+        "swap_pss_mb": values_kib.get("SwapPss", 0) / 1024.0,
+    }
+
+
+def _read_thread_runtime(path: Path) -> dict[str, Any] | None:
+    """Identify Linux thread states and loaded native parallel runtimes."""
+
+    name_counts: dict[str, int] = {}
+    wchan_counts: dict[str, int] = {}
+    try:
+        tasks = list((path / "task").iterdir())
+    except OSError:
+        return None
+    for task in tasks:
+        if not task.name.isdigit():
+            continue
+        try:
+            name = (task / "comm").read_text(
+                encoding="utf-8",
+                errors="ignore",
+            ).strip()
+        except OSError:
+            name = "unreadable"
+        try:
+            wchan = (task / "wchan").read_text(
+                encoding="utf-8",
+                errors="ignore",
+            ).strip()
+        except OSError:
+            wchan = "unreadable"
+        name_counts[name or "empty"] = name_counts.get(name or "empty", 0) + 1
+        wchan_counts[wchan or "empty"] = (
+            wchan_counts.get(wchan or "empty", 0) + 1
+        )
+    parallel_library_tokens = (
+        "blas",
+        "lapack",
+        "gomp",
+        "iomp",
+        "openmp",
+        "mkl",
+        "tbb",
+        "mumps",
+        "scalapack",
+        "hdf5",
+    )
+    libraries: set[str] = set()
+    try:
+        map_lines = (path / "maps").read_text(
+            encoding="utf-8",
+            errors="ignore",
+        ).splitlines()
+    except OSError:
+        map_lines = []
+    for line in map_lines:
+        fields = line.split()
+        if not fields:
+            continue
+        candidate = fields[-1]
+        lowered = candidate.lower()
+        if candidate.startswith("/") and any(
+            token in lowered for token in parallel_library_tokens
+        ):
+            libraries.add(candidate)
+    return {
+        "thread_count_observed": int(sum(name_counts.values())),
+        "thread_name_counts": dict(sorted(name_counts.items())),
+        "thread_wchan_counts": dict(sorted(wchan_counts.items())),
+        "loaded_parallel_runtime_libraries": sorted(libraries),
+        "measurement_scope": "one Linux process",
+    }
+
+
 def _read_processes() -> dict[int, dict[str, Any]]:
     processes: dict[int, dict[str, Any]] = {}
     proc = Path("/proc")
@@ -251,6 +390,16 @@ def _read_processes() -> dict[int, dict[str, Any]]:
                         break
                 if rank is not None:
                     break
+        smaps_rollup = (
+            _read_smaps_rollup(entry / "smaps_rollup")
+            if rank is not None
+            else None
+        )
+        thread_runtime = (
+            _read_thread_runtime(entry)
+            if rank is not None and thread_count > 8
+            else None
+        )
         processes[pid] = {
             "pid": pid,
             "ppid": ppid,
@@ -261,6 +410,8 @@ def _read_processes() -> dict[int, dict[str, Any]]:
             "cpu_seconds": cpu_seconds,
             "cmdline": cmdline,
             "worker_rank": rank,
+            "smaps_rollup": smaps_rollup,
+            "thread_runtime": thread_runtime,
             "read_bytes": io_fields.get("read_bytes", 0),
             "write_bytes": io_fields.get("write_bytes", 0),
             "blkio_delay_seconds": blkio_delay_seconds,
@@ -327,12 +478,19 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
                 "cpu_affinity": item["cpu_affinity"],
                 "thread_count": item["thread_count"],
                 "cpu_seconds": item["cpu_seconds"],
+                "smaps_rollup": item["smaps_rollup"],
+                "thread_runtime": item["thread_runtime"],
             }
             for item in processes.values()
             if item["worker_rank"] is not None
         ),
         key=lambda item: (item["rank"], item["pid"]),
     )
+    readable_smaps = [
+        item
+        for item in worker_ranks
+        if isinstance(item.get("smaps_rollup"), dict)
+    ]
     stage, stage_status = _latest_stage(progress_path)
     pswpin, pswpout = _vmstat_swap_pages()
     ooc_file_count, ooc_bytes = _directory_usage(
@@ -344,6 +502,22 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
         "stage": stage,
         "stage_status": stage_status,
         "worker_rank_rss_sum_mb": sum(item["rss_mb"] for item in worker_ranks),
+        "worker_rank_pss_sum_mb": sum(
+            item["smaps_rollup"]["pss_mb"]
+            for item in readable_smaps
+        ),
+        "worker_rank_uss_sum_mb": sum(
+            item["smaps_rollup"]["uss_mb"]
+            for item in readable_smaps
+        ),
+        "worker_rank_shared_sum_mb": sum(
+            item["smaps_rollup"]["shared_mb"]
+            for item in readable_smaps
+        ),
+        "worker_rank_smaps_swap_sum_mb": sum(
+            item["smaps_rollup"]["swap_mb"]
+            for item in readable_smaps
+        ),
         "mpi_process_tree_rss_mb": sum(
             processes[pid]["rss_mb"] for pid in tree if pid in processes
         ),
@@ -354,6 +528,18 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
             item["rss_mb"] for item in processes.values()
         ),
         "worker_rank_rss_mb_json": json.dumps(worker_ranks, separators=(",", ":")),
+        "worker_rank_smaps_rollup_json": json.dumps(
+            [
+                {
+                    "rank": item["rank"],
+                    "pid": item["pid"],
+                    **item["smaps_rollup"],
+                }
+                for item in readable_smaps
+            ],
+            separators=(",", ":"),
+        ),
+        "worker_rank_smaps_readable_count": len(readable_smaps),
         "worker_rank_cpu_affinity_json": json.dumps(
             [
                 {"rank": item["rank"], "cpu_affinity": item["cpu_affinity"]}
@@ -363,6 +549,18 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
         ),
         "worker_rank_thread_count_sum": sum(
             item["thread_count"] for item in worker_ranks
+        ),
+        "worker_rank_thread_runtime_json": json.dumps(
+            [
+                {
+                    "rank": item["rank"],
+                    "pid": item["pid"],
+                    **item["thread_runtime"],
+                }
+                for item in worker_ranks
+                if isinstance(item.get("thread_runtime"), dict)
+            ],
+            separators=(",", ":"),
         ),
         "mpi_process_tree_thread_count": sum(
             processes[pid]["thread_count"] for pid in tree if pid in processes

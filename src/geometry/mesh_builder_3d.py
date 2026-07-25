@@ -8,7 +8,7 @@ import ufl
 from basix.ufl import element
 from mpi4py import MPI
 
-from dolfinx import default_real_type, io, mesh
+from dolfinx import default_real_type, graph, io, mesh
 
 from ..common.config_3d import SimulationConfig3D
 
@@ -253,6 +253,79 @@ def _subdivide_piecewise_axis(
     return np.asarray(axis, dtype=np.float64)
 
 
+def _subdivide_piecewise_axis_exact_count(
+    start: float,
+    stop: float,
+    breakpoints: list[float],
+    *,
+    num_cells: int,
+) -> np.ndarray:
+    """Fit required planes while producing exactly ``num_cells`` intervals."""
+
+    if stop <= start:
+        raise ValueError("Axis stop must be greater than start.")
+    if isinstance(num_cells, bool) or not isinstance(
+        num_cells, (int, np.integer)
+    ):
+        raise ValueError("Exact axis cell count must be an integer.")
+    num_cells = int(num_cells)
+    tol = _axis_tolerance(start, stop)
+    points = _deduplicate_sorted([start, stop, *breakpoints], tol)
+    if abs(points[0] - start) > tol or abs(points[-1] - stop) > tol:
+        raise ValueError("Axis breakpoints must stay inside the domain bounds.")
+    interval_lengths = np.diff(np.asarray(points, dtype=np.float64))
+    if np.any(interval_lengths <= tol):
+        raise ValueError("Exact axis authority contains a degenerate interval.")
+    if num_cells < len(interval_lengths):
+        raise ValueError(
+            "Exact axis cell count cannot place at least one cell in every "
+            "material interval."
+        )
+
+    quotas = (
+        float(num_cells)
+        * interval_lengths
+        / float(np.sum(interval_lengths))
+    )
+    allocations = np.maximum(
+        1,
+        np.floor(quotas).astype(np.int64),
+    )
+    while int(np.sum(allocations)) < num_cells:
+        deficits = quotas - allocations
+        index = int(np.argmax(deficits))
+        allocations[index] += 1
+    while int(np.sum(allocations)) > num_cells:
+        removable = allocations > 1
+        if not np.any(removable):
+            raise RuntimeError(
+                "Exact axis interval allocation cannot satisfy its count."
+            )
+        excess = allocations.astype(np.float64) - quotas
+        excess[~removable] = -np.inf
+        index = int(np.argmax(excess))
+        allocations[index] -= 1
+
+    axis: list[float] = [float(start)]
+    for low, high, count in zip(
+        points[:-1],
+        points[1:],
+        allocations,
+        strict=True,
+    ):
+        segment = np.linspace(
+            low,
+            high,
+            int(count) + 1,
+            dtype=np.float64,
+        )
+        axis.extend(float(value) for value in segment[1:])
+    values = np.asarray(axis, dtype=np.float64)
+    if len(values) - 1 != num_cells:
+        raise RuntimeError("Exact axis generator produced the wrong count.")
+    return values
+
+
 def _uniform_axis(start: float, stop: float, num_cells: int) -> np.ndarray:
     return np.linspace(start, stop, num_cells + 1, dtype=np.float64)
 
@@ -341,53 +414,156 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
     """Resolve the Stage-4 hexa spacing mode and build periodic-compatible axes."""
 
     _validate_stage4_hexa_geometry(cfg)
-    uniform_cells = _hexa_mesh_cells(cfg, comm_size)
-    uniform_axes = _uniform_axes(cfg, uniform_cells)
-    uniform_alignment = _material_plane_alignment_report(cfg, uniform_axes)
-    requested = cfg.mesh_spacing_mode_requested
-    if requested == "auto":
-        mode = "uniform_strict" if uniform_alignment["all_aligned"] else "boundary_fitted"
-    else:
-        mode = requested
-
-    min_axis_cells = 2 if cfg.use_floquet_xy else 1
-    required = _stage4_required_planes_by_axis(cfg)
-    if mode == "uniform_strict":
-        if not uniform_alignment["all_aligned"]:
-            hint = (
-                "Stage-4 uniform_strict hexa meshes require every material boundary to be a grid plane. "
-                "Use mesh_spacing_mode='auto', 'boundary_fitted', or 'local_refined' to generate a fitted nonuniform hexa mesh."
+    explicit_counts = cfg.mesh_axis_cell_counts_requested
+    explicit_z_values = cfg.mesh_axis_z_values_requested
+    explicit_z_profile = cfg.mesh_axis_z_profile
+    if (explicit_z_values is None) != (explicit_z_profile is None):
+        raise ValueError(
+            "mesh_axis_z_values and mesh_axis_z_profile must be supplied "
+            "together."
+        )
+    if explicit_z_values is not None and explicit_counts is None:
+        raise ValueError(
+            "mesh_axis_z_values requires mesh_axis_cell_counts so the exact "
+            "tensor topology is explicit."
+        )
+    if explicit_z_profile is not None and not str(explicit_z_profile).strip():
+        raise ValueError("mesh_axis_z_profile must be a non-empty identity")
+    if explicit_counts is not None:
+        if cfg.mesh_cell_type_resolved != "hexahedron":
+            raise ValueError(
+                "mesh_axis_cell_counts is currently qualified only for "
+                "Stage-4 hexahedra."
             )
-            raise ValueError(hint + " " + " ".join(str(message) for message in uniform_alignment["missing"]))
-        axes = uniform_axes
-        regions: dict[str, list[list[float]]] = {"x": [], "y": [], "z": []}
-    else:
+        if cfg.geometry_kind != "rectangular_block_grating":
+            raise ValueError(
+                "mesh_axis_cell_counts is currently qualified only for the "
+                "fixed rectangular block grating."
+            )
+        if cfg.mesh_spacing_mode_requested not in {
+            "auto",
+            "boundary_fitted",
+        }:
+            raise ValueError(
+                "mesh_axis_cell_counts requires mesh_spacing_mode='auto' or "
+                "'boundary_fitted'."
+            )
+        if cfg.use_floquet_xy and (
+            explicit_counts[0] < 2 or explicit_counts[1] < 2
+        ):
+            raise ValueError(
+                "Floquet exact-axis plans require at least two x and y cells."
+            )
+        if int(np.prod(explicit_counts)) < int(comm_size):
+            raise ValueError(
+                "Exact axis plan has fewer cells than MPI ranks; it will not "
+                "be silently refined."
+            )
+        required = _stage4_required_planes_by_axis(cfg)
         spans = {
             "x": (cfg.x_min, cfg.x_max),
             "y": (cfg.y_min, cfg.y_max),
             "z": (cfg.domain_z_min, cfg.domain_z_max),
         }
-        regions = _stage4_refinement_regions(cfg) if mode == "local_refined" else {"x": [], "y": [], "z": []}
-        refined_size = cfg.mesh_refined_size_resolved
-        axes = {}
-        for axis_name, (start, stop) in spans.items():
-            breakpoints = [value for _, value in required[axis_name]]
-            for low, high in regions[axis_name]:
-                breakpoints.extend([low, high])
-
-            def target_size(midpoint: float, *, axis: str = axis_name) -> float:
-                if mode == "local_refined" and _interval_in_regions(midpoint, regions[axis]):
-                    return refined_size
-                return float(cfg.mesh_target_size)
-
-            axes[axis_name] = _subdivide_piecewise_axis(
+        axes = {
+            axis_name: _subdivide_piecewise_axis_exact_count(
                 start,
                 stop,
-                breakpoints,
-                target_size,
-                min_cells=min_axis_cells,
+                [value for _, value in required[axis_name]],
+                num_cells=explicit_counts[index],
             )
-        axes = _refine_axes_until_enough_cells(axes, comm_size)
+            for index, (axis_name, (start, stop)) in enumerate(
+                spans.items()
+            )
+        }
+        if explicit_z_values is not None:
+            if len(explicit_z_values) != explicit_counts[2] + 1:
+                raise ValueError(
+                    "mesh_axis_z_values length must equal NZ + 1 from "
+                    "mesh_axis_cell_counts."
+                )
+            if not (
+                np.isclose(
+                    explicit_z_values[0],
+                    cfg.domain_z_min,
+                    rtol=0.0,
+                    atol=1.0e-12,
+                )
+                and np.isclose(
+                    explicit_z_values[-1],
+                    cfg.domain_z_max,
+                    rtol=0.0,
+                    atol=1.0e-12,
+                )
+            ):
+                raise ValueError(
+                    "mesh_axis_z_values endpoints must equal the Stage-4 "
+                    "domain z bounds."
+                )
+            axes["z"] = np.asarray(explicit_z_values, dtype=np.float64)
+            mode = "boundary_fitted_exact_counts_explicit_z"
+        else:
+            mode = "boundary_fitted_exact_counts"
+        regions: dict[str, list[list[float]]] = {
+            "x": [],
+            "y": [],
+            "z": [],
+        }
+    else:
+        uniform_cells = _hexa_mesh_cells(cfg, comm_size)
+        uniform_axes = _uniform_axes(cfg, uniform_cells)
+        uniform_alignment = _material_plane_alignment_report(
+            cfg,
+            uniform_axes,
+        )
+        requested = cfg.mesh_spacing_mode_requested
+        if requested == "auto":
+            mode = (
+                "uniform_strict"
+                if uniform_alignment["all_aligned"]
+                else "boundary_fitted"
+            )
+        else:
+            mode = requested
+
+        min_axis_cells = 2 if cfg.use_floquet_xy else 1
+        required = _stage4_required_planes_by_axis(cfg)
+        if mode == "uniform_strict":
+            if not uniform_alignment["all_aligned"]:
+                hint = (
+                    "Stage-4 uniform_strict hexa meshes require every material boundary to be a grid plane. "
+                    "Use mesh_spacing_mode='auto', 'boundary_fitted', or 'local_refined' to generate a fitted nonuniform hexa mesh."
+                )
+                raise ValueError(hint + " " + " ".join(str(message) for message in uniform_alignment["missing"]))
+            axes = uniform_axes
+            regions = {"x": [], "y": [], "z": []}
+        else:
+            spans = {
+                "x": (cfg.x_min, cfg.x_max),
+                "y": (cfg.y_min, cfg.y_max),
+                "z": (cfg.domain_z_min, cfg.domain_z_max),
+            }
+            regions = _stage4_refinement_regions(cfg) if mode == "local_refined" else {"x": [], "y": [], "z": []}
+            refined_size = cfg.mesh_refined_size_resolved
+            axes = {}
+            for axis_name, (start, stop) in spans.items():
+                breakpoints = [value for _, value in required[axis_name]]
+                for low, high in regions[axis_name]:
+                    breakpoints.extend([low, high])
+
+                def target_size(midpoint: float, *, axis: str = axis_name) -> float:
+                    if mode == "local_refined" and _interval_in_regions(midpoint, regions[axis]):
+                        return refined_size
+                    return float(cfg.mesh_target_size)
+
+                axes[axis_name] = _subdivide_piecewise_axis(
+                    start,
+                    stop,
+                    breakpoints,
+                    target_size,
+                    min_cells=min_axis_cells,
+                )
+            axes = _refine_axes_until_enough_cells(axes, comm_size)
 
     alignment = _material_plane_alignment_report(cfg, axes)
     if not alignment["all_aligned"]:
@@ -423,6 +599,8 @@ def _structured_hexa_mesh(
     x_values: np.ndarray,
     y_values: np.ndarray,
     z_values: np.ndarray,
+    *,
+    preserve_input_partition: bool = False,
 ) -> mesh.Mesh:
     """Create a tensor-product hexa mesh from explicit nonuniform coordinate axes."""
 
@@ -444,7 +622,34 @@ def _structured_hexa_mesh(
     ]
     coordinate_element = element("Lagrange", "hexahedron", 1, shape=(3,), dtype=default_real_type)
     domain = ufl.Mesh(coordinate_element)
-    partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
+    if preserve_input_partition:
+
+        def keep_input_cell_owners(
+            _comm,
+            num_partitions: int,
+            adjacency,
+            _ghost_mode: bool,
+        ):
+            if int(num_partitions) != int(msh_comm.size):
+                raise RuntimeError(
+                    "input-preserving partitioner received an unexpected "
+                    "partition count"
+                )
+            destinations = np.full(
+                (int(adjacency.num_nodes), 1),
+                int(msh_comm.rank),
+                dtype=np.int32,
+            )
+            return graph.adjacencylist(destinations)._cpp_object
+
+        partitioner = mesh.create_cell_partitioner(
+            keep_input_cell_owners,
+            mesh.GhostMode.shared_facet,
+        )
+    else:
+        partitioner = mesh.create_cell_partitioner(
+            mesh.GhostMode.shared_facet
+        )
     return mesh.create_mesh(msh_comm, np.asarray(cells, dtype=np.int64), domain, points, partitioner=partitioner)
 
 
@@ -478,6 +683,68 @@ def _structured_hexa_cell_vertices(cell_id: int, nx: int, ny: int, node) -> list
         node(i, j + 1, k + 1),
         node(i + 1, j + 1, k + 1),
     ]
+
+
+def _structured_tet_mesh_from_axes(
+    msh_comm: MPI.Intracomm,
+    x_values: np.ndarray,
+    y_values: np.ndarray,
+    z_values: np.ndarray,
+) -> mesh.Mesh:
+    """Split matching tensor boxes into periodic-compatible tetrahedra."""
+
+    nx = len(x_values) - 1
+    ny = len(y_values) - 1
+    nz = len(z_values) - 1
+    points = np.asarray(
+        [(x, y, z) for z in z_values for y in y_values for x in x_values],
+        dtype=default_real_type,
+    )
+
+    def node(i: int, j: int, k: int) -> int:
+        return k * len(y_values) * len(x_values) + j * len(x_values) + i
+
+    cells: list[list[int]] = []
+    cells_per_layer = nx * ny
+    for cell_id in _rank_cell_ids(nx * ny * nz, msh_comm.rank, msh_comm.size):
+        k = int(cell_id) // cells_per_layer
+        layer_cell = int(cell_id) - k * cells_per_layer
+        j = layer_cell // nx
+        i = layer_cell - j * nx
+        v000 = node(i, j, k)
+        v100 = node(i + 1, j, k)
+        v010 = node(i, j + 1, k)
+        v110 = node(i + 1, j + 1, k)
+        v001 = node(i, j, k + 1)
+        v101 = node(i + 1, j, k + 1)
+        v011 = node(i, j + 1, k + 1)
+        v111 = node(i + 1, j + 1, k + 1)
+        cells.extend(
+            [
+                [v000, v100, v110, v111],
+                [v000, v110, v010, v111],
+                [v000, v010, v011, v111],
+                [v000, v011, v001, v111],
+                [v000, v001, v101, v111],
+                [v000, v101, v100, v111],
+            ]
+        )
+    coordinate_element = element(
+        "Lagrange",
+        "tetrahedron",
+        1,
+        shape=(3,),
+        dtype=default_real_type,
+    )
+    domain = ufl.Mesh(coordinate_element)
+    partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
+    return mesh.create_mesh(
+        msh_comm,
+        np.asarray(cells, dtype=np.int64),
+        domain,
+        points,
+        partitioner=partitioner,
+    )
 
 
 def _structured_tet_mesh(msh_comm: MPI.Intracomm, cfg: SimulationConfig3D) -> mesh.Mesh:
@@ -584,15 +851,22 @@ def _grid_contains(grid: np.ndarray, value: float, tol: float) -> bool:
 
 
 def _validate_stage4_hexa_geometry(cfg: SimulationConfig3D) -> None:
-    """Validate Stage-4 assumptions before building uniform or fitted hexa axes."""
+    """Validate Stage-4 assumptions before building fitted tensor axes."""
     if cfg.geometry_kind != "rectangular_block_grating":
         return
-    if cfg.mesh_cell_type_resolved != "hexahedron":
-        raise ValueError("stage4_block_grating requires a hexahedron mesh for explicit edge Floquet constraints.")
-    if int(cfg.nedelec_degree) not in {1, 2, 3, 4}:
+    if cfg.mesh_cell_type_resolved not in {"hexahedron", "tetrahedron"}:
+        raise ValueError(
+            "stage4_block_grating requires a tetrahedron or hexahedron mesh."
+        )
+    degree = int(cfg.nedelec_degree)
+    task035_fixed_target_high_order = (
+        cfg.stage_case == "stage4_block_grating" and degree in {5, 6}
+    )
+    if degree not in {1, 2, 3, 4} and not task035_fixed_target_high_order:
         raise NotImplementedError(
-            "Task033 Stage-4 hexahedral Floquet supports N1curl degree 1 through 4. "
-            f"Requested degree={cfg.nedelec_degree}; higher degrees remain fail-closed."
+            "Stage-4 Floquet supports N1curl degree 1 through 4 generally and "
+            "Task035/Task035b research degrees 5 through 6 on the fixed target; "
+            f"requested degree={degree}, cell_type={cfg.mesh_cell_type_resolved}."
         )
     if cfg.scattering_background.lower() != "layered":
         raise ValueError("stage4_block_grating currently requires scattering_background='layered'.")
@@ -617,7 +891,13 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
     comm = MPI.COMM_WORLD
     mesh_cell_type_resolved = cfg.mesh_cell_type_resolved
     hexa_axis_plan: HexaAxisPlan | None = None
-    if mesh_cell_type_resolved == "hexahedron":
+    if cfg.geometry_kind == "rectangular_block_grating" and (
+        mesh_cell_type_resolved in {"hexahedron", "tetrahedron"}
+    ):
+        hexa_axis_plan = _stage4_axis_plan(cfg, comm.size)
+        mesh_cells_resolved = hexa_axis_plan.mesh_cells_resolved
+        z_alignment_warnings = []
+    elif mesh_cell_type_resolved == "hexahedron":
         if cfg.geometry_kind == "rectangular_block_grating":
             hexa_axis_plan = _stage4_axis_plan(cfg, comm.size)
             mesh_cells_resolved = hexa_axis_plan.mesh_cells_resolved
@@ -660,6 +940,9 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
                 hexa_axis_plan.x_values,
                 hexa_axis_plan.y_values,
                 hexa_axis_plan.z_values,
+                preserve_input_partition=(
+                    cfg.stage4_preserve_structured_input_partition
+                ),
             )
             mesh_note = (
                 "Using custom tensor-product hexahedron cells with nonuniform axis spacing. "
@@ -671,6 +954,8 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
                 "This is the default low-memory 3D Floquet mesh because opposite periodic faces are structured.",
                 f"mesh_spacing_mode_resolved = {hexa_axis_plan.mesh_spacing_mode_resolved}",
                 f"mesh_cells_resolved = {mesh_cells_resolved}",
+                "stage4_preserve_structured_input_partition = "
+                f"{cfg.stage4_preserve_structured_input_partition}",
                 f"axis_cell_stats = {hexa_axis_plan.axis_cell_stats}",
             ]
             if cfg.geometry_kind == "rectangular_block_grating":
@@ -681,6 +966,28 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
                 note_lines.append(f"local_refinement_regions = {hexa_axis_plan.local_refinement_regions}")
             note_lines.extend(f"WARNING: {message}" for message in z_alignment_warnings)
             (out_dir / "mesh_3d_partition_note.txt").write_text("\n".join(note_lines) + "\n", encoding="utf-8")
+    elif (
+        mesh_cell_type_resolved == "tetrahedron"
+        and cfg.geometry_kind == "rectangular_block_grating"
+    ):
+        assert hexa_axis_plan is not None
+        msh = _structured_tet_mesh_from_axes(
+            comm,
+            hexa_axis_plan.x_values,
+            hexa_axis_plan.y_values,
+            hexa_axis_plan.z_values,
+        )
+        if comm.rank == 0:
+            (out_dir / "mesh_3d_partition_note.txt").write_text(
+                "Using matching tensor axes split into six conforming tetrahedra per box.\n"
+                "Opposite x/y faces use translated-identical triangle patterns.\n"
+                "Stage-4 material planes are exact mesh facets.\n"
+                f"mesh_spacing_mode_resolved = {hexa_axis_plan.mesh_spacing_mode_resolved}\n"
+                f"mesh_cells_resolved = {mesh_cells_resolved}\n"
+                f"axis_cell_stats = {hexa_axis_plan.axis_cell_stats}\n"
+                f"material_plane_alignment = {hexa_axis_plan.material_plane_alignment}\n",
+                encoding="utf-8",
+            )
     elif comm.size > 1:
         points = [
             np.asarray((cfg.x_min, cfg.y_min, cfg.domain_z_min), dtype=np.float64),
@@ -736,4 +1043,34 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
         if hexa_axis_plan is not None
         else {"all_aligned": None, "missing": [], "checked": {"x": [], "y": [], "z": []}},
         local_refinement_regions=hexa_axis_plan.local_refinement_regions if hexa_axis_plan is not None else {},
+    )
+
+
+def rebuild_airbox_mesh_data_3d(
+    refined_mesh: mesh.Mesh,
+    cfg: SimulationConfig3D,
+    template: AirBox3DMesh,
+) -> AirBox3DMesh:
+    """Rebuild material and boundary tags after conforming tetra refinement."""
+
+    if refined_mesh.topology.cell_type != mesh.CellType.tetrahedron:
+        raise ValueError("Task035 marked refinement requires a tetrahedron mesh.")
+    refined_mesh.name = cfg.case_name
+    refined_mesh.topology.create_connectivity(
+        refined_mesh.topology.dim - 1, refined_mesh.topology.dim
+    )
+    cell_tags = _mark_cells(refined_mesh, cfg)
+    facet_tags, boundary_facets = _mark_boundary_facets(refined_mesh, cfg)
+    return AirBox3DMesh(
+        mesh=refined_mesh,
+        cell_tags=cell_tags,
+        facet_tags=facet_tags,
+        boundary_facets=boundary_facets,
+        mesh_cell_type_resolved="tetrahedron",
+        mesh_cells_resolved=template.mesh_cells_resolved,
+        z_alignment_warnings=list(template.z_alignment_warnings),
+        mesh_spacing_mode_resolved="estimator_marked_tetra_refinement",
+        mesh_axis_cell_stats=dict(template.mesh_axis_cell_stats),
+        material_plane_alignment=dict(template.material_plane_alignment),
+        local_refinement_regions=dict(template.local_refinement_regions),
     )

@@ -22,12 +22,14 @@ from src.constraints.high_order_floquet_trace import (
 
 
 class Task033HighOrderEntityTransformTests(unittest.TestCase):
-    def test_p1_to_p4_layout_matches_3d_face_and_2d_cross_section(self) -> None:
+    def test_p1_to_p6_layout_matches_3d_face_and_2d_cross_section(self) -> None:
         expected = {
             1: (12, 1, 0, 0, 4),
             2: (54, 2, 4, 6, 12),
             3: (144, 3, 12, 36, 24),
             4: (300, 4, 24, 108, 40),
+            5: (540, 5, 40, 240, 60),
+            6: (882, 6, 60, 450, 84),
         }
         for degree, values in expected.items():
             with self.subTest(degree=degree):
@@ -56,7 +58,7 @@ class Task033HighOrderEntityTransformTests(unittest.TestCase):
             self.assertEqual(sorted(permutation), [0, 1, 2, 3])
 
     def test_edge_and_face_coefficient_transforms_round_trip(self) -> None:
-        for degree in range(1, 5):
+        for degree in range(1, 7):
             with self.subTest(degree=degree, entity="edge"):
                 edge = edge_coefficient_transform(degree, reversed_orientation=True)
                 np.testing.assert_allclose(

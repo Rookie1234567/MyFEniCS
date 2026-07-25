@@ -1334,7 +1334,7 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         log("stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes")
     if solve_incident_scattered:
         log("incident-scattered RHS sign = +k0^2*(eps_sub - eps_air)*inner(E_inc, v)")
-        log(f"incident-scattered RHS source region = physical_substrate")
+        log("incident-scattered RHS source region = physical_substrate")
         log(f"incident-scattered RHS source tag volumes = {{'substrate': {domain_tag_volumes['substrate']:.6e}}}")
         log(f"incident-scattered RHS source norm = {rhs_source_norm:.6e}")
     if solve_layered_scattered:

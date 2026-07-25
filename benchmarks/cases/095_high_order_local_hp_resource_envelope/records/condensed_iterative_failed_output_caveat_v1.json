@@ -1,0 +1,69 @@
+{
+  "schema_version": "task035b.condensed-iterative-failed-output-caveat.v1",
+  "status": "historical_evidence_caveat",
+  "classification": "infrastructure_semantics_correction",
+  "source_sha": "54622497c58758de74879f80a98c11ec8f83a61c",
+  "ordinary_default_changed": false,
+  "historical_artifacts_retained": true,
+  "reason": "Both MPI8 iterative screens were valid controlled-negative nonconvergence records, but the old solver path wrote diagnostic port files before the common case flow rejected the unconverged KSP. Those port files used status=ok and role=primary even though run_summary.json correctly set official_result=false, diagnostic_only=true, postprocess_skipped=true and omitted R/T/A. The historical files are retained, hash-bound and explicitly disqualified here rather than deleted or rewritten.",
+  "authority_rule": {
+    "watchdog_and_run_summary_remain_authoritative": true,
+    "failed_run_port_power_is_official": false,
+    "failed_run_diffraction_orders_are_official": false,
+    "failed_run_complex_amplitudes_are_official": false,
+    "failed_run_field_outputs_are_official": false,
+    "do_not_use_for_accuracy_or_hybrid_closure": true,
+    "resource_telemetry_remains_usable_with_original_scope": true
+  },
+  "runs": [
+    {
+      "profile": "gmres_jacobi",
+      "mpi_size": 8,
+      "run_directory": "benchmarks/artifacts/task035b/condensed_iterative/h15_fixed_p5trace_p6interior_gmres_jacobi_mpi8_20260725T022426Z",
+      "watchdog_summary_sha256": "6edb21d6da86c1c92e2cd4c669fc4ae23db8183424cc78c08019cb3347ca2e08",
+      "solve_summary_sha256": "1c2677e8259dbbd337fcb308aa43a392febae9f556776a2dcb1d4b81035db265",
+      "port_power_sha256": "105ae0c6f243bb7188e955218675e769ee39836a4f638431a1d2cc92ff2ec2d7",
+      "watchdog_status": "controlled_negative_iterative_nonconvergence",
+      "ksp_reason": "DIVERGED_MAX_IT",
+      "iterations": 200,
+      "terminal_explicit_reduced_relative_residual": 0.8616624409266606,
+      "full_recovered_true_residual": 0.8616614736453792,
+      "max_process_tree_rss_gib": 3.9212112426757812,
+      "max_worker_rank_pss_sum_mb": 3186.6005859375,
+      "swap_mb": 0.0,
+      "stale_port_file_semantics": {
+        "status": "ok",
+        "role": "primary",
+        "official": false
+      }
+    },
+    {
+      "profile": "fgmres_asm_ilu",
+      "mpi_size": 8,
+      "run_directory": "benchmarks/artifacts/task035b/condensed_iterative/h15_fixed_p5trace_p6interior_fgmres_asm_ilu_mpi8_20260725T022555Z",
+      "watchdog_summary_sha256": "b724e5b56351cb4c3aec584b6504b37f5097fc61065945e0e96c196facfd7f34",
+      "solve_summary_sha256": "717f1130f34d95a656ccb4c404a8d227e6e3b143c812d49eb7c2e9e201209dc9",
+      "port_power_sha256": "8984648bb658c5e9519309c9e6658c7ca2b6ad97192f780f6e1cf137a4c8696d",
+      "watchdog_status": "controlled_negative_iterative_nonconvergence",
+      "ksp_reason": "DIVERGED_MAX_IT",
+      "iterations": 200,
+      "terminal_explicit_reduced_relative_residual": 0.9996606193679306,
+      "full_recovered_true_residual": 0.9996594971732532,
+      "max_process_tree_rss_gib": 4.461772918701172,
+      "max_worker_rank_pss_sum_mb": 3733.0029296875,
+      "swap_mb": 0.0,
+      "stale_port_file_semantics": {
+        "status": "ok",
+        "role": "primary",
+        "official": false
+      }
+    }
+  ],
+  "corrective_action": {
+    "new_iterative_exception_type": "CondensedIterativeSolveFailure",
+    "failed_iterative_case_status": "failed_condensed_iterative_exception",
+    "nonconverged_port_files_persisted": false,
+    "ksp_converged_but_full_true_residual_gt_1e-9_outputs_persisted": false,
+    "direct_path_semantics_changed": false
+  }
+}
