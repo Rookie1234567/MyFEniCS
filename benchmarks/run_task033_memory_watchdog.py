@@ -910,6 +910,10 @@ def _worker_command(
         "--host-environment-id",
         args.host_environment_id,
     ]
+    if args.modal_h_nm is not None:
+        command.extend(("--modal-h-nm", str(args.modal_h_nm)))
+    if args.modal_degree is not None:
+        command.extend(("--modal-degree", str(args.modal_degree)))
     if args.full3d_reference is not None:
         command.extend(
             ("--full3d-reference", str(args.full3d_reference))
@@ -1295,6 +1299,23 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4), required=True)
     parser.add_argument("--h-nm", type=float, required=True)
     parser.add_argument(
+        "--modal-h-nm",
+        type=float,
+        help=(
+            "Independent Hybrid cross-section QEP mesh size; local 3D FEM "
+            "continues to use --h-nm."
+        ),
+    )
+    parser.add_argument(
+        "--modal-degree",
+        type=int,
+        choices=(1, 2, 3, 4),
+        help=(
+            "Independent Hybrid cross-section QEP degree; local 3D FEM "
+            "continues to use --degree."
+        ),
+    )
+    parser.add_argument(
         "--mpi-size",
         type=int,
         choices=(1, 2, 4, 8, 16, 32),
@@ -1419,6 +1440,20 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("MPI8/16/32 require --task034-workstation-gate.")
     if args.target == "qep" and args.material_kind is None:
         parser.error("--target qep requires --material-kind.")
+    if (
+        args.target != "hybrid"
+        and (args.modal_h_nm is not None or args.modal_degree is not None)
+    ):
+        parser.error("Independent modal h/p options are Hybrid-only.")
+    if args.modal_h_nm is not None and args.modal_h_nm <= 0.0:
+        parser.error("--modal-h-nm must be positive.")
+    if (
+        args.graded_reference_h is not None
+        and (args.modal_h_nm is not None or args.modal_degree is not None)
+    ):
+        parser.error(
+            "Independent modal h/p is not combined with the Task034 graded path."
+        )
     if args.target == "hybrid" and args.requested_modes < 2:
         parser.error("Hybrid requested modes must be at least two.")
     static_backend = (

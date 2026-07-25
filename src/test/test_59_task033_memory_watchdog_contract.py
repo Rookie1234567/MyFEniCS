@@ -537,6 +537,44 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         )
         self.assertIn("--memory-stages", command)
 
+    def test_hybrid_command_can_refine_only_the_modal_cross_section(self) -> None:
+        args = _parse_args(
+            [
+                "--target",
+                "hybrid",
+                "--case-label",
+                "task035c_p2_h5_modal_h3",
+                "--degree",
+                "2",
+                "--h-nm",
+                "5",
+                "--modal-degree",
+                "2",
+                "--modal-h-nm",
+                "3",
+                "--mpi-size",
+                "1",
+                "--requested-modes",
+                "120",
+                "--candidate-modes",
+                "240",
+                "--full3d-reference",
+                "records/p2_h5_reference.json",
+                "--verified-clean-sha",
+                "d" * 40,
+            ]
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            command = _worker_command(
+                args, root / "record.json", root / "stages.jsonl"
+            )
+        rendered = " ".join(command)
+        self.assertIn("--degree 2", rendered)
+        self.assertIn("--h-nm 5.0", rendered)
+        self.assertIn("--modal-degree 2", rendered)
+        self.assertIn("--modal-h-nm 3.0", rendered)
+
     def test_hybrid_candidate_pool_is_exactly_twice_requested_modes(self) -> None:
         matrix = json.loads(DEFAULT_RESOURCE_MATRIX.read_text(encoding="utf-8"))
         evidence = _m160_nonconvergence_evidence()

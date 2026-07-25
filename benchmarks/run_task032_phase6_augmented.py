@@ -618,6 +618,23 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--h-nm", type=float, default=5.0)
     parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4), default=2)
     parser.add_argument(
+        "--modal-h-nm",
+        type=float,
+        help=(
+            "Optional independent cross-section QEP mesh size. The local 3D "
+            "FEM mesh remains controlled by --h-nm."
+        ),
+    )
+    parser.add_argument(
+        "--modal-degree",
+        type=int,
+        choices=(1, 2, 3, 4),
+        help=(
+            "Optional independent cross-section QEP polynomial degree. The "
+            "local 3D FEM degree remains controlled by --degree."
+        ),
+    )
+    parser.add_argument(
         "--stage4-full3d-assembly-backend",
         choices=(
             STANDARD_FULL_ASSEMBLY_BACKEND,
@@ -712,6 +729,18 @@ def main() -> None:
     args = _parse_args()
     if args.h_nm <= 0.0:
         raise SystemExit("--h-nm must be positive.")
+    modal_h_nm = (
+        float(args.h_nm)
+        if args.modal_h_nm is None
+        else float(args.modal_h_nm)
+    )
+    modal_degree = (
+        int(args.degree)
+        if args.modal_degree is None
+        else int(args.modal_degree)
+    )
+    if modal_h_nm <= 0.0:
+        raise SystemExit("--modal-h-nm must be positive.")
     if not (
         0.0 < args.bottom_interface_nm < args.top_interface_nm < 120.0
     ):
@@ -720,6 +749,11 @@ def main() -> None:
             "0 < bottom-interface-nm < top-interface-nm < 120."
         )
     if args.graded_reference_h is not None:
+        if args.modal_h_nm is not None or args.modal_degree is not None:
+            raise SystemExit(
+                "Independent modal h/p is not combined with the Task034 "
+                "graded local-mesh research path."
+            )
         if args.degree not in (2, 3):
             raise SystemExit("The Task034 fixed-p graded path is restricted to p2/p3.")
         if (
@@ -757,6 +791,8 @@ def main() -> None:
         raise SystemExit("--compare-modal-schur requires --solver-path augmented.")
     task33_variant = bool(
         args.degree != 2
+        or modal_degree != args.degree
+        or not np.isclose(modal_h_nm, args.h_nm)
         or args.bottom_interface_nm != 10.0
         or args.top_interface_nm != 110.0
         or args.graded_reference_h is not None
@@ -802,6 +838,13 @@ def main() -> None:
     cfg.matrix_diagnostics_factorization_only = False
     cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
     cfg.polarization_kind = args.polarization_kind
+    modal_cfg = target_stage4_config(
+        degree=modal_degree,
+        h_nm=modal_h_nm,
+    )
+    modal_cfg.incident_theta_deg = cfg.incident_theta_deg
+    modal_cfg.incident_phi_deg = cfg.incident_phi_deg
+    modal_cfg.polarization_kind = cfg.polarization_kind
     operators = None
     positive = None
     negative = None
@@ -838,6 +881,8 @@ def main() -> None:
             "material_kind": "stage4_xy",
             "degree": args.degree,
             "h_nm": args.h_nm,
+            "modal_degree": modal_degree,
+            "modal_h_nm": modal_h_nm,
             "requested_modes_per_direction": args.requested_modes,
             "candidate_modes_per_target_branch": candidate_modes,
             "near_degenerate_tolerance": args.near_degenerate_tolerance,
@@ -1002,17 +1047,20 @@ def main() -> None:
                 y_values=graded_plan.y_values,
             )
         else:
-            cross_section = build_matching_cross_section(cfg, "stage4_xy")
+            cross_section = build_matching_cross_section(
+                modal_cfg,
+                "stage4_xy",
+            )
         spaces = build_cross_section_spaces(
-            cross_section, transverse_degree=args.degree
+            cross_section, transverse_degree=modal_degree
         )
         operators = assemble_quadratic_beta_operators(
-            cfg, cross_section, spaces
+            modal_cfg, cross_section, spaces
         )
         poynting_evaluator = PoyntingFluxEvaluator(
-            cfg, cross_section, spaces
+            modal_cfg, cross_section, spaces
         )
-        target = analytic_homogeneous_beta(cfg, cfg.n_air)
+        target = analytic_homogeneous_beta(modal_cfg, modal_cfg.n_air)
         timings["cross_section_and_qep_assembly"] = _max_elapsed(
             comm, started
         )
@@ -1032,7 +1080,7 @@ def main() -> None:
             requested_modes=args.requested_modes,
             poynting_evaluator=poynting_evaluator,
             maximum_abs_beta=(
-                NUMERICAL_INFINITY_BETA_H_CUTOFF / args.h_nm
+                NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm
             ),
         )
         if len(positive_right) != args.requested_modes:
@@ -1051,7 +1099,7 @@ def main() -> None:
             )
         mark_stage("mode_classification")
         positive = build_biorthogonal_mode_basis(
-            cfg,
+            modal_cfg,
             cross_section,
             spaces,
             operators,
@@ -1076,7 +1124,7 @@ def main() -> None:
             requested_modes=args.requested_modes,
             poynting_evaluator=poynting_evaluator,
             maximum_abs_beta=(
-                NUMERICAL_INFINITY_BETA_H_CUTOFF / args.h_nm
+                NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm
             ),
         )
         if len(negative_right) != args.requested_modes:
@@ -1094,7 +1142,7 @@ def main() -> None:
                 f"backward modes: {negative_selection.direction_counts}."
             )
         negative = build_biorthogonal_mode_basis(
-            cfg,
+            modal_cfg,
             cross_section,
             spaces,
             operators,
@@ -1803,6 +1851,8 @@ def main() -> None:
                 "material_kind": "stage4_xy",
                 "degree": args.degree,
                 "h_nm": args.h_nm,
+                "modal_degree": modal_degree,
+                "modal_h_nm": modal_h_nm,
                 "requested_modes_per_direction": args.requested_modes,
                 "candidate_modes_per_target_branch": candidate_modes,
                 "near_degenerate_tolerance": args.near_degenerate_tolerance,
