@@ -10,6 +10,7 @@ from petsc4py import PETSc
 
 from src.common.config_3d import target_stage4_config
 from src.coupling.hybrid_internal_modes import (
+    _ReusableInterfaceLifter,
     _ReusableModeTractionEvaluator,
     build_hybrid_internal_mode_coupling,
 )
@@ -239,6 +240,28 @@ class Task032HybridInternalModeTests(unittest.TestCase):
                 atol=1.0e-12,
                 rtol=1.0e-12,
             )
+
+    def test_interface_lifter_routes_independently_refined_modal_mesh(self):
+        modal_cfg = target_stage4_config(degree=2, h_nm=5.0)
+        modal_mesh = build_matching_cross_section(modal_cfg, "stage4_xy")
+        modal_spaces = build_cross_section_spaces(
+            modal_mesh,
+            transverse_degree=2,
+        )
+        source = fem.Function(modal_spaces.transverse)
+
+        def constant_trace(x):
+            values = np.zeros((2, x.shape[1]), dtype=PETSc.ScalarType)
+            values[0, :] = 1.0
+            values[1, :] = -0.5j
+            return values
+
+        source.interpolate(constant_trace)
+        source.x.scatter_forward()
+        lifter = _ReusableInterfaceLifter(self.bottom_system)
+        lifted, query_count = lifter.lift(source)
+        self.assertGreater(query_count, 0)
+        self.assertGreater(float(np.linalg.norm(lifted.x.array)), 0.0)
 
 
 if __name__ == "__main__":

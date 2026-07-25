@@ -379,15 +379,6 @@ class _ReusableInterfaceLifter:
             ),
             dtype=np.float64,
         )
-        geometry_dofmap = np.asarray(msh.geometry.dofmap)
-        geometry = np.asarray(msh.geometry.x)
-        self.cell_midpoints_xy = np.asarray(
-            [
-                np.mean(geometry[geometry_dofmap[cell], :2], axis=0)
-                for cell in self.cells
-            ],
-            dtype=np.float64,
-        ).reshape(-1, 2)
         self.padding = 1.0e-10 * max(
             system.local_mesh.mesh_data.mesh_axis_cell_stats["x"]["max"],
             system.local_mesh.mesh_data.mesh_axis_cell_stats["y"]["max"],
@@ -406,40 +397,18 @@ class _ReusableInterfaceLifter:
             points = np.asarray(coordinates, dtype=np.float64)
         else:
             raise RuntimeError("Target interpolation coordinates need three columns.")
-        if len(self.cells) == 0:
-            if len(points) != 0:
-                raise RuntimeError("A rank without target cells received interpolation points.")
-            return np.empty((0, 2), dtype=np.int64)
-        if len(points) % len(self.cells) != 0:
-            raise RuntimeError("Target interpolation points are not cell-factorable.")
-        points_per_cell = len(points) // len(self.cells)
-        cell_keys = np.asarray(
+        # Route every target interpolation point through the source modal
+        # mesh.  The old midpoint shortcut was valid only when both structured
+        # meshes had identical cell boundaries; an independently refined QEP
+        # mesh can place several source cells under one local-FE interface
+        # cell.
+        return np.asarray(
             [
-                evaluator._cell_key(float(midpoint[0]), float(midpoint[1]))
-                for midpoint in self.cell_midpoints_xy
+                evaluator._cell_key(float(point[0]), float(point[1]))
+                for point in points
             ],
             dtype=np.int64,
-        )
-        cell_major = np.repeat(cell_keys, points_per_cell, axis=0)
-        point_major = np.tile(cell_keys, (points_per_cell, 1))
-
-        def routing_matches(keys: np.ndarray) -> bool:
-            lower_x = evaluator.x_values[keys[:, 0]] - evaluator.tolerance
-            upper_x = evaluator.x_values[keys[:, 0] + 1] + evaluator.tolerance
-            lower_y = evaluator.y_values[keys[:, 1]] - evaluator.tolerance
-            upper_y = evaluator.y_values[keys[:, 1] + 1] + evaluator.tolerance
-            return bool(
-                np.all((points[:, 0] >= lower_x) & (points[:, 0] <= upper_x))
-                and np.all((points[:, 1] >= lower_y) & (points[:, 1] <= upper_y))
-            )
-
-        if routing_matches(cell_major):
-            return cell_major
-        if routing_matches(point_major):
-            return point_major
-        raise RuntimeError(
-            "Could not associate target interpolation points with target cells."
-        )
+        ).reshape(-1, 2)
 
     def lift(self, source: fem.Function) -> tuple[fem.Function, int]:
         if self.evaluator is None:
