@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -30,6 +31,21 @@ def test_h13_cold_warm_pair_is_setup_authority_not_accuracy_pass() -> None:
         "a20b8b404f66b983596326c912a88fb8be3b255c"
     )
     assert record["source"]["clean_and_stable_for_both_runs"] is True
+    mesh_authority = record["mesh_and_accuracy_authority"]
+    mesh_authority_path = ROOT / mesh_authority["path"]
+    assert hashlib.sha256(mesh_authority_path.read_bytes()).hexdigest() == (
+        mesh_authority["sha256"]
+    )
+    assert mesh_authority["partition_independent_mesh_sha256"] == (
+        "11b71dbcc3113461e3fac494f330a890df2dcdc38ee07d5b31050ed0d2774c8f"
+    )
+    assert mesh_authority[
+        "accuracy_record_significant_power_pass_count"
+    ] == 10
+    assert mesh_authority[
+        "accuracy_record_significant_complex_amplitude_pass_count"
+    ] == 10
+    assert mesh_authority["nnz_source_stage_difference"] == 960
 
     assert identity["geometry"] == "Task034 fixed rectangular block grating"
     assert identity["h_nm"] == 13.0
@@ -72,6 +88,10 @@ def test_h13_cold_warm_pair_is_setup_authority_not_accuracy_pass() -> None:
     assert warm["cache"]["dtn_rank_bundle_hits"] == 8
     assert warm["cache"]["dtn_reduced_bundle_restores"] == 320
     assert comparison["cold_to_warm_non_ksp_speedup"] > 2.8
+    assert comparison[
+        "same_h13_preoptimization_cold_baseline_available"
+    ] is False
+    assert comparison["review_v2_cold_optimization_2x_claimed"] is False
     assert comparison["cold_non_ksp_at_or_below_30_seconds_pass"] is True
     assert comparison["warm_non_ksp_below_10_seconds_pass"] is True
     assert comparison["cold_warm_rows_nnz_and_factor_nnz_identical"] is True

@@ -15,6 +15,25 @@
     "clean_full_sha_gate": true,
     "clean_and_stable_for_both_runs": true
   },
+  "mesh_and_accuracy_authority": {
+    "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_directional_z_mpi8.json",
+    "sha256": "81ba43d91c4c9a35121676ae40368d56116f3a381e4559d630fb547a94dc4a5c",
+    "authority_semantics": "This tracked accuracy record supplies the partition-independent mesh/tag identity and the separate significant-channel audit. The setup profiler did not recompute the significant-channel comparison.",
+    "partition_independent_mesh_sha256": "11b71dbcc3113461e3fac494f330a890df2dcdc38ee07d5b31050ed0d2774c8f",
+    "cell_tag_sha256": "83eb3c9c13ad8e87c3e55fcaabdb030e755c51a0652d6d9c76686b18ff1bee77",
+    "facet_tag_sha256": "e16224ae7fee92ba78b05c969e99da9ecbe965114a0d8ed18c53da9ce9a84478",
+    "axis_sha256": {
+      "x": "86dc23ef348c79d9ed51d79c199cbaddf95416e04c51e5569c666234c6613cc3",
+      "y": "d3aac691ebe8875dc45e5817b42b4f33c45277f999f2d010fd29fecd7ec1401f",
+      "z": "644e61a83908e2317dc1b8aef70ea2f1d8351a77a7cc685708be397c1aa9a3d8"
+    },
+    "accuracy_record_significant_power_pass_count": 10,
+    "accuracy_record_significant_complex_amplitude_pass_count": 10,
+    "accuracy_record_matrix_nnz_used": 11013212,
+    "setup_profile_matrix_nnz_used": 11014172,
+    "nnz_source_stage_difference": 960,
+    "dual_nnz_semantics": "The two NNZ values are source-stage-specific measured authorities on the same mesh; neither overwrites the other."
+  },
   "identity": {
     "geometry": "Task034 fixed rectangular block grating",
     "mesh_lane": "review_v2_h13_directional_z_best_candidate",
@@ -306,6 +325,9 @@
     "cold_warm_physical_closure_pass": true,
     "zero_swap_both_runs": true,
     "warm_rss_change_vs_cold_gib": -0.014102935791015625,
+    "same_h13_preoptimization_cold_baseline_available": false,
+    "review_v2_cold_optimization_2x_claimed": false,
+    "cold_to_warm_speedup_semantics": "The 2.899x ratio measures persistent-cache reuse from cold to warm, not a cold-code optimization speedup against a same-h13 preoptimization baseline.",
     "h15_setup_authority_record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v2.json",
     "h13_over_h15_full3d_equivalent_dof_ratio": 1.1982908265456003,
     "h13_over_h15_active_row_ratio": 1.1919431279620853,
@@ -321,7 +343,7 @@
     "h13_within_90000_full3d_equivalent_dof_gate": true,
     "dof_margin_is_only_260": true,
     "memory_interpretation": "MPI8 process-tree peaks are 5.030 GiB cold and 5.016 GiB warm with zero swap. They are measured points, not a lower bound. Relative to h15, factor NNZ grows faster than rows and used NNZ, explaining part of the nonlinear direct-factor cost.",
-    "timing_interpretation": "The complete non-KSP build ledger is 19.410 s cold and 6.696 s warm. MUMPS symbolic, numeric, backsolve, residual and postprocess are reported separately and are not hidden inside these build figures.",
+    "timing_interpretation": "The complete non-KSP build ledger is 19.410 s cold and 6.696 s warm. Their 2.899x ratio is cache reuse, not a cold-code optimization claim because no same-h13 preoptimization cold baseline exists. MUMPS symbolic, numeric, backsolve, residual and postprocess are reported separately and are not hidden inside these build figures.",
     "significant_power_pass_count": null,
     "significant_complex_amplitude_pass_count": null,
     "twelve_of_twelve_gate_claimed": false,

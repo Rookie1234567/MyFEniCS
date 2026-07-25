@@ -1,0 +1,152 @@
+{
+  "schema_version": "task035b.physical-selective-trace-execution-capability.v2",
+  "benchmark_id": "task035b_physical_selective_trace_execution_capability",
+  "status": "fixture_qualified_execution_capability_not_formal_pde_evidence",
+  "classification": "positive_fixture_and_correctness_capability",
+  "capability_pass": true,
+  "formal_candidate_pass": false,
+  "pass_semantics": "The pass applies only to fixture-qualified execution plumbing and correctness-only matrix action; it does not qualify an actual selective candidate or PDE result.",
+  "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+  "source_snapshot_commit_sha": "a20b8b404f66b983596326c912a88fb8be3b255c",
+  "review_v2_commit_sha": "d547e9d7e903e9e8639346715770e56f9c17e86d",
+  "worktree_clean_claimed": false,
+  "file_hashes_are_authority": true,
+  "formal_pde_started": false,
+  "heavy_pde_rerun": false,
+  "official_physics_result": false,
+  "diagnostic_physics_result": false,
+  "ordinary_default_changed": false,
+  "evidence_scope": {
+    "fixture_only": true,
+    "correctness_only": true,
+    "stage4_physical_caller_execution_plumbing_wired": true,
+    "formal_h14_live_capture_and_channel_dwr_runner_wired": false,
+    "production_selective_solver_qualified": false
+  },
+  "capabilities": {
+    "stage4_physical_caller_expansion_and_row_omission": {
+      "status": "fixture_qualified_execution_plumbing",
+      "caller_trace_expansion_only": true,
+      "legacy_mpc_passed_simultaneously": false,
+      "complete_periodic_floquet_pullback_owned_by_caller": true,
+      "inactive_missing_rows_allocated": 0,
+      "full_p6_trace_matrix_constructed_then_zeroed": false,
+      "duplicate_recovery_backsubstitution": false,
+      "actual_selective_candidate_pde": "not_run",
+      "evidence_class": "fixture"
+    },
+    "owner_aware_matrix_free_shell": {
+      "status": "correctness_only_owner_aware_action",
+      "global_explicit_matrix_constructed": false,
+      "global_lu_constructed": false,
+      "replicated_factor_allocated": false,
+      "replicated_active_vector_allocated": false,
+      "full_vector_allreduce_used_by_action": false,
+      "full_vector_allgather_used_by_action": false,
+      "inactive_missing_rows_allocated": 0,
+      "dtn_action_wired": false,
+      "preconditioner_wired": false,
+      "ksp_profile_wired": false,
+      "production_execution_enabled": false,
+      "formal_pde_execution": "not_run",
+      "evidence_class": "correctness_only"
+    },
+    "stage4_pre_release_callback": {
+      "status": "default_off_fixture_qualified",
+      "borrowed_petsc_objects": true,
+      "read_only_callback_contract": true,
+      "invoked_after_true_residual_diagnostics": true,
+      "invoked_before_solver_release": true,
+      "invoked_before_postprocess": true,
+      "collective_failure_propagation": true,
+      "actual_h14_live_capture": "not_run",
+      "evidence_class": "fixture"
+    }
+  },
+  "formal_accuracy_boundary": {
+    "actual_channel_dwr_selection": false,
+    "actual_enriched_residual_weighted_channel_dwr": false,
+    "formal_actual_pde_ready": false,
+    "runner_wired": false,
+    "runner_wired_scope": "formal_h14_live_capture_and_actual_channel_dwr",
+    "selective_candidate_count": 0,
+    "selective_pde_run_count": 0,
+    "power_gate_pass_count": 0,
+    "complex_amplitude_gate_pass_count": 0,
+    "twelve_of_twelve_power_claimed": false,
+    "twelve_of_twelve_complex_amplitude_claimed": false,
+    "hybrid": false,
+    "hybrid_eligible": false,
+    "hybrid_launch_authorized": false,
+    "hybrid_run_status": "not_run_by_selected_candidate_gate"
+  },
+  "official_physics_outputs": {
+    "R00": null,
+    "R_total": null,
+    "T_total": null,
+    "A_closure": null,
+    "true_residual": null,
+    "significant_channel_powers": null,
+    "significant_channel_complex_amplitudes": null,
+    "selected_field_interface_errors": null
+  },
+  "file_bindings": [
+    {
+      "path": "src/constraints/selective_p6_trace_expansion.py",
+      "role": "typed physical caller expansion and row-omission contract",
+      "sha256": "4fc870279e79e559044e97dc6f919c63b5ee5bafb956e378081490b3bf03dcc7"
+    },
+    {
+      "path": "src/solvers/common_3d_case_flow.py",
+      "role": "Stage4 caller factory and pre-release callback invocation",
+      "sha256": "c42959c0470ea3e5c64f20b78d201fb018d6ab23dc503ad0a160c1e77b2e3c3f"
+    },
+    {
+      "path": "src/solvers/dtn_port_3d.py",
+      "role": "caller_trace_expansion consumption and inactive-row omission",
+      "sha256": "cb46c673dd8ad04f28a07a02d9d6cdc60e63a96eef6caf35fdc91130207f9db2"
+    },
+    {
+      "path": "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py",
+      "role": "default-off Stage4 physical entry-point hooks",
+      "sha256": "a5f909f0384f33ded357859c6cecf1a52585ea174924b1a5be7d690dafc2b86b"
+    },
+    {
+      "path": "src/solvers/selective_p6_trace_matrix_free.py",
+      "role": "owner-aware correctness-only PETSc MatShell",
+      "sha256": "586cca429068948117cfcd4139cf4669eb89510848397d35e5a7362822b89475"
+    },
+    {
+      "path": "src/adaptivity/formal_h14_live_capture_bridge.py",
+      "role": "formal readiness boundary and missing-runner authority",
+      "sha256": "7a654b18872c25c19cd83ac5716747d94fb7c196a9f3dd7cd9e4cfd8eb966582"
+    },
+    {
+      "path": "src/test/test_147_task035b_actual_selective_trace_expansion.py",
+      "role": "caller expansion fixture qualification",
+      "sha256": "392c04ddf94ea352830c38a0fc17e31297590d3e320339459a6be958895aa4cb"
+    },
+    {
+      "path": "src/test/test_171_task035b_actual_selective_trace_stage4_wiring.py",
+      "role": "Stage4 physical caller wiring fixture qualification",
+      "sha256": "3aad6a9f14353d3da15c12ef6700b0d434c16463e3fd0b8d8d40ff473c935d00"
+    },
+    {
+      "path": "src/test/test_172_task035b_selective_p6_trace_matrix_free.py",
+      "role": "owner-aware MatShell correctness qualification",
+      "sha256": "c14eba313f3bfaa8137646f8f5e0d8a109f9ab7d2ecf0d4413b2a89a7fc027f4"
+    },
+    {
+      "path": "src/test/test_174_task035b_stage4_pre_release_capture.py",
+      "role": "pre-release callback fixture qualification",
+      "sha256": "0a2ecf405d96f95c2f908d31b31803b13f141508a5e6f63e2a8c8e54f2c01700"
+    }
+  ],
+  "decision": {
+    "preserve_as_positive_capability_evidence": true,
+    "authorize_actual_channel_dwr_selection": false,
+    "authorize_selective_candidate_pde": false,
+    "authorize_hybrid": false,
+    "next_required_evidence": "Wire the formal h14 live-capture and actual channel-DWR runner, then execute and qualify a physical selective candidate without allocating inactive trace rows."
+  }
+}
