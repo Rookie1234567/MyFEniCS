@@ -54,6 +54,10 @@ H13_NEGATIVE = (
 H13_NEGATIVE_SHA = (
     "ff12b909aa1c75dcf15246ba48a8169bf9653d13ddf36709c46367217d799b4b"
 )
+H14_EXACT_REVERSE_NEGATIVE = (
+    RECORDS
+    / "fixed_p5trace_p6interior_h14_exact_reverse_h13_top2_mpi8_v1.json"
+)
 SIGNIFICANT_SHA = (
     "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3"
 )
@@ -350,3 +354,39 @@ def test_real_parent_and_negative_authorities_are_qualified_and_hash_bound(
     assert negative["diffraction_channel_comparison"][
         "significant_complex_amplitude_pass_count"
     ] == 8
+
+
+def test_measured_exact_reverse_is_preserved_as_a_hash_bound_negative(
+) -> None:
+    record = json.loads(H14_EXACT_REVERSE_NEGATIVE.read_text())
+    channels = record["diffraction_channel_comparison"]
+    reverse = record["reverse_evidence_authority"]
+    candidate = record["candidate"]
+    resource = record["resource_authority"]
+
+    assert record["status"] == "actual_fixed_trace_controlled_negative"
+    assert record["qualification"]["pass"] is True
+    assert record["qualification"]["failures"] == []
+    assert record["candidate_accuracy_pass"] is False
+    assert record["formal_candidate_eligible"] is False
+    assert record["source"]["commit_sha"] == (
+        "e8e6b25860b05ad7cd519aa7499888a98de830d2"
+    )
+    assert record["source"]["stable_and_clean_after"] is True
+    assert reverse["status"] == (
+        "qualified_h13_top_phase_controlled_negative"
+    )
+    assert reverse["sha256"] == H13_NEGATIVE_SHA
+    assert channels["frozen_significant_channel_count"] == 12
+    assert channels["significant_power_pass_count"] == 7
+    assert channels["significant_complex_amplitude_pass_count"] == 8
+    assert channels["all_12_significant_powers_pass"] is False
+    assert channels["all_12_significant_complex_amplitudes_pass"] is False
+    assert channels["thresholds_relaxed"] is False
+    assert candidate["mpi_size"] == 8
+    assert candidate["num_nedelec_dofs"] == 82_315
+    assert candidate["matrix_stats"]["matrix_rows"] == 18_500
+    assert candidate["matrix_stats"]["matrix_nnz_used"] == 10_104_512.0
+    assert candidate["linear_system_relative_residual"] <= 1.0e-9
+    assert resource["max_process_tree_swap_mb"] == 0.0
+    assert record["ordinary_default_changed"] is False

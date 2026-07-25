@@ -6280,6 +6280,9 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "directional_parent_authority": result.get(
                     "directional_parent_authority"
                 ),
+                "reverse_evidence_authority": result.get(
+                    "reverse_evidence_authority"
+                ),
                 "global_p6_baseline_authority": result.get(
                     "global_p6_baseline_authority"
                 ),
