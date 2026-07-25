@@ -31,7 +31,10 @@ from src.adaptivity.cell_indicator_snapshot import (
 )
 from src.solvers.solve_vector_maxwell import _json_default
 from src.geometry.research_axis_profiles import (
+    TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE,
+    TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM,
     TASK035B_R5_SLAB_BISECT_PROFILE,
+    TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
 )
 
 
@@ -82,7 +85,6 @@ _FIXED_TRACE_EXPLICIT_TOPOLOGY_CONTRACTS = {
         "safe_allocated_nnz_upper": 11065344,
     },
 }
-_FIXED_TRACE_EXPLICIT_Z_PROFILE = TASK035B_R5_SLAB_BISECT_PROFILE
 _FIXED_TRACE_EXPLICIT_Z_TOPOLOGY_CONTRACT = {
     "mesh_cells_resolved": [6, 2, 12],
     "num_mesh_cells": 144,
@@ -92,6 +94,28 @@ _FIXED_TRACE_EXPLICIT_Z_TOPOLOGY_CONTRACT = {
     "base_schur_nnz": 10946700,
     "predicted_used_nnz": 11013212,
     "safe_allocated_nnz_upper": 11301980,
+}
+_FIXED_TRACE_EXPLICIT_Z_PROFILE_CONTRACTS = {
+    TASK035B_R5_SLAB_BISECT_PROFILE: {
+        "nominal_h_nm": 14.0,
+        "z_values_nm": TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
+        "directional_parent_required": False,
+        "directional_mesh_change_semantics": (
+            "exact_h14_r5_slab_bisect_not_nested_refinement"
+        ),
+        "target_identity_flag": "r5_slab_bisect",
+    },
+    TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE: {
+        "nominal_h_nm": 13.0,
+        "z_values_nm": (
+            TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM
+        ),
+        "directional_parent_required": True,
+        "directional_mesh_change_semantics": (
+            "fixed_dof_h13_top2_phase_redistribution_not_refinement"
+        ),
+        "target_identity_flag": "h13_top_phase_redistribution",
+    },
 }
 _EXPLICIT_AXIS_IDENTITY_CONTRACTS = {
     (7, 2, 10): {
@@ -127,22 +151,41 @@ _EXPLICIT_AXIS_IDENTITY_CONTRACTS = {
         ),
     },
 }
-_EXPLICIT_Z_PROFILE_IDENTITY_CONTRACT = {
-    "profile": _FIXED_TRACE_EXPLICIT_Z_PROFILE,
-    "axis_sha256": {
-        "x": "86dc23ef348c79d9ed51d79c199cbaddf95416e04c51e5569c666234c6613cc3",
-        "y": "d3aac691ebe8875dc45e5817b42b4f33c45277f999f2d010fd29fecd7ec1401f",
-        "z": "9048a25cdb01a0ef2aa123bc5f7ec66116a2320ed42376e63ec22679e5f3c6d8",
+_EXPLICIT_Z_PROFILE_IDENTITY_CONTRACTS = {
+    TASK035B_R5_SLAB_BISECT_PROFILE: {
+        "profile": TASK035B_R5_SLAB_BISECT_PROFILE,
+        "axis_sha256": {
+            "x": "86dc23ef348c79d9ed51d79c199cbaddf95416e04c51e5569c666234c6613cc3",
+            "y": "d3aac691ebe8875dc45e5817b42b4f33c45277f999f2d010fd29fecd7ec1401f",
+            "z": "9048a25cdb01a0ef2aa123bc5f7ec66116a2320ed42376e63ec22679e5f3c6d8",
+        },
+        "partition_independent_mesh_sha256": (
+            "dcb2bad6d889ddd98025ae16d5d42d2e0131d48acad0591e0735998c2260cefa"
+        ),
+        "cell_tag_sha256": (
+            "7a881ac7098887ea86ec5cb2c215b5b602128b91a7f4f3bae801083ae143da3d"
+        ),
+        "facet_tag_sha256": (
+            "0d80fd0367b1af554d9c8e550addd5f6dd2bde4cfef906579427d19fca17e0d9"
+        ),
     },
-    "partition_independent_mesh_sha256": (
-        "dcb2bad6d889ddd98025ae16d5d42d2e0131d48acad0591e0735998c2260cefa"
-    ),
-    "cell_tag_sha256": (
-        "7a881ac7098887ea86ec5cb2c215b5b602128b91a7f4f3bae801083ae143da3d"
-    ),
-    "facet_tag_sha256": (
-        "0d80fd0367b1af554d9c8e550addd5f6dd2bde4cfef906579427d19fca17e0d9"
-    ),
+    TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE: {
+        "profile": TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE,
+        "axis_sha256": {
+            "x": "86dc23ef348c79d9ed51d79c199cbaddf95416e04c51e5569c666234c6613cc3",
+            "y": "d3aac691ebe8875dc45e5817b42b4f33c45277f999f2d010fd29fecd7ec1401f",
+            "z": "6f8892c60ecae93aa2b34dc4208de296c83a3cd39410e3e4e94872fc225b79b8",
+        },
+        "partition_independent_mesh_sha256": (
+            "6d4bf800caedc07020e8d93e8fdb49cac4abd0e71a2cc29d1aea88f3a2927b08"
+        ),
+        "cell_tag_sha256": (
+            "46d288e1fae15f801988516b1579ecc14285f1472a9220f451cfa89efb6ef71e"
+        ),
+        "facet_tag_sha256": (
+            "442cd53e48103cfe55224a270b04c92cc61032ac128a5490d5349936d7d850d5"
+        ),
+    },
 }
 _Y_ONLY_GLOBAL_P5_CONTROL_CONTRACT = {
     "mesh_cells_resolved": [6, 3, 10],
@@ -161,10 +204,12 @@ _Y_ONLY_GLOBAL_P5_CONTROL_CONTRACT = {
 def _fixed_trace_topology_contract(
     args: argparse.Namespace,
 ) -> dict[str, Any] | None:
-    if (
-        getattr(args, "fixed_trace_explicit_z_profile", None)
-        == _FIXED_TRACE_EXPLICIT_Z_PROFILE
-    ):
+    explicit_z_profile = getattr(
+        args,
+        "fixed_trace_explicit_z_profile",
+        None,
+    )
+    if explicit_z_profile in _FIXED_TRACE_EXPLICIT_Z_PROFILE_CONTRACTS:
         return _FIXED_TRACE_EXPLICIT_Z_TOPOLOGY_CONTRACT
     explicit = getattr(args, "structured_axis_cells", None)
     if explicit is not None:
@@ -228,16 +273,19 @@ def _fixed_trace_resource_preflight(
         "fixed_trace_explicit_z_profile",
         None,
     )
-    if explicit_z_profile is not None:
-        from src.adaptivity.target_fixed_trace_candidate import (
-            TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
+    explicit_z_contract = (
+        None
+        if explicit_z_profile is None
+        else _FIXED_TRACE_EXPLICIT_Z_PROFILE_CONTRACTS.get(
+            explicit_z_profile
         )
-
-        if explicit_z_profile != _FIXED_TRACE_EXPLICIT_Z_PROFILE:
+    )
+    if explicit_z_profile is not None:
+        if explicit_z_contract is None:
             raise SystemExit("unknown fixed-trace explicit z profile")
         cfg.mesh_axis_cell_counts = (6, 2, 12)
-        cfg.mesh_axis_z_values = (
-            TASK035B_R5_SLAB_BISECT_Z_VALUES_NM
+        cfg.mesh_axis_z_values = tuple(
+            explicit_z_contract["z_values_nm"]
         )
         cfg.mesh_axis_z_profile = explicit_z_profile
     cfg.stage4_dtn_quadrature_degree = (
@@ -437,8 +485,8 @@ def _fixed_trace_resource_preflight(
         if axis_sha256[axis] != seed_axis_sha256[axis]
     ]
     explicit_identity = (
-        _EXPLICIT_Z_PROFILE_IDENTITY_CONTRACT
-        if explicit_z_profile == _FIXED_TRACE_EXPLICIT_Z_PROFILE
+        _EXPLICIT_Z_PROFILE_IDENTITY_CONTRACTS.get(explicit_z_profile)
+        if explicit_z_profile is not None
         else _EXPLICIT_AXIS_IDENTITY_CONTRACTS.get(tuple(actual_cells))
     )
     parent_h14_cfg = target_stage4_config(
@@ -452,10 +500,56 @@ def _fixed_trace_resource_preflight(
     parent_h14_z = [
         float(value) for value in parent_h14_plan.z_values
     ]
+    parent_h13_cfg = target_stage4_config(
+        degree=int(args.fixed_interior_degree),
+        h_nm=13.0,
+    )
+    parent_h13_plan = stage4_axis_plan(
+        parent_h13_cfg,
+        int(args.mpi_size),
+    )
+    parent_h13_z = [
+        float(value) for value in parent_h13_plan.z_values
+    ]
     expected_bisect_z = list(parent_h14_z)
     expected_bisect_z.insert(
         2,
         0.5 * (parent_h14_z[1] + parent_h14_z[2]),
+    )
+    expected_explicit_z = (
+        None
+        if explicit_z_contract is None
+        else [
+            float(value)
+            for value in explicit_z_contract["z_values_nm"]
+        ]
+    )
+    directional_parent_bound = bool(
+        getattr(args, "fixed_trace_directional_parent_record", None)
+        is not None
+        and getattr(
+            args,
+            "fixed_trace_directional_parent_sha256",
+            None,
+        )
+        is not None
+    )
+    h13_changed_indices = (
+        [
+            index
+            for index, (candidate_value, parent_value) in enumerate(
+                zip(axes["z"], parent_h13_z, strict=True)
+            )
+            if not math.isclose(
+                candidate_value,
+                parent_value,
+                rel_tol=0.0,
+                abs_tol=1.0e-12,
+            )
+        ]
+        if explicit_z_profile
+        == TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE
+        else []
     )
     checks = {
         "reviewed_topology_contract": actual_cells
@@ -492,16 +586,37 @@ def _fixed_trace_resource_preflight(
         "explicit_z_profile_identity_frozen": (
             explicit_z_profile is None
             or (
-                explicit_z_profile == _FIXED_TRACE_EXPLICIT_Z_PROFILE
-                and abs(float(args.h_nm) - 14.0) <= 1.0e-12
+                explicit_z_contract is not None
+                and abs(
+                    float(args.h_nm)
+                    - float(explicit_z_contract["nominal_h_nm"])
+                )
+                <= 1.0e-12
                 and directional
                 and directional_axis == "z"
                 and actual_cells == [6, 2, 12]
-                and axes["z"] == expected_bisect_z
+                and axes["z"] == expected_explicit_z
                 and axes["x"]
-                == [float(value) for value in parent_h14_plan.x_values]
+                == [float(value) for value in parent_h13_plan.x_values]
                 and axes["y"]
-                == [float(value) for value in parent_h14_plan.y_values]
+                == [float(value) for value in parent_h13_plan.y_values]
+                and (
+                    directional_parent_bound
+                    is bool(
+                        explicit_z_contract[
+                            "directional_parent_required"
+                        ]
+                    )
+                )
+                and (
+                    axes["z"] == expected_bisect_z
+                    if explicit_z_profile
+                    == TASK035B_R5_SLAB_BISECT_PROFILE
+                    else (
+                        h13_changed_indices == [9, 10]
+                        and axes["z"][-4:] == parent_h14_z[-4:]
+                    )
+                )
             )
         ),
     }
@@ -513,8 +628,10 @@ def _fixed_trace_resource_preflight(
         "directional_recovery": directional,
         "directional_axis": directional_axis,
         "directional_mesh_change_semantics": (
-            "exact_h14_r5_slab_bisect_not_nested_refinement"
-            if explicit_z_profile == _FIXED_TRACE_EXPLICIT_Z_PROFILE
+            explicit_z_contract[
+                "directional_mesh_change_semantics"
+            ]
+            if explicit_z_contract is not None
             else "exact_material_fitted_remeshing_not_nested_refinement"
             if directional
             else "not_applicable"
@@ -525,6 +642,30 @@ def _fixed_trace_resource_preflight(
             else list(args.structured_axis_cells)
         ),
         "explicit_z_profile": explicit_z_profile,
+        "explicit_z_profile_contract": (
+            None
+            if explicit_z_contract is None
+            else {
+                "profile": explicit_z_profile,
+                "nominal_h_nm": float(
+                    explicit_z_contract["nominal_h_nm"]
+                ),
+                "directional_parent_required": bool(
+                    explicit_z_contract[
+                        "directional_parent_required"
+                    ]
+                ),
+                "directional_parent_bound": directional_parent_bound,
+                "target_identity_flag": explicit_z_contract[
+                    "target_identity_flag"
+                ],
+                "directional_mesh_change_semantics": (
+                    explicit_z_contract[
+                        "directional_mesh_change_semantics"
+                    ]
+                ),
+            }
+        ),
         "axis_plan": {
             "mesh_cells_resolved": actual_cells,
             "mesh_spacing_mode_resolved": (
@@ -535,6 +676,9 @@ def _fixed_trace_resource_preflight(
             "h15_axis_sha256": seed_axis_sha256,
             "parent_h14_z_axis_sha256": _axis_sha256(parent_h14_z),
             "parent_h14_z_values_nm": parent_h14_z,
+            "parent_h13_z_axis_sha256": _axis_sha256(parent_h13_z),
+            "parent_h13_z_values_nm": parent_h13_z,
+            "h13_changed_z_indices": h13_changed_indices,
             "changed_axes_from_h15": changed_axes,
             "expected_mesh_identity": explicit_identity,
             "material_plane_alignment": (
@@ -1542,9 +1686,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--fixed-trace-explicit-z-profile",
-        choices=(_FIXED_TRACE_EXPLICIT_Z_PROFILE,),
+        choices=tuple(_FIXED_TRACE_EXPLICIT_Z_PROFILE_CONTRACTS),
         help=(
-            "research-only frozen h14 z-axis profile; no arbitrary "
+            "research-only frozen Task035b z-axis profile; no arbitrary "
             "coordinate list is accepted"
         ),
     )
@@ -1727,16 +1871,40 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             args.fixed_trace_directional_axis or "z"
         )
     if args.fixed_trace_explicit_z_profile is not None:
+        explicit_z_contract = (
+            _FIXED_TRACE_EXPLICIT_Z_PROFILE_CONTRACTS[
+                args.fixed_trace_explicit_z_profile
+            ]
+        )
+        directional_parent_bound = all(
+            value is not None
+            for value in fixed_trace_directional_parent_values
+        )
+        directional_parent_absent = all(
+            value is None
+            for value in fixed_trace_directional_parent_values
+        )
+        parent_contract_pass = (
+            directional_parent_bound
+            if explicit_z_contract["directional_parent_required"]
+            else directional_parent_absent
+        )
         if (
             not fixed_trace_mode
             or not args.fixed_trace_directional_recovery
             or args.fixed_trace_directional_axis != "z"
-            or abs(float(args.h_nm) - 14.0) > 1.0e-12
+            or abs(
+                float(args.h_nm)
+                - float(explicit_z_contract["nominal_h_nm"])
+            )
+            > 1.0e-12
             or args.structured_axis_cells is not None
+            or not parent_contract_pass
         ):
             parser.error(
-                "the explicit z profile requires the fixed-trace h14 "
-                "directional-z lane without a structured-axis override"
+                "the selected explicit z profile requires its frozen nominal "
+                "h, fixed-trace directional-z lane, no structured-axis "
+                "override, and the reviewed SHA-bound h14-parent contract"
             )
     if (
         args.fixed_trace_channel_adjoint_diagnostic
@@ -3979,10 +4147,17 @@ def _qualify_fixed_trace(
         "fixed_trace_explicit_z_profile",
         None,
     )
+    explicit_z_contract = (
+        None
+        if explicit_z_profile is None
+        else _FIXED_TRACE_EXPLICIT_Z_PROFILE_CONTRACTS.get(
+            explicit_z_profile
+        )
+    )
     topology = _fixed_trace_topology_contract(args)
     explicit_identity = (
-        _EXPLICIT_Z_PROFILE_IDENTITY_CONTRACT
-        if explicit_z_profile == _FIXED_TRACE_EXPLICIT_Z_PROFILE
+        _EXPLICIT_Z_PROFILE_IDENTITY_CONTRACTS.get(explicit_z_profile)
+        if explicit_z_profile is not None
         else (
             None
             if getattr(args, "structured_axis_cells", None) is None
@@ -3993,7 +4168,7 @@ def _qualify_fixed_trace(
     )
     expected_axis_counts = (
         [6, 2, 12]
-        if explicit_z_profile == _FIXED_TRACE_EXPLICIT_Z_PROFILE
+        if explicit_z_contract is not None
         else (
             None
             if args.structured_axis_cells is None
@@ -4001,21 +4176,17 @@ def _qualify_fixed_trace(
         )
     )
     expected_directional_semantics = (
-        "exact_h14_r5_slab_bisect_not_nested_refinement"
-        if explicit_z_profile == _FIXED_TRACE_EXPLICIT_Z_PROFILE
+        explicit_z_contract["directional_mesh_change_semantics"]
+        if explicit_z_contract is not None
         else (
             "exact_material_fitted_remeshing_not_nested_refinement"
             if directional_recovery
             else "not_applicable"
         )
     )
-    if explicit_z_profile == _FIXED_TRACE_EXPLICIT_Z_PROFILE:
-        from src.adaptivity.target_fixed_trace_candidate import (
-            TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
-        )
-
+    if explicit_z_contract is not None:
         expected_z_values = list(
-            TASK035B_R5_SLAB_BISECT_Z_VALUES_NM
+            explicit_z_contract["z_values_nm"]
         )
     else:
         expected_z_values = None
@@ -4431,28 +4602,62 @@ def _qualify_fixed_trace(
         ),
         "explicit_z_profile_contract": (
             (
-                explicit_z_profile == _FIXED_TRACE_EXPLICIT_Z_PROFILE
-                and bool(target_identity.get("r5_slab_bisect"))
+                explicit_z_contract is not None
+                and bool(
+                    target_identity.get(
+                        explicit_z_contract["target_identity_flag"]
+                    )
+                )
+                and all(
+                    not bool(target_identity.get(other_flag))
+                    for other_flag in (
+                        "r5_slab_bisect",
+                        "h13_top_phase_redistribution",
+                    )
+                    if other_flag
+                    != explicit_z_contract["target_identity_flag"]
+                )
                 and target_identity.get("mesh_axis_z_values_requested")
                 == expected_z_values
                 and resolved_config.get("mesh_axis_z_values_requested")
                 == expected_z_values
                 and resolved_config.get("mesh_axis_z_profile_requested")
-                == _FIXED_TRACE_EXPLICIT_Z_PROFILE
+                == explicit_z_profile
                 and summary.get("mesh_spacing_mode_resolved")
                 == "boundary_fitted_exact_counts_explicit_z"
                 and (
                     resource_preflight.get("axis_plan") or {}
                 ).get("axis_sha256")
-                == _EXPLICIT_Z_PROFILE_IDENTITY_CONTRACT[
-                    "axis_sha256"
-                ]
+                == explicit_identity["axis_sha256"]
                 and resource_preflight.get("explicit_z_profile")
-                == _FIXED_TRACE_EXPLICIT_Z_PROFILE
+                == explicit_z_profile
+                and (
+                    resource_preflight.get(
+                        "explicit_z_profile_contract"
+                    )
+                    or {}
+                ).get("target_identity_flag")
+                == explicit_z_contract["target_identity_flag"]
+                and (
+                    resource_preflight.get(
+                        "explicit_z_profile_contract"
+                    )
+                    or {}
+                ).get("directional_parent_required")
+                is bool(
+                    explicit_z_contract[
+                        "directional_parent_required"
+                    ]
+                )
             )
             if explicit_z_profile is not None
             else (
                 not bool(target_identity.get("r5_slab_bisect"))
+                and not bool(
+                    target_identity.get(
+                        "h13_top_phase_redistribution"
+                    )
+                )
                 and target_identity.get(
                     "mesh_axis_z_values_requested"
                 )
