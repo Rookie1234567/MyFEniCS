@@ -312,12 +312,85 @@ class _StorageEntityDofs:
 
 
 @dataclass(frozen=True)
-class _OrbitPullback:
+class PhysicalP6TraceOrbitPullback:
+    """Actual DOLFINx-oriented representative-to-member pullbacks.
+
+    ``basis_kind`` distinguishes the retained p5 trace quotient from the
+    missing-p6 Riesz complement.  The matrices include the qualified Basix
+    entity transform and the physical Floquet phase.  They are therefore the
+    authority that a complement residual/DWR layer must use when accumulating
+    physical entity contributions into one periodic-orbit coordinate block.
+    """
+
     representative_entity_id: int
     member_entity_ids: tuple[int, ...]
     entity_kind: TraceEntityKind
     dimension: int
+    basis_kind: str
     representative_to_member: Mapping[int, np.ndarray]
+
+    def __post_init__(self) -> None:
+        representative = int(self.representative_entity_id)
+        members = tuple(map(int, self.member_entity_ids))
+        dimension = int(self.dimension)
+        if representative < 0 or representative not in members:
+            raise ValueError(
+                "physical trace orbit representative must be a member"
+            )
+        if not members or len(set(members)) != len(members):
+            raise ValueError(
+                "physical trace orbit members must be nonempty and unique"
+            )
+        if self.entity_kind not in _ENTITY_DIMENSION:
+            raise ValueError("physical trace orbit must be edge or face")
+        if self.basis_kind not in {"retained", "missing"}:
+            raise ValueError(
+                "physical trace orbit basis must be retained or missing"
+            )
+        expected_dimension = (
+            _RETAINED_DIMENSION[self.entity_kind]
+            if self.basis_kind == "retained"
+            else _MISSING_DIMENSION[self.entity_kind]
+        )
+        if dimension != expected_dimension:
+            raise ValueError(
+                "physical trace orbit dimension disagrees with basis kind"
+            )
+        if set(map(int, self.representative_to_member)) != set(members):
+            raise ValueError(
+                "physical trace orbit pullbacks must cover every member"
+            )
+        frozen: dict[int, np.ndarray] = {}
+        for entity_id, values in self.representative_to_member.items():
+            matrix = _readonly_matrix(
+                values,
+                label="physical trace orbit pullback",
+            )
+            if matrix.shape != (dimension, dimension):
+                raise ValueError(
+                    "physical trace orbit pullback has the wrong shape"
+                )
+            frozen[int(entity_id)] = matrix
+        identity = np.eye(dimension, dtype=np.complex128)
+        if (
+            _relative_matrix_error(frozen[representative], identity)
+            > 2.0e-12
+        ):
+            raise RuntimeError(
+                "physical trace orbit representative pullback is not identity"
+            )
+        object.__setattr__(
+            self,
+            "representative_entity_id",
+            representative,
+        )
+        object.__setattr__(self, "member_entity_ids", members)
+        object.__setattr__(self, "dimension", dimension)
+        object.__setattr__(
+            self,
+            "representative_to_member",
+            MappingProxyType(frozen),
+        )
 
 
 def _validate_full_p6_storage(
@@ -595,14 +668,21 @@ def _p5_transform(
     )
 
 
-def _discover_actual_orbit_pullbacks(
+def build_physical_p6_trace_orbit_pullbacks(
     *,
     catalog: SelectiveP6TraceMeshCatalog,
     basis_kind: str,
     tolerance: float,
-) -> tuple[_OrbitPullback, ...]:
+) -> tuple[PhysicalP6TraceOrbitPullback, ...]:
+    """Build actual oriented/Floquet pullbacks for every physical orbit."""
+
     if basis_kind not in {"retained", "missing"}:
         raise ValueError("orbit pullback basis must be retained or missing")
+    if catalog.audit.get("pass") is not True:
+        raise RuntimeError("actual selective trace mesh catalog is unqualified")
+    tolerance = float(tolerance)
+    if not np.isfinite(tolerance) or tolerance <= 0.0:
+        raise ValueError("physical orbit pullback tolerance must be positive")
     by_id = {entity.entity_id: entity for entity in catalog.entities}
     adjacency: dict[int, list[tuple[int, np.ndarray]]] = {
         entity_id: [] for entity_id in by_id
@@ -632,7 +712,7 @@ def _discover_actual_orbit_pullbacks(
         for orbit in catalog.all_inactive_orbit_numbering.orbits
     }
     visited: set[int] = set()
-    result: list[_OrbitPullback] = []
+    result: list[PhysicalP6TraceOrbitPullback] = []
     for seed in sorted(by_id):
         if seed in visited:
             continue
@@ -693,25 +773,36 @@ def _discover_actual_orbit_pullbacks(
             for entity_id, transform in transforms.items()
         }
         result.append(
-            _OrbitPullback(
+            PhysicalP6TraceOrbitPullback(
                 representative_entity_id=representative,
                 member_entity_ids=members,
                 entity_kind=physical.entity_kind,
                 dimension=dimension,
+                basis_kind=basis_kind,
                 representative_to_member=MappingProxyType(frozen),
             )
         )
         visited.update(component)
-    return tuple(result)
+    ordered = tuple(
+        sorted(
+            result,
+            key=lambda item: item.representative_entity_id,
+        )
+    )
+    if len(visited) != len(by_id):
+        raise RuntimeError(
+            "physical trace orbit pullbacks do not cover every mesh entity"
+        )
+    return ordered
 
 
 def _base_logical_rows(
     *,
     catalog: SelectiveP6TraceMeshCatalog,
     row_plan: SelectiveP6TraceMPIRowPlan,
-    retained_orbits: Sequence[_OrbitPullback],
+    retained_orbits: Sequence[PhysicalP6TraceOrbitPullback],
 ) -> dict[tuple[int, int], int]:
-    by_owner: list[list[_OrbitPullback]] = [
+    by_owner: list[list[PhysicalP6TraceOrbitPullback]] = [
         [] for _rank in range(row_plan.mpi_size)
     ]
     for orbit in retained_orbits:
@@ -917,12 +1008,12 @@ def build_actual_selective_p6_trace_expansion(
         catalog=catalog,
         coordinate_tolerance=coordinate_tolerance,
     )
-    retained_orbits = _discover_actual_orbit_pullbacks(
+    retained_orbits = build_physical_p6_trace_orbit_pullbacks(
         catalog=catalog,
         basis_kind="retained",
         tolerance=algebra_tolerance,
     )
-    missing_orbits = _discover_actual_orbit_pullbacks(
+    missing_orbits = build_physical_p6_trace_orbit_pullbacks(
         catalog=catalog,
         basis_kind="missing",
         tolerance=algebra_tolerance,
@@ -1186,6 +1277,8 @@ __all__ = [
     "ActualSelectiveP6TraceExpansion",
     "PhysicalCellP6TraceExpansion",
     "PhysicalEntityP6TraceExpansion",
+    "PhysicalP6TraceOrbitPullback",
     "build_actual_selective_p6_trace_expansion",
+    "build_physical_p6_trace_orbit_pullbacks",
     "constrain_physical_cell_schur",
 ]
