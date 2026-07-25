@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 from benchmarks.run_task035b_direct_setup_profile import (
+    DIRECT_SETUP_TYPED_PETSC_OPTIONS,
     _cache_pairs,
     _classify_profile,
     _direct_config,
@@ -21,6 +22,18 @@ def _worker_result() -> dict:
     return {
         "status": "worker_completed_with_summary",
         "rank_failures": [],
+        "petsc_option_provenance": {
+            "schema_version": (
+                "task035b.collective-petsc-option-provenance.v1"
+            ),
+            "rank_count": 8,
+            "raw_audit_present_on_all_ranks": True,
+            "typed_audit_present_on_all_ranks": True,
+            "raw_options_absent_on_all_ranks": True,
+            "typed_allowlist_pass_on_all_ranks": True,
+            "rank_audits_identical": True,
+            "pass": True,
+        },
         "worker_timings_seconds": {
             "solver_module_import_seconds": 1.25,
             "research_config_build_seconds": 0.02,
@@ -88,6 +101,11 @@ def _worker_result() -> dict:
                 "stage4_condensed_cache_mode": "read_only",
                 "stage4_condensed_persistent_dtn_surface_cache": True,
                 "stage4_preserve_structured_input_partition": True,
+                "petsc_direct_solver_profile": "default",
+                "stage4_condensed_iterative_profile": None,
+                "petsc_extra_options": dict(
+                    DIRECT_SETUP_TYPED_PETSC_OPTIONS
+                ),
             },
             "function_space_setup_audit": {
                 "persistent_fixed_trace_element_cache": {

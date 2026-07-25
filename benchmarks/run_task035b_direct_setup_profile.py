@@ -63,6 +63,98 @@ CACHE_MODES = {"cold": "read_write", "warm": "read_only"}
 DTN_REDUCED_MODAL_CACHE_SCHEMA = (
     "task035b.dtn-reduced-modal-persistent-cache.v2"
 )
+DIRECT_SETUP_TYPED_PETSC_OPTIONS = {
+    "pc_factor_mat_solver_type": "mumps",
+    "mat_mumps_icntl_14": 100,
+}
+
+
+def _raw_petsc_option_provenance() -> dict[str, Any]:
+    """Audit PETSc's live raw option sources before typed solver setup."""
+
+    from petsc4py import PETSc
+
+    environment_value = os.environ.get("PETSC_OPTIONS")
+    options = {
+        str(key): str(value)
+        for key, value in PETSc.Options().getAll().items()
+    }
+    canonical_options = json.dumps(
+        options,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    possible_rc_files = tuple(
+        dict.fromkeys(
+            (
+                str((ROOT / ".petscrc").resolve()),
+                str((Path.cwd() / ".petscrc").resolve()),
+                str((Path.home() / ".petscrc").resolve()),
+            )
+        )
+    )
+    environment_nonempty = bool(
+        environment_value is not None and environment_value.strip()
+    )
+    return {
+        "schema_version": "task035b.raw-petsc-option-provenance.v1",
+        "checked_before_typed_solver_configuration": True,
+        "PETSC_OPTIONS_present": environment_value is not None,
+        "PETSC_OPTIONS_nonempty": environment_nonempty,
+        "PETSC_OPTIONS_sha256": (
+            None
+            if environment_value is None
+            else hashlib.sha256(
+                environment_value.encode("utf-8")
+            ).hexdigest()
+        ),
+        "live_options_database_entry_count": len(options),
+        "live_options_database_keys": sorted(options),
+        "live_options_database_sha256": hashlib.sha256(
+            canonical_options
+        ).hexdigest(),
+        "possible_petscrc_sources": [
+            {
+                "path": path,
+                "exists": Path(path).is_file(),
+            }
+            for path in possible_rc_files
+        ],
+        "raw_options_absent": not environment_nonempty and not options,
+        "raw_option_values_recorded": False,
+    }
+
+
+def _typed_direct_petsc_option_audit(
+    cfg,
+) -> dict[str, Any]:
+    """Require the research runner's exact direct-MUMPS allowlist."""
+
+    configured = dict(cfg.petsc_extra_options)
+    expected = dict(DIRECT_SETUP_TYPED_PETSC_OPTIONS)
+    return {
+        "schema_version": "task035b.typed-direct-petsc-options.v1",
+        "provenance": "runner_constant_allowlist_not_raw_environment_or_cli",
+        "configured_options": configured,
+        "allowed_options": expected,
+        "exact_allowlist_match": configured == expected,
+        "direct_solver_profile": cfg.petsc_direct_solver_profile,
+        "condensed_iterative_profile": (
+            cfg.stage4_condensed_iterative_profile
+        ),
+        "direct_profile_is_default": (
+            cfg.petsc_direct_solver_profile == "default"
+        ),
+        "iterative_profile_absent": (
+            cfg.stage4_condensed_iterative_profile is None
+        ),
+        "pass": (
+            configured == expected
+            and cfg.petsc_direct_solver_profile == "default"
+            and cfg.stage4_condensed_iterative_profile is None
+        ),
+    }
 
 
 def _json_default(value: Any) -> Any:
@@ -289,6 +381,7 @@ def _environment_preflight() -> dict[str, Any]:
     import numpy as np
     from petsc4py import PETSc
 
+    raw_petsc_options = _raw_petsc_option_provenance()
     executable = Path(sys.executable).absolute()
     expected = (ROOT / ".venv" / "bin" / "python").absolute()
     checks = {
@@ -303,6 +396,9 @@ def _environment_preflight() -> dict[str, Any]:
         "temporary_directory_not_windows_mount": not any(
             str(os.environ.get(name, "")).startswith("/mnt/")
             for name in ("TMPDIR", "TMP", "TEMP")
+        ),
+        "raw_petsc_options_absent_before_worker": (
+            raw_petsc_options["raw_options_absent"] is True
         ),
     }
     return {
@@ -326,6 +422,7 @@ def _environment_preflight() -> dict[str, Any]:
         "temporary_directory_environment": {
             name: os.environ.get(name) for name in ("TMPDIR", "TMP", "TEMP")
         },
+        "raw_petsc_option_provenance": raw_petsc_options,
     }
 
 
@@ -380,10 +477,7 @@ def _direct_config(
         stage4_condensed_persistent_dtn_surface_cache=True,
         stage4_preserve_structured_input_partition=True,
         petsc_direct_solver_profile="default",
-        petsc_extra_options={
-            "pc_factor_mat_solver_type": "mumps",
-            "mat_mumps_icntl_14": 100,
-        },
+        petsc_extra_options=dict(DIRECT_SETUP_TYPED_PETSC_OPTIONS),
         unique_output=False,
     )
 
@@ -398,10 +492,30 @@ def _worker(args: argparse.Namespace) -> int:
     local_import_seconds = 0.0
     local_config_seconds = 0.0
     local_solver_seconds = 0.0
+    local_raw_petsc_options: dict[str, Any] | None = None
+    local_typed_petsc_options: dict[str, Any] | None = None
     try:
         if int(comm.size) != int(args.mpi_size):
             raise RuntimeError(
                 f"worker MPI size {comm.size} differs from {args.mpi_size}"
+            )
+        local_raw_petsc_options = _raw_petsc_option_provenance()
+        preliminary_raw_audits = comm.allgather(
+            local_raw_petsc_options
+        )
+        if (
+            not all(
+                audit.get("raw_options_absent") is True
+                for audit in preliminary_raw_audits
+            )
+            or not all(
+                audit == preliminary_raw_audits[0]
+                for audit in preliminary_raw_audits[1:]
+            )
+        ):
+            raise RuntimeError(
+                "raw PETSc options are present or differ across ranks "
+                "before typed direct setup"
             )
         import_started = time.perf_counter()
         from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
@@ -419,6 +533,24 @@ def _worker(args: argparse.Namespace) -> int:
                 args.canonical_orientation_class_reuse
             ),
         )
+        local_typed_petsc_options = _typed_direct_petsc_option_audit(cfg)
+        preliminary_typed_audits = comm.allgather(
+            local_typed_petsc_options
+        )
+        if (
+            not all(
+                audit.get("pass") is True
+                for audit in preliminary_typed_audits
+            )
+            or not all(
+                audit == preliminary_typed_audits[0]
+                for audit in preliminary_typed_audits[1:]
+            )
+        ):
+            raise RuntimeError(
+                "typed direct PETSc configuration differs from the "
+                "runner allowlist or across ranks"
+            )
         local_config_seconds = time.perf_counter() - config_started
         solver_started = time.perf_counter()
         summary = run_stage4b_block_grating_3d_case(
@@ -449,6 +581,53 @@ def _worker(args: argparse.Namespace) -> int:
             comm.allreduce(local_solver_seconds, op=MPI.MAX)
         ),
     }
+    raw_petsc_rank_audits = comm.allgather(local_raw_petsc_options)
+    typed_petsc_rank_audits = comm.allgather(local_typed_petsc_options)
+    petsc_option_provenance = {
+        "schema_version": (
+            "task035b.collective-petsc-option-provenance.v1"
+        ),
+        "rank_count": int(comm.size),
+        "raw_rank_audits": raw_petsc_rank_audits,
+        "typed_rank_audits": typed_petsc_rank_audits,
+        "raw_audit_present_on_all_ranks": all(
+            isinstance(audit, dict)
+            for audit in raw_petsc_rank_audits
+        ),
+        "typed_audit_present_on_all_ranks": all(
+            isinstance(audit, dict)
+            for audit in typed_petsc_rank_audits
+        ),
+        "raw_options_absent_on_all_ranks": all(
+            isinstance(audit, dict)
+            and audit.get("raw_options_absent") is True
+            for audit in raw_petsc_rank_audits
+        ),
+        "typed_allowlist_pass_on_all_ranks": all(
+            isinstance(audit, dict)
+            and audit.get("pass") is True
+            for audit in typed_petsc_rank_audits
+        ),
+        "rank_audits_identical": (
+            all(
+                audit == raw_petsc_rank_audits[0]
+                for audit in raw_petsc_rank_audits[1:]
+            )
+            and all(
+                audit == typed_petsc_rank_audits[0]
+                for audit in typed_petsc_rank_audits[1:]
+            )
+        ),
+    }
+    petsc_option_provenance["pass"] = bool(
+        petsc_option_provenance["raw_audit_present_on_all_ranks"]
+        and petsc_option_provenance["typed_audit_present_on_all_ranks"]
+        and petsc_option_provenance["raw_options_absent_on_all_ranks"]
+        and petsc_option_provenance[
+            "typed_allowlist_pass_on_all_ranks"
+        ]
+        and petsc_option_provenance["rank_audits_identical"]
+    )
     if comm.rank == 0:
         payload = {
             "schema_version": "task035b.direct-setup-profile-worker.v1",
@@ -463,6 +642,7 @@ def _worker(args: argparse.Namespace) -> int:
             "canonical_orientation_class_reuse_requested": bool(
                 args.canonical_orientation_class_reuse
             ),
+            "petsc_option_provenance": petsc_option_provenance,
             "worker_timings_seconds": timing_max,
             "summary": summary,
             "rank_failures": failures,
@@ -698,6 +878,9 @@ def _extract_setup_evidence(
             "rank_failures": worker_result.get("rank_failures") or [],
         }
     worker_timings = worker_result.get("worker_timings_seconds") or {}
+    petsc_option_provenance = (
+        worker_result.get("petsc_option_provenance") or {}
+    )
     outer = summary.get("timings_seconds") or {}
     cell = summary.get("cell_static_condensation") or {}
     raw_cache = cell.get("raw_tensor_persistent_cache") or {}
@@ -824,11 +1007,21 @@ def _extract_setup_evidence(
             "preserve_structured_input_partition": config.get(
                 "stage4_preserve_structured_input_partition"
             ),
+            "direct_solver_profile": config.get(
+                "petsc_direct_solver_profile"
+            ),
+            "condensed_iterative_profile": config.get(
+                "stage4_condensed_iterative_profile"
+            ),
+            "typed_direct_petsc_options": config.get(
+                "petsc_extra_options"
+            ),
             "ordinary_default_changed": config.get(
                 "ordinary_default_changed",
                 False,
             ),
         },
+        "petsc_option_provenance": petsc_option_provenance,
         "cache_audit": {
             "fixed_trace_element": fixed_trace_element_cache,
             "raw_tensor": raw_cache,
@@ -1128,6 +1321,9 @@ def _classify_profile(
     canonical_orientation = (
         evidence.get("canonical_orientation_class_reuse") or {}
     )
+    petsc_option_provenance = (
+        evidence.get("petsc_option_provenance") or {}
+    )
     canonical_request = canonical_orientation.get("request") or {}
     canonical_core = canonical_orientation.get("core") or {}
     expected_canonical_orientation_class_reuse = bool(
@@ -1356,6 +1552,21 @@ def _classify_profile(
         ),
     }
     residual = evidence.get("full_true_residual")
+    physical_observables = {
+        name: evidence.get(name)
+        for name in (
+            "R00_total",
+            "R_total",
+            "T_total",
+            "A_closure",
+        )
+    }
+    physical_observables_finite = all(
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        for value in physical_observables.values()
+    )
     process_swap = telemetry.get("max_process_tree_swap_mb")
     smaps_swap = telemetry.get("max_worker_rank_smaps_swap_sum_mb")
     checks = {
@@ -1369,10 +1580,55 @@ def _classify_profile(
             telemetry.get("observed_worker_rank_count")
             == int(expected_mpi_size)
         ),
+        "summary_mpi_size_identity": (
+            evidence.get("mpi_size") == int(expected_mpi_size)
+        ),
         "source_stable_and_clean_after": source_stable_and_clean_after,
+        "physical_full_run_completed": (
+            evidence.get("case_status") == "completed"
+            and evidence.get("official_result") is True
+            and evidence.get("diagnostic_only") is False
+            and evidence.get("postprocess_skipped") is False
+        ),
+        "physical_R00_R_T_Aclosure_finite": (
+            physical_observables_finite
+        ),
         "direct_mumps_identity": (
             evidence.get("linear_solve_method") == "direct_lu"
             and evidence.get("actual_pc_factor_solver_type") == "mumps"
+        ),
+        "raw_petsc_options_absent_on_all_worker_ranks": (
+            petsc_option_provenance.get("schema_version")
+            == "task035b.collective-petsc-option-provenance.v1"
+            and petsc_option_provenance.get("rank_count")
+            == int(expected_mpi_size)
+            and petsc_option_provenance.get(
+                "raw_audit_present_on_all_ranks"
+            )
+            is True
+            and petsc_option_provenance.get(
+                "raw_options_absent_on_all_ranks"
+            )
+            is True
+            and petsc_option_provenance.get(
+                "rank_audits_identical"
+            )
+            is True
+        ),
+        "typed_direct_petsc_options_exact_allowlist": (
+            petsc_option_provenance.get(
+                "typed_audit_present_on_all_ranks"
+            )
+            is True
+            and petsc_option_provenance.get(
+                "typed_allowlist_pass_on_all_ranks"
+            )
+            is True
+            and petsc_option_provenance.get("pass") is True
+            and config.get("direct_solver_profile") == "default"
+            and config.get("condensed_iterative_profile") is None
+            and config.get("typed_direct_petsc_options")
+            == DIRECT_SETUP_TYPED_PETSC_OPTIONS
         ),
         "solve_converged": evidence.get("ksp_converged") is True,
         "full_true_residual_le_1e-9": (
@@ -1481,7 +1737,10 @@ def _classify_profile(
         "summary_available",
         "no_rank_failures",
         "all_expected_mpi_ranks_observed",
+        "summary_mpi_size_identity",
         "source_stable_and_clean_after",
+        "raw_petsc_options_absent_on_all_worker_ranks",
+        "typed_direct_petsc_options_exact_allowlist",
     )
     evidence_valid = all(checks[name] for name in infrastructure_names)
     if passed:
