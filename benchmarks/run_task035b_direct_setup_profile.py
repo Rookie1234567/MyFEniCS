@@ -735,6 +735,9 @@ def _extract_setup_evidence(
             "raw_tensor_kernel_evaluation_count"
         ),
         "native_object_ledger": cell.get("native_object_ledger"),
+        "recovery_cache_lifecycle": cell.get(
+            "recovery_cache_lifecycle"
+        ),
         "timing_coverage": {
             "nonoverlapping_outer_stages": (
                 "timings_seconds fields are mutually staged by the common "
@@ -894,6 +897,11 @@ def _extract_setup_evidence(
                 "backsolve": ksp_solve,
             },
             "recovery": {
+                "cell_interior_rhs_prepare_and_cache_release": _number(
+                    summary,
+                    "stage4_dtn_cell_interior_rhs_"
+                    "prepare_and_cache_release_seconds",
+                ),
                 "cell_interior": _number(
                     summary,
                     "stage4_dtn_cell_static_condensation_recovery_seconds",

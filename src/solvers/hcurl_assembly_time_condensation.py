@@ -93,7 +93,6 @@ class AssemblyTimeCondensedSystem:
         dict[int, np.ndarray], ...
     ]
     appended_dual_rows_registered: set[int]
-    trace_from_interior_rhs_by_class: dict[tuple[Any, ...], np.ndarray]
     interior_residual_projection_by_class: dict[
         tuple[Any, ...], np.ndarray
     ]
@@ -105,6 +104,8 @@ class AssemblyTimeCondensedSystem:
     active_interior_rows: int
     build_audit: dict[str, Any]
     affine_isotropic_tensor_spec: Any | None = None
+    prepared_interior_rhs_by_cell: tuple[np.ndarray, ...] | None = None
+    prepared_full_rhs_state: int | None = None
 
     def destroy(self) -> None:
         self.matrix.destroy()
@@ -2210,8 +2211,11 @@ def build_unconstrained_assembly_time_condensation(
     rhs_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
     solution_embedding_cache: dict[tuple[Any, ...], np.ndarray] = {}
     dual_recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
-    rhs_trace_cache: dict[tuple[Any, ...], np.ndarray] = {}
     residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    high_interior_identity = np.eye(
+        len(interior_positions),
+        dtype=np.float64,
+    )
     recovery_maps: list[CellRecoveryMap] = []
     local_schur_seconds = 0.0
     local_orientation_seconds = 0.0
@@ -2322,10 +2326,7 @@ def build_unconstrained_assembly_time_condensation(
                     (len(interior_positions), len(trace_positions)),
                     dtype=np.float64,
                 )
-                interior_embedding_from_interior = np.eye(
-                    len(interior_positions),
-                    dtype=np.float64,
-                )
+                interior_embedding_from_interior = high_interior_identity
             local_orientation_seconds += (
                 perf_counter() - orientation_started
             )
@@ -2376,9 +2377,6 @@ def build_unconstrained_assembly_time_condensation(
                 @ adjoint_trace_solution
             )
             local_aii_solve_seconds += perf_counter() - solve_started
-            trace_from_interior_rhs = (
-                dual_interior_from_trace.conj().T
-            )
             schur_product_started = perf_counter()
             schur = A_tt + A_ti @ active_interior_from_trace
             local_schur_product_seconds += (
@@ -2389,15 +2387,14 @@ def build_unconstrained_assembly_time_condensation(
             recovery_cache[class_key] = interior_from_trace
             lu_cache[class_key] = active_interior_lu
             rhs_projection_cache[class_key] = (
-                interior_embedding_from_interior.conj().T
+                interior_embedding_from_interior.T
             )
             solution_embedding_cache[class_key] = (
                 interior_embedding_from_interior
             )
             dual_recovery_cache[class_key] = dual_interior_from_trace
-            rhs_trace_cache[class_key] = trace_from_interior_rhs
             residual_projection_cache[class_key] = (
-                interior_embedding_from_interior.conj().T
+                interior_embedding_from_interior.T
             )
         trace_original = original_dofs[trace_positions]
         active_ids, local_expansion, identity_expansion = cell_trace_data[cell]
@@ -2530,9 +2527,6 @@ def build_unconstrained_assembly_time_condensation(
             "dual_recovery_cache": tuple(
                 dual_recovery_cache.values()
             ),
-            "trace_from_interior_rhs_cache": tuple(
-                rhs_trace_cache.values()
-            ),
             "residual_projection_cache": tuple(
                 residual_projection_cache.values()
             ),
@@ -2551,7 +2545,7 @@ def build_unconstrained_assembly_time_condensation(
                 ),
             ),
         },
-        transient_categories=("raw_tensor_cache",),
+        transient_categories=("raw_tensor_cache", "schur_cache"),
     )
     return AssemblyTimeCondensedSystem(
         matrix=condensed,
@@ -2568,7 +2562,6 @@ def build_unconstrained_assembly_time_condensation(
             {} for _cell in recovery_maps
         ),
         appended_dual_rows_registered=set(),
-        trace_from_interior_rhs_by_class=rhs_trace_cache,
         interior_residual_projection_by_class=residual_projection_cache,
         full_rows=full_rows,
         trace_rows=trace_rows,
@@ -2791,7 +2784,9 @@ def condense_unconstrained_vector_to_active_trace(
             continue
         if side == "right":
             correction = (
-                condensed.trace_from_interior_rhs_by_class[cell.class_key]
+                condensed.dual_interior_from_trace_by_class[
+                    cell.class_key
+                ].conj().T
                 @ interior_values
             )
         else:
@@ -2873,6 +2868,163 @@ def cell_interior_schur_bilinear(
     )
 
 
+def _recovery_native_array_ledger(
+    condensed: AssemblyTimeCondensedSystem,
+) -> dict[str, Any]:
+    return _python_visible_native_array_ledger(
+        condensed.matrix.getComm().tompi4py(),
+        {
+            "interior_recovery_cache": tuple(
+                condensed.interior_from_trace_by_class.values()
+            ),
+            "interior_lu_cache": tuple(
+                condensed.interior_lu_by_class.values()
+            ),
+            "rhs_projection_cache": tuple(
+                condensed.interior_rhs_projection_by_class.values()
+            ),
+            "solution_embedding_cache": tuple(
+                condensed.interior_solution_embedding_by_class.values()
+            ),
+            "dual_recovery_cache": tuple(
+                condensed.dual_interior_from_trace_by_class.values()
+            ),
+            "residual_projection_cache": tuple(
+                condensed.interior_residual_projection_by_class.values()
+            ),
+            "prepared_cell_interior_rhs": (
+                ()
+                if condensed.prepared_interior_rhs_by_cell is None
+                else condensed.prepared_interior_rhs_by_cell
+            ),
+            "cell_recovery_numbering": tuple(
+                (
+                    recovery.interior_original_dofs,
+                    recovery.trace_original_dofs,
+                    recovery.cell_local_dofs,
+                )
+                for recovery in condensed.cell_recovery_maps
+            ),
+        },
+    )
+
+
+def prepare_cell_interior_rhs_recovery(
+    condensed: AssemblyTimeCondensedSystem,
+    full_rhs: PETSc.Vec,
+    *,
+    release_nonprimal_caches: bool,
+) -> dict[str, Any]:
+    """Freeze the particular interior field before the global solve.
+
+    Once every full-space load and DtN contribution has been accumulated,
+    ``A_ii^{-1} b_i`` is cell-local and independent of the trace solve.  Storing
+    that one vector per cell lets the forward-only path release all local LU,
+    embedding, and dual-recovery class caches before MUMPS factorization.
+    """
+
+    if int(full_rhs.getSize()) != int(condensed.full_rows):
+        raise ValueError("prepared recovery RHS differs from the FE space")
+    if condensed.prepared_interior_rhs_by_cell is not None:
+        raise RuntimeError("cell-interior RHS recovery is already prepared")
+    rhs_state = int(full_rhs.stateGet())
+    row_start, row_end = map(int, full_rhs.getOwnershipRange())
+    rhs_values = np.asarray(
+        full_rhs.getArray(readonly=True),
+        dtype=np.complex128,
+    )
+    before = _recovery_native_array_ledger(condensed)
+    prepared: list[np.ndarray] = []
+    started = perf_counter()
+    for cell in condensed.cell_recovery_maps:
+        rows = np.asarray(cell.interior_original_dofs, dtype=np.int64)
+        if len(rows) and (
+            int(rows.min()) < row_start or int(rows.max()) >= row_end
+        ):
+            raise ValueError(
+                "owned cell-interior preparation rows are outside local "
+                "RHS ownership"
+            )
+        projection = condensed.interior_rhs_projection_by_class.get(
+            cell.class_key
+        )
+        embedding = condensed.interior_solution_embedding_by_class.get(
+            cell.class_key
+        )
+        factor = condensed.interior_lu_by_class.get(cell.class_key)
+        if projection is None or embedding is None or factor is None:
+            raise RuntimeError(
+                "cell-interior preparation requires unreleased local caches"
+            )
+        prepared.append(
+            np.asarray(
+                embedding
+                @ lu_solve(
+                    factor,
+                    projection @ rhs_values[rows - row_start],
+                ),
+                dtype=np.complex128,
+            )
+        )
+    condensed.prepared_interior_rhs_by_cell = tuple(prepared)
+    condensed.prepared_full_rhs_state = rhs_state
+    released = []
+    if release_nonprimal_caches:
+        for name, cache in (
+            ("interior_lu_by_class", condensed.interior_lu_by_class),
+            (
+                "interior_rhs_projection_by_class",
+                condensed.interior_rhs_projection_by_class,
+            ),
+            (
+                "interior_solution_embedding_by_class",
+                condensed.interior_solution_embedding_by_class,
+            ),
+            (
+                "dual_interior_from_trace_by_class",
+                condensed.dual_interior_from_trace_by_class,
+            ),
+        ):
+            cache.clear()
+            released.append(name)
+    after = _recovery_native_array_ledger(condensed)
+    audit = {
+        "schema_version": (
+            "task035b.cell-interior-rhs-recovery-lifecycle.v1"
+        ),
+        "status": "particular_cell_interior_rhs_prepared",
+        "full_rhs_petsc_state": rhs_state,
+        "owned_cell_count_global": int(
+            condensed.matrix.getComm().tompi4py().allreduce(
+                len(prepared),
+                op=MPI.SUM,
+            )
+        ),
+        "prepare_seconds_max": float(
+            condensed.matrix.getComm().tompi4py().allreduce(
+                perf_counter() - started,
+                op=MPI.MAX,
+            )
+        ),
+        "prepared_vector_bytes_rank_sum": int(
+            after["rank_sum_bytes"]["prepared_cell_interior_rhs"]
+        ),
+        "release_nonprimal_caches": bool(
+            release_nonprimal_caches
+        ),
+        "released_cache_names": released,
+        "native_array_ledger_before": before,
+        "native_array_ledger_after": after,
+        "retained_bytes_reduction_rank_sum": int(
+            before["retained_rank_sum_total_bytes"]
+            - after["retained_rank_sum_total_bytes"]
+        ),
+        "ordinary_default_changed": False,
+    }
+    condensed.build_audit["recovery_cache_lifecycle"] = audit
+    return audit
+
+
 def recover_owned_cell_interiors(
     condensed: AssemblyTimeCondensedSystem,
     active_trace_values: np.ndarray,
@@ -2887,16 +3039,24 @@ def recover_owned_cell_interiors(
     rhs_values = None
     rhs_start = 0
     rhs_end = 0
+    prepared_rhs = condensed.prepared_interior_rhs_by_cell
     if full_rhs is not None:
         if full_rhs.getSize() != condensed.full_rows:
             raise ValueError("full recovery RHS differs from the FE space")
-        rhs_start, rhs_end = map(int, full_rhs.getOwnershipRange())
-        rhs_values = np.asarray(
-            full_rhs.getArray(readonly=True),
-            dtype=np.complex128,
-        )
+        if prepared_rhs is not None:
+            if int(full_rhs.stateGet()) != condensed.prepared_full_rhs_state:
+                raise RuntimeError(
+                    "full recovery RHS changed after its cell-interior "
+                    "particular solution was prepared"
+                )
+        else:
+            rhs_start, rhs_end = map(int, full_rhs.getOwnershipRange())
+            rhs_values = np.asarray(
+                full_rhs.getArray(readonly=True),
+                dtype=np.complex128,
+            )
     result: list[tuple[np.ndarray, np.ndarray]] = []
-    for cell in condensed.cell_recovery_maps:
+    for cell_index, cell in enumerate(condensed.cell_recovery_maps):
         recovery = condensed.interior_from_trace_by_class[cell.class_key]
         local_trace = np.empty(
             len(cell.trace_original_dofs),
@@ -2913,7 +3073,9 @@ def recover_owned_cell_interiors(
                 active[active_ids],
             )
         values = recovery @ local_trace
-        if rhs_values is not None:
+        if full_rhs is not None and prepared_rhs is not None:
+            values = values + prepared_rhs[cell_index]
+        elif rhs_values is not None:
             rows = np.asarray(cell.interior_original_dofs, dtype=np.int64)
             if len(rows) and (
                 int(rows.min()) < rhs_start or int(rows.max()) >= rhs_end
@@ -3333,6 +3495,7 @@ __all__ = [
     "build_unconstrained_assembly_time_condensation",
     "cell_interior_schur_bilinear",
     "condense_unconstrained_vector_to_active_trace",
+    "prepare_cell_interior_rhs_recovery",
     "project_mpc_vector_to_active_trace",
     "recover_full_dual_from_active_trace",
     "recover_owned_cell_interiors",

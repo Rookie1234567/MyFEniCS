@@ -43,6 +43,7 @@ from .hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
     cell_interior_schur_bilinear,
     condense_unconstrained_vector_to_active_trace,
+    prepare_cell_interior_rhs_recovery,
     recover_owned_cell_interiors,
     register_appended_dual_interior_coupling,
     _orient_cell_tensor,
@@ -2749,6 +2750,47 @@ def solve_stage4_dtn_port_total_field(
         petsc_options=petsc_options,
         extra={"stage4_dtn_num_auxiliary_dofs": int(n_aux)},
     )
+
+    if (
+        assembly_time_system is not None
+        and assembly_time_full_rhs is not None
+        and not cfg.stage4_retain_dual_recovery_context
+    ):
+        recovery_prepare_started = time.perf_counter()
+        recovery_cache_lifecycle = (
+            prepare_cell_interior_rhs_recovery(
+                assembly_time_system,
+                assembly_time_full_rhs,
+                release_nonprimal_caches=True,
+            )
+        )
+        timing_details[
+            "stage4_dtn_cell_interior_rhs_prepare_and_cache_release_seconds"
+        ] = float(
+            comm.allreduce(
+                time.perf_counter() - recovery_prepare_started,
+                op=MPI.MAX,
+            )
+        )
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="cell_interior_rhs_prepared_before_ksp_setup",
+            status="end",
+            started=started,
+            dofs=int(
+                V.dofmap.index_map.size_global
+                * V.dofmap.index_map_bs
+            ),
+            constraints=floquet_data.num_constraints,
+            matrix_stats=augmented_matrix_stats_after_finalize,
+            petsc_options=petsc_options,
+            extra={
+                "recovery_cache_lifecycle": (
+                    recovery_cache_lifecycle
+                ),
+            },
+        )
 
     if cfg.matrix_diagnostics_assemble_only:
         x_aug = b_aug.duplicate()

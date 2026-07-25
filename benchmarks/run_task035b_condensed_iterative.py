@@ -483,6 +483,7 @@ def _extract_solver_evidence(
     factor_inventory = summary.get("stage4_dtn_factor_inventory") or {}
     matrix = summary.get("matrix_stats") or {}
     config = summary.get("config") or {}
+    cell = summary.get("cell_static_condensation") or {}
     return {
         "summary_available": True,
         "worker_status": worker_result.get("status"),
@@ -537,6 +538,10 @@ def _extract_solver_evidence(
             "mumps_symbolic_or_numeric_created"
         ),
         "factor_inventory": factor_inventory,
+        "native_object_ledger": cell.get("native_object_ledger"),
+        "recovery_cache_lifecycle": cell.get(
+            "recovery_cache_lifecycle"
+        ),
         "local_subdomain_ilu_active": factor_inventory.get(
             "local_subdomain_ilu_active"
         ),

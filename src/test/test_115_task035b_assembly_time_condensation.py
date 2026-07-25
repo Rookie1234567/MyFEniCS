@@ -28,6 +28,7 @@ from src.solvers.hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
     cell_interior_schur_bilinear,
     condense_unconstrained_vector_to_active_trace,
+    prepare_cell_interior_rhs_recovery,
     project_mpc_vector_to_active_trace,
     recover_full_dual_from_active_trace,
     recover_owned_cell_interiors,
@@ -1055,6 +1056,23 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             dtype=np.complex128,
         )
         recovered_values[trace] = trace_solution
+        lifecycle = prepare_cell_interior_rhs_recovery(
+            candidate,
+            right,
+            release_nonprimal_caches=True,
+        )
+        self.assertGreater(
+            lifecycle["retained_bytes_reduction_rank_sum"],
+            0,
+        )
+        self.assertFalse(candidate.interior_lu_by_class)
+        self.assertFalse(candidate.interior_rhs_projection_by_class)
+        self.assertFalse(candidate.interior_solution_embedding_by_class)
+        self.assertFalse(candidate.dual_interior_from_trace_by_class)
+        self.assertEqual(
+            len(candidate.prepared_interior_rhs_by_cell or ()),
+            len(candidate.cell_recovery_maps),
+        )
         for rows, values in recover_owned_cell_interiors(
             candidate,
             trace_solution,
@@ -1067,6 +1085,16 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             rtol=3.0e-12,
             atol=3.0e-11,
         )
+        right.shift(PETSc.ScalarType(1.0))
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "changed after",
+        ):
+            recover_owned_cell_interiors(
+                candidate,
+                trace_solution,
+                full_rhs=right,
+            )
 
         reduced_left.destroy()
         reduced_right.destroy()
@@ -2247,6 +2275,21 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             audit["full_explicit_true_residual"][
                 "full_operator_residual_method"
             ],
+        )
+        lifecycle = audit["recovery_cache_lifecycle"]
+        self.assertTrue(lifecycle["release_nonprimal_caches"])
+        self.assertGreater(
+            lifecycle["retained_bytes_reduction_rank_sum"],
+            0,
+        )
+        after = lifecycle["native_array_ledger_after"]
+        self.assertEqual(
+            after["rank_sum_bytes"]["interior_lu_cache"],
+            0,
+        )
+        self.assertGreater(
+            after["rank_sum_bytes"]["prepared_cell_interior_rhs"],
+            0,
         )
         preallocation = audit["trace_preallocation"]
         self.assertTrue(
