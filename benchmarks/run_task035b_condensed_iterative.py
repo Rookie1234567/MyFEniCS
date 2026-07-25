@@ -47,6 +47,7 @@ DEFAULT_ARTIFACT_ROOT = (
 )
 PHYSICS_AWARE_PROFILE = "fgmres_dtn_trace_deflation"
 PHYSICAL_SLAB_DTN_PROFILE = "fgmres_zslab_ilu0_dtn_trace_galerkin"
+TRACE_HARMONIC_PROFILE = "fgmres_trace_harmonic_block_schur"
 PHYSICS_AWARE_PROFILES = (
     PHYSICS_AWARE_PROFILE,
     PHYSICAL_SLAB_DTN_PROFILE,
@@ -56,6 +57,7 @@ SUPPORTED_PROFILES = (
     "fgmres_asm_ilu",
     PHYSICS_AWARE_PROFILE,
     PHYSICAL_SLAB_DTN_PROFILE,
+    TRACE_HARMONIC_PROFILE,
 )
 EXPECTED_H15_TOPOLOGY = {
     "mesh_cells_resolved": [6, 2, 10],
@@ -180,6 +182,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("timeout and poll interval must be positive")
     if (args.execute_pde or args.worker) and args.profile is None:
         parser.error("--execute-pde requires an explicit --profile")
+    if (
+        (args.execute_pde or args.worker)
+        and args.profile == TRACE_HARMONIC_PROFILE
+    ):
+        parser.error(
+            "the trace-harmonic profile is capability-only: no production "
+            "TraceHarmonicPartition builder is qualified and the prototype "
+            "apply still replicates full work vectors"
+        )
     if args.worker and (args.run_dir is None or args.source_sha is None):
         parser.error("--worker requires --run-dir and --source-sha")
     if args.worker and not args.execute_pde:
@@ -194,8 +205,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
     return {
         "schema_version": "task035b.condensed-iterative-plan.v1",
-        "status": "not_run_requires_explicit_execute_pde",
+        "status": (
+            "capability_only_production_execution_blocked"
+            if args.profile == TRACE_HARMONIC_PROFILE
+            else "not_run_requires_explicit_execute_pde"
+        ),
         "pde_started": False,
+        "selected_profile_execution_enabled": (
+            args.profile != TRACE_HARMONIC_PROFILE
+        ),
         "ordinary_default_changed": False,
         "geometry": "Task034 fixed rectangular block grating",
         "space": "fixed p5 trace plus p6 cell interior",
@@ -211,6 +229,10 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             ),
             "fgmres_zslab_ilu0_dtn_trace_galerkin": (
                 "not_run_requires_formal_discriminator"
+            ),
+            TRACE_HARMONIC_PROFILE: (
+                "capability_only_requires_production_partition_and_"
+                "distributed_apply"
             ),
         },
         "raw_petsc_options_accepted": False,
@@ -247,9 +269,34 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             },
             "status": "not_run",
         },
+        "trace_harmonic_capability_gate": {
+            "profile": TRACE_HARMONIC_PROFILE,
+            "typed_partition_schema_required": (
+                "task035b.trace-harmonic-partition.v1"
+            ),
+            "production_partition_builder_available": False,
+            "prototype_apply_replicates_full_vectors": True,
+            "full_vector_replication_allowed_for_formal_pde": False,
+            "production_scalability_gate": (
+                "not_passed_full_vector_replication_must_be_replaced_by_"
+                "interface_and_owner_neighborhood_exchange"
+            ),
+            "execute_pde_enabled": False,
+            "formal_pde_status": "not_run",
+            "candidate_promotion": False,
+            "ordinary_default_changed": False,
+        },
         "next_action": (
-            "rerun with --execute-pde and an explicit --profile after "
-            "committing all source changes"
+            (
+                "implement and qualify a production trace-harmonic partition "
+                "builder plus distributed interface/owner-neighborhood apply; "
+                "do not start a formal PDE from this capability profile"
+            )
+            if args.profile == TRACE_HARMONIC_PROFILE
+            else (
+                "rerun with --execute-pde and an explicit --profile after "
+                "committing all source changes"
+            )
         ),
     }
 
@@ -302,6 +349,12 @@ def _environment_preflight() -> dict[str, Any]:
 def _iterative_config(profile: str, *, h_nm: float):
     """Build only the reviewed research configuration; numerical work is core-owned."""
 
+    if profile == TRACE_HARMONIC_PROFILE:
+        raise RuntimeError(
+            "the trace-harmonic profile is capability-only until a production "
+            "partition builder and nonreplicated distributed apply are "
+            "qualified"
+        )
     from src.common.config_3d import target_stage4_config
 
     base = target_stage4_config(degree=6, h_nm=float(h_nm))
@@ -678,6 +731,12 @@ def _classify_screen(
     terminated_for_timeout: bool,
     telemetry_readable: bool,
 ) -> dict[str, Any]:
+    if expected_profile == TRACE_HARMONIC_PROFILE:
+        raise ValueError(
+            "the trace-harmonic capability profile cannot be classified as a "
+            "formal PDE screen before its production partition and "
+            "nonreplicated distributed apply are qualified"
+        )
     reduction = evidence.get("residual_history_final_to_initial")
     reduced = evidence.get(
         "terminal_explicit_reduced_relative_residual"

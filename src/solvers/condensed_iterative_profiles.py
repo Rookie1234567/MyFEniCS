@@ -61,6 +61,9 @@ class CondensedIterativeProfile:
     physical_slab_overlap_layers: float | None = None
     local_ilu_levels: int | None = None
     factor_only_local_storage: bool = False
+    requires_trace_harmonic_partition: bool = False
+    production_execution_enabled: bool = True
+    prototype_replicates_full_vectors: bool = False
 
 
 _PROFILES = {
@@ -102,11 +105,28 @@ _PROFILES = {
         local_ilu_levels=0,
         factor_only_local_storage=True,
     ),
+    "fgmres_trace_harmonic_block_schur": CondensedIterativeProfile(
+        name="fgmres_trace_harmonic_block_schur",
+        ksp_type="fgmres",
+        pc_strategy=(
+            "owner_computes_nonoverlapping_trace_harmonic_exact_block_ldu"
+        ),
+        restart=40,
+        relative_tolerance=1.0e-10,
+        evidence_status=(
+            "capability_only_requires_production_partition_and_"
+            "distributed_apply"
+        ),
+        requires_trace_harmonic_partition=True,
+        production_execution_enabled=False,
+        prototype_replicates_full_vectors=True,
+    ),
 }
 
 SUPPORTED_CONDENSED_ITERATIVE_PROFILES = tuple(_PROFILES)
 PHYSICS_AWARE_PROFILE = "fgmres_dtn_trace_deflation"
 PHYSICAL_SLAB_DTN_PROFILE = "fgmres_zslab_ilu0_dtn_trace_galerkin"
+TRACE_HARMONIC_PROFILE = "fgmres_trace_harmonic_block_schur"
 PHYSICS_AWARE_PROFILES = (
     PHYSICS_AWARE_PROFILE,
     PHYSICAL_SLAB_DTN_PROFILE,
@@ -176,6 +196,39 @@ def condensed_iterative_profile_contract(name: str) -> dict[str, Any]:
             ),
             "inactive_rows_allowed": False,
         },
+        "trace_harmonic_partition_gate": {
+            "required": profile.requires_trace_harmonic_partition,
+            "schema_version_required": (
+                "task035b.trace-harmonic-partition.v1"
+                if profile.requires_trace_harmonic_partition
+                else None
+            ),
+            "all_active_rows_covered_exactly_once_required": (
+                profile.requires_trace_harmonic_partition
+            ),
+            "nonoverlapping_local_trace_blocks_required": (
+                profile.requires_trace_harmonic_partition
+            ),
+            "cross_block_coupling_gate_required": (
+                profile.requires_trace_harmonic_partition
+            ),
+            "production_partition_builder_available": (
+                False if profile.requires_trace_harmonic_partition else None
+            ),
+            "prototype_replicates_full_vectors": (
+                profile.prototype_replicates_full_vectors
+            ),
+            "full_vector_replication_allowed_for_formal_pde": (
+                False if profile.requires_trace_harmonic_partition else None
+            ),
+            "production_execution_enabled": (
+                profile.production_execution_enabled
+            ),
+            "fail_closed_before_profile_configuration": (
+                profile.requires_trace_harmonic_partition
+                and not profile.production_execution_enabled
+            ),
+        },
         "factor_semantics": {
             "global_fine_factor_free": True,
             "no_global_sparse_direct_factor": True,
@@ -193,12 +246,19 @@ def condensed_iterative_profile_contract(name: str) -> dict[str, Any]:
             "small_dense_galerkin_lu_disclosed": (
                 profile.name in PHYSICS_AWARE_PROFILES
             ),
+            "local_dense_trace_block_lu_disclosed": (
+                profile.name == TRACE_HARMONIC_PROFILE
+            ),
+            "small_replicated_interface_schur_lu_disclosed": (
+                profile.name == TRACE_HARMONIC_PROFILE
+            ),
             "strictly_factorless_preconditioner": (
                 profile.name == "gmres_jacobi"
             ),
             "strictly_factorless": profile.name == "gmres_jacobi",
             "complete_factor_inventory_required": (
                 profile.name in PHYSICS_AWARE_PROFILES
+                or profile.name == TRACE_HARMONIC_PROFILE
             ),
             "fine_operator_factor_free": True,
             "legacy_compatibility_alias": {
@@ -219,6 +279,12 @@ def configure_condensed_iterative_outer_ksp(
 ) -> None:
     """Configure the common outer contract without consulting PETSc options."""
 
+    if not profile.production_execution_enabled:
+        raise RuntimeError(
+            f"condensed iterative profile {profile.name!r} is capability-only: "
+            "no production trace-harmonic partition builder is qualified and "
+            "the prototype apply still replicates full work vectors"
+        )
     if (
         profile.requires_physical_slab_partition
         and not physical_slab_partition_available
@@ -790,6 +856,7 @@ __all__ = [
     "PHYSICS_AWARE_PROFILES",
     "PHYSICAL_SLAB_DTN_PROFILE",
     "SUPPORTED_CONDENSED_ITERATIVE_PROFILES",
+    "TRACE_HARMONIC_PROFILE",
     "build_diagonal_lifted_dtn_trace_basis",
     "condensed_iterative_profile",
     "condensed_iterative_profile_contract",
