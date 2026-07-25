@@ -1,0 +1,334 @@
+{
+  "schema_version": "task035b.h13-canonical-orientation-symbolic-numeric-cold-warm.v1",
+  "benchmark_id": "task035b_h13_canonical_orientation_symbolic_numeric_mpi8",
+  "status": "formal_direct_setup_pair_completed",
+  "classification": "positive_h13_setup_and_resource_authority",
+  "pass": true,
+  "pass_semantics": "Both clean-SHA MPI8 direct profiles pass the h13 setup, cache, resource, raw-option, timing-ledger, PETSc factor-event and full-explicit-residual gates. This is setup/resource evidence only; significant-channel power and complex-amplitude gates were not evaluated by this profile.",
+  "candidate_promotion": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "execution_source_sha": "a20b8b404f66b983596326c912a88fb8be3b255c",
+    "comparison_record_commit_sha": null,
+    "comparison_record_commit_sha_semantics": "The later commit containing this record is reported by git history and response_v3; the record is deliberately not self-referential.",
+    "clean_full_sha_gate": true,
+    "clean_and_stable_for_both_runs": true
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "mesh_lane": "review_v2_h13_directional_z_best_candidate",
+    "h_nm": 13.0,
+    "mesh_cells_resolved": [
+      6,
+      2,
+      12
+    ],
+    "num_mesh_cells": 144,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "mpi_size": 8,
+    "full3d_equivalent_dofs": 89740,
+    "full3d_equivalent_dof_limit": 90000,
+    "full3d_equivalent_dof_margin": 260,
+    "active_rows_with_dtn": 20120,
+    "matrix_nnz_used": 11014172,
+    "matrix_nnz_allocated": 11301980,
+    "matrix_average_nnz_per_row": 547.4240556660039,
+    "matrix_maximum_nnz_per_row": 965,
+    "factor_nnz": 35746600,
+    "factor_fill_ratio": 3.245509512653334,
+    "canonical_orientation_class_reuse": true,
+    "direct_solver": "MUMPS",
+    "raw_petsc_options_used": false,
+    "typed_direct_options": {
+      "ksp_type": "preonly",
+      "pc_type": "lu",
+      "ksp_error_if_not_converged": true,
+      "pc_factor_mat_solver_type": "mumps",
+      "mat_mumps_icntl_14": 100
+    },
+    "cache_directory": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/cache"
+  },
+  "cold": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "all_profile_checks_pass": true,
+    "cache_mode": "read_write",
+    "timings_seconds": {
+      "solver_module_import": 2.2922302930091973,
+      "research_config_build": 0.0005180019943509251,
+      "mesh_build": 0.010059107997221872,
+      "bilinear_form_compile": 0.000002948014298453927,
+      "function_space_total": 7.835212039004546,
+      "fixed_trace_element_read": 0.0,
+      "fixed_trace_element_reconstruct": 0.0,
+      "fixed_trace_element_cold_build": 7.697897117002867,
+      "fixed_trace_element_write": 0.08555713397799991,
+      "tensor_total": 2.6925054570601787,
+      "tensor_cache_read": 0.00015163904754444957,
+      "tensor_cache_write": 0.32006988997454755,
+      "aii_factor": 0.26886952001950704,
+      "aii_solve": 1.1388830990181305,
+      "local_schur_total": 1.921893192018615,
+      "condensed_class_read": 0.17971962099545635,
+      "condensed_class_write": 3.715612983040046,
+      "trace_preallocation": 0.06570920598460361,
+      "cell_block_insertion": 0.036510883015580475,
+      "dtn_outer": 32.86387775398907,
+      "dtn_non_ksp": 19.40958555196994,
+      "base_condensed_matrix_assembly": 8.648587495001266,
+      "dtn_surface_setup": 0.6520929999824148,
+      "dtn_modal_loop": 6.179719264997402,
+      "full_explicit_residual": 3.557076984026935,
+      "postprocess_total": 3.807633888005512,
+      "common_solver": 45.56755940700532
+    },
+    "mumps": {
+      "symbolic_seconds_max": 0.1541991259999982,
+      "numeric_seconds_max": 13.266391328000001,
+      "combined_ksp_setup_wall_seconds": 13.420612664020155,
+      "backsolve_seconds": 0.03367953799897805,
+      "event_split_status": "measured_symbolic_numeric_split",
+      "collective_rank_payload_sha256": "aa5fbefa7a23714bd09f26a29c08c2415ae1fa00875e2977fb4ff9bb48c7837c"
+    },
+    "matrix": {
+      "active_rows": 20120,
+      "nnz_used": 11014172,
+      "nnz_allocated": 11301980,
+      "average_nnz_per_row": 547.4240556660039,
+      "maximum_nnz_per_row": 965,
+      "factor_nnz": 35746600,
+      "factor_fill_ratio": 3.245509512653334
+    },
+    "cache": {
+      "fixed_trace_element_hit_on_all_ranks": false,
+      "fixed_trace_element_identity_sha256": "bd5f3b7da7e9c8ac9234d16c771e5e3a2664800f2208ea1184eb3e96a897d47a",
+      "fixed_trace_element_payload_sha256": "f1dc4b02f034371faa26347ee24189d42bf4f886a2e436cb3356bb67361317c5",
+      "fixed_trace_element_signature_sha256": "6f73e28ff9fdc64a37068393ed0c5aa54ee01a7c530d745f0f5156a2f32f8236",
+      "raw_tensor_hits": 0,
+      "raw_tensor_misses": 6,
+      "raw_tensor_writes": 6,
+      "condensed_class_hits": 8,
+      "condensed_class_misses": 122,
+      "condensed_class_writes": 122,
+      "dtn_rank_bundle_hits": 0,
+      "dtn_rank_bundle_misses": 8,
+      "dtn_reduced_bundle_restores": 0,
+      "dtn_full_vectors_intentionally_not_materialized": 0
+    },
+    "canonical_orientation": {
+      "canonical_class_constructions": 20,
+      "oriented_classes_derived": 122,
+      "aii_factorizations_avoided": 102,
+      "persistent_lu_alias_restores": 8,
+      "used_set_equals_qualified_set": true,
+      "trace_interior_block_diagonal_proven": true,
+      "inactive_or_postzero_rows_created": false
+    },
+    "resource": {
+      "max_process_tree_rss_gib": 5.030036926269531,
+      "max_worker_rank_pss_sum_mb": 4308.5302734375,
+      "max_worker_rank_uss_sum_mb": 4196.09765625,
+      "max_process_tree_swap_mb": 0.0,
+      "max_worker_rank_thread_count_sum": 400
+    },
+    "physics": {
+      "full_explicit_true_residual": 3.944176397296566e-12,
+      "R00_total": 0.0007561175701050223,
+      "R_total": 0.0007652465115393972,
+      "T_total": 0.6026824516724333,
+      "A_closure": 0.3965523018160273
+    },
+    "artifacts": [
+      {
+        "role": "watchdog_authority",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/cold/watchdog_summary.json",
+        "sha256": "374fa65c2d5b7fb67dcd197545d0ec15b3c6e689771f08447d27ab71b39c6689"
+      },
+      {
+        "role": "worker_result",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/cold/worker_result.json",
+        "sha256": "0f71646d54d87c9f15ee2c09f4f3bf03b40735901eda821621845b6e61e8b575"
+      },
+      {
+        "role": "solve_summary",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/cold/solve/run_summary.json",
+        "sha256": "943a8a4215ea5d021f54dcb0eee5bdca677e3ab5a79449cef6f5afced66cbb39"
+      },
+      {
+        "role": "memory_timeline",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/cold/memory_timeline.csv",
+        "sha256": "ef7cd5907265a45ef2ad6e70605b0cf11123a85cef1028f017291a3bb8318417"
+      },
+      {
+        "role": "progress",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/cold/solve/progress_3d.jsonl",
+        "sha256": "8970b5ecac450013c4943514e99544c3c8e055b87d4a98d493592adbdf39c4f1"
+      },
+      {
+        "role": "stdout",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/cold/worker_stdout.txt",
+        "sha256": "8b0be4e67991f105d1efb3a62f40cd79b36a6f5b08efe83d8e920e7c61a64c9a"
+      }
+    ]
+  },
+  "warm": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "all_profile_checks_pass": true,
+    "cache_mode": "read_only",
+    "timings_seconds": {
+      "solver_module_import": 1.4227434739877935,
+      "research_config_build": 0.12937654502457008,
+      "mesh_build": 0.009055847011040896,
+      "bilinear_form_compile": 0.0000018629943951964378,
+      "function_space_total": 2.724715282995021,
+      "fixed_trace_element_read": 0.046484326012432575,
+      "fixed_trace_element_reconstruct": 2.5852160080103204,
+      "fixed_trace_element_cold_build": 0.0,
+      "fixed_trace_element_write": 0.0,
+      "tensor_total": 0.0,
+      "tensor_cache_read": 0.20679610705701634,
+      "tensor_cache_write": 0.0,
+      "aii_factor": 0.0,
+      "aii_solve": 0.0,
+      "local_schur_total": 0.0,
+      "condensed_class_read": 1.0199204190284945,
+      "condensed_class_write": 0.0,
+      "trace_preallocation": 0.06468006898649037,
+      "cell_block_insertion": 0.04404101995169185,
+      "dtn_outer": 19.563782893004827,
+      "dtn_non_ksp": 6.696055239008274,
+      "base_condensed_matrix_assembly": 2.0744938010175247,
+      "dtn_surface_setup": 0.6443149739934597,
+      "dtn_modal_loop": 0.036747981008375064,
+      "full_explicit_residual": 3.587370021996321,
+      "postprocess_total": 3.598060479009291,
+      "common_solver": 26.898542890994577
+    },
+    "mumps": {
+      "symbolic_seconds_max": 0.15860212800000006,
+      "numeric_seconds_max": 12.675489965999999,
+      "combined_ksp_setup_wall_seconds": 12.83411201601848,
+      "backsolve_seconds": 0.03361563797807321,
+      "event_split_status": "measured_symbolic_numeric_split",
+      "collective_rank_payload_sha256": "d024c74e5657b8c34ad923e96ea95f9d46c2d21d72aa6bd6ca1ba1cfa705b950"
+    },
+    "matrix": {
+      "active_rows": 20120,
+      "nnz_used": 11014172,
+      "nnz_allocated": 11301980,
+      "average_nnz_per_row": 547.4240556660039,
+      "maximum_nnz_per_row": 965,
+      "factor_nnz": 35746600,
+      "factor_fill_ratio": 3.245509512653334
+    },
+    "cache": {
+      "fixed_trace_element_hit_on_all_ranks": true,
+      "fixed_trace_element_identity_sha256": "bd5f3b7da7e9c8ac9234d16c771e5e3a2664800f2208ea1184eb3e96a897d47a",
+      "fixed_trace_element_payload_sha256": "f1dc4b02f034371faa26347ee24189d42bf4f886a2e436cb3356bb67361317c5",
+      "fixed_trace_element_signature_sha256": "6f73e28ff9fdc64a37068393ed0c5aa54ee01a7c530d745f0f5156a2f32f8236",
+      "raw_tensor_hits": 6,
+      "raw_tensor_misses": 0,
+      "raw_tensor_writes": 0,
+      "condensed_class_hits": 130,
+      "condensed_class_misses": 0,
+      "condensed_class_writes": 0,
+      "dtn_rank_bundle_hits": 8,
+      "dtn_rank_bundle_misses": 0,
+      "dtn_reduced_bundle_restores": 320,
+      "dtn_full_vectors_intentionally_not_materialized": 624
+    },
+    "canonical_orientation": {
+      "canonical_class_constructions": 0,
+      "oriented_classes_derived": 0,
+      "aii_factorizations_avoided": 0,
+      "persistent_lu_alias_restores": 110,
+      "used_set_equals_qualified_set": true,
+      "trace_interior_block_diagonal_proven": true,
+      "inactive_or_postzero_rows_created": false
+    },
+    "resource": {
+      "max_process_tree_rss_gib": 5.015933990478516,
+      "max_worker_rank_pss_sum_mb": 4298.9189453125,
+      "max_worker_rank_uss_sum_mb": 4187.609375,
+      "max_process_tree_swap_mb": 0.0,
+      "max_worker_rank_thread_count_sum": 400
+    },
+    "physics": {
+      "full_explicit_true_residual": 5.5089031607070936e-12,
+      "R00_total": 0.0007561175701105907,
+      "R_total": 0.0007652465115448204,
+      "T_total": 0.6026824516723616,
+      "A_closure": 0.3965523018160936
+    },
+    "artifacts": [
+      {
+        "role": "watchdog_authority",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/warm/watchdog_summary.json",
+        "sha256": "b822d6df07e844e30f1edf15b72a585e9520307cfe82006209d5f8b95c7a6b8d"
+      },
+      {
+        "role": "worker_result",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/warm/worker_result.json",
+        "sha256": "d4ea0b0c28b19c71613736e164039762f03cf9bb53bda14972901b6973f1fe9d"
+      },
+      {
+        "role": "solve_summary",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/warm/solve/run_summary.json",
+        "sha256": "9b8654bf4b6495ac3e0477e21ede6de6f7304e136a6a7119c77872667d853f75"
+      },
+      {
+        "role": "memory_timeline",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/warm/memory_timeline.csv",
+        "sha256": "ca64c6b2ccf16693b558eccb3171a0752d9f1f2d3c9a03399ff30d9b9685bdcf"
+      },
+      {
+        "role": "progress",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/warm/solve/progress_3d.jsonl",
+        "sha256": "3812d626fa3e9b26f7c7b4cb13bd07670d3639568ef6302955361747f865d273"
+      },
+      {
+        "role": "stdout",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h13_canonical_orientation_mpi8_a20b8b404f66b983596326c912a88fb8be3b255c_v1/warm/worker_stdout.txt",
+        "sha256": "7b6f3abf707c44935d3dba7205bb4a8bc5d351158fa9036b6f234c2139b6b981"
+      }
+    ]
+  },
+  "comparison": {
+    "cold_to_warm_common_solver_speedup": 1.6940530790707249,
+    "cold_to_warm_non_ksp_speedup": 2.898659712198643,
+    "cold_non_ksp_at_or_below_30_seconds_pass": true,
+    "warm_non_ksp_below_10_seconds_pass": true,
+    "cold_warm_rows_nnz_and_factor_nnz_identical": true,
+    "max_cold_warm_physics_abs_delta": 7.172040739078511e-14,
+    "cold_warm_physical_closure_pass": true,
+    "zero_swap_both_runs": true,
+    "warm_rss_change_vs_cold_gib": -0.014102935791015625,
+    "h15_setup_authority_record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v2.json",
+    "h13_over_h15_full3d_equivalent_dof_ratio": 1.1982908265456003,
+    "h13_over_h15_active_row_ratio": 1.1919431279620853,
+    "h13_over_h15_matrix_nnz_ratio": 1.1976128145832037,
+    "h13_over_h15_factor_nnz_ratio": 1.3461242995722118,
+    "h13_over_h15_cold_rss_ratio": 1.0930651473439623,
+    "h13_over_h15_warm_rss_ratio": 1.1265318606452321,
+    "h13_over_h15_cold_numeric_factor_time_ratio": 2.284617611861756,
+    "h13_over_h15_warm_numeric_factor_time_ratio": 2.1028180420162377
+  },
+  "scope_and_decision": {
+    "setup_targets_pass": true,
+    "h13_within_90000_full3d_equivalent_dof_gate": true,
+    "dof_margin_is_only_260": true,
+    "memory_interpretation": "MPI8 process-tree peaks are 5.030 GiB cold and 5.016 GiB warm with zero swap. They are measured points, not a lower bound. Relative to h15, factor NNZ grows faster than rows and used NNZ, explaining part of the nonlinear direct-factor cost.",
+    "timing_interpretation": "The complete non-KSP build ledger is 19.410 s cold and 6.696 s warm. MUMPS symbolic, numeric, backsolve, residual and postprocess are reported separately and are not hidden inside these build figures.",
+    "significant_power_pass_count": null,
+    "significant_complex_amplitude_pass_count": null,
+    "twelve_of_twelve_gate_claimed": false,
+    "not_a_12_of_12_candidate": true,
+    "hybrid_promotion_allowed": false,
+    "heavy_pair_should_not_be_repeated_without_relevant_source_or_identity_change": true,
+    "historical_artifacts_deleted": false,
+    "candidate_promotion": false
+  }
+}
