@@ -1,0 +1,103 @@
+{
+  "schema_version": "task035b.condensed-cache-rank-independent-cold-warm.v2",
+  "benchmark_id": "task035b_h15_condensed_cache_rank_independent_mpi8",
+  "status": "positive_rank_independent_cold_warm_cache",
+  "classification": "positive_setup_rearchitecture_evidence",
+  "pass": true,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "commit_sha": "3f1b25eb31da72d0aa3515c9aa989f6d693760b9",
+    "clean_and_stable_for_both_runs": true
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 15.0,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "mpi_size": 8,
+    "full3d_equivalent_dofs": 74890,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9195812,
+    "cache_identity_schema": "task035b.persistent-condensed-class-identity.v2",
+    "cache_manifest_schema": "task035b.condensed-class-cache-manifest.v2",
+    "cache_directory": "benchmarks/artifacts/task035b/direct_setup_profile/condensed_setup_cache/3f1b25eb31da72d0aa3515c9aa989f6d693760b9"
+  },
+  "cold": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "common_solver_seconds": 54.111504472995875,
+    "condensed_build_non_ksp_seconds": 25.97119228899828,
+    "mumps_symbolic_numeric_seconds": 6.5309843870054465,
+    "max_process_tree_rss_gib": 4.589038848876953,
+    "max_worker_rank_pss_sum_mb": 3841.3779296875,
+    "max_worker_rank_uss_sum_mb": 3721.17578125,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 8.837463715812149e-12,
+    "R_total": 0.0007650243181076003,
+    "T_total": 0.6026851467954976,
+    "A_closure": 0.3965498288863948,
+    "raw_tensor_cache_hits": 0,
+    "raw_tensor_cache_misses": 6,
+    "condensed_class_cache_hits": 4,
+    "condensed_class_cache_misses": 106,
+    "condensed_class_constructions": 106,
+    "condensed_class_writes": 106,
+    "unique_condensed_manifests": 106,
+    "same_job_cross_rank_reuse_count": 4,
+    "watchdog": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T031146Z/watchdog_summary.json",
+      "sha256": "595f4e117c208e8d79cc88abfd148a2962e01edc9914d26b662e1e8405b47d12"
+    }
+  },
+  "warm": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "common_solver_seconds": 38.42003462300636,
+    "condensed_build_non_ksp_seconds": 10.081633944966597,
+    "mumps_symbolic_numeric_seconds": 7.040632528020069,
+    "max_process_tree_rss_gib": 4.666282653808594,
+    "max_worker_rank_pss_sum_mb": 3927.1005859375,
+    "max_worker_rank_uss_sum_mb": 3807.92578125,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 6.973330876156235e-12,
+    "R_total": 0.0007650243181121836,
+    "T_total": 0.6026851467960569,
+    "A_closure": 0.3965498288858309,
+    "raw_tensor_cache_hits": 6,
+    "raw_tensor_cache_misses": 0,
+    "condensed_class_cache_hits": 110,
+    "condensed_class_cache_misses": 0,
+    "condensed_class_constructions": 0,
+    "condensed_class_writes": 0,
+    "projection_alias_restore_count": 110,
+    "projection_alias_retained_bytes_elided": 534600000,
+    "persistent_condensed_cache_read_seconds": 0.8433776800520718,
+    "watchdog": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_mpi8_20260725T031305Z/watchdog_summary.json",
+      "sha256": "66be4c0befac00fa626788c831c57a5267b70bd818bd66aedcccf4d27fc34e75"
+    }
+  },
+  "comparison": {
+    "physical_closure_pass": true,
+    "warm_all_raw_tensors_hit_without_recompute": true,
+    "warm_all_condensed_classes_hit_without_recompute": true,
+    "rank_and_mpi_size_removed_from_content_digest": true,
+    "cross_rank_same_job_reuse_observed": true,
+    "cold_build_25_to_30_second_preferred_target_pass": true,
+    "cold_to_warm_build_speedup": 2.5760895932910537,
+    "warm_build_10_second_preferred_target_pass": false,
+    "warm_build_preferred_target_miss_seconds": 0.08163394496659748,
+    "warm_minus_cold_rss_gib": 0.07724380493164062,
+    "warm_rss_increase_percent": 1.6832240361300062,
+    "projection_alias_memory_defect_fixed": true,
+    "zero_swap_both_runs": true
+  },
+  "decision": {
+    "historical_rank_partition_negative_preserved": true,
+    "cache_lane_status": "positive_core_goal_met_with_narrow_warm_timing_miss",
+    "next_minimal_action": "Profile the remaining warm-build floor before deciding whether the 0.082 second preferred-target miss justifies another code change; do not rerun this heavy pair for noise.",
+    "candidate_promotion": false
+  },
+  "scope_limit": "This record qualifies the setup/cache implementation only. It is not a Task035b 12/12 diffraction-channel candidate."
+}

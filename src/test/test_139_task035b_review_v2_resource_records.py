@@ -137,3 +137,36 @@ def test_rank_partition_warm_cache_negative_is_preserved() -> None:
     assert record["decision"]["historical_artifacts_deleted"] is False
     assert record["decision"]["candidate_promotion"] is False
     assert record["ordinary_default_changed"] is False
+
+
+def test_rank_independent_warm_cache_reuses_every_condensed_class() -> None:
+    record = _record(
+        "h15_condensed_cache_rank_independent_cold_warm_mpi8_v2.json"
+    )
+    cold = record["cold"]
+    warm = record["warm"]
+    comparison = record["comparison"]
+
+    assert record["pass"] is True
+    assert cold["formal_profile_pass"] is True
+    assert warm["formal_profile_pass"] is True
+    assert cold["same_job_cross_rank_reuse_count"] == 4
+    assert cold["condensed_class_constructions"] == 106
+    assert cold["unique_condensed_manifests"] == 106
+    assert warm["raw_tensor_cache_hits"] == 6
+    assert warm["raw_tensor_cache_misses"] == 0
+    assert warm["condensed_class_cache_hits"] == 110
+    assert warm["condensed_class_cache_misses"] == 0
+    assert warm["condensed_class_constructions"] == 0
+    assert warm["projection_alias_restore_count"] == 110
+    assert cold["full_explicit_true_residual"] <= 1.0e-9
+    assert warm["full_explicit_true_residual"] <= 1.0e-9
+    assert comparison["warm_all_condensed_classes_hit_without_recompute"]
+    assert comparison["cold_build_25_to_30_second_preferred_target_pass"]
+    assert comparison["cold_to_warm_build_speedup"] >= 2.0
+    assert comparison["warm_build_10_second_preferred_target_pass"] is False
+    assert 0.0 < comparison["warm_build_preferred_target_miss_seconds"] < 0.1
+    assert comparison["zero_swap_both_runs"] is True
+    assert record["decision"]["historical_rank_partition_negative_preserved"]
+    assert record["decision"]["candidate_promotion"] is False
+    assert record["ordinary_default_changed"] is False
