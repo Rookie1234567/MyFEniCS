@@ -31,6 +31,13 @@ from .common_3d_solve import (
     _petsc_matrix_stats,
 )
 from .common_3d_utils import _write_progress_event
+from .condensed_iterative_profiles import (
+    PHYSICS_AWARE_PROFILE,
+    condensed_iterative_profile,
+    condensed_iterative_profile_contract,
+    configure_condensed_iterative_outer_ksp,
+    configure_dtn_trace_deflation_pc,
+)
 from .hcurl_cell_static_condensation import (
     build_explicit_cell_static_condensation,
     build_floquet_independent_trace_system,
@@ -1246,24 +1253,24 @@ def _solve_augmented_system(
     matrix_stats: dict[str, Any] | None = None,
     factorization_only: bool = False,
     iterative_profile: str | None = None,
+    dtn_auxiliary_rows: int | None = None,
 ) -> tuple[PETSc.Vec, PETSc.KSP, dict[str, Any]]:
-    supported_iterative_profiles = {
-        "gmres_jacobi",
-        "fgmres_asm_ilu",
-    }
-    if (
-        iterative_profile is not None
-        and iterative_profile not in supported_iterative_profiles
-    ):
-        raise ValueError(
-            "unsupported condensed iterative profile "
-            f"{iterative_profile!r}; expected one of "
-            f"{sorted(supported_iterative_profiles)}"
-        )
+    iterative_definition = (
+        None
+        if iterative_profile is None
+        else condensed_iterative_profile(iterative_profile)
+    )
     if iterative_profile is not None and factorization_only:
         raise ValueError(
             "factorization-only diagnostics are incompatible with the "
             "condensed iterative profile"
+        )
+    if iterative_profile == PHYSICS_AWARE_PROFILE and (
+        dtn_auxiliary_rows is None or int(dtn_auxiliary_rows) <= 0
+    ):
+        raise ValueError(
+            "the DtN-trace deflation profile requires the positive physical "
+            "DtN auxiliary-row count"
         )
     progress_comm = comm if comm is not None else A_aug.getComm()
     if out_dir is not None:
@@ -1291,28 +1298,15 @@ def _solve_augmented_system(
             del opts[key]
         opts.prefixPop()
     else:
-        ksp.setType(
-            "gmres"
-            if iterative_profile == "gmres_jacobi"
-            else "fgmres"
+        assert iterative_definition is not None
+        configure_condensed_iterative_outer_ksp(
+            ksp,
+            iterative_definition,
         )
-        ksp.setGMRESRestart(30)
-        ksp.setTolerances(
-            rtol=1.0e-8,
-            atol=1.0e-12,
-            divtol=1.0e8,
-            max_it=200,
-        )
-        # Review V2 requires an unpreconditioned residual reduction screen.
-        # PETSc otherwise defaults GMRES history to a preconditioned norm,
-        # which cannot be relabelled as physical reduced-system progress.
-        ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
-        ksp.setInitialGuessNonzero(False)
-        ksp.setConvergenceHistory(length=201, reset=True)
         pc = ksp.getPC()
         if iterative_profile == "gmres_jacobi":
             pc.setType("jacobi")
-        else:
+        elif iterative_profile == "fgmres_asm_ilu":
             pc.setType("asm")
             pc.setASMType(PETSc.PC.ASMType.RESTRICT)
             pc.setASMOverlap(1)
@@ -1353,7 +1347,17 @@ def _solve_augmented_system(
             extra={"stage_semantics": "external sampler labels samples while KSPSetUp is running"},
         )
     setup_started = time.perf_counter()
+    physics_aware_context = None
     try:
+        if iterative_profile == PHYSICS_AWARE_PROFILE:
+            assert dtn_auxiliary_rows is not None
+            matrix_rows = int(A_aug.getSize()[0])
+            physics_aware_context = configure_dtn_trace_deflation_pc(
+                ksp,
+                A_aug,
+                trace_rows=matrix_rows - int(dtn_auxiliary_rows),
+                dtn_auxiliary_rows=int(dtn_auxiliary_rows),
+            )
         ksp.setUp()
         if iterative_profile == "fgmres_asm_ilu":
             sub_ksps = ksp.getPC().getASMSubKSP()
@@ -1362,7 +1366,9 @@ def _solve_augmented_system(
                 sub_ksp.getPC().setType("ilu")
                 sub_ksp.getPC().setFactorLevels(0)
             ksp.setUp()
-    except PETSc.Error as exc:
+    except (PETSc.Error, RuntimeError, ValueError) as exc:
+        if iterative_profile is None and not isinstance(exc, PETSc.Error):
+            raise
         failure_type = _petsc_solve_failure_type(iterative_profile)
         raise failure_type(
             (
@@ -1385,10 +1391,43 @@ def _solve_augmented_system(
             ),
         ) from exc
     setup_seconds = float(progress_comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX))
-    factor_inventory = (
-        _petsc_factor_inventory(ksp)
-        if iterative_profile is None
-        else {
+    if iterative_profile is None:
+        factor_inventory = _petsc_factor_inventory(ksp)
+    elif physics_aware_context is not None:
+        physics_inventory = physics_aware_context.diagnostics
+        factor_inventory = {
+            "available": False,
+            "factor_solver_type": None,
+            "matrix_stats": None,
+            "mumps_raw_infog": {},
+            "mumps_raw_rinfog": {},
+            "mumps_api_available": False,
+            "mumps_symbolic_or_numeric_created": False,
+            "global_direct_factor_nnz": 0,
+            "global_fine_sparse_factor_nnz": 0,
+            "local_subdomain_ilu_active": False,
+            "coarse_dense_lu_active": True,
+            "coarse_dense_matrix_entries": physics_inventory[
+                "coarse_dense_matrix_entries"
+            ],
+            "coarse_dense_matrix_bytes": physics_inventory[
+                "coarse_dense_matrix_bytes"
+            ],
+            "coarse_dense_lu_storage_semantics": physics_inventory[
+                "coarse_dense_lu_storage_semantics"
+            ],
+            "fine_operator_factor_free": True,
+            "strictly_factorless_preconditioner": False,
+            "limitations": [
+                "global fine sparse direct factor deliberately absent",
+                (
+                    "small replicated dense DtN-trace Galerkin LU is "
+                    "reported separately"
+                ),
+            ],
+        }
+    else:
+        factor_inventory = {
             "available": False,
             "factor_solver_type": None,
             "matrix_stats": None,
@@ -1409,7 +1448,6 @@ def _solve_augmented_system(
                 ),
             ],
         }
-    )
     if out_dir is not None:
         _write_progress_event(
             out_dir,
@@ -1546,10 +1584,16 @@ def _solve_augmented_system(
             "matrix_free": False,
             "ksp_type": ksp.getType(),
             "pc_type": ksp.getPC().getType(),
-            "restart": 30,
-            "maximum_iterations": 200,
-            "relative_tolerance": 1.0e-8,
-            "absolute_tolerance": 1.0e-12,
+            "restart": iterative_definition.restart,
+            "maximum_iterations": (
+                iterative_definition.maximum_iterations
+            ),
+            "relative_tolerance": (
+                iterative_definition.relative_tolerance
+            ),
+            "absolute_tolerance": (
+                iterative_definition.absolute_tolerance
+            ),
             "converged_reason": int(ksp.getConvergedReason()),
             "iterations": int(ksp.getIterationNumber()),
             "residual_history": convergence_history,
@@ -1579,6 +1623,14 @@ def _solve_augmented_system(
                 ),
             },
             "ordinary_default_changed": False,
+            "typed_profile_contract": (
+                condensed_iterative_profile_contract(iterative_profile)
+            ),
+            "physics_aware_preconditioner": (
+                None
+                if physics_aware_context is None
+                else physics_aware_context.diagnostics
+            ),
         }
     )
     if out_dir is not None:
@@ -3042,6 +3094,7 @@ def solve_stage4_dtn_port_total_field(
             ),
             factorization_only=cfg.matrix_diagnostics_factorization_only,
             iterative_profile=cfg.stage4_condensed_iterative_profile,
+            dtn_auxiliary_rows=int(n_aux),
         )
     except (CondensedIterativeSolveFailure, DirectSolveFailure) as exc:
         exc.timing_details.update(timing_details)

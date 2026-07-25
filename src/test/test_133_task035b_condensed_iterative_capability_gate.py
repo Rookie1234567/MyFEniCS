@@ -84,10 +84,13 @@ def test_factor_removal_envelope_keeps_measured_and_derived_separate() -> None:
     ]
 
 
-def test_live_code_capability_stops_raw_override_from_becoming_evidence() -> None:
+def test_live_code_capability_distinguishes_default_from_typed_opt_in() -> None:
     capability = _code_capability()
     assert capability["petsc_hypre_available"] is False
     assert capability["public_solver_profile_is_direct_only"] is True
+    assert capability["public_solver_profile_semantics"] == (
+        "ordinary_default_direct_mumps_with_explicit_research_opt_in"
+    )
     assert capability["default_ksp_type"] == "preonly"
     assert capability["default_pc_type"] == "lu"
     assert capability[
@@ -96,10 +99,20 @@ def test_live_code_capability_stops_raw_override_from_becoming_evidence() -> Non
     assert capability[
         "raw_override_preserves_correct_iterative_provenance"
     ] is False
-    assert capability["dedicated_condensed_iterative_hook_exists"] is False
-    assert capability["iterative_residual_history_contract_exists"] is False
-    assert capability["factor_free_inventory_contract_exists"] is False
-    assert capability["candidate_capability_pass"] is False
+    assert capability["dedicated_condensed_iterative_hook_exists"] is True
+    assert capability["iterative_residual_history_contract_exists"] is True
+    assert capability["factor_free_inventory_contract_exists"] is True
+    assert capability["typed_explicit_research_opt_in_exists"] is True
+    assert (
+        capability["typed_profile_name"]
+        == "fgmres_dtn_trace_deflation"
+    )
+    assert capability["selected_profile_requires_hypre"] is False
+    assert capability[
+        "hypre_unavailable_but_not_required_for_selected_profile"
+    ] is True
+    assert all(capability["capability_checks"].values())
+    assert capability["candidate_capability_pass"] is True
 
 
 def test_gate_is_valid_controlled_stop_without_iterative_pde() -> None:

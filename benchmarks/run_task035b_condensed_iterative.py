@@ -45,7 +45,12 @@ DEFAULT_ARTIFACT_ROOT = (
     / "task035b"
     / "condensed_iterative"
 )
-SUPPORTED_PROFILES = ("gmres_jacobi", "fgmres_asm_ilu")
+PHYSICS_AWARE_PROFILE = "fgmres_dtn_trace_deflation"
+SUPPORTED_PROFILES = (
+    "gmres_jacobi",
+    "fgmres_asm_ilu",
+    PHYSICS_AWARE_PROFILE,
+)
 EXPECTED_H15_TOPOLOGY = {
     "mesh_cells_resolved": [6, 2, 10],
     "num_mesh_cells": 120,
@@ -191,6 +196,13 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
         "mpi_size": int(args.mpi_size),
         "selected_profile": args.profile,
         "supported_programmatic_profiles": list(SUPPORTED_PROFILES),
+        "profile_evidence_status": {
+            "gmres_jacobi": "closed_controlled_negative",
+            "fgmres_asm_ilu": "closed_controlled_negative",
+            "fgmres_dtn_trace_deflation": (
+                "not_run_requires_formal_discriminator"
+            ),
+        },
         "raw_petsc_options_accepted": False,
         "formal_first_screen": {
             "restart": 30,
@@ -200,6 +212,16 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             "full_recovered_true_residual_required": True,
             "global_direct_factor_nnz_required": 0,
             "swap_allowed": False,
+        },
+        "physics_aware_discriminator": {
+            "profile": "fgmres_dtn_trace_deflation",
+            "coarse_basis": (
+                "one normalized [-diag(A_tt)^-1 B_j; e_j] vector per "
+                "physical DtN auxiliary mode"
+            ),
+            "fine_sparse_factor_nnz": 0,
+            "small_dense_coarse_factor_reported_separately": True,
+            "status": "not_run",
         },
         "next_action": (
             "rerun with --execute-pde and an explicit --profile after "
@@ -554,6 +576,12 @@ def _extract_solver_evidence(
             "assembled_reduced_operator"
         ),
         "matrix_free": iterative.get("matrix_free"),
+        "typed_profile_contract": iterative.get(
+            "typed_profile_contract"
+        ),
+        "physics_aware_preconditioner": iterative.get(
+            "physics_aware_preconditioner"
+        ),
         "global_direct_factor_nnz": iterative.get(
             "global_direct_factor_nnz",
             factor_inventory.get("global_direct_factor_nnz"),
@@ -632,6 +660,130 @@ def _classify_screen(
     )
     process_swap = telemetry.get("max_process_tree_swap_mb")
     smaps_swap = telemetry.get("max_worker_rank_smaps_swap_sum_mb")
+    physics_aware_checks: dict[str, bool] = {}
+    if expected_profile == PHYSICS_AWARE_PROFILE:
+        contract = evidence.get("typed_profile_contract")
+        physics = evidence.get("physics_aware_preconditioner")
+        inventory = evidence.get("factor_inventory")
+        contract = contract if isinstance(contract, dict) else {}
+        physics = physics if isinstance(physics, dict) else {}
+        inventory = inventory if isinstance(inventory, dict) else {}
+        coarse_dimension = physics.get("coarse_dimension")
+        coarse_rank = physics.get("coarse_rank")
+        coarse_entries = physics.get("coarse_dense_matrix_entries")
+        coarse_bytes = physics.get("coarse_dense_matrix_bytes")
+        inventory_entries = inventory.get(
+            "coarse_dense_matrix_entries"
+        )
+        inventory_bytes = inventory.get("coarse_dense_matrix_bytes")
+        physics_aware_checks = {
+            "typed_profile_contract_present": bool(contract),
+            "typed_profile_contract_schema": (
+                contract.get("schema_version")
+                == "task035b.condensed-iterative-profile-contract.v2"
+            ),
+            "typed_profile_contract_name": (
+                contract.get("name") == expected_profile
+            ),
+            "typed_profile_contract_programmatic": (
+                contract.get("configured_programmatically") is True
+            ),
+            "typed_profile_contract_rejects_raw_options": (
+                contract.get("raw_petsc_options_accepted") is False
+            ),
+            "typed_profile_contract_assembled_reduced_operator": (
+                contract.get("assembled_reduced_operator") is True
+            ),
+            "typed_profile_contract_not_matrix_free": (
+                contract.get("matrix_free") is False
+            ),
+            "typed_profile_contract_ordinary_default_unchanged": (
+                contract.get("ordinary_default_changed") is False
+            ),
+            "physics_aware_preconditioner_present": bool(physics),
+            "physics_aware_coarse_full_rank": (
+                isinstance(coarse_dimension, int)
+                and not isinstance(coarse_dimension, bool)
+                and coarse_dimension > 0
+                and coarse_rank == coarse_dimension
+            ),
+            "physics_aware_fine_operator_factor_free": (
+                physics.get("fine_operator_factor_free") is True
+            ),
+            "physics_aware_global_fine_sparse_factor_absent": (
+                physics.get("global_fine_sparse_factor_nnz") == 0
+            ),
+            "physics_aware_mumps_absent": (
+                physics.get("mumps_symbolic_or_numeric_created") is False
+            ),
+            "physics_aware_dense_coarse_lu_disclosed": (
+                physics.get("coarse_dense_lu_active") is True
+            ),
+            "physics_aware_not_strictly_factorless": (
+                physics.get("strictly_factorless_preconditioner") is False
+            ),
+            "physics_aware_factor_disclosure_reason_recorded": (
+                isinstance(
+                    physics.get("strictly_factorless_reason"),
+                    str,
+                )
+                and bool(
+                    physics["strictly_factorless_reason"].strip()
+                )
+            ),
+            "physics_aware_dense_coarse_entries_consistent": (
+                isinstance(coarse_entries, int)
+                and not isinstance(coarse_entries, bool)
+                and isinstance(coarse_dimension, int)
+                and not isinstance(coarse_dimension, bool)
+                and coarse_entries == coarse_dimension * coarse_dimension
+            ),
+            "physics_aware_dense_coarse_bytes_consistent": (
+                isinstance(coarse_bytes, int)
+                and not isinstance(coarse_bytes, bool)
+                and isinstance(coarse_entries, int)
+                and not isinstance(coarse_entries, bool)
+                and coarse_bytes == coarse_entries * 16
+            ),
+            "factor_inventory_dense_coarse_lu_disclosed": (
+                inventory.get("coarse_dense_lu_active") is True
+            ),
+            "factor_inventory_fine_operator_factor_free": (
+                inventory.get("fine_operator_factor_free") is True
+            ),
+            "factor_inventory_global_fine_sparse_factor_absent": (
+                inventory.get("global_fine_sparse_factor_nnz") == 0
+            ),
+            "factor_inventory_mumps_absent": (
+                inventory.get("mumps_symbolic_or_numeric_created")
+                is False
+            ),
+            "factor_inventory_not_strictly_factorless": (
+                inventory.get("strictly_factorless_preconditioner")
+                is False
+            ),
+            "factor_inventory_dense_coarse_entries_match": (
+                inventory_entries == coarse_entries
+                and isinstance(inventory_entries, int)
+                and not isinstance(inventory_entries, bool)
+            ),
+            "factor_inventory_dense_coarse_bytes_match": (
+                inventory_bytes == coarse_bytes
+                and isinstance(inventory_bytes, int)
+                and not isinstance(inventory_bytes, bool)
+            ),
+            "factor_inventory_dense_coarse_semantics_recorded": (
+                isinstance(
+                    inventory.get("coarse_dense_lu_storage_semantics"),
+                    str,
+                )
+                and bool(
+                    inventory[
+                        "coarse_dense_lu_storage_semantics"
+                    ].strip()
+                )
+            ),
+        }
     topology_checks = {
         "fixed_rectangular_hexa_h15": (
             evidence.get("mesh_cell_type") == "hexahedron"
@@ -701,6 +853,7 @@ def _classify_screen(
         "no_worker_smaps_swap": (
             _finite_number(smaps_swap) and float(smaps_swap) == 0.0
         ),
+        **physics_aware_checks,
         **topology_checks,
         "ordinary_default_unchanged": (
             evidence.get("ordinary_default_changed") is False

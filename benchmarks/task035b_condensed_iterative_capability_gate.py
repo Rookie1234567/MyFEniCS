@@ -1,11 +1,12 @@
-"""Audit whether the Task035b condensed trace system can run a formal GMRES screen.
+"""Audit whether the Task035b condensed trace system can run a formal screen.
 
-Review V1 permits a lightweight factor-free prototype, but the accepted h15
-path is still a direct-only MUMPS path.  This pure postprocess binds the best
-MPI8 h15 direct authority, recomputes its matrix/factor/memory anatomy, and
-checks the live PETSc/code capability.  It deliberately does not use raw
-``petsc_extra_options`` to make an iterative run look qualified under direct
-solver provenance.
+The ordinary Stage-4 default remains direct MUMPS.  Review V2 now also has an
+explicit typed research-only condensed iterative profile.  This pure
+postprocess distinguishes that opt-in capability from both the ordinary
+default and an unqualified raw ``petsc_extra_options`` override.
+
+The tracked Review-V1 ``condensed_trace_iterative_capability_gate.json`` is
+historical controlled-stop evidence and is never rewritten by this module.
 """
 
 from __future__ import annotations
@@ -53,9 +54,11 @@ AUTHORITY_SOURCE_SHA = "7f61d554b0441d7b224c096aba402d3b3ac2baa6"
 AUTHORITY_SCHEMA = "task035b.fixed-trace-watchdog.v1"
 SOURCE_FILES = (
     "benchmarks/task035b_condensed_iterative_capability_gate.py",
+    "benchmarks/run_task035b_condensed_iterative.py",
     "benchmarks/run_task035_actual_r5.py",
     "src/common/config_3d.py",
     "src/solvers/common_3d_solve.py",
+    "src/solvers/condensed_iterative_profiles.py",
     "src/solvers/dtn_port_3d.py",
 )
 GIB = 1024**3
@@ -366,8 +369,188 @@ def _derived_factor_removal_envelope(
     }
 
 
+def _typed_iterative_contract_probe() -> dict[str, bool]:
+    """Exercise the live evidence extraction/classifier without a PDE."""
+
+    from benchmarks.run_task035b_condensed_iterative import (
+        _classify_screen,
+        _extract_solver_evidence,
+        SUPPORTED_PROFILES,
+    )
+    from src.solvers.condensed_iterative_profiles import (
+        PHYSICS_AWARE_PROFILE,
+        SUPPORTED_CONDENSED_ITERATIVE_PROFILES,
+        condensed_iterative_profile_contract,
+    )
+
+    coarse_dimension = 80
+    coarse_entries = coarse_dimension * coarse_dimension
+    coarse_bytes = coarse_entries * 16
+    contract = condensed_iterative_profile_contract(
+        PHYSICS_AWARE_PROFILE
+    )
+    physics = {
+        "coarse_dimension": coarse_dimension,
+        "coarse_rank": coarse_dimension,
+        "coarse_dense_lu_active": True,
+        "coarse_dense_matrix_entries": coarse_entries,
+        "coarse_dense_matrix_bytes": coarse_bytes,
+        "strictly_factorless_preconditioner": False,
+        "strictly_factorless_reason": (
+            "the small dense Galerkin coarse LU is retained"
+        ),
+        "fine_operator_factor_free": True,
+        "global_fine_sparse_factor_nnz": 0,
+        "mumps_symbolic_or_numeric_created": False,
+    }
+    inventory = {
+        "global_direct_factor_nnz": 0,
+        "global_fine_sparse_factor_nnz": 0,
+        "mumps_symbolic_or_numeric_created": False,
+        "coarse_dense_lu_active": True,
+        "coarse_dense_matrix_entries": coarse_entries,
+        "coarse_dense_matrix_bytes": coarse_bytes,
+        "coarse_dense_lu_storage_semantics": (
+            "small replicated dense coarse LU; no global fine sparse factor"
+        ),
+        "fine_operator_factor_free": True,
+        "strictly_factorless_preconditioner": False,
+        "local_subdomain_ilu_active": False,
+    }
+    worker = {
+        "status": "worker_completed_with_summary",
+        "rank_failures": [],
+        "summary": {
+            "case_status": "completed",
+            "official_result": True,
+            "diagnostic_only": False,
+            "postprocess_skipped": False,
+            "linear_solve_method": "assembled_condensed_iterative",
+            "stage4_condensed_iterative_profile": PHYSICS_AWARE_PROFILE,
+            "stage4_condensed_iterative": {
+                "configured_programmatically": True,
+                "raw_petsc_options_used_for_iterative_configuration": False,
+                "assembled_reduced_operator": True,
+                "matrix_free": False,
+                "residual_history": [1.0, 1.0e-4],
+                "residual_history_initial_norm": 1.0,
+                "residual_history_final_norm": 1.0e-4,
+                "residual_history_final_to_initial": 1.0e-4,
+                "terminal_explicit_reduced_residual_norm": 1.0e-4,
+                "terminal_explicit_reduced_relative_residual": 1.0e-4,
+                "global_direct_factor_nnz": 0,
+                "mumps_symbolic_or_numeric_created": False,
+                "typed_profile_contract": contract,
+                "physics_aware_preconditioner": physics,
+            },
+            "stage4_dtn_factor_inventory": inventory,
+            "actual_ksp_type": "fgmres",
+            "actual_pc_type": "python",
+            "ksp_converged": True,
+            "ksp_converged_reason": 2,
+            "ksp_converged_reason_name": "CONVERGED_RTOL",
+            "ksp_iterations": 40,
+            "mpi_size": 8,
+            "mesh_cell_type_actual": "hexahedron",
+            "mesh_cells_resolved": [6, 2, 10],
+            "num_mesh_cells": 120,
+            "num_nedelec_dofs": 74890,
+            "matrix_stats": {
+                "matrix_rows": 16880,
+                "matrix_nnz_used": 9195812,
+            },
+            "config": {
+                "mesh_target_size": 15.0,
+                "nedelec_trace_degree_resolved": 5,
+                "nedelec_interior_degree_resolved": 6,
+            },
+            "cell_static_condensation": {
+                "full_explicit_true_residual": {
+                    "linear_system_relative_residual": 1.0e-10,
+                }
+            },
+        },
+    }
+    evidence = _extract_solver_evidence(worker)
+    telemetry = {
+        "observed_worker_rank_count": 8,
+        "max_process_tree_swap_mb": 0.0,
+        "max_worker_rank_smaps_swap_sum_mb": 0.0,
+    }
+
+    def classify(candidate: dict[str, Any]) -> dict[str, Any]:
+        return _classify_screen(
+            candidate,
+            telemetry,
+            expected_profile=PHYSICS_AWARE_PROFILE,
+            expected_mpi_size=8,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            telemetry_readable=True,
+        )
+
+    passing = classify(evidence)
+    raw_tampered = json.loads(json.dumps(evidence))
+    raw_tampered["typed_profile_contract"][
+        "raw_petsc_options_accepted"
+    ] = True
+    missing_inventory = json.loads(json.dumps(evidence))
+    missing_inventory["factor_inventory"].pop(
+        "coarse_dense_matrix_bytes"
+    )
+    return {
+        "profile_registered_in_solver": (
+            PHYSICS_AWARE_PROFILE
+            in SUPPORTED_CONDENSED_ITERATIVE_PROFILES
+        ),
+        "profile_registered_in_runner": (
+            PHYSICS_AWARE_PROFILE in SUPPORTED_PROFILES
+        ),
+        "typed_contract_schema": (
+            contract.get("schema_version")
+            == "task035b.condensed-iterative-profile-contract.v2"
+        ),
+        "typed_contract_identity": (
+            contract.get("name") == PHYSICS_AWARE_PROFILE
+        ),
+        "typed_contract_rejects_raw_options": (
+            contract.get("raw_petsc_options_accepted") is False
+        ),
+        "residual_history_extracted": (
+            evidence.get("residual_history") == [1.0, 1.0e-4]
+            and evidence.get(
+                "terminal_explicit_reduced_relative_residual"
+            )
+            == 1.0e-4
+        ),
+        "factor_inventory_extracted": (
+            evidence.get("factor_inventory") == inventory
+        ),
+        "complete_contract_classifies_as_capable": (
+            passing["formal_iterative_screen_pass"] is True
+        ),
+        "raw_option_contract_tamper_fails_closed": (
+            classify(raw_tampered)["formal_iterative_screen_pass"] is False
+        ),
+        "missing_factor_inventory_fails_closed": (
+            classify(missing_inventory)[
+                "formal_iterative_screen_pass"
+            ]
+            is False
+        ),
+    }
+
+
 def _code_capability() -> dict[str, Any]:
+    from src.solvers.condensed_iterative_profiles import (
+        configure_condensed_iterative_outer_ksp,
+    )
+
     dataclass_field_names = {field.name for field in fields(SimulationConfig3D)}
+    dataclass_fields = {
+        field.name: field for field in fields(SimulationConfig3D)
+    }
     direct_options = _direct_lu_petsc_options()
     overridden_options = dict(direct_options)
     _apply_petsc_option_dict(
@@ -379,14 +562,57 @@ def _code_capability() -> dict[str, Any]:
         },
     )
     solve_parameters = inspect.signature(_solve_augmented_system).parameters
+    solve_source = inspect.getsource(_solve_augmented_system)
+    outer_profile_source = inspect.getsource(
+        configure_condensed_iterative_outer_ksp
+    )
     hypre_available = bool(PETSc.Sys.hasExternalPackage("hypre"))
+    typed_contract_checks = _typed_iterative_contract_probe()
+    capability_checks = {
+        "ordinary_default_direct_mumps": (
+            direct_options["ksp_type"] == "preonly"
+            and direct_options["pc_type"] == "lu"
+            and dataclass_fields[
+                "stage4_condensed_iterative_profile"
+            ].default
+            is None
+        ),
+        "typed_profile_config_field": (
+            "stage4_condensed_iterative_profile"
+            in dataclass_field_names
+        ),
+        "solver_accepts_typed_profile": (
+            "iterative_profile" in solve_parameters
+        ),
+        "solver_accepts_physical_dtn_row_identity": (
+            "dtn_auxiliary_rows" in solve_parameters
+        ),
+        "solver_writes_residual_history": (
+            "setConvergenceHistory" in outer_profile_source
+            and '"residual_history"' in solve_source
+            and "terminal_explicit_reduced_relative_residual"
+            in solve_source
+        ),
+        "solver_writes_factor_inventory": (
+            '"global_fine_sparse_factor_nnz"' in solve_source
+            and '"coarse_dense_lu_active"' in solve_source
+            and '"mumps_symbolic_or_numeric_created"' in solve_source
+        ),
+        **typed_contract_checks,
+    }
+    capability_pass = all(capability_checks.values())
     return {
         "petsc_hypre_available": hypre_available,
         "public_solver_profile_is_direct_only": (
             direct_options["ksp_type"] == "preonly"
             and direct_options["pc_type"] == "lu"
-            and "stage4_condensed_iterative_profile"
-            not in dataclass_field_names
+            and dataclass_fields[
+                "stage4_condensed_iterative_profile"
+            ].default
+            is None
+        ),
+        "public_solver_profile_semantics": (
+            "ordinary_default_direct_mumps_with_explicit_research_opt_in"
         ),
         "default_ksp_type": str(direct_options["ksp_type"]),
         "default_pc_type": str(direct_options["pc_type"]),
@@ -397,18 +623,42 @@ def _code_capability() -> dict[str, Any]:
         "raw_override_preserves_correct_iterative_provenance": False,
         "dedicated_condensed_iterative_hook_exists": (
             "stage4_condensed_iterative_profile" in dataclass_field_names
+            and "iterative_profile" in solve_parameters
+            and "dtn_auxiliary_rows" in solve_parameters
         ),
         "iterative_residual_history_contract_exists": (
-            "residual_history" in solve_parameters
-            or "iteration_observer" in solve_parameters
+            capability_checks["solver_writes_residual_history"]
+            and typed_contract_checks["residual_history_extracted"]
         ),
-        "factor_free_inventory_contract_exists": False,
+        "factor_free_inventory_contract_exists": (
+            capability_checks["solver_writes_factor_inventory"]
+            and typed_contract_checks["factor_inventory_extracted"]
+            and typed_contract_checks[
+                "missing_factor_inventory_fails_closed"
+            ]
+        ),
+        "typed_explicit_research_opt_in_exists": (
+            typed_contract_checks["profile_registered_in_solver"]
+            and typed_contract_checks["profile_registered_in_runner"]
+        ),
+        "typed_profile_name": "fgmres_dtn_trace_deflation",
+        "typed_profile_contract_schema": (
+            "task035b.condensed-iterative-profile-contract.v2"
+        ),
         "hypre_preconditioner_available": hypre_available,
-        "candidate_capability_pass": False,
+        "selected_profile_requires_hypre": False,
+        "hypre_unavailable_but_not_required_for_selected_profile": (
+            not hypre_available
+        ),
+        "capability_checks": capability_checks,
+        "candidate_capability_pass": capability_pass,
         "reason": (
-            "raw PETSc overrides would still pass through the direct profile, "
-            "DirectSolveFailure semantics, and factor-oriented provenance; "
-            "this does not constitute a qualified iterative result"
+            "The ordinary default remains direct MUMPS. The live code now "
+            "contains a typed explicit DtN-trace-deflation research profile "
+            "with residual-history, fine-factor and dense-coarse inventory, "
+            "and fail-closed provenance contracts. HYPRE remains unavailable "
+            "but is not a dependency of this profile. Raw PETSc overrides "
+            "still do not constitute qualified iterative evidence."
         ),
     }
 
