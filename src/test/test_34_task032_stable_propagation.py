@@ -9,6 +9,7 @@ from src.modes.stable_propagation import (
     build_two_sided_propagation,
     diagnose_reciprocity_and_passivity,
     full3d_uniform_cg_discrete_beta,
+    scalar_cg_discrete_traction_beta,
 )
 
 
@@ -78,6 +79,27 @@ class Task032StablePropagationTests(unittest.TestCase):
         self.assertGreater(forward.imag, 0.1)
         self.assertAlmostEqual(backward.real, -forward.real, places=14)
         self.assertAlmostEqual(backward.imag, -forward.imag, places=14)
+
+    def test_scalar_cg_traction_symbol_is_reciprocal_and_convergent(self):
+        beta = 0.324456 + 0.002j
+        errors = []
+        for h_nm in (5.0, 2.5, 1.25):
+            forward = scalar_cg_discrete_traction_beta(
+                beta,
+                degree=2,
+                h_nm=h_nm,
+                direction="forward",
+            )
+            backward = scalar_cg_discrete_traction_beta(
+                -beta,
+                degree=2,
+                h_nm=h_nm,
+                direction="backward",
+            )
+            np.testing.assert_allclose(backward, -forward, rtol=1.0e-12)
+            errors.append(abs(forward - beta))
+        self.assertLess(errors[1], errors[0] / 8.0)
+        self.assertLess(errors[2], errors[1] / 8.0)
 
     def test_full3d_uniform_cg_is_opt_in_reciprocal_and_passive(self):
         modes = _reciprocal_modes(0.08 + 0.01j, 0.0 + 10.0j)

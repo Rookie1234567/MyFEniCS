@@ -28,8 +28,10 @@ from ..modes.mode_classification import (
 )
 from ..modes.stable_propagation import (
     AxialPropagationModel,
+    ModalTractionModel,
     TwoSidedPropagation,
     build_two_sided_propagation,
+    scalar_cg_discrete_traction_beta,
 )
 from ..solvers.dtn_port_3d import (
     _assemble_mpc_form_vector,
@@ -79,6 +81,9 @@ class HybridInternalModeCoupling:
     bottom: HybridInterfaceModeBlocks
     top: HybridInterfaceModeBlocks
     propagation: TwoSidedPropagation
+    modal_traction_model: ModalTractionModel
+    positive_traction_beta_per_nm: tuple[complex, ...]
+    negative_traction_beta_per_nm: tuple[complex, ...]
     negative_trace_to_positive: np.ndarray
     positive_projection_identity_error: float
     mode_count_per_direction: int
@@ -632,6 +637,7 @@ class _ReusableModeTractionEvaluator:
         mode: ClassifiedBiorthogonalMode,
         *,
         local_outward_normal_sign: int,
+        beta_override: complex | None = None,
     ) -> fem.Function:
         """Return ``curl(E) x n_local`` in x/y components."""
 
@@ -640,7 +646,10 @@ class _ReusableModeTractionEvaluator:
         field_vector = self.field.x.petsc_vec
         mode.right.right_full.copy(field_vector)
         self.field.x.scatter_forward()
-        self._set_constant(self.beta, complex(mode.beta))
+        self._set_constant(
+            self.beta,
+            complex(mode.beta if beta_override is None else beta_override),
+        )
         self._set_constant(self.sign, complex(local_outward_normal_sign))
         self.traction.interpolate(self.expression)
         self.traction.x.scatter_forward()
@@ -836,9 +845,12 @@ def _build_traction_matrix(
     surface_load: _ReusableInterfaceSurfaceLoad,
     full_left_vectors: tuple[PETSc.Vec, ...],
     inverse_gram: np.ndarray,
+    traction_beta_per_nm: Sequence[complex],
 ) -> tuple[PETSc.Mat, int, np.ndarray]:
     comm = system.local_mesh.mesh.comm
     mode_count = len(modes)
+    if len(traction_beta_per_nm) != mode_count:
+        raise ValueError("Traction beta count must equal the modal count.")
     local_mode_cols = mode_count if comm.rank == comm.size - 1 else 0
     matrix = _create_rectangular_aij(
         comm,
@@ -858,6 +870,7 @@ def _build_traction_matrix(
             traction = traction_evaluator.evaluate(
                 mode,
                 local_outward_normal_sign=sign,
+                beta_override=traction_beta_per_nm[column],
             )
             entries = surface_load.assemble(traction, role="load_column")
             query_count += entries.queries
@@ -916,6 +929,8 @@ def _build_interface_blocks(
     negative_basis: BiorthogonalModeBasis,
     negative_traces: Sequence[fem.Function],
     traction_evaluator: _ReusableModeTractionEvaluator,
+    positive_traction_beta_per_nm: Sequence[complex],
+    negative_traction_beta_per_nm: Sequence[complex],
     log=None,
 ) -> HybridInterfaceModeBlocks:
     if log is not None:
@@ -957,6 +972,7 @@ def _build_interface_blocks(
             surface_load,
             full_left_vectors,
             inverse_gram,
+            positive_traction_beta_per_nm,
         )
         if log is not None:
             log(f"Task32 {system.side}: assembling negative traction columns")
@@ -971,6 +987,7 @@ def _build_interface_blocks(
             surface_load,
             full_left_vectors,
             inverse_gram,
+            negative_traction_beta_per_nm,
         )
     except Exception:
         if positive_traction is not None:
@@ -1020,6 +1037,7 @@ def build_hybrid_internal_mode_coupling(
     *,
     length_nm: float = 100.0,
     propagation_model: AxialPropagationModel = "continuous_beta",
+    modal_traction_model: ModalTractionModel = "continuous_qep_beta",
     log=None,
 ) -> HybridInternalModeCoupling:
     """Build sparse internal-interface blocks without assembling the full solve."""
@@ -1078,6 +1096,43 @@ def build_hybrid_internal_mode_coupling(
         axial_fem_degree=int(cfg.nedelec_degree),
         axial_h_nm=float(cfg.mesh_target_size),
     )
+    if modal_traction_model == "continuous_qep_beta":
+        positive_traction_beta = tuple(
+            complex(mode.beta) for mode in positive_basis.modes
+        )
+        negative_traction_beta = tuple(
+            complex(mode.beta) for mode in negative_basis.modes
+        )
+    elif modal_traction_model == "scalar_cg_discrete_derivative":
+        if propagation_model != "full3d_uniform_cg":
+            projection.destroy()
+            raise ValueError(
+                "scalar_cg_discrete_derivative traction requires "
+                "full3d_uniform_cg propagation."
+            )
+        positive_traction_beta = tuple(
+            scalar_cg_discrete_traction_beta(
+                mode.beta,
+                degree=int(cfg.nedelec_degree),
+                h_nm=float(cfg.mesh_target_size),
+                direction="forward",
+            )
+            for mode in positive_basis.modes
+        )
+        negative_traction_beta = tuple(
+            scalar_cg_discrete_traction_beta(
+                mode.beta,
+                degree=int(cfg.nedelec_degree),
+                h_nm=float(cfg.mesh_target_size),
+                direction="backward",
+            )
+            for mode in negative_basis.modes
+        )
+    else:
+        projection.destroy()
+        raise ValueError(
+            f"Unsupported modal_traction_model {modal_traction_model!r}."
+        )
     bottom = None
     top = None
     try:
@@ -1092,6 +1147,8 @@ def build_hybrid_internal_mode_coupling(
             negative_basis,
             negative_traces,
             traction_evaluator,
+            positive_traction_beta,
+            negative_traction_beta,
             log,
         )
         top = _build_interface_blocks(
@@ -1102,6 +1159,8 @@ def build_hybrid_internal_mode_coupling(
             negative_basis,
             negative_traces,
             traction_evaluator,
+            positive_traction_beta,
+            negative_traction_beta,
             log,
         )
         mapping_scale = max(
@@ -1173,6 +1232,9 @@ def build_hybrid_internal_mode_coupling(
             bottom=bottom,
             top=top,
             propagation=propagation,
+            modal_traction_model=modal_traction_model,
+            positive_traction_beta_per_nm=positive_traction_beta,
+            negative_traction_beta_per_nm=negative_traction_beta,
             negative_trace_to_positive=negative_mapping,
             positive_projection_identity_error=max(
                 identity_error,

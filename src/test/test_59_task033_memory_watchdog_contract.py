@@ -451,6 +451,8 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 *base,
                 "--internal-propagation-model",
                 "full3d_uniform_cg",
+                "--internal-traction-model",
+                "scalar_cg_discrete_derivative",
             ]
         )
         with tempfile.TemporaryDirectory() as temporary:
@@ -467,6 +469,12 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 corrected_command.index("--internal-propagation-model") + 1
             ],
             "full3d_uniform_cg",
+        )
+        self.assertEqual(
+            corrected_command[
+                corrected_command.index("--internal-traction-model") + 1
+            ],
+            "scalar_cg_discrete_derivative",
         )
 
     def test_twelve_gib_runtime_guard_fits_smaller_live_host_ceiling(self) -> None:

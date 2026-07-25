@@ -645,6 +645,19 @@ def _parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--internal-traction-model",
+        choices=(
+            "continuous_qep_beta",
+            "scalar_cg_discrete_derivative",
+        ),
+        default="continuous_qep_beta",
+        help=(
+            "Modal interface traction symbol. The scalar-CG derivative is an "
+            "explicit diagnostic and requires full3d_uniform_cg propagation; "
+            "continuous_qep_beta remains the ordinary default."
+        ),
+    )
+    parser.add_argument(
         "--stage4-full3d-assembly-backend",
         choices=(
             STANDARD_FULL_ASSEMBLY_BACKEND,
@@ -799,6 +812,14 @@ def main() -> None:
         raise SystemExit("--block-rotation-tolerance must be positive.")
     if args.compare_modal_schur and args.solver_path != "augmented":
         raise SystemExit("--compare-modal-schur requires --solver-path augmented.")
+    if (
+        args.internal_traction_model == "scalar_cg_discrete_derivative"
+        and args.internal_propagation_model != "full3d_uniform_cg"
+    ):
+        raise SystemExit(
+            "scalar_cg_discrete_derivative traction requires "
+            "--internal-propagation-model full3d_uniform_cg."
+        )
     task33_variant = bool(
         args.degree != 2
         or modal_degree != args.degree
@@ -809,6 +830,7 @@ def main() -> None:
         or not np.isclose(args.incident_grazing_deg, 10.0)
         or args.polarization_kind != "s"
         or args.internal_propagation_model != "continuous_beta"
+        or args.internal_traction_model != "continuous_qep_beta"
     )
     comm = MPI.COMM_WORLD
     provenance = _source_provenance(
@@ -897,6 +919,7 @@ def main() -> None:
             "internal_propagation_model": (
                 args.internal_propagation_model
             ),
+            "internal_traction_model": args.internal_traction_model,
             "requested_modes_per_direction": args.requested_modes,
             "candidate_modes_per_target_branch": candidate_modes,
             "near_degenerate_tolerance": args.near_degenerate_tolerance,
@@ -961,6 +984,9 @@ def main() -> None:
                 "primary_solver_path": args.solver_path,
                 "internal_propagation_model_requested": (
                     args.internal_propagation_model
+                ),
+                "internal_traction_model_requested": (
+                    args.internal_traction_model
                 ),
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
@@ -1224,6 +1250,7 @@ def main() -> None:
             top,
             length_nm=args.top_interface_nm - args.bottom_interface_nm,
             propagation_model=args.internal_propagation_model,
+            modal_traction_model=args.internal_traction_model,
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -1856,6 +1883,12 @@ def main() -> None:
                 "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
                 "full_field_or_mode_vector_gather": False,
                 "primary_solver_path": args.solver_path,
+                "internal_propagation_model_requested": (
+                    args.internal_propagation_model
+                ),
+                "internal_traction_model_requested": (
+                    args.internal_traction_model
+                ),
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
                 ),
@@ -1883,6 +1916,7 @@ def main() -> None:
                 "internal_propagation_model": (
                     args.internal_propagation_model
                 ),
+                "internal_traction_model": args.internal_traction_model,
                 "requested_modes_per_direction": args.requested_modes,
                 "candidate_modes_per_target_branch": candidate_modes,
                 "near_degenerate_tolerance": args.near_degenerate_tolerance,
@@ -2013,8 +2047,16 @@ def main() -> None:
                         "the measured 12-channel/field/residual closure"
                     ),
                     "modal_magnetic_and_traction_symbol": (
-                        "original_continuous_QEP_beta"
+                        coupling.modal_traction_model
                     ),
+                    "positive_traction_beta_per_nm": [
+                        _complex_json(value)
+                        for value in coupling.positive_traction_beta_per_nm
+                    ],
+                    "negative_traction_beta_per_nm": [
+                        _complex_json(value)
+                        for value in coupling.negative_traction_beta_per_nm
+                    ],
                     "axial_fem_degree": int(cfg.nedelec_degree),
                     "axial_h_nm": float(cfg.mesh_target_size),
                     "forward_original_beta_per_nm": [

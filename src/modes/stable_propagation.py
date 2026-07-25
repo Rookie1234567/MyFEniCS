@@ -10,6 +10,10 @@ from scipy.optimize import linear_sum_assignment
 
 PropagationDirection = Literal["forward", "backward"]
 AxialPropagationModel = Literal["continuous_beta", "full3d_uniform_cg"]
+ModalTractionModel = Literal[
+    "continuous_qep_beta",
+    "scalar_cg_discrete_derivative",
+]
 
 
 class ClassifiedModeForPropagation(Protocol):
@@ -372,6 +376,60 @@ def full3d_uniform_cg_discrete_beta(
     ):
         raise FloatingPointError("Non-finite Full3D-compatible axial beta.")
     return complex(effective_beta)
+
+
+def scalar_cg_discrete_traction_beta(
+    beta_per_nm: complex,
+    *,
+    degree: int,
+    h_nm: float,
+    direction: PropagationDirection,
+) -> complex:
+    """Return the scalar CG endpoint-derivative symbol as an effective beta."""
+
+    beta = complex(beta_per_nm)
+    degree = int(degree)
+    h_nm = float(h_nm)
+    travel_sign = 1.0 if direction == "forward" else -1.0
+    q_direction = travel_sign * beta * h_nm
+    mass, stiffness = _scalar_cg_reference_matrices(degree)
+    dynamic = (
+        stiffness.astype(np.complex128) - q_direction * q_direction * mass
+    )
+    endpoints = np.asarray((0, degree), dtype=np.int64)
+    interior = np.arange(1, degree, dtype=np.int64)
+    schur = dynamic[np.ix_(endpoints, endpoints)].copy()
+    if interior.size:
+        interior_block = dynamic[np.ix_(interior, interior)]
+        condition = float(np.linalg.cond(interior_block))
+        if not np.isfinite(condition) or condition > 1.0e14:
+            raise ValueError(
+                "Scalar CG endpoint-derivative symbol is singular or "
+                f"ill-conditioned (condition={condition:.3e})."
+            )
+        schur -= dynamic[np.ix_(endpoints, interior)] @ np.linalg.solve(
+            interior_block,
+            dynamic[np.ix_(interior, endpoints)],
+        )
+    effective_beta = full3d_uniform_cg_discrete_beta(
+        beta,
+        degree=degree,
+        h_nm=h_nm,
+        direction=direction,
+    )
+    theta_direction = travel_sign * effective_beta * h_nm
+    multiplier = complex(np.exp(1j * theta_direction))
+    if direction == "forward":
+        outward_flux = (schur[0, 0] + schur[0, 1] * multiplier) / h_nm
+        traction_beta = 1j * outward_flux
+    else:
+        outward_flux = (schur[1, 0] * multiplier + schur[1, 1]) / h_nm
+        traction_beta = -1j * outward_flux
+    if not np.isfinite(traction_beta.real) or not np.isfinite(
+        traction_beta.imag
+    ):
+        raise FloatingPointError("Non-finite scalar CG traction beta.")
+    return complex(traction_beta)
 
 
 def _build_directional_block(

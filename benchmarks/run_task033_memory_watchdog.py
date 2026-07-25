@@ -921,6 +921,13 @@ def _worker_command(
                 args.internal_propagation_model,
             )
         )
+    if args.internal_traction_model != "continuous_qep_beta":
+        command.extend(
+            (
+                "--internal-traction-model",
+                args.internal_traction_model,
+            )
+        )
     if args.full3d_reference is not None:
         command.extend(
             ("--full3d-reference", str(args.full3d_reference))
@@ -1336,6 +1343,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--internal-traction-model",
+        choices=(
+            "continuous_qep_beta",
+            "scalar_cg_discrete_derivative",
+        ),
+        default="continuous_qep_beta",
+        help=(
+            "Explicit Hybrid traction-symbol diagnostic; the ordinary "
+            "default remains continuous_qep_beta."
+        ),
+    )
+    parser.add_argument(
         "--mpi-size",
         type=int,
         choices=(1, 2, 4, 8, 16, 32),
@@ -1466,6 +1485,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             args.modal_h_nm is not None
             or args.modal_degree is not None
             or args.internal_propagation_model != "continuous_beta"
+            or args.internal_traction_model != "continuous_qep_beta"
         )
     ):
         parser.error(
@@ -1473,6 +1493,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.modal_h_nm is not None and args.modal_h_nm <= 0.0:
         parser.error("--modal-h-nm must be positive.")
+    if (
+        args.internal_traction_model == "scalar_cg_discrete_derivative"
+        and args.internal_propagation_model != "full3d_uniform_cg"
+    ):
+        parser.error(
+            "scalar_cg_discrete_derivative traction requires "
+            "--internal-propagation-model full3d_uniform_cg."
+        )
     if (
         args.graded_reference_h is not None
         and (args.modal_h_nm is not None or args.modal_degree is not None)
