@@ -361,6 +361,7 @@ def _direct_config(
         stage4_condensed_cache_source_sha=source_sha,
         stage4_condensed_cache_mode=CACHE_MODES[cache_state],
         stage4_condensed_persistent_dtn_surface_cache=True,
+        stage4_preserve_structured_input_partition=True,
         petsc_direct_solver_profile="default",
         petsc_extra_options={
             "pc_factor_mat_solver_type": "mumps",
@@ -776,6 +777,9 @@ def _extract_setup_evidence(
             "cache_mode": config.get("stage4_condensed_cache_mode"),
             "persistent_dtn_surface_cache": config.get(
                 "stage4_condensed_persistent_dtn_surface_cache"
+            ),
+            "preserve_structured_input_partition": config.get(
+                "stage4_preserve_structured_input_partition"
             ),
             "ordinary_default_changed": config.get(
                 "ordinary_default_changed",
@@ -1264,6 +1268,9 @@ def _classify_profile(
         "persistent_dtn_surface_cache_opt_in": (
             config.get("persistent_dtn_surface_cache") is True
         ),
+        "deterministic_structured_partition_opt_in": (
+            config.get("preserve_structured_input_partition") is True
+        ),
         "assembly_time_condensation_opt_in": (
             config.get("assembly_time_cell_static_condensation") is True
         ),
@@ -1576,6 +1583,7 @@ def _run_parent(args: argparse.Namespace) -> int:
             "cache_directory": _path_from_root(cache_directory),
             "fast_fixed_trace_setup": True,
             "affine_isotropic_reference_tensor": True,
+            "preserve_structured_input_partition": True,
             "direct_solver": "MUMPS",
         },
         "source": source,

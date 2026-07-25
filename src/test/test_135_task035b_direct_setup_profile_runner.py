@@ -14,6 +14,7 @@ from benchmarks.run_task035b_direct_setup_profile import (
     _telemetry_summary,
     _validate_source_snapshot,
 )
+from src.common.config_3d import target_stage4_config
 
 
 def _worker_result() -> dict:
@@ -85,6 +86,7 @@ def _worker_result() -> dict:
                 "stage4_condensed_cache_source_sha": "a" * 40,
                 "stage4_condensed_cache_mode": "read_only",
                 "stage4_condensed_persistent_dtn_surface_cache": True,
+                "stage4_preserve_structured_input_partition": True,
             },
             "stage4_dtn_surface_vector_persistent_cache": {
                 "schema_version": (
@@ -230,6 +232,12 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
     def test_direct_config_is_explicit_and_ordinary_default_stays_off(
         self,
     ) -> None:
+        self.assertFalse(
+            target_stage4_config(
+                degree=6,
+                h_nm=15.0,
+            ).stage4_preserve_structured_input_partition
+        )
         with tempfile.TemporaryDirectory() as directory:
             cfg = _direct_config(
                 source_sha="a" * 40,
@@ -247,6 +255,7 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
         self.assertTrue(
             cfg.stage4_condensed_persistent_dtn_surface_cache
         )
+        self.assertTrue(cfg.stage4_preserve_structured_input_partition)
         self.assertEqual(cfg.stage4_condensed_cache_mode, "read_only")
         self.assertEqual(cfg.stage4_condensed_cache_source_sha, "a" * 40)
         self.assertIsNone(cfg.stage4_condensed_iterative_profile)

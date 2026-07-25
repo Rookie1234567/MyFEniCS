@@ -181,6 +181,11 @@ class SimulationConfig3D:
     # SHA-bound cache directory/mode above but has a stricter mesh, boundary,
     # mode, trace-projection, partition, and ABI identity.
     stage4_condensed_persistent_dtn_surface_cache: bool = False
+    # Review-V2 offline/online cache qualification only.  Preserve the
+    # contiguous tensor-cell ownership supplied to ``create_mesh`` so repeated
+    # cold/warm runs have identical DOLFINx orientation/permutation classes.
+    # The ordinary graph-partitioned mesh remains the default.
+    stage4_preserve_structured_input_partition: bool = False
     # Review-V2 setup research switches.  Both remain opt-in because the
     # already-qualified path is the authority baseline.  The bulk path changes
     # only how identical local Schur blocks reach PETSc; the fast-element path

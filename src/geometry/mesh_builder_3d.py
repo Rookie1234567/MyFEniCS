@@ -8,7 +8,7 @@ import ufl
 from basix.ufl import element
 from mpi4py import MPI
 
-from dolfinx import default_real_type, io, mesh
+from dolfinx import default_real_type, graph, io, mesh
 
 from ..common.config_3d import SimulationConfig3D
 
@@ -636,6 +636,8 @@ def _structured_hexa_mesh(
     x_values: np.ndarray,
     y_values: np.ndarray,
     z_values: np.ndarray,
+    *,
+    preserve_input_partition: bool = False,
 ) -> mesh.Mesh:
     """Create a tensor-product hexa mesh from explicit nonuniform coordinate axes."""
 
@@ -657,7 +659,34 @@ def _structured_hexa_mesh(
     ]
     coordinate_element = element("Lagrange", "hexahedron", 1, shape=(3,), dtype=default_real_type)
     domain = ufl.Mesh(coordinate_element)
-    partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
+    if preserve_input_partition:
+
+        def keep_input_cell_owners(
+            _comm,
+            num_partitions: int,
+            adjacency,
+            _ghost_mode: bool,
+        ):
+            if int(num_partitions) != int(msh_comm.size):
+                raise RuntimeError(
+                    "input-preserving partitioner received an unexpected "
+                    "partition count"
+                )
+            destinations = np.full(
+                (int(adjacency.num_nodes), 1),
+                int(msh_comm.rank),
+                dtype=np.int32,
+            )
+            return graph.adjacencylist(destinations)._cpp_object
+
+        partitioner = mesh.create_cell_partitioner(
+            keep_input_cell_owners,
+            mesh.GhostMode.shared_facet,
+        )
+    else:
+        partitioner = mesh.create_cell_partitioner(
+            mesh.GhostMode.shared_facet
+        )
     return mesh.create_mesh(msh_comm, np.asarray(cells, dtype=np.int64), domain, points, partitioner=partitioner)
 
 
@@ -948,6 +977,9 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
                 hexa_axis_plan.x_values,
                 hexa_axis_plan.y_values,
                 hexa_axis_plan.z_values,
+                preserve_input_partition=(
+                    cfg.stage4_preserve_structured_input_partition
+                ),
             )
             mesh_note = (
                 "Using custom tensor-product hexahedron cells with nonuniform axis spacing. "
@@ -959,6 +991,8 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
                 "This is the default low-memory 3D Floquet mesh because opposite periodic faces are structured.",
                 f"mesh_spacing_mode_resolved = {hexa_axis_plan.mesh_spacing_mode_resolved}",
                 f"mesh_cells_resolved = {mesh_cells_resolved}",
+                "stage4_preserve_structured_input_partition = "
+                f"{cfg.stage4_preserve_structured_input_partition}",
                 f"axis_cell_stats = {hexa_axis_plan.axis_cell_stats}",
             ]
             if cfg.geometry_kind == "rectangular_block_grating":
