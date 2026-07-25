@@ -19,6 +19,8 @@ from .high_order_same_error import (
 from src.geometry.research_axis_profiles import (
     TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE,
     TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM,
+    TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE,
+    TASK035B_H14_EXACT_REVERSE_TOP2_Z_VALUES_NM,
     TASK035B_R5_SLAB_BISECT_PROFILE,
     TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
 )
@@ -161,6 +163,56 @@ def _load_directional_parent(
             "directional parent"
         )
     return parent
+
+
+def _load_h13_top_phase_negative(
+    path: Path,
+    expected_sha256: str,
+    *,
+    significant_reference_sha256: str,
+) -> dict[str, Any]:
+    """Load the measured perturbation that motivates the exact reverse."""
+
+    if _sha256(path) != str(expected_sha256).lower():
+        raise ValueError(
+            "Task035b h13 top-phase negative SHA256 mismatch"
+        )
+    negative = json.loads(path.read_text(encoding="utf-8"))
+    candidate = negative.get("candidate") or {}
+    target = negative.get("target_identity") or {}
+    channels = negative.get("diffraction_channel_comparison") or {}
+    reference = (
+        negative.get("significant_channel_reference_authority") or {}
+    )
+    resource = negative.get("resource_authority") or {}
+    if (
+        negative.get("schema_version")
+        != "task035b.fixed-trace-watchdog.v1"
+        or negative.get("status")
+        != "actual_fixed_trace_controlled_negative"
+        or negative.get("candidate_accuracy_pass") is not False
+        or negative.get("formal_candidate_eligible") is not False
+        or (negative.get("qualification") or {}).get("pass") is not True
+        or target.get("explicit_z_profile")
+        != TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE
+        or target.get("h13_top_phase_redistribution") is not True
+        or target.get("mesh_axis_cell_counts_requested") != [6, 2, 12]
+        or candidate.get("num_nedelec_dofs") != 89_740
+        or candidate.get("mpi_size") != 8
+        or channels.get("significant_power_pass_count") != 8
+        or channels.get("significant_complex_amplitude_pass_count") != 8
+        or channels.get("thresholds_relaxed") is not False
+        or reference.get("sha256")
+        != str(significant_reference_sha256).lower()
+        or resource.get("max_process_tree_swap_mb") != 0.0
+        or (negative.get("source") or {}).get("stable_and_clean_after")
+        is not True
+    ):
+        raise ValueError(
+            "Task035b h14 exact-reverse point requires the qualified "
+            "MPI8 h13 top-phase controlled-negative authority"
+        )
+    return negative
 
 
 def _same_mesh_identity(
@@ -661,6 +713,8 @@ def run_target_fixed_trace_candidate(
     global_p6_baseline_sha256: str | None = None,
     directional_parent_record: Path | None = None,
     directional_parent_sha256: str | None = None,
+    reverse_evidence_record: Path | None = None,
+    reverse_evidence_sha256: str | None = None,
     h_nm: float = 15.0,
     incident_theta_deg: float = 80.0,
     polarization_kind: str = "s",
@@ -707,6 +761,12 @@ def run_target_fixed_trace_candidate(
         raise ValueError(
             "directional parent path and SHA256 must be paired"
         )
+    if (reverse_evidence_record is None) != (
+        reverse_evidence_sha256 is None
+    ):
+        raise ValueError(
+            "reverse evidence path and SHA256 must be paired"
+        )
     dtn_evanescent_buffer = int(dtn_evanescent_buffer)
     port_diagnostic = bool(
         dtn_quadrature_degree is not None
@@ -747,6 +807,13 @@ def run_target_fixed_trace_candidate(
             mesh_axis_z_values = (
                 TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM
             )
+        elif (
+            explicit_z_profile
+            == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+        ):
+            mesh_axis_z_values = (
+                TASK035B_H14_EXACT_REVERSE_TOP2_Z_VALUES_NM
+            )
         else:
             raise ValueError("unknown explicit z profile")
         if mesh_axis_cell_counts is not None:
@@ -754,7 +821,12 @@ def run_target_fixed_trace_candidate(
                 "explicit z profile and mesh_axis_cell_counts are mutually "
                 "exclusive"
             )
-        mesh_axis_cell_counts = (6, 2, 12)
+        mesh_axis_cell_counts = (
+            (6, 2, 11)
+            if explicit_z_profile
+            == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+            else (6, 2, 12)
+        )
     else:
         mesh_axis_z_values = None
     if mesh_axis_cell_counts is not None:
@@ -777,6 +849,10 @@ def run_target_fixed_trace_candidate(
         explicit_z_profile
         == TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE
     )
+    explicit_h14_exact_reverse_top2 = (
+        explicit_z_profile
+        == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+    )
     if directional_recovery:
         if channel_adjoint_diagnostic:
             raise ValueError(
@@ -795,18 +871,32 @@ def run_target_fixed_trace_candidate(
                     and abs(float(h_nm) - 14.0) <= 1.0e-12
                     and mesh_axis_cell_counts == (6, 2, 12)
                     and directional_parent_record is None
+                    and reverse_evidence_record is None
                 )
                 top_phase_contract = bool(
                     explicit_h13_top_phase_redistribution
                     and abs(float(h_nm) - 13.0) <= 1.0e-12
                     and mesh_axis_cell_counts == (6, 2, 12)
                     and directional_parent_record is not None
+                    and reverse_evidence_record is None
                 )
-                if not (r5_contract or top_phase_contract):
+                exact_reverse_contract = bool(
+                    explicit_h14_exact_reverse_top2
+                    and abs(float(h_nm) - 14.0) <= 1.0e-12
+                    and mesh_axis_cell_counts == (6, 2, 11)
+                    and directional_parent_record is not None
+                    and reverse_evidence_record is not None
+                )
+                if not (
+                    r5_contract
+                    or top_phase_contract
+                    or exact_reverse_contract
+                ):
                     raise ValueError(
                         "explicit z recovery is limited to the reviewed h14 "
                         "R5-slab bisect or Review-V2 h13 top-phase "
-                        "redistribution on exact axis cells (6, 2, 12)"
+                        "redistribution, plus its one h14 exact-reverse "
+                        "two-plane point"
                     )
             elif (
                 not any(
@@ -825,10 +915,18 @@ def run_target_fixed_trace_candidate(
                         "h13 directional escalation requires a positive "
                         "SHA-bound h14 parent"
                     )
-            elif directional_parent_record is not None:
+                if reverse_evidence_record is not None:
+                    raise ValueError(
+                        "h13 directional escalation does not consume "
+                        "reverse evidence"
+                    )
+            elif (
+                directional_parent_record is not None
+                or reverse_evidence_record is not None
+            ):
                 raise ValueError(
                     "the primary h14 directional point must not provide a "
-                    "parent record"
+                    "parent or reverse-evidence record"
                 )
         elif resolved_directional_axis == "x":
             if (
@@ -836,6 +934,7 @@ def run_target_fixed_trace_candidate(
                 or mesh_axis_cell_counts != (7, 2, 10)
                 or mesh_axis_z_values is not None
                 or directional_parent_record is not None
+                or reverse_evidence_record is not None
             ):
                 raise ValueError(
                     "x-directional fixed-trace recovery requires nominal "
@@ -855,9 +954,12 @@ def run_target_fixed_trace_candidate(
             "the accepted fixed-trace seed requires h15 and a qualified "
             "same-mesh global-p6 baseline without an axis override"
         )
-    elif directional_parent_record is not None:
+    elif (
+        directional_parent_record is not None
+        or reverse_evidence_record is not None
+    ):
         raise ValueError(
-            "the accepted h15 seed does not use a directional parent"
+            "the accepted h15 seed does not use directional authorities"
         )
     control_record = Path(control_record).resolve()
     if _sha256(control_record) != str(control_sha256):
@@ -888,6 +990,17 @@ def run_target_fixed_trace_candidate(
         else _load_directional_parent(
             Path(directional_parent_record).resolve(),
             str(directional_parent_sha256),
+            significant_reference_sha256=(
+                significant_channel_reference_sha256
+            ),
+        )
+    )
+    reverse_evidence = (
+        None
+        if reverse_evidence_record is None
+        else _load_h13_top_phase_negative(
+            Path(reverse_evidence_record).resolve(),
+            str(reverse_evidence_sha256),
             significant_reference_sha256=(
                 significant_channel_reference_sha256
             ),
@@ -951,6 +1064,11 @@ def run_target_fixed_trace_candidate(
             + (
                 "_top2phasev1"
                 if explicit_h13_top_phase_redistribution
+                else ""
+            )
+            + (
+                "_exactreversetop2v1"
+                if explicit_h14_exact_reverse_top2
                 else ""
             )
         ).replace(".", "p"),
@@ -1193,6 +1311,13 @@ def run_target_fixed_trace_candidate(
                 )
                 if explicit_h13_top_phase_redistribution
                 else (
+                    "classifies the single Review-V2 A2 h14 exact-reverse "
+                    "two-plane discriminator; its 9/12 power plus 11/12 "
+                    "amplitude projection is not a success claim and never "
+                    "authorizes a node scan"
+                )
+                if explicit_h14_exact_reverse_top2
+                else (
                     "authorizes at most one z/h13 escalation when true; "
                     "never changes the formal 12-channel acceptance Gate"
                 )
@@ -1308,13 +1433,22 @@ def run_target_fixed_trace_candidate(
             "h13_top_phase_redistribution": (
                 explicit_h13_top_phase_redistribution
             ),
+            "h14_exact_reverse_top2": (
+                explicit_h14_exact_reverse_top2
+            ),
             "directional_mesh_change_semantics": (
                 "exact_h14_r5_slab_bisect_not_nested_refinement"
                 if explicit_r5_slab_bisect
                 else (
                     "fixed_dof_h13_top2_phase_redistribution_not_refinement"
                     if explicit_h13_top_phase_redistribution
-                    else "exact_material_fitted_remeshing_not_nested_refinement"
+                    else (
+                        "fixed_dof_h14_exact_reverse_h13_top2_not_refinement"
+                        if explicit_h14_exact_reverse_top2
+                        else (
+                            "exact_material_fitted_remeshing_not_nested_refinement"
+                        )
+                    )
                 )
                 if directional_recovery
                 else "not_applicable"
@@ -1372,6 +1506,37 @@ def run_target_fixed_trace_candidate(
                 "status": "not_applicable_h15_seed",
                 "required": False,
             }
+        ),
+        "reverse_evidence_authority": (
+            {
+                "status": "not_required",
+                "required": False,
+            }
+            if reverse_evidence is None
+            else {
+                "status": (
+                    "qualified_h13_top_phase_controlled_negative"
+                ),
+                "required": True,
+                "path": str(Path(reverse_evidence_record).resolve()),
+                "sha256": str(reverse_evidence_sha256).lower(),
+                "measured_power_pass_count": 8,
+                "measured_complex_amplitude_pass_count": 8,
+                "ordinary_default_changed": False,
+            }
+        ),
+        "prior_prediction": (
+            {
+                "status": (
+                    "derived_exact_reverse_projection_not_measured_pde"
+                ),
+                "significant_power_pass_count": 9,
+                "significant_complex_amplitude_pass_count": 11,
+                "formal_success_claimed": False,
+                "formal_gate_still_requires_measured_12_plus_12": True,
+            }
+            if explicit_h14_exact_reverse_top2
+            else None
         ),
         "global_p6_baseline_authority": (
             {
@@ -1496,6 +1661,8 @@ def run_target_fixed_trace_candidate(
 __all__ = [
     "TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE",
     "TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM",
+    "TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE",
+    "TASK035B_H14_EXACT_REVERSE_TOP2_Z_VALUES_NM",
     "TASK035B_R5_SLAB_BISECT_PROFILE",
     "TASK035B_R5_SLAB_BISECT_Z_VALUES_NM",
     "run_target_fixed_trace_candidate",

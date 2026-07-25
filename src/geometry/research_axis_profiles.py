@@ -51,10 +51,36 @@ TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM = (
     130.0,
 )
 
+# Review V2 A2 bounded discriminator.  This is the exact reverse, on the
+# unchanged h14 tensor topology, of the two-plane perturbation already measured
+# as a controlled negative on h13.  Relative to the qualified h14 control only
+# 93 1/3 -> 96 nm and 106 2/3 -> 108 nm move.  Interfaces, exterior
+# boundaries, cell count, and therefore the p5-trace/p6-interior DoF count stay
+# fixed.  It is one named research point, not an arbitrary-coordinate API.
+TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE = (
+    "h14_exact_reverse_h13_top2_v1"
+)
+TASK035B_H14_EXACT_REVERSE_TOP2_Z_VALUES_NM = (
+    -10.0,
+    0.0,
+    13.333333333333334,
+    26.666666666666668,
+    40.0,
+    53.333333333333336,
+    66.66666666666667,
+    80.0,
+    96.0,
+    108.0,
+    120.0,
+    130.0,
+)
+
 
 __all__ = [
     "TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE",
     "TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM",
+    "TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE",
+    "TASK035B_H14_EXACT_REVERSE_TOP2_Z_VALUES_NM",
     "TASK035B_R5_SLAB_BISECT_PROFILE",
     "TASK035B_R5_SLAB_BISECT_Z_VALUES_NM",
 ]

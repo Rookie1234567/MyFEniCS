@@ -33,6 +33,8 @@ from src.solvers.solve_vector_maxwell import _json_default
 from src.geometry.research_axis_profiles import (
     TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE,
     TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM,
+    TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE,
+    TASK035B_H14_EXACT_REVERSE_TOP2_Z_VALUES_NM,
     TASK035B_R5_SLAB_BISECT_PROFILE,
     TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
 )
@@ -98,23 +100,49 @@ _FIXED_TRACE_EXPLICIT_Z_TOPOLOGY_CONTRACT = {
 _FIXED_TRACE_EXPLICIT_Z_PROFILE_CONTRACTS = {
     TASK035B_R5_SLAB_BISECT_PROFILE: {
         "nominal_h_nm": 14.0,
+        "mesh_axis_cell_counts": (6, 2, 12),
         "z_values_nm": TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
         "directional_parent_required": False,
+        "reverse_evidence_required": False,
         "directional_mesh_change_semantics": (
             "exact_h14_r5_slab_bisect_not_nested_refinement"
         ),
         "target_identity_flag": "r5_slab_bisect",
+        "prior_prediction": None,
     },
     TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE: {
         "nominal_h_nm": 13.0,
+        "mesh_axis_cell_counts": (6, 2, 12),
         "z_values_nm": (
             TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM
         ),
         "directional_parent_required": True,
+        "reverse_evidence_required": False,
         "directional_mesh_change_semantics": (
             "fixed_dof_h13_top2_phase_redistribution_not_refinement"
         ),
         "target_identity_flag": "h13_top_phase_redistribution",
+        "prior_prediction": None,
+    },
+    TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE: {
+        "nominal_h_nm": 14.0,
+        "mesh_axis_cell_counts": (6, 2, 11),
+        "z_values_nm": TASK035B_H14_EXACT_REVERSE_TOP2_Z_VALUES_NM,
+        "directional_parent_required": True,
+        "reverse_evidence_required": True,
+        "directional_mesh_change_semantics": (
+            "fixed_dof_h14_exact_reverse_h13_top2_not_refinement"
+        ),
+        "target_identity_flag": "h14_exact_reverse_top2",
+        "prior_prediction": {
+            "status": (
+                "derived_exact_reverse_projection_not_measured_pde"
+            ),
+            "significant_power_pass_count": 9,
+            "significant_complex_amplitude_pass_count": 11,
+            "formal_success_claimed": False,
+            "formal_gate_still_requires_measured_12_plus_12": True,
+        },
     },
 }
 _EXPLICIT_AXIS_IDENTITY_CONTRACTS = {
@@ -186,6 +214,23 @@ _EXPLICIT_Z_PROFILE_IDENTITY_CONTRACTS = {
             "442cd53e48103cfe55224a270b04c92cc61032ac128a5490d5349936d7d850d5"
         ),
     },
+    TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE: {
+        "profile": TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE,
+        "axis_sha256": {
+            "x": "86dc23ef348c79d9ed51d79c199cbaddf95416e04c51e5569c666234c6613cc3",
+            "y": "d3aac691ebe8875dc45e5817b42b4f33c45277f999f2d010fd29fecd7ec1401f",
+            "z": "62fa925a820639e4864c6512420acf12b768627fb0f125bc381fbdefde6bbd1d",
+        },
+        "partition_independent_mesh_sha256": (
+            "42b36eb298ec3bb2fcdf227b9ef09edfac999d03133c42985dc69ba6724effaa"
+        ),
+        "cell_tag_sha256": (
+            "7fc553a5b926cb83b7c675d3faeb262a54b638247814ef826937b9380772a61a"
+        ),
+        "facet_tag_sha256": (
+            "c99bc14ee9c94622bf37c3361f049b8c05f95a6f81e9744d5d7476b6cf3cdca4"
+        ),
+    },
 }
 _Y_ONLY_GLOBAL_P5_CONTROL_CONTRACT = {
     "mesh_cells_resolved": [6, 3, 10],
@@ -210,7 +255,18 @@ def _fixed_trace_topology_contract(
         None,
     )
     if explicit_z_profile in _FIXED_TRACE_EXPLICIT_Z_PROFILE_CONTRACTS:
-        return _FIXED_TRACE_EXPLICIT_Z_TOPOLOGY_CONTRACT
+        explicit_contract = _FIXED_TRACE_EXPLICIT_Z_PROFILE_CONTRACTS[
+            explicit_z_profile
+        ]
+        if tuple(explicit_contract["mesh_axis_cell_counts"]) == (
+            6,
+            2,
+            12,
+        ):
+            return _FIXED_TRACE_EXPLICIT_Z_TOPOLOGY_CONTRACT
+        return _FIXED_TRACE_TOPOLOGY_CONTRACTS[
+            float(explicit_contract["nominal_h_nm"])
+        ]
     explicit = getattr(args, "structured_axis_cells", None)
     if explicit is not None:
         return _FIXED_TRACE_EXPLICIT_TOPOLOGY_CONTRACTS.get(
@@ -283,7 +339,9 @@ def _fixed_trace_resource_preflight(
     if explicit_z_profile is not None:
         if explicit_z_contract is None:
             raise SystemExit("unknown fixed-trace explicit z profile")
-        cfg.mesh_axis_cell_counts = (6, 2, 12)
+        cfg.mesh_axis_cell_counts = tuple(
+            explicit_z_contract["mesh_axis_cell_counts"]
+        )
         cfg.mesh_axis_z_values = tuple(
             explicit_z_contract["z_values_nm"]
         )
@@ -534,6 +592,16 @@ def _fixed_trace_resource_preflight(
         )
         is not None
     )
+    reverse_evidence_bound = bool(
+        getattr(args, "fixed_trace_reverse_evidence_record", None)
+        is not None
+        and getattr(
+            args,
+            "fixed_trace_reverse_evidence_sha256",
+            None,
+        )
+        is not None
+    )
     h13_changed_indices = (
         [
             index
@@ -550,6 +618,47 @@ def _fixed_trace_resource_preflight(
         if explicit_z_profile
         == TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE
         else []
+    )
+    h14_changed_indices = (
+        [
+            index
+            for index, (candidate_value, parent_value) in enumerate(
+                zip(axes["z"], parent_h14_z, strict=True)
+            )
+            if not math.isclose(
+                candidate_value,
+                parent_value,
+                rel_tol=0.0,
+                abs_tol=1.0e-12,
+            )
+        ]
+        if explicit_z_profile
+        == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+        else []
+    )
+    explicit_profile_shape_pass = bool(
+        axes["z"] == expected_bisect_z
+        if explicit_z_profile == TASK035B_R5_SLAB_BISECT_PROFILE
+        else (
+            h13_changed_indices == [9, 10]
+            and axes["z"][-4:] == parent_h14_z[-4:]
+        )
+        if explicit_z_profile
+        == TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE
+        else (
+            h14_changed_indices == [8, 9]
+            and parent_h14_z[8:10]
+            == [93.33333333333334, 106.66666666666667]
+            and axes["z"][8:10] == [96.0, 108.0]
+            and [
+                axes["z"][index + 1] - axes["z"][index]
+                for index in (7, 8, 9)
+            ]
+            == [16.0, 12.0, 12.0]
+        )
+        if explicit_z_profile
+        == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+        else explicit_z_profile is None
     )
     checks = {
         "reviewed_topology_contract": actual_cells
@@ -594,7 +703,8 @@ def _fixed_trace_resource_preflight(
                 <= 1.0e-12
                 and directional
                 and directional_axis == "z"
-                and actual_cells == [6, 2, 12]
+                and actual_cells
+                == list(explicit_z_contract["mesh_axis_cell_counts"])
                 and axes["z"] == expected_explicit_z
                 and axes["x"]
                 == [float(value) for value in parent_h13_plan.x_values]
@@ -608,15 +718,9 @@ def _fixed_trace_resource_preflight(
                         ]
                     )
                 )
-                and (
-                    axes["z"] == expected_bisect_z
-                    if explicit_z_profile
-                    == TASK035B_R5_SLAB_BISECT_PROFILE
-                    else (
-                        h13_changed_indices == [9, 10]
-                        and axes["z"][-4:] == parent_h14_z[-4:]
-                    )
-                )
+                and reverse_evidence_bound
+                is bool(explicit_z_contract["reverse_evidence_required"])
+                and explicit_profile_shape_pass
             )
         ),
     }
@@ -664,7 +768,49 @@ def _fixed_trace_resource_preflight(
                         "directional_mesh_change_semantics"
                     ]
                 ),
+                **(
+                    {
+                        "reverse_evidence_required": True,
+                        "reverse_evidence_bound": (
+                            reverse_evidence_bound
+                        ),
+                        "prior_prediction": explicit_z_contract[
+                            "prior_prediction"
+                        ],
+                    }
+                    if explicit_z_profile
+                    == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+                    else {}
+                ),
             }
+        ),
+        "bounded_discriminator_contract": (
+            {
+                "status": "review_v2_a2_single_exact_reverse_point",
+                "unchanged_h14_topology_control_required": True,
+                "h13_top2_controlled_negative_required": True,
+                "required_mpi_size": 8,
+                "swap_allowed": False,
+                "changed_z_indices": [8, 9],
+                "changed_z_coordinates_nm": [
+                    {
+                        "from": 93.33333333333334,
+                        "to": 96.0,
+                    },
+                    {
+                        "from": 106.66666666666667,
+                        "to": 108.0,
+                    },
+                ],
+                "local_widths_nm": [16.0, 12.0, 12.0],
+                "additional_plane_or_scan_authorized": False,
+                "prior_prediction": explicit_z_contract[
+                    "prior_prediction"
+                ],
+            }
+            if explicit_z_profile
+            == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+            else None
         ),
         "axis_plan": {
             "mesh_cells_resolved": actual_cells,
@@ -679,6 +825,7 @@ def _fixed_trace_resource_preflight(
             "parent_h13_z_axis_sha256": _axis_sha256(parent_h13_z),
             "parent_h13_z_values_nm": parent_h13_z,
             "h13_changed_z_indices": h13_changed_indices,
+            "h14_changed_z_indices": h14_changed_indices,
             "changed_axes_from_h15": changed_axes,
             "expected_mesh_identity": explicit_identity,
             "material_plane_alignment": (
@@ -1291,6 +1438,12 @@ def _worker(args: argparse.Namespace) -> int:
             directional_parent_sha256=(
                 args.fixed_trace_directional_parent_sha256
             ),
+            reverse_evidence_record=(
+                args.fixed_trace_reverse_evidence_record
+            ),
+            reverse_evidence_sha256=(
+                args.fixed_trace_reverse_evidence_sha256
+            ),
             h_nm=args.h_nm,
             incident_theta_deg=80.0,
             polarization_kind=args.polarization_kind,
@@ -1705,6 +1858,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="required SHA256 for the positive h14 directional parent",
     )
     parser.add_argument(
+        "--fixed-trace-reverse-evidence-record",
+        type=Path,
+        help=(
+            "qualified h13 top-two-plane controlled negative required only "
+            "for the one reviewed h14 exact-reverse discriminator"
+        ),
+    )
+    parser.add_argument(
+        "--fixed-trace-reverse-evidence-sha256",
+        help="required SHA256 for the h13 top-two-plane negative evidence",
+    )
+    parser.add_argument(
         "--fixed-trace-channel-adjoint-diagnostic",
         action="store_true",
         help=(
@@ -1816,6 +1981,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.fixed_trace_directional_parent_record,
         args.fixed_trace_directional_parent_sha256,
     )
+    fixed_trace_reverse_evidence_values = (
+        args.fixed_trace_reverse_evidence_record,
+        args.fixed_trace_reverse_evidence_sha256,
+    )
     fixed_trace_port_diagnostic = bool(
         args.fixed_trace_dtn_quadrature_degree is not None
         or args.fixed_trace_dtn_evanescent_buffer > 0
@@ -1884,10 +2053,23 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             value is None
             for value in fixed_trace_directional_parent_values
         )
+        reverse_evidence_bound = all(
+            value is not None
+            for value in fixed_trace_reverse_evidence_values
+        )
+        reverse_evidence_absent = all(
+            value is None
+            for value in fixed_trace_reverse_evidence_values
+        )
         parent_contract_pass = (
             directional_parent_bound
             if explicit_z_contract["directional_parent_required"]
             else directional_parent_absent
+        )
+        reverse_evidence_contract_pass = (
+            reverse_evidence_bound
+            if explicit_z_contract["reverse_evidence_required"]
+            else reverse_evidence_absent
         )
         if (
             not fixed_trace_mode
@@ -1900,6 +2082,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             > 1.0e-12
             or args.structured_axis_cells is not None
             or not parent_contract_pass
+            or not reverse_evidence_contract_pass
         ):
             parser.error(
                 "the selected explicit z profile requires its frozen nominal "
@@ -1951,6 +2134,28 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ):
         parser.error(
             "fixed-trace directional parent path and SHA256 must be paired."
+        )
+    if any(
+        value is not None
+        for value in fixed_trace_reverse_evidence_values
+    ) and not all(
+        value is not None
+        for value in fixed_trace_reverse_evidence_values
+    ):
+        parser.error(
+            "fixed-trace reverse-evidence path and SHA256 must be paired."
+        )
+    if (
+        any(
+            value is not None
+            for value in fixed_trace_reverse_evidence_values
+        )
+        and args.fixed_trace_explicit_z_profile
+        != TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+    ):
+        parser.error(
+            "fixed-trace reverse evidence is valid only for the one frozen "
+            "h14 exact-reverse two-plane profile."
         )
     if fixed_trace_mode and (
         common_mesh_mode or active_cycles or regionwise_mode
@@ -2205,6 +2410,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 parser.error(
                     "fixed-trace directional parent SHA256 must be 64 hex."
                 )
+        if args.fixed_trace_reverse_evidence_sha256 is not None:
+            value = args.fixed_trace_reverse_evidence_sha256
+            if len(value) != 64 or any(
+                character not in "0123456789abcdefABCDEF"
+                for character in value
+            ):
+                parser.error(
+                    "fixed-trace reverse-evidence SHA256 must be 64 hex."
+                )
         fixed_identity = (
             args.mpi_size != 8
             or args.mesh_cell_type != "hexahedron"
@@ -2232,11 +2446,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 value is not None
                 for value in fixed_trace_directional_parent_values
             )
+            reverse_evidence_bound = all(
+                value is not None
+                for value in fixed_trace_reverse_evidence_values
+            )
             if args.fixed_trace_directional_axis == "x":
                 if (
                     abs(args.h_nm - 15.0) > 1.0e-12
                     or args.structured_axis_cells != (7, 2, 10)
                     or parent_bound
+                    or reverse_evidence_bound
                 ):
                     parser.error(
                         "x-only fixed-trace recovery requires nominal h15, "
@@ -2263,12 +2482,31 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         "directional parent."
                     )
                 if (
+                    abs(args.h_nm - 13.0) <= 1.0e-12
+                    and reverse_evidence_bound
+                ):
+                    parser.error(
+                        "h13 escalation does not consume reverse evidence."
+                    )
+                if (
                     abs(args.h_nm - 14.0) <= 1.0e-12
-                    and parent_bound
+                    and args.fixed_trace_explicit_z_profile
+                    == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+                    and not (parent_bound and reverse_evidence_bound)
+                ):
+                    parser.error(
+                        "the h14 exact-reverse point requires both the "
+                        "positive h14 parent and h13 negative evidence."
+                    )
+                if (
+                    abs(args.h_nm - 14.0) <= 1.0e-12
+                    and args.fixed_trace_explicit_z_profile
+                    != TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+                    and (parent_bound or reverse_evidence_bound)
                 ):
                     parser.error(
                         "the primary h14 directional point must not provide "
-                        "a parent record."
+                        "directional authority records."
                     )
         elif abs(args.h_nm - 15.0) > 1.0e-12 or not baseline_bound:
             parser.error(
@@ -2278,10 +2516,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             )
         elif any(
             value is not None
-            for value in fixed_trace_directional_parent_values
+            for value in (
+                *fixed_trace_directional_parent_values,
+                *fixed_trace_reverse_evidence_values,
+            )
         ):
             parser.error(
-                "directional parent is valid only for h13 recovery."
+                "directional authorities require a reviewed directional "
+                "profile."
             )
     if args.goal_dwr_only and (
         args.mpi_size != 8
@@ -4167,7 +4409,7 @@ def _qualify_fixed_trace(
         )
     )
     expected_axis_counts = (
-        [6, 2, 12]
+        list(explicit_z_contract["mesh_axis_cell_counts"])
         if explicit_z_contract is not None
         else (
             None
@@ -4220,6 +4462,7 @@ def _qualify_fixed_trace(
         result.get("significant_channel_reference_authority") or {}
     )
     directional_parent = result.get("directional_parent_authority") or {}
+    reverse_evidence = result.get("reverse_evidence_authority") or {}
     global_p6_baseline = result.get("global_p6_baseline_authority") or {}
     same_mesh_baseline = result.get("same_mesh_global_p6_baseline") or {}
     resource_comparison = result.get("same_mesh_resource_comparison") or {}
@@ -4539,6 +4782,18 @@ def _qualify_fixed_trace(
             and abs(float(args.h_nm) - 13.0) <= 1.0e-12
             else (
                 directional_parent.get("status")
+                == "qualified_positive_h14_parent"
+                and directional_parent.get("required") is True
+                and directional_parent.get("sha256")
+                == args.fixed_trace_directional_parent_sha256
+            )
+            if (
+                directional_recovery
+                and explicit_z_profile
+                == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+            )
+            else (
+                directional_parent.get("status")
                 == "not_required_primary_h14"
                 and directional_parent.get("required") is False
             )
@@ -4547,6 +4802,33 @@ def _qualify_fixed_trace(
                 directional_parent.get("status")
                 == "not_applicable_h15_seed"
                 and directional_parent.get("required") is False
+            )
+        ),
+        "reverse_evidence_requirement_classified": (
+            (
+                reverse_evidence.get("status")
+                == "qualified_h13_top_phase_controlled_negative"
+                and reverse_evidence.get("required") is True
+                and reverse_evidence.get("sha256")
+                == args.fixed_trace_reverse_evidence_sha256
+                and reverse_evidence.get("measured_power_pass_count") == 8
+                and reverse_evidence.get(
+                    "measured_complex_amplitude_pass_count"
+                )
+                == 8
+                and reverse_evidence.get("ordinary_default_changed") is False
+            )
+            if explicit_z_profile
+            == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+            else (
+                (
+                    not reverse_evidence
+                    or (
+                        reverse_evidence.get("status") == "not_required"
+                        and reverse_evidence.get("required") is False
+                    )
+                )
+                and args.fixed_trace_reverse_evidence_record is None
             )
         ),
         "global_p6_baseline_requirement_classified": (
@@ -4613,6 +4895,7 @@ def _qualify_fixed_trace(
                     for other_flag in (
                         "r5_slab_bisect",
                         "h13_top_phase_redistribution",
+                        "h14_exact_reverse_top2",
                     )
                     if other_flag
                     != explicit_z_contract["target_identity_flag"]
@@ -4649,6 +4932,29 @@ def _qualify_fixed_trace(
                         "directional_parent_required"
                     ]
                 )
+                and (
+                    (
+                        (
+                            resource_preflight.get(
+                                "explicit_z_profile_contract"
+                            )
+                            or {}
+                        ).get("reverse_evidence_required")
+                        is True
+                        and (
+                            resource_preflight.get(
+                                "explicit_z_profile_contract"
+                            )
+                            or {}
+                        ).get("prior_prediction")
+                        == explicit_z_contract["prior_prediction"]
+                        and result.get("prior_prediction")
+                        == explicit_z_contract["prior_prediction"]
+                    )
+                    if explicit_z_profile
+                    == TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE
+                    else result.get("prior_prediction") is None
+                )
             )
             if explicit_z_profile is not None
             else (
@@ -4656,6 +4962,11 @@ def _qualify_fixed_trace(
                 and not bool(
                     target_identity.get(
                         "h13_top_phase_redistribution"
+                    )
+                )
+                and not bool(
+                    target_identity.get(
+                        "h14_exact_reverse_top2"
                     )
                 )
                 and target_identity.get(
@@ -5255,6 +5566,13 @@ def _run_parent(args: argparse.Namespace) -> int:
                     "fixed_trace_directional_parent_sha256",
                 )
             )
+        if args.fixed_trace_reverse_evidence_record is not None:
+            authority_pairs.append(
+                (
+                    "fixed_trace_reverse_evidence_record",
+                    "fixed_trace_reverse_evidence_sha256",
+                )
+            )
         for path_name, sha_name in authority_pairs:
             authority_path = getattr(args, path_name)
             if not authority_path.is_absolute():
@@ -5280,6 +5598,7 @@ def _run_parent(args: argparse.Namespace) -> int:
                 args.fixed_trace_global_p6_baseline_record,
                 args.fixed_trace_significant_channel_reference_record,
                 args.fixed_trace_directional_parent_record,
+                args.fixed_trace_reverse_evidence_record,
                 args.regionwise_p_classifier_record,
                 args.regionwise_p_control_record,
                 args.common_mesh_replay_record,
@@ -5557,6 +5876,15 @@ def _run_parent(args: argparse.Namespace) -> int:
                     str(args.fixed_trace_directional_parent_record),
                     "--fixed-trace-directional-parent-sha256",
                     args.fixed_trace_directional_parent_sha256,
+                ]
+            )
+        if args.fixed_trace_reverse_evidence_record is not None:
+            command.extend(
+                [
+                    "--fixed-trace-reverse-evidence-record",
+                    str(args.fixed_trace_reverse_evidence_record),
+                    "--fixed-trace-reverse-evidence-sha256",
+                    args.fixed_trace_reverse_evidence_sha256,
                 ]
             )
     elif args.regionwise_p_classifier_record is not None:

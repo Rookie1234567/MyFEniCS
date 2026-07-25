@@ -431,6 +431,8 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
         from .research_axis_profiles import (
             TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE,
             TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM,
+            TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE,
+            TASK035B_H14_EXACT_REVERSE_TOP2_Z_VALUES_NM,
             TASK035B_R5_SLAB_BISECT_PROFILE,
             TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
         )
@@ -439,20 +441,27 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
             TASK035B_R5_SLAB_BISECT_PROFILE: (
                 TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
                 14.0,
+                (6, 2, 12),
             ),
             TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE: (
                 TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM,
                 13.0,
+                (6, 2, 12),
+            ),
+            TASK035B_H14_EXACT_REVERSE_TOP2_PROFILE: (
+                TASK035B_H14_EXACT_REVERSE_TOP2_Z_VALUES_NM,
+                14.0,
+                (6, 2, 11),
             ),
         }.get(explicit_z_profile)
         if frozen_contract is None:
             raise ValueError(
                 "unknown Task035b frozen explicit z authority."
             )
-        expected_z_values, expected_h_nm = frozen_contract
+        expected_z_values, expected_h_nm, expected_counts = frozen_contract
         if (
             tuple(explicit_z_values or ()) != expected_z_values
-            or explicit_counts != (6, 2, 12)
+            or explicit_counts != expected_counts
             or not np.isclose(
                 float(cfg.mesh_target_size),
                 expected_h_nm,
@@ -464,7 +473,7 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
             raise ValueError(
                 "the only qualified Task035b frozen explicit z authorities "
                 "require their exact coordinates, nominal h, fixed "
-                "rectangular block grating, and tensor counts (6,2,12)."
+                "rectangular block grating, and frozen tensor counts."
             )
     if explicit_counts is not None:
         if cfg.mesh_cell_type_resolved != "hexahedron":
