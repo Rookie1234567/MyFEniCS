@@ -429,26 +429,42 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
         )
     if explicit_z_profile is not None:
         from .research_axis_profiles import (
+            TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE,
+            TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM,
             TASK035B_R5_SLAB_BISECT_PROFILE,
             TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
         )
 
+        frozen_contract = {
+            TASK035B_R5_SLAB_BISECT_PROFILE: (
+                TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
+                14.0,
+            ),
+            TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE: (
+                TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM,
+                13.0,
+            ),
+        }.get(explicit_z_profile)
+        if frozen_contract is None:
+            raise ValueError(
+                "unknown Task035b frozen explicit z authority."
+            )
+        expected_z_values, expected_h_nm = frozen_contract
         if (
-            explicit_z_profile != TASK035B_R5_SLAB_BISECT_PROFILE
-            or tuple(explicit_z_values or ())
-            != TASK035B_R5_SLAB_BISECT_Z_VALUES_NM
+            tuple(explicit_z_values or ()) != expected_z_values
             or explicit_counts != (6, 2, 12)
             or not np.isclose(
                 float(cfg.mesh_target_size),
-                14.0,
+                expected_h_nm,
                 rtol=0.0,
                 atol=1.0e-12,
             )
             or cfg.geometry_kind != "rectangular_block_grating"
         ):
             raise ValueError(
-                "the only qualified explicit z authority is the Task035b "
-                "h14_max-R5_slab_bisect profile on exact counts (6,2,12)."
+                "the only qualified Task035b frozen explicit z authorities "
+                "require their exact coordinates, nominal h, fixed "
+                "rectangular block grating, and tensor counts (6,2,12)."
             )
     if explicit_counts is not None:
         if cfg.mesh_cell_type_resolved != "hexahedron":

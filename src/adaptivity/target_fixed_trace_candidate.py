@@ -17,6 +17,8 @@ from .high_order_same_error import (
     compare_significant_channels_to_reference_v1,
 )
 from src.geometry.research_axis_profiles import (
+    TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE,
+    TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM,
     TASK035B_R5_SLAB_BISECT_PROFILE,
     TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
 )
@@ -736,7 +738,16 @@ def run_target_fixed_trace_candidate(
         else None
     )
     if explicit_z_profile is not None:
-        if explicit_z_profile != TASK035B_R5_SLAB_BISECT_PROFILE:
+        if explicit_z_profile == TASK035B_R5_SLAB_BISECT_PROFILE:
+            mesh_axis_z_values = TASK035B_R5_SLAB_BISECT_Z_VALUES_NM
+        elif (
+            explicit_z_profile
+            == TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE
+        ):
+            mesh_axis_z_values = (
+                TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM
+            )
+        else:
             raise ValueError("unknown explicit z profile")
         if mesh_axis_cell_counts is not None:
             raise ValueError(
@@ -744,7 +755,6 @@ def run_target_fixed_trace_candidate(
                 "exclusive"
             )
         mesh_axis_cell_counts = (6, 2, 12)
-        mesh_axis_z_values = TASK035B_R5_SLAB_BISECT_Z_VALUES_NM
     else:
         mesh_axis_z_values = None
     if mesh_axis_cell_counts is not None:
@@ -763,6 +773,10 @@ def run_target_fixed_trace_candidate(
     explicit_r5_slab_bisect = (
         explicit_z_profile == TASK035B_R5_SLAB_BISECT_PROFILE
     )
+    explicit_h13_top_phase_redistribution = (
+        explicit_z_profile
+        == TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE
+    )
     if directional_recovery:
         if channel_adjoint_diagnostic:
             raise ValueError(
@@ -776,15 +790,23 @@ def run_target_fixed_trace_candidate(
             )
         if resolved_directional_axis == "z":
             if mesh_axis_z_values is not None:
-                if (
-                    not explicit_r5_slab_bisect
-                    or abs(float(h_nm) - 14.0) > 1.0e-12
-                    or mesh_axis_cell_counts != (6, 2, 12)
-                    or directional_parent_record is not None
-                ):
+                r5_contract = bool(
+                    explicit_r5_slab_bisect
+                    and abs(float(h_nm) - 14.0) <= 1.0e-12
+                    and mesh_axis_cell_counts == (6, 2, 12)
+                    and directional_parent_record is None
+                )
+                top_phase_contract = bool(
+                    explicit_h13_top_phase_redistribution
+                    and abs(float(h_nm) - 13.0) <= 1.0e-12
+                    and mesh_axis_cell_counts == (6, 2, 12)
+                    and directional_parent_record is not None
+                )
+                if not (r5_contract or top_phase_contract):
                     raise ValueError(
                         "explicit z recovery is limited to the reviewed h14 "
-                        "R5-slab bisect on exact axis cells (6, 2, 12)"
+                        "R5-slab bisect or Review-V2 h13 top-phase "
+                        "redistribution on exact axis cells (6, 2, 12)"
                     )
             elif (
                 not any(
@@ -926,6 +948,11 @@ def run_target_fixed_trace_candidate(
                 )
             )
             + ("_r5slabbisect" if explicit_r5_slab_bisect else "")
+            + (
+                "_top2phasev1"
+                if explicit_h13_top_phase_redistribution
+                else ""
+            )
         ).replace(".", "p"),
         incident_theta_deg=float(incident_theta_deg),
         polarization_kind=polarization_kind,
@@ -1160,6 +1187,12 @@ def run_target_fixed_trace_candidate(
                 )
                 if explicit_r5_slab_bisect
                 else (
+                    "classifies the single Review-V2 h13 top-phase "
+                    "redistribution; never authorizes a blind node scan and "
+                    "never changes the formal 12-channel acceptance Gate"
+                )
+                if explicit_h13_top_phase_redistribution
+                else (
                     "authorizes at most one z/h13 escalation when true; "
                     "never changes the formal 12-channel acceptance Gate"
                 )
@@ -1272,10 +1305,17 @@ def run_target_fixed_trace_candidate(
             ),
             "explicit_z_profile": explicit_z_profile,
             "r5_slab_bisect": explicit_r5_slab_bisect,
+            "h13_top_phase_redistribution": (
+                explicit_h13_top_phase_redistribution
+            ),
             "directional_mesh_change_semantics": (
                 "exact_h14_r5_slab_bisect_not_nested_refinement"
                 if explicit_r5_slab_bisect
-                else "exact_material_fitted_remeshing_not_nested_refinement"
+                else (
+                    "fixed_dof_h13_top2_phase_redistribution_not_refinement"
+                    if explicit_h13_top_phase_redistribution
+                    else "exact_material_fitted_remeshing_not_nested_refinement"
+                )
                 if directional_recovery
                 else "not_applicable"
             ),
@@ -1454,6 +1494,8 @@ def run_target_fixed_trace_candidate(
 
 
 __all__ = [
+    "TASK035B_H13_TOP_PHASE_REDISTRIBUTION_PROFILE",
+    "TASK035B_H13_TOP_PHASE_REDISTRIBUTION_Z_VALUES_NM",
     "TASK035B_R5_SLAB_BISECT_PROFILE",
     "TASK035B_R5_SLAB_BISECT_Z_VALUES_NM",
     "run_target_fixed_trace_candidate",
