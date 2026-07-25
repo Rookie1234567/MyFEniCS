@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -228,3 +229,78 @@ def test_canonical_orientation_pair_is_setup_authority_not_accuracy_pass() -> No
     assert decision["setup_targets_pass"] is True
     assert decision["twelve_of_twelve_gate_claimed"] is False
     assert decision["not_a_12_of_12_candidate"] is True
+
+
+def test_fixed_trace_element_optimized_pair_is_new_setup_authority() -> None:
+    record = _record(
+        "h15_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v2.json"
+    )
+    source = record["source"]
+    cold = record["cold"]
+    warm = record["warm"]
+    comparison = record["comparison"]
+    decision = record["scope_and_decision"]
+
+    assert record["pass"] is True
+    assert record["candidate_promotion"] is False
+    assert record["ordinary_default_changed"] is False
+    assert source["execution_source_sha"] == (
+        "beef7f9e82392c3aeca70639af6e59ef7645fc2a"
+    )
+    assert source["comparison_record_commit_sha"] is None
+    assert source["fixed_trace_element_optimization_commit"] == (
+        "5ebf5dcb4fb2519a22604efac243d4b311ea1ae6"
+    )
+    assert source["optimization_commit_is_execution_ancestor"] is True
+    assert source["optimization_files_unchanged_since_commit"] is True
+
+    previous = record["previous_authority"]
+    previous_path = ROOT / previous["path"]
+    assert hashlib.sha256(previous_path.read_bytes()).hexdigest() == (
+        previous["sha256"]
+    )
+    for relative_path, expected in source[
+        "optimization_file_sha256"
+    ].items():
+        assert hashlib.sha256((ROOT / relative_path).read_bytes()).hexdigest() == (
+            expected
+        )
+
+    assert record["identity"]["mpi_size"] == 8
+    assert record["identity"]["full3d_equivalent_dofs"] == 74_890
+    assert record["identity"]["active_rows_with_dtn"] == 16_880
+    assert record["identity"]["factor_nnz"] == 26_555_200
+    for run in (cold, warm):
+        assert run["formal_profile_pass"] is True
+        assert run["physics"]["full_explicit_true_residual"] <= 1.0e-9
+        assert run["resource"]["max_process_tree_swap_mb"] == 0.0
+        assert run["matrix"]["active_rows"] == 16_880
+        assert run["matrix"]["nnz_used"] == 9_196_772
+        assert run["matrix"]["factor_nnz"] == 26_555_200
+        assert run["mumps"]["event_split_status"] == (
+            "measured_symbolic_numeric_split"
+        )
+        assert run["canonical_orientation"][
+            "inactive_or_postzero_rows_created"
+        ] is False
+        assert len(run["artifacts"]) == 6
+        assert all(len(item["sha256"]) == 64 for item in run["artifacts"])
+
+    assert cold["cache"]["raw_tensor_misses"] == 6
+    assert cold["cache"]["condensed_class_misses"] == 115
+    assert warm["cache"]["fixed_trace_element_hit_on_all_ranks"] is True
+    assert warm["cache"]["raw_tensor_hits"] == 6
+    assert warm["cache"]["condensed_class_hits"] == 119
+    assert warm["cache"]["dtn_rank_bundle_hits"] == 8
+    assert warm["cache"]["dtn_reduced_bundle_restores"] == 320
+    assert comparison["cold_fixed_trace_build_speedup_v1_over_v2"] > 1.7
+    assert comparison["cold_function_space_speedup_v1_over_v2"] > 1.7
+    assert comparison["cold_build_minimum_2x_target_pass"] is True
+    assert comparison["cold_build_25_to_30_second_preferred_target_pass"] is True
+    assert comparison["warm_build_below_10_seconds_preferred_target_pass"] is True
+    assert comparison["cold_warm_rows_nnz_and_factor_nnz_identical"] is True
+    assert comparison["cold_warm_physical_closure_pass"] is True
+    assert comparison["zero_swap_both_runs"] is True
+    assert decision["twelve_of_twelve_gate_claimed"] is False
+    assert decision["not_a_12_of_12_candidate"] is True
+    assert decision["candidate_promotion"] is False
