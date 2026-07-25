@@ -62,13 +62,24 @@ _HISTORICAL_CAPABILITY_RECORD_V1 = (
 _HISTORICAL_CAPABILITY_RECORD_V1_SHA256 = (
     "2be326fd21ee5c5cf4d2af337b62b3abe006b52fe4ed768f5850ef6b3572f52a"
 )
-_CURRENT_CAPABILITY_RECERTIFICATION_V2 = (
+_HISTORICAL_CAPABILITY_RECERTIFICATION_V2 = (
     _ROOT
     / "benchmarks"
     / "cases"
     / "095_high_order_local_hp_resource_envelope"
     / "records"
     / "h15_physical_slab_dtn_and_trace_harmonic_iterative_capability_v2.json"
+)
+_HISTORICAL_CAPABILITY_RECERTIFICATION_V2_SHA256 = (
+    "2d99885b2d0c4280c77df636d3bba5f69c0f41af23761f439ddd8096a5c5527c"
+)
+_CURRENT_CAPABILITY_RECERTIFICATION_V3 = (
+    _ROOT
+    / "benchmarks"
+    / "cases"
+    / "095_high_order_local_hp_resource_envelope"
+    / "records"
+    / "h15_physical_slab_dtn_and_trace_harmonic_iterative_capability_v3.json"
 )
 
 
@@ -287,10 +298,15 @@ class Task035bPhysicalSlabDtnProfileTests(unittest.TestCase):
             self.assertTrue((_ROOT / source["path"]).is_file())
             self.assertRegex(source["sha256"], r"^[0-9a-f]{64}$")
 
-    def test_v2_recertification_binds_current_capability_sources_and_tests(
+    def test_v2_recertification_is_preserved_as_a_historical_snapshot(
         self,
     ) -> None:
-        record = json.loads(_CURRENT_CAPABILITY_RECERTIFICATION_V2.read_text())
+        payload = _HISTORICAL_CAPABILITY_RECERTIFICATION_V2.read_bytes()
+        self.assertEqual(
+            hashlib.sha256(payload).hexdigest(),
+            _HISTORICAL_CAPABILITY_RECERTIFICATION_V2_SHA256,
+        )
+        record = json.loads(payload)
         self.assertEqual(
             record["status"],
             "capability_only_recertified_no_pde",
@@ -320,11 +336,8 @@ class Task035bPhysicalSlabDtnProfileTests(unittest.TestCase):
         self.assertTrue(historical["v1_preserved_unmodified"])
 
         for source in record["source"]["files"]:
-            payload = (_ROOT / source["path"]).read_bytes()
-            self.assertEqual(
-                hashlib.sha256(payload).hexdigest(),
-                source["sha256"],
-            )
+            self.assertTrue((_ROOT / source["path"]).is_file())
+            self.assertRegex(source["sha256"], r"^[0-9a-f]{64}$")
 
         slab = record["capabilities"]["physical_slab_dtn"]
         self.assertEqual(
@@ -340,6 +353,62 @@ class Task035bPhysicalSlabDtnProfileTests(unittest.TestCase):
         self.assertFalse(harmonic["production_execution_enabled"])
         self.assertFalse(harmonic["production_partition_builder_available"])
         self.assertTrue(harmonic["prototype_replicates_full_vectors"])
+        self.assertEqual(
+            record["official_output_authority"]["status"],
+            "not_run_no_official_physics",
+        )
+
+    def test_v3_recertification_binds_current_distributed_apply_sources(
+        self,
+    ) -> None:
+        record = json.loads(
+            _CURRENT_CAPABILITY_RECERTIFICATION_V3.read_text()
+        )
+        self.assertEqual(
+            record["status"],
+            "capability_only_recertified_after_distributed_apply_no_pde",
+        )
+        self.assertTrue(record["pass"])
+        self.assertFalse(record["formal_pde_started"])
+        self.assertFalse(record["heavy_pde_rerun"])
+        self.assertFalse(record["official_physics_result"])
+        self.assertFalse(record["candidate_promotion"])
+        self.assertFalse(record["ordinary_default_changed"])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "5ebf5dcb4fb2519a22604efac243d4b311ea1ae6",
+        )
+        historical = record["historical_evidence"]
+        self.assertEqual(
+            historical["capability_recertification_v2"]["sha256"],
+            _HISTORICAL_CAPABILITY_RECERTIFICATION_V2_SHA256,
+        )
+        self.assertTrue(historical["v2_preserved_unmodified"])
+        self.assertTrue(
+            historical["physical_slab_formal_screen_controlled_negative"][
+                "preserved_and_not_reclassified"
+            ]
+        )
+
+        for source in record["source"]["files"]:
+            payload = (_ROOT / source["path"]).read_bytes()
+            self.assertEqual(
+                hashlib.sha256(payload).hexdigest(),
+                source["sha256"],
+            )
+
+        slab = record["capabilities"]["physical_slab_dtn"]
+        self.assertTrue(slab["formal_screen_lane_closed"])
+        self.assertEqual(slab["pde_execution_in_this_record"], "not_run")
+        harmonic = record["capabilities"]["trace_harmonic"]
+        self.assertFalse(harmonic["production_execution_enabled"])
+        self.assertFalse(harmonic["production_partition_builder_available"])
+        self.assertFalse(harmonic["replicated_full_vector_workspace"])
+        self.assertTrue(harmonic["replicated_interface_vector_workspace"])
+        self.assertEqual(
+            harmonic["distributed_apply"],
+            "block_rhs_to_declared_owner_and_solution_to_petsc_row_owner",
+        )
         self.assertEqual(
             record["official_output_authority"]["status"],
             "not_run_no_official_physics",
