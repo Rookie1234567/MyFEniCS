@@ -198,8 +198,44 @@ class Task035ActualDtnAdjointTests(unittest.TestCase):
         self.assertEqual(identity, recomputed)
         self.assertEqual(
             report["adjoint_content_sha256"],
+            recomputed["global_value_sha256"],
+        )
+        self.assertEqual(
+            report["adjoint_partition_content_sha256"],
             recomputed["global_content_sha256"],
         )
+        if comm.size == 2:
+            original_split = int(identity["partitions"][0]["ownership_end"])
+            alternate_split = 1 if original_split != 1 else 2
+            alternate = replicated_adjoint_partition_content_identity(
+                captured_adjoint["values"],
+                {
+                    "partitions": [
+                        {
+                            "rank": 0,
+                            "world_rank": 0,
+                            "ownership_start": 0,
+                            "ownership_end": alternate_split,
+                        },
+                        {
+                            "rank": 1,
+                            "world_rank": 1,
+                            "ownership_start": alternate_split,
+                            "ownership_end": len(
+                                captured_adjoint["values"]
+                            ),
+                        },
+                    ]
+                },
+            )
+            self.assertEqual(
+                alternate["global_value_sha256"],
+                identity["global_value_sha256"],
+            )
+            self.assertNotEqual(
+                alternate["global_content_sha256"],
+                identity["global_content_sha256"],
+            )
 
         gradient.destroy()
         state.destroy()
