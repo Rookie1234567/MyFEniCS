@@ -15,35 +15,92 @@ from typing import Any, Mapping
 ROOT = Path(__file__).resolve().parents[3]
 CASE_DIR = Path(__file__).resolve().parent
 RECORD_DIR = CASE_DIR / "records"
-PLAN_RELATIVE = (
-    "benchmarks/cases/"
-    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
-    "h15_top_air_local_h_plan_v1.json"
-)
-RECORD_NAMES = {
-    1: "local_h_production_mpi1_v3_owner_gate_fix1.json",
-    2: "local_h_production_mpi2_v3_owner_gate_fix1.json",
-    8: "local_h_production_mpi8_v3_owner_gate_fix1.json",
-}
-OUTPUT_NAME = "local_h_production_mpi_identity_v3_owner_gate_fix2.json"
-SCHEMA = "case097.local-h-production-component.v3-integration"
+DEFAULT_CANDIDATE_ID = "h15_top_air_local_h_v1"
 CHECKER_RELATIVE = (
     "benchmarks/cases/"
     "097_goal_oriented_exact_sequence_hp_adaptivity/"
     "check_local_h_production_authority.py"
 )
-EXPECTED = {
-    "root_cell_count": 120,
-    "leaf_cell_count": 134,
-    "hanging_patch_count": 6,
-    "raw_broken_active_fe_dofs": 84_175,
-    "raw_broken_trace_rows": 23_875,
-    "hanging_slave_rows": 1_250,
-    "periodic_slave_rows": 4_235,
-    "actual_full3d_equivalent_active_fe_dofs": 82_925,
-    "independent_trace_rows": 18_390,
-    "predicted_direct_solve_rows": 18_470,
+CANDIDATE_SPECS = {
+    DEFAULT_CANDIDATE_ID: {
+        "plan_relative": (
+            "benchmarks/cases/"
+            "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+            "h15_top_air_local_h_plan_v1.json"
+        ),
+        "record_names": {
+            1: "local_h_production_mpi1_v3_owner_gate_fix1.json",
+            2: "local_h_production_mpi2_v3_owner_gate_fix1.json",
+            8: "local_h_production_mpi8_v3_owner_gate_fix1.json",
+        },
+        "output_name": (
+            "local_h_production_mpi_identity_v3_owner_gate_fix2.json"
+        ),
+        "schema": "case097.local-h-production-component.v3-integration",
+        "pass_status": "local_h_production_component_pass",
+        "identity_schema": (
+            "case097.local-h-production-mpi-identity.v3-integration"
+        ),
+        "identity_status": "local_h_production_mpi_identity_pass",
+        "pde_launch_scope": "one formal MPI8 h15 local-h direct PDE",
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 134,
+            "hanging_patch_count": 6,
+            "raw_broken_active_fe_dofs": 84_175,
+            "raw_broken_trace_rows": 23_875,
+            "hanging_slave_rows": 1_250,
+            "periodic_slave_rows": 4_235,
+            "actual_full3d_equivalent_active_fe_dofs": 82_925,
+            "independent_trace_rows": 18_390,
+            "predicted_direct_solve_rows": 18_470,
+        },
+        "variable_interior": False,
+    },
+    "h15_symmetric_top_air_remote_p5_interior_v1": {
+        "plan_relative": (
+            "benchmarks/cases/"
+            "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+            "h15_symmetric_top_air_remote_p5_interior_plan_v1.json"
+        ),
+        "record_names": {
+            1: "combined_hp_interior_mpi1_v1.json",
+            2: "combined_hp_interior_mpi2_v1.json",
+            8: "combined_hp_interior_mpi8_v1.json",
+        },
+        "output_name": "combined_hp_interior_mpi_identity_v1.json",
+        "schema": "case097.combined-hp-interior-component.v1",
+        "pass_status": "combined_hp_interior_component_pass",
+        "identity_schema": (
+            "case097.combined-hp-interior-mpi-identity.v1"
+        ),
+        "identity_status": "combined_hp_interior_mpi_identity_pass",
+        "pde_launch_scope": (
+            "one formal MPI8 h15 symmetric local-h plus "
+            "variable-interior direct PDE"
+        ),
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 148,
+            "hanging_patch_count": 12,
+            "raw_broken_active_fe_dofs": 86_740,
+            "raw_broken_trace_rows": 26_860,
+            "hanging_slave_rows": 2_500,
+            "periodic_slave_rows": 4_380,
+            "actual_full3d_equivalent_active_fe_dofs": 84_240,
+            "independent_trace_rows": 19_980,
+            "predicted_direct_solve_rows": 20_060,
+        },
+        "variable_interior": True,
+    },
 }
+
+
+def _candidate_spec(candidate_id: str) -> Mapping[str, Any]:
+    try:
+        return CANDIDATE_SPECS[str(candidate_id)]
+    except KeyError as exc:
+        raise ValueError(f"unknown Task035d candidate {candidate_id!r}") from exc
 
 
 def _sha256(path: Path) -> str:
@@ -70,7 +127,13 @@ def _commit_blob_sha(source_sha: str, relative: str) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
-def _validate_one(path: Path, payload: Mapping[str, Any]) -> list[str]:
+def _validate_one(
+    path: Path,
+    payload: Mapping[str, Any],
+    *,
+    candidate_id: str,
+    spec: Mapping[str, Any],
+) -> list[str]:
     failures: list[str] = []
     try:
         mpi_size = int(payload["environment"]["mpi_size"])
@@ -85,15 +148,16 @@ def _validate_one(path: Path, payload: Mapping[str, Any]) -> list[str]:
             {key: value for key, value in row.items() if key != "rank"}
             for row in rank_rows
         ]
-        if path.name != RECORD_NAMES.get(mpi_size):
+        if path.name != spec["record_names"].get(mpi_size):
             failures.append("record_name")
-        if payload.get("schema_version") != SCHEMA:
+        if payload.get("schema_version") != spec["schema"]:
             failures.append("schema")
         if not re.fullmatch(r"[0-9a-f]{40}", source_sha):
             failures.append("source_sha")
         if not (
             payload.get("pass") is True
-            and payload.get("status") == "local_h_production_component_pass"
+            and payload.get("status") == spec["pass_status"]
+            and payload.get("candidate_id") == candidate_id
             and payload.get("heavy_pde_started") is False
             and payload.get("pde_accuracy_credit") is False
             and payload.get("ordinary_default_changed") is False
@@ -122,15 +186,19 @@ def _validate_one(path: Path, payload: Mapping[str, Any]) -> list[str]:
             and all(row == comparable[0] for row in comparable[1:])
         ):
             failures.append("mpi_abi")
-        if payload["plan"]["path"] != PLAN_RELATIVE:
+        plan_relative = str(spec["plan_relative"])
+        if payload["plan"]["path"] != plan_relative:
             failures.append("plan_path")
-        plan_path = ROOT / PLAN_RELATIVE
+        plan_path = ROOT / plan_relative
         if (
             payload["plan"]["file_sha256"] != _sha256(plan_path)
             or payload["plan"]["payload"] != _strict_load(plan_path)
         ):
             failures.append("plan_identity")
-        if any(int(stable.get(name, -1)) != expected for name, expected in EXPECTED.items()):
+        if any(
+            int(stable.get(name, -1)) != expected
+            for name, expected in spec["expected"].items()
+        ):
             failures.append("frozen_dimensions")
         if not (
             reduction.get("pass") is True
@@ -144,6 +212,26 @@ def _validate_one(path: Path, payload: Mapping[str, Any]) -> list[str]:
             is False
         ):
             failures.append("production_reduction")
+        if spec["variable_interior"] and not (
+            reduction["degree_plan"].get("cell_degree_counts")
+            == {"p4": 0, "p5": 32, "p6": 116}
+            and reduction["degree_plan"].get(
+                "local_variable_trace_implemented"
+            )
+            is False
+            and reduction["degree_plan"].get(
+                "complete_combined_hp_credit"
+            )
+            is False
+            and stable.get("cell_degree_counts")
+            == {"p4": 0, "p5": 32, "p6": 116}
+            and isinstance(stable.get("cell_degree_plan_sha256"), str)
+            and isinstance(
+                stable.get("canonical_degree_map_sha256"),
+                str,
+            )
+        ):
+            failures.append("variable_interior_scope")
         checks = payload.get("checks")
         if not isinstance(checks, dict) or not checks or not all(checks.values()):
             failures.append("embedded_checks")
@@ -158,10 +246,20 @@ def _validate_one(path: Path, payload: Mapping[str, Any]) -> list[str]:
     return failures
 
 
-def check_records(paths: tuple[Path, ...]) -> dict[str, Any]:
+def check_records(
+    paths: tuple[Path, ...],
+    *,
+    candidate_id: str = DEFAULT_CANDIDATE_ID,
+) -> dict[str, Any]:
+    spec = _candidate_spec(candidate_id)
     payloads = [_strict_load(path) for path in paths]
     record_failures = {
-        path.name: _validate_one(path, payload)
+        path.name: _validate_one(
+            path,
+            payload,
+            candidate_id=candidate_id,
+            spec=spec,
+        )
         for path, payload in zip(paths, payloads, strict=True)
     }
     failures = [
@@ -283,15 +381,15 @@ def check_records(paths: tuple[Path, ...]) -> dict[str, Any]:
         failures.append("checker_source_identity")
     return {
         "schema_version": (
-            "case097.local-h-production-mpi-identity.v3-integration"
+            spec["identity_schema"]
         ),
         "status": (
-            "local_h_production_mpi_identity_pass"
+            spec["identity_status"]
             if not failures
-            else "local_h_production_mpi_identity_fail"
+            else f"{spec['identity_status']}_failed"
         ),
         "pass": not failures,
-        "candidate_id": "h15_top_air_local_h_v1",
+        "candidate_id": candidate_id,
         "source_sha": source_sha,
         "live_head": live_head,
         "checker_identity": checker_identity,
@@ -304,15 +402,15 @@ def check_records(paths: tuple[Path, ...]) -> dict[str, Any]:
             for path, payload in zip(paths, payloads, strict=True)
         ],
         "plan": {
-            "path": PLAN_RELATIVE,
-            "sha256": _sha256(ROOT / PLAN_RELATIVE),
+            "path": spec["plan_relative"],
+            "sha256": _sha256(ROOT / str(spec["plan_relative"])),
         },
         "stable_identity": stable[0] if stable else None,
         "record_failures": record_failures,
         "cross_checks": cross_checks,
         "failures": failures,
         "pde_launch_gate": not failures,
-        "pde_launch_scope": "one formal MPI8 h15 local-h direct PDE",
+        "pde_launch_scope": spec["pde_launch_scope"],
         "pde_accuracy_credit": False,
         "ordinary_default_changed": False,
     }
@@ -320,6 +418,11 @@ def check_records(paths: tuple[Path, ...]) -> dict[str, Any]:
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--candidate",
+        choices=tuple(CANDIDATE_SPECS),
+        default=DEFAULT_CANDIDATE_ID,
+    )
     parser.add_argument(
         "--records",
         nargs=3,
@@ -333,19 +436,20 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
+    spec = _candidate_spec(args.candidate)
     expected = tuple(
-        (RECORD_DIR / RECORD_NAMES[size]).resolve()
+        (RECORD_DIR / spec["record_names"][size]).resolve()
         for size in (1, 2, 8)
     )
     paths = tuple(path.resolve() for path in args.records)
     if paths != expected:
         raise ValueError("formal inputs must be ordered MPI1/MPI2/MPI8 records")
     output = args.output.resolve()
-    if output != (RECORD_DIR / OUTPUT_NAME).resolve():
+    if output != (RECORD_DIR / str(spec["output_name"])).resolve():
         raise ValueError("formal MPI identity output path is fixed")
     if output.exists():
         raise FileExistsError("formal MPI identity record is immutable")
-    result = check_records(paths)
+    result = check_records(paths, candidate_id=args.candidate)
     with output.open("x", encoding="utf-8") as stream:
         stream.write(
             json.dumps(

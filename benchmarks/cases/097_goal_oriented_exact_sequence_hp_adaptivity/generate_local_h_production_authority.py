@@ -33,6 +33,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.adaptivity.stage4_local_h import (  # noqa: E402
+    _build_forest,
     build_stage4_local_h_mesh_data,
     build_stage4_local_h_reduction_authority,
     stage4_local_h_refinement_plan_payload,
@@ -42,17 +43,81 @@ from src.common.config_3d import target_stage4_config  # noqa: E402
 
 CASE_DIR = Path(__file__).resolve().parent
 RECORD_DIR = CASE_DIR / "records"
-CANDIDATE_ID = "h15_top_air_local_h_v1"
-PLAN_NAME = "h15_top_air_local_h_plan_v1.json"
-PLAN_PATH = RECORD_DIR / PLAN_NAME
-PLAN_RELATIVE = str(PLAN_PATH.relative_to(ROOT))
-COMPONENT_NAMES = {
-    1: "local_h_production_mpi1_v3_owner_gate_fix1.json",
-    2: "local_h_production_mpi2_v3_owner_gate_fix1.json",
-    8: "local_h_production_mpi8_v3_owner_gate_fix1.json",
-}
 CHECKER_NAME = "check_local_h_production_authority.py"
 GENERATOR_NAME = Path(__file__).name
+DEFAULT_CANDIDATE_ID = "h15_top_air_local_h_v1"
+CANDIDATE_SPECS = {
+    DEFAULT_CANDIDATE_ID: {
+        "plan_name": "h15_top_air_local_h_plan_v1.json",
+        "component_names": {
+            1: "local_h_production_mpi1_v3_owner_gate_fix1.json",
+            2: "local_h_production_mpi2_v3_owner_gate_fix1.json",
+            8: "local_h_production_mpi8_v3_owner_gate_fix1.json",
+        },
+        "schema_version": (
+            "case097.local-h-production-component.v3-integration"
+        ),
+        "pass_status": "local_h_production_component_pass",
+        "marked_root_boxes": (
+            (8.25, 0.0, 120.0, 16.5, 12.5, 130.0),
+        ),
+        "variable_interior": False,
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 134,
+            "hanging_patch_count": 6,
+            "raw_broken_active_fe_dofs": 84_175,
+            "raw_broken_trace_rows": 23_875,
+            "hanging_slave_rows": 1_250,
+            "periodic_slave_rows": 4_235,
+            "actual_full3d_equivalent_active_fe_dofs": 82_925,
+            "independent_trace_rows": 18_390,
+            "predicted_direct_solve_rows": 18_470,
+        },
+    },
+    "h15_symmetric_top_air_remote_p5_interior_v1": {
+        "plan_name": (
+            "h15_symmetric_top_air_remote_p5_interior_plan_v1.json"
+        ),
+        "component_names": {
+            1: "combined_hp_interior_mpi1_v1.json",
+            2: "combined_hp_interior_mpi2_v1.json",
+            8: "combined_hp_interior_mpi8_v1.json",
+        },
+        "schema_version": (
+            "case097.combined-hp-interior-component.v1"
+        ),
+        "pass_status": "combined_hp_interior_component_pass",
+        "marked_root_boxes": (
+            (8.25, 0.0, 120.0, 16.5, 12.5, 130.0),
+            (33.5, 0.0, 120.0, 41.75, 12.5, 130.0),
+        ),
+        "variable_interior": True,
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 148,
+            "hanging_patch_count": 12,
+            "raw_broken_active_fe_dofs": 86_740,
+            "raw_broken_trace_rows": 26_860,
+            "hanging_slave_rows": 2_500,
+            "periodic_slave_rows": 4_380,
+            "actual_full3d_equivalent_active_fe_dofs": 84_240,
+            "independent_trace_rows": 19_980,
+            "predicted_direct_solve_rows": 20_060,
+        },
+    },
+}
+
+
+def _candidate_spec(candidate_id: str) -> Mapping[str, Any]:
+    try:
+        return CANDIDATE_SPECS[str(candidate_id)]
+    except KeyError as exc:
+        raise ValueError(f"unknown Task035d candidate {candidate_id!r}") from exc
+
+
+def _plan_path(spec: Mapping[str, Any]) -> Path:
+    return RECORD_DIR / str(spec["plan_name"])
 PRIOR_AUTHORITIES = {
     "phase_a_compact": {
         "path": (
@@ -104,26 +169,6 @@ NUMERICAL_RELATIVE_FILES = (
         f"{CHECKER_NAME}"
     ),
 )
-MARKED_ROOT_BOX = (
-    8.25,
-    0.0,
-    120.0,
-    16.5,
-    12.5,
-    130.0,
-)
-EXPECTED = {
-    "root_cell_count": 120,
-    "leaf_cell_count": 134,
-    "hanging_patch_count": 6,
-    "raw_broken_active_fe_dofs": 84_175,
-    "raw_broken_trace_rows": 23_875,
-    "hanging_slave_rows": 1_250,
-    "periodic_slave_rows": 4_235,
-    "actual_full3d_equivalent_active_fe_dofs": 82_925,
-    "independent_trace_rows": 18_390,
-    "predicted_direct_solve_rows": 18_470,
-}
 
 
 def _plain(value: Any) -> Any:
@@ -284,24 +329,88 @@ def _prior_authorities() -> dict[str, Any]:
     return result
 
 
-def build_plan_payload() -> dict[str, Any]:
+def build_plan_payload(
+    candidate_id: str = DEFAULT_CANDIDATE_ID,
+) -> dict[str, Any]:
+    spec = _candidate_spec(candidate_id)
     cfg = target_stage4_config(degree=6, h_nm=15.0)
-    return stage4_local_h_refinement_plan_payload(
-        cfg,
-        (MARKED_ROOT_BOX,),
-        comm_size=8,
-        trace_degree=5,
-        cell_interior_degree=6,
-        provenance={
+    marked = tuple(spec["marked_root_boxes"])
+    overrides = None
+    provenance: dict[str, Any]
+    if spec["variable_interior"]:
+        forest = _build_forest(
+            cfg,
+            comm_size=8,
+            marked_root_boxes=marked,
+            maximum_level=1,
+        )
+        overrides = {
+            cell.box: 5
+            for cell in forest.leaves
+            if (
+                cell.key.level == 0
+                and cell.material_tag == int(cfg.tags.air)
+                and cell.box[2] >= 0.0
+                and cell.box[5] <= 120.0
+                and (
+                    cell.box[3] <= 8.25
+                    or cell.box[0] >= 41.75
+                )
+            )
+        }
+        if len(overrides) != 32:
+            raise RuntimeError(
+                "combined h/p remote-air classifier must mark 32 cells"
+            )
+        provenance = {
+            "purpose": (
+                "Task035d first local-h plus true variable-interior "
+                "candidate"
+            ),
+            "candidate_id": candidate_id,
+            "h_action": (
+                "one split in each top-air root immediately outside the "
+                "left and right grating sidewalls, then y-periodic closure"
+            ),
+            "h_action_evidence": (
+                "symmetric diagnostic response to the h15 one-sided "
+                "local-h 6/12 power plus 6/12 amplitude controlled "
+                "negative; heuristic channel-directed action, not actual "
+                "DWR or adjoint credit"
+            ),
+            "p_action": (
+                "p6-to-p5 cell-interior only in 32 unrefined homogeneous "
+                "air leaves at the two far lateral columns, excluding "
+                "grating, sidewall-adjacent, local-h, top-port, and "
+                "bottom-port cells"
+            ),
+            "p_action_evidence": (
+                "geometry smoothness and distance guard; no variable "
+                "trace, DWR, or full combined-hp completion credit"
+            ),
+            "accuracy_credit": False,
+            "complete_combined_hp_credit": False,
+            "ordinary_default_changed": False,
+        }
+    else:
+        provenance = {
             "purpose": "Task035d h-only first formal candidate",
-            "candidate_id": CANDIDATE_ID,
+            "candidate_id": candidate_id,
             "seed": (
                 "Task035b fixed p5-trace/p6-interior h15 plus "
                 "minimum top-air local-h split"
             ),
             "accuracy_credit": False,
             "ordinary_default_changed": False,
-        },
+        }
+    return stage4_local_h_refinement_plan_payload(
+        cfg,
+        marked,
+        comm_size=8,
+        trace_degree=5,
+        cell_interior_degree=6,
+        provenance=provenance,
+        cell_interior_degree_overrides=overrides,
     )
 
 
@@ -315,6 +424,7 @@ def _stable_identity(
     physical = reduction.audit["physical_trace"]
     constraints = reduction.audit["trace_constraints"]
     degree_plan = reduction.audit["degree_plan"]
+    entity_map = reduction.degree_plan.entity_map.audit
     return {
         "plan_file_sha256": context.plan_file_sha256,
         "base_config_identity_sha256": mesh[
@@ -346,6 +456,13 @@ def _stable_identity(
         "mesh_cell_box_catalog_sha256": degree_plan[
             "mesh_cell_box_catalog_sha256"
         ],
+        "cell_degree_plan_sha256": degree_plan[
+            "cell_degree_plan_sha256"
+        ],
+        "cell_degree_counts": degree_plan["cell_degree_counts"],
+        "canonical_degree_map_sha256": entity_map[
+            "canonical_degree_map_sha256"
+        ],
         "raw_broken_active_fe_dofs": reduction.audit[
             "raw_broken_active_fe_dofs"
         ],
@@ -370,14 +487,18 @@ def generate_component(
     comm: MPI.Intracomm,
     *,
     source_sha: str,
+    candidate_id: str = DEFAULT_CANDIDATE_ID,
 ) -> dict[str, Any]:
+    spec = _candidate_spec(candidate_id)
+    plan_path = _plan_path(spec)
+    plan_relative = str(plan_path.relative_to(ROOT))
     source = _live_source_identity(comm, expected_sha=source_sha)
     environment = _environment(comm)
     prior = _prior_authorities()
-    if not PLAN_PATH.is_file():
-        raise FileNotFoundError(f"tracked local-h plan is missing: {PLAN_PATH}")
+    if not plan_path.is_file():
+        raise FileNotFoundError(f"tracked local-h plan is missing: {plan_path}")
     tracked = subprocess.run(
-        ("git", "ls-files", "--error-unmatch", PLAN_RELATIVE),
+        ("git", "ls-files", "--error-unmatch", plan_relative),
         cwd=ROOT,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -389,7 +510,7 @@ def generate_component(
     cfg = target_stage4_config(degree=6, h_nm=15.0)
     mesh_data = build_stage4_local_h_mesh_data(
         cfg,
-        PLAN_PATH,
+        plan_path,
         comm=comm,
     )
     context = mesh_data.local_h_context
@@ -407,7 +528,7 @@ def generate_component(
         "reduction_authority": reduction.audit["pass"] is True,
         "expected_dimensions": all(
             int(stable[name]) == int(expected)
-            for name, expected in EXPECTED.items()
+            for name, expected in spec["expected"].items()
         ),
         "constraint_kinds": (
             reduction.audit["trace_constraints"]["constraint_kinds"]
@@ -422,6 +543,29 @@ def generate_component(
         "physical_dof_gate": (
             reduction.audit["active_fe_dof_gate_pass"] is True
         ),
+        "cell_interior_policy": (
+            (
+                reduction.degree_plan.audit[
+                    "cell_degree_counts"
+                ]
+                == {"p4": 0, "p5": 32, "p6": 116}
+                and reduction.degree_plan.audit[
+                    "local_variable_trace_implemented"
+                ]
+                is False
+                and reduction.degree_plan.audit[
+                    "complete_combined_hp_credit"
+                ]
+                is False
+            )
+            if spec["variable_interior"]
+            else (
+                reduction.degree_plan.audit[
+                    "cell_degree_counts"
+                ]
+                == {"p4": 0, "p5": 0, "p6": 134}
+            )
+        ),
         "prior_attempt2_hash_bound": all(
             row["pass"] is True for row in prior.values()
         ),
@@ -433,22 +577,22 @@ def generate_component(
     failures = [name for name, passed in checks.items() if not passed]
     return {
         "schema_version": (
-            "case097.local-h-production-component.v3-integration"
+            spec["schema_version"]
         ),
         "status": (
-            "local_h_production_component_pass"
+            spec["pass_status"]
             if not failures
-            else "local_h_production_component_fail"
+            else f"{spec['pass_status']}_failed"
         ),
         "pass": not failures,
-        "candidate_id": CANDIDATE_ID,
+        "candidate_id": candidate_id,
         "source_sha": source_sha,
         "source_identity": source,
         "environment": environment,
         "plan": {
-            "path": PLAN_RELATIVE,
-            "file_sha256": _sha256(PLAN_PATH),
-            "payload": json.loads(PLAN_PATH.read_text(encoding="utf-8")),
+            "path": plan_relative,
+            "file_sha256": _sha256(plan_path),
+            "payload": json.loads(plan_path.read_text(encoding="utf-8")),
         },
         "prior_authorities": prior,
         "stable_identity": stable,
@@ -466,6 +610,11 @@ def generate_component(
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--candidate",
+        choices=tuple(CANDIDATE_SPECS),
+        default=DEFAULT_CANDIDATE_ID,
+    )
+    parser.add_argument(
         "--mode",
         choices=("plan", "component"),
         required=True,
@@ -478,15 +627,17 @@ def _parse_args() -> argparse.Namespace:
 def main() -> int:
     args = _parse_args()
     comm = MPI.COMM_WORLD
+    spec = _candidate_spec(args.candidate)
+    plan_path = _plan_path(spec)
     if args.mode == "plan":
         if comm.size != 1:
             raise ValueError("plan generation is serial")
-        output = args.output or PLAN_PATH
-        if output.resolve() != PLAN_PATH.resolve():
+        output = args.output or plan_path
+        if output.resolve() != plan_path.resolve():
             raise ValueError("formal plan output path is fixed")
-        payload = build_plan_payload()
+        payload = build_plan_payload(args.candidate)
     else:
-        expected_name = COMPONENT_NAMES.get(int(comm.size))
+        expected_name = spec["component_names"].get(int(comm.size))
         if expected_name is None:
             raise ValueError("component authority requires MPI1, MPI2, or MPI8")
         if args.source_sha is None:
@@ -497,6 +648,7 @@ def main() -> int:
         payload = generate_component(
             comm,
             source_sha=str(args.source_sha),
+            candidate_id=args.candidate,
         )
     if output.exists():
         raise FileExistsError(f"authority output is immutable: {output}")
@@ -514,7 +666,7 @@ def main() -> int:
     envelope = comm.bcast(envelope, root=0)
     if comm.rank == 0:
         print(json.dumps(envelope, sort_keys=True))
-    return 0 if payload["pass"] else 1
+    return 0 if payload.get("pass", True) else 1
 
 
 if __name__ == "__main__":
