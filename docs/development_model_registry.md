@@ -346,13 +346,15 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间均匀长段改�
 
 | 模型 | 网格 / 空间 | Full3D-equivalent DoF | active rows incl. DtN | matrix NNZ | factor NNZ | R00 | Rtotal | Ttotal | Aclosure | true residual | 峰值 / 主要时间 | 状态 |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
-| p4/h10 global | `(6,3,14)`；global p4 | 53,084 | 21,824 | 8,184,464 | 40,151,936 | `0.001872161` | `0.001882317` | `0.596619520` | `0.401498163` | `2.35e-11` | build `35.64 s`；MUMPS setup `13.36 s` | `success`，但未达高阶收敛 |
-| p5/h10 global | `(6,3,14)`；global p5 | 101,815 | 35,000 | 20,140,928 | 101,062,900 | `0.000785714` | `0.000794886` | `0.602483954` | `0.396721160` | `1.25e-11` | build/setup/solve `24.72/36.48/0.077 s` | `success`，接近 p6 |
+| p4/h10 global | `(6,3,14)`；global p4 | 53,084 | 21,824 | 8,184,464 | 40,151,936 | `0.001872161` | `0.001882317` | `0.596619520` | `0.401498163` | `2.35e-11` | peak `历史未冻结`；build `35.64 s`；MUMPS setup `13.36 s` | `success`，但未达高阶收敛 |
+| p5/h10 global | `(6,3,14)`；global p5 | 101,815 | 35,000 | 20,140,928 | 101,062,900 | `0.000785714` | `0.000794886` | `0.602483954` | `0.396721160` | `1.25e-11` | peak `历史未冻结`；build/setup/solve `24.72/36.48/0.077 s` | `success`，接近 p6 |
 | p6/h10 global reference | `(6,3,14)`；global p6 | 173,802 | 51,272 | 41,989,040 | 202,441,352 | `0.000753761` | `0.000762881` | `0.602701634` | `0.396535485` | `1.26e-11` | build/setup/solve `102.32/102.54/0.167 s`；隔离 direct peak `15.964 GiB` | `success`；best available same-code discrete reference |
 | global p6/h15 | 粗化网格；global p6 | 84,492 | 24,704 | 19,207,136 | 59,616,320 | 见 record | 见 record | 见 record | 见 record | `7.87e-12` | pair peak `12.000 GiB`；build/setup/solve `396.93/21.53/0.057 s` | `controlled_negative`；弱通道不满足 |
 | fixed p5-trace/p6-interior h15 | `(6,2,10)` | 74,890 | 16,880 | 9,195,812 | 27,916,600 | `0.000755888314` | `0.000765024318` | `0.602685146796` | `0.396549828886` | `8.83e-12` | canonical direct MPI8 peak `5.803 GiB`；cold/warm non-KSP `19.242/6.141 s` | `controlled_negative`；总量通过、通道失败 |
 | fixed p5-trace/p6-interior h14 | `(6,2,11)` | 82,315 | 18,500 | 10,104,512 | 31,347,000 | 见 record | 见 record | 见 record | 见 record | `4.45e-12` | `6.376 GiB`；build/setup/solve `62.312/11.474/0.0315 s` | `controlled_negative`；z 方向正信号但不完整 |
 | fixed p5-trace/p6-interior h13 | `(6,2,12)` | 89,740 | 20,120 | 11,013,212 | 36,273,200 | `0.000756117570` | `0.000765246512` | `0.602682451672` | `0.396552301816` | `5.81e-12` | accuracy peak `6.411 GiB`；canonical setup peak约 `5.03 GiB`；cold/warm non-KSP `19.410/6.696 s` | `controlled_negative`；当前预算内最强点 |
+
+**峰值内存口径说明：**p4/h10与p5/h10的同表记录保存了rows、NNZ、factor、物理量和阶段时间，但没有冻结单独的per-model峰值内存；因此显式写为`历史未冻结`，不能空着也不能由p5/p6 pair peak反推。p6/h10同时有隔离direct peak `15.964 GiB`和后续Task035c MPI8 static Full3D peak `14.722 GiB`两套不同source/生命周期authority，二者不能混写。
 
 ### 1.4.1.1 12 个显著通道功率
 
