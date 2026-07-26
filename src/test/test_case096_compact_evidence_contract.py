@@ -261,7 +261,7 @@ def test_task035c_selective_merge_manifest_is_file_level_and_complete() -> None:
     with manifest_path.open(encoding="utf-8", newline="") as stream:
         rows = list(csv.DictReader(stream))
 
-    assert len(rows) == 69
+    assert len(rows) == 70
     paths = [row["path"] for row in rows]
     assert len(paths) == len(set(paths))
     assert {row["category"] for row in rows} == {

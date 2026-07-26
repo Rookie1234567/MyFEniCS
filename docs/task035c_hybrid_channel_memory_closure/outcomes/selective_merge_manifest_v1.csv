@@ -43,6 +43,7 @@
 "benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_six_path_v1.json","A","compact_evidence","G7_compact_evidence","none","test_182; Case096 hermetic","source 244b62e1; six paths; 12/12+12/12","3","formal high-order numerical and RSS authority"
 "benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_static_rank_study_v1.json","A","compact_evidence","G7_compact_evidence","none","Case096 hermetic","MPI1 numerical and MPI2 telemetry negatives","3","preserve rank-lane controlled negatives"
 "benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md","M","project_docs","G8_project_docs","none","documentation contract","Task035b H1-A record","4","index final predecessor Hybrid evidence"
+"benchmarks/cases/095_high_order_local_hp_resource_envelope/test_command.txt","integration_fix","project_docs","G8_project_docs","none","Case095 focused command; full pytest","not applicable","4","M4 removed one do_not_merge historical test path that is absent from master"
 "benchmarks/cases/README.md","M","project_docs","G8_project_docs","none","documentation contract","not applicable","4","register Case096"
 "docs/README.md","M","project_docs","G8_project_docs","none","documentation contract","not applicable","4","register Task035c and Task035d entry points"
 "docs/development_model_registry.md","M","project_docs","G8_project_docs","none","documentation contract","Task035c p2 and six-path compact authority","4","normalize model ledger including scope PSS/USS and negative lanes"

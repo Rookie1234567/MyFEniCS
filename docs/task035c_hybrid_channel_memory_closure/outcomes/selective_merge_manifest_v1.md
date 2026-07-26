@@ -5,22 +5,26 @@
 ```text
 source_branch = codex/20260726-task35c-hybrid-channel-memory-closure
 base = origin/master@1fb144d3ca50208c22b5f0733e140bfac8d9c47c
-tracked_or_planned_files = 69
+tracked_or_planned_files = 70
 production_core = 16
 research_opt_in = 0
 reusable_benchmark = 19
 compact_evidence = 8
-project_docs = 26
+project_docs = 27
 do_not_merge = 0
 whole_branch_blind_merge = forbidden
 integration_method = file-level restore by manifest dependency order
 ordinary_default_change = false
 ```
 
-本 manifest 覆盖 `origin/master...Task035c` 的全部 67 个已有差异文件，以及本
-manifest 自身的 Markdown/CSV 两个文件。没有 tracked `do_not_merge` 差异，
-但仍采用文件级迁移，以便机器核对实际迁入集合并避免把 ignored 本机 artifact
-带入 master。
+本 manifest 最初覆盖 `origin/master...Task035c` 的全部 67 个已有差异文件，
+以及本 manifest 自身的 Markdown/CSV 两个文件。M4 首次 Case095 focused
+命令又发现 master 中的 `test_command.txt` 仍引用 Task035b manifest 已明确
+`do_not_merge` 的 `test_158_task035b_generalized_primal_recovery.py`；该文件
+本来就不存在于 master。为使合并后复现入口真实可执行，integration 另增加这一
+个非数值 hygiene fix。因此最终集合为 69 个 Task035c 文件 + 1 个 integration
+fix。没有 tracked `do_not_merge` 内容，仍采用文件级迁移并排除 ignored 本机
+artifact。
 
 逐文件权威表为
 [`selective_merge_manifest_v1.csv`](selective_merge_manifest_v1.csv)。CSV 的
@@ -34,7 +38,7 @@ manifest 自身的 Markdown/CSV 两个文件。没有 tracked `do_not_merge` 差
 | 1 | G1–G3 production numerical core + core tests | 16 | 保留 explicit opt-in；先迁移以便后续 runner/tests import |
 | 2 | G4–G6 reusable Case096、runner、watchdog、checker和测试 | 19 | 不成为 ordinary solver default |
 | 3 | G7 compact evidence | 8 | 只迁移 tracked compact/hash；保留正负结果 |
-| 4 | G8 project docs/registry/review/task handoff | 24 | 同步适用边界、PSS/USS口径和Task035d入口 |
+| 4 | G8 project docs/registry/review/task handoff | 25 | 同步适用边界、PSS/USS口径、Task035d入口并修复Case095陈旧命令 |
 | 5 | G9 manifest | 2 | 最后迁移并执行实际diff集合核对 |
 
 ## 3. 数值身份与 PDE 重跑
@@ -76,7 +80,7 @@ RSS 推算，也不是 PDE 重跑。正式 relative-memory authority 仍为原 c
 若远程 master 在迁移前前进，应先更新本文件中的 base 并重新核对差异集合。
 文件级 restore 后必须证明：
 
-1. 实际 changed-path 集合与 CSV 69 行完全相等；
+1. 实际 changed-path 集合与 CSV 70 行完全相等；
 2. `do_not_merge = 0`，ignored raw artifact 为 0；
 3. numerical blob checker 没有要求重跑；
 4. Review V2 M4 的 focused、MPI、Case095/096、Task032/033、full pytest、

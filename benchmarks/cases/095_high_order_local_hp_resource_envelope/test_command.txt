@@ -8,7 +8,6 @@ python -m pytest -q \
   src/test/test_114_task035b_cell_static_condensation.py \
   src/test/test_115_task035b_assembly_time_condensation.py \
   src/test/test_152_task035b_dtn_surface_vector_cache.py \
-  src/test/test_158_task035b_generalized_primal_recovery.py \
   src/test/test_178_task035b_public_assembly_backend.py
 mpiexec -n 8 python -m pytest -q \
   src/test/test_46_task033_high_order_floquet_topology.py \
