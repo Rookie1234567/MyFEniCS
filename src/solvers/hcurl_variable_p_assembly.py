@@ -44,6 +44,57 @@ class VariablePTraceConstraintMap(Protocol):
     audit: Any
 
 
+def _lu_factor_matrix_action(
+    factor: tuple[np.ndarray, np.ndarray],
+    values: np.ndarray,
+) -> np.ndarray:
+    """Apply the original matrix represented by SciPy ``lu_factor``."""
+
+    lu, pivots = factor
+    dimension = int(lu.shape[0])
+    lower = np.tril(lu, k=-1) + np.eye(
+        dimension,
+        dtype=lu.dtype,
+    )
+    upper = np.triu(lu)
+    permuted = lower @ (upper @ values)
+    permutation = np.arange(dimension)
+    for row, pivot in enumerate(pivots):
+        permutation[[row, int(pivot)]] = permutation[
+            [int(pivot), row]
+        ]
+    return np.ascontiguousarray(
+        permuted[np.argsort(permutation)]
+    )
+
+
+def _iteratively_refined_lu_solve(
+    factor: tuple[np.ndarray, np.ndarray],
+    right_hand_side: np.ndarray,
+    *,
+    maximum_steps: int = 2,
+) -> np.ndarray:
+    """Return the best same-precision LU solution after residual refinement."""
+
+    rhs = np.asarray(right_hand_side, dtype=np.complex128)
+    best = np.ascontiguousarray(lu_solve(factor, rhs))
+    residual = _lu_factor_matrix_action(factor, best) - rhs
+    best_norm = float(np.linalg.norm(residual))
+    for _step in range(int(maximum_steps)):
+        correction = lu_solve(factor, residual)
+        candidate = np.ascontiguousarray(best - correction)
+        candidate_residual = (
+            _lu_factor_matrix_action(factor, candidate) - rhs
+        )
+        candidate_norm = float(np.linalg.norm(candidate_residual))
+        if not np.isfinite(candidate_norm) or candidate_norm >= best_norm:
+            break
+        best = candidate
+        residual = candidate_residual
+        best_norm = candidate_norm
+    return best
+
+
 @dataclass(frozen=True)
 class VariablePCellRecovery:
     """Local active-field recovery data for one owned cell."""
@@ -137,7 +188,7 @@ class VariablePCondensedTraceSystem:
             )
             if active_full_rhs is not None:
                 rows = np.asarray(cell.interior_rows, dtype=np.int64)
-                interior += lu_solve(
+                interior += _iteratively_refined_lu_solve(
                     self.interior_lu_by_class[recovery.class_key],
                     rhs_local[rows],
                 )
@@ -1002,6 +1053,8 @@ def build_variable_p_condensed_trace_system(
         "interior_adjoint_operator_residual_max": float(
             adjoint_operator_residual
         ),
+        "interior_rhs_recovery_iterative_refinement_max_steps": 2,
+        "interior_rhs_recovery_refinement_uses_retained_lu_only": True,
         "final_assembly_seconds": assembly_seconds,
         "final_assembly_deferred": bool(defer_final_assembly),
         "preallocation_seconds": preallocation_seconds,

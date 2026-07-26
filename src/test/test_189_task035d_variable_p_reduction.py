@@ -7,7 +7,7 @@ from basix.ufl import element
 from dolfinx import default_real_type, fem, mesh
 from mpi4py import MPI
 from petsc4py import PETSc
-from scipy.linalg import lu_factor
+from scipy.linalg import lu_factor, lu_solve
 
 from src.adaptivity.variable_p_degree_plan import (
     build_variable_p_cell_degree_plan,
@@ -20,6 +20,7 @@ from src.adaptivity.variable_p_transfer import (
     build_variable_p_global_transfer,
 )
 from src.solvers.hcurl_variable_p_assembly import (
+    _iteratively_refined_lu_solve,
     build_variable_p_condensed_trace_system,
 )
 from src.solvers.hcurl_variable_p_reduction import (
@@ -67,6 +68,40 @@ class Task035dVariablePReductionTests(unittest.TestCase):
             rtol=2.0e-15,
             atol=2.0e-15,
         )
+
+    def test_lu_interior_recovery_refinement_never_worsens_residual(
+        self,
+    ) -> None:
+        rng = np.random.default_rng(350189)
+        left, _ = np.linalg.qr(
+            rng.standard_normal((24, 24))
+            + 1j * rng.standard_normal((24, 24))
+        )
+        right, _ = np.linalg.qr(
+            rng.standard_normal((24, 24))
+            + 1j * rng.standard_normal((24, 24))
+        )
+        matrix = (
+            left
+            @ np.diag(np.geomspace(1.0, 1.0e-10, 24))
+            @ right.conj().T
+        )
+        rhs = (
+            rng.standard_normal(24)
+            + 1j * rng.standard_normal(24)
+        )
+        factor = lu_factor(matrix)
+        raw = lu_solve(factor, rhs)
+        refined = _iteratively_refined_lu_solve(factor, rhs)
+        raw_residual = np.linalg.norm(
+            _lu_factor_matrix_action(factor, raw) - rhs
+        )
+        refined_residual = np.linalg.norm(
+            _lu_factor_matrix_action(factor, refined) - rhs
+        )
+
+        self.assertTrue(np.all(np.isfinite(refined)))
+        self.assertLessEqual(refined_residual, raw_residual)
 
     def test_adapter_reduces_recovers_and_audits_true_active_system(
         self,

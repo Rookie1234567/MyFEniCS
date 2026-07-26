@@ -31,6 +31,7 @@ from src.adaptivity.stage4_local_h import (
 
 from .hcurl_variable_p_assembly import (
     VariablePCondensedTraceSystem,
+    _lu_factor_matrix_action,
     build_variable_p_condensed_trace_system_from_compiled_form,
     condense_variable_p_active_vector_to_trace,
     recover_variable_p_active_full_vector,
@@ -307,6 +308,11 @@ class VariablePAssemblyTimeReduction:
                 ),
                 "auxiliary_interior_action_norm": auxiliary_norm,
                 "active_full_rhs_source": rhs_source,
+                "interior_rhs_recovery_iterative_refinement_max_steps": (
+                    self.system.build_audit[
+                        "interior_rhs_recovery_iterative_refinement_max_steps"
+                    ]
+                ),
                 "full_p6_global_matrix_allocated": False,
                 "ordinary_default_changed": False,
             },
@@ -725,30 +731,6 @@ def _reduced_trace_auxiliary_norm(
             )
     auxiliary_sq = float(np.vdot(auxiliary, auxiliary).real)
     return float(np.sqrt(max(trace_sq + auxiliary_sq, 0.0)))
-
-
-def _lu_factor_matrix_action(
-    factor: tuple[np.ndarray, np.ndarray],
-    values: np.ndarray,
-) -> np.ndarray:
-    """Apply the original matrix represented by SciPy ``lu_factor``."""
-
-    lu, pivots = factor
-    dimension = int(lu.shape[0])
-    lower = np.tril(lu, k=-1) + np.eye(
-        dimension,
-        dtype=lu.dtype,
-    )
-    upper = np.triu(lu)
-    permuted = lower @ (upper @ values)
-    permutation = np.arange(dimension)
-    for row, pivot in enumerate(pivots):
-        permutation[[row, int(pivot)]] = permutation[
-            [int(pivot), row]
-        ]
-    return np.ascontiguousarray(
-        permuted[np.argsort(permutation)]
-    )
 
 
 def _active_auxiliary_interior_action(
