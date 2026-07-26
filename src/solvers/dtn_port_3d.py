@@ -2126,7 +2126,6 @@ def solve_stage4_dtn_port_total_field(
     component_full_vectors: tuple[PETSc.Vec, PETSc.Vec] | None = None
     component_active_vectors: tuple[PETSc.Vec, PETSc.Vec] | None = None
     component_interior_bilinear: np.ndarray | None = None
-    variable_p_auxiliary_interior_columns_local: np.ndarray | None = None
     unique_surface_orders = 0
     component_vector_assemblies = 0
     component_vector_cache_hits = 0
@@ -2222,44 +2221,10 @@ def solve_stage4_dtn_port_total_field(
                     variable_p_reduction is not None
                     and component_active_vectors is not None
                 ):
-                    component_interior_bilinear = np.asarray(
-                        [
-                            [
-                                variable_p_reduction
-                                .interior_cross_bilinear_active(
-                                    left,
-                                    right,
-                                )
-                                for right in component_active_vectors
-                            ]
-                            for left in component_active_vectors
-                        ],
+                    component_interior_bilinear = np.zeros(
+                        (2, 2),
                         dtype=np.complex128,
                     )
-                    if (
-                        variable_p_auxiliary_interior_columns_local
-                        is None
-                    ):
-                        active_start, active_end = map(
-                            int,
-                            component_active_vectors[
-                                0
-                            ].getOwnershipRange(),
-                        )
-                        interior_start = max(
-                            active_start,
-                            variable_p_reduction.system.entity_map
-                            .active_trace_rows,
-                        )
-                        variable_p_auxiliary_interior_columns_local = (
-                            np.zeros(
-                                (
-                                    max(0, active_end - interior_start),
-                                    n_aux,
-                                ),
-                                dtype=np.complex128,
-                            )
-                        )
                 else:
                     component_interior_bilinear = np.asarray(
                         [
@@ -2295,31 +2260,6 @@ def solve_stage4_dtn_port_total_field(
         if component_left_entries is None:
             raise RuntimeError("DtN left component cache is unavailable")
         traction_vector = _traction_vector(mode, cfg)
-        if (
-            component_active_vectors is not None
-            and variable_p_auxiliary_interior_columns_local is not None
-        ):
-            active_start, active_end = map(
-                int,
-                component_active_vectors[0].getOwnershipRange(),
-            )
-            interior_start = max(
-                active_start,
-                variable_p_reduction.system.entity_map.active_trace_rows,
-            )
-            offset = interior_start - active_start
-            local_column = (
-                variable_p_auxiliary_interior_columns_local[:, aux_index]
-            )
-            for coefficient, vector in zip(
-                traction_vector[:2],
-                component_active_vectors,
-                strict=True,
-            ):
-                local_column += complex(coefficient) * np.asarray(
-                    vector.getArray(readonly=True),
-                    dtype=np.complex128,
-                )[offset : offset + len(local_column)]
         ell_cols, ell_values = _combine_owned_entries(
             component_left_entries,
             (mode.e_vector[0], mode.e_vector[1]),
@@ -2442,24 +2382,13 @@ def solve_stage4_dtn_port_total_field(
         for vector in component_active_vectors:
             vector.destroy()
 
-    if variable_p_auxiliary_interior_columns_local is not None:
-        local_column_bytes = int(
-            variable_p_auxiliary_interior_columns_local.nbytes
-        )
-        local_column_max = float(
-            np.max(
-                np.abs(
-                    variable_p_auxiliary_interior_columns_local
-                ),
-                initial=0.0,
-            )
-        )
+    if variable_p_reduction is not None:
+        timing_details[
+            "stage4_dtn_variable_p_auxiliary_interior_columns_allocated"
+        ] = False
         timing_details[
             "stage4_dtn_variable_p_auxiliary_interior_column_bytes_local_max"
-        ] = int(comm.allreduce(local_column_bytes, op=MPI.MAX))
-        timing_details[
-            "stage4_dtn_variable_p_auxiliary_interior_column_max_abs"
-        ] = float(comm.allreduce(local_column_max, op=MPI.MAX))
+        ] = 0
     if variable_p_trace_functional_audits:
         timing_details[
             "stage4_dtn_variable_p_trace_functional_count"
@@ -2851,24 +2780,10 @@ def solve_stage4_dtn_port_total_field(
                 "variable-p recovery requires the active and p6 RHS"
             )
         recovery_started = time.perf_counter()
-        recovery_kwargs: dict[str, Any] = {}
-        if variable_p_auxiliary_interior_columns_local is not None:
-            recovery_kwargs = {
-                "auxiliary_interior_columns_local": (
-                    variable_p_auxiliary_interior_columns_local
-                ),
-                "auxiliary_values": _gather_auxiliary_values(
-                    solve_x,
-                    n_fe,
-                    n_aux,
-                    comm,
-                ),
-            }
         variable_p_recovered = variable_p_reduction.recover(
             solve_x,
             assembly_time_full_rhs,
             active_full_rhs_override=variable_p_active_full_rhs,
-            **recovery_kwargs,
         )
         assembly_time_field = variable_p_recovered.field
         condensation_recovery = variable_p_recovered.audit

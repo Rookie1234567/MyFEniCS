@@ -1,0 +1,80 @@
+{
+  "schema_version": "task035d.variable-p-component-anchor.v2",
+  "status": "numerical_pass_harness_metadata_fail",
+  "pass": false,
+  "classification": "controlled_negative_postcondition_only",
+  "task": "Task035d",
+  "case_id": "097_goal_oriented_exact_sequence_hp_adaptivity",
+  "source_commit_sha": "0464467c17435d614ccb17d659d856dd6bf941f9",
+  "run": {
+    "mpi_size": 1,
+    "degree_container": 6,
+    "h_nm": 100.0,
+    "mesh_cells": 24,
+    "actual_axis_counts": [
+      3,
+      2,
+      4
+    ],
+    "cell_degree_policy": "uniform_p6_degenerate_control",
+    "formal_candidate": false,
+    "heavy_pde": true,
+    "elapsed_seconds": 496.2787330580177
+  },
+  "numerical_result": {
+    "case_status": "completed",
+    "official_result": true,
+    "active_fe_dofs": 17478,
+    "periodic_independent_trace_rows": 5184,
+    "dtn_rows": 80,
+    "matrix_rows": 5264,
+    "matrix_nnz_used": 3894728,
+    "matrix_nnz_allocated": 4106888,
+    "matrix_mallocs": 0,
+    "full_explicit_true_relative_residual": 2.763693099935084e-12,
+    "eliminated_cell_interior_residual_norm": 0.0,
+    "R_total": 0.0031645707170031762,
+    "T_total": 0.59116138009267,
+    "A_volume_total": 0.405674049190394,
+    "R_plus_T_plus_A_volume": 1.0000000000000673,
+    "energy_closure_error": 6.727951529228449e-14,
+    "max_rss_mb": 891.44140625,
+    "total_peak_rss_mb": 891.44140625,
+    "swap_bytes": null,
+    "swap_measurement": "not_available_in_component_fixture"
+  },
+  "trace_only_gate": {
+    "pass": true,
+    "surface_functional_count": 81,
+    "removed_active_interior_max_abs": 2.5280404402561893e-12,
+    "auxiliary_interior_column_max_abs_after_gate": 0.0,
+    "auxiliary_interior_action_norm": 0.0
+  },
+  "timing_seconds": {
+    "base_matrix_assembly": 473.1699403219973,
+    "modal_loop": 9.190998633974232,
+    "modal_vector_assembly": 9.117512735014316,
+    "ksp_setup": 6.393996092956513,
+    "ksp_solve": 0.03316043800441548,
+    "recovery": 0.20503038499737158,
+    "matrix_free_full_residual": 0.31558629299979657
+  },
+  "artifact_identity": {
+    "artifact_root": "/tmp/task035d_variable_p_dtn_smoke_mpi1/solve",
+    "artifact_retention": "local_tmp_not_git",
+    "run_summary_sha256": "461feca14ed7eb74be84e2498d0078a2b0ee7247af6c77350ccc078afc22ecdc",
+    "progress_3d_jsonl_sha256": "8bafa702d916eaae406910e08731b1bcbdeffcc168148c9dca2eb17e3947f35c",
+    "dtn_port_diffraction_orders_sha256": "27ae7f6dafa3e24692d4272fa3c4a9d16827867ffe2b789037aea7361a7fe478"
+  },
+  "harness_failure": {
+    "exception": "KeyError: 'stage4_variable_p_active'",
+    "failed_assertion": "summary['stage4_variable_p_active']",
+    "root_cause": "dtn_port_3d returned the field in solver_info, but common_3d_case_flow did not copy variable-p identity and active-row fields into run_summary.json",
+    "numerical_kernel_failure": false,
+    "serialization_failure": false,
+    "fix_scope": "summary provenance projection plus removal of zero auxiliary-interior storage",
+    "heavy_pde_rerun_required_for_this_fix": false
+  },
+  "accuracy_credit": "component qualification only; no p6/h10 reference-v1 channel credit",
+  "ordinary_default_changed": false
+}

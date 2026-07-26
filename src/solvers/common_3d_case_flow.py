@@ -1488,6 +1488,20 @@ def run_prepared_3d_case_flow(
                 "stage4_assembly_time_cell_static_condensation"
             )
         ),
+        "stage4_variable_p_active": False
+        if dtn_solver_info is None
+        else bool(dtn_solver_info.get("stage4_variable_p_active")),
+        "num_actual_conforming_active_fe_dofs": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get(
+            "num_actual_conforming_active_fe_dofs"
+        ),
+        "num_active_trace_dofs": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("num_active_trace_dofs"),
+        "num_active_condensed_dofs": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("num_active_condensed_dofs"),
         "stage4_floquet_slave_elimination": False
         if dtn_solver_info is None
         else bool(
