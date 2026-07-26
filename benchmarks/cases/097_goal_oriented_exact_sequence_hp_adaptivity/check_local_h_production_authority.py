@@ -25,7 +25,7 @@ RECORD_NAMES = {
     2: "local_h_production_mpi2_v3_owner_gate_fix1.json",
     8: "local_h_production_mpi8_v3_owner_gate_fix1.json",
 }
-OUTPUT_NAME = "local_h_production_mpi_identity_v3_owner_gate_fix1.json"
+OUTPUT_NAME = "local_h_production_mpi_identity_v3_owner_gate_fix2.json"
 SCHEMA = "case097.local-h-production-component.v3-integration"
 CHECKER_RELATIVE = (
     "benchmarks/cases/"
@@ -138,7 +138,10 @@ def _validate_one(path: Path, payload: Mapping[str, Any]) -> list[str]:
             and trace.get("pass") is True
             and trace.get("constraint_kinds") == ["hanging", "floquet"]
             and trace.get("pde_launch_ownership_gate") is True
-            and trace.get("inactive_p6_rows_globally_numbered") is False
+            and trace.get(
+                "hanging_or_floquet_slave_rows_globally_numbered"
+            )
+            is False
         ):
             failures.append("production_reduction")
         checks = payload.get("checks")
