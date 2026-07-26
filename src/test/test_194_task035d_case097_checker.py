@@ -47,6 +47,9 @@ from benchmarks.task035d_case097_gates import (
     task035d_case097_local_h_plan_authority_gate,
     task035d_case097_sidewall_guard_plan_authority_gate,
 )
+from src.adaptivity.high_order_same_error import (
+    _sample_lagrange_hex_position_fallback,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -156,6 +159,60 @@ def _pass_payload() -> dict:
 
 
 class Task035dCase097CheckerTests(unittest.TestCase):
+    def test_lagrange_hex_locator_fallback_is_exact_and_unique(self) -> None:
+        import numpy as np
+        import pyvista as pv
+        from vtkmodules.vtkCommonDataModel import vtkLagrangeHexahedron
+
+        order = (2, 2, 2)
+        points = np.zeros((27, 3), dtype=np.float64)
+        for i in range(3):
+            for j in range(3):
+                for k in range(3):
+                    index = vtkLagrangeHexahedron.PointIndexFromIJK(
+                        i,
+                        j,
+                        k,
+                        order,
+                    )
+                    points[index] = (0.5 * i, 0.5 * j, 0.5 * k)
+        cells = np.concatenate(
+            ([len(points)], np.arange(len(points), dtype=np.int64))
+        )
+        grid = pv.UnstructuredGrid(
+            cells,
+            np.asarray(
+                [pv.CellType.LAGRANGE_HEXAHEDRON],
+                dtype=np.uint8,
+            ),
+            points,
+        )
+        real = np.column_stack(
+            (
+                points[:, 0] + 2.0 * points[:, 1],
+                points[:, 1] - points[:, 2],
+                points[:, 2] + 3.0 * points[:, 0],
+            )
+        )
+        imaginary = -0.5 * real
+        query = np.asarray([[0.2, 0.3, 0.4]], dtype=np.float64)
+        fallback = _sample_lagrange_hex_position_fallback(
+            grid,
+            query,
+            np.asarray([True]),
+            real,
+            imaginary,
+        )
+        expected_real = np.asarray([0.8, -0.1, 1.0])
+        self.assertEqual(fallback["valid"].tolist(), [True])
+        self.assertEqual(fallback["ambiguous"], [])
+        np.testing.assert_allclose(
+            fallback["values"][0],
+            expected_real - 0.5j * expected_real,
+            rtol=0.0,
+            atol=2.0e-15,
+        )
+
     def test_t30_controlled_negative_record_is_hash_bound(self) -> None:
         self.assertEqual(
             hashlib.sha256(T30_CONTROLLED_NEGATIVE.read_bytes()).hexdigest(),

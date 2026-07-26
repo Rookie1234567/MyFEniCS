@@ -252,6 +252,118 @@ def _field_shard_paths(run_dir: Path) -> list[Path]:
     ]
 
 
+def _sample_lagrange_hex_position_fallback(
+    grid: Any,
+    points: Any,
+    unresolved: Any,
+    real: Any,
+    imaginary: Any,
+) -> dict[str, Any]:
+    """Evaluate locator misses against one explicit owned cell at a time."""
+
+    import numpy as np
+    from vtkmodules.vtkCommonCore import reference
+
+    query_points = np.asarray(points, dtype=np.float64)
+    unresolved_mask = np.asarray(unresolved, dtype=bool)
+    point_count = len(query_points)
+    valid = np.zeros(point_count, dtype=bool)
+    values = np.zeros((point_count, 3), dtype=np.complex128)
+    if not np.any(unresolved_mask):
+        return {
+            "valid": valid,
+            "values": values,
+            "ambiguous": [],
+        }
+    cell_bounds = np.asarray(
+        [
+            grid.GetCell(cell_index).GetBounds()
+            for cell_index in range(grid.n_cells)
+        ],
+        dtype=np.float64,
+    )
+    scale = max(
+        1.0,
+        float(np.max(np.abs(query_points), initial=0.0)),
+        float(np.max(np.abs(cell_bounds), initial=0.0)),
+    )
+    tolerance = max(1.0e-12, 64.0 * np.finfo(np.float64).eps * scale)
+    real_values = np.asarray(real)
+    imaginary_values = np.asarray(imaginary)
+    ambiguous: list[dict[str, Any]] = []
+    for point_index in np.flatnonzero(unresolved_mask):
+        point = query_points[point_index]
+        candidates = np.flatnonzero(
+            (point[0] >= cell_bounds[:, 0] - tolerance)
+            & (point[0] <= cell_bounds[:, 1] + tolerance)
+            & (point[1] >= cell_bounds[:, 2] - tolerance)
+            & (point[1] <= cell_bounds[:, 3] + tolerance)
+            & (point[2] >= cell_bounds[:, 4] - tolerance)
+            & (point[2] <= cell_bounds[:, 5] + tolerance)
+        )
+        matches: list[Any] = []
+        for cell_index in candidates:
+            cell = grid.GetCell(int(cell_index))
+            if int(cell.GetCellType()) != 72:
+                raise ValueError(
+                    "field fallback encountered a non-Lagrange-hexa cell"
+                )
+            weights = [0.0] * int(cell.GetNumberOfPoints())
+            status = cell.EvaluatePosition(
+                point,
+                [0.0, 0.0, 0.0],
+                reference(0),
+                [0.0, 0.0, 0.0],
+                reference(0.0),
+                weights,
+            )
+            if int(status) != 1:
+                continue
+            weight_array = np.asarray(weights, dtype=np.float64)
+            if (
+                not np.all(np.isfinite(weight_array))
+                or not math.isclose(
+                    float(np.sum(weight_array)),
+                    1.0,
+                    rel_tol=0.0,
+                    abs_tol=5.0e-11,
+                )
+            ):
+                raise ValueError(
+                    "field fallback produced invalid interpolation weights"
+                )
+            point_ids = np.asarray(
+                [
+                    cell.GetPointId(local_index)
+                    for local_index in range(cell.GetNumberOfPoints())
+                ],
+                dtype=np.int64,
+            )
+            matches.append(
+                weight_array @ real_values[point_ids]
+                + 1j * (weight_array @ imaginary_values[point_ids])
+            )
+        if len(matches) == 1:
+            valid[point_index] = True
+            values[point_index] = matches[0]
+        elif len(matches) > 1:
+            ambiguous.append(
+                {
+                    "index": int(point_index),
+                    "match_count": len(matches),
+                    "coordinate_nm": [
+                        float(value) for value in point
+                    ],
+                }
+            )
+    return {
+        "valid": valid,
+        "values": values,
+        "ambiguous": ambiguous,
+        "bounding_box_tolerance": tolerance,
+    }
+
+
 def sample_owned_vtu_shards(
     shard_paths: Sequence[Path],
     probes: ProbeSet,
@@ -291,8 +403,23 @@ def sample_owned_vtu_shards(
         imaginary = np.asarray(sampled.point_data["E_tot_V_per_m_imag"])
         if real.shape != (point_count, 3) or imaginary.shape != (point_count, 3):
             raise ValueError(f"field shard has an unexpected E-vector shape: {path}")
+        fallback = _sample_lagrange_hex_position_fallback(
+            grid,
+            probes.points,
+            ~valid,
+            np.asarray(grid.point_data["E_tot_V_per_m_real"]),
+            np.asarray(grid.point_data["E_tot_V_per_m_imag"]),
+        )
+        if fallback["ambiguous"]:
+            raise ValueError(
+                "field fallback found multiple owned cells: "
+                + json.dumps(fallback["ambiguous"][:10], sort_keys=True)
+            )
+        fallback_valid = np.asarray(fallback["valid"], dtype=bool)
+        shard_valid = valid | fallback_valid
         values[valid] = real[valid] + 1j * imaginary[valid]
-        hit_count[valid] += 1
+        values[fallback_valid] = fallback["values"][fallback_valid]
+        hit_count[shard_valid] += 1
         authorities.append(
             {
                 "rank": rank,
@@ -301,7 +428,13 @@ def sample_owned_vtu_shards(
                 "cell_count": int(grid.n_cells),
                 "point_count": int(grid.n_points),
                 "cell_types": cell_types,
-                "probe_hits": int(np.count_nonzero(valid)),
+                "probe_hits": int(np.count_nonzero(shard_valid)),
+                "standard_locator_probe_hits": int(
+                    np.count_nonzero(valid)
+                ),
+                "explicit_cell_position_fallback_hits": int(
+                    np.count_nonzero(fallback_valid)
+                ),
             }
         )
     invalid = np.flatnonzero(hit_count != 1)
@@ -330,6 +463,15 @@ def sample_owned_vtu_shards(
             "probe_count": point_count,
             "unique_hit_histogram": {"1": point_count},
             "all_probes_covered_exactly_once": True,
+            "explicit_cell_position_fallback": (
+                "only standard-locator misses; per-owned-cell bounds plus "
+                "vtkLagrangeHexahedron.EvaluatePosition; unique ownership "
+                "remains mandatory"
+            ),
+            "explicit_cell_position_fallback_hit_count": sum(
+                row["explicit_cell_position_fallback_hits"]
+                for row in authorities
+            ),
             "shards": authorities,
         },
     }
