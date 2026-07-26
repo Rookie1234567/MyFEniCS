@@ -11,9 +11,6 @@ on:
       - codex/20260726-task35c-hybrid-channel-memory-closure
     paths:
       - .github/workflows/one_off_comsol_registry_backfill.yml
-      - .github/scripts/one_off_comsol_registry_backfill.py
-      - docs/development_model_registry.md
-      - src/test/test_183_development_model_registry_markdown.py
 
 permissions:
   contents: write
@@ -33,13 +30,24 @@ jobs:
         run: python .github/scripts/one_off_comsol_registry_backfill.py
 
       - name: Validate Markdown tables and fences
+        id: markdown_validation
+        continue-on-error: true
         shell: bash
         run: |
-          set +e
           python src/test/test_183_development_model_registry_markdown.py > /tmp/registry-markdown-test.log 2>&1
-          status=$?
+
+      - name: Upload Markdown diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry-markdown-diagnostics
+          path: /tmp/registry-markdown-test.log
+          if-no-files-found: error
+
+      - name: Stop on Markdown validation failure
+        if: steps.markdown_validation.outcome != 'success'
+        run: |
           cat /tmp/registry-markdown-test.log
-          exit "$status"
+          exit 1
 
       - name: Validate key rendered-table sources
         run: |
