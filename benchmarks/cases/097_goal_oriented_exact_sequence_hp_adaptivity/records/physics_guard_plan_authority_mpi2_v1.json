@@ -1,0 +1,67 @@
+{
+  "actual_axis_counts": [
+    6,
+    3,
+    14
+  ],
+  "candidate": "sidewall_z0_guard_v1",
+  "cell_count": 252,
+  "degree_container": 6,
+  "environment": {
+    "dolfinx_version": "0.10.0.post2",
+    "mpi_size": 2,
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128"
+  },
+  "formal_accuracy_credit": false,
+  "fresh_12_channel_pde_required": true,
+  "geometry": "Task034 fixed rectangular block grating",
+  "h_nm": 10.0,
+  "heavy_pde_started": false,
+  "ordinary_default_changed": false,
+  "pass": true,
+  "plan": {
+    "active_fe_dof_gate_pass": true,
+    "active_rows_by_dimension": {
+      "cell_interior": 53496,
+      "edge": 4902,
+      "face": 31472
+    },
+    "active_trace_rows_before_periodic_elimination": 36374,
+    "actual_conforming_active_fe_dofs": 89870,
+    "cell_degree_counts": {
+      "p4": 72,
+      "p5": 168,
+      "p6": 12
+    },
+    "cell_degree_plan_sha256": "8172bcc9ca2e2fcbc23a8ca15524f80b7658ccf0c19d24da4dcff1ed32fee062",
+    "cycle1_cell_degree_counts": {
+      "p4": 0,
+      "p5": 240,
+      "p6": 12
+    },
+    "file_sha256": "31922411775580b2f44b474897dbf877d96b7887f74d22e02b3f0e410c205bc2",
+    "maximum_adjacent_cell_degree_jump": 1,
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/sidewall_z0_guard_h10_cell_degree_plan_v1.json",
+    "periodic_independent_trace_rows": 30984,
+    "predicted_direct_solve_rows": 31064
+  },
+  "regional_diagnostic": {
+    "actual_channel_dwr": false,
+    "diagnostic_only": true,
+    "formal_accuracy_credit": false,
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/t30_regional_probe_error_localization_v1.json",
+    "sha256": "baaca8a90a98d459e392468778528edc43217d1c6fa19969592044522d498f3f"
+  },
+  "schema_version": "task035d.physics-guard-plan-authority.v1",
+  "source": {
+    "commit_sha": "c6fa966333b722dddcd76ac91227f5415cef8147",
+    "file_sha256": {
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_physics_guard_recovery.py": "e1cd6d178d711a75cb626b5f24d4155b898e38d04649a6ecf3c8a340c5479a6e",
+      "src/adaptivity/physics_guard_variable_p.py": "da1870221b9d963176cf921874073dff2c9dcde28dfeee26ef3fa39835625eb0",
+      "src/test/test_195_task035d_physics_guard_selector.py": "5df8f46690457afcc16feac19212781c982e289dd19004554ece0398a401031c"
+    },
+    "ordinary_default_changed": false
+  },
+  "status": "physics_guard_plan_authority_mpi2_pass"
+}

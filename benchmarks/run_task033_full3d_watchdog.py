@@ -28,6 +28,8 @@ from benchmarks.task035c_p6_h10_gates import (
 from benchmarks.task035d_case097_gates import (
     TASK035D_CASE097_BACKEND,
     task035d_case097_plan_authority_gate,
+    task035d_case097_sidewall_guard_plan_authority_gate,
+    task035d_case097_sidewall_guard_solver_gate,
     task035d_case097_t30_solver_gate,
 )
 from benchmarks.run_direct_memory_forensics import (
@@ -223,9 +225,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--task035d-case097-gate",
         action="store_true",
         help=(
-            "Explicitly open only the Task035d Case097 T30 variable-p "
-            "p6/h10 MPI8 candidate. This grants no physical accuracy credit."
+            "Explicitly open one frozen Task035d Case097 variable-p p6/h10 "
+            "MPI8 candidate. This grants no physical accuracy credit."
         ),
+    )
+    parser.add_argument(
+        "--task035d-candidate-id",
+        choices=("t30", "sidewall_z0_guard_v1"),
+        default="t30",
     )
     parser.add_argument("--task035d-plan-authority", type=Path)
     parser.add_argument("--task035d-plan-authority-sha256")
@@ -370,7 +377,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "no-swap, default-profile fixed rectangular p6/h10 "
                 "S-polarized full solve on MPI8 using "
                 "assembly_time_variable_p_condensed with tracked, "
-                "hash-bound T30 plan and MPI8 plan authority."
+                "hash-bound candidate plan and MPI8 plan authority."
             )
     elif (
         args.task035d_plan_authority is not None
@@ -379,6 +386,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.stage4_variable_p_cell_degree_plan_sha256 is not None
         or args.stage4_full3d_assembly_backend
         == TASK035D_CASE097_BACKEND
+        or args.task035d_candidate_id != "t30"
     ):
         parser.error(
             "Task035d variable-p arguments require "
@@ -488,7 +496,12 @@ def _validate_task035d_case097_plan(
 
     plan_tracked, plan_relative = tracked(plan_path)
     authority_tracked, authority_relative = tracked(authority_path)
-    gate = task035d_case097_plan_authority_gate(
+    gate_builder = (
+        task035d_case097_sidewall_guard_plan_authority_gate
+        if args.task035d_candidate_id == "sidewall_z0_guard_v1"
+        else task035d_case097_plan_authority_gate
+    )
+    gate = gate_builder(
         plan if isinstance(plan, dict) else None,
         authority if isinstance(authority, dict) else None,
         expected_plan_file_sha256=(
@@ -507,7 +520,8 @@ def _validate_task035d_case097_plan(
     gate["authority_path_from_root"] = authority_relative
     if not gate["pass"]:
         raise SystemExit(
-            "Task035d Case097 T30 launch authority failed: "
+            f"Task035d Case097 {args.task035d_candidate_id} launch "
+            "authority failed: "
             f"{gate['failures']}"
         )
     args.stage4_variable_p_cell_degree_plan = plan_path
@@ -865,9 +879,12 @@ def _qualify(
         }
     task035d_solver_gate = None
     if args.task035d_case097_gate:
-        task035d_solver_gate = task035d_case097_t30_solver_gate(
-            solver_summary
+        solver_gate_builder = (
+            task035d_case097_sidewall_guard_solver_gate
+            if args.task035d_candidate_id == "sidewall_z0_guard_v1"
+            else task035d_case097_t30_solver_gate
         )
+        task035d_solver_gate = solver_gate_builder(solver_summary)
         checks.update(
             {
                 f"task035d_solver_{name}": bool(passed)
@@ -1001,6 +1018,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.extend(
             (
                 "--task035d-case097-gate",
+                "--task035d-candidate-id",
+                str(args.task035d_candidate_id),
                 "--stage4-variable-p-cell-degree-plan",
                 str(args.stage4_variable_p_cell_degree_plan),
                 "--stage4-variable-p-cell-degree-plan-sha256",
@@ -1280,6 +1299,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         "p4_prerequisite_gate": p4_gate,
         "task035c_p6_h10_preflight_gate": task035c_p6_gate,
         "task035d_case097_launch_gate": task035d_case097_gate,
+        "task035d_candidate_id": (
+            args.task035d_candidate_id
+            if args.task035d_case097_gate
+            else None
+        ),
         "task035d_accuracy_credit": (
             "pending_independent_12_channel_and_field_checker"
             if args.task035d_case097_gate

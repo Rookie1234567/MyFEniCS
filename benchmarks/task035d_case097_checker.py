@@ -11,6 +11,12 @@ from typing import Any, Callable, Mapping, Sequence
 
 from benchmarks.task035d_case097_gates import (
     TASK035D_CASE097_BACKEND,
+    TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS,
+    TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256,
+    TASK035D_SIDEWALL_GUARD_AUTHORITY_PATH,
+    TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256,
+    TASK035D_SIDEWALL_GUARD_PLAN_PATH,
+    TASK035D_SIDEWALL_GUARD_SOLVE_ROWS,
     TASK035D_T30_ACTIVE_FE_DOFS,
     TASK035D_T30_AUTHORITY_FILE_SHA256,
     TASK035D_T30_AUTHORITY_PATH,
@@ -18,6 +24,8 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_T30_PLAN_PATH,
     TASK035D_T30_SOLVE_ROWS,
     task035d_case097_plan_authority_gate,
+    task035d_case097_sidewall_guard_plan_authority_gate,
+    task035d_case097_sidewall_guard_solver_gate,
     task035d_case097_t30_solver_gate,
 )
 from src.adaptivity.high_order_same_error import (
@@ -87,6 +95,84 @@ MANDATORY_PEAK_GIB = STATIC_P6_PEAK_GIB * 0.80
 PREFERRED_PEAK_GIB = STATIC_P6_PEAK_GIB * 0.60
 ENERGY_CLOSURE_TOLERANCE = 1.0e-9
 EXPECTED_MPI_SIZE = 8
+
+
+def _candidate_spec(candidate_id: str) -> dict[str, Any]:
+    if candidate_id == "t30":
+        return {
+            "candidate_id": "t30",
+            "plan_path": TASK035D_T30_PLAN_PATH,
+            "plan_file_sha256": TASK035D_T30_PLAN_FILE_SHA256,
+            "authority_path": TASK035D_T30_AUTHORITY_PATH,
+            "authority_file_sha256": (
+                TASK035D_T30_AUTHORITY_FILE_SHA256
+            ),
+            "active_fe_dofs": TASK035D_T30_ACTIVE_FE_DOFS,
+            "solve_rows": TASK035D_T30_SOLVE_ROWS,
+            "launch_schema": "task035d.case097-t30-launch-gate.v1",
+            "launch_status": "task035d_t30_launch_authority_pass",
+            "check_schema": "task035d.case097-t30-candidate-check.v1",
+            "pass_status": "task035d_t30_p_only_candidate_pass",
+            "negative_status": "task035d_t30_p_only_controlled_negative",
+            "evidence_failure_status": (
+                "task035d_t30_checker_evidence_failure"
+            ),
+            "benchmark_id": "task035d_case097_t30_candidate",
+            "plan_context": "frozen T30 plan",
+            "authority_context": "frozen MPI8 T30 plan authority",
+            "plan_gate": task035d_case097_plan_authority_gate,
+            "solver_gate": task035d_case097_t30_solver_gate,
+            "candidate_option_required": False,
+        }
+    if candidate_id == "sidewall_z0_guard_v1":
+        return {
+            "candidate_id": "sidewall_z0_guard_v1",
+            "plan_path": TASK035D_SIDEWALL_GUARD_PLAN_PATH,
+            "plan_file_sha256": (
+                TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256
+            ),
+            "authority_path": TASK035D_SIDEWALL_GUARD_AUTHORITY_PATH,
+            "authority_file_sha256": (
+                TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256
+            ),
+            "active_fe_dofs": (
+                TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS
+            ),
+            "solve_rows": TASK035D_SIDEWALL_GUARD_SOLVE_ROWS,
+            "launch_schema": (
+                "task035d.case097-sidewall-z0-guard-launch-gate.v1"
+            ),
+            "launch_status": (
+                "task035d_sidewall_z0_guard_launch_authority_pass"
+            ),
+            "check_schema": (
+                "task035d.case097-sidewall-z0-guard-candidate-check.v1"
+            ),
+            "pass_status": (
+                "task035d_sidewall_z0_guard_p_only_candidate_pass"
+            ),
+            "negative_status": (
+                "task035d_sidewall_z0_guard_p_only_controlled_negative"
+            ),
+            "evidence_failure_status": (
+                "task035d_sidewall_z0_guard_checker_evidence_failure"
+            ),
+            "benchmark_id": (
+                "task035d_case097_sidewall_z0_guard_candidate"
+            ),
+            "plan_context": "frozen sidewall-z0 guard plan",
+            "authority_context": (
+                "frozen MPI8 sidewall-z0 guard plan authority"
+            ),
+            "plan_gate": (
+                task035d_case097_sidewall_guard_plan_authority_gate
+            ),
+            "solver_gate": task035d_case097_sidewall_guard_solver_gate,
+            "candidate_option_required": True,
+        }
+    raise Task035dEvidenceError(
+        f"unsupported Task035d candidate id: {candidate_id}"
+    )
 
 
 class Task035dEvidenceError(ValueError):
@@ -481,11 +567,26 @@ def _command_option(command: Sequence[str], option: str) -> str:
     return command[indices[0] + 1]
 
 
+def _optional_command_option(
+    command: Sequence[str],
+    option: str,
+) -> str | None:
+    indices = [index for index, value in enumerate(command) if value == option]
+    _require(
+        len(indices) <= 1
+        and (not indices or indices[0] + 1 < len(command)),
+        f"candidate command contains an invalid {option}",
+    )
+    return command[indices[0] + 1] if indices else None
+
+
 def _candidate_launch_contract(
     record: Mapping[str, Any],
     *,
     source_sha: str,
+    candidate_id: str = "t30",
 ) -> dict[str, Any]:
+    spec = _candidate_spec(candidate_id)
     command = [
         str(value)
         for value in _sequence(record.get("command"), "candidate command")
@@ -511,6 +612,11 @@ def _candidate_launch_contract(
         record.get("resource_policy"),
         "candidate resource policy",
     )
+    command_candidate = _optional_command_option(
+        command,
+        "--task035d-candidate-id",
+    )
+    record_candidate = record.get("task035d_candidate_id")
     checks = {
         "mpiexec_mpi8_worker": (
             len(command) >= 6
@@ -535,31 +641,40 @@ def _candidate_launch_contract(
             and "--task035d-case097-gate" in command
             and "--task035c-p6-h10-gate" not in command
             and "--allow-swap" not in command
+            and (
+                command_candidate == candidate_id
+                if spec["candidate_option_required"]
+                else command_candidate in {None, candidate_id}
+            )
+            and (
+                record_candidate == candidate_id
+                if spec["candidate_option_required"]
+                else record_candidate in {None, candidate_id}
+            )
         ),
         "command_plan_identity": (
-            plan_path == (ROOT / TASK035D_T30_PLAN_PATH).resolve()
+            plan_path == (ROOT / spec["plan_path"]).resolve()
             and _command_option(
                 command,
                 "--stage4-variable-p-cell-degree-plan-sha256",
             )
-            == TASK035D_T30_PLAN_FILE_SHA256
+            == spec["plan_file_sha256"]
         ),
         "command_authority_identity": (
-            authority_path == (ROOT / TASK035D_T30_AUTHORITY_PATH).resolve()
+            authority_path == (ROOT / spec["authority_path"]).resolve()
             and _command_option(
                 command,
                 "--task035d-plan-authority-sha256",
             )
-            == TASK035D_T30_AUTHORITY_FILE_SHA256
+            == spec["authority_file_sha256"]
         ),
         "command_clean_source_identity": (
             _command_option(command, "--verified-clean-sha") == source_sha
         ),
         "embedded_launch_gate_pass": (
             embedded.get("schema_version")
-            == "task035d.case097-t30-launch-gate.v1"
-            and embedded.get("status")
-            == "task035d_t30_launch_authority_pass"
+            == spec["launch_schema"]
+            and embedded.get("status") == spec["launch_status"]
             and embedded.get("pass") is True
             and embedded.get("failures") == []
             and embedded.get("accuracy_credit")
@@ -569,17 +684,17 @@ def _candidate_launch_contract(
         ),
         "embedded_plan_identity": (
             (embedded.get("plan_identity") or {}).get("path")
-            == TASK035D_T30_PLAN_PATH
+            == spec["plan_path"]
             and (embedded.get("plan_identity") or {}).get("file_sha256")
-            == TASK035D_T30_PLAN_FILE_SHA256
+            == spec["plan_file_sha256"]
             and (embedded.get("plan_identity") or {}).get(
                 "actual_conforming_active_fe_dofs"
             )
-            == TASK035D_T30_ACTIVE_FE_DOFS
+            == spec["active_fe_dofs"]
             and (embedded.get("plan_identity") or {}).get(
                 "predicted_direct_solve_rows"
             )
-            == TASK035D_T30_SOLVE_ROWS
+            == spec["solve_rows"]
         ),
         "watchdog_no_swap_contract": (
             resource_policy.get("swap_allowed") is False
@@ -597,6 +712,7 @@ def _candidate_launch_contract(
     )
     return {
         "schema_version": "task035d.case097-candidate-launch-contract.v1",
+        "candidate_id": candidate_id,
         "checks": checks,
         "pass": True,
         "command": command,
@@ -631,6 +747,8 @@ def _artifact(
 def _load_candidate_raw(
     watchdog_path: Path,
     watchdog_sha256: str,
+    *,
+    candidate_id: str = "t30",
 ) -> dict[str, Any]:
     record, observed_watchdog_sha = _load_json(
         watchdog_path,
@@ -650,12 +768,13 @@ def _load_candidate_raw(
         and record.get("profile") == "default"
         and record.get("stage4_full3d_assembly_backend_actual")
         == TASK035D_CASE097_BACKEND,
-        "candidate watchdog identity is outside the frozen T30 scope",
+        "candidate watchdog identity is outside the frozen Case097 scope",
     )
     source_sha = _source_identity(record)
     launch_contract = _candidate_launch_contract(
         record,
         source_sha=source_sha,
+        candidate_id=candidate_id,
     )
     raw = _mapping(record.get("raw_evidence"), "candidate raw evidence")
     run_value = raw.get("run_directory")
@@ -967,6 +1086,9 @@ def _resource_comparison(
     solver_summary: Mapping[str, Any],
     watchdog_resource: Mapping[str, Any],
     timeline: Mapping[str, Any],
+    expected_active_fe_dofs: int = TASK035D_T30_ACTIVE_FE_DOFS,
+    expected_solve_rows: int = TASK035D_T30_SOLVE_ROWS,
+    candidate_id: str = "t30",
 ) -> dict[str, Any]:
     for key in (
         "sample_count",
@@ -1019,10 +1141,10 @@ def _resource_comparison(
     checks = {
         "active_fe_dofs_le_90000": (
             solver_summary.get("num_actual_conforming_active_fe_dofs")
-            == TASK035D_T30_ACTIVE_FE_DOFS
-            and TASK035D_T30_ACTIVE_FE_DOFS <= 90_000
+            == expected_active_fe_dofs
+            and expected_active_fe_dofs <= 90_000
         ),
-        "condensed_rows_match_t30": rows == TASK035D_T30_SOLVE_ROWS,
+        f"condensed_rows_match_{candidate_id}": rows == expected_solve_rows,
         "active_rows_decrease": rows < STATIC_P6_ROWS,
         "matrix_nnz_decrease": matrix_nnz < STATIC_P6_MATRIX_NNZ,
         "factor_nnz_decrease": factor_nnz < STATIC_P6_FACTOR_NNZ,
@@ -1052,6 +1174,7 @@ def _resource_comparison(
     }
     return {
         "schema_version": "task035d.case097-resource-comparison.v1",
+        "candidate_id": candidate_id,
         "baseline": {
             "source": "Case096 p6/h10 Full3D static MPI8",
             "active_rows": STATIC_P6_ROWS,
@@ -1173,7 +1296,9 @@ def evaluate_task035d_case097_candidate(
     energy_comparison: Mapping[str, Any],
     field_comparison: Mapping[str, Any],
     resource_comparison: Mapping[str, Any],
+    candidate_id: str = "t30",
 ) -> dict[str, Any]:
+    spec = _candidate_spec(candidate_id)
     qualification = _mapping(
         watchdog.get("qualification"),
         "candidate watchdog qualification",
@@ -1211,11 +1336,11 @@ def evaluate_task035d_case097_candidate(
     }
     failures = [name for name, passed in checks.items() if not passed]
     return {
-        "schema_version": "task035d.case097-t30-candidate-check.v1",
+        "schema_version": spec["check_schema"],
         "status": (
-            "task035d_t30_p_only_candidate_pass"
+            spec["pass_status"]
             if not failures
-            else "task035d_t30_p_only_controlled_negative"
+            else spec["negative_status"]
         ),
         "classification": (
             "p_only_candidate_pass_pending_local_h"
@@ -1230,6 +1355,7 @@ def evaluate_task035d_case097_candidate(
         "field_comparison": dict(field_comparison),
         "resource_comparison": dict(resource_comparison),
         "pass": not failures,
+        "candidate_id": candidate_id,
         "ordinary_default_changed": False,
     }
 
@@ -1241,36 +1367,42 @@ def build_task035d_case097_candidate_check(
     field_comparator: Callable[..., dict[str, Any]] = (
         compare_cross_mesh_fields
     ),
+    candidate_id: str = "t30",
 ) -> dict[str, Any]:
+    spec = _candidate_spec(candidate_id)
     checker_source = _checker_source_provenance()
     authorities = _load_frozen_authorities()
-    candidate = _load_candidate_raw(watchdog_path, watchdog_sha256)
+    candidate = _load_candidate_raw(
+        watchdog_path,
+        watchdog_sha256,
+        candidate_id=candidate_id,
+    )
     watchdog = candidate["record"]
     summary = candidate["solver_summary"]
 
     plan, _ = _load_json(
-        ROOT / TASK035D_T30_PLAN_PATH,
-        expected_sha256=TASK035D_T30_PLAN_FILE_SHA256,
-        context="frozen T30 plan",
+        ROOT / spec["plan_path"],
+        expected_sha256=spec["plan_file_sha256"],
+        context=spec["plan_context"],
     )
     authority, _ = _load_json(
-        ROOT / TASK035D_T30_AUTHORITY_PATH,
-        expected_sha256=TASK035D_T30_AUTHORITY_FILE_SHA256,
-        context="frozen MPI8 T30 plan authority",
+        ROOT / spec["authority_path"],
+        expected_sha256=spec["authority_file_sha256"],
+        context=spec["authority_context"],
     )
-    launch_gate = task035d_case097_plan_authority_gate(
+    launch_gate = spec["plan_gate"](
         plan,
         authority,
-        expected_plan_file_sha256=TASK035D_T30_PLAN_FILE_SHA256,
-        observed_plan_file_sha256=TASK035D_T30_PLAN_FILE_SHA256,
-        expected_authority_sha256=TASK035D_T30_AUTHORITY_FILE_SHA256,
-        observed_authority_sha256=TASK035D_T30_AUTHORITY_FILE_SHA256,
-        plan_is_tracked=_git_tracked(ROOT / TASK035D_T30_PLAN_PATH),
+        expected_plan_file_sha256=spec["plan_file_sha256"],
+        observed_plan_file_sha256=spec["plan_file_sha256"],
+        expected_authority_sha256=spec["authority_file_sha256"],
+        observed_authority_sha256=spec["authority_file_sha256"],
+        plan_is_tracked=_git_tracked(ROOT / spec["plan_path"]),
         authority_is_tracked=_git_tracked(
-            ROOT / TASK035D_T30_AUTHORITY_PATH
+            ROOT / spec["authority_path"]
         ),
-        plan_path_from_root=TASK035D_T30_PLAN_PATH,
-        authority_path_from_root=TASK035D_T30_AUTHORITY_PATH,
+        plan_path_from_root=spec["plan_path"],
+        authority_path_from_root=spec["authority_path"],
     )
     embedded_launch = candidate["launch_contract"]["embedded_launch_gate"]
     for key in (
@@ -1287,7 +1419,7 @@ def build_task035d_case097_candidate_check(
             embedded_launch.get(key) == launch_gate.get(key),
             f"embedded/recomputed launch gate mismatch: {key}",
         )
-    solver_gate = task035d_case097_t30_solver_gate(summary)
+    solver_gate = spec["solver_gate"](summary)
     channel_comparison = compare_significant_channels_to_reference_v1(
         candidate_path=candidate["dtn_orders_path"],
         reference_record_path=SIGNIFICANT_REFERENCE_PATH,
@@ -1319,6 +1451,9 @@ def build_task035d_case097_candidate_check(
         solver_summary=summary,
         watchdog_resource=resource,
         timeline=timeline,
+        expected_active_fe_dofs=spec["active_fe_dofs"],
+        expected_solve_rows=spec["solve_rows"],
+        candidate_id=candidate_id,
     )
     result = evaluate_task035d_case097_candidate(
         watchdog=watchdog,
@@ -1329,10 +1464,11 @@ def build_task035d_case097_candidate_check(
         energy_comparison=energy_comparison,
         field_comparison=field_comparison,
         resource_comparison=resource_comparison,
+        candidate_id=candidate_id,
     )
     result.update(
         {
-            "benchmark_id": "task035d_case097_t30_candidate",
+            "benchmark_id": spec["benchmark_id"],
             "source_sha": candidate["source_sha"],
             "checker_source": checker_source,
             "candidate_watchdog": {
@@ -1358,8 +1494,13 @@ def build_task035d_case097_candidate_check(
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Independently check the Task035d Case097 T30 MPI8 candidate."
+            "Independently check one frozen Task035d Case097 MPI8 candidate."
         )
+    )
+    parser.add_argument(
+        "--candidate-id",
+        choices=("t30", "sidewall_z0_guard_v1"),
+        default="t30",
     )
     parser.add_argument("--watchdog", type=Path, required=True)
     parser.add_argument("--watchdog-sha256", required=True)
@@ -1369,12 +1510,14 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
+    spec = _candidate_spec(args.candidate_id)
     output = args.output
     output = output if output.is_absolute() else ROOT / output
     try:
         result = build_task035d_case097_candidate_check(
             watchdog_path=args.watchdog,
             watchdog_sha256=args.watchdog_sha256,
+            candidate_id=args.candidate_id,
         )
         return_code = 0 if result["pass"] else 1
     except Exception as error:
@@ -1385,9 +1528,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             else ROOT / watchdog_path
         )
         result = {
-            "schema_version": "task035d.case097-t30-candidate-check.v1",
-            "status": "task035d_t30_checker_evidence_failure",
+            "schema_version": spec["check_schema"],
+            "status": spec["evidence_failure_status"],
             "classification": "fail_closed_evidence_error",
+            "candidate_id": args.candidate_id,
             "pass": False,
             "checks": {"evidence_integrity": False},
             "failures": ["evidence_integrity"],

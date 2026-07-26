@@ -19,12 +19,20 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_H10_CELL_TAG_SHA256,
     TASK035D_H10_FACET_TAG_SHA256,
     TASK035D_H10_MESH_SHA256,
+    TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS,
+    TASK035D_SIDEWALL_GUARD_ACTIVE_TRACE_ROWS,
+    TASK035D_SIDEWALL_GUARD_CELL_DEGREE_COUNTS,
+    TASK035D_SIDEWALL_GUARD_PERIODIC_TRACE_ROWS,
+    TASK035D_SIDEWALL_GUARD_PLAN_CONTENT_SHA256,
+    TASK035D_SIDEWALL_GUARD_SOLVE_ROWS,
     TASK035D_T30_ACTIVE_FE_DOFS,
     TASK035D_T30_ACTIVE_TRACE_ROWS,
     TASK035D_T30_PERIODIC_TRACE_ROWS,
     TASK035D_T30_PLAN_CONTENT_SHA256,
     TASK035D_T30_SOLVE_ROWS,
     task035d_case097_plan_authority_gate,
+    task035d_case097_sidewall_guard_plan_authority_gate,
+    task035d_case097_sidewall_guard_solver_gate,
     task035d_case097_t30_solver_gate,
 )
 
@@ -41,6 +49,12 @@ PLAN = RECORDS / "t30_h10_cell_degree_plan_v1.json"
 AUTHORITY = RECORDS / "legacy_seeded_plan_authority_mpi8_v1.json"
 PLAN_SHA256 = hashlib.sha256(PLAN.read_bytes()).hexdigest()
 AUTHORITY_SHA256 = hashlib.sha256(AUTHORITY.read_bytes()).hexdigest()
+SIDEWALL_PLAN = RECORDS / "sidewall_z0_guard_h10_cell_degree_plan_v1.json"
+SIDEWALL_AUTHORITY = RECORDS / "physics_guard_plan_authority_mpi8_v1.json"
+SIDEWALL_PLAN_SHA256 = hashlib.sha256(SIDEWALL_PLAN.read_bytes()).hexdigest()
+SIDEWALL_AUTHORITY_SHA256 = hashlib.sha256(
+    SIDEWALL_AUTHORITY.read_bytes()
+).hexdigest()
 SOURCE_SHA = "a" * 40
 
 
@@ -74,7 +88,55 @@ def _task035d_cli() -> list[str]:
     ]
 
 
-def _solver_summary() -> dict:
+def _sidewall_cli() -> list[str]:
+    cli = _task035d_cli()
+    cli.extend(("--task035d-candidate-id", "sidewall_z0_guard_v1"))
+    cli[cli.index("--stage4-variable-p-cell-degree-plan") + 1] = str(
+        SIDEWALL_PLAN
+    )
+    cli[
+        cli.index("--stage4-variable-p-cell-degree-plan-sha256") + 1
+    ] = SIDEWALL_PLAN_SHA256
+    cli[cli.index("--task035d-plan-authority") + 1] = str(
+        SIDEWALL_AUTHORITY
+    )
+    cli[cli.index("--task035d-plan-authority-sha256") + 1] = (
+        SIDEWALL_AUTHORITY_SHA256
+    )
+    return cli
+
+
+def _solver_summary(*, sidewall: bool = False) -> dict:
+    active_fe_dofs = (
+        TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS
+        if sidewall
+        else TASK035D_T30_ACTIVE_FE_DOFS
+    )
+    active_trace_rows = (
+        TASK035D_SIDEWALL_GUARD_ACTIVE_TRACE_ROWS
+        if sidewall
+        else TASK035D_T30_ACTIVE_TRACE_ROWS
+    )
+    periodic_trace_rows = (
+        TASK035D_SIDEWALL_GUARD_PERIODIC_TRACE_ROWS
+        if sidewall
+        else TASK035D_T30_PERIODIC_TRACE_ROWS
+    )
+    solve_rows = (
+        TASK035D_SIDEWALL_GUARD_SOLVE_ROWS
+        if sidewall
+        else TASK035D_T30_SOLVE_ROWS
+    )
+    plan_content_sha = (
+        TASK035D_SIDEWALL_GUARD_PLAN_CONTENT_SHA256
+        if sidewall
+        else TASK035D_T30_PLAN_CONTENT_SHA256
+    )
+    degree_counts = (
+        TASK035D_SIDEWALL_GUARD_CELL_DEGREE_COUNTS
+        if sidewall
+        else {"p4": 144, "p5": 56, "p6": 52}
+    )
     residual = {
         "linear_system_rhs_norm": 1.0,
         "linear_system_solution_norm": 2.0,
@@ -84,7 +146,7 @@ def _solver_summary() -> dict:
         "eliminated_cell_interior_max_abs_residual": 1.0e-14,
     }
     matrix = {
-        "matrix_rows": TASK035D_T30_SOLVE_ROWS,
+        "matrix_rows": solve_rows,
         "matrix_nnz_used": 123_456.0,
         "matrix_mallocs": 0.0,
     }
@@ -177,10 +239,10 @@ def _solver_summary() -> dict:
             "created_dense_boundary_square": False,
         },
         "num_actual_conforming_active_fe_dofs": (
-            TASK035D_T30_ACTIVE_FE_DOFS
+            active_fe_dofs
         ),
-        "num_active_trace_dofs": TASK035D_T30_PERIODIC_TRACE_ROWS,
-        "num_active_condensed_dofs": TASK035D_T30_SOLVE_ROWS,
+        "num_active_trace_dofs": periodic_trace_rows,
+        "num_active_condensed_dofs": solve_rows,
         "stage4_dtn_num_auxiliary_dofs": 80,
         "stage4_dtn_variable_p_trace_only_gate_pass": True,
         "stage4_dtn_variable_p_auxiliary_interior_columns_allocated": False,
@@ -209,21 +271,21 @@ def _solver_summary() -> dict:
                 "pass": True,
                 "mpi_size": 8,
                 "cell_degree_plan_sha256": (
-                    TASK035D_T30_PLAN_CONTENT_SHA256
+                    plan_content_sha
                 ),
                 "mesh_cell_box_catalog_sha256": (
                     "e33ae0611cfe3d9d380ec04af0b86efec7f7f751cdb2dd90"
                     "a9bd936d71dbcf64"
                 ),
-                "cell_degree_counts": {"p4": 144, "p5": 56, "p6": 52},
-                "active_rows": TASK035D_T30_ACTIVE_FE_DOFS,
-                "active_trace_rows": TASK035D_T30_ACTIVE_TRACE_ROWS,
+                "cell_degree_counts": degree_counts,
+                "active_rows": active_fe_dofs,
+                "active_trace_rows": active_trace_rows,
             },
             "periodic_constraints": {
                 "pass": True,
                 "mpi_size": 8,
                 "independent_periodic_trace_rows": (
-                    TASK035D_T30_PERIODIC_TRACE_ROWS
+                    periodic_trace_rows
                 ),
                 "inactive_p6_rows_globally_numbered": False,
             },
@@ -337,6 +399,88 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
             "authority_file_hash_matches_frozen_mpi8",
             drifted["failures"],
         )
+
+    def test_sidewall_guard_authority_and_solver_identity_are_frozen(
+        self,
+    ) -> None:
+        plan = json.loads(SIDEWALL_PLAN.read_text(encoding="utf-8"))
+        authority = json.loads(
+            SIDEWALL_AUTHORITY.read_text(encoding="utf-8")
+        )
+        gate = task035d_case097_sidewall_guard_plan_authority_gate(
+            plan,
+            authority,
+            expected_plan_file_sha256=SIDEWALL_PLAN_SHA256,
+            observed_plan_file_sha256=SIDEWALL_PLAN_SHA256,
+            expected_authority_sha256=SIDEWALL_AUTHORITY_SHA256,
+            observed_authority_sha256=SIDEWALL_AUTHORITY_SHA256,
+            plan_is_tracked=True,
+            authority_is_tracked=True,
+            plan_path_from_root=(
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "sidewall_z0_guard_h10_cell_degree_plan_v1.json"
+            ),
+            authority_path_from_root=(
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "physics_guard_plan_authority_mpi8_v1.json"
+            ),
+        )
+        self.assertTrue(gate["pass"], gate["failures"])
+        self.assertEqual(
+            gate["plan_identity"]["actual_conforming_active_fe_dofs"],
+            TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS,
+        )
+        self.assertEqual(
+            gate["plan_identity"]["predicted_direct_solve_rows"],
+            TASK035D_SIDEWALL_GUARD_SOLVE_ROWS,
+        )
+
+        tampered = copy.deepcopy(authority)
+        tampered["regional_diagnostic"]["actual_channel_dwr"] = True
+        rejected = task035d_case097_sidewall_guard_plan_authority_gate(
+            plan,
+            tampered,
+            expected_plan_file_sha256=SIDEWALL_PLAN_SHA256,
+            observed_plan_file_sha256=SIDEWALL_PLAN_SHA256,
+            expected_authority_sha256=SIDEWALL_AUTHORITY_SHA256,
+            observed_authority_sha256=SIDEWALL_AUTHORITY_SHA256,
+            plan_is_tracked=True,
+            authority_is_tracked=True,
+            plan_path_from_root=(
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "sidewall_z0_guard_h10_cell_degree_plan_v1.json"
+            ),
+            authority_path_from_root=(
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "physics_guard_plan_authority_mpi8_v1.json"
+            ),
+        )
+        self.assertFalse(rejected["pass"])
+        self.assertIn(
+            "authority_diagnostic_identity",
+            rejected["failures"],
+        )
+
+        args = _parse_args(_sidewall_cli())
+        self.assertEqual(
+            args.task035d_candidate_id,
+            "sidewall_z0_guard_v1",
+        )
+        integrated = _validate_task035d_case097_plan(args)
+        self.assertTrue(integrated["pass"], integrated["failures"])
+        command = _worker_command(args, Path("/tmp/task035d-sidewall"))
+        self.assertEqual(
+            command[command.index("--task035d-candidate-id") + 1],
+            "sidewall_z0_guard_v1",
+        )
+        solver_gate = task035d_case097_sidewall_guard_solver_gate(
+            _solver_summary(sidewall=True)
+        )
+        self.assertTrue(solver_gate["pass"], solver_gate["failures"])
 
     def test_task035d_parser_is_opt_in_and_scope_locked(self) -> None:
         args = _parse_args(_task035d_cli())

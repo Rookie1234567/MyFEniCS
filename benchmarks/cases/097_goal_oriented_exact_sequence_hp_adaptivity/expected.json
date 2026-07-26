@@ -21,6 +21,18 @@
     "mpi2_required": true
   },
   "phase_b_p_only": "t30_controlled_negative_0_of_12",
+  "phase_b_recovery_authority": {
+    "candidate": "sidewall_z0_guard_v1",
+    "status": "pre_pde_authority_pass",
+    "cell_degree_counts": {
+      "p4": 72,
+      "p5": 168,
+      "p6": 12
+    },
+    "active_fe_dofs": 89870,
+    "periodic_trace_plus_dtn80_rows": 31064,
+    "fresh_12_channel_pde_required": true
+  },
   "phase_c_h_only": "not_run",
   "phase_e_combined_hp": "not_run",
   "phase_f_hybrid": "not_run",

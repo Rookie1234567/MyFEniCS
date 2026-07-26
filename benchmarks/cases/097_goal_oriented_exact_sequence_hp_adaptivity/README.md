@@ -149,24 +149,84 @@ same-code p5→p6 band。因此更激进的 T25/T15 不会在没有新恢复逻�
 启动。下一 p-only 点必须把失败通道与 field/interface sensitivity 显式用于
 p6 trace/cell 恢复，并仍保持 `active FE DoF <= 90,000`。
 
+### Physics-guard 恢复 authority
+
+T30 的原始 MPI8 VTU 用冻结 probe 重新按物理区域分解。该分解是
+`diagnostic_only`，不是 actual channel DWR 或 adjoint derivative，也不提供
+精度信用：
+
+| region | T30 rel-L2 / global-p5→p6 band |
+|---|---:|
+| left/right grating sidewall | `17.07–18.10` |
+| substrate volume | `9.84` |
+| left/right air volume | `4.10–4.16` |
+| grating volume | `3.87` |
+| z=0 interface | `2.45–2.65` |
+| top air | `1.25` |
+| grating top interface | `0.386` |
+
+诊断同时重算 T30 的 12 通道失败宽度：power 为
+`1.42–845.26×` tolerance，complex amplitude 为
+`8.38–298.83×` tolerance。由此只构造一个保守恢复点
+`sidewall_z0_guard_v1`：
+
+1. cycle 1 在 grating 核心 `x=16.5..33.5 nm`、下部
+   `z=0..20 nm` 保留 p6，其余降到 p5；
+2. cycle 2 只把两条远离结构的外侧均匀空气带降到 p4；
+3. 每个 p6 与 p4 区域之间保留 p5 corridor，最大相邻跳阶严格为 1；
+4. substrate、top port、全部 material interface 与 grating 主体至少为 p5。
+
+冻结结构 authority：
+
+| metric | sidewall-z0 guard |
+|---|---:|
+| p4/p5/p6 cells | `72/168/12` |
+| active FE DoF | `89,870` |
+| edge/face/cell-interior DoF | `4,902 / 31,472 / 53,496` |
+| trace before periodic reduction | `36,374` |
+| periodic independent trace | `30,984` |
+| direct rows with DtN80 | `31,064` |
+
+证据：
+
+```text
+records/t30_regional_probe_error_localization_v1.json
+  sha256 = baaca8a90a98d459e392468778528edc43217d1c6fa19969592044522d498f3f
+records/sidewall_z0_guard_h10_cell_degree_plan_v1.json
+  sha256 = 31922411775580b2f44b474897dbf877d96b7887f74d22e02b3f0e410c205bc2
+records/physics_guard_plan_authority_mpi1_v1.json
+records/physics_guard_plan_authority_mpi2_v1.json
+records/physics_guard_plan_authority_mpi8_v1.json
+  MPI8 sha256 =
+    ccf40707125425540bd60a8118fed4fd74f9138968624255eb1e4fa25c8e911d
+```
+
+MPI1/2/8 已重现相同 plan content SHA
+`8172bcc9ca2e2fcbc23a8ca15524f80b7658ccf0c19d24da4dcff1ed32fee062`。
+这仍是 `pre_pde_authority_pass`；只有 fresh MPI8 direct PDE 通过完整 checker
+后才能取得物理信用。
+
 复现：
 
 ```bash
 cd /home/Projects/MyFEniCS
 source scripts/activate_myfenics_wsl.sh
 
-python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_legacy_seeded_plans.py \
+python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_physics_guard_recovery.py \
+  --mode diagnostic
+
+python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_physics_guard_recovery.py \
   --mode generate
 
 mpiexec -n 2 python \
-  benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_legacy_seeded_plans.py \
+  benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_physics_guard_recovery.py \
   --mode generate
 
 mpiexec -n 8 python \
-  benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_legacy_seeded_plans.py \
+  benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_physics_guard_recovery.py \
   --mode generate
 
-python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_legacy_seeded_plans.py \
+python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_physics_guard_recovery.py \
   --mode check
 ```
 
@@ -183,7 +243,7 @@ cross-mode Schur 或 auxiliary RHS。恢复/残差另外保留非 Hermitian
 `+T_i a` dense oracle，以防未来引入真正非零 interior coupling 时发生符号
 或左右列混用。
 
-## T30 MPI8 正式 p-only Gate
+## Task035d MPI8 正式 p-only Gate
 
 首个正式候选固定为 `T30`：
 
@@ -197,7 +257,9 @@ direct solve rows = 28,990
 ```
 
 `benchmarks.run_task033_full3d_watchdog` 的 Task035d opt-in 入口只接受
-`p6/h10/S/MPI8/default/no-swap`、冻结的 T30 plan 与 MPI8 plan authority。
+`p6/h10/S/MPI8/default/no-swap` 及显式 `--task035d-candidate-id` 对应的
+冻结 plan 与 MPI8 plan authority。T30 仍是历史正式负证据；
+`sidewall_z0_guard_v1` 是唯一获准的下一恢复点。
 它检查 exact-sequence backend、真实减行、Floquet、mesh/tag/orientation、
 trace-only DtN、full recovery、full explicit residual、MUMPS factor inventory
 和 solver lifecycle；只授予结构/残差信用。
@@ -253,4 +315,48 @@ python -m benchmarks.task035d_case097_checker \
   --watchdog benchmarks/artifacts/task035d/case097/t30_h10_mpi8_watchdog.json \
   --watchdog-sha256 "${watchdog_sha}" \
   --output benchmarks/artifacts/task035d/case097/t30_h10_mpi8_check.json
+```
+
+唯一恢复点把 plan、authority 和 checker candidate identity 同时切换：
+
+```bash
+clean_sha="$(git rev-parse HEAD)"
+
+python -m benchmarks.run_task033_full3d_watchdog \
+  --degree 6 \
+  --h-nm 10 \
+  --polarization-kind s \
+  --run-kind full-solve \
+  --mpi-size 8 \
+  --profile default \
+  --stage4-full3d-assembly-backend assembly_time_variable_p_condensed \
+  --task035d-case097-gate \
+  --task035d-candidate-id sidewall_z0_guard_v1 \
+  --stage4-variable-p-cell-degree-plan \
+    benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/sidewall_z0_guard_h10_cell_degree_plan_v1.json \
+  --stage4-variable-p-cell-degree-plan-sha256 \
+    31922411775580b2f44b474897dbf877d96b7887f74d22e02b3f0e410c205bc2 \
+  --task035d-plan-authority \
+    benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/physics_guard_plan_authority_mpi8_v1.json \
+  --task035d-plan-authority-sha256 \
+    ccf40707125425540bd60a8118fed4fd74f9138968624255eb1e4fa25c8e911d \
+  --verified-clean-sha "${clean_sha}" \
+  --warning-gib 48 \
+  --terminate-gib 96 \
+  --timeout-seconds 21600 \
+  --artifact-root benchmarks/artifacts/task035d/case097 \
+  --record \
+    benchmarks/artifacts/task035d/case097/sidewall_z0_guard_h10_mpi8_watchdog.json
+
+watchdog_sha="$(sha256sum \
+  benchmarks/artifacts/task035d/case097/sidewall_z0_guard_h10_mpi8_watchdog.json \
+  | cut -d' ' -f1)"
+
+python -m benchmarks.task035d_case097_checker \
+  --candidate-id sidewall_z0_guard_v1 \
+  --watchdog \
+    benchmarks/artifacts/task035d/case097/sidewall_z0_guard_h10_mpi8_watchdog.json \
+  --watchdog-sha256 "${watchdog_sha}" \
+  --output \
+    benchmarks/artifacts/task035d/case097/sidewall_z0_guard_h10_mpi8_check.json
 ```

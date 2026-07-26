@@ -25,12 +25,19 @@ from benchmarks.task035d_case097_checker import (
 )
 from benchmarks.task035d_case097_gates import (
     TASK035D_CASE097_BACKEND,
+    TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS,
+    TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256,
+    TASK035D_SIDEWALL_GUARD_AUTHORITY_PATH,
+    TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256,
+    TASK035D_SIDEWALL_GUARD_PLAN_PATH,
+    TASK035D_SIDEWALL_GUARD_SOLVE_ROWS,
     TASK035D_T30_ACTIVE_FE_DOFS,
     TASK035D_T30_AUTHORITY_FILE_SHA256,
     TASK035D_T30_AUTHORITY_PATH,
     TASK035D_T30_PLAN_FILE_SHA256,
     TASK035D_T30_PLAN_PATH,
     TASK035D_T30_SOLVE_ROWS,
+    task035d_case097_sidewall_guard_plan_authority_gate,
 )
 
 
@@ -255,6 +262,115 @@ class Task035dCase097CheckerTests(unittest.TestCase):
         ] = "0" * 64
         with self.assertRaises(Task035dEvidenceError):
             _candidate_launch_contract(drifted, source_sha=source_sha)
+
+    def test_sidewall_guard_launch_contract_requires_candidate_identity(
+        self,
+    ) -> None:
+        source_sha = "b" * 40
+        plan_path = ROOT / TASK035D_SIDEWALL_GUARD_PLAN_PATH
+        authority_path = ROOT / TASK035D_SIDEWALL_GUARD_AUTHORITY_PATH
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        authority = json.loads(
+            authority_path.read_text(encoding="utf-8")
+        )
+        embedded = (
+            task035d_case097_sidewall_guard_plan_authority_gate(
+                plan,
+                authority,
+                expected_plan_file_sha256=(
+                    TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256
+                ),
+                observed_plan_file_sha256=(
+                    TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256
+                ),
+                expected_authority_sha256=(
+                    TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256
+                ),
+                observed_authority_sha256=(
+                    TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256
+                ),
+                plan_is_tracked=True,
+                authority_is_tracked=True,
+                plan_path_from_root=(
+                    TASK035D_SIDEWALL_GUARD_PLAN_PATH
+                ),
+                authority_path_from_root=(
+                    TASK035D_SIDEWALL_GUARD_AUTHORITY_PATH
+                ),
+            )
+        )
+        self.assertTrue(embedded["pass"], embedded["failures"])
+        command = [
+            "mpiexec",
+            "-n",
+            "8",
+            str(ROOT / ".venv" / "bin" / "python"),
+            "-m",
+            "benchmarks.run_task033_full3d_watchdog",
+            "--worker",
+            "--degree",
+            "6",
+            "--h-nm",
+            "10.0",
+            "--polarization-kind",
+            "s",
+            "--run-kind",
+            "full-solve",
+            "--mpi-size",
+            "8",
+            "--profile",
+            "default",
+            "--stage4-full3d-assembly-backend",
+            TASK035D_CASE097_BACKEND,
+            "--task035d-case097-gate",
+            "--task035d-candidate-id",
+            "sidewall_z0_guard_v1",
+            "--stage4-variable-p-cell-degree-plan",
+            str(plan_path),
+            "--stage4-variable-p-cell-degree-plan-sha256",
+            TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256,
+            "--task035d-plan-authority",
+            str(authority_path),
+            "--task035d-plan-authority-sha256",
+            TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256,
+            "--verified-clean-sha",
+            source_sha,
+        ]
+        record = {
+            "command": command,
+            "task035d_candidate_id": "sidewall_z0_guard_v1",
+            "task035d_case097_launch_gate": embedded,
+            "resource_policy": {"swap_allowed": False},
+            "no_swap": True,
+            "task035d_accuracy_credit": (
+                "pending_independent_12_channel_and_field_checker"
+            ),
+        }
+        contract = _candidate_launch_contract(
+            record,
+            source_sha=source_sha,
+            candidate_id="sidewall_z0_guard_v1",
+        )
+        self.assertTrue(contract["pass"])
+        self.assertEqual(
+            embedded["plan_identity"][
+                "actual_conforming_active_fe_dofs"
+            ],
+            TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS,
+        )
+        self.assertEqual(
+            embedded["plan_identity"]["predicted_direct_solve_rows"],
+            TASK035D_SIDEWALL_GUARD_SOLVE_ROWS,
+        )
+
+        drifted = json.loads(json.dumps(record))
+        drifted["task035d_candidate_id"] = "t30"
+        with self.assertRaises(Task035dEvidenceError):
+            _candidate_launch_contract(
+                drifted,
+                source_sha=source_sha,
+                candidate_id="sidewall_z0_guard_v1",
+            )
 
     def test_frozen_control_field_shards_remain_hash_bound(self) -> None:
         authorities = _load_frozen_authorities()

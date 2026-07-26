@@ -41,12 +41,66 @@ TASK035D_T30_SEED_GEOMETRY_SHA256 = (
 TASK035D_T30_SEED_PAYLOAD_SHA256 = (
     "b3420dbdfce689cfa14e9b87e51910943d81b160dbd8a4b9e3c5798526f4b68c"
 )
+TASK035D_T30_RECORD_SHA256 = (
+    "ac0266578fe38dd9934cfcfb840d817f8c4fbc617694a068462f7d505392acc1"
+)
 TASK035D_T30_CELL_DEGREE_COUNTS = {"p4": 144, "p5": 56, "p6": 52}
 TASK035D_T30_ACTIVE_FE_DOFS = 87_600
 TASK035D_T30_ACTIVE_TRACE_ROWS = 35_208
 TASK035D_T30_PERIODIC_TRACE_ROWS = 28_910
 TASK035D_T30_DTN_ROWS = 80
 TASK035D_T30_SOLVE_ROWS = 28_990
+TASK035D_SIDEWALL_GUARD_PLAN_NAME = "sidewall_z0_guard_v1"
+TASK035D_SIDEWALL_GUARD_PLAN_PATH = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+    "sidewall_z0_guard_h10_cell_degree_plan_v1.json"
+)
+TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256 = (
+    "31922411775580b2f44b474897dbf877d96b7887f74d22e02b3f0e410c205bc2"
+)
+TASK035D_SIDEWALL_GUARD_AUTHORITY_PATH = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+    "physics_guard_plan_authority_mpi8_v1.json"
+)
+TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256 = (
+    "ccf40707125425540bd60a8118fed4fd74f9138968624255eb1e4fa25c8e911d"
+)
+TASK035D_SIDEWALL_GUARD_DIAGNOSTIC_PATH = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+    "t30_regional_probe_error_localization_v1.json"
+)
+TASK035D_SIDEWALL_GUARD_DIAGNOSTIC_SHA256 = (
+    "baaca8a90a98d459e392468778528edc43217d1c6fa19969592044522d498f3f"
+)
+TASK035D_SIDEWALL_GUARD_AUTHORITY_SOURCE_SHA = (
+    "c6fa966333b722dddcd76ac91227f5415cef8147"
+)
+TASK035D_SIDEWALL_GUARD_PLAN_CONTENT_SHA256 = (
+    "8172bcc9ca2e2fcbc23a8ca15524f80b7658ccf0c19d24da4dcff1ed32fee062"
+)
+TASK035D_SIDEWALL_GUARD_CELL_DEGREE_COUNTS = {
+    "p4": 72,
+    "p5": 168,
+    "p6": 12,
+}
+TASK035D_SIDEWALL_GUARD_CYCLE1_COUNTS = {
+    "p4": 0,
+    "p5": 240,
+    "p6": 12,
+}
+TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS = 89_870
+TASK035D_SIDEWALL_GUARD_ACTIVE_TRACE_ROWS = 36_374
+TASK035D_SIDEWALL_GUARD_PERIODIC_TRACE_ROWS = 30_984
+TASK035D_SIDEWALL_GUARD_DTN_ROWS = 80
+TASK035D_SIDEWALL_GUARD_SOLVE_ROWS = 31_064
+TASK035D_SIDEWALL_GUARD_ROW_BREAKDOWN = {
+    "edge": 4_902,
+    "face": 31_472,
+    "cell_interior": 53_496,
+}
 TASK035D_H10_MESH_SHA256 = (
     "f0eef2aa28e86014b661a921993bcfd45e6db1892da350402f2be11ec64dd857"
 )
@@ -321,8 +375,324 @@ def task035d_case097_plan_authority_gate(
     }
 
 
-def task035d_case097_t30_solver_gate(
+def task035d_case097_sidewall_guard_plan_authority_gate(
+    plan: dict[str, Any] | None,
+    authority: dict[str, Any] | None,
+    *,
+    expected_plan_file_sha256: str | None,
+    observed_plan_file_sha256: str | None,
+    expected_authority_sha256: str | None,
+    observed_authority_sha256: str | None,
+    plan_is_tracked: bool,
+    authority_is_tracked: bool,
+    plan_path_from_root: str | None,
+    authority_path_from_root: str | None,
+) -> dict[str, Any]:
+    """Validate the tracked MPI8 sidewall-z0 recovery launch authority."""
+
+    plan = plan if isinstance(plan, dict) else {}
+    authority = authority if isinstance(authority, dict) else {}
+    closure = plan.get("closure_audit")
+    closure = closure if isinstance(closure, dict) else {}
+    provenance = plan.get("provenance")
+    provenance = provenance if isinstance(provenance, dict) else {}
+    selector = provenance.get("selector_audit")
+    selector = selector if isinstance(selector, dict) else {}
+    periodic = selector.get("periodic_constraint_audit")
+    periodic = periodic if isinstance(periodic, dict) else {}
+    periodic_checks = periodic.get("checks")
+    periodic_checks = (
+        periodic_checks if isinstance(periodic_checks, dict) else {}
+    )
+    diagnostic = provenance.get("regional_diagnostic")
+    diagnostic = diagnostic if isinstance(diagnostic, dict) else {}
+    authority_diagnostic = authority.get("regional_diagnostic")
+    authority_diagnostic = (
+        authority_diagnostic
+        if isinstance(authority_diagnostic, dict)
+        else {}
+    )
+    authority_plan = authority.get("plan")
+    authority_plan = (
+        authority_plan if isinstance(authority_plan, dict) else {}
+    )
+    environment = authority.get("environment")
+    environment = environment if isinstance(environment, dict) else {}
+    source = authority.get("source")
+    source = source if isinstance(source, dict) else {}
+    cells = plan.get("cells")
+    cell_degrees = (
+        Counter(int(row.get("degree", -1)) for row in cells)
+        if isinstance(cells, list)
+        and all(isinstance(row, dict) for row in cells)
+        else Counter()
+    )
+    observed_degree_counts = {
+        f"p{degree}": int(cell_degrees[degree])
+        for degree in (4, 5, 6)
+    }
+    checks = {
+        "plan_is_tracked": plan_is_tracked,
+        "authority_is_tracked": authority_is_tracked,
+        "plan_expected_sha_is_valid": _valid_hex(
+            expected_plan_file_sha256,
+            64,
+        ),
+        "authority_expected_sha_is_valid": _valid_hex(
+            expected_authority_sha256,
+            64,
+        ),
+        "plan_file_hash_matches_expected": (
+            observed_plan_file_sha256 == expected_plan_file_sha256
+        ),
+        "plan_file_hash_matches_frozen_sidewall_guard": (
+            observed_plan_file_sha256
+            == TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256
+            and expected_plan_file_sha256
+            == TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256
+        ),
+        "authority_file_hash_matches_expected": (
+            observed_authority_sha256 == expected_authority_sha256
+        ),
+        "authority_file_hash_matches_frozen_mpi8": (
+            observed_authority_sha256
+            == TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256
+            and expected_authority_sha256
+            == TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256
+        ),
+        "plan_schema": (
+            plan.get("schema_version") == TASK035D_CASE097_PLAN_SCHEMA
+        ),
+        "plan_status": plan.get("status") == "geometry_bound_cell_degree_plan",
+        "plan_path_identity": (
+            plan_path_from_root == TASK035D_SIDEWALL_GUARD_PLAN_PATH
+        ),
+        "authority_path_identity": (
+            authority_path_from_root
+            == TASK035D_SIDEWALL_GUARD_AUTHORITY_PATH
+        ),
+        "plan_content_sha": (
+            plan.get("cell_degree_plan_sha256")
+            == TASK035D_SIDEWALL_GUARD_PLAN_CONTENT_SHA256
+        ),
+        "plan_geometry_catalog_sha": (
+            plan.get("mesh_cell_box_catalog_sha256")
+            == TASK035D_T30_GEOMETRY_CATALOG_SHA256
+        ),
+        "plan_cell_count": isinstance(cells, list) and len(cells) == 252,
+        "plan_cell_degree_counts": (
+            observed_degree_counts
+            == TASK035D_SIDEWALL_GUARD_CELL_DEGREE_COUNTS
+        ),
+        "plan_closure_pass": closure.get("pass") is True,
+        "plan_active_fe_dofs": (
+            closure.get("active_rows")
+            == TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS
+        ),
+        "plan_active_trace_rows": (
+            closure.get("active_trace_rows")
+            == TASK035D_SIDEWALL_GUARD_ACTIVE_TRACE_ROWS
+        ),
+        "plan_inactive_rows_absent": (
+            closure.get("inactive_p6_rows") == 83_932
+            and closure.get("inactive_p6_trace_rows") == 24_028
+        ),
+        "plan_adjacent_degree_jump": (
+            closure.get("maximum_adjacent_cell_degree_jump") == 1
+        ),
+        "plan_ordinary_default_unchanged": (
+            plan.get("ordinary_default_changed") is False
+            and closure.get("ordinary_default_changed") is False
+            and provenance.get("ordinary_default_changed") is False
+        ),
+        "selector_identity": (
+            provenance.get("selector")
+            == TASK035D_SIDEWALL_GUARD_PLAN_NAME
+            and selector.get("selector")
+            == TASK035D_SIDEWALL_GUARD_PLAN_NAME
+            and selector.get("status")
+            == "sidewall_z0_guard_two_cycle_plan_pass"
+            and selector.get("pass") is True
+        ),
+        "selector_is_diagnostic_not_dwr": (
+            selector.get("diagnostic_only_selector") is True
+            and selector.get("actual_channel_dwr") is False
+            and selector.get("formal_accuracy_credit") is False
+            and provenance.get("formal_accuracy_credit") is False
+            and provenance.get("fresh_12_channel_pde_required") is True
+        ),
+        "diagnostic_identity": (
+            diagnostic.get("path")
+            == TASK035D_SIDEWALL_GUARD_DIAGNOSTIC_PATH
+            and diagnostic.get("sha256")
+            == TASK035D_SIDEWALL_GUARD_DIAGNOSTIC_SHA256
+            and provenance.get("t30_compact_record_sha256")
+            == TASK035D_T30_RECORD_SHA256
+        ),
+        "selector_dimensions": (
+            selector.get("cycle1_cell_degree_counts")
+            == TASK035D_SIDEWALL_GUARD_CYCLE1_COUNTS
+            and selector.get("cell_degree_counts")
+            == TASK035D_SIDEWALL_GUARD_CELL_DEGREE_COUNTS
+            and selector.get("actual_conforming_active_fe_dofs")
+            == TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS
+            and selector.get(
+                "active_trace_rows_before_periodic_elimination"
+            )
+            == TASK035D_SIDEWALL_GUARD_ACTIVE_TRACE_ROWS
+            and selector.get("active_rows_by_dimension")
+            == TASK035D_SIDEWALL_GUARD_ROW_BREAKDOWN
+            and selector.get("active_fe_dof_gate_pass") is True
+        ),
+        "selector_periodic_trace_rows": (
+            selector.get("periodic_independent_trace_rows")
+            == TASK035D_SIDEWALL_GUARD_PERIODIC_TRACE_ROWS
+            and selector.get("predicted_direct_solve_rows")
+            == TASK035D_SIDEWALL_GUARD_SOLVE_ROWS
+            and selector.get("appended_dtn_rows")
+            == TASK035D_SIDEWALL_GUARD_DTN_ROWS
+        ),
+        "periodic_constraint_pass": (
+            periodic.get("pass") is True
+            and periodic.get("independent_periodic_trace_rows")
+            == TASK035D_SIDEWALL_GUARD_PERIODIC_TRACE_ROWS
+            and periodic_checks.get(
+                "slave_rows_eliminated_before_insertion"
+            )
+            is True
+            and periodic.get("inactive_p6_rows_globally_numbered") is False
+        ),
+        "authority_schema": (
+            authority.get("schema_version")
+            == "task035d.physics-guard-plan-authority.v1"
+        ),
+        "authority_status": (
+            authority.get("status")
+            == "physics_guard_plan_authority_mpi8_pass"
+            and authority.get("pass") is True
+        ),
+        "authority_source": (
+            source.get("commit_sha")
+            == TASK035D_SIDEWALL_GUARD_AUTHORITY_SOURCE_SHA
+            and isinstance(source.get("file_sha256"), dict)
+            and bool(source.get("file_sha256"))
+            and all(
+                _valid_hex(value, 64)
+                for value in source["file_sha256"].values()
+            )
+        ),
+        "authority_environment": (
+            environment.get("mpi_size") == 8
+            and environment.get("petsc_scalar_type") == "complex128"
+            and environment.get("petsc_int_type") == "int32"
+        ),
+        "authority_fixed_case": (
+            authority.get("actual_axis_counts") == [6, 3, 14]
+            and authority.get("cell_count") == 252
+            and authority.get("degree_container") == 6
+            and authority.get("h_nm") == 10.0
+            and authority.get("geometry")
+            == "Task034 fixed rectangular block grating"
+            and authority.get("candidate")
+            == TASK035D_SIDEWALL_GUARD_PLAN_NAME
+        ),
+        "authority_is_pre_pde_only": (
+            authority.get("formal_accuracy_credit") is False
+            and authority.get("fresh_12_channel_pde_required") is True
+            and authority.get("heavy_pde_started") is False
+        ),
+        "authority_diagnostic_identity": (
+            authority_diagnostic.get("path")
+            == TASK035D_SIDEWALL_GUARD_DIAGNOSTIC_PATH
+            and authority_diagnostic.get("sha256")
+            == TASK035D_SIDEWALL_GUARD_DIAGNOSTIC_SHA256
+            and authority_diagnostic.get("diagnostic_only") is True
+            and authority_diagnostic.get("actual_channel_dwr") is False
+            and authority_diagnostic.get("formal_accuracy_credit") is False
+        ),
+        "authority_plan_identity": (
+            authority_plan.get("path")
+            == TASK035D_SIDEWALL_GUARD_PLAN_PATH
+            and authority_plan.get("file_sha256")
+            == TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256
+            and authority_plan.get("cell_degree_plan_sha256")
+            == TASK035D_SIDEWALL_GUARD_PLAN_CONTENT_SHA256
+            and authority_plan.get("cell_degree_counts")
+            == TASK035D_SIDEWALL_GUARD_CELL_DEGREE_COUNTS
+            and authority_plan.get("cycle1_cell_degree_counts")
+            == TASK035D_SIDEWALL_GUARD_CYCLE1_COUNTS
+            and authority_plan.get("actual_conforming_active_fe_dofs")
+            == TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS
+            and authority_plan.get(
+                "active_trace_rows_before_periodic_elimination"
+            )
+            == TASK035D_SIDEWALL_GUARD_ACTIVE_TRACE_ROWS
+            and authority_plan.get("periodic_independent_trace_rows")
+            == TASK035D_SIDEWALL_GUARD_PERIODIC_TRACE_ROWS
+            and authority_plan.get("predicted_direct_solve_rows")
+            == TASK035D_SIDEWALL_GUARD_SOLVE_ROWS
+            and authority_plan.get("active_rows_by_dimension")
+            == TASK035D_SIDEWALL_GUARD_ROW_BREAKDOWN
+            and authority_plan.get("maximum_adjacent_cell_degree_jump") == 1
+            and authority_plan.get("active_fe_dof_gate_pass") is True
+        ),
+        "authority_ordinary_default_unchanged": (
+            authority.get("ordinary_default_changed") is False
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {
+        "schema_version": (
+            "task035d.case097-sidewall-z0-guard-launch-gate.v1"
+        ),
+        "status": (
+            "task035d_sidewall_z0_guard_launch_authority_pass"
+            if not failures
+            else "task035d_sidewall_z0_guard_launch_authority_fail"
+        ),
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "plan_identity": {
+            "name": TASK035D_SIDEWALL_GUARD_PLAN_NAME,
+            "path": plan_path_from_root,
+            "file_sha256": observed_plan_file_sha256,
+            "cell_degree_plan_sha256": plan.get(
+                "cell_degree_plan_sha256"
+            ),
+            "mesh_cell_box_catalog_sha256": plan.get(
+                "mesh_cell_box_catalog_sha256"
+            ),
+            "cell_degree_counts": observed_degree_counts,
+            "actual_conforming_active_fe_dofs": closure.get("active_rows"),
+            "periodic_independent_trace_rows": selector.get(
+                "periodic_independent_trace_rows"
+            ),
+            "predicted_direct_solve_rows": selector.get(
+                "predicted_direct_solve_rows"
+            ),
+        },
+        "accuracy_credit": (
+            "none_until_fresh_12_channel_checker_passes"
+        ),
+        "ordinary_default_changed": False,
+    }
+
+
+def _task035d_case097_solver_gate(
     solver_summary: dict[str, Any] | None,
+    *,
+    candidate_name: str,
+    active_fe_dofs: int,
+    active_trace_rows: int,
+    periodic_trace_rows: int,
+    solve_rows: int,
+    dtn_rows: int,
+    plan_content_sha256: str,
+    cell_degree_counts: dict[str, int],
+    schema_version: str,
+    pass_status: str,
+    fail_status: str,
 ) -> dict[str, Any]:
     """Check the exact variable-p reduction identity before physics comparison."""
 
@@ -497,21 +867,21 @@ def task035d_case097_t30_solver_gate(
         ),
         "active_fe_dof_gate": (
             summary.get("num_actual_conforming_active_fe_dofs")
-            == TASK035D_T30_ACTIVE_FE_DOFS
+            == active_fe_dofs
             and summary.get("num_actual_conforming_active_fe_dofs") <= 90_000
         ),
         "active_periodic_trace_rows": (
             summary.get("num_active_trace_dofs")
-            == TASK035D_T30_PERIODIC_TRACE_ROWS
+            == periodic_trace_rows
         ),
         "active_solve_rows": (
             summary.get("num_active_condensed_dofs")
-            == TASK035D_T30_SOLVE_ROWS
-            and matrix.get("matrix_rows") == TASK035D_T30_SOLVE_ROWS
+            == solve_rows
+            and matrix.get("matrix_rows") == solve_rows
         ),
         "dtn_rows": (
             summary.get("stage4_dtn_num_auxiliary_dofs")
-            == TASK035D_T30_DTN_ROWS
+            == dtn_rows
         ),
         "matrix_nonzero_and_no_dynamic_reallocation": (
             isinstance(matrix.get("matrix_nnz_used"), (int, float))
@@ -521,8 +891,7 @@ def task035d_case097_t30_solver_gate(
         "direct_factor_inventory": (
             factor_inventory.get("available") is True
             and factor_inventory.get("factor_solver_type") == "mumps"
-            and factor_matrix.get("matrix_rows")
-            == TASK035D_T30_SOLVE_ROWS
+            and factor_matrix.get("matrix_rows") == solve_rows
             and isinstance(
                 factor_matrix.get("matrix_nnz_used"),
                 (int, float),
@@ -531,23 +900,22 @@ def task035d_case097_t30_solver_gate(
         ),
         "degree_plan_identity": (
             degree_plan.get("cell_degree_plan_sha256")
-            == TASK035D_T30_PLAN_CONTENT_SHA256
+            == plan_content_sha256
             and degree_plan.get("mesh_cell_box_catalog_sha256")
             == TASK035D_T30_GEOMETRY_CATALOG_SHA256
             and degree_plan.get("cell_degree_counts")
-            == TASK035D_T30_CELL_DEGREE_COUNTS
+            == cell_degree_counts
         ),
         "degree_plan_active_dimensions": (
-            degree_plan.get("active_rows")
-            == TASK035D_T30_ACTIVE_FE_DOFS
+            degree_plan.get("active_rows") == active_fe_dofs
             and degree_plan.get("active_trace_rows")
-            == TASK035D_T30_ACTIVE_TRACE_ROWS
+            == active_trace_rows
         ),
         "periodic_identity": (
             periodic.get("pass") is True
             and periodic.get("mpi_size") == 8
             and periodic.get("independent_periodic_trace_rows")
-            == TASK035D_T30_PERIODIC_TRACE_ROWS
+            == periodic_trace_rows
             and periodic.get("inactive_p6_rows_globally_numbered") is False
         ),
         "inactive_rows_absent": (
@@ -652,17 +1020,66 @@ def task035d_case097_t30_solver_gate(
     }
     failures = [name for name, passed in checks.items() if not passed]
     return {
-        "schema_version": "task035d.case097-t30-solver-gate.v1",
+        "schema_version": schema_version,
         "status": (
-            "task035d_t30_solver_identity_pass"
+            pass_status
             if not failures
-            else "task035d_t30_solver_identity_fail"
+            else fail_status
         ),
         "pass": not failures,
         "checks": checks,
         "failures": failures,
+        "candidate": candidate_name,
         "accuracy_credit": "structural_and_residual_only",
     }
+
+
+def task035d_case097_t30_solver_gate(
+    solver_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Check the frozen T30 variable-p reduction identity."""
+
+    return _task035d_case097_solver_gate(
+        solver_summary,
+        candidate_name=TASK035D_T30_PLAN_NAME,
+        active_fe_dofs=TASK035D_T30_ACTIVE_FE_DOFS,
+        active_trace_rows=TASK035D_T30_ACTIVE_TRACE_ROWS,
+        periodic_trace_rows=TASK035D_T30_PERIODIC_TRACE_ROWS,
+        solve_rows=TASK035D_T30_SOLVE_ROWS,
+        dtn_rows=TASK035D_T30_DTN_ROWS,
+        plan_content_sha256=TASK035D_T30_PLAN_CONTENT_SHA256,
+        cell_degree_counts=TASK035D_T30_CELL_DEGREE_COUNTS,
+        schema_version="task035d.case097-t30-solver-gate.v1",
+        pass_status="task035d_t30_solver_identity_pass",
+        fail_status="task035d_t30_solver_identity_fail",
+    )
+
+
+def task035d_case097_sidewall_guard_solver_gate(
+    solver_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Check the frozen sidewall-z0 guard variable-p reduction identity."""
+
+    return _task035d_case097_solver_gate(
+        solver_summary,
+        candidate_name=TASK035D_SIDEWALL_GUARD_PLAN_NAME,
+        active_fe_dofs=TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS,
+        active_trace_rows=TASK035D_SIDEWALL_GUARD_ACTIVE_TRACE_ROWS,
+        periodic_trace_rows=TASK035D_SIDEWALL_GUARD_PERIODIC_TRACE_ROWS,
+        solve_rows=TASK035D_SIDEWALL_GUARD_SOLVE_ROWS,
+        dtn_rows=TASK035D_SIDEWALL_GUARD_DTN_ROWS,
+        plan_content_sha256=TASK035D_SIDEWALL_GUARD_PLAN_CONTENT_SHA256,
+        cell_degree_counts=TASK035D_SIDEWALL_GUARD_CELL_DEGREE_COUNTS,
+        schema_version=(
+            "task035d.case097-sidewall-z0-guard-solver-gate.v1"
+        ),
+        pass_status=(
+            "task035d_sidewall_z0_guard_solver_identity_pass"
+        ),
+        fail_status=(
+            "task035d_sidewall_z0_guard_solver_identity_fail"
+        ),
+    )
 
 
 __all__ = [
@@ -670,6 +1087,20 @@ __all__ = [
     "TASK035D_H10_CELL_TAG_SHA256",
     "TASK035D_H10_FACET_TAG_SHA256",
     "TASK035D_H10_MESH_SHA256",
+    "TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS",
+    "TASK035D_SIDEWALL_GUARD_ACTIVE_TRACE_ROWS",
+    "TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256",
+    "TASK035D_SIDEWALL_GUARD_AUTHORITY_PATH",
+    "TASK035D_SIDEWALL_GUARD_CELL_DEGREE_COUNTS",
+    "TASK035D_SIDEWALL_GUARD_DIAGNOSTIC_PATH",
+    "TASK035D_SIDEWALL_GUARD_DIAGNOSTIC_SHA256",
+    "TASK035D_SIDEWALL_GUARD_DTN_ROWS",
+    "TASK035D_SIDEWALL_GUARD_PERIODIC_TRACE_ROWS",
+    "TASK035D_SIDEWALL_GUARD_PLAN_CONTENT_SHA256",
+    "TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256",
+    "TASK035D_SIDEWALL_GUARD_PLAN_NAME",
+    "TASK035D_SIDEWALL_GUARD_PLAN_PATH",
+    "TASK035D_SIDEWALL_GUARD_SOLVE_ROWS",
     "TASK035D_T30_ACTIVE_FE_DOFS",
     "TASK035D_T30_ACTIVE_TRACE_ROWS",
     "TASK035D_T30_AUTHORITY_FILE_SHA256",
@@ -681,5 +1112,7 @@ __all__ = [
     "TASK035D_T30_PLAN_PATH",
     "TASK035D_T30_SOLVE_ROWS",
     "task035d_case097_plan_authority_gate",
+    "task035d_case097_sidewall_guard_plan_authority_gate",
+    "task035d_case097_sidewall_guard_solver_gate",
     "task035d_case097_t30_solver_gate",
 ]
