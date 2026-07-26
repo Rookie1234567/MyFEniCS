@@ -1062,77 +1062,77 @@ def build_hybrid_internal_mode_coupling(
     if log is not None:
         log("Task32 internal coupling: building canonical modal projection")
     projection = ModalTraceProjection(spaces, positive_basis)
-    canonical_negative_mapping = np.empty(
-        (mode_count, mode_count), dtype=np.complex128
-    )
-    negative_traces: list[fem.Function] = []
-    for column, mode in enumerate(negative_basis.modes):
-        trace = _trace_from_full_mode_vector(
-            mode.right.right_full,
-            spaces,
-            name=f"task032_negative_trace_{column}",
+    try:
+        canonical_negative_mapping = np.empty(
+            (mode_count, mode_count), dtype=np.complex128
         )
-        negative_traces.append(trace)
-        canonical_negative_mapping[:, column] = projection.project(trace)
-    positive_mapping = np.column_stack(
-        [projection.project(trace) for trace in projection.right_traces]
-    )
-    identity_error = float(
-        np.linalg.norm(positive_mapping - np.eye(mode_count), ord=np.inf)
-    )
-    if identity_error > 1.0e-9:
-        projection.destroy()
-        raise RuntimeError(
-            f"Positive interface projection identity error {identity_error:.3e}."
+        negative_traces: list[fem.Function] = []
+        for column, mode in enumerate(negative_basis.modes):
+            trace = _trace_from_full_mode_vector(
+                mode.right.right_full,
+                spaces,
+                name=f"task032_negative_trace_{column}",
+            )
+            negative_traces.append(trace)
+            canonical_negative_mapping[:, column] = projection.project(trace)
+        positive_mapping = np.column_stack(
+            [projection.project(trace) for trace in projection.right_traces]
         )
-    if not np.all(np.isfinite(canonical_negative_mapping)):
-        projection.destroy()
-        raise RuntimeError("Negative-to-positive interface map is non-finite.")
+        identity_error = float(
+            np.linalg.norm(positive_mapping - np.eye(mode_count), ord=np.inf)
+        )
+        if identity_error > 1.0e-9:
+            raise RuntimeError(
+                f"Positive interface projection identity error {identity_error:.3e}."
+            )
+        if not np.all(np.isfinite(canonical_negative_mapping)):
+            raise RuntimeError("Negative-to-positive interface map is non-finite.")
 
-    propagation = build_two_sided_propagation(
-        [*positive_basis.modes, *negative_basis.modes],
-        length_nm,
-        propagation_model=propagation_model,
-        axial_fem_degree=int(cfg.nedelec_degree),
-        axial_h_nm=float(cfg.mesh_target_size),
-    )
-    if modal_traction_model == "continuous_qep_beta":
-        positive_traction_beta = tuple(
-            complex(mode.beta) for mode in positive_basis.modes
+        propagation = build_two_sided_propagation(
+            [*positive_basis.modes, *negative_basis.modes],
+            length_nm,
+            propagation_model=propagation_model,
+            axial_fem_degree=int(cfg.nedelec_degree),
+            axial_h_nm=float(cfg.mesh_target_size),
         )
-        negative_traction_beta = tuple(
-            complex(mode.beta) for mode in negative_basis.modes
-        )
-    elif modal_traction_model == "scalar_cg_discrete_derivative":
-        if propagation_model != "full3d_uniform_cg":
-            projection.destroy()
+        if modal_traction_model == "continuous_qep_beta":
+            positive_traction_beta = tuple(
+                complex(mode.beta) for mode in positive_basis.modes
+            )
+            negative_traction_beta = tuple(
+                complex(mode.beta) for mode in negative_basis.modes
+            )
+        elif modal_traction_model == "scalar_cg_discrete_derivative":
+            if propagation_model != "full3d_uniform_cg":
+                raise ValueError(
+                    "scalar_cg_discrete_derivative traction requires "
+                    "full3d_uniform_cg propagation."
+                )
+            positive_traction_beta = tuple(
+                scalar_cg_discrete_traction_beta(
+                    mode.beta,
+                    degree=int(cfg.nedelec_degree),
+                    h_nm=float(cfg.mesh_target_size),
+                    direction="forward",
+                )
+                for mode in positive_basis.modes
+            )
+            negative_traction_beta = tuple(
+                scalar_cg_discrete_traction_beta(
+                    mode.beta,
+                    degree=int(cfg.nedelec_degree),
+                    h_nm=float(cfg.mesh_target_size),
+                    direction="backward",
+                )
+                for mode in negative_basis.modes
+            )
+        else:
             raise ValueError(
-                "scalar_cg_discrete_derivative traction requires "
-                "full3d_uniform_cg propagation."
+                f"Unsupported modal_traction_model {modal_traction_model!r}."
             )
-        positive_traction_beta = tuple(
-            scalar_cg_discrete_traction_beta(
-                mode.beta,
-                degree=int(cfg.nedelec_degree),
-                h_nm=float(cfg.mesh_target_size),
-                direction="forward",
-            )
-            for mode in positive_basis.modes
-        )
-        negative_traction_beta = tuple(
-            scalar_cg_discrete_traction_beta(
-                mode.beta,
-                degree=int(cfg.nedelec_degree),
-                h_nm=float(cfg.mesh_target_size),
-                direction="backward",
-            )
-            for mode in negative_basis.modes
-        )
-    else:
+    except Exception:
         projection.destroy()
-        raise ValueError(
-            f"Unsupported modal_traction_model {modal_traction_model!r}."
-        )
+        raise
     bottom = None
     top = None
     try:

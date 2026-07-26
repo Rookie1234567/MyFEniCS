@@ -387,30 +387,66 @@ def scalar_cg_discrete_traction_beta(
 ) -> complex:
     """Return the scalar CG endpoint-derivative symbol as an effective beta."""
 
-    beta = complex(beta_per_nm)
-    degree = int(degree)
-    h_nm = float(h_nm)
+    try:
+        beta = complex(beta_per_nm)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Scalar CG traction beta must be a complex scalar.") from exc
+    try:
+        degree_value = float(degree)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Scalar CG traction degree must be an integer.") from exc
+    try:
+        h_nm = float(h_nm)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Scalar CG traction h_nm must be a real scalar.") from exc
+    if not np.isfinite(beta.real) or not np.isfinite(beta.imag):
+        raise ValueError("Scalar CG traction beta must be finite.")
+    if not np.isfinite(degree_value) or not degree_value.is_integer():
+        raise ValueError("Scalar CG traction degree must be an integer.")
+    degree = int(degree_value)
+    if degree < 1 or degree > 6:
+        raise ValueError("Scalar CG traction degree must lie in [1, 6].")
+    if not np.isfinite(h_nm) or h_nm <= 0.0:
+        raise ValueError("Scalar CG traction h_nm must be finite and positive.")
+    if direction not in ("forward", "backward"):
+        raise ValueError(
+            f"Unsupported scalar CG traction direction {direction!r}."
+        )
     travel_sign = 1.0 if direction == "forward" else -1.0
     q_direction = travel_sign * beta * h_nm
+    if q_direction.imag < -1.0e-12:
+        raise ValueError(
+            f"{direction} beta={beta!r} is not passive for scalar CG traction."
+        )
     mass, stiffness = _scalar_cg_reference_matrices(degree)
     dynamic = (
         stiffness.astype(np.complex128) - q_direction * q_direction * mass
     )
-    endpoints = np.asarray((0, degree), dtype=np.int64)
-    interior = np.arange(1, degree, dtype=np.int64)
-    schur = dynamic[np.ix_(endpoints, endpoints)].copy()
-    if interior.size:
+    interior = list(range(1, degree))
+    if interior:
         interior_block = dynamic[np.ix_(interior, interior)]
-        condition = float(np.linalg.cond(interior_block))
-        if not np.isfinite(condition) or condition > 1.0e14:
+        coupling_border = dynamic[
+            np.ix_([0, *interior], [degree, *interior])
+        ]
+        interior_sign, interior_logabs = np.linalg.slogdet(interior_block)
+        coupling_sign, coupling_logabs = np.linalg.slogdet(coupling_border)
+        if interior_sign == 0.0:
             raise ValueError(
-                "Scalar CG endpoint-derivative symbol is singular or "
-                f"ill-conditioned (condition={condition:.3e})."
+                "Scalar CG traction is singular at an interior Dirichlet "
+                "resonance."
             )
-        schur -= dynamic[np.ix_(endpoints, interior)] @ np.linalg.solve(
-            interior_block,
-            dynamic[np.ix_(interior, endpoints)],
-        )
+        if coupling_sign == 0.0:
+            raise ValueError(
+                "Scalar CG traction endpoint coupling is singular."
+            )
+        with np.errstate(over="raise", invalid="raise", under="ignore"):
+            off_diagonal = complex(
+                coupling_sign
+                / interior_sign
+                * np.exp(coupling_logabs - interior_logabs)
+            )
+    else:
+        off_diagonal = complex(dynamic[0, degree])
     effective_beta = full3d_uniform_cg_discrete_beta(
         beta,
         degree=degree,
@@ -419,12 +455,15 @@ def scalar_cg_discrete_traction_beta(
     )
     theta_direction = travel_sign * effective_beta * h_nm
     multiplier = complex(np.exp(1j * theta_direction))
-    if direction == "forward":
-        outward_flux = (schur[0, 0] + schur[0, 1] * multiplier) / h_nm
-        traction_beta = 1j * outward_flux
-    else:
-        outward_flux = (schur[1, 0] * multiplier + schur[1, 1]) / h_nm
-        traction_beta = -1j * outward_flux
+    if multiplier == 0.0:
+        raise ValueError("Scalar CG traction Bloch multiplier underflowed.")
+    with np.errstate(over="raise", invalid="raise", divide="raise"):
+        outward_flux = (
+            0.5 * off_diagonal * (multiplier - 1.0 / multiplier) / h_nm
+        )
+    traction_beta = (
+        1j * outward_flux if direction == "forward" else -1j * outward_flux
+    )
     if not np.isfinite(traction_beta.real) or not np.isfinite(
         traction_beta.imag
     ):

@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 
 from src.modes.stable_propagation import (
+    _scalar_cg_reference_matrices,
     build_two_sided_propagation,
     diagnose_reciprocity_and_passivity,
     full3d_uniform_cg_discrete_beta,
@@ -100,6 +101,122 @@ class Task032StablePropagationTests(unittest.TestCase):
             errors.append(abs(forward - beta))
         self.assertLess(errors[1], errors[0] / 8.0)
         self.assertLess(errors[2], errors[1] / 8.0)
+
+    def test_scalar_cg_traction_matches_schur_away_from_resonance(self):
+        for degree, beta in (
+            (2, 0.324456 + 0.002j),
+            (6, 0.416629 + 0.0003j),
+        ):
+            h_nm = 1.25
+            mass, stiffness = _scalar_cg_reference_matrices(degree)
+            q = beta * h_nm
+            dynamic = stiffness.astype(np.complex128) - q * q * mass
+            endpoints = np.asarray((0, degree), dtype=np.int64)
+            interior = np.arange(1, degree, dtype=np.int64)
+            schur = dynamic[np.ix_(endpoints, endpoints)].copy()
+            if interior.size:
+                schur -= dynamic[np.ix_(endpoints, interior)] @ np.linalg.solve(
+                    dynamic[np.ix_(interior, interior)],
+                    dynamic[np.ix_(interior, endpoints)],
+                )
+            effective = full3d_uniform_cg_discrete_beta(
+                beta,
+                degree=degree,
+                h_nm=h_nm,
+                direction="forward",
+            )
+            multiplier = np.exp(1j * effective * h_nm)
+            expected = (
+                1j * (schur[0, 0] + schur[0, 1] * multiplier) / h_nm
+            )
+            actual = scalar_cg_discrete_traction_beta(
+                beta,
+                degree=degree,
+                h_nm=h_nm,
+                direction="forward",
+            )
+            np.testing.assert_allclose(actual, expected, rtol=1.0e-10, atol=1.0e-12)
+
+    def test_scalar_cg_traction_survives_near_p6_dirichlet_resonance(self):
+        degree = 6
+        mass, stiffness = _scalar_cg_reference_matrices(degree)
+        interior = np.arange(1, degree, dtype=np.int64)
+        interior_mass = mass[np.ix_(interior, interior)]
+        interior_stiffness = stiffness[np.ix_(interior, interior)]
+        eigenvalues = np.linalg.eigvals(
+            np.linalg.solve(interior_mass, interior_stiffness)
+        )
+        first_pole = float(np.sqrt(np.min(eigenvalues.real)))
+        beta = first_pole + 1.0e-12j
+        dynamic_interior = (
+            interior_stiffness.astype(np.complex128)
+            - beta * beta * interior_mass
+        )
+        self.assertGreater(np.linalg.cond(dynamic_interior), 1.0e14)
+
+        forward = scalar_cg_discrete_traction_beta(
+            beta,
+            degree=degree,
+            h_nm=1.0,
+            direction="forward",
+        )
+        backward = scalar_cg_discrete_traction_beta(
+            -beta,
+            degree=degree,
+            h_nm=1.0,
+            direction="backward",
+        )
+        self.assertTrue(np.isfinite(forward.real))
+        self.assertTrue(np.isfinite(forward.imag))
+        np.testing.assert_allclose(backward, -forward, rtol=1.0e-10)
+
+    def test_scalar_cg_traction_validates_inputs_before_assembly(self):
+        kwargs = {"degree": 2, "h_nm": 1.0, "direction": "forward"}
+        for beta in (np.nan, np.inf, 1.0 + np.inf * 1j):
+            with self.subTest(beta=beta):
+                with self.assertRaisesRegex(ValueError, "beta must be finite"):
+                    scalar_cg_discrete_traction_beta(beta, **kwargs)
+        for h_nm in (0.0, -1.0, np.nan, np.inf):
+            with self.subTest(h_nm=h_nm):
+                with self.assertRaisesRegex(
+                    ValueError, "h_nm must be finite and positive"
+                ):
+                    scalar_cg_discrete_traction_beta(
+                        0.2,
+                        degree=2,
+                        h_nm=h_nm,
+                        direction="forward",
+                    )
+        for degree in (0, 7):
+            with self.subTest(degree=degree):
+                with self.assertRaisesRegex(ValueError, r"degree must lie in \[1, 6\]"):
+                    scalar_cg_discrete_traction_beta(
+                        0.2,
+                        degree=degree,
+                        h_nm=1.0,
+                        direction="forward",
+                    )
+        with self.assertRaisesRegex(ValueError, "degree must be an integer"):
+            scalar_cg_discrete_traction_beta(
+                0.2,
+                degree=2.5,
+                h_nm=1.0,
+                direction="forward",
+            )
+        with self.assertRaisesRegex(ValueError, "Unsupported.*direction"):
+            scalar_cg_discrete_traction_beta(
+                0.2,
+                degree=2,
+                h_nm=1.0,
+                direction="sideways",
+            )
+        with self.assertRaisesRegex(ValueError, "not passive"):
+            scalar_cg_discrete_traction_beta(
+                0.2 - 0.01j,
+                degree=2,
+                h_nm=1.0,
+                direction="forward",
+            )
 
     def test_full3d_uniform_cg_is_opt_in_reciprocal_and_passive(self):
         modes = _reciprocal_modes(0.08 + 0.01j, 0.0 + 10.0j)

@@ -22,6 +22,14 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - Windows host path
     resource = None
 
+from benchmarks.task035c_p6_h10_gates import (
+    TASK035C_P6_H10_BACKENDS,
+    TASK035C_P6_H10_MODE_COUNTS,
+    TASK035C_P6_H10_MPI_SIZES,
+    task035c_p6_h10_full3d_reference_gate,
+    task035c_p6_h10_preflight_authority_gate,
+    valid_hex_digest,
+)
 from src.common.config_3d import (
     ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
     STANDARD_FULL_ASSEMBLY_BACKEND,
@@ -610,13 +618,13 @@ def _reference_archive(
     return archive, record_path, record
 
 
-def _parse_args() -> argparse.Namespace:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Task32 Phase6 real-QEP hybrid augmented direct diagnostic"
     )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--h-nm", type=float, default=5.0)
-    parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4), default=2)
+    parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4, 6), default=2)
     parser.add_argument(
         "--modal-h-nm",
         type=float,
@@ -628,7 +636,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--modal-degree",
         type=int,
-        choices=(1, 2, 3, 4),
+        choices=(1, 2, 3, 4, 6),
         help=(
             "Optional independent cross-section QEP polynomial degree. The "
             "local 3D FEM degree remains controlled by --degree."
@@ -678,6 +686,17 @@ def _parse_args() -> argparse.Namespace:
             "reference registry."
         ),
     )
+    parser.add_argument("--full3d-reference-sha256")
+    parser.add_argument(
+        "--task035c-p6-h10-gate",
+        action="store_true",
+        help=(
+            "Explicitly open only the fixed-rectangular Task035c p6/h10 "
+            "M120/M160 Hybrid path. Ordinary defaults remain unchanged."
+        ),
+    )
+    parser.add_argument("--task035c-p6-preflight-authority", type=Path)
+    parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
     parser.add_argument("--top-interface-nm", type=float, default=110.0)
     parser.add_argument("--graded-reference-h", type=float, choices=(5.0, 3.0))
@@ -745,7 +764,152 @@ def _parse_args() -> argparse.Namespace:
         "--host-environment-id",
         default=os.environ.get("TASK032_HOST_ENVIRONMENT_ID", "SK-20260601OSDE"),
     )
-    return parser.parse_args()
+    args = parser.parse_args(argv)
+    if args.degree == 6 and not args.task035c_p6_h10_gate:
+        parser.error(
+            "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
+            "Task035c p6/h10 Hybrid authority only."
+        )
+    if args.task035c_p6_h10_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes in TASK035C_P6_H10_MODE_COUNTS
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            in TASK035C_P6_H10_BACKENDS
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model
+            == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.allow_dirty_research
+        )
+        if not scoped:
+            parser.error(
+                "--task035c-p6-h10-gate is restricted to clean-source fixed "
+                "rectangular p6/h10 S-polarized Hybrid M120/M160, explicit "
+                "modal p6/h10, exact 2M pool, modal-schur-memory-minimal, "
+                "the qualified discrete axial propagation/traction pair, "
+                "10/110 nm interfaces, standard/static backend, and "
+                "hash-bound historical and matching Full3D authorities."
+            )
+    elif (
+        args.task035c_p6_preflight_authority is not None
+        or args.task035c_p6_preflight_sha256 is not None
+        or args.full3d_reference_sha256 is not None
+    ):
+        parser.error(
+            "Task035c authority SHA arguments require "
+            "--task035c-p6-h10-gate."
+        )
+    return args
+
+
+def _task035c_worker_authority_gate(
+    args: argparse.Namespace,
+    *,
+    current_source_sha: str | None,
+    mpi_size: int,
+) -> dict[str, Any] | None:
+    if not args.task035c_p6_h10_gate:
+        return None
+
+    authority_path = args.task035c_p6_preflight_authority
+    reference_path = args.full3d_reference
+    if authority_path is None or reference_path is None:
+        raise SystemExit("Task035c p6/h10 authority paths are required.")
+    authority_path = (
+        authority_path if authority_path.is_absolute() else ROOT / authority_path
+    ).resolve()
+    reference_path = (
+        reference_path if reference_path.is_absolute() else ROOT / reference_path
+    ).resolve()
+    try:
+        authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            f"Task035c p6/h10 historical authority is unreadable: {exc}"
+        ) from exc
+    try:
+        reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            f"Task035c p6/h10 Full3D reference is unreadable: {exc}"
+        ) from exc
+    try:
+        authority_relative = authority_path.relative_to(ROOT).as_posix()
+    except ValueError:
+        authority_relative = None
+    authority_is_tracked = bool(
+        authority_relative is not None
+        and _git(
+            "ls-files", "--error-unmatch", "--", authority_relative
+        )
+        is not None
+    )
+    preflight_gate = task035c_p6_h10_preflight_authority_gate(
+        authority if isinstance(authority, dict) else None,
+        expected_sha256=args.task035c_p6_preflight_sha256,
+        observed_sha256=_sha256(authority_path),
+        authority_is_tracked=authority_is_tracked,
+    )
+    reference_gate = task035c_p6_h10_full3d_reference_gate(
+        reference if isinstance(reference, dict) else None,
+        expected_sha256=args.full3d_reference_sha256,
+        observed_sha256=_sha256(reference_path),
+        current_source_sha=current_source_sha,
+        assembly_backend=args.stage4_full3d_assembly_backend,
+        mpi_size=mpi_size,
+    )
+    gate = {
+        "schema_version": "task035c.p6-h10-worker-authority-gate.v1",
+        "pass": bool(preflight_gate["pass"] and reference_gate["pass"]),
+        "historical_preflight": {
+            **preflight_gate,
+            "path": str(authority_path),
+        },
+        "matching_full3d_reference": {
+            **reference_gate,
+            "path": str(reference_path),
+        },
+    }
+    gate["failures"] = [
+        *(
+            []
+            if preflight_gate["pass"]
+            else [
+                f"historical_preflight:{failure}"
+                for failure in preflight_gate["failures"]
+            ]
+        ),
+        *(
+            []
+            if reference_gate["pass"]
+            else [
+                f"matching_full3d_reference:{failure}"
+                for failure in reference_gate["failures"]
+            ]
+        ),
+    ]
+    if not gate["pass"]:
+        raise SystemExit(
+            f"Task035c p6/h10 worker authority failed: {gate['failures']}"
+        )
+    return gate
 
 
 def main() -> None:
@@ -835,6 +999,18 @@ def main() -> None:
     comm = MPI.COMM_WORLD
     provenance = _source_provenance(
         comm, args.verified_clean_sha, args.allow_dirty_research
+    )
+    if (
+        args.task035c_p6_h10_gate
+        and comm.size not in TASK035C_P6_H10_MPI_SIZES
+    ):
+        raise SystemExit(
+            "Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8."
+        )
+    task035c_p6_gate = _task035c_worker_authority_gate(
+        args,
+        current_source_sha=provenance.get("commit_sha"),
+        mpi_size=comm.size,
     )
 
     if comm.rank == 0 and args.memory_stages is not None:
@@ -991,6 +1167,7 @@ def main() -> None:
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
                 ),
+                "task035c_p6_h10_authority_gate": task035c_p6_gate,
                 "task33_variant": True,
                 "provenance": (
                     "clean_task033_finite_spectrum_capacity_negative"
@@ -1892,6 +2069,7 @@ def main() -> None:
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
                 ),
+                "task035c_p6_h10_authority_gate": task035c_p6_gate,
                 "task33_variant": task33_variant,
                 "provenance": (
                     (

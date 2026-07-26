@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 from types import SimpleNamespace
 
 import numpy as np
@@ -53,6 +54,86 @@ def _augmented_local_field_vector(system, field) -> PETSc.Vec:
         )
     vector.assemble()
     return vector
+
+
+class Task032HybridInternalModeFailureCleanupTests(unittest.TestCase):
+    @staticmethod
+    def _inputs():
+        positive_mode = SimpleNamespace(
+            beta=0.2 + 0.01j,
+            direction="forward",
+            right=SimpleNamespace(right_full=object()),
+        )
+        negative_mode = SimpleNamespace(
+            beta=-0.2 - 0.01j,
+            direction="backward",
+            right=SimpleNamespace(right_full=object()),
+        )
+        return {
+            "cfg": SimpleNamespace(nedelec_degree=2, mesh_target_size=5.0),
+            "spaces": object(),
+            "positive_basis": SimpleNamespace(modes=[positive_mode]),
+            "negative_basis": SimpleNamespace(modes=[negative_mode]),
+            "bottom_system": SimpleNamespace(
+                side="bottom", assembly_backend_actual="test"
+            ),
+            "top_system": SimpleNamespace(
+                side="top", assembly_backend_actual="test"
+            ),
+        }
+
+    def test_projection_is_destroyed_when_negative_trace_extraction_fails(self):
+        projection = SimpleNamespace(
+            right_traces=(object(),),
+            project=mock.Mock(return_value=np.ones(1, dtype=np.complex128)),
+            destroy=mock.Mock(),
+        )
+        with (
+            mock.patch(
+                "src.coupling.hybrid_internal_modes.ModalTraceProjection",
+                return_value=projection,
+            ),
+            mock.patch(
+                "src.coupling.hybrid_internal_modes._trace_from_full_mode_vector",
+                side_effect=RuntimeError("controlled trace failure"),
+            ),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "controlled trace failure"):
+                build_hybrid_internal_mode_coupling(**self._inputs())
+        projection.destroy.assert_called_once_with()
+
+    def test_projection_is_destroyed_when_discrete_traction_fails(self):
+        projection = SimpleNamespace(
+            right_traces=(object(),),
+            project=mock.Mock(return_value=np.ones(1, dtype=np.complex128)),
+            destroy=mock.Mock(),
+        )
+        patches = (
+            mock.patch(
+                "src.coupling.hybrid_internal_modes.ModalTraceProjection",
+                return_value=projection,
+            ),
+            mock.patch(
+                "src.coupling.hybrid_internal_modes._trace_from_full_mode_vector",
+                return_value=object(),
+            ),
+            mock.patch(
+                "src.coupling.hybrid_internal_modes.build_two_sided_propagation",
+                return_value=object(),
+            ),
+            mock.patch(
+                "src.coupling.hybrid_internal_modes.scalar_cg_discrete_traction_beta",
+                side_effect=RuntimeError("controlled traction failure"),
+            ),
+        )
+        with patches[0], patches[1], patches[2], patches[3]:
+            with self.assertRaisesRegex(RuntimeError, "controlled traction failure"):
+                build_hybrid_internal_mode_coupling(
+                    **self._inputs(),
+                    propagation_model="full3d_uniform_cg",
+                    modal_traction_model="scalar_cg_discrete_derivative",
+                )
+        projection.destroy.assert_called_once_with()
 
 
 class Task032HybridInternalModeTests(unittest.TestCase):

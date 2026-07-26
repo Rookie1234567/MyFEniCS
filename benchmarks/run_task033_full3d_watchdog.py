@@ -19,6 +19,12 @@ from benchmarks.task034_wsl_resources import (
     effective_memory_limit,
     vmstat_swap_pages,
 )
+from benchmarks.task035c_p6_h10_gates import (
+    TASK035C_P6_H10_BACKENDS,
+    TASK035C_P6_H10_MPI_SIZES,
+    task035c_p6_h10_preflight_authority_gate,
+    valid_hex_digest,
+)
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
     _add_cpu_core_equivalents,
@@ -153,7 +159,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "controlled direct-reference watchdog."
         )
     )
-    parser.add_argument("--degree", type=int, choices=(2, 3, 4), required=True)
+    parser.add_argument("--degree", type=int, choices=(2, 3, 4, 6), required=True)
     parser.add_argument(
         "--h-nm",
         type=float,
@@ -181,6 +187,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=("standard_full", "assembly_time_static_condensed"),
         default="standard_full",
     )
+    parser.add_argument(
+        "--task035c-p6-h10-gate",
+        action="store_true",
+        help=(
+            "Explicitly open only the Task035c fixed-rectangular p6/h10 "
+            "Full3D authority path. Ordinary p2/p3/p4 behavior is unchanged."
+        ),
+    )
+    parser.add_argument("--task035c-p6-preflight-authority", type=Path)
+    parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -232,6 +248,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         2: {5.0, 3.0, 2.0, 1.0},
         3: {10.0, 7.5, 5.0, 3.0, 2.0},
         4: {10.0, 7.5, 5.0, 3.0},
+        6: {10.0},
     }
     if args.h_nm not in allowed_h_by_degree[args.degree]:
         parser.error(
@@ -242,6 +259,45 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.degree == 4 and math.isclose(args.h_nm, 3.0)
     ):
         parser.error("--task034-p4-h3-added-point is restricted to p4/h3.")
+    if args.degree == 6 and not args.task035c_p6_h10_gate:
+        parser.error(
+            "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
+            "Task035c p6/h10 authority only."
+        )
+    if args.task035c_p6_h10_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.polarization_kind == "s"
+            and args.run_kind == "full-solve"
+            and args.mpi_size in TASK035C_P6_H10_MPI_SIZES
+            and args.profile == "default"
+            and args.stage4_full3d_assembly_backend
+            in TASK035C_P6_H10_BACKENDS
+            and not args.allow_swap
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.p3_gate_record is None
+            and args.p4_trace_record is None
+            and not args.task034_p4_h3_added_point
+        )
+        if not scoped:
+            parser.error(
+                "--task035c-p6-h10-gate is restricted to a clean-source, "
+                "no-swap, default-profile fixed rectangular p6/h10 S-polarized "
+                "full solve on MPI1/2/4/8 with standard_full or "
+                "assembly_time_static_condensed and a hash-bound historical "
+                "preflight authority."
+            )
+    elif (
+        args.task035c_p6_preflight_authority is not None
+        or args.task035c_p6_preflight_sha256 is not None
+    ):
+        parser.error(
+            "Task035c p6 preflight authority arguments require "
+            "--task035c-p6-h10-gate."
+        )
     if (
         args.stage4_full3d_assembly_backend
         == "assembly_time_static_condensed"
@@ -252,6 +308,52 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "for mandatory recovery and explicit residual."
         )
     return args
+
+
+def _validate_task035c_p6_preflight(
+    args: argparse.Namespace,
+) -> dict[str, Any] | None:
+    if not args.task035c_p6_h10_gate:
+        return None
+    path = args.task035c_p6_preflight_authority
+    if path is None:
+        raise SystemExit("Task035c p6/h10 preflight authority path is required.")
+    path = path if path.is_absolute() else ROOT / path
+    path = path.resolve()
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            f"Task035c p6/h10 preflight authority is unreadable: {exc}"
+        ) from exc
+    try:
+        relative = path.relative_to(ROOT).as_posix()
+    except ValueError:
+        relative = None
+    tracked = bool(
+        relative is not None
+        and subprocess.run(
+            ["git", "ls-files", "--error-unmatch", "--", relative],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        == 0
+    )
+    gate = task035c_p6_h10_preflight_authority_gate(
+        record if isinstance(record, dict) else None,
+        expected_sha256=args.task035c_p6_preflight_sha256,
+        observed_sha256=_sha256(path),
+        authority_is_tracked=tracked,
+    )
+    gate["path"] = _path_from_root(path)
+    if not gate["pass"]:
+        raise SystemExit(
+            "Task035c p6/h10 preflight authority failed: "
+            f"{gate['failures']}"
+        )
+    return gate
 
 
 def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
@@ -554,6 +656,7 @@ def _run_parent(args: argparse.Namespace) -> int:
             "assembly-only and factorization-only calibration forbid --allow-swap."
         )
     p4_gate = _validate_p4_gate(args)
+    task035c_p6_gate = _validate_task035c_p6_preflight(args)
     source_before = _source_provenance(args)
     environment_before = _resource_snapshot()
     if environment_before["host_available_bytes"] is None:
@@ -595,6 +698,18 @@ def _run_parent(args: argparse.Namespace) -> int:
         "--run-dir",
         str(run_dir),
     ]
+    if args.task035c_p6_h10_gate:
+        command.extend(
+            (
+                "--task035c-p6-h10-gate",
+                "--task035c-p6-preflight-authority",
+                str(args.task035c_p6_preflight_authority),
+                "--task035c-p6-preflight-sha256",
+                str(args.task035c_p6_preflight_sha256),
+                "--verified-clean-sha",
+                str(args.verified_clean_sha),
+            )
+        )
     environment = os.environ.copy()
     environment.update(
         {
@@ -756,6 +871,7 @@ def _run_parent(args: argparse.Namespace) -> int:
             "stable_and_clean_after": source_stable,
         },
         "p4_prerequisite_gate": p4_gate,
+        "task035c_p6_h10_preflight_gate": task035c_p6_gate,
         "resource_policy": {
             "swap_allowed": args.allow_swap,
             "warning_gib": args.warning_gib,
