@@ -29,30 +29,51 @@ jobs:
       - name: Backfill COMSOL models
         run: python .github/scripts/one_off_comsol_registry_backfill.py
 
-      - name: Repair generated COMSOL configuration row
+      - name: Repair generated Markdown rows
         run: |
           python - <<'PY'
           from pathlib import Path
+
           path = Path('docs/development_model_registry.md')
           text = path.read_text(encoding='utf-8')
-          old = (
-              '| `C-COMSOL-HO-S` | COMSOL p2–p6直接法与p2 GMRES+GMG收敛矩阵 | '
-              '固定三维高阶benchmark；精确geometry/source hash保存在MPH而非Markdown | '
-              '13.5 nm项目主点；偏振/入射身份以MPH为准 | '
-              '双Floquet/周期端口；保存R00与总R/T/A，未逐项冻结12通道复振幅 | '
-              '`docs/COMSOL_direct_solver_report.md` |'
-          )
-          new = (
-              '| `C-COMSOL-HO-S` | COMSOL p2–p6直接法与p2 GMRES+GMG收敛矩阵 | '
-              '固定三维高阶benchmark；精确geometry/source hash保存在MPH而非Markdown | '
-              '13.5 nm项目主点；入射身份以MPH为准 | '
-              '偏振身份以MPH为准（Markdown未冻结） | '
-              '双Floquet/周期端口；保存R00与总R/T/A，未逐项冻结12通道复振幅 | '
-              '`docs/COMSOL_direct_solver_report.md` |'
-          )
-          if old not in text:
-              raise SystemExit('generated COMSOL configuration row was not found')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replacements = [
+              (
+                  '| `C-COMSOL-HO-S` | COMSOL p2–p6直接法与p2 GMRES+GMG收敛矩阵 | '
+                  '固定三维高阶benchmark；精确geometry/source hash保存在MPH而非Markdown | '
+                  '13.5 nm项目主点；偏振/入射身份以MPH为准 | '
+                  '双Floquet/周期端口；保存R00与总R/T/A，未逐项冻结12通道复振幅 | '
+                  '`docs/COMSOL_direct_solver_report.md` |',
+                  '| `C-COMSOL-HO-S` | COMSOL p2–p6直接法与p2 GMRES+GMG收敛矩阵 | '
+                  '固定三维高阶benchmark；精确geometry/source hash保存在MPH而非Markdown | '
+                  '13.5 nm项目主点；入射身份以MPH为准 | '
+                  '偏振身份以MPH为准（Markdown未冻结） | '
+                  '双Floquet/周期端口；保存R00与总R/T/A，未逐项冻结12通道复振幅 | '
+                  '`docs/COMSOL_direct_solver_report.md` |',
+              ),
+              (
+                  '| `task035c_p6_h10_hybrid_static_M160` | same source；MPI8 | '
+                  '17,248 rows；same local matrix/factor inventory | '
+                  'RSS7.929GiB；PSS/USS `6.169376/5.888676 GiB`；393.84s；'
+                  '12/12+12/12；相对M120无物理收益 | '
+                  '`success_not_selected`；RSS -29.50%，PSS/USS -35.81%/-37.16% | '
+                  'same compact records |',
+                  '| `task035c_p6_h10_hybrid_static_M160` | same source；MPI8 | '
+                  '`F-HO-S`；local p6/h10 ends + discrete modal middle | '
+                  '17,248 rows；same local matrix/factor inventory | '
+                  'RSS7.929GiB；PSS/USS `6.169376/5.888676 GiB`；393.84s；'
+                  '12/12+12/12；相对M120无物理收益 | '
+                  '`success_not_selected`；RSS -29.50%，PSS/USS -35.81%/-37.16% | '
+                  'same compact records |',
+              ),
+          ]
+
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'Markdown row was not found: {old[:80]}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
           PY
 
       - name: Validate Markdown tables and fences
