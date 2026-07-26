@@ -482,7 +482,7 @@ def generate_plan_authority() -> dict[str, Any]:
                 np.sum(seed.score_by_canonical_cell_id[p6_ids])
             ),
         }
-        if comm.rank == 0:
+        if comm.size == 1:
             payload = variable_p_cell_degree_plan_payload(
                 mesh_data.mesh,
                 proposal.cycle2.cell_degree_by_box,
