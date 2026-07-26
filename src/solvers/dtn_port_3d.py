@@ -1716,6 +1716,8 @@ def solve_stage4_dtn_port_total_field(
     assembly_time_system: AssemblyTimeCondensedSystem | None = None
     variable_p_reduction: VariablePAssemblyTimeReduction | None = None
     assembly_time_full_rhs: PETSc.Vec | None = None
+    variable_p_active_full_rhs: PETSc.Vec | None = None
+    variable_p_trace_functional_audits: list[dict[str, Any]] = []
 
     t0 = time.perf_counter()
     if assembly_time_cell_static_condensation:
@@ -1888,10 +1890,19 @@ def solve_stage4_dtn_port_total_field(
     if assembly_time_active:
         full_b_base = _assemble_unconstrained_vector(L)
         assembly_time_full_rhs = full_b_base
-        b_aug = reduce_assembly_time_vector(
-            full_b_base,
-            side="right",
-        )
+        if variable_p_reduction is not None:
+            variable_p_active_full_rhs = (
+                variable_p_reduction.project_p6_vector(full_b_base)
+            )
+            b_aug = variable_p_reduction.reduce_active_vector(
+                variable_p_active_full_rhs,
+                side="right",
+            )
+        else:
+            b_aug = reduce_assembly_time_vector(
+                full_b_base,
+                side="right",
+            )
         b_base = None
     else:
         full_b_base = _assemble_mpc_vector(L, floquet_data.mpc)
@@ -2026,17 +2037,45 @@ def solve_stage4_dtn_port_total_field(
         incident_traction_vec = _assemble_unconstrained_vector(
             _incident_top_traction_form(V, mesh_data, cfg)
         )
-        reduced_incident = reduce_assembly_time_vector(
-            incident_traction_vec,
-            side="right",
-        )
+        if variable_p_reduction is not None:
+            if variable_p_active_full_rhs is None:
+                raise RuntimeError(
+                    "variable-p active full RHS was not initialized"
+                )
+            active_incident = variable_p_reduction.project_p6_vector(
+                incident_traction_vec
+            )
+            variable_p_trace_functional_audits.append(
+                variable_p_reduction
+                .enforce_trace_only_active_functional(
+                    active_incident,
+                    role="incident_top_traction",
+                )
+            )
+            reduced_incident = (
+                variable_p_reduction.reduce_active_vector(
+                    active_incident,
+                    side="right",
+                )
+            )
+            variable_p_active_full_rhs.axpy(
+                PETSc.ScalarType(1.0),
+                active_incident,
+            )
+            active_incident.destroy()
+        else:
+            reduced_incident = reduce_assembly_time_vector(
+                incident_traction_vec,
+                side="right",
+            )
         inc_rows, inc_values = _vec_nonzero_owned_entries(
             reduced_incident
         )
-        assembly_time_full_rhs.axpy(
-            PETSc.ScalarType(1.0),
-            incident_traction_vec,
-        )
+        if variable_p_reduction is None:
+            assembly_time_full_rhs.axpy(
+                PETSc.ScalarType(1.0),
+                incident_traction_vec,
+            )
         reduced_incident.destroy()
         incident_traction_vec.destroy()
     else:
@@ -2085,7 +2124,9 @@ def solve_stage4_dtn_port_total_field(
         | None
     ) = None
     component_full_vectors: tuple[PETSc.Vec, PETSc.Vec] | None = None
+    component_active_vectors: tuple[PETSc.Vec, PETSc.Vec] | None = None
     component_interior_bilinear: np.ndarray | None = None
+    variable_p_auxiliary_interior_columns_local: np.ndarray | None = None
     unique_surface_orders = 0
     component_vector_assemblies = 0
     component_vector_cache_hits = 0
@@ -2108,6 +2149,10 @@ def solve_stage4_dtn_port_total_field(
                 if component_full_vectors is not None:
                     for vector in component_full_vectors:
                         vector.destroy()
+                if component_active_vectors is not None:
+                    for vector in component_active_vectors:
+                        vector.destroy()
+                    component_active_vectors = None
                 component_full_vectors = (
                     surface_assemblers[
                         (mode.side, 0)
@@ -2116,20 +2161,53 @@ def solve_stage4_dtn_port_total_field(
                         (mode.side, 1)
                     ].assemble_unconstrained_vector(mode),
                 )
-                right_vectors = tuple(
-                    reduce_assembly_time_vector(
-                        vector,
-                        side="right",
+                if variable_p_reduction is not None:
+                    component_active_vectors = tuple(
+                        variable_p_reduction.project_p6_vector(vector)
+                        for vector in component_full_vectors
                     )
-                    for vector in component_full_vectors
-                )
-                left_vectors = tuple(
-                    reduce_assembly_time_vector(
-                        vector,
-                        side="left",
+                    for component, vector in enumerate(
+                        component_active_vectors
+                    ):
+                        variable_p_trace_functional_audits.append(
+                            variable_p_reduction
+                            .enforce_trace_only_active_functional(
+                                vector,
+                                role=(
+                                    f"{mode.side}_surface_component_"
+                                    f"{component}_m{mode.m}_n{mode.n}"
+                                ),
+                            )
+                        )
+                    right_vectors = tuple(
+                        variable_p_reduction.reduce_active_vector(
+                            vector,
+                            side="right",
+                        )
+                        for vector in component_active_vectors
                     )
-                    for vector in component_full_vectors
-                )
+                    left_vectors = tuple(
+                        variable_p_reduction.reduce_active_vector(
+                            vector,
+                            side="left",
+                        )
+                        for vector in component_active_vectors
+                    )
+                else:
+                    right_vectors = tuple(
+                        reduce_assembly_time_vector(
+                            vector,
+                            side="right",
+                        )
+                        for vector in component_full_vectors
+                    )
+                    left_vectors = tuple(
+                        reduce_assembly_time_vector(
+                            vector,
+                            side="left",
+                        )
+                        for vector in component_full_vectors
+                    )
                 component_right_entries = tuple(
                     _vec_nonzero_owned_entries(vector)
                     for vector in right_vectors
@@ -2140,19 +2218,62 @@ def solve_stage4_dtn_port_total_field(
                 )
                 for vector in (*right_vectors, *left_vectors):
                     vector.destroy()
-                component_interior_bilinear = np.asarray(
-                    [
+                if (
+                    variable_p_reduction is not None
+                    and component_active_vectors is not None
+                ):
+                    component_interior_bilinear = np.asarray(
                         [
-                            assembly_time_interior_bilinear(
-                                left,
-                                right,
+                            [
+                                variable_p_reduction
+                                .interior_cross_bilinear_active(
+                                    left,
+                                    right,
+                                )
+                                for right in component_active_vectors
+                            ]
+                            for left in component_active_vectors
+                        ],
+                        dtype=np.complex128,
+                    )
+                    if (
+                        variable_p_auxiliary_interior_columns_local
+                        is None
+                    ):
+                        active_start, active_end = map(
+                            int,
+                            component_active_vectors[
+                                0
+                            ].getOwnershipRange(),
+                        )
+                        interior_start = max(
+                            active_start,
+                            variable_p_reduction.system.entity_map
+                            .active_trace_rows,
+                        )
+                        variable_p_auxiliary_interior_columns_local = (
+                            np.zeros(
+                                (
+                                    max(0, active_end - interior_start),
+                                    n_aux,
+                                ),
+                                dtype=np.complex128,
                             )
-                            for right in component_full_vectors
-                        ]
-                        for left in component_full_vectors
-                    ],
-                    dtype=np.complex128,
-                )
+                        )
+                else:
+                    component_interior_bilinear = np.asarray(
+                        [
+                            [
+                                assembly_time_interior_bilinear(
+                                    left,
+                                    right,
+                                )
+                                for right in component_full_vectors
+                            ]
+                            for left in component_full_vectors
+                        ],
+                        dtype=np.complex128,
+                    )
             else:
                 component_right_entries = (
                     surface_assemblers[
@@ -2174,6 +2295,31 @@ def solve_stage4_dtn_port_total_field(
         if component_left_entries is None:
             raise RuntimeError("DtN left component cache is unavailable")
         traction_vector = _traction_vector(mode, cfg)
+        if (
+            component_active_vectors is not None
+            and variable_p_auxiliary_interior_columns_local is not None
+        ):
+            active_start, active_end = map(
+                int,
+                component_active_vectors[0].getOwnershipRange(),
+            )
+            interior_start = max(
+                active_start,
+                variable_p_reduction.system.entity_map.active_trace_rows,
+            )
+            offset = interior_start - active_start
+            local_column = (
+                variable_p_auxiliary_interior_columns_local[:, aux_index]
+            )
+            for coefficient, vector in zip(
+                traction_vector[:2],
+                component_active_vectors,
+                strict=True,
+            ):
+                local_column += complex(coefficient) * np.asarray(
+                    vector.getArray(readonly=True),
+                    dtype=np.complex128,
+                )[offset : offset + len(local_column)]
         ell_cols, ell_values = _combine_owned_entries(
             component_left_entries,
             (mode.e_vector[0], mode.e_vector[1]),
@@ -2204,20 +2350,49 @@ def solve_stage4_dtn_port_total_field(
                 )
         if (
             incident_projection != 0.0
-            and assembly_time_full_rhs is not None
-            and component_full_vectors is not None
+            and (
+                component_active_vectors is not None
+                or component_full_vectors is not None
+            )
         ):
-            for coefficient, vector in zip(
-                traction_vector[:2],
-                component_full_vectors,
-                strict=True,
-            ):
-                assembly_time_full_rhs.axpy(
-                    PETSc.ScalarType(
-                        -incident_projection * coefficient
-                    ),
-                    vector,
-                )
+            if variable_p_reduction is not None:
+                if (
+                    variable_p_active_full_rhs is None
+                    or component_active_vectors is None
+                ):
+                    raise RuntimeError(
+                        "variable-p modal RHS lifecycle is invalid"
+                    )
+                for coefficient, vector in zip(
+                    traction_vector[:2],
+                    component_active_vectors,
+                    strict=True,
+                ):
+                    variable_p_active_full_rhs.axpy(
+                        PETSc.ScalarType(
+                            -incident_projection * coefficient
+                        ),
+                        vector,
+                    )
+            else:
+                if (
+                    assembly_time_full_rhs is None
+                    or component_full_vectors is None
+                ):
+                    raise RuntimeError(
+                        "assembly-time modal RHS lifecycle is invalid"
+                    )
+                for coefficient, vector in zip(
+                    traction_vector[:2],
+                    component_full_vectors,
+                    strict=True,
+                ):
+                    assembly_time_full_rhs.axpy(
+                        PETSc.ScalarType(
+                            -incident_projection * coefficient
+                        ),
+                        vector,
+                    )
 
         if len(ell_cols):
             ell_cols_total_local += int(len(ell_cols))
@@ -2263,6 +2438,41 @@ def solve_stage4_dtn_port_total_field(
     if component_full_vectors is not None:
         for vector in component_full_vectors:
             vector.destroy()
+    if component_active_vectors is not None:
+        for vector in component_active_vectors:
+            vector.destroy()
+
+    if variable_p_auxiliary_interior_columns_local is not None:
+        local_column_bytes = int(
+            variable_p_auxiliary_interior_columns_local.nbytes
+        )
+        local_column_max = float(
+            np.max(
+                np.abs(
+                    variable_p_auxiliary_interior_columns_local
+                ),
+                initial=0.0,
+            )
+        )
+        timing_details[
+            "stage4_dtn_variable_p_auxiliary_interior_column_bytes_local_max"
+        ] = int(comm.allreduce(local_column_bytes, op=MPI.MAX))
+        timing_details[
+            "stage4_dtn_variable_p_auxiliary_interior_column_max_abs"
+        ] = float(comm.allreduce(local_column_max, op=MPI.MAX))
+    if variable_p_trace_functional_audits:
+        timing_details[
+            "stage4_dtn_variable_p_trace_functional_count"
+        ] = len(variable_p_trace_functional_audits)
+        timing_details[
+            "stage4_dtn_variable_p_removed_interior_max_abs"
+        ] = max(
+            float(audit["removed_active_interior_max_abs"])
+            for audit in variable_p_trace_functional_audits
+        )
+        timing_details[
+            "stage4_dtn_variable_p_trace_only_gate_pass"
+        ] = True
 
     timing_details["stage4_dtn_modal_loop_seconds"] = float(
         comm.allreduce(time.perf_counter() - modal_loop_start, op=MPI.MAX)
@@ -2633,14 +2843,32 @@ def solve_stage4_dtn_port_total_field(
     embedded_fe_solution = None
     variable_p_recovered: VariablePRecoveredSolution | None = None
     if variable_p_reduction is not None:
-        if assembly_time_full_rhs is None:
+        if (
+            assembly_time_full_rhs is None
+            or variable_p_active_full_rhs is None
+        ):
             raise RuntimeError(
-                "variable-p recovery requires the full p6 RHS"
+                "variable-p recovery requires the active and p6 RHS"
             )
         recovery_started = time.perf_counter()
+        recovery_kwargs: dict[str, Any] = {}
+        if variable_p_auxiliary_interior_columns_local is not None:
+            recovery_kwargs = {
+                "auxiliary_interior_columns_local": (
+                    variable_p_auxiliary_interior_columns_local
+                ),
+                "auxiliary_values": _gather_auxiliary_values(
+                    solve_x,
+                    n_fe,
+                    n_aux,
+                    comm,
+                ),
+            }
         variable_p_recovered = variable_p_reduction.recover(
             solve_x,
             assembly_time_full_rhs,
+            active_full_rhs_override=variable_p_active_full_rhs,
+            **recovery_kwargs,
         )
         assembly_time_field = variable_p_recovered.field
         condensation_recovery = variable_p_recovered.audit
@@ -2727,11 +2955,18 @@ def solve_stage4_dtn_port_total_field(
         )
         variable_p_recovered.active_full_solution.destroy()
         variable_p_recovered.active_full_rhs.destroy()
+        if (
+            variable_p_recovered.active_auxiliary_interior_action
+            is not None
+        ):
+            variable_p_recovered.active_auxiliary_interior_action.destroy()
         variable_p_recovered = None
         if assembly_time_full_rhs is None:
             raise RuntimeError("variable-p full RHS lifecycle is invalid")
         assembly_time_full_rhs.destroy()
         assembly_time_full_rhs = None
+        variable_p_active_full_rhs.destroy()
+        variable_p_active_full_rhs = None
         timing_details[
             "stage4_dtn_matrix_free_full_residual_seconds"
         ] = float(
