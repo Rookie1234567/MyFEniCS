@@ -206,6 +206,9 @@ class HybridLocalStaticCondensation:
         full_mpc_vector: PETSc.Vec,
         *,
         eliminated_tolerance: float = 1.0e-12,
+        eliminated_relative_tolerance: float = (
+            512.0 * np.finfo(np.float64).eps
+        ),
     ) -> PETSc.Vec:
         """Project a verified trace-only tangential surface vector.
 
@@ -227,6 +230,7 @@ class HybridLocalStaticCondensation:
             self.condensed,
             full_mpc_vector,
             eliminated_tolerance=eliminated_tolerance,
+            eliminated_relative_tolerance=eliminated_relative_tolerance,
         )
 
     def recover_and_audit(

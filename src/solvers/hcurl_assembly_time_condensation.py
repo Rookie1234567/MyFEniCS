@@ -1791,16 +1791,30 @@ def project_mpc_vector_to_active_trace(
     full_vector: PETSc.Vec,
     *,
     eliminated_tolerance: float = 1.0e-12,
+    eliminated_relative_tolerance: float = (
+        512.0 * np.finfo(np.float64).eps
+    ),
 ) -> PETSc.Vec:
     """Project an already MPC-assembled full-space vector to active trace rows.
 
     ``dolfinx_mpc.assemble_vector`` has already applied ``C^H`` and leaves
     slave entries at zero.  This function verifies that no eliminated
     cell-interior or slave entry is nonzero before physically dropping them.
+    The verification combines an absolute roundoff floor with a global
+    retained-signal scale.  This keeps the audit invariant under harmless
+    mode normalization while remaining independent of MPI partitioning and
+    vector length.
     """
 
     if full_vector.getSize() != condensed.full_rows:
         raise ValueError("full MPC vector size differs from the FE space")
+    if (
+        not np.isfinite(eliminated_tolerance)
+        or not np.isfinite(eliminated_relative_tolerance)
+        or eliminated_tolerance < 0.0
+        or eliminated_relative_tolerance < 0.0
+    ):
+        raise ValueError("eliminated-vector tolerances must be finite and nonnegative")
     comm = condensed.matrix.getComm().tompi4py()
     row_start, row_end = full_vector.getOwnershipRange()
     owned_original = np.arange(row_start, row_end, dtype=PETSc.IntType)
@@ -1808,24 +1822,60 @@ def project_mpc_vector_to_active_trace(
         full_vector.getArray(readonly=True),
         dtype=np.complex128,
     )
+    nonfinite_count = int(
+        comm.allreduce(
+            int(np.count_nonzero(~np.isfinite(owned_values))),
+            op=MPI.SUM,
+        )
+    )
+    if nonfinite_count:
+        raise ValueError(
+            "MPC vector contains nonfinite entries before trace projection: "
+            f"global_count={nonfinite_count}"
+        )
     active_set = set(
         int(value)
         for value in condensed.trace_constraints.owned_active_original_dofs
     )
-    eliminated_mask = np.asarray(
-        [int(row) not in active_set for row in owned_original],
+    trace_set = set(
+        int(value) for value in condensed.owned_trace_original_dofs
+    )
+    active_mask = np.asarray(
+        [int(row) in active_set for row in owned_original],
         dtype=bool,
     )
-    local_max_eliminated = float(
-        np.max(np.abs(owned_values[eliminated_mask]), initial=0.0)
+    slave_mask = np.asarray(
+        [
+            int(row) in trace_set and int(row) not in active_set
+            for row in owned_original
+        ],
+        dtype=bool,
     )
-    max_eliminated = float(
-        comm.allreduce(local_max_eliminated, op=MPI.MAX)
+    interior_mask = np.asarray(
+        [int(row) not in trace_set for row in owned_original],
+        dtype=bool,
     )
-    if max_eliminated > eliminated_tolerance:
+
+    def global_max(mask: np.ndarray) -> float:
+        local = float(
+            np.max(np.abs(owned_values[mask]), initial=0.0)
+        )
+        return float(comm.allreduce(local, op=MPI.MAX))
+
+    max_active = global_max(active_mask)
+    max_slave = global_max(slave_mask)
+    max_interior = global_max(interior_mask)
+    max_eliminated = max(max_slave, max_interior)
+    cutoff = max(
+        float(eliminated_tolerance),
+        float(eliminated_relative_tolerance) * max_active,
+    )
+    if max_eliminated > cutoff:
         raise ValueError(
             "MPC vector has nonzero eliminated interior/slave entries: "
-            f"{max_eliminated:.3e}"
+            f"max={max_eliminated:.3e}, cutoff={cutoff:.3e}, "
+            f"active_scale={max_active:.3e}, slave={max_slave:.3e}, "
+            f"interior={max_interior:.3e}"
         )
     active_vector = condensed.matrix.createVecRight()
     active_original = (

@@ -555,6 +555,88 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(projected_rhs.getSize(), candidate.active_rows)
         self.assertEqual(projected_rhs.norm(), 0.0)
 
+        active_value = PETSc.ScalarType(20.0 + 3.0j)
+        active_index = int(
+            candidate.trace_constraints.original_to_active[master]
+        )
+        roundoff_value = PETSc.ScalarType(1.187e-12)
+        true_leakage_value = PETSc.ScalarType(
+            1.0e-8 * abs(active_value)
+        )
+        interior = int(next(iter(interior_set)))
+        for eliminated in (slave, interior):
+            zero_rhs.set(PETSc.ScalarType(0.0))
+            zero_rhs.setValue(master, active_value)
+            zero_rhs.setValue(eliminated, roundoff_value)
+            zero_rhs.assemble()
+            roundoff_projection = project_mpc_vector_to_active_trace(
+                candidate,
+                zero_rhs,
+                eliminated_tolerance=1.0e-12,
+                eliminated_relative_tolerance=(
+                    512.0 * np.finfo(np.float64).eps
+                ),
+            )
+            self.assertAlmostEqual(
+                abs(
+                    complex(roundoff_projection.getValue(active_index))
+                    - complex(active_value)
+                ),
+                0.0,
+                places=14,
+            )
+            roundoff_projection.destroy()
+
+            zero_rhs.set(PETSc.ScalarType(0.0))
+            zero_rhs.setValue(master, active_value)
+            zero_rhs.setValue(eliminated, true_leakage_value)
+            zero_rhs.assemble()
+            with self.assertRaisesRegex(
+                ValueError,
+                "nonzero eliminated interior/slave",
+            ):
+                project_mpc_vector_to_active_trace(
+                    candidate,
+                    zero_rhs,
+                    eliminated_tolerance=1.0e-12,
+                    eliminated_relative_tolerance=(
+                        512.0 * np.finfo(np.float64).eps
+                    ),
+                )
+
+        zero_rhs.set(PETSc.ScalarType(0.0))
+        zero_rhs.setValue(interior, roundoff_value)
+        zero_rhs.assemble()
+        with self.assertRaisesRegex(
+            ValueError,
+            r"active_scale=0.000e\+00",
+        ):
+            project_mpc_vector_to_active_trace(
+                candidate,
+                zero_rhs,
+            )
+
+        zero_rhs.set(PETSc.ScalarType(0.0))
+        zero_rhs.assemble()
+        row_start, _row_end = zero_rhs.getOwnershipRange()
+        zero_rhs.getArray()[master - row_start] = PETSc.ScalarType(np.nan)
+        with self.assertRaisesRegex(ValueError, "nonfinite entries"):
+            project_mpc_vector_to_active_trace(candidate, zero_rhs)
+
+        zero_rhs.set(PETSc.ScalarType(0.0))
+        zero_rhs.assemble()
+        with self.assertRaisesRegex(
+            ValueError,
+            "finite and nonnegative",
+        ):
+            project_mpc_vector_to_active_trace(
+                candidate,
+                zero_rhs,
+                eliminated_relative_tolerance=-1.0,
+            )
+
+        zero_rhs.set(PETSc.ScalarType(0.0))
+        zero_rhs.assemble()
         unconstrained = fem_petsc.assemble_matrix(compiled, bcs=[])
         unconstrained.assemble()
         rng = np.random.default_rng(20260724)

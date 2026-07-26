@@ -823,8 +823,9 @@ def _build_projection_matrix(
                 "Hybrid trace-only projection unexpectedly retained "
                 "full-space left vectors."
             )
-        # The verified left vectors have exactly zero cell-interior entries,
-        # hence l_i^H A_ii^-1 b_i is identically zero for any local FE RHS.
+        # The verified left vectors have cell-interior entries within the
+        # scale-aware floating-point roundoff envelope, so the discarded
+        # l_i^H A_ii^-1 b_i term is zero at the qualified trace-only accuracy.
         modal_rhs_correction = np.zeros(mode_count, dtype=np.complex128)
     return (
         matrix,
