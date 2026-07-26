@@ -65,3 +65,79 @@ python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_
 
 后续 Phase B–F 的 p-only、h-only、combined hp、12 通道和资源记录继续放在
 本 Case 中，但不得把尚未运行的条目写成通过。
+
+## Phase B：历史多目标 seed 与真实减行候选
+
+Task035b 的 same-mesh p4/p5 DWR 只提供历史 seed，不提供 Task035d
+精度信用。Case097 将其压缩为
+`records/legacy_multigoal_seed_v1.json`，并同时保存以下限制：
+
+- 没有12个显著功率和12个复振幅各自的 residual-weighted adjoint；
+- 没有独立的 `A_volume` 和 field/interface cellwise adjoint；
+- `production_qualified=false`；
+- 每个候选都必须重新运行 direct PDE 和完整物理 Gate。
+
+在实际 `p6/h10`、`(6,3,14)`、252-cell 网格上，serial/MPI2/MPI8
+共同重现了三个两周期 exact-sequence 计划：
+
+| 候选 | p4/p5/p6 cells | active FE DoF | periodic trace + DtN80 | 定位 |
+|---|---:|---:|---:|---|
+| T30 | 144/56/52 | 87,600 | 28,990 | 首个正式 p-only seed |
+| T25 | 159/51/42 | 82,052 | 27,869 | T30 有正信号后的第二候选 |
+| T15 | 178/46/28 | 74,522 | 26,052 | preferred-band，精度风险更高 |
+
+计划构造严格分成两轮：
+
+1. cycle 1 只允许 `p6 -> p5`；
+2. cycle 2 保留 p6 core 和 p5 face-ring，其余只允许 `p5 -> p4`；
+3. x/y periodic cell component 同步选择；
+4. shared edge/face degree 取 incident cell 的合法最小闭包；
+5. inactive p6 mode 不生成 active global row。
+
+对应 evidence：
+
+```text
+records/t30_h10_cell_degree_plan_v1.json
+records/t25_h10_cell_degree_plan_v1.json
+records/t15_h10_cell_degree_plan_v1.json
+records/legacy_seeded_plan_authority_mpi1_v1.json
+records/legacy_seeded_plan_authority_mpi2_v1.json
+records/legacy_seeded_plan_authority_mpi8_v1.json
+```
+
+这些 authority 只证明 mesh/plan/entity/Floquet identity 和真实 active-row
+规模，`heavy_pde_started=false`，不能写成物理通过。
+
+复现：
+
+```bash
+cd /home/Projects/MyFEniCS
+source scripts/activate_myfenics_wsl.sh
+
+python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_legacy_seeded_plans.py \
+  --mode generate
+
+mpiexec -n 2 python \
+  benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_legacy_seeded_plans.py \
+  --mode generate
+
+mpiexec -n 8 python \
+  benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_legacy_seeded_plans.py \
+  --mode generate
+
+python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_legacy_seeded_plans.py \
+  --mode check
+```
+
+## Variable-p DtN 一致性 Gate
+
+assembly-time variable-p backend 对每个 port surface functional 先投影到
+真实 active space，再执行 trace-only fail-closed Gate。N1curl
+cell-interior 基函数的切向边界迹严格为零；FFCx 留下的 roundoff-sized
+interior 值只有低于记录阈值才会被统一清零。这样 DtN row、column、
+auxiliary block、RHS、recovery 和 residual 使用同一个离散定义。
+
+若 interior 项超过阈值，运行立即失败；不得只修 auxiliary diagonal 后忽略
+cross-mode Schur 或 auxiliary RHS。恢复/残差另外保留非 Hermitian
+`+T_i a` dense oracle，以防未来引入真正非零 interior coupling 时发生符号
+或左右列混用。

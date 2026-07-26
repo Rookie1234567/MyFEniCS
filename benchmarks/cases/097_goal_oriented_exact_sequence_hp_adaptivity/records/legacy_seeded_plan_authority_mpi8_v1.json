@@ -1,0 +1,91 @@
+{
+  "actual_axis_counts": [
+    6,
+    3,
+    14
+  ],
+  "cell_count": 252,
+  "degree_container": 6,
+  "environment": {
+    "dolfinx_version": "0.10.0.post2",
+    "mpi_size": 8,
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128"
+  },
+  "formal_accuracy_credit": false,
+  "fresh_12_channel_pde_required": true,
+  "geometry": "Task034 fixed rectangular block grating",
+  "h_nm": 10.0,
+  "heavy_pde_started": false,
+  "ordinary_default_changed": false,
+  "pass": true,
+  "plans": [
+    {
+      "active_fe_dof_gate_pass": true,
+      "actual_conforming_active_fe_dofs": 87600,
+      "cell_degree_counts": {
+        "p4": 144,
+        "p5": 56,
+        "p6": 52
+      },
+      "cell_degree_plan_sha256": "862a0347792c356858b405d27f9874cfb9a28b3d75034d73f75c594c5c43c26d",
+      "fresh_12_channel_pde_required": true,
+      "name": "t30",
+      "periodic_independent_trace_rows": 28910,
+      "plan_file": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/t30_h10_cell_degree_plan_v1.json",
+      "plan_file_sha256": "4f580a06f4c1774316ecbdce950828b3cda143f0807145d9d40de2cd64df5c3a",
+      "predicted_direct_solve_rows": 28990,
+      "target_score_mass": 0.3
+    },
+    {
+      "active_fe_dof_gate_pass": true,
+      "actual_conforming_active_fe_dofs": 82052,
+      "cell_degree_counts": {
+        "p4": 159,
+        "p5": 51,
+        "p6": 42
+      },
+      "cell_degree_plan_sha256": "666a20fa5ed4354e380b8286c3b6321b8e6b243e5b89df56ec35a0a869d0f9ad",
+      "fresh_12_channel_pde_required": true,
+      "name": "t25",
+      "periodic_independent_trace_rows": 27789,
+      "plan_file": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/t25_h10_cell_degree_plan_v1.json",
+      "plan_file_sha256": "c7032dfbc0abf8b31a386a460ae66a7da4d87dd944abd3c5fb672d4583167523",
+      "predicted_direct_solve_rows": 27869,
+      "target_score_mass": 0.25
+    },
+    {
+      "active_fe_dof_gate_pass": true,
+      "actual_conforming_active_fe_dofs": 74522,
+      "cell_degree_counts": {
+        "p4": 178,
+        "p5": 46,
+        "p6": 28
+      },
+      "cell_degree_plan_sha256": "a940c09f208c03fcbb4c07cd8527313ace3a5c63945eb68e8fe66bfc9860b669",
+      "fresh_12_channel_pde_required": true,
+      "name": "t15",
+      "periodic_independent_trace_rows": 25972,
+      "plan_file": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/t15_h10_cell_degree_plan_v1.json",
+      "plan_file_sha256": "4267d63c9df0cabf6e61b5d70a9614a180e6f1966484ce9bd7e4866422777b83",
+      "predicted_direct_solve_rows": 26052,
+      "target_score_mass": 0.15
+    }
+  ],
+  "schema_version": "task035d.legacy-seeded-plan-authority.v1",
+  "seed_payload_sha256": "b3420dbdfce689cfa14e9b87e51910943d81b160dbd8a4b9e3c5798526f4b68c",
+  "seed_production_qualified": false,
+  "source": {
+    "commit_sha": "5859958a161be5f6d2aada37def9999ad3ad7c0a",
+    "file_sha256": {
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_legacy_seeded_plans.py": "e1fc9f6a5ba920a3a42c61af56eb777d36d40e15c94a04c51528e8a9548e0269",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/legacy_multigoal_seed_v1.json": "b3420dbdfce689cfa14e9b87e51910943d81b160dbd8a4b9e3c5798526f4b68c",
+      "src/adaptivity/legacy_seeded_variable_p.py": "1770e292048516d3eaf5a4a48a305541e12b754266f1ecacd95d1110efd88bea",
+      "src/adaptivity/variable_p_degree_plan.py": "9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f",
+      "src/adaptivity/variable_p_periodic_orbits.py": "c062ba02705759057486bbab207667dd08c67042cf90ec7032bb983b6f624bd8",
+      "src/test/test_191_task035d_legacy_seeded_selector.py": "d5cbbd16bea10458b0071f6be84f945f57ef3ebd25cc1e52b98ff3b5d2ceb009"
+    },
+    "ordinary_default_changed": false
+  },
+  "status": "legacy_seeded_plan_authority_mpi8_pass"
+}
