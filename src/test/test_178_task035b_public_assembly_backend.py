@@ -118,7 +118,8 @@ def test_local_h_plan_reuses_variable_backend_and_is_mutually_exclusive():
 
     assert qualification["status"] == "qualified"
     assert qualification["element_contract"] == (
-        "exact_sequence_balanced_local_h_fixed_trace_p6_interior"
+        "exact_sequence_balanced_local_h_fixed_trace_"
+        "variable_cell_interior"
     )
     assert (
         "geometry_bound_balanced_local_h_hanging_trace_elimination"

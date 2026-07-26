@@ -52,7 +52,11 @@ def _shared_plan_path(
     return path
 
 
-def _h100_context(*, trace_degree: int = 5):
+def _h100_context(
+    *,
+    trace_degree: int = 5,
+    cell_interior_degree_overrides=None,
+):
     cfg = target_stage4_config(degree=6, h_nm=100.0)
     marked = ((0.0, 0.0, 120.0, 16.5, 12.5, 130.0),)
     payload = stage4_local_h_refinement_plan_payload(
@@ -66,10 +70,21 @@ def _h100_context(*, trace_degree: int = 5):
             "accuracy_credit": False,
             "ordinary_default_changed": False,
         },
+        cell_interior_degree_overrides=(
+            cell_interior_degree_overrides
+        ),
+    )
+    override_label = (
+        "uniform"
+        if cell_interior_degree_overrides is None
+        else "variable-interior"
     )
     path = _shared_plan_path(
         payload,
-        name=f"h100-p{trace_degree}-mpi{MPI.COMM_WORLD.size}",
+        name=(
+            f"h100-p{trace_degree}-{override_label}-"
+            f"mpi{MPI.COMM_WORLD.size}"
+        ),
     )
     mesh_data = build_stage4_local_h_mesh_data(
         cfg,
@@ -114,6 +129,32 @@ def test_h100_plan_builds_real_periodic_local_h_carrier() -> None:
     assert tags == {11, 12, 13, 14, 15, 16}
 
 
+def test_frozen_h15_h_only_plan_payload_remains_unchanged() -> None:
+    plan_path = (
+        Path(__file__).resolve().parents[2]
+        / "benchmarks"
+        / "cases"
+        / "097_goal_oriented_exact_sequence_hp_adaptivity"
+        / "records"
+        / "h15_top_air_local_h_plan_v1.json"
+    )
+    frozen = json.loads(plan_path.read_text(encoding="utf-8"))
+    marked = tuple(
+        (*row["lower"], *row["upper"])
+        for row in frozen["marked_root_boxes"]
+    )
+    rebuilt = stage4_local_h_refinement_plan_payload(
+        target_stage4_config(degree=6, h_nm=15.0),
+        marked,
+        comm_size=8,
+        trace_degree=frozen["trace_degree"],
+        cell_interior_degree=frozen["cell_interior_degree"],
+        provenance=frozen["provenance"],
+    )
+    assert "cell_interior_degrees" not in frozen
+    assert rebuilt == frozen
+
+
 def test_h100_production_reduction_removes_hanging_and_floquet_rows() -> None:
     _cfg, _path, _mesh_data, context = _h100_context()
     authority = build_stage4_local_h_reduction_authority(
@@ -140,6 +181,100 @@ def test_h100_production_reduction_removes_hanging_and_floquet_rows() -> None:
         ]
         is False
     )
+
+
+def test_h100_true_variable_cell_interiors_remove_p6_rows() -> None:
+    p5_box = (0.0, 0.0, 120.0, 8.25, 6.25, 125.0)
+    _cfg, _path, _mesh_data, uniform_context = _h100_context()
+    _cfg, path, _mesh_data, mixed_context = _h100_context(
+        cell_interior_degree_overrides={p5_box: 5},
+    )
+    uniform = build_stage4_local_h_reduction_authority(
+        uniform_context,
+        phase_x=np.exp(0.2j),
+        phase_y=np.exp(-0.3j),
+    )
+    mixed = build_stage4_local_h_reduction_authority(
+        mixed_context,
+        phase_x=np.exp(0.2j),
+        phase_y=np.exp(-0.3j),
+    )
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert len(payload["cell_interior_degrees"]) == 52
+    assert mixed_context.audit["variable_cell_interior_degree"] is True
+    assert mixed.degree_plan.audit["cell_degree_counts"] == {
+        "p4": 0,
+        "p5": 1,
+        "p6": 51,
+    }
+    assert mixed.degree_plan.cell_degree_by_box[p5_box] == 5
+    assert (
+        mixed.degree_plan.entity_map.active_trace_rows
+        == uniform.degree_plan.entity_map.active_trace_rows
+    )
+    assert (
+        uniform.degree_plan.entity_map.active_rows
+        - mixed.degree_plan.entity_map.active_rows
+        == 210
+    )
+    assert (
+        uniform.audit["actual_full3d_equivalent_active_fe_dofs"]
+        - mixed.audit["actual_full3d_equivalent_active_fe_dofs"]
+        == 210
+    )
+    assert (
+        mixed.degree_plan.audit["inactive_p6_rows"]
+        == uniform.degree_plan.audit["inactive_p6_rows"] + 210
+    )
+    assert (
+        mixed.degree_plan.audit[
+            "cell_interior_p6_modes_globally_numbered_when_inactive"
+        ]
+        is False
+    )
+    assert (
+        mixed.audit["hanging_slave_rows"]
+        == uniform.audit["hanging_slave_rows"]
+    )
+    assert (
+        mixed.audit["periodic_slave_rows"]
+        == uniform.audit["periodic_slave_rows"]
+    )
+    assert mixed.audit["active_fe_dof_gate_pass"] is True
+
+
+def test_local_h_variable_interior_plan_fails_closed() -> None:
+    cfg = target_stage4_config(degree=6, h_nm=100.0)
+    marked = ((0.0, 0.0, 120.0, 16.5, 12.5, 130.0),)
+    provenance = {
+        "purpose": "negative component fixture",
+        "accuracy_credit": False,
+    }
+    with pytest.raises(ValueError, match="not one forest leaf"):
+        stage4_local_h_refinement_plan_payload(
+            cfg,
+            marked,
+            comm_size=MPI.COMM_WORLD.size,
+            trace_degree=5,
+            cell_interior_degree=6,
+            provenance=provenance,
+            cell_interior_degree_overrides={
+                (99.0, 99.0, 99.0, 100.0, 100.0, 100.0): 5
+            },
+        )
+    with pytest.raises(ValueError, match="trace_degree <= degree"):
+        stage4_local_h_refinement_plan_payload(
+            cfg,
+            marked,
+            comm_size=MPI.COMM_WORLD.size,
+            trace_degree=5,
+            cell_interior_degree=6,
+            provenance=provenance,
+            cell_interior_degree_overrides={
+                (0.0, 0.0, 120.0, 8.25, 6.25, 125.0): 4
+            },
+        )
 
 
 @pytest.mark.skipif(

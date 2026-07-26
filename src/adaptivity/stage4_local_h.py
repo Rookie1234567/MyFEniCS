@@ -40,6 +40,7 @@ from .hcurl_broken_trace_graph import (
     build_broken_hexa_trace_constraint_authority,
 )
 from .variable_p_degree_plan import (
+    CellBoxKey,
     VariablePCellDegreePlan,
     cell_box_catalog,
     cell_box_catalog_sha256,
@@ -60,6 +61,7 @@ class Stage4LocalHContext:
     plan_file_sha256: str
     trace_degree: int
     cell_interior_degree: int
+    cell_interior_degree_by_box: Mapping[CellBoxKey, int]
     audit: Mapping[str, Any]
 
 
@@ -97,6 +99,118 @@ def _normalized_box(values: Sequence[float]) -> Box:
     if any(box[axis] >= box[axis + 3] for axis in range(3)):
         raise ValueError("one local-h box has non-positive extent")
     return box  # type: ignore[return-value]
+
+
+def _cell_interior_degree_catalog(
+    forest: BalancedDyadicHexForest,
+    *,
+    trace_degree: int,
+    container_degree: int,
+    overrides: Mapping[CellBoxKey, int] | None = None,
+) -> dict[CellBoxKey, int]:
+    """Close sparse leaf overrides into one complete geometry-bound catalog."""
+
+    boxes = tuple(cell.box for cell in forest.leaves)
+    result: dict[CellBoxKey, int] = {
+        box: int(container_degree) for box in boxes
+    }
+    normalized_overrides: dict[CellBoxKey, int] = {}
+    for raw_box, raw_degree in (overrides or {}).items():
+        box = _normalized_box(raw_box)
+        if box in normalized_overrides:
+            raise ValueError("local-h cell-interior box is duplicated")
+        normalized_overrides[box] = int(raw_degree)
+    missing = sorted(set(normalized_overrides) - set(boxes))
+    if missing:
+        raise ValueError(
+            "local-h cell-interior override is not one forest leaf: "
+            f"{missing[:2]}"
+        )
+    result.update(normalized_overrides)
+    invalid = sorted(
+        {
+            degree
+            for degree in result.values()
+            if degree not in {5, 6}
+            or degree < int(trace_degree)
+            or degree > int(container_degree)
+        }
+    )
+    if invalid:
+        raise ValueError(
+            "the first local-h variable-interior cycle permits only "
+            "p6->p5 and requires trace_degree <= degree <= p6: "
+            f"{invalid}"
+        )
+    return result
+
+
+def _cell_interior_degree_sha256(
+    degree_by_box: Mapping[CellBoxKey, int],
+) -> str:
+    return _json_sha256(
+        [
+            {"box": list(box), "degree": int(degree_by_box[box])}
+            for box in sorted(degree_by_box)
+        ]
+    )
+
+
+def _cell_interior_degree_rows(
+    degree_by_box: Mapping[CellBoxKey, int],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "lower": list(box[:3]),
+            "upper": list(box[3:]),
+            "degree": int(degree_by_box[box]),
+        }
+        for box in sorted(degree_by_box)
+    ]
+
+
+def _load_cell_interior_degree_catalog(
+    payload: Mapping[str, Any],
+    forest: BalancedDyadicHexForest,
+    *,
+    trace_degree: int,
+    container_degree: int,
+) -> dict[CellBoxKey, int]:
+    rows = payload.get("cell_interior_degrees")
+    if rows is None:
+        # Backwards compatibility for the already frozen h-only p6 plans.
+        return _cell_interior_degree_catalog(
+            forest,
+            trace_degree=trace_degree,
+            container_degree=container_degree,
+        )
+    if not isinstance(rows, list) or not rows:
+        raise ValueError(
+            "local-h variable cell-interior catalog must be nonempty"
+        )
+    catalog: dict[CellBoxKey, int] = {}
+    for row in rows:
+        box = _normalized_box((*row["lower"], *row["upper"]))
+        if box in catalog:
+            raise ValueError("local-h cell-interior box is duplicated")
+        catalog[box] = int(row["degree"])
+    closed = _cell_interior_degree_catalog(
+        forest,
+        trace_degree=trace_degree,
+        container_degree=container_degree,
+        overrides=catalog,
+    )
+    if set(catalog) != set(closed):
+        raise ValueError(
+            "local-h variable cell-interior catalog must list every leaf"
+        )
+    expected_sha = payload.get("cell_interior_degree_plan_sha256")
+    actual_sha = _cell_interior_degree_sha256(closed)
+    if expected_sha != actual_sha:
+        raise ValueError(
+            "local-h cell-interior degree-plan content SHA is invalid"
+        )
+    return closed
 
 
 def _stage4_root_boxes(
@@ -289,8 +403,11 @@ def stage4_local_h_refinement_plan_payload(
     trace_degree: int,
     cell_interior_degree: int,
     provenance: Mapping[str, Any],
+    cell_interior_degree_overrides: (
+        Mapping[CellBoxKey, int] | None
+    ) = None,
 ) -> dict[str, Any]:
-    """Return a JSON-ready, geometry-bound one-cycle local-h plan."""
+    """Return a JSON-ready, geometry-bound one-cycle local h/p plan."""
 
     trace_degree = int(trace_degree)
     cell_interior_degree = int(cell_interior_degree)
@@ -298,7 +415,7 @@ def stage4_local_h_refinement_plan_payload(
         raise ValueError("local-h trace degree must be p4, p5, or p6")
     if cell_interior_degree != 6 or trace_degree > cell_interior_degree:
         raise ValueError(
-            "current local-h production adapter requires p6 interiors"
+            "current local-h production adapter requires a p6 container"
         )
     marked = tuple(_normalized_box(box) for box in marked_root_boxes)
     forest = _build_forest(
@@ -308,7 +425,13 @@ def stage4_local_h_refinement_plan_payload(
         maximum_level=1,
     )
     base = _base_config_identity(cfg, comm_size=int(comm_size))
-    return {
+    degree_catalog = _cell_interior_degree_catalog(
+        forest,
+        trace_degree=trace_degree,
+        container_degree=cell_interior_degree,
+        overrides=cell_interior_degree_overrides,
+    )
+    payload = {
         "schema_version": LOCAL_H_PLAN_SCHEMA,
         "status": "stage4_balanced_local_h_plan",
         "base_config": base,
@@ -328,6 +451,14 @@ def stage4_local_h_refinement_plan_payload(
         "provenance": dict(provenance),
         "ordinary_default_changed": False,
     }
+    if cell_interior_degree_overrides is not None:
+        payload["cell_interior_degrees"] = (
+            _cell_interior_degree_rows(degree_catalog)
+        )
+        payload["cell_interior_degree_plan_sha256"] = (
+            _cell_interior_degree_sha256(degree_catalog)
+        )
+    return payload
 
 
 def build_stage4_local_h_mesh_data(
@@ -404,6 +535,19 @@ def build_stage4_local_h_mesh_data(
         raise ValueError(
             "Stage-4 local-h interior degree differs from the p6 container"
         )
+    cell_interior_degree_by_box = _load_cell_interior_degree_catalog(
+        payload,
+        forest,
+        trace_degree=trace_degree,
+        container_degree=cell_interior_degree,
+    )
+    degree_counts = {
+        f"p{degree}": sum(
+            value == degree
+            for value in cell_interior_degree_by_box.values()
+        )
+        for degree in (4, 5, 6)
+    }
     plan_file_sha256 = _file_sha256(resolved)
     audit = MappingProxyType(
         {
@@ -415,6 +559,18 @@ def build_stage4_local_h_mesh_data(
             "base_config_identity_sha256": base["identity_sha256"],
             "trace_degree": trace_degree,
             "cell_interior_degree": cell_interior_degree,
+            "cell_interior_degree_counts": degree_counts,
+            "cell_interior_degree_plan_sha256": (
+                _cell_interior_degree_sha256(
+                    cell_interior_degree_by_box
+                )
+            ),
+            "variable_cell_interior_degree": (
+                len(
+                    set(cell_interior_degree_by_box.values())
+                )
+                > 1
+            ),
             "root_cell_count": len(forest.root_boxes),
             "leaf_cell_count": len(forest.leaves),
             "hanging_patch_count": len(forest.hanging_faces),
@@ -432,6 +588,9 @@ def build_stage4_local_h_mesh_data(
         plan_file_sha256=plan_file_sha256,
         trace_degree=trace_degree,
         cell_interior_degree=cell_interior_degree,
+        cell_interior_degree_by_box=MappingProxyType(
+            cell_interior_degree_by_box
+        ),
         audit=audit,
     )
     axis_plan = stage4_axis_plan(cfg, comm.size)
@@ -474,15 +633,23 @@ def build_stage4_local_h_reduction_authority(
     phase_x: complex,
     phase_y: complex,
 ) -> Stage4LocalHReductionAuthority:
-    """Bind fixed trace/p6 interiors to hanging and Floquet roots."""
+    """Bind fixed trace and true variable interiors to physical roots."""
 
     mesh = context.carrier.mesh
     edge_degrees = _degree_array(mesh, 1, context.trace_degree)
     face_degrees = _degree_array(mesh, 2, context.trace_degree)
-    cell_degrees = _degree_array(
-        mesh,
-        3,
-        context.cell_interior_degree,
+    canonical_leaf = np.asarray(
+        context.carrier.canonical_leaf_by_local_cell,
+        dtype=np.int64,
+    )
+    cell_degrees = np.asarray(
+        [
+            context.cell_interior_degree_by_box[
+                context.forest.leaves[int(leaf)].box
+            ]
+            for leaf in canonical_leaf
+        ],
+        dtype=np.int32,
     )
     entity_map = build_variable_p_global_entity_map(
         mesh,
@@ -504,30 +671,69 @@ def build_stage4_local_h_reduction_authority(
         physical,
     )
     boxes = cell_box_catalog(mesh)
+    if set(boxes) != set(context.cell_interior_degree_by_box):
+        raise RuntimeError(
+            "local-h cell-interior plan differs from carrier geometry"
+        )
+    degree_counts = {
+        f"p{degree}": sum(
+            value == degree
+            for value in context.cell_interior_degree_by_box.values()
+        )
+        for degree in (4, 5, 6)
+    }
+    variable_interior = len(
+        set(context.cell_interior_degree_by_box.values())
+    ) > 1
     degree_audit = MappingProxyType(
         {
             "schema_version": (
-                "task035d.local-h-fixed-trace-degree-plan.v1"
+                "task035d.local-h-fixed-trace-variable-interior-plan.v1"
             ),
-            "status": "local_h_fixed_trace_p6_interior_plan_closed",
+            "status": (
+                "local_h_fixed_trace_variable_interior_plan_closed"
+                if variable_interior
+                else "local_h_fixed_trace_uniform_interior_plan_closed"
+            ),
             "pass": True,
             "mpi_size": int(mesh.comm.size),
             "mesh_cell_box_catalog_sha256": (
                 cell_box_catalog_sha256(boxes)
             ),
             "cell_count": len(boxes),
-            "cell_degree_counts": {
-                "p4": 0,
-                "p5": 0,
-                "p6": len(boxes),
-            },
+            "cell_degree_counts": degree_counts,
+            "cell_degree_plan_sha256": (
+                _cell_interior_degree_sha256(
+                    context.cell_interior_degree_by_box
+                )
+            ),
             "trace_degree": context.trace_degree,
+            "cell_interior_container_degree": (
+                context.cell_interior_degree
+            ),
             "cell_interior_degree": context.cell_interior_degree,
+            "variable_cell_interior_degree": variable_interior,
             "active_rows": entity_map.active_rows,
             "active_trace_rows": entity_map.active_trace_rows,
+            "inactive_p6_rows": int(
+                entity_map.uniform_p6_rows - entity_map.active_rows
+            ),
+            "inactive_p6_trace_rows": int(
+                entity_map.uniform_p6_trace_rows
+                - entity_map.active_trace_rows
+            ),
             "entity_degree_closure": (
                 "uniform fixed trace degree on every physical edge/face; "
-                "uniform p6 cell-interior degree"
+                "geometry-bound p5/p6 cell-interior degree with "
+                "trace_degree <= cell degree"
+            ),
+            "adaptation_cycle_scope": (
+                "first p6-to-p5 cell-interior-only cycle"
+            ),
+            "local_variable_trace_implemented": False,
+            "complete_combined_hp_credit": False,
+            "cell_interior_p6_modes_globally_numbered_when_inactive": (
+                False
             ),
             "geometry_bound_not_global_entity_id_bound": True,
             "ordinary_default_changed": False,
@@ -535,10 +741,7 @@ def build_stage4_local_h_reduction_authority(
     )
     degree_plan = VariablePCellDegreePlan(
         cell_degree_by_box=MappingProxyType(
-            {
-                box: context.cell_interior_degree
-                for box in boxes
-            }
+            dict(context.cell_interior_degree_by_box)
         ),
         edge_degrees=edge_degrees,
         face_degrees=face_degrees,

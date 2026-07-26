@@ -70,6 +70,7 @@ def _single_hanging_fixture(
     *,
     degree: int = 4,
     cell_degree: int = 4,
+    p5_interior_canonical_leaves: int = 0,
 ):
     forest = build_root_dyadic_hexa_forest(
         [
@@ -88,11 +89,24 @@ def _single_hanging_fixture(
         comm=MPI.COMM_WORLD,
     )
     msh = carrier.mesh
+    cell_degrees = _degree_array(msh, 3, cell_degree)
+    if p5_interior_canonical_leaves:
+        if cell_degree != 6 or degree > 5:
+            raise ValueError(
+                "mixed fixture requires p5 trace and a p6 container"
+            )
+        canonical = np.asarray(
+            carrier.canonical_leaf_by_local_cell,
+            dtype=np.int64,
+        )
+        cell_degrees[
+            canonical < int(p5_interior_canonical_leaves)
+        ] = 5
     entity_map = build_variable_p_global_entity_map(
         msh,
         edge_degrees=_degree_array(msh, 1, degree),
         face_degrees=_degree_array(msh, 2, degree),
-        cell_degrees=_degree_array(msh, 3, cell_degree),
+        cell_degrees=cell_degrees,
     )
     authority = build_broken_hexa_trace_constraint_authority(
         forest,
@@ -819,7 +833,17 @@ def test_periodic_hanging_matrix_uses_conjugated_phases_before_insertion() -> No
         system.destroy()
 
 
-def test_compiled_p6_kernel_binds_to_p5_hanging_trace_rows() -> None:
+@pytest.mark.parametrize(
+    ("p5_interior_canonical_leaves", "active_full_rows"),
+    (
+        (0, 6060),
+        (1, 5850),
+    ),
+)
+def test_compiled_p6_kernel_binds_to_p5_hanging_trace_rows(
+    p5_interior_canonical_leaves: int,
+    active_full_rows: int,
+) -> None:
     if MPI.COMM_WORLD.size not in {1, 2, 8}:
         pytest.skip(
             "Task035d compiled local-h binding qualifies serial/MPI2/MPI8"
@@ -827,6 +851,9 @@ def test_compiled_p6_kernel_binds_to_p5_hanging_trace_rows() -> None:
     _, carrier, entity_map, _, constraints = _single_hanging_fixture(
         degree=5,
         cell_degree=6,
+        p5_interior_canonical_leaves=(
+            p5_interior_canonical_leaves
+        ),
     )
     msh = carrier.mesh
     p6_space = fem.functionspace(
@@ -866,7 +893,10 @@ def test_compiled_p6_kernel_binds_to_p5_hanging_trace_rows() -> None:
         assert audit["compiled_p6_tensor_builder"] is True
         assert audit["compiled_trace_constraint_binding_complete"] is True
         assert audit["trace_constraint_elimination_applied_before_insertion"]
-        assert audit["active_full3d_rows_before_condensation"] == 6060
+        assert (
+            audit["active_full3d_rows_before_condensation"]
+            == active_full_rows
+        )
         assert audit["active_trace_rows_before_periodic_elimination"] == 2010
         assert audit["active_trace_rows"] == 1790
         assert audit["hanging_or_floquet_slave_rows"] == 220
@@ -875,6 +905,9 @@ def test_compiled_p6_kernel_binds_to_p5_hanging_trace_rows() -> None:
         assert audit["full_p6_global_matrix_constructed"] is False
         assert audit["full_active_global_matrix_constructed"] is False
         assert audit["hanging_or_floquet_slave_rows_globally_numbered"] is False
+        assert audit["inactive_p6_full_rows"] >= (
+            210 * p5_interior_canonical_leaves
+        )
         root = np.sin(
             0.017 * np.arange(constraints.independent_trace_rows)
         ) + 1j * np.cos(

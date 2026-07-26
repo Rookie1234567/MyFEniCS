@@ -843,7 +843,10 @@ def qualify_stage4_full3d_assembly_backend(
                 "plan or balanced local-h refinement plan"
             )
         element_contract = (
-            "exact_sequence_balanced_local_h_fixed_trace_p6_interior"
+            (
+                "exact_sequence_balanced_local_h_fixed_trace_"
+                "variable_cell_interior"
+            )
             if cfg.stage4_local_h_refinement_plan
             else "exact_sequence_variable_p4_p5_p6_in_p6_container"
         )
