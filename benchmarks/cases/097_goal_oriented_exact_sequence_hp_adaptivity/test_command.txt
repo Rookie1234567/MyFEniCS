@@ -2,7 +2,14 @@ source scripts/activate_myfenics_wsl.sh
 
 python -m pytest -q \
   src/test/test_183_task035d_reference_active_space.py \
-  src/test/test_184_task035d_global_entity_numbering.py
+  src/test/test_184_task035d_global_entity_numbering.py \
+  src/test/test_188_task035d_variable_p_degree_plan.py \
+  src/test/test_189_task035d_variable_p_reduction.py \
+  src/test/test_190_task035d_variable_p_stage4_smoke.py \
+  src/test/test_191_task035d_legacy_seeded_selector.py \
+  src/test/test_192_task035d_mixed_variable_p_stage4.py \
+  src/test/test_193_task035d_case097_runner_gates.py \
+  src/test/test_194_task035d_case097_checker.py
 
 mpiexec -n 2 python -m pytest -q \
   src/test/test_184_task035d_global_entity_numbering.py

@@ -848,6 +848,26 @@ def run_prepared_3d_case_flow(
     tdim = msh.topology.dim
     num_cells = msh.topology.index_map(tdim).size_global
     domain_tag_volumes = _cell_tag_volumes(msh, mesh_data, cfg)
+    variable_p_mesh_identity = None
+    if (
+        cfg.stage4_full3d_assembly_backend
+        == "assembly_time_variable_p_condensed"
+    ):
+        from ..adaptivity.high_order_resource_audit import (
+            partition_independent_linear_mesh_identity,
+        )
+
+        stage_start = _start_timed_stage(comm)
+        variable_p_mesh_identity = (
+            partition_independent_linear_mesh_identity(mesh_data)
+        )
+        _finish_timed_stage(
+            comm,
+            timings,
+            "variable_p_mesh_identity",
+            stage_start,
+            log,
+        )
 
     stage_start = _start_timed_stage(comm)
     _write_progress_event(out_dir, comm, stage="function_space_setup", status="begin", started=started)
@@ -1407,6 +1427,7 @@ def run_prepared_3d_case_flow(
         if factorization_only_result
         else "PETSc KSP did not converge.",
         "num_mesh_cells": int(num_cells),
+        "variable_p_mesh_identity": variable_p_mesh_identity,
         "num_nedelec_dofs": int(num_dofs),
         "matrix_stats": matrix_stats,
         "unconstrained_matrix_stats": unconstrained_matrix_stats,
@@ -1502,6 +1523,31 @@ def run_prepared_3d_case_flow(
         "num_active_condensed_dofs": None
         if dtn_solver_info is None
         else dtn_solver_info.get("num_active_condensed_dofs"),
+        "stage4_dtn_variable_p_auxiliary_interior_columns_allocated": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get(
+            "stage4_dtn_variable_p_auxiliary_interior_columns_allocated"
+        ),
+        "stage4_dtn_variable_p_auxiliary_interior_column_bytes_local_max": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get(
+            "stage4_dtn_variable_p_auxiliary_interior_column_bytes_local_max"
+        ),
+        "stage4_dtn_variable_p_trace_functional_count": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get(
+            "stage4_dtn_variable_p_trace_functional_count"
+        ),
+        "stage4_dtn_variable_p_removed_interior_max_abs": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get(
+            "stage4_dtn_variable_p_removed_interior_max_abs"
+        ),
+        "stage4_dtn_variable_p_trace_only_gate_pass": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get(
+            "stage4_dtn_variable_p_trace_only_gate_pass"
+        ),
         "stage4_floquet_slave_elimination": False
         if dtn_solver_info is None
         else bool(

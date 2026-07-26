@@ -483,6 +483,7 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
             }
             for item in processes.values()
             if item["worker_rank"] is not None
+            and item["pid"] in tree
         ),
         key=lambda item: (item["rank"], item["pid"]),
     )

@@ -141,3 +141,75 @@ auxiliary block、RHS、recovery 和 residual 使用同一个离散定义。
 cross-mode Schur 或 auxiliary RHS。恢复/残差另外保留非 Hermitian
 `+T_i a` dense oracle，以防未来引入真正非零 interior coupling 时发生符号
 或左右列混用。
+
+## T30 MPI8 正式 p-only Gate
+
+首个正式候选固定为 `T30`：
+
+```text
+cells p4/p5/p6 = 144/56/52
+actual conforming active FE DoF = 87,600
+active trace rows before periodic reduction = 35,208
+periodic independent trace rows = 28,910
+DtN auxiliary rows = 80
+direct solve rows = 28,990
+```
+
+`benchmarks.run_task033_full3d_watchdog` 的 Task035d opt-in 入口只接受
+`p6/h10/S/MPI8/default/no-swap`、冻结的 T30 plan 与 MPI8 plan authority。
+它检查 exact-sequence backend、真实减行、Floquet、mesh/tag/orientation、
+trace-only DtN、full recovery、full explicit residual、MUMPS factor inventory
+和 solver lifecycle；只授予结构/残差信用。
+
+`benchmarks.task035d_case097_checker` 随后独立读取并哈希校验 raw
+watchdog、solver summary、timeline、80-order DtN JSON 和 8 个 VTU shard，
+再重算：
+
+- Case095 reference-v1 的 `12/12` significant powers 与 `12/12`
+  physical-boundary complex amplitudes；
+- R00/R/T/Aclosure normalized vector、Avolume 与 energy closure；
+- 冻结 volume/interface probes；
+- rows、matrix NNZ、factor NNZ；
+- process-tree RSS 权威、每 rank PSS/USS/smaps、cgroup 诊断账本和 zero swap。
+
+当 cgroup 不是当前 job 的专属 cgroup 时，其 current/peak 只作为诊断账本，
+不得覆盖 simultaneous process-tree RSS 权威。
+
+正式命令在 runner/checker 提交后从干净 SHA 启动：
+
+```bash
+clean_sha="$(git rev-parse HEAD)"
+
+python -m benchmarks.run_task033_full3d_watchdog \
+  --degree 6 \
+  --h-nm 10 \
+  --polarization-kind s \
+  --run-kind full-solve \
+  --mpi-size 8 \
+  --profile default \
+  --stage4-full3d-assembly-backend assembly_time_variable_p_condensed \
+  --stage4-variable-p-cell-degree-plan \
+    benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/t30_h10_cell_degree_plan_v1.json \
+  --stage4-variable-p-cell-degree-plan-sha256 \
+    4f580a06f4c1774316ecbdce950828b3cda143f0807145d9d40de2cd64df5c3a \
+  --task035d-case097-gate \
+  --task035d-plan-authority \
+    benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/legacy_seeded_plan_authority_mpi8_v1.json \
+  --task035d-plan-authority-sha256 \
+    97e8ddaab151cfc985c43c66256c036f3809ee216c47f67710a1f01679de0961 \
+  --verified-clean-sha "${clean_sha}" \
+  --warning-gib 48 \
+  --terminate-gib 96 \
+  --timeout-seconds 21600 \
+  --artifact-root benchmarks/artifacts/task035d/case097 \
+  --record benchmarks/artifacts/task035d/case097/t30_h10_mpi8_watchdog.json
+
+watchdog_sha="$(sha256sum \
+  benchmarks/artifacts/task035d/case097/t30_h10_mpi8_watchdog.json \
+  | cut -d' ' -f1)"
+
+python -m benchmarks.task035d_case097_checker \
+  --watchdog benchmarks/artifacts/task035d/case097/t30_h10_mpi8_watchdog.json \
+  --watchdog-sha256 "${watchdog_sha}" \
+  --output benchmarks/artifacts/task035d/case097/t30_h10_mpi8_check.json
+```

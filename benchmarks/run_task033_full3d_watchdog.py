@@ -25,6 +25,11 @@ from benchmarks.task035c_p6_h10_gates import (
     task035c_p6_h10_preflight_authority_gate,
     valid_hex_digest,
 )
+from benchmarks.task035d_case097_gates import (
+    TASK035D_CASE097_BACKEND,
+    task035d_case097_plan_authority_gate,
+    task035d_case097_t30_solver_gate,
+)
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
     _add_cpu_core_equivalents,
@@ -132,6 +137,17 @@ def _full3d_config(args: argparse.Namespace):
         stage4_full3d_assembly_backend=(
             args.stage4_full3d_assembly_backend
         ),
+        stage4_variable_p_cell_degree_plan=(
+            None
+            if args.stage4_variable_p_cell_degree_plan is None
+            else str(args.stage4_variable_p_cell_degree_plan)
+        ),
+        direct_release_base_after_augmentation=bool(
+            args.task035d_case097_gate
+        ),
+        direct_release_solver_before_postprocess=bool(
+            args.task035d_case097_gate
+        ),
         petsc_direct_solver_profile=args.profile,
         matrix_diagnostics_assemble_only=args.run_kind == "assembly-only",
         matrix_diagnostics_factorization_only=factorization_only,
@@ -184,9 +200,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--stage4-full3d-assembly-backend",
-        choices=("standard_full", "assembly_time_static_condensed"),
+        choices=(
+            "standard_full",
+            "assembly_time_static_condensed",
+            TASK035D_CASE097_BACKEND,
+        ),
         default="standard_full",
     )
+    parser.add_argument("--stage4-variable-p-cell-degree-plan", type=Path)
+    parser.add_argument("--stage4-variable-p-cell-degree-plan-sha256")
     parser.add_argument(
         "--task035c-p6-h10-gate",
         action="store_true",
@@ -197,6 +219,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
+    parser.add_argument(
+        "--task035d-case097-gate",
+        action="store_true",
+        help=(
+            "Explicitly open only the Task035d Case097 T30 variable-p "
+            "p6/h10 MPI8 candidate. This grants no physical accuracy credit."
+        ),
+    )
+    parser.add_argument("--task035d-plan-authority", type=Path)
+    parser.add_argument("--task035d-plan-authority-sha256")
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -259,11 +291,19 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.degree == 4 and math.isclose(args.h_nm, 3.0)
     ):
         parser.error("--task034-p4-h3-added-point is restricted to p4/h3.")
-    if args.degree == 6 and not args.task035c_p6_h10_gate:
-        parser.error(
-            "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
-            "Task035c p6/h10 authority only."
+    selected_p6_gate_count = sum(
+        (
+            bool(args.task035c_p6_h10_gate),
+            bool(args.task035d_case097_gate),
         )
+    )
+    if args.degree == 6 and selected_p6_gate_count != 1:
+        parser.error(
+            "p6 is fail-closed; select exactly one scoped Task035c or "
+            "Task035d p6/h10 gate."
+        )
+    if args.degree != 6 and selected_p6_gate_count:
+        parser.error("Task035c/Task035d p6 gates require --degree 6.")
     if args.task035c_p6_h10_gate:
         scoped = bool(
             args.degree == 6
@@ -298,13 +338,62 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Task035c p6 preflight authority arguments require "
             "--task035c-p6-h10-gate."
         )
+    if args.task035d_case097_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.polarization_kind == "s"
+            and args.run_kind == "full-solve"
+            and args.mpi_size == 8
+            and args.profile == "default"
+            and args.stage4_full3d_assembly_backend
+            == TASK035D_CASE097_BACKEND
+            and not args.allow_swap
+            and args.stage4_variable_p_cell_degree_plan is not None
+            and valid_hex_digest(
+                args.stage4_variable_p_cell_degree_plan_sha256,
+                64,
+            )
+            and args.task035d_plan_authority is not None
+            and valid_hex_digest(args.task035d_plan_authority_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.task035c_p6_h10_gate
+            and args.task035c_p6_preflight_authority is None
+            and args.task035c_p6_preflight_sha256 is None
+            and args.p3_gate_record is None
+            and args.p4_trace_record is None
+            and not args.task034_p4_h3_added_point
+        )
+        if not scoped:
+            parser.error(
+                "--task035d-case097-gate is restricted to a clean-source, "
+                "no-swap, default-profile fixed rectangular p6/h10 "
+                "S-polarized full solve on MPI8 using "
+                "assembly_time_variable_p_condensed with tracked, "
+                "hash-bound T30 plan and MPI8 plan authority."
+            )
+    elif (
+        args.task035d_plan_authority is not None
+        or args.task035d_plan_authority_sha256 is not None
+        or args.stage4_variable_p_cell_degree_plan is not None
+        or args.stage4_variable_p_cell_degree_plan_sha256 is not None
+        or args.stage4_full3d_assembly_backend
+        == TASK035D_CASE097_BACKEND
+    ):
+        parser.error(
+            "Task035d variable-p arguments require "
+            "--task035d-case097-gate."
+        )
     if (
         args.stage4_full3d_assembly_backend
-        == "assembly_time_static_condensed"
+        in {
+            "assembly_time_static_condensed",
+            TASK035D_CASE097_BACKEND,
+        }
         and args.run_kind != "full-solve"
     ):
         parser.error(
-            "assembly_time_static_condensed requires --run-kind full-solve "
+            "assembly-time condensed backends require --run-kind full-solve "
             "for mandatory recovery and explicit residual."
         )
     return args
@@ -353,6 +442,76 @@ def _validate_task035c_p6_preflight(
             "Task035c p6/h10 preflight authority failed: "
             f"{gate['failures']}"
         )
+    return gate
+
+
+def _validate_task035d_case097_plan(
+    args: argparse.Namespace,
+) -> dict[str, Any] | None:
+    if not args.task035d_case097_gate:
+        return None
+    plan_path = args.stage4_variable_p_cell_degree_plan
+    authority_path = args.task035d_plan_authority
+    if plan_path is None or authority_path is None:
+        raise SystemExit(
+            "Task035d Case097 plan and MPI8 authority paths are required."
+        )
+    plan_path = (
+        plan_path if plan_path.is_absolute() else ROOT / plan_path
+    ).resolve()
+    authority_path = (
+        authority_path
+        if authority_path.is_absolute()
+        else ROOT / authority_path
+    ).resolve()
+    try:
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            f"Task035d Case097 launch authority is unreadable: {exc}"
+        ) from exc
+
+    def tracked(path: Path) -> tuple[bool, str | None]:
+        try:
+            relative = path.relative_to(ROOT).as_posix()
+        except ValueError:
+            return False, None
+        result = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", "--", relative],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        return result.returncode == 0, relative
+
+    plan_tracked, plan_relative = tracked(plan_path)
+    authority_tracked, authority_relative = tracked(authority_path)
+    gate = task035d_case097_plan_authority_gate(
+        plan if isinstance(plan, dict) else None,
+        authority if isinstance(authority, dict) else None,
+        expected_plan_file_sha256=(
+            args.stage4_variable_p_cell_degree_plan_sha256
+        ),
+        observed_plan_file_sha256=_sha256(plan_path),
+        expected_authority_sha256=args.task035d_plan_authority_sha256,
+        observed_authority_sha256=_sha256(authority_path),
+        plan_is_tracked=plan_tracked,
+        authority_is_tracked=authority_tracked,
+        plan_path_from_root=plan_relative,
+        authority_path_from_root=authority_relative,
+    )
+    gate["plan_path"] = _path_from_root(plan_path)
+    gate["authority_path"] = _path_from_root(authority_path)
+    gate["authority_path_from_root"] = authority_relative
+    if not gate["pass"]:
+        raise SystemExit(
+            "Task035d Case097 T30 launch authority failed: "
+            f"{gate['failures']}"
+        )
+    args.stage4_variable_p_cell_degree_plan = plan_path
+    args.task035d_plan_authority = authority_path
     return gate
 
 
@@ -454,9 +613,15 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         return max(values) - min(values) if values else None
 
     worker_mb = maximum("worker_rank_rss_sum_mb")
+    worker_pss_mb = maximum("worker_rank_pss_sum_mb")
+    worker_uss_mb = maximum("worker_rank_uss_sum_mb")
+    worker_shared_mb = maximum("worker_rank_shared_sum_mb")
+    worker_smaps_swap_mb = maximum("worker_rank_smaps_swap_sum_mb")
     process_tree_mb = maximum("mpi_process_tree_rss_mb")
     process_tree_swap_mb = maximum("mpi_process_tree_swap_mb")
     dedicated_rows = [row for row in rows if row.get("job_cgroup_dedicated") is True]
+    observed_cgroup_current_mb = maximum("container_cgroup_current_mb")
+    observed_cgroup_swap_mb = maximum("container_swap_current_mb")
     dedicated_cgroup_values = [
         float(row["container_cgroup_current_mb"])
         for row in dedicated_rows
@@ -469,6 +634,7 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     ]
     cgroup_mb = max(dedicated_cgroup_values) if dedicated_cgroup_values else None
     swap_mb = max(dedicated_swap_values) if dedicated_swap_values else None
+    cgroup_peak_mb = maximum("container_cgroup_peak_mb")
     memory_authority_mb = (
         None
         if process_tree_mb is None
@@ -476,6 +642,8 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     )
     combined_authority_mb = memory_authority_mb
     worker_rank_counts: list[int] = []
+    per_rank_smaps_peaks: dict[str, dict[str, float]] = {}
+    per_rank_rss_peaks: dict[str, float] = {}
     for row in rows:
         try:
             workers = json.loads(str(row.get("worker_rank_rss_mb_json", "[]")))
@@ -483,15 +651,71 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
             continue
         if isinstance(workers, list):
             worker_rank_counts.append(len(workers))
+            for worker in workers:
+                if not isinstance(worker, dict):
+                    continue
+                rank = worker.get("rank")
+                rss = worker.get("rss_mb")
+                if isinstance(rank, int) and isinstance(rss, (int, float)):
+                    key = str(rank)
+                    per_rank_rss_peaks[key] = max(
+                        per_rank_rss_peaks.get(key, 0.0),
+                        float(rss),
+                    )
+        try:
+            smaps = json.loads(
+                str(row.get("worker_rank_smaps_rollup_json", "[]"))
+            )
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(smaps, list):
+            continue
+        for worker in smaps:
+            if not isinstance(worker, dict) or not isinstance(
+                worker.get("rank"),
+                int,
+            ):
+                continue
+            key = str(worker["rank"])
+            peaks = per_rank_smaps_peaks.setdefault(key, {})
+            for name in (
+                "rss_mb",
+                "pss_mb",
+                "uss_mb",
+                "shared_mb",
+                "anonymous_mb",
+                "swap_mb",
+                "swap_pss_mb",
+            ):
+                value = worker.get(name)
+                if isinstance(value, (int, float)):
+                    peaks[name] = max(
+                        peaks.get(name, 0.0),
+                        float(value),
+                    )
     return {
         "poll_interval_seconds": None,
         "sample_count": len(rows),
         "max_simultaneous_worker_rss_mb": worker_mb,
+        "max_simultaneous_worker_pss_mb": worker_pss_mb,
+        "max_simultaneous_worker_uss_mb": worker_uss_mb,
+        "max_simultaneous_worker_shared_mb": worker_shared_mb,
+        "max_simultaneous_worker_smaps_swap_mb": worker_smaps_swap_mb,
+        "per_rank_rss_peak_mb": per_rank_rss_peaks,
+        "per_rank_smaps_rollup_peak_mb": per_rank_smaps_peaks,
+        "max_worker_rank_smaps_readable_count": maximum(
+            "worker_rank_smaps_readable_count"
+        ),
         "max_process_tree_rss_mb": process_tree_mb,
         "max_process_tree_swap_mb": process_tree_swap_mb,
         "dedicated_job_cgroup_observed": bool(dedicated_rows),
         "max_container_cgroup_current_mb": cgroup_mb,
+        "max_container_cgroup_peak_mb": cgroup_peak_mb,
         "max_container_swap_current_mb": swap_mb,
+        "max_container_cgroup_current_observed_mb": (
+            observed_cgroup_current_mb
+        ),
+        "max_container_swap_current_observed_mb": observed_cgroup_swap_mb,
         "memory_authority_mb": memory_authority_mb,
         "memory_authority_gib": (
             None if memory_authority_mb is None else memory_authority_mb / 1024.0
@@ -546,6 +770,7 @@ def _qualify(
     terminated_for_authority_unreadable: bool,
     no_swap: bool,
     observed_worker_rank_count: int | None = None,
+    resource_summary: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     matrix = solver_summary.get("matrix_stats") or {}
     common = {
@@ -623,8 +848,80 @@ def _qualify(
             ),
             "swap_policy_satisfied": args.allow_swap or no_swap,
         }
+    task035d_solver_gate = None
+    if args.task035d_case097_gate:
+        task035d_solver_gate = task035d_case097_t30_solver_gate(
+            solver_summary
+        )
+        checks.update(
+            {
+                f"task035d_solver_{name}": bool(passed)
+                for name, passed in task035d_solver_gate["checks"].items()
+            }
+        )
+        resource = (
+            resource_summary
+            if isinstance(resource_summary, dict)
+            else {}
+        )
+        per_rank_smaps = resource.get("per_rank_smaps_rollup_peak_mb")
+        per_rank_smaps = (
+            per_rank_smaps if isinstance(per_rank_smaps, dict) else {}
+        )
+        expected_ranks = {str(rank) for rank in range(8)}
+        checks.update(
+            {
+                "task035d_all_rank_smaps_readable": (
+                    resource.get("max_worker_rank_smaps_readable_count")
+                    == 8.0
+                    and set(per_rank_smaps) == expected_ranks
+                ),
+                "task035d_pss_uss_peaks_recorded": (
+                    isinstance(
+                        resource.get("max_simultaneous_worker_pss_mb"),
+                        (int, float),
+                    )
+                    and float(
+                        resource["max_simultaneous_worker_pss_mb"]
+                    )
+                    > 0.0
+                    and isinstance(
+                        resource.get("max_simultaneous_worker_uss_mb"),
+                        (int, float),
+                    )
+                    and float(
+                        resource["max_simultaneous_worker_uss_mb"]
+                    )
+                    > 0.0
+                    and all(
+                        isinstance(values, dict)
+                        and isinstance(values.get("pss_mb"), (int, float))
+                        and isinstance(values.get("uss_mb"), (int, float))
+                        for values in per_rank_smaps.values()
+                    )
+                ),
+                "task035d_cgroup_ledger_recorded": (
+                    isinstance(
+                        resource.get(
+                            "max_container_cgroup_current_observed_mb"
+                        ),
+                        (int, float),
+                    )
+                    and isinstance(
+                        resource.get("max_container_cgroup_peak_mb"),
+                        (int, float),
+                    )
+                ),
+                "task035d_zero_swap": no_swap,
+            }
+        )
     failures = [name for name, passed in checks.items() if not passed]
-    return {"pass": not failures, "checks": checks, "failures": failures}
+    return {
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "task035d_case097_solver_gate": task035d_solver_gate,
+    }
 
 
 def _terminate(process: subprocess.Popen[str]) -> None:
@@ -633,6 +930,63 @@ def _terminate(process: subprocess.Popen[str]) -> None:
         process.wait(timeout=10)
     except subprocess.TimeoutExpired:
         process.kill()
+
+
+def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
+    command = [
+        "mpiexec",
+        "-n",
+        str(args.mpi_size),
+        sys.executable,
+        "-m",
+        "benchmarks.run_task033_full3d_watchdog",
+        "--worker",
+        "--degree",
+        str(args.degree),
+        "--h-nm",
+        str(args.h_nm),
+        "--polarization-kind",
+        args.polarization_kind,
+        "--run-kind",
+        args.run_kind,
+        "--mpi-size",
+        str(args.mpi_size),
+        "--profile",
+        args.profile,
+        "--stage4-full3d-assembly-backend",
+        args.stage4_full3d_assembly_backend,
+        "--run-dir",
+        str(run_dir),
+    ]
+    if args.task035c_p6_h10_gate:
+        command.extend(
+            (
+                "--task035c-p6-h10-gate",
+                "--task035c-p6-preflight-authority",
+                str(args.task035c_p6_preflight_authority),
+                "--task035c-p6-preflight-sha256",
+                str(args.task035c_p6_preflight_sha256),
+                "--verified-clean-sha",
+                str(args.verified_clean_sha),
+            )
+        )
+    if args.task035d_case097_gate:
+        command.extend(
+            (
+                "--task035d-case097-gate",
+                "--stage4-variable-p-cell-degree-plan",
+                str(args.stage4_variable_p_cell_degree_plan),
+                "--stage4-variable-p-cell-degree-plan-sha256",
+                str(args.stage4_variable_p_cell_degree_plan_sha256),
+                "--task035d-plan-authority",
+                str(args.task035d_plan_authority),
+                "--task035d-plan-authority-sha256",
+                str(args.task035d_plan_authority_sha256),
+                "--verified-clean-sha",
+                str(args.verified_clean_sha),
+            )
+        )
+    return command
 
 
 def _run_parent(args: argparse.Namespace) -> int:
@@ -657,7 +1011,19 @@ def _run_parent(args: argparse.Namespace) -> int:
         )
     p4_gate = _validate_p4_gate(args)
     task035c_p6_gate = _validate_task035c_p6_preflight(args)
+    task035d_case097_gate = _validate_task035d_case097_plan(args)
     source_before = _source_provenance(args)
+    if args.task035d_case097_gate:
+        task035d_status_before = subprocess.check_output(
+            ["git", "status", "--porcelain", "--untracked-files=all"],
+            cwd=ROOT,
+            text=True,
+        ).strip()
+        if task035d_status_before:
+            raise SystemExit(
+                "Task035d formal PDE requires an actually clean source tree; "
+                "commit the runner/checker and evidence before launch."
+            )
     environment_before = _resource_snapshot()
     if environment_before["host_available_bytes"] is None:
         raise SystemExit("Readable WSL MemAvailable is required.")
@@ -675,41 +1041,7 @@ def _run_parent(args: argparse.Namespace) -> int:
     progress_path = run_dir / "progress_3d.jsonl"
     timeline_path = run_dir / "memory_timeline.csv"
     stdout_path = run_dir / "worker_stdout.txt"
-    command = [
-        "mpiexec",
-        "-n",
-        str(args.mpi_size),
-        sys.executable,
-        "-m",
-        "benchmarks.run_task033_full3d_watchdog",
-        "--worker",
-        "--degree",
-        str(args.degree),
-        "--h-nm",
-        str(args.h_nm),
-        "--polarization-kind",
-        args.polarization_kind,
-        "--run-kind",
-        args.run_kind,
-        "--profile",
-        args.profile,
-        "--stage4-full3d-assembly-backend",
-        args.stage4_full3d_assembly_backend,
-        "--run-dir",
-        str(run_dir),
-    ]
-    if args.task035c_p6_h10_gate:
-        command.extend(
-            (
-                "--task035c-p6-h10-gate",
-                "--task035c-p6-preflight-authority",
-                str(args.task035c_p6_preflight_authority),
-                "--task035c-p6-preflight-sha256",
-                str(args.task035c_p6_preflight_sha256),
-                "--verified-clean-sha",
-                str(args.verified_clean_sha),
-            )
-        )
+    command = _worker_command(args, run_dir)
     environment = os.environ.copy()
     environment.update(
         {
@@ -797,6 +1129,19 @@ def _run_parent(args: argparse.Namespace) -> int:
         if solver_path.is_file()
         else {}
     )
+    dtn_orders_path = run_dir / "dtn_port_diffraction_orders_3d.json"
+    field_shard_paths = [
+        run_dir / f"fields_3d_for_paraview_rank{rank:04d}.vtu"
+        for rank in range(args.mpi_size)
+    ]
+    field_shard_authority = [
+        {
+            "rank": rank,
+            "path": _path_from_root(path),
+            "sha256": _sha256(path),
+        }
+        for rank, path in enumerate(field_shard_paths)
+    ]
     events = _read_progress_events(progress_path)
     sampler = _sampler_summary(rows)
     sampler["poll_interval_seconds"] = args.poll_interval
@@ -817,7 +1162,40 @@ def _run_parent(args: argparse.Namespace) -> int:
         terminated_for_authority_unreadable=terminated_for_authority_unreadable,
         no_swap=no_swap,
         observed_worker_rank_count=sampler["max_observed_worker_rank_count"],
+        resource_summary=sampler,
     )
+    if args.task035d_case097_gate:
+        raw_artifact_checks = {
+            "task035d_solver_summary_hash_bound": (
+                _sha256(solver_path) is not None
+            ),
+            "task035d_timeline_hash_bound": (
+                _sha256(timeline_path) is not None
+            ),
+            "task035d_progress_hash_bound": (
+                _sha256(progress_path) is not None
+            ),
+            "task035d_stdout_hash_bound": (
+                _sha256(stdout_path) is not None
+            ),
+            "task035d_dtn_orders_hash_bound": (
+                _sha256(dtn_orders_path) is not None
+            ),
+            "task035d_eight_field_shards_hash_bound": (
+                len(field_shard_authority) == 8
+                and all(
+                    authority["sha256"] is not None
+                    for authority in field_shard_authority
+                )
+            ),
+        }
+        qualification["checks"].update(raw_artifact_checks)
+        qualification["failures"].extend(
+            name
+            for name, passed in raw_artifact_checks.items()
+            if not passed
+        )
+        qualification["pass"] = not qualification["failures"]
     source_head_after = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
     ).strip()
@@ -838,6 +1216,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         if qualification["pass"] and args.run_kind == "assembly-only"
         else "factorization_calibration_pass"
         if qualification["pass"] and args.run_kind == "factorization-only"
+        else "task035d_candidate_numerical_pass"
+        if qualification["pass"] and args.task035d_case097_gate
         else "full3d_reference_pass"
         if qualification["pass"]
         else "formal_not_pass"
@@ -872,6 +1252,12 @@ def _run_parent(args: argparse.Namespace) -> int:
         },
         "p4_prerequisite_gate": p4_gate,
         "task035c_p6_h10_preflight_gate": task035c_p6_gate,
+        "task035d_case097_launch_gate": task035d_case097_gate,
+        "task035d_accuracy_credit": (
+            "pending_independent_12_channel_and_field_checker"
+            if args.task035d_case097_gate
+            else None
+        ),
         "resource_policy": {
             "swap_allowed": args.allow_swap,
             "warning_gib": args.warning_gib,
@@ -933,12 +1319,17 @@ def _run_parent(args: argparse.Namespace) -> int:
         "solver_summary_sha256": _sha256(solver_path),
         "timeline_sha256": _sha256(timeline_path),
         "progress_sha256": _sha256(progress_path),
+        "stdout_sha256": _sha256(stdout_path),
+        "dtn_orders_sha256": _sha256(dtn_orders_path),
+        "field_shard_authority": field_shard_authority,
         "raw_evidence": {
             "run_directory": _path_from_root(run_dir),
             "solver_summary": _path_from_root(solver_path),
             "timeline": _path_from_root(timeline_path),
             "progress": _path_from_root(progress_path),
             "stdout": _path_from_root(stdout_path),
+            "dtn_orders": _path_from_root(dtn_orders_path),
+            "field_shards": field_shard_authority,
         },
         "solver_summary": solver_summary,
     }
