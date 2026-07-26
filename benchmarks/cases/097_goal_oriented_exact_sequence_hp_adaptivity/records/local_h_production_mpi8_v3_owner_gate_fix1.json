@@ -1,0 +1,2516 @@
+{
+  "candidate_id": "h15_top_air_local_h_v1",
+  "checks": {
+    "constraint_kinds": true,
+    "expected_dimensions": true,
+    "mesh_authority": true,
+    "ordinary_default_unchanged": true,
+    "owner_routing_qualified": true,
+    "physical_dof_gate": true,
+    "plan_is_tracked": true,
+    "prior_attempt2_hash_bound": true,
+    "reduction_authority": true
+  },
+  "environment": {
+    "all_ranks_identical": true,
+    "mpi_size": 8,
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128",
+    "rank_environments": [
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 0
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 1
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 2
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 3
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 4
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 5
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 6
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 7
+      }
+    ]
+  },
+  "failures": [],
+  "formal_MPI": 8,
+  "heavy_pde_started": false,
+  "mesh_audit": {
+    "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+    "carrier": {
+      "artificial_facet_catalog_sha256": "556b11a9e55ecadfbfc11b5b9c80747ec2b46f61e2d2ab0cebed10679be333cb",
+      "artificial_hanging_exterior_facet_count": 30,
+      "axis_aligned_affine_hexahedra": true,
+      "boundary_markers": {
+        "x_lower": 11,
+        "x_upper": 12,
+        "y_lower": 13,
+        "y_upper": 14,
+        "z_lower": 15,
+        "z_upper": 16
+      },
+      "canonical_connectivity_sha256": "b94b6a85a439ce5170e9e628e88e60adb22b91fc43590a8f7f753cbfc20f9aec",
+      "canonical_leaf_count": 134,
+      "canonical_vertex_count": 264,
+      "carrier_global_cell_count": 134,
+      "carrier_global_topological_facet_count": 515,
+      "carrier_global_vertex_count": 264,
+      "checks": {
+        "all_artificial_exterior_is_hanging": true,
+        "artificial_exterior_count_is_five_per_patch": true,
+        "canonical_vertex_count_matches_carrier": true,
+        "forest_authority_pass": true,
+        "original_cell_crosswalk_matches_geometry": true,
+        "owned_cells_cover_forest_once": true,
+        "physical_and_artificial_exterior_partition": true,
+        "physical_boundary_area": true
+      },
+      "cross_rank_hanging_patch_count": 3,
+      "dolfinx_cell_type": "CellType.hexahedron",
+      "dolfinx_shared_facet_is_not_hanging_authority": true,
+      "expected_boundary_area": 23500.0,
+      "failures": [],
+      "geometry_degree": 1,
+      "ghost_cell_counts_by_rank": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "hanging_patch_count": 6,
+      "hanging_relation_source": "global_geometry_catalog",
+      "hcurl_hanging_constraints_built": false,
+      "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+      "material_catalog_sha256": "806a2a9ed3e63a9a5df4d0b981df6a9ef52c5466ed64a48671ab2917389bef6e",
+      "mpi_constraint_ownership_qualified": false,
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "owned_cell_counts_by_rank": [
+        16,
+        17,
+        17,
+        17,
+        16,
+        17,
+        17,
+        17
+      ],
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "physical_boundary_area": 23500.0,
+      "physical_exterior_facet_count": 196,
+      "physical_facet_catalog_sha256": "41b250c6629025e82a674c2d9a67bd1d0e60857c6b77a9dbfca98f3d138a5f97",
+      "schema_version": "task035d.broken-dyadic-hexa-carrier.v1",
+      "status": "broken_dyadic_hexa_carrier_component_pass",
+      "topological_exterior_facet_count": 226
+    },
+    "cell_interior_degree": 6,
+    "forest": {
+      "axis_aligned_affine_hexahedra": true,
+      "balance_touch_class": "face_edge_vertex",
+      "closure_split_counts": {
+        "balance": 0,
+        "material": 0,
+        "periodic": 1,
+        "user": 1
+      },
+      "face_adjacency_count": 313,
+      "hanging_face_catalog_sha256": "8b70b5c1d679eceb638ff9c3c55ef8c8cf18e007ba939a84b1b39334902d0712",
+      "hanging_face_count": 6,
+      "hanging_fine_face_count": 24,
+      "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+      "leaf_cell_count": 134,
+      "leaf_level_counts": {
+        "0": 118,
+        "1": 16
+      },
+      "local_h_is_real_cell_split": true,
+      "material_interface_hanging_face_count": 0,
+      "material_interface_protection": true,
+      "maximum_adjacent_level_jump": 1,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "periodic_boundary_audit": {
+        "x": {
+          "lower_patch_count": 20,
+          "lower_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4",
+          "matching": true,
+          "upper_patch_count": 20,
+          "upper_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4"
+        },
+        "y": {
+          "lower_patch_count": 63,
+          "lower_sha256": "e3c0cf9bcb1d44d91fccedfe1c9326fb461e7da03972d8f618a5c1d807a001cd",
+          "matching": true,
+          "upper_patch_count": 63,
+          "upper_sha256": "e3c0cf9bcb1d44d91fccedfe1c9326fb461e7da03972d8f618a5c1d807a001cd"
+        }
+      },
+      "refined_root_count": 2,
+      "root_cell_count": 120,
+      "schema_version": "task035d.dyadic-hexa-forest.v1",
+      "status": "balanced_periodic_dyadic_hexa_forest_pass",
+      "strong_2_to_1_balance": true,
+      "touching_pair_count": 935
+    },
+    "full3d_equivalent_dof_gate_limit": 90000,
+    "hanging_patch_count": 6,
+    "leaf_cell_count": 134,
+    "ordinary_default_changed": false,
+    "pass": true,
+    "pde_accuracy_credit": false,
+    "plan_file_sha256": "c4d8a5bd3cb16735f9027c21e531b720517180ee5f2d510042f6ed23dad112a1",
+    "plan_path": "/home/Projects/MyFEniCS/benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_local_h_plan_v1.json",
+    "root_cell_count": 120,
+    "schema_version": "task035d.stage4-local-h-mesh.v1",
+    "status": "stage4_balanced_local_h_mesh_pass",
+    "trace_degree": 5
+  },
+  "ordinary_default_changed": false,
+  "pass": true,
+  "pde_accuracy_credit": false,
+  "plan": {
+    "file_sha256": "c4d8a5bd3cb16735f9027c21e531b720517180ee5f2d510042f6ed23dad112a1",
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_local_h_plan_v1.json",
+    "payload": {
+      "base_config": {
+        "axis_values": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            12.5,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            15.0,
+            30.0,
+            45.0,
+            60.0,
+            75.0,
+            90.0,
+            105.0,
+            120.0,
+            130.0
+          ]
+        },
+        "boundary_tags": {
+          "x_lower": 11,
+          "x_upper": 12,
+          "y_lower": 13,
+          "y_upper": 14,
+          "z_lower": 15,
+          "z_upper": 16
+        },
+        "domain_z_max": 130.0,
+        "domain_z_min": -10.0,
+        "geometry_kind": "rectangular_block_grating",
+        "grating_bounds": [
+          16.5,
+          0.0,
+          0.0,
+          33.5,
+          25.0,
+          120.0
+        ],
+        "identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+        "interface_z": 0.0,
+        "material_tags": {
+          "air": 1,
+          "grating": 3,
+          "substrate": 2
+        },
+        "mesh_cells_resolved": [
+          6,
+          2,
+          10
+        ],
+        "mesh_spacing_mode_resolved": "boundary_fitted",
+        "mesh_target_size": 15.0,
+        "period_x": 50.0,
+        "period_y": 25.0,
+        "stage_case": "stage4_block_grating"
+      },
+      "cell_interior_degree": 6,
+      "expected_forest": {
+        "closure_counts": {
+          "balance": 0,
+          "material": 0,
+          "periodic": 1,
+          "user": 1
+        },
+        "hanging_face_catalog_sha256": "8b70b5c1d679eceb638ff9c3c55ef8c8cf18e007ba939a84b1b39334902d0712",
+        "hanging_patch_count": 6,
+        "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+        "leaf_cell_count": 134,
+        "root_catalog_sha256": "4d9368ac6a4fdd5442ac3bc001294214f6eccc7fcd3d6d13c3a6d54a0ef87fca",
+        "root_cell_count": 120
+      },
+      "marked_root_boxes": [
+        {
+          "lower": [
+            8.25,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            130.0
+          ]
+        }
+      ],
+      "maximum_level": 1,
+      "ordinary_default_changed": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "protect_material_interfaces": true,
+      "provenance": {
+        "accuracy_credit": false,
+        "candidate_id": "h15_top_air_local_h_v1",
+        "ordinary_default_changed": false,
+        "purpose": "Task035d h-only first formal candidate",
+        "seed": "Task035b fixed p5-trace/p6-interior h15 plus minimum top-air local-h split"
+      },
+      "root_cell_box_catalog_sha256": "539557f657ee327803467f92643c01995f5217c4b37a51ac0f69b7e0c10f695c",
+      "schema_version": "task035d.stage4-local-h-refinement-plan.v1",
+      "status": "stage4_balanced_local_h_plan",
+      "trace_degree": 5
+    }
+  },
+  "prior_authorities": {
+    "local_h_attempt2_mpi_identity_v3": {
+      "pass": true,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt2_mpi_identity_v3.json",
+      "sha256": "c293fc07284435c075fc54ba4948f5809d9553cb4693929c270848aca8fd15e2",
+      "status": "local_h_attempt2_owner_routed_component_pass_pde_launch_ready"
+    },
+    "phase_a_compact": {
+      "pass": true,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/compact_authority_v1.json",
+      "sha256": "2e896ef45bbfc5c11901503269d11c0321106c9e41f71729ac7c6fc722687403",
+      "status": "case097_phase_a_compact_authority"
+    }
+  },
+  "reduction_audit": {
+    "active_fe_dof_gate_limit": 90000,
+    "active_fe_dof_gate_pass": true,
+    "actual_full3d_equivalent_active_fe_dofs": 82925,
+    "degree_plan": {
+      "active_rows": 84175,
+      "active_trace_rows": 23875,
+      "cell_count": 134,
+      "cell_degree_counts": {
+        "p4": 0,
+        "p5": 0,
+        "p6": 134
+      },
+      "cell_interior_degree": 6,
+      "entity_degree_closure": "uniform fixed trace degree on every physical edge/face; uniform p6 cell-interior degree",
+      "geometry_bound_not_global_entity_id_bound": true,
+      "mesh_cell_box_catalog_sha256": "de8f9293edacfdfe30f5972c36347121add8c88203912330b0ab8e9d71d88c20",
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "schema_version": "task035d.local-h-fixed-trace-degree-plan.v1",
+      "status": "local_h_fixed_trace_p6_interior_plan_closed",
+      "trace_degree": 5
+    },
+    "hanging_or_floquet_slave_rows_globally_numbered": false,
+    "hanging_slave_rows": 1250,
+    "independent_trace_rows": 18390,
+    "mesh": {
+      "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+      "carrier": {
+        "artificial_facet_catalog_sha256": "556b11a9e55ecadfbfc11b5b9c80747ec2b46f61e2d2ab0cebed10679be333cb",
+        "artificial_hanging_exterior_facet_count": 30,
+        "axis_aligned_affine_hexahedra": true,
+        "boundary_markers": {
+          "x_lower": 11,
+          "x_upper": 12,
+          "y_lower": 13,
+          "y_upper": 14,
+          "z_lower": 15,
+          "z_upper": 16
+        },
+        "canonical_connectivity_sha256": "b94b6a85a439ce5170e9e628e88e60adb22b91fc43590a8f7f753cbfc20f9aec",
+        "canonical_leaf_count": 134,
+        "canonical_vertex_count": 264,
+        "carrier_global_cell_count": 134,
+        "carrier_global_topological_facet_count": 515,
+        "carrier_global_vertex_count": 264,
+        "checks": {
+          "all_artificial_exterior_is_hanging": true,
+          "artificial_exterior_count_is_five_per_patch": true,
+          "canonical_vertex_count_matches_carrier": true,
+          "forest_authority_pass": true,
+          "original_cell_crosswalk_matches_geometry": true,
+          "owned_cells_cover_forest_once": true,
+          "physical_and_artificial_exterior_partition": true,
+          "physical_boundary_area": true
+        },
+        "cross_rank_hanging_patch_count": 3,
+        "dolfinx_cell_type": "CellType.hexahedron",
+        "dolfinx_shared_facet_is_not_hanging_authority": true,
+        "expected_boundary_area": 23500.0,
+        "failures": [],
+        "geometry_degree": 1,
+        "ghost_cell_counts_by_rank": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "hanging_patch_count": 6,
+        "hanging_relation_source": "global_geometry_catalog",
+        "hcurl_hanging_constraints_built": false,
+        "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+        "material_catalog_sha256": "806a2a9ed3e63a9a5df4d0b981df6a9ef52c5466ed64a48671ab2917389bef6e",
+        "mpi_constraint_ownership_qualified": false,
+        "mpi_size": 8,
+        "ordinary_default_changed": false,
+        "owned_cell_counts_by_rank": [
+          16,
+          17,
+          17,
+          17,
+          16,
+          17,
+          17,
+          17
+        ],
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "physical_boundary_area": 23500.0,
+        "physical_exterior_facet_count": 196,
+        "physical_facet_catalog_sha256": "41b250c6629025e82a674c2d9a67bd1d0e60857c6b77a9dbfca98f3d138a5f97",
+        "schema_version": "task035d.broken-dyadic-hexa-carrier.v1",
+        "status": "broken_dyadic_hexa_carrier_component_pass",
+        "topological_exterior_facet_count": 226
+      },
+      "cell_interior_degree": 6,
+      "forest": {
+        "axis_aligned_affine_hexahedra": true,
+        "balance_touch_class": "face_edge_vertex",
+        "closure_split_counts": {
+          "balance": 0,
+          "material": 0,
+          "periodic": 1,
+          "user": 1
+        },
+        "face_adjacency_count": 313,
+        "hanging_face_catalog_sha256": "8b70b5c1d679eceb638ff9c3c55ef8c8cf18e007ba939a84b1b39334902d0712",
+        "hanging_face_count": 6,
+        "hanging_fine_face_count": 24,
+        "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+        "leaf_cell_count": 134,
+        "leaf_level_counts": {
+          "0": 118,
+          "1": 16
+        },
+        "local_h_is_real_cell_split": true,
+        "material_interface_hanging_face_count": 0,
+        "material_interface_protection": true,
+        "maximum_adjacent_level_jump": 1,
+        "ordinary_default_changed": false,
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "periodic_axes": [
+          "x",
+          "y"
+        ],
+        "periodic_boundary_audit": {
+          "x": {
+            "lower_patch_count": 20,
+            "lower_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4",
+            "matching": true,
+            "upper_patch_count": 20,
+            "upper_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4"
+          },
+          "y": {
+            "lower_patch_count": 63,
+            "lower_sha256": "e3c0cf9bcb1d44d91fccedfe1c9326fb461e7da03972d8f618a5c1d807a001cd",
+            "matching": true,
+            "upper_patch_count": 63,
+            "upper_sha256": "e3c0cf9bcb1d44d91fccedfe1c9326fb461e7da03972d8f618a5c1d807a001cd"
+          }
+        },
+        "refined_root_count": 2,
+        "root_cell_count": 120,
+        "schema_version": "task035d.dyadic-hexa-forest.v1",
+        "status": "balanced_periodic_dyadic_hexa_forest_pass",
+        "strong_2_to_1_balance": true,
+        "touching_pair_count": 935
+      },
+      "full3d_equivalent_dof_gate_limit": 90000,
+      "hanging_patch_count": 6,
+      "leaf_cell_count": 134,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "plan_file_sha256": "c4d8a5bd3cb16735f9027c21e531b720517180ee5f2d510042f6ed23dad112a1",
+      "plan_path": "/home/Projects/MyFEniCS/benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_local_h_plan_v1.json",
+      "root_cell_count": 120,
+      "schema_version": "task035d.stage4-local-h-mesh.v1",
+      "status": "stage4_balanced_local_h_mesh_pass",
+      "trace_degree": 5
+    },
+    "ordinary_default_changed": false,
+    "pass": true,
+    "periodic_slave_rows": 4235,
+    "physical_trace": {
+      "checks": {
+        "all_hanging_patches_have_relations": true,
+        "flattened_graph_pass": true,
+        "forest_carrier_identity": true,
+        "mpi_physical_authority_identity": true,
+        "no_slave_rows_numbered": true,
+        "periodic_cycle_closure": true
+      },
+      "compiled_cell_tensor_binding_complete": false,
+      "degree": 5,
+      "distributed_scalability_qualified": false,
+      "entity_catalog_sha256": "dd2f07c262aeda4dd7fa70290a8988a1c52a01e602bde8ae255706f655a374a8",
+      "failures": [],
+      "flattened_graph_sha256": "7677482e10d5b159ce20344b566bc2704bbd5ad4a7cb5ac375d3c51826fa582d",
+      "hanging_patch_count": 6,
+      "hanging_primary_relation_count": 6,
+      "hanging_relation_count": 11,
+      "hanging_secondary_relation_count": 5,
+      "hanging_slave_rows": 1250,
+      "independent_trace_rows": 18390,
+      "maximum_chain_depth": 2,
+      "maximum_relation_residual": 3.929734507748659e-15,
+      "mpi_constraint_row_ownership_qualified": false,
+      "mpi_ghost_expansion_qualified": false,
+      "mpi_physical_catalog_identity_qualified": true,
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "partition_independent_physical_keys": true,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "periodic_cycle_error": 5.551115123125783e-17,
+      "periodic_primary_relation_count": 266,
+      "periodic_relation_count": 272,
+      "periodic_secondary_relation_count": 6,
+      "phase_x": [
+        -0.6007411348979813,
+        -0.7994436120462065
+      ],
+      "phase_y": [
+        1.0,
+        0.0
+      ],
+      "physical_authority_sha256": "877f3088424d47ea4debc9ef23cd70abd2c5b3f8e4424ce20718e7a7b4772fac",
+      "physical_edge_count": 655,
+      "physical_face_count": 515,
+      "raw_trace_rows": 23875,
+      "schema_version": "task035d.broken-hexa-trace-authority.v1",
+      "status": "broken_hexa_trace_constraint_component_pass"
+    },
+    "raw_broken_active_fe_dofs": 84175,
+    "raw_broken_trace_rows": 23875,
+    "schema_version": "task035d.stage4-local-h-reduction-authority.v1",
+    "status": "stage4_local_h_reduction_authority_pass",
+    "trace_constraints": {
+      "active_trace_work_ownership_ranges": [
+        [
+          0,
+          2985
+        ],
+        [
+          2985,
+          5970
+        ],
+        [
+          5970,
+          8955
+        ],
+        [
+          8955,
+          11939
+        ],
+        [
+          11939,
+          14923
+        ],
+        [
+          14923,
+          17907
+        ],
+        [
+          17907,
+          20891
+        ],
+        [
+          20891,
+          23875
+        ]
+      ],
+      "active_vector_block_work_owner_counts_by_rank": [
+        597,
+        126,
+        74,
+        75,
+        75,
+        74,
+        75,
+        74
+      ],
+      "canonical_cell_graph_sha256": "8af31327df6760ad3f1ebbe0ecbf21af65ad656f7bcf78dea9c02f96c8995211",
+      "canonical_root_numbering_partition_independent": true,
+      "cell_expansion_inverse_used": false,
+      "cell_expansion_rank_semantics": "rank_equals_min(local_trace_rows, independent_root_rows); wide hanging/Floquet cell expansions require full row rank",
+      "cell_expansion_svd_used_for_rank_audit": true,
+      "checks": {
+        "active_vector_block_work_ownership_closes": true,
+        "all_independent_roots_reached": true,
+        "all_owned_cells_bound": true,
+        "all_physical_entities_bound_once": true,
+        "canonical_cell_graph_mpi_identity": true,
+        "cell_expansions_maximal_rank": true,
+        "cell_transform_matches_dolfinx_cell_info": true,
+        "constraint_relations_have_one_canonical_owner": true,
+        "cross_rank_hanging_graph_and_cell_expansions_close": true,
+        "entity_transform_orthogonality": true,
+        "forest_carrier_identity": true,
+        "no_slave_rows_numbered": true,
+        "off_process_root_insertion_path_exercised": true,
+        "owner_routed_remote_cache_pass": true,
+        "petsc_root_row_ownership_closes": true,
+        "physical_rows_have_one_dolfinx_owner": true,
+        "trace_transform_does_not_mix_cell_interior": true,
+        "unpermuted_cell_chart_matches_forest": true
+      },
+      "compiled_cell_tensor_binding_complete": false,
+      "constraint_kinds": [
+        "hanging",
+        "floquet"
+      ],
+      "constraint_relation_owner_counts_by_rank": [
+        30,
+        39,
+        35,
+        30,
+        37,
+        32,
+        36,
+        44
+      ],
+      "constraint_relation_owner_sha256": "ada7ed17bb02ac31298a4b266a5aa7bf9f45556a717c3270bc8981080320bf4b",
+      "contains_floquet_constraints": true,
+      "contains_hanging_constraints": true,
+      "cross_rank_hanging_participant_entities": [
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            5892857143,
+            0,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            5892857143,
+            0,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            5892857143,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            5892857143,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            8839285714,
+            0,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            11785714286,
+            0,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            96428571429,
+            5892857143,
+            0,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            96428571429,
+            5892857143,
+            4464285714,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            100000000000,
+            5892857143,
+            4464285714,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            100000000000,
+            5892857143,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            92857142857,
+            5892857143,
+            4464285714,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            92857142857,
+            5892857143,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            92857142857,
+            8839285714,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            96428571429,
+            5892857143,
+            4464285714,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            96428571429,
+            5892857143,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            100000000000,
+            5892857143,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            5892857143,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            5892857143,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            5892857143,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            5892857143,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            8839285714,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            96428571429,
+            5892857143,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            96428571429,
+            5892857143,
+            13392857143,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            100000000000,
+            5892857143,
+            13392857143,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            100000000000,
+            5892857143,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            92857142857,
+            5892857143,
+            13392857143,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            92857142857,
+            5892857143,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            92857142857,
+            8839285714,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            96428571429,
+            5892857143,
+            13392857143,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            96428571429,
+            5892857143,
+            17857142857,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            100000000000,
+            5892857143,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            92857142857,
+            5892857143,
+            17857142857,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            92857142857,
+            5892857143,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            92857142857,
+            8839285714,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            92857142857,
+            11785714286,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            96428571429,
+            5892857143,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            0,
+            92857142857,
+            8839285714,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            0,
+            92857142857,
+            11785714286,
+            0,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            4464285714,
+            92857142857,
+            8839285714,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            4464285714,
+            92857142857,
+            11785714286,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            92857142857,
+            8839285714,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            13392857143,
+            92857142857,
+            8839285714,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            13392857143,
+            92857142857,
+            11785714286,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            17857142857,
+            92857142857,
+            11785714286,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            92857142857,
+            11785714286,
+            0,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            92857142857,
+            11785714286,
+            0,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            92857142857,
+            11785714286,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            96428571429,
+            11785714286,
+            0,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            96428571429,
+            11785714286,
+            4464285714,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            100000000000,
+            11785714286,
+            4464285714,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            100000000000,
+            11785714286,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            92857142857,
+            11785714286,
+            4464285714,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            96428571429,
+            11785714286,
+            4464285714,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            96428571429,
+            11785714286,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            100000000000,
+            11785714286,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            96428571429,
+            11785714286,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            100000000000,
+            11785714286,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            13392857143,
+            92857142857,
+            11785714286,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            17857142857,
+            92857142857,
+            11785714286,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            0,
+            4464285714,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            0,
+            4464285714,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            0,
+            8928571429,
+            92857142857,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            4464285714,
+            8928571429,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            4464285714,
+            8928571429,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            8928571429,
+            13392857143,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            8928571429,
+            13392857143,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            8928571429,
+            17857142857,
+            92857142857,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            13392857143,
+            17857142857,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            13392857143,
+            17857142857,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            0,
+            4464285714,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            0,
+            4464285714,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            0,
+            8928571429,
+            92857142857,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            4464285714,
+            8928571429,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            4464285714,
+            8928571429,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            8928571429,
+            17857142857,
+            92857142857,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            8839285714,
+            0,
+            4464285714
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            8839285714,
+            4464285714,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            8839285714,
+            8928571429,
+            13392857143
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            8839285714,
+            13392857143,
+            17857142857
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            11785714286,
+            0,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            11785714286,
+            8928571429,
+            17857142857
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            8839285714,
+            11785714286,
+            0,
+            4464285714
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            8839285714,
+            11785714286,
+            4464285714,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            8839285714,
+            11785714286,
+            8928571429,
+            13392857143
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            8839285714,
+            11785714286,
+            13392857143,
+            17857142857
+          ]
+        ]
+      ],
+      "cross_rank_hanging_participant_entity_count": 93,
+      "cross_rank_hanging_participant_entity_sha256": "f55b321dc0ecd0726a0fe1fd4325b94be1ecdb21362eecd7c56d0c26a4831808",
+      "cross_rank_hanging_patch_count": 3,
+      "cross_rank_hanging_relation_count": 10,
+      "cross_rank_hanging_remote_lookup_counts_by_rank": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        6,
+        6
+      ],
+      "cross_rank_hanging_remote_participant_entities": [
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            5892857143,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            5892857143,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            5892857143,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            5892857143,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            8839285714,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            96428571429,
+            5892857143,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            96428571429,
+            11785714286,
+            8928571429,
+            100000000000
+          ]
+        ]
+      ],
+      "cross_rank_hanging_remote_participant_entity_count": 12,
+      "cross_rank_hanging_remote_participant_entity_sha256": "a194d2f7622131f31561c89918a583cab76105d178a8e1fab56f87ede3046903",
+      "cross_rank_hanging_remote_participant_semantics": "unique canonical physical entities that participate in a cross-rank hanging relation and are consumed by an owned cell through an owner-routed remote block",
+      "cross_rank_hanging_resolution_semantics": "replicated_physical_graph_plus_owner_routed_entity_blocks_plus_all_owned_cell_expansions",
+      "cross_rank_relation_counts_by_kind": {
+        "floquet_star": 119,
+        "hanging": 5,
+        "hanging_compatibility": 5
+      },
+      "degree": 5,
+      "dense_cell_expansion_retained": true,
+      "distributed_scalability_qualified": false,
+      "dolfinx_entity_order_bound_exactly_once": true,
+      "dolfinx_entity_owner_counts_by_rank": [
+        147,
+        152,
+        131,
+        136,
+        123,
+        138,
+        165,
+        178
+      ],
+      "eliminated_hanging_or_floquet_rows": 5485,
+      "entity_block_bytes_are_logical_native_arrays_not_peak_rss": true,
+      "entity_catalog_distribution": "owner_routed_requested_dense_cache",
+      "failures": [],
+      "flattened_graph_sha256": "7677482e10d5b159ce20344b566bc2704bbd5ad4a7cb5ac375d3c51826fa582d",
+      "full_dense_entity_catalog_replicated": false,
+      "full_p6_trace_matrix_constructed": false,
+      "global_cell_count": 134,
+      "global_entity_declarations_distribution": "allgather_metadata_only",
+      "hanging_cell_ghost_counts_by_rank": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "hanging_or_floquet_slave_rows_globally_numbered": false,
+      "hanging_slave_rows": 1250,
+      "independent_trace_rows": 18390,
+      "local_entity_block_cache_bytes_by_rank": [
+        6581080,
+        10758200,
+        10138240,
+        9520000,
+        8272000,
+        7195520,
+        7424640,
+        6876160
+      ],
+      "local_entity_block_cache_bytes_global_sum": 66765840,
+      "maximum_cell_expansion_condition": 154038033.90299493,
+      "maximum_cell_transform_error": 5.906386491005833e-14,
+      "maximum_entity_transform_orthogonality_error": 1.7047215689850554e-14,
+      "maximum_independent_rows_per_cell": 340,
+      "maximum_trace_interior_mixing_error": 0.0,
+      "maximum_unpermuted_cell_chart_error": 0.0,
+      "mpi_ghost_expansion_qualified": true,
+      "mpi_size": 8,
+      "off_process_root_reference_counts_by_rank": [
+        3720,
+        4500,
+        4526,
+        4460,
+        4280,
+        4830,
+        5100,
+        3820
+      ],
+      "off_process_root_reference_local_digests_by_rank": [
+        "8e6f940e1f36078371ea38ce1a14abb2246adf4bad241779d6ce14ff0d25d080",
+        "65c190978a47cc13ae837faaa869a0ed4b330192120e6f614fb37e306989fccd",
+        "fca2a778e9f85ca8627de1a1dff3fcb61071c1d953432ecb81244c9f0c203a9a",
+        "777c7953236b78e85b6c4b84b4d63aae70270be16813be50f99b51c6c0d42127",
+        "1551c3f5354f23c5e6d47d7ab14838b0ff0c8edd9868fdc59d98c420d9c91bc2",
+        "2cbd7607e9bfd8b52e1827cc44820a229897f54906f83f0183dbac54a24d60a0",
+        "0c95cd2f8439ec4db4dceb6cfdb450c7ee1826a450a2067dd494dd00d3c08c16",
+        "fcf82832cb2cd147b04ab149346cf21825aa111eba1ca4aa5686e437f07032a3"
+      ],
+      "ordinary_default_changed": false,
+      "owned_cell_expansion_bytes_by_rank": [
+        23078400,
+        24520800,
+        24520800,
+        24520800,
+        23078400,
+        24520800,
+        24520800,
+        25097760
+      ],
+      "owned_cell_expansion_bytes_global_sum": 193858560,
+      "owner_routed_trace_cache_audit": {
+        "active_trace_work_ownership_ranges": [
+          [
+            0,
+            2985
+          ],
+          [
+            2985,
+            5970
+          ],
+          [
+            5970,
+            8955
+          ],
+          [
+            8955,
+            11939
+          ],
+          [
+            11939,
+            14923
+          ],
+          [
+            14923,
+            17907
+          ],
+          [
+            17907,
+            20891
+          ],
+          [
+            20891,
+            23875
+          ]
+        ],
+        "canonical_content_sha256": "7d03affd0c3e00a30f6d93d210351ddb2e8c69b2f3f674c3e6471cfd395dfc2d",
+        "cell_needed_block_counts_by_rank": [
+          181,
+          196,
+          194,
+          196,
+          184,
+          194,
+          212,
+          205
+        ],
+        "collective_fail_closed": true,
+        "declaration_catalog_is_metadata_only": true,
+        "declaration_count": 1170,
+        "dense_global_entity_catalog_replicated": false,
+        "dolfinx_ghost_entity_counts_by_dimension_by_rank": {
+          "1": [
+            26,
+            29,
+            45,
+            46,
+            44,
+            40,
+            34,
+            20
+          ],
+          "2": [
+            8,
+            15,
+            18,
+            14,
+            17,
+            16,
+            13,
+            7
+          ]
+        },
+        "dolfinx_owned_entity_counts_by_dimension_by_rank": {
+          "1": [
+            82,
+            88,
+            71,
+            71,
+            66,
+            76,
+            96,
+            105
+          ],
+          "2": [
+            65,
+            64,
+            60,
+            65,
+            57,
+            62,
+            69,
+            73
+          ]
+        },
+        "duplicate_reply_count": 0,
+        "local_cache_block_counts_by_dimension_by_rank": {
+          "1": [
+            597,
+            175,
+            116,
+            117,
+            110,
+            116,
+            130,
+            125
+          ],
+          "2": [
+            73,
+            135,
+            129,
+            121,
+            105,
+            91,
+            88,
+            81
+          ]
+        },
+        "local_cache_block_counts_by_rank": [
+          670,
+          310,
+          245,
+          238,
+          215,
+          207,
+          218,
+          206
+        ],
+        "local_cache_native_array_bytes_by_rank": [
+          6581080,
+          10758200,
+          10138240,
+          9520000,
+          8272000,
+          7195520,
+          7424640,
+          6876160
+        ],
+        "missing_reply_count": 0,
+        "native_array_bytes_are_logical_not_rss_pss_peak": true,
+        "owner_assignment_sha256": "8e3b0bc140589e7af776fc8bc1f0e0701431f36d3908b619462dc0bcc9f69e07",
+        "owner_policy": "dolfinx_unique_entity_owner",
+        "pass": true,
+        "received_reply_counts_by_rank": [
+          523,
+          158,
+          114,
+          102,
+          92,
+          69,
+          53,
+          28
+        ],
+        "received_reply_native_array_bytes_by_rank": [
+          1442520,
+          5689400,
+          5400960,
+          4395520,
+          3773440,
+          2296960,
+          1523280,
+          661920
+        ],
+        "received_request_counts_by_rank": [
+          82,
+          186,
+          161,
+          159,
+          131,
+          137,
+          148,
+          135
+        ],
+        "reply_counts_by_rank": [
+          82,
+          186,
+          161,
+          159,
+          131,
+          137,
+          148,
+          135
+        ],
+        "reply_native_array_bytes_by_rank": [
+          5055360,
+          5493120,
+          4394880,
+          4011520,
+          2300160,
+          1698560,
+          1398480,
+          831920
+        ],
+        "reply_validation": "token_key_owner_global_entity_orientation_and_block_sha256",
+        "request_counts_by_rank": [
+          523,
+          158,
+          114,
+          102,
+          92,
+          69,
+          53,
+          28
+        ],
+        "request_key": "canonical_physical_dimension_and_geometry",
+        "request_reply_count_closes": true,
+        "retained_cache_duplication_factor": 1.6056490044692586,
+        "retained_cache_native_array_bytes_global_sum": 66765840,
+        "retained_cache_native_array_bytes_max": 10758200,
+        "schema_version": "task035d.owner-routed-trace-cache.v1",
+        "stale_or_corrupt_reply_count": 0,
+        "temporary_reply_bytes_are_logical_not_peak_rss": true,
+        "unique_dolfinx_owner_native_array_bytes_by_rank": [
+          5138560,
+          5068800,
+          4737280,
+          5124480,
+          4498560,
+          4898560,
+          5901360,
+          6214240
+        ],
+        "unique_dolfinx_owner_native_array_bytes_global_sum": 41581840,
+        "unrequested_reply_count": 0,
+        "work_owned_block_counts_by_dimension_by_rank": {
+          "1": [
+            597,
+            58,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "2": [
+            0,
+            68,
+            74,
+            75,
+            75,
+            74,
+            75,
+            74
+          ]
+        },
+        "work_owned_block_counts_by_rank": [
+          597,
+          126,
+          74,
+          75,
+          75,
+          74,
+          75,
+          74
+        ],
+        "work_owned_native_array_bytes_by_rank": [
+          927960,
+          5419960,
+          5730560,
+          5808000,
+          5808000,
+          5730560,
+          6117120,
+          6039680
+        ],
+        "work_owned_native_array_bytes_max": 6117120,
+        "work_owned_native_array_bytes_mean": 5197730.0,
+        "work_owner_straddling_block_count": 5,
+        "work_owner_straddling_block_counts_by_rank": [
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          1,
+          0
+        ],
+        "wrong_owner_reply_count": 0
+      },
+      "ownership_policy": {
+        "active_vector_block_work_owner": "owner_of_first_active_trace_entity_row",
+        "physical_entity_owner": "dolfinx_unique_entity_owner",
+        "reduced_petsc_row_owner": "balanced_contiguous_root_rows",
+        "relation_owner": "owner_of_lexicographically_first_physical_slave_row",
+        "remote_entity_resolution": "owner_routed_canonical_key_query_reply"
+      },
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "pde_launch_ownership_gate": true,
+      "periodic_slave_rows": 4235,
+      "petsc_constraint_row_ownership_qualified": true,
+      "physical_authority_sha256": "877f3088424d47ea4debc9ef23cd70abd2c5b3f8e4424ce20718e7a7b4772fac",
+      "physical_entity_owner_sha256": "65e6049642734121edfc99381b4b82377b52589c567faa69ee45749e3e34bac5",
+      "raw_trace_rows": 23875,
+      "reduced_petsc_root_ownership_ranges": [
+        [
+          0,
+          2299
+        ],
+        [
+          2299,
+          4598
+        ],
+        [
+          4598,
+          6897
+        ],
+        [
+          6897,
+          9196
+        ],
+        [
+          9196,
+          11495
+        ],
+        [
+          11495,
+          13794
+        ],
+        [
+          13794,
+          16092
+        ],
+        [
+          16092,
+          18390
+        ]
+      ],
+      "remote_entity_lookup_counts_by_rank": [
+        46,
+        59,
+        86,
+        86,
+        85,
+        82,
+        58,
+        35
+      ],
+      "remote_entity_lookup_local_digests_by_rank": [
+        "16a69a4b2db1ca5fc6bc6a6313f356042798a3c3218ec60a0b1d6a0cee9fd52f",
+        "4ec6ab00aba2d27508110a341b9525e8f5cfc020c968be9b04dc590c73a0c063",
+        "263b7a11a609e0dcb098730c3536f7e704d63d5fc6e02a5aff65e37f3f0cbb67",
+        "b26ad5dcc482eba7d3cc5b5b9d5de17705a5c99e93289575fc087120fea35366",
+        "0b6589a342a81fca762f7e0939880720bd5a50808ca08086b03f4e5643cdbbfa",
+        "e3511d0e9ad9bbcea4b4d0a93569618b154cd0f910cb11bbec693042cfc92bba",
+        "4a1d74eb67c2ec36974194dd789a9091a01b728778a512b2e8f1428579ce3eec",
+        "a5d51ebec283e0c68cafd68a6aa6e3c7b8e1344461e4004f621e7d30edd0b7e4"
+      ],
+      "remote_resolution_audit_is_count_and_digest_only": true,
+      "remote_resolution_sha256": "bd1c8b39de0df77c0a0c2a705f7b076d8efb998ce53c22eaae6c395082ea1a1c",
+      "replicated_component_gram_bytes_per_rank": 643164,
+      "replicated_entity_block_bytes_per_rank": 0,
+      "replicated_entity_block_bytes_semantics": "no_complete_dense_global_entity_catalog_is_retained_per_rank",
+      "schema_version": "task035d.broken-hexa-cell-trace-map.v2",
+      "status": "broken_hexa_cell_trace_binding_pass",
+      "wide_cell_expansion_count": 4
+    }
+  },
+  "schema_version": "case097.local-h-production-component.v3-integration",
+  "source_identity": {
+    "expected_sha": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+    "head": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+    "numerical_file_sha256": {
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_production_authority.py": "3cbcffe1199d313176432d91a89da0494aa068a4b4d39fce6d1de14c9a6731d0",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_production_authority.py": "09a1af6e7e909d43fbb5035fbd952d1c2646dfb79de17ca536946788866c6f39",
+      "src/adaptivity/dyadic_hexa_broken_mesh.py": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+      "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "7889c1f21f943380494375acf25760d96c6e209cfbd078ceea0e9ba443a72ef4",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "a6aa48cbf0c596eaa97fe2470fed6f6faf02b979d63e057fb2d7b133da7f3c85",
+      "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "src/adaptivity/hcurl_trace_constraint_graph.py": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+      "src/adaptivity/stage4_local_h.py": "c784010dea10f9205292bb393b989849a00848ed6c5280d7423ad7e94d59829a",
+      "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+      "src/adaptivity/variable_p_transfer.py": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+      "src/common/config_3d.py": "2dd56fe801c2090e323f1503db183da7934ff1852666705fa409a9fd0532efd2",
+      "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+      "src/geometry/mesh_builder_3d.py": "cece033930810eef39fc00e8638fbe76317b9860749c53b5523a70443bc1dc16",
+      "src/solvers/common_3d_case_flow.py": "4c017ab52983ea062c4959b7d51ac3116dec670b3e97cad746470fe9ce233e1d",
+      "src/solvers/dtn_port_3d.py": "23e21cf473cf4e69ca0f3eb9b43ca96dff6e6fd14c978fc2ac3487ce557100ea",
+      "src/solvers/hcurl_variable_p_assembly.py": "1e4348affefcebaf068354d9817086f002b1df55ceaadea2788ca8e788d7616d",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/solvers/hcurl_variable_p_reduction.py": "7feecb3d0d75cc5a9a9733a4f05caca52a6e164c80c69de782d72ba4b7e95818"
+    },
+    "rank_checks": [
+      {
+        "expected_sha": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "head": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "mismatched_files": [],
+        "rank": 0,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "head": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "mismatched_files": [],
+        "rank": 1,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "head": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "mismatched_files": [],
+        "rank": 2,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "head": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "mismatched_files": [],
+        "rank": 3,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "head": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "mismatched_files": [],
+        "rank": 4,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "head": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "mismatched_files": [],
+        "rank": 5,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "head": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "mismatched_files": [],
+        "rank": 6,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "head": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+        "mismatched_files": [],
+        "rank": 7,
+        "status_lines": []
+      }
+    ],
+    "verified_clean_numerical_source": true
+  },
+  "source_sha": "571b65fe5f9832a421bd2354969d7f06680ec7bf",
+  "stable_identity": {
+    "actual_full3d_equivalent_active_fe_dofs": 82925,
+    "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+    "canonical_cell_graph_sha256": "8af31327df6760ad3f1ebbe0ecbf21af65ad656f7bcf78dea9c02f96c8995211",
+    "carrier_connectivity_sha256": "b94b6a85a439ce5170e9e628e88e60adb22b91fc43590a8f7f753cbfc20f9aec",
+    "flattened_graph_sha256": "7677482e10d5b159ce20344b566bc2704bbd5ad4a7cb5ac375d3c51826fa582d",
+    "hanging_face_catalog_sha256": "8b70b5c1d679eceb638ff9c3c55ef8c8cf18e007ba939a84b1b39334902d0712",
+    "hanging_patch_count": 6,
+    "hanging_slave_rows": 1250,
+    "independent_trace_rows": 18390,
+    "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+    "leaf_cell_count": 134,
+    "material_catalog_sha256": "806a2a9ed3e63a9a5df4d0b981df6a9ef52c5466ed64a48671ab2917389bef6e",
+    "mesh_cell_box_catalog_sha256": "de8f9293edacfdfe30f5972c36347121add8c88203912330b0ab8e9d71d88c20",
+    "periodic_slave_rows": 4235,
+    "physical_authority_sha256": "877f3088424d47ea4debc9ef23cd70abd2c5b3f8e4424ce20718e7a7b4772fac",
+    "physical_facet_catalog_sha256": "41b250c6629025e82a674c2d9a67bd1d0e60857c6b77a9dbfca98f3d138a5f97",
+    "plan_file_sha256": "c4d8a5bd3cb16735f9027c21e531b720517180ee5f2d510042f6ed23dad112a1",
+    "predicted_direct_solve_rows": 18470,
+    "raw_broken_active_fe_dofs": 84175,
+    "raw_broken_trace_rows": 23875,
+    "root_cell_count": 120
+  },
+  "status": "local_h_production_component_pass"
+}
