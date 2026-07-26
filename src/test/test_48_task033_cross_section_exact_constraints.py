@@ -42,14 +42,16 @@ class Task033CrossSectionExactConstraintTests(unittest.TestCase):
         self.assertNotIn("pinv(", source)
         self.assertNotIn("lstsq(", source)
         self.assertIn("distributed_match_periodic_records", source)
-        self.assertIn("edge_coefficient_transform", source)
+        self.assertIn("dof_layout.entity_dofs", source)
+        self.assertIn("basix_element.entity_dofs", source)
+        self.assertIn("basix_element.entity_transformations()", source)
         self.assertIn("comm.exscan", source)
         self.assertIn('status = "slave_chain"', source)
 
-    def test_p1_p4_exact_constraints_reproduce_bloch_interpolants(self):
+    def test_p1_p6_exact_constraints_reproduce_bloch_interpolants(self):
         kx = 0.017
         ky = -0.023
-        for degree in range(1, 5):
+        for degree in range(1, 7):
             with self.subTest(degree=degree):
                 cross_section, spaces = self._spaces(degree)
                 constraints = build_cross_section_floquet_constraints(
@@ -120,16 +122,42 @@ class Task033CrossSectionExactConstraintTests(unittest.TestCase):
                     self.assertEqual(constraints.max_probe_residual, 0.0)
                     self.assertEqual(
                         constraints.orientation_schema,
-                        "basix_interval_exact_p1_p4",
+                        "basix_interval_exact_p1_p6",
                     )
                     self.assertFalse(constraints.used_full_boundary_gather)
                     self.assertFalse(constraints.created_dense_boundary_square)
-                    self.assertGreater(constraints.transverse_constraint_count, 0)
-                    self.assertGreater(constraints.longitudinal_constraint_count, 0)
+                    global_transverse_constraints = (
+                        cross_section.mesh.comm.allreduce(
+                            constraints.transverse_constraint_count,
+                            op=MPI.SUM,
+                        )
+                    )
+                    global_longitudinal_constraints = (
+                        cross_section.mesh.comm.allreduce(
+                            constraints.longitudinal_constraint_count,
+                            op=MPI.SUM,
+                        )
+                    )
+                    nx, ny = cross_section.mesh_cells
+                    boundary_intervals = nx + ny
+                    expected_transverse = degree * boundary_intervals
+                    expected_longitudinal = degree * boundary_intervals + 1
+                    self.assertEqual(
+                        global_transverse_constraints,
+                        expected_transverse,
+                    )
+                    self.assertEqual(
+                        global_longitudinal_constraints,
+                        expected_longitudinal,
+                    )
                     self.assertLess(constraints.max_pair_coordinate_error, 1.0e-12)
                     self.assertEqual(
                         transform.reduced_global_size,
                         transform.full_global_size - transform.global_slave_count,
+                    )
+                    self.assertEqual(
+                        transform.global_slave_count,
+                        expected_transverse + expected_longitudinal,
                     )
                     self.assertIn("MPI exscan", transform.ownership_note)
                 finally:

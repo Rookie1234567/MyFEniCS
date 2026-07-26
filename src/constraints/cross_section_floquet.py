@@ -11,7 +11,6 @@ from ..modes.cross_section_spaces import CrossSectionMesh, CrossSectionSpaces
 from .high_order_floquet_trace import (
     _alltoallv_json_records,
     distributed_match_periodic_records,
-    edge_coefficient_transform,
 )
 
 
@@ -32,7 +31,7 @@ class CrossSectionFloquetConstraints:
     max_pair_coordinate_error: float
     max_probe_residual: float
     communication_scope: str = "distributed_hash_periodic_boundary_entities_only"
-    orientation_schema: str = "basix_interval_exact_p1_p4"
+    orientation_schema: str = "basix_interval_exact_p1_p6"
     used_full_boundary_gather: bool = False
     created_dense_boundary_square: bool = False
     pairing_bytes_sent: int = 0
@@ -86,8 +85,15 @@ def _coordinate_key(value: float, tolerance: float) -> int:
 def _collective_guard(comm, local_errors: list[str], prefix: str) -> None:
     error_count = int(comm.allreduce(len(local_errors), op=MPI.SUM))
     if error_count:
-        detail = (
-            local_errors[0] if local_errors else "failure was reported by another rank"
+        first_error_rank = int(
+            comm.allreduce(
+                int(comm.rank) if local_errors else int(comm.size),
+                op=MPI.MIN,
+            )
+        )
+        detail = comm.bcast(
+            local_errors[0] if int(comm.rank) == first_error_rank else None,
+            root=first_error_rank,
         )
         raise RuntimeError(f"{prefix}: global_error_count={error_count}; {detail}.")
 
@@ -107,9 +113,9 @@ def _transverse_entity_dof_map(
         raise NotImplementedError(
             "Exact cross-section Floquet constraints require a quadrilateral mesh."
         )
-    if int(spaces.transverse_degree) not in {1, 2, 3, 4}:
+    if int(spaces.transverse_degree) not in {1, 2, 3, 4, 5, 6}:
         raise ValueError(
-            "Task033 qualifies exact cross-section N1curl constraints for p=1..4."
+            "Exact cross-section N1curl constraints are qualified for p=1..6."
         )
 
     msh.topology.create_entity_permutations()
@@ -121,10 +127,42 @@ def _transverse_entity_dof_map(
         np.asarray(V.dofmap.dof_layout.entity_dofs(fdim, local_facet), dtype=np.int32)
         for local_facet in range(4)
     ]
+    basix_reference_dofs = [
+        np.asarray(
+            V.element.basix_element.entity_dofs[fdim][local_facet],
+            dtype=np.int32,
+        )
+        for local_facet in range(4)
+    ]
+    if any(
+        not np.array_equal(dolfinx_dofs, basix_dofs)
+        for dolfinx_dofs, basix_dofs in zip(
+            reference_dofs, basix_reference_dofs, strict=True
+        )
+    ):
+        raise RuntimeError(
+            "DOLFINx and Basix disagree on quadrilateral N1curl edge-entity "
+            f"dof ordering for p={spaces.transverse_degree}."
+        )
     if any(len(dofs) != int(spaces.transverse_degree) for dofs in reference_dofs):
         raise RuntimeError(
             "Basix/DOLFINx interval entity layout disagrees with the requested "
             f"N1curl degree p={spaces.transverse_degree}."
+        )
+    interval_transforms = np.asarray(
+        V.element.basix_element.entity_transformations()["interval"],
+        dtype=np.float64,
+    )
+    expected_transform_shape = (
+        1,
+        int(spaces.transverse_degree),
+        int(spaces.transverse_degree),
+    )
+    if interval_transforms.shape != expected_transform_shape:
+        raise RuntimeError(
+            "Basix quadrilateral N1curl interval transform shape changed: "
+            f"observed={interval_transforms.shape}, "
+            f"expected={expected_transform_shape}."
         )
 
     records: dict[int, dict[str, object]] = {}
@@ -172,6 +210,26 @@ def _transverse_entity_dof_map(
                     ) or bool(current["touches_owned_cell"])
                     records[int(facet)] = record
     return records
+
+
+def _transverse_edge_coefficient_transform(
+    spaces: CrossSectionSpaces,
+    *,
+    reversed_orientation: bool,
+) -> np.ndarray:
+    """Return Basix's exact coefficient map for one cross-section edge."""
+
+    degree = int(spaces.transverse_degree)
+    transformations = spaces.transverse.element.basix_element.entity_transformations()
+    interval = np.asarray(transformations["interval"][0], dtype=np.float64)
+    if interval.shape != (degree, degree):
+        raise RuntimeError(
+            "Basix quadrilateral N1curl interval transform disagrees with the "
+            f"requested degree p={degree}: shape={interval.shape}."
+        )
+    if not reversed_orientation:
+        return np.eye(degree, dtype=np.complex128)
+    return np.asarray(interval.T, dtype=np.complex128)
 
 
 def _local_transverse_records(
@@ -354,8 +412,8 @@ def _transverse_axis_constraints(
             raise RuntimeError(
                 "Paired cross-section interval tangents are not collinear."
             )
-        transform = edge_coefficient_transform(
-            int(spaces.transverse_degree),
+        transform = _transverse_edge_coefficient_transform(
+            spaces,
             reversed_orientation=tangent_dot < 0.0,
         )
         slave_global = np.asarray(record["parent_global"], dtype=np.int64)
@@ -628,7 +686,7 @@ def build_cross_section_floquet_constraints(
     kx: float,
     ky: float,
 ) -> CrossSectionFloquetConstraints:
-    """Build exact p1--p4 double-periodic constraints on the mixed space.
+    """Build exact p1--p6 double-periodic constraints on the mixed space.
 
     Boundary entities are hash-routed to pairing ranks and replied only to
     contributing slave ranks.  No boundary-sized global map or probe fit is
