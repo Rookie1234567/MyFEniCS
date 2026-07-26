@@ -108,6 +108,47 @@ records/legacy_seeded_plan_authority_mpi8_v1.json
 这些 authority 只证明 mesh/plan/entity/Floquet identity 和真实 active-row
 规模，`heavy_pde_started=false`，不能写成物理通过。
 
+### T30 正式 MPI8 结果：controlled negative
+
+首条正式 PDE 绑定：
+
+```text
+solver source SHA = c3768cf4723c2ae949c82d1ce8b18a56f5ab0f7b
+checker source SHA = 5f960f912809b162e363259b0896af25ef3b0018
+raw watchdog SHA256 =
+  081ec26770741dddb9039831d38d475a01df051b7062ff5b4d0e1fef2e02ebd9
+compact checker SHA256 =
+  ac0266578fe38dd9934cfcfb840d817f8c4fbc617694a068462f7d505392acc1
+```
+
+权威记录：
+
+```text
+records/t30_h10_mpi8_controlled_negative_v1.json
+```
+
+结构、残差和资源 Gate 通过，但同精度 Gate 明确失败：
+
+| metric | T30 measured | p6 static baseline | result |
+|---|---:|---:|---|
+| active FE DoF | 87,600 | 173,802 | mandatory DoF pass |
+| direct rows | 28,990 | 51,272 | `-43.46%` |
+| matrix NNZ | 15,253,176 | 41,989,040 | `-63.67%` |
+| factor NNZ | 63,564,300 | 212,343,992 | `-70.07%` |
+| process-tree peak | 10.0929 GiB | 14.7218 GiB | `-31.44%`, 20% mandatory pass |
+| PSS / USS peak | 9.0901 / 8.9268 GiB | not same-campaign baseline | measured |
+| true residual | `1.410e-11` | `<=1e-9` Gate | pass |
+| energy closure | `-5.638e-13` | `<=1e-9` Gate | pass |
+| significant power / amplitude | `0/12` / `0/12` | `12/12` / `12/12` | fail |
+| normalized R/T/Aclosure L2 | `21.214` | `sqrt(3)` | fail |
+| volume / interface field rel-L2 | `9.337%` / `9.884%` | `2.220%` / `2.447%` | fail |
+
+T30 的资源压缩是真实正信号，但物理误差不是边缘失败：12 个冻结通道全部
+失败，R00、R、T、Aclosure、Avolume 和两个 field selections 均超出
+same-code p5→p6 band。因此更激进的 T25/T15 不会在没有新恢复逻辑时盲目
+启动。下一 p-only 点必须把失败通道与 field/interface sensitivity 显式用于
+p6 trace/cell 恢复，并仍保持 `active FE DoF <= 90,000`。
+
 复现：
 
 ```bash

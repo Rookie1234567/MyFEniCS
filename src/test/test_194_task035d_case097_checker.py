@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -34,6 +35,17 @@ from benchmarks.task035d_case097_gates import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
+T30_CONTROLLED_NEGATIVE = (
+    ROOT
+    / "benchmarks"
+    / "cases"
+    / "097_goal_oriented_exact_sequence_hp_adaptivity"
+    / "records"
+    / "t30_h10_mpi8_controlled_negative_v1.json"
+)
+T30_CONTROLLED_NEGATIVE_SHA256 = (
+    "ac0266578fe38dd9934cfcfb840d817f8c4fbc617694a068462f7d505392acc1"
+)
 
 
 def _timeline_row(*, process_rss_mb: float = 512.0) -> dict[str, object]:
@@ -129,6 +141,41 @@ def _pass_payload() -> dict:
 
 
 class Task035dCase097CheckerTests(unittest.TestCase):
+    def test_t30_controlled_negative_record_is_hash_bound(self) -> None:
+        self.assertEqual(
+            hashlib.sha256(T30_CONTROLLED_NEGATIVE.read_bytes()).hexdigest(),
+            T30_CONTROLLED_NEGATIVE_SHA256,
+        )
+        record = json.loads(
+            T30_CONTROLLED_NEGATIVE.read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            record["status"],
+            "task035d_t30_p_only_controlled_negative",
+        )
+        self.assertFalse(record["pass"])
+        self.assertEqual(
+            record["channel_comparison"][
+                "significant_power_pass_count"
+            ],
+            0,
+        )
+        self.assertEqual(
+            record["channel_comparison"][
+                "significant_complex_amplitude_pass_count"
+            ],
+            0,
+        )
+        self.assertTrue(record["resource_comparison"]["pass"])
+        self.assertEqual(
+            record["source_sha"],
+            "c3768cf4723c2ae949c82d1ce8b18a56f5ab0f7b",
+        )
+        self.assertEqual(
+            record["checker_source"]["commit_sha"],
+            "5f960f912809b162e363259b0896af25ef3b0018",
+        )
+
     def test_candidate_launch_contract_is_bound_to_actual_command(
         self,
     ) -> None:

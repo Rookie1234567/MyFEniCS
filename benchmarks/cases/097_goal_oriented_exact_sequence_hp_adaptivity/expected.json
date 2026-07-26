@@ -20,7 +20,7 @@
     "serial_required": true,
     "mpi2_required": true
   },
-  "phase_b_p_only": "not_run",
+  "phase_b_p_only": "t30_controlled_negative_0_of_12",
   "phase_c_h_only": "not_run",
   "phase_e_combined_hp": "not_run",
   "phase_f_hybrid": "not_run",
