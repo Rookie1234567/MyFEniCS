@@ -1,0 +1,11 @@
+source scripts/activate_myfenics_wsl.sh
+
+python -m pytest -q \
+  src/test/test_183_task035d_reference_active_space.py \
+  src/test/test_184_task035d_global_entity_numbering.py
+
+mpiexec -n 2 python -m pytest -q \
+  src/test/test_184_task035d_global_entity_numbering.py
+
+python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_reference_authority.py \
+  --mode check

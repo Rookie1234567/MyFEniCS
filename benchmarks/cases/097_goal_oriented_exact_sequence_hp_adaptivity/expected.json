@@ -1,0 +1,28 @@
+{
+  "schema_version": "task035d.case097-expected.v1",
+  "phase_a": {
+    "entity_catalog_pass": true,
+    "allowed_dimension_degree_triple_count": 10,
+    "uniform_p4_hcurl_dimension": 300,
+    "uniform_p5_hcurl_dimension": 540,
+    "uniform_p6_hcurl_dimension": 882,
+    "mixed_p4edge_p5face_p6cell_hcurl_dimension": 738,
+    "mixed_p4edge_p5face_p6cell_h1_dimension": 265,
+    "single_cell_active_rows": 738,
+    "single_cell_active_trace_rows": 288,
+    "two_cell_active_rows": 1420,
+    "small_2x2x2_active_rows": 5256,
+    "small_2x2x2_uniform_p6_rows": 6084,
+    "small_2x2x2_inactive_p6_rows": 828,
+    "small_2x2x2_active_trace_rows": 1656,
+    "small_2x2x2_uniform_p6_trace_rows": 2484,
+    "double_periodic_independent_trace_rows": 1248,
+    "serial_required": true,
+    "mpi2_required": true
+  },
+  "phase_b_p_only": "not_run",
+  "phase_c_h_only": "not_run",
+  "phase_e_combined_hp": "not_run",
+  "phase_f_hybrid": "not_run",
+  "ordinary_default_changed": false
+}

@@ -1,0 +1,49 @@
+{
+  "schema_version": "task035d.case097-config.v1",
+  "case_id": "097_goal_oriented_exact_sequence_hp_adaptivity",
+  "geometry": "Task034 fixed rectangular block grating",
+  "geometry_scope": "fixed_only",
+  "mesh_cell_type": "hexahedron",
+  "qualified_entity_degrees": [
+    4,
+    5,
+    6
+  ],
+  "reference_container_degree": 6,
+  "exact_sequence_degree_rule": "edge_degree <= incident_face_degree <= cell_degree",
+  "phase_a": {
+    "single_cell": true,
+    "two_shared_face_cells": true,
+    "small_mesh": [
+      2,
+      2,
+      2
+    ],
+    "serial": true,
+    "mpi2": true,
+    "periodic_axes": [
+      "x",
+      "y",
+      "xy"
+    ],
+    "starts_heavy_pde": false
+  },
+  "formal_candidate": {
+    "degree_set": [
+      4,
+      5,
+      6
+    ],
+    "active_full3d_dof_max": 90000,
+    "significant_power_pass_required": 12,
+    "significant_complex_amplitude_pass_required": 12,
+    "true_residual_max": 1e-09
+  },
+  "out_of_scope": {
+    "iterative_solver": "not_researched",
+    "matrix_free": "not_researched",
+    "wavelength_0p7_nm": "not_researched",
+    "irregular_geometry": "not_researched"
+  },
+  "ordinary_default_changed": false
+}
