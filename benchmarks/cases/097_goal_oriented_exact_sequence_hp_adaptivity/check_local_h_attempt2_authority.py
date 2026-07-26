@@ -18,6 +18,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[3]
 CASE_DIR = Path(__file__).resolve().parent
 RECORD_DIR = CASE_DIR / "records"
+CHECKER_RELATIVE = (
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "check_local_h_attempt2_authority.py"
+)
 SCHEMA = "case097.local-h-attempt2-authority.v2"
 EXPECTED_NAMES = {
     1: "local_h_attempt2_mpi1_v2.json",
@@ -128,6 +132,46 @@ def _solver_blob_manifest(source_sha: str) -> dict[str, str]:
         )
         result[relative] = hashlib.sha256(content).hexdigest()
     return result
+
+
+def _live_checker_identity() -> dict[str, Any]:
+    head = subprocess.check_output(
+        ("git", "rev-parse", "HEAD"),
+        cwd=ROOT,
+        text=True,
+    ).strip()
+    committed = subprocess.check_output(
+        ("git", "show", f"{head}:{CHECKER_RELATIVE}"),
+        cwd=ROOT,
+    )
+    status_lines = [
+        line
+        for line in subprocess.check_output(
+            (
+                "git",
+                "status",
+                "--short",
+                "--untracked-files=all",
+                "--",
+                CHECKER_RELATIVE,
+            ),
+            cwd=ROOT,
+            text=True,
+        ).splitlines()
+        if line
+    ]
+    live_sha256 = _sha256(Path(__file__))
+    committed_sha256 = hashlib.sha256(committed).hexdigest()
+    return {
+        "path": CHECKER_RELATIVE,
+        "git_head": head,
+        "live_sha256": live_sha256,
+        "committed_sha256": committed_sha256,
+        "status_lines": status_lines,
+        "verified_clean_checker": (
+            live_sha256 == committed_sha256 and not status_lines
+        ),
+    }
 
 
 def _prior_authority_manifest() -> dict[str, Any]:
@@ -397,14 +441,53 @@ def _signature_matches(
                 atol=3.0e-11,
             ):
                 return False
-        for name in ("sum", "weighted_sum", "normalized_samples"):
-            if not np.allclose(
-                np.asarray(left[name], dtype=np.float64),
-                np.asarray(right[name], dtype=np.float64),
-                rtol=3.0e-10,
-                atol=3.0e-9,
+        left_scale = float(left["linf"])
+        right_scale = float(right["linf"])
+        if not (
+            math.isfinite(left_scale)
+            and math.isfinite(right_scale)
+            and left_scale > 0.0
+            and right_scale > 0.0
+        ):
+            return False
+        # Raw sums can be strongly cancellation-conditioned.  Compare their
+        # scale-free moments so an MPI reduction-order perturbation is judged
+        # relative to the vector, rather than to a nearly cancelled component.
+        for name in ("sum", "weighted_sum"):
+            left_moment = np.asarray(left[name], dtype=np.float64)
+            right_moment = np.asarray(right[name], dtype=np.float64)
+            if (
+                left_moment.shape != right_moment.shape
+                or not np.all(np.isfinite(left_moment))
+                or not np.all(np.isfinite(right_moment))
+                or not np.allclose(
+                    left_moment / left_scale,
+                    right_moment / right_scale,
+                    rtol=3.0e-10,
+                    atol=3.0e-10,
+                )
             ):
                 return False
+        left_samples = np.asarray(
+            left["normalized_samples"],
+            dtype=np.float64,
+        )
+        right_samples = np.asarray(
+            right["normalized_samples"],
+            dtype=np.float64,
+        )
+        if (
+            left_samples.shape != right_samples.shape
+            or not np.all(np.isfinite(left_samples))
+            or not np.all(np.isfinite(right_samples))
+            or not np.allclose(
+                left_samples,
+                right_samples,
+                rtol=3.0e-10,
+                atol=3.0e-10,
+            )
+        ):
+            return False
         return True
     except (KeyError, TypeError, ValueError):
         return False
@@ -414,6 +497,16 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
     failures: list[str] = []
     payloads: list[Mapping[str, Any] | None] = []
     load_failures: dict[str, list[str]] = {}
+    try:
+        checker_identity = _live_checker_identity()
+        if checker_identity["verified_clean_checker"] is not True:
+            failures.append("checker_source_identity")
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError) as exc:
+        checker_identity = {
+            "verified_clean_checker": False,
+            "probe_failure": type(exc).__name__,
+        }
+        failures.append("checker_source_identity")
     try:
         prior = _prior_authority_manifest()
     except (OSError, ValueError, RuntimeError, KeyError) as exc:
@@ -523,7 +616,7 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
         failures.append("valid_record_count")
 
     return {
-        "schema_version": "case097.local-h-attempt2-independent-check.v1",
+        "schema_version": "case097.local-h-attempt2-independent-check.v2",
         "status": (
             "local_h_attempt2_component_pass_pde_blocked"
             if not failures
@@ -537,8 +630,19 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
             if path.exists()
         ],
         "record_failures": load_failures,
+        "checker_identity": checker_identity,
         "cross_checks": cross_checks,
         "non_gating_digest_diagnostics": digest_diagnostics,
+        "signature_identity_semantics": {
+            "norm_rtol": 3.0e-10,
+            "norm_atol": 3.0e-11,
+            "moment_rtol": 3.0e-10,
+            "normalized_moment_atol": 3.0e-10,
+            "normalized_sample_rtol": 3.0e-10,
+            "normalized_sample_atol": 3.0e-10,
+            "raw_moments_scaled_by_each_vector_linf": True,
+            "quantized_digest_is_gating": False,
+        },
         "solver_commit_numerical_files": solver_blobs,
         "failures": failures,
         "component_only": True,

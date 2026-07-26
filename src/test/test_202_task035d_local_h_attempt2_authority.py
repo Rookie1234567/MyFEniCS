@@ -237,3 +237,26 @@ def test_independent_checker_returns_structured_failure_for_bad_records(
     assert result["pass"] is False
     assert result["status"] == "local_h_attempt2_evidence_fail"
     assert result["failures"]
+
+
+def test_attempt2_signature_accepts_scale_normalized_cancelled_moment() -> None:
+    left = _signature(1)
+    right = json.loads(json.dumps(left))
+    left["linf"] = 90.39870735838991
+    right["linf"] = 90.39870735842221
+    left["l2"] = 549.3292489233214
+    right["l2"] = 549.3292489236558
+    left["sum"] = [10.007053159472093, -577.2361390197937]
+    right["sum"] = [10.007053167409254, -577.2361390030103]
+    left["weighted_sum"] = [888.592494408143, 5610.578421213141]
+    right["weighted_sum"] = [888.5924944116579, 5610.5784212138005]
+    assert _load_checker()._signature_matches(left, right) is True
+    assert _load_generator()._signature_matches(left, right) is True
+
+
+def test_attempt2_signature_rejects_material_normalized_moment_tamper() -> None:
+    left = _signature(1)
+    right = json.loads(json.dumps(left))
+    right["sum"][0] += 1.0e-6 * float(right["linf"])
+    assert _load_checker()._signature_matches(left, right) is False
+    assert _load_generator()._signature_matches(left, right) is False

@@ -1488,35 +1488,65 @@ def _signature_matches(
     left: Mapping[str, Any],
     right: Mapping[str, Any],
 ) -> bool:
-    if (
-        int(left["size"]) != int(right["size"])
-        or list(left["sample_indices"]) != list(right["sample_indices"])
-    ):
-        return False
-    for name in ("linf", "l2"):
-        if not np.isclose(
-            float(left[name]),
-            float(right[name]),
-            rtol=3.0e-10,
-            atol=3.0e-11,
+    try:
+        if (
+            int(left["size"]) != int(right["size"])
+            or list(left["sample_indices"]) != list(right["sample_indices"])
         ):
             return False
-    for name in ("sum", "weighted_sum"):
-        if not np.allclose(
-            np.asarray(left[name], dtype=np.float64),
-            np.asarray(right[name], dtype=np.float64),
-            rtol=3.0e-10,
-            atol=3.0e-9,
+        for name in ("linf", "l2"):
+            if not np.isclose(
+                float(left[name]),
+                float(right[name]),
+                rtol=3.0e-10,
+                atol=3.0e-11,
+            ):
+                return False
+        left_scale = float(left["linf"])
+        right_scale = float(right["linf"])
+        if not (
+            math.isfinite(left_scale)
+            and math.isfinite(right_scale)
+            and left_scale > 0.0
+            and right_scale > 0.0
         ):
             return False
-    return bool(
-        np.allclose(
-            np.asarray(left["normalized_samples"], dtype=np.float64),
-            np.asarray(right["normalized_samples"], dtype=np.float64),
-            rtol=3.0e-10,
-            atol=3.0e-11,
+        for name in ("sum", "weighted_sum"):
+            left_moment = np.asarray(left[name], dtype=np.float64)
+            right_moment = np.asarray(right[name], dtype=np.float64)
+            if (
+                left_moment.shape != right_moment.shape
+                or not np.all(np.isfinite(left_moment))
+                or not np.all(np.isfinite(right_moment))
+                or not np.allclose(
+                    left_moment / left_scale,
+                    right_moment / right_scale,
+                    rtol=3.0e-10,
+                    atol=3.0e-10,
+                )
+            ):
+                return False
+        left_samples = np.asarray(
+            left["normalized_samples"],
+            dtype=np.float64,
         )
-    )
+        right_samples = np.asarray(
+            right["normalized_samples"],
+            dtype=np.float64,
+        )
+        return bool(
+            left_samples.shape == right_samples.shape
+            and np.all(np.isfinite(left_samples))
+            and np.all(np.isfinite(right_samples))
+            and np.allclose(
+                left_samples,
+                right_samples,
+                rtol=3.0e-10,
+                atol=3.0e-10,
+            )
+        )
+    except (KeyError, TypeError, ValueError):
+        return False
 
 
 def _recompute_record_pass(
