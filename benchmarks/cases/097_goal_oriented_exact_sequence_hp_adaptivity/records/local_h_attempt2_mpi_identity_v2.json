@@ -1,0 +1,71 @@
+{
+  "component_only": true,
+  "cross_checks": {
+    "left_reduced_rhs_mpi_identity": false,
+    "matrix_action_probe_mpi_identity": true,
+    "matrix_action_root_mpi_identity": true,
+    "mpi_sizes_are_1_2_8": true,
+    "nonzero_rhs_full_recovery_mpi_identity": true,
+    "right_reduced_rhs_mpi_identity": true,
+    "same_abi": true,
+    "same_fixture_identity": true,
+    "same_solver_blob_manifest": true,
+    "same_solver_source_sha": true,
+    "zero_rhs_full_recovery_mpi_identity": true
+  },
+  "distributed_scalability_qualified": false,
+  "failures": [
+    "cross:left_reduced_rhs_mpi_identity"
+  ],
+  "input_records": [
+    {
+      "path": "records/local_h_attempt2_mpi1_v2.json",
+      "sha256": "6a4ae7312402e94653206b68ed54a825703f89bef7bbb787d2abf777d3d5a6af"
+    },
+    {
+      "path": "records/local_h_attempt2_mpi2_v2.json",
+      "sha256": "b135f618880883d0b9360be3483c0cf0aa786710588a61479db5e845981f2405"
+    },
+    {
+      "path": "records/local_h_attempt2_mpi8_v2.json",
+      "sha256": "7814a3bac9da53557218947afec48f9fd8a544eed9cb3c59cafd94baeff08f12"
+    }
+  ],
+  "non_gating_digest_diagnostics": {
+    "left_reduced_rhs_digest_equal": false,
+    "matrix_action_probe_digest_equal": true,
+    "matrix_action_root_digest_equal": true,
+    "nonzero_rhs_full_recovery_digest_equal": false,
+    "right_reduced_rhs_digest_equal": false,
+    "zero_rhs_full_recovery_digest_equal": false
+  },
+  "ordinary_default_changed": false,
+  "pass": false,
+  "pde_accuracy_credit": false,
+  "pde_launch_gate": false,
+  "record_failures": {
+    "local_h_attempt2_mpi1_v2.json": [],
+    "local_h_attempt2_mpi2_v2.json": [],
+    "local_h_attempt2_mpi8_v2.json": []
+  },
+  "schema_version": "case097.local-h-attempt2-independent-check.v1",
+  "solver_commit_numerical_files": {
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_attempt2_authority.py": "fba12e077548101e15f154eaa68764492dacf9faaf5e10e6bbf295d31fd44e85",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt2_authority.py": "73c2608542d2b33af7f1ba46d293890052fc8ea9d671fd258da175df8dd9eddd",
+    "src/adaptivity/dyadic_hexa_broken_mesh.py": "b30c769dc4e9aedea4932de9f4fc1fe2ec0f2cafa02e5836aa624b0b39a0b75f",
+    "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+    "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+    "src/adaptivity/hcurl_broken_cell_trace.py": "e6b60777db8b66748262c77d80c4e722df852c2ff320a279ab701607a6f36164",
+    "src/adaptivity/hcurl_broken_trace_graph.py": "a6aa48cbf0c596eaa97fe2470fed6f6faf02b979d63e057fb2d7b133da7f3c85",
+    "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+    "src/adaptivity/hcurl_trace_constraint_graph.py": "a5236d7c5999354599c7be73dce3894d29657be3008ecd5147df437fa0cfd5ee",
+    "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+    "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+    "src/solvers/hcurl_assembly_time_condensation.py": "af1aab6751dc3b11ed769097ed04c7e4d11a728f6a9066a074dd53cded35e59b",
+    "src/solvers/hcurl_variable_p_assembly.py": "ca7b2892f7cca4fdf68a996d8931934aa15038a2b6a05af468fb4d3ed7655e68",
+    "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+    "src/solvers/hcurl_variable_p_reduction.py": "e7efdbfbba7cddf81d6a388a6dbb42966d7dd66b914b43645fb8f87907dd1f6c"
+  },
+  "source_sha": "03503eeb65ce47b4884e2d9d5fb718036225fca2",
+  "status": "local_h_attempt2_evidence_fail"
+}

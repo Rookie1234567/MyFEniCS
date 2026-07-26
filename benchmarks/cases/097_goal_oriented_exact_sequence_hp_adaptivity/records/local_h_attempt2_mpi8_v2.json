@@ -1,0 +1,1642 @@
+{
+  "argv": [
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt2_authority.py",
+    "--source-sha",
+    "03503eeb65ce47b4884e2d9d5fb718036225fca2",
+    "--output",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt2_mpi8_v2.json"
+  ],
+  "checks": {
+    "clean_live_source": true,
+    "combined_constraint_kinds": true,
+    "ordinary_default_unchanged": true,
+    "p5_high_condition_retained_as_risk": true,
+    "p5_trace_p6_interior_hanging_floquet": true,
+    "prior_exact_sequence_and_attempt1_hash_bound": true,
+    "qualified_activation": true
+  },
+  "component_resource_ledger": {
+    "candidate_matrix_nnz": 2758850,
+    "candidate_matrix_rows": 5430,
+    "diagnostic_raw_matrix_nnz": 3143400,
+    "diagnostic_raw_matrix_rows": 8100,
+    "factorization_or_pde_solve_memory_measured": false,
+    "owned_cell_expansion_bytes_by_rank": [
+      5769600,
+      7212000,
+      5769600,
+      7212000,
+      7212000,
+      5769600,
+      7212000,
+      7212000
+    ],
+    "owned_cell_expansion_bytes_global_sum": 53368800,
+    "process_peak_is_not_candidate_memory_authority": true,
+    "raw_oracle_and_candidate_co_resident": true,
+    "replicated_component_gram_bytes_per_rank": 405524,
+    "replicated_entity_block_bytes_per_rank": 14691520,
+    "semantics": "measured_or_derived_component_objects_only",
+    "timings_are_per_stage_mpi_max_not_rank_sum": true
+  },
+  "component_scope": "actual DOLFINx cell_info + FFCx p6 cell tensor + p5 trace projection + cell-interior Schur + hanging/Floquet C_K^H S_K C_K + PETSc action/RHS/recovery",
+  "distributed_scalability_qualified": false,
+  "environment": {
+    "all_ranks_identical": true,
+    "basix": "0.10.0",
+    "dolfinx": "0.10.0.post2",
+    "mpi4py": "3.1.5",
+    "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+    "mpi_vendor": [
+      "Open MPI",
+      [
+        4,
+        1,
+        6
+      ]
+    ],
+    "petsc4py": "3.19.6",
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128",
+    "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "qualified_activation": "1",
+    "rank_environments": [
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 0
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 1
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 2
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 3
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 4
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 5
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 6
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 7
+      }
+    ],
+    "rank_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ]
+  },
+  "failures": [],
+  "fixture_config": {
+    "cell_interior_degree": 6,
+    "form": "curlcurl + (2.5+0.17j) mass",
+    "periodic_axes": [
+      "x",
+      "y"
+    ],
+    "phase_x": [
+      0.9800665778412416,
+      0.19866933079506122
+    ],
+    "phase_y": [
+      0.955336489125606,
+      -0.29552020666133955
+    ],
+    "refined_root": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "root_cells": [
+      3,
+      3,
+      1
+    ],
+    "trace_degree": 5
+  },
+  "fixture_config_sha256": "b66ca14cb02e0857824d20a609acb9dd86a7d725fc82bb8651f8bbed7bab4264",
+  "heavy_pde_started": false,
+  "mpi_size": 8,
+  "numerical_files": {
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_attempt2_authority.py": "fba12e077548101e15f154eaa68764492dacf9faaf5e10e6bbf295d31fd44e85",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt2_authority.py": "73c2608542d2b33af7f1ba46d293890052fc8ea9d671fd258da175df8dd9eddd",
+    "src/adaptivity/dyadic_hexa_broken_mesh.py": "b30c769dc4e9aedea4932de9f4fc1fe2ec0f2cafa02e5836aa624b0b39a0b75f",
+    "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+    "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+    "src/adaptivity/hcurl_broken_cell_trace.py": "e6b60777db8b66748262c77d80c4e722df852c2ff320a279ab701607a6f36164",
+    "src/adaptivity/hcurl_broken_trace_graph.py": "a6aa48cbf0c596eaa97fe2470fed6f6faf02b979d63e057fb2d7b133da7f3c85",
+    "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+    "src/adaptivity/hcurl_trace_constraint_graph.py": "a5236d7c5999354599c7be73dce3894d29657be3008ecd5147df437fa0cfd5ee",
+    "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+    "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+    "src/solvers/hcurl_assembly_time_condensation.py": "af1aab6751dc3b11ed769097ed04c7e4d11a728f6a9066a074dd53cded35e59b",
+    "src/solvers/hcurl_variable_p_assembly.py": "ca7b2892f7cca4fdf68a996d8931934aa15038a2b6a05af468fb4d3ed7655e68",
+    "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+    "src/solvers/hcurl_variable_p_reduction.py": "e7efdbfbba7cddf81d6a388a6dbb42966d7dd66b914b43645fb8f87907dd1f6c"
+  },
+  "ordinary_default_changed": false,
+  "p5_trace_p6_interior_hanging_floquet": {
+    "assembly_audit": {
+      "active_full3d_rows_before_condensation": 24750,
+      "active_trace_rows": 5430,
+      "active_trace_rows_before_constraint_elimination": 8100,
+      "active_trace_rows_before_periodic_elimination": 8100,
+      "appended_rows": 0,
+      "cell_p6_tensors_are_local_only": true,
+      "compiled_p6_element_hash": 16913352432823651554,
+      "compiled_p6_form_dtype": "complex128",
+      "compiled_p6_tensor_builder": true,
+      "compiled_trace_constraint_binding_complete": true,
+      "condensation_seconds_max": 3.5370277360780165,
+      "final_assembly_deferred": false,
+      "final_assembly_seconds": 3.76824416796444,
+      "floquet_elimination_applied_before_insertion": true,
+      "full_active_global_matrix_constructed": false,
+      "full_p6_global_matrix_constructed": false,
+      "global_cell_count": 37,
+      "hanging_elimination_applied_before_insertion": true,
+      "hanging_or_floquet_slave_rows": 2670,
+      "hanging_or_floquet_slave_rows_globally_numbered": false,
+      "hanging_slave_rows": 1720,
+      "inactive_p6_full_rows": 3660,
+      "inactive_p6_rows_globally_numbered": false,
+      "inactive_p6_trace_rows": 3660,
+      "insertion_seconds_max": 0.5718646259047091,
+      "interior_adjoint_operator_residual_max": 8.10438429036637e-15,
+      "interior_recovery_operator_residual_max": 1.9520964191969185e-15,
+      "local_reference_class_count_sum": 37,
+      "matrix_mallocs": 0,
+      "matrix_nnz": 2758850,
+      "matrix_nnz_allocated": 2758850,
+      "matrix_nnz_preallocated": 2758850,
+      "matrix_rows": 5430,
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "periodic_slave_rows": 950,
+      "periodic_slave_rows_globally_numbered": false,
+      "preallocation_seconds": 0.01884779700776562,
+      "projection_seconds_max": 13.923819079936948,
+      "raw_tensor_broadcast_seconds_max": 0.017074152012355626,
+      "raw_tensor_class_count_global_unique": 2,
+      "raw_tensor_class_count_sum": 2,
+      "raw_tensor_class_owner_ranks": {
+        "('p6_actual_space', 1, 0.5, 0.5, 0.5)": 0,
+        "('p6_actual_space', 1, 1.0, 1.0, 1.0)": 1
+      },
+      "raw_tensor_class_use_count_sum": 12,
+      "raw_tensor_class_user_rank_counts": {
+        "('p6_actual_space', 1, 0.5, 0.5, 0.5)": 8,
+        "('p6_actual_space', 1, 1.0, 1.0, 1.0)": 4
+      },
+      "raw_tensor_classes": [
+        {
+          "active_kernel_ids": [
+            1
+          ],
+          "canonical_coordinates_sha256": "74e0cfa22f9f5ae7af34cac520bd57acc9b3a01bad90820bb942a88f1383833d",
+          "cell_widths": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "consumer_rank_count": 8,
+          "dimension": 882,
+          "material_tag": 1,
+          "owner_rank": 0,
+          "policy": "p6_actual_space",
+          "tensor_bytes": 12446784
+        },
+        {
+          "active_kernel_ids": [
+            1
+          ],
+          "canonical_coordinates_sha256": "e9f28c6bc6e2644a82da4d74358847b9634525c2eafd7f827046303751bac2c5",
+          "cell_widths": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "consumer_rank_count": 4,
+          "dimension": 882,
+          "material_tag": 1,
+          "owner_rank": 1,
+          "policy": "p6_actual_space",
+          "tensor_bytes": 12446784
+        }
+      ],
+      "raw_tensor_cross_rank_dedup_active": true,
+      "raw_tensor_global_owner_policy": "deterministic_dimension_squared_greedy_all_mpi_ranks",
+      "raw_tensor_kernel_seconds_max": 69.6513289710274,
+      "raw_tensor_logical_broadcast_bytes": 174254976,
+      "raw_tensor_metadata_seconds": 0.001094022998586297,
+      "raw_tensor_owner_cost_loads": [
+        777924,
+        777924,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "raw_tensor_owner_evaluation_sync_seconds_max": 69.65146437595831,
+      "raw_tensor_policy_signatures_identical": true,
+      "schema_version": "task035d.variable-p-condensed-trace-system.v1",
+      "status": "variable_p_condensed_trace_matrix_pass",
+      "total_build_seconds": 18.055065547989216,
+      "trace_constraint_cell_tensor_binding_complete": true,
+      "trace_constraint_elimination_applied_before_insertion": true,
+      "trace_constraint_kinds": [
+        "floquet",
+        "hanging"
+      ],
+      "trace_constraint_schema": "task035d.broken-hexa-cell-trace-map.v1",
+      "trace_preallocation": {
+        "active_rows": 5430,
+        "appended_graph_preallocation": "not_applicable",
+        "appended_rows": 0,
+        "appended_rows_per_support_group": [],
+        "appended_support_active_row_counts": [],
+        "appended_support_group_count": 0,
+        "base_graph_preallocation": "exact",
+        "local_row_count": 679,
+        "maximum_diagonal_nnz": 265,
+        "maximum_off_diagonal_nnz": 1560,
+        "new_nonzero_allocation_error_enabled": true,
+        "ordinary_default_changed": false,
+        "policy": "distributed_exact_constrained_cell_graph_plus_support_safe_appended_upper_bound",
+        "preallocated_structural_nnz": 2758850,
+        "received_cell_graph_count": 37,
+        "schema_version": "task035b.exact-trace-preallocation.v1"
+      },
+      "trace_slave_rows_globally_numbered": false,
+      "uniform_p6_full3d_rows": 28410,
+      "uniform_p6_trace_rows": 11760
+    },
+    "carrier_audit": {
+      "artificial_facet_catalog_sha256": "a1dc7ec5c50f288024470acfffe247069549a50a15223fcb29515fda21871056",
+      "artificial_hanging_exterior_facet_count": 40,
+      "axis_aligned_affine_hexahedra": true,
+      "boundary_markers": {
+        "x_lower": 1,
+        "x_upper": 2,
+        "y_lower": 3,
+        "y_upper": 4,
+        "z_lower": 5,
+        "z_upper": 6
+      },
+      "canonical_connectivity_sha256": "764259d25dc801949aa118d1ce7ba575a64979e9ed1c500e78a3175cfb190ba1",
+      "canonical_leaf_count": 37,
+      "canonical_vertex_count": 108,
+      "carrier_global_cell_count": 37,
+      "carrier_global_topological_facet_count": 170,
+      "carrier_global_vertex_count": 108,
+      "checks": {
+        "all_artificial_exterior_is_hanging": true,
+        "artificial_exterior_count_is_five_per_patch": true,
+        "canonical_vertex_count_matches_carrier": true,
+        "forest_authority_pass": true,
+        "original_cell_crosswalk_matches_geometry": true,
+        "owned_cells_cover_forest_once": true,
+        "physical_and_artificial_exterior_partition": true,
+        "physical_boundary_area": true
+      },
+      "cross_rank_hanging_patch_count": 7,
+      "dolfinx_cell_type": "CellType.hexahedron",
+      "dolfinx_shared_facet_is_not_hanging_authority": true,
+      "expected_boundary_area": 30.0,
+      "failures": [],
+      "geometry_degree": 1,
+      "ghost_cell_counts_by_rank": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "hanging_patch_count": 8,
+      "hanging_relation_source": "global_geometry_catalog",
+      "hcurl_hanging_constraints_built": false,
+      "leaf_catalog_sha256": "85083ba15cce04d2ce48ff5990ac5914742c54f2a6417a4fba40e0308b33c695",
+      "material_catalog_sha256": "2663158748af83f8c8fa00e0948c16a16fd86d5929d938dfc492c739f7f27219",
+      "mpi_constraint_ownership_qualified": false,
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "owned_cell_counts_by_rank": [
+        4,
+        5,
+        4,
+        5,
+        5,
+        4,
+        5,
+        5
+      ],
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "physical_boundary_area": 30.0,
+      "physical_exterior_facet_count": 78,
+      "physical_facet_catalog_sha256": "5870568a686f9a91e783e2cb97e0ea4c627fb7c15f45afe0133105a68d05c529",
+      "schema_version": "task035d.broken-dyadic-hexa-carrier.v1",
+      "status": "broken_dyadic_hexa_carrier_component_pass",
+      "topological_exterior_facet_count": 118
+    },
+    "cell_interior_degree": 6,
+    "cell_trace_binding_audit": {
+      "canonical_cell_graph_sha256": "5de0bd41774cb38c12aa243eb5b5bab030781023a9c71efb950af62e7e48300c",
+      "canonical_root_numbering_partition_independent": true,
+      "cell_expansion_inverse_used": false,
+      "cell_expansion_svd_used_for_rank_audit": true,
+      "checks": {
+        "all_independent_roots_reached": true,
+        "all_owned_cells_bound": true,
+        "all_physical_entities_bound_once": true,
+        "canonical_cell_graph_mpi_identity": true,
+        "cell_expansions_full_column_rank": true,
+        "cell_transform_matches_dolfinx_cell_info": true,
+        "entity_transform_orthogonality": true,
+        "forest_carrier_identity": true,
+        "no_slave_rows_numbered": true,
+        "trace_transform_does_not_mix_cell_interior": true,
+        "unpermuted_cell_chart_matches_forest": true
+      },
+      "compiled_cell_tensor_binding_complete": false,
+      "constraint_kinds": [
+        "hanging",
+        "floquet"
+      ],
+      "contains_floquet_constraints": true,
+      "contains_hanging_constraints": true,
+      "degree": 5,
+      "dense_cell_expansion_retained": true,
+      "distributed_scalability_qualified": false,
+      "dolfinx_entity_order_bound_exactly_once": true,
+      "eliminated_hanging_or_floquet_rows": 2670,
+      "entity_catalog_distribution": "allgather_replicated",
+      "failures": [],
+      "flattened_graph_sha256": "e91da0dedf4734ca3bb9685fbdb6e5241bc080da56900ff09fbe607582d46648",
+      "full_p6_trace_matrix_constructed": false,
+      "global_cell_count": 37,
+      "hanging_or_floquet_slave_rows_globally_numbered": false,
+      "hanging_slave_rows": 1720,
+      "independent_trace_rows": 5430,
+      "maximum_cell_expansion_condition": 154038033.76447198,
+      "maximum_cell_transform_error": 8.615330671091215e-14,
+      "maximum_entity_transform_orthogonality_error": 1.7047215689850554e-14,
+      "maximum_trace_interior_mixing_error": 0.0,
+      "maximum_unpermuted_cell_chart_error": 0.0,
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "owned_cell_expansion_bytes_by_rank": [
+        5769600,
+        7212000,
+        5769600,
+        7212000,
+        7212000,
+        5769600,
+        7212000,
+        7212000
+      ],
+      "owned_cell_expansion_bytes_global_sum": 53368800,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_slave_rows": 950,
+      "petsc_constraint_row_ownership_qualified": false,
+      "physical_authority_sha256": "e77363111ab8f386ec1e37893f966d869043f4e19d1e0261079aec299b878528",
+      "raw_trace_rows": 8100,
+      "replicated_component_gram_bytes_per_rank": 405524,
+      "replicated_entity_block_bytes_per_rank": 14691520,
+      "schema_version": "task035d.broken-hexa-cell-trace-map.v1",
+      "status": "broken_hexa_cell_trace_binding_pass"
+    },
+    "checks": {
+      "adjoint_interior_operator_residual": true,
+      "candidate_action_matches_raw_congruence": true,
+      "carrier_pass": true,
+      "cell_trace_binding_pass": true,
+      "compiled_constraint_binding": true,
+      "compiled_p6_tensor_builder": true,
+      "component_gram_dual_norm": true,
+      "component_gram_dual_solve": true,
+      "component_gram_hermitian": true,
+      "component_gram_primal_norm": true,
+      "distributed_scalability_not_claimed": true,
+      "exact_preallocation": true,
+      "finite_left_reduction": true,
+      "finite_right_reduction": true,
+      "forest_pass": true,
+      "full_active_rhs_recovery_mapping": true,
+      "full_trace_recovery": true,
+      "left_rhs_matches_raw_congruence": true,
+      "no_full_global_matrix": true,
+      "no_slave_rows_numbered": true,
+      "nonzero_rhs_recovered_interior_equation": true,
+      "nonzero_rhs_recovery_matches_raw_oracle": true,
+      "petsc_row_ownership_closes": true,
+      "physical_trace_graph_pass": true,
+      "primal_interior_operator_residual": true,
+      "raw_oracle_exact_preallocation": true,
+      "right_rhs_matches_raw_congruence": true,
+      "zero_rhs_recovered_interior_equation": true,
+      "zero_rhs_recovery_matches_raw_oracle": true
+    },
+    "entity_map_audit": {
+      "active_cell_interior_rows": 16650,
+      "active_rows": 24750,
+      "active_trace_rows": 8100,
+      "all_active_rows_reached_by_owned_cells": true,
+      "canonical_degree_map_sha256": "656b26c477a7b2bd952c86fee5466c3d0ce3ce8c81a38d1f4454bf38ad8923f3",
+      "canonical_numbering_partition_independent": true,
+      "cell_pattern_count": 1,
+      "cell_pattern_signatures": [
+        "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[6]"
+      ],
+      "full_p6_global_matrix_constructed": false,
+      "global_entity_counts": {
+        "1": 260,
+        "2": 170,
+        "3": 37
+      },
+      "inactive_modes_globally_numbered": false,
+      "inactive_p6_rows": 3660,
+      "inactive_p6_trace_rows": 3660,
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "schema_version": "task035d.variable-p-global-entity-map.v1",
+      "status": "inactive_row_free_entity_numbering_pass",
+      "uniform_p6_rows": 28410,
+      "uniform_p6_trace_rows": 11760
+    },
+    "failures": [],
+    "forest_audit": {
+      "axis_aligned_affine_hexahedra": true,
+      "balance_touch_class": "face_edge_vertex",
+      "closure_split_counts": {
+        "balance": 0,
+        "material": 0,
+        "periodic": 3,
+        "user": 1
+      },
+      "face_adjacency_count": 84,
+      "hanging_face_catalog_sha256": "47e0d24e9e51db1f4b5fcfe34bec982ea2a410b8f6ff6e581e1415ea8dce3782",
+      "hanging_face_count": 8,
+      "hanging_fine_face_count": 32,
+      "leaf_catalog_sha256": "85083ba15cce04d2ce48ff5990ac5914742c54f2a6417a4fba40e0308b33c695",
+      "leaf_cell_count": 37,
+      "leaf_level_counts": {
+        "0": 5,
+        "1": 32
+      },
+      "local_h_is_real_cell_split": true,
+      "material_interface_hanging_face_count": 0,
+      "material_interface_protection": true,
+      "maximum_adjacent_level_jump": 1,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "periodic_boundary_audit": {
+        "x": {
+          "lower_patch_count": 9,
+          "lower_sha256": "a240a23959912968306d78abcd25c40af17c1400bcf65458b00856579ae508b7",
+          "matching": true,
+          "upper_patch_count": 9,
+          "upper_sha256": "a240a23959912968306d78abcd25c40af17c1400bcf65458b00856579ae508b7"
+        },
+        "y": {
+          "lower_patch_count": 9,
+          "lower_sha256": "a240a23959912968306d78abcd25c40af17c1400bcf65458b00856579ae508b7",
+          "matching": true,
+          "upper_patch_count": 9,
+          "upper_sha256": "a240a23959912968306d78abcd25c40af17c1400bcf65458b00856579ae508b7"
+        }
+      },
+      "refined_root_count": 4,
+      "root_cell_count": 9,
+      "schema_version": "task035d.dyadic-hexa-forest.v1",
+      "status": "balanced_periodic_dyadic_hexa_forest_pass",
+      "strong_2_to_1_balance": true,
+      "touching_pair_count": 160
+    },
+    "implementation_congruence_scope": "small-fixture unconstrained p5 trace Schur using the same physical constraint map and local kernel; validates C^H S C insertion/RHS/recovery consistency, is not an independent physical-constraint oracle, is not a candidate, and is not used to claim reduced rows",
+    "observables": {
+      "active_rhs_semantics": "trace RHS is generated from canonical physical roots; cell-interior dual coefficients are generated by canonical leaf/mode then transformed to DOLFINx ordering",
+      "component_gram": {
+        "dual_norm_relative_error": 0.0,
+        "dual_solve_relative_residual": 2.824038215079976e-16,
+        "expected_dual_norm": 68.44251862889396,
+        "expected_primal_norm": 104.2468174059822,
+        "hermitian_max_abs_error": 0.0,
+        "nnz": 19190,
+        "observed_dual_norm": 68.44251862889396,
+        "observed_primal_norm": 104.2468174059822,
+        "primal_norm_relative_error": 0.0,
+        "rows": 5430
+      },
+      "full_active_rhs_recovery_mapping_max_abs_error": 7.56428808291775e-14,
+      "full_recovery_signature_semantics": "oriented active cell coefficients are inverse-transformed to reference coefficients and concatenated by canonical forest leaf",
+      "full_trace_recovery_max_abs_error": 0.0,
+      "implementation_congruence_errors": {
+        "action_probe_max_abs": 2.331074814518804e-10,
+        "action_probe_max_relative": 2.11081960630593e-14,
+        "action_root_max_abs": 3.76234390106623e-10,
+        "action_root_max_relative": 3.3941381305557095e-14,
+        "bilinear_abs": 1.086440816100292e-09,
+        "bilinear_relative": 3.5542700927033996e-15,
+        "left_rhs_max_abs": 2.21667697385989e-13,
+        "left_rhs_max_relative": 2.4521113615828373e-15,
+        "nonzero_rhs_recovery_max_abs": 7.135207744473287e-13,
+        "nonzero_rhs_recovery_max_relative": 3.979584396926286e-15,
+        "right_rhs_max_abs": 2.327502010382318e-13,
+        "right_rhs_max_relative": 2.5747000129859874e-15,
+        "zero_rhs_recovery_max_abs": 7.077979590067931e-13,
+        "zero_rhs_recovery_max_relative": 8.18987922553421e-14
+      },
+      "left_reduced_rhs": {
+        "l2": 549.3292489236558,
+        "linf": 90.39870735842221,
+        "normalized_quantized_1e10_sha256": "71745b8123938e79e01486681988e7068009eb31a79403352f712c7dcd511ab1",
+        "normalized_samples": [
+          [
+            -0.004808507739685025,
+            0.03747251314982987
+          ],
+          [
+            -0.012981427746281124,
+            -0.023384299963475356
+          ],
+          [
+            0.021632304367280093,
+            -0.009550306689337942
+          ],
+          [
+            -0.0037855847128502006,
+            0.01330008450333151
+          ],
+          [
+            0.03617110116199656,
+            -0.02460592474626702
+          ],
+          [
+            -0.03353000426614429,
+            -0.0010030994050657847
+          ],
+          [
+            0.0035023204666044003,
+            0.005712477872176591
+          ],
+          [
+            -0.0034200453161064466,
+            0.022795924642789626
+          ],
+          [
+            0.00398557655919154,
+            -0.004447808736469639
+          ],
+          [
+            0.004978807329640802,
+            0.009742331122692521
+          ],
+          [
+            -0.006948615082882074,
+            -0.003687445204889391
+          ],
+          [
+            0.0017620463659548953,
+            -0.0005899949613222725
+          ],
+          [
+            -0.003860930695828309,
+            0.00829050342401246
+          ],
+          [
+            0.011736854422289856,
+            -0.009693603808065417
+          ],
+          [
+            -0.0015127303348102302,
+            -0.020088205753033037
+          ],
+          [
+            0.012096861573922622,
+            -0.005744897592893526
+          ],
+          [
+            0.011422481609482324,
+            0.011344508545349265
+          ]
+        ],
+        "sample_indices": [
+          0,
+          339,
+          678,
+          1017,
+          1357,
+          1696,
+          2035,
+          2375,
+          2714,
+          3053,
+          3393,
+          3732,
+          4071,
+          4411,
+          4750,
+          5089,
+          5429
+        ],
+        "size": 5430,
+        "sum": [
+          10.007053167409254,
+          -577.2361390030103
+        ],
+        "weighted_sum": [
+          888.5924944116579,
+          5610.5784212138005
+        ]
+      },
+      "matrix_action_probe": {
+        "l2": 126787.57407998844,
+        "linf": 11043.45822615477,
+        "normalized_quantized_1e10_sha256": "5a62b7ca7493f940b9249afb38dc183d1e75e693c70eadf552edbfd0edf3b169",
+        "normalized_samples": [
+          [
+            0.006511320359877649,
+            -0.0019247882517180958
+          ],
+          [
+            -0.0022956376380660008,
+            0.000481611495073368
+          ],
+          [
+            0.06219977721689809,
+            0.09061905618724214
+          ],
+          [
+            -0.01574661687672327,
+            0.019622771858368415
+          ],
+          [
+            0.06689973573817373,
+            0.01396061484780933
+          ],
+          [
+            -0.00039567812720005453,
+            -0.003549357723227663
+          ],
+          [
+            0.0480862791939439,
+            0.12421965284597195
+          ],
+          [
+            -0.008111160091980677,
+            0.007221048921134454
+          ],
+          [
+            0.012176149855258602,
+            -0.018129181230419997
+          ],
+          [
+            0.00334608166509259,
+            -7.955480987945192e-05
+          ],
+          [
+            -0.021653121563209143,
+            0.06852709298457513
+          ],
+          [
+            -0.001120787853917098,
+            -0.0011971923997555237
+          ],
+          [
+            -0.21352729609540969,
+            -0.06912114751639116
+          ],
+          [
+            0.0006076895564538533,
+            -0.0006657453546632023
+          ],
+          [
+            -0.01638313967743811,
+            0.010889761472226013
+          ],
+          [
+            8.844308004793915e-05,
+            0.00036748343650854556
+          ],
+          [
+            -0.003413894682729194,
+            0.0011273912262352956
+          ]
+        ],
+        "sample_indices": [
+          0,
+          339,
+          678,
+          1017,
+          1357,
+          1696,
+          2035,
+          2375,
+          2714,
+          3053,
+          3393,
+          3732,
+          4071,
+          4411,
+          4750,
+          5089,
+          5429
+        ],
+        "size": 5430,
+        "sum": [
+          90165.62977117703,
+          -76789.00276801386
+        ],
+        "weighted_sum": [
+          86663.57986830137,
+          -39852.103548495215
+        ]
+      },
+      "matrix_action_root": {
+        "l2": 131542.9074409842,
+        "linf": 11084.828478828653,
+        "normalized_quantized_1e10_sha256": "72400c3095caa229abb223e4b0678924f8cc1abf42a2fec8cef14ac3ec7ed82b",
+        "normalized_samples": [
+          [
+            0.005006852431578085,
+            0.0012631268669974004
+          ],
+          [
+            -0.00037543039175754747,
+            -6.436655034504964e-05
+          ],
+          [
+            0.06162007252206628,
+            -0.01100048588168953
+          ],
+          [
+            0.01648911125389467,
+            -0.01707774783945288
+          ],
+          [
+            -0.16901151260614497,
+            0.07028795129425291
+          ],
+          [
+            0.0012956783606956777,
+            0.0037053374500364664
+          ],
+          [
+            -0.08649587621575323,
+            0.06424351696552724
+          ],
+          [
+            -0.002248483599071262,
+            -0.005305190991390479
+          ],
+          [
+            0.028977676653767926,
+            -0.02545338117597765
+          ],
+          [
+            -0.0013538724951963888,
+            -0.0022434904775276076
+          ],
+          [
+            0.15042590436670303,
+            0.13676750655387016
+          ],
+          [
+            0.0006472503008918767,
+            -0.002561078999727387
+          ],
+          [
+            0.08024236490677461,
+            -0.3358272300639436
+          ],
+          [
+            0.001117926101906226,
+            -0.005028950907081523
+          ],
+          [
+            -0.020862894984602073,
+            0.004609137870612335
+          ],
+          [
+            0.0004913090287636522,
+            0.0014574584463954946
+          ],
+          [
+            0.003166107852603916,
+            -0.0031233591146833327
+          ]
+        ],
+        "sample_indices": [
+          0,
+          339,
+          678,
+          1017,
+          1357,
+          1696,
+          2035,
+          2375,
+          2714,
+          3053,
+          3393,
+          3732,
+          4071,
+          4411,
+          4750,
+          5089,
+          5429
+        ],
+        "size": 5430,
+        "sum": [
+          -16189.206136040622,
+          -48442.89810805707
+        ],
+        "weighted_sum": [
+          -36311.38864623721,
+          -4980.863072007769
+        ]
+      },
+      "nonzero_rhs_full_recovery": {
+        "l2": 2742.0672588501297,
+        "linf": 179.29529902630816,
+        "normalized_quantized_1e10_sha256": "0c916529eccd44daebeedff0fef227c0098a480986ec7d47aa5ba8c1424bbf64",
+        "normalized_samples": [
+          [
+            0.0009435961231876568,
+            0.005530328453114073
+          ],
+          [
+            -0.0007703650609761764,
+            -0.0003810858121906747
+          ],
+          [
+            0.1148793293733081,
+            -0.06643870374941886
+          ],
+          [
+            0.013175148342716003,
+            0.018693263110077407
+          ],
+          [
+            0.00542469278100003,
+            0.0009949633397469998
+          ],
+          [
+            0.0002670103339846765,
+            0.0016149888879323279
+          ],
+          [
+            -0.0010458442697766502,
+            -0.0001875129654407973
+          ],
+          [
+            -0.0006436776722815439,
+            -0.005358408137019741
+          ],
+          [
+            -0.0033837245162047797,
+            -0.0004713275714418626
+          ],
+          [
+            -0.011695107367551508,
+            -0.0056003567203737805
+          ],
+          [
+            0.0033126993126512405,
+            -0.00556447263114338
+          ],
+          [
+            -0.0009689395815015685,
+            -0.00012109343307684714
+          ],
+          [
+            -0.09486487992542349,
+            -0.07582753550898882
+          ],
+          [
+            0.0008776642680195252,
+            0.0008879571567718379
+          ],
+          [
+            0.0031740693772314243,
+            0.0010300966952858153
+          ],
+          [
+            0.011237687445683972,
+            -0.0011699920156058529
+          ],
+          [
+            -0.0013379212015719071,
+            -0.000802929114228903
+          ]
+        ],
+        "sample_indices": [
+          0,
+          1734,
+          3468,
+          5202,
+          6937,
+          8671,
+          10405,
+          12140,
+          13874,
+          15608,
+          17343,
+          19077,
+          20811,
+          22546,
+          24280,
+          26014,
+          27749
+        ],
+        "size": 27750,
+        "sum": [
+          1275.6701648981655,
+          158.24508539008457
+        ],
+        "weighted_sum": [
+          1808.2327644075438,
+          3247.5510466385585
+        ]
+      },
+      "nonzero_rhs_recovered_interior_equation_relative_residual": 7.657783616398824e-15,
+      "right_reduced_rhs": {
+        "l2": 549.329839859111,
+        "linf": 90.39895904933086,
+        "normalized_quantized_1e10_sha256": "984754d7560453dc706affd64c509452030a2858e7e2b503b03031818b84ac09",
+        "normalized_samples": [
+          [
+            -0.004809259339412626,
+            0.03747323958725422
+          ],
+          [
+            -0.012983863010181477,
+            -0.023383329834022328
+          ],
+          [
+            0.02164391945228889,
+            -0.009566313364817865
+          ],
+          [
+            -0.003785526118087484,
+            0.013298613488707684
+          ],
+          [
+            0.03618629001678723,
+            -0.024592412772692782
+          ],
+          [
+            -0.033528264109502166,
+            -0.0009987311653120213
+          ],
+          [
+            0.0035026830908415113,
+            0.005705718578372969
+          ],
+          [
+            -0.003418519495220667,
+            0.022796195540234727
+          ],
+          [
+            0.004004924818277732,
+            -0.004508957601250697
+          ],
+          [
+            0.004977248672760592,
+            0.009742331577393194
+          ],
+          [
+            -0.006948822523301309,
+            -0.003687537297596221
+          ],
+          [
+            0.0017635950692794628,
+            -0.0005896967603589321
+          ],
+          [
+            -0.0038609061793946527,
+            0.00829046651251154
+          ],
+          [
+            0.011735898417330685,
+            -0.009693686357891819
+          ],
+          [
+            -0.0015356086556546798,
+            -0.020075650756348113
+          ],
+          [
+            0.012095194279113175,
+            -0.005747149808374118
+          ],
+          [
+            0.011419742647351187,
+            0.01134759386813449
+          ]
+        ],
+        "sample_indices": [
+          0,
+          339,
+          678,
+          1017,
+          1357,
+          1696,
+          2035,
+          2375,
+          2714,
+          3053,
+          3393,
+          3732,
+          4071,
+          4411,
+          4750,
+          5089,
+          5429
+        ],
+        "size": 5430,
+        "sum": [
+          9.849763667552452,
+          -577.2199883509429
+        ],
+        "weighted_sum": [
+          888.5563304354334,
+          5610.632447459785
+        ]
+      },
+      "zero_rhs_full_recovery": {
+        "l2": 180.02561453972385,
+        "linf": 8.642349166762354,
+        "normalized_quantized_1e10_sha256": "830e49eb6096087068ff12e2eecd4adc6873001ef43d50319051db63a68d17be",
+        "normalized_samples": [
+          [
+            0.01957596780718547,
+            0.11473291284367912
+          ],
+          [
+            -0.01598209367637573,
+            -0.00790605578795511
+          ],
+          [
+            -0.015085382575322959,
+            0.18111810886230484
+          ],
+          [
+            -0.0465923465990171,
+            0.14876897399370553
+          ],
+          [
+            0.1125413814609419,
+            0.02064163875792384
+          ],
+          [
+            0.002469455626648435,
+            0.017558249586702403
+          ],
+          [
+            -0.024688836940722828,
+            -0.002316822767230617
+          ],
+          [
+            -0.013353820645447531,
+            -0.11116623162216833
+          ],
+          [
+            0.004885840279593543,
+            -0.014036347452359911
+          ],
+          [
+            0.011740748004227624,
+            -0.028753850406167344
+          ],
+          [
+            0.06872569047896489,
+            -0.11544127239866171
+          ],
+          [
+            -0.013268972117507384,
+            -0.00859248871147998
+          ],
+          [
+            -0.29644958337509764,
+            -0.13142638179754
+          ],
+          [
+            0.018208136970959497,
+            0.018421674578741873
+          ],
+          [
+            0.06584965582154947,
+            0.021370519918078278
+          ],
+          [
+            0.2441813648875571,
+            -0.11621674880801644
+          ],
+          [
+            -0.015543542957830952,
+            -0.00798891201118826
+          ]
+        ],
+        "sample_indices": [
+          0,
+          1734,
+          3468,
+          5202,
+          6937,
+          8671,
+          10405,
+          12140,
+          13874,
+          15608,
+          17343,
+          19077,
+          20811,
+          22546,
+          24280,
+          26014,
+          27749
+        ],
+        "size": 27750,
+        "sum": [
+          508.66438360240613,
+          233.33823295241524
+        ],
+        "weighted_sum": [
+          6.266998826419619,
+          -696.2198064559982
+        ]
+      },
+      "zero_rhs_recovered_interior_equation_relative_residual": 1.7934223018935807e-14
+    },
+    "pass": true,
+    "petsc_ownership_ranges": [
+      [
+        0,
+        679
+      ],
+      [
+        679,
+        1358
+      ],
+      [
+        1358,
+        2037
+      ],
+      [
+        2037,
+        2716
+      ],
+      [
+        2716,
+        3395
+      ],
+      [
+        3395,
+        4074
+      ],
+      [
+        4074,
+        4752
+      ],
+      [
+        4752,
+        5430
+      ]
+    ],
+    "physical_trace_audit": {
+      "checks": {
+        "all_hanging_patches_have_relations": true,
+        "flattened_graph_pass": true,
+        "forest_carrier_identity": true,
+        "mpi_physical_authority_identity": true,
+        "no_slave_rows_numbered": true,
+        "periodic_cycle_closure": true
+      },
+      "compiled_cell_tensor_binding_complete": false,
+      "degree": 5,
+      "distributed_scalability_qualified": false,
+      "entity_catalog_sha256": "3bb1dc183fb2742fd38abb76707474d41a270883c699321df93d34cd32708b12",
+      "failures": [],
+      "flattened_graph_sha256": "e91da0dedf4734ca3bb9685fbdb6e5241bc080da56900ff09fbe607582d46648",
+      "hanging_patch_count": 8,
+      "hanging_primary_relation_count": 8,
+      "hanging_relation_count": 12,
+      "hanging_secondary_relation_count": 4,
+      "hanging_slave_rows": 1720,
+      "independent_trace_rows": 5430,
+      "maximum_chain_depth": 2,
+      "maximum_relation_residual": 3.929734507748659e-15,
+      "mpi_constraint_row_ownership_qualified": false,
+      "mpi_ghost_expansion_qualified": false,
+      "mpi_physical_catalog_identity_qualified": true,
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "partition_independent_physical_keys": true,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "periodic_cycle_error": 1.2412670766236366e-16,
+      "periodic_primary_relation_count": 64,
+      "periodic_relation_count": 72,
+      "periodic_secondary_relation_count": 8,
+      "phase_x": [
+        0.9800665778412416,
+        0.19866933079506122
+      ],
+      "phase_y": [
+        0.955336489125606,
+        -0.29552020666133955
+      ],
+      "physical_authority_sha256": "e77363111ab8f386ec1e37893f966d869043f4e19d1e0261079aec299b878528",
+      "physical_edge_count": 260,
+      "physical_face_count": 170,
+      "raw_trace_rows": 8100,
+      "schema_version": "task035d.broken-hexa-trace-authority.v1",
+      "status": "broken_hexa_trace_constraint_component_pass"
+    },
+    "raw_oracle_assembly_audit": {
+      "active_full3d_rows_before_condensation": 24750,
+      "active_trace_rows": 8100,
+      "active_trace_rows_before_constraint_elimination": 8100,
+      "active_trace_rows_before_periodic_elimination": 8100,
+      "appended_rows": 0,
+      "cell_p6_tensors_are_local_only": true,
+      "compiled_p6_element_hash": 16913352432823651554,
+      "compiled_p6_form_dtype": "complex128",
+      "compiled_p6_tensor_builder": true,
+      "compiled_trace_constraint_binding_complete": false,
+      "condensation_seconds_max": 3.5411025119246915,
+      "final_assembly_deferred": false,
+      "final_assembly_seconds": 3.718100266996771,
+      "floquet_elimination_applied_before_insertion": false,
+      "full_active_global_matrix_constructed": false,
+      "full_p6_global_matrix_constructed": false,
+      "global_cell_count": 37,
+      "hanging_elimination_applied_before_insertion": false,
+      "hanging_or_floquet_slave_rows": 0,
+      "hanging_or_floquet_slave_rows_globally_numbered": false,
+      "hanging_slave_rows": 0,
+      "inactive_p6_full_rows": 3660,
+      "inactive_p6_rows_globally_numbered": false,
+      "inactive_p6_trace_rows": 3660,
+      "insertion_seconds_max": 0.015908782079350203,
+      "interior_adjoint_operator_residual_max": 8.10438429036637e-15,
+      "interior_recovery_operator_residual_max": 1.9520964191969185e-15,
+      "local_reference_class_count_sum": 37,
+      "matrix_mallocs": 0,
+      "matrix_nnz": 3143400,
+      "matrix_nnz_allocated": 3143400,
+      "matrix_nnz_preallocated": 3143400,
+      "matrix_rows": 8100,
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "periodic_slave_rows": 0,
+      "periodic_slave_rows_globally_numbered": false,
+      "preallocation_seconds": 0.025820257025770843,
+      "projection_seconds_max": 13.908681899891235,
+      "raw_tensor_broadcast_seconds_max": 0.016274306981358677,
+      "raw_tensor_class_count_global_unique": 2,
+      "raw_tensor_class_count_sum": 2,
+      "raw_tensor_class_owner_ranks": {
+        "('p6_actual_space', 1, 0.5, 0.5, 0.5)": 0,
+        "('p6_actual_space', 1, 1.0, 1.0, 1.0)": 1
+      },
+      "raw_tensor_class_use_count_sum": 12,
+      "raw_tensor_class_user_rank_counts": {
+        "('p6_actual_space', 1, 0.5, 0.5, 0.5)": 8,
+        "('p6_actual_space', 1, 1.0, 1.0, 1.0)": 4
+      },
+      "raw_tensor_classes": [
+        {
+          "active_kernel_ids": [
+            1
+          ],
+          "canonical_coordinates_sha256": "74e0cfa22f9f5ae7af34cac520bd57acc9b3a01bad90820bb942a88f1383833d",
+          "cell_widths": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "consumer_rank_count": 8,
+          "dimension": 882,
+          "material_tag": 1,
+          "owner_rank": 0,
+          "policy": "p6_actual_space",
+          "tensor_bytes": 12446784
+        },
+        {
+          "active_kernel_ids": [
+            1
+          ],
+          "canonical_coordinates_sha256": "e9f28c6bc6e2644a82da4d74358847b9634525c2eafd7f827046303751bac2c5",
+          "cell_widths": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "consumer_rank_count": 4,
+          "dimension": 882,
+          "material_tag": 1,
+          "owner_rank": 1,
+          "policy": "p6_actual_space",
+          "tensor_bytes": 12446784
+        }
+      ],
+      "raw_tensor_cross_rank_dedup_active": true,
+      "raw_tensor_global_owner_policy": "deterministic_dimension_squared_greedy_all_mpi_ranks",
+      "raw_tensor_kernel_seconds_max": 69.41598204697948,
+      "raw_tensor_logical_broadcast_bytes": 174254976,
+      "raw_tensor_metadata_seconds": 0.0010616770014166832,
+      "raw_tensor_owner_cost_loads": [
+        777924,
+        777924,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "raw_tensor_owner_evaluation_sync_seconds_max": 69.41613852599403,
+      "raw_tensor_policy_signatures_identical": true,
+      "schema_version": "task035d.variable-p-condensed-trace-system.v1",
+      "status": "variable_p_condensed_trace_matrix_pass",
+      "total_build_seconds": 17.508260896021966,
+      "trace_constraint_cell_tensor_binding_complete": false,
+      "trace_constraint_elimination_applied_before_insertion": false,
+      "trace_constraint_kinds": [],
+      "trace_constraint_schema": null,
+      "trace_preallocation": {
+        "active_rows": 8100,
+        "appended_graph_preallocation": "not_applicable",
+        "appended_rows": 0,
+        "appended_rows_per_support_group": [],
+        "appended_support_active_row_counts": [],
+        "appended_support_group_count": 0,
+        "base_graph_preallocation": "exact",
+        "local_row_count": 1013,
+        "maximum_diagonal_nnz": 440,
+        "maximum_off_diagonal_nnz": 815,
+        "new_nonzero_allocation_error_enabled": true,
+        "ordinary_default_changed": false,
+        "policy": "distributed_exact_constrained_cell_graph_plus_support_safe_appended_upper_bound",
+        "preallocated_structural_nnz": 3143400,
+        "received_cell_graph_count": 30,
+        "schema_version": "task035b.exact-trace-preallocation.v1"
+      },
+      "trace_slave_rows_globally_numbered": false,
+      "uniform_p6_full3d_rows": 28410,
+      "uniform_p6_trace_rows": 11760
+    },
+    "stable_identity": {
+      "active_full_rows": 24750,
+      "canonical_cell_graph_sha256": "5de0bd41774cb38c12aa243eb5b5bab030781023a9c71efb950af62e7e48300c",
+      "carrier_connectivity_sha256": "764259d25dc801949aa118d1ce7ba575a64979e9ed1c500e78a3175cfb190ba1",
+      "compiled_element_hash": 16913352432823651554,
+      "flattened_graph_sha256": "e91da0dedf4734ca3bb9685fbdb6e5241bc080da56900ff09fbe607582d46648",
+      "independent_trace_rows": 5430,
+      "leaf_catalog_sha256": "85083ba15cce04d2ce48ff5990ac5914742c54f2a6417a4fba40e0308b33c695",
+      "matrix_nnz": 2758850,
+      "matrix_rows": 5430,
+      "physical_authority_sha256": "e77363111ab8f386ec1e37893f966d869043f4e19d1e0261079aec299b878528",
+      "raw_oracle_matrix_nnz": 3143400,
+      "raw_oracle_matrix_rows": 8100,
+      "raw_trace_rows": 8100
+    },
+    "status": "compiled_local_h_cell_tensor_component_pass",
+    "trace_degree": 5
+  },
+  "pass": true,
+  "pde_accuracy_credit": false,
+  "pde_launch_blockers": [
+    "formal MPI1/MPI2/MPI8 comparison is generated separately",
+    "remote constraint ownership/ghost-equivalent lookup is not yet qualified for the production PDE path",
+    "this record is a cell-tensor component sub-gate only"
+  ],
+  "pde_launch_gate": false,
+  "prior_authorities": {
+    "attempt1_orientation_restriction_hash_bound": true,
+    "p5_hanging_restriction_sha256": "90bd8eb7c612f044c0026ce0551c2f96d8241adc9b63b8e402652b5b738ccf2a",
+    "phase_a_exact_sequence_hash_bound": true,
+    "records": {
+      "local_h_attempt1_mpi_identity": {
+        "p5_hanging_restriction_sha256": "90bd8eb7c612f044c0026ce0551c2f96d8241adc9b63b8e402652b5b738ccf2a",
+        "pass": true,
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt1_mpi_identity_v1.json",
+        "sha256": "d341ad69dd52df6bbedcec8a522084cd75ae99fd9fd7d751bab7bfb73655fe44",
+        "status": "local_h_attempt1_mpi1_mpi2_mpi8_identity_pass"
+      },
+      "phase_a_compact": {
+        "pass": true,
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/compact_authority_v1.json",
+        "sha256": "2e896ef45bbfc5c11901503269d11c0321106c9e41f71729ac7c6fc722687403",
+        "status": "case097_phase_a_compact_authority"
+      },
+      "phase_a_reference_active_space": {
+        "pass": true,
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/reference_active_space_authority_v1.json",
+        "sha256": "4c1c5e68540dca4ddcc4165b0cc175abb4671ad254a44c1aa3518e4c9398ea9b",
+        "status": "task035d_phase_a_serial_authority_pass"
+      }
+    }
+  },
+  "scalability_caveat": "entity blocks and component Gram are replicated; dense owned-cell expansions and full-vector allgathers remain in the fixture path",
+  "schema_version": "case097.local-h-attempt2-authority.v2",
+  "source_identity": {
+    "allowed_generated_evidence": [
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt2_mpi1_v2.json",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt2_mpi2_v2.json"
+    ],
+    "clean_semantics": "no tracked/staged/unknown changes; previously generated Attempt2 evidence files are enumerated and allowed",
+    "disallowed_status_lines": [],
+    "head": "03503eeb65ce47b4884e2d9d5fb718036225fca2",
+    "status_lines": [
+      "?? benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt2_mpi1_v2.json",
+      "?? benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt2_mpi2_v2.json"
+    ],
+    "verified_clean_numerical_source": true
+  },
+  "source_sha": "03503eeb65ce47b4884e2d9d5fb718036225fca2",
+  "stable_identity": {
+    "active_full_rows": 24750,
+    "canonical_cell_graph_sha256": "5de0bd41774cb38c12aa243eb5b5bab030781023a9c71efb950af62e7e48300c",
+    "carrier_connectivity_sha256": "764259d25dc801949aa118d1ce7ba575a64979e9ed1c500e78a3175cfb190ba1",
+    "compiled_element_hash": 16913352432823651554,
+    "flattened_graph_sha256": "e91da0dedf4734ca3bb9685fbdb6e5241bc080da56900ff09fbe607582d46648",
+    "independent_trace_rows": 5430,
+    "leaf_catalog_sha256": "85083ba15cce04d2ce48ff5990ac5914742c54f2a6417a4fba40e0308b33c695",
+    "matrix_nnz": 2758850,
+    "matrix_rows": 5430,
+    "physical_authority_sha256": "e77363111ab8f386ec1e37893f966d869043f4e19d1e0261079aec299b878528",
+    "raw_oracle_matrix_nnz": 3143400,
+    "raw_oracle_matrix_rows": 8100,
+    "raw_trace_rows": 8100
+  },
+  "status": "local_h_attempt2_cell_tensor_component_pass_pde_blocked"
+}
