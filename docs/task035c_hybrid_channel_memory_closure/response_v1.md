@@ -149,3 +149,25 @@ Ruff / compileall / JSON parse / git diff --check = pass
 Review V2 已授权在 M0–M4 完成后选择性整合到 master；本 response 中的数值
 结论仍绑定 `244b62e1...`，文档、PSS/USS compact 回填和 manifest 不改变该
 numerical authority。
+
+## 7. Review V2 M0–M4 receipt
+
+```text
+task035c_closeout_source = 900260556ba9a74bc631e8295b08fc1487bd5abc
+integration_base = 1fb144d3ca50208c22b5f0733e140bfac8d9c47c
+task035c_manifest_files = 69
+integration_hygiene_files = 1
+final_selective_diff_files = 70
+focused_serial = 180 passed, 10 skipped
+mpi2_components = 21 passed per rank
+mpi8_components = 17 passed, 4 skipped per rank
+full_repository = 619 passed, 28 skipped
+tracked_json = 898 parse pass
+numerical_blob_checker = pass
+task035c_authority_kernel_blobs = 10/10 byte-identical
+p6_h10_heavy_pde_rerun = no
+```
+
+额外 1 个 integration hygiene file 只删除 Case095 复现命令中对历史
+`do_not_merge` 测试的陈旧引用，不涉及 numerical kernel。最终 master SHA
+由 fast-forward 和远程 push 成功后在 Git handoff 中报告，不在提交内自引用。

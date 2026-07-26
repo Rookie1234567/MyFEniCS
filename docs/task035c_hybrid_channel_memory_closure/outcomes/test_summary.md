@@ -62,3 +62,33 @@ fail-closed期望后，targeted 13项和最终full suite均通过。该修复不
 没有GitHub Actions证据，因此这里只声明本地WSL测试。昂贵p6 PDE已绑定数值
 source `244b62e1...`；后续checker、compact evidence和文档收口没有触发
 无理由PDE重跑。
+
+## 5. Review V2 M0–M4 选择性整合验证
+
+临时 integration 从干净
+`origin/master@1fb144d3ca50208c22b5f0733e140bfac8d9c47c` 建立，以
+`900260556ba9a74bc631e8295b08fc1487bd5abc` 为 Task035c 冻结源，按 manifest
+文件级迁移，没有整体 merge 旧分支。
+
+| Gate | integration 结果 |
+|---|---|
+| Task035c source files | 69 个，CSV 与首个 integration commit changed paths 完全相等 |
+| integration hygiene | 另修复 Case095 `test_command.txt` 对已 `do_not_merge`、master 中不存在的历史 test158 引用；最终 manifest 70 个 paths |
+| Case095 compact checker | pass；19 records 全部 hash verified |
+| Case096 raw regeneration | `generate_compact_records.py --check` pass |
+| focused serial | `180 passed, 10 skipped in 124.46 s` |
+| MPI2 component | 2 ranks 各 `21 passed in 355.98/355.89 s` |
+| MPI8 component | 8 ranks 各 `17 passed, 4 skipped in 119.77–119.78 s` |
+| full repository | **`619 passed, 28 skipped in 455.62 s`** |
+| Ruff | 全 `src` 与 `benchmarks` pass |
+| compileall | 全 `src` 与 `benchmarks` pass |
+| tracked JSON | `898` files parse pass |
+| numerical blob checker | `numerical_blob_compatibility_pass` |
+| Task035c Review V2 kernel identity | 10/10 指定 kernel 与 `244b62e1...` byte-identical |
+| manifest / diff | 70/70 exact；`do_not_merge=0`；`git diff --check` pass |
+| ordinary default | `standard_full`，unchanged |
+| heavy p6/h10 PDE rerun | **no**；kernel blob 未变，Review V2 禁止无理由重复 |
+
+第一次 focused 命令在 PDE/test 执行前因陈旧文件名返回 code 4；Case095 checker
+已经先行通过。该错误被保留并直接修复为当前 master 真实存在的测试集合，随后
+focused、MPI2、MPI8 和 full suite 全部通过。它不是 ABI、数值或资源负结果。
