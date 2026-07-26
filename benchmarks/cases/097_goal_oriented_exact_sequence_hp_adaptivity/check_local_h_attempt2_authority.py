@@ -18,11 +18,11 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[3]
 CASE_DIR = Path(__file__).resolve().parent
 RECORD_DIR = CASE_DIR / "records"
-SCHEMA = "case097.local-h-attempt2-authority.v1"
+SCHEMA = "case097.local-h-attempt2-authority.v2"
 EXPECTED_NAMES = {
-    1: "local_h_attempt2_mpi1_v1.json",
-    2: "local_h_attempt2_mpi2_v1.json",
-    8: "local_h_attempt2_mpi8_v1.json",
+    1: "local_h_attempt2_mpi1_v2.json",
+    2: "local_h_attempt2_mpi2_v2.json",
+    8: "local_h_attempt2_mpi8_v2.json",
 }
 FIXTURE_CONFIG = {
     "root_cells": [3, 3, 1],
@@ -222,6 +222,13 @@ def _validate_record(
         assembly = fixture["assembly_audit"]
         diagnostic = fixture["raw_oracle_assembly_audit"]
         observables = fixture["observables"]
+        if not (
+            "canonical physical roots"
+            in observables["active_rhs_semantics"]
+            and "canonical forest leaf"
+            in observables["full_recovery_signature_semantics"]
+        ):
+            failures.append("canonical_observable_semantics")
         if not (
             fixture["trace_degree"] == 5
             and fixture["cell_interior_degree"] == 6

@@ -164,7 +164,7 @@ def test_attempt2_comparison_accepts_only_mpi1_mpi2_mpi8_identity(
     for mpi_size in (1, 2, 8):
         path = (
             records_dir
-            / f"local_h_attempt2_mpi{mpi_size}_v1.json"
+            / f"local_h_attempt2_mpi{mpi_size}_v2.json"
         )
         path.write_text(json.dumps(_record(mpi_size)), encoding="utf-8")
         paths.append(path)
@@ -203,7 +203,7 @@ def test_attempt2_comparison_fails_closed_on_observable_tamper(
             ][0][0] += 0.25
         path = (
             records_dir
-            / f"local_h_attempt2_mpi{mpi_size}_v1.json"
+            / f"local_h_attempt2_mpi{mpi_size}_v2.json"
         )
         path.write_text(json.dumps(payload), encoding="utf-8")
         paths.append(path)

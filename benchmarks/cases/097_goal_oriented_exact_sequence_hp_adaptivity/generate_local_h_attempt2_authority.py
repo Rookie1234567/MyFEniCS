@@ -98,6 +98,14 @@ ALLOWED_GENERATED_EVIDENCE = {
     "records/local_h_attempt2_mpi8_v1.json",
     "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
     "records/local_h_attempt2_mpi_identity_v1.json",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "records/local_h_attempt2_mpi1_v2.json",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "records/local_h_attempt2_mpi2_v2.json",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "records/local_h_attempt2_mpi8_v2.json",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "records/local_h_attempt2_mpi_identity_v2.json",
 }
 FIXTURE_CONFIG = {
     "root_cells": [3, 3, 1],
@@ -586,22 +594,124 @@ def _matrix_from_lu_factor(
     return matrix
 
 
-def _active_rhs(system: Any) -> PETSc.Vec:
+def _active_rhs(system: Any, constraints: Any) -> PETSc.Vec:
     comm = system.entity_map.mesh.comm
+    values = np.zeros(
+        system.entity_map.active_rows,
+        dtype=np.complex128,
+    )
+    root_rows = np.arange(
+        constraints.independent_trace_rows,
+        dtype=np.float64,
+    )
+    canonical_trace_root = (
+        np.sin(0.029 * root_rows)
+        + 1j * np.cos(0.031 * root_rows)
+        + 0.02 * np.sin(0.037 * root_rows)
+    )
+    values[: system.entity_map.active_trace_rows] = (
+        _expected_raw_trace(constraints, canonical_trace_root)
+    )
+    constraint_by_cell = {
+        cell.global_cell: cell for cell in constraints.owned_cells
+    }
+    local_interior_packets = []
+    for recovery in system.cell_recovery:
+        cell = recovery.cell
+        space = recovery.space
+        canonical_leaf = constraint_by_cell[cell.global_cell].canonical_leaf
+        reference_rhs = np.zeros(
+            space.hcurl_dimension,
+            dtype=np.complex128,
+        )
+        mode = (
+            canonical_leaf * 1000
+            + np.arange(len(space.interior_dofs), dtype=np.float64)
+        )
+        reference_rhs[space.interior_dofs] = (
+            np.sin(0.011 * mode)
+            + 1j * np.cos(0.007 * mode)
+            + 0.03 * np.cos(0.017 * mode)
+        )
+        oriented_rhs = space.apply_hcurl_dof_transform(
+            reference_rhs,
+            cell_info=cell.cell_info,
+        )
+        local_interior_packets.append(
+            (
+                np.asarray(cell.interior_rows, dtype=np.int64),
+                np.asarray(
+                    oriented_rhs[space.interior_dofs],
+                    dtype=np.complex128,
+                ),
+            )
+        )
+    covered = []
+    for packet in comm.allgather(tuple(local_interior_packets)):
+        for rows, local_values in packet:
+            values[rows] = local_values
+            covered.extend(map(int, rows))
+    expected_interior = np.arange(
+        system.entity_map.active_trace_rows,
+        system.entity_map.active_rows,
+        dtype=np.int64,
+    )
+    if not np.array_equal(
+        np.sort(np.asarray(covered, dtype=np.int64)),
+        expected_interior,
+    ):
+        raise RuntimeError(
+            "canonical active RHS does not cover each interior row once"
+        )
     counts = _balanced_counts(system.entity_map.active_rows, comm.size)
     vector = PETSc.Vec().createMPI(
         (counts[comm.rank], system.entity_map.active_rows),
         comm=comm,
     )
     start, stop = vector.getOwnershipRange()
-    rows = np.arange(start, stop, dtype=np.float64)
-    vector.getArray()[:] = (
-        np.sin(0.011 * rows)
-        + 1j * np.cos(0.007 * rows)
-        + 0.03 * np.cos(0.017 * rows)
-    )
+    vector.getArray()[:] = values[start:stop]
     vector.assemble()
     return vector
+
+
+def _canonical_recovered_values(
+    system: Any,
+    constraints: Any,
+    recovered_values: np.ndarray,
+) -> np.ndarray:
+    constraint_by_cell = {
+        cell.global_cell: cell for cell in constraints.owned_cells
+    }
+    local_packet = []
+    for recovery in system.cell_recovery:
+        cell = recovery.cell
+        oriented = np.asarray(recovered_values[cell.active_rows])
+        reference = recovery.space.apply_hcurl_dof_transform(
+            oriented,
+            cell_info=cell.cell_info,
+            transpose=True,
+        )
+        local_packet.append(
+            (
+                int(constraint_by_cell[cell.global_cell].canonical_leaf),
+                np.asarray(reference, dtype=np.complex128),
+            )
+        )
+    gathered = [
+        row
+        for packet in system.entity_map.mesh.comm.allgather(
+            tuple(local_packet)
+        )
+        for row in packet
+    ]
+    gathered.sort(key=lambda row: row[0])
+    if [leaf for leaf, _values in gathered] != list(
+        range(len(gathered))
+    ):
+        raise RuntimeError(
+            "canonical recovery does not cover every forest leaf once"
+        )
+    return np.concatenate([values for _leaf, values in gathered])
 
 
 def _compiled_form(carrier: Any) -> tuple[Any, Any]:
@@ -725,7 +835,7 @@ def _run_compiled_fixture(
             1.0,
         )
 
-        active_rhs = _active_rhs(system)
+        active_rhs = _active_rhs(system, constraints)
         reduced_right = condense_variable_p_active_vector_to_trace(
             system,
             active_rhs,
@@ -782,6 +892,16 @@ def _run_compiled_fixture(
         )
         recovered_zero_values = _global_vector(recovered_zero)
         recovered_rhs_values = _global_vector(recovered_rhs)
+        canonical_recovered_zero_values = _canonical_recovered_values(
+            system,
+            constraints,
+            recovered_zero_values,
+        )
+        canonical_recovered_rhs_values = _canonical_recovered_values(
+            system,
+            constraints,
+            recovered_rhs_values,
+        )
         raw_recovered_zero_values = _global_vector(raw_recovered_zero)
         raw_recovered_rhs_values = _global_vector(raw_recovered_rhs)
         zero_recovery_abs, zero_recovery_rel = _relative_max_error(
@@ -1121,10 +1241,20 @@ def _run_compiled_fixture(
                 "right_reduced_rhs": _vector_signature(right_values),
                 "left_reduced_rhs": _vector_signature(left_values),
                 "zero_rhs_full_recovery": _vector_signature(
-                    recovered_zero_values
+                    canonical_recovered_zero_values
                 ),
                 "nonzero_rhs_full_recovery": _vector_signature(
-                    recovered_rhs_values
+                    canonical_recovered_rhs_values
+                ),
+                "full_recovery_signature_semantics": (
+                    "oriented active cell coefficients are inverse-transformed "
+                    "to reference coefficients and concatenated by canonical "
+                    "forest leaf"
+                ),
+                "active_rhs_semantics": (
+                    "trace RHS is generated from canonical physical roots; "
+                    "cell-interior dual coefficients are generated by "
+                    "canonical leaf/mode then transformed to DOLFINx ordering"
                 ),
                 "implementation_congruence_errors": {
                     "action_root_max_abs": action_root_abs,
@@ -1289,7 +1419,7 @@ def generate_authority(
     }
     failures = [name for name, passed in checks.items() if not passed]
     return {
-        "schema_version": "case097.local-h-attempt2-authority.v1",
+        "schema_version": "case097.local-h-attempt2-authority.v2",
         "status": (
             "local_h_attempt2_cell_tensor_component_pass_pde_blocked"
             if not failures
@@ -1397,7 +1527,7 @@ def _recompute_record_pass(
         if not _all_numbers_finite(payload):
             failures.append("nonfinite_value")
         if payload["schema_version"] != (
-            "case097.local-h-attempt2-authority.v1"
+            "case097.local-h-attempt2-authority.v2"
         ):
             failures.append("schema_version")
         if not re.fullmatch(r"[0-9a-f]{40}", str(payload["source_sha"])):
@@ -1612,9 +1742,9 @@ def compare_authorities(records: tuple[Path, ...]) -> dict[str, Any]:
     )
     recomputed = [_recompute_record_pass(payload) for payload in payloads]
     expected_names = {
-        1: "local_h_attempt2_mpi1_v1.json",
-        2: "local_h_attempt2_mpi2_v1.json",
-        8: "local_h_attempt2_mpi8_v1.json",
+        1: "local_h_attempt2_mpi1_v2.json",
+        2: "local_h_attempt2_mpi2_v2.json",
+        8: "local_h_attempt2_mpi8_v2.json",
     }
     abi_signatures = [
         {
@@ -1771,7 +1901,7 @@ def compare_authorities(records: tuple[Path, ...]) -> dict[str, Any]:
         )
     failures = [name for name, passed in checks.items() if not passed]
     return {
-        "schema_version": "case097.local-h-attempt2-mpi-comparison.v1",
+        "schema_version": "case097.local-h-attempt2-mpi-comparison.v2",
         "status": (
             "local_h_attempt2_mpi_identity_component_pass_pde_blocked"
             if not failures
