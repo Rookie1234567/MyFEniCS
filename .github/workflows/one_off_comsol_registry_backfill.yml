@@ -6,6 +6,14 @@ on:
       - chatgpt/20260726-development-model-registry-backfill
     paths:
       - .github/workflows/one_off_comsol_registry_backfill.yml
+  pull_request:
+    branches:
+      - codex/20260726-task35c-hybrid-channel-memory-closure
+    paths:
+      - .github/workflows/one_off_comsol_registry_backfill.yml
+      - .github/scripts/one_off_comsol_registry_backfill.py
+      - docs/development_model_registry.md
+      - src/test/test_183_development_model_registry_markdown.py
 
 permissions:
   contents: write
@@ -46,5 +54,3 @@ jobs:
           git diff --cached --check
           git commit -m 'docs: complete COMSOL registry and repair Markdown tables'
           git push origin HEAD:chatgpt/20260726-development-model-registry-backfill
-
-# retrigger: 2026-07-26T09:15Z
