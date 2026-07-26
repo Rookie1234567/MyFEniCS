@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from types import SimpleNamespace
 
 from mpi4py import MPI
@@ -11,6 +12,7 @@ import ufl
 from basix.ufl import element
 from dolfinx import default_real_type, fem
 
+import src.adaptivity.hcurl_broken_cell_trace as broken_cell_trace_module
 from src.adaptivity.dyadic_hexa_broken_mesh import (
     build_broken_dyadic_hexa_carrier,
 )
@@ -156,7 +158,12 @@ def _global_trace_expansion(constraints) -> sparse.csr_matrix:
     rows: list[int] = []
     columns: list[int] = []
     values: list[complex] = []
-    for block in constraints.entity_blocks.values():
+    blocks = getattr(
+        constraints,
+        "work_owned_entity_blocks",
+        tuple(constraints.entity_blocks.values()),
+    )
+    for block in blocks:
         local_rows, local_columns = np.nonzero(
             np.abs(block.full_from_independent) > 0.0
         )
@@ -165,8 +172,21 @@ def _global_trace_expansion(constraints) -> sparse.csr_matrix:
         values.extend(
             map(complex, block.full_from_independent[local_rows, local_columns])
         )
+    packets = MPI.COMM_WORLD.allgather(
+        (
+            np.asarray(rows, dtype=np.int64),
+            np.asarray(columns, dtype=np.int64),
+            np.asarray(values, dtype=np.complex128),
+        )
+    )
     return sparse.coo_matrix(
-        (values, (rows, columns)),
+        (
+            np.concatenate([packet[2] for packet in packets]),
+            (
+                np.concatenate([packet[0] for packet in packets]),
+                np.concatenate([packet[1] for packet in packets]),
+            ),
+        ),
         shape=(
             constraints.entity_map.active_trace_rows,
             constraints.independent_trace_rows,
@@ -220,6 +240,31 @@ def test_actual_cell_info_binding_is_partition_independent() -> None:
     assert audit["physical_authority_sha256"] == (
         "d65bc72969f7ee2180d08563bc75f4c60067a954a518da0b14afed2750ba2177"
     )
+    routing = audit["owner_routed_trace_cache_audit"]
+    assert audit["petsc_constraint_row_ownership_qualified"] is True
+    assert audit["mpi_ghost_expansion_qualified"] is True
+    assert audit["pde_launch_ownership_gate"] is True
+    assert audit["replicated_entity_block_bytes_per_rank"] == 0
+    assert audit["distributed_scalability_qualified"] is False
+    assert routing["pass"] is True
+    assert routing["dense_global_entity_catalog_replicated"] is False
+    assert routing["declaration_catalog_is_metadata_only"] is True
+    assert routing["request_reply_count_closes"] is True
+    assert sum(routing["work_owned_block_counts_by_rank"]) == routing[
+        "declaration_count"
+    ]
+    assert all(
+        routing[name] == 0
+        for name in (
+            "missing_reply_count",
+            "duplicate_reply_count",
+            "unrequested_reply_count",
+            "wrong_owner_reply_count",
+            "stale_or_corrupt_reply_count",
+        )
+    )
+    if MPI.COMM_WORLD.size > 1:
+        assert sum(routing["request_counts_by_rank"]) > 0
     hashes = MPI.COMM_WORLD.allgather(
         audit["canonical_cell_graph_sha256"]
     )
@@ -415,6 +460,35 @@ def test_trace_constraint_protocol_fails_closed() -> None:
             trace_constraints=inconsistent,
         )
 
+    work_block = constraints.work_owned_entity_blocks[0]
+    wrong_owner = replace(
+        work_block,
+        active_vector_work_owner_rank=1,
+    )
+    wrong_owner_blocks = dict(constraints.entity_blocks)
+    wrong_owner_blocks[
+        (wrong_owner.dimension, wrong_owner.global_entity)
+    ] = wrong_owner
+    wrong_owner_work = tuple(
+        wrong_owner if block is work_block else block
+        for block in constraints.work_owned_entity_blocks
+    )
+    invalid_routing = SimpleNamespace(
+        entity_map=entity_map,
+        audit=constraints.audit,
+        independent_trace_rows=constraints.independent_trace_rows,
+        owned_cells=constraints.owned_cells,
+        entity_blocks=wrong_owner_blocks,
+        work_owned_entity_blocks=wrong_owner_work,
+        component_gram=constraints.component_gram,
+    )
+    with pytest.raises(ValueError, match="wrong active-vector owner"):
+        build_variable_p_condensed_trace_system(
+            entity_map,
+            tensors,
+            trace_constraints=invalid_routing,
+        )
+
 
 def test_mpi_rank_local_constraint_corruption_fails_collectively() -> None:
     if MPI.COMM_WORLD.size != 2:
@@ -448,6 +522,71 @@ def test_mpi_rank_local_constraint_corruption_fails_collectively() -> None:
             trace_constraints=rank_local,
         )
 
+    divergent_fields = {
+        "entity_map": entity_map,
+        "audit": constraints.audit,
+        "independent_trace_rows": constraints.independent_trace_rows,
+        "owned_cells": constraints.owned_cells,
+        "entity_blocks": constraints.entity_blocks,
+        "component_gram": constraints.component_gram,
+    }
+    if MPI.COMM_WORLD.rank == 0:
+        divergent_fields["work_owned_entity_blocks"] = (
+            constraints.work_owned_entity_blocks
+        )
+    divergent_mode = SimpleNamespace(**divergent_fields)
+    with pytest.raises(ValueError, match="routing-mode validation"):
+        build_variable_p_condensed_trace_system(
+            entity_map,
+            tensors,
+            trace_constraints=divergent_mode,
+        )
+
+    for mutation in ("duplicate", "missing"):
+        work_blocks = list(constraints.work_owned_entity_blocks)
+        if MPI.COMM_WORLD.rank == 0:
+            if mutation == "duplicate":
+                work_blocks.append(work_blocks[0])
+            else:
+                work_blocks.pop(0)
+        malformed_partition = SimpleNamespace(
+            entity_map=entity_map,
+            audit=constraints.audit,
+            independent_trace_rows=constraints.independent_trace_rows,
+            owned_cells=constraints.owned_cells,
+            entity_blocks=constraints.entity_blocks,
+            work_owned_entity_blocks=tuple(work_blocks),
+            component_gram=constraints.component_gram,
+        )
+        with pytest.raises(ValueError, match="partition"):
+            build_variable_p_condensed_trace_system(
+                entity_map,
+                tensors,
+                trace_constraints=malformed_partition,
+            )
+
+
+def test_mpi_rank_local_cell_expansion_failure_is_collective(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    if MPI.COMM_WORLD.size != 2:
+        pytest.skip("MPI2 rank-local cell-expansion failure control")
+    if MPI.COMM_WORLD.rank == 0:
+
+        def fail_cell_expansion(*_args, **_kwargs):
+            raise RuntimeError("injected rank-local cell expansion failure")
+
+        monkeypatch.setattr(
+            broken_cell_trace_module,
+            "_cell_expansion",
+            fail_cell_expansion,
+        )
+    with pytest.raises(
+        RuntimeError,
+        match="cell trace expansion failed collectively",
+    ):
+        _single_hanging_fixture()
+
 
 def test_periodic_hanging_chains_bind_without_numbered_slaves() -> None:
     if MPI.COMM_WORLD.size not in {1, 2, 8}:
@@ -463,6 +602,67 @@ def test_periodic_hanging_chains_bind_without_numbered_slaves() -> None:
     assert audit["maximum_trace_interior_mixing_error"] == 0.0
     assert audit["hanging_or_floquet_slave_rows_globally_numbered"] is False
     assert len(constraints.owned_cells) == len(entity_map.owned_cells)
+    routing = audit["owner_routed_trace_cache_audit"]
+    assert routing["pass"] is True
+    assert routing["dense_global_entity_catalog_replicated"] is False
+    hanging_participants = {
+        (int(row[0]), tuple(map(int, row[1])))
+        for row in audit["cross_rank_hanging_participant_entities"]
+    }
+    remote_hanging_participants = {
+        (int(row[0]), tuple(map(int, row[1])))
+        for row in audit[
+            "cross_rank_hanging_remote_participant_entities"
+        ]
+    }
+    assert len(hanging_participants) == audit[
+        "cross_rank_hanging_participant_entity_count"
+    ]
+    assert len(remote_hanging_participants) == audit[
+        "cross_rank_hanging_remote_participant_entity_count"
+    ]
+    assert remote_hanging_participants <= hanging_participants
+    if MPI.COMM_WORLD.size > 1:
+        assert audit["cross_rank_hanging_patch_count"] > 0
+        assert audit["cross_rank_hanging_relation_count"] > 0
+        assert audit["cross_rank_hanging_participant_entity_count"] > 0
+        assert remote_hanging_participants
+        assert (
+            sum(
+                audit[
+                    "cross_rank_hanging_remote_lookup_counts_by_rank"
+                ]
+            )
+            > 0
+        )
+        assert sum(audit["remote_entity_lookup_counts_by_rank"]) > 0
+        assert sum(routing["request_counts_by_rank"]) > 0
+        assert all(
+            count > 0
+            for count in routing["work_owned_block_counts_by_rank"]
+        )
+        assert all(
+            value > 0
+            for value in routing[
+                "work_owned_native_array_bytes_by_rank"
+            ]
+        )
+        assert routing["retained_cache_duplication_factor"] >= 1.0
+        assert all(
+            count == 0
+            for count in audit["hanging_cell_ghost_counts_by_rank"]
+        )
+    else:
+        assert not hanging_participants
+        assert not remote_hanging_participants
+        assert (
+            sum(
+                audit[
+                    "cross_rank_hanging_remote_lookup_counts_by_rank"
+                ]
+            )
+            == 0
+        )
     hashes = MPI.COMM_WORLD.allgather(
         audit["canonical_cell_graph_sha256"]
     )

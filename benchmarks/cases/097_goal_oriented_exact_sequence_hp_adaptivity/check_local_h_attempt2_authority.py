@@ -22,12 +22,13 @@ CHECKER_RELATIVE = (
     "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
     "check_local_h_attempt2_authority.py"
 )
-SCHEMA = "case097.local-h-attempt2-authority.v2"
+SCHEMA = "case097.local-h-attempt2-authority.v3"
 EXPECTED_NAMES = {
-    1: "local_h_attempt2_mpi1_v2.json",
-    2: "local_h_attempt2_mpi2_v2.json",
-    8: "local_h_attempt2_mpi8_v2.json",
+    1: "local_h_attempt2_mpi1_v3.json",
+    2: "local_h_attempt2_mpi2_v3.json",
+    8: "local_h_attempt2_mpi8_v3.json",
 }
+FORMAL_OUTPUT_NAME = "local_h_attempt2_mpi_identity_v3.json"
 FIXTURE_CONFIG = {
     "root_cells": [3, 3, 1],
     "refined_root": [0, 0, 0, 0, 0],
@@ -78,6 +79,62 @@ PRIOR_AUTHORITY_SHA256 = {
         "d341ad69dd52df6bbedcec8a522084cd75ae99fd9fd7d751bab7bfb73655fe44",
     ),
 }
+ATTEMPT2_HISTORY = {
+    "mpi1_v1": (
+        "local_h_attempt2_mpi1_v1.json",
+        "ebe88241242603971eaaba89735c893a5445f416486e02c0fa1b0647a44ddfbc",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "mpi2_v1": (
+        "local_h_attempt2_mpi2_v1.json",
+        "05c526a728538065bb00b49e0d578365173babad18933fd607e4b46d0546e354",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "mpi8_v1": (
+        "local_h_attempt2_mpi8_v1.json",
+        "c0bf2e9b14fd5852d3d65f71aa2fea7c6362ffa96d997eb020bb312ec11df5cd",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "identity_v1_controlled_failure": (
+        "local_h_attempt2_mpi_identity_v1.json",
+        "9afcacd1e855ed08dd2609ae54b5c1de1fb3d97a783bc29d12b76bb767398411",
+        "local_h_attempt2_evidence_fail",
+        False,
+    ),
+    "mpi1_v2": (
+        "local_h_attempt2_mpi1_v2.json",
+        "6a4ae7312402e94653206b68ed54a825703f89bef7bbb787d2abf777d3d5a6af",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "mpi2_v2": (
+        "local_h_attempt2_mpi2_v2.json",
+        "b135f618880883d0b9360be3483c0cf0aa786710588a61479db5e845981f2405",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "mpi8_v2": (
+        "local_h_attempt2_mpi8_v2.json",
+        "7814a3bac9da53557218947afec48f9fd8a544eed9cb3c59cafd94baeff08f12",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "identity_v2_controlled_failure": (
+        "local_h_attempt2_mpi_identity_v2.json",
+        "d72d3bb204c6ed0f2bb57fa701ce81b55f61ee090c2d9247c59679f1df5bed9a",
+        "local_h_attempt2_evidence_fail",
+        False,
+    ),
+    "identity_v2_checker_fix1": (
+        "local_h_attempt2_mpi_identity_v2_checker_fix1.json",
+        "63a5aea0c8f10984e7959ce9f186cc36bb5a4a06d207f8f184bcaf2284b10bcd",
+        "local_h_attempt2_component_pass_pde_blocked",
+        True,
+    ),
+}
 EXPECTED_P5_RESTRICTION_SHA256 = (
     "90bd8eb7c612f044c0026ce0551c2f96d8241adc9b63b8e402652b5b738ccf2a"
 )
@@ -96,6 +153,34 @@ def _json_sha256(payload: Any) -> str:
             allow_nan=False,
         ).encode("utf-8")
     ).hexdigest()
+
+
+def _balanced_ranges(total: int, size: int) -> list[tuple[int, int]]:
+    quotient, remainder = divmod(int(total), int(size))
+    ranges: list[tuple[int, int]] = []
+    start = 0
+    for rank in range(int(size)):
+        stop = start + quotient + (1 if rank < remainder else 0)
+        ranges.append((start, stop))
+        start = stop
+    return ranges
+
+
+def _canonical_entity_catalog(
+    payload: Any,
+) -> tuple[list[tuple[int, tuple[int, ...]]], list[list[Any]]]:
+    entities = [
+        (int(row[0]), tuple(map(int, row[1])))
+        for row in payload
+    ]
+    canonical = sorted(entities)
+    canonical_payload = [
+        [dimension, list(geometry_key)]
+        for dimension, geometry_key in canonical
+    ]
+    if len(set(entities)) != len(entities) or payload != canonical_payload:
+        raise ValueError("physical entity catalog is not canonical")
+    return canonical, canonical_payload
 
 
 def _strict_load(path: Path) -> Mapping[str, Any]:
@@ -134,6 +219,44 @@ def _solver_blob_manifest(source_sha: str) -> dict[str, str]:
     return result
 
 
+def _live_numerical_source_identity(head: str) -> dict[str, Any]:
+    committed = _solver_blob_manifest(head)
+    live = {
+        relative: _sha256(ROOT / relative)
+        for relative in NUMERICAL_RELATIVE_FILES
+    }
+    status_lines = [
+        line
+        for line in subprocess.check_output(
+            (
+                "git",
+                "status",
+                "--short",
+                "--untracked-files=all",
+                "--",
+                *NUMERICAL_RELATIVE_FILES,
+            ),
+            cwd=ROOT,
+            text=True,
+        ).splitlines()
+        if line
+    ]
+    mismatched_files = sorted(
+        relative
+        for relative in NUMERICAL_RELATIVE_FILES
+        if live.get(relative) != committed.get(relative)
+    )
+    return {
+        "live_sha256": live,
+        "committed_sha256": committed,
+        "status_lines": status_lines,
+        "mismatched_files": mismatched_files,
+        "verified_clean_numerical_source": (
+            not status_lines and not mismatched_files
+        ),
+    }
+
+
 def _live_checker_identity() -> dict[str, Any]:
     head = subprocess.check_output(
         ("git", "rev-parse", "HEAD"),
@@ -162,6 +285,7 @@ def _live_checker_identity() -> dict[str, Any]:
     ]
     live_sha256 = _sha256(Path(__file__))
     committed_sha256 = hashlib.sha256(committed).hexdigest()
+    numerical_source = _live_numerical_source_identity(head)
     return {
         "path": CHECKER_RELATIVE,
         "git_head": head,
@@ -171,6 +295,10 @@ def _live_checker_identity() -> dict[str, Any]:
         "verified_clean_checker": (
             live_sha256 == committed_sha256 and not status_lines
         ),
+        "numerical_source": numerical_source,
+        "verified_clean_numerical_source": numerical_source[
+            "verified_clean_numerical_source"
+        ],
     }
 
 
@@ -204,11 +332,43 @@ def _prior_authority_manifest() -> dict[str, Any]:
     }
 
 
+def _attempt2_history_immutability_manifest() -> dict[str, Any]:
+    records: dict[str, Any] = {}
+    for name, (
+        filename,
+        expected_sha,
+        expected_status,
+        expected_pass,
+    ) in ATTEMPT2_HISTORY.items():
+        path = RECORD_DIR / filename
+        payload = _strict_load(path)
+        if (
+            _sha256(path) != expected_sha
+            or payload.get("status") != expected_status
+            or payload.get("pass") is not expected_pass
+        ):
+            raise RuntimeError(
+                f"Attempt2 historical evidence drifted: {name}"
+            )
+        records[name] = {
+            "path": f"records/{filename}",
+            "sha256": expected_sha,
+            "expected_status": expected_status,
+            "expected_pass": expected_pass,
+        }
+    return {
+        "records": records,
+        "historical_failure_evidence_preserved": True,
+        "history_file_count": len(records),
+    }
+
+
 def _validate_record(
     path: Path,
     payload: Mapping[str, Any],
     *,
     prior_manifest: Mapping[str, Any],
+    history_manifest: Mapping[str, Any],
 ) -> list[str]:
     failures: list[str] = []
     try:
@@ -239,6 +399,8 @@ def _validate_record(
             failures.append("fixture_config")
         if payload["prior_authorities"] != prior_manifest:
             failures.append("prior_authorities")
+        if payload["attempt2_history_immutability"] != history_manifest:
+            failures.append("attempt2_history_immutability")
         environment = payload["environment"]
         rank_env = environment["rank_environments"]
         comparable = [
@@ -263,6 +425,7 @@ def _validate_record(
         entity_map = fixture["entity_map_audit"]
         physical = fixture["physical_trace_audit"]
         trace = fixture["cell_trace_binding_audit"]
+        routing = trace["owner_routed_trace_cache_audit"]
         assembly = fixture["assembly_audit"]
         diagnostic = fixture["raw_oracle_assembly_audit"]
         observables = fixture["observables"]
@@ -284,6 +447,22 @@ def _validate_record(
             and assembly["pass"] is True
         ):
             failures.append("component_authorities")
+        if not (
+            entity_map["global_entity_counts"]
+            == {"1": 260, "2": 170, "3": 37}
+            and entity_map["active_rows"] == 24750
+            and entity_map["active_trace_rows"] == 8100
+            and physical["physical_edge_count"] == 260
+            and physical["physical_face_count"] == 170
+            and trace["global_cell_count"] == 37
+            and trace["raw_trace_rows"] == 8100
+            and trace["independent_trace_rows"] == 5430
+            and assembly["matrix_rows"] == 5430
+            and assembly["matrix_nnz"] == 2758850
+            and diagnostic["matrix_rows"] == 8100
+            and diagnostic["matrix_nnz"] == 3143400
+        ):
+            failures.append("frozen_fixture_structure")
         if not (
             physical["periodic_axes"] == ["x", "y"]
             and physical["maximum_relation_residual"] <= 5.0e-11
@@ -308,6 +487,257 @@ def _validate_record(
             and trace["distributed_scalability_qualified"] is False
         ):
             failures.append("cell_trace_binding")
+        request_counts = list(map(int, routing["request_counts_by_rank"]))
+        received_request_counts = list(
+            map(int, routing["received_request_counts_by_rank"])
+        )
+        reply_counts = list(map(int, routing["reply_counts_by_rank"]))
+        received_reply_counts = list(
+            map(int, routing["received_reply_counts_by_rank"])
+        )
+        work_counts = list(
+            map(int, routing["work_owned_block_counts_by_rank"])
+        )
+        work_bytes = list(
+            map(int, routing["work_owned_native_array_bytes_by_rank"])
+        )
+        cache_bytes = list(
+            map(int, routing["local_cache_native_array_bytes_by_rank"])
+        )
+        unique_owner_bytes = list(
+            map(
+                int,
+                routing[
+                    "unique_dolfinx_owner_native_array_bytes_by_rank"
+                ],
+            )
+        )
+        trace_work_ranges = [
+            tuple(map(int, row))
+            for row in routing["active_trace_work_ownership_ranges"]
+        ]
+        expected_trace_work_ranges = _balanced_ranges(
+            trace["raw_trace_rows"],
+            mpi_size,
+        )
+        unique_owner_bytes_total = sum(unique_owner_bytes)
+        expected_duplication = (
+            sum(cache_bytes) / unique_owner_bytes_total
+            if unique_owner_bytes_total > 0
+            else -1.0
+        )
+        if not (
+            trace["petsc_constraint_row_ownership_qualified"] is True
+            and trace["mpi_ghost_expansion_qualified"] is True
+            and trace["pde_launch_ownership_gate"] is True
+            and trace["full_dense_entity_catalog_replicated"] is False
+            and trace["remote_resolution_audit_is_count_and_digest_only"]
+            is True
+            and routing["pass"] is True
+            and routing["dense_global_entity_catalog_replicated"] is False
+            and routing["declaration_catalog_is_metadata_only"] is True
+            and routing["request_reply_count_closes"] is True
+            and fixture["stable_identity"][
+                "owner_routed_canonical_content_sha256"
+            ]
+            == routing["canonical_content_sha256"]
+            and len(request_counts)
+            == len(received_request_counts)
+            == len(reply_counts)
+            == len(received_reply_counts)
+            == len(work_counts)
+            == len(work_bytes)
+            == len(cache_bytes)
+            == len(unique_owner_bytes)
+            == mpi_size
+            and len(trace_work_ranges) == mpi_size
+            and trace_work_ranges == expected_trace_work_ranges
+            and all(
+                value >= 0
+                for value in (
+                    *request_counts,
+                    *received_request_counts,
+                    *reply_counts,
+                    *received_reply_counts,
+                    *work_counts,
+                )
+            )
+            and reply_counts == received_request_counts
+            and received_reply_counts == request_counts
+            and sum(request_counts)
+            == sum(received_request_counts)
+            == sum(reply_counts)
+            == sum(received_reply_counts)
+            and sum(work_counts) == routing["declaration_count"]
+            and sum(trace["dolfinx_entity_owner_counts_by_rank"])
+            == routing["declaration_count"]
+            and all(value > 0 for value in work_bytes)
+            and all(value > 0 for value in cache_bytes)
+            and all(value > 0 for value in unique_owner_bytes)
+            and unique_owner_bytes_total
+            == routing[
+                "unique_dolfinx_owner_native_array_bytes_global_sum"
+            ]
+            and sum(cache_bytes)
+            == routing["retained_cache_native_array_bytes_global_sum"]
+            and max(cache_bytes)
+            == routing["retained_cache_native_array_bytes_max"]
+            and np.isclose(
+                routing["retained_cache_duplication_factor"],
+                expected_duplication,
+                rtol=0.0,
+                atol=1.0e-15,
+            )
+            and routing["retained_cache_duplication_factor"] >= 1.0
+            and routing[
+                "native_array_bytes_are_logical_not_rss_pss_peak"
+            ]
+            is True
+            and trace_work_ranges[0][0] == 0
+            and trace_work_ranges[-1][1] == trace["raw_trace_rows"]
+            and all(
+                left[1] == right[0]
+                for left, right in zip(
+                    trace_work_ranges[:-1],
+                    trace_work_ranges[1:],
+                    strict=True,
+                )
+            )
+            and all(
+                routing[name] == 0
+                for name in (
+                    "missing_reply_count",
+                    "duplicate_reply_count",
+                    "unrequested_reply_count",
+                    "wrong_owner_reply_count",
+                    "stale_or_corrupt_reply_count",
+                )
+            )
+            and all(
+                isinstance(digest, str)
+                and re.fullmatch(r"[0-9a-f]{64}", digest)
+                for digest in (
+                    routing["canonical_content_sha256"],
+                    routing["owner_assignment_sha256"],
+                    trace["physical_entity_owner_sha256"],
+                    trace["constraint_relation_owner_sha256"],
+                )
+            )
+        ):
+            failures.append("owner_routed_cache")
+        remote_digests = trace[
+            "remote_entity_lookup_local_digests_by_rank"
+        ]
+        root_digests = trace[
+            "off_process_root_reference_local_digests_by_rank"
+        ]
+        remote_counts = list(
+            map(int, trace["remote_entity_lookup_counts_by_rank"])
+        )
+        remote_hanging_lookup_counts = list(
+            map(
+                int,
+                trace[
+                    "cross_rank_hanging_remote_lookup_counts_by_rank"
+                ],
+            )
+        )
+        root_counts = list(
+            map(int, trace["off_process_root_reference_counts_by_rank"])
+        )
+        (
+            hanging_participants,
+            hanging_participant_payload,
+        ) = _canonical_entity_catalog(
+            trace["cross_rank_hanging_participant_entities"]
+        )
+        (
+            remote_hanging_participants,
+            remote_hanging_participant_payload,
+        ) = _canonical_entity_catalog(
+            trace[
+                "cross_rank_hanging_remote_participant_entities"
+            ]
+        )
+        remote_resolution_payload = {
+            "remote_entity_lookup_counts_by_rank": remote_counts,
+            "remote_entity_lookup_local_digests_by_rank": remote_digests,
+            "off_process_root_reference_counts_by_rank": root_counts,
+            "off_process_root_reference_local_digests_by_rank": root_digests,
+        }
+        if not (
+            len(remote_digests)
+            == len(root_digests)
+            == len(remote_counts)
+            == len(remote_hanging_lookup_counts)
+            == len(root_counts)
+            == mpi_size
+            and all(
+                value >= 0
+                for value in (
+                    *remote_counts,
+                    *remote_hanging_lookup_counts,
+                    *root_counts,
+                )
+            )
+            and all(
+                isinstance(digest, str)
+                and re.fullmatch(r"[0-9a-f]{64}", digest)
+                for digest in (*remote_digests, *root_digests)
+            )
+            and trace["remote_resolution_sha256"]
+            == _json_sha256(remote_resolution_payload)
+            and len(hanging_participants)
+            == trace["cross_rank_hanging_participant_entity_count"]
+            and trace["cross_rank_hanging_participant_entity_sha256"]
+            == _json_sha256(hanging_participant_payload)
+            and len(remote_hanging_participants)
+            == trace[
+                "cross_rank_hanging_remote_participant_entity_count"
+            ]
+            and trace[
+                "cross_rank_hanging_remote_participant_entity_sha256"
+            ]
+            == _json_sha256(remote_hanging_participant_payload)
+            and set(remote_hanging_participants).issubset(
+                hanging_participants
+            )
+            and sum(remote_hanging_lookup_counts) <= sum(remote_counts)
+            and len(trace["hanging_cell_ghost_counts_by_rank"])
+            == mpi_size
+            and all(
+                int(count) == 0
+                for count in trace["hanging_cell_ghost_counts_by_rank"]
+            )
+            and (
+                (
+                    mpi_size == 1
+                    and trace["cross_rank_hanging_patch_count"] == 0
+                    and trace["cross_rank_hanging_relation_count"] == 0
+                    and sum(request_counts) == 0
+                    and sum(remote_counts) == 0
+                    and sum(remote_hanging_lookup_counts) == 0
+                    and sum(root_counts) == 0
+                    and not hanging_participants
+                    and not remote_hanging_participants
+                )
+                or (
+                    mpi_size > 1
+                    and trace["cross_rank_hanging_patch_count"] > 0
+                    and trace["cross_rank_hanging_relation_count"] > 0
+                    and trace[
+                        "cross_rank_hanging_participant_entity_count"
+                    ]
+                    > 0
+                    and sum(remote_hanging_lookup_counts) > 0
+                    and bool(remote_hanging_participants)
+                    and sum(remote_counts) > 0
+                    and sum(root_counts) > 0
+                    and sum(request_counts) > 0
+                )
+            )
+        ):
+            failures.append("cross_rank_hanging_owner_path")
         if not (
             assembly["trace_constraint_kinds"] == ["floquet", "hanging"]
             and assembly["matrix_rows"] == trace["independent_trace_rows"]
@@ -330,6 +760,18 @@ def _validate_record(
             and assembly["full_active_global_matrix_constructed"] is False
             and assembly[
                 "hanging_or_floquet_slave_rows_globally_numbered"
+            ]
+            is False
+            and assembly[
+                "trace_constraint_owner_routing_qualified"
+            ]
+            is True
+            and assembly[
+                "trace_constraint_dense_global_entity_catalog_replicated"
+            ]
+            is False
+            and assembly[
+                "trace_constraint_distributed_scalability_qualified"
             ]
             is False
         ):
@@ -397,8 +839,9 @@ def _validate_record(
             and fixture["pass"] is True
             and fixture["failures"] == []
             and payload["status"]
-            == "local_h_attempt2_cell_tensor_component_pass_pde_blocked"
+            == "local_h_attempt2_owner_routed_component_pass_mpi_gate_pending"
             and payload["distributed_scalability_qualified"] is False
+            and payload["pde_launch_ownership_gate"] is True
             and payload["pde_launch_gate"] is False
             and payload["heavy_pde_started"] is False
             and payload["pde_accuracy_credit"] is False
@@ -406,6 +849,15 @@ def _validate_record(
         ):
             failures.append("declared_scope")
         ledger = payload["component_resource_ledger"]
+        outgoing_reply_bytes = list(
+            map(int, ledger["outgoing_reply_logical_bytes_by_rank"])
+        )
+        incoming_reply_bytes = list(
+            map(int, ledger["incoming_reply_logical_bytes_by_rank"])
+        )
+        owned_cell_expansion_bytes = list(
+            map(int, ledger["owned_cell_expansion_bytes_by_rank"])
+        )
         if not (
             ledger["raw_oracle_and_candidate_co_resident"] is True
             and ledger[
@@ -416,6 +868,67 @@ def _validate_record(
             is False
             and ledger["timings_are_per_stage_mpi_max_not_rank_sum"]
             is True
+            and ledger["full_dense_entity_catalog_replicated"] is False
+            and ledger["replicated_entity_block_bytes_per_rank"] == 0
+            and ledger[
+                "native_array_bytes_are_logical_not_rss_pss_peak"
+            ]
+            is True
+            and ledger[
+                "remote_resolution_audit_is_count_and_digest_only"
+            ]
+            is True
+            and ledger[
+                "unique_dolfinx_owner_entity_block_bytes_by_rank"
+            ]
+            == unique_owner_bytes
+            and ledger["retained_entity_block_cache_bytes_by_rank"]
+            == cache_bytes
+            and ledger["work_owned_entity_block_bytes_by_rank"]
+            == work_bytes
+            and ledger["work_owner_straddling_block_count"]
+            == routing["work_owner_straddling_block_count"]
+            and ledger[
+                "retained_entity_block_cache_duplication_factor"
+            ]
+            == routing["retained_cache_duplication_factor"]
+            and ledger["retained_entity_block_cache_bytes_global_sum"]
+            == sum(cache_bytes)
+            and ledger["retained_entity_block_cache_bytes_max"]
+            == max(cache_bytes)
+            and len(outgoing_reply_bytes)
+            == len(incoming_reply_bytes)
+            == len(owned_cell_expansion_bytes)
+            == mpi_size
+            and outgoing_reply_bytes
+            == list(map(int, routing["reply_native_array_bytes_by_rank"]))
+            and incoming_reply_bytes
+            == list(
+                map(
+                    int,
+                    routing[
+                        "received_reply_native_array_bytes_by_rank"
+                    ],
+                )
+            )
+            and sum(outgoing_reply_bytes) == sum(incoming_reply_bytes)
+            and all(value >= 0 for value in outgoing_reply_bytes)
+            and all(value >= 0 for value in incoming_reply_bytes)
+            and all(value > 0 for value in owned_cell_expansion_bytes)
+            and owned_cell_expansion_bytes
+            == list(map(int, trace["owned_cell_expansion_bytes_by_rank"]))
+            and ledger["owned_cell_expansion_bytes_global_sum"]
+            == sum(owned_cell_expansion_bytes)
+            == trace["owned_cell_expansion_bytes_global_sum"]
+            and ledger["replicated_component_gram_bytes_per_rank"]
+            == trace["replicated_component_gram_bytes_per_rank"]
+            and ledger["candidate_matrix_rows"]
+            == assembly["matrix_rows"]
+            and ledger["candidate_matrix_nnz"] == assembly["matrix_nnz"]
+            and ledger["diagnostic_raw_matrix_rows"]
+            == diagnostic["matrix_rows"]
+            and ledger["diagnostic_raw_matrix_nnz"]
+            == diagnostic["matrix_nnz"]
         ):
             failures.append("resource_semantics")
     except (KeyError, TypeError, ValueError, IndexError):
@@ -501,6 +1014,11 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
         checker_identity = _live_checker_identity()
         if checker_identity["verified_clean_checker"] is not True:
             failures.append("checker_source_identity")
+        if (
+            checker_identity["verified_clean_numerical_source"]
+            is not True
+        ):
+            failures.append("live_numerical_source_identity")
     except (OSError, subprocess.SubprocessError, ValueError, KeyError) as exc:
         checker_identity = {
             "verified_clean_checker": False,
@@ -512,6 +1030,11 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
     except (OSError, ValueError, RuntimeError, KeyError) as exc:
         prior = {}
         failures.append(f"prior_authority_probe:{type(exc).__name__}")
+    try:
+        history = _attempt2_history_immutability_manifest()
+    except (OSError, ValueError, RuntimeError, KeyError, TypeError) as exc:
+        history = {}
+        failures.append(f"history_immutability_probe:{type(exc).__name__}")
     for path in records:
         try:
             payload = _strict_load(path)
@@ -519,6 +1042,7 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
                 path,
                 payload,
                 prior_manifest=prior,
+                history_manifest=history,
             )
         except (OSError, ValueError, TypeError) as exc:
             payload = None
@@ -576,6 +1100,25 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
         cross_checks = {
             "mpi_sizes_are_1_2_8": mpi_sizes == {1, 2, 8},
             "same_solver_source_sha": len(sources) == 1,
+            "live_checker_blob_matches_record_source": (
+                source_sha is not None
+                and checker_identity.get("verified_clean_checker") is True
+                and checker_identity.get("git_head") == source_sha
+                and checker_identity.get("live_sha256")
+                == solver_blobs.get(CHECKER_RELATIVE)
+            ),
+            "live_numerical_source_matches_record_source": (
+                source_sha is not None
+                and checker_identity.get(
+                    "verified_clean_numerical_source"
+                )
+                is True
+                and checker_identity.get("git_head") == source_sha
+                and checker_identity.get("numerical_source", {}).get(
+                    "live_sha256"
+                )
+                == solver_blobs
+            ),
             "same_solver_blob_manifest": all(
                 payload["numerical_files"]
                 == valid_payloads[0]["numerical_files"]
@@ -588,6 +1131,57 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
                 for payload in valid_payloads[1:]
             ),
             "same_abi": all(row == abi[0] for row in abi[1:]),
+            "owner_routing_subgate_all_mpi": all(
+                payload["pde_launch_ownership_gate"] is True
+                and payload[fixture_name]["cell_trace_binding_audit"][
+                    "pde_launch_ownership_gate"
+                ]
+                is True
+                and payload[fixture_name]["assembly_audit"][
+                    "trace_constraint_owner_routing_qualified"
+                ]
+                is True
+                for payload in valid_payloads
+            ),
+            "mpi2_mpi8_cross_rank_hanging_owner_path": all(
+                payload[fixture_name]["cell_trace_binding_audit"][
+                    "cross_rank_hanging_patch_count"
+                ]
+                > 0
+                and payload[fixture_name]["cell_trace_binding_audit"][
+                    "cross_rank_hanging_relation_count"
+                ]
+                > 0
+                and payload[fixture_name]["cell_trace_binding_audit"][
+                    "cross_rank_hanging_participant_entity_count"
+                ]
+                > 0
+                and payload[fixture_name]["cell_trace_binding_audit"][
+                    "cross_rank_hanging_remote_participant_entity_count"
+                ]
+                > 0
+                and sum(
+                    payload[fixture_name][
+                        "cell_trace_binding_audit"
+                    ][
+                        "cross_rank_hanging_remote_lookup_counts_by_rank"
+                    ]
+                )
+                > 0
+                for payload in valid_payloads
+                if int(payload["mpi_size"]) > 1
+            ),
+            "owner_routed_cache_not_full_catalog": all(
+                payload[fixture_name]["cell_trace_binding_audit"][
+                    "full_dense_entity_catalog_replicated"
+                ]
+                is False
+                and payload[fixture_name]["cell_trace_binding_audit"][
+                    "owner_routed_trace_cache_audit"
+                ]["request_reply_count_closes"]
+                is True
+                for payload in valid_payloads
+            ),
         }
         for observable_name in observable_names:
             reference = valid_payloads[0][fixture_name]["observables"][
@@ -616,9 +1210,9 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
         failures.append("valid_record_count")
 
     return {
-        "schema_version": "case097.local-h-attempt2-independent-check.v2",
+        "schema_version": "case097.local-h-attempt2-independent-check.v3",
         "status": (
-            "local_h_attempt2_component_pass_pde_blocked"
+            "local_h_attempt2_owner_routed_component_pass_pde_launch_ready"
             if not failures
             else "local_h_attempt2_evidence_fail"
         ),
@@ -631,6 +1225,7 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
         ],
         "record_failures": load_failures,
         "checker_identity": checker_identity,
+        "attempt2_history_immutability": history,
         "cross_checks": cross_checks,
         "non_gating_digest_diagnostics": digest_diagnostics,
         "signature_identity_semantics": {
@@ -646,7 +1241,12 @@ def check_records(records: tuple[Path, ...]) -> dict[str, Any]:
         "solver_commit_numerical_files": solver_blobs,
         "failures": failures,
         "component_only": True,
-        "pde_launch_gate": False,
+        "pde_launch_ownership_gate": not failures,
+        "pde_launch_gate": not failures,
+        "pde_launch_scope": (
+            "minimal local-h PDE may start; no PDE accuracy or "
+            "distributed-scalability credit is granted"
+        ),
         "pde_accuracy_credit": False,
         "distributed_scalability_qualified": False,
         "ordinary_default_changed": False,
@@ -666,25 +1266,53 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _validate_cli_paths(
+    records: tuple[Path, ...],
+    output: Path,
+) -> Path:
+    expected_records = tuple(
+        (RECORD_DIR / EXPECTED_NAMES[mpi_size]).resolve()
+        for mpi_size in (1, 2, 8)
+    )
+    observed_records = tuple(path.resolve() for path in records)
+    if observed_records != expected_records:
+        raise ValueError(
+            "independent checker inputs must be the ordered formal "
+            "MPI1/MPI2/MPI8 v3 records"
+        )
+    expected_output = (RECORD_DIR / FORMAL_OUTPUT_NAME).resolve()
+    if output.resolve() != expected_output:
+        raise ValueError(
+            "independent checker output must be the formal v3 identity record"
+        )
+    if output.exists():
+        raise FileExistsError(
+            "formal v3 identity evidence already exists and is immutable"
+        )
+    return output
+
+
 def main() -> int:
     args = _parse_args()
-    result = check_records(tuple(args.records))
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(
-            result,
-            indent=2,
-            sort_keys=True,
-            allow_nan=False,
+    records = tuple(args.records)
+    output = _validate_cli_paths(records, args.output)
+    result = check_records(records)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("x", encoding="utf-8") as stream:
+        stream.write(
+            json.dumps(
+                result,
+                indent=2,
+                sort_keys=True,
+                allow_nan=False,
+            )
+            + "\n"
         )
-        + "\n",
-        encoding="utf-8",
-    )
     print(
         json.dumps(
             {
-                "output": str(args.output),
-                "sha256": _sha256(args.output),
+                "output": str(output),
+                "sha256": _sha256(output),
                 "status": result["status"],
                 "pass": result["pass"],
             },

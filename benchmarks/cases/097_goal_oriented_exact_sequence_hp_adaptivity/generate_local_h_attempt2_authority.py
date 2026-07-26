@@ -69,6 +69,15 @@ from src.solvers.hcurl_variable_p_reduction import (  # noqa: E402
 
 
 CASE_DIR = Path(__file__).resolve().parent
+RECORD_DIR = CASE_DIR / "records"
+EXPECTED_V3_RECORD_NAMES = {
+    1: "local_h_attempt2_mpi1_v3.json",
+    2: "local_h_attempt2_mpi2_v3.json",
+    8: "local_h_attempt2_mpi8_v3.json",
+}
+DIAGNOSTIC_OUTPUT_DIR = Path(
+    "/tmp/myfenics-task035d-attempt2-diagnostics"
+)
 NUMERICAL_FILES = (
     ROOT / "src/adaptivity/dyadic_hexa_refinement.py",
     ROOT / "src/adaptivity/dyadic_hexa_broken_mesh.py",
@@ -106,6 +115,14 @@ ALLOWED_GENERATED_EVIDENCE = {
     "records/local_h_attempt2_mpi8_v2.json",
     "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
     "records/local_h_attempt2_mpi_identity_v2.json",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "records/local_h_attempt2_mpi1_v3.json",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "records/local_h_attempt2_mpi2_v3.json",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "records/local_h_attempt2_mpi8_v3.json",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "records/local_h_attempt2_mpi_identity_v3.json",
 }
 FIXTURE_CONFIG = {
     "root_cells": [3, 3, 1],
@@ -146,6 +163,62 @@ PRIOR_AUTHORITIES = {
         ),
     },
 }
+ATTEMPT2_HISTORY = {
+    "mpi1_v1": (
+        "records/local_h_attempt2_mpi1_v1.json",
+        "ebe88241242603971eaaba89735c893a5445f416486e02c0fa1b0647a44ddfbc",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "mpi2_v1": (
+        "records/local_h_attempt2_mpi2_v1.json",
+        "05c526a728538065bb00b49e0d578365173babad18933fd607e4b46d0546e354",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "mpi8_v1": (
+        "records/local_h_attempt2_mpi8_v1.json",
+        "c0bf2e9b14fd5852d3d65f71aa2fea7c6362ffa96d997eb020bb312ec11df5cd",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "identity_v1_controlled_failure": (
+        "records/local_h_attempt2_mpi_identity_v1.json",
+        "9afcacd1e855ed08dd2609ae54b5c1de1fb3d97a783bc29d12b76bb767398411",
+        "local_h_attempt2_evidence_fail",
+        False,
+    ),
+    "mpi1_v2": (
+        "records/local_h_attempt2_mpi1_v2.json",
+        "6a4ae7312402e94653206b68ed54a825703f89bef7bbb787d2abf777d3d5a6af",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "mpi2_v2": (
+        "records/local_h_attempt2_mpi2_v2.json",
+        "b135f618880883d0b9360be3483c0cf0aa786710588a61479db5e845981f2405",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "mpi8_v2": (
+        "records/local_h_attempt2_mpi8_v2.json",
+        "7814a3bac9da53557218947afec48f9fd8a544eed9cb3c59cafd94baeff08f12",
+        "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        True,
+    ),
+    "identity_v2_controlled_failure": (
+        "records/local_h_attempt2_mpi_identity_v2.json",
+        "d72d3bb204c6ed0f2bb57fa701ce81b55f61ee090c2d9247c59679f1df5bed9a",
+        "local_h_attempt2_evidence_fail",
+        False,
+    ),
+    "identity_v2_checker_fix1": (
+        "records/local_h_attempt2_mpi_identity_v2_checker_fix1.json",
+        "63a5aea0c8f10984e7959ce9f186cc36bb5a4a06d207f8f184bcaf2284b10bcd",
+        "local_h_attempt2_component_pass_pde_blocked",
+        True,
+    ),
+}
 EXPECTED_P5_HANGING_RESTRICTION_SHA256 = (
     "90bd8eb7c612f044c0026ce0551c2f96d8241adc9b63b8e402652b5b738ccf2a"
 )
@@ -171,16 +244,16 @@ def _sha256(path: Path) -> str:
 
 def _write(path: Path, payload: Mapping[str, Any]) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(
-            _plain(payload),
-            indent=2,
-            sort_keys=True,
-            allow_nan=False,
+    with path.open("x", encoding="utf-8") as stream:
+        stream.write(
+            json.dumps(
+                _plain(payload),
+                indent=2,
+                sort_keys=True,
+                allow_nan=False,
+            )
+            + "\n"
         )
-        + "\n",
-        encoding="utf-8",
-    )
     return _sha256(path)
 
 
@@ -245,6 +318,42 @@ def _prior_authority_manifest() -> dict[str, Any]:
         "p5_hanging_restriction_sha256": (
             EXPECTED_P5_HANGING_RESTRICTION_SHA256
         ),
+    }
+
+
+def _attempt2_history_immutability_manifest() -> dict[str, Any]:
+    records: dict[str, Any] = {}
+    for name, (
+        relative,
+        expected_sha,
+        expected_status,
+        expected_pass,
+    ) in ATTEMPT2_HISTORY.items():
+        path = CASE_DIR / relative
+        payload = json.loads(
+            path.read_text(encoding="utf-8"),
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                ValueError(f"non-finite JSON constant {value}")
+            ),
+        )
+        if (
+            _sha256(path) != expected_sha
+            or payload.get("status") != expected_status
+            or payload.get("pass") is not expected_pass
+        ):
+            raise RuntimeError(
+                f"Attempt2 historical evidence drifted: {name}"
+            )
+        records[name] = {
+            "path": f"records/{path.name}",
+            "sha256": expected_sha,
+            "expected_status": expected_status,
+            "expected_pass": expected_pass,
+        }
+    return {
+        "records": records,
+        "historical_failure_evidence_preserved": True,
+        "history_file_count": len(records),
     }
 
 
@@ -520,18 +629,30 @@ def _expected_raw_trace(constraints: Any, root: np.ndarray) -> np.ndarray:
         constraints.entity_map.active_trace_rows,
         dtype=np.complex128,
     )
-    for block in constraints.entity_blocks.values():
+    blocks = getattr(
+        constraints,
+        "work_owned_entity_blocks",
+        tuple(constraints.entity_blocks.values()),
+    )
+    for block in blocks:
         trace[block.full_rows] = (
             block.full_from_independent @ root[block.independent_rows]
         )
-    return trace
+    return np.asarray(
+        constraints.entity_map.mesh.comm.allreduce(trace, op=MPI.SUM)
+    )
 
 
 def _global_trace_expansion(constraints: Any) -> sparse.csr_matrix:
     rows: list[int] = []
     columns: list[int] = []
     values: list[complex] = []
-    for block in constraints.entity_blocks.values():
+    blocks = getattr(
+        constraints,
+        "work_owned_entity_blocks",
+        tuple(constraints.entity_blocks.values()),
+    )
+    for block in blocks:
         local_rows, local_columns = np.nonzero(
             np.abs(block.full_from_independent) > 0.0
         )
@@ -548,8 +669,21 @@ def _global_trace_expansion(constraints: Any) -> sparse.csr_matrix:
                 ],
             )
         )
+    packets = constraints.entity_map.mesh.comm.allgather(
+        (
+            np.asarray(rows, dtype=np.int64),
+            np.asarray(columns, dtype=np.int64),
+            np.asarray(values, dtype=np.complex128),
+        )
+    )
     return sparse.coo_matrix(
-        (values, (rows, columns)),
+        (
+            np.concatenate([packet[2] for packet in packets]),
+            (
+                np.concatenate([packet[0] for packet in packets]),
+                np.concatenate([packet[1] for packet in packets]),
+            ),
+        ),
         shape=(
             constraints.entity_map.active_trace_rows,
             constraints.independent_trace_rows,
@@ -1075,6 +1209,7 @@ def _run_compiled_fixture(
         build_audit = dict(system.build_audit)
         raw_build_audit = dict(raw_system.build_audit)
         trace_audit = dict(constraints.audit)
+        routing_audit = trace_audit["owner_routed_trace_cache_audit"]
         ownership_ranges = mesh.comm.allgather(
             tuple(map(int, system.matrix.getOwnershipRange()))
         )
@@ -1104,6 +1239,20 @@ def _run_compiled_fixture(
                     "compiled_trace_constraint_binding_complete"
                 ]
                 is True
+            ),
+            "compiled_owner_routing_binding": (
+                build_audit[
+                    "trace_constraint_owner_routing_qualified"
+                ]
+                is True
+                and build_audit[
+                    "trace_constraint_dense_global_entity_catalog_replicated"
+                ]
+                is False
+                and build_audit[
+                    "trace_constraint_distributed_scalability_qualified"
+                ]
+                is False
             ),
             "exact_preallocation": (
                 build_audit["matrix_mallocs"] == 0
@@ -1180,6 +1329,100 @@ def _run_compiled_fixture(
             ),
             "component_gram_dual_norm": dual_norm_error <= 5.0e-9,
             "petsc_row_ownership_closes": ownership_closes,
+            "owner_routed_trace_cache": (
+                trace_audit["petsc_constraint_row_ownership_qualified"]
+                is True
+                and trace_audit["mpi_ghost_expansion_qualified"] is True
+                and trace_audit["pde_launch_ownership_gate"] is True
+                and trace_audit["full_dense_entity_catalog_replicated"]
+                is False
+                and routing_audit["pass"] is True
+                and routing_audit[
+                    "dense_global_entity_catalog_replicated"
+                ]
+                is False
+                and routing_audit["declaration_catalog_is_metadata_only"]
+                is True
+                and routing_audit["request_reply_count_closes"] is True
+                and all(
+                    routing_audit[name] == 0
+                    for name in (
+                        "missing_reply_count",
+                        "duplicate_reply_count",
+                        "unrequested_reply_count",
+                        "wrong_owner_reply_count",
+                        "stale_or_corrupt_reply_count",
+                    )
+                )
+            ),
+            "owner_routed_work_partition": (
+                sum(routing_audit["work_owned_block_counts_by_rank"])
+                == routing_audit["declaration_count"]
+                and len(
+                    routing_audit[
+                        "work_owned_native_array_bytes_by_rank"
+                    ]
+                )
+                == mesh.comm.size
+                and all(
+                    value > 0
+                    for value in routing_audit[
+                        "work_owned_native_array_bytes_by_rank"
+                    ]
+                )
+                and routing_audit[
+                    "native_array_bytes_are_logical_not_rss_pss_peak"
+                ]
+                is True
+            ),
+            "cross_rank_hanging_owner_path": (
+                (
+                    mesh.comm.size == 1
+                    and trace_audit[
+                        "cross_rank_hanging_remote_participant_entity_count"
+                    ]
+                    == 0
+                    and sum(
+                        trace_audit[
+                            "cross_rank_hanging_remote_lookup_counts_by_rank"
+                        ]
+                    )
+                    == 0
+                )
+                or (
+                    trace_audit["cross_rank_hanging_patch_count"] > 0
+                    and trace_audit[
+                        "cross_rank_hanging_relation_count"
+                    ]
+                    > 0
+                    and trace_audit[
+                        "cross_rank_hanging_participant_entity_count"
+                    ]
+                    > 0
+                    and trace_audit[
+                        "cross_rank_hanging_remote_participant_entity_count"
+                    ]
+                    > 0
+                    and sum(
+                        trace_audit[
+                            "cross_rank_hanging_remote_lookup_counts_by_rank"
+                        ]
+                    )
+                    > 0
+                    and sum(
+                        trace_audit[
+                            "remote_entity_lookup_counts_by_rank"
+                        ]
+                    )
+                    > 0
+                    and all(
+                        count == 0
+                        for count in trace_audit[
+                            "hanging_cell_ghost_counts_by_rank"
+                        ]
+                    )
+                )
+            ),
             "distributed_scalability_not_claimed": (
                 trace_audit["distributed_scalability_qualified"] is False
             ),
@@ -1217,6 +1460,9 @@ def _run_compiled_fixture(
                 ],
                 "canonical_cell_graph_sha256": trace_audit[
                     "canonical_cell_graph_sha256"
+                ],
+                "owner_routed_canonical_content_sha256": routing_audit[
+                    "canonical_content_sha256"
                 ],
                 "compiled_element_hash": build_audit[
                     "compiled_p6_element_hash"
@@ -1347,6 +1593,7 @@ def generate_authority(
     )
     environment_preflight = _collective_environment_preflight(comm)
     prior_authorities = _prior_authority_manifest()
+    attempt2_history = _attempt2_history_immutability_manifest()
     periodic_forest, periodic_carrier = _periodic_corner_fixture(comm)
     combined = _run_compiled_fixture(
         forest=periodic_forest,
@@ -1356,12 +1603,42 @@ def generate_authority(
         phase_y=np.exp(-0.3j),
     )
     trace_resources = combined["cell_trace_binding_audit"]
+    routing_resources = trace_resources["owner_routed_trace_cache_audit"]
     component_resource_ledger = {
         "semantics": "measured_or_derived_component_objects_only",
         "raw_oracle_and_candidate_co_resident": True,
         "process_peak_is_not_candidate_memory_authority": True,
+        "native_array_bytes_are_logical_not_rss_pss_peak": True,
+        "full_dense_entity_catalog_replicated": False,
         "replicated_entity_block_bytes_per_rank": trace_resources[
             "replicated_entity_block_bytes_per_rank"
+        ],
+        "unique_dolfinx_owner_entity_block_bytes_by_rank": routing_resources[
+            "unique_dolfinx_owner_native_array_bytes_by_rank"
+        ],
+        "retained_entity_block_cache_bytes_by_rank": routing_resources[
+            "local_cache_native_array_bytes_by_rank"
+        ],
+        "retained_entity_block_cache_bytes_global_sum": routing_resources[
+            "retained_cache_native_array_bytes_global_sum"
+        ],
+        "retained_entity_block_cache_bytes_max": routing_resources[
+            "retained_cache_native_array_bytes_max"
+        ],
+        "retained_entity_block_cache_duplication_factor": (
+            routing_resources["retained_cache_duplication_factor"]
+        ),
+        "work_owned_entity_block_bytes_by_rank": routing_resources[
+            "work_owned_native_array_bytes_by_rank"
+        ],
+        "work_owner_straddling_block_count": routing_resources[
+            "work_owner_straddling_block_count"
+        ],
+        "outgoing_reply_logical_bytes_by_rank": routing_resources[
+            "reply_native_array_bytes_by_rank"
+        ],
+        "incoming_reply_logical_bytes_by_rank": routing_resources[
+            "received_reply_native_array_bytes_by_rank"
         ],
         "replicated_component_gram_bytes_per_rank": trace_resources[
             "replicated_component_gram_bytes_per_rank"
@@ -1383,6 +1660,9 @@ def generate_authority(
             "raw_oracle_assembly_audit"
         ]["matrix_nnz"],
         "timings_are_per_stage_mpi_max_not_rank_sum": True,
+        "remote_resolution_audit_is_count_and_digest_only": trace_resources[
+            "remote_resolution_audit_is_count_and_digest_only"
+        ],
         "factorization_or_pde_solve_memory_measured": False,
     }
     checks = {
@@ -1401,6 +1681,20 @@ def generate_authority(
             combined["assembly_audit"]["trace_constraint_kinds"]
             == ["floquet", "hanging"]
         ),
+        "owner_routed_pde_launch_subgate": (
+            combined["cell_trace_binding_audit"][
+                "pde_launch_ownership_gate"
+            ]
+            is True
+            and combined["cell_trace_binding_audit"][
+                "petsc_constraint_row_ownership_qualified"
+            ]
+            is True
+            and combined["cell_trace_binding_audit"][
+                "mpi_ghost_expansion_qualified"
+            ]
+            is True
+        ),
         "ordinary_default_unchanged": (
             combined["assembly_audit"]["ordinary_default_changed"] is False
         ),
@@ -1416,14 +1710,19 @@ def generate_authority(
                 "attempt1_orientation_restriction_hash_bound"
             ]
         ),
+        "attempt2_history_preserved": (
+            attempt2_history["historical_failure_evidence_preserved"]
+            is True
+            and attempt2_history["history_file_count"] == 9
+        ),
     }
     failures = [name for name, passed in checks.items() if not passed]
     return {
-        "schema_version": "case097.local-h-attempt2-authority.v2",
+        "schema_version": "case097.local-h-attempt2-authority.v3",
         "status": (
-            "local_h_attempt2_cell_tensor_component_pass_pde_blocked"
+            "local_h_attempt2_owner_routed_component_pass_mpi_gate_pending"
             if not failures
-            else "local_h_attempt2_cell_tensor_authority_fail"
+            else "local_h_attempt2_owner_routed_component_authority_fail"
         ),
         "pass": not failures,
         "source_sha": source_sha,
@@ -1433,6 +1732,7 @@ def generate_authority(
         "fixture_config": FIXTURE_CONFIG,
         "fixture_config_sha256": _json_sha256(FIXTURE_CONFIG),
         "prior_authorities": prior_authorities,
+        "attempt2_history_immutability": attempt2_history,
         "component_resource_ledger": component_resource_ledger,
         "environment": {
             "qualified_activation": os.environ.get(
@@ -1467,16 +1767,16 @@ def generate_authority(
             "hanging/Floquet C_K^H S_K C_K + PETSc action/RHS/recovery"
         ),
         "distributed_scalability_qualified": False,
+        "pde_launch_ownership_gate": not failures,
         "pde_launch_gate": False,
         "pde_launch_blockers": [
             "formal MPI1/MPI2/MPI8 comparison is generated separately",
-            "remote constraint ownership/ghost-equivalent lookup is not yet "
-            "qualified for the production PDE path",
             "this record is a cell-tensor component sub-gate only",
         ],
         "scalability_caveat": (
-            "entity blocks and component Gram are replicated; dense owned-cell "
-            "expansions and full-vector allgathers remain in the fixture path"
+            "dense entity blocks use owner-routed retained caches, but the "
+            "physical graph, component Gram, dense owned-cell expansions, and "
+            "full-vector allgathers remain replicated in the fixture path"
         ),
         "heavy_pde_started": False,
         "pde_accuracy_credit": False,
@@ -1557,7 +1857,7 @@ def _recompute_record_pass(
         if not _all_numbers_finite(payload):
             failures.append("nonfinite_value")
         if payload["schema_version"] != (
-            "case097.local-h-attempt2-authority.v2"
+            "case097.local-h-attempt2-authority.v3"
         ):
             failures.append("schema_version")
         if not re.fullmatch(r"[0-9a-f]{40}", str(payload["source_sha"])):
@@ -1580,6 +1880,10 @@ def _recompute_record_pass(
             failures.append("fixture_config_hash")
         if payload["prior_authorities"] != _prior_authority_manifest():
             failures.append("prior_authority_hashes")
+        if payload["attempt2_history_immutability"] != (
+            _attempt2_history_immutability_manifest()
+        ):
+            failures.append("attempt2_history_immutability")
         environment = payload["environment"]
         rank_environments = environment["rank_environments"]
         comparable_rank_environments = [
@@ -1608,6 +1912,7 @@ def _recompute_record_pass(
             "p5_trace_p6_interior_hanging_floquet"
         ]
         trace = fixture["cell_trace_binding_audit"]
+        routing = trace["owner_routed_trace_cache_audit"]
         assembly = fixture["assembly_audit"]
         raw = fixture["raw_oracle_assembly_audit"]
         observables = fixture["observables"]
@@ -1630,6 +1935,89 @@ def _recompute_record_pass(
         ):
             failures.append("component_audits")
         if not (
+            fixture["entity_map_audit"]["global_entity_counts"]
+            == {"1": 260, "2": 170, "3": 37}
+            and fixture["entity_map_audit"]["active_rows"] == 24750
+            and fixture["entity_map_audit"]["active_trace_rows"] == 8100
+            and fixture["physical_trace_audit"]["physical_edge_count"] == 260
+            and fixture["physical_trace_audit"]["physical_face_count"] == 170
+            and trace["global_cell_count"] == 37
+            and trace["raw_trace_rows"] == 8100
+            and trace["independent_trace_rows"] == 5430
+            and assembly["matrix_rows"] == 5430
+            and assembly["matrix_nnz"] == 2758850
+            and raw["matrix_rows"] == 8100
+            and raw["matrix_nnz"] == 3143400
+        ):
+            failures.append("frozen_fixture_structure")
+        if not (
+            trace["petsc_constraint_row_ownership_qualified"] is True
+            and trace["mpi_ghost_expansion_qualified"] is True
+            and trace["pde_launch_ownership_gate"] is True
+            and trace["full_dense_entity_catalog_replicated"] is False
+            and routing["pass"] is True
+            and routing["dense_global_entity_catalog_replicated"] is False
+            and routing["declaration_catalog_is_metadata_only"] is True
+            and routing["request_reply_count_closes"] is True
+            and sum(routing["work_owned_block_counts_by_rank"])
+            == routing["declaration_count"]
+            and len(routing["work_owned_native_array_bytes_by_rank"])
+            == int(payload["mpi_size"])
+            and all(
+                value > 0
+                for value in routing[
+                    "work_owned_native_array_bytes_by_rank"
+                ]
+            )
+            and all(
+                routing[name] == 0
+                for name in (
+                    "missing_reply_count",
+                    "duplicate_reply_count",
+                    "unrequested_reply_count",
+                    "wrong_owner_reply_count",
+                    "stale_or_corrupt_reply_count",
+                )
+            )
+        ):
+            failures.append("owner_routing")
+        if int(payload["mpi_size"]) > 1 and not (
+            trace["cross_rank_hanging_patch_count"] > 0
+            and trace["cross_rank_hanging_relation_count"] > 0
+            and trace["cross_rank_hanging_participant_entity_count"] > 0
+            and trace[
+                "cross_rank_hanging_remote_participant_entity_count"
+            ]
+            > 0
+            and sum(
+                trace[
+                    "cross_rank_hanging_remote_lookup_counts_by_rank"
+                ]
+            )
+            > 0
+            and sum(trace["remote_entity_lookup_counts_by_rank"]) > 0
+            and sum(routing["request_counts_by_rank"]) > 0
+            and all(
+                count == 0
+                for count in trace["hanging_cell_ghost_counts_by_rank"]
+            )
+        ):
+            failures.append("cross_rank_hanging_owner_path")
+        if int(payload["mpi_size"]) == 1 and not (
+            trace["cross_rank_hanging_participant_entity_count"] == 0
+            and trace[
+                "cross_rank_hanging_remote_participant_entity_count"
+            ]
+            == 0
+            and sum(
+                trace[
+                    "cross_rank_hanging_remote_lookup_counts_by_rank"
+                ]
+            )
+            == 0
+        ):
+            failures.append("serial_hanging_owner_path")
+        if not (
             assembly["matrix_rows"] == trace["independent_trace_rows"]
             and assembly["matrix_nnz"]
             == assembly["matrix_nnz_preallocated"]
@@ -1648,6 +2036,14 @@ def _recompute_record_pass(
             is False
             and assembly[
                 "hanging_or_floquet_slave_rows_globally_numbered"
+            ]
+            is False
+            and assembly[
+                "trace_constraint_owner_routing_qualified"
+            ]
+            is True
+            and assembly[
+                "trace_constraint_dense_global_entity_catalog_replicated"
             ]
             is False
         ):
@@ -1717,8 +2113,28 @@ def _recompute_record_pass(
             )
         ):
             failures.append("petsc_ownership")
+        ledger = payload["component_resource_ledger"]
+        if not (
+            ledger["raw_oracle_and_candidate_co_resident"] is True
+            and ledger["process_peak_is_not_candidate_memory_authority"]
+            is True
+            and ledger["full_dense_entity_catalog_replicated"] is False
+            and ledger["replicated_entity_block_bytes_per_rank"] == 0
+            and ledger[
+                "native_array_bytes_are_logical_not_rss_pss_peak"
+            ]
+            is True
+            and ledger["factorization_or_pde_solve_memory_measured"]
+            is False
+            and ledger["retained_entity_block_cache_bytes_by_rank"]
+            == routing["local_cache_native_array_bytes_by_rank"]
+            and ledger["work_owned_entity_block_bytes_by_rank"]
+            == routing["work_owned_native_array_bytes_by_rank"]
+        ):
+            failures.append("component_resource_ledger")
         if not (
             payload["distributed_scalability_qualified"] is False
+            and payload["pde_launch_ownership_gate"] is True
             and payload["pde_launch_gate"] is False
             and payload["heavy_pde_started"] is False
             and payload["pde_accuracy_credit"] is False
@@ -1728,6 +2144,8 @@ def _recompute_record_pass(
         if not (
             payload["pass"] is True
             and payload["failures"] == []
+            and payload["status"]
+            == "local_h_attempt2_owner_routed_component_pass_mpi_gate_pending"
             and fixture["pass"] is True
             and fixture["failures"] == []
         ):
@@ -1772,9 +2190,9 @@ def compare_authorities(records: tuple[Path, ...]) -> dict[str, Any]:
     )
     recomputed = [_recompute_record_pass(payload) for payload in payloads]
     expected_names = {
-        1: "local_h_attempt2_mpi1_v2.json",
-        2: "local_h_attempt2_mpi2_v2.json",
-        8: "local_h_attempt2_mpi8_v2.json",
+        1: "local_h_attempt2_mpi1_v3.json",
+        2: "local_h_attempt2_mpi2_v3.json",
+        8: "local_h_attempt2_mpi8_v3.json",
     }
     abi_signatures = [
         {
@@ -1806,6 +2224,9 @@ def compare_authorities(records: tuple[Path, ...]) -> dict[str, Any]:
             for path, payload in zip(records, payloads, strict=True)
         ),
         "same_source_sha": len(source_shas) == 1,
+        "live_head_is_solver_source": (
+            len(source_shas) == 1 and live_head in source_shas
+        ),
         "same_numerical_file_blobs": all(
             payload["numerical_files"] == payloads[0]["numerical_files"]
             for payload in payloads[1:]
@@ -1832,6 +2253,73 @@ def compare_authorities(records: tuple[Path, ...]) -> dict[str, Any]:
         ),
         "no_scalability_overclaim": all(
             payload["distributed_scalability_qualified"] is False
+            for payload in payloads
+        ),
+        "owner_routing_subgate_all_mpi": all(
+            payload["pde_launch_ownership_gate"] is True
+            and payload[
+                "p5_trace_p6_interior_hanging_floquet"
+            ]["cell_trace_binding_audit"][
+                "pde_launch_ownership_gate"
+            ]
+            is True
+            and payload[
+                "p5_trace_p6_interior_hanging_floquet"
+            ]["assembly_audit"][
+                "trace_constraint_owner_routing_qualified"
+            ]
+            is True
+            for payload in payloads
+        ),
+        "mpi2_mpi8_cross_rank_hanging_owner_path": all(
+            payload[
+                "p5_trace_p6_interior_hanging_floquet"
+            ]["cell_trace_binding_audit"][
+                "cross_rank_hanging_patch_count"
+            ]
+            > 0
+            and payload[
+                "p5_trace_p6_interior_hanging_floquet"
+            ]["cell_trace_binding_audit"][
+                "cross_rank_hanging_relation_count"
+            ]
+            > 0
+            and payload[
+                "p5_trace_p6_interior_hanging_floquet"
+            ]["cell_trace_binding_audit"][
+                "cross_rank_hanging_participant_entity_count"
+            ]
+            > 0
+            and payload[
+                "p5_trace_p6_interior_hanging_floquet"
+            ]["cell_trace_binding_audit"][
+                "cross_rank_hanging_remote_participant_entity_count"
+            ]
+            > 0
+            and sum(
+                payload[
+                    "p5_trace_p6_interior_hanging_floquet"
+                ]["cell_trace_binding_audit"][
+                    "cross_rank_hanging_remote_lookup_counts_by_rank"
+                ]
+            )
+            > 0
+            for payload in payloads
+            if int(payload["mpi_size"]) > 1
+        ),
+        "owner_routed_cache_not_full_catalog": all(
+            payload[
+                "p5_trace_p6_interior_hanging_floquet"
+            ]["cell_trace_binding_audit"][
+                "full_dense_entity_catalog_replicated"
+            ]
+            is False
+            and payload[
+                "p5_trace_p6_interior_hanging_floquet"
+            ]["cell_trace_binding_audit"][
+                "owner_routed_trace_cache_audit"
+            ]["request_reply_count_closes"]
+            is True
             for payload in payloads
         ),
     }
@@ -1931,11 +2419,11 @@ def compare_authorities(records: tuple[Path, ...]) -> dict[str, Any]:
         )
     failures = [name for name, passed in checks.items() if not passed]
     return {
-        "schema_version": "case097.local-h-attempt2-mpi-comparison.v2",
+        "schema_version": "case097.local-h-attempt2-mpi-comparison.v3",
         "status": (
-            "local_h_attempt2_mpi_identity_component_pass_pde_blocked"
+            "local_h_attempt2_owner_routed_mpi_diagnostic_pass"
             if not failures
-            else "local_h_attempt2_mpi_identity_fail"
+            else "local_h_attempt2_owner_routed_mpi_identity_fail"
         ),
         "pass": not failures,
         "source_sha": next(iter(source_shas)) if len(source_shas) == 1 else None,
@@ -1972,7 +2460,14 @@ def compare_authorities(records: tuple[Path, ...]) -> dict[str, Any]:
             "raw-trace oracle"
         ),
         "distributed_scalability_qualified": False,
+        "pde_launch_ownership_gate": not failures,
         "pde_launch_gate": False,
+        "diagnostic_only": True,
+        "independent_checker_required_for_pde_launch": True,
+        "pde_launch_scope": (
+            "generator comparison is diagnostic; only the source-bound "
+            "independent checker may authorize a minimal local-h PDE"
+        ),
         "heavy_pde_started": False,
         "pde_accuracy_credit": False,
         "ordinary_default_changed": False,
@@ -1992,23 +2487,67 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _validate_output_target(
+    output: Path,
+    *,
+    mpi_size: int,
+    comparison: bool,
+) -> Path:
+    resolved = output.resolve()
+    if comparison:
+        if (
+            resolved.parent != DIAGNOSTIC_OUTPUT_DIR.resolve()
+            or not resolved.name.endswith("_diagnostic.json")
+        ):
+            raise ValueError(
+                "generator comparison output must be a *_diagnostic.json "
+                "file in the Task035d /tmp diagnostic directory"
+            )
+    else:
+        expected_name = EXPECTED_V3_RECORD_NAMES.get(int(mpi_size))
+        if expected_name is None:
+            raise ValueError(
+                "formal Attempt2 v3 generation supports only MPI1/MPI2/MPI8"
+            )
+        if resolved != (RECORD_DIR / expected_name).resolve():
+            raise ValueError(
+                "formal Attempt2 output must match the MPI-specific v3 "
+                "record path"
+            )
+    if output.exists():
+        raise FileExistsError(
+            "Attempt2 output already exists and is immutable"
+        )
+    return output
+
+
 def main() -> int:
     args = _parse_args()
     comm = MPI.COMM_WORLD
     if args.compare_records is not None:
         if comm.size != 1:
             raise RuntimeError("record comparison must run in serial")
+        output = _validate_output_target(
+            args.output,
+            mpi_size=comm.size,
+            comparison=True,
+        )
         payload = compare_authorities(tuple(args.compare_records))
     else:
         if args.source_sha is None:
             raise ValueError("--source-sha is required for generation")
+        output = _validate_output_target(
+            args.output,
+            mpi_size=comm.size,
+            comparison=False,
+        )
         payload = generate_authority(
             comm=comm,
             source_sha=str(args.source_sha),
         )
     if comm.rank == 0:
         try:
-            digest = _write(args.output, payload)
+            digest = _write(output, payload)
             write_envelope = {
                 "ok": True,
                 "error": None,
@@ -2032,7 +2571,7 @@ def main() -> int:
         print(
             json.dumps(
                 {
-                    "output": str(args.output),
+                    "output": str(output),
                     "sha256": write_envelope["digest"],
                     "status": payload["status"],
                     "pass": payload["pass"],

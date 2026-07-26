@@ -284,7 +284,6 @@ def _validate_trace_constraints(
             f"component Gram: {type(exc).__name__}: {exc}"
         )
 
-    full_entity_rows: list[np.ndarray] = []
     try:
         entity_blocks = constraints.entity_blocks
         block_values = tuple(entity_blocks.values())
@@ -322,18 +321,142 @@ def _validate_trace_constraints(
                 raise ValueError(
                     "one constrained entity expansion is non-finite"
                 )
-            full_entity_rows.append(
-                np.asarray(full_rows, dtype=np.int64)
-            )
         except (AttributeError, TypeError, ValueError, RuntimeError) as exc:
             local_errors.append(
                 f"entity block: {type(exc).__name__}: {exc}"
             )
-    covered = (
-        np.sort(np.concatenate(full_entity_rows))
-        if full_entity_rows
-        else np.empty(0, dtype=np.int64)
+    routed_mode_error: str | None = None
+    try:
+        routed_work_blocks = getattr(
+            constraints,
+            "work_owned_entity_blocks",
+            None,
+        )
+        local_routed_mode = routed_work_blocks is not None
+    except (AttributeError, TypeError, ValueError, RuntimeError) as exc:
+        routed_work_blocks = None
+        local_routed_mode = False
+        routed_mode_error = f"{type(exc).__name__}: {exc}"
+    routed_mode_packets = comm.allgather(
+        (local_routed_mode, routed_mode_error)
     )
+    routed_mode_failures = [
+        f"rank {rank}: {error}"
+        for rank, (_mode, error) in enumerate(routed_mode_packets)
+        if error is not None
+    ]
+    routed_modes = {mode for mode, error in routed_mode_packets if error is None}
+    if routed_mode_failures or len(routed_modes) != 1:
+        detail = (
+            routed_mode_failures[:4]
+            if routed_mode_failures
+            else [
+                "rank routed modes disagree: "
+                + repr([mode for mode, _error in routed_mode_packets])
+            ]
+        )
+        raise ValueError(
+            "collective trace constraint routing-mode validation failed: "
+            + "; ".join(detail)
+        )
+    routed_mode = next(iter(routed_modes))
+    if not routed_mode:
+        work_rows: list[np.ndarray] = []
+        for block in block_values:
+            try:
+                work_rows.append(
+                    np.asarray(block.full_rows, dtype=np.int64)
+                )
+            except (AttributeError, TypeError, ValueError) as exc:
+                local_errors.append(
+                    f"legacy work block: {type(exc).__name__}: {exc}"
+                )
+        covered = (
+            np.sort(np.concatenate(work_rows))
+            if work_rows
+            else np.empty(0, dtype=np.int64)
+        )
+    else:
+        try:
+            constraint_audit = constraints.audit
+            routing_audit = constraint_audit[
+                "owner_routed_trace_cache_audit"
+            ]
+            if not (
+                constraint_audit["petsc_constraint_row_ownership_qualified"]
+                is True
+                and constraint_audit["mpi_ghost_expansion_qualified"] is True
+                and constraint_audit["pde_launch_ownership_gate"] is True
+                and routing_audit["pass"] is True
+                and routing_audit[
+                    "dense_global_entity_catalog_replicated"
+                ]
+                is False
+                and routing_audit["request_reply_count_closes"] is True
+            ):
+                raise ValueError(
+                    "owner-routed trace authority has not passed"
+                )
+        except (KeyError, TypeError, ValueError) as exc:
+            local_errors.append(
+                f"owner-routed trace audit: {type(exc).__name__}: {exc}"
+            )
+        try:
+            work_block_values = tuple(routed_work_blocks)
+        except (TypeError, ValueError, RuntimeError) as exc:
+            local_errors.append(
+                f"work-owned block catalog: {type(exc).__name__}: {exc}"
+            )
+            work_block_values = ()
+        work_rows: list[np.ndarray] = []
+        active_counts = _balanced_counts(
+            entity_map.active_trace_rows,
+            comm.size,
+        )
+        active_starts = np.cumsum((0, *active_counts[:-1]))
+        for block in work_block_values:
+            try:
+                identity = (
+                    int(block.dimension),
+                    int(block.global_entity),
+                )
+                if entity_blocks.get(identity) is not block:
+                    raise ValueError(
+                        "one work-owned block is absent from the local cache"
+                    )
+                owner_rank = int(block.active_vector_work_owner_rank)
+                full_rows = np.asarray(block.full_rows, dtype=np.int64)
+                first_row = int(full_rows[0])
+                expected_owner = next(
+                    rank
+                    for rank, (start, count) in enumerate(
+                        zip(active_starts, active_counts, strict=True)
+                    )
+                    if int(start) <= first_row < int(start + count)
+                )
+                if owner_rank != comm.rank or owner_rank != expected_owner:
+                    raise ValueError(
+                        "one routed block has the wrong active-vector owner"
+                    )
+                work_rows.append(full_rows)
+            except (
+                AttributeError,
+                IndexError,
+                StopIteration,
+                TypeError,
+                ValueError,
+            ) as exc:
+                local_errors.append(
+                    f"work-owned entity block: {type(exc).__name__}: {exc}"
+                )
+        local_work_rows = (
+            np.concatenate(work_rows)
+            if work_rows
+            else np.empty(0, dtype=np.int64)
+        )
+        covered = np.sort(
+            np.concatenate(comm.allgather(local_work_rows))
+        )
     if not np.array_equal(
         covered,
         np.arange(entity_map.active_trace_rows, dtype=np.int64),
@@ -823,6 +946,24 @@ def build_variable_p_condensed_trace_system(
         ),
         "trace_constraint_kinds": sorted(constraint_kinds),
         "trace_constraint_schema": constraint_schema,
+        "trace_constraint_owner_routing_qualified": (
+            None
+            if constraints is None
+            else constraints.audit.get("pde_launch_ownership_gate")
+        ),
+        "trace_constraint_dense_global_entity_catalog_replicated": (
+            None
+            if constraints is None
+            else constraints.audit.get(
+                "owner_routed_trace_cache_audit",
+                {},
+            ).get("dense_global_entity_catalog_replicated")
+        ),
+        "trace_constraint_distributed_scalability_qualified": (
+            None
+            if constraints is None
+            else constraints.audit.get("distributed_scalability_qualified")
+        ),
         "uniform_p6_full3d_rows": entity_map.uniform_p6_rows,
         "uniform_p6_trace_rows": entity_map.uniform_p6_trace_rows,
         "inactive_p6_full_rows": int(
@@ -1068,6 +1209,7 @@ def condense_variable_p_active_vector_to_trace(
 
     if side not in {"right", "left"}:
         raise ValueError("vector condensation side must be right or left")
+    comm = system.entity_map.mesh.comm
     values = _global_active_vector_values(system, active_full_vector)
     cutoff = max(
         1.0e-30,
@@ -1099,11 +1241,25 @@ def condense_variable_p_active_vector_to_trace(
         periodic_by_cell = {
             cell.global_cell: cell for cell in constraints.owned_cells
         }
-        for block in constraints.entity_blocks.values():
-            if not (
-                row_start <= int(block.full_rows[0]) < row_end
-            ):
-                continue
+        routed_blocks = getattr(
+            constraints,
+            "work_owned_entity_blocks",
+            None,
+        )
+        for block in (
+            routed_blocks
+            if routed_blocks is not None
+            else constraints.entity_blocks.values()
+        ):
+            if routed_blocks is None:
+                if not (
+                    row_start <= int(block.full_rows[0]) < row_end
+                ):
+                    continue
+            elif int(block.active_vector_work_owner_rank) != comm.rank:
+                raise RuntimeError(
+                    "routed trace block reached the wrong work owner"
+                )
             projected = (
                 block.full_from_independent.conj().T
                 @ values[block.full_rows]
@@ -1247,11 +1403,26 @@ def recover_variable_p_active_full_vector(
                 addv=PETSc.InsertMode.INSERT_VALUES,
             )
     else:
-        for block in system.periodic_constraints.entity_blocks.values():
-            if not (
-                row_start <= int(block.full_rows[0]) < row_end
-            ):
-                continue
+        constraints = system.periodic_constraints
+        routed_blocks = getattr(
+            constraints,
+            "work_owned_entity_blocks",
+            None,
+        )
+        for block in (
+            routed_blocks
+            if routed_blocks is not None
+            else constraints.entity_blocks.values()
+        ):
+            if routed_blocks is None:
+                if not (
+                    row_start <= int(block.full_rows[0]) < row_end
+                ):
+                    continue
+            elif int(block.active_vector_work_owner_rank) != comm.rank:
+                raise RuntimeError(
+                    "routed trace block reached the wrong work owner"
+                )
             values = (
                 block.full_from_independent
                 @ trace[block.independent_rows]
