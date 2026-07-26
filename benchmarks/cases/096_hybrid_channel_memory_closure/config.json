@@ -1,0 +1,54 @@
+{
+  "schema_version": "task035c.case096-config.v1",
+  "case_id": "096_hybrid_channel_memory_closure",
+  "geometry": "Task034 fixed rectangular block grating",
+  "geometry_scope": "fixed_only",
+  "degrees": [
+    2,
+    6
+  ],
+  "mpi_size": 8,
+  "irregular_geometry": {
+    "status": "out_of_scope_by_user",
+    "run": false,
+    "completion_gate": false
+  },
+  "ordinary_default": "standard_full",
+  "ordinary_default_changed": false,
+  "diagnostic_model": {
+    "degree": 2,
+    "h_nm": 5.0
+  },
+  "formal_model": {
+    "degree": 6,
+    "h_nm": 10.0,
+    "mpi_size": 8,
+    "hybrid_modes_per_direction": [
+      120,
+      160
+    ]
+  },
+  "channel_gate": {
+    "significant_channel_count": 12,
+    "significant_power_floor": 1e-08,
+    "relative_tolerance": 0.001,
+    "complex_amplitude_field": "outgoing_amplitude_at_boundary",
+    "required_power_pass_count": 12,
+    "required_complex_amplitude_pass_count": 12
+  },
+  "resource_gate": {
+    "mandatory_static_hybrid_memory_saving_fraction": 0.15,
+    "preferred_static_hybrid_memory_saving_fraction": 0.25,
+    "user_target_static_hybrid_memory_saving_fraction": 0.5,
+    "maximum_static_to_standard_total_time_ratio": 1.35,
+    "modal_coupling_time_hard_gate": false
+  },
+  "out_of_scope": {
+    "p3_h7p5": "out_of_scope_by_user_not_run_not_completion_gate",
+    "irregular_geometry": "not_run",
+    "h13_adaptive_hybrid": "not_run",
+    "production_selective_trace": "not_promoted",
+    "tetra_or_mixed_static_condensation": "not_run",
+    "condensed_iterative": "not_researched"
+  }
+}

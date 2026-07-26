@@ -67,9 +67,19 @@ INTENTIONAL_CLASSIFICATIONS = {
         "reason": "Task035b extends exact Basix D4 entity transforms and trace layouts from hexa p4 through p6",
         "requires_corresponding_pde_rerun": True,
     },
+    "src/constraints/cross_section_floquet.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Task035c replaces the p1-p4 cross-section shortcut with exact Basix quadrilateral entity DoFs and interval transforms for p1-p6; serial/MPI2/MPI8 constraints and the p6/h10 six-path PDE authorities were rerun",
+        "requires_corresponding_pde_rerun": True,
+    },
     "src/modes/mode_classification.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
         "reason": "batched QEP overlap evaluation reuses MatMult actions and performs the final cancellation in extended precision; Hybrid QEP/PDE anchors must be rerun",
+        "requires_corresponding_pde_rerun": True,
+    },
+    "src/coupling/hybrid_internal_modes.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Review V3 adds opt-in left/right cell-interior Schur corrections to Hybrid modal coupling and RHS; fresh p2/h5 MPI8 standard/static M120/M160 anchors were run while the standard backend remains unchanged",
         "requires_corresponding_pde_rerun": True,
     },
     "src/postprocessing/hybrid_field_reconstruction.py": {
@@ -95,6 +105,11 @@ INTENTIONAL_CLASSIFICATIONS = {
     "src/solvers/hcurl_cell_static_condensation.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
         "reason": "Task035b introduces exact per-cell interior elimination and verified zero-RHS identity Floquet-slave removal into a physically smaller trace matrix without max-p zero masking",
+        "requires_corresponding_pde_rerun": True,
+    },
+    "src/solvers/hybrid_local_dtn.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Review V3 adds the explicit assembly-time static-condensed local-FE backend with retained external/interface trace, streaming recovery, and eliminated-equation residual; fresh p2/h5 MPI8 Full3D/Hybrid anchors were run",
         "requires_corresponding_pde_rerun": True,
     },
     "src/solvers/hybrid_fem_modal_schur_direct.py": {

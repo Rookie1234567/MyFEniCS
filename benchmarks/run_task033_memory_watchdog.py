@@ -34,6 +34,14 @@ from benchmarks.task034_workstation_resource_gates import (
     task034_adaptive_mechanism_evidence_gate,
     task034_workstation_hybrid_launch_gate,
 )
+from benchmarks.task035c_p6_h10_gates import (
+    TASK035C_P6_H10_BACKENDS,
+    TASK035C_P6_H10_MODE_COUNTS,
+    TASK035C_P6_H10_MPI_SIZES,
+    task035c_p6_h10_full3d_reference_gate,
+    task035c_p6_h10_preflight_authority_gate,
+    valid_hex_digest,
+)
 from benchmarks.task033_watchdog_launch import (
     DEFAULT_RESOURCE_MATRIX,
     high_order_core_evidence_gate,
@@ -163,6 +171,26 @@ TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES = frozenset(
         *TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES,
     }
 )
+TASK035B_STATIC_HYBRID_RESOURCE_COMPATIBLE_FILES = frozenset(
+    {
+        "benchmarks/run_task032_phase6_augmented.py",
+        "benchmarks/run_task033_full3d_watchdog.py",
+        "benchmarks/run_task033_memory_watchdog.py",
+        "src/coupling/hybrid_internal_modes.py",
+        "src/postprocessing/hybrid_field_reconstruction.py",
+        "src/solvers/hybrid_fem_modal_augmented_direct.py",
+        "src/solvers/hybrid_fem_modal_schur_direct.py",
+        "src/solvers/hybrid_local_dtn.py",
+        "src/solvers/hybrid_local_static_condensation.py",
+        "src/solvers/hybrid_static_field_recovery.py",
+    }
+)
+TASK035B_STATIC_FULL3D_ANCHOR_COMPATIBLE_FILES = frozenset(
+    {
+        "benchmarks/run_task033_memory_watchdog.py",
+        "benchmarks/task034_workstation_resource_gates.py",
+    }
+)
 
 
 def _git(*args: str) -> str | None:
@@ -279,6 +307,7 @@ def _task034_authority_source_compatibility(
     h_nm: float,
     polarization_kind: str = "s",
     current_source_sha: str | None,
+    assembly_backend: str = "standard_full",
 ) -> dict[str, Any]:
     """Audit a Case092 measured authority against the current clean source."""
 
@@ -334,6 +363,11 @@ def _task034_authority_source_compatibility(
     def allowed(path: str) -> bool:
         return bool(
             path in TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES
+            or (
+                assembly_backend == "assembly_time_static_condensed"
+                and path
+                in TASK035B_STATIC_HYBRID_RESOURCE_COMPATIBLE_FILES
+            )
             or path.startswith(
                 "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
             )
@@ -351,6 +385,14 @@ def _task034_authority_source_compatibility(
         for path in changed_paths
         if path in TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES
     ]
+    static_resource_compatible = [
+        path
+        for path in changed_paths
+        if (
+            assembly_backend == "assembly_time_static_condensed"
+            and path in TASK035B_STATIC_HYBRID_RESOURCE_COMPATIBLE_FILES
+        )
+    ]
     failures = []
     if merge_base != reference_source_sha:
         failures.append("reference_source_is_not_ancestor_of_current_source")
@@ -366,7 +408,345 @@ def _task034_authority_source_compatibility(
         "changed_paths": changed_paths,
         "disallowed_changed_paths": disallowed,
         "component_disjoint_numerical_changed_paths": component_disjoint,
+        "static_hybrid_resource_compatible_changed_paths": (
+            static_resource_compatible
+        ),
+        "assembly_backend": assembly_backend,
         "failures": failures,
+    }
+
+
+def _valid_hex_digest(value: object, length: int) -> bool:
+    return bool(
+        isinstance(value, str)
+        and len(value) == length
+        and all(character in "0123456789abcdefABCDEF" for character in value)
+    )
+
+
+def _task035b_static_full3d_anchor_gate(
+    record: Mapping[str, Any] | None,
+    *,
+    expected_sha256: str | None,
+    observed_sha256: str | None,
+    degree: int,
+    h_nm: float,
+    mpi_size: int,
+    polarization_kind: str,
+    current_source_sha: str | None,
+) -> dict[str, Any]:
+    """Qualify a fresh same-p/h static Full3D resource anchor.
+
+    Case092 remains the tracked workstation limit and prediction authority.
+    The opt-in static Hybrid route binds its measured matrix and memory identity
+    to this fresh watchdog record instead of the historical standard matrix.
+    """
+
+    payload = record if isinstance(record, Mapping) else {}
+    source = payload.get("source")
+    source = source if isinstance(source, Mapping) else {}
+    qualification = payload.get("qualification")
+    qualification = (
+        qualification if isinstance(qualification, Mapping) else {}
+    )
+    qualification_checks = qualification.get("checks")
+    qualification_checks = (
+        qualification_checks
+        if isinstance(qualification_checks, Mapping)
+        else {}
+    )
+    calibration = payload.get("calibration")
+    calibration = calibration if isinstance(calibration, Mapping) else {}
+    summary = payload.get("solver_summary")
+    summary = summary if isinstance(summary, Mapping) else {}
+    config = summary.get("config")
+    config = config if isinstance(config, Mapping) else {}
+    matrix = summary.get("matrix_stats")
+    matrix = matrix if isinstance(matrix, Mapping) else {}
+    factor_inventory = summary.get("stage4_dtn_factor_inventory")
+    factor_inventory = (
+        factor_inventory if isinstance(factor_inventory, Mapping) else {}
+    )
+    factor_matrix = factor_inventory.get("matrix_stats")
+    factor_matrix = (
+        factor_matrix if isinstance(factor_matrix, Mapping) else {}
+    )
+    condensation = summary.get("cell_static_condensation")
+    condensation = (
+        condensation if isinstance(condensation, Mapping) else {}
+    )
+    recovery = condensation.get("recovery")
+    recovery = recovery if isinstance(recovery, Mapping) else {}
+    residual = condensation.get("full_explicit_true_residual")
+    residual = residual if isinstance(residual, Mapping) else {}
+    resource = payload.get("resource_authority")
+    resource = resource if isinstance(resource, Mapping) else {}
+
+    reference_source_sha = source.get("commit_sha")
+    source_sha_valid = bool(
+        _valid_hex_digest(reference_source_sha, 40)
+        and _valid_hex_digest(current_source_sha, 40)
+    )
+    if source_sha_valid and reference_source_sha == current_source_sha:
+        merge_base = reference_source_sha
+        changed_paths: list[str] = []
+        rendered_paths: str | None = ""
+    elif source_sha_valid:
+        merge_base = _git(
+            "merge-base", str(reference_source_sha), str(current_source_sha)
+        )
+        rendered_paths = _git(
+            "diff",
+            "--name-only",
+            f"{reference_source_sha}..{current_source_sha}",
+        )
+        changed_paths = (
+            [] if rendered_paths is None else rendered_paths.splitlines()
+        )
+    else:
+        merge_base = None
+        rendered_paths = None
+        changed_paths = []
+    disallowed_changed_paths = [
+        path
+        for path in changed_paths
+        if not (
+            path in TASK035B_STATIC_FULL3D_ANCHOR_COMPATIBLE_FILES
+            or path.startswith("docs/")
+            or path.startswith("src/test/")
+        )
+    ]
+    source_compatibility_checks = {
+        "source_sha_valid": source_sha_valid,
+        "reference_source_is_ancestor": bool(
+            source_sha_valid and merge_base == reference_source_sha
+        ),
+        "source_diff_readable": rendered_paths is not None,
+        "only_resource_contract_or_non_numerical_changes": not (
+            disallowed_changed_paths
+        ),
+    }
+    source_compatibility_failures = [
+        name
+        for name, passed in source_compatibility_checks.items()
+        if not passed
+    ]
+    source_compatibility = {
+        "pass": not source_compatibility_failures,
+        "reference_source_sha": reference_source_sha,
+        "current_source_sha": current_source_sha,
+        "reference_source_is_ancestor": bool(
+            source_sha_valid and merge_base == reference_source_sha
+        ),
+        "changed_paths": changed_paths,
+        "disallowed_changed_paths": disallowed_changed_paths,
+        "checks": source_compatibility_checks,
+        "failures": source_compatibility_failures,
+    }
+
+    relative_residual = residual.get("linear_system_relative_residual")
+    interior_residual = residual.get(
+        "eliminated_cell_interior_max_abs_residual"
+    )
+    rows = matrix.get("matrix_rows")
+    assembled_nnz = matrix.get("matrix_nnz_used")
+    factor_nnz = factor_matrix.get("matrix_nnz_used")
+    peak_memory_gib = resource.get("memory_authority_gib")
+    elapsed_seconds = summary.get("elapsed_seconds")
+    reference_planes = config.get("full3d_reference_plane_z")
+    reference_planes = (
+        reference_planes if isinstance(reference_planes, list) else []
+    )
+    checks = {
+        "object_present": bool(payload),
+        "schema_identity": bool(
+            payload.get("schema_version") == "task033.full3d-watchdog.v1"
+            and payload.get("benchmark_id") == "task033_target_full3d_watchdog"
+        ),
+        "record_hash_expected_valid": _valid_hex_digest(expected_sha256, 64),
+        "record_hash_observed_valid": _valid_hex_digest(observed_sha256, 64),
+        "record_hash_matches_expected": bool(
+            expected_sha256 == observed_sha256
+        ),
+        "same_discretization_identity": bool(
+            payload.get("degree") == degree
+            and math.isclose(
+                float(payload.get("h_nm", math.nan)), float(h_nm)
+            )
+            and payload.get("mpi_size") == mpi_size
+            and payload.get("polarization_kind") == polarization_kind
+            and config.get("nedelec_degree") == degree
+            and math.isclose(
+                float(config.get("mesh_target_size", math.nan)), float(h_nm)
+            )
+        ),
+        "fixed_task034_physics_identity": bool(
+            summary.get("stage_case") == "stage4_block_grating"
+            and summary.get("geometry_kind") == "rectangular_block_grating"
+            and math.isclose(float(config.get("lambda0", math.nan)), 13.5)
+            and math.isclose(
+                float(config.get("incident_theta_deg", math.nan)), 80.0
+            )
+            and math.isclose(
+                float(config.get("incident_phi_deg", math.nan)), 0.0
+            )
+            and math.isclose(float(config.get("period_x", math.nan)), 50.0)
+            and math.isclose(float(config.get("period_y", math.nan)), 25.0)
+            and math.isclose(float(config.get("z_min", math.nan)), -10.0)
+            and math.isclose(float(config.get("z_max", math.nan)), 130.0)
+            and math.isclose(
+                float(config.get("grating_height", math.nan)), 120.0
+            )
+            and math.isclose(
+                float(config.get("grating_width_x", math.nan)), 17.0
+            )
+            and math.isclose(
+                float(config.get("grating_width_y", math.nan)), 25.0
+            )
+            and config.get("n_substrate")
+            == [0.999002304859, 0.00182649365]
+            and config.get("n_grating")
+            == [0.999002304859, 0.00182649365]
+            and config.get("use_floquet_xy") is True
+            and config.get("stage4_boundary_model") == "dtn_port"
+            and config.get("stage4_dtn_assembly") == "auxiliary"
+            and config.get("scattering_background") == "layered"
+        ),
+        "full_solve_pass": bool(
+            payload.get("run_kind") == "full-solve"
+            and payload.get("status") == "full3d_reference_pass"
+            and payload.get("return_code") == 0
+            and qualification.get("pass") is True
+            and qualification.get("failures") == []
+        ),
+        "qualification_checks_complete": bool(
+            qualification_checks.get("process_completed") is True
+            and qualification_checks.get("live_authority_readable") is True
+            and qualification_checks.get("all_expected_mpi_ranks_observed")
+            is True
+            and qualification_checks.get("official_result") is True
+            and qualification_checks.get("ksp_converged") is True
+            and qualification_checks.get("true_residual_le_1e-9") is True
+            and qualification_checks.get("reference_exported") is True
+            and qualification_checks.get("swap_policy_satisfied") is True
+            and qualification_checks.get("source_stable_and_clean_after")
+            is True
+        ),
+        "static_backend_identity": bool(
+            payload.get("stage4_full3d_assembly_backend_requested")
+            == "assembly_time_static_condensed"
+            and payload.get("stage4_full3d_assembly_backend_actual")
+            == "assembly_time_static_condensed"
+            and summary.get("stage4_full3d_assembly_backend_actual")
+            == "assembly_time_static_condensed"
+            and condensation.get("ordinary_default_changed") is False
+        ),
+        "official_result_and_reference_export": bool(
+            summary.get("official_result") is True
+            and summary.get("case_status") == "completed"
+            and config.get("full3d_reference_export") is True
+            and any(math.isclose(float(value), 10.0) for value in reference_planes)
+            and any(
+                math.isclose(float(value), 110.0)
+                for value in reference_planes
+            )
+        ),
+        "raw_artifact_hashes_present": bool(
+            _valid_hex_digest(payload.get("solver_summary_sha256"), 64)
+            and _valid_hex_digest(payload.get("progress_sha256"), 64)
+            and _valid_hex_digest(payload.get("timeline_sha256"), 64)
+        ),
+        "source_record_clean_and_stable": bool(
+            source.get("tracked_source_dirty") is False
+            and source.get("stable_and_clean_after") is True
+            and source.get("commit_sha") == source.get("verified_clean_sha")
+            and source.get("head_after_sha") == source.get("commit_sha")
+        ),
+        "source_compatible_with_current": source_compatibility["pass"],
+        "no_swap": payload.get("no_swap") is True,
+        "not_resource_terminated": bool(
+            payload.get("terminated_for_memory") is False
+            and payload.get("terminated_for_timeout") is False
+            and payload.get("terminated_for_authority_unreadable") is False
+        ),
+        "exact_positive_rows": bool(
+            type(rows) is int
+            and rows > 0
+            and calibration.get("exact_rows") == rows
+        ),
+        "exact_positive_assembled_nnz": bool(
+            isinstance(assembled_nnz, (int, float))
+            and assembled_nnz > 0
+            and calibration.get("exact_assembled_nnz") == assembled_nnz
+        ),
+        "factor_inventory_positive": bool(
+            factor_inventory.get("available") is True
+            and isinstance(factor_nnz, (int, float))
+            and factor_nnz > 0
+        ),
+        "peak_memory_positive": bool(
+            isinstance(peak_memory_gib, (int, float))
+            and math.isfinite(float(peak_memory_gib))
+            and peak_memory_gib > 0
+        ),
+        "full_explicit_true_residual": bool(
+            isinstance(relative_residual, (int, float))
+            and math.isfinite(float(relative_residual))
+            and 0.0 <= relative_residual <= 1.0e-9
+            and isinstance(interior_residual, (int, float))
+            and math.isfinite(float(interior_residual))
+            and 0.0 <= interior_residual <= 1.0e-9
+            and residual.get("full_global_matrix_allocated_for_residual")
+            is False
+            and residual.get("full_trace_matrix_allocated_for_residual")
+            is False
+        ),
+        "physical_row_reduction_and_recovery": bool(
+            condensation.get("full_global_matrix_allocated") is False
+            and condensation.get("full_trace_matrix_allocated") is False
+            and condensation.get("inactive_max_p_rows_retained_in_matrix")
+            is False
+            and recovery.get("status")
+            == "full_field_recovered_without_full_global_matrix"
+            and recovery.get("full_global_matrix_allocated") is False
+            and recovery.get("full_trace_matrix_allocated") is False
+        ),
+        "elapsed_seconds_positive": bool(
+            isinstance(elapsed_seconds, (int, float))
+            and math.isfinite(float(elapsed_seconds))
+            and elapsed_seconds > 0
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    anchor = {
+        "role": "task035b_fresh_static_full3d_resource_anchor",
+        "source_sha": reference_source_sha,
+        "watchdog_record_sha256": observed_sha256,
+        "descriptor_sha256": expected_sha256,
+        "reference_input_kind": "fresh_static_full3d_watchdog_record",
+        "status": payload.get("status"),
+        "qualification_pass": qualification.get("pass"),
+        "no_swap": payload.get("no_swap"),
+        "peak_memory_gib": peak_memory_gib,
+        "true_relative_residual": relative_residual,
+        "exact_rows": rows,
+        "exact_assembled_nnz": assembled_nnz,
+        "factor_nnz": factor_nnz,
+        "elapsed_seconds": elapsed_seconds,
+        "degree": payload.get("degree"),
+        "h_nm": payload.get("h_nm"),
+        "mpi_size": payload.get("mpi_size"),
+        "polarization_kind": payload.get("polarization_kind"),
+        "assembly_backend": payload.get(
+            "stage4_full3d_assembly_backend_actual"
+        ),
+    }
+    return {
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "anchor": anchor,
+        "source_compatibility": source_compatibility,
     }
 
 
@@ -521,6 +901,8 @@ def _worker_command(
         str(args.candidate_modes),
         "--solver-path",
         args.solver_path,
+        "--stage4-full3d-assembly-backend",
+        args.stage4_full3d_assembly_backend,
         "--comparison-solver-path",
         args.comparison_solver_path,
         "--verified-clean-sha",
@@ -536,9 +918,39 @@ def _worker_command(
         "--host-environment-id",
         args.host_environment_id,
     ]
+    if args.modal_h_nm is not None:
+        command.extend(("--modal-h-nm", str(args.modal_h_nm)))
+    if args.modal_degree is not None:
+        command.extend(("--modal-degree", str(args.modal_degree)))
+    if args.internal_propagation_model != "continuous_beta":
+        command.extend(
+            (
+                "--internal-propagation-model",
+                args.internal_propagation_model,
+            )
+        )
+    if args.internal_traction_model != "continuous_qep_beta":
+        command.extend(
+            (
+                "--internal-traction-model",
+                args.internal_traction_model,
+            )
+        )
     if args.full3d_reference is not None:
         command.extend(
             ("--full3d-reference", str(args.full3d_reference))
+        )
+    if args.task035c_p6_h10_gate:
+        command.extend(
+            (
+                "--full3d-reference-sha256",
+                str(args.full3d_reference_sha256),
+                "--task035c-p6-h10-gate",
+                "--task035c-p6-preflight-authority",
+                str(args.task035c_p6_preflight_authority),
+                "--task035c-p6-preflight-sha256",
+                str(args.task035c_p6_preflight_sha256),
+            )
         )
     if args.compare_modal_schur:
         command.append("--compare-modal-schur")
@@ -738,6 +1150,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
                 "bottom_local_thickness_nm",
                 "top_local_thickness_nm",
                 "internal_unknown_count",
+                "internal_propagation",
                 "qep_to_interface_quadrature_degree",
                 "dense_interface_square_formed",
                 "full_field_or_mode_gathered",
@@ -753,6 +1166,9 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         },
         "physical_field_reconstruction": {
             "interface_continuity": physical.get("interface_continuity"),
+            "full3d_trace_modal_oracle": physical.get(
+                "full3d_trace_modal_oracle"
+            ),
             "volume_absorption": physical.get("volume_absorption"),
             "selected_plane_full3d_comparison": physical.get(
                 "selected_plane_full3d_comparison"
@@ -918,8 +1334,54 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--target", choices=("qep", "hybrid"), required=True)
     parser.add_argument("--case-label", required=True)
-    parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4), required=True)
+    parser.add_argument(
+        "--degree", type=int, choices=(1, 2, 3, 4, 6), required=True
+    )
     parser.add_argument("--h-nm", type=float, required=True)
+    parser.add_argument(
+        "--modal-h-nm",
+        type=float,
+        help=(
+            "Independent Hybrid cross-section QEP mesh size; local 3D FEM "
+            "continues to use --h-nm."
+        ),
+    )
+    parser.add_argument(
+        "--modal-degree",
+        type=int,
+        choices=(1, 2, 3, 4, 6),
+        help=(
+            "Independent Hybrid cross-section QEP degree; local 3D FEM "
+            "continues to use --degree."
+        ),
+    )
+    parser.add_argument(
+        "--internal-propagation-model",
+        choices=("continuous_beta", "full3d_uniform_cg"),
+        default="continuous_beta",
+        help=(
+            "Explicit Hybrid middle-segment propagation model. "
+            "full3d_uniform_cg is qualified only for fixed rectangular, "
+            "axis-aligned affine tensor-hexa meshes with uniform middle-z "
+            "spacing, one axial h and p1-p6; nonuniform/local-h/curved/mixed "
+            "meshes fail closed. The ordinary default remains continuous_beta."
+        ),
+    )
+    parser.add_argument(
+        "--internal-traction-model",
+        choices=(
+            "continuous_qep_beta",
+            "scalar_cg_discrete_derivative",
+        ),
+        default="continuous_qep_beta",
+        help=(
+            "Explicit Hybrid traction-symbol diagnostic. "
+            "scalar_cg_discrete_derivative requires full3d_uniform_cg and its "
+            "same uniform-z affine-hexa qualification scope; unsupported "
+            "meshes fail closed. The ordinary default remains "
+            "continuous_qep_beta."
+        ),
+    )
     parser.add_argument(
         "--mpi-size",
         type=int,
@@ -933,6 +1395,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--solver-path",
         choices=("augmented", "modal-schur-fast", "modal-schur-memory-minimal"),
         default="modal-schur-memory-minimal",
+    )
+    parser.add_argument(
+        "--stage4-full3d-assembly-backend",
+        choices=("standard_full", "assembly_time_static_condensed"),
+        default="standard_full",
     )
     parser.add_argument("--compare-modal-schur", action="store_true")
     parser.add_argument(
@@ -957,6 +1424,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--full3d-reference",
         type=Path,
         help="Explicit same-p/h full3D descriptor for Hybrid field closure.",
+    )
+    parser.add_argument(
+        "--full3d-reference-sha256",
+        help=(
+            "Expected SHA-256 of a fresh Full3D watchdog record. Required by "
+            "the static-condensed Hybrid backend and by both Task035c p6/h10 "
+            "backends."
+        ),
     )
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
     parser.add_argument(
@@ -983,6 +1458,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "14 GiB Case091 policy remains unchanged when this flag is absent."
         ),
     )
+    parser.add_argument(
+        "--task035c-p6-h10-gate",
+        action="store_true",
+        help=(
+            "Explicitly open only the fixed-rectangular Task035c p6/h10 "
+            "M120/M160 Hybrid authority path. Ordinary defaults are unchanged."
+        ),
+    )
+    parser.add_argument("--task035c-p6-preflight-authority", type=Path)
+    parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument(
         "--task034-workstation-resource-authority",
         type=Path,
@@ -1026,15 +1511,86 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--host-environment-id", default="windows-docker-desktop")
     args = parser.parse_args(argv)
+    if args.degree == 6 and not args.task035c_p6_h10_gate:
+        parser.error(
+            "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
+            "Task035c p6/h10 Hybrid authority only."
+        )
+    if args.task035c_p6_h10_gate and args.task034_workstation_gate:
+        parser.error(
+            "--task035c-p6-h10-gate and --task034-workstation-gate are "
+            "mutually exclusive."
+        )
     if (
         args.mpi_size not in (1, 2, 4)
         and not args.task034_workstation_gate
+        and not args.task035c_p6_h10_gate
     ):
-        parser.error("MPI8/16/32 require --task034-workstation-gate.")
+        parser.error(
+            "MPI8/16/32 require --task034-workstation-gate or the scoped "
+            "Task035c p6/h10 gate."
+        )
     if args.target == "qep" and args.material_kind is None:
         parser.error("--target qep requires --material-kind.")
+    if (
+        args.target != "hybrid"
+        and (
+            args.modal_h_nm is not None
+            or args.modal_degree is not None
+            or args.internal_propagation_model != "continuous_beta"
+            or args.internal_traction_model != "continuous_qep_beta"
+        )
+    ):
+        parser.error(
+            "Independent modal h/p and propagation options are Hybrid-only."
+        )
+    if args.modal_h_nm is not None and args.modal_h_nm <= 0.0:
+        parser.error("--modal-h-nm must be positive.")
+    if (
+        args.internal_traction_model == "scalar_cg_discrete_derivative"
+        and args.internal_propagation_model != "full3d_uniform_cg"
+    ):
+        parser.error(
+            "scalar_cg_discrete_derivative traction requires "
+            "--internal-propagation-model full3d_uniform_cg."
+        )
+    if (
+        args.graded_reference_h is not None
+        and (args.modal_h_nm is not None or args.modal_degree is not None)
+    ):
+        parser.error(
+            "Independent modal h/p is not combined with the Task034 graded path."
+        )
     if args.target == "hybrid" and args.requested_modes < 2:
         parser.error("Hybrid requested modes must be at least two.")
+    static_backend = (
+        args.stage4_full3d_assembly_backend
+        == "assembly_time_static_condensed"
+    )
+    if static_backend:
+        if args.target != "hybrid":
+            parser.error(
+                "The static-condensed assembly backend is currently qualified "
+                "only for Hybrid watchdog shards."
+            )
+        if args.full3d_reference is None:
+            parser.error(
+                "The static-condensed Hybrid backend requires a fresh same-p/h "
+                "--full3d-reference."
+            )
+        if not _valid_hex_digest(args.full3d_reference_sha256, 64):
+            parser.error(
+                "The static-condensed Hybrid backend requires an explicit "
+                "64-hex --full3d-reference-sha256."
+            )
+    elif (
+        args.full3d_reference_sha256 is not None
+        and not args.task035c_p6_h10_gate
+    ):
+        parser.error(
+            "--full3d-reference-sha256 is reserved for the opt-in "
+            "static-condensed Hybrid backend or Task035c p6/h10."
+        )
     if not 0.0 < args.incident_grazing_deg < 90.0:
         parser.error("--incident-grazing-deg must lie strictly between 0 and 90.")
     if args.candidate_modes < args.requested_modes:
@@ -1070,6 +1626,54 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--warning-gib must be lower than --terminate-gib.")
     if args.timeout_seconds <= 0.0:
         parser.error("--timeout-seconds must be positive.")
+    if args.task035c_p6_h10_gate:
+        scoped = bool(
+            args.target == "hybrid"
+            and args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.mpi_size in TASK035C_P6_H10_MPI_SIZES
+            and args.requested_modes in TASK035C_P6_H10_MODE_COUNTS
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            in TASK035C_P6_H10_BACKENDS
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model
+            == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+        )
+        if not scoped:
+            parser.error(
+                "--task035c-p6-h10-gate is restricted to WSL fixed rectangular "
+                "p6/h10 S-polarized Hybrid M120/M160 on MPI1/2/4/8, explicit "
+                "modal p6/h10, exact 2M pool, modal-schur-memory-minimal, "
+                "the qualified discrete axial propagation/traction pair, "
+                "10/110 nm interfaces, standard/static backend, and "
+                "hash-bound historical and matching Full3D authorities."
+            )
+    elif (
+        args.task035c_p6_preflight_authority is not None
+        or args.task035c_p6_preflight_sha256 is not None
+    ):
+        parser.error(
+            "Task035c p6 preflight authority arguments require "
+            "--task035c-p6-h10-gate."
+        )
     if args.task033_same_sha_anchor_requalification:
         scoped = bool(
             args.target == "hybrid"
@@ -1319,7 +1923,111 @@ def run(args: argparse.Namespace) -> int:
         else None
     )
     if args.target == "hybrid":
-        if args.task034_workstation_gate:
+        if args.task035c_p6_h10_gate:
+            authority_path = args.task035c_p6_preflight_authority
+            if authority_path is not None and not authority_path.is_absolute():
+                authority_path = ROOT / authority_path
+            authority_path = (
+                None if authority_path is None else authority_path.resolve()
+            )
+            authority, authority_read_error = _read_json_object(authority_path)
+            authority_observed_sha256 = (
+                None if authority_path is None else _sha256(authority_path)
+            )
+            try:
+                authority_relative = (
+                    None
+                    if authority_path is None
+                    else authority_path.relative_to(ROOT).as_posix()
+                )
+            except ValueError:
+                authority_relative = None
+            authority_is_tracked = bool(
+                authority_relative is not None
+                and _git(
+                    "ls-files",
+                    "--error-unmatch",
+                    "--",
+                    authority_relative,
+                )
+                is not None
+            )
+            preflight_authority_gate = (
+                task035c_p6_h10_preflight_authority_gate(
+                    authority,
+                    expected_sha256=args.task035c_p6_preflight_sha256,
+                    observed_sha256=authority_observed_sha256,
+                    authority_is_tracked=authority_is_tracked,
+                )
+            )
+
+            full3d_path = args.full3d_reference
+            if full3d_path is not None and not full3d_path.is_absolute():
+                full3d_path = ROOT / full3d_path
+            full3d_path = (
+                None if full3d_path is None else full3d_path.resolve()
+            )
+            full3d_reference, full3d_reference_read_error = (
+                _read_json_object(full3d_path)
+            )
+            full3d_reference_observed_sha256 = (
+                None if full3d_path is None else _sha256(full3d_path)
+            )
+            full3d_reference_gate = task035c_p6_h10_full3d_reference_gate(
+                full3d_reference,
+                expected_sha256=args.full3d_reference_sha256,
+                observed_sha256=full3d_reference_observed_sha256,
+                current_source_sha=source_before.get("commit_sha"),
+                assembly_backend=args.stage4_full3d_assembly_backend,
+                mpi_size=args.mpi_size,
+            )
+            checks = {
+                "task035c_scope_parser_passed": True,
+                "historical_preflight_readable": (
+                    authority_read_error is None
+                ),
+                "historical_preflight_gate": preflight_authority_gate["pass"],
+                "matching_full3d_reference_readable": (
+                    full3d_reference_read_error is None
+                ),
+                "matching_full3d_reference_gate": (
+                    full3d_reference_gate["pass"]
+                ),
+                "source_clean_and_exact": source_before[
+                    "source_clean_verified"
+                ],
+                "environment_preflight": environment_preflight["pass"],
+                "external_watchdog_active": True,
+            }
+            failures = [
+                name for name, passed in checks.items() if not passed
+            ]
+            launch_gate = {
+                "schema_version": "task035c.p6-h10-hybrid-launch-gate.v1",
+                "pass": not failures,
+                "launch_eligible_recomputed": not failures,
+                "scope": "task035c_fixed_rectangular_p6_h10",
+                "checks": checks,
+                "failures": failures,
+                "historical_preflight_authority": {
+                    **preflight_authority_gate,
+                    "path": (
+                        None
+                        if authority_path is None
+                        else str(authority_path)
+                    ),
+                    "read_error": authority_read_error,
+                },
+                "matching_full3d_reference": {
+                    **full3d_reference_gate,
+                    "path": (
+                        None if full3d_path is None else str(full3d_path)
+                    ),
+                    "read_error": full3d_reference_read_error,
+                },
+                "high_order_core_evidence": {},
+            }
+        elif args.task034_workstation_gate:
             authority_path = args.task034_workstation_resource_authority
             if not authority_path.is_absolute():
                 authority_path = ROOT / authority_path
@@ -1340,13 +2048,16 @@ def run(args: argparse.Namespace) -> int:
             )
             authority, authority_read_error = _read_json_object(authority_path)
             authority_observed_sha256 = _sha256(authority_path)
-            authority_source_compatibility = (
+            historical_authority_source_compatibility = (
                 _task034_authority_source_compatibility(
                     authority,
                     degree=args.degree,
                     h_nm=args.h_nm,
                     polarization_kind=args.polarization_kind,
                     current_source_sha=source_before.get("commit_sha"),
+                    assembly_backend=(
+                        args.stage4_full3d_assembly_backend
+                    ),
                 )
             )
             full3d_path = args.full3d_reference
@@ -1355,6 +2066,32 @@ def run(args: argparse.Namespace) -> int:
             full3d_path = None if full3d_path is None else full3d_path.resolve()
             full3d_reference_sha256 = (
                 None if full3d_path is None else _sha256(full3d_path)
+            )
+            fresh_static_record, fresh_static_read_error = (
+                _read_json_object(full3d_path)
+                if args.stage4_full3d_assembly_backend
+                == "assembly_time_static_condensed"
+                else (None, None)
+            )
+            fresh_static_anchor_gate = (
+                _task035b_static_full3d_anchor_gate(
+                    fresh_static_record,
+                    expected_sha256=args.full3d_reference_sha256,
+                    observed_sha256=full3d_reference_sha256,
+                    degree=args.degree,
+                    h_nm=args.h_nm,
+                    mpi_size=args.mpi_size,
+                    polarization_kind=args.polarization_kind,
+                    current_source_sha=source_before.get("commit_sha"),
+                )
+                if args.stage4_full3d_assembly_backend
+                == "assembly_time_static_condensed"
+                else None
+            )
+            active_source_compatibility = (
+                fresh_static_anchor_gate["source_compatibility"]
+                if fresh_static_anchor_gate is not None
+                else historical_authority_source_compatibility
             )
             resource_anchor_path = args.task034_workstation_resource_anchor
             if (
@@ -1433,13 +2170,15 @@ def run(args: argparse.Namespace) -> int:
                 mpi_size=args.mpi_size,
                 available_physical_core_count=_available_physical_core_count(),
                 current_source_sha=source_before.get("commit_sha"),
-                source_compatibility=authority_source_compatibility,
+                source_compatibility=active_source_compatibility,
                 source_clean_verified=source_before["source_clean_verified"],
                 authority_is_canonical=authority_is_canonical,
                 authority_is_tracked=authority_is_tracked,
                 external_watchdog_active=True,
                 full3d_reference_sha256=full3d_reference_sha256,
                 resource_anchor_sha256=resource_anchor_sha256,
+                assembly_backend=args.stage4_full3d_assembly_backend,
+                measured_full3d_anchor=fresh_static_anchor_gate,
                 m160_funnel_evidence=m160_funnel_evidence,
                 expected_m160_funnel_sha256=(
                     args.m160_funnel_evidence_sha256
@@ -1461,6 +2200,15 @@ def run(args: argparse.Namespace) -> int:
                     ),
                     "full3d_reference_observed_sha256": (
                         full3d_reference_sha256
+                    ),
+                    "full3d_reference_expected_sha256": (
+                        args.full3d_reference_sha256
+                    ),
+                    "fresh_static_reference_read_error": (
+                        fresh_static_read_error
+                    ),
+                    "historical_authority_source_compatibility": (
+                        historical_authority_source_compatibility
                     ),
                     "resource_anchor_path": (
                         None
@@ -1624,7 +2372,11 @@ def run(args: argparse.Namespace) -> int:
         None if core_path is None else str(core_path)
     )
     launch_gate["high_order_core_evidence_read_error"] = core_read_error
-    if args.degree >= 3 and core_read_error is not None:
+    if (
+        args.degree >= 3
+        and not args.task035c_p6_h10_gate
+        and core_read_error is not None
+    ):
         launch_gate["pass"] = False
         launch_gate["launch_eligible_recomputed"] = False
         launch_gate.setdefault("failures", []).append(
@@ -1684,7 +2436,7 @@ def run(args: argparse.Namespace) -> int:
         return 2
 
     core_gate = launch_gate.get("high_order_core_evidence", {})
-    if args.degree >= 3:
+    if args.degree >= 3 and not args.task035c_p6_h10_gate:
         args.high_order_core_evidence_sha256 = core_gate.get("evidence_sha256")
     args._no_swap_verified = True
     record_path = run_dir / "solver_record.json"
@@ -1771,7 +2523,10 @@ def run(args: argparse.Namespace) -> int:
             live_worker_count: int | None = None
             terminal_record_complete = False
             if (
-                args.task034_workstation_gate
+                (
+                    args.task034_workstation_gate
+                    or args.task035c_p6_h10_gate
+                )
                 and process_running
                 and not authority_readable
                 and row.get("stage") == "record_and_release"
@@ -1789,7 +2544,10 @@ def run(args: argparse.Namespace) -> int:
                         for worker in discovered_workers
                     )
             terminal_worker_drain = _task034_terminal_worker_drain(
-                task034_workstation_gate=args.task034_workstation_gate,
+                task034_workstation_gate=(
+                    args.task034_workstation_gate
+                    or args.task035c_p6_h10_gate
+                ),
                 process_running=process_running,
                 authority_readable=authority_readable,
                 stage=row.get("stage"),
@@ -1797,7 +2555,10 @@ def run(args: argparse.Namespace) -> int:
                 live_worker_count=live_worker_count,
             )
             readability_sample_is_formal = _resource_readability_sample_is_formal(
-                task034_workstation_gate=args.task034_workstation_gate,
+                task034_workstation_gate=(
+                    args.task034_workstation_gate
+                    or args.task035c_p6_h10_gate
+                ),
                 process_running=process_running,
                 terminal_worker_drain=terminal_worker_drain,
             )

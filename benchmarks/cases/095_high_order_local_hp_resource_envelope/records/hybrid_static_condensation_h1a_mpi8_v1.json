@@ -1,0 +1,585 @@
+{
+  "schema_version": "task035b.hybrid-static-condensation-h1a.v1",
+  "benchmark_id": "task035b_h1a_p2_h5_hybrid_static_condensation_mpi8",
+  "status": "h1a_controlled_negative_hybrid_same_discretization_gate_failed",
+  "classification": "controlled_negative",
+  "pass": false,
+  "ordinary_default_changed": false,
+  "review_authority": {
+    "path": "docs/task035b_high_order_local_hp_resource_envelope/review_report_v3.md",
+    "case": "H1-A",
+    "h1b_requires_h1a_all_pass": true
+  },
+  "source": {
+    "branch": "codex/20260726-task35b-high-order-local-hp-resource-envelope",
+    "numerical_commit_sha": "148729c28c3f9aefec8e5646cc644c5c4e2332da",
+    "master_base_sha": "1fb144d3ca50208c22b5f0733e140bfac8d9c47c",
+    "mpi_size": 8,
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32"
+  },
+  "identity": {
+    "model_family": "F-STAGE4-S",
+    "geometry": "Task034 fixed rectangular block grating",
+    "wavelength_nm": 13.5,
+    "incidence_theta_degrees": 80.0,
+    "incidence_phi_degrees": 0.0,
+    "polarization": "S",
+    "mesh_cell_type": "hexahedron",
+    "degree": 2,
+    "h_nm": 5.0,
+    "full3d_mesh_cells": [
+      10,
+      5,
+      28
+    ],
+    "full3d_equivalent_fe_dofs": 44698,
+    "hybrid_local_mesh_cells_per_side": [
+      10,
+      5,
+      4
+    ],
+    "hybrid_local_fe_dofs_per_side": 6826,
+    "hybrid_local_cell_interior_rows_per_side": 1440,
+    "hybrid_trace_rows_before_constraints_per_side": 5386,
+    "hybrid_active_trace_rows_per_side": 4800,
+    "hybrid_external_auxiliary_rows_per_side": 40,
+    "qep_interface_dofs": 80,
+    "external_dtn_auxiliary_rows": 80
+  },
+  "raw_authorities": [
+    {
+      "role": "standard_full3d_control",
+      "path": "benchmarks/artifacts/task034/phase_f/records/p2_h5_full_mpi8_6b30df2.json",
+      "sha256": "b165c32dfd01ce32da51ec0dadf6007bb1eb0797b6943a31aa22468fe4a0150a"
+    },
+    {
+      "role": "static_full3d_fresh_anchor",
+      "path": "benchmarks/artifacts/task035b_hybrid_h1/h1a_p2_h5_full_static_mpi8_e3122b4.json",
+      "sha256": "8f4ca477121b97b8dd8c93809ba7266b41cbb30d77253f88e9c7ae54c2489f69"
+    },
+    {
+      "role": "standard_hybrid_m120_control",
+      "path": "benchmarks/artifacts/task034/phase_f/records/p2_h5_hybrid_m120_mpi8_bd24a7f.json",
+      "sha256": "24a4d987ae8cbcd7d005cc90f1a1f179ae5c72895838e89c0501bc5380e7caba"
+    },
+    {
+      "role": "standard_hybrid_m160_control",
+      "path": "benchmarks/artifacts/task034/phase_f/records/p2_h5_hybrid_m160_mpi8_bd24a7f.json",
+      "sha256": "5a27fbf4bc2f9c826337a0f0a3ab923275daed3967ec627bb4de389957799124"
+    },
+    {
+      "role": "static_hybrid_m120_watchdog",
+      "path": "benchmarks/artifacts/task035b_hybrid_h1/h1a_static_p2_h5_m120_mpi8_fresh_anchor_exact_sha_148729c_watchdog.json",
+      "sha256": "3f4b239fc86a7cea5caeb21226edac5e630f76f039365b138907827c57b35246"
+    },
+    {
+      "role": "static_hybrid_m120_solver",
+      "path": "benchmarks/artifacts/task035b_hybrid_h1/H1A_static_p2_h5_m120_fresh_anchor_exact_sha_hybrid_p2_h5_mpi8_20260725T202334Z/solver_record.json",
+      "sha256": "d4278d209a72a4bce7a01259c73f0e6a7b2c8b139403633e4a2fc5bc906b004f"
+    },
+    {
+      "role": "static_hybrid_m160_watchdog",
+      "path": "benchmarks/artifacts/task035b_hybrid_h1/h1a_static_p2_h5_m160_mpi8_fresh_anchor_exact_sha_148729c_watchdog.json",
+      "sha256": "0e9832b8d62f5ccec3af424795ec9f6e8d0b4ed34ede6eaacecca6ba87d187c7"
+    },
+    {
+      "role": "significant_channel_reference_v1",
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json",
+      "sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3"
+    }
+  ],
+  "tolerance_semantics": {
+    "primary_same_discretization_gate": "Task033 relative error <= 1e-3 for each power and complex amplitude",
+    "secondary_strict_audit": "Task035b significant-channel-reference-v1 unchanged-v0 absolute tolerance, applied pairwise without replacing the p2/h5 Full3D center",
+    "primary_static_full3d_vs_static_hybrid_m160_power_pass_count": 3,
+    "primary_static_full3d_vs_static_hybrid_m160_amplitude_pass_count": 2,
+    "secondary_static_full3d_vs_static_hybrid_m160_power_pass_count": 2,
+    "secondary_static_full3d_vs_static_hybrid_m160_amplitude_pass_count": 2
+  },
+  "models": {
+    "standard_full3d": {
+      "assembly_backend": "standard_full",
+      "active_rows": 44778,
+      "matrix_nnz": 4896156,
+      "factor_nnz": 31053132,
+      "peak_process_tree_rss_gib": 2.959606170654297,
+      "R_total": 0.08902160293633875,
+      "T_total": 0.4425882786571031,
+      "A_closure": 0.46839011840655814
+    },
+    "static_full3d": {
+      "assembly_backend": "assembly_time_static_condensed",
+      "active_rows": 30800,
+      "matrix_nnz": 3229040,
+      "factor_nnz": 26995728,
+      "peak_process_tree_rss_gib": 2.7627029418945312,
+      "elapsed_seconds": 11.617,
+      "full_explicit_true_residual": 8.20658e-12,
+      "eliminated_interior_residual_norm": 1.7769e-12,
+      "eliminated_interior_max_residual": 5.90575e-14,
+      "R00_total": 0.08901303594304653,
+      "R_total": 0.08902160293633875,
+      "T_total": 0.4425882786571031,
+      "A_closure": 0.46839011840655814,
+      "A_volume": 0.46839011840644845
+    },
+    "standard_hybrid_m120": {
+      "assembly_backend": "standard_full",
+      "M": 120,
+      "total_rows": 13972,
+      "local_matrix_nnz_pair": 1454248,
+      "factor_nnz_pair": 6193888,
+      "factor_fill": 4.259,
+      "peak_process_tree_rss_gib": 2.596989,
+      "total_seconds": 67.727,
+      "internal_modal_coupling_seconds": 7.527
+    },
+    "static_hybrid_m120": {
+      "assembly_backend": "assembly_time_static_condensed",
+      "M": 120,
+      "modal_rows": 240,
+      "total_rows": 9920,
+      "local_matrix_nnz_pair": 976400,
+      "average_row_width": 100.868,
+      "maximum_row_width": 481,
+      "factor_nnz_pair": 5968912,
+      "factor_fill": 6.113,
+      "peak_process_tree_rss_gib": 2.747066,
+      "swap_mb": 0.0,
+      "total_seconds": 114.2091,
+      "qep_assembly_seconds": 0.5766,
+      "qep_bases_seconds": 35.4275,
+      "local_fem_seconds": 2.3235,
+      "internal_modal_coupling_seconds": 60.2783,
+      "primary_system_build_seconds": 4.1642,
+      "field_recovery_seconds": 7.5939,
+      "full_explicit_true_residual": 3.18394e-12,
+      "bottom_full_operator_relative_residual": 1.66338e-12,
+      "top_full_operator_relative_residual": 4.32043e-12,
+      "bottom_eliminated_interior_max_residual": 5.68368e-14,
+      "top_eliminated_interior_max_residual": 6.99648e-14,
+      "R00_total": 0.0890118196727513,
+      "R_total": 0.0890210691062443,
+      "T_total": 0.44258674274275994,
+      "A_closure": 0.46839218815099576,
+      "A_volume": 0.46839218816844136
+    },
+    "standard_hybrid_m160": {
+      "assembly_backend": "standard_full",
+      "M": 160,
+      "total_rows": 14052,
+      "local_matrix_nnz_pair": 1454248,
+      "factor_nnz_pair": 6390216,
+      "factor_fill": 4.394,
+      "peak_process_tree_rss_gib": 3.284866,
+      "total_seconds": 96.2844,
+      "internal_modal_coupling_seconds": 11.722
+    },
+    "static_hybrid_m160": {
+      "assembly_backend": "assembly_time_static_condensed",
+      "M": 160,
+      "modal_rows": 320,
+      "total_rows": 10000,
+      "local_matrix_nnz_pair": 976400,
+      "factor_nnz_pair": 5986184,
+      "factor_fill": 6.130873,
+      "peak_process_tree_rss_gib": 3.308307647705078,
+      "swap_mb": 0.0,
+      "total_seconds": 186.36435,
+      "qep_assembly_seconds": 0.47324,
+      "qep_bases_seconds": 53.73256,
+      "local_fem_seconds": 2.11508,
+      "internal_modal_coupling_seconds": 110.61713,
+      "primary_system_build_seconds": 5.13723,
+      "field_recovery_seconds": 10.00027,
+      "full_explicit_true_residual": 3.4503975769539785e-12,
+      "bottom_full_operator_relative_residual": 1.78247e-12,
+      "top_full_operator_relative_residual": 3.86782e-12,
+      "bottom_eliminated_interior_max_residual": 5.35006e-14,
+      "top_eliminated_interior_max_residual": 6.92031e-14,
+      "R00_total": 0.08901181967275751,
+      "R_total": 0.08902106910625036,
+      "T_total": 0.44258674274277315,
+      "A_closure": 0.46839218815097644,
+      "A_volume": 0.4683921881680365,
+      "interface_E_relative_l2_bottom": 1.66364e-07,
+      "interface_E_relative_l2_top": 2.47566e-07,
+      "interface_H_relative_l2_bottom": 0.00741748,
+      "interface_H_relative_l2_top": 0.00673247,
+      "middle_plane_E_relative_l2": 0.0002879984,
+      "middle_plane_H_relative_l2": 0.0008791684
+    }
+  },
+  "comparisons": {
+    "standard_full3d_vs_static_full3d": {
+      "power_pass_count": 12,
+      "amplitude_pass_count": 12,
+      "max_relative_power_error": 1.9673e-10,
+      "max_relative_amplitude_error": 1.762e-10,
+      "pass": true
+    },
+    "standard_hybrid_m120_vs_static_hybrid_m120": {
+      "power_pass_count": 12,
+      "amplitude_pass_count": 12,
+      "max_relative_power_error": 2.6104e-09,
+      "max_relative_amplitude_error": 1.33275e-09,
+      "pass": true
+    },
+    "standard_hybrid_m160_vs_static_hybrid_m160": {
+      "power_pass_count": 12,
+      "amplitude_pass_count": 12,
+      "max_relative_power_error": 1.06383e-09,
+      "max_relative_amplitude_error": 6.83819e-10,
+      "pass": true
+    },
+    "static_hybrid_m120_vs_static_hybrid_m160": {
+      "power_pass_count": 12,
+      "amplitude_pass_count": 12,
+      "max_relative_power_error": 3.40011e-10,
+      "max_relative_amplitude_error": 2.79177e-10,
+      "pass": true
+    },
+    "static_full3d_vs_static_hybrid_m120": {
+      "primary_relative_power_pass_count": 3,
+      "primary_relative_amplitude_pass_count": 2,
+      "secondary_absolute_power_pass_count": 2,
+      "secondary_absolute_amplitude_pass_count": 2,
+      "max_relative_power_error": 0.6292407985,
+      "max_relative_amplitude_error": 0.5938570333,
+      "pass": false
+    },
+    "static_full3d_vs_static_hybrid_m160": {
+      "primary_relative_power_pass_count": 3,
+      "primary_relative_amplitude_pass_count": 2,
+      "secondary_absolute_power_pass_count": 2,
+      "secondary_absolute_amplitude_pass_count": 2,
+      "max_relative_power_error": 0.6292407986118086,
+      "max_relative_amplitude_error": 0.5938570334605956,
+      "pass": false
+    }
+  },
+  "static_full3d_vs_static_hybrid_m160_channels": [
+    {
+      "channel": "T(-7,0)_s",
+      "static_full_power": 6.576075485469842e-06,
+      "static_hybrid_m160_power": 6.573403545245956e-06,
+      "power_abs_diff": 2.6719402238863256e-09,
+      "power_abs_tolerance": 2.1586938039525714e-09,
+      "power_abs_pass": false,
+      "power_relative_error": 0.0004063122799898066,
+      "power_relative_1e-3_pass": true,
+      "static_full_amplitude": [
+        -0.0009959861188804087,
+        0.0013492575294642589
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.001008258466507694,
+        0.001339685167363644
+      ],
+      "amplitude_abs_diff": 1.5564081484951916e-05,
+      "amplitude_abs_tolerance": 1.2165650664394503e-05,
+      "amplitude_abs_pass": false,
+      "amplitude_relative_error": 0.009280651141209965,
+      "amplitude_relative_1e-3_pass": false
+    },
+    {
+      "channel": "T(-5,0)_s",
+      "static_full_power": 7.173940104174331e-08,
+      "static_hybrid_m160_power": 1.667073552376576e-07,
+      "power_abs_diff": 9.496795419591429e-08,
+      "power_abs_tolerance": 3.891272584918786e-10,
+      "power_abs_pass": false,
+      "power_relative_error": 1.3237907316880841,
+      "power_relative_1e-3_pass": false,
+      "static_full_amplitude": [
+        -0.00011518823220728642,
+        -1.938323567249378e-05
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.00014677745539586778,
+        -0.0001008080809167508
+      ],
+      "amplitude_abs_diff": 8.733776070354227e-05,
+      "amplitude_abs_tolerance": 1.28064572388584e-06,
+      "amplitude_abs_pass": false,
+      "amplitude_relative_error": 0.7477055114686518,
+      "amplitude_relative_1e-3_pass": false
+    },
+    {
+      "channel": "T(-4,0)_s",
+      "static_full_power": 5.351329995213962e-07,
+      "static_hybrid_m160_power": 3.172632978180595e-07,
+      "power_abs_diff": 2.1786970170333672e-07,
+      "power_abs_tolerance": 5.251002536670234e-10,
+      "power_abs_pass": false,
+      "power_relative_error": 0.4071318754369317,
+      "power_relative_1e-3_pass": false,
+      "static_full_amplitude": [
+        -0.00021787215512473798,
+        0.00021813812565508228
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.0002221132601153174,
+        8.378130859283877e-05
+      ],
+      "amplitude_abs_diff": 0.00013442373772008532,
+      "amplitude_abs_tolerance": 2.541657906333072e-06,
+      "amplitude_abs_pass": false,
+      "amplitude_relative_error": 0.436007695228361,
+      "amplitude_relative_1e-3_pass": false
+    },
+    {
+      "channel": "T(-2,0)_s",
+      "static_full_power": 1.008643270805254e-06,
+      "static_hybrid_m160_power": 4.7231707393160395e-07,
+      "power_abs_diff": 5.363261968736499e-07,
+      "power_abs_tolerance": 4.651045293875445e-09,
+      "power_abs_pass": false,
+      "power_relative_error": 0.5317303078277338,
+      "power_relative_1e-3_pass": false,
+      "static_full_amplitude": [
+        -0.00044397307574820975,
+        4.944958506616968e-05
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.0002931982989643589,
+        -8.64951903653629e-05
+      ],
+      "amplitude_abs_diff": 0.00020301235253390338,
+      "amplitude_abs_tolerance": 4.580806193893276e-06,
+      "amplitude_abs_pass": false,
+      "amplitude_relative_error": 0.4544526037977317,
+      "amplitude_relative_1e-3_pass": false
+    },
+    {
+      "channel": "T(-1,0)_s",
+      "static_full_power": 3.839971782022218e-06,
+      "static_hybrid_m160_power": 5.146399933967019e-06,
+      "power_abs_diff": 1.306428151944801e-06,
+      "power_abs_tolerance": 1.1144136652304436e-07,
+      "power_abs_pass": false,
+      "power_relative_error": 0.34021816463890936,
+      "power_relative_1e-3_pass": false,
+      "static_full_amplitude": [
+        -0.0009582163928268676,
+        -0.00024659373805384116
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.001075175335868354,
+        -0.0003950371221378941
+      ],
+      "amplitude_abs_diff": 0.00018898368351714207,
+      "amplitude_abs_tolerance": 1.2728990676557803e-05,
+      "amplitude_abs_pass": false,
+      "amplitude_relative_error": 0.19100107828551452,
+      "amplitude_relative_1e-3_pass": false
+    },
+    {
+      "channel": "T(0,0)_s",
+      "static_full_power": 0.4425762354340188,
+      "static_hybrid_m160_power": 0.4425740572368631,
+      "power_abs_diff": 2.1781971557000013e-06,
+      "power_abs_tolerance": 0.00021757657401122454,
+      "power_abs_pass": true,
+      "power_relative_error": 4.9216315321673805e-06,
+      "power_relative_1e-3_pass": true,
+      "static_full_amplitude": [
+        -0.6597139932092309,
+        0.2653497842952276
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.6597178278075735,
+        0.2653355611199407
+      ],
+      "amplitude_abs_diff": 1.4731016926557656e-05,
+      "amplitude_abs_tolerance": 0.006779628645197135,
+      "amplitude_abs_pass": true,
+      "amplitude_relative_error": 2.0716433834381007e-05,
+      "amplitude_relative_1e-3_pass": true
+    },
+    {
+      "channel": "R(-7,0)_s",
+      "static_full_power": 2.241058885798492e-06,
+      "static_hybrid_m160_power": 2.232991179344903e-06,
+      "power_abs_diff": 8.067706453589037e-09,
+      "power_abs_tolerance": 1.2494442957486303e-09,
+      "power_abs_pass": false,
+      "power_relative_error": 0.003599952908294288,
+      "power_relative_1e-3_pass": false,
+      "static_full_amplitude": [
+        -0.0007544996052721743,
+        -0.000588545641791216
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.0007507183354813785,
+        -0.0005905770825748122
+      ],
+      "amplitude_abs_diff": 4.292406421582573e-06,
+      "amplitude_abs_tolerance": 7.995038740979746e-07,
+      "amplitude_abs_pass": false,
+      "amplitude_relative_error": 0.004485746755078049,
+      "amplitude_relative_1e-3_pass": false
+    },
+    {
+      "channel": "R(-5,0)_s",
+      "static_full_power": 1.2701157804637408e-07,
+      "static_hybrid_m160_power": 1.9848296036933038e-07,
+      "power_abs_diff": 7.14713823229563e-08,
+      "power_abs_tolerance": 1.1943015599631952e-09,
+      "power_abs_pass": false,
+      "power_relative_error": 0.562715489582067,
+      "power_relative_1e-3_pass": false,
+      "static_full_amplitude": [
+        -8.669307718897895e-05,
+        0.00012718479529862464
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.00012950306567557356,
+        0.00014231051552898009
+      ],
+      "amplitude_abs_diff": 4.540355191732633e-05,
+      "amplitude_abs_tolerance": 1.113206415872461e-06,
+      "amplitude_abs_pass": false,
+      "amplitude_relative_error": 0.29497965742394494,
+      "amplitude_relative_1e-3_pass": false
+    },
+    {
+      "channel": "R(-4,0)_s",
+      "static_full_power": 2.2088435914299162e-07,
+      "static_hybrid_m160_power": 9.446545581957702e-08,
+      "power_abs_diff": 1.2641890332341458e-07,
+      "power_abs_tolerance": 1.086491588133722e-09,
+      "power_abs_pass": false,
+      "power_relative_error": 0.572330715555899,
+      "power_relative_1e-3_pass": false,
+      "static_full_amplitude": [
+        -0.00019097521954712372,
+        4.538287603961879e-05
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.0001266975913005991,
+        2.0647164368796647e-05
+      ],
+      "amplitude_abs_diff": 6.88728460633105e-05,
+      "amplitude_abs_tolerance": 1.8815249525164472e-06,
+      "amplitude_abs_pass": false,
+      "amplitude_relative_error": 0.35086665873115946,
+      "amplitude_relative_1e-3_pass": false
+    },
+    {
+      "channel": "R(-2,0)_s",
+      "static_full_power": 1.9207734146372026e-07,
+      "static_hybrid_m160_power": 7.121444172585587e-08,
+      "power_abs_diff": 1.208628997378644e-07,
+      "power_abs_tolerance": 1.2422824425350593e-09,
+      "power_abs_pass": false,
+      "power_relative_error": 0.6292407986118086,
+      "power_relative_1e-3_pass": false,
+      "static_full_amplitude": [
+        -0.00013088397559753468,
+        0.0001418105760413272
+      ],
+      "static_hybrid_m160_amplitude": [
+        -1.9245411724775848e-05,
+        0.00011591809012318192
+      ],
+      "amplitude_abs_diff": 0.00011460187507450917,
+      "amplitude_abs_tolerance": 3.1864912826411788e-06,
+      "amplitude_abs_pass": false,
+      "amplitude_relative_error": 0.5938570334605956,
+      "amplitude_relative_1e-3_pass": false
+    },
+    {
+      "channel": "R(-1,0)_s",
+      "static_full_power": 5.7797985762281695e-06,
+      "static_hybrid_m160_power": 6.647510640884879e-06,
+      "power_abs_diff": 8.677120646567096e-07,
+      "power_abs_tolerance": 5.111835340427464e-08,
+      "power_abs_pass": false,
+      "power_relative_error": 0.15012842631325202,
+      "power_relative_1e-3_pass": false,
+      "static_full_amplitude": [
+        -0.0008193540865538687,
+        0.0008739787331757426
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.0009193366514086951,
+        0.0008974749986608335
+      ],
+      "amplitude_abs_diff": 0.00010270631804662964,
+      "amplitude_abs_tolerance": 7.413384075620187e-06,
+      "amplitude_abs_pass": false,
+      "amplitude_relative_error": 0.08573220264147009,
+      "amplitude_relative_1e-3_pass": false
+    },
+    {
+      "channel": "R(0,0)_s",
+      "static_full_power": 0.08901303594304653,
+      "static_hybrid_m160_power": 0.08901181967275751,
+      "power_abs_diff": 1.2162702890256005e-06,
+      "power_abs_tolerance": 3.195286914614711e-05,
+      "power_abs_pass": true,
+      "power_relative_error": 1.3663956926531641e-05,
+      "power_relative_1e-3_pass": true,
+      "static_full_amplitude": [
+        -0.17441066633193492,
+        -0.24206188343623447
+      ],
+      "static_hybrid_m160_amplitude": [
+        -0.17440458310805207,
+        -0.24206375413032055
+      ],
+      "amplitude_abs_diff": 6.364362432525107e-06,
+      "amplitude_abs_tolerance": 0.0008330266538614554,
+      "amplitude_abs_pass": true,
+      "amplitude_relative_error": 2.1331829150490803e-05,
+      "amplitude_relative_1e-3_pass": true
+    }
+  ],
+  "resource_deltas": {
+    "full3d_standard_to_static_percent": {
+      "active_rows": -31.21622225110545,
+      "matrix_nnz": -34.04942315726297,
+      "factor_nnz": -13.0669481876486,
+      "peak_process_tree_rss": -6.653019750983335
+    },
+    "hybrid_m160_standard_to_static_percent": {
+      "total_rows": -28.83575220609166,
+      "local_matrix_nnz_pair": -32.85876851747341,
+      "factor_nnz_pair": -6.322664273415177,
+      "factor_fill": 39.52435138825671,
+      "peak_process_tree_rss": 0.7136273409697292,
+      "total_seconds": 93.5583697866923,
+      "internal_modal_coupling_seconds": 843.6747961098788
+    }
+  },
+  "gates": {
+    "static_full3d_equivalence_pass": true,
+    "static_hybrid_equivalence_pass": true,
+    "static_hybrid_m120_to_m160_converged": true,
+    "static_full3d_vs_static_hybrid_m120_pass": false,
+    "static_full3d_vs_static_hybrid_m160_pass": false,
+    "full_explicit_true_residual_pass": true,
+    "recovered_interior_equation_residual_pass": true,
+    "interface_and_selected_field_norms_pass": true,
+    "h1a_all_pass": false,
+    "h1b_launch_authorized": false
+  },
+  "interpretation": {
+    "static_condensation_algebraic_equivalence": "qualified",
+    "m_truncation_root_cause": "rejected_by_m120_to_m160_identity",
+    "hybrid_same_discretization_channel_closure": "failed",
+    "resource_signal": "mixed_negative: rows and matrix NNZ fall, but fill rises, factor NNZ falls only modestly, peak memory does not improve, and total time nearly doubles",
+    "dominant_setup_bottleneck": "internal modal coupling",
+    "watchdog_formal_pass_semantics": "resource/source/numeric shard only; physical_qualified remains false"
+  },
+  "continuation": {
+    "H1_A": "controlled_negative_completed",
+    "H1_B": "not_run_by_review_prerequisite",
+    "H1_C": "not_run_after_h1a_numerical_gate",
+    "H1_D": "not_run_after_h1a_numerical_gate",
+    "adaptive_hybrid_A1_to_A4": "not_run_after_h1a_numerical_gate",
+    "stop_reason": "Review V3 H1-A numerical Gate failure"
+  }
+}

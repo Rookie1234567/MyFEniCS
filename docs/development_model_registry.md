@@ -16,7 +16,7 @@
 |---|---|---|---|---|---|---|
 | `C-COMSOL-P0` | COMSOL 直接/迭代求解器对照 | 周期 `50×25 nm`；空气 `50×25×130 nm`；基底 `50×25×10 nm`；光栅 `16×25×120 nm` | `13.5 nm`；`80°`（相对法线） | P | 两周期端口 + 双 Floquet；仅 `(0,0)` 零级 | `task029/.../comsol_3d_direct_iterative_memory_report.md` |
 | `F-STAGE4-S` | FEniCS Stage4 原始完整 FE 矩阵、Hybrid 和迭代主线 | 单元 `50×25×140 nm`；Si 块 `17×25×120 nm` | `13.5 nm`；`theta=80°`、`phi=0°`，即 `10°` 掠入射 | S | 双 Floquet + Fourier-DtN；top/bottom 各 40 个传播模态，共 80 个辅助量 | Task027–Task033 |
-| `F-HO-S` | FEniCS 高阶、h/p、自适应和静态凝聚主线 | Task034 冻结规则矩形光栅；与 `F-STAGE4-S` 同一工程主点族 | `13.5 nm`；`10°` 掠入射 | S | 双 Floquet + DtN；显著衍射级使用 Task035b reference v1 | Task034–Task035b |
+| `F-HO-S` | FEniCS 高阶、h/p、自适应、静态凝聚与Hybrid高阶闭合主线 | Task034 冻结规则矩形光栅；与 `F-STAGE4-S` 同一工程主点族 | `13.5 nm`；`10°` 掠入射 | S | 双 Floquet + DtN；显著衍射级使用 Task035b reference v1 | Task034–Task035c |
 
 ### 0.2 总量、自由度和资源字段
 
@@ -220,11 +220,25 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 
 ### 1.4.2 Hybrid
 
-当前没有使用 cell-interior 静态凝聚的正式 Hybrid Full3D–Modal 成功模型。
+Review V3 已把 cell-interior 静态凝聚接入 Task032/033 Hybrid 的上下局部
+三维 FEM 端区。static 路径与原始 Hybrid 路径达到逐通道等价，但 p2/h5
+static Hybrid 没有与同离散 static Full3D 完成显著通道闭合。因此当前有
+正式实测的工程能力和 controlled negative，没有 Hybrid 物理成功模型。
 
-| 模型 | 状态 | 原因 |
-|---|---|---|
-| Static-condensed Hybrid | `not_run` | Task035b 没有获得 `<=90k` 且 12/12 功率、12/12 复振幅全部通过的 Full3D 候选，因此 Hybrid、M 漏斗和 external DtN 漏斗未解锁。 |
+| 模型 | local FE / trace / total rows | matrix / factor NNZ | R00 / R / T / Aclosure | residual / fields | peak / total | 状态 |
+|---|---:|---:|---|---|---:|---|
+| p2/h5 static Hybrid M120 | 6,826 full FE/side；4,800 active trace/side；9,920 total | 976,400 / 5,968,912 pair | `0.089011819673 / 0.089021069106 / 0.442586742743 / 0.468392188151` | `3.18e-12`；full/interior residual pass | 2.747 GiB / 114.21 s | `controlled_negative`；static-equivalence 12/12+12/12，Full3D closure 3/12+2/12 |
+| p2/h5 static Hybrid M160 | 6,826 full FE/side；4,800 active trace/side；10,000 total | 976,400 / 5,986,184 pair | `0.089011819673 / 0.089021069106 / 0.442586742743 / 0.468392188151` | `3.45e-12`；interface E/H 与 middle plane pass | 3.308 GiB / 186.36 s | `controlled_negative`；M120→M160 12/12+12/12，但 Full3D closure 3/12+2/12 |
+
+M160 的相对 `1e-3` 失败功率为
+`T(-5,0)=1.667074e-7`、`T(-4,0)=3.172633e-7`、
+`T(-2,0)=4.723171e-7`、`T(-1,0)=5.146400e-6`、
+`R(-7,0)=2.232991e-6`、`R(-5,0)=1.984830e-7`、
+`R(-4,0)=9.446546e-8`、`R(-2,0)=7.121444e-8`、
+`R(-1,0)=6.647511e-6`；复振幅还在 `T(-7,0)` 失败。对应 Full3D
+值、复振幅、绝对差和冻结限值见
+`benchmarks/cases/095_high_order_local_hp_resource_envelope/records/hybrid_static_condensation_h1a_mpi8_v1.json`。
+H1-B p2/h3 为 `not_run_by_review_prerequisite`，不是普通待运行项。
 
 ---
 
@@ -266,9 +280,9 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 
 ---
 
-# 3. Task000–Task035b 逐任务统一总账
+# 3. Task000–Task035c 逐任务统一总账
 
-> 本节编号固定为 `3.1 Task000` 至 `3.37 Task035b`。每个 Task 先用通俗语言回答“研究什么、为什么研究、改变了哪段流程、最终结论是什么”，再用同一表头登记身份、物理、离散、算法、规模、总量、逐级结果、资源和处置。历史没有保存的字段统一写“历史未记录”，不填 0、不由功率反推复振幅。早期 `linear_system_relative_residual` 明确标成 legacy explicit residual，不冒充 Task035b 的 full explicit true residual。
+> 本节编号固定为 `3.1 Task000` 至 `3.38 Task035c`。每个 Task 先用通俗语言回答“研究什么、为什么研究、改变了哪段流程、最终结论是什么”，再用同一表头登记身份、物理、离散、算法、规模、总量、逐级结果、资源和处置。历史没有保存的字段统一写“历史未记录”，不填 0、不由功率反推复振幅。早期 `linear_system_relative_residual` 明确标成 legacy explicit residual，不冒充 Task035b/035c 的 full explicit true residual。
 
 统一表头如下，后续 checker 会检查每个 Task 都存在这一表头：
 
@@ -680,6 +694,7 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | `fixed_p5trace_p6interior_h13` | Case095 hash-bound record | `(6,2,12)`；89,740 Full3D-equivalent DoF | MPI8 assembly-time static-condensed direct；20,120 rows，11,013,212 NNZ，36,273,200 factor NNZ | R00/R/T/A=`0.000756117570/0.000765246512/0.602682451672/0.396552301816`，residual `5.81e-12`；`T(-4)=4.354892e-7`、`R(-4)=2.723391e-7`、`r(-4)=2.127847e-4-4.721864e-5i`、`r(-5)=-1.009264e-4-5.936550e-5i`失败；peak 6.411 GiB | `controlled_negative`；10/12+10/12，不是same-error | `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_directional_z_mpi8.json` |
 | `condensed_iterative_three_profiles` | Case095 negative records | h15 condensed trace | Jacobi GMRES30、ASM/ILU0 FGMRES30、z-slab/DtN coarse，均200步 | terminal residual ratios `0.861662/0.999661/0.996265`；peak `3.921/4.462/3.885 GiB`；无official R/T/A/channel | `controlled_negative`；不得提升production | `docs/task035b_high_order_local_hp_resource_envelope/outcomes/summary.md` |
 | `selective_p6_trace` | fixture/capability v2；无PDE record | p5trace/p6interior storage + research orbit | MatShell/action-only fixtures | actual DWR、row plan、正式PDE数量均0；资源/物理 `not_run` | `incomplete; research_only` | `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/physical_selective_trace_execution_capability_v2.json` |
+| `hybrid_static_h1a_p2_h5` | source `148729c28c3f9aefec8e5646cc644c5c4e2332da`；raw SHA 绑定 compact record | `F-STAGE4-S`；p2/h5 hexa；Full3D 44,698 FE；Hybrid local 6,826 FE/side | MPI8 direct；local static condensation；M120/M160；M160 10,000 total rows、976,400 matrix NNZ pair、5,986,184 factor NNZ pair | M160 R00/R/T/A=`0.089011819673/0.089021069106/0.442586742743/0.468392188151`，residual `3.45e-12`；static-vs-standard 12/12+12/12；Full3D-vs-Hybrid 3/12+2/12；peak 3.308 GiB，186.36 s | `controlled_negative`；H1-A channel Gate fail，H1-B not run | `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/hybrid_static_condensation_h1a_mpi8_v1.json` |
 
 ### 3.37.1 精度候选
 
@@ -710,6 +725,54 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | FGMRES30 + ASM(1)/ILU0 | `0.999661` | `4.462 GiB` | 几乎完全停滞；含局部 ILU | `controlled_negative` |
 | FGMRES + z-slab ILU0 + DtN trace coarse | `0.996265` | `3.885 GiB` | 物理分块和80D coarse仍未改善谱；不是严格 factorless | `controlled_negative` |
 | matrix-free selective trace MatShell | fixture action正确，不构造 global matrix/LU | 无正式 PDE、KSP 和内存 authority | 只降低存储不会自动解决预条件器问题 | `incomplete` |
+
+### 3.37.4 Review V3 static Hybrid H1-A
+
+| 研究点 | 实际结果 | 未满足项 | 状态 |
+|---|---|---|---|
+| Full3D standard/static 等价 | 12/12 power、12/12 amplitude；rows `44,778→30,800`；peak `2.960→2.763 GiB` | 无 static-equivalence 失败 | `engineering success` |
+| Hybrid standard/static M160 等价 | 12/12 + 12/12；rows `14,052→10,000`；NNZ pair `1,454,248→976,400` | factor 只降6.3%，peak升0.7%，total升93.6% | `engineering mixed_negative` |
+| static Hybrid M120→M160 | 12/12 + 12/12；总量和场几乎不变 | 增大 M 没有修复 Full3D channel closure | `converged discriminator` |
+| static Full3D↔Hybrid M160 | 相对口径3/12 power、2/12 amplitude；strict absolute 2/12+2/12 | 9个功率和10个幅值失败，逐项值/限值见 compact record | `controlled_negative` |
+| H1-B/H1-C/H1-D | PDE 均未启动 | Review V3 要求 H1-A 全通过后才能进入 H1-B | `not_run_by_review_prerequisite` |
+
+## 3.38 Task035c：Hybrid逐通道与高阶静态内存闭合
+
+Task035c先用p2/h5解释“总R/T接近但弱衍射级不对”的原因，再在p6/h10上
+正式比较Full3D与Hybrid、standard与static。Hybrid把中间均匀长段替换成二维
+模态传播；static condensation再精确消去上下局部三维单元内部自由度。最终
+12通道物理与正式15%/25%内存Gate通过，但用户期望的50%峰值下降没有达到。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `task035c_p2_h5_continuous_symbol_baseline` | Task035b H1-A + Case096 root-cause ledger | `F-STAGE4-S`；p2/h5；MPI8 | Hybrid continuous QEP phase + continuous traction；M120/M160 | M160 对 same-source Full3D 仅 `3/12 powers + 2/12 amplitudes`；提高 M 未修复 | `controlled_negative_root_cause_baseline`；不是 M 截断不足 | `benchmarks/cases/096_hybrid_channel_memory_closure/records/p2_h5_root_cause_v1.json` |
+| `task035c_p2_h5_discrete_phase_only` | source/record hash见 Case096 compact | 同一 fixed rectangular p2/h5 | 只启用 scalar-CG discrete phase，traction仍连续 | `4/12 powers + 4/12 amplitudes`；相对原始有改善但未闭合 | `controlled_negative_discriminator`；phase必要但不充分 | same compact record |
+| `task035c_p2_h5_discrete_phase_traction` | source `8a1e40c...`；Case096 compact | `F-STAGE4-S`；p2/h5；MPI8 | Hybrid M120/M160；`full3d_uniform_cg` + `scalar_cg_discrete_derivative` opt-in | 两点均12/12 powers+12/12 boundary amplitudes；phase-only仅4/12+4/12 | `diagnostic_success`；root cause closed | `benchmarks/cases/096_hybrid_channel_memory_closure/records/p2_h5_root_cause_v1.json` |
+| `task035c_p6_h10_full_standard` | source `244b62e1...`；clean MPI8 | `F-HO-S`；global p6/h10；173,802 FE | standard Full3D direct；173,882 rows；210,353,168 matrix NNZ；438,050,956 factor NNZ | R/T/A=`0.000762881475133/0.602701633983338/0.396535484541529`；residual`1.709e-11`；peak34.041GiB；2581.55s；12/12+12/12 | `success; discrete_reference` | `benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_six_path_v1.json` |
+| `task035c_p6_h10_full_static` | same source/mesh/MPI | `F-HO-S`；p6/h10 | exact cell-interior static；51,272 rows；41,989,040 NNZ；212,343,992 factor NNZ | R/T/A=`0.000762881475126/0.602701633985538/0.396535484539337`；residual`3.092e-11`；14.722GiB；260.74s；12/12+12/12 | `engineering_success`；peak -56.75% | same compact record |
+| `task035c_p6_h10_hybrid_standard_M120_M160` | same source；MPI8 | local p6/h10 ends + discrete modal middle | M120/M160；52,292/52,372 total rows；60,434,236 NNZ；141,010,528 factor NNZ | peaks11.077/11.247GiB；times942.03/1014.71s；两点12/12+12/12 | `success baselines` | same compact record |
+| `task035c_p6_h10_hybrid_static_M120` | same source；MPI8 formal authority | local exact static + modal middle；17,168 rows | 12,313,232 matrix NNZ；45,293,792 factor NNZ | R/T/A=`0.000762881475142/0.602701633984217/0.396535484540641`；residual`2.079e-12`；RSS7.544GiB；PSS/USS `5.769862/5.491413 GiB`；322.78s；12/12+12/12 | `success; selected`；RSS -31.89%，PSS/USS -38.88%/-40.31%；用户50%目标仍open | six-path + PSS/USS compact records |
+| `task035c_p6_h10_hybrid_static_M160` | same source；MPI8 | 17,248 rows；same local matrix/factor inventory | RSS7.929GiB；PSS/USS `6.169376/5.888676 GiB`；393.84s；12/12+12/12；相对M120无物理收益 | `success_not_selected`；RSS -29.50%，PSS/USS -35.81%/-37.16% | same compact records |
+| `task035c_static_rank_MPI1` | source `244b62e1...`；measured | Full static formal pass；Hybrid static M120 | Hybrid measured1.752GiB、1328.72s | 12/12+12/12但positive QEP biorthogonality `1.197600e-6 > 1e-6` | `controlled_negative_numerical`；非内存floor | `benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_static_rank_study_v1.json` |
+| `task035c_static_rank_MPI2` | same source；measured | Full static formal pass；Hybrid numeric pass | Hybrid measured3.142GiB、798.20s | terminal launcher-drain RSS/swap readability失败 | `controlled_negative_resource_authority`；MPI4 not run by stop rule | same rank record |
+
+### 3.38.1 Task035c 选择、内存口径与能力边界
+
+M120 被选择是因为它与 M160 都通过 12/12 功率、12/12 physical-boundary
+complex amplitudes、R/T/A/场/残差 Gate，而 M160 没有可测物理收益，却使 static
+RSS增加 `5.1052%`、modal coupling 增加 `38.9106%`、总时间增加
+`22.0146%`；因此停止 M160 lane，不运行 M240。用户提出的 `>=50%` static
+Hybrid RSS 降幅仍为 `not_achieved/open_engineering_gap`。
+
+PSS/USS 来自原始 MPI8 timeline 中逐 rank `/proc/<pid>/smaps_rollup` 的历史
+回填。只使用 8 个 rank 同时可读的样本，不由 RSS 推算且没有重跑 PDE。正式
+Task035c relative-memory authority 仍为 simultaneous process-tree/live-worker
+RSS；PSS/USS 是共享页/私有页诊断。compact authority 为
+`benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_pss_uss_ledger_v1.json`。
+
+| qualified scope | not qualified / must fail closed |
+|---|---|
+| fixed rectangular block grating；structured tensor-product；axis-aligned first-order affine hexa；modal middle uniform z；single axial h；p1–p6；complex128；Floquet；sparse auxiliary DtN；direct standard/static Full3D/Hybrid | nonuniform z；local-h/hanging hexa；curved/distorted/high-order geometry；tetra static；hexa/tetra/prism/pyramid mixed；sloped/rounded/rough/defect或任意 irregular geometry；production automatic hp adaptivity |
 
 ---
 
@@ -745,7 +808,7 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 
 # 5. 当前数据缺口与后续自动化
 
-1. Task000–035b 已逐项回填；早期没有保存的 source SHA、geometry hash、12 通道、factor NNZ 或 PSS/cgroup 明确标成“历史未记录”。
+1. Task000–035c 已逐项回填；早期没有保存的 source SHA、geometry hash、12 通道、factor NNZ 或 PSS/cgroup 明确标成“历史未记录”。
 2. Task032–034 的 heavy JSON 包含比总账更细的衍射级、场误差和资源字段；总账保留权威 evidence path，不建立第二份易漂移的逐字段副本。
 3. COMSOL 参考只计算零级；非零衍射级不能写 0。
 4. 不同物理配置、偏振、网格和软件之间的数值只能做标注清楚的横向参考，不能混成单一收敛序列。

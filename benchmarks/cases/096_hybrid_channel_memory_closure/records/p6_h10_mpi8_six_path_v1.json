@@ -1,0 +1,2924 @@
+{
+  "channel_semantics": {
+    "complex_amplitude_field": "outgoing_amplitude_at_boundary",
+    "relative_tolerance": 0.001,
+    "significant_power_floor": 1e-08
+  },
+  "classification": {
+    "mandatory_static_hybrid_memory": "pass",
+    "modal_coupling_time": "measured_and_minimized_not_hard_gate_by_user",
+    "physics": "12_of_12_power_and_12_of_12_boundary_amplitude_pass",
+    "preferred_25_percent_static_hybrid_memory": "pass",
+    "total_time_1p35": "pass",
+    "user_target_50_percent_static_hybrid_memory": "not_met"
+  },
+  "frozen_reference_v1_gates": {
+    "full_standard": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_absolute_error": 1.6437510215026032e-13,
+          "complex_amplitude_absolute_tolerance": 1.2165650664394503e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-7,0)_s",
+          "power_absolute_error": 7.300763319633211e-16,
+          "power_absolute_tolerance": 2.1586938039525714e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 5.393732420423407e-14,
+          "complex_amplitude_absolute_tolerance": 1.28064572388584e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-5,0)_s",
+          "power_absolute_error": 1.0817838934210934e-16,
+          "power_absolute_tolerance": 3.891272584918786e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 3.909498412868333e-14,
+          "complex_amplitude_absolute_tolerance": 2.541657906333072e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-4,0)_s",
+          "power_absolute_error": 9.858648236828324e-17,
+          "power_absolute_tolerance": 5.251002536670234e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.031116025116582e-14,
+          "complex_amplitude_absolute_tolerance": 4.580806193893276e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-2,0)_s",
+          "power_absolute_error": 3.5602700597229565e-16,
+          "power_absolute_tolerance": 4.651045293875445e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.0424026946597373e-13,
+          "complex_amplitude_absolute_tolerance": 1.2728990676557803e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-1,0)_s",
+          "power_absolute_error": 1.5777513301916402e-15,
+          "power_absolute_tolerance": 1.1144136652304436e-07,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.4166526326323686e-12,
+          "complex_amplitude_absolute_tolerance": 0.006779628645197135,
+          "complex_amplitude_pass": true,
+          "label": "T(0,0)_s",
+          "power_absolute_error": 2.776334717680129e-12,
+          "power_absolute_tolerance": 0.00021757657401122454,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.4117975880563034e-14,
+          "complex_amplitude_absolute_tolerance": 7.995038740979746e-07,
+          "complex_amplitude_pass": true,
+          "label": "R(-7,0)_s",
+          "power_absolute_error": 3.071267351361208e-17,
+          "power_absolute_tolerance": 1.2494442957486303e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.443328124400854e-14,
+          "complex_amplitude_absolute_tolerance": 1.113206415872461e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-5,0)_s",
+          "power_absolute_error": 4.482866286806221e-17,
+          "power_absolute_tolerance": 1.1943015599631952e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 5.48551013386036e-14,
+          "complex_amplitude_absolute_tolerance": 1.8815249525164472e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-4,0)_s",
+          "power_absolute_error": 1.7952704498377286e-17,
+          "power_absolute_tolerance": 1.086491588133722e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.2587045302332992e-13,
+          "complex_amplitude_absolute_tolerance": 3.1864912826411788e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-2,0)_s",
+          "power_absolute_error": 6.921893952655835e-16,
+          "power_absolute_tolerance": 1.2422824425350593e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.0733847016800884e-13,
+          "complex_amplitude_absolute_tolerance": 7.413384075620187e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-1,0)_s",
+          "power_absolute_error": 1.0191466540045852e-15,
+          "power_absolute_tolerance": 5.111835340427464e-08,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 8.124355501369542e-14,
+          "complex_amplitude_absolute_tolerance": 0.0008330266538614554,
+          "complex_amplitude_pass": true,
+          "label": "R(0,0)_s",
+          "power_absolute_error": 2.4033509557486177e-15,
+          "power_absolute_tolerance": 3.195286914614711e-05,
+          "power_pass": true
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "pass": true,
+      "power_pass_count": 12
+    },
+    "full_static": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_absolute_error": 1.2899451619565039e-13,
+          "complex_amplitude_absolute_tolerance": 1.2165650664394503e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-7,0)_s",
+          "power_absolute_error": 3.7267289745173716e-16,
+          "power_absolute_tolerance": 2.1586938039525714e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.852476633350198e-14,
+          "complex_amplitude_absolute_tolerance": 1.28064572388584e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-5,0)_s",
+          "power_absolute_error": 3.60571602432111e-17,
+          "power_absolute_tolerance": 3.891272584918786e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 4.3324581924700425e-14,
+          "complex_amplitude_absolute_tolerance": 2.541657906333072e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-4,0)_s",
+          "power_absolute_error": 1.2615195202681276e-16,
+          "power_absolute_tolerance": 5.251002536670234e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.532166274325954e-14,
+          "complex_amplitude_absolute_tolerance": 4.580806193893276e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-2,0)_s",
+          "power_absolute_error": 3.763020101142482e-16,
+          "power_absolute_tolerance": 4.651045293875445e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 4.649827697488355e-14,
+          "complex_amplitude_absolute_tolerance": 1.2728990676557803e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-1,0)_s",
+          "power_absolute_error": 1.488304650961586e-16,
+          "power_absolute_tolerance": 1.1144136652304436e-07,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 4.319342617325963e-13,
+          "complex_amplitude_absolute_tolerance": 0.006779628645197135,
+          "complex_amplitude_pass": true,
+          "label": "T(0,0)_s",
+          "power_absolute_error": 5.779821066198565e-13,
+          "power_absolute_tolerance": 0.00021757657401122454,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.556168186316555e-14,
+          "complex_amplitude_absolute_tolerance": 7.995038740979746e-07,
+          "complex_amplitude_pass": true,
+          "label": "R(-7,0)_s",
+          "power_absolute_error": 2.9019137014695516e-17,
+          "power_absolute_tolerance": 1.2494442957486303e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 4.5705190239790576e-14,
+          "complex_amplitude_absolute_tolerance": 1.113206415872461e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-5,0)_s",
+          "power_absolute_error": 5.733408524775729e-17,
+          "power_absolute_tolerance": 1.1943015599631952e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 5.5958845104282825e-14,
+          "complex_amplitude_absolute_tolerance": 1.8815249525164472e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-4,0)_s",
+          "power_absolute_error": 7.81339189447625e-17,
+          "power_absolute_tolerance": 1.086491588133722e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.851288817661895e-14,
+          "complex_amplitude_absolute_tolerance": 3.1864912826411788e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-2,0)_s",
+          "power_absolute_error": 2.8651016495818797e-16,
+          "power_absolute_tolerance": 1.2422824425350593e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.1920558613457652e-13,
+          "complex_amplitude_absolute_tolerance": 7.413384075620187e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-1,0)_s",
+          "power_absolute_error": 1.1211582199742096e-15,
+          "power_absolute_tolerance": 5.111835340427464e-08,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.4499299148768643e-13,
+          "complex_amplitude_absolute_tolerance": 0.0008330266538614554,
+          "complex_amplitude_pass": true,
+          "label": "R(0,0)_s",
+          "power_absolute_error": 5.1023638439340324e-15,
+          "power_absolute_tolerance": 3.195286914614711e-05,
+          "power_pass": true
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "pass": true,
+      "power_pass_count": 12
+    },
+    "hybrid_standard_m120": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_absolute_error": 1.136642912437961e-13,
+          "complex_amplitude_absolute_tolerance": 1.2165650664394503e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-7,0)_s",
+          "power_absolute_error": 3.8432214157532556e-16,
+          "power_absolute_tolerance": 2.1586938039525714e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 3.832509364272202e-14,
+          "complex_amplitude_absolute_tolerance": 1.28064572388584e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-5,0)_s",
+          "power_absolute_error": 8.134986481747066e-17,
+          "power_absolute_tolerance": 3.891272584918786e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.505643727964757e-14,
+          "complex_amplitude_absolute_tolerance": 2.541657906333072e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-4,0)_s",
+          "power_absolute_error": 4.379689732896767e-19,
+          "power_absolute_tolerance": 5.251002536670234e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 9.365166173386103e-14,
+          "complex_amplitude_absolute_tolerance": 4.580806193893276e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-2,0)_s",
+          "power_absolute_error": 1.7243388520434694e-16,
+          "power_absolute_tolerance": 4.651045293875445e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.0922950491663503e-13,
+          "complex_amplitude_absolute_tolerance": 1.2728990676557803e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-1,0)_s",
+          "power_absolute_error": 1.7275101433979895e-15,
+          "power_absolute_tolerance": 1.1144136652304436e-07,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.5157427993278042e-12,
+          "complex_amplitude_absolute_tolerance": 0.006779628645197135,
+          "complex_amplitude_pass": true,
+          "label": "T(0,0)_s",
+          "power_absolute_error": 2.692179812413542e-12,
+          "power_absolute_tolerance": 0.00021757657401122454,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.500880181659508e-13,
+          "complex_amplitude_absolute_tolerance": 7.995038740979746e-07,
+          "complex_amplitude_pass": true,
+          "label": "R(-7,0)_s",
+          "power_absolute_error": 5.836455112067339e-16,
+          "power_absolute_tolerance": 1.2494442957486303e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.476518167399818e-14,
+          "complex_amplitude_absolute_tolerance": 1.113206415872461e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-5,0)_s",
+          "power_absolute_error": 2.913887306272379e-17,
+          "power_absolute_tolerance": 1.1943015599631952e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 5.4363155188151386e-14,
+          "complex_amplitude_absolute_tolerance": 1.8815249525164472e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-4,0)_s",
+          "power_absolute_error": 3.7335888825989474e-17,
+          "power_absolute_tolerance": 1.086491588133722e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.49549715015332e-13,
+          "complex_amplitude_absolute_tolerance": 3.1864912826411788e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-2,0)_s",
+          "power_absolute_error": 7.914705505297336e-16,
+          "power_absolute_tolerance": 1.2422824425350593e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 7.804869379437722e-14,
+          "complex_amplitude_absolute_tolerance": 7.413384075620187e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-1,0)_s",
+          "power_absolute_error": 4.0300980597412356e-17,
+          "power_absolute_tolerance": 5.111835340427464e-08,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 3.3947738448197215e-13,
+          "complex_amplitude_absolute_tolerance": 0.0008330266538614554,
+          "complex_amplitude_pass": true,
+          "label": "R(0,0)_s",
+          "power_absolute_error": 1.4404601643425163e-14,
+          "power_absolute_tolerance": 3.195286914614711e-05,
+          "power_pass": true
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "pass": true,
+      "power_pass_count": 12
+    },
+    "hybrid_standard_m160": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_absolute_error": 1.0255854715083143e-13,
+          "complex_amplitude_absolute_tolerance": 1.2165650664394503e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-7,0)_s",
+          "power_absolute_error": 2.881669614030174e-16,
+          "power_absolute_tolerance": 2.1586938039525714e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.705040124796197e-14,
+          "complex_amplitude_absolute_tolerance": 1.28064572388584e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-5,0)_s",
+          "power_absolute_error": 1.7380507272727404e-17,
+          "power_absolute_tolerance": 3.891272584918786e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.8171262382373286e-14,
+          "complex_amplitude_absolute_tolerance": 2.541657906333072e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-4,0)_s",
+          "power_absolute_error": 1.2773521542390866e-17,
+          "power_absolute_tolerance": 5.251002536670234e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.08610762936568e-14,
+          "complex_amplitude_absolute_tolerance": 4.580806193893276e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-2,0)_s",
+          "power_absolute_error": 2.7753076868434513e-16,
+          "power_absolute_tolerance": 4.651045293875445e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.1977246635067657e-13,
+          "complex_amplitude_absolute_tolerance": 1.2728990676557803e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-1,0)_s",
+          "power_absolute_error": 1.6965189019238491e-15,
+          "power_absolute_tolerance": 1.1144136652304436e-07,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.5797070583395255e-12,
+          "complex_amplitude_absolute_tolerance": 0.006779628645197135,
+          "complex_amplitude_pass": true,
+          "label": "T(0,0)_s",
+          "power_absolute_error": 2.7113866707395573e-12,
+          "power_absolute_tolerance": 0.00021757657401122454,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.1123576528044355e-13,
+          "complex_amplitude_absolute_tolerance": 7.995038740979746e-07,
+          "complex_amplitude_pass": true,
+          "label": "R(-7,0)_s",
+          "power_absolute_error": 5.083864220849525e-16,
+          "power_absolute_tolerance": 1.2494442957486303e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 7.524351434626969e-14,
+          "complex_amplitude_absolute_tolerance": 1.113206415872461e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-5,0)_s",
+          "power_absolute_error": 8.533841061719315e-17,
+          "power_absolute_tolerance": 1.1943015599631952e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 3.333801327698264e-14,
+          "complex_amplitude_absolute_tolerance": 1.8815249525164472e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-4,0)_s",
+          "power_absolute_error": 2.1543912436498705e-17,
+          "power_absolute_tolerance": 1.086491588133722e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.411633636375197e-13,
+          "complex_amplitude_absolute_tolerance": 3.1864912826411788e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-2,0)_s",
+          "power_absolute_error": 7.416381199351054e-16,
+          "power_absolute_tolerance": 1.2422824425350593e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 8.73097464400113e-14,
+          "complex_amplitude_absolute_tolerance": 7.413384075620187e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-1,0)_s",
+          "power_absolute_error": 7.148958074826295e-19,
+          "power_absolute_tolerance": 5.111835340427464e-08,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.2641657552367207e-13,
+          "complex_amplitude_absolute_tolerance": 0.0008330266538614554,
+          "complex_amplitude_pass": true,
+          "label": "R(0,0)_s",
+          "power_absolute_error": 1.0908374897811157e-14,
+          "power_absolute_tolerance": 3.195286914614711e-05,
+          "power_pass": true
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "pass": true,
+      "power_pass_count": 12
+    },
+    "hybrid_static_m120": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_absolute_error": 1.8315989761349895e-13,
+          "complex_amplitude_absolute_tolerance": 1.2165650664394503e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-7,0)_s",
+          "power_absolute_error": 2.6779539550507783e-16,
+          "power_absolute_tolerance": 2.1586938039525714e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.893370173202643e-14,
+          "complex_amplitude_absolute_tolerance": 1.28064572388584e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-5,0)_s",
+          "power_absolute_error": 1.0503740588523318e-16,
+          "power_absolute_tolerance": 3.891272584918786e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 7.204273445981862e-15,
+          "complex_amplitude_absolute_tolerance": 2.541657906333072e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-4,0)_s",
+          "power_absolute_error": 1.8672417805747424e-17,
+          "power_absolute_tolerance": 5.251002536670234e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.174773888825894e-14,
+          "complex_amplitude_absolute_tolerance": 4.580806193893276e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-2,0)_s",
+          "power_absolute_error": 1.0393221317752353e-16,
+          "power_absolute_tolerance": 4.651045293875445e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.008057531434662e-14,
+          "complex_amplitude_absolute_tolerance": 1.2728990676557803e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-1,0)_s",
+          "power_absolute_error": 5.805529939163084e-16,
+          "power_absolute_tolerance": 1.1144136652304436e-07,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.0587489449118906e-12,
+          "complex_amplitude_absolute_tolerance": 0.006779628645197135,
+          "complex_amplitude_pass": true,
+          "label": "T(0,0)_s",
+          "power_absolute_error": 1.89859239441148e-12,
+          "power_absolute_tolerance": 0.00021757657401122454,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 3.2269508637084204e-13,
+          "complex_amplitude_absolute_tolerance": 7.995038740979746e-07,
+          "complex_amplitude_pass": true,
+          "label": "R(-7,0)_s",
+          "power_absolute_error": 4.687189162529679e-16,
+          "power_absolute_tolerance": 1.2494442957486303e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 5.1920821030132295e-14,
+          "complex_amplitude_absolute_tolerance": 1.113206415872461e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-5,0)_s",
+          "power_absolute_error": 3.3569967107607054e-17,
+          "power_absolute_tolerance": 1.1943015599631952e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 4.7500193148199e-14,
+          "complex_amplitude_absolute_tolerance": 1.8815249525164472e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-4,0)_s",
+          "power_absolute_error": 3.058800085168809e-17,
+          "power_absolute_tolerance": 1.086491588133722e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.576914873358237e-13,
+          "complex_amplitude_absolute_tolerance": 3.1864912826411788e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-2,0)_s",
+          "power_absolute_error": 8.108796752413555e-16,
+          "power_absolute_tolerance": 1.2422824425350593e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.0723708901184685e-13,
+          "complex_amplitude_absolute_tolerance": 7.413384075620187e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-1,0)_s",
+          "power_absolute_error": 7.691076101727992e-16,
+          "power_absolute_tolerance": 5.111835340427464e-08,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 3.33831785622355e-13,
+          "complex_amplitude_absolute_tolerance": 0.0008330266538614554,
+          "complex_amplitude_pass": true,
+          "label": "R(0,0)_s",
+          "power_absolute_error": 1.0205486629388805e-14,
+          "power_absolute_tolerance": 3.195286914614711e-05,
+          "power_pass": true
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "pass": true,
+      "power_pass_count": 12
+    },
+    "hybrid_static_m160": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_absolute_error": 2.195246848945709e-13,
+          "complex_amplitude_absolute_tolerance": 1.2165650664394503e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-7,0)_s",
+          "power_absolute_error": 3.319098603815976e-18,
+          "power_absolute_tolerance": 2.1586938039525714e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.1105981695941e-14,
+          "complex_amplitude_absolute_tolerance": 1.28064572388584e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-5,0)_s",
+          "power_absolute_error": 9.785075484425407e-17,
+          "power_absolute_tolerance": 3.891272584918786e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.6647505892255556e-15,
+          "complex_amplitude_absolute_tolerance": 2.541657906333072e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-4,0)_s",
+          "power_absolute_error": 1.743299684567757e-19,
+          "power_absolute_tolerance": 5.251002536670234e-10,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.638905616267401e-14,
+          "complex_amplitude_absolute_tolerance": 4.580806193893276e-06,
+          "complex_amplitude_pass": true,
+          "label": "T(-2,0)_s",
+          "power_absolute_error": 2.3429227782585486e-16,
+          "power_absolute_tolerance": 4.651045293875445e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 5.7889839289435e-14,
+          "complex_amplitude_absolute_tolerance": 1.2728990676557803e-05,
+          "complex_amplitude_pass": true,
+          "label": "T(-1,0)_s",
+          "power_absolute_error": 3.352014304146278e-16,
+          "power_absolute_tolerance": 1.1144136652304436e-07,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.026868737245392e-12,
+          "complex_amplitude_absolute_tolerance": 0.006779628645197135,
+          "complex_amplitude_pass": true,
+          "label": "T(0,0)_s",
+          "power_absolute_error": 1.8416379532482097e-12,
+          "power_absolute_tolerance": 0.00021757657401122454,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 3.120257440748966e-13,
+          "complex_amplitude_absolute_tolerance": 7.995038740979746e-07,
+          "complex_amplitude_pass": true,
+          "label": "R(-7,0)_s",
+          "power_absolute_error": 4.963190613227757e-16,
+          "power_absolute_tolerance": 1.2494442957486303e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 6.153899351480386e-14,
+          "complex_amplitude_absolute_tolerance": 1.113206415872461e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-5,0)_s",
+          "power_absolute_error": 4.748159652864228e-17,
+          "power_absolute_tolerance": 1.1943015599631952e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 3.4220993939668753e-14,
+          "complex_amplitude_absolute_tolerance": 1.8815249525164472e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-4,0)_s",
+          "power_absolute_error": 7.488485937777261e-17,
+          "power_absolute_tolerance": 1.086491588133722e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.5533299319902667e-13,
+          "complex_amplitude_absolute_tolerance": 3.1864912826411788e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-2,0)_s",
+          "power_absolute_error": 7.817334832845718e-16,
+          "power_absolute_tolerance": 1.2422824425350593e-09,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 1.1541539958353172e-13,
+          "complex_amplitude_absolute_tolerance": 7.413384075620187e-06,
+          "complex_amplitude_pass": true,
+          "label": "R(-1,0)_s",
+          "power_absolute_error": 7.454576032525119e-16,
+          "power_absolute_tolerance": 5.111835340427464e-08,
+          "power_pass": true
+        },
+        {
+          "complex_amplitude_absolute_error": 2.2807039595992e-13,
+          "complex_amplitude_absolute_tolerance": 0.0008330266538614554,
+          "complex_amplitude_pass": true,
+          "label": "R(0,0)_s",
+          "power_absolute_error": 6.703513612260625e-15,
+          "power_absolute_tolerance": 3.195286914614711e-05,
+          "power_pass": true
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "pass": true,
+      "power_pass_count": 12
+    }
+  },
+  "identity": {
+    "degree": 6,
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 10.0,
+    "mpi_size": 8,
+    "p3_h7p5": {
+      "completion_gate": false,
+      "execution": "not_run",
+      "status": "out_of_scope_by_user"
+    }
+  },
+  "models": {
+    "full_standard": {
+      "A_closure": 0.3965354845415293,
+      "A_volume": 0.3965354845417606,
+      "R00_total": 0.000753761220069907,
+      "R_total": 0.0007628814751330973,
+      "T_total": 0.6027016339833375,
+      "active_rows": 173882,
+      "assembly_and_solve_seconds": 2564.3755995089887,
+      "assembly_backend": "standard_full",
+      "backsolve_seconds": 0.46273409097921103,
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.0009812210506877437,
+            -8.723749952673426e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.3620104485099136e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0001340326965591371,
+            0.00014700578426052056
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.119208256122664e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0002621322074938866,
+            8.743226905009427e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.3728889710803655e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805317118,
+            0.0002979420806664616
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.95984139477312e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0020910133852542006,
+            -0.001023379862751572
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.1781673983969082e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.6313787033457912,
+            0.4730209810385343
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723441903
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091112350357,
+            -2.6088861693306266e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542421917607e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.817807924523096e-05,
+            -6.535503243357475e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300541253381e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333610564795,
+            -4.973043617932874e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396094936815e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316169500768,
+            -0.0002055157697050086
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.4776908506107308e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0010327077158672321,
+            0.0007678339216602234
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.669309653233052e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.02525230435366359,
+            0.010774151702099406
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.000753761220069907
+        }
+      ],
+      "degree": 6,
+      "energy_closure_error": 2.313704783318826e-13,
+      "factor_fill": 2.082454760082339,
+      "factor_nnz": 438050956,
+      "factor_setup_seconds": 300.57070109201595,
+      "formal_pass": true,
+      "h_nm": 10.0,
+      "kind": "full3d",
+      "matrix_nnz": 210353168,
+      "mpi_size": 8,
+      "no_swap": true,
+      "peak_memory_gib": 34.04121017456055,
+      "raw_authority": {
+        "dtn_order_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T025200Z/dtn_port_diffraction_orders_3d.json",
+        "dtn_order_sha256": "c272c617a044d044ab6c86960a6ced2707324cd69b83dfe362fe3b59037a9331",
+        "solver_summary_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T025200Z/run_summary.json",
+        "solver_summary_sha256": "ca28f2a53c77382784f09ea27856daaaebf9423788b2c94519c931883e6c3da9",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_standard_mpi8_244b62e.json",
+        "watchdog_sha256": "0a0846cd5e7bdef1532fda0ee2540fe2af00f54a8e1cc7c963f53dbf019df246"
+      },
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 2581.5497879360046,
+      "true_residual": 1.708691428950741e-11
+    },
+    "full_static": {
+      "A_closure": 0.3965354845393365,
+      "A_volume": 0.39653548454280696,
+      "R00_total": 0.0007537612200624013,
+      "R_total": 0.0007628814751258605,
+      "T_total": 0.6027016339855377,
+      "active_rows": 51272,
+      "assembly_and_solve_seconds": 243.62834563999786,
+      "assembly_backend": "assembly_time_static_condensed",
+      "backsolve_seconds": 0.2355272799904924,
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.000981221050747373,
+            -8.723749969762523e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.362010448867317e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00013403269657842327,
+            0.00014700578428874543
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.1192082568438762e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0002621322074984722,
+            8.743226900881963e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.372888970804711e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805311397,
+            0.0002979420806611947
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.959841394752845e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0020910133852757038,
+            -0.0010233798628813441
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.1781673985398003e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.6313787033477729,
+            0.4730209810382889
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723463887
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091112386975,
+            -2.6088861635657095e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542421934543e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.81780792268492e-05,
+            -6.535503247903435e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300542503923e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333608387974,
+            -4.97304361657992e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396088918694e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316170307675,
+            -0.00020551576970232068
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.47769085101641e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0010327077158037517,
+            0.0007678339217291073
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.66930965313104e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.025252304353422045,
+            0.01077415170231722
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.0007537612200624013
+        }
+      ],
+      "degree": 6,
+      "energy_closure_error": 3.4705571749782393e-12,
+      "factor_fill": 5.057129003187498,
+      "factor_nnz": 212343992,
+      "factor_setup_seconds": 143.1312569429865,
+      "formal_pass": true,
+      "h_nm": 10.0,
+      "kind": "full3d",
+      "matrix_nnz": 41989040,
+      "mpi_size": 8,
+      "no_swap": true,
+      "peak_memory_gib": 14.721755981445312,
+      "raw_authority": {
+        "dtn_order_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T023040Z/dtn_port_diffraction_orders_3d.json",
+        "dtn_order_sha256": "1b18be4a1e7df89ca41db6092fd82815ea867c4362c171b0780af4e1efb4a4c8",
+        "solver_summary_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T023040Z/run_summary.json",
+        "solver_summary_sha256": "4c8a877ff9607245a3b58deb93da38ac8b95ae95febda4fb516a16b883fc935c",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_static_mpi8_244b62e.json",
+        "watchdog_sha256": "b8b428476cdeb4b80495f4a8b1c89e3bb2f67c682c695fc72bb59dbbbd94b4e3"
+      },
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 260.7361800459912,
+      "true_residual": 3.092135187704348e-11
+    },
+    "hybrid_standard_m120": {
+      "A_closure": 0.39653548454143117,
+      "A_volume": 0.3965354846961206,
+      "R00_total": 0.0007537612200819082,
+      "R_total": 0.0007628814751465509,
+      "T_total": 0.6027016339834222,
+      "active_rows": 52292,
+      "assembly_backend": "standard_full",
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.0009812210507612093,
+            -8.723749951457054e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.362010448855668e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0001340326965786288,
+            0.0001470057842597896
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.1192082563909492e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.000262132207535543,
+            8.743226902321247e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.3728889720618507e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805735814,
+            0.00029794208062832275
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.959841394956713e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.002091013385245732,
+            -0.0010233798627506698
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.1781673983819323e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.6313787033457139,
+            0.4730209810387293
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723442745
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091114781421,
+            -2.6088861796345452e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542428061189e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.81780792101168e-05,
+            -6.535503246393387e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300539684402e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333609852547,
+            -4.973043617544198e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396092998497e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316169455127,
+            -0.00020551576966915328
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.4776908505114496e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0010327077159638378,
+            0.0007678339216885666
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.6693096542118975e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.025252304353922318,
+            0.010774151702049952
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.0007537612200819082
+        }
+      ],
+      "degree": 6,
+      "dense_interface_square_formed": false,
+      "energy_closure_error": 1.5468937242246739e-10,
+      "factor_fill": 2.333288833170655,
+      "factor_nnz": 141010528,
+      "formal_pass": true,
+      "h_nm": 10.0,
+      "interface_E_relative_l2_max": 1.6394918666046414e-07,
+      "interface_H_relative_l2_max": 3.895753250381661e-05,
+      "kind": "hybrid",
+      "matrix_nnz": 60434236,
+      "memory_authority_pass": true,
+      "modal_coupling_seconds": 34.71421805600403,
+      "modal_coupling_stage_peak_gib": 7.370822906494141,
+      "modal_degree": 6,
+      "modal_h_nm": 10.0,
+      "modal_schur_bytes": 921600,
+      "modes_per_direction": 120,
+      "mpi_size": 8,
+      "no_swap": true,
+      "numeric_pass": true,
+      "peak_memory_gib": 11.076892852783203,
+      "raw_authority": {
+        "solver_record_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_standard_m120_hybrid_p6_h10_mpi8_20260726T033606Z/solver_record.json",
+        "solver_record_sha256": "b3d782f3014852e0e08e12239d65458254b2fa02fa786482440ffbba051a843e",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_standard_m120_mpi8_244b62e.json",
+        "watchdog_sha256": "563e4158955f251e067be6d40bb3ca0e34e1032c2b1ad1e265a3751d3889979b"
+      },
+      "retained_right_left_eigenvector_bytes": 30696960,
+      "selected_plane_E_relative_l2_max": 1.2841385424764414e-11,
+      "selected_plane_H_relative_l2_max": 4.173300629475084e-06,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 942.0260467719927,
+      "true_residual": 4.8583587756597904e-12
+    },
+    "hybrid_standard_m160": {
+      "A_closure": 0.3965354845414537,
+      "A_volume": 0.39653548468708383,
+      "R00_total": 0.000753761220078412,
+      "R_total": 0.0007628814751431373,
+      "T_total": 0.6027016339834032,
+      "active_rows": 52372,
+      "assembly_backend": "standard_full",
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.0009812210507814036,
+            -8.723749951384862e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.362010448951823e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00013403269662035582,
+            0.00014700578426237617
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.1192082570306428e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.00026213220752591745,
+            8.743226906526379e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.3728889721939656e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805448544,
+            0.00029794208066128824
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.9598413948516163e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0020910133852559613,
+            -0.0010233798627335366
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.1781673983850315e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.6313787033456578,
+            0.4730209810387832
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723442553
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091114495391,
+            -2.6088861760918252e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542427308598e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.817807926052338e-05,
+            -6.535503246841207e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300545304356e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333610934543,
+            -4.9730436157400113e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396094577695e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316169541497,
+            -0.00020551576967188889
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.477690850561282e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0010327077159724863,
+            0.0007678339216833358
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.6693096542514836e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.025252304353821822,
+            0.01077415170212324
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.000753761220078412
+        }
+      ],
+      "degree": 6,
+      "dense_interface_square_formed": false,
+      "energy_closure_error": 1.4563017458613103e-10,
+      "factor_fill": 2.333288833170655,
+      "factor_nnz": 141010528,
+      "formal_pass": true,
+      "h_nm": 10.0,
+      "interface_E_relative_l2_max": 1.213435436356959e-07,
+      "interface_H_relative_l2_max": 3.895771085164387e-05,
+      "kind": "hybrid",
+      "matrix_nnz": 60434236,
+      "memory_authority_pass": true,
+      "modal_coupling_seconds": 48.19244129699655,
+      "modal_coupling_stage_peak_gib": 7.857563018798828,
+      "modal_degree": 6,
+      "modal_h_nm": 10.0,
+      "modal_schur_bytes": 1638400,
+      "modes_per_direction": 160,
+      "mpi_size": 8,
+      "no_swap": true,
+      "numeric_pass": true,
+      "peak_memory_gib": 11.247024536132812,
+      "raw_authority": {
+        "solver_record_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_standard_m160_hybrid_p6_h10_mpi8_20260726T035233Z/solver_record.json",
+        "solver_record_sha256": "2313cb2c05846ab7cac5cb1006205d776eef2e2af3c92503a87e733dc09c59cc",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_standard_m160_mpi8_244b62e.json",
+        "watchdog_sha256": "724923b23976000d44640177d50fc4882628c957fdffaf4800aa28f4e22734b5"
+      },
+      "retained_right_left_eigenvector_bytes": 40929280,
+      "selected_plane_E_relative_l2_max": 1.282826706279957e-11,
+      "selected_plane_H_relative_l2_max": 4.173300583317652e-06,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 1014.7061817499925,
+      "true_residual": 7.877881599086644e-12
+    },
+    "hybrid_static_m120": {
+      "A_closure": 0.39653548454064114,
+      "A_volume": 0.3965354846965286,
+      "R00_total": 0.0007537612200777091,
+      "R_total": 0.0007628814751415616,
+      "T_total": 0.6027016339842173,
+      "active_rows": 17168,
+      "assembly_backend": "assembly_time_static_condensed",
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.0009812210507937227,
+            -8.723749942325464e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.3620104489721946e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00013403269653797432,
+            0.00014700578428181082
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.1192082561540738e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.00026213220752400573,
+            8.743226903959411e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.372888971879506e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805940489,
+            0.0002979420806704754
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.9598413952330793e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.002091013385252503,
+            -0.0010233798628762657
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.178167398496628e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.631378703346222,
+            0.47302098103891743
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723450681
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091114226273,
+            -2.6088861971445567e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542426911923e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.817807923273075e-05,
+            -6.535503243628601e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300540127512e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333612667835,
+            -4.9730436175561435e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396099790886e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316169479512,
+            -0.0002055157696541338
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.4776908504920405e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.001032707715907095,
+            0.0007678339216470395
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.669309653483091e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.025252304353876247,
+            0.010774151701963058
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.0007537612200777091
+        }
+      ],
+      "degree": 6,
+      "dense_interface_square_formed": false,
+      "energy_closure_error": 1.5588752511064285e-10,
+      "factor_fill": 3.6784649229381854,
+      "factor_nnz": 45293792,
+      "formal_pass": true,
+      "h_nm": 10.0,
+      "interface_E_relative_l2_max": 1.6394918253665888e-07,
+      "interface_H_relative_l2_max": 3.8957532481105785e-05,
+      "kind": "hybrid",
+      "matrix_nnz": 12313232,
+      "memory_authority_pass": true,
+      "modal_coupling_seconds": 37.340494967997074,
+      "modal_coupling_stage_peak_gib": 5.756237030029297,
+      "modal_degree": 6,
+      "modal_h_nm": 10.0,
+      "modal_schur_bytes": 921600,
+      "modes_per_direction": 120,
+      "mpi_size": 8,
+      "no_swap": true,
+      "numeric_pass": true,
+      "peak_memory_gib": 7.544261932373047,
+      "raw_authority": {
+        "solver_record_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_static_m120_retry1_hybrid_p6_h10_mpi8_20260726T023759Z/solver_record.json",
+        "solver_record_sha256": "1420afa1022f0ed1fdb37dc6ea5cb0c11699832fe4703a4cab113e05a0de5a55",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_static_m120_mpi8_244b62e_retry1.json",
+        "watchdog_sha256": "194a22ee2528a2536f794c0a0a8871671cb023a2f8dc029b31fae456694d5532"
+      },
+      "retained_right_left_eigenvector_bytes": 30696960,
+      "selected_plane_E_relative_l2_max": 1.3027501991328901e-11,
+      "selected_plane_H_relative_l2_max": 4.173300561234117e-06,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 322.78178776399,
+      "true_residual": 2.078713702357502e-12
+    },
+    "hybrid_static_m160": {
+      "A_closure": 0.39653548454058696,
+      "A_volume": 0.39653548468748856,
+      "R00_total": 0.0007537612200742072,
+      "R_total": 0.0007628814751381962,
+      "T_total": 0.6027016339842749,
+      "active_rows": 17248,
+      "assembly_backend": "assembly_time_static_condensed",
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.0009812210508526494,
+            -8.723749938323164e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.362010449236671e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00013403269654606518,
+            0.0001470057842789987
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.1192082562259403e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0002621322075300153,
+            8.743226904004842e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.372888972064487e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027806089762,
+            0.0002979420806780229
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.9598413953634393e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.002091013385262698,
+            -0.0010233798628852613
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.1781673985211632e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.631378703346259,
+            0.4730209810389302
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.602673872345125
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091114349036,
+            -2.6088861949840345e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542427187925e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.817807924418002e-05,
+            -6.535503243893942e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300541518675e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333615095158,
+            -4.9730436150642674e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.675239610422057e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316169553075,
+            -0.00020551576965019143
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.4776908505211867e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0010327077159165913,
+            0.0007678339216380911
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.669309653506741e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.025252304353784363,
+            0.010774151702015903
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.0007537612200742072
+        }
+      ],
+      "degree": 6,
+      "dense_interface_square_formed": false,
+      "energy_closure_error": 1.4690160199393176e-10,
+      "factor_fill": 3.6784649229381854,
+      "factor_nnz": 45293792,
+      "formal_pass": true,
+      "h_nm": 10.0,
+      "interface_E_relative_l2_max": 1.2134352762377098e-07,
+      "interface_H_relative_l2_max": 3.895771085202663e-05,
+      "kind": "hybrid",
+      "matrix_nnz": 12313232,
+      "memory_authority_pass": true,
+      "modal_coupling_seconds": 51.86991740000667,
+      "modal_coupling_stage_peak_gib": 6.494361877441406,
+      "modal_degree": 6,
+      "modal_h_nm": 10.0,
+      "modal_schur_bytes": 1638400,
+      "modes_per_direction": 160,
+      "mpi_size": 8,
+      "no_swap": true,
+      "numeric_pass": true,
+      "peak_memory_gib": 7.929412841796875,
+      "raw_authority": {
+        "solver_record_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_static_m160_hybrid_p6_h10_mpi8_20260726T024447Z/solver_record.json",
+        "solver_record_sha256": "695be08d3b42ba1455edf2d2329b149979b8dd2fdc14a54b3d307ae4f6b1d615",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_static_m160_mpi8_244b62e.json",
+        "watchdog_sha256": "58281f5f0be5c9d30b441d9b573018070502734043a81cb8cd10ddd068f5c137"
+      },
+      "retained_right_left_eigenvector_bytes": 40929280,
+      "selected_plane_E_relative_l2_max": 1.3014651026312805e-11,
+      "selected_plane_H_relative_l2_max": 4.173300545371714e-06,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 393.84081403998425,
+      "true_residual": 2.3682298443380313e-12
+    }
+  },
+  "numerical_source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+  "ordinary_default_changed": false,
+  "pairwise_channel_comparisons": {
+    "full_standard__vs__full_static": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.837347672297547e-10,
+          "label": "T(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.5131323177802784e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.7183826316014673e-10,
+          "label": "T(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.403215746540547e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.5028679191457376e-10,
+          "label": "T(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 6.303720455934467e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 6.989169778057224e-12,
+          "label": "T(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 6.8500306056117896e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 5.650378650958606e-11,
+          "label": "T(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 6.560197650802236e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.5311781346009935e-12,
+          "label": "T(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.6476653658494135e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.1418733595037063e-10,
+          "label": "R(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.7037998385480804e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 4.15759639284114e-10,
+          "label": "R(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.6769368900205487e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.1864403631536426e-10,
+          "label": "R(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.2495635244341782e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.5083465906338178e-10,
+          "label": "R(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.7453592883000827e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.279146533427776e-11,
+          "label": "R(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.5295670957513978e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.1846774257414849e-11,
+          "label": "R(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 9.957682353287609e-12
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "left": "full_standard",
+      "max_complex_amplitude_relative_error": 4.15759639284114e-10,
+      "max_power_relative_error": 3.403215746540547e-10,
+      "pass": true,
+      "power_pass_count": 12,
+      "relative_tolerance": 0.001,
+      "right": "full_static",
+      "semantics": "boundary-plane amplitude; symmetric relative denominator",
+      "significant_power_floor": 1e-08
+    },
+    "full_standard__vs__hybrid_standard_m120": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.55926854453132e-11,
+          "label": "T(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.4638131281574318e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 9.804873655439142e-11,
+          "label": "T(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.2659692337329864e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.7941327371372897e-10,
+          "label": "T(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.244477598723843e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.471650006358977e-11,
+          "label": "T(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 6.202802659655138e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.6582346749587085e-12,
+          "label": "T(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 6.875450129157616e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.6588633361064093e-13,
+          "label": "T(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.3963589451661808e-13
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 5.219421846078279e-10,
+          "label": "R(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 9.80847805816674e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.935723304986887e-10,
+          "label": "R(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.1039503126558135e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.756027199103006e-11,
+          "label": "R(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 7.245401218951251e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 6.752744994626623e-11,
+          "label": "R(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 6.718668876045162e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.823406056907759e-11,
+          "label": "R(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.4676866484809236e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 9.594381371281005e-12,
+          "label": "R(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.5921820289948608e-11
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "left": "full_standard",
+      "max_complex_amplitude_relative_error": 5.219421846078279e-10,
+      "max_power_relative_error": 9.80847805816674e-10,
+      "pass": true,
+      "power_pass_count": 12,
+      "relative_tolerance": 0.001,
+      "right": "hybrid_standard_m120",
+      "semantics": "boundary-plane amplitude; symmetric relative denominator",
+      "significant_power_floor": 1e-08
+    },
+    "full_standard__vs__hybrid_standard_m160": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 9.597294918756996e-11,
+          "label": "T(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.8709035379433122e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.07872308580046e-10,
+          "label": "T(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.284519077733522e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.2825785765236517e-10,
+          "label": "T(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.546600305170853e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.863314175039495e-11,
+          "label": "T(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.652042012267543e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.783991022387586e-12,
+          "label": "T(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.45263747036246e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.579291381339749e-13,
+          "label": "T(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.0776648851216911e-13
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 4.4458343838163783e-10,
+          "label": "R(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 8.606936120495184e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.2258334885981835e-10,
+          "label": "R(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.432226782738258e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.0294237148493524e-10,
+          "label": "R(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.3423873978903503e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 6.234224567521869e-11,
+          "label": "R(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.346351143006996e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 8.373899033492606e-11,
+          "label": "R(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.5270422442417006e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 5.828369058255417e-12,
+          "label": "R(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.128344589176103e-11
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "left": "full_standard",
+      "max_complex_amplitude_relative_error": 4.4458343838163783e-10,
+      "max_power_relative_error": 8.606936120495184e-10,
+      "pass": true,
+      "power_pass_count": 12,
+      "relative_tolerance": 0.001,
+      "right": "hybrid_standard_m160",
+      "semantics": "boundary-plane amplitude; symmetric relative denominator",
+      "significant_power_floor": 1e-08
+    },
+    "full_static__vs__hybrid_static_m120": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.824691998734663e-10,
+          "label": "T(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.4401794239435194e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.0629309233166372e-10,
+          "label": "T(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.2550007966066503e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.447110523996347e-10,
+          "label": "T(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.457861036770611e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 8.389059057499024e-11,
+          "label": "T(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.6224998544354592e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.0201804340703448e-11,
+          "label": "T(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.9820447643719577e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.1211432532217056e-12,
+          "label": "T(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.191251933073015e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.568223103667892e-10,
+          "label": "R(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 7.946590273406359e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.658680506240481e-10,
+          "label": "R(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.18669175322938e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.0320695969788215e-10,
+          "label": "R(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.0640068048820654e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.7900706238711955e-10,
+          "label": "R(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.548573843591756e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.0254727087895408e-10,
+          "label": "R(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.2786664301536756e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.0978555702275398e-11,
+          "label": "R(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.030862037681465e-11
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "left": "full_static",
+      "max_complex_amplitude_relative_error": 7.568223103667892e-10,
+      "max_power_relative_error": 7.946590273406359e-10,
+      "pass": true,
+      "power_pass_count": 12,
+      "relative_tolerance": 0.001,
+      "right": "hybrid_static_m120",
+      "semantics": "boundary-plane amplitude; symmetric relative denominator",
+      "significant_power_floor": 1e-08
+    },
+    "full_static__vs__hybrid_static_m160": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.3656929206659526e-10,
+          "label": "T(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.5637263542474378e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.6987466950073343e-10,
+          "label": "T(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.9158811740886565e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.606308876358474e-10,
+          "label": "T(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.8808785876601074e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.050574808055936e-10,
+          "label": "T(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.062929077539738e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 5.834492338573687e-12,
+          "label": "T(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 8.556319658599635e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.084046164534787e-12,
+          "label": "T(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.096749012378063e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.322176318679694e-10,
+          "label": "R(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 8.387237804236071e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.7035468323834575e-10,
+          "label": "R(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.3211870251117515e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.183098543251628e-10,
+          "label": "R(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.719815814868045e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.713474848036227e-10,
+          "label": "R(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.3513323709472183e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.1265365456044491e-10,
+          "label": "R(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.6332759496952325e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.7164210671883194e-11,
+          "label": "R(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.5662622514637167e-11
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "left": "full_static",
+      "max_complex_amplitude_relative_error": 7.322176318679694e-10,
+      "max_power_relative_error": 8.387237804236071e-10,
+      "pass": true,
+      "power_pass_count": 12,
+      "relative_tolerance": 0.001,
+      "right": "hybrid_static_m160",
+      "semantics": "boundary-plane amplitude; symmetric relative denominator",
+      "significant_power_floor": 1e-08
+    },
+    "hybrid_standard_m120__vs__hybrid_standard_m160": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.051306969109467e-11,
+          "label": "T(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.070904098454707e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.1015371280288639e-10,
+          "label": "T(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.0185498443826746e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.5611430112290328e-10,
+          "label": "T(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.021227065148209e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 5.768512934823252e-11,
+          "label": "T(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.550760647481762e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 8.571496159480283e-12,
+          "label": "T(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.4228126588029146e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 9.858328403907481e-14,
+          "label": "T(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.1869406004452413e-14
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 9.000631191130078e-11,
+          "label": "R(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.2015419387057146e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 4.2906932511331546e-10,
+          "label": "R(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 7.536177094251158e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 9.738484416684822e-11,
+          "label": "R(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.903013821140142e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.692611417974193e-11,
+          "label": "R(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.3723177331510156e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.854131068576083e-12,
+          "label": "R(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.935559576948837e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 4.530410869720372e-12,
+          "label": "R(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.638374398239916e-12
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "left": "hybrid_standard_m120",
+      "max_complex_amplitude_relative_error": 4.2906932511331546e-10,
+      "max_power_relative_error": 7.536177094251158e-10,
+      "pass": true,
+      "power_pass_count": 12,
+      "relative_tolerance": 0.001,
+      "right": "hybrid_standard_m160",
+      "semantics": "boundary-plane amplitude; symmetric relative denominator",
+      "significant_power_floor": 1e-08
+    },
+    "hybrid_standard_m120__vs__hybrid_static_m120": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 9.839850368086187e-11,
+          "label": "T(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.9333713202222787e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.3241418473982916e-10,
+          "label": "T(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.1177542837674126e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.251008308574131e-11,
+          "label": "T(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.169886075076831e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 6.181822115678679e-11,
+          "label": "T(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 9.337192824823893e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 5.402819126730718e-11,
+          "label": "T(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.265697899405304e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 6.868357557981298e-13,
+          "label": "T(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.3167775382631553e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.631078260523882e-10,
+          "label": "R(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.8348497878594273e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.028471584743135e-10,
+          "label": "R(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.941954492835145e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.3032327105840244e-10,
+          "label": "R(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.538983402619719e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.8427651804923163e-11,
+          "label": "R(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.3134766791649337e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 5.4640266330514105e-11,
+          "label": "R(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.0927767150759307e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.582331142521032e-12,
+          "label": "R(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.570882266376158e-12
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "left": "hybrid_standard_m120",
+      "max_complex_amplitude_relative_error": 3.631078260523882e-10,
+      "max_power_relative_error": 2.538983402619719e-10,
+      "pass": true,
+      "power_pass_count": 12,
+      "relative_tolerance": 0.001,
+      "right": "hybrid_static_m120",
+      "semantics": "boundary-plane amplitude; symmetric relative denominator",
+      "significant_power_floor": 1e-08
+    },
+    "hybrid_standard_m160__vs__hybrid_static_m160": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.5103597447106433e-10,
+          "label": "T(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.2059551340734139e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.826740442293178e-10,
+          "label": "T(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.79718450532458e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 9.244843523972893e-11,
+          "label": "T(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.960937630289627e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 8.742542851113721e-11,
+          "label": "T(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.7292245703163875e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 6.523772631800866e-11,
+          "label": "T(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 6.249829431996224e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.844885824277983e-13,
+          "label": "T(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.4431498649625887e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.7456964268241224e-10,
+          "label": "R(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.9266031805841955e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.8574131821481714e-10,
+          "label": "R(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.076476917963056e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.9512211832732588e-10,
+          "label": "R(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.604491030956973e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 4.059409004065656e-11,
+          "label": "R(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 2.7133796852187764e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 5.5880919069992016e-11,
+          "label": "R(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.1166713588868651e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 4.140873107060422e-12,
+          "label": "R(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 5.578505730386487e-12
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "left": "hybrid_standard_m160",
+      "max_complex_amplitude_relative_error": 3.826740442293178e-10,
+      "max_power_relative_error": 5.076476917963056e-10,
+      "pass": true,
+      "power_pass_count": 12,
+      "relative_tolerance": 0.001,
+      "right": "hybrid_static_m160",
+      "semantics": "boundary-plane amplitude; symmetric relative denominator",
+      "significant_power_floor": 1e-08
+    },
+    "hybrid_static_m120__vs__hybrid_static_m160": {
+      "channel_count": 12,
+      "channels": [
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 7.231137369143949e-11,
+          "label": "T(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.1197084119028028e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 4.305725390697553e-11,
+          "label": "T(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.3911962261687716e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.180993885086043e-11,
+          "label": "T(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.230175509934684e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 2.206679337471655e-11,
+          "label": "T(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.404292231757385e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 5.840292247559005e-12,
+          "label": "T(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.126412798521632e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 4.957811838893614e-14,
+          "label": "T(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 9.450292069515037e-14
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 4.912094610499932e-11,
+          "label": "R(-7,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.406475311798772e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 9.964863381225632e-11,
+          "label": "R(-5,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.8655047283640968e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.6103192009767094e-10,
+          "label": "R(-4,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.6558090106589017e-10
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.5592683647241027e-11,
+          "label": "R(-2,0)_s",
+          "power_pass": true,
+          "power_relative_error": 1.972414727106397e-11
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 1.0139348505169853e-11,
+          "label": "R(-1,0)_s",
+          "power_pass": true,
+          "power_relative_error": 3.5460951956027536e-12
+        },
+        {
+          "complex_amplitude_pass": true,
+          "complex_amplitude_relative_error": 3.8608013121675415e-12,
+          "label": "R(0,0)_s",
+          "power_pass": true,
+          "power_relative_error": 4.645997862250253e-12
+        }
+      ],
+      "complex_amplitude_pass_count": 12,
+      "left": "hybrid_static_m120",
+      "max_complex_amplitude_relative_error": 1.6103192009767094e-10,
+      "max_power_relative_error": 1.8655047283640968e-10,
+      "pass": true,
+      "power_pass_count": 12,
+      "relative_tolerance": 0.001,
+      "right": "hybrid_static_m160",
+      "semantics": "boundary-plane amplitude; symmetric relative denominator",
+      "significant_power_floor": 1e-08
+    }
+  },
+  "pass": true,
+  "resource_comparisons": {
+    "m120_standard_vs_static": {
+      "active_row_saving_fraction": 0.6716897422167827,
+      "factor_nnz_saving_fraction": 0.6787914161983707,
+      "mandatory_15_percent_pass": true,
+      "matrix_nnz_saving_fraction": 0.7962540305796205,
+      "memory_saving_fraction": 0.31891893939576565,
+      "modal_coupling_stage_memory_saving_fraction": 0.21905096580767067,
+      "modal_time_is_report_only_not_hard_gate_by_user": true,
+      "pass": true,
+      "preferred_25_percent_pass": true,
+      "static_to_standard_modal_coupling_time_ratio": 1.0756542148740353,
+      "static_to_standard_total_time_ratio": 0.34264635130849613,
+      "total_time_1p35_gate_pass": true,
+      "user_target_50_percent_pass": false
+    },
+    "m160_standard_vs_static": {
+      "active_row_saving_fraction": 0.6706637134346597,
+      "factor_nnz_saving_fraction": 0.6787914161983707,
+      "mandatory_15_percent_pass": true,
+      "matrix_nnz_saving_fraction": 0.7962540305796205,
+      "memory_saving_fraction": 0.29497683442208156,
+      "modal_coupling_stage_memory_saving_fraction": 0.17348904973412635,
+      "modal_time_is_report_only_not_hard_gate_by_user": true,
+      "pass": true,
+      "preferred_25_percent_pass": true,
+      "static_to_standard_modal_coupling_time_ratio": 1.0763081513208028,
+      "static_to_standard_total_time_ratio": 0.388132861633655,
+      "total_time_1p35_gate_pass": true,
+      "user_target_50_percent_pass": false
+    }
+  },
+  "schema_version": "task035c.case096-p6-six-path.v1",
+  "significant_channel_reference_v1": {
+    "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json",
+    "phase_convention": "atan2 boundary-amplitude phase, nearest 2pi branch around each p6/h10 channel center",
+    "schema_version": "task035b.significant-channel-reference.v1",
+    "sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3",
+    "significant_power_floor": 1e-08,
+    "status": "significant_channel_reference_v1_frozen"
+  },
+  "status": "p6_h10_mpi8_channel_and_resource_authority_pass"
+}

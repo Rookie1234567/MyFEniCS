@@ -426,6 +426,57 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertIn("--container-limit-gib", command)
         self.assertIn("9.25", command)
 
+    def test_hybrid_command_propagates_explicit_axial_model_only(self) -> None:
+        base = [
+            "--target",
+            "hybrid",
+            "--case-label",
+            "task035c_p2_h5",
+            "--degree",
+            "2",
+            "--h-nm",
+            "5",
+            "--mpi-size",
+            "1",
+            "--requested-modes",
+            "160",
+            "--candidate-modes",
+            "320",
+            "--verified-clean-sha",
+            "a" * 40,
+        ]
+        ordinary = _parse_args(base)
+        corrected = _parse_args(
+            [
+                *base,
+                "--internal-propagation-model",
+                "full3d_uniform_cg",
+                "--internal-traction-model",
+                "scalar_cg_discrete_derivative",
+            ]
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            ordinary_command = _worker_command(
+                ordinary, root / "ordinary.json", root / "ordinary.jsonl"
+            )
+            corrected_command = _worker_command(
+                corrected, root / "corrected.json", root / "corrected.jsonl"
+            )
+        self.assertNotIn("--internal-propagation-model", ordinary_command)
+        self.assertEqual(
+            corrected_command[
+                corrected_command.index("--internal-propagation-model") + 1
+            ],
+            "full3d_uniform_cg",
+        )
+        self.assertEqual(
+            corrected_command[
+                corrected_command.index("--internal-traction-model") + 1
+            ],
+            "scalar_cg_discrete_derivative",
+        )
+
     def test_twelve_gib_runtime_guard_fits_smaller_live_host_ceiling(self) -> None:
         matrix = json.loads(DEFAULT_RESOURCE_MATRIX.read_text(encoding="utf-8"))
         common = {
@@ -536,6 +587,44 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             Path("records/p2_h5_reference.json"),
         )
         self.assertIn("--memory-stages", command)
+
+    def test_hybrid_command_can_refine_only_the_modal_cross_section(self) -> None:
+        args = _parse_args(
+            [
+                "--target",
+                "hybrid",
+                "--case-label",
+                "task035c_p2_h5_modal_h3",
+                "--degree",
+                "2",
+                "--h-nm",
+                "5",
+                "--modal-degree",
+                "2",
+                "--modal-h-nm",
+                "3",
+                "--mpi-size",
+                "1",
+                "--requested-modes",
+                "120",
+                "--candidate-modes",
+                "240",
+                "--full3d-reference",
+                "records/p2_h5_reference.json",
+                "--verified-clean-sha",
+                "d" * 40,
+            ]
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            command = _worker_command(
+                args, root / "record.json", root / "stages.jsonl"
+            )
+        rendered = " ".join(command)
+        self.assertIn("--degree 2", rendered)
+        self.assertIn("--h-nm 5.0", rendered)
+        self.assertIn("--modal-degree 2", rendered)
+        self.assertIn("--modal-h-nm 3.0", rendered)
 
     def test_hybrid_candidate_pool_is_exactly_twice_requested_modes(self) -> None:
         matrix = json.loads(DEFAULT_RESOURCE_MATRIX.read_text(encoding="utf-8"))
@@ -914,6 +1003,46 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                                 str(candidate_modes),
                             ]
                         )
+
+    def test_static_hybrid_cli_requires_hash_bound_fresh_reference(self) -> None:
+        base = [
+            "--target", "hybrid",
+            "--case-label", "static_h1a",
+            "--degree", "2",
+            "--h-nm", "5",
+            "--mpi-size", "1",
+            "--requested-modes", "120",
+            "--candidate-modes", "240",
+            "--full3d-reference", "fresh_static.json",
+            "--stage4-full3d-assembly-backend",
+            "assembly_time_static_condensed",
+            "--verified-clean-sha", "f" * 40,
+        ]
+        args = _parse_args(
+            [*base, "--full3d-reference-sha256", "a" * 64]
+        )
+        self.assertEqual(
+            args.stage4_full3d_assembly_backend,
+            "assembly_time_static_condensed",
+        )
+        self.assertEqual(args.full3d_reference_sha256, "a" * 64)
+        with self.assertRaises(SystemExit):
+            _parse_args(base)
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--target", "hybrid",
+                    "--case-label", "standard",
+                    "--degree", "2",
+                    "--h-nm", "5",
+                    "--mpi-size", "1",
+                    "--requested-modes", "120",
+                    "--candidate-modes", "240",
+                    "--full3d-reference", "standard.json",
+                    "--full3d-reference-sha256", "a" * 64,
+                    "--verified-clean-sha", "f" * 40,
+                ]
+            )
 
 
 if __name__ == "__main__":

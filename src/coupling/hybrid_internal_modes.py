@@ -26,8 +26,18 @@ from ..modes.mode_classification import (
     BiorthogonalModeBasis,
     ClassifiedBiorthogonalMode,
 )
-from ..modes.stable_propagation import TwoSidedPropagation, build_two_sided_propagation
-from ..solvers.dtn_port_3d import _assemble_mpc_form_vector, _vec_nonzero_owned_entries
+from ..modes.stable_propagation import (
+    AxialPropagationModel,
+    ModalTractionModel,
+    TwoSidedPropagation,
+    build_two_sided_propagation,
+    scalar_cg_discrete_traction_beta,
+)
+from ..solvers.dtn_port_3d import (
+    _assemble_mpc_form_vector,
+    _assemble_unconstrained_form_vector,
+    _vec_nonzero_owned_entries,
+)
 from ..solvers.hybrid_local_dtn import HybridLocalDtnSystem
 from .modal_trace_projection import (
     ModalTraceProjection,
@@ -49,6 +59,12 @@ class HybridInterfaceModeBlocks:
     local_fem_outward_normal_sign: int
     lifted_query_points: int
     quadrature_degree: int
+    positive_interior_correction: np.ndarray
+    negative_interior_correction: np.ndarray
+    modal_rhs_correction: np.ndarray
+    tangential_surface_trace_only_verified: bool = False
+    interior_modal_pairwise_schur_evaluated: bool = False
+    full_surface_mode_vectors_retained: bool = False
     full_field_or_mode_gathered: bool = False
 
     def destroy(self) -> None:
@@ -65,10 +81,16 @@ class HybridInternalModeCoupling:
     bottom: HybridInterfaceModeBlocks
     top: HybridInterfaceModeBlocks
     propagation: TwoSidedPropagation
+    modal_traction_model: ModalTractionModel
+    positive_traction_beta_per_nm: tuple[complex, ...]
+    negative_traction_beta_per_nm: tuple[complex, ...]
     negative_trace_to_positive: np.ndarray
     positive_projection_identity_error: float
     mode_count_per_direction: int
     interface_quadrature_degree: int
+    spaces: CrossSectionSpaces
+    positive_basis: BiorthogonalModeBasis
+    negative_basis: BiorthogonalModeBasis
     full_field_or_mode_gathered: bool = False
     dense_interface_square_formed: bool = False
 
@@ -366,15 +388,6 @@ class _ReusableInterfaceLifter:
             ),
             dtype=np.float64,
         )
-        geometry_dofmap = np.asarray(msh.geometry.dofmap)
-        geometry = np.asarray(msh.geometry.x)
-        self.cell_midpoints_xy = np.asarray(
-            [
-                np.mean(geometry[geometry_dofmap[cell], :2], axis=0)
-                for cell in self.cells
-            ],
-            dtype=np.float64,
-        ).reshape(-1, 2)
         self.padding = 1.0e-10 * max(
             system.local_mesh.mesh_data.mesh_axis_cell_stats["x"]["max"],
             system.local_mesh.mesh_data.mesh_axis_cell_stats["y"]["max"],
@@ -393,40 +406,18 @@ class _ReusableInterfaceLifter:
             points = np.asarray(coordinates, dtype=np.float64)
         else:
             raise RuntimeError("Target interpolation coordinates need three columns.")
-        if len(self.cells) == 0:
-            if len(points) != 0:
-                raise RuntimeError("A rank without target cells received interpolation points.")
-            return np.empty((0, 2), dtype=np.int64)
-        if len(points) % len(self.cells) != 0:
-            raise RuntimeError("Target interpolation points are not cell-factorable.")
-        points_per_cell = len(points) // len(self.cells)
-        cell_keys = np.asarray(
+        # Route every target interpolation point through the source modal
+        # mesh.  The old midpoint shortcut was valid only when both structured
+        # meshes had identical cell boundaries; an independently refined QEP
+        # mesh can place several source cells under one local-FE interface
+        # cell.
+        return np.asarray(
             [
-                evaluator._cell_key(float(midpoint[0]), float(midpoint[1]))
-                for midpoint in self.cell_midpoints_xy
+                evaluator._cell_key(float(point[0]), float(point[1]))
+                for point in points
             ],
             dtype=np.int64,
-        )
-        cell_major = np.repeat(cell_keys, points_per_cell, axis=0)
-        point_major = np.tile(cell_keys, (points_per_cell, 1))
-
-        def routing_matches(keys: np.ndarray) -> bool:
-            lower_x = evaluator.x_values[keys[:, 0]] - evaluator.tolerance
-            upper_x = evaluator.x_values[keys[:, 0] + 1] + evaluator.tolerance
-            lower_y = evaluator.y_values[keys[:, 1]] - evaluator.tolerance
-            upper_y = evaluator.y_values[keys[:, 1] + 1] + evaluator.tolerance
-            return bool(
-                np.all((points[:, 0] >= lower_x) & (points[:, 0] <= upper_x))
-                and np.all((points[:, 1] >= lower_y) & (points[:, 1] <= upper_y))
-            )
-
-        if routing_matches(cell_major):
-            return cell_major
-        if routing_matches(point_major):
-            return point_major
-        raise RuntimeError(
-            "Could not associate target interpolation points with target cells."
-        )
+        ).reshape(-1, 2)
 
     def lift(self, source: fem.Function) -> tuple[fem.Function, int]:
         if self.evaluator is None:
@@ -482,6 +473,17 @@ class _ReusableInterfaceLifter:
         return self.target, queries
 
 
+@dataclass
+class _InterfaceSurfaceLoadEntries:
+    matrix_rows: np.ndarray
+    matrix_values: np.ndarray
+    overlap_rows: np.ndarray
+    overlap_values: np.ndarray
+    full_vector: PETSc.Vec | None
+    queries: int
+    tangential_surface_trace_only_verified: bool
+
+
 class _ReusableInterfaceSurfaceLoad:
     """Compile one interface load form and update only its lifted coefficient."""
 
@@ -511,18 +513,72 @@ class _ReusableInterfaceSurfaceLoad:
             },
         )
 
+    def assemble(
+        self,
+        source: fem.Function,
+        *,
+        role: str,
+    ) -> _InterfaceSurfaceLoadEntries:
+        _lifted, queries = self.lifter.lift(source)
+        overlap_vector = _assemble_mpc_form_vector(
+            self.form, self.system.floquet_data.mpc
+        )
+        overlap_rows, overlap_values = _vec_nonzero_owned_entries(
+            overlap_vector
+        )
+        if self.system.static_condensation is None:
+            overlap_vector.destroy()
+            return _InterfaceSurfaceLoadEntries(
+                matrix_rows=overlap_rows,
+                matrix_values=overlap_values,
+                overlap_rows=overlap_rows,
+                overlap_values=overlap_values,
+                full_vector=None,
+                queries=queries,
+                tangential_surface_trace_only_verified=False,
+            )
+        try:
+            reduced = (
+                self.system.static_condensation
+                .reduce_tangential_surface_mpc_vector(overlap_vector)
+            )
+            matrix_rows, matrix_values = _vec_nonzero_owned_entries(reduced)
+            reduced.destroy()
+        except Exception:
+            overlap_vector.destroy()
+            raise
+        overlap_vector.destroy()
+        return _InterfaceSurfaceLoadEntries(
+            matrix_rows=matrix_rows,
+            matrix_values=matrix_values,
+            overlap_rows=overlap_rows,
+            overlap_values=overlap_values,
+            full_vector=None,
+            queries=queries,
+            tangential_surface_trace_only_verified=True,
+        )
+
     def assemble_entries(
         self, source: fem.Function
     ) -> tuple[np.ndarray, np.ndarray, int]:
+        entries = self.assemble(source, role="load_column")
+        if entries.full_vector is not None:
+            entries.full_vector.destroy()
+        return entries.matrix_rows, entries.matrix_values, entries.queries
+
+    def assemble_full_vector(
+        self,
+        source: fem.Function,
+    ) -> tuple[PETSc.Vec, int]:
+        """Assemble one full-space interface load for streaming recovery."""
+
+        if self.system.static_condensation is None:
+            raise ValueError(
+                "Full-space Hybrid interface loads are recovery-only and "
+                "require assembly-time static condensation."
+            )
         _lifted, queries = self.lifter.lift(source)
-        vector = _assemble_mpc_form_vector(
-            self.form, self.system.floquet_data.mpc
-        )
-        try:
-            rows, values = _vec_nonzero_owned_entries(vector)
-            return rows, values, queries
-        finally:
-            vector.destroy()
+        return _assemble_unconstrained_form_vector(self.form), queries
 
 
 def _surface_load_entries(
@@ -581,6 +637,7 @@ class _ReusableModeTractionEvaluator:
         mode: ClassifiedBiorthogonalMode,
         *,
         local_outward_normal_sign: int,
+        beta_override: complex | None = None,
     ) -> fem.Function:
         """Return ``curl(E) x n_local`` in x/y components."""
 
@@ -589,7 +646,10 @@ class _ReusableModeTractionEvaluator:
         field_vector = self.field.x.petsc_vec
         mode.right.right_full.copy(field_vector)
         self.field.x.scatter_forward()
-        self._set_constant(self.beta, complex(mode.beta))
+        self._set_constant(
+            self.beta,
+            complex(mode.beta if beta_override is None else beta_override),
+        )
         self._set_constant(self.sign, complex(local_outward_normal_sign))
         self.traction.interpolate(self.expression)
         self.traction.x.scatter_forward()
@@ -633,7 +693,16 @@ def _build_projection_matrix(
     surface_load: _ReusableInterfaceSurfaceLoad,
     trace_lifter: _ReusableInterfaceLifter,
     log=None,
-) -> tuple[PETSc.Mat, int, np.ndarray, float, float]:
+) -> tuple[
+    PETSc.Mat,
+    int,
+    np.ndarray,
+    float,
+    float,
+    tuple[PETSc.Vec, ...],
+    np.ndarray,
+    np.ndarray,
+]:
     comm = system.local_mesh.mesh.comm
     mode_count = len(projection.left_traces)
     local_mode_rows = mode_count if comm.rank == comm.size - 1 else 0
@@ -645,10 +714,22 @@ def _build_projection_matrix(
         local_cols=system.A.getLocalSize()[1],
     )
     raw_entries = []
-    for index, left in enumerate(projection.left_traces):
-        if log is not None:
-            log(f"Task32 {system.side}: assembling left surface load {index + 1}/{mode_count}")
-        raw_entries.append(surface_load.assemble_entries(left))
+    try:
+        for index, left in enumerate(projection.left_traces):
+            if log is not None:
+                log(
+                    f"Task32 {system.side}: assembling left surface load "
+                    f"{index + 1}/{mode_count}"
+                )
+            raw_entries.append(
+                surface_load.assemble(left, role="row_functional")
+            )
+    except Exception:
+        for entries in raw_entries:
+            if entries.full_vector is not None:
+                entries.full_vector.destroy()
+        matrix.destroy()
+        raise
     lift_queries = 0
 
     def raw_overlap_matrix(traces: Sequence[fem.Function]) -> np.ndarray:
@@ -667,7 +748,9 @@ def _build_projection_matrix(
             system.floquet_data.mpc.homogenize(field)
             field.x.scatter_forward()
             field_vector = field.x.petsc_vec
-            for row, (columns, coefficients, _queries) in enumerate(raw_entries):
+            for row, entries in enumerate(raw_entries):
+                columns = entries.overlap_rows
+                coefficients = entries.overlap_values
                 local = (
                     complex(
                         np.vdot(
@@ -688,6 +771,9 @@ def _build_projection_matrix(
     gram_condition = float(np.linalg.cond(surface_gram))
     if not np.isfinite(gram_condition) or gram_condition > 1.0e12:
         matrix.destroy()
+        for entries in raw_entries:
+            if entries.full_vector is not None:
+                entries.full_vector.destroy()
         raise RuntimeError(
             f"{system.side} lifted interface Gram is ill-conditioned: "
             f"{gram_condition:.6e}."
@@ -698,7 +784,9 @@ def _build_projection_matrix(
     )
     negative_mapping = inverse_gram @ negative_raw
     for row in range(mode_count):
-        for left_index, (columns, values, _queries) in enumerate(raw_entries):
+        for left_index, entries in enumerate(raw_entries):
+            columns = entries.matrix_rows
+            values = entries.matrix_values
             coefficient = complex(inverse_gram[row, left_index])
             if len(columns) and abs(coefficient) > 0.0:
                 matrix.setValues(
@@ -708,12 +796,46 @@ def _build_projection_matrix(
                     addv=PETSc.InsertMode.ADD_VALUES,
                 )
     matrix.assemble()
+    full_left_vectors = tuple(
+        entries.full_vector
+        for entries in raw_entries
+        if entries.full_vector is not None
+    )
+    if system.static_condensation is None:
+        modal_rhs_correction = np.zeros(mode_count, dtype=np.complex128)
+    else:
+        if not all(
+            entries.tangential_surface_trace_only_verified
+            for entries in raw_entries
+        ):
+            matrix.destroy()
+            for vector in full_left_vectors:
+                vector.destroy()
+            raise RuntimeError(
+                "Hybrid static projection did not verify trace-only "
+                "tangential surface loads."
+            )
+        if full_left_vectors:
+            matrix.destroy()
+            for vector in full_left_vectors:
+                vector.destroy()
+            raise RuntimeError(
+                "Hybrid trace-only projection unexpectedly retained "
+                "full-space left vectors."
+            )
+        # The verified left vectors have cell-interior entries within the
+        # scale-aware floating-point roundoff envelope, so the discarded
+        # l_i^H A_ii^-1 b_i term is zero at the qualified trace-only accuracy.
+        modal_rhs_correction = np.zeros(mode_count, dtype=np.complex128)
     return (
         matrix,
-        int(sum(item[2] for item in raw_entries) + lift_queries),
+        int(sum(item.queries for item in raw_entries) + lift_queries),
         negative_mapping,
         gram_condition,
         positive_identity_error,
+        full_left_vectors,
+        inverse_gram,
+        modal_rhs_correction,
     )
 
 
@@ -722,9 +844,14 @@ def _build_traction_matrix(
     modes: Sequence[ClassifiedBiorthogonalMode],
     traction_evaluator: _ReusableModeTractionEvaluator,
     surface_load: _ReusableInterfaceSurfaceLoad,
-) -> tuple[PETSc.Mat, int]:
+    full_left_vectors: tuple[PETSc.Vec, ...],
+    inverse_gram: np.ndarray,
+    traction_beta_per_nm: Sequence[complex],
+) -> tuple[PETSc.Mat, int, np.ndarray]:
     comm = system.local_mesh.mesh.comm
     mode_count = len(modes)
+    if len(traction_beta_per_nm) != mode_count:
+        raise ValueError("Traction beta count must equal the modal count.")
     local_mode_cols = mode_count if comm.rank == comm.size - 1 else 0
     matrix = _create_rectangular_aij(
         comm,
@@ -734,24 +861,65 @@ def _build_traction_matrix(
         local_cols=local_mode_cols,
     )
     query_count = 0
+    raw_interior_correction = np.zeros(
+        (inverse_gram.shape[1], mode_count),
+        dtype=np.complex128,
+    )
     sign = system.local_mesh.local_interface_outward_normal_sign
-    for column, mode in enumerate(modes):
-        traction = traction_evaluator.evaluate(
-            mode,
-            local_outward_normal_sign=sign,
-        )
-        rows, values, queries = surface_load.assemble_entries(traction)
-        query_count += queries
-        if len(rows):
-            # Existing Stage-4 DtN convention inserts -traction in the FE row.
-            matrix.setValues(
-                rows,
-                np.asarray([column], dtype=PETSc.IntType),
-                (-values).reshape((len(rows), 1)),
-                addv=PETSc.InsertMode.ADD_VALUES,
+    try:
+        for column, mode in enumerate(modes):
+            traction = traction_evaluator.evaluate(
+                mode,
+                local_outward_normal_sign=sign,
+                beta_override=traction_beta_per_nm[column],
             )
+            entries = surface_load.assemble(traction, role="load_column")
+            query_count += entries.queries
+            if entries.full_vector is not None:
+                if system.static_condensation is None:
+                    entries.full_vector.destroy()
+                    raise RuntimeError(
+                        "Standard Hybrid traction unexpectedly retained a "
+                        "full vector."
+                    )
+                try:
+                    for row, left_vector in enumerate(full_left_vectors):
+                        raw_interior_correction[row, column] = (
+                            system.static_condensation.interior_cross_bilinear(
+                                left_vector,
+                                entries.full_vector,
+                            )
+                        )
+                finally:
+                    entries.full_vector.destroy()
+            elif (
+                system.static_condensation is not None
+                and not entries.tangential_surface_trace_only_verified
+            ):
+                matrix.destroy()
+                raise RuntimeError(
+                    "Hybrid static traction did not verify a trace-only "
+                    "tangential surface load."
+                )
+            if len(entries.matrix_rows):
+                # Existing Stage-4 DtN convention inserts -traction in the FE row.
+                matrix.setValues(
+                    entries.matrix_rows,
+                    np.asarray([column], dtype=PETSc.IntType),
+                    (-entries.matrix_values).reshape(
+                        (len(entries.matrix_rows), 1)
+                    ),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+    except Exception:
+        matrix.destroy()
+        raise
     matrix.assemble()
-    return matrix, query_count
+    return (
+        matrix,
+        query_count,
+        inverse_gram @ raw_interior_correction,
+    )
 
 
 def _build_interface_blocks(
@@ -762,6 +930,8 @@ def _build_interface_blocks(
     negative_basis: BiorthogonalModeBasis,
     negative_traces: Sequence[fem.Function],
     traction_evaluator: _ReusableModeTractionEvaluator,
+    positive_traction_beta_per_nm: Sequence[complex],
+    negative_traction_beta_per_nm: Sequence[complex],
     log=None,
 ) -> HybridInterfaceModeBlocks:
     if log is not None:
@@ -776,6 +946,9 @@ def _build_interface_blocks(
         negative_mapping,
         trace_gram_condition,
         positive_identity_error,
+        full_left_vectors,
+        inverse_gram,
+        modal_rhs_correction,
     ) = _build_projection_matrix(
         system,
         projection,
@@ -786,14 +959,47 @@ def _build_interface_blocks(
     )
     if log is not None:
         log(f"Task32 {system.side}: assembling positive traction columns")
-    positive_traction, positive_queries = _build_traction_matrix(
-        system, positive_basis.modes, traction_evaluator, surface_load
-    )
-    if log is not None:
-        log(f"Task32 {system.side}: assembling negative traction columns")
-    negative_traction, negative_queries = _build_traction_matrix(
-        system, negative_basis.modes, traction_evaluator, surface_load
-    )
+    positive_traction = None
+    negative_traction = None
+    try:
+        (
+            positive_traction,
+            positive_queries,
+            positive_interior_correction,
+        ) = _build_traction_matrix(
+            system,
+            positive_basis.modes,
+            traction_evaluator,
+            surface_load,
+            full_left_vectors,
+            inverse_gram,
+            positive_traction_beta_per_nm,
+        )
+        if log is not None:
+            log(f"Task32 {system.side}: assembling negative traction columns")
+        (
+            negative_traction,
+            negative_queries,
+            negative_interior_correction,
+        ) = _build_traction_matrix(
+            system,
+            negative_basis.modes,
+            traction_evaluator,
+            surface_load,
+            full_left_vectors,
+            inverse_gram,
+            negative_traction_beta_per_nm,
+        )
+    except Exception:
+        if positive_traction is not None:
+            positive_traction.destroy()
+        if negative_traction is not None:
+            negative_traction.destroy()
+        projection_matrix.destroy()
+        raise
+    finally:
+        for vector in full_left_vectors:
+            vector.destroy()
     if log is not None:
         log(f"Task32 {system.side}: internal interface blocks complete")
     return HybridInterfaceModeBlocks(
@@ -811,6 +1017,14 @@ def _build_interface_blocks(
             projection_queries + positive_queries + negative_queries
         ),
         quadrature_degree=surface_load.quadrature_policy.selected_degree,
+        positive_interior_correction=positive_interior_correction,
+        negative_interior_correction=negative_interior_correction,
+        modal_rhs_correction=modal_rhs_correction,
+        tangential_surface_trace_only_verified=bool(
+            system.static_condensation is not None
+        ),
+        interior_modal_pairwise_schur_evaluated=False,
+        full_surface_mode_vectors_retained=False,
     )
 
 
@@ -823,12 +1037,21 @@ def build_hybrid_internal_mode_coupling(
     top_system: HybridLocalDtnSystem,
     *,
     length_nm: float = 100.0,
+    propagation_model: AxialPropagationModel = "continuous_beta",
+    modal_traction_model: ModalTractionModel = "continuous_qep_beta",
     log=None,
 ) -> HybridInternalModeCoupling:
     """Build sparse internal-interface blocks without assembling the full solve."""
 
     if bottom_system.side != "bottom" or top_system.side != "top":
         raise ValueError("Hybrid local systems must be ordered bottom, top.")
+    if (
+        bottom_system.assembly_backend_actual
+        != top_system.assembly_backend_actual
+    ):
+        raise ValueError(
+            "Hybrid bottom/top local assembly backends must match."
+        )
     mode_count = len(positive_basis.modes)
     if mode_count == 0 or len(negative_basis.modes) != mode_count:
         raise ValueError("Positive and negative internal bases need equal nonzero size.")
@@ -840,37 +1063,77 @@ def build_hybrid_internal_mode_coupling(
     if log is not None:
         log("Task32 internal coupling: building canonical modal projection")
     projection = ModalTraceProjection(spaces, positive_basis)
-    canonical_negative_mapping = np.empty(
-        (mode_count, mode_count), dtype=np.complex128
-    )
-    negative_traces: list[fem.Function] = []
-    for column, mode in enumerate(negative_basis.modes):
-        trace = _trace_from_full_mode_vector(
-            mode.right.right_full,
-            spaces,
-            name=f"task032_negative_trace_{column}",
+    try:
+        canonical_negative_mapping = np.empty(
+            (mode_count, mode_count), dtype=np.complex128
         )
-        negative_traces.append(trace)
-        canonical_negative_mapping[:, column] = projection.project(trace)
-    positive_mapping = np.column_stack(
-        [projection.project(trace) for trace in projection.right_traces]
-    )
-    identity_error = float(
-        np.linalg.norm(positive_mapping - np.eye(mode_count), ord=np.inf)
-    )
-    if identity_error > 1.0e-9:
-        projection.destroy()
-        raise RuntimeError(
-            f"Positive interface projection identity error {identity_error:.3e}."
+        negative_traces: list[fem.Function] = []
+        for column, mode in enumerate(negative_basis.modes):
+            trace = _trace_from_full_mode_vector(
+                mode.right.right_full,
+                spaces,
+                name=f"task032_negative_trace_{column}",
+            )
+            negative_traces.append(trace)
+            canonical_negative_mapping[:, column] = projection.project(trace)
+        positive_mapping = np.column_stack(
+            [projection.project(trace) for trace in projection.right_traces]
         )
-    if not np.all(np.isfinite(canonical_negative_mapping)):
-        projection.destroy()
-        raise RuntimeError("Negative-to-positive interface map is non-finite.")
+        identity_error = float(
+            np.linalg.norm(positive_mapping - np.eye(mode_count), ord=np.inf)
+        )
+        if identity_error > 1.0e-9:
+            raise RuntimeError(
+                f"Positive interface projection identity error {identity_error:.3e}."
+            )
+        if not np.all(np.isfinite(canonical_negative_mapping)):
+            raise RuntimeError("Negative-to-positive interface map is non-finite.")
 
-    propagation = build_two_sided_propagation(
-        [*positive_basis.modes, *negative_basis.modes],
-        length_nm,
-    )
+        propagation = build_two_sided_propagation(
+            [*positive_basis.modes, *negative_basis.modes],
+            length_nm,
+            propagation_model=propagation_model,
+            axial_fem_degree=int(cfg.nedelec_degree),
+            axial_h_nm=float(cfg.mesh_target_size),
+        )
+        if modal_traction_model == "continuous_qep_beta":
+            positive_traction_beta = tuple(
+                complex(mode.beta) for mode in positive_basis.modes
+            )
+            negative_traction_beta = tuple(
+                complex(mode.beta) for mode in negative_basis.modes
+            )
+        elif modal_traction_model == "scalar_cg_discrete_derivative":
+            if propagation_model != "full3d_uniform_cg":
+                raise ValueError(
+                    "scalar_cg_discrete_derivative traction requires "
+                    "full3d_uniform_cg propagation."
+                )
+            positive_traction_beta = tuple(
+                scalar_cg_discrete_traction_beta(
+                    mode.beta,
+                    degree=int(cfg.nedelec_degree),
+                    h_nm=float(cfg.mesh_target_size),
+                    direction="forward",
+                )
+                for mode in positive_basis.modes
+            )
+            negative_traction_beta = tuple(
+                scalar_cg_discrete_traction_beta(
+                    mode.beta,
+                    degree=int(cfg.nedelec_degree),
+                    h_nm=float(cfg.mesh_target_size),
+                    direction="backward",
+                )
+                for mode in negative_basis.modes
+            )
+        else:
+            raise ValueError(
+                f"Unsupported modal_traction_model {modal_traction_model!r}."
+            )
+    except Exception:
+        projection.destroy()
+        raise
     bottom = None
     top = None
     try:
@@ -885,6 +1148,8 @@ def build_hybrid_internal_mode_coupling(
             negative_basis,
             negative_traces,
             traction_evaluator,
+            positive_traction_beta,
+            negative_traction_beta,
             log,
         )
         top = _build_interface_blocks(
@@ -895,6 +1160,8 @@ def build_hybrid_internal_mode_coupling(
             negative_basis,
             negative_traces,
             traction_evaluator,
+            positive_traction_beta,
+            negative_traction_beta,
             log,
         )
         mapping_scale = max(
@@ -966,6 +1233,9 @@ def build_hybrid_internal_mode_coupling(
             bottom=bottom,
             top=top,
             propagation=propagation,
+            modal_traction_model=modal_traction_model,
+            positive_traction_beta_per_nm=positive_traction_beta,
+            negative_traction_beta_per_nm=negative_traction_beta,
             negative_trace_to_positive=negative_mapping,
             positive_projection_identity_error=max(
                 identity_error,
@@ -974,6 +1244,9 @@ def build_hybrid_internal_mode_coupling(
             ),
             mode_count_per_direction=mode_count,
             interface_quadrature_degree=bottom.quadrature_degree,
+            spaces=spaces,
+            positive_basis=positive_basis,
+            negative_basis=negative_basis,
         )
     except Exception:
         if bottom is not None:

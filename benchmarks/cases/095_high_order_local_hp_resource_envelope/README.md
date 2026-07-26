@@ -483,6 +483,15 @@ count 均为 0。
 DtN funnel 和 0.7 nm resource model v3 均为
 `not_run_by_selected_candidate_gate`。
 
+Review V3 在选择性合并后的新分支上另外执行了 p2/h5 static-Hybrid
+H1-A；该工程判别不把旧 h13 提升为 Hybrid-eligible candidate。static
+Full3D/standard Full3D、static/standard Hybrid 及 M120/M160 分别为
+12/12 power + 12/12 amplitude 等价，但 static Full3D ↔ static Hybrid
+只有相对口径 3/12 + 2/12，strict absolute audit 为 2/12 + 2/12。
+因此 H1-A 是 `controlled_negative`，H1-B/H1-C/H1-D 未解锁。compact
+authority 为
+`records/hybrid_static_condensation_h1a_mpi8_v1.json`。
+
 ## 不应无理由重复的 heavy authorities
 
 以下 MPI8 PDE 已有 source/artifact/hash-bound 证据；除非对应数值核心、输入
@@ -500,6 +509,7 @@ identity 或 review Gate 改变，不应重跑：
 - h15 MPI1/2/4/8 direct rank study 与 solve-thread audit；
 - h15 Jacobi、ASM-ILU 和 z-slab+DtN iterative controlled negatives；
 - Task034 p4/h5、structured p4/h7.5 及 Task035 tetra heavy references。
+- Review V3 H1-A p2/h5 static Full3D、static Hybrid M120/M160。
 
 ## 复现
 

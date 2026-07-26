@@ -25,6 +25,10 @@ from .dtn_port_3d import (
     _port_power_metrics,
 )
 from .hybrid_local_dtn import HybridLocalDtnSystem
+from .hybrid_static_field_recovery import (
+    HybridStaticRecoveredLocalField,
+    recover_hybrid_static_local_field,
+)
 
 
 def _int(values) -> np.ndarray:
@@ -257,12 +261,65 @@ def internal_modal_constraint_matrix(
         coupling.propagation.backward.factors, dtype=np.complex128
     )
     identity = np.eye(mode_count, dtype=np.complex128)
-    return np.block(
+    base = np.block(
         [
             [-identity, -(negative_map @ np.diag(backward))],
             [-np.diag(forward), -negative_map],
         ]
     )
+    bottom_correction = np.hstack(
+        (
+            np.asarray(
+                coupling.bottom.positive_interior_correction,
+                dtype=np.complex128,
+            ),
+            np.asarray(
+                coupling.bottom.negative_interior_correction,
+                dtype=np.complex128,
+            )
+            @ np.diag(backward),
+        )
+    )
+    top_correction = np.hstack(
+        (
+            np.asarray(
+                coupling.top.positive_interior_correction,
+                dtype=np.complex128,
+            )
+            @ np.diag(forward),
+            np.asarray(
+                coupling.top.negative_interior_correction,
+                dtype=np.complex128,
+            ),
+        )
+    )
+    correction = np.vstack((bottom_correction, top_correction))
+    if correction.shape != base.shape:
+        raise ValueError("Hybrid modal interior correction has the wrong shape.")
+    return base + correction
+
+
+def internal_modal_rhs_correction(
+    coupling: HybridInternalModeCoupling,
+) -> np.ndarray:
+    """Return the cell-interior elimination RHS for both modal equations."""
+
+    correction = np.concatenate(
+        (
+            np.asarray(
+                coupling.bottom.modal_rhs_correction,
+                dtype=np.complex128,
+            ),
+            np.asarray(
+                coupling.top.modal_rhs_correction,
+                dtype=np.complex128,
+            ),
+        )
+    )
+    expected = coupling.internal_equation_count
+    if correction.shape != (expected,):
+        raise ValueError("Hybrid modal RHS interior correction has the wrong shape.")
+    return correction
 
 
 def _copy_block(
@@ -325,7 +382,25 @@ class HybridAugmentedDirectSolution:
     solve_seconds: float
     converged_reason: int
     factor_solver: str = "mumps"
+    bottom_recovered: HybridStaticRecoveredLocalField | None = None
+    top_recovered: HybridStaticRecoveredLocalField | None = None
     _destroyed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def bottom_physical(self):
+        return (
+            self.bottom_recovered.electric_field
+            if self.bottom_recovered is not None
+            else self.bottom
+        )
+
+    @property
+    def top_physical(self):
+        return (
+            self.top_recovered.electric_field
+            if self.top_recovered is not None
+            else self.top
+        )
 
     def destroy(self) -> None:
         if self._destroyed:
@@ -431,7 +506,7 @@ def build_hybrid_augmented_direct_system(
     rhs = layout.pack(
         bottom_system.b,
         top_system.b,
-        np.zeros(internal_count, dtype=np.complex128),
+        internal_modal_rhs_correction(coupling),
     )
     block_shapes = {
         "A_bottom": bottom_system.A.getSize(),
@@ -458,6 +533,7 @@ def solve_hybrid_augmented_direct(
     system: HybridAugmentedDirectSystem,
     bottom_system: HybridLocalDtnSystem,
     top_system: HybridLocalDtnSystem,
+    coupling: HybridInternalModeCoupling | None = None,
 ) -> HybridAugmentedDirectSolution:
     """Factor and solve the assembled hybrid system with direct MUMPS LU."""
 
@@ -492,6 +568,44 @@ def solve_hybrid_augmented_direct(
     bottom, top, modal = system.layout.split(
         x, bottom_system.b, top_system.b
     )
+    bottom_recovered = None
+    top_recovered = None
+    static_requested = (
+        bottom_system.static_condensation is not None
+        or top_system.static_condensation is not None
+    )
+    if static_requested:
+        if (
+            bottom_system.static_condensation is None
+            or top_system.static_condensation is None
+        ):
+            bottom.destroy()
+            top.destroy()
+            x.destroy()
+            ksp.destroy()
+            raise ValueError(
+                "Hybrid bottom/top local assembly backends must match."
+            )
+        if coupling is None:
+            bottom.destroy()
+            top.destroy()
+            x.destroy()
+            ksp.destroy()
+            raise ValueError(
+                "Condensed Hybrid augmented recovery requires its coupling."
+            )
+        bottom_recovered = recover_hybrid_static_local_field(
+            bottom_system,
+            coupling,
+            bottom,
+            modal,
+        )
+        top_recovered = recover_hybrid_static_local_field(
+            top_system,
+            coupling,
+            top,
+            modal,
+        )
     return HybridAugmentedDirectSolution(
         x=x,
         ksp=ksp,
@@ -502,6 +616,8 @@ def solve_hybrid_augmented_direct(
         setup_seconds=setup_seconds,
         solve_seconds=solve_seconds,
         converged_reason=int(ksp.getConvergedReason()),
+        bottom_recovered=bottom_recovered,
+        top_recovered=top_recovered,
     )
 
 

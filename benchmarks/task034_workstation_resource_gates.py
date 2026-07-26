@@ -164,6 +164,8 @@ def task034_workstation_hybrid_launch_gate(
     external_watchdog_active: bool,
     full3d_reference_sha256: str | None,
     resource_anchor_sha256: str | None = None,
+    assembly_backend: str = "standard_full",
+    measured_full3d_anchor: Mapping[str, Any] | None = None,
     m160_funnel_evidence: Mapping[str, Any] | None = None,
     expected_m160_funnel_sha256: str | None = None,
     observed_m160_funnel_sha256: str | None = None,
@@ -192,16 +194,38 @@ def task034_workstation_hybrid_launch_gate(
         and item.get("polarization_kind") == polarization_kind
     ]
     entry = matches[0] if len(matches) == 1 else {}
-    reference = entry.get("full3d_reference")
-    reference = reference if isinstance(reference, Mapping) else {}
+    historical_reference = entry.get("full3d_reference")
+    historical_reference = (
+        historical_reference
+        if isinstance(historical_reference, Mapping)
+        else {}
+    )
+    fresh_anchor_gate = (
+        measured_full3d_anchor
+        if isinstance(measured_full3d_anchor, Mapping)
+        else {}
+    )
+    fresh_reference = fresh_anchor_gate.get("anchor")
+    fresh_reference = (
+        fresh_reference if isinstance(fresh_reference, Mapping) else {}
+    )
+    static_backend = assembly_backend == "assembly_time_static_condensed"
+    use_fresh_reference = bool(static_backend and fresh_anchor_gate)
+    reference = (
+        fresh_reference if use_fresh_reference else historical_reference
+    )
     assembly_anchor = entry.get("assembly_resource_anchor")
     assembly_anchor = (
         assembly_anchor if isinstance(assembly_anchor, Mapping) else {}
     )
     anchor_kind = (
+        "fresh_full3d_reference"
+        if use_fresh_reference
+        else (
         "full3d_reference"
         if (
-            full3d_reference_sha256 is not None
+            assembly_backend == "standard_full"
+            and full3d_reference_sha256 is not None
             and resource_anchor_sha256 is None
             and reference.get("status") == "full3d_reference_pass"
         )
@@ -214,8 +238,13 @@ def task034_workstation_hybrid_launch_gate(
             )
             else None
         )
+        )
     )
-    anchor = reference if anchor_kind == "full3d_reference" else assembly_anchor
+    anchor = (
+        reference
+        if anchor_kind in {"full3d_reference", "fresh_full3d_reference"}
+        else assembly_anchor
+    )
     prediction = entry.get("workstation_prediction")
     prediction = prediction if isinstance(prediction, Mapping) else {}
     centers = prediction.get("centers_gib")
@@ -267,18 +296,18 @@ def task034_workstation_hybrid_launch_gate(
     )
     expected_anchor_sha = (
         reference.get("descriptor_sha256")
-        if anchor_kind == "full3d_reference"
+        if anchor_kind in {"full3d_reference", "fresh_full3d_reference"}
         else assembly_anchor.get("watchdog_record_sha256")
     )
     observed_anchor_sha = (
         full3d_reference_sha256
-        if anchor_kind == "full3d_reference"
+        if anchor_kind in {"full3d_reference", "fresh_full3d_reference"}
         else resource_anchor_sha256
     )
     full3d_residual = _positive_finite(reference.get("true_relative_residual"))
     anchor_stage_scope_valid = bool(
         (
-            anchor_kind == "full3d_reference"
+            anchor_kind in {"full3d_reference", "fresh_full3d_reference"}
             and full3d_residual is not None
             and full3d_residual <= 1.0e-9
         )
@@ -318,6 +347,38 @@ def task034_workstation_hybrid_launch_gate(
         "complete_nonignored_worktree_clean": bool(source_clean_verified),
         "authority_source_compatible_with_current": (
             compatibility.get("pass") is True
+        ),
+        "assembly_backend_supported": assembly_backend
+        in {"standard_full", "assembly_time_static_condensed"},
+        "static_backend_requires_fresh_anchor": bool(
+            not static_backend or fresh_anchor_gate
+        ),
+        "standard_backend_rejects_fresh_anchor": bool(
+            static_backend or not fresh_anchor_gate
+        ),
+        "fresh_full3d_reference_qualified": bool(
+            not fresh_anchor_gate
+            or (
+                fresh_anchor_gate.get("pass") is True
+                and fresh_anchor_gate.get("failures") == []
+                and isinstance(fresh_anchor_gate.get("checks"), Mapping)
+                and all(fresh_anchor_gate["checks"].values())
+                and isinstance(
+                    fresh_anchor_gate.get("source_compatibility"), Mapping
+                )
+                and fresh_anchor_gate["source_compatibility"].get("pass")
+                is True
+                and fresh_reference.get("assembly_backend")
+                == "assembly_time_static_condensed"
+                and fresh_reference.get("degree") == degree
+                and math.isclose(
+                    float(fresh_reference.get("h_nm", math.nan)),
+                    float(h_nm),
+                )
+                and fresh_reference.get("mpi_size") == mpi_size
+                and fresh_reference.get("polarization_kind")
+                == polarization_kind
+            )
         ),
         "external_watchdog_is_launch_authority": bool(external_watchdog_active),
         "live_task034_effective_limit_readable": live_values_valid,
@@ -424,7 +485,11 @@ def task034_workstation_hybrid_launch_gate(
         ),
         "high_order_core_evidence": core.get("pass") is True,
         "measured_resource_anchor_kind_supported": anchor_kind
-        in {"full3d_reference", "assembly_calibration"},
+        in {
+            "full3d_reference",
+            "fresh_full3d_reference",
+            "assembly_calibration",
+        },
         "measured_resource_anchor_status_pass": (
             anchor.get("status")
             in {"full3d_reference_pass", "assembly_calibration_pass"}
@@ -442,6 +507,11 @@ def task034_workstation_hybrid_launch_gate(
         ),
         "measured_resource_anchor_peak_is_positive": (
             _positive_finite(anchor.get("peak_memory_gib")) is not None
+        ),
+        "measured_resource_anchor_peak_within_live_warning": bool(
+            live_warning_gib is not None
+            and _positive_finite(anchor.get("peak_memory_gib")) is not None
+            and float(anchor["peak_memory_gib"]) <= live_warning_gib
         ),
         "two_independent_prediction_centers_present": bool(
             len(parsed_centers) >= 2
@@ -486,6 +556,9 @@ def task034_workstation_hybrid_launch_gate(
         "resource_anchor_kind": anchor_kind,
         "resource_anchor": dict(anchor),
         "full3d_reference": dict(reference),
+        "historical_full3d_reference": dict(historical_reference),
+        "fresh_full3d_reference_gate": dict(fresh_anchor_gate),
+        "assembly_backend": assembly_backend,
         "conditional_m240_evidence": m240_gate,
         "high_order_core_evidence": dict(core),
         "adaptive_mechanism_evidence": dict(adaptive_gate),

@@ -1,4 +1,27 @@
-# 项目开发进度：Task000–Task035b
+# 项目开发进度：Task000–Task035c
+
+## 2026-07-26：Task035c Hybrid逐通道与p6/h10内存闭合
+
+Task035c 用低成本p2/h5定位Full3D–Hybrid弱衍射级误差，再以p6/h10 MPI8
+完成六路径高阶authority。普通默认保持`standard_full`；p3/h7.5按用户范围
+未运行。
+
+| 主线 | 实际结果 | 数据身份 / 边界 |
+|---|---|---|
+| channel root cause | Full3D z向使用scalar CG(p)离散相位/端点导数；旧Hybrid使用连续beta/traction | p2/h5 measured diagnosis |
+| p2/h5 fix | corrected M120/M160均12/12 power + 12/12 boundary-plane amplitude | diagnostic pass |
+| p6/h10 physics | Full3D standard/static、Hybrid standard/static M120/M160六路径均12/12+12/12；residual/RTA/Avolume/interface/field pass | measured MPI8；source `244b62e1...` |
+| Full3D static | peak `34.041→14.722 GiB`，下降56.75%；total `2581.55→260.74 s` | measured process-tree RSS，zero swap |
+| Hybrid static M120 | rows/NNZ/factor分别下降67.17%/79.63%/67.88%；peak `11.077→7.544 GiB`，下降31.89%；total ratio0.343 | mandatory/preferred memory pass |
+| Hybrid static M160 | peak下降29.50%；没有物理收益且更耗时/内存 | M120 selected；M240 not run |
+| user 50% target | 未达到；峰值在record-and-release，不在modal coupling本身 | lifecycle engineering gap |
+| rank study | MPI1 QEP biorthogonality fail；MPI2 terminal-drain resource authority fail | two controlled negatives；MPI4 not run by stop rule |
+| scope | p3/h7.5、h13 adaptive、0.7nm、irregular/tetra/mixed static、new iterative均未运行 | compliant |
+
+完整回顾见
+[`task035c_hybrid_channel_memory_closure/outcomes/summary.md`](task035c_hybrid_channel_memory_closure/outcomes/summary.md)，
+compact authority见
+[`../benchmarks/cases/096_hybrid_channel_memory_closure/README.md`](../benchmarks/cases/096_hybrid_channel_memory_closure/README.md)。
 
 ## 2026-07-25：Task035b Review V2 setup、内存下限与最终通道续研
 
@@ -142,8 +165,8 @@ docs/taskXXX_*/review_report*.md
 更新时间：
 
 ```text
-2026-07-24
-current branch = codex/20260723-task35b-high-order-local-hp-resource-envelope
+2026-07-26
+current branch = codex/20260726-task35c-hybrid-channel-memory-closure
 Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
@@ -152,7 +175,8 @@ Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080
 Task033 status = review-v6 reduced scope complete; fixed-p p3/h7.5 clear success with qualifications; original full scope partial by transfer
 Task034 status = PASS_WITH_QUALIFICATIONS; Review V3 blockers closed; final Review V4 and user merge authorization pending
 Task035 status = Review V6 research baseline; Task035b successor active
-Task035b status = PARTIAL_WITH_CONTROLLED_NEGATIVES; Review V2 continuation complete; response_v3 pending review
+Task035b status = CLOSED_WITH_CONTROLLED_NEGATIVES by Review V4
+Task035c status = mandatory channel/memory closure complete; 50% Hybrid memory target remains open; response_v1 pending review
 ```
 
 ## 1.1 2026-07-15 最新更新

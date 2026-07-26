@@ -14,6 +14,7 @@ from petsc4py import PETSc
 from ..common.config_3d import SimulationConfig3D
 from ..modes.cross_section_spaces import CrossSectionMesh, CrossSectionSpaces
 from ..modes.mode_classification import BiorthogonalModeBasis
+from ..modes.stable_propagation import TwoSidedPropagation
 from ..solvers.dtn_port_3d import _assign_fe_solution_from_augmented
 from ..solvers.hybrid_local_dtn import HybridLocalDtnSystem
 from .full3d_reference import _sample_distributed_function
@@ -118,10 +119,16 @@ def _sample_distributed_2d(function, points_xy: np.ndarray) -> np.ndarray:
 
 def assign_local_total_electric_field(
     system: HybridLocalDtnSystem,
-    augmented_solution: PETSc.Vec,
+    augmented_solution,
 ):
     """Back-substitute one local MPC solution into its physical H(curl) field."""
 
+    if isinstance(augmented_solution, fem.Function):
+        if augmented_solution.function_space.mesh is not system.V.mesh:
+            raise ValueError(
+                "Recovered Hybrid field belongs to a different local mesh."
+            )
+        return augmented_solution
     if augmented_solution.getSize() != system.global_size:
         raise ValueError("Local augmented solution and Hybrid local system sizes differ.")
     return _assign_fe_solution_from_augmented(
@@ -172,6 +179,7 @@ class ModalFieldReconstructor:
         *,
         bottom_z_nm: float = 10.0,
         top_z_nm: float = 110.0,
+        propagation: TwoSidedPropagation | None = None,
     ) -> None:
         if len(positive.modes) != len(negative.modes):
             raise ValueError("Positive and negative modal bases must have equal sizes.")
@@ -185,6 +193,34 @@ class ModalFieldReconstructor:
         if self.top_z_nm <= self.bottom_z_nm:
             raise ValueError("The modal interval must have positive length.")
         self._modes = tuple([*positive.modes, *negative.modes])
+        if propagation is None:
+            self.propagation_model = "continuous_beta"
+            self._positive_propagation_beta = np.asarray(
+                [mode.beta for mode in positive.modes],
+                dtype=np.complex128,
+            )
+            self._negative_propagation_beta = np.asarray(
+                [mode.beta for mode in negative.modes],
+                dtype=np.complex128,
+            )
+        else:
+            count = len(positive.modes)
+            if (
+                propagation.forward.mode_count != count
+                or propagation.backward.mode_count != count
+            ):
+                raise ValueError(
+                    "Propagation and modal reconstruction sizes differ."
+                )
+            self.propagation_model = propagation.propagation_model
+            self._positive_propagation_beta = np.asarray(
+                propagation.forward.effective_beta_per_nm,
+                dtype=np.complex128,
+            )
+            self._negative_propagation_beta = np.asarray(
+                propagation.backward.effective_beta_per_nm,
+                dtype=np.complex128,
+            )
         msh = self.cross_section.mesh
         self._magnetic_space = fem.functionspace(
             msh,
@@ -244,6 +280,26 @@ class ModalFieldReconstructor:
     def mode_count_per_direction(self) -> int:
         return len(self.positive.modes)
 
+    def _effective_propagation_betas(
+        self,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        positive = getattr(self, "_positive_propagation_beta", None)
+        negative = getattr(self, "_negative_propagation_beta", None)
+        if positive is None:
+            positive = np.asarray(
+                [mode.beta for mode in self.positive.modes],
+                dtype=np.complex128,
+            )
+        if negative is None:
+            negative = np.asarray(
+                [mode.beta for mode in self.negative.modes],
+                dtype=np.complex128,
+            )
+        return (
+            np.asarray(positive, dtype=np.complex128),
+            np.asarray(negative, dtype=np.complex128),
+        )
+
     def _sample_mode_bases(
         self, points: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
@@ -295,18 +351,21 @@ class ModalFieldReconstructor:
         count = self.mode_count_per_direction
         if modal.shape != (2 * count,):
             raise ValueError(f"Modal amplitudes must have shape ({2 * count},).")
-        positive_beta = np.asarray(
-            [mode.beta for mode in self.positive.modes], dtype=np.complex128
-        )
-        negative_beta = np.asarray(
-            [mode.beta for mode in self.negative.modes], dtype=np.complex128
-        )
+        positive_beta, negative_beta = self._effective_propagation_betas()
         return np.concatenate(
             (
                 modal[:count]
-                * np.exp(1j * positive_beta * (float(z_nm) - self.bottom_z_nm)),
+                * np.exp(
+                    1j
+                    * positive_beta
+                    * (float(z_nm) - self.bottom_z_nm)
+                ),
                 modal[count:]
-                * np.exp(1j * negative_beta * (float(z_nm) - self.top_z_nm)),
+                * np.exp(
+                    1j
+                    * negative_beta
+                    * (float(z_nm) - self.top_z_nm)
+                ),
             )
         )
 
@@ -342,6 +401,383 @@ class ModalFieldReconstructor:
             ),
             magnetic_A_per_m=np.asarray(magnetic, dtype=np.complex128).reshape(shape),
         )
+
+    def full3d_trace_modal_oracle(
+        self,
+        reference_npz: Path,
+    ) -> dict[str, object]:
+        """Project both Full3D interface traces onto one sampled modal basis.
+
+        Electric-only projection cannot distinguish counter-propagating modes
+        that share a tangential trace.  The joint normalized E/H fit resolves
+        both directions and lets us compare continuous and selected propagation
+        independently of the local Hybrid solve.
+        """
+
+        with np.load(reference_npz) as archive:
+            x_nm = np.asarray(archive["x_nm"], dtype=np.float64)
+            y_nm = np.asarray(archive["y_nm"], dtype=np.float64)
+            z_nm = np.asarray(archive["z_nm"], dtype=np.float64)
+            electric = np.asarray(
+                archive["E_V_per_m"],
+                dtype=np.complex128,
+            )
+            magnetic = np.asarray(
+                archive["H_A_per_m"],
+                dtype=np.complex128,
+            )
+        bottom_matches = np.flatnonzero(
+            np.isclose(z_nm, self.bottom_z_nm, rtol=0.0, atol=1.0e-10)
+        )
+        top_matches = np.flatnonzero(
+            np.isclose(z_nm, self.top_z_nm, rtol=0.0, atol=1.0e-10)
+        )
+        if len(bottom_matches) != 1 or len(top_matches) != 1:
+            raise ValueError(
+                "Full3D trace oracle requires exactly one sample plane at "
+                "each Hybrid interface."
+            )
+        yy, xx = np.meshgrid(y_nm, x_nm, indexing="ij")
+        points = np.column_stack((xx.ravel(), yy.ravel()))
+        electric_basis, magnetic_basis = self._sample_mode_bases(points)
+        electric_basis = (
+            self.cfg.electric_field_scale_V_per_m
+            * electric_basis[..., :2]
+        )
+        magnetic_basis = magnetic_basis[..., :2]
+        electric_matrix = electric_basis.reshape(
+            len(electric_basis), -1
+        ).T
+        magnetic_matrix = magnetic_basis.reshape(
+            len(magnetic_basis), -1
+        ).T
+        interface_indices = {
+            "bottom": int(bottom_matches[0]),
+            "top": int(top_matches[0]),
+        }
+
+        def fit(index: int) -> tuple[np.ndarray, dict[str, object]]:
+            electric_target = electric[index, ..., :2].reshape(-1)
+            magnetic_target = magnetic[index, ..., :2].reshape(-1)
+            electric_scale = max(
+                float(np.linalg.norm(electric_target)),
+                1.0e-30,
+            )
+            magnetic_scale = max(
+                float(np.linalg.norm(magnetic_target)),
+                1.0e-30,
+            )
+            joint_matrix = np.vstack(
+                (
+                    electric_matrix / electric_scale,
+                    magnetic_matrix / magnetic_scale,
+                )
+            )
+            joint_target = np.concatenate(
+                (
+                    electric_target / electric_scale,
+                    magnetic_target / magnetic_scale,
+                )
+            )
+            coefficients, _residuals, rank, singular_values = np.linalg.lstsq(
+                joint_matrix,
+                joint_target,
+                rcond=1.0e-10,
+            )
+            reconstructed_electric = (
+                electric_matrix @ coefficients
+            ).reshape(electric[index, ..., :2].shape)
+            reconstructed_magnetic = (
+                magnetic_matrix @ coefficients
+            ).reshape(magnetic[index, ..., :2].shape)
+            condition = (
+                float(singular_values[0] / singular_values[-1])
+                if len(singular_values) and singular_values[-1] > 0.0
+                else float("inf")
+            )
+            return coefficients, {
+                "joint_fit_rank": int(rank),
+                "joint_fit_columns": int(joint_matrix.shape[1]),
+                "joint_fit_condition": condition,
+                "electric_tangential": relative_sample_error(
+                    reconstructed_electric,
+                    electric[index, ..., :2],
+                ),
+                "magnetic_tangential": relative_sample_error(
+                    reconstructed_magnetic,
+                    magnetic[index, ..., :2],
+                ),
+                "coefficient_l2": float(np.linalg.norm(coefficients)),
+            }
+
+        comm = self.cross_section.mesh.comm
+        payload = None
+        if comm.rank == 0:
+            bottom_coefficients, bottom_fit = fit(
+                interface_indices["bottom"]
+            )
+            top_coefficients, top_fit = fit(interface_indices["top"])
+            original_beta = np.asarray(
+                [mode.beta for mode in self._modes],
+                dtype=np.complex128,
+            )
+            positive_beta, negative_beta = (
+                self._effective_propagation_betas()
+            )
+            effective_beta = np.concatenate(
+                (
+                    positive_beta,
+                    negative_beta,
+                )
+            )
+            length_nm = self.top_z_nm - self.bottom_z_nm
+            count = self.mode_count_per_direction
+            forward_factors = np.exp(
+                1j * original_beta[:count] * length_nm
+            )
+            backward_factors = np.exp(
+                -1j * original_beta[count:] * length_nm
+            )
+            predicted_top_forward = (
+                bottom_coefficients[:count] * forward_factors
+            )
+            predicted_bottom_backward = (
+                top_coefficients[count:] * backward_factors
+            )
+            stable_top_coefficients = np.concatenate(
+                (predicted_top_forward, top_coefficients[count:])
+            )
+            stable_bottom_coefficients = np.concatenate(
+                (bottom_coefficients[:count], predicted_bottom_backward)
+            )
+            predicted_top_electric = (
+                electric_matrix @ stable_top_coefficients
+            ).reshape(electric[interface_indices["top"], ..., :2].shape)
+            predicted_top_magnetic = (
+                magnetic_matrix @ stable_top_coefficients
+            ).reshape(magnetic[interface_indices["top"], ..., :2].shape)
+            predicted_bottom_electric = (
+                electric_matrix @ stable_bottom_coefficients
+            ).reshape(electric[interface_indices["bottom"], ..., :2].shape)
+            predicted_bottom_magnetic = (
+                magnetic_matrix @ stable_bottom_coefficients
+            ).reshape(magnetic[interface_indices["bottom"], ..., :2].shape)
+
+            def coefficient_error(
+                predicted: np.ndarray,
+                observed: np.ndarray,
+            ) -> float:
+                scale = max(
+                    float(np.linalg.norm(predicted)),
+                    float(np.linalg.norm(observed)),
+                    1.0e-30,
+                )
+                return float(np.linalg.norm(predicted - observed) / scale)
+
+            def largest_mode_diagnostics(
+                predicted: np.ndarray,
+                observed: np.ndarray,
+                mode_beta: np.ndarray,
+                *,
+                direction: str,
+                offset: int,
+            ) -> list[dict[str, object]]:
+                significant = np.argsort(
+                    np.maximum(np.abs(predicted), np.abs(observed))
+                )[-12:][::-1]
+                diagnostics = []
+                for local_index in significant:
+                    predicted_value = predicted[int(local_index)]
+                    observed_value = observed[int(local_index)]
+                    diagnostics.append(
+                        {
+                            "mode_index": int(offset + local_index),
+                            "direction": direction,
+                            "beta_per_nm": [
+                                float(mode_beta[local_index].real),
+                                float(mode_beta[local_index].imag),
+                            ],
+                            "predicted_coefficient_abs": float(
+                                abs(predicted_value)
+                            ),
+                            "projected_coefficient_abs": float(
+                                abs(observed_value)
+                            ),
+                            "phase_delta_rad": float(
+                                np.angle(observed_value / predicted_value)
+                                if abs(predicted_value) > 1.0e-30
+                                else np.nan
+                            ),
+                        }
+                    )
+                return diagnostics
+
+            forward_report = {
+                "coefficient_relative_l2": coefficient_error(
+                    predicted_top_forward,
+                    top_coefficients[:count],
+                ),
+                "largest_projected_modes": largest_mode_diagnostics(
+                    predicted_top_forward,
+                    top_coefficients[:count],
+                    original_beta[:count],
+                    direction="forward",
+                    offset=0,
+                ),
+            }
+            backward_report = {
+                "coefficient_relative_l2": coefficient_error(
+                    predicted_bottom_backward,
+                    bottom_coefficients[count:],
+                ),
+                "largest_projected_modes": largest_mode_diagnostics(
+                    predicted_bottom_backward,
+                    bottom_coefficients[count:],
+                    original_beta[count:],
+                    direction="backward",
+                    offset=count,
+                ),
+            }
+            max_stable_factor = max(
+                float(np.max(np.abs(forward_factors), initial=0.0)),
+                float(np.max(np.abs(backward_factors), initial=0.0)),
+                1.0e-30,
+            )
+            selected_forward_factors = np.exp(
+                1j * effective_beta[:count] * length_nm
+            )
+            selected_backward_factors = np.exp(
+                -1j * effective_beta[count:] * length_nm
+            )
+            selected_top_forward = (
+                bottom_coefficients[:count] * selected_forward_factors
+            )
+            selected_bottom_backward = (
+                top_coefficients[count:] * selected_backward_factors
+            )
+            selected_top_coefficients = np.concatenate(
+                (selected_top_forward, top_coefficients[count:])
+            )
+            selected_bottom_coefficients = np.concatenate(
+                (bottom_coefficients[:count], selected_bottom_backward)
+            )
+            selected_top_electric = (
+                electric_matrix @ selected_top_coefficients
+            ).reshape(electric[interface_indices["top"], ..., :2].shape)
+            selected_top_magnetic = (
+                magnetic_matrix @ selected_top_coefficients
+            ).reshape(magnetic[interface_indices["top"], ..., :2].shape)
+            selected_bottom_electric = (
+                electric_matrix @ selected_bottom_coefficients
+            ).reshape(electric[interface_indices["bottom"], ..., :2].shape)
+            selected_bottom_magnetic = (
+                magnetic_matrix @ selected_bottom_coefficients
+            ).reshape(magnetic[interface_indices["bottom"], ..., :2].shape)
+            selected_propagation = {
+                "length_nm": float(length_nm),
+                "forward_bottom_to_top": {
+                    "coefficient_relative_l2": coefficient_error(
+                        selected_top_forward,
+                        top_coefficients[:count],
+                    ),
+                    "largest_projected_modes": largest_mode_diagnostics(
+                        selected_top_forward,
+                        top_coefficients[:count],
+                        effective_beta[:count],
+                        direction="forward",
+                        offset=0,
+                    ),
+                },
+                "backward_top_to_bottom": {
+                    "coefficient_relative_l2": coefficient_error(
+                        selected_bottom_backward,
+                        bottom_coefficients[count:],
+                    ),
+                    "largest_projected_modes": largest_mode_diagnostics(
+                        selected_bottom_backward,
+                        bottom_coefficients[count:],
+                        effective_beta[count:],
+                        direction="backward",
+                        offset=count,
+                    ),
+                },
+                "stable_two_sided_reconstruction": {
+                    "top_electric_tangential": relative_sample_error(
+                        selected_top_electric,
+                        electric[interface_indices["top"], ..., :2],
+                    ),
+                    "top_magnetic_tangential": relative_sample_error(
+                        selected_top_magnetic,
+                        magnetic[interface_indices["top"], ..., :2],
+                    ),
+                    "bottom_electric_tangential": relative_sample_error(
+                        selected_bottom_electric,
+                        electric[interface_indices["bottom"], ..., :2],
+                    ),
+                    "bottom_magnetic_tangential": relative_sample_error(
+                        selected_bottom_magnetic,
+                        magnetic[interface_indices["bottom"], ..., :2],
+                    ),
+                },
+                "max_stable_factor_magnitude": max(
+                    float(
+                        np.max(np.abs(selected_forward_factors), initial=0.0)
+                    ),
+                    float(
+                        np.max(np.abs(selected_backward_factors), initial=0.0)
+                    ),
+                    1.0e-30,
+                ),
+                "diagnostic_uses_growing_inverse_factors": False,
+            }
+            payload = {
+                "schema_version": (
+                    "task035c.sampled-full3d-trace-modal-oracle.v2"
+                ),
+                "status": "measured_sampled_oracle",
+                "reference_npz": str(reference_npz),
+                "sample_grid_shape_y_x": [len(y_nm), len(x_nm)],
+                "mode_count_per_direction": self.mode_count_per_direction,
+                "fit_uses_joint_normalized_tangential_E_H": True,
+                "interfaces": {
+                    "bottom": bottom_fit,
+                    "top": top_fit,
+                },
+                "continuous_propagation": {
+                    "length_nm": float(length_nm),
+                    "forward_bottom_to_top": forward_report,
+                    "backward_top_to_bottom": backward_report,
+                    "stable_two_sided_reconstruction": {
+                        "top_electric_tangential": relative_sample_error(
+                            predicted_top_electric,
+                            electric[interface_indices["top"], ..., :2],
+                        ),
+                        "top_magnetic_tangential": relative_sample_error(
+                            predicted_top_magnetic,
+                            magnetic[interface_indices["top"], ..., :2],
+                        ),
+                        "bottom_electric_tangential": relative_sample_error(
+                            predicted_bottom_electric,
+                            electric[interface_indices["bottom"], ..., :2],
+                        ),
+                        "bottom_magnetic_tangential": relative_sample_error(
+                            predicted_bottom_magnetic,
+                            magnetic[interface_indices["bottom"], ..., :2],
+                        ),
+                    },
+                    "max_stable_factor_magnitude": max_stable_factor,
+                    "diagnostic_uses_growing_inverse_factors": False,
+                },
+                "selected_propagation_model": getattr(
+                    self, "propagation_model", "continuous_beta"
+                ),
+                "selected_propagation": selected_propagation,
+                "authority_boundary": (
+                    "bounded 40x20 sampled interface oracle; not an exact "
+                    "FE mass/Riesz projection"
+                ),
+            }
+        return comm.bcast(payload, root=0)
 
     def absorbed_power_code_units(
         self,

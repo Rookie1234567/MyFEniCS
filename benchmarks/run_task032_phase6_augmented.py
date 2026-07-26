@@ -22,7 +22,19 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - Windows host path
     resource = None
 
-from src.common.config_3d import target_stage4_config
+from benchmarks.task035c_p6_h10_gates import (
+    TASK035C_P6_H10_BACKENDS,
+    TASK035C_P6_H10_MODE_COUNTS,
+    TASK035C_P6_H10_MPI_SIZES,
+    task035c_p6_h10_full3d_reference_gate,
+    task035c_p6_h10_preflight_authority_gate,
+    valid_hex_digest,
+)
+from src.common.config_3d import (
+    ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+    STANDARD_FULL_ASSEMBLY_BACKEND,
+    target_stage4_config,
+)
 from src.common.distributed_matrix_diagnostics import (
     distributed_active_column_count,
 )
@@ -98,6 +110,52 @@ REFERENCE_BY_DEGREE_AND_H = {
     / "stage3_p3_h5"
     / "full3d_reference.json",
 }
+
+
+def _discrete_axial_qualification_scope(
+    propagation_model: str,
+    traction_model: str,
+) -> dict[str, Any]:
+    """Expose the fail-closed scope of the Task035c discrete axial symbols."""
+
+    selected = (
+        propagation_model == "full3d_uniform_cg"
+        or traction_model == "scalar_cg_discrete_derivative"
+    )
+    return {
+        "selected": selected,
+        "status": (
+            "qualified_only_for_listed_scope"
+            if selected
+            else "not_selected_ordinary_continuous_symbols"
+        ),
+        "qualified": [
+            "fixed rectangular block grating",
+            "structured tensor-product mesh",
+            "axis-aligned first-order affine hexahedra",
+            "uniform z segmentation in the modal middle region",
+            "one axial h for the scalar CG(p) chain",
+            "supported axial degree p1-p6",
+            "complex128",
+            "Floquet periodicity",
+            "sparse auxiliary DtN",
+            "direct standard/static Full3D and Hybrid",
+        ],
+        "not_qualified": [
+            "nonuniform z spacing",
+            "locally refined or hanging-node hexa mesh",
+            "curved or distorted hexahedra",
+            "high-order curved geometry mapping",
+            "tetrahedral static condensation",
+            "hexa/tetra/prism/pyramid mixed meshes",
+            "irregular geometry",
+            "production automatic hp adaptivity",
+        ],
+        "failure_policy": (
+            "unsupported meshes and inconsistent propagation/traction "
+            "combinations fail closed; no fallback is permitted"
+        ),
+    }
 
 
 def _git(*args: str) -> str | None:
@@ -606,13 +664,71 @@ def _reference_archive(
     return archive, record_path, record
 
 
-def _parse_args() -> argparse.Namespace:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Task32 Phase6 real-QEP hybrid augmented direct diagnostic"
     )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--h-nm", type=float, default=5.0)
-    parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4), default=2)
+    parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4, 6), default=2)
+    parser.add_argument(
+        "--modal-h-nm",
+        type=float,
+        help=(
+            "Optional independent cross-section QEP mesh size. The local 3D "
+            "FEM mesh remains controlled by --h-nm."
+        ),
+    )
+    parser.add_argument(
+        "--modal-degree",
+        type=int,
+        choices=(1, 2, 3, 4, 6),
+        help=(
+            "Optional independent cross-section QEP polynomial degree. The "
+            "local 3D FEM degree remains controlled by --degree."
+        ),
+    )
+    parser.add_argument(
+        "--internal-propagation-model",
+        choices=("continuous_beta", "full3d_uniform_cg"),
+        default="continuous_beta",
+        help=(
+            "Axial propagation used between the two Hybrid interfaces. "
+            "full3d_uniform_cg is an explicit same-p/h Full3D closure audit "
+            "qualified only for a fixed rectangular, axis-aligned affine "
+            "tensor-hexa mesh with uniform middle-region z spacing, one "
+            "axial h, p1-p6, complex128, Floquet and sparse auxiliary DtN; "
+            "nonuniform/local-h/curved/mixed meshes fail closed. "
+            "continuous_beta remains the ordinary default."
+        ),
+    )
+    parser.add_argument(
+        "--internal-traction-model",
+        choices=(
+            "continuous_qep_beta",
+            "scalar_cg_discrete_derivative",
+        ),
+        default="continuous_qep_beta",
+        help=(
+            "Modal interface traction symbol. The scalar-CG derivative is an "
+            "explicit diagnostic and requires full3d_uniform_cg propagation "
+            "under the same uniform-z affine-hexa qualification scope; "
+            "unsupported meshes fail closed without fallback. "
+            "continuous_qep_beta remains the ordinary default."
+        ),
+    )
+    parser.add_argument(
+        "--stage4-full3d-assembly-backend",
+        choices=(
+            STANDARD_FULL_ASSEMBLY_BACKEND,
+            ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+        ),
+        default=STANDARD_FULL_ASSEMBLY_BACKEND,
+        help=(
+            "Single public local-FE assembly port. Static condensation is "
+            "explicit opt-in; standard_full remains the ordinary default."
+        ),
+    )
     parser.add_argument(
         "--full3d-reference",
         type=Path,
@@ -622,6 +738,17 @@ def _parse_args() -> argparse.Namespace:
             "reference registry."
         ),
     )
+    parser.add_argument("--full3d-reference-sha256")
+    parser.add_argument(
+        "--task035c-p6-h10-gate",
+        action="store_true",
+        help=(
+            "Explicitly open only the fixed-rectangular Task035c p6/h10 "
+            "M120/M160 Hybrid path. Ordinary defaults remain unchanged."
+        ),
+    )
+    parser.add_argument("--task035c-p6-preflight-authority", type=Path)
+    parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
     parser.add_argument("--top-interface-nm", type=float, default=110.0)
     parser.add_argument("--graded-reference-h", type=float, choices=(5.0, 3.0))
@@ -689,13 +816,170 @@ def _parse_args() -> argparse.Namespace:
         "--host-environment-id",
         default=os.environ.get("TASK032_HOST_ENVIRONMENT_ID", "SK-20260601OSDE"),
     )
-    return parser.parse_args()
+    args = parser.parse_args(argv)
+    if args.degree == 6 and not args.task035c_p6_h10_gate:
+        parser.error(
+            "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
+            "Task035c p6/h10 Hybrid authority only."
+        )
+    if args.task035c_p6_h10_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes in TASK035C_P6_H10_MODE_COUNTS
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            in TASK035C_P6_H10_BACKENDS
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model
+            == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.allow_dirty_research
+        )
+        if not scoped:
+            parser.error(
+                "--task035c-p6-h10-gate is restricted to clean-source fixed "
+                "rectangular p6/h10 S-polarized Hybrid M120/M160, explicit "
+                "modal p6/h10, exact 2M pool, modal-schur-memory-minimal, "
+                "the qualified discrete axial propagation/traction pair, "
+                "10/110 nm interfaces, standard/static backend, and "
+                "hash-bound historical and matching Full3D authorities."
+            )
+    elif (
+        args.task035c_p6_preflight_authority is not None
+        or args.task035c_p6_preflight_sha256 is not None
+        or args.full3d_reference_sha256 is not None
+    ):
+        parser.error(
+            "Task035c authority SHA arguments require "
+            "--task035c-p6-h10-gate."
+        )
+    return args
+
+
+def _task035c_worker_authority_gate(
+    args: argparse.Namespace,
+    *,
+    current_source_sha: str | None,
+    mpi_size: int,
+) -> dict[str, Any] | None:
+    if not args.task035c_p6_h10_gate:
+        return None
+
+    authority_path = args.task035c_p6_preflight_authority
+    reference_path = args.full3d_reference
+    if authority_path is None or reference_path is None:
+        raise SystemExit("Task035c p6/h10 authority paths are required.")
+    authority_path = (
+        authority_path if authority_path.is_absolute() else ROOT / authority_path
+    ).resolve()
+    reference_path = (
+        reference_path if reference_path.is_absolute() else ROOT / reference_path
+    ).resolve()
+    try:
+        authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            f"Task035c p6/h10 historical authority is unreadable: {exc}"
+        ) from exc
+    try:
+        reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            f"Task035c p6/h10 Full3D reference is unreadable: {exc}"
+        ) from exc
+    try:
+        authority_relative = authority_path.relative_to(ROOT).as_posix()
+    except ValueError:
+        authority_relative = None
+    authority_is_tracked = bool(
+        authority_relative is not None
+        and _git(
+            "ls-files", "--error-unmatch", "--", authority_relative
+        )
+        is not None
+    )
+    preflight_gate = task035c_p6_h10_preflight_authority_gate(
+        authority if isinstance(authority, dict) else None,
+        expected_sha256=args.task035c_p6_preflight_sha256,
+        observed_sha256=_sha256(authority_path),
+        authority_is_tracked=authority_is_tracked,
+    )
+    reference_gate = task035c_p6_h10_full3d_reference_gate(
+        reference if isinstance(reference, dict) else None,
+        expected_sha256=args.full3d_reference_sha256,
+        observed_sha256=_sha256(reference_path),
+        current_source_sha=current_source_sha,
+        assembly_backend=args.stage4_full3d_assembly_backend,
+        mpi_size=mpi_size,
+    )
+    gate = {
+        "schema_version": "task035c.p6-h10-worker-authority-gate.v1",
+        "pass": bool(preflight_gate["pass"] and reference_gate["pass"]),
+        "historical_preflight": {
+            **preflight_gate,
+            "path": str(authority_path),
+        },
+        "matching_full3d_reference": {
+            **reference_gate,
+            "path": str(reference_path),
+        },
+    }
+    gate["failures"] = [
+        *(
+            []
+            if preflight_gate["pass"]
+            else [
+                f"historical_preflight:{failure}"
+                for failure in preflight_gate["failures"]
+            ]
+        ),
+        *(
+            []
+            if reference_gate["pass"]
+            else [
+                f"matching_full3d_reference:{failure}"
+                for failure in reference_gate["failures"]
+            ]
+        ),
+    ]
+    if not gate["pass"]:
+        raise SystemExit(
+            f"Task035c p6/h10 worker authority failed: {gate['failures']}"
+        )
+    return gate
 
 
 def main() -> None:
     args = _parse_args()
     if args.h_nm <= 0.0:
         raise SystemExit("--h-nm must be positive.")
+    modal_h_nm = (
+        float(args.h_nm)
+        if args.modal_h_nm is None
+        else float(args.modal_h_nm)
+    )
+    modal_degree = (
+        int(args.degree)
+        if args.modal_degree is None
+        else int(args.modal_degree)
+    )
+    if modal_h_nm <= 0.0:
+        raise SystemExit("--modal-h-nm must be positive.")
     if not (
         0.0 < args.bottom_interface_nm < args.top_interface_nm < 120.0
     ):
@@ -704,6 +988,11 @@ def main() -> None:
             "0 < bottom-interface-nm < top-interface-nm < 120."
         )
     if args.graded_reference_h is not None:
+        if args.modal_h_nm is not None or args.modal_degree is not None:
+            raise SystemExit(
+                "Independent modal h/p is not combined with the Task034 "
+                "graded local-mesh research path."
+            )
         if args.degree not in (2, 3):
             raise SystemExit("The Task034 fixed-p graded path is restricted to p2/p3.")
         if (
@@ -739,17 +1028,41 @@ def main() -> None:
         raise SystemExit("--block-rotation-tolerance must be positive.")
     if args.compare_modal_schur and args.solver_path != "augmented":
         raise SystemExit("--compare-modal-schur requires --solver-path augmented.")
+    if (
+        args.internal_traction_model == "scalar_cg_discrete_derivative"
+        and args.internal_propagation_model != "full3d_uniform_cg"
+    ):
+        raise SystemExit(
+            "scalar_cg_discrete_derivative traction requires "
+            "--internal-propagation-model full3d_uniform_cg."
+        )
     task33_variant = bool(
         args.degree != 2
+        or modal_degree != args.degree
+        or not np.isclose(modal_h_nm, args.h_nm)
         or args.bottom_interface_nm != 10.0
         or args.top_interface_nm != 110.0
         or args.graded_reference_h is not None
         or not np.isclose(args.incident_grazing_deg, 10.0)
         or args.polarization_kind != "s"
+        or args.internal_propagation_model != "continuous_beta"
+        or args.internal_traction_model != "continuous_qep_beta"
     )
     comm = MPI.COMM_WORLD
     provenance = _source_provenance(
         comm, args.verified_clean_sha, args.allow_dirty_research
+    )
+    if (
+        args.task035c_p6_h10_gate
+        and comm.size not in TASK035C_P6_H10_MPI_SIZES
+    ):
+        raise SystemExit(
+            "Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8."
+        )
+    task035c_p6_gate = _task035c_worker_authority_gate(
+        args,
+        current_source_sha=provenance.get("commit_sha"),
+        mpi_size=comm.size,
     )
 
     if comm.rank == 0 and args.memory_stages is not None:
@@ -779,8 +1092,20 @@ def main() -> None:
     total_started = time.perf_counter()
     timings: dict[str, float] = {}
     cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
+    cfg.stage4_full3d_assembly_backend = (
+        args.stage4_full3d_assembly_backend
+    )
+    cfg.matrix_diagnostics_assemble_only = False
+    cfg.matrix_diagnostics_factorization_only = False
     cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
     cfg.polarization_kind = args.polarization_kind
+    modal_cfg = target_stage4_config(
+        degree=modal_degree,
+        h_nm=modal_h_nm,
+    )
+    modal_cfg.incident_theta_deg = cfg.incident_theta_deg
+    modal_cfg.incident_phi_deg = cfg.incident_phi_deg
+    modal_cfg.polarization_kind = cfg.polarization_kind
     operators = None
     positive = None
     negative = None
@@ -817,6 +1142,18 @@ def main() -> None:
             "material_kind": "stage4_xy",
             "degree": args.degree,
             "h_nm": args.h_nm,
+            "modal_degree": modal_degree,
+            "modal_h_nm": modal_h_nm,
+            "internal_propagation_model": (
+                args.internal_propagation_model
+            ),
+            "internal_traction_model": args.internal_traction_model,
+            "discrete_axial_qualification_scope": (
+                _discrete_axial_qualification_scope(
+                    args.internal_propagation_model,
+                    args.internal_traction_model,
+                )
+            ),
             "requested_modes_per_direction": args.requested_modes,
             "candidate_modes_per_target_branch": candidate_modes,
             "near_degenerate_tolerance": args.near_degenerate_tolerance,
@@ -879,6 +1216,16 @@ def main() -> None:
                 "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
                 "full_field_or_mode_vector_gather": False,
                 "primary_solver_path": args.solver_path,
+                "internal_propagation_model_requested": (
+                    args.internal_propagation_model
+                ),
+                "internal_traction_model_requested": (
+                    args.internal_traction_model
+                ),
+                "stage4_full3d_assembly_backend_requested": (
+                    args.stage4_full3d_assembly_backend
+                ),
+                "task035c_p6_h10_authority_gate": task035c_p6_gate,
                 "task33_variant": True,
                 "provenance": (
                     "clean_task033_finite_spectrum_capacity_negative"
@@ -978,17 +1325,20 @@ def main() -> None:
                 y_values=graded_plan.y_values,
             )
         else:
-            cross_section = build_matching_cross_section(cfg, "stage4_xy")
+            cross_section = build_matching_cross_section(
+                modal_cfg,
+                "stage4_xy",
+            )
         spaces = build_cross_section_spaces(
-            cross_section, transverse_degree=args.degree
+            cross_section, transverse_degree=modal_degree
         )
         operators = assemble_quadratic_beta_operators(
-            cfg, cross_section, spaces
+            modal_cfg, cross_section, spaces
         )
         poynting_evaluator = PoyntingFluxEvaluator(
-            cfg, cross_section, spaces
+            modal_cfg, cross_section, spaces
         )
-        target = analytic_homogeneous_beta(cfg, cfg.n_air)
+        target = analytic_homogeneous_beta(modal_cfg, modal_cfg.n_air)
         timings["cross_section_and_qep_assembly"] = _max_elapsed(
             comm, started
         )
@@ -1008,7 +1358,7 @@ def main() -> None:
             requested_modes=args.requested_modes,
             poynting_evaluator=poynting_evaluator,
             maximum_abs_beta=(
-                NUMERICAL_INFINITY_BETA_H_CUTOFF / args.h_nm
+                NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm
             ),
         )
         if len(positive_right) != args.requested_modes:
@@ -1027,7 +1377,7 @@ def main() -> None:
             )
         mark_stage("mode_classification")
         positive = build_biorthogonal_mode_basis(
-            cfg,
+            modal_cfg,
             cross_section,
             spaces,
             operators,
@@ -1052,7 +1402,7 @@ def main() -> None:
             requested_modes=args.requested_modes,
             poynting_evaluator=poynting_evaluator,
             maximum_abs_beta=(
-                NUMERICAL_INFINITY_BETA_H_CUTOFF / args.h_nm
+                NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm
             ),
         )
         if len(negative_right) != args.requested_modes:
@@ -1070,7 +1420,7 @@ def main() -> None:
                 f"backward modes: {negative_selection.direction_counts}."
             )
         negative = build_biorthogonal_mode_basis(
-            cfg,
+            modal_cfg,
             cross_section,
             spaces,
             operators,
@@ -1134,6 +1484,8 @@ def main() -> None:
             bottom,
             top,
             length_nm=args.top_interface_nm - args.bottom_interface_nm,
+            propagation_model=args.internal_propagation_model,
+            modal_traction_model=args.internal_traction_model,
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -1147,7 +1499,12 @@ def main() -> None:
             timings["primary_system_build"] = _max_elapsed(comm, started)
             timings["monolithic_assembly"] = timings["primary_system_build"]
             progress("Task32 Phase6: monolithic augmented AIJ complete")
-            solution = solve_hybrid_augmented_direct(system, bottom, top)
+            solution = solve_hybrid_augmented_direct(
+                system,
+                bottom,
+                top,
+                coupling,
+            )
         else:
             builder = (
                 build_hybrid_modal_schur_direct_system
@@ -1364,7 +1721,15 @@ def main() -> None:
             negative,
             bottom_z_nm=args.bottom_interface_nm,
             top_z_nm=args.top_interface_nm,
+            propagation=coupling.propagation,
         )
+        trace_modal_oracle = None
+        if reference_archive is not None:
+            mark_stage("full3d_trace_modal_oracle")
+            trace_modal_oracle = reconstructor.full3d_trace_modal_oracle(
+                archive_path
+            )
+            mark_stage("middle_plane_reconstruction")
         selected_planes = reconstructor.selected_planes(
             solution.modal_amplitudes,
             sample_x,
@@ -1384,16 +1749,16 @@ def main() -> None:
             cfg,
             bottom,
             top,
-            solution.bottom,
-            solution.top,
+            solution.bottom_physical,
+            solution.top_physical,
             interface_samples,
         )
         absorption = hybrid_volume_absorption(
             cfg,
             bottom,
             top,
-            solution.bottom,
-            solution.top,
+            solution.bottom_physical,
+            solution.top_physical,
             reconstructor,
             solution.modal_amplitudes,
             incident_power=float(port_power["incident_power_code_units"]),
@@ -1451,6 +1816,7 @@ def main() -> None:
             ),
             "full_middle_volume_reconstructed": False,
             "interface_continuity": interface_continuity,
+            "full3d_trace_modal_oracle": trace_modal_oracle,
             "volume_absorption": absorption,
             "selected_plane_full3d_comparison": field_reference,
         }
@@ -1541,6 +1907,49 @@ def main() -> None:
             ),
             "external_port_rta_finite": finite_rta,
         }
+        if solution.bottom_recovered is not None:
+            if solution.top_recovered is None:
+                raise RuntimeError(
+                    "Hybrid static recovery completed on only one local side."
+                )
+            recovered_sides = (
+                solution.bottom_recovered,
+                solution.top_recovered,
+            )
+            gates.update(
+                {
+                    "condensed_full_operator_relative_residual_le_1e-9": (
+                        max(
+                            item.full_operator_residual[
+                                "linear_system_relative_residual"
+                            ]
+                            for item in recovered_sides
+                        )
+                        <= 1.0e-9
+                    ),
+                    "condensed_eliminated_interior_max_residual_le_1e-9": (
+                        max(
+                            item.full_operator_residual[
+                                "eliminated_cell_interior_max_abs_residual"
+                            ]
+                            for item in recovered_sides
+                        )
+                        <= 1.0e-9
+                    ),
+                    "condensed_full_surface_mode_matrix_not_retained": all(
+                        not item.streaming_audit[
+                            "full_surface_mode_matrix_retained"
+                        ]
+                        for item in recovered_sides
+                    ),
+                    "condensed_full_global_matrix_not_allocated": all(
+                        not item.streaming_audit[
+                            "full_global_matrix_allocated"
+                        ]
+                        for item in recovered_sides
+                    ),
+                }
+            )
         if physical_fields is not None:
             interface_physical = physical_fields["interface_continuity"]
             absorption_physical = physical_fields["volume_absorption"]
@@ -1709,6 +2118,16 @@ def main() -> None:
                 "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
                 "full_field_or_mode_vector_gather": False,
                 "primary_solver_path": args.solver_path,
+                "internal_propagation_model_requested": (
+                    args.internal_propagation_model
+                ),
+                "internal_traction_model_requested": (
+                    args.internal_traction_model
+                ),
+                "stage4_full3d_assembly_backend_requested": (
+                    args.stage4_full3d_assembly_backend
+                ),
+                "task035c_p6_h10_authority_gate": task035c_p6_gate,
                 "task33_variant": task33_variant,
                 "provenance": (
                     (
@@ -1728,6 +2147,18 @@ def main() -> None:
                 "material_kind": "stage4_xy",
                 "degree": args.degree,
                 "h_nm": args.h_nm,
+                "modal_degree": modal_degree,
+                "modal_h_nm": modal_h_nm,
+                "internal_propagation_model": (
+                    args.internal_propagation_model
+                ),
+                "internal_traction_model": args.internal_traction_model,
+                "discrete_axial_qualification_scope": (
+                    _discrete_axial_qualification_scope(
+                        args.internal_propagation_model,
+                        args.internal_traction_model,
+                    )
+                ),
                 "requested_modes_per_direction": args.requested_modes,
                 "candidate_modes_per_target_branch": candidate_modes,
                 "near_degenerate_tolerance": args.near_degenerate_tolerance,
@@ -1814,6 +2245,29 @@ def main() -> None:
                 ),
                 "bottom_global_size": bottom.global_size,
                 "top_global_size": top.global_size,
+                "assembly_backend_requested": (
+                    args.stage4_full3d_assembly_backend
+                ),
+                "bottom_assembly_backend_actual": (
+                    bottom.assembly_backend_actual
+                ),
+                "top_assembly_backend_actual": top.assembly_backend_actual,
+                "bottom_assembly_backend_qualification": (
+                    bottom.assembly_backend_qualification
+                ),
+                "top_assembly_backend_qualification": (
+                    top.assembly_backend_qualification
+                ),
+                "bottom_static_condensation": (
+                    bottom.static_condensation.metadata.to_dict()
+                    if bottom.static_condensation is not None
+                    else None
+                ),
+                "top_static_condensation": (
+                    top.static_condensation.metadata.to_dict()
+                    if top.static_condensation is not None
+                    else None
+                ),
                 "bottom_local_fe_dofs": bottom.n_fe,
                 "top_local_fe_dofs": top.n_fe,
                 "bottom_local_mesh_cells": list(bottom.local_mesh.mesh_cells),
@@ -1828,8 +2282,109 @@ def main() -> None:
                 "bottom_matrix_stats": bottom.augmented_matrix_stats,
                 "top_matrix_stats": top.augmented_matrix_stats,
                 "internal_unknown_count": coupling.internal_unknown_count,
+                "internal_propagation": {
+                    "model": coupling.propagation.propagation_model,
+                    "authority_boundary": (
+                        "scalar_CG_axial_phase_oracle; final authority remains "
+                        "the measured 12-channel/field/residual closure"
+                    ),
+                    "modal_magnetic_and_traction_symbol": (
+                        coupling.modal_traction_model
+                    ),
+                    "positive_traction_beta_per_nm": [
+                        _complex_json(value)
+                        for value in coupling.positive_traction_beta_per_nm
+                    ],
+                    "negative_traction_beta_per_nm": [
+                        _complex_json(value)
+                        for value in coupling.negative_traction_beta_per_nm
+                    ],
+                    "axial_fem_degree": int(cfg.nedelec_degree),
+                    "axial_h_nm": float(cfg.mesh_target_size),
+                    "forward_original_beta_per_nm": [
+                        _complex_json(value)
+                        for value in coupling.propagation.forward.beta_per_nm
+                    ],
+                    "forward_effective_beta_per_nm": [
+                        _complex_json(value)
+                        for value in (
+                            coupling.propagation.forward.effective_beta_per_nm
+                        )
+                    ],
+                    "forward_phase_corrections_rad": list(
+                        coupling.propagation.forward.phase_corrections_rad
+                    ),
+                    "forward_log_magnitude_corrections": list(
+                        coupling.propagation.forward.log_magnitude_corrections
+                    ),
+                    "backward_original_beta_per_nm": [
+                        _complex_json(value)
+                        for value in coupling.propagation.backward.beta_per_nm
+                    ],
+                    "backward_effective_beta_per_nm": [
+                        _complex_json(value)
+                        for value in (
+                            coupling.propagation.backward.effective_beta_per_nm
+                        )
+                    ],
+                    "backward_phase_corrections_rad": list(
+                        coupling.propagation.backward.phase_corrections_rad
+                    ),
+                    "backward_log_magnitude_corrections": list(
+                        coupling.propagation.backward.log_magnitude_corrections
+                    ),
+                    "max_factor_magnitude": float(
+                        coupling.propagation.max_factor_magnitude
+                    ),
+                    "passivity_valid": bool(
+                        coupling.propagation.passivity_valid
+                    ),
+                },
                 "qep_to_interface_quadrature_degree": (
                     coupling.interface_quadrature_degree
+                ),
+                "cell_interior_modal_correction_norms": {
+                    side: {
+                        "positive_frobenius": float(
+                            np.linalg.norm(
+                                block.positive_interior_correction
+                            )
+                        ),
+                        "negative_frobenius": float(
+                            np.linalg.norm(
+                                block.negative_interior_correction
+                            )
+                        ),
+                        "modal_rhs_l2": float(
+                            np.linalg.norm(block.modal_rhs_correction)
+                        ),
+                    }
+                    for side, block in (
+                        ("bottom", coupling.bottom),
+                        ("top", coupling.top),
+                    )
+                },
+                "tangential_surface_trace_only_audit": {
+                    side: {
+                        "verified": bool(
+                            block.tangential_surface_trace_only_verified
+                        ),
+                        "pairwise_interior_schur_evaluated": bool(
+                            block.interior_modal_pairwise_schur_evaluated
+                        ),
+                        "mathematical_contract": (
+                            "pure tangential ds coupling; H(curl) "
+                            "cell-interior tangential trace is zero"
+                        ),
+                    }
+                    for side, block in (
+                        ("bottom", coupling.bottom),
+                        ("top", coupling.top),
+                    )
+                },
+                "full_surface_mode_vectors_retained": bool(
+                    coupling.bottom.full_surface_mode_vectors_retained
+                    or coupling.top.full_surface_mode_vectors_retained
                 ),
                 "dense_interface_square_formed": (
                     system.dense_interface_square_formed
@@ -1877,6 +2432,32 @@ def main() -> None:
                 "recovery_seconds": getattr(solution, "recovery_seconds", None),
                 "recovery_factor_setup_seconds": getattr(
                     solution, "recovery_factor_setup_seconds", {}
+                ),
+                "bottom_static_recovery": (
+                    None
+                    if solution.bottom_recovered is None
+                    else {
+                        "recovery": (
+                            solution.bottom_recovered.recovery_audit
+                        ),
+                        "full_operator_residual": (
+                            solution.bottom_recovered.full_operator_residual
+                        ),
+                        "streaming": (
+                            solution.bottom_recovered.streaming_audit
+                        ),
+                    }
+                ),
+                "top_static_recovery": (
+                    None
+                    if solution.top_recovered is None
+                    else {
+                        "recovery": solution.top_recovered.recovery_audit,
+                        "full_operator_residual": (
+                            solution.top_recovered.full_operator_residual
+                        ),
+                        "streaming": solution.top_recovered.streaming_audit,
+                    }
                 ),
             },
             "validation": validation,
@@ -1955,8 +2536,7 @@ def main() -> None:
             coupling.destroy()
         for local_system in (bottom, top):
             if local_system is not None:
-                local_system.A.destroy()
-                local_system.b.destroy()
+                local_system.destroy()
         if positive is not None:
             positive.destroy()
         if negative is not None:

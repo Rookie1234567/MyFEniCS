@@ -9,7 +9,9 @@ formal_MPI = 8
 ordinary_default_changed = false
 irregular_geometry = out_of_scope_by_user / not_run / not_a_completion_gate
 hybrid_eligible_candidate_count = 0
-master_merge = not_authorized
+selective_master_merge = completed_at_1fb144d3ca50208c22b5f0733e140bfac8d9c47c
+current_branch = codex/20260726-task35b-high-order-local-hp-resource-envelope
+hybrid_static_H1_A = controlled_negative
 ```
 
 Task035b 完成了同网格 p4/p5/p6 资格化、entity DoF 分解、exact
@@ -34,6 +36,15 @@ power、10/12 complex amplitude，但仍未满足 12/12 + 12/12。随后两个
 结果分别只有 8/12 + 8/12 和 7/12 + 8/12；任何先验投影都没有被写成
 实测。因此按合同 Hybrid eligible 仍为 0，Full3D–Hybrid closure、M funnel
 和 0.7 nm / 2 TiB resource model v3 均未运行。
+
+Review V3 随后完成 Task035/035b 文件级选择性合并，并在新分支把静态
+凝聚接入 Task032/033 Hybrid。p2/h5 H1-A 证明 static Full3D 与 standard
+Full3D、static Hybrid 与 standard Hybrid 均达到逐通道 12/12 + 12/12
+等价，M120→M160 也已收敛；但 static Full3D ↔ static Hybrid 只有
+Task033 相对口径的 **3/12 power + 2/12 amplitude**，strict absolute
+audit 为 **2/12 + 2/12**。这是新的 Hybrid 同离散 numerical Gate，
+不是静态凝聚误差。Review V3 明确规定 H1-B 只在 H1-A 全通过后运行，
+所以 p2/h3、高阶典型点、h13 seed 与 adaptive Hybrid 均没有启动。
 
 ## 权威基线
 
@@ -296,13 +307,22 @@ serial/MPI2 correctness capability；没有 formal matrix-free PDE、独立
 ```text
 selected candidate = null
 Hybrid eligible candidate count = 0
-Hybrid closure = not_run_by_selected_candidate_gate
-M funnel = not_run
+Hybrid static H1-A p2/h5 = controlled_negative
+H1-A M funnel = M120/M160 run; converged but channel closure failed
+h13-seed Hybrid closure = not_run_by_h1a_review_prerequisite
+adaptive Hybrid = not_run_by_h1a_review_prerequisite
 0.7 nm PDE = not_run
 0.7 nm / 2 TiB resource model v3 = not_run_by_selected_candidate_gate
 predicted simultaneous peak = null
 production feasibility = unknown
 ```
+
+H1-A 的 static Full3D/Hybrid 总量、残差、接口和 selected field norms
+分别通过，但显著通道同离散闭合失败。M160 的相对 `1e-3` 失败功率为
+`T(-5,-4,-2,-1)` 与 `R(-7,-5,-4,-2,-1)`；失败复振幅还包括
+`T(-7)`。M120 与 M160 的 12 通道彼此为 12/12 + 12/12，因此不运行
+M240。完整实际值、冻结 tolerance 和资源对照见
+`outcomes/hybrid_static_condensation_h1.md`。
 
 规划敏感性仍保留
 `N_local,0.7=N_equiv,13.5*7173.104956*f_H`。90k/75k/70k/65k 与
@@ -321,7 +341,8 @@ envelope 冒充 simultaneous peak，也不能宣称 0.7 nm 已可行或已证明
 | negative/failure preservation | complete |
 | physical selective execution | fixture/correctness capability only；actual DWR/PDE count 0 |
 | assembled iterative | three formal controlled negatives；official output count 0 |
-| Hybrid/resource bridge | `Hybrid eligible = 0`；Hybrid、M funnel、resource model v3 not run |
+| Hybrid static H1-A | p2/h5 M120/M160 已运行；same-discretization 3/12 + 2/12，`controlled_negative` |
+| Hybrid/resource bridge | `Hybrid eligible = 0`；h13/adaptive Hybrid 与 resource model v3 not run |
 | ordinary default | unchanged |
 
 证据索引见：
@@ -332,5 +353,6 @@ envelope 冒充 simultaneous peak，也不能宣称 0.7 nm 已可行或已证明
 - `outcomes/regular_geometry_compression.md`
 - `outcomes/negative_results.md`
 - `outcomes/resource_projection_0p7nm.md`
+- `outcomes/hybrid_static_condensation_h1.md`
 - `outcomes/all_candidates.json`
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/`

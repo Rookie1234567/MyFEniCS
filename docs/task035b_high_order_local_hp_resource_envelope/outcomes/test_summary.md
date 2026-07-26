@@ -19,6 +19,46 @@ cd /home/Projects/MyFEniCS
 source scripts/activate_myfenics_wsl.sh
 ```
 
+## Review V3 选择性合并后 H0/H1-A 最终验证
+
+```text
+selective merge master =
+1fb144d3ca50208c22b5f0733e140bfac8d9c47c
+numerical PDE source =
+148729c28c3f9aefec8e5646cc644c5c4e2332da
+metadata delivery head =
+documentation-only successor reported in final Git handoff
+```
+
+| layer | command scope | result |
+|---|---|---|
+| selective-merge pre-master full repository | M0–M4 integrated tree | **`570 passed, 28 skipped`** |
+| H0/H1-A focused serial | Task032/033 Hybrid、watchdogs、public backend、static condensation、compact record、registry | **`124 passed in 261.92 s`** |
+| H0 static-condensation MPI8 | `test_179`，8 ranks | each rank **`5 passed in 4.61–4.62 s`** |
+| evidence/registry initial contract | H1-A record、registry、public backend | **`27 passed in 2.84 s`** |
+| docs/Case095 contract | benchmark/docs/retrospective/Case095/registry/H1-A | **`34 passed in 1.07 s`** |
+| full repository，first | final numerical + draft metadata | `581 passed, 28 skipped, 1 failed in 452.37 s`；Task034 numerical-blob checker 未分类两个 H0 successor |
+| governance fix targeted | Task034 blob checker + H1-A + registry | **`7 passed in 0.69 s`** |
+| final relevant regression | Task034 hardening + static Hybrid + H1-A + registry | **`24 passed in 4.40 s`** |
+| full repository，final | qualified complex ABI；610 collected | **`582 passed, 28 skipped in 452.93 s`** |
+| changed-Python Ruff | checker、hardening test、H1-A record test | pass |
+| compileall | `src`、`benchmarks` | pass |
+| tracked-tree JSON parse | artifacts excluded；tracked/project JSON | 892 files pass |
+| `git diff --check` / links / worktree | post-writeback rerun | reported in final Git handoff |
+
+第一次 full repository 的唯一失败不是数值结果失败。H0 合法改变了
+`src/coupling/hybrid_internal_modes.py` 和
+`src/solvers/hybrid_local_dtn.py`，并已在 source
+`148729c28c3f9aefec8e5646cc644c5c4e2332da` 上完成 p2/h5 MPI8
+standard/static Full3D、M120 和 M160 anchors；旧 Task034 checker
+尚未给两条路径追加 “numerical kernel intentionally changed and requires
+PDE rerun” 分类。修复只更新 fail-closed classification 和测试期望，没有
+修改数值代码或 PDE record。第二次 full repository 全部通过。
+
+H1-A 的 PDE numerical Gate 仍真实失败：static Full3D ↔ static Hybrid
+只有 3/12 power + 2/12 amplitude；测试通过不改变其
+`controlled_negative` 状态。
+
 ## Review V2 最终验证
 
 ```text

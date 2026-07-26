@@ -1,0 +1,5 @@
+source scripts/activate_myfenics_wsl.sh
+python -m pytest -q src/test/test_case096_compact_evidence_contract.py
+
+# Local raw-provenance audit; requires the ignored Task035c artifacts.
+python benchmarks/cases/096_hybrid_channel_memory_closure/generate_compact_records.py --check

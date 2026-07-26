@@ -17,8 +17,15 @@ from petsc4py import PETSc
 
 from ..coupling.hybrid_internal_modes import HybridInternalModeCoupling
 from .common_3d_solve import _petsc_factor_inventory
-from .hybrid_fem_modal_augmented_direct import internal_modal_constraint_matrix
+from .hybrid_fem_modal_augmented_direct import (
+    internal_modal_constraint_matrix,
+    internal_modal_rhs_correction,
+)
 from .hybrid_local_dtn import HybridLocalDtnSystem
+from .hybrid_static_field_recovery import (
+    HybridStaticRecoveredLocalField,
+    recover_hybrid_static_local_field,
+)
 
 
 MUMPS_WORKSPACE_RELAXATION_PERCENT = 100
@@ -246,7 +253,25 @@ class HybridModalSchurDirectSolution:
     recovery_factor_setup_seconds: dict[str, float] = field(default_factory=dict)
     converged_reason: int = 1
     factor_solver: str = "mumps_multi_rhs_modal_schur"
+    bottom_recovered: HybridStaticRecoveredLocalField | None = None
+    top_recovered: HybridStaticRecoveredLocalField | None = None
     _destroyed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def bottom_physical(self):
+        return (
+            self.bottom_recovered.electric_field
+            if self.bottom_recovered is not None
+            else self.bottom
+        )
+
+    @property
+    def top_physical(self):
+        return (
+            self.top_recovered.electric_field
+            if self.top_recovered is not None
+            else self.top
+        )
 
     def destroy(self) -> None:
         if self._destroyed:
@@ -303,7 +328,11 @@ def build_hybrid_modal_schur_direct_system(
             - bottom_contribution[:, 1:]
             - top_contribution[:, 1:]
         )
-        modal_rhs = -bottom_contribution[:, 0] - top_contribution[:, 0]
+        modal_rhs = (
+            internal_modal_rhs_correction(coupling)
+            - bottom_contribution[:, 0]
+            - top_contribution[:, 0]
+        )
         condition = float(np.linalg.cond(modal_schur))
         if not np.isfinite(condition):
             raise RuntimeError("The Task32 modal Schur matrix is singular or non-finite.")
@@ -397,7 +426,11 @@ def build_hybrid_modal_schur_memory_minimal_system(
         - bottom_contribution[:, 1:]
         - top_contribution[:, 1:]
     )
-    modal_rhs = -bottom_contribution[:, 0] - top_contribution[:, 0]
+    modal_rhs = (
+        internal_modal_rhs_correction(coupling)
+        - bottom_contribution[:, 0]
+        - top_contribution[:, 0]
+    )
     condition = float(np.linalg.cond(modal_schur))
     if not np.isfinite(condition):
         raise RuntimeError("The Task32 modal Schur matrix is singular or non-finite.")
@@ -596,6 +629,31 @@ def solve_hybrid_modal_schur_direct(
         float(top_system.b.norm()),
         1.0e-30,
     )
+    bottom_recovered = (
+        recover_hybrid_static_local_field(
+            bottom_system,
+            coupling,
+            bottom,
+            modal,
+        )
+        if bottom_system.static_condensation is not None
+        else None
+    )
+    top_recovered = (
+        recover_hybrid_static_local_field(
+            top_system,
+            coupling,
+            top,
+            modal,
+        )
+        if top_system.static_condensation is not None
+        else None
+    )
+    if (bottom_recovered is None) != (top_recovered is None):
+        bottom.destroy()
+        top.destroy()
+        raise ValueError("Hybrid bottom/top local assembly backends must match.")
+    recovery_seconds = _max_elapsed(comm, started)
     return HybridModalSchurDirectSolution(
         bottom=bottom,
         top=top,
@@ -607,4 +665,6 @@ def solve_hybrid_modal_schur_direct(
         modal_solve_seconds=modal_seconds,
         recovery_seconds=recovery_seconds,
         recovery_factor_setup_seconds=recovery_factor_setup,
+        bottom_recovered=bottom_recovered,
+        top_recovered=top_recovered,
     )

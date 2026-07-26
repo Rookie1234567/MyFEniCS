@@ -1,0 +1,1465 @@
+{
+  "comparisons": {
+    "full_standard_vs_static": {
+      "pss": {
+        "saving_fraction": 0.6035124640201462,
+        "standard_gib": 32.29862594604492,
+        "static_gib": 12.806002616882324
+      },
+      "uss": {
+        "saving_fraction": 0.6067482175281105,
+        "standard_gib": 32.04717254638672,
+        "static_gib": 12.602607727050781
+      }
+    },
+    "hybrid_m120_standard_vs_static": {
+      "pss": {
+        "saving_fraction": 0.38882823892125107,
+        "standard_gib": 9.440655708312988,
+        "static_gib": 5.769862174987793
+      },
+      "uss": {
+        "saving_fraction": 0.40314617381779044,
+        "standard_gib": 9.200599670410156,
+        "static_gib": 5.491413116455078
+      }
+    },
+    "hybrid_m160_standard_vs_static": {
+      "pss": {
+        "saving_fraction": 0.35808317017643765,
+        "standard_gib": 9.610865592956543,
+        "static_gib": 6.169376373291016
+      },
+      "uss": {
+        "saving_fraction": 0.37157490469901827,
+        "standard_gib": 9.370529174804688,
+        "static_gib": 5.888675689697266
+      }
+    }
+  },
+  "formal_task035c_relative_memory_authority": "simultaneous process-tree/live-worker RSS from the original campaign",
+  "is_pde_rerun": false,
+  "models": {
+    "full_standard": {
+      "all_qualified_samples_have_zero_smaps_swap": true,
+      "fully_readable_mpi8_sample_count": 7617,
+      "mpi_size": 8,
+      "no_live_rank_smaps_sample_count": 5,
+      "partial_terminal_or_startup_sample_count": 1,
+      "qualification": "qualified historical backfill from simultaneous per-rank /proc/<pid>/smaps_rollup samples; only samples with all eight rank snapshots readable are eligible",
+      "sample_count": 7623,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "timeline_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T025200Z/memory_timeline.csv",
+      "timeline_sha256": "b7a9110d43a21da586595826cc3dc3707559bdb82ba1dc3cfc0a7f178800af65",
+      "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_standard_mpi8_244b62e.json",
+      "watchdog_sha256": "0a0846cd5e7bdef1532fda0ee2540fe2af00f54a8e1cc7c963f53dbf019df246",
+      "worker_rank_pss_peak": {
+        "elapsed_seconds": 2584.563417255995,
+        "per_rank": [
+          {
+            "pss_mb": 6877.1708984375,
+            "rank": 0,
+            "rss_mb": 7099.6484375,
+            "shared_mb": 255.9609375,
+            "swap_mb": 0.0,
+            "uss_mb": 6843.6875
+          },
+          {
+            "pss_mb": 3828.18359375,
+            "rank": 1,
+            "rss_mb": 4048.48046875,
+            "shared_mb": 251.56640625,
+            "swap_mb": 0.0,
+            "uss_mb": 3796.9140625
+          },
+          {
+            "pss_mb": 3526.8046875,
+            "rank": 2,
+            "rss_mb": 3747.0234375,
+            "shared_mb": 251.46875,
+            "swap_mb": 0.0,
+            "uss_mb": 3495.5546875
+          },
+          {
+            "pss_mb": 3562.9169921875,
+            "rank": 3,
+            "rss_mb": 3785.7578125,
+            "shared_mb": 256.43359375,
+            "swap_mb": 0.0,
+            "uss_mb": 3529.32421875
+          },
+          {
+            "pss_mb": 3712.427734375,
+            "rank": 4,
+            "rss_mb": 3934.17578125,
+            "shared_mb": 254.4375,
+            "swap_mb": 0.0,
+            "uss_mb": 3679.73828125
+          },
+          {
+            "pss_mb": 4225.6064453125,
+            "rank": 5,
+            "rss_mb": 4447.140625,
+            "shared_mb": 254.1875,
+            "swap_mb": 0.0,
+            "uss_mb": 4192.953125
+          },
+          {
+            "pss_mb": 3749.0859375,
+            "rank": 6,
+            "rss_mb": 3969.3046875,
+            "shared_mb": 251.5234375,
+            "swap_mb": 0.0,
+            "uss_mb": 3717.78125
+          },
+          {
+            "pss_mb": 3591.5966796875,
+            "rank": 7,
+            "rss_mb": 3812.0546875,
+            "shared_mb": 251.703125,
+            "swap_mb": 0.0,
+            "uss_mb": 3560.3515625
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 32.29862594604492,
+        "simultaneous_sum_mb": 33073.79296875,
+        "stage": "after_field_output",
+        "timestamp_utc": "2026-07-26T03:35:04.909863+00:00"
+      },
+      "worker_rank_rss_peak": {
+        "elapsed_seconds": 2583.981447697006,
+        "per_rank": [
+          {
+            "pss_mb": 6877.1708984375,
+            "rank": 0,
+            "rss_mb": 7099.6484375,
+            "shared_mb": 255.9609375,
+            "swap_mb": 0.0,
+            "uss_mb": 6843.6875
+          },
+          {
+            "pss_mb": 3828.181640625,
+            "rank": 1,
+            "rss_mb": 4048.48046875,
+            "shared_mb": 251.56640625,
+            "swap_mb": 0.0,
+            "uss_mb": 3796.9140625
+          },
+          {
+            "pss_mb": 3526.8046875,
+            "rank": 2,
+            "rss_mb": 3747.0234375,
+            "shared_mb": 251.46875,
+            "swap_mb": 0.0,
+            "uss_mb": 3495.5546875
+          },
+          {
+            "pss_mb": 3562.9169921875,
+            "rank": 3,
+            "rss_mb": 3785.7578125,
+            "shared_mb": 256.43359375,
+            "swap_mb": 0.0,
+            "uss_mb": 3529.32421875
+          },
+          {
+            "pss_mb": 3712.42578125,
+            "rank": 4,
+            "rss_mb": 3934.17578125,
+            "shared_mb": 254.4375,
+            "swap_mb": 0.0,
+            "uss_mb": 3679.73828125
+          },
+          {
+            "pss_mb": 4225.6064453125,
+            "rank": 5,
+            "rss_mb": 4447.140625,
+            "shared_mb": 254.1875,
+            "swap_mb": 0.0,
+            "uss_mb": 4192.953125
+          },
+          {
+            "pss_mb": 3749.0859375,
+            "rank": 6,
+            "rss_mb": 3969.3046875,
+            "shared_mb": 251.5234375,
+            "swap_mb": 0.0,
+            "uss_mb": 3717.78125
+          },
+          {
+            "pss_mb": 3591.5966796875,
+            "rank": 7,
+            "rss_mb": 3812.0546875,
+            "shared_mb": 251.703125,
+            "swap_mb": 0.0,
+            "uss_mb": 3560.3515625
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 34.026939392089844,
+        "simultaneous_sum_mb": 34843.5859375,
+        "stage": "after_field_output",
+        "timestamp_utc": "2026-07-26T03:35:04.322929+00:00"
+      },
+      "worker_rank_uss_peak": {
+        "elapsed_seconds": 2583.981447697006,
+        "per_rank": [
+          {
+            "pss_mb": 6877.1708984375,
+            "rank": 0,
+            "rss_mb": 7099.6484375,
+            "shared_mb": 255.9609375,
+            "swap_mb": 0.0,
+            "uss_mb": 6843.6875
+          },
+          {
+            "pss_mb": 3828.181640625,
+            "rank": 1,
+            "rss_mb": 4048.48046875,
+            "shared_mb": 251.56640625,
+            "swap_mb": 0.0,
+            "uss_mb": 3796.9140625
+          },
+          {
+            "pss_mb": 3526.8046875,
+            "rank": 2,
+            "rss_mb": 3747.0234375,
+            "shared_mb": 251.46875,
+            "swap_mb": 0.0,
+            "uss_mb": 3495.5546875
+          },
+          {
+            "pss_mb": 3562.9169921875,
+            "rank": 3,
+            "rss_mb": 3785.7578125,
+            "shared_mb": 256.43359375,
+            "swap_mb": 0.0,
+            "uss_mb": 3529.32421875
+          },
+          {
+            "pss_mb": 3712.42578125,
+            "rank": 4,
+            "rss_mb": 3934.17578125,
+            "shared_mb": 254.4375,
+            "swap_mb": 0.0,
+            "uss_mb": 3679.73828125
+          },
+          {
+            "pss_mb": 4225.6064453125,
+            "rank": 5,
+            "rss_mb": 4447.140625,
+            "shared_mb": 254.1875,
+            "swap_mb": 0.0,
+            "uss_mb": 4192.953125
+          },
+          {
+            "pss_mb": 3749.0859375,
+            "rank": 6,
+            "rss_mb": 3969.3046875,
+            "shared_mb": 251.5234375,
+            "swap_mb": 0.0,
+            "uss_mb": 3717.78125
+          },
+          {
+            "pss_mb": 3591.5966796875,
+            "rank": 7,
+            "rss_mb": 3812.0546875,
+            "shared_mb": 251.703125,
+            "swap_mb": 0.0,
+            "uss_mb": 3560.3515625
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 32.04717254638672,
+        "simultaneous_sum_mb": 32816.3046875,
+        "stage": "after_field_output",
+        "timestamp_utc": "2026-07-26T03:35:04.322929+00:00"
+      }
+    },
+    "full_static": {
+      "all_qualified_samples_have_zero_smaps_swap": true,
+      "fully_readable_mpi8_sample_count": 818,
+      "mpi_size": 8,
+      "no_live_rank_smaps_sample_count": 2,
+      "partial_terminal_or_startup_sample_count": 1,
+      "qualification": "qualified historical backfill from simultaneous per-rank /proc/<pid>/smaps_rollup samples; only samples with all eight rank snapshots readable are eligible",
+      "sample_count": 821,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "timeline_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T023040Z/memory_timeline.csv",
+      "timeline_sha256": "1a29c1ac6c4eff80ff9d798812f80b60d49c828d96525eebc2064c77160d6b27",
+      "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_static_mpi8_244b62e.json",
+      "watchdog_sha256": "b8b428476cdeb4b80495f4a8b1c89e3bb2f67c682c695fc72bb59dbbbd94b4e3",
+      "worker_rank_pss_peak": {
+        "elapsed_seconds": 252.61336013799882,
+        "per_rank": [
+          {
+            "pss_mb": 1754.439453125,
+            "rank": 0,
+            "rss_mb": 1930.734375,
+            "shared_mb": 206.65625,
+            "swap_mb": 0.0,
+            "uss_mb": 1724.078125
+          },
+          {
+            "pss_mb": 1932.8955078125,
+            "rank": 1,
+            "rss_mb": 2107.09375,
+            "shared_mb": 202.4765625,
+            "swap_mb": 0.0,
+            "uss_mb": 1904.6171875
+          },
+          {
+            "pss_mb": 1444.1689453125,
+            "rank": 2,
+            "rss_mb": 1618.1640625,
+            "shared_mb": 202.18359375,
+            "swap_mb": 0.0,
+            "uss_mb": 1415.98046875
+          },
+          {
+            "pss_mb": 1685.001953125,
+            "rank": 3,
+            "rss_mb": 1861.23046875,
+            "shared_mb": 206.640625,
+            "swap_mb": 0.0,
+            "uss_mb": 1654.58984375
+          },
+          {
+            "pss_mb": 1599.8994140625,
+            "rank": 4,
+            "rss_mb": 1775.359375,
+            "shared_mb": 205.14453125,
+            "swap_mb": 0.0,
+            "uss_mb": 1570.21484375
+          },
+          {
+            "pss_mb": 1769.2568359375,
+            "rank": 5,
+            "rss_mb": 1912.01171875,
+            "shared_mb": 164.19140625,
+            "swap_mb": 0.0,
+            "uss_mb": 1747.8203125
+          },
+          {
+            "pss_mb": 1492.2255859375,
+            "rank": 6,
+            "rss_mb": 1633.484375,
+            "shared_mb": 161.30078125,
+            "swap_mb": 0.0,
+            "uss_mb": 1472.18359375
+          },
+          {
+            "pss_mb": 1435.458984375,
+            "rank": 7,
+            "rss_mb": 1576.13671875,
+            "shared_mb": 160.55078125,
+            "swap_mb": 0.0,
+            "uss_mb": 1415.5859375
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 12.806002616882324,
+        "simultaneous_sum_mb": 13113.3466796875,
+        "stage": "after_ksp_solve",
+        "timestamp_utc": "2026-07-26T02:34:53.625356+00:00"
+      },
+      "worker_rank_rss_peak": {
+        "elapsed_seconds": 265.05991560200346,
+        "per_rank": [
+          {
+            "pss_mb": 1751.0673828125,
+            "rank": 0,
+            "rss_mb": 2007.0859375,
+            "shared_mb": 297.7734375,
+            "swap_mb": 0.0,
+            "uss_mb": 1709.3125
+          },
+          {
+            "pss_mb": 1931.6884765625,
+            "rank": 1,
+            "rss_mb": 2185.76953125,
+            "shared_mb": 293.78125,
+            "swap_mb": 0.0,
+            "uss_mb": 1891.98828125
+          },
+          {
+            "pss_mb": 1442.236328125,
+            "rank": 2,
+            "rss_mb": 1695.98828125,
+            "shared_mb": 293.36328125,
+            "swap_mb": 0.0,
+            "uss_mb": 1402.625
+          },
+          {
+            "pss_mb": 1681.8359375,
+            "rank": 3,
+            "rss_mb": 1937.88671875,
+            "shared_mb": 297.890625,
+            "swap_mb": 0.0,
+            "uss_mb": 1639.99609375
+          },
+          {
+            "pss_mb": 1596.576171875,
+            "rank": 4,
+            "rss_mb": 1851.8125,
+            "shared_mb": 296.3359375,
+            "swap_mb": 0.0,
+            "uss_mb": 1555.4765625
+          },
+          {
+            "pss_mb": 1767.3232421875,
+            "rank": 5,
+            "rss_mb": 1998.97265625,
+            "shared_mb": 265.78515625,
+            "swap_mb": 0.0,
+            "uss_mb": 1733.1875
+          },
+          {
+            "pss_mb": 1490.3916015625,
+            "rank": 6,
+            "rss_mb": 1720.5859375,
+            "shared_mb": 262.9609375,
+            "swap_mb": 0.0,
+            "uss_mb": 1457.625
+          },
+          {
+            "pss_mb": 1432.5537109375,
+            "rank": 7,
+            "rss_mb": 1662.40234375,
+            "shared_mb": 262.4765625,
+            "swap_mb": 0.0,
+            "uss_mb": 1399.92578125
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 14.707523345947266,
+        "simultaneous_sum_mb": 15060.50390625,
+        "stage": "after_field_output",
+        "timestamp_utc": "2026-07-26T02:35:06.144234+00:00"
+      },
+      "worker_rank_uss_peak": {
+        "elapsed_seconds": 252.2585322619998,
+        "per_rank": [
+          {
+            "pss_mb": 1754.4404296875,
+            "rank": 0,
+            "rss_mb": 1930.734375,
+            "shared_mb": 206.65625,
+            "swap_mb": 0.0,
+            "uss_mb": 1724.078125
+          },
+          {
+            "pss_mb": 1932.896484375,
+            "rank": 1,
+            "rss_mb": 2107.09375,
+            "shared_mb": 202.4765625,
+            "swap_mb": 0.0,
+            "uss_mb": 1904.6171875
+          },
+          {
+            "pss_mb": 1444.1689453125,
+            "rank": 2,
+            "rss_mb": 1618.1640625,
+            "shared_mb": 202.18359375,
+            "swap_mb": 0.0,
+            "uss_mb": 1415.98046875
+          },
+          {
+            "pss_mb": 1685.0009765625,
+            "rank": 3,
+            "rss_mb": 1861.23046875,
+            "shared_mb": 206.640625,
+            "swap_mb": 0.0,
+            "uss_mb": 1654.58984375
+          },
+          {
+            "pss_mb": 1599.900390625,
+            "rank": 4,
+            "rss_mb": 1775.359375,
+            "shared_mb": 205.14453125,
+            "swap_mb": 0.0,
+            "uss_mb": 1570.21484375
+          },
+          {
+            "pss_mb": 1769.2587890625,
+            "rank": 5,
+            "rss_mb": 1912.01171875,
+            "shared_mb": 164.19140625,
+            "swap_mb": 0.0,
+            "uss_mb": 1747.8203125
+          },
+          {
+            "pss_mb": 1492.2265625,
+            "rank": 6,
+            "rss_mb": 1633.484375,
+            "shared_mb": 161.30078125,
+            "swap_mb": 0.0,
+            "uss_mb": 1472.18359375
+          },
+          {
+            "pss_mb": 1435.451171875,
+            "rank": 7,
+            "rss_mb": 1576.07421875,
+            "shared_mb": 160.48828125,
+            "swap_mb": 0.0,
+            "uss_mb": 1415.5859375
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 12.602607727050781,
+        "simultaneous_sum_mb": 12905.0703125,
+        "stage": "after_ksp_solve",
+        "timestamp_utc": "2026-07-26T02:34:53.270184+00:00"
+      }
+    },
+    "hybrid_standard_m120": {
+      "all_qualified_samples_have_zero_smaps_swap": true,
+      "fully_readable_mpi8_sample_count": 2990,
+      "mpi_size": 8,
+      "no_live_rank_smaps_sample_count": 3,
+      "partial_terminal_or_startup_sample_count": 0,
+      "qualification": "qualified historical backfill from simultaneous per-rank /proc/<pid>/smaps_rollup samples; only samples with all eight rank snapshots readable are eligible",
+      "sample_count": 2993,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "timeline_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_standard_m120_hybrid_p6_h10_mpi8_20260726T033606Z/memory_timeline.csv",
+      "timeline_sha256": "76445bb6ecb186361a6881674d64b80d8315581d392a0ea437ec0aebead736ea",
+      "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_standard_m120_mpi8_244b62e.json",
+      "watchdog_sha256": "563e4158955f251e067be6d40bb3ca0e34e1032c2b1ad1e265a3751d3889979b",
+      "worker_rank_pss_peak": {
+        "elapsed_seconds": 943.9378657900088,
+        "per_rank": [
+          {
+            "pss_mb": 1130.677734375,
+            "rank": 0,
+            "rss_mb": 1345.66015625,
+            "shared_mb": 247.1015625,
+            "swap_mb": 0.0,
+            "uss_mb": 1098.55859375
+          },
+          {
+            "pss_mb": 1190.5263671875,
+            "rank": 1,
+            "rss_mb": 1396.65625,
+            "shared_mb": 236.35546875,
+            "swap_mb": 0.0,
+            "uss_mb": 1160.30078125
+          },
+          {
+            "pss_mb": 1038.76953125,
+            "rank": 2,
+            "rss_mb": 1253.43359375,
+            "shared_mb": 246.75390625,
+            "swap_mb": 0.0,
+            "uss_mb": 1006.6796875
+          },
+          {
+            "pss_mb": 1213.205078125,
+            "rank": 3,
+            "rss_mb": 1419.25,
+            "shared_mb": 236.08984375,
+            "swap_mb": 0.0,
+            "uss_mb": 1183.16015625
+          },
+          {
+            "pss_mb": 1143.052734375,
+            "rank": 4,
+            "rss_mb": 1341.79296875,
+            "shared_mb": 228.37890625,
+            "swap_mb": 0.0,
+            "uss_mb": 1113.4140625
+          },
+          {
+            "pss_mb": 1306.5712890625,
+            "rank": 5,
+            "rss_mb": 1505.14453125,
+            "shared_mb": 228.13671875,
+            "swap_mb": 0.0,
+            "uss_mb": 1277.0078125
+          },
+          {
+            "pss_mb": 1267.521484375,
+            "rank": 6,
+            "rss_mb": 1482.2421875,
+            "shared_mb": 246.85546875,
+            "swap_mb": 0.0,
+            "uss_mb": 1235.38671875
+          },
+          {
+            "pss_mb": 1376.9072265625,
+            "rank": 7,
+            "rss_mb": 1583.40625,
+            "shared_mb": 236.5,
+            "swap_mb": 0.0,
+            "uss_mb": 1346.90625
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 9.440655708312988,
+        "simultaneous_sum_mb": 9667.2314453125,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T03:51:50.081220+00:00"
+      },
+      "worker_rank_rss_peak": {
+        "elapsed_seconds": 943.9378657900088,
+        "per_rank": [
+          {
+            "pss_mb": 1130.677734375,
+            "rank": 0,
+            "rss_mb": 1345.66015625,
+            "shared_mb": 247.1015625,
+            "swap_mb": 0.0,
+            "uss_mb": 1098.55859375
+          },
+          {
+            "pss_mb": 1190.5263671875,
+            "rank": 1,
+            "rss_mb": 1396.65625,
+            "shared_mb": 236.35546875,
+            "swap_mb": 0.0,
+            "uss_mb": 1160.30078125
+          },
+          {
+            "pss_mb": 1038.76953125,
+            "rank": 2,
+            "rss_mb": 1253.43359375,
+            "shared_mb": 246.75390625,
+            "swap_mb": 0.0,
+            "uss_mb": 1006.6796875
+          },
+          {
+            "pss_mb": 1213.205078125,
+            "rank": 3,
+            "rss_mb": 1419.25,
+            "shared_mb": 236.08984375,
+            "swap_mb": 0.0,
+            "uss_mb": 1183.16015625
+          },
+          {
+            "pss_mb": 1143.052734375,
+            "rank": 4,
+            "rss_mb": 1341.79296875,
+            "shared_mb": 228.37890625,
+            "swap_mb": 0.0,
+            "uss_mb": 1113.4140625
+          },
+          {
+            "pss_mb": 1306.5712890625,
+            "rank": 5,
+            "rss_mb": 1505.14453125,
+            "shared_mb": 228.13671875,
+            "swap_mb": 0.0,
+            "uss_mb": 1277.0078125
+          },
+          {
+            "pss_mb": 1267.521484375,
+            "rank": 6,
+            "rss_mb": 1482.2421875,
+            "shared_mb": 246.85546875,
+            "swap_mb": 0.0,
+            "uss_mb": 1235.38671875
+          },
+          {
+            "pss_mb": 1376.9072265625,
+            "rank": 7,
+            "rss_mb": 1583.40625,
+            "shared_mb": 236.5,
+            "swap_mb": 0.0,
+            "uss_mb": 1346.90625
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 11.076892852783203,
+        "simultaneous_sum_mb": 11342.73828125,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T03:51:50.081220+00:00"
+      },
+      "worker_rank_uss_peak": {
+        "elapsed_seconds": 943.9378657900088,
+        "per_rank": [
+          {
+            "pss_mb": 1130.677734375,
+            "rank": 0,
+            "rss_mb": 1345.66015625,
+            "shared_mb": 247.1015625,
+            "swap_mb": 0.0,
+            "uss_mb": 1098.55859375
+          },
+          {
+            "pss_mb": 1190.5263671875,
+            "rank": 1,
+            "rss_mb": 1396.65625,
+            "shared_mb": 236.35546875,
+            "swap_mb": 0.0,
+            "uss_mb": 1160.30078125
+          },
+          {
+            "pss_mb": 1038.76953125,
+            "rank": 2,
+            "rss_mb": 1253.43359375,
+            "shared_mb": 246.75390625,
+            "swap_mb": 0.0,
+            "uss_mb": 1006.6796875
+          },
+          {
+            "pss_mb": 1213.205078125,
+            "rank": 3,
+            "rss_mb": 1419.25,
+            "shared_mb": 236.08984375,
+            "swap_mb": 0.0,
+            "uss_mb": 1183.16015625
+          },
+          {
+            "pss_mb": 1143.052734375,
+            "rank": 4,
+            "rss_mb": 1341.79296875,
+            "shared_mb": 228.37890625,
+            "swap_mb": 0.0,
+            "uss_mb": 1113.4140625
+          },
+          {
+            "pss_mb": 1306.5712890625,
+            "rank": 5,
+            "rss_mb": 1505.14453125,
+            "shared_mb": 228.13671875,
+            "swap_mb": 0.0,
+            "uss_mb": 1277.0078125
+          },
+          {
+            "pss_mb": 1267.521484375,
+            "rank": 6,
+            "rss_mb": 1482.2421875,
+            "shared_mb": 246.85546875,
+            "swap_mb": 0.0,
+            "uss_mb": 1235.38671875
+          },
+          {
+            "pss_mb": 1376.9072265625,
+            "rank": 7,
+            "rss_mb": 1583.40625,
+            "shared_mb": 236.5,
+            "swap_mb": 0.0,
+            "uss_mb": 1346.90625
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 9.200599670410156,
+        "simultaneous_sum_mb": 9421.4140625,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T03:51:50.081220+00:00"
+      }
+    },
+    "hybrid_standard_m160": {
+      "all_qualified_samples_have_zero_smaps_swap": true,
+      "fully_readable_mpi8_sample_count": 3215,
+      "mpi_size": 8,
+      "no_live_rank_smaps_sample_count": 3,
+      "partial_terminal_or_startup_sample_count": 0,
+      "qualification": "qualified historical backfill from simultaneous per-rank /proc/<pid>/smaps_rollup samples; only samples with all eight rank snapshots readable are eligible",
+      "sample_count": 3218,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "timeline_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_standard_m160_hybrid_p6_h10_mpi8_20260726T035233Z/memory_timeline.csv",
+      "timeline_sha256": "2c2153e0a31a1d1017a9d7a61e48809c12f74ef64f7abb64882d7be5d3e74eba",
+      "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_standard_m160_mpi8_244b62e.json",
+      "watchdog_sha256": "724923b23976000d44640177d50fc4882628c957fdffaf4800aa28f4e22734b5",
+      "worker_rank_pss_peak": {
+        "elapsed_seconds": 1016.7209253989859,
+        "per_rank": [
+          {
+            "pss_mb": 1118.5234375,
+            "rank": 0,
+            "rss_mb": 1333.44921875,
+            "shared_mb": 247.1015625,
+            "swap_mb": 0.0,
+            "uss_mb": 1086.34765625
+          },
+          {
+            "pss_mb": 1180.201171875,
+            "rank": 1,
+            "rss_mb": 1386.63671875,
+            "shared_mb": 236.65234375,
+            "swap_mb": 0.0,
+            "uss_mb": 1149.984375
+          },
+          {
+            "pss_mb": 1117.84765625,
+            "rank": 2,
+            "rss_mb": 1332.40234375,
+            "shared_mb": 246.734375,
+            "swap_mb": 0.0,
+            "uss_mb": 1085.66796875
+          },
+          {
+            "pss_mb": 1212.529296875,
+            "rank": 3,
+            "rss_mb": 1418.65625,
+            "shared_mb": 236.23046875,
+            "swap_mb": 0.0,
+            "uss_mb": 1182.42578125
+          },
+          {
+            "pss_mb": 1164.0107421875,
+            "rank": 4,
+            "rss_mb": 1362.9296875,
+            "shared_mb": 228.5,
+            "swap_mb": 0.0,
+            "uss_mb": 1134.4296875
+          },
+          {
+            "pss_mb": 1341.3818359375,
+            "rank": 5,
+            "rss_mb": 1540.05859375,
+            "shared_mb": 228.23046875,
+            "swap_mb": 0.0,
+            "uss_mb": 1311.828125
+          },
+          {
+            "pss_mb": 1306.341796875,
+            "rank": 6,
+            "rss_mb": 1520.9453125,
+            "shared_mb": 246.7265625,
+            "swap_mb": 0.0,
+            "uss_mb": 1274.21875
+          },
+          {
+            "pss_mb": 1400.6904296875,
+            "rank": 7,
+            "rss_mb": 1607.17578125,
+            "shared_mb": 236.65625,
+            "swap_mb": 0.0,
+            "uss_mb": 1370.51953125
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 9.610865592956543,
+        "simultaneous_sum_mb": 9841.5263671875,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T04:09:30.348788+00:00"
+      },
+      "worker_rank_rss_peak": {
+        "elapsed_seconds": 1016.7209253989859,
+        "per_rank": [
+          {
+            "pss_mb": 1118.5234375,
+            "rank": 0,
+            "rss_mb": 1333.44921875,
+            "shared_mb": 247.1015625,
+            "swap_mb": 0.0,
+            "uss_mb": 1086.34765625
+          },
+          {
+            "pss_mb": 1180.201171875,
+            "rank": 1,
+            "rss_mb": 1386.63671875,
+            "shared_mb": 236.65234375,
+            "swap_mb": 0.0,
+            "uss_mb": 1149.984375
+          },
+          {
+            "pss_mb": 1117.84765625,
+            "rank": 2,
+            "rss_mb": 1332.40234375,
+            "shared_mb": 246.734375,
+            "swap_mb": 0.0,
+            "uss_mb": 1085.66796875
+          },
+          {
+            "pss_mb": 1212.529296875,
+            "rank": 3,
+            "rss_mb": 1418.65625,
+            "shared_mb": 236.23046875,
+            "swap_mb": 0.0,
+            "uss_mb": 1182.42578125
+          },
+          {
+            "pss_mb": 1164.0107421875,
+            "rank": 4,
+            "rss_mb": 1362.9296875,
+            "shared_mb": 228.5,
+            "swap_mb": 0.0,
+            "uss_mb": 1134.4296875
+          },
+          {
+            "pss_mb": 1341.3818359375,
+            "rank": 5,
+            "rss_mb": 1540.05859375,
+            "shared_mb": 228.23046875,
+            "swap_mb": 0.0,
+            "uss_mb": 1311.828125
+          },
+          {
+            "pss_mb": 1306.341796875,
+            "rank": 6,
+            "rss_mb": 1520.9453125,
+            "shared_mb": 246.7265625,
+            "swap_mb": 0.0,
+            "uss_mb": 1274.21875
+          },
+          {
+            "pss_mb": 1400.6904296875,
+            "rank": 7,
+            "rss_mb": 1607.17578125,
+            "shared_mb": 236.65625,
+            "swap_mb": 0.0,
+            "uss_mb": 1370.51953125
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 11.247024536132812,
+        "simultaneous_sum_mb": 11516.953125,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T04:09:30.348788+00:00"
+      },
+      "worker_rank_uss_peak": {
+        "elapsed_seconds": 1016.7209253989859,
+        "per_rank": [
+          {
+            "pss_mb": 1118.5234375,
+            "rank": 0,
+            "rss_mb": 1333.44921875,
+            "shared_mb": 247.1015625,
+            "swap_mb": 0.0,
+            "uss_mb": 1086.34765625
+          },
+          {
+            "pss_mb": 1180.201171875,
+            "rank": 1,
+            "rss_mb": 1386.63671875,
+            "shared_mb": 236.65234375,
+            "swap_mb": 0.0,
+            "uss_mb": 1149.984375
+          },
+          {
+            "pss_mb": 1117.84765625,
+            "rank": 2,
+            "rss_mb": 1332.40234375,
+            "shared_mb": 246.734375,
+            "swap_mb": 0.0,
+            "uss_mb": 1085.66796875
+          },
+          {
+            "pss_mb": 1212.529296875,
+            "rank": 3,
+            "rss_mb": 1418.65625,
+            "shared_mb": 236.23046875,
+            "swap_mb": 0.0,
+            "uss_mb": 1182.42578125
+          },
+          {
+            "pss_mb": 1164.0107421875,
+            "rank": 4,
+            "rss_mb": 1362.9296875,
+            "shared_mb": 228.5,
+            "swap_mb": 0.0,
+            "uss_mb": 1134.4296875
+          },
+          {
+            "pss_mb": 1341.3818359375,
+            "rank": 5,
+            "rss_mb": 1540.05859375,
+            "shared_mb": 228.23046875,
+            "swap_mb": 0.0,
+            "uss_mb": 1311.828125
+          },
+          {
+            "pss_mb": 1306.341796875,
+            "rank": 6,
+            "rss_mb": 1520.9453125,
+            "shared_mb": 246.7265625,
+            "swap_mb": 0.0,
+            "uss_mb": 1274.21875
+          },
+          {
+            "pss_mb": 1400.6904296875,
+            "rank": 7,
+            "rss_mb": 1607.17578125,
+            "shared_mb": 236.65625,
+            "swap_mb": 0.0,
+            "uss_mb": 1370.51953125
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 9.370529174804688,
+        "simultaneous_sum_mb": 9595.421875,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T04:09:30.348788+00:00"
+      }
+    },
+    "hybrid_static_m120": {
+      "all_qualified_samples_have_zero_smaps_swap": true,
+      "fully_readable_mpi8_sample_count": 1071,
+      "mpi_size": 8,
+      "no_live_rank_smaps_sample_count": 2,
+      "partial_terminal_or_startup_sample_count": 0,
+      "qualification": "qualified historical backfill from simultaneous per-rank /proc/<pid>/smaps_rollup samples; only samples with all eight rank snapshots readable are eligible",
+      "sample_count": 1073,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "timeline_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_static_m120_retry1_hybrid_p6_h10_mpi8_20260726T023759Z/memory_timeline.csv",
+      "timeline_sha256": "8e0b652de1a4af2c3eced21ce9e053eb143739e37259b3c6479b3989e52af510",
+      "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_static_m120_mpi8_244b62e_retry1.json",
+      "watchdog_sha256": "194a22ee2528a2536f794c0a0a8871671cb023a2f8dc029b31fae456694d5532",
+      "worker_rank_pss_peak": {
+        "elapsed_seconds": 324.52952707000077,
+        "per_rank": [
+          {
+            "pss_mb": 746.6982421875,
+            "rank": 0,
+            "rss_mb": 977.0859375,
+            "shared_mb": 269.69140625,
+            "swap_mb": 0.0,
+            "uss_mb": 707.39453125
+          },
+          {
+            "pss_mb": 708.345703125,
+            "rank": 1,
+            "rss_mb": 938.35546875,
+            "shared_mb": 269.25390625,
+            "swap_mb": 0.0,
+            "uss_mb": 669.1015625
+          },
+          {
+            "pss_mb": 695.7080078125,
+            "rank": 2,
+            "rss_mb": 942.6484375,
+            "shared_mb": 290.3203125,
+            "swap_mb": 0.0,
+            "uss_mb": 652.328125
+          },
+          {
+            "pss_mb": 804.052734375,
+            "rank": 3,
+            "rss_mb": 1043.58203125,
+            "shared_mb": 280.453125,
+            "swap_mb": 0.0,
+            "uss_mb": 763.12890625
+          },
+          {
+            "pss_mb": 712.9384765625,
+            "rank": 4,
+            "rss_mb": 912.32421875,
+            "shared_mb": 229.0390625,
+            "swap_mb": 0.0,
+            "uss_mb": 683.28515625
+          },
+          {
+            "pss_mb": 759.8203125,
+            "rank": 5,
+            "rss_mb": 960.16796875,
+            "shared_mb": 230.17578125,
+            "swap_mb": 0.0,
+            "uss_mb": 729.9921875
+          },
+          {
+            "pss_mb": 713.75390625,
+            "rank": 6,
+            "rss_mb": 930.0,
+            "shared_mb": 248.67578125,
+            "swap_mb": 0.0,
+            "uss_mb": 681.32421875
+          },
+          {
+            "pss_mb": 767.021484375,
+            "rank": 7,
+            "rss_mb": 975.03515625,
+            "shared_mb": 238.3828125,
+            "swap_mb": 0.0,
+            "uss_mb": 736.65234375
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 5.769862174987793,
+        "simultaneous_sum_mb": 5908.3388671875,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T02:43:23.779390+00:00"
+      },
+      "worker_rank_rss_peak": {
+        "elapsed_seconds": 324.52952707000077,
+        "per_rank": [
+          {
+            "pss_mb": 746.6982421875,
+            "rank": 0,
+            "rss_mb": 977.0859375,
+            "shared_mb": 269.69140625,
+            "swap_mb": 0.0,
+            "uss_mb": 707.39453125
+          },
+          {
+            "pss_mb": 708.345703125,
+            "rank": 1,
+            "rss_mb": 938.35546875,
+            "shared_mb": 269.25390625,
+            "swap_mb": 0.0,
+            "uss_mb": 669.1015625
+          },
+          {
+            "pss_mb": 695.7080078125,
+            "rank": 2,
+            "rss_mb": 942.6484375,
+            "shared_mb": 290.3203125,
+            "swap_mb": 0.0,
+            "uss_mb": 652.328125
+          },
+          {
+            "pss_mb": 804.052734375,
+            "rank": 3,
+            "rss_mb": 1043.58203125,
+            "shared_mb": 280.453125,
+            "swap_mb": 0.0,
+            "uss_mb": 763.12890625
+          },
+          {
+            "pss_mb": 712.9384765625,
+            "rank": 4,
+            "rss_mb": 912.32421875,
+            "shared_mb": 229.0390625,
+            "swap_mb": 0.0,
+            "uss_mb": 683.28515625
+          },
+          {
+            "pss_mb": 759.8203125,
+            "rank": 5,
+            "rss_mb": 960.16796875,
+            "shared_mb": 230.17578125,
+            "swap_mb": 0.0,
+            "uss_mb": 729.9921875
+          },
+          {
+            "pss_mb": 713.75390625,
+            "rank": 6,
+            "rss_mb": 930.0,
+            "shared_mb": 248.67578125,
+            "swap_mb": 0.0,
+            "uss_mb": 681.32421875
+          },
+          {
+            "pss_mb": 767.021484375,
+            "rank": 7,
+            "rss_mb": 975.03515625,
+            "shared_mb": 238.3828125,
+            "swap_mb": 0.0,
+            "uss_mb": 736.65234375
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 7.544261932373047,
+        "simultaneous_sum_mb": 7725.32421875,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T02:43:23.779390+00:00"
+      },
+      "worker_rank_uss_peak": {
+        "elapsed_seconds": 324.52952707000077,
+        "per_rank": [
+          {
+            "pss_mb": 746.6982421875,
+            "rank": 0,
+            "rss_mb": 977.0859375,
+            "shared_mb": 269.69140625,
+            "swap_mb": 0.0,
+            "uss_mb": 707.39453125
+          },
+          {
+            "pss_mb": 708.345703125,
+            "rank": 1,
+            "rss_mb": 938.35546875,
+            "shared_mb": 269.25390625,
+            "swap_mb": 0.0,
+            "uss_mb": 669.1015625
+          },
+          {
+            "pss_mb": 695.7080078125,
+            "rank": 2,
+            "rss_mb": 942.6484375,
+            "shared_mb": 290.3203125,
+            "swap_mb": 0.0,
+            "uss_mb": 652.328125
+          },
+          {
+            "pss_mb": 804.052734375,
+            "rank": 3,
+            "rss_mb": 1043.58203125,
+            "shared_mb": 280.453125,
+            "swap_mb": 0.0,
+            "uss_mb": 763.12890625
+          },
+          {
+            "pss_mb": 712.9384765625,
+            "rank": 4,
+            "rss_mb": 912.32421875,
+            "shared_mb": 229.0390625,
+            "swap_mb": 0.0,
+            "uss_mb": 683.28515625
+          },
+          {
+            "pss_mb": 759.8203125,
+            "rank": 5,
+            "rss_mb": 960.16796875,
+            "shared_mb": 230.17578125,
+            "swap_mb": 0.0,
+            "uss_mb": 729.9921875
+          },
+          {
+            "pss_mb": 713.75390625,
+            "rank": 6,
+            "rss_mb": 930.0,
+            "shared_mb": 248.67578125,
+            "swap_mb": 0.0,
+            "uss_mb": 681.32421875
+          },
+          {
+            "pss_mb": 767.021484375,
+            "rank": 7,
+            "rss_mb": 975.03515625,
+            "shared_mb": 238.3828125,
+            "swap_mb": 0.0,
+            "uss_mb": 736.65234375
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 5.491413116455078,
+        "simultaneous_sum_mb": 5623.20703125,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T02:43:23.779390+00:00"
+      }
+    },
+    "hybrid_static_m160": {
+      "all_qualified_samples_have_zero_smaps_swap": true,
+      "fully_readable_mpi8_sample_count": 1294,
+      "mpi_size": 8,
+      "no_live_rank_smaps_sample_count": 2,
+      "partial_terminal_or_startup_sample_count": 1,
+      "qualification": "qualified historical backfill from simultaneous per-rank /proc/<pid>/smaps_rollup samples; only samples with all eight rank snapshots readable are eligible",
+      "sample_count": 1297,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "timeline_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_static_m160_hybrid_p6_h10_mpi8_20260726T024447Z/memory_timeline.csv",
+      "timeline_sha256": "24c9147ef4d33b37faae401f0ee05722f561742896478792639e732a1734636c",
+      "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_static_m160_mpi8_244b62e.json",
+      "watchdog_sha256": "58281f5f0be5c9d30b441d9b573018070502734043a81cb8cd10ddd068f5c137",
+      "worker_rank_pss_peak": {
+        "elapsed_seconds": 395.8094057640119,
+        "per_rank": [
+          {
+            "pss_mb": 749.96484375,
+            "rank": 0,
+            "rss_mb": 997.3515625,
+            "shared_mb": 290.15234375,
+            "swap_mb": 0.0,
+            "uss_mb": 707.19921875
+          },
+          {
+            "pss_mb": 819.294921875,
+            "rank": 1,
+            "rss_mb": 1058.3125,
+            "shared_mb": 279.6796875,
+            "swap_mb": 0.0,
+            "uss_mb": 778.6328125
+          },
+          {
+            "pss_mb": 705.34765625,
+            "rank": 2,
+            "rss_mb": 953.25,
+            "shared_mb": 290.74609375,
+            "swap_mb": 0.0,
+            "uss_mb": 662.50390625
+          },
+          {
+            "pss_mb": 813.3720703125,
+            "rank": 3,
+            "rss_mb": 1052.5625,
+            "shared_mb": 279.85546875,
+            "swap_mb": 0.0,
+            "uss_mb": 772.70703125
+          },
+          {
+            "pss_mb": 820.0,
+            "rank": 4,
+            "rss_mb": 1019.68359375,
+            "shared_mb": 229.25,
+            "swap_mb": 0.0,
+            "uss_mb": 790.43359375
+          },
+          {
+            "pss_mb": 895.40234375,
+            "rank": 5,
+            "rss_mb": 1095.9921875,
+            "shared_mb": 230.47265625,
+            "swap_mb": 0.0,
+            "uss_mb": 865.51953125
+          },
+          {
+            "pss_mb": 725.3671875,
+            "rank": 6,
+            "rss_mb": 941.5390625,
+            "shared_mb": 248.61328125,
+            "swap_mb": 0.0,
+            "uss_mb": 692.92578125
+          },
+          {
+            "pss_mb": 788.6923828125,
+            "rank": 7,
+            "rss_mb": 996.49609375,
+            "shared_mb": 238.09375,
+            "swap_mb": 0.0,
+            "uss_mb": 758.40234375
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 6.169376373291016,
+        "simultaneous_sum_mb": 6317.44140625,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T02:51:23.376161+00:00"
+      },
+      "worker_rank_rss_peak": {
+        "elapsed_seconds": 395.8094057640119,
+        "per_rank": [
+          {
+            "pss_mb": 749.96484375,
+            "rank": 0,
+            "rss_mb": 997.3515625,
+            "shared_mb": 290.15234375,
+            "swap_mb": 0.0,
+            "uss_mb": 707.19921875
+          },
+          {
+            "pss_mb": 819.294921875,
+            "rank": 1,
+            "rss_mb": 1058.3125,
+            "shared_mb": 279.6796875,
+            "swap_mb": 0.0,
+            "uss_mb": 778.6328125
+          },
+          {
+            "pss_mb": 705.34765625,
+            "rank": 2,
+            "rss_mb": 953.25,
+            "shared_mb": 290.74609375,
+            "swap_mb": 0.0,
+            "uss_mb": 662.50390625
+          },
+          {
+            "pss_mb": 813.3720703125,
+            "rank": 3,
+            "rss_mb": 1052.5625,
+            "shared_mb": 279.85546875,
+            "swap_mb": 0.0,
+            "uss_mb": 772.70703125
+          },
+          {
+            "pss_mb": 820.0,
+            "rank": 4,
+            "rss_mb": 1019.68359375,
+            "shared_mb": 229.25,
+            "swap_mb": 0.0,
+            "uss_mb": 790.43359375
+          },
+          {
+            "pss_mb": 895.40234375,
+            "rank": 5,
+            "rss_mb": 1095.9921875,
+            "shared_mb": 230.47265625,
+            "swap_mb": 0.0,
+            "uss_mb": 865.51953125
+          },
+          {
+            "pss_mb": 725.3671875,
+            "rank": 6,
+            "rss_mb": 941.5390625,
+            "shared_mb": 248.61328125,
+            "swap_mb": 0.0,
+            "uss_mb": 692.92578125
+          },
+          {
+            "pss_mb": 788.6923828125,
+            "rank": 7,
+            "rss_mb": 996.49609375,
+            "shared_mb": 238.09375,
+            "swap_mb": 0.0,
+            "uss_mb": 758.40234375
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 7.929412841796875,
+        "simultaneous_sum_mb": 8119.71875,
+        "stage": "record_and_release",
+        "timestamp_utc": "2026-07-26T02:51:23.376161+00:00"
+      },
+      "worker_rank_uss_peak": {
+        "elapsed_seconds": 394.5060677549918,
+        "per_rank": [
+          {
+            "pss_mb": 746.3701171875,
+            "rank": 0,
+            "rss_mb": 976.41796875,
+            "shared_mb": 269.234375,
+            "swap_mb": 0.0,
+            "uss_mb": 707.18359375
+          },
+          {
+            "pss_mb": 817.7646484375,
+            "rank": 1,
+            "rss_mb": 1047.69140625,
+            "shared_mb": 269.07421875,
+            "swap_mb": 0.0,
+            "uss_mb": 778.6171875
+          },
+          {
+            "pss_mb": 701.7578125,
+            "rank": 2,
+            "rss_mb": 932.31640625,
+            "shared_mb": 269.828125,
+            "swap_mb": 0.0,
+            "uss_mb": 662.48828125
+          },
+          {
+            "pss_mb": 811.853515625,
+            "rank": 3,
+            "rss_mb": 1041.98828125,
+            "shared_mb": 269.296875,
+            "swap_mb": 0.0,
+            "uss_mb": 772.69140625
+          },
+          {
+            "pss_mb": 816.4013671875,
+            "rank": 4,
+            "rss_mb": 998.73828125,
+            "shared_mb": 208.328125,
+            "swap_mb": 0.0,
+            "uss_mb": 790.41015625
+          },
+          {
+            "pss_mb": 893.283203125,
+            "rank": 5,
+            "rss_mb": 1085.3828125,
+            "shared_mb": 219.87890625,
+            "swap_mb": 0.0,
+            "uss_mb": 865.50390625
+          },
+          {
+            "pss_mb": 722.763671875,
+            "rank": 6,
+            "rss_mb": 921.546875,
+            "shared_mb": 227.63671875,
+            "swap_mb": 0.0,
+            "uss_mb": 693.91015625
+          },
+          {
+            "pss_mb": 787.9677734375,
+            "rank": 7,
+            "rss_mb": 986.67578125,
+            "shared_mb": 227.4765625,
+            "swap_mb": 0.0,
+            "uss_mb": 759.19921875
+          }
+        ],
+        "rank_count": 8,
+        "simultaneous_sum_gib": 5.888675689697266,
+        "simultaneous_sum_mb": 6030.00390625,
+        "stage": "middle_plane_reconstruction",
+        "timestamp_utc": "2026-07-26T02:51:22.068391+00:00"
+      }
+    }
+  },
+  "numerical_source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+  "pass": true,
+  "pss_uss_semantics": "diagnostic memory decomposition reconstructed from the original simultaneous MPI8 smaps_rollup timeline; no RSS-to-PSS/USS inference",
+  "schema_version": "task035c.case096-p6-mpi8-pss-uss-ledger.v1",
+  "status": "p6_h10_mpi8_historical_pss_uss_backfill_qualified"
+}

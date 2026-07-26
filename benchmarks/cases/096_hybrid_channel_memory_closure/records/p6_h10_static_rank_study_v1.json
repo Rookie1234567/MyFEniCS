@@ -1,0 +1,1287 @@
+{
+  "authority_boundary": "MPI8 is the formal Task035c comparison point. MPI1 and MPI2 remain preserved rank evidence and are not used to overwrite MPI8 authority.",
+  "classification": {
+    "mpi1": {
+      "actual": 1.1975997613347697e-06,
+      "failed_quantity": "positive_QEP_max_biorthogonality_identity_error",
+      "limit": 1e-06,
+      "reason": "numerical gate failure, not a resource authority",
+      "status": "failed_numerical_gate"
+    },
+    "mpi2": {
+      "failed_resource_checks": [
+        "container_current_swap_zero_unreadable",
+        "all_live_authority_samples_readable",
+        "all_live_swap_samples_readable"
+      ],
+      "numeric_pass": true,
+      "reason": "terminal worker-drain sampling race made live RSS/swap readability incomplete; measured peak is diagnostic only",
+      "resource_authority_pass": false,
+      "status": "numeric_pass_resource_nonformal"
+    },
+    "mpi8": {
+      "numeric_pass": true,
+      "resource_authority_pass": true,
+      "status": "formal_pass"
+    }
+  },
+  "full_static": {
+    "mpi1": {
+      "A_closure": 0.3965354845351713,
+      "A_volume": 0.3965354845443594,
+      "R00_total": 0.0007537612200694902,
+      "R_total": 0.0007628814751332247,
+      "T_total": 0.6027016339896955,
+      "active_rows": 51272,
+      "assembly_and_solve_seconds": 1232.3811456899857,
+      "assembly_backend": "assembly_time_static_condensed",
+      "backsolve_seconds": 1.1552640610025264,
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.0009812210506463313,
+            -8.723749961848639e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.3620104483510644e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00013403269657156336,
+            0.00014700578428249267
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.119208256646963e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0002621322075264838,
+            8.74322690465415e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.372888972023481e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805502282,
+            0.0002979420806471688
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.9598413948468653e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0020910133852820164,
+            -0.0010233798628722028
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.1781673985428906e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.6313787033503633,
+            0.47302098103937035
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723505468
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091113492115,
+            -2.6088861857874793e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542424951325e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.817807927935342e-05,
+            -6.535503248233033e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.45730054826185e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333613561765,
+            -4.973043618310492e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396102375607e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316168890767,
+            -0.0002055157696020441
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.4776908500814578e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0010327077159183668,
+            0.0007678339216996273
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.669309653902078e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.02525230435362197,
+            0.010774151702177617
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.0007537612200694902
+        }
+      ],
+      "degree": 6,
+      "energy_closure_error": 9.188205751797796e-12,
+      "factor_fill": 4.895261239599667,
+      "factor_nnz": 205547320,
+      "factor_setup_seconds": 731.8961846570019,
+      "formal_pass": true,
+      "h_nm": 10.0,
+      "kind": "full3d",
+      "matrix_nnz": 41989040,
+      "mpi_size": 1,
+      "no_swap": true,
+      "peak_memory_gib": 6.165107727050781,
+      "raw_authority": {
+        "dtn_order_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi1_20260726T041020Z/dtn_port_diffraction_orders_3d.json",
+        "dtn_order_sha256": "1e57cf86fdcfe75fd9b5c905c06057234bdb2845733ca956ddc67a844c36a75f",
+        "solver_summary_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi1_20260726T041020Z/run_summary.json",
+        "solver_summary_sha256": "6768f74a987456a05421e69adb7b4f076562ad024a7cc12637a8afdfc99658a4",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_static_mpi1_244b62e.json",
+        "watchdog_sha256": "36cde9b87732277d91d9f9924e7a9a91671bc98ec74d949c0c1d14adce11a894"
+      },
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 1256.061048300995,
+      "true_residual": 2.247741436904515e-11
+    },
+    "mpi2": {
+      "A_closure": 0.39653548453674725,
+      "A_volume": 0.3965354845437108,
+      "R00_total": 0.0007537612200585413,
+      "R_total": 0.0007628814751224726,
+      "T_total": 0.6027016339881303,
+      "active_rows": 51272,
+      "assembly_and_solve_seconds": 683.1910686070041,
+      "assembly_backend": "assembly_time_static_condensed",
+      "backsolve_seconds": 0.34922481299145147,
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.0009812210507295321,
+            -8.723749960284297e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.3620104487418444e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00013403269657323547,
+            0.00014700578428912894
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.119208256775446e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.00026213220751147777,
+            8.743226906334555e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.372888971741222e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805403724,
+            0.00029794208067964405
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.959841394875776e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0020910133852228997,
+            -0.001023379862851351
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.1781673984263765e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.6313787033490422,
+            0.4730209810394261
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723489824
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.000505209111314619,
+            -2.60888618737998e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542424116193e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.817807920044288e-05,
+            -6.535503248112863e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300539870964e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0002102233361397205,
+            -4.97304361889115e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396103695565e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316169093372,
+            -0.00020551576966191685
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.4776908503116788e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0010327077159396477,
+            0.000767833921681205
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.6693096539651585e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.02525230435349226,
+            0.01077415170197352
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.0007537612200585413
+        }
+      ],
+      "degree": 6,
+      "energy_closure_error": 6.963540855053907e-12,
+      "factor_fill": 4.8513478755408554,
+      "factor_nnz": 203703440,
+      "factor_setup_seconds": 384.191009400005,
+      "formal_pass": true,
+      "h_nm": 10.0,
+      "kind": "full3d",
+      "matrix_nnz": 41989040,
+      "mpi_size": 2,
+      "no_swap": true,
+      "peak_memory_gib": 8.159408569335938,
+      "raw_authority": {
+        "dtn_order_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi2_20260726T045631Z/dtn_port_diffraction_orders_3d.json",
+        "dtn_order_sha256": "6dac0c76b8aaa7ea9d770d4a575fab6021d7eba2ecfb3157057cfc0d4a7a9147",
+        "solver_summary_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi2_20260726T045631Z/run_summary.json",
+        "solver_summary_sha256": "4b13d6933671990ed8f7da40de382ae7c4fbcd7685232ede33072467a1055dd8",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_static_mpi2_244b62e.json",
+        "watchdog_sha256": "6b045a1475e1f9d4b9d6e7b2e3bd41c6501f7312879228df3fb5b4fdfdcd225c"
+      },
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 701.6134275069926,
+      "true_residual": 1.255552481656054e-11
+    },
+    "mpi8": {
+      "A_closure": 0.3965354845393365,
+      "A_volume": 0.39653548454280696,
+      "R00_total": 0.0007537612200624013,
+      "R_total": 0.0007628814751258605,
+      "T_total": 0.6027016339855377,
+      "active_rows": 51272,
+      "assembly_and_solve_seconds": 243.62834563999786,
+      "assembly_backend": "assembly_time_static_condensed",
+      "backsolve_seconds": 0.2355272799904924,
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.000981221050747373,
+            -8.723749969762523e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.362010448867317e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00013403269657842327,
+            0.00014700578428874543
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.1192082568438762e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0002621322074984722,
+            8.743226900881963e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.372888970804711e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805311397,
+            0.0002979420806611947
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.959841394752845e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0020910133852757038,
+            -0.0010233798628813441
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.1781673985398003e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.6313787033477729,
+            0.4730209810382889
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723463887
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091112386975,
+            -2.6088861635657095e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542421934543e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.81780792268492e-05,
+            -6.535503247903435e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300542503923e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333608387974,
+            -4.97304361657992e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396088918694e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316170307675,
+            -0.00020551576970232068
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.47769085101641e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0010327077158037517,
+            0.0007678339217291073
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.66930965313104e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.025252304353422045,
+            0.01077415170231722
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.0007537612200624013
+        }
+      ],
+      "degree": 6,
+      "energy_closure_error": 3.4705571749782393e-12,
+      "factor_fill": 5.057129003187498,
+      "factor_nnz": 212343992,
+      "factor_setup_seconds": 143.1312569429865,
+      "formal_pass": true,
+      "h_nm": 10.0,
+      "kind": "full3d",
+      "matrix_nnz": 41989040,
+      "mpi_size": 8,
+      "no_swap": true,
+      "peak_memory_gib": 14.721755981445312,
+      "raw_authority": {
+        "dtn_order_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T023040Z/dtn_port_diffraction_orders_3d.json",
+        "dtn_order_sha256": "1b18be4a1e7df89ca41db6092fd82815ea867c4362c171b0780af4e1efb4a4c8",
+        "solver_summary_path": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T023040Z/run_summary.json",
+        "solver_summary_sha256": "4c8a877ff9607245a3b58deb93da38ac8b95ae95febda4fb516a16b883fc935c",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_static_mpi8_244b62e.json",
+        "watchdog_sha256": "b8b428476cdeb4b80495f4a8b1c89e3bb2f67c682c695fc72bb59dbbbd94b4e3"
+      },
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 260.7361800459912,
+      "true_residual": 3.092135187704348e-11
+    }
+  },
+  "hybrid_static_m120": {
+    "mpi1": {
+      "A_closure": 0.3965354845408723,
+      "A_volume": 0.3965354846963775,
+      "R00_total": 0.0007537612200674956,
+      "R_total": 0.0007628814751311424,
+      "T_total": 0.6027016339839966,
+      "active_rows": 17168,
+      "assembly_backend": "assembly_time_static_condensed",
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.000981221050816337,
+            -8.723749956482651e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.3620104491403386e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00013403269658626536,
+            0.0001470057843013729
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.1192082571552508e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0002621322075486301,
+            8.743226909308554e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.372888973154499e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805619952,
+            0.0002979420806913228
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.9598413950668965e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.002091013385251826,
+            -0.0010233798628001252
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.1781673984328573e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.6313787033460673,
+            0.47302098103888357
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723448478
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091113921882,
+            -2.6088861889269683e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542426054225e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.817807923864766e-05,
+            -6.53550324681309e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300542981863e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333611420488,
+            -4.9730436119394084e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396093581954e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316169585159,
+            -0.00020551576967361965
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.4776908505872108e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0010327077158637425,
+            0.0007678339216728762
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.669309653282278e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.025252304353673,
+            0.010774151701965445
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.0007537612200674956
+        }
+      ],
+      "degree": 6,
+      "dense_interface_square_formed": false,
+      "energy_closure_error": 1.5550516430096195e-10,
+      "factor_fill": 3.7028367531773947,
+      "factor_nnz": 45593888,
+      "formal_pass": false,
+      "h_nm": 10.0,
+      "interface_E_relative_l2_max": 1.6394917717899308e-07,
+      "interface_H_relative_l2_max": 3.895753249333108e-05,
+      "kind": "hybrid",
+      "matrix_nnz": 12313232,
+      "memory_authority_pass": true,
+      "modal_coupling_seconds": 202.94948435301194,
+      "modal_coupling_stage_peak_gib": 1.1110687255859375,
+      "modal_degree": 6,
+      "modal_h_nm": 10.0,
+      "modal_schur_bytes": 921600,
+      "modes_per_direction": 120,
+      "mpi_size": 1,
+      "no_swap": true,
+      "numeric_pass": false,
+      "peak_memory_gib": 1.7516975402832031,
+      "raw_authority": {
+        "solver_record_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_static_m120_mpi1_hybrid_p6_h10_mpi1_20260726T043204Z/solver_record.json",
+        "solver_record_sha256": "88cd19d9a993055a3096d2618838d5f8624e3b3a321b9d628eb8b9fbbb3a5e5f",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_static_m120_mpi1_244b62e.json",
+        "watchdog_sha256": "e99cda1de21e6bbe7a8787eda268d4498565420f8a32d662f6456a919d6ca27e"
+      },
+      "retained_right_left_eigenvector_bytes": 30696960,
+      "selected_plane_E_relative_l2_max": 1.347612862427827e-11,
+      "selected_plane_H_relative_l2_max": 4.173300407087436e-06,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 1328.7171952089993,
+      "true_residual": 6.472126352314833e-12
+    },
+    "mpi2": {
+      "A_closure": 0.396535484540673,
+      "A_volume": 0.3965354846965201,
+      "R00_total": 0.0007537612200760503,
+      "R_total": 0.000762881475139571,
+      "T_total": 0.6027016339841874,
+      "active_rows": 17168,
+      "assembly_backend": "assembly_time_static_condensed",
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.0009812210508232803,
+            -8.723749950881852e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.3620104491497183e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00013403269656354563,
+            0.00014700578427403094
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.1192082563986516e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.000262132207530255,
+            8.743226902370481e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.372888971908015e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805744367,
+            0.00029794208069987033
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.959841395182476e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0020910133852538293,
+            -0.001023379862813239
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.1781673984470116e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.6313787033461921,
+            0.4730209810389253
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723450387
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091113937886,
+            -2.6088861874835618e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.26354242607537e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.817807924138215e-05,
+            -6.535503246032489e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300542722717e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333612516852,
+            -4.973043617415551e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396099346824e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316169370138,
+            -0.0002055157696809483
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.4776908504931251e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0010327077158870576,
+            0.0007678339216286971
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.669309653202985e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.025252304353825517,
+            0.01077415170200498
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.0007537612200760503
+        }
+      ],
+      "degree": 6,
+      "dense_interface_square_formed": false,
+      "energy_closure_error": 1.558471129925465e-10,
+      "factor_fill": 3.748709355918901,
+      "factor_nnz": 46158728,
+      "formal_pass": false,
+      "h_nm": 10.0,
+      "interface_E_relative_l2_max": 1.6394919595861337e-07,
+      "interface_H_relative_l2_max": 3.8957532515743794e-05,
+      "kind": "hybrid",
+      "matrix_nnz": 12313232,
+      "memory_authority_pass": false,
+      "modal_coupling_seconds": 109.58858084899839,
+      "modal_coupling_stage_peak_gib": 2.267719268798828,
+      "modal_degree": 6,
+      "modal_h_nm": 10.0,
+      "modal_schur_bytes": 921600,
+      "modes_per_direction": 120,
+      "mpi_size": 2,
+      "no_swap": false,
+      "numeric_pass": true,
+      "peak_memory_gib": 3.1417884826660156,
+      "raw_authority": {
+        "solver_record_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_static_m120_mpi2_hybrid_p6_h10_mpi2_20260726T050854Z/solver_record.json",
+        "solver_record_sha256": "92feee4beebf716f7764f6eb1d7f37417778588972173237afd6f6fac493618f",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_static_m120_mpi2_244b62e.json",
+        "watchdog_sha256": "5a0ef31775d307c09ccf6b7e3fcb5fc523c6b9cba0531f9b298a938901e2bf5b"
+      },
+      "retained_right_left_eigenvector_bytes": 30696960,
+      "selected_plane_E_relative_l2_max": 1.3019622201491802e-11,
+      "selected_plane_H_relative_l2_max": 4.173300491581607e-06,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 798.2013209050056,
+      "true_residual": 3.3530748885589462e-12
+    },
+    "mpi8": {
+      "A_closure": 0.39653548454064114,
+      "A_volume": 0.3965354846965286,
+      "R00_total": 0.0007537612200777091,
+      "R_total": 0.0007628814751415616,
+      "T_total": 0.6027016339842173,
+      "active_rows": 17168,
+      "assembly_backend": "assembly_time_static_condensed",
+      "channels": [
+        {
+          "boundary_complex_amplitude": [
+            0.0009812210507937227,
+            -8.723749942325464e-05
+          ],
+          "key": [
+            "bottom",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "T(-7,0)_s",
+          "power": 2.3620104489721946e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00013403269653797432,
+            0.00014700578428181082
+          ],
+          "key": [
+            "bottom",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "T(-5,0)_s",
+          "power": 2.1192082561540738e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.00026213220752400573,
+            8.743226903959411e-05
+          ],
+          "key": [
+            "bottom",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "T(-4,0)_s",
+          "power": 4.372888971879506e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0006970027805940489,
+            0.0002979420806704754
+          ],
+          "key": [
+            "bottom",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "T(-2,0)_s",
+          "power": 2.9598413952330793e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.002091013385252503,
+            -0.0010233798628762657
+          ],
+          "key": [
+            "bottom",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "T(-1,0)_s",
+          "power": 2.178167398496628e-05
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.631378703346222,
+            0.47302098103891743
+          ],
+          "key": [
+            "bottom",
+            0,
+            0,
+            "s"
+          ],
+          "label": "T(0,0)_s",
+          "power": 0.6026738723450681
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.0005052091114226273,
+            -2.6088861971445567e-05
+          ],
+          "key": [
+            "top",
+            -7,
+            0,
+            "s"
+          ],
+          "label": "R(-7,0)_s",
+          "power": 6.263542426911923e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            -9.817807923273075e-05,
+            -6.535503243628601e-05
+          ],
+          "key": [
+            "top",
+            -5,
+            0,
+            "s"
+          ],
+          "label": "R(-5,0)_s",
+          "power": 7.457300540127512e-08
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.00021022333612667835,
+            -4.9730436175561435e-05
+          ],
+          "key": [
+            "top",
+            -4,
+            0,
+            "s"
+          ],
+          "label": "R(-4,0)_s",
+          "power": 2.6752396099790886e-07
+        },
+        {
+          "boundary_complex_amplitude": [
+            0.0004942316169479512,
+            -0.0002055157696541338
+          ],
+          "key": [
+            "top",
+            -2,
+            0,
+            "s"
+          ],
+          "label": "R(-2,0)_s",
+          "power": 1.4776908504920405e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.001032707715907095,
+            0.0007678339216470395
+          ],
+          "key": [
+            "top",
+            -1,
+            0,
+            "s"
+          ],
+          "label": "R(-1,0)_s",
+          "power": 6.669309653483091e-06
+        },
+        {
+          "boundary_complex_amplitude": [
+            -0.025252304353876247,
+            0.010774151701963058
+          ],
+          "key": [
+            "top",
+            0,
+            0,
+            "s"
+          ],
+          "label": "R(0,0)_s",
+          "power": 0.0007537612200777091
+        }
+      ],
+      "degree": 6,
+      "dense_interface_square_formed": false,
+      "energy_closure_error": 1.5588752511064285e-10,
+      "factor_fill": 3.6784649229381854,
+      "factor_nnz": 45293792,
+      "formal_pass": true,
+      "h_nm": 10.0,
+      "interface_E_relative_l2_max": 1.6394918253665888e-07,
+      "interface_H_relative_l2_max": 3.8957532481105785e-05,
+      "kind": "hybrid",
+      "matrix_nnz": 12313232,
+      "memory_authority_pass": true,
+      "modal_coupling_seconds": 37.340494967997074,
+      "modal_coupling_stage_peak_gib": 5.756237030029297,
+      "modal_degree": 6,
+      "modal_h_nm": 10.0,
+      "modal_schur_bytes": 921600,
+      "modes_per_direction": 120,
+      "mpi_size": 8,
+      "no_swap": true,
+      "numeric_pass": true,
+      "peak_memory_gib": 7.544261932373047,
+      "raw_authority": {
+        "solver_record_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_static_m120_retry1_hybrid_p6_h10_mpi8_20260726T023759Z/solver_record.json",
+        "solver_record_sha256": "1420afa1022f0ed1fdb37dc6ea5cb0c11699832fe4703a4cab113e05a0de5a55",
+        "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_static_m120_mpi8_244b62e_retry1.json",
+        "watchdog_sha256": "194a22ee2528a2536f794c0a0a8871671cb023a2f8dc029b31fae456694d5532"
+      },
+      "retained_right_left_eigenvector_bytes": 30696960,
+      "selected_plane_E_relative_l2_max": 1.3027501991328901e-11,
+      "selected_plane_H_relative_l2_max": 4.173300561234117e-06,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "total_seconds": 322.78178776399,
+      "true_residual": 2.078713702357502e-12
+    }
+  },
+  "numerical_source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+  "pass": true,
+  "schema_version": "task035c.case096-static-rank-study.v1",
+  "status": "rank_study_complete_with_controlled_negatives"
+}
