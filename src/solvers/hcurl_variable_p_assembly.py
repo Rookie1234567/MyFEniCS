@@ -594,6 +594,8 @@ def build_variable_p_condensed_trace_system(
     projection_seconds = 0.0
     condensation_seconds = 0.0
     insertion_seconds = 0.0
+    interior_recovery_operator_residual = 0.0
+    interior_adjoint_operator_residual = 0.0
     for cell, p6_tensor, raw_key, constrained_cell in zip(
         cells,
         tensors,
@@ -642,6 +644,39 @@ def build_variable_p_condensed_trace_system(
                 trans=2,
             )
             trace_rhs = -adjoint_solution.conj().T
+            recovery_residual = A_ii @ recovery + A_it
+            recovery_scale = max(
+                float(np.max(np.abs(A_it), initial=0.0)),
+                1.0,
+            )
+            interior_recovery_operator_residual = max(
+                interior_recovery_operator_residual,
+                float(
+                    np.max(
+                        np.abs(recovery_residual),
+                        initial=0.0,
+                    )
+                    / recovery_scale
+                ),
+            )
+            adjoint_residual = (
+                A_ii.conj().T @ adjoint_solution
+                - A_ti.conj().T
+            )
+            adjoint_scale = max(
+                float(np.max(np.abs(A_ti), initial=0.0)),
+                1.0,
+            )
+            interior_adjoint_operator_residual = max(
+                interior_adjoint_operator_residual,
+                float(
+                    np.max(
+                        np.abs(adjoint_residual),
+                        initial=0.0,
+                    )
+                    / adjoint_scale
+                ),
+            )
             schur = np.ascontiguousarray(A_tt + A_ti @ recovery)
             condensation_seconds += perf_counter() - condensation_started
             schur_cache[class_key] = schur
@@ -703,6 +738,28 @@ def build_variable_p_condensed_trace_system(
         matrix.destroy()
         raise RuntimeError(
             "variable-p PETSc matrix does not match the exact active graph"
+        )
+    recovery_operator_residual = float(
+        comm.allreduce(
+            interior_recovery_operator_residual,
+            op=MPI.MAX,
+        )
+    )
+    adjoint_operator_residual = float(
+        comm.allreduce(
+            interior_adjoint_operator_residual,
+            op=MPI.MAX,
+        )
+    )
+    if (
+        recovery_operator_residual > 5.0e-11
+        or adjoint_operator_residual > 5.0e-11
+    ):
+        matrix.destroy()
+        raise RuntimeError(
+            "cell-interior recovery operator failed residual Gate: "
+            f"primal={recovery_operator_residual:.6e}, "
+            f"adjoint={adjoint_operator_residual:.6e}"
         )
     global_cells = int(comm.allreduce(len(cells), op=MPI.SUM))
     constraint_kinds = (
@@ -797,6 +854,12 @@ def build_variable_p_condensed_trace_system(
         ),
         "insertion_seconds_max": float(
             comm.allreduce(insertion_seconds, op=MPI.MAX)
+        ),
+        "interior_recovery_operator_residual_max": float(
+            recovery_operator_residual
+        ),
+        "interior_adjoint_operator_residual_max": float(
+            adjoint_operator_residual
         ),
         "final_assembly_seconds": assembly_seconds,
         "final_assembly_deferred": bool(defer_final_assembly),

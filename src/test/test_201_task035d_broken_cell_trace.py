@@ -310,6 +310,8 @@ def test_constrained_schur_action_matches_raw_trace_congruence() -> None:
         assert audit["periodic_slave_rows"] is None
         assert audit["matrix_rows"] == 1128
         assert audit["matrix_mallocs"] == 0
+        assert audit["interior_recovery_operator_residual_max"] <= 5.0e-11
+        assert audit["interior_adjoint_operator_residual_max"] <= 5.0e-11
         assert "compiled_p6_tensor_builder" not in audit
         norm_vector = constrained.matrix.createVecRight()
         norm_vector.getArray()[:] = root
@@ -490,6 +492,8 @@ def test_periodic_hanging_matrix_uses_conjugated_phases_before_insertion() -> No
         assert audit["active_trace_rows"] == 3384
         assert audit["matrix_rows"] == 3384
         assert audit["matrix_mallocs"] == 0
+        assert audit["interior_recovery_operator_residual_max"] <= 5.0e-11
+        assert audit["interior_adjoint_operator_residual_max"] <= 5.0e-11
         assert audit["trace_slave_rows_globally_numbered"] is False
 
         rows = np.arange(constraints.independent_trace_rows)
