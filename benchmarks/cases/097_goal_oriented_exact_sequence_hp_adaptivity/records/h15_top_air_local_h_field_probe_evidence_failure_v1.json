@@ -1,0 +1,24 @@
+{
+  "schema_version": "task035d.case097-h15-local-h-candidate-check.v1",
+  "status": "task035d_h15_local_h_checker_evidence_failure",
+  "classification": "fail_closed_evidence_error",
+  "candidate_id": "h15_top_air_local_h_v1",
+  "pass": false,
+  "checks": {
+    "evidence_integrity": false
+  },
+  "failures": [
+    "evidence_integrity"
+  ],
+  "error": {
+    "type": "ValueError",
+    "message": "fixed field probes do not have unique MPI-shard ownership: [{\"coordinate_nm\": [16.500473910378595, 16.749763044810702, 120.69431844202974], \"hit_count\": 0, \"index\": 376}, {\"coordinate_nm\": [16.500473910378595, 16.749763044810702, 123.30009478207572], \"hit_count\": 0, \"index\": 377}, {\"coordinate_nm\": [16.500473910378595, 16.749763044810702, 126.69990521792428], \"hit_count\": 0, \"index\": 378}, {\"coordinate_nm\": [16.500473910378595, 16.749763044810702, 129.30568155797027], \"hit_count\": 0, \"index\": 379}, {\"coordinate_nm\": [16.500473910378595, 23.264203894925657, 120.69431844202974], \"hit_count\": 0, \"index\": 380}, {\"coordinate_nm\": [16.500473910378595, 23.264203894925657, 123.30009478207572], \"hit_count\": 0, \"index\": 381}, {\"coordinate_nm\": [16.500473910378595, 23.264203894925657, 126.69990521792428], \"hit_count\": 0, \"index\": 382}, {\"coordinate_nm\": [16.500473910378595, 23.264203894925657, 129.30568155797027], \"hit_count\": 0, \"index\": 383}]"
+  },
+  "candidate_watchdog": {
+    "path": "benchmarks/artifacts/task035d/case097/h15_top_air_local_h_mpi8_watchdog.json",
+    "expected_sha256": "a3ed3bbd0bc55f64835ca8f9630748391a699b2b6a8031c1408a35fc49048689",
+    "observed_sha256": "a3ed3bbd0bc55f64835ca8f9630748391a699b2b6a8031c1408a35fc49048689"
+  },
+  "accuracy_credit": "none_fail_closed",
+  "ordinary_default_changed": false
+}
