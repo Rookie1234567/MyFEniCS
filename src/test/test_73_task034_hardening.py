@@ -190,6 +190,7 @@ class Task034HardeningTests(unittest.TestCase):
                 "src/geometry/mesh_builder_3d.py",
                 "src/constraints/floquet_3d.py",
                 "src/constraints/high_order_floquet_trace.py",
+                "src/constraints/cross_section_floquet.py",
                 "src/modes/mode_classification.py",
                 "src/coupling/hybrid_internal_modes.py",
                 "src/solvers/common_3d_case_flow.py",

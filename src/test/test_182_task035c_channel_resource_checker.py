@@ -15,6 +15,10 @@ from benchmarks.task035c_channel_resource_checker import (
 
 
 SOURCE_SHA = "1" * 40
+PHASE_CONVENTION = (
+    "atan2 boundary-amplitude phase, nearest 2pi branch around each p6/h10 "
+    "channel center"
+)
 
 
 def _write_json(path: Path, payload: Any) -> str:
@@ -48,7 +52,10 @@ def _orders() -> list[dict[str, Any]]:
                         "n": 0,
                         "polarization": polarization,
                         "power_ratio": power,
-                        "outgoing_amplitude": amplitude,
+                        # Deliberately use a different non-boundary convention so
+                        # tests catch accidental regressions to this field.
+                        "outgoing_amplitude": [-amplitude[1], amplitude[0]],
+                        "outgoing_amplitude_at_boundary": amplitude,
                         "direction": (
                             "outgoing_down" if side == "bottom" else "outgoing_up"
                         ),
@@ -79,15 +86,20 @@ def _source() -> dict[str, Any]:
     }
 
 
-def _make_full(tmp_path: Path) -> tuple[Path, str, list[dict[str, Any]]]:
-    run_directory = tmp_path / "full_raw"
+def _make_full(
+    tmp_path: Path,
+    *,
+    backend: str = "assembly_time_static_condensed",
+    label: str = "full",
+) -> tuple[Path, str, list[dict[str, Any]]]:
+    run_directory = tmp_path / f"{label}_raw"
     orders = _orders()
     _write_json(run_directory / "orders.json", {"orders": orders})
     summary = {
         "stage_case": "stage4_block_grating",
         "geometry_kind": "rectangular_block_grating",
         "mpi_size": 8,
-        "stage4_full3d_assembly_backend_actual": "assembly_time_static_condensed",
+        "stage4_full3d_assembly_backend_actual": backend,
         "dtn_port_orders_json": "orders.json",
         "config": {
             "stage4_boundary_model": "dtn_port",
@@ -99,8 +111,15 @@ def _make_full(tmp_path: Path) -> tuple[Path, str, list[dict[str, Any]]]:
             "mesh_target_size": 5.0,
             "lambda0": 13.5,
             "incident_theta_deg": 80.0,
-            "stage4_full3d_assembly_backend": (
-                "assembly_time_static_condensed"
+            "stage4_full3d_assembly_backend": backend,
+            "stage4_assembly_time_cell_static_condensation": (
+                backend == "assembly_time_static_condensed"
+            ),
+            "stage4_cell_static_condensation": (
+                backend == "assembly_time_static_condensed"
+            ),
+            "stage4_floquet_slave_elimination": (
+                backend == "assembly_time_static_condensed"
             ),
         },
     }
@@ -112,12 +131,8 @@ def _make_full(tmp_path: Path) -> tuple[Path, str, list[dict[str, Any]]]:
         "degree": 2,
         "h_nm": 5.0,
         "mpi_size": 8,
-        "stage4_full3d_assembly_backend_requested": (
-            "assembly_time_static_condensed"
-        ),
-        "stage4_full3d_assembly_backend_actual": (
-            "assembly_time_static_condensed"
-        ),
+        "stage4_full3d_assembly_backend_requested": backend,
+        "stage4_full3d_assembly_backend_actual": backend,
         "source": _source(),
         "raw_evidence": {
             "run_directory": str(run_directory),
@@ -126,7 +141,7 @@ def _make_full(tmp_path: Path) -> tuple[Path, str, list[dict[str, Any]]]:
         "solver_summary_sha256": summary_sha,
         "solver_summary": summary,
     }
-    record_path = tmp_path / "full_watchdog.json"
+    record_path = tmp_path / f"{label}_watchdog.json"
     return record_path, _write_json(record_path, record), orders
 
 
@@ -225,8 +240,10 @@ def _make_hybrid(
             "job_cgroup_dedicated": False,
         },
         "launch_gate": {
-            "full3d_reference_expected_sha256": full_sha,
-            "full3d_reference_observed_sha256": full_sha,
+            "matching_full3d_reference": {
+                "expected_sha256": full_sha,
+                "observed_sha256": full_sha,
+            },
         },
     }
     path = tmp_path / f"{label}_hybrid_watchdog.json"
@@ -273,7 +290,7 @@ def _make_reference(
                 },
                 "reference_center": {
                     "power": power,
-                    "complex_amplitude": row["outgoing_amplitude"],
+                    "complex_amplitude": row["outgoing_amplitude_at_boundary"],
                 },
                 "unchanged_v0_acceptance_gate": {
                     "power_absolute_tolerance": 1.0e-9,
@@ -289,6 +306,7 @@ def _make_reference(
         "status": "significant_channel_reference_v1_frozen",
         "pass": True,
         "mechanical_validation_pass": True,
+        "phase_convention": PHASE_CONVENTION,
         "authority_manifest": {"mechanically_validated": True},
         "significant_channel_selection": {
             "channel_count": 12,
@@ -341,6 +359,57 @@ def test_p2_gate_is_recomputed_from_raw_orders_not_input_status(tmp_path: Path) 
     assert result["input_status_advisory_only"]["hybrid_watchdog_numeric_pass"] is False
     assert result["resource_recomputed"]["hybrid"]["peak_memory_bytes"] == 2_000_000_000
     assert result["resource_recomputed"]["hybrid"]["total_seconds_max_rank"] == 40.0
+    assert (
+        result["full3d_vs_hybrid"]["complex_amplitude_field"]
+        == "outgoing_amplitude_at_boundary"
+    )
+
+
+def test_boundary_amplitude_and_nested_full3d_hash_fail_closed(
+    tmp_path: Path,
+) -> None:
+    evidence = _base_evidence(tmp_path)
+    hybrid_record = json.loads(evidence["hybrid_path"].read_text(encoding="utf-8"))
+    raw_path = Path(hybrid_record["solver_record_ignored_path"])
+    raw = json.loads(raw_path.read_text(encoding="utf-8"))
+
+    # The unphased coefficient is not an acceptance observable.
+    raw["validation"]["external_diffraction_orders"][0]["outgoing_amplitude"] = [
+        999.0,
+        -999.0,
+    ]
+    hybrid_record["measurements"]["validation"] = copy.deepcopy(raw["validation"])
+    hybrid_record["solver_record_sha256"] = _write_json(raw_path, raw)
+    evidence["hybrid_sha"] = _write_json(evidence["hybrid_path"], hybrid_record)
+    result = build_task035c_channel_resource_check(**_build_args(evidence))
+    assert result["pass"] is True
+    assert result["full3d_vs_hybrid"]["complex_amplitude_pass_count"] == 12
+
+    # The boundary-plane coefficient is mandatory and phase-sensitive.
+    del raw["validation"]["external_diffraction_orders"][0][
+        "outgoing_amplitude_at_boundary"
+    ]
+    hybrid_record["measurements"]["validation"] = copy.deepcopy(raw["validation"])
+    hybrid_record["solver_record_sha256"] = _write_json(raw_path, raw)
+    evidence["hybrid_sha"] = _write_json(evidence["hybrid_path"], hybrid_record)
+    with pytest.raises(
+        Task035cEvidenceError,
+        match="outgoing_amplitude_at_boundary",
+    ):
+        build_task035c_channel_resource_check(**_build_args(evidence))
+
+    evidence = _base_evidence(tmp_path / "flat_hash")
+    hybrid_record = json.loads(evidence["hybrid_path"].read_text(encoding="utf-8"))
+    hybrid_record["launch_gate"] = {
+        "full3d_reference_expected_sha256": evidence["full_sha"],
+        "full3d_reference_observed_sha256": evidence["full_sha"],
+    }
+    evidence["hybrid_sha"] = _write_json(evidence["hybrid_path"], hybrid_record)
+    with pytest.raises(
+        Task035cEvidenceError,
+        match="matching_full3d_reference",
+    ):
+        build_task035c_channel_resource_check(**_build_args(evidence))
 
 
 def test_hash_mismatch_fails_closed_and_raw_channel_change_fails_gate(
@@ -387,6 +456,18 @@ def test_p6_absolute_v1_gate_is_separate_from_relative_p2_gate(tmp_path: Path) -
     assert result["p6_formal_gate"]["evaluated"] is True
     assert result["p6_formal_gate"]["absolute_comparison"]["full3d_power_pass_count"] == 11
     assert result["p6_formal_gate"]["absolute_comparison"]["hybrid_power_pass_count"] == 11
+    assert (
+        result["p6_formal_gate"]["absolute_comparison"][
+            "full3d_complex_amplitude_pass_count"
+        ]
+        == 12
+    )
+    assert (
+        result["p6_formal_gate"]["absolute_comparison"][
+            "hybrid_complex_amplitude_pass_count"
+        ]
+        == 12
+    )
     assert result["pass"] is False
 
     with pytest.raises(Task035cEvidenceError, match="requires significant channel"):
@@ -394,6 +475,17 @@ def test_p6_absolute_v1_gate_is_separate_from_relative_p2_gate(tmp_path: Path) -
             **{
                 **_build_args(evidence),
                 "gate_kind": "p6-formal",
+            }
+        )
+
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    reference["phase_convention"] = "unphased modal coefficient"
+    reference_sha = _write_json(reference_path, reference)
+    with pytest.raises(Task035cEvidenceError, match="phase convention differs"):
+        build_task035c_channel_resource_check(
+            **{
+                **args,
+                "significant_channel_reference_sha256": reference_sha,
             }
         )
 
@@ -424,6 +516,13 @@ def test_same_m_standard_static_pair_resource_deltas_and_identity(tmp_path: Path
         pair["recomputed_deltas"]["static_to_standard_modal_coupling_time_ratio"]
         == 0.5
     )
+    assert pair["resource_gate"]["mandatory_memory_pass"] is True
+    assert pair["resource_gate"]["preferred_memory_pass"] is True
+    assert pair["resource_gate"]["user_target_memory_pass"] is True
+    assert pair["resource_gate"]["total_time_pass"] is True
+    assert pair["resource_gate"]["modal_coupling_hard_gate"] is False
+    assert pair["pass"] is True
+    assert result["pass"] is True
 
     other_source_path, other_source_sha = _make_hybrid(
         tmp_path,
@@ -449,3 +548,100 @@ def test_same_m_standard_static_pair_resource_deltas_and_identity(tmp_path: Path
         diagnostic["same_m_backend_pair"]["identity_checks"]["same_source_sha"]
         is False
     )
+    assert diagnostic["same_m_backend_pair"]["pass"] is False
+    assert diagnostic["pass"] is False
+
+
+def test_same_m_resource_gate_rejects_memory_or_total_time_negative(
+    tmp_path: Path,
+) -> None:
+    evidence = _base_evidence(tmp_path)
+    low_saving_path, low_saving_sha = _make_hybrid(
+        tmp_path,
+        evidence["full_path"],
+        evidence["full_sha"],
+        copy.deepcopy(evidence["orders"]),
+        backend="standard_full",
+        peak_bytes=2_200_000_000,
+        total_seconds=50.0,
+        modal_seconds=20.0,
+        label="low_saving_standard",
+    )
+    low_saving = build_task035c_channel_resource_check(
+        **_build_args(evidence),
+        paired_hybrid_record=low_saving_path,
+        paired_hybrid_sha256=low_saving_sha,
+    )
+    gate = low_saving["same_m_backend_pair"]["resource_gate"]
+    assert gate["mandatory_memory_pass"] is False
+    assert gate["preferred_memory_pass"] is False
+    assert gate["user_target_memory_pass"] is False
+    assert gate["total_time_pass"] is True
+    assert low_saving["pass"] is False
+
+    slow_standard_path, slow_standard_sha = _make_hybrid(
+        tmp_path,
+        evidence["full_path"],
+        evidence["full_sha"],
+        copy.deepcopy(evidence["orders"]),
+        backend="standard_full",
+        peak_bytes=4_000_000_000,
+        total_seconds=20.0,
+        modal_seconds=20.0,
+        label="slow_static_pair_standard",
+    )
+    slow_static = build_task035c_channel_resource_check(
+        **_build_args(evidence),
+        paired_hybrid_record=slow_standard_path,
+        paired_hybrid_sha256=slow_standard_sha,
+    )
+    gate = slow_static["same_m_backend_pair"]["resource_gate"]
+    assert gate["mandatory_memory_pass"] is True
+    assert gate["total_time_pass"] is False
+    assert slow_static["pass"] is False
+
+
+def test_full3d_backend_and_hybrid_mode_pairs_recompute_channels(
+    tmp_path: Path,
+) -> None:
+    evidence = _base_evidence(tmp_path)
+    standard_full_path, standard_full_sha, _ = _make_full(
+        tmp_path,
+        backend="standard_full",
+        label="standard_full",
+    )
+    m160_path, m160_sha = _make_hybrid(
+        tmp_path,
+        evidence["full_path"],
+        evidence["full_sha"],
+        copy.deepcopy(evidence["orders"]),
+        modes=160,
+        peak_bytes=2_600_000_000,
+        total_seconds=55.0,
+        modal_seconds=15.0,
+        label="static_m160",
+    )
+    result = build_task035c_channel_resource_check(
+        **_build_args(evidence),
+        paired_full3d_record=standard_full_path,
+        paired_full3d_sha256=standard_full_sha,
+        paired_modes_hybrid_record=m160_path,
+        paired_modes_hybrid_sha256=m160_sha,
+    )
+
+    full_pair = result["full3d_standard_static_pair"]
+    assert full_pair["identity_checks"]["standard_and_static_backends"] is True
+    assert full_pair["channel_comparison"]["power_pass_count"] == 12
+    assert full_pair["channel_comparison"]["complex_amplitude_pass_count"] == 12
+    assert full_pair["pass"] is True
+
+    mode_pair = result["same_backend_m120_m160_pair"]
+    assert mode_pair["identity_checks"]["m120_and_m160"] is True
+    assert mode_pair["channel_comparison"]["power_pass_count"] == 12
+    assert mode_pair["channel_comparison"]["complex_amplitude_pass_count"] == 12
+    assert (
+        mode_pair["resource_comparison"]["m160_to_m120_peak_memory_ratio"]
+        == pytest.approx(1.3)
+    )
+    assert mode_pair["pass"] is True
+    assert result["pass"] is True

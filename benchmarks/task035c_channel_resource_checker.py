@@ -15,6 +15,21 @@ SIGNIFICANT_POWER_FLOOR = 1.0e-8
 P2_RELATIVE_TOLERANCE = 1.0e-3
 AMPLITUDE_DENOMINATOR_FLOOR = 1.0e-15
 VALID_MODE_COUNTS = (120, 160)
+BOUNDARY_AMPLITUDE_FIELD = "outgoing_amplitude_at_boundary"
+SIGNIFICANT_REFERENCE_PHASE_CONVENTION = (
+    "atan2 boundary-amplitude phase, nearest 2pi branch around each p6/h10 "
+    "channel center"
+)
+MANDATORY_STATIC_MEMORY_SAVING_FRACTION = 0.15
+PREFERRED_STATIC_MEMORY_SAVING_FRACTION = 0.25
+USER_TARGET_STATIC_MEMORY_SAVING_FRACTION = 0.50
+MAX_STATIC_TO_STANDARD_TOTAL_TIME_RATIO = 1.35
+FULL3D_BACKEND_CONFIG_FIELDS = (
+    "stage4_full3d_assembly_backend",
+    "stage4_assembly_time_cell_static_condensation",
+    "stage4_cell_static_condensation",
+    "stage4_floquet_slave_elimination",
+)
 
 
 class Task035cEvidenceError(ValueError):
@@ -187,8 +202,8 @@ def _order_map(
         _require(key not in result, f"{context} contains duplicate channel {key}")
         _finite(row.get("power_ratio"), f"{context}[{index}].power_ratio")
         _complex_pair(
-            row.get("outgoing_amplitude"),
-            f"{context}[{index}].outgoing_amplitude",
+            row.get(BOUNDARY_AMPLITUDE_FIELD),
+            f"{context}[{index}].{BOUNDARY_AMPLITUDE_FIELD}",
         )
         result[key] = row
     return result
@@ -619,14 +634,16 @@ def _check_full_hybrid_identity(
         _mapping(hybrid["record"], "Hybrid record").get("launch_gate"),
         "Hybrid launch_gate",
     )
+    matching_reference = _mapping(
+        launch_gate.get("matching_full3d_reference"),
+        "Hybrid launch_gate.matching_full3d_reference",
+    )
     _require(
-        launch_gate.get("full3d_reference_expected_sha256")
-        == full["record_sha256"],
+        matching_reference.get("expected_sha256") == full["record_sha256"],
         "Hybrid launch gate expected Full3D hash differs",
     )
     _require(
-        launch_gate.get("full3d_reference_observed_sha256")
-        == full["record_sha256"],
+        matching_reference.get("observed_sha256") == full["record_sha256"],
         "Hybrid launch gate observed Full3D hash differs",
     )
     _require(
@@ -680,12 +697,12 @@ def _compare_full_hybrid(
             SIGNIFICANT_POWER_FLOOR,
         )
         full_amplitude = _complex_pair(
-            full_orders[key].get("outgoing_amplitude"),
-            "Full3D amplitude",
+            full_orders[key].get(BOUNDARY_AMPLITUDE_FIELD),
+            f"Full3D {BOUNDARY_AMPLITUDE_FIELD}",
         )
         hybrid_amplitude = _complex_pair(
-            hybrid_orders[key].get("outgoing_amplitude"),
-            "Hybrid amplitude",
+            hybrid_orders[key].get(BOUNDARY_AMPLITUDE_FIELD),
+            f"Hybrid {BOUNDARY_AMPLITUDE_FIELD}",
         )
         amplitude_relative = abs(hybrid_amplitude - full_amplitude) / max(
             abs(full_amplitude),
@@ -719,6 +736,8 @@ def _compare_full_hybrid(
     count_pass = len(significant) == EXPECTED_SIGNIFICANT_CHANNEL_COUNT
     return {
         "selection": "max(full3d_power, hybrid_power) >= 1e-8",
+        "complex_amplitude_field": BOUNDARY_AMPLITUDE_FIELD,
+        "phase_convention": SIGNIFICANT_REFERENCE_PHASE_CONVENTION,
         "significant_power_floor": SIGNIFICANT_POWER_FLOOR,
         "relative_tolerance": P2_RELATIVE_TOLERANCE,
         "significant_channel_count": len(significant),
@@ -777,6 +796,10 @@ def _load_significant_reference(
     _require(
         record.get("status") == "significant_channel_reference_v1_frozen",
         "significant channel reference v1 is not frozen",
+    )
+    _require(
+        record.get("phase_convention") == SIGNIFICANT_REFERENCE_PHASE_CONVENTION,
+        "significant channel reference v1 phase convention differs",
     )
     _require(record.get("pass") is True, "significant channel reference pass is not true")
     _require(
@@ -898,12 +921,12 @@ def _compare_to_significant_reference(
             f"Hybrid {key} power",
         )
         full_amplitude = _complex_pair(
-            full_orders[key].get("outgoing_amplitude"),
-            f"Full3D {key} amplitude",
+            full_orders[key].get(BOUNDARY_AMPLITUDE_FIELD),
+            f"Full3D {key} {BOUNDARY_AMPLITUDE_FIELD}",
         )
         hybrid_amplitude = _complex_pair(
-            hybrid_orders[key].get("outgoing_amplitude"),
-            f"Hybrid {key} amplitude",
+            hybrid_orders[key].get(BOUNDARY_AMPLITUDE_FIELD),
+            f"Hybrid {key} {BOUNDARY_AMPLITUDE_FIELD}",
         )
         full_power_error = abs(full_power - reference_power)
         hybrid_power_error = abs(hybrid_power - reference_power)
@@ -941,8 +964,11 @@ def _compare_to_significant_reference(
     return {
         "semantics": (
             "independent absolute comparison to frozen v1 center and unchanged-v0 "
-            "per-channel tolerances; relative 1e-3 does not replace this gate"
+            "per-channel tolerances using boundary-plane complex amplitudes; relative "
+            "1e-3 does not replace this gate"
         ),
+        "complex_amplitude_field": BOUNDARY_AMPLITUDE_FIELD,
+        "phase_convention": SIGNIFICANT_REFERENCE_PHASE_CONVENTION,
         "channel_count": len(rows),
         "analytic_identity_pass_count": analytic_identity_count,
         "full3d_power_pass_count": full_power_count,
@@ -999,6 +1025,7 @@ def _same_m_resource_pair(
         "evaluated": True,
         "authoritative_same_source_same_case_pair": authoritative,
         "identity_checks": identity_checks,
+        "pass": False,
         "reason": (
             "same-source same-case standard/static pair"
             if authoritative
@@ -1021,17 +1048,19 @@ def _same_m_resource_pair(
             "static modal coupling",
         )
         _require(standard_peak > 0.0, "standard peak memory must be positive")
+        _require(static_peak > 0.0, "static peak memory must be positive")
         _require(standard_total > 0.0, "standard total time must be positive")
+        _require(static_total > 0.0, "static total time must be positive")
         _require(standard_modal > 0.0, "standard modal time must be positive")
+        _require(static_modal >= 0.0, "static modal time must be nonnegative")
+        memory_saving = (standard_peak - static_peak) / standard_peak
+        total_ratio = static_total / standard_total
+        modal_ratio = static_modal / standard_modal
         output["recomputed_deltas"] = {
-            "memory_saving_fraction": (standard_peak - static_peak) / standard_peak,
-            "memory_saving_percent": 100.0
-            * (standard_peak - static_peak)
-            / standard_peak,
-            "static_to_standard_total_time_ratio": static_total / standard_total,
-            "static_to_standard_modal_coupling_time_ratio": (
-                static_modal / standard_modal
-            ),
+            "memory_saving_fraction": memory_saving,
+            "memory_saving_percent": 100.0 * memory_saving,
+            "static_to_standard_total_time_ratio": total_ratio,
+            "static_to_standard_modal_coupling_time_ratio": modal_ratio,
             "active_row_saving_fraction": (
                 _finite(standard["active_rows"], "standard rows")
                 - _finite(static["active_rows"], "static rows")
@@ -1043,7 +1072,187 @@ def _same_m_resource_pair(
             )
             / _finite(standard["assembled_local_fem_nnz"], "standard NNZ"),
         }
+        mandatory_memory_pass = (
+            memory_saving >= MANDATORY_STATIC_MEMORY_SAVING_FRACTION
+        )
+        total_time_pass = total_ratio <= MAX_STATIC_TO_STANDARD_TOTAL_TIME_RATIO
+        output["resource_gate"] = {
+            "evaluated": authoritative,
+            "mandatory_memory_saving_fraction": (
+                MANDATORY_STATIC_MEMORY_SAVING_FRACTION
+            ),
+            "mandatory_memory_pass": mandatory_memory_pass,
+            "preferred_memory_saving_fraction": (
+                PREFERRED_STATIC_MEMORY_SAVING_FRACTION
+            ),
+            "preferred_memory_pass": (
+                memory_saving >= PREFERRED_STATIC_MEMORY_SAVING_FRACTION
+            ),
+            "user_target_memory_saving_fraction": (
+                USER_TARGET_STATIC_MEMORY_SAVING_FRACTION
+            ),
+            "user_target_memory_pass": (
+                memory_saving >= USER_TARGET_STATIC_MEMORY_SAVING_FRACTION
+            ),
+            "maximum_total_time_ratio": (
+                MAX_STATIC_TO_STANDARD_TOTAL_TIME_RATIO
+            ),
+            "total_time_pass": total_time_pass,
+            "modal_coupling_time_ratio": modal_ratio,
+            "modal_coupling_hard_gate": False,
+            "modal_coupling_semantics": (
+                "reported and minimized, but not a hard acceptance gate by user "
+                "instruction"
+            ),
+            "pass": authoritative and mandatory_memory_pass and total_time_pass,
+        }
+        output["pass"] = output["resource_gate"]["pass"]
+    else:
+        output["resource_gate"] = {
+            "evaluated": False,
+            "pass": False,
+            "reason": "standard_full and assembly_time_static_condensed are both required",
+        }
     return output
+
+
+def _full3d_backend_pair(
+    primary: Mapping[str, Any],
+    paired: Mapping[str, Any],
+) -> dict[str, Any]:
+    by_backend = {
+        str(primary["actual_backend"]): primary,
+        str(paired["actual_backend"]): paired,
+    }
+    required_backends = {"standard_full", "assembly_time_static_condensed"}
+    primary_config = dict(_mapping(primary["config"], "primary Full3D config"))
+    paired_config = dict(_mapping(paired["config"], "paired Full3D config"))
+    for config in (primary_config, paired_config):
+        for name in FULL3D_BACKEND_CONFIG_FIELDS:
+            config.pop(name, None)
+    identity_checks = {
+        "same_source_sha": primary["source_sha"] == paired["source_sha"],
+        "same_degree": primary["degree"] == paired["degree"],
+        "same_h_nm": math.isclose(
+            float(primary["h_nm"]),
+            float(paired["h_nm"]),
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        ),
+        "same_mpi_size": primary["mpi_size"] == paired["mpi_size"],
+        "same_physics_config": primary_config == paired_config,
+        "standard_and_static_backends": set(by_backend) == required_backends,
+    }
+    authoritative = all(identity_checks.values())
+    channel_comparison = _compare_full_hybrid(
+        primary["orders"],
+        paired["orders"],
+    )
+    return {
+        "evaluated": True,
+        "authoritative_same_source_same_case_pair": authoritative,
+        "identity_checks": identity_checks,
+        "channel_comparison": channel_comparison,
+        "pass": authoritative and bool(channel_comparison["pass"]),
+        "authorities": [
+            {
+                "path": str(item["path"]),
+                "sha256": item["record_sha256"],
+                "assembly_backend_actual": item["actual_backend"],
+            }
+            for item in (primary, paired)
+        ],
+    }
+
+
+def _hybrid_mode_pair(
+    primary: Mapping[str, Any],
+    paired: Mapping[str, Any],
+) -> dict[str, Any]:
+    by_mode = {
+        int(primary["modes"]): primary,
+        int(paired["modes"]): paired,
+    }
+    primary_case = dict(_mapping(primary["case"], "primary Hybrid case"))
+    paired_case = dict(_mapping(paired["case"], "paired-modes Hybrid case"))
+    for case in (primary_case, paired_case):
+        case.pop("requested_modes_per_direction", None)
+        case.pop("candidate_modes_per_target_branch", None)
+    identity_checks = {
+        "same_source_sha": primary["source_sha"] == paired["source_sha"],
+        "same_degree": primary["degree"] == paired["degree"],
+        "same_h_nm": math.isclose(
+            float(primary["h_nm"]),
+            float(paired["h_nm"]),
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        ),
+        "same_modal_degree": primary["modal_degree"] == paired["modal_degree"],
+        "same_modal_h_nm": math.isclose(
+            float(primary["modal_h_nm"]),
+            float(paired["modal_h_nm"]),
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        ),
+        "same_mpi_size": primary["mpi_size"] == paired["mpi_size"],
+        "same_backend": primary["actual_backend"] == paired["actual_backend"],
+        "same_case_except_mode_count": primary_case == paired_case,
+        "m120_and_m160": set(by_mode) == set(VALID_MODE_COUNTS),
+    }
+    authoritative = all(identity_checks.values())
+    channel_comparison = _compare_full_hybrid(
+        primary["orders"],
+        paired["orders"],
+    )
+    resource_comparison: dict[str, Any] | None = None
+    if set(by_mode) == set(VALID_MODE_COUNTS):
+        m120 = _mapping(by_mode[120]["resource"], "M120 resource")
+        m160 = _mapping(by_mode[160]["resource"], "M160 resource")
+        m120_peak = _finite(m120["peak_memory_bytes"], "M120 peak memory")
+        m120_total = _finite(m120["total_seconds_max_rank"], "M120 total time")
+        m120_modal = _finite(
+            m120["modal_coupling_seconds_max_rank"],
+            "M120 modal time",
+        )
+        m160_peak = _finite(m160["peak_memory_bytes"], "M160 peak memory")
+        m160_total = _finite(
+            m160["total_seconds_max_rank"],
+            "M160 total time",
+        )
+        m160_modal = _finite(
+            m160["modal_coupling_seconds_max_rank"],
+            "M160 modal time",
+        )
+        _require(m120_peak > 0.0, "M120 peak memory must be positive")
+        _require(m120_total > 0.0, "M120 total time must be positive")
+        _require(m120_modal > 0.0, "M120 modal time must be positive")
+        _require(m160_peak > 0.0, "M160 peak memory must be positive")
+        _require(m160_total > 0.0, "M160 total time must be positive")
+        _require(m160_modal >= 0.0, "M160 modal time must be nonnegative")
+        resource_comparison = {
+            "m160_to_m120_peak_memory_ratio": m160_peak / m120_peak,
+            "m160_to_m120_total_time_ratio": m160_total / m120_total,
+            "m160_to_m120_modal_coupling_time_ratio": m160_modal / m120_modal,
+            "m120": m120,
+            "m160": m160,
+        }
+    return {
+        "evaluated": True,
+        "authoritative_same_source_same_case_pair": authoritative,
+        "identity_checks": identity_checks,
+        "channel_comparison": channel_comparison,
+        "resource_comparison": resource_comparison,
+        "pass": authoritative and bool(channel_comparison["pass"]),
+        "authorities": [
+            {
+                "path": str(item["path"]),
+                "sha256": item["record_sha256"],
+                "modes": item["modes"],
+                "assembly_backend_actual": item["actual_backend"],
+            }
+            for item in (primary, paired)
+        ],
+    }
 
 
 def build_task035c_channel_resource_check(
@@ -1059,6 +1268,10 @@ def build_task035c_channel_resource_check(
     significant_channel_reference_sha256: str | None = None,
     paired_hybrid_record: Path | str | None = None,
     paired_hybrid_sha256: str | None = None,
+    paired_full3d_record: Path | str | None = None,
+    paired_full3d_sha256: str | None = None,
+    paired_modes_hybrid_record: Path | str | None = None,
+    paired_modes_hybrid_sha256: str | None = None,
 ) -> dict[str, Any]:
     _require(
         _source_sha_is_valid(expected_source_sha),
@@ -1136,9 +1349,51 @@ def build_task035c_channel_resource_check(
         )
         pair_result = _same_m_resource_pair(hybrid, paired)
 
-    selected_gate_pass = (
+    full3d_pair_result: dict[str, Any] = {"evaluated": False}
+    if paired_full3d_record is not None or paired_full3d_sha256 is not None:
+        _require(
+            paired_full3d_record is not None and paired_full3d_sha256 is not None,
+            "paired Full3D record and SHA-256 must be provided together",
+        )
+        paired_full = _load_full3d(
+            paired_full3d_record,
+            paired_full3d_sha256,
+            expected_source_sha,
+        )
+        full3d_pair_result = _full3d_backend_pair(full, paired_full)
+
+    mode_pair_result: dict[str, Any] = {"evaluated": False}
+    if (
+        paired_modes_hybrid_record is not None
+        or paired_modes_hybrid_sha256 is not None
+    ):
+        _require(
+            paired_modes_hybrid_record is not None
+            and paired_modes_hybrid_sha256 is not None,
+            "paired-modes Hybrid record and SHA-256 must be provided together",
+        )
+        paired_modes = _load_hybrid(
+            paired_modes_hybrid_record,
+            paired_modes_hybrid_sha256,
+            expected_source_sha,
+            None,
+            context="paired-modes Hybrid watchdog",
+        )
+        mode_pair_result = _hybrid_mode_pair(hybrid, paired_modes)
+
+    physics_gate_pass = (
         bool(p2_gate["pass"]) if gate_kind == "p2-diagnosis" else bool(p6_gate["pass"])
     )
+    optional_pair_gates = (
+        pair_result,
+        full3d_pair_result,
+        mode_pair_result,
+    )
+    pair_gates_pass = all(
+        not bool(result["evaluated"]) or bool(result.get("pass"))
+        for result in optional_pair_gates
+    )
+    selected_gate_pass = physics_gate_pass and pair_gates_pass
     return {
         "schema_version": "task035c.channel-resource-check.v1",
         "status": "recomputed_pass" if selected_gate_pass else "recomputed_failed",
@@ -1175,6 +1430,8 @@ def build_task035c_channel_resource_check(
             "modes": hybrid["modes"],
         },
         "same_m_backend_pair": pair_result,
+        "full3d_standard_static_pair": full3d_pair_result,
+        "same_backend_m120_m160_pair": mode_pair_result,
         "input_status_advisory_only": {
             "full3d_watchdog_status": full["record"].get("status"),
             "hybrid_watchdog_status": hybrid["record"].get("status"),
@@ -1205,6 +1462,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--significant-channel-reference-sha256")
     parser.add_argument("--paired-hybrid-record", type=Path)
     parser.add_argument("--paired-hybrid-sha256")
+    parser.add_argument("--paired-full3d-record", type=Path)
+    parser.add_argument("--paired-full3d-sha256")
+    parser.add_argument("--paired-modes-hybrid-record", type=Path)
+    parser.add_argument("--paired-modes-hybrid-sha256")
     parser.add_argument("--output", type=Path, required=True)
     return parser
 
@@ -1225,6 +1486,10 @@ def main() -> int:
         ),
         paired_hybrid_record=args.paired_hybrid_record,
         paired_hybrid_sha256=args.paired_hybrid_sha256,
+        paired_full3d_record=args.paired_full3d_record,
+        paired_full3d_sha256=args.paired_full3d_sha256,
+        paired_modes_hybrid_record=args.paired_modes_hybrid_record,
+        paired_modes_hybrid_sha256=args.paired_modes_hybrid_sha256,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(

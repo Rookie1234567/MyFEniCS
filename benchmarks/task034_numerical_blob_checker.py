@@ -67,6 +67,11 @@ INTENTIONAL_CLASSIFICATIONS = {
         "reason": "Task035b extends exact Basix D4 entity transforms and trace layouts from hexa p4 through p6",
         "requires_corresponding_pde_rerun": True,
     },
+    "src/constraints/cross_section_floquet.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Task035c replaces the p1-p4 cross-section shortcut with exact Basix quadrilateral entity DoFs and interval transforms for p1-p6; serial/MPI2/MPI8 constraints and the p6/h10 six-path PDE authorities were rerun",
+        "requires_corresponding_pde_rerun": True,
+    },
     "src/modes/mode_classification.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
         "reason": "batched QEP overlap evaluation reuses MatMult actions and performs the final cancellation in extended precision; Hybrid QEP/PDE anchors must be rerun",
