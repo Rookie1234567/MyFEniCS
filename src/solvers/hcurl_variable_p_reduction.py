@@ -8,6 +8,8 @@ from typing import Any
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
+from scipy import sparse
+from scipy.sparse import linalg as sparse_linalg
 
 from src.adaptivity.variable_p_degree_plan import (
     VariablePCellDegreePlan,
@@ -469,7 +471,7 @@ def _reduced_trace_auxiliary_norm(
     *,
     trace_kind: str,
 ) -> float:
-    """Return a periodic-orbit invariant reduced vector norm."""
+    """Return the full trace-constraint invariant reduced vector norm."""
 
     if trace_kind not in {"dual", "primal"}:
         raise ValueError("reduced trace norm must be primal or dual")
@@ -482,15 +484,63 @@ def _reduced_trace_auxiliary_norm(
     trace = values[: system.active_trace_rows]
     auxiliary = values[system.active_trace_rows :]
     trace_sq = 0.0
-    if system.periodic_constraints is None:
+    constraints = system.trace_constraints
+    if constraints is None:
         trace_sq = float(np.vdot(trace, trace).real)
+    elif hasattr(constraints, "component_gram"):
+        gram = constraints.component_gram
+        expected_shape = (
+            system.active_trace_rows,
+            system.active_trace_rows,
+        )
+        if gram.shape != expected_shape:
+            raise RuntimeError(
+                "physical trace component Gram has the wrong shape"
+            )
+        if trace_kind == "primal":
+            gram_action = gram @ trace
+        elif sparse.issparse(gram):
+            gram_action = sparse_linalg.spsolve(
+                sparse.csc_matrix(gram),
+                trace,
+            )
+        else:
+            gram_action = np.linalg.solve(
+                np.asarray(gram),
+                trace,
+            )
+        if not np.all(np.isfinite(gram_action)):
+            raise RuntimeError(
+                "physical trace component Gram action is non-finite"
+            )
+        if trace_kind == "dual":
+            residual = gram @ gram_action - trace
+            relative = float(
+                np.linalg.norm(residual)
+                / max(np.linalg.norm(trace), 1.0)
+            )
+            if relative > 5.0e-11:
+                raise RuntimeError(
+                    "physical trace component Gram solve failed: "
+                    f"{relative:.6e}"
+                )
+        contribution = np.vdot(trace, gram_action)
+        if (
+            abs(float(contribution.imag))
+            > 5.0e-11 * max(abs(float(contribution.real)), 1.0)
+            or float(contribution.real) < -5.0e-11
+        ):
+            raise RuntimeError(
+                "physical trace component Gram norm is not positive real"
+            )
+        trace_sq = max(float(contribution.real), 0.0)
     else:
         seen = np.zeros(system.active_trace_rows, dtype=np.int8)
         blocks_by_root: dict[
             tuple[int, int],
             list[Any],
         ] = {}
-        for block in system.periodic_constraints.entity_blocks.values():
+        for block in constraints.entity_blocks.values():
             blocks_by_root.setdefault(
                 (int(block.dimension), int(block.root_entity)),
                 [],

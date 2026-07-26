@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 from time import perf_counter
-from typing import Any, Sequence
+from typing import Any, Protocol, Sequence
 
 import numpy as np
 from mpi4py import MPI
@@ -34,6 +34,16 @@ from .hcurl_assembly_time_condensation import (
 from .hcurl_variable_p_local import project_p6_local_tensor
 
 
+class VariablePTraceConstraintMap(Protocol):
+    """Structural contract shared by periodic and local-h trace maps."""
+
+    entity_map: VariablePGlobalEntityMap
+    entity_blocks: Any
+    owned_cells: tuple[Any, ...]
+    independent_trace_rows: int
+    audit: Any
+
+
 @dataclass(frozen=True)
 class VariablePCellRecovery:
     """Local active-field recovery data for one owned cell."""
@@ -49,7 +59,7 @@ class VariablePCondensedTraceSystem:
 
     matrix: PETSc.Mat
     entity_map: VariablePGlobalEntityMap
-    periodic_constraints: VariablePPeriodicConstraintMap | None
+    periodic_constraints: VariablePTraceConstraintMap | None
     active_trace_rows: int
     appended_rows: int
     cell_recovery: tuple[VariablePCellRecovery, ...]
@@ -63,6 +73,17 @@ class VariablePCondensedTraceSystem:
         np.ndarray,
     ]
     build_audit: dict[str, Any]
+
+    @property
+    def trace_constraints(self) -> VariablePTraceConstraintMap | None:
+        """Return the generalized assembly-time trace constraint map.
+
+        ``periodic_constraints`` remains as a compatibility field for the
+        previously qualified periodic-only path.  New local-h code should use
+        this neutral alias.
+        """
+
+        return self.periodic_constraints
 
     def destroy(self) -> None:
         self.matrix.destroy()
@@ -144,12 +165,312 @@ def _tensor_sha256(tensor: np.ndarray) -> str:
     ).hexdigest()
 
 
+def _validate_trace_constraints(
+    entity_map: VariablePGlobalEntityMap,
+    constraints: VariablePTraceConstraintMap,
+) -> tuple[Any, ...]:
+    comm = entity_map.mesh.comm
+    metadata_error: str | None = None
+    active_rows = -1
+    cells: tuple[Any, ...] = ()
+    try:
+        if constraints.entity_map is not entity_map:
+            raise ValueError(
+                "trace constraints must be built from the same entity map"
+            )
+        if constraints.audit.get("pass") is not True:
+            raise ValueError("trace constraint authority has not passed")
+        active_rows = int(constraints.independent_trace_rows)
+        if not 0 < active_rows <= entity_map.active_trace_rows:
+            raise ValueError(
+                "trace constraint independent-row count is invalid"
+            )
+        cells = tuple(constraints.owned_cells)
+        if len(cells) != len(entity_map.owned_cells):
+            raise RuntimeError(
+                "trace constraints do not cover all locally owned cells"
+            )
+    except (AttributeError, TypeError, ValueError, RuntimeError) as exc:
+        metadata_error = f"{type(exc).__name__}: {exc}"
+    metadata_packets = comm.allgather((metadata_error, active_rows))
+    metadata_failures = [
+        f"rank {rank}: {error}"
+        for rank, (error, _rows) in enumerate(metadata_packets)
+        if error is not None
+    ]
+    row_counts = {
+        int(rows)
+        for error, rows in metadata_packets
+        if error is None
+    }
+    if metadata_failures or len(row_counts) != 1:
+        detail = (
+            metadata_failures[:4]
+            if metadata_failures
+            else [f"rank row counts disagree: {sorted(row_counts)}"]
+        )
+        raise ValueError(
+            "collective trace constraint metadata validation failed: "
+            + "; ".join(detail)
+        )
+
+    local_errors: list[str] = []
+    locally_used: list[np.ndarray] = []
+    for entity_cell, constrained_cell in zip(
+        entity_map.owned_cells,
+        cells,
+        strict=True,
+    ):
+        try:
+            if constrained_cell.global_cell != entity_cell.global_cell:
+                raise RuntimeError(
+                    "constrained cells differ from entity-map order"
+                )
+            rows = np.asarray(constrained_cell.independent_rows)
+            expansion = np.asarray(
+                constrained_cell.full_trace_from_independent
+            )
+            if (
+                rows.ndim != 1
+                or not np.issubdtype(rows.dtype, np.integer)
+                or len(rows) == 0
+                or len(np.unique(rows)) != len(rows)
+                or np.any(rows < 0)
+                or np.any(rows >= active_rows)
+            ):
+                raise ValueError(
+                    "one constrained cell has invalid independent rows"
+                )
+            if expansion.shape != (len(entity_cell.trace_rows), len(rows)):
+                raise ValueError(
+                    "one constrained cell expansion has the wrong shape"
+                )
+            if not np.all(np.isfinite(expansion)):
+                raise ValueError(
+                    "one constrained cell expansion contains non-finite values"
+                )
+            if np.any(
+                np.max(np.abs(expansion), axis=1)
+                <= np.finfo(np.float64).tiny
+            ):
+                raise ValueError(
+                    "one constrained cell expansion has an empty trace row"
+                )
+            locally_used.append(np.asarray(rows, dtype=np.int64))
+        except (AttributeError, TypeError, ValueError, RuntimeError) as exc:
+            local_errors.append(
+                f"cell {entity_cell.global_cell}: "
+                f"{type(exc).__name__}: {exc}"
+            )
+
+    component_gram = getattr(constraints, "component_gram", None)
+    try:
+        if component_gram is not None:
+            if component_gram.shape != (active_rows, active_rows):
+                raise ValueError(
+                    "trace constraint component Gram has the wrong shape"
+                )
+            gram_values = (
+                component_gram.data
+                if hasattr(component_gram, "indptr")
+                else np.asarray(component_gram)
+            )
+            if not np.all(np.isfinite(gram_values)):
+                raise ValueError(
+                    "trace constraint component Gram is non-finite"
+                )
+    except (AttributeError, TypeError, ValueError, RuntimeError) as exc:
+        local_errors.append(
+            f"component Gram: {type(exc).__name__}: {exc}"
+        )
+
+    full_entity_rows: list[np.ndarray] = []
+    try:
+        entity_blocks = constraints.entity_blocks
+        block_values = tuple(entity_blocks.values())
+    except (AttributeError, TypeError) as exc:
+        local_errors.append(
+            f"entity block catalog: {type(exc).__name__}: {exc}"
+        )
+        entity_blocks = {}
+        block_values = ()
+    for block in block_values:
+        try:
+            full_rows = np.asarray(block.full_rows)
+            independent = np.asarray(block.independent_rows)
+            expansion = np.asarray(block.full_from_independent)
+            if (
+                full_rows.ndim != 1
+                or independent.ndim != 1
+                or not np.issubdtype(full_rows.dtype, np.integer)
+                or not np.issubdtype(independent.dtype, np.integer)
+                or np.any(full_rows < 0)
+                or np.any(full_rows >= entity_map.active_trace_rows)
+                or np.any(independent < 0)
+                or np.any(independent >= active_rows)
+                or len(np.unique(full_rows)) != len(full_rows)
+                or len(np.unique(independent)) != len(independent)
+            ):
+                raise ValueError(
+                    "one constrained entity block has invalid rows"
+                )
+            if expansion.shape != (len(full_rows), len(independent)):
+                raise ValueError(
+                    "one constrained entity expansion has the wrong shape"
+                )
+            if not np.all(np.isfinite(expansion)):
+                raise ValueError(
+                    "one constrained entity expansion is non-finite"
+                )
+            full_entity_rows.append(
+                np.asarray(full_rows, dtype=np.int64)
+            )
+        except (AttributeError, TypeError, ValueError, RuntimeError) as exc:
+            local_errors.append(
+                f"entity block: {type(exc).__name__}: {exc}"
+            )
+    covered = (
+        np.sort(np.concatenate(full_entity_rows))
+        if full_entity_rows
+        else np.empty(0, dtype=np.int64)
+    )
+    if not np.array_equal(
+        covered,
+        np.arange(entity_map.active_trace_rows, dtype=np.int64),
+    ):
+        local_errors.append(
+            "trace entity blocks do not partition unconstrained trace rows"
+        )
+
+    for entity_cell, constrained_cell in zip(
+        entity_map.owned_cells,
+        cells,
+        strict=True,
+    ):
+        try:
+            blocks: list[Any] = []
+            for dimension in (1, 2):
+                index_map = entity_map.mesh.topology.index_map(dimension)
+                global_entities = np.asarray(
+                    index_map.local_to_global(
+                        np.asarray(
+                            entity_cell.entity_ids[dimension],
+                            dtype=np.int32,
+                        )
+                    ),
+                    dtype=np.int64,
+                )
+                blocks.extend(
+                    entity_blocks[
+                        (dimension, int(global_entity))
+                    ]
+                    for global_entity in global_entities
+                )
+            full_rows = np.concatenate(
+                [np.asarray(block.full_rows) for block in blocks]
+            )
+            if not np.array_equal(full_rows, entity_cell.trace_rows):
+                raise RuntimeError(
+                    "entity blocks differ from cell trace row order"
+                )
+            independent = np.unique(
+                np.concatenate(
+                    [
+                        np.asarray(block.independent_rows)
+                        for block in blocks
+                    ]
+                )
+            ).astype(np.int64)
+            column = {
+                int(row): index for index, row in enumerate(independent)
+            }
+            reconstructed = np.zeros(
+                (len(full_rows), len(independent)),
+                dtype=np.complex128,
+            )
+            row_start = 0
+            for block in blocks:
+                block_rows = np.asarray(block.full_rows)
+                block_independent = np.asarray(block.independent_rows)
+                row_stop = row_start + len(block_rows)
+                columns = np.asarray(
+                    [column[int(row)] for row in block_independent],
+                    dtype=np.int64,
+                )
+                reconstructed[
+                    np.ix_(np.arange(row_start, row_stop), columns)
+                ] = np.asarray(block.full_from_independent)
+                row_start = row_stop
+            if not np.array_equal(
+                independent,
+                constrained_cell.independent_rows,
+            ):
+                raise RuntimeError(
+                    "cell and entity blocks use different independent rows"
+                )
+            mismatch = float(
+                np.max(
+                    np.abs(
+                        reconstructed
+                        - constrained_cell.full_trace_from_independent
+                    ),
+                    initial=0.0,
+                )
+            )
+            if mismatch > 5.0e-11:
+                raise RuntimeError(
+                    "cell and entity trace expansions disagree: "
+                    f"{mismatch:.6e}"
+                )
+        except (
+            AttributeError,
+            KeyError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+        ) as exc:
+            local_errors.append(
+                f"cell/entity cross-check {entity_cell.global_cell}: "
+                f"{type(exc).__name__}: {exc}"
+            )
+
+    error_packets = comm.allgather(tuple(local_errors))
+    collective_errors = [
+        f"rank {rank}: {error}"
+        for rank, packet in enumerate(error_packets)
+        for error in packet
+    ]
+    if collective_errors:
+        raise ValueError(
+            "collective trace constraint validation failed: "
+            + "; ".join(collective_errors[:4])
+        )
+
+    local_union = (
+        np.unique(np.concatenate(locally_used))
+        if locally_used
+        else np.empty(0, dtype=np.int64)
+    )
+    global_union = np.unique(
+        np.concatenate(comm.allgather(local_union))
+    )
+    if not np.array_equal(
+        global_union,
+        np.arange(active_rows, dtype=np.int64),
+    ):
+        raise RuntimeError(
+            "trace constraint map contains an isolated independent row"
+        )
+    return cells
+
+
 def build_variable_p_condensed_trace_system(
     entity_map: VariablePGlobalEntityMap,
     p6_tensors_by_owned_cell: Sequence[np.ndarray],
     *,
     tensor_class_keys: Sequence[Any] | None = None,
     periodic_constraints: VariablePPeriodicConstraintMap | None = None,
+    trace_constraints: VariablePTraceConstraintMap | None = None,
     appended_global_rows: int = 0,
     appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
     appended_support_group_by_row: tuple[int, ...] = (),
@@ -181,39 +502,25 @@ def build_variable_p_condensed_trace_system(
             raise ValueError("variable-p assembly requires p6 hexa cell tensors")
         if not np.all(np.isfinite(tensor)):
             raise ValueError("p6 cell tensor contains non-finite entries")
-    if (
-        periodic_constraints is not None
-        and periodic_constraints.entity_map is not entity_map
-    ):
+    if periodic_constraints is not None and trace_constraints is not None:
         raise ValueError(
-            "periodic constraints must be built from the same entity map"
+            "supply periodic_constraints or trace_constraints, not both"
         )
-    periodic_cells = (
-        periodic_constraints.owned_cells
-        if periodic_constraints is not None
+    constraints: VariablePTraceConstraintMap | None = (
+        trace_constraints
+        if trace_constraints is not None
+        else periodic_constraints
+    )
+    constrained_cells = (
+        _validate_trace_constraints(entity_map, constraints)
+        if constraints is not None
         else (None,) * len(cells)
     )
-    if len(periodic_cells) != len(cells):
-        raise RuntimeError(
-            "periodic constraints do not cover all locally owned cells"
-        )
-    for cell, periodic_cell in zip(
-        cells,
-        periodic_cells,
-        strict=True,
-    ):
-        if (
-            periodic_cell is not None
-            and periodic_cell.global_cell != cell.global_cell
-        ):
-            raise RuntimeError(
-                "periodic cell constraints differ from entity-map order"
-            )
 
     started = perf_counter()
     active_rows = (
-        periodic_constraints.independent_trace_rows
-        if periodic_constraints is not None
+        constraints.independent_trace_rows
+        if constraints is not None
         else entity_map.active_trace_rows
     )
     matrix_rows = active_rows + appended_global_rows
@@ -221,12 +528,12 @@ def build_variable_p_condensed_trace_system(
         appended_global_rows if comm.rank == comm.size - 1 else 0
     )
     insertion_rows = tuple(
-        periodic_cell.independent_rows
-        if periodic_cell is not None
+        constrained_cell.independent_rows
+        if constrained_cell is not None
         else cell.trace_rows
-        for cell, periodic_cell in zip(
+        for cell, constrained_cell in zip(
             cells,
-            periodic_cells,
+            constrained_cells,
             strict=True,
         )
     )
@@ -287,11 +594,11 @@ def build_variable_p_condensed_trace_system(
     projection_seconds = 0.0
     condensation_seconds = 0.0
     insertion_seconds = 0.0
-    for cell, p6_tensor, raw_key, periodic_cell in zip(
+    for cell, p6_tensor, raw_key, constrained_cell in zip(
         cells,
         tensors,
         raw_keys,
-        periodic_cells,
+        constrained_cells,
         strict=True,
     ):
         space = build_variable_p_reference_space(cell.degree_map)
@@ -342,12 +649,12 @@ def build_variable_p_condensed_trace_system(
             interior_lu[class_key] = factor
             trace_from_interior_rhs[class_key] = trace_rhs
         insertion_started = perf_counter()
-        if periodic_cell is None:
+        if constrained_cell is None:
             rows = cell.trace_rows
             insertion_tensor = schur
         else:
-            expansion = periodic_cell.full_trace_from_independent
-            rows = periodic_cell.independent_rows
+            expansion = constrained_cell.full_trace_from_independent
+            rows = constrained_cell.independent_rows
             insertion_tensor = (
                 expansion.conj().T @ schur @ expansion
             )
@@ -398,6 +705,27 @@ def build_variable_p_condensed_trace_system(
             "variable-p PETSc matrix does not match the exact active graph"
         )
     global_cells = int(comm.allreduce(len(cells), op=MPI.SUM))
+    constraint_kinds = (
+        set()
+        if constraints is None
+        else set(map(str, constraints.audit.get("constraint_kinds", ())))
+    )
+    if (
+        constraints is not None
+        and not constraint_kinds
+        and isinstance(constraints, VariablePPeriodicConstraintMap)
+    ):
+        constraint_kinds = {"floquet"}
+    contains_floquet = "floquet" in constraint_kinds
+    contains_hanging = "hanging" in constraint_kinds
+    constraint_schema = (
+        None
+        if constraints is None
+        else str(constraints.audit.get("schema_version", "unknown"))
+    )
+    eliminated_trace_rows = int(
+        entity_map.active_trace_rows - active_rows
+    )
     audit = {
         "schema_version": "task035d.variable-p-condensed-trace-system.v1",
         "status": "variable_p_condensed_trace_matrix_pass",
@@ -408,14 +736,36 @@ def build_variable_p_condensed_trace_system(
         "active_trace_rows_before_periodic_elimination": (
             entity_map.active_trace_rows
         ),
+        "active_trace_rows_before_constraint_elimination": (
+            entity_map.active_trace_rows
+        ),
         "active_trace_rows": active_rows,
         "appended_rows": appended_global_rows,
         "periodic_slave_rows": int(
-            entity_map.active_trace_rows - active_rows
-        ),
+            constraints.audit.get(
+                "periodic_slave_rows",
+                eliminated_trace_rows,
+            )
+        )
+        if contains_floquet
+        else (0 if constraints is None else None),
+        "hanging_slave_rows": int(
+            constraints.audit.get("hanging_slave_rows", 0)
+        )
+        if contains_hanging
+        else 0,
+        "hanging_or_floquet_slave_rows": eliminated_trace_rows,
         "floquet_elimination_applied_before_insertion": (
-            periodic_constraints is not None
+            contains_floquet
         ),
+        "hanging_elimination_applied_before_insertion": (
+            contains_hanging
+        ),
+        "trace_constraint_elimination_applied_before_insertion": (
+            constraints is not None
+        ),
+        "trace_constraint_kinds": sorted(constraint_kinds),
+        "trace_constraint_schema": constraint_schema,
         "uniform_p6_full3d_rows": entity_map.uniform_p6_rows,
         "uniform_p6_trace_rows": entity_map.uniform_p6_trace_rows,
         "inactive_p6_full_rows": int(
@@ -459,13 +809,18 @@ def build_variable_p_condensed_trace_system(
         "full_active_global_matrix_constructed": False,
         "inactive_p6_rows_globally_numbered": False,
         "periodic_slave_rows_globally_numbered": False,
+        "trace_slave_rows_globally_numbered": False,
+        "hanging_or_floquet_slave_rows_globally_numbered": False,
+        "trace_constraint_cell_tensor_binding_complete": (
+            constraints is not None
+        ),
         "cell_p6_tensors_are_local_only": True,
         "ordinary_default_changed": False,
     }
     return VariablePCondensedTraceSystem(
         matrix=matrix,
         entity_map=entity_map,
-        periodic_constraints=periodic_constraints,
+        periodic_constraints=constraints,
         active_trace_rows=active_rows,
         appended_rows=appended_global_rows,
         cell_recovery=tuple(recoveries),
@@ -483,6 +838,7 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
     entity_map: VariablePGlobalEntityMap,
     *,
     periodic_constraints: VariablePPeriodicConstraintMap | None = None,
+    trace_constraints: VariablePTraceConstraintMap | None = None,
     appended_global_rows: int = 0,
     appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
     appended_support_group_by_row: tuple[int, ...] = (),
@@ -491,6 +847,10 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
 ) -> VariablePCondensedTraceSystem:
     """Evaluate p6 FFCx tensor classes and assemble the true active system."""
 
+    if periodic_constraints is not None and trace_constraints is not None:
+        raise ValueError(
+            "supply periodic_constraints or trace_constraints, not both"
+        )
     if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
         raise TypeError("variable-p compiled form must use complex128")
     if p6_space.mesh is not entity_map.mesh:
@@ -586,6 +946,7 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
         tuple(raw_cache[key] for key in cell_policy_keys),
         tensor_class_keys=tuple(tensor_keys),
         periodic_constraints=periodic_constraints,
+        trace_constraints=trace_constraints,
         appended_global_rows=appended_global_rows,
         appended_support_owned_cell_groups=(
             appended_support_owned_cell_groups
@@ -598,6 +959,9 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
     system.build_audit.update(
         {
             "compiled_p6_tensor_builder": True,
+            "compiled_trace_constraint_binding_complete": (
+                system.trace_constraints is not None
+            ),
             "compiled_p6_form_dtype": str(
                 np.dtype(compiled_form.dtype)
             ),
