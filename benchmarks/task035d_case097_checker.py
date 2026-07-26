@@ -11,6 +11,13 @@ from typing import Any, Callable, Mapping, Sequence
 
 from benchmarks.task035d_case097_gates import (
     TASK035D_CASE097_BACKEND,
+    TASK035D_LOCAL_H_ACTIVE_FE_DOFS,
+    TASK035D_LOCAL_H_AUTHORITY_FILE_SHA256,
+    TASK035D_LOCAL_H_AUTHORITY_PATH,
+    TASK035D_LOCAL_H_PLAN_FILE_SHA256,
+    TASK035D_LOCAL_H_PLAN_NAME,
+    TASK035D_LOCAL_H_PLAN_PATH,
+    TASK035D_LOCAL_H_SOLVE_ROWS,
     TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS,
     TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256,
     TASK035D_SIDEWALL_GUARD_AUTHORITY_PATH,
@@ -23,6 +30,8 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_T30_PLAN_FILE_SHA256,
     TASK035D_T30_PLAN_PATH,
     TASK035D_T30_SOLVE_ROWS,
+    task035d_case097_local_h_plan_authority_gate,
+    task035d_case097_local_h_solver_gate,
     task035d_case097_plan_authority_gate,
     task035d_case097_sidewall_guard_plan_authority_gate,
     task035d_case097_sidewall_guard_solver_gate,
@@ -123,6 +132,17 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
             "plan_gate": task035d_case097_plan_authority_gate,
             "solver_gate": task035d_case097_t30_solver_gate,
             "candidate_option_required": False,
+            "h_nm": 10.0,
+            "plan_option": "--stage4-variable-p-cell-degree-plan",
+            "plan_sha_option": (
+                "--stage4-variable-p-cell-degree-plan-sha256"
+            ),
+            "forbidden_plan_option": "--stage4-local-h-refinement-plan",
+            "classification_pass": "p_only_candidate_pass_pending_local_h",
+            "pass_accuracy_credit": (
+                "fresh_p_only_accuracy_and_resource_pass"
+            ),
+            "selection_credit": None,
         }
     if candidate_id == "sidewall_z0_guard_v1":
         return {
@@ -169,6 +189,74 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
             ),
             "solver_gate": task035d_case097_sidewall_guard_solver_gate,
             "candidate_option_required": True,
+            "h_nm": 10.0,
+            "plan_option": "--stage4-variable-p-cell-degree-plan",
+            "plan_sha_option": (
+                "--stage4-variable-p-cell-degree-plan-sha256"
+            ),
+            "forbidden_plan_option": "--stage4-local-h-refinement-plan",
+            "classification_pass": "p_only_candidate_pass_pending_local_h",
+            "pass_accuracy_credit": (
+                "fresh_p_only_accuracy_and_resource_pass"
+            ),
+            "selection_credit": None,
+        }
+    if candidate_id == TASK035D_LOCAL_H_PLAN_NAME:
+        return {
+            "candidate_id": TASK035D_LOCAL_H_PLAN_NAME,
+            "plan_path": TASK035D_LOCAL_H_PLAN_PATH,
+            "plan_file_sha256": TASK035D_LOCAL_H_PLAN_FILE_SHA256,
+            "authority_path": TASK035D_LOCAL_H_AUTHORITY_PATH,
+            "authority_file_sha256": (
+                TASK035D_LOCAL_H_AUTHORITY_FILE_SHA256
+            ),
+            "active_fe_dofs": TASK035D_LOCAL_H_ACTIVE_FE_DOFS,
+            "solve_rows": TASK035D_LOCAL_H_SOLVE_ROWS,
+            "launch_schema": (
+                "task035d.case097-h15-local-h-launch-gate.v1"
+            ),
+            "launch_status": (
+                "task035d_h15_local_h_launch_authority_pass"
+            ),
+            "check_schema": (
+                "task035d.case097-h15-local-h-candidate-check.v1"
+            ),
+            "pass_status": "task035d_h15_local_h_candidate_pass",
+            "negative_status": (
+                "task035d_h15_local_h_controlled_negative"
+            ),
+            "evidence_failure_status": (
+                "task035d_h15_local_h_checker_evidence_failure"
+            ),
+            "benchmark_id": (
+                "task035d_case097_h15_top_air_local_h_candidate"
+            ),
+            "plan_context": "frozen h15 top-air local-h plan",
+            "authority_context": (
+                "frozen MPI1/2/8 h15 local-h production authority"
+            ),
+            "plan_gate": task035d_case097_local_h_plan_authority_gate,
+            "solver_gate": task035d_case097_local_h_solver_gate,
+            "candidate_option_required": True,
+            "h_nm": 15.0,
+            "plan_option": "--stage4-local-h-refinement-plan",
+            "plan_sha_option": (
+                "--stage4-local-h-refinement-plan-sha256"
+            ),
+            "forbidden_plan_option": (
+                "--stage4-variable-p-cell-degree-plan"
+            ),
+            "classification_pass": (
+                "local_h_structural_resource_anchor_pass_without_dwr_credit"
+            ),
+            "pass_accuracy_credit": (
+                "fresh_local_h_accuracy_and_resource_pass_no_dwr_selection_credit"
+            ),
+            "selection_credit": {
+                "structural_resource_anchor": True,
+                "actual_channel_dwr": False,
+                "goal_oriented_selection_credit": False,
+            },
         }
     raise Task035dEvidenceError(
         f"unsupported Task035d candidate id: {candidate_id}"
@@ -594,7 +682,7 @@ def _candidate_launch_contract(
     plan_path = Path(
         _command_option(
             command,
-            "--stage4-variable-p-cell-degree-plan",
+            spec["plan_option"],
         )
     ).resolve()
     authority_path = Path(
@@ -628,7 +716,8 @@ def _candidate_launch_contract(
         ),
         "command_scope": (
             _command_option(command, "--degree") == "6"
-            and _command_option(command, "--h-nm") == "10.0"
+            and _command_option(command, "--h-nm")
+            == str(spec["h_nm"])
             and _command_option(command, "--polarization-kind") == "s"
             and _command_option(command, "--run-kind") == "full-solve"
             and _command_option(command, "--mpi-size") == "8"
@@ -641,6 +730,7 @@ def _candidate_launch_contract(
             and "--task035d-case097-gate" in command
             and "--task035c-p6-h10-gate" not in command
             and "--allow-swap" not in command
+            and spec["forbidden_plan_option"] not in command
             and (
                 command_candidate == candidate_id
                 if spec["candidate_option_required"]
@@ -656,7 +746,7 @@ def _candidate_launch_contract(
             plan_path == (ROOT / spec["plan_path"]).resolve()
             and _command_option(
                 command,
-                "--stage4-variable-p-cell-degree-plan-sha256",
+                spec["plan_sha_option"],
             )
             == spec["plan_file_sha256"]
         ),
@@ -695,6 +785,11 @@ def _candidate_launch_contract(
                 "predicted_direct_solve_rows"
             )
             == spec["solve_rows"]
+        ),
+        "embedded_selection_credit": (
+            spec["selection_credit"] is None
+            or embedded.get("selection_credit")
+            == spec["selection_credit"]
         ),
         "watchdog_no_swap_contract": (
             resource_policy.get("swap_allowed") is False
@@ -761,7 +856,7 @@ def _load_candidate_raw(
     )
     _require(
         record.get("degree") == 6
-        and record.get("h_nm") == 10.0
+        and record.get("h_nm") == _candidate_spec(candidate_id)["h_nm"]
         and record.get("polarization_kind") == "s"
         and record.get("run_kind") == "full-solve"
         and record.get("mpi_size") == EXPECTED_MPI_SIZE
@@ -1343,7 +1438,7 @@ def evaluate_task035d_case097_candidate(
             else spec["negative_status"]
         ),
         "classification": (
-            "p_only_candidate_pass_pending_local_h"
+            spec["classification_pass"]
             if not failures
             else "controlled_negative"
         ),
@@ -1419,6 +1514,12 @@ def build_task035d_case097_candidate_check(
             embedded_launch.get(key) == launch_gate.get(key),
             f"embedded/recomputed launch gate mismatch: {key}",
         )
+    if spec["selection_credit"] is not None:
+        _require(
+            embedded_launch.get("selection_credit")
+            == launch_gate.get("selection_credit"),
+            "embedded/recomputed launch gate mismatch: selection_credit",
+        )
     solver_gate = spec["solver_gate"](summary)
     channel_comparison = compare_significant_channels_to_reference_v1(
         candidate_path=candidate["dtn_orders_path"],
@@ -1482,7 +1583,7 @@ def build_task035d_case097_candidate_check(
             "candidate_launch_contract": candidate["launch_contract"],
             "solver_gate": solver_gate,
             "accuracy_credit": (
-                "fresh_p_only_accuracy_and_resource_pass"
+                spec["pass_accuracy_credit"]
                 if result["pass"]
                 else "none_controlled_negative_preserved"
             ),
@@ -1499,7 +1600,11 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--candidate-id",
-        choices=("t30", "sidewall_z0_guard_v1"),
+        choices=(
+            "t30",
+            "sidewall_z0_guard_v1",
+            TASK035D_LOCAL_H_PLAN_NAME,
+        ),
         default="t30",
     )
     parser.add_argument("--watchdog", type=Path, required=True)

@@ -19,6 +19,12 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_H10_CELL_TAG_SHA256,
     TASK035D_H10_FACET_TAG_SHA256,
     TASK035D_H10_MESH_SHA256,
+    TASK035D_LOCAL_H_ACTIVE_FE_DOFS,
+    TASK035D_LOCAL_H_AUTHORITY_PATH,
+    TASK035D_LOCAL_H_PLAN_NAME,
+    TASK035D_LOCAL_H_PLAN_PATH,
+    TASK035D_LOCAL_H_RAW_ACTIVE_FE_DOFS,
+    TASK035D_LOCAL_H_SOLVE_ROWS,
     TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS,
     TASK035D_SIDEWALL_GUARD_ACTIVE_TRACE_ROWS,
     TASK035D_SIDEWALL_GUARD_CELL_DEGREE_COUNTS,
@@ -30,6 +36,7 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_T30_PERIODIC_TRACE_ROWS,
     TASK035D_T30_PLAN_CONTENT_SHA256,
     TASK035D_T30_SOLVE_ROWS,
+    task035d_case097_local_h_solver_gate,
     task035d_case097_plan_authority_gate,
     task035d_case097_sidewall_guard_plan_authority_gate,
     task035d_case097_sidewall_guard_solver_gate,
@@ -55,6 +62,13 @@ SIDEWALL_PLAN_SHA256 = hashlib.sha256(SIDEWALL_PLAN.read_bytes()).hexdigest()
 SIDEWALL_AUTHORITY_SHA256 = hashlib.sha256(
     SIDEWALL_AUTHORITY.read_bytes()
 ).hexdigest()
+LOCAL_H_PLAN = ROOT / TASK035D_LOCAL_H_PLAN_PATH
+LOCAL_H_AUTHORITY = ROOT / TASK035D_LOCAL_H_AUTHORITY_PATH
+LOCAL_H_PLAN_SHA256 = hashlib.sha256(LOCAL_H_PLAN.read_bytes()).hexdigest()
+LOCAL_H_AUTHORITY_SHA256 = hashlib.sha256(
+    LOCAL_H_AUTHORITY.read_bytes()
+).hexdigest()
+LOCAL_H_COMPONENT = RECORDS / "local_h_production_mpi8_v3_owner_gate_fix1.json"
 SOURCE_SHA = "a" * 40
 
 
@@ -104,6 +118,38 @@ def _sidewall_cli() -> list[str]:
         SIDEWALL_AUTHORITY_SHA256
     )
     return cli
+
+
+def _local_h_cli() -> list[str]:
+    return [
+        "--degree",
+        "6",
+        "--h-nm",
+        "15",
+        "--polarization-kind",
+        "s",
+        "--run-kind",
+        "full-solve",
+        "--mpi-size",
+        "8",
+        "--profile",
+        "default",
+        "--stage4-full3d-assembly-backend",
+        TASK035D_CASE097_BACKEND,
+        "--stage4-local-h-refinement-plan",
+        str(LOCAL_H_PLAN),
+        "--stage4-local-h-refinement-plan-sha256",
+        LOCAL_H_PLAN_SHA256,
+        "--task035d-case097-gate",
+        "--task035d-candidate-id",
+        TASK035D_LOCAL_H_PLAN_NAME,
+        "--task035d-plan-authority",
+        str(LOCAL_H_AUTHORITY),
+        "--task035d-plan-authority-sha256",
+        LOCAL_H_AUTHORITY_SHA256,
+        "--verified-clean-sha",
+        SOURCE_SHA,
+    ]
 
 
 def _solver_summary(*, sidewall: bool = False) -> dict:
@@ -312,6 +358,117 @@ def _solver_summary(*, sidewall: bool = False) -> dict:
     }
 
 
+def _local_h_solver_summary() -> dict:
+    summary = copy.deepcopy(_solver_summary())
+    reduction = json.loads(
+        LOCAL_H_COMPONENT.read_text(encoding="utf-8")
+    )["reduction_audit"]
+    matrix = {
+        "matrix_rows": TASK035D_LOCAL_H_SOLVE_ROWS,
+        "matrix_nnz_used": 123_456.0,
+        "matrix_mallocs": 0.0,
+    }
+    residual = {
+        "linear_system_rhs_norm": 1.0,
+        "linear_system_solution_norm": 2.0,
+        "linear_system_residual_norm": 1.0e-12,
+        "linear_system_relative_residual": 1.0e-12,
+        "eliminated_cell_interior_residual_norm": 1.0e-13,
+        "eliminated_cell_interior_max_abs_residual": 1.0e-14,
+    }
+    summary["matrix_stats"] = matrix
+    summary["stage4_dtn_factor_inventory"]["matrix_stats"] = matrix
+    summary["config"].update(
+        {
+            "mesh_target_size": 15.0,
+            "stage4_variable_p_cell_degree_plan": None,
+            "stage4_local_h_refinement_plan": str(LOCAL_H_PLAN),
+        }
+    )
+    summary["stage4_full3d_assembly_backend_qualification"].update(
+        {
+            "element_contract": (
+                "exact_sequence_balanced_local_h_fixed_trace_p6_interior"
+            ),
+            "contract": [
+                "geometry_bound_balanced_local_h_hanging_trace_elimination",
+                "floquet_slave_elimination_before_global_insertion",
+                "full_recovery_and_explicit_residual",
+            ],
+        }
+    )
+    summary["stage4_local_h_active"] = True
+    summary["stage4_local_h_constraint_audit"] = reduction
+    summary["num_raw_broken_active_fe_dofs"] = (
+        TASK035D_LOCAL_H_RAW_ACTIVE_FE_DOFS
+    )
+    summary["num_actual_conforming_active_fe_dofs"] = (
+        TASK035D_LOCAL_H_ACTIVE_FE_DOFS
+    )
+    summary["num_active_trace_dofs"] = (
+        reduction["independent_trace_rows"]
+    )
+    summary["num_active_condensed_dofs"] = TASK035D_LOCAL_H_SOLVE_ROWS
+    summary["cell_static_condensation"] = {
+        "schema_version": "task035d.variable-p-assembly-reduction.v1",
+        "status": "variable_p_assembly_time_reduction_built",
+        "pass": True,
+        "degree_plan": reduction["degree_plan"],
+        "periodic_constraints": None,
+        "trace_constraints": reduction["trace_constraints"],
+        "local_h": reduction,
+        "global_transfer": {
+            "status": "matrix_free_active_p6_transfer_built",
+            "pass": True,
+            "mpi_size": 8,
+        },
+        "condensed_system": {
+            "schema_version": (
+                "task035d.variable-p-condensed-trace-system.v1"
+            ),
+            "status": "variable_p_condensed_trace_matrix_pass",
+            "pass": True,
+            "mpi_size": 8,
+            "active_full3d_rows_before_condensation": (
+                TASK035D_LOCAL_H_RAW_ACTIVE_FE_DOFS
+            ),
+            "active_trace_rows_before_constraint_elimination": (
+                reduction["raw_broken_trace_rows"]
+            ),
+            "active_trace_rows": reduction["independent_trace_rows"],
+            "appended_rows": 80,
+            "floquet_elimination_applied_before_insertion": True,
+            "hanging_elimination_applied_before_insertion": True,
+            "trace_constraint_elimination_applied_before_insertion": True,
+            "trace_constraint_kinds": ["hanging", "floquet"],
+            "hanging_or_floquet_slave_rows_globally_numbered": False,
+        },
+        "recovery": {
+            "status": "variable_p_full_field_recovery_pass",
+            "pass": True,
+            "trace_constraint_recovery": {
+                "pass": True,
+                "hanging_trace_recovery_explicitly_checked": True,
+                "constraint_kinds": ["floquet", "hanging"],
+                "covered_raw_trace_rows": reduction[
+                    "raw_broken_trace_rows"
+                ],
+                "expected_raw_trace_rows": reduction[
+                    "raw_broken_trace_rows"
+                ],
+                "maximum_abs_error": 1.0e-13,
+                "relative_l2_error": 1.0e-13,
+            },
+        },
+        "full_explicit_true_residual": residual,
+        "full_p6_global_matrix_allocated": False,
+        "inactive_p6_rows_globally_numbered": False,
+        "active_fe_dof_gate_pass": True,
+        "ordinary_default_changed": False,
+    }
+    return summary
+
+
 def _resource_summary() -> dict:
     per_rank = {
         str(rank): {"pss_mb": 100.0 + rank, "uss_mb": 90.0 + rank}
@@ -329,6 +486,72 @@ def _resource_summary() -> dict:
 
 
 class Task035dCase097RunnerGateTests(unittest.TestCase):
+    def test_h15_local_h_launch_and_solver_identity_are_frozen(self) -> None:
+        args = _parse_args(_local_h_cli())
+        launch = _validate_task035d_case097_plan(args)
+        self.assertTrue(launch["pass"], launch["failures"])
+        self.assertEqual(
+            launch["plan_identity"]["actual_conforming_active_fe_dofs"],
+            TASK035D_LOCAL_H_ACTIVE_FE_DOFS,
+        )
+        self.assertEqual(
+            launch["plan_identity"]["predicted_direct_solve_rows"],
+            TASK035D_LOCAL_H_SOLVE_ROWS,
+        )
+        self.assertFalse(
+            launch["selection_credit"]["goal_oriented_selection_credit"]
+        )
+
+        cfg = _full3d_config(args)
+        self.assertEqual(
+            cfg.stage4_local_h_refinement_plan,
+            str(LOCAL_H_PLAN.resolve()),
+        )
+        self.assertIsNone(cfg.stage4_variable_p_cell_degree_plan)
+        command = _worker_command(args, Path("/tmp/task035d-local-h"))
+        self.assertEqual(
+            command[command.index("--h-nm") + 1],
+            "15.0",
+        )
+        self.assertEqual(
+            command[
+                command.index("--stage4-local-h-refinement-plan") + 1
+            ],
+            str(LOCAL_H_PLAN.resolve()),
+        )
+        self.assertNotIn(
+            "--stage4-variable-p-cell-degree-plan",
+            command,
+        )
+
+        solver = _local_h_solver_summary()
+        gate = task035d_case097_local_h_solver_gate(solver)
+        self.assertTrue(gate["pass"], gate["failures"])
+        qualification = _qualify(
+            args=args,
+            solver_summary=solver,
+            events=[{"stage": "after_ksp_solve"}],
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            terminated_for_authority_unreadable=False,
+            no_swap=True,
+            observed_worker_rank_count=8,
+            resource_summary=_resource_summary(),
+        )
+        self.assertTrue(qualification["pass"], qualification["failures"])
+
+        tampered = copy.deepcopy(solver)
+        tampered["cell_static_condensation"]["trace_constraints"][
+            "hanging_or_floquet_slave_rows_globally_numbered"
+        ] = True
+        rejected = task035d_case097_local_h_solver_gate(tampered)
+        self.assertFalse(rejected["pass"])
+        self.assertIn(
+            "combined_constraint_identity",
+            rejected["failures"],
+        )
+
     def test_t30_launch_gate_accepts_only_tracked_frozen_authority(self) -> None:
         args = _parse_args(_task035d_cli())
         gate = _validate_task035d_case097_plan(args)
