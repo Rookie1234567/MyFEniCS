@@ -644,6 +644,7 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     worker_rank_counts: list[int] = []
     per_rank_smaps_peaks: dict[str, dict[str, float]] = {}
     per_rank_rss_peaks: dict[str, float] = {}
+    fully_readable_mpi8_smaps_sample_count = 0
     for row in rows:
         try:
             workers = json.loads(str(row.get("worker_rank_rss_mb_json", "[]")))
@@ -670,6 +671,17 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
             continue
         if not isinstance(smaps, list):
             continue
+        smaps_ranks = {
+            worker.get("rank")
+            for worker in smaps
+            if isinstance(worker, dict)
+            and isinstance(worker.get("rank"), int)
+        }
+        if (
+            row.get("worker_rank_smaps_readable_count") == 8
+            and smaps_ranks == set(range(8))
+        ):
+            fully_readable_mpi8_smaps_sample_count += 1
         for worker in smaps:
             if not isinstance(worker, dict) or not isinstance(
                 worker.get("rank"),
@@ -705,6 +717,9 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "per_rank_smaps_rollup_peak_mb": per_rank_smaps_peaks,
         "max_worker_rank_smaps_readable_count": maximum(
             "worker_rank_smaps_readable_count"
+        ),
+        "fully_readable_mpi8_smaps_sample_count": (
+            fully_readable_mpi8_smaps_sample_count
         ),
         "max_process_tree_rss_mb": process_tree_mb,
         "max_process_tree_swap_mb": process_tree_swap_mb,
@@ -874,6 +889,18 @@ def _qualify(
                 "task035d_all_rank_smaps_readable": (
                     resource.get("max_worker_rank_smaps_readable_count")
                     == 8.0
+                    and isinstance(
+                        resource.get(
+                            "fully_readable_mpi8_smaps_sample_count"
+                        ),
+                        (int, float),
+                    )
+                    and float(
+                        resource[
+                            "fully_readable_mpi8_smaps_sample_count"
+                        ]
+                    )
+                    > 0.0
                     and set(per_rank_smaps) == expected_ranks
                 ),
                 "task035d_pss_uss_peaks_recorded": (

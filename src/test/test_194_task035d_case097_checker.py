@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 from benchmarks.run_direct_memory_forensics import TIMELINE_FIELDS
 from benchmarks.task035d_case097_checker import (
@@ -12,17 +13,27 @@ from benchmarks.task035d_case097_checker import (
     STATIC_P6_FACTOR_NNZ,
     STATIC_P6_MATRIX_NNZ,
     Task035dEvidenceError,
+    _candidate_launch_contract,
     _control_field_directories,
     _energy_comparison,
     _load_frozen_authorities,
     _resource_comparison,
     _timeline_resource_metrics,
     evaluate_task035d_case097_candidate,
+    main,
 )
 from benchmarks.task035d_case097_gates import (
+    TASK035D_CASE097_BACKEND,
     TASK035D_T30_ACTIVE_FE_DOFS,
+    TASK035D_T30_AUTHORITY_FILE_SHA256,
+    TASK035D_T30_AUTHORITY_PATH,
+    TASK035D_T30_PLAN_FILE_SHA256,
+    TASK035D_T30_PLAN_PATH,
     TASK035D_T30_SOLVE_ROWS,
 )
+
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def _timeline_row(*, process_rss_mb: float = 512.0) -> dict[str, object]:
@@ -118,6 +129,86 @@ def _pass_payload() -> dict:
 
 
 class Task035dCase097CheckerTests(unittest.TestCase):
+    def test_candidate_launch_contract_is_bound_to_actual_command(
+        self,
+    ) -> None:
+        source_sha = "a" * 40
+        command = [
+            "mpiexec",
+            "-n",
+            "8",
+            str(ROOT / ".venv" / "bin" / "python"),
+            "-m",
+            "benchmarks.run_task033_full3d_watchdog",
+            "--worker",
+            "--degree",
+            "6",
+            "--h-nm",
+            "10.0",
+            "--polarization-kind",
+            "s",
+            "--run-kind",
+            "full-solve",
+            "--mpi-size",
+            "8",
+            "--profile",
+            "default",
+            "--stage4-full3d-assembly-backend",
+            TASK035D_CASE097_BACKEND,
+            "--stage4-variable-p-cell-degree-plan",
+            str(ROOT / TASK035D_T30_PLAN_PATH),
+            "--stage4-variable-p-cell-degree-plan-sha256",
+            TASK035D_T30_PLAN_FILE_SHA256,
+            "--task035d-case097-gate",
+            "--task035d-plan-authority",
+            str(ROOT / TASK035D_T30_AUTHORITY_PATH),
+            "--task035d-plan-authority-sha256",
+            TASK035D_T30_AUTHORITY_FILE_SHA256,
+            "--verified-clean-sha",
+            source_sha,
+        ]
+        record = {
+            "command": command,
+            "task035d_case097_launch_gate": {
+                "schema_version": "task035d.case097-t30-launch-gate.v1",
+                "status": "task035d_t30_launch_authority_pass",
+                "pass": True,
+                "checks": {"frozen": True},
+                "failures": [],
+                "accuracy_credit": (
+                    "none_until_fresh_12_channel_checker_passes"
+                ),
+                "plan_identity": {
+                    "path": TASK035D_T30_PLAN_PATH,
+                    "file_sha256": TASK035D_T30_PLAN_FILE_SHA256,
+                    "actual_conforming_active_fe_dofs": (
+                        TASK035D_T30_ACTIVE_FE_DOFS
+                    ),
+                    "predicted_direct_solve_rows": TASK035D_T30_SOLVE_ROWS,
+                },
+            },
+            "resource_policy": {"swap_allowed": False},
+            "no_swap": True,
+            "task035d_accuracy_credit": (
+                "pending_independent_12_channel_and_field_checker"
+            ),
+        }
+        contract = _candidate_launch_contract(
+            record,
+            source_sha=source_sha,
+        )
+        self.assertTrue(contract["pass"])
+
+        drifted = json.loads(json.dumps(record))
+        drifted["command"][
+            drifted["command"].index(
+                "--stage4-variable-p-cell-degree-plan-sha256"
+            )
+            + 1
+        ] = "0" * 64
+        with self.assertRaises(Task035dEvidenceError):
+            _candidate_launch_contract(drifted, source_sha=source_sha)
+
     def test_frozen_control_field_shards_remain_hash_bound(self) -> None:
         authorities = _load_frozen_authorities()
         p5_dir, p6_dir, observed = _control_field_directories(authorities)
@@ -184,6 +275,7 @@ class Task035dCase097CheckerTests(unittest.TestCase):
             if key
             in {
                 "sample_count",
+                "fully_readable_mpi8_smaps_sample_count",
                 "max_observed_worker_rank_count",
                 "max_simultaneous_worker_rss_mb",
                 "max_simultaneous_worker_pss_mb",
@@ -282,6 +374,33 @@ class Task035dCase097CheckerTests(unittest.TestCase):
             "significant_12_power_and_12_amplitude",
             rejected["failures"],
         )
+
+    def test_cli_persists_fail_closed_checker_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "failed.json"
+            with mock.patch(
+                "benchmarks.task035d_case097_checker."
+                "build_task035d_case097_candidate_check",
+                side_effect=Task035dEvidenceError("tampered authority"),
+            ):
+                return_code = main(
+                    [
+                        "--watchdog",
+                        str(Path(directory) / "missing-watchdog.json"),
+                        "--watchdog-sha256",
+                        "0" * 64,
+                        "--output",
+                        str(output),
+                    ]
+                )
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(return_code, 2)
+            self.assertFalse(result["pass"])
+            self.assertEqual(
+                result["classification"],
+                "fail_closed_evidence_error",
+            )
+            self.assertEqual(result["failures"], ["evidence_integrity"])
 
 
 if __name__ == "__main__":

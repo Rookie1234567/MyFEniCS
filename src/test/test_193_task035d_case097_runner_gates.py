@@ -257,6 +257,7 @@ def _resource_summary() -> dict:
     }
     return {
         "max_worker_rank_smaps_readable_count": 8.0,
+        "fully_readable_mpi8_smaps_sample_count": 2,
         "per_rank_smaps_rollup_peak_mb": per_rank,
         "max_simultaneous_worker_pss_mb": 800.0,
         "max_simultaneous_worker_uss_mb": 720.0,
@@ -465,6 +466,26 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
             rejected["failures"],
         )
 
+        no_same_frame = _resource_summary()
+        no_same_frame["fully_readable_mpi8_smaps_sample_count"] = 0
+        rejected = _qualify(
+            args=args,
+            solver_summary=summary,
+            events=[{"stage": "after_ksp_solve"}],
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            terminated_for_authority_unreadable=False,
+            no_swap=True,
+            observed_worker_rank_count=8,
+            resource_summary=no_same_frame,
+        )
+        self.assertFalse(rejected["pass"])
+        self.assertIn(
+            "task035d_all_rank_smaps_readable",
+            rejected["failures"],
+        )
+
         summary["num_actual_conforming_active_fe_dofs"] += 1
         rejected_solver = task035d_case097_t30_solver_gate(summary)
         self.assertFalse(rejected_solver["pass"])
@@ -514,6 +535,10 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
         self.assertEqual(
             summary["max_container_cgroup_current_observed_mb"],
             240.0,
+        )
+        self.assertEqual(
+            summary["fully_readable_mpi8_smaps_sample_count"],
+            0,
         )
         self.assertIsNone(summary["max_container_cgroup_current_mb"])
         self.assertEqual(summary["max_container_cgroup_peak_mb"], 250.0)

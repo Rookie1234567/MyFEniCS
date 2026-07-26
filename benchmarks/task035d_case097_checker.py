@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import subprocess
 from typing import Any, Callable, Mapping, Sequence
 
 from benchmarks.task035d_case097_gates import (
@@ -428,6 +429,153 @@ def _source_identity(record: Mapping[str, Any]) -> str:
     return source_sha
 
 
+def _git_tracked(path: Path) -> bool:
+    try:
+        relative = path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return False
+    result = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", "--", relative],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def _command_option(command: Sequence[str], option: str) -> str:
+    indices = [index for index, value in enumerate(command) if value == option]
+    _require(
+        len(indices) == 1 and indices[0] + 1 < len(command),
+        f"candidate command must contain exactly one {option}",
+    )
+    return command[indices[0] + 1]
+
+
+def _candidate_launch_contract(
+    record: Mapping[str, Any],
+    *,
+    source_sha: str,
+) -> dict[str, Any]:
+    command = [
+        str(value)
+        for value in _sequence(record.get("command"), "candidate command")
+    ]
+    plan_path = Path(
+        _command_option(
+            command,
+            "--stage4-variable-p-cell-degree-plan",
+        )
+    ).resolve()
+    authority_path = Path(
+        _command_option(command, "--task035d-plan-authority")
+    ).resolve()
+    embedded = _mapping(
+        record.get("task035d_case097_launch_gate"),
+        "candidate embedded Task035d launch gate",
+    )
+    embedded_checks = _mapping(
+        embedded.get("checks"),
+        "candidate embedded launch checks",
+    )
+    resource_policy = _mapping(
+        record.get("resource_policy"),
+        "candidate resource policy",
+    )
+    checks = {
+        "mpiexec_mpi8_worker": (
+            len(command) >= 6
+            and command[:3] == ["mpiexec", "-n", "8"]
+            and command[3] == str(ROOT / ".venv" / "bin" / "python")
+            and command[4:6]
+            == ["-m", "benchmarks.run_task033_full3d_watchdog"]
+            and "--worker" in command
+        ),
+        "command_scope": (
+            _command_option(command, "--degree") == "6"
+            and _command_option(command, "--h-nm") == "10.0"
+            and _command_option(command, "--polarization-kind") == "s"
+            and _command_option(command, "--run-kind") == "full-solve"
+            and _command_option(command, "--mpi-size") == "8"
+            and _command_option(command, "--profile") == "default"
+            and _command_option(
+                command,
+                "--stage4-full3d-assembly-backend",
+            )
+            == TASK035D_CASE097_BACKEND
+            and "--task035d-case097-gate" in command
+            and "--task035c-p6-h10-gate" not in command
+            and "--allow-swap" not in command
+        ),
+        "command_plan_identity": (
+            plan_path == (ROOT / TASK035D_T30_PLAN_PATH).resolve()
+            and _command_option(
+                command,
+                "--stage4-variable-p-cell-degree-plan-sha256",
+            )
+            == TASK035D_T30_PLAN_FILE_SHA256
+        ),
+        "command_authority_identity": (
+            authority_path == (ROOT / TASK035D_T30_AUTHORITY_PATH).resolve()
+            and _command_option(
+                command,
+                "--task035d-plan-authority-sha256",
+            )
+            == TASK035D_T30_AUTHORITY_FILE_SHA256
+        ),
+        "command_clean_source_identity": (
+            _command_option(command, "--verified-clean-sha") == source_sha
+        ),
+        "embedded_launch_gate_pass": (
+            embedded.get("schema_version")
+            == "task035d.case097-t30-launch-gate.v1"
+            and embedded.get("status")
+            == "task035d_t30_launch_authority_pass"
+            and embedded.get("pass") is True
+            and embedded.get("failures") == []
+            and embedded.get("accuracy_credit")
+            == "none_until_fresh_12_channel_checker_passes"
+            and bool(embedded_checks)
+            and all(value is True for value in embedded_checks.values())
+        ),
+        "embedded_plan_identity": (
+            (embedded.get("plan_identity") or {}).get("path")
+            == TASK035D_T30_PLAN_PATH
+            and (embedded.get("plan_identity") or {}).get("file_sha256")
+            == TASK035D_T30_PLAN_FILE_SHA256
+            and (embedded.get("plan_identity") or {}).get(
+                "actual_conforming_active_fe_dofs"
+            )
+            == TASK035D_T30_ACTIVE_FE_DOFS
+            and (embedded.get("plan_identity") or {}).get(
+                "predicted_direct_solve_rows"
+            )
+            == TASK035D_T30_SOLVE_ROWS
+        ),
+        "watchdog_no_swap_contract": (
+            resource_policy.get("swap_allowed") is False
+            and record.get("no_swap") is True
+        ),
+        "watchdog_accuracy_credit_pending_checker": (
+            record.get("task035d_accuracy_credit")
+            == "pending_independent_12_channel_and_field_checker"
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    _require(
+        not failures,
+        f"candidate launch contract failed: {failures}",
+    )
+    return {
+        "schema_version": "task035d.case097-candidate-launch-contract.v1",
+        "checks": checks,
+        "pass": True,
+        "command": command,
+        "embedded_launch_gate": dict(embedded),
+    }
+
+
 def _artifact(
     raw: Mapping[str, Any],
     key: str,
@@ -477,6 +625,10 @@ def _load_candidate_raw(
         "candidate watchdog identity is outside the frozen T30 scope",
     )
     source_sha = _source_identity(record)
+    launch_contract = _candidate_launch_contract(
+        record,
+        source_sha=source_sha,
+    )
     raw = _mapping(record.get("raw_evidence"), "candidate raw evidence")
     run_value = raw.get("run_directory")
     _require(
@@ -569,6 +721,7 @@ def _load_candidate_raw(
         "record_path": watchdog_path.resolve(),
         "record_sha256": observed_watchdog_sha,
         "source_sha": source_sha,
+        "launch_contract": launch_contract,
         "run_dir": run_dir,
         "solver_summary": solver_summary,
         "timeline_path": artifact_paths["timeline"],
@@ -780,6 +933,7 @@ def _resource_comparison(
 ) -> dict[str, Any]:
     for key in (
         "sample_count",
+        "fully_readable_mpi8_smaps_sample_count",
         "max_observed_worker_rank_count",
         "max_simultaneous_worker_rss_mb",
         "max_simultaneous_worker_pss_mb",
@@ -1073,11 +1227,28 @@ def build_task035d_case097_candidate_check(
         observed_plan_file_sha256=TASK035D_T30_PLAN_FILE_SHA256,
         expected_authority_sha256=TASK035D_T30_AUTHORITY_FILE_SHA256,
         observed_authority_sha256=TASK035D_T30_AUTHORITY_FILE_SHA256,
-        plan_is_tracked=True,
-        authority_is_tracked=True,
+        plan_is_tracked=_git_tracked(ROOT / TASK035D_T30_PLAN_PATH),
+        authority_is_tracked=_git_tracked(
+            ROOT / TASK035D_T30_AUTHORITY_PATH
+        ),
         plan_path_from_root=TASK035D_T30_PLAN_PATH,
         authority_path_from_root=TASK035D_T30_AUTHORITY_PATH,
     )
+    embedded_launch = candidate["launch_contract"]["embedded_launch_gate"]
+    for key in (
+        "schema_version",
+        "status",
+        "pass",
+        "checks",
+        "failures",
+        "plan_identity",
+        "accuracy_credit",
+        "ordinary_default_changed",
+    ):
+        _require(
+            embedded_launch.get(key) == launch_gate.get(key),
+            f"embedded/recomputed launch gate mismatch: {key}",
+        )
     solver_gate = task035d_case097_t30_solver_gate(summary)
     channel_comparison = compare_significant_channels_to_reference_v1(
         candidate_path=candidate["dtn_orders_path"],
@@ -1133,6 +1304,7 @@ def build_task035d_case097_candidate_check(
             "frozen_authorities": authorities["authorities"],
             "control_field_artifacts": control_field_artifacts,
             "launch_gate": launch_gate,
+            "candidate_launch_contract": candidate["launch_contract"],
             "solver_gate": solver_gate,
             "accuracy_credit": (
                 "fresh_p_only_accuracy_and_resource_pass"
@@ -1158,12 +1330,45 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
-    result = build_task035d_case097_candidate_check(
-        watchdog_path=args.watchdog,
-        watchdog_sha256=args.watchdog_sha256,
-    )
     output = args.output
     output = output if output.is_absolute() else ROOT / output
+    try:
+        result = build_task035d_case097_candidate_check(
+            watchdog_path=args.watchdog,
+            watchdog_sha256=args.watchdog_sha256,
+        )
+        return_code = 0 if result["pass"] else 1
+    except Exception as error:
+        watchdog_path = args.watchdog
+        watchdog_path = (
+            watchdog_path
+            if watchdog_path.is_absolute()
+            else ROOT / watchdog_path
+        )
+        result = {
+            "schema_version": "task035d.case097-t30-candidate-check.v1",
+            "status": "task035d_t30_checker_evidence_failure",
+            "classification": "fail_closed_evidence_error",
+            "pass": False,
+            "checks": {"evidence_integrity": False},
+            "failures": ["evidence_integrity"],
+            "error": {
+                "type": type(error).__name__,
+                "message": str(error),
+            },
+            "candidate_watchdog": {
+                "path": _path_from_root(watchdog_path),
+                "expected_sha256": args.watchdog_sha256,
+                "observed_sha256": (
+                    _sha256(watchdog_path)
+                    if watchdog_path.is_file()
+                    else None
+                ),
+            },
+            "accuracy_credit": "none_fail_closed",
+            "ordinary_default_changed": False,
+        }
+        return_code = 2
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + "\n",
@@ -1181,7 +1386,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             ensure_ascii=False,
         )
     )
-    return 0 if result["pass"] else 1
+    return return_code
 
 
 if __name__ == "__main__":
