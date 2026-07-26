@@ -142,6 +142,46 @@ def test_h100_production_reduction_removes_hanging_and_floquet_rows() -> None:
     )
 
 
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2,
+    reason="MPI2 partition-specific owner-routing regression",
+)
+def test_h15_mpi2_accepts_rank_local_hanging_patches() -> None:
+    cfg = target_stage4_config(degree=6, h_nm=15.0)
+    plan = (
+        Path(__file__).resolve().parents[2]
+        / "benchmarks"
+        / "cases"
+        / "097_goal_oriented_exact_sequence_hp_adaptivity"
+        / "records"
+        / "h15_top_air_local_h_plan_v1.json"
+    )
+    mesh_data = build_stage4_local_h_mesh_data(
+        cfg,
+        plan,
+        comm=MPI.COMM_WORLD,
+    )
+    context = mesh_data.local_h_context
+    assert isinstance(context, Stage4LocalHContext)
+    authority = build_stage4_local_h_reduction_authority(
+        context,
+        phase_x=cfg.floquet_phase_x,
+        phase_y=cfg.floquet_phase_y,
+    )
+    trace = authority.audit["trace_constraints"]
+    routing = trace["owner_routed_trace_cache_audit"]
+
+    assert context.carrier.audit["cross_rank_hanging_patch_count"] == 0
+    assert trace["cross_rank_hanging_relation_count"] == 0
+    assert sum(routing["request_counts_by_rank"]) > 0
+    assert sum(trace["remote_entity_lookup_counts_by_rank"]) > 0
+    assert trace["pde_launch_ownership_gate"] is True
+    assert (
+        authority.audit["actual_full3d_equivalent_active_fe_dofs"]
+        == 82_925
+    )
+
+
 def test_local_h_plan_rejects_live_geometry_drift() -> None:
     cfg, path, _mesh_data, _context = _h100_context()
     drifted = replace(cfg, mesh_target_size=15.0)

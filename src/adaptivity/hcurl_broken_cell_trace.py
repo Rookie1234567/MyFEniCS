@@ -2047,16 +2047,62 @@ def build_broken_hexa_cell_trace_constraint_map(
                     comm.size > 1
                     and sum(routing_audit["request_counts_by_rank"]) > 0
                     and sum(remote_entity_lookup_counts) > 0
-                    and sum(cross_rank_hanging_remote_lookup_counts) > 0
-                    and bool(cross_rank_hanging_remote_participants)
+                    and (
+                        (
+                            cross_rank_hanging_patches == 0
+                            and cross_rank_hanging_relations == 0
+                            and not cross_rank_hanging_participant_entities
+                            and sum(
+                                cross_rank_hanging_remote_lookup_counts
+                            )
+                            == 0
+                            and not cross_rank_hanging_remote_participants
+                        )
+                        or (
+                            cross_rank_hanging_patches > 0
+                            and cross_rank_hanging_relations > 0
+                            and sum(
+                                cross_rank_hanging_remote_lookup_counts
+                            )
+                            > 0
+                            and bool(
+                                cross_rank_hanging_remote_participants
+                            )
+                        )
+                    )
                 )
             )
         ),
     }
     failures = [name for name, passed in checks.items() if not passed]
     if failures:
+        diagnostic = {
+            "routing_pass": routing_audit["pass"],
+            "request_counts_by_rank": routing_audit[
+                "request_counts_by_rank"
+            ],
+            "remote_entity_lookup_counts_by_rank": (
+                remote_entity_lookup_counts
+            ),
+            "cross_rank_hanging_patch_count": (
+                cross_rank_hanging_patches
+            ),
+            "cross_rank_hanging_relation_count": (
+                cross_rank_hanging_relations
+            ),
+            "cross_rank_hanging_remote_lookup_counts_by_rank": (
+                cross_rank_hanging_remote_lookup_counts
+            ),
+            "cross_rank_hanging_participant_entity_count": len(
+                cross_rank_hanging_participant_entities
+            ),
+            "cross_rank_hanging_remote_participant_entity_count": len(
+                cross_rank_hanging_remote_participants
+            ),
+        }
         raise RuntimeError(
-            f"broken cell trace binding failed: {failures}"
+            "broken cell trace binding failed: "
+            f"{failures}; diagnostics={diagnostic}"
         )
     audit = MappingProxyType(
         {

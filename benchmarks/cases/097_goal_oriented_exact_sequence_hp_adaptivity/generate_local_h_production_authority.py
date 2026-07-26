@@ -47,9 +47,9 @@ PLAN_NAME = "h15_top_air_local_h_plan_v1.json"
 PLAN_PATH = RECORD_DIR / PLAN_NAME
 PLAN_RELATIVE = str(PLAN_PATH.relative_to(ROOT))
 COMPONENT_NAMES = {
-    1: "local_h_production_mpi1_v3_integration.json",
-    2: "local_h_production_mpi2_v3_integration.json",
-    8: "local_h_production_mpi8_v3_integration.json",
+    1: "local_h_production_mpi1_v3_owner_gate_fix1.json",
+    2: "local_h_production_mpi2_v3_owner_gate_fix1.json",
+    8: "local_h_production_mpi8_v3_owner_gate_fix1.json",
 }
 CHECKER_NAME = "check_local_h_production_authority.py"
 GENERATOR_NAME = Path(__file__).name
