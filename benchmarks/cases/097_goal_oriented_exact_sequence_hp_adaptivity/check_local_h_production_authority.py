@@ -27,6 +27,11 @@ RECORD_NAMES = {
 }
 OUTPUT_NAME = "local_h_production_mpi_identity_v3_owner_gate_fix1.json"
 SCHEMA = "case097.local-h-production-component.v3-integration"
+CHECKER_RELATIVE = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "check_local_h_production_authority.py"
+)
 EXPECTED = {
     "root_cell_count": 120,
     "leaf_cell_count": 134,
@@ -167,6 +172,27 @@ def check_records(paths: tuple[Path, ...]) -> dict[str, Any]:
         payload.get("source_identity", {}).get("numerical_file_sha256")
         for payload in payloads
     ]
+    distributed = [
+        payload
+        for payload in payloads
+        if int(payload["environment"]["mpi_size"]) > 1
+    ]
+    zero_cross_rank = [
+        payload
+        for payload in distributed
+        if payload["reduction_audit"]["trace_constraints"][
+            "cross_rank_hanging_patch_count"
+        ]
+        == 0
+    ]
+    positive_cross_rank = [
+        payload
+        for payload in distributed
+        if payload["reduction_audit"]["trace_constraints"][
+            "cross_rank_hanging_patch_count"
+        ]
+        > 0
+    ]
     cross_checks = {
         "mpi_sizes_are_1_2_8": {
             int(payload["environment"]["mpi_size"])
@@ -176,13 +202,34 @@ def check_records(paths: tuple[Path, ...]) -> dict[str, Any]:
         "same_source_sha": len(sources) == 1,
         "same_numerical_blobs": all(row == numerical[0] for row in numerical[1:]),
         "same_physical_identity": all(row == stable[0] for row in stable[1:]),
-        "cross_rank_hanging_path_exercised": all(
-            payload["reduction_audit"]["trace_constraints"][
-                "cross_rank_hanging_patch_count"
-            ]
-            > 0
-            for payload in payloads
-            if int(payload["environment"]["mpi_size"]) > 1
+        "rank_local_and_cross_rank_hanging_partitions_qualified": (
+            bool(zero_cross_rank)
+            and bool(positive_cross_rank)
+            and all(
+                payload["reduction_audit"]["trace_constraints"][
+                    "pde_launch_ownership_gate"
+                ]
+                is True
+                for payload in distributed
+            )
+            and all(
+                sum(
+                    payload["reduction_audit"]["trace_constraints"][
+                        "owner_routed_trace_cache_audit"
+                    ]["request_counts_by_rank"]
+                )
+                > 0
+                for payload in zero_cross_rank
+            )
+            and all(
+                sum(
+                    payload["reduction_audit"]["trace_constraints"][
+                        "cross_rank_hanging_remote_lookup_counts_by_rank"
+                    ]
+                )
+                > 0
+                for payload in positive_cross_rank
+            )
         ),
         "no_heavy_pde_or_accuracy_credit": all(
             payload["heavy_pde_started"] is False
@@ -201,6 +248,36 @@ def check_records(paths: tuple[Path, ...]) -> dict[str, Any]:
         cwd=ROOT,
         text=True,
     ).strip()
+    checker_status = subprocess.check_output(
+        (
+            "git",
+            "status",
+            "--short",
+            "--untracked-files=all",
+            "--",
+            CHECKER_RELATIVE,
+        ),
+        cwd=ROOT,
+        text=True,
+    ).strip()
+    checker_live_sha256 = _sha256(Path(__file__))
+    checker_committed_sha256 = _commit_blob_sha(
+        live_head,
+        CHECKER_RELATIVE,
+    )
+    checker_identity = {
+        "path": CHECKER_RELATIVE,
+        "source_sha": live_head,
+        "live_sha256": checker_live_sha256,
+        "committed_sha256": checker_committed_sha256,
+        "status_lines": checker_status.splitlines(),
+        "verified_clean_checker": (
+            checker_live_sha256 == checker_committed_sha256
+            and not checker_status
+        ),
+    }
+    if checker_identity["verified_clean_checker"] is not True:
+        failures.append("checker_source_identity")
     return {
         "schema_version": (
             "case097.local-h-production-mpi-identity.v3-integration"
@@ -214,6 +291,7 @@ def check_records(paths: tuple[Path, ...]) -> dict[str, Any]:
         "candidate_id": "h15_top_air_local_h_v1",
         "source_sha": source_sha,
         "live_head": live_head,
+        "checker_identity": checker_identity,
         "input_records": [
             {
                 "path": str(path.relative_to(ROOT)),
