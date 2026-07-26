@@ -194,12 +194,23 @@ def _assemble_unconstrained_vector(
     )
 
 
-def _vec_nonzero_owned_entries(vec: PETSc.Vec, *, relative_tol: float = 1.0e-13) -> tuple[np.ndarray, np.ndarray]:
+def _vec_nonzero_owned_entries(
+    vec: PETSc.Vec,
+    *,
+    relative_tol: float = 1.0e-13,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return owned significant entries using one collective cutoff."""
+
     start, end = vec.getOwnershipRange()
     values = np.asarray(vec.getArray(readonly=True), dtype=np.complex128)
-    if values.size == 0:
-        return _idx([]), np.asarray([], dtype=np.complex128)
-    cutoff = max(1.0e-30, relative_tol * float(np.max(np.abs(values))))
+    local_maximum = float(np.max(np.abs(values), initial=0.0))
+    global_maximum = float(
+        vec.getComm().tompi4py().allreduce(
+            local_maximum,
+            op=MPI.MAX,
+        )
+    )
+    cutoff = max(1.0e-30, relative_tol * global_maximum)
     nz = np.flatnonzero(np.abs(values) > cutoff)
     return (_idx(np.arange(start, end, dtype=np.int64)[nz]), values[nz].copy())
 
@@ -208,6 +219,7 @@ def _combine_owned_entries(
     component_entries: tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]],
     coefficients: tuple[complex, complex],
     *,
+    comm: MPI.Intracomm,
     relative_tol: float = 1.0e-13,
 ) -> tuple[np.ndarray, np.ndarray]:
     row_blocks: list[np.ndarray] = []
@@ -218,17 +230,30 @@ def _combine_owned_entries(
             continue
         row_blocks.append(rows)
         value_blocks.append(PETSc.ScalarType(coefficient) * values)
-    if not row_blocks:
-        return _idx([]), np.asarray([], dtype=np.complex128)
-
-    rows_all = np.concatenate(row_blocks).astype(PETSc.IntType, copy=False)
-    values_all = np.concatenate(value_blocks).astype(np.complex128, copy=False)
-    order = np.argsort(rows_all, kind="mergesort")
-    rows_sorted = rows_all[order]
-    values_sorted = values_all[order]
-    unique_rows, first = np.unique(rows_sorted, return_index=True)
-    summed_values = np.add.reduceat(values_sorted, first)
-    cutoff = max(1.0e-30, relative_tol * float(np.max(np.abs(summed_values))))
+    if row_blocks:
+        rows_all = np.concatenate(row_blocks).astype(
+            PETSc.IntType,
+            copy=False,
+        )
+        values_all = np.concatenate(value_blocks).astype(
+            np.complex128,
+            copy=False,
+        )
+        order = np.argsort(rows_all, kind="mergesort")
+        rows_sorted = rows_all[order]
+        values_sorted = values_all[order]
+        unique_rows, first = np.unique(rows_sorted, return_index=True)
+        summed_values = np.add.reduceat(values_sorted, first)
+    else:
+        unique_rows = _idx([])
+        summed_values = np.asarray([], dtype=np.complex128)
+    local_maximum = float(
+        np.max(np.abs(summed_values), initial=0.0)
+    )
+    global_maximum = float(
+        comm.allreduce(local_maximum, op=MPI.MAX)
+    )
+    cutoff = max(1.0e-30, relative_tol * global_maximum)
     keep = np.abs(summed_values) > cutoff
     return _idx(unique_rows[keep]), summed_values[keep].copy()
 
@@ -1715,6 +1740,7 @@ def solve_stage4_dtn_port_total_field(
     )
     assembly_time_system: AssemblyTimeCondensedSystem | None = None
     variable_p_reduction: VariablePAssemblyTimeReduction | None = None
+    local_h_context = getattr(mesh_data, "local_h_context", None)
     assembly_time_full_rhs: PETSc.Vec | None = None
     variable_p_active_full_rhs: PETSc.Vec | None = None
     variable_p_trace_functional_audits: list[dict[str, Any]] = []
@@ -1735,20 +1761,22 @@ def solve_stage4_dtn_port_total_field(
             0 if mode.side == "top" else 1 for mode in modes
         )
         if variable_p_backend:
-            if cfg.stage4_variable_p_cell_degree_plan is None:
+            if (
+                cfg.stage4_variable_p_cell_degree_plan is None
+                and local_h_context is None
+            ):
                 raise RuntimeError(
-                    "qualified variable-p backend lost its degree plan"
+                    "qualified variable-p backend lost both of its plans"
                 )
             variable_p_reduction = (
                 build_variable_p_assembly_time_reduction(
                     fem.form(a),
                     V,
                     mesh_data.cell_tags,
-                    degree_plan_path=(
-                        cfg.stage4_variable_p_cell_degree_plan
-                    ),
+                    degree_plan_path=cfg.stage4_variable_p_cell_degree_plan,
                     phase_x=floquet_data.phase_x,
                     phase_y=floquet_data.phase_y,
+                    local_h_context=local_h_context,
                     appended_global_rows=n_aux,
                     appended_support_owned_cell_groups=(
                         support_cell_groups
@@ -2263,10 +2291,12 @@ def solve_stage4_dtn_port_total_field(
         ell_cols, ell_values = _combine_owned_entries(
             component_left_entries,
             (mode.e_vector[0], mode.e_vector[1]),
+            comm=comm,
         )
         traction_rows, traction_values = _combine_owned_entries(
             component_right_entries,
             (traction_vector[0], traction_vector[1]),
+            comm=comm,
         )
         aux_global = n_fe + aux_index
         denominator = _mode_projection_denominator(mode, cfg)
@@ -3004,12 +3034,12 @@ def solve_stage4_dtn_port_total_field(
             "ordinary_default_changed": False,
         }
     elif variable_p_reduction is not None:
-        periodic_constraints = (
-            variable_p_reduction.system.periodic_constraints
+        trace_constraints = (
+            variable_p_reduction.system.trace_constraints
         )
-        if periodic_constraints is None:
+        if trace_constraints is None:
             raise RuntimeError(
-                "variable-p audit lost its periodic constraints"
+                "variable-p audit lost its physical trace constraints"
             )
         cell_static_condensation_audit = {
             **variable_p_reduction.build_audit,
@@ -3020,7 +3050,10 @@ def solve_stage4_dtn_port_total_field(
                 augmented_matrix_stats_after_finalize
             ),
             "floquet_slave_elimination": (
-                dict(periodic_constraints.audit)
+                dict(trace_constraints.audit)
+            ),
+            "trace_constraint_elimination": (
+                dict(trace_constraints.audit)
             ),
             "recovery": condensation_recovery,
             "full_operator_true_residual": linear_residual,
@@ -3101,11 +3134,31 @@ def solve_stage4_dtn_port_total_field(
         "stage4_variable_p_active": bool(
             variable_p_reduction is not None
         ),
+        "stage4_local_h_active": bool(
+            variable_p_reduction is not None
+            and variable_p_reduction.build_audit.get("local_h") is not None
+        ),
+        "stage4_local_h_constraint_audit": (
+            None
+            if variable_p_reduction is None
+            else variable_p_reduction.build_audit.get("local_h")
+        ),
         "num_actual_conforming_active_fe_dofs": (
             None
             if variable_p_reduction is None
             else int(
-                variable_p_reduction.system.entity_map.active_rows
+                variable_p_reduction.build_audit[
+                    "actual_full3d_equivalent_active_fe_dofs"
+                ]
+            )
+        ),
+        "num_raw_broken_active_fe_dofs": (
+            None
+            if variable_p_reduction is None
+            else int(
+                variable_p_reduction.build_audit[
+                    "raw_broken_active_fe_dofs"
+                ]
             )
         ),
         "stage4_floquet_slave_elimination": bool(

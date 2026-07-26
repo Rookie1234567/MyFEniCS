@@ -24,6 +24,10 @@ from src.adaptivity.variable_p_transfer import (
     project_p6_dual_to_active_full,
     recover_active_full_to_p6_field,
 )
+from src.adaptivity.stage4_local_h import (
+    Stage4LocalHContext,
+    build_stage4_local_h_reduction_authority,
+)
 
 from .hcurl_variable_p_assembly import (
     VariablePCondensedTraceSystem,
@@ -251,6 +255,20 @@ class VariablePAssemblyTimeReduction:
         if effective_rhs is not active_rhs:
             effective_rhs.destroy()
         try:
+            trace_constraint_recovery = (
+                _trace_constraint_recovery_audit(
+                    self.system,
+                    reduced_solution,
+                    active_solution,
+                )
+            )
+        except Exception:
+            active_solution.destroy()
+            active_rhs.destroy()
+            if auxiliary_action is not None:
+                auxiliary_action.destroy()
+            raise
+        try:
             field, field_audit = recover_active_full_to_p6_field(
                 self.transfer,
                 active_solution,
@@ -281,6 +299,9 @@ class VariablePAssemblyTimeReduction:
                 "active_trace_rows": self.system.active_trace_rows,
                 "p6_storage_rows": self.transfer.audit["p6_global_rows"],
                 "field_recovery": field_audit,
+                "trace_constraint_recovery": (
+                    trace_constraint_recovery
+                ),
                 "auxiliary_interior_action_included": (
                     auxiliary_action is not None
                 ),
@@ -463,6 +484,124 @@ def _global_values(
     if values.shape != (expected,):
         raise RuntimeError("distributed active vector does not close")
     return values
+
+
+def _trace_constraint_recovery_audit(
+    system: VariablePCondensedTraceSystem,
+    reduced_solution: PETSc.Vec,
+    active_solution: PETSc.Vec,
+) -> dict[str, Any]:
+    """Verify every recovered raw trace row against its physical root map."""
+
+    constraints = system.trace_constraints
+    if constraints is None:
+        return {
+            "schema_version": (
+                "task035d.trace-constraint-recovery-audit.v1"
+            ),
+            "status": "not_required",
+            "pass": True,
+            "constraint_kinds": [],
+            "maximum_abs_error": 0.0,
+            "relative_l2_error": 0.0,
+            "ordinary_default_changed": False,
+        }
+    comm = system.entity_map.mesh.comm
+    reduced_values = np.concatenate(
+        comm.allgather(
+            np.asarray(
+                reduced_solution.getArray(readonly=True),
+                dtype=np.complex128,
+            ).copy()
+        )
+    )
+    if reduced_values.shape != (system.matrix.getSize()[0],):
+        raise RuntimeError("reduced recovery vector ownership does not close")
+    trace = reduced_values[: system.active_trace_rows]
+    active = _global_values(
+        active_solution,
+        system.entity_map.active_rows,
+        comm,
+    )
+    routed_blocks = getattr(
+        constraints,
+        "work_owned_entity_blocks",
+        None,
+    )
+    blocks = (
+        routed_blocks
+        if routed_blocks is not None
+        else constraints.entity_blocks.values()
+    )
+    local_error_sq = 0.0
+    local_reference_sq = 0.0
+    local_maximum = 0.0
+    local_rows = 0
+    active_start, active_stop = map(
+        int,
+        active_solution.getOwnershipRange(),
+    )
+    for block in blocks:
+        if routed_blocks is None and not (
+            active_start <= int(block.full_rows[0]) < active_stop
+        ):
+            continue
+        expected = (
+            np.asarray(
+                block.full_from_independent,
+                dtype=np.complex128,
+            )
+            @ trace[
+                np.asarray(block.independent_rows, dtype=np.int64)
+            ]
+        )
+        observed = active[
+            np.asarray(block.full_rows, dtype=np.int64)
+        ]
+        error = observed - expected
+        local_error_sq += float(np.vdot(error, error).real)
+        local_reference_sq += float(np.vdot(expected, expected).real)
+        local_maximum = max(
+            local_maximum,
+            float(np.max(np.abs(error), initial=0.0)),
+        )
+        local_rows += len(block.full_rows)
+    error_norm = float(
+        np.sqrt(comm.allreduce(local_error_sq, op=MPI.SUM))
+    )
+    reference_norm = float(
+        np.sqrt(comm.allreduce(local_reference_sq, op=MPI.SUM))
+    )
+    maximum = float(comm.allreduce(local_maximum, op=MPI.MAX))
+    covered_rows = int(comm.allreduce(local_rows, op=MPI.SUM))
+    relative = error_norm / max(reference_norm, 1.0)
+    if (
+        covered_rows != system.entity_map.active_trace_rows
+        or maximum > 5.0e-11
+        or relative > 5.0e-11
+    ):
+        raise RuntimeError(
+            "physical trace recovery failed: "
+            f"rows={covered_rows}/{system.entity_map.active_trace_rows}, "
+            f"max={maximum:.6e}, relative={relative:.6e}"
+        )
+    return {
+        "schema_version": "task035d.trace-constraint-recovery-audit.v1",
+        "status": "physical_trace_recovery_pass",
+        "pass": True,
+        "constraint_kinds": sorted(
+            map(str, constraints.audit.get("constraint_kinds", ()))
+        ),
+        "covered_raw_trace_rows": covered_rows,
+        "expected_raw_trace_rows": system.entity_map.active_trace_rows,
+        "maximum_abs_error": maximum,
+        "relative_l2_error": relative,
+        "hanging_trace_recovery_explicitly_checked": (
+            "hanging"
+            in constraints.audit.get("constraint_kinds", ())
+        ),
+        "ordinary_default_changed": False,
+    }
 
 
 def _reduced_trace_auxiliary_norm(
@@ -655,9 +794,10 @@ def build_variable_p_assembly_time_reduction(
     p6_space: Any,
     cell_tags: Any,
     *,
-    degree_plan_path: str,
+    degree_plan_path: str | None,
     phase_x: complex,
     phase_y: complex,
+    local_h_context: Stage4LocalHContext | None = None,
     appended_global_rows: int = 0,
     appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
     appended_support_group_by_row: tuple[int, ...] = (),
@@ -665,22 +805,53 @@ def build_variable_p_assembly_time_reduction(
 ) -> VariablePAssemblyTimeReduction:
     """Build one hash-bound Task035d p4/p5/p6 reduction."""
 
-    degree_plan = load_variable_p_cell_degree_plan(
-        p6_space.mesh,
-        degree_plan_path,
-    )
-    if degree_plan.entity_map.active_rows > 90_000:
+    if local_h_context is None:
+        if degree_plan_path is None:
+            raise ValueError(
+                "variable-p reduction requires a cell-degree or local-h plan"
+            )
+        degree_plan = load_variable_p_cell_degree_plan(
+            p6_space.mesh,
+            degree_plan_path,
+        )
+        trace_constraints = None
+        periodic = build_variable_p_periodic_constraint_map(
+            degree_plan.entity_map,
+            axes=("x", "y"),
+            phase_x=complex(phase_x),
+            phase_y=complex(phase_y),
+        )
+        physical_active_fe_dofs = degree_plan.entity_map.active_rows
+        local_h_audit = None
+    else:
+        if degree_plan_path is not None:
+            raise ValueError(
+                "local-h and conforming cell-degree plans are mutually exclusive"
+            )
+        if p6_space.mesh is not local_h_context.carrier.mesh:
+            raise ValueError(
+                "local-h context and p6 storage space use different meshes"
+            )
+        local_h = build_stage4_local_h_reduction_authority(
+            local_h_context,
+            phase_x=complex(phase_x),
+            phase_y=complex(phase_y),
+        )
+        degree_plan = local_h.degree_plan
+        trace_constraints = local_h.trace_constraints
+        periodic = None
+        physical_active_fe_dofs = int(
+            local_h.audit[
+                "actual_full3d_equivalent_active_fe_dofs"
+            ]
+        )
+        local_h_audit = dict(local_h.audit)
+    if physical_active_fe_dofs > 90_000:
         raise RuntimeError(
             "Task035d variable-p candidate exceeds the fail-closed "
             "90,000 active FE DoF gate; use the standard/static backend "
             "for a global-p control"
         )
-    periodic = build_variable_p_periodic_constraint_map(
-        degree_plan.entity_map,
-        axes=("x", "y"),
-        phase_x=complex(phase_x),
-        phase_y=complex(phase_y),
-    )
     transfer = build_variable_p_global_transfer(
         degree_plan.entity_map,
         p6_space,
@@ -692,6 +863,7 @@ def build_variable_p_assembly_time_reduction(
             cell_tags,
             degree_plan.entity_map,
             periodic_constraints=periodic,
+            trace_constraints=trace_constraints,
             appended_global_rows=appended_global_rows,
             appended_support_owned_cell_groups=(
                 appended_support_owned_cell_groups
@@ -707,15 +879,29 @@ def build_variable_p_assembly_time_reduction(
         "status": "variable_p_assembly_time_reduction_built",
         "pass": True,
         "degree_plan": dict(degree_plan.audit),
-        "periodic_constraints": dict(periodic.audit),
+        "periodic_constraints": (
+            None if periodic is None else dict(periodic.audit)
+        ),
+        "trace_constraints": (
+            None
+            if trace_constraints is None
+            else dict(trace_constraints.audit)
+        ),
+        "local_h": local_h_audit,
         "global_transfer": dict(transfer.audit),
         "condensed_system": dict(system.build_audit),
         "actual_conforming_active_fe_dofs": (
+            physical_active_fe_dofs
+        ),
+        "actual_full3d_equivalent_active_fe_dofs": (
+            physical_active_fe_dofs
+        ),
+        "raw_broken_active_fe_dofs": (
             degree_plan.entity_map.active_rows
         ),
         "active_fe_dof_gate_limit": 90_000,
         "active_fe_dof_gate_pass": (
-            degree_plan.entity_map.active_rows <= 90_000
+            physical_active_fe_dofs <= 90_000
         ),
         "full_p6_global_matrix_allocated": False,
         "inactive_p6_rows_globally_numbered": False,

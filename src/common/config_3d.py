@@ -167,6 +167,10 @@ class SimulationConfig3D:
     # Task035d research opt-in. The JSON is bound to the actual cell-box
     # geometry and closes cell p4/p5/p6 decisions onto shared edge/face modes.
     stage4_variable_p_cell_degree_plan: str | None = None
+    # Task035d research opt-in for one balanced dyadic local-h cycle.  The
+    # plan is geometry/hash bound and is accepted only by the inactive-row-free
+    # assembly-time backend.  None preserves the ordinary conforming mesh.
+    stage4_local_h_refinement_plan: str | None = None
     stage4_cell_static_condensation: bool = False
     # Task035b opt-in memory path: call the compiled cell kernels directly,
     # condense cell interiors, and apply Floquet constraints before global
@@ -775,6 +779,15 @@ def qualify_stage4_full3d_assembly_backend(
         else audit
     )
     actual = str(resolved["actual"])
+    if (
+        cfg.stage4_local_h_refinement_plan
+        and actual != ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+    ):
+        raise ValueError(
+            "stage4_local_h_refinement_plan requires "
+            "stage4_full3d_assembly_backend="
+            "'assembly_time_variable_p_condensed'"
+        )
     if actual not in {
         ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
         ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
@@ -818,11 +831,22 @@ def qualify_stage4_full3d_assembly_backend(
             failures.append(
                 "variable-p cannot be combined with the fixed-trace element"
             )
-        if not cfg.stage4_variable_p_cell_degree_plan:
-            failures.append(
-                "variable-p requires a geometry-bound cell degree plan"
+        plan_count = sum(
+            (
+                bool(cfg.stage4_variable_p_cell_degree_plan),
+                bool(cfg.stage4_local_h_refinement_plan),
             )
-        element_contract = "exact_sequence_variable_p4_p5_p6_in_p6_container"
+        )
+        if plan_count != 1:
+            failures.append(
+                "variable-p requires exactly one geometry-bound cell degree "
+                "plan or balanced local-h refinement plan"
+            )
+        element_contract = (
+            "exact_sequence_balanced_local_h_fixed_trace_p6_interior"
+            if cfg.stage4_local_h_refinement_plan
+            else "exact_sequence_variable_p4_p5_p6_in_p6_container"
+        )
     else:
         try:
             element_contract = cfg.nedelec_fixed_trace_contract
@@ -849,9 +873,10 @@ def qualify_stage4_full3d_assembly_backend(
             "assembly_time_cell_interior_condensation",
             "floquet_slave_elimination_before_global_insertion",
             (
-                "geometry_bound_inactive_row_free_variable_p"
-                if actual
-                == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+                "geometry_bound_balanced_local_h_hanging_trace_elimination"
+                if cfg.stage4_local_h_refinement_plan
+                else "geometry_bound_inactive_row_free_variable_p"
+                if actual == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
                 else "uniform_or_fixed_trace_active_space"
             ),
             "sparse_auxiliary_dtn",

@@ -805,7 +805,19 @@ def run_prepared_3d_case_flow(
         petsc_options=petsc_options,
     )
     if mesh_data_override is None:
-        mesh_data = build_airbox_mesh_3d(cfg, out_dir)
+        if cfg.stage4_local_h_refinement_plan is None:
+            mesh_data = build_airbox_mesh_3d(cfg, out_dir)
+        else:
+            from ..adaptivity.stage4_local_h import (
+                build_stage4_local_h_mesh_data,
+            )
+
+            mesh_data = build_stage4_local_h_mesh_data(
+                cfg,
+                cfg.stage4_local_h_refinement_plan,
+                comm=comm,
+            )
+            log("mesh source = explicit hash-bound balanced local-h plan")
     else:
         relation = MPI.Comm.Compare(comm, mesh_data_override.mesh.comm)
         if relation not in (MPI.IDENT, MPI.CONGRUENT):
@@ -816,6 +828,21 @@ def run_prepared_3d_case_flow(
             )
         mesh_data = mesh_data_override
         log("mesh source = explicit audited mesh_data_override")
+    local_h_context = getattr(mesh_data, "local_h_context", None)
+    if (
+        cfg.stage4_local_h_refinement_plan is None
+        and local_h_context is not None
+    ):
+        raise ValueError(
+            "a local-h mesh override requires stage4_local_h_refinement_plan"
+        )
+    if (
+        cfg.stage4_local_h_refinement_plan is not None
+        and local_h_context is None
+    ):
+        raise ValueError(
+            "stage4_local_h_refinement_plan did not produce a local-h context"
+        )
     _finish_timed_stage(comm, timings, "mesh_build", stage_start, log)
     _write_progress_event(
         out_dir,
@@ -868,6 +895,11 @@ def run_prepared_3d_case_flow(
             stage_start,
             log,
         )
+    local_h_mesh_audit = (
+        None
+        if local_h_context is None
+        else dict(local_h_context.audit)
+    )
 
     stage_start = _start_timed_stage(comm)
     _write_progress_event(out_dir, comm, stage="function_space_setup", status="begin", started=started)
@@ -1428,6 +1460,7 @@ def run_prepared_3d_case_flow(
         else "PETSc KSP did not converge.",
         "num_mesh_cells": int(num_cells),
         "variable_p_mesh_identity": variable_p_mesh_identity,
+        "stage4_local_h_mesh_audit": local_h_mesh_audit,
         "num_nedelec_dofs": int(num_dofs),
         "matrix_stats": matrix_stats,
         "unconstrained_matrix_stats": unconstrained_matrix_stats,
@@ -1512,11 +1545,24 @@ def run_prepared_3d_case_flow(
         "stage4_variable_p_active": False
         if dtn_solver_info is None
         else bool(dtn_solver_info.get("stage4_variable_p_active")),
+        "stage4_local_h_active": bool(
+            local_h_context is not None
+            or (
+                dtn_solver_info is not None
+                and dtn_solver_info.get("stage4_local_h_active")
+            )
+        ),
+        "stage4_local_h_constraint_audit": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("stage4_local_h_constraint_audit"),
         "num_actual_conforming_active_fe_dofs": None
         if dtn_solver_info is None
         else dtn_solver_info.get(
             "num_actual_conforming_active_fe_dofs"
         ),
+        "num_raw_broken_active_fe_dofs": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("num_raw_broken_active_fe_dofs"),
         "num_active_trace_dofs": None
         if dtn_solver_info is None
         else dtn_solver_info.get("num_active_trace_dofs"),

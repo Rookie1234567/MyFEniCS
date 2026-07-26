@@ -230,6 +230,10 @@ def _config_updates(args) -> dict[str, object]:
         updates["stage4_variable_p_cell_degree_plan"] = (
             args.stage4_variable_p_cell_degree_plan
         )
+    if args.stage4_local_h_refinement_plan is not None:
+        updates["stage4_local_h_refinement_plan"] = (
+            args.stage4_local_h_refinement_plan
+        )
     if args.stage4_pml_outer_bc is not None:
         updates["stage4_pml_outer_bc"] = args.stage4_pml_outer_bc
     if args.diffraction_zero_order_only is not None:
@@ -631,6 +635,14 @@ def main(argv: list[str] | None = None):
         help=(
             "Task035d geometry-bound p4/p5/p6 cell-plan JSON. It is "
             "required only by assembly_time_variable_p_condensed."
+        ),
+    )
+    parser.add_argument(
+        "--stage4-local-h-refinement-plan",
+        default=None,
+        help=(
+            "Task035d geometry-bound balanced local-h plan JSON. It is an "
+            "explicit opt-in for assembly_time_variable_p_condensed."
         ),
     )
     parser.add_argument(
