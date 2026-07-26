@@ -1,0 +1,1417 @@
+{
+  "argv": [
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt2_authority.py",
+    "--source-sha",
+    "89330ad9241919c4b27edf998d3acc4ab7e29ccf",
+    "--output",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt2_mpi1_v1.json"
+  ],
+  "checks": {
+    "clean_live_source": true,
+    "combined_constraint_kinds": true,
+    "ordinary_default_unchanged": true,
+    "p5_high_condition_retained_as_risk": true,
+    "p5_trace_p6_interior_hanging_floquet": true,
+    "prior_exact_sequence_and_attempt1_hash_bound": true,
+    "qualified_activation": true
+  },
+  "component_resource_ledger": {
+    "candidate_matrix_nnz": 2758850,
+    "candidate_matrix_rows": 5430,
+    "diagnostic_raw_matrix_nnz": 3143400,
+    "diagnostic_raw_matrix_rows": 8100,
+    "factorization_or_pde_solve_memory_measured": false,
+    "owned_cell_expansion_bytes_by_rank": [
+      53368800
+    ],
+    "owned_cell_expansion_bytes_global_sum": 53368800,
+    "process_peak_is_not_candidate_memory_authority": true,
+    "raw_oracle_and_candidate_co_resident": true,
+    "replicated_component_gram_bytes_per_rank": 405524,
+    "replicated_entity_block_bytes_per_rank": 14691520,
+    "semantics": "measured_or_derived_component_objects_only",
+    "timings_are_per_stage_mpi_max_not_rank_sum": true
+  },
+  "component_scope": "actual DOLFINx cell_info + FFCx p6 cell tensor + p5 trace projection + cell-interior Schur + hanging/Floquet C_K^H S_K C_K + PETSc action/RHS/recovery",
+  "distributed_scalability_qualified": false,
+  "environment": {
+    "all_ranks_identical": true,
+    "basix": "0.10.0",
+    "dolfinx": "0.10.0.post2",
+    "mpi4py": "3.1.5",
+    "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+    "mpi_vendor": [
+      "Open MPI",
+      [
+        4,
+        1,
+        6
+      ]
+    ],
+    "petsc4py": "3.19.6",
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128",
+    "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "qualified_activation": "1",
+    "rank_environments": [
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 0
+      }
+    ],
+    "rank_ids": [
+      0
+    ]
+  },
+  "failures": [],
+  "fixture_config": {
+    "cell_interior_degree": 6,
+    "form": "curlcurl + (2.5+0.17j) mass",
+    "periodic_axes": [
+      "x",
+      "y"
+    ],
+    "phase_x": [
+      0.9800665778412416,
+      0.19866933079506122
+    ],
+    "phase_y": [
+      0.955336489125606,
+      -0.29552020666133955
+    ],
+    "refined_root": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "root_cells": [
+      3,
+      3,
+      1
+    ],
+    "trace_degree": 5
+  },
+  "fixture_config_sha256": "b66ca14cb02e0857824d20a609acb9dd86a7d725fc82bb8651f8bbed7bab4264",
+  "heavy_pde_started": false,
+  "mpi_size": 1,
+  "numerical_files": {
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_attempt2_authority.py": "061512d51ae72f64d67f29673b08230d15b0fb3f5c6772c0bc16beb450059d15",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt2_authority.py": "e3d3ab15d089f9a1b7b9a22099ec66e25adfd4e13633547829912ceb555117f4",
+    "src/adaptivity/dyadic_hexa_broken_mesh.py": "b30c769dc4e9aedea4932de9f4fc1fe2ec0f2cafa02e5836aa624b0b39a0b75f",
+    "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+    "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+    "src/adaptivity/hcurl_broken_cell_trace.py": "e6b60777db8b66748262c77d80c4e722df852c2ff320a279ab701607a6f36164",
+    "src/adaptivity/hcurl_broken_trace_graph.py": "a6aa48cbf0c596eaa97fe2470fed6f6faf02b979d63e057fb2d7b133da7f3c85",
+    "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+    "src/adaptivity/hcurl_trace_constraint_graph.py": "a5236d7c5999354599c7be73dce3894d29657be3008ecd5147df437fa0cfd5ee",
+    "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+    "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+    "src/solvers/hcurl_assembly_time_condensation.py": "af1aab6751dc3b11ed769097ed04c7e4d11a728f6a9066a074dd53cded35e59b",
+    "src/solvers/hcurl_variable_p_assembly.py": "ca7b2892f7cca4fdf68a996d8931934aa15038a2b6a05af468fb4d3ed7655e68",
+    "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+    "src/solvers/hcurl_variable_p_reduction.py": "e7efdbfbba7cddf81d6a388a6dbb42966d7dd66b914b43645fb8f87907dd1f6c"
+  },
+  "ordinary_default_changed": false,
+  "p5_trace_p6_interior_hanging_floquet": {
+    "assembly_audit": {
+      "active_full3d_rows_before_condensation": 24750,
+      "active_trace_rows": 5430,
+      "active_trace_rows_before_constraint_elimination": 8100,
+      "active_trace_rows_before_periodic_elimination": 8100,
+      "appended_rows": 0,
+      "cell_p6_tensors_are_local_only": true,
+      "compiled_p6_element_hash": 16913352432823651554,
+      "compiled_p6_form_dtype": "complex128",
+      "compiled_p6_tensor_builder": true,
+      "compiled_trace_constraint_binding_complete": true,
+      "condensation_seconds_max": 10.119297720026225,
+      "final_assembly_deferred": false,
+      "final_assembly_seconds": 0.001956559019163251,
+      "floquet_elimination_applied_before_insertion": true,
+      "full_active_global_matrix_constructed": false,
+      "full_p6_global_matrix_constructed": false,
+      "global_cell_count": 37,
+      "hanging_elimination_applied_before_insertion": true,
+      "hanging_or_floquet_slave_rows": 2670,
+      "hanging_or_floquet_slave_rows_globally_numbered": false,
+      "hanging_slave_rows": 1720,
+      "inactive_p6_full_rows": 3660,
+      "inactive_p6_rows_globally_numbered": false,
+      "inactive_p6_trace_rows": 3660,
+      "insertion_seconds_max": 4.1741146869026124,
+      "interior_adjoint_operator_residual_max": 8.10438429036637e-15,
+      "interior_recovery_operator_residual_max": 1.6563240536414223e-15,
+      "local_reference_class_count_sum": 15,
+      "matrix_mallocs": 0,
+      "matrix_nnz": 2758850,
+      "matrix_nnz_allocated": 2758850,
+      "matrix_nnz_preallocated": 2758850,
+      "matrix_rows": 5430,
+      "mpi_size": 1,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "periodic_slave_rows": 950,
+      "periodic_slave_rows_globally_numbered": false,
+      "preallocation_seconds": 0.10871997004142031,
+      "projection_seconds_max": 32.46245597995585,
+      "raw_tensor_broadcast_seconds_max": 1.5212048310786486e-05,
+      "raw_tensor_class_count_global_unique": 2,
+      "raw_tensor_class_count_sum": 2,
+      "raw_tensor_class_owner_ranks": {
+        "('p6_actual_space', 1, 0.5, 0.5, 0.5)": 0,
+        "('p6_actual_space', 1, 1.0, 1.0, 1.0)": 0
+      },
+      "raw_tensor_class_use_count_sum": 2,
+      "raw_tensor_class_user_rank_counts": {
+        "('p6_actual_space', 1, 0.5, 0.5, 0.5)": 1,
+        "('p6_actual_space', 1, 1.0, 1.0, 1.0)": 1
+      },
+      "raw_tensor_classes": [
+        {
+          "active_kernel_ids": [
+            1
+          ],
+          "canonical_coordinates_sha256": "74e0cfa22f9f5ae7af34cac520bd57acc9b3a01bad90820bb942a88f1383833d",
+          "cell_widths": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "consumer_rank_count": 1,
+          "dimension": 882,
+          "material_tag": 1,
+          "owner_rank": 0,
+          "policy": "p6_actual_space",
+          "tensor_bytes": 12446784
+        },
+        {
+          "active_kernel_ids": [
+            1
+          ],
+          "canonical_coordinates_sha256": "e9f28c6bc6e2644a82da4d74358847b9634525c2eafd7f827046303751bac2c5",
+          "cell_widths": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "consumer_rank_count": 1,
+          "dimension": 882,
+          "material_tag": 1,
+          "owner_rank": 0,
+          "policy": "p6_actual_space",
+          "tensor_bytes": 12446784
+        }
+      ],
+      "raw_tensor_cross_rank_dedup_active": false,
+      "raw_tensor_global_owner_policy": "deterministic_dimension_squared_greedy_all_mpi_ranks",
+      "raw_tensor_kernel_seconds_max": 133.79832712298958,
+      "raw_tensor_logical_broadcast_bytes": 0,
+      "raw_tensor_metadata_seconds": 0.006244995980523527,
+      "raw_tensor_owner_cost_loads": [
+        1555848
+      ],
+      "raw_tensor_owner_evaluation_sync_seconds_max": 8.693902054801583e-05,
+      "raw_tensor_policy_signatures_identical": true,
+      "schema_version": "task035d.variable-p-condensed-trace-system.v1",
+      "status": "variable_p_condensed_trace_matrix_pass",
+      "total_build_seconds": 46.86904273700202,
+      "trace_constraint_cell_tensor_binding_complete": true,
+      "trace_constraint_elimination_applied_before_insertion": true,
+      "trace_constraint_kinds": [
+        "floquet",
+        "hanging"
+      ],
+      "trace_constraint_schema": "task035d.broken-hexa-cell-trace-map.v1",
+      "trace_preallocation": {
+        "active_rows": 5430,
+        "appended_graph_preallocation": "not_applicable",
+        "appended_rows": 0,
+        "appended_rows_per_support_group": [],
+        "appended_support_active_row_counts": [],
+        "appended_support_group_count": 0,
+        "base_graph_preallocation": "exact",
+        "local_row_count": 5430,
+        "maximum_diagonal_nnz": 1825,
+        "maximum_off_diagonal_nnz": 0,
+        "new_nonzero_allocation_error_enabled": true,
+        "ordinary_default_changed": false,
+        "policy": "distributed_exact_constrained_cell_graph_plus_support_safe_appended_upper_bound",
+        "preallocated_structural_nnz": 2758850,
+        "received_cell_graph_count": 37,
+        "schema_version": "task035b.exact-trace-preallocation.v1"
+      },
+      "trace_slave_rows_globally_numbered": false,
+      "uniform_p6_full3d_rows": 28410,
+      "uniform_p6_trace_rows": 11760
+    },
+    "carrier_audit": {
+      "artificial_facet_catalog_sha256": "a1dc7ec5c50f288024470acfffe247069549a50a15223fcb29515fda21871056",
+      "artificial_hanging_exterior_facet_count": 40,
+      "axis_aligned_affine_hexahedra": true,
+      "boundary_markers": {
+        "x_lower": 1,
+        "x_upper": 2,
+        "y_lower": 3,
+        "y_upper": 4,
+        "z_lower": 5,
+        "z_upper": 6
+      },
+      "canonical_connectivity_sha256": "764259d25dc801949aa118d1ce7ba575a64979e9ed1c500e78a3175cfb190ba1",
+      "canonical_leaf_count": 37,
+      "canonical_vertex_count": 108,
+      "carrier_global_cell_count": 37,
+      "carrier_global_topological_facet_count": 170,
+      "carrier_global_vertex_count": 108,
+      "checks": {
+        "all_artificial_exterior_is_hanging": true,
+        "artificial_exterior_count_is_five_per_patch": true,
+        "canonical_vertex_count_matches_carrier": true,
+        "forest_authority_pass": true,
+        "original_cell_crosswalk_matches_geometry": true,
+        "owned_cells_cover_forest_once": true,
+        "physical_and_artificial_exterior_partition": true,
+        "physical_boundary_area": true
+      },
+      "cross_rank_hanging_patch_count": 0,
+      "dolfinx_cell_type": "CellType.hexahedron",
+      "dolfinx_shared_facet_is_not_hanging_authority": true,
+      "expected_boundary_area": 30.0,
+      "failures": [],
+      "geometry_degree": 1,
+      "ghost_cell_counts_by_rank": [
+        0
+      ],
+      "hanging_patch_count": 8,
+      "hanging_relation_source": "global_geometry_catalog",
+      "hcurl_hanging_constraints_built": false,
+      "leaf_catalog_sha256": "85083ba15cce04d2ce48ff5990ac5914742c54f2a6417a4fba40e0308b33c695",
+      "material_catalog_sha256": "2663158748af83f8c8fa00e0948c16a16fd86d5929d938dfc492c739f7f27219",
+      "mpi_constraint_ownership_qualified": false,
+      "mpi_size": 1,
+      "ordinary_default_changed": false,
+      "owned_cell_counts_by_rank": [
+        37
+      ],
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "physical_boundary_area": 30.0,
+      "physical_exterior_facet_count": 78,
+      "physical_facet_catalog_sha256": "5870568a686f9a91e783e2cb97e0ea4c627fb7c15f45afe0133105a68d05c529",
+      "schema_version": "task035d.broken-dyadic-hexa-carrier.v1",
+      "status": "broken_dyadic_hexa_carrier_component_pass",
+      "topological_exterior_facet_count": 118
+    },
+    "cell_interior_degree": 6,
+    "cell_trace_binding_audit": {
+      "canonical_cell_graph_sha256": "5de0bd41774cb38c12aa243eb5b5bab030781023a9c71efb950af62e7e48300c",
+      "canonical_root_numbering_partition_independent": true,
+      "cell_expansion_inverse_used": false,
+      "cell_expansion_svd_used_for_rank_audit": true,
+      "checks": {
+        "all_independent_roots_reached": true,
+        "all_owned_cells_bound": true,
+        "all_physical_entities_bound_once": true,
+        "canonical_cell_graph_mpi_identity": true,
+        "cell_expansions_full_column_rank": true,
+        "cell_transform_matches_dolfinx_cell_info": true,
+        "entity_transform_orthogonality": true,
+        "forest_carrier_identity": true,
+        "no_slave_rows_numbered": true,
+        "trace_transform_does_not_mix_cell_interior": true,
+        "unpermuted_cell_chart_matches_forest": true
+      },
+      "compiled_cell_tensor_binding_complete": false,
+      "constraint_kinds": [
+        "hanging",
+        "floquet"
+      ],
+      "contains_floquet_constraints": true,
+      "contains_hanging_constraints": true,
+      "degree": 5,
+      "dense_cell_expansion_retained": true,
+      "distributed_scalability_qualified": false,
+      "dolfinx_entity_order_bound_exactly_once": true,
+      "eliminated_hanging_or_floquet_rows": 2670,
+      "entity_catalog_distribution": "allgather_replicated",
+      "failures": [],
+      "flattened_graph_sha256": "e91da0dedf4734ca3bb9685fbdb6e5241bc080da56900ff09fbe607582d46648",
+      "full_p6_trace_matrix_constructed": false,
+      "global_cell_count": 37,
+      "hanging_or_floquet_slave_rows_globally_numbered": false,
+      "hanging_slave_rows": 1720,
+      "independent_trace_rows": 5430,
+      "maximum_cell_expansion_condition": 154038033.80212644,
+      "maximum_cell_transform_error": 5.906386491005833e-14,
+      "maximum_entity_transform_orthogonality_error": 1.3859823933069056e-14,
+      "maximum_trace_interior_mixing_error": 0.0,
+      "maximum_unpermuted_cell_chart_error": 0.0,
+      "mpi_size": 1,
+      "ordinary_default_changed": false,
+      "owned_cell_expansion_bytes_by_rank": [
+        53368800
+      ],
+      "owned_cell_expansion_bytes_global_sum": 53368800,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_slave_rows": 950,
+      "petsc_constraint_row_ownership_qualified": false,
+      "physical_authority_sha256": "e77363111ab8f386ec1e37893f966d869043f4e19d1e0261079aec299b878528",
+      "raw_trace_rows": 8100,
+      "replicated_component_gram_bytes_per_rank": 405524,
+      "replicated_entity_block_bytes_per_rank": 14691520,
+      "schema_version": "task035d.broken-hexa-cell-trace-map.v1",
+      "status": "broken_hexa_cell_trace_binding_pass"
+    },
+    "checks": {
+      "adjoint_interior_operator_residual": true,
+      "candidate_action_matches_raw_congruence": true,
+      "carrier_pass": true,
+      "cell_trace_binding_pass": true,
+      "compiled_constraint_binding": true,
+      "compiled_p6_tensor_builder": true,
+      "component_gram_dual_norm": true,
+      "component_gram_dual_solve": true,
+      "component_gram_hermitian": true,
+      "component_gram_primal_norm": true,
+      "distributed_scalability_not_claimed": true,
+      "exact_preallocation": true,
+      "finite_left_reduction": true,
+      "finite_right_reduction": true,
+      "forest_pass": true,
+      "full_active_rhs_recovery_mapping": true,
+      "full_trace_recovery": true,
+      "left_rhs_matches_raw_congruence": true,
+      "no_full_global_matrix": true,
+      "no_slave_rows_numbered": true,
+      "nonzero_rhs_recovered_interior_equation": true,
+      "nonzero_rhs_recovery_matches_raw_oracle": true,
+      "petsc_row_ownership_closes": true,
+      "physical_trace_graph_pass": true,
+      "primal_interior_operator_residual": true,
+      "raw_oracle_exact_preallocation": true,
+      "right_rhs_matches_raw_congruence": true,
+      "zero_rhs_recovered_interior_equation": true,
+      "zero_rhs_recovery_matches_raw_oracle": true
+    },
+    "entity_map_audit": {
+      "active_cell_interior_rows": 16650,
+      "active_rows": 24750,
+      "active_trace_rows": 8100,
+      "all_active_rows_reached_by_owned_cells": true,
+      "canonical_degree_map_sha256": "656b26c477a7b2bd952c86fee5466c3d0ce3ce8c81a38d1f4454bf38ad8923f3",
+      "canonical_numbering_partition_independent": true,
+      "cell_pattern_count": 1,
+      "cell_pattern_signatures": [
+        "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[6]"
+      ],
+      "full_p6_global_matrix_constructed": false,
+      "global_entity_counts": {
+        "1": 260,
+        "2": 170,
+        "3": 37
+      },
+      "inactive_modes_globally_numbered": false,
+      "inactive_p6_rows": 3660,
+      "inactive_p6_trace_rows": 3660,
+      "mpi_size": 1,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "schema_version": "task035d.variable-p-global-entity-map.v1",
+      "status": "inactive_row_free_entity_numbering_pass",
+      "uniform_p6_rows": 28410,
+      "uniform_p6_trace_rows": 11760
+    },
+    "failures": [],
+    "forest_audit": {
+      "axis_aligned_affine_hexahedra": true,
+      "balance_touch_class": "face_edge_vertex",
+      "closure_split_counts": {
+        "balance": 0,
+        "material": 0,
+        "periodic": 3,
+        "user": 1
+      },
+      "face_adjacency_count": 84,
+      "hanging_face_catalog_sha256": "47e0d24e9e51db1f4b5fcfe34bec982ea2a410b8f6ff6e581e1415ea8dce3782",
+      "hanging_face_count": 8,
+      "hanging_fine_face_count": 32,
+      "leaf_catalog_sha256": "85083ba15cce04d2ce48ff5990ac5914742c54f2a6417a4fba40e0308b33c695",
+      "leaf_cell_count": 37,
+      "leaf_level_counts": {
+        "0": 5,
+        "1": 32
+      },
+      "local_h_is_real_cell_split": true,
+      "material_interface_hanging_face_count": 0,
+      "material_interface_protection": true,
+      "maximum_adjacent_level_jump": 1,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "periodic_boundary_audit": {
+        "x": {
+          "lower_patch_count": 9,
+          "lower_sha256": "a240a23959912968306d78abcd25c40af17c1400bcf65458b00856579ae508b7",
+          "matching": true,
+          "upper_patch_count": 9,
+          "upper_sha256": "a240a23959912968306d78abcd25c40af17c1400bcf65458b00856579ae508b7"
+        },
+        "y": {
+          "lower_patch_count": 9,
+          "lower_sha256": "a240a23959912968306d78abcd25c40af17c1400bcf65458b00856579ae508b7",
+          "matching": true,
+          "upper_patch_count": 9,
+          "upper_sha256": "a240a23959912968306d78abcd25c40af17c1400bcf65458b00856579ae508b7"
+        }
+      },
+      "refined_root_count": 4,
+      "root_cell_count": 9,
+      "schema_version": "task035d.dyadic-hexa-forest.v1",
+      "status": "balanced_periodic_dyadic_hexa_forest_pass",
+      "strong_2_to_1_balance": true,
+      "touching_pair_count": 160
+    },
+    "implementation_congruence_scope": "small-fixture unconstrained p5 trace Schur using the same physical constraint map and local kernel; validates C^H S C insertion/RHS/recovery consistency, is not an independent physical-constraint oracle, is not a candidate, and is not used to claim reduced rows",
+    "observables": {
+      "component_gram": {
+        "dual_norm_relative_error": 0.0,
+        "dual_solve_relative_residual": 2.824038215079976e-16,
+        "expected_dual_norm": 68.44251862889396,
+        "expected_primal_norm": 104.2468174059822,
+        "hermitian_max_abs_error": 0.0,
+        "nnz": 19190,
+        "observed_dual_norm": 68.44251862889396,
+        "observed_primal_norm": 104.2468174059822,
+        "primal_norm_relative_error": 0.0,
+        "rows": 5430
+      },
+      "full_active_rhs_recovery_mapping_max_abs_error": 6.697106945104327e-14,
+      "full_trace_recovery_max_abs_error": 0.0,
+      "implementation_congruence_errors": {
+        "action_probe_max_abs": 1.8817397162993671e-10,
+        "action_probe_max_relative": 1.7039406296143198e-14,
+        "action_root_max_abs": 2.193128422525895e-10,
+        "action_root_max_relative": 1.9784955867514105e-14,
+        "bilinear_abs": 1.8406878575731415e-10,
+        "bilinear_relative": 6.021774684108122e-16,
+        "left_rhs_max_abs": 2.770718099202587e-13,
+        "left_rhs_max_relative": 9.627139726838523e-15,
+        "nonzero_rhs_recovery_max_abs": 4.4884656875135865e-13,
+        "nonzero_rhs_recovery_max_relative": 3.2566397478792406e-15,
+        "right_rhs_max_abs": 2.7413508581532296e-13,
+        "right_rhs_max_relative": 9.525623919133197e-15,
+        "zero_rhs_recovery_max_abs": 4.5181451163502035e-13,
+        "zero_rhs_recovery_max_relative": 5.227913185604209e-14
+      },
+      "left_reduced_rhs": {
+        "l2": 178.06032577019315,
+        "linf": 28.78028342601463,
+        "normalized_quantized_1e10_sha256": "30760b0b10e51d40f82b31a3a392fcea4c5acb2ead2811a9b72bad1e1a3b3cbc",
+        "normalized_samples": [
+          [
+            0.04555577765323063,
+            -0.04060578753142517
+          ],
+          [
+            0.06321558549251358,
+            0.040189381722498654
+          ],
+          [
+            -0.06664946325370041,
+            -0.0551736621986027
+          ],
+          [
+            0.030623452989042236,
+            0.03283261949082133
+          ],
+          [
+            0.08633524816714684,
+            -0.07294123771783338
+          ],
+          [
+            0.07430098299861378,
+            0.019360389373181873
+          ],
+          [
+            -0.06586207108431691,
+            -0.048553222522349226
+          ],
+          [
+            0.02444571786886227,
+            -0.12892614428970936
+          ],
+          [
+            0.042425033351320925,
+            -0.025065314851487292
+          ],
+          [
+            0.06957044626301827,
+            -0.03515519106531215
+          ],
+          [
+            -0.009245774651223906,
+            0.046480723551669205
+          ],
+          [
+            -0.014492778984694617,
+            -0.0013844215956429838
+          ],
+          [
+            0.013594410982216655,
+            0.017291964279977215
+          ],
+          [
+            -0.023669758385443548,
+            -0.05194538705273004
+          ],
+          [
+            0.03225045626239534,
+            0.019359813247197575
+          ],
+          [
+            -0.015655367450999616,
+            -0.03231878329562051
+          ],
+          [
+            -0.0462271316305004,
+            0.047438784409486026
+          ]
+        ],
+        "sample_indices": [
+          0,
+          339,
+          678,
+          1017,
+          1357,
+          1696,
+          2035,
+          2375,
+          2714,
+          3053,
+          3393,
+          3732,
+          4071,
+          4411,
+          4750,
+          5089,
+          5429
+        ],
+        "size": 5430,
+        "sum": [
+          201.59901675785818,
+          -49.74998007002733
+        ],
+        "weighted_sum": [
+          619.6972324068291,
+          244.7347204683282
+        ]
+      },
+      "matrix_action_probe": {
+        "l2": 126787.57407998848,
+        "linf": 11043.458226154817,
+        "normalized_quantized_1e10_sha256": "5a62b7ca7493f940b9249afb38dc183d1e75e693c70eadf552edbfd0edf3b169",
+        "normalized_samples": [
+          [
+            0.006511320359877798,
+            -0.0019247882517181155
+          ],
+          [
+            -0.0022956376380660203,
+            0.00048161149507261697
+          ],
+          [
+            0.06219977721689761,
+            0.09061905618724131
+          ],
+          [
+            -0.015746616876734496,
+            0.01962277185837962
+          ],
+          [
+            0.06689973573817373,
+            0.013960614847809152
+          ],
+          [
+            -0.0003956781271986137,
+            -0.0035493577232282732
+          ],
+          [
+            0.0480862791939435,
+            0.12421965284597072
+          ],
+          [
+            -0.00811116009198176,
+            0.007221048921136015
+          ],
+          [
+            0.012176149855258467,
+            -0.018129181230419764
+          ],
+          [
+            0.0033460816650894235,
+            -7.955480988334012e-05
+          ],
+          [
+            -0.021653121563208016,
+            0.0685270929845717
+          ],
+          [
+            -0.0011207878539171577,
+            -0.0011971923997555
+          ],
+          [
+            -0.21352729609540955,
+            -0.06912114751639076
+          ],
+          [
+            0.0006076895564571587,
+            -0.0006657453546685609
+          ],
+          [
+            -0.01638313967743781,
+            0.01088976147222591
+          ],
+          [
+            8.84430800478457e-05,
+            0.00036748343650874776
+          ],
+          [
+            -0.0034138946827292115,
+            0.0011273912262352679
+          ]
+        ],
+        "sample_indices": [
+          0,
+          339,
+          678,
+          1017,
+          1357,
+          1696,
+          2035,
+          2375,
+          2714,
+          3053,
+          3393,
+          3732,
+          4071,
+          4411,
+          4750,
+          5089,
+          5429
+        ],
+        "size": 5430,
+        "sum": [
+          90165.62977117773,
+          -76789.00276801482
+        ],
+        "weighted_sum": [
+          86663.57986830277,
+          -39852.10354849556
+        ]
+      },
+      "matrix_action_root": {
+        "l2": 131542.9074409843,
+        "linf": 11084.828478828715,
+        "normalized_quantized_1e10_sha256": "72400c3095caa229abb223e4b0678924f8cc1abf42a2fec8cef14ac3ec7ed82b",
+        "normalized_samples": [
+          [
+            0.005006852431578047,
+            0.0012631268669974975
+          ],
+          [
+            -0.0003754303917573795,
+            -6.436655034458173e-05
+          ],
+          [
+            0.06162007252206598,
+            -0.011000485881689247
+          ],
+          [
+            0.016489111253905665,
+            -0.017077747839464554
+          ],
+          [
+            -0.1690115126061434,
+            0.07028795129425174
+          ],
+          [
+            0.001295678360694682,
+            0.003705337450035827
+          ],
+          [
+            -0.08649587621575232,
+            0.06424351696552695
+          ],
+          [
+            -0.0022484835990717123,
+            -0.005305190991391451
+          ],
+          [
+            0.028977676653767395,
+            -0.025453381175977122
+          ],
+          [
+            -0.0013538724952015773,
+            -0.0022434904775275517
+          ],
+          [
+            0.15042590436670106,
+            0.13676750655387002
+          ],
+          [
+            0.0006472503008918347,
+            -0.002561078999727355
+          ],
+          [
+            0.08024236490677367,
+            -0.33582723006394233
+          ],
+          [
+            0.0011179261019138471,
+            -0.005028950907092306
+          ],
+          [
+            -0.02086289498460198,
+            0.004609137870612363
+          ],
+          [
+            0.0004913090287635863,
+            0.0014574584463955909
+          ],
+          [
+            0.003166107852603904,
+            -0.0031233591146833067
+          ]
+        ],
+        "sample_indices": [
+          0,
+          339,
+          678,
+          1017,
+          1357,
+          1696,
+          2035,
+          2375,
+          2714,
+          3053,
+          3393,
+          3732,
+          4071,
+          4411,
+          4750,
+          5089,
+          5429
+        ],
+        "size": 5430,
+        "sum": [
+          -16189.20613604079,
+          -48442.8981080558
+        ],
+        "weighted_sum": [
+          -36311.38864623855,
+          -4980.863072007276
+        ]
+      },
+      "nonzero_rhs_full_recovery": {
+        "l2": 2083.303103089142,
+        "linf": 137.82506003117243,
+        "normalized_quantized_1e10_sha256": "1b19a8b3569a974a1f429892a407f8ede85c929486bb933c661c08a8d14d697a",
+        "normalized_samples": [
+          [
+            -0.005418212135724181,
+            -0.003807162497797337
+          ],
+          [
+            -0.004788256581413267,
+            0.007136321550082024
+          ],
+          [
+            -0.007250463814540137,
+            -0.006399430272101093
+          ],
+          [
+            0.0033244669869186387,
+            0.0044049731855222455
+          ],
+          [
+            -0.0031713930787710207,
+            0.004234197917664369
+          ],
+          [
+            0.006600265055354584,
+            -0.000305310239282178
+          ],
+          [
+            0.00197494699270898,
+            0.006039467506987012
+          ],
+          [
+            -7.366522618839341e-05,
+            0.0009414879670001294
+          ],
+          [
+            -0.00517508438333192,
+            0.004335561692633774
+          ],
+          [
+            0.0020492772866113414,
+            -0.005984520681579856
+          ],
+          [
+            0.143375252008377,
+            -0.015761654294090488
+          ],
+          [
+            -0.002227561199787415,
+            0.002817109491795041
+          ],
+          [
+            -0.0006304459502066361,
+            0.0023378175699217173
+          ],
+          [
+            0.020995093305734434,
+            -0.026195231304532576
+          ],
+          [
+            -7.47163813505279e-06,
+            -0.00068733406536083
+          ],
+          [
+            0.0034127442498586274,
+            0.006434117246467044
+          ],
+          [
+            -0.00029517862518494326,
+            -0.0012067524850017369
+          ]
+        ],
+        "sample_indices": [
+          0,
+          1546,
+          3093,
+          4640,
+          6187,
+          7734,
+          9280,
+          10827,
+          12374,
+          13921,
+          15468,
+          17014,
+          18561,
+          20108,
+          21655,
+          23202,
+          24749
+        ],
+        "size": 24750,
+        "sum": [
+          1808.1479451872144,
+          -811.7385743225218
+        ],
+        "weighted_sum": [
+          1945.2490837286903,
+          -29319.320106420873
+        ]
+      },
+      "nonzero_rhs_recovered_interior_equation_relative_residual": 4.598861541686497e-15,
+      "right_reduced_rhs": {
+        "l2": 178.05979349153307,
+        "linf": 28.778701336790505,
+        "normalized_quantized_1e10_sha256": "f0ed3dfced70323eac3739d0675a2331530c336c38c33ccfeab33419721f5786",
+        "normalized_samples": [
+          [
+            0.04554774983905372,
+            -0.040614391467055116
+          ],
+          [
+            0.06322103767772419,
+            0.04019004284890231
+          ],
+          [
+            -0.06671895853882744,
+            -0.055185789317005914
+          ],
+          [
+            0.03062535155822297,
+            0.03283508144214667
+          ],
+          [
+            0.0863155118427067,
+            -0.07289008536878688
+          ],
+          [
+            0.07431052502636444,
+            0.019353845997338925
+          ],
+          [
+            -0.06586967623174507,
+            -0.048572158201726084
+          ],
+          [
+            0.024441631886907282,
+            -0.12893219629371466
+          ],
+          [
+            0.042237755177627845,
+            -0.0252345800442074
+          ],
+          [
+            0.06957568399953205,
+            -0.03516188449020445
+          ],
+          [
+            -0.009245461278417806,
+            0.04648238184390464
+          ],
+          [
+            -0.01448854225167105,
+            -0.0013882316937222066
+          ],
+          [
+            0.013594626303329947,
+            0.017291972201503622
+          ],
+          [
+            -0.02367377645519268,
+            -0.05194721729161906
+          ],
+          [
+            0.03232710469346664,
+            0.01929687815301392
+          ],
+          [
+            -0.01566283731168533,
+            -0.03231781505721354
+          ],
+          [
+            -0.046239197455081905,
+            0.04743190920807579
+          ]
+        ],
+        "sample_indices": [
+          0,
+          339,
+          678,
+          1017,
+          1357,
+          1696,
+          2035,
+          2375,
+          2714,
+          3053,
+          3393,
+          3732,
+          4071,
+          4411,
+          4750,
+          5089,
+          5429
+        ],
+        "size": 5430,
+        "sum": [
+          201.55691021168315,
+          -49.739664427840374
+        ],
+        "weighted_sum": [
+          619.7381070172407,
+          244.74001232898314
+        ]
+      },
+      "zero_rhs_full_recovery": {
+        "l2": 170.42236594107095,
+        "linf": 8.642349166760228,
+        "normalized_quantized_1e10_sha256": "c601194e5c9db2d3f31d8a9ded5605f8d985d0a701ddd4d6a41227eca09b088b",
+        "normalized_samples": [
+          [
+            -0.08640768828688201,
+            -0.060715251106204716
+          ],
+          [
+            -0.07636138485542507,
+            0.1138074760766134
+          ],
+          [
+            -0.11562777564418233,
+            -0.10205580038468554
+          ],
+          [
+            0.05301739760827976,
+            0.07024891982672563
+          ],
+          [
+            -0.05057623026216101,
+            0.06752545759554449
+          ],
+          [
+            0.10525864089993822,
+            -0.004868977316843607
+          ],
+          [
+            0.0423814495758402,
+            0.09238807220805728
+          ],
+          [
+            -0.006569929505910191,
+            0.003965325086330851
+          ],
+          [
+            -0.00648263656911622,
+            -0.0071800078845708345
+          ],
+          [
+            0.009077643078360561,
+            -0.0672137815037337
+          ],
+          [
+            0.12842842683226502,
+            0.07166962491178805
+          ],
+          [
+            -0.03219689221557917,
+            0.03979657916197765
+          ],
+          [
+            -0.0008942232093735259,
+            0.007263960501179552
+          ],
+          [
+            0.03393361371375033,
+            -0.08885189427071638
+          ],
+          [
+            -0.0033588328731005293,
+            -0.008383174028119706
+          ],
+          [
+            0.06803965986417204,
+            0.08767786864422508
+          ],
+          [
+            -0.015543542957834534,
+            -0.007988912011190863
+          ]
+        ],
+        "sample_indices": [
+          0,
+          1546,
+          3093,
+          4640,
+          6187,
+          7734,
+          9280,
+          10827,
+          12374,
+          13921,
+          15468,
+          17014,
+          18561,
+          20108,
+          21655,
+          23202,
+          24749
+        ],
+        "size": 24750,
+        "sum": [
+          -198.02739572244369,
+          -115.74740292558798
+        ],
+        "weighted_sum": [
+          168.94322613271657,
+          -129.28030365087713
+        ]
+      },
+      "zero_rhs_recovered_interior_equation_relative_residual": 2.021399250379214e-14
+    },
+    "pass": true,
+    "petsc_ownership_ranges": [
+      [
+        0,
+        5430
+      ]
+    ],
+    "physical_trace_audit": {
+      "checks": {
+        "all_hanging_patches_have_relations": true,
+        "flattened_graph_pass": true,
+        "forest_carrier_identity": true,
+        "mpi_physical_authority_identity": true,
+        "no_slave_rows_numbered": true,
+        "periodic_cycle_closure": true
+      },
+      "compiled_cell_tensor_binding_complete": false,
+      "degree": 5,
+      "distributed_scalability_qualified": false,
+      "entity_catalog_sha256": "3bb1dc183fb2742fd38abb76707474d41a270883c699321df93d34cd32708b12",
+      "failures": [],
+      "flattened_graph_sha256": "e91da0dedf4734ca3bb9685fbdb6e5241bc080da56900ff09fbe607582d46648",
+      "hanging_patch_count": 8,
+      "hanging_primary_relation_count": 8,
+      "hanging_relation_count": 12,
+      "hanging_secondary_relation_count": 4,
+      "hanging_slave_rows": 1720,
+      "independent_trace_rows": 5430,
+      "maximum_chain_depth": 2,
+      "maximum_relation_residual": 3.929734507748659e-15,
+      "mpi_constraint_row_ownership_qualified": false,
+      "mpi_ghost_expansion_qualified": false,
+      "mpi_physical_catalog_identity_qualified": true,
+      "mpi_size": 1,
+      "ordinary_default_changed": false,
+      "partition_independent_physical_keys": true,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "periodic_cycle_error": 1.2412670766236366e-16,
+      "periodic_primary_relation_count": 64,
+      "periodic_relation_count": 72,
+      "periodic_secondary_relation_count": 8,
+      "phase_x": [
+        0.9800665778412416,
+        0.19866933079506122
+      ],
+      "phase_y": [
+        0.955336489125606,
+        -0.29552020666133955
+      ],
+      "physical_authority_sha256": "e77363111ab8f386ec1e37893f966d869043f4e19d1e0261079aec299b878528",
+      "physical_edge_count": 260,
+      "physical_face_count": 170,
+      "raw_trace_rows": 8100,
+      "schema_version": "task035d.broken-hexa-trace-authority.v1",
+      "status": "broken_hexa_trace_constraint_component_pass"
+    },
+    "raw_oracle_assembly_audit": {
+      "active_full3d_rows_before_condensation": 24750,
+      "active_trace_rows": 8100,
+      "active_trace_rows_before_constraint_elimination": 8100,
+      "active_trace_rows_before_periodic_elimination": 8100,
+      "appended_rows": 0,
+      "cell_p6_tensors_are_local_only": true,
+      "compiled_p6_element_hash": 16913352432823651554,
+      "compiled_p6_form_dtype": "complex128",
+      "compiled_p6_tensor_builder": true,
+      "compiled_trace_constraint_binding_complete": false,
+      "condensation_seconds_max": 10.205788610037416,
+      "final_assembly_deferred": false,
+      "final_assembly_seconds": 0.0023929139715619385,
+      "floquet_elimination_applied_before_insertion": false,
+      "full_active_global_matrix_constructed": false,
+      "full_p6_global_matrix_constructed": false,
+      "global_cell_count": 37,
+      "hanging_elimination_applied_before_insertion": false,
+      "hanging_or_floquet_slave_rows": 0,
+      "hanging_or_floquet_slave_rows_globally_numbered": false,
+      "hanging_slave_rows": 0,
+      "inactive_p6_full_rows": 3660,
+      "inactive_p6_rows_globally_numbered": false,
+      "inactive_p6_trace_rows": 3660,
+      "insertion_seconds_max": 0.11486758990213275,
+      "interior_adjoint_operator_residual_max": 8.10438429036637e-15,
+      "interior_recovery_operator_residual_max": 1.6563240536414223e-15,
+      "local_reference_class_count_sum": 15,
+      "matrix_mallocs": 0,
+      "matrix_nnz": 3143400,
+      "matrix_nnz_allocated": 3143400,
+      "matrix_nnz_preallocated": 3143400,
+      "matrix_rows": 8100,
+      "mpi_size": 1,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "periodic_slave_rows": 0,
+      "periodic_slave_rows_globally_numbered": false,
+      "preallocation_seconds": 0.14412726199952886,
+      "projection_seconds_max": 32.57140062493272,
+      "raw_tensor_broadcast_seconds_max": 1.5569967217743397e-05,
+      "raw_tensor_class_count_global_unique": 2,
+      "raw_tensor_class_count_sum": 2,
+      "raw_tensor_class_owner_ranks": {
+        "('p6_actual_space', 1, 0.5, 0.5, 0.5)": 0,
+        "('p6_actual_space', 1, 1.0, 1.0, 1.0)": 0
+      },
+      "raw_tensor_class_use_count_sum": 2,
+      "raw_tensor_class_user_rank_counts": {
+        "('p6_actual_space', 1, 0.5, 0.5, 0.5)": 1,
+        "('p6_actual_space', 1, 1.0, 1.0, 1.0)": 1
+      },
+      "raw_tensor_classes": [
+        {
+          "active_kernel_ids": [
+            1
+          ],
+          "canonical_coordinates_sha256": "74e0cfa22f9f5ae7af34cac520bd57acc9b3a01bad90820bb942a88f1383833d",
+          "cell_widths": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "consumer_rank_count": 1,
+          "dimension": 882,
+          "material_tag": 1,
+          "owner_rank": 0,
+          "policy": "p6_actual_space",
+          "tensor_bytes": 12446784
+        },
+        {
+          "active_kernel_ids": [
+            1
+          ],
+          "canonical_coordinates_sha256": "e9f28c6bc6e2644a82da4d74358847b9634525c2eafd7f827046303751bac2c5",
+          "cell_widths": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "consumer_rank_count": 1,
+          "dimension": 882,
+          "material_tag": 1,
+          "owner_rank": 0,
+          "policy": "p6_actual_space",
+          "tensor_bytes": 12446784
+        }
+      ],
+      "raw_tensor_cross_rank_dedup_active": false,
+      "raw_tensor_global_owner_policy": "deterministic_dimension_squared_greedy_all_mpi_ranks",
+      "raw_tensor_kernel_seconds_max": 134.16941551398486,
+      "raw_tensor_logical_broadcast_bytes": 0,
+      "raw_tensor_metadata_seconds": 0.006355188030283898,
+      "raw_tensor_owner_cost_loads": [
+        1555848
+      ],
+      "raw_tensor_owner_evaluation_sync_seconds_max": 5.266297375783324e-05,
+      "raw_tensor_policy_signatures_identical": true,
+      "schema_version": "task035d.variable-p-condensed-trace-system.v1",
+      "status": "variable_p_condensed_trace_matrix_pass",
+      "total_build_seconds": 43.04059290699661,
+      "trace_constraint_cell_tensor_binding_complete": false,
+      "trace_constraint_elimination_applied_before_insertion": false,
+      "trace_constraint_kinds": [],
+      "trace_constraint_schema": null,
+      "trace_preallocation": {
+        "active_rows": 8100,
+        "appended_graph_preallocation": "not_applicable",
+        "appended_rows": 0,
+        "appended_rows_per_support_group": [],
+        "appended_support_active_row_counts": [],
+        "appended_support_group_count": 0,
+        "base_graph_preallocation": "exact",
+        "local_row_count": 8100,
+        "maximum_diagonal_nnz": 965,
+        "maximum_off_diagonal_nnz": 0,
+        "new_nonzero_allocation_error_enabled": true,
+        "ordinary_default_changed": false,
+        "policy": "distributed_exact_constrained_cell_graph_plus_support_safe_appended_upper_bound",
+        "preallocated_structural_nnz": 3143400,
+        "received_cell_graph_count": 37,
+        "schema_version": "task035b.exact-trace-preallocation.v1"
+      },
+      "trace_slave_rows_globally_numbered": false,
+      "uniform_p6_full3d_rows": 28410,
+      "uniform_p6_trace_rows": 11760
+    },
+    "stable_identity": {
+      "active_full_rows": 24750,
+      "canonical_cell_graph_sha256": "5de0bd41774cb38c12aa243eb5b5bab030781023a9c71efb950af62e7e48300c",
+      "carrier_connectivity_sha256": "764259d25dc801949aa118d1ce7ba575a64979e9ed1c500e78a3175cfb190ba1",
+      "compiled_element_hash": 16913352432823651554,
+      "flattened_graph_sha256": "e91da0dedf4734ca3bb9685fbdb6e5241bc080da56900ff09fbe607582d46648",
+      "independent_trace_rows": 5430,
+      "leaf_catalog_sha256": "85083ba15cce04d2ce48ff5990ac5914742c54f2a6417a4fba40e0308b33c695",
+      "matrix_nnz": 2758850,
+      "matrix_rows": 5430,
+      "physical_authority_sha256": "e77363111ab8f386ec1e37893f966d869043f4e19d1e0261079aec299b878528",
+      "raw_oracle_matrix_nnz": 3143400,
+      "raw_oracle_matrix_rows": 8100,
+      "raw_trace_rows": 8100
+    },
+    "status": "compiled_local_h_cell_tensor_component_pass",
+    "trace_degree": 5
+  },
+  "pass": true,
+  "pde_accuracy_credit": false,
+  "pde_launch_blockers": [
+    "formal MPI1/MPI2/MPI8 comparison is generated separately",
+    "remote constraint ownership/ghost-equivalent lookup is not yet qualified for the production PDE path",
+    "this record is a cell-tensor component sub-gate only"
+  ],
+  "pde_launch_gate": false,
+  "prior_authorities": {
+    "attempt1_orientation_restriction_hash_bound": true,
+    "p5_hanging_restriction_sha256": "90bd8eb7c612f044c0026ce0551c2f96d8241adc9b63b8e402652b5b738ccf2a",
+    "phase_a_exact_sequence_hash_bound": true,
+    "records": {
+      "local_h_attempt1_mpi_identity": {
+        "p5_hanging_restriction_sha256": "90bd8eb7c612f044c0026ce0551c2f96d8241adc9b63b8e402652b5b738ccf2a",
+        "pass": true,
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt1_mpi_identity_v1.json",
+        "sha256": "d341ad69dd52df6bbedcec8a522084cd75ae99fd9fd7d751bab7bfb73655fe44",
+        "status": "local_h_attempt1_mpi1_mpi2_mpi8_identity_pass"
+      },
+      "phase_a_compact": {
+        "pass": true,
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/compact_authority_v1.json",
+        "sha256": "2e896ef45bbfc5c11901503269d11c0321106c9e41f71729ac7c6fc722687403",
+        "status": "case097_phase_a_compact_authority"
+      },
+      "phase_a_reference_active_space": {
+        "pass": true,
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/reference_active_space_authority_v1.json",
+        "sha256": "4c1c5e68540dca4ddcc4165b0cc175abb4671ad254a44c1aa3518e4c9398ea9b",
+        "status": "task035d_phase_a_serial_authority_pass"
+      }
+    }
+  },
+  "scalability_caveat": "entity blocks and component Gram are replicated; dense owned-cell expansions and full-vector allgathers remain in the fixture path",
+  "schema_version": "case097.local-h-attempt2-authority.v1",
+  "source_identity": {
+    "allowed_generated_evidence": [],
+    "clean_semantics": "no tracked/staged/unknown changes; previously generated Attempt2 evidence files are enumerated and allowed",
+    "disallowed_status_lines": [],
+    "head": "89330ad9241919c4b27edf998d3acc4ab7e29ccf",
+    "status_lines": [],
+    "verified_clean_numerical_source": true
+  },
+  "source_sha": "89330ad9241919c4b27edf998d3acc4ab7e29ccf",
+  "stable_identity": {
+    "active_full_rows": 24750,
+    "canonical_cell_graph_sha256": "5de0bd41774cb38c12aa243eb5b5bab030781023a9c71efb950af62e7e48300c",
+    "carrier_connectivity_sha256": "764259d25dc801949aa118d1ce7ba575a64979e9ed1c500e78a3175cfb190ba1",
+    "compiled_element_hash": 16913352432823651554,
+    "flattened_graph_sha256": "e91da0dedf4734ca3bb9685fbdb6e5241bc080da56900ff09fbe607582d46648",
+    "independent_trace_rows": 5430,
+    "leaf_catalog_sha256": "85083ba15cce04d2ce48ff5990ac5914742c54f2a6417a4fba40e0308b33c695",
+    "matrix_nnz": 2758850,
+    "matrix_rows": 5430,
+    "physical_authority_sha256": "e77363111ab8f386ec1e37893f966d869043f4e19d1e0261079aec299b878528",
+    "raw_oracle_matrix_nnz": 3143400,
+    "raw_oracle_matrix_rows": 8100,
+    "raw_trace_rows": 8100
+  },
+  "status": "local_h_attempt2_cell_tensor_component_pass_pde_blocked"
+}
