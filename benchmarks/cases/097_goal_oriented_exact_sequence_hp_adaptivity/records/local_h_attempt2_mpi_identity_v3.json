@@ -1,0 +1,194 @@
+{
+  "attempt2_history_immutability": {
+    "historical_failure_evidence_preserved": true,
+    "history_file_count": 9,
+    "records": {
+      "identity_v1_controlled_failure": {
+        "expected_pass": false,
+        "expected_status": "local_h_attempt2_evidence_fail",
+        "path": "records/local_h_attempt2_mpi_identity_v1.json",
+        "sha256": "9afcacd1e855ed08dd2609ae54b5c1de1fb3d97a783bc29d12b76bb767398411"
+      },
+      "identity_v2_checker_fix1": {
+        "expected_pass": true,
+        "expected_status": "local_h_attempt2_component_pass_pde_blocked",
+        "path": "records/local_h_attempt2_mpi_identity_v2_checker_fix1.json",
+        "sha256": "63a5aea0c8f10984e7959ce9f186cc36bb5a4a06d207f8f184bcaf2284b10bcd"
+      },
+      "identity_v2_controlled_failure": {
+        "expected_pass": false,
+        "expected_status": "local_h_attempt2_evidence_fail",
+        "path": "records/local_h_attempt2_mpi_identity_v2.json",
+        "sha256": "d72d3bb204c6ed0f2bb57fa701ce81b55f61ee090c2d9247c59679f1df5bed9a"
+      },
+      "mpi1_v1": {
+        "expected_pass": true,
+        "expected_status": "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        "path": "records/local_h_attempt2_mpi1_v1.json",
+        "sha256": "ebe88241242603971eaaba89735c893a5445f416486e02c0fa1b0647a44ddfbc"
+      },
+      "mpi1_v2": {
+        "expected_pass": true,
+        "expected_status": "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        "path": "records/local_h_attempt2_mpi1_v2.json",
+        "sha256": "6a4ae7312402e94653206b68ed54a825703f89bef7bbb787d2abf777d3d5a6af"
+      },
+      "mpi2_v1": {
+        "expected_pass": true,
+        "expected_status": "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        "path": "records/local_h_attempt2_mpi2_v1.json",
+        "sha256": "05c526a728538065bb00b49e0d578365173babad18933fd607e4b46d0546e354"
+      },
+      "mpi2_v2": {
+        "expected_pass": true,
+        "expected_status": "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        "path": "records/local_h_attempt2_mpi2_v2.json",
+        "sha256": "b135f618880883d0b9360be3483c0cf0aa786710588a61479db5e845981f2405"
+      },
+      "mpi8_v1": {
+        "expected_pass": true,
+        "expected_status": "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        "path": "records/local_h_attempt2_mpi8_v1.json",
+        "sha256": "c0bf2e9b14fd5852d3d65f71aa2fea7c6362ffa96d997eb020bb312ec11df5cd"
+      },
+      "mpi8_v2": {
+        "expected_pass": true,
+        "expected_status": "local_h_attempt2_cell_tensor_component_pass_pde_blocked",
+        "path": "records/local_h_attempt2_mpi8_v2.json",
+        "sha256": "7814a3bac9da53557218947afec48f9fd8a544eed9cb3c59cafd94baeff08f12"
+      }
+    }
+  },
+  "checker_identity": {
+    "committed_sha256": "6ae2958c03489357eff3a953df4bf8fd6ae3fd7e3b5377bdf869344801fd4be3",
+    "git_head": "b902367fa7cd3c01130db4dc3e09d868954f9ba7",
+    "live_sha256": "6ae2958c03489357eff3a953df4bf8fd6ae3fd7e3b5377bdf869344801fd4be3",
+    "numerical_source": {
+      "committed_sha256": {
+        "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_attempt2_authority.py": "6ae2958c03489357eff3a953df4bf8fd6ae3fd7e3b5377bdf869344801fd4be3",
+        "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt2_authority.py": "073db2153632ff93cdd09161b5b6944b18cc7a114840ec3ed41da78a36a21afe",
+        "src/adaptivity/dyadic_hexa_broken_mesh.py": "b30c769dc4e9aedea4932de9f4fc1fe2ec0f2cafa02e5836aa624b0b39a0b75f",
+        "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+        "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+        "src/adaptivity/hcurl_broken_cell_trace.py": "b198c426569e223e69dea654c595ff509fcc7007e69890f70910aeec00847da4",
+        "src/adaptivity/hcurl_broken_trace_graph.py": "a6aa48cbf0c596eaa97fe2470fed6f6faf02b979d63e057fb2d7b133da7f3c85",
+        "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+        "src/adaptivity/hcurl_trace_constraint_graph.py": "a5236d7c5999354599c7be73dce3894d29657be3008ecd5147df437fa0cfd5ee",
+        "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+        "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+        "src/solvers/hcurl_assembly_time_condensation.py": "af1aab6751dc3b11ed769097ed04c7e4d11a728f6a9066a074dd53cded35e59b",
+        "src/solvers/hcurl_variable_p_assembly.py": "1e4348affefcebaf068354d9817086f002b1df55ceaadea2788ca8e788d7616d",
+        "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+        "src/solvers/hcurl_variable_p_reduction.py": "e7efdbfbba7cddf81d6a388a6dbb42966d7dd66b914b43645fb8f87907dd1f6c"
+      },
+      "live_sha256": {
+        "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_attempt2_authority.py": "6ae2958c03489357eff3a953df4bf8fd6ae3fd7e3b5377bdf869344801fd4be3",
+        "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt2_authority.py": "073db2153632ff93cdd09161b5b6944b18cc7a114840ec3ed41da78a36a21afe",
+        "src/adaptivity/dyadic_hexa_broken_mesh.py": "b30c769dc4e9aedea4932de9f4fc1fe2ec0f2cafa02e5836aa624b0b39a0b75f",
+        "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+        "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+        "src/adaptivity/hcurl_broken_cell_trace.py": "b198c426569e223e69dea654c595ff509fcc7007e69890f70910aeec00847da4",
+        "src/adaptivity/hcurl_broken_trace_graph.py": "a6aa48cbf0c596eaa97fe2470fed6f6faf02b979d63e057fb2d7b133da7f3c85",
+        "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+        "src/adaptivity/hcurl_trace_constraint_graph.py": "a5236d7c5999354599c7be73dce3894d29657be3008ecd5147df437fa0cfd5ee",
+        "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+        "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+        "src/solvers/hcurl_assembly_time_condensation.py": "af1aab6751dc3b11ed769097ed04c7e4d11a728f6a9066a074dd53cded35e59b",
+        "src/solvers/hcurl_variable_p_assembly.py": "1e4348affefcebaf068354d9817086f002b1df55ceaadea2788ca8e788d7616d",
+        "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+        "src/solvers/hcurl_variable_p_reduction.py": "e7efdbfbba7cddf81d6a388a6dbb42966d7dd66b914b43645fb8f87907dd1f6c"
+      },
+      "mismatched_files": [],
+      "status_lines": [],
+      "verified_clean_numerical_source": true
+    },
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_attempt2_authority.py",
+    "status_lines": [],
+    "verified_clean_checker": true,
+    "verified_clean_numerical_source": true
+  },
+  "component_only": true,
+  "cross_checks": {
+    "left_reduced_rhs_mpi_identity": true,
+    "live_checker_blob_matches_record_source": true,
+    "live_numerical_source_matches_record_source": true,
+    "matrix_action_probe_mpi_identity": true,
+    "matrix_action_root_mpi_identity": true,
+    "mpi2_mpi8_cross_rank_hanging_owner_path": true,
+    "mpi_sizes_are_1_2_8": true,
+    "nonzero_rhs_full_recovery_mpi_identity": true,
+    "owner_routed_cache_not_full_catalog": true,
+    "owner_routing_subgate_all_mpi": true,
+    "right_reduced_rhs_mpi_identity": true,
+    "same_abi": true,
+    "same_fixture_identity": true,
+    "same_solver_blob_manifest": true,
+    "same_solver_source_sha": true,
+    "zero_rhs_full_recovery_mpi_identity": true
+  },
+  "distributed_scalability_qualified": false,
+  "failures": [],
+  "input_records": [
+    {
+      "path": "records/local_h_attempt2_mpi1_v3.json",
+      "sha256": "ec4af6653525c44c95e53d11a399ed120baecfc751e837f9a781f9e1c1abccb1"
+    },
+    {
+      "path": "records/local_h_attempt2_mpi2_v3.json",
+      "sha256": "6c6bb6ef597254147bdcb0de62f176469c24d334d4f8a614d8c72aa1a0a7f41e"
+    },
+    {
+      "path": "records/local_h_attempt2_mpi8_v3.json",
+      "sha256": "015d96c5103568fad472979243e58473c610ff7b810382653e33b0fc9c5867a7"
+    }
+  ],
+  "non_gating_digest_diagnostics": {
+    "left_reduced_rhs_digest_equal": false,
+    "matrix_action_probe_digest_equal": true,
+    "matrix_action_root_digest_equal": true,
+    "nonzero_rhs_full_recovery_digest_equal": false,
+    "right_reduced_rhs_digest_equal": false,
+    "zero_rhs_full_recovery_digest_equal": false
+  },
+  "ordinary_default_changed": false,
+  "pass": true,
+  "pde_accuracy_credit": false,
+  "pde_launch_gate": true,
+  "pde_launch_ownership_gate": true,
+  "pde_launch_scope": "minimal local-h PDE may start; no PDE accuracy or distributed-scalability credit is granted",
+  "record_failures": {
+    "local_h_attempt2_mpi1_v3.json": [],
+    "local_h_attempt2_mpi2_v3.json": [],
+    "local_h_attempt2_mpi8_v3.json": []
+  },
+  "schema_version": "case097.local-h-attempt2-independent-check.v3",
+  "signature_identity_semantics": {
+    "moment_rtol": 3e-10,
+    "norm_atol": 3e-11,
+    "norm_rtol": 3e-10,
+    "normalized_moment_atol": 3e-10,
+    "normalized_sample_atol": 3e-10,
+    "normalized_sample_rtol": 3e-10,
+    "quantized_digest_is_gating": false,
+    "raw_moments_scaled_by_each_vector_linf": true
+  },
+  "solver_commit_numerical_files": {
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_attempt2_authority.py": "6ae2958c03489357eff3a953df4bf8fd6ae3fd7e3b5377bdf869344801fd4be3",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt2_authority.py": "073db2153632ff93cdd09161b5b6944b18cc7a114840ec3ed41da78a36a21afe",
+    "src/adaptivity/dyadic_hexa_broken_mesh.py": "b30c769dc4e9aedea4932de9f4fc1fe2ec0f2cafa02e5836aa624b0b39a0b75f",
+    "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+    "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+    "src/adaptivity/hcurl_broken_cell_trace.py": "b198c426569e223e69dea654c595ff509fcc7007e69890f70910aeec00847da4",
+    "src/adaptivity/hcurl_broken_trace_graph.py": "a6aa48cbf0c596eaa97fe2470fed6f6faf02b979d63e057fb2d7b133da7f3c85",
+    "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+    "src/adaptivity/hcurl_trace_constraint_graph.py": "a5236d7c5999354599c7be73dce3894d29657be3008ecd5147df437fa0cfd5ee",
+    "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+    "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+    "src/solvers/hcurl_assembly_time_condensation.py": "af1aab6751dc3b11ed769097ed04c7e4d11a728f6a9066a074dd53cded35e59b",
+    "src/solvers/hcurl_variable_p_assembly.py": "1e4348affefcebaf068354d9817086f002b1df55ceaadea2788ca8e788d7616d",
+    "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+    "src/solvers/hcurl_variable_p_reduction.py": "e7efdbfbba7cddf81d6a388a6dbb42966d7dd66b914b43645fb8f87907dd1f6c"
+  },
+  "source_sha": "b902367fa7cd3c01130db4dc3e09d868954f9ba7",
+  "status": "local_h_attempt2_owner_routed_component_pass_pde_launch_ready"
+}
