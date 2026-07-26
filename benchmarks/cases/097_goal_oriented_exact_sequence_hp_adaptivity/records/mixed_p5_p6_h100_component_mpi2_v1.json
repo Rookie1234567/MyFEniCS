@@ -1,0 +1,98 @@
+{
+  "schema_version": "task035d.mixed-variable-p-component.v1",
+  "status": "mixed_p5_p6_stage4_mpi2_component_pass",
+  "pass": true,
+  "classification": "component_qualification_pass_no_accuracy_credit",
+  "task": "Task035d",
+  "case_id": "097_goal_oriented_exact_sequence_hp_adaptivity",
+  "source_commit_sha": "8bc884dbea9c279e69947f4c865e17080ef4f065",
+  "run": {
+    "mpi_size": 2,
+    "degree_container": 6,
+    "h_nm": 100.0,
+    "mesh_cells": 24,
+    "actual_axis_counts": [
+      3,
+      2,
+      4
+    ],
+    "cell_degree_policy": "periodic z-layer p5/p6 split",
+    "cell_degree_counts": {
+      "p4": 0,
+      "p5": 12,
+      "p6": 12
+    },
+    "formal_candidate": false,
+    "heavy_pde": true,
+    "elapsed_seconds": 369.68432456301525
+  },
+  "plan_identity": {
+    "cell_degree_plan_sha256": "1ced4420fc862495556a87a339d7104eb5ab0fb0a4bcecee1b579aa950afaafa",
+    "mesh_cell_box_catalog_sha256": "72e7b44a0b1a468f0de71bd1a94b83c73c32048b29f3dd5a54709286afb7f02e",
+    "active_rows_before_condensation": 13843,
+    "active_trace_rows_before_periodic_elimination": 5563,
+    "maximum_adjacent_cell_degree_jump": 1,
+    "periodic_closure": "pass"
+  },
+  "numerical_result": {
+    "case_status": "completed",
+    "official_result": true,
+    "p6_storage_dofs": 17478,
+    "actual_conforming_active_fe_dofs": 13843,
+    "periodic_independent_trace_rows": 4296,
+    "dtn_rows": 80,
+    "matrix_rows": 4376,
+    "matrix_nnz_used": 2775690,
+    "matrix_nnz_allocated": 2953874,
+    "matrix_mallocs": 0,
+    "full_explicit_true_relative_residual": 2.40015083290027e-12,
+    "eliminated_cell_interior_residual_norm": 0.0,
+    "R_total": 0.017647676459345587,
+    "T_total": 0.4891066674337472,
+    "A_volume_total": 0.49324565610680265,
+    "R_plus_T_plus_A_volume": 0.9999999999998954,
+    "energy_closure_error": -1.0458300891968975e-13,
+    "max_rank_rss_mb": 816.25390625,
+    "total_peak_rss_mb": 1513.95703125,
+    "swap_bytes": null,
+    "swap_measurement": "not_available_in_component_fixture"
+  },
+  "serial_mpi2_identity": {
+    "serial_record": "mixed_p5_p6_h100_component_mpi1_v1.json",
+    "cell_degree_plan_sha256_equal": true,
+    "mesh_geometry_sha256_equal": true,
+    "active_fe_dofs_equal": true,
+    "periodic_independent_trace_rows_equal": true,
+    "matrix_rows_equal": true,
+    "R_total_abs_difference": 3.226585665316861e-15,
+    "T_total_abs_difference": 3.574918139293004e-14,
+    "A_volume_total_abs_difference": 1.2129186544029835e-13,
+    "matrix_frobenius_norm_abs_difference": 2.1827872842550278e-11,
+    "matrix_nnz_difference": 88,
+    "matrix_nnz_note": "MPI ownership retains 88 additional structural zero locations; allocated NNZ and matrix action norm remain consistent",
+    "pass": true
+  },
+  "trace_only_gate": {
+    "pass": true,
+    "surface_functional_count": 81,
+    "removed_active_interior_max_abs": 2.5280404402561893e-12,
+    "auxiliary_interior_columns_allocated": false,
+    "auxiliary_interior_column_bytes_local_max": 0
+  },
+  "timing_seconds": {
+    "base_matrix_assembly": 344.697828400007,
+    "modal_loop": 8.357659001019783,
+    "ksp_setup": 2.9382939190254547,
+    "ksp_solve": 0.018225816020276397
+  },
+  "artifact_identity": {
+    "artifact_root": "/tmp/task035d_mixed_p5_p6_dtn_smoke_mpi2/solve",
+    "artifact_retention": "local_tmp_not_git",
+    "degree_plan_file_sha256": "b3458039ab60b488157eea3a951169f1f7acb3786be79d51399c88dfa5ff76bf",
+    "run_summary_sha256": "bd2c511564f1ea6784e9cc10b148eb97d1c5643bafc316e9dfc90bd957098a98",
+    "progress_3d_jsonl_sha256": "324f6a9d4736c2a9bf98de41145de302cb86820e27c2cb28cda5a1a306833da1",
+    "dtn_port_diffraction_orders_sha256": "d7a77e8debb2b661432cdc44792c1c674afe501bfbe84d4568d77a90b8602b25"
+  },
+  "accuracy_credit": "component qualification only; its h100 R/T/A differs materially from the uniform-p6 h100 control",
+  "ordinary_default_changed": false
+}
