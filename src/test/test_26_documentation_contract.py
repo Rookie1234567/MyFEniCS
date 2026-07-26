@@ -69,6 +69,7 @@ STAGING_OR_IN_PROGRESS_CASES: set[str] = set()
 ACTIVE_RESEARCH_CASES = {
     "094_hcurl_goal_oriented_adaptivity",
     "095_high_order_local_hp_resource_envelope",
+    "096_hybrid_channel_memory_closure",
 }
 
 RECORDED_CASES = {
@@ -369,10 +370,35 @@ class DocumentationContractTests(unittest.TestCase):
                         "automatic_production_hp",
                         config["not_promoted"],
                     )
-                else:
+                elif case.startswith("095_"):
                     self.assertEqual(config["geometry_scope"], "fixed_only")
                     self.assertEqual(config["degrees"], [4, 5, 6])
                     self.assertEqual(config["mpi_size"], 8)
+                    irregular = config["irregular_geometry"]
+                    self.assertEqual(
+                        irregular["status"],
+                        "out_of_scope_by_user",
+                    )
+                    self.assertFalse(irregular["run"])
+                    self.assertFalse(irregular["completion_gate"])
+                else:
+                    self.assertTrue(case.startswith("096_"), case)
+                    self.assertEqual(config["geometry_scope"], "fixed_only")
+                    self.assertEqual(config["degrees"], [2, 6])
+                    self.assertEqual(config["mpi_size"], 8)
+                    self.assertEqual(
+                        config["formal_model"],
+                        {
+                            "degree": 6,
+                            "h_nm": 10.0,
+                            "mpi_size": 8,
+                            "hybrid_modes_per_direction": [120, 160],
+                        },
+                    )
+                    self.assertEqual(
+                        config["out_of_scope"]["p3_h7p5"],
+                        "out_of_scope_by_user_not_run_not_completion_gate",
+                    )
                     irregular = config["irregular_geometry"]
                     self.assertEqual(
                         irregular["status"],

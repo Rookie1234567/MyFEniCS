@@ -1,0 +1,46 @@
+{
+  "closed_scope_guards": {
+    "condensed_iterative": "not_researched",
+    "h13_adaptive_hybrid": "not_run",
+    "irregular_geometry": "not_run",
+    "production_selective_trace": "not_promoted",
+    "tetra_or_mixed_static_condensation": "not_run"
+  },
+  "entries": [
+    {
+      "classification": "completed_positive",
+      "lane": "p2_h5_root_cause",
+      "record": "records/p2_h5_root_cause_v1.json",
+      "status": "p2_h5_channel_root_cause_closed"
+    },
+    {
+      "classification": "completed_positive",
+      "lane": "p6_h10_six_path_mpi8",
+      "record": "records/p6_h10_mpi8_six_path_v1.json",
+      "status": "p6_h10_mpi8_channel_and_resource_authority_pass"
+    },
+    {
+      "classification": "completed_with_controlled_negatives",
+      "lane": "p6_h10_rank_lifecycle",
+      "record": "records/p6_h10_static_rank_study_v1.json",
+      "status": "rank_study_complete_with_controlled_negatives"
+    },
+    {
+      "classification": "preserved_failed_evidence",
+      "lane": "dependency_failures",
+      "record": "records/dependency_failures_v1.json",
+      "status": "preserved_failed_and_superseded_evidence"
+    },
+    {
+      "classification": "out_of_scope_by_user",
+      "completion_gate": false,
+      "execution": "not_run",
+      "lane": "p3_h7p5"
+    }
+  ],
+  "ordinary_default": "standard_full",
+  "ordinary_default_changed": false,
+  "schema_version": "task035c.case096-execution-ledger.v1",
+  "status": "task035c_compact_execution_ledger",
+  "task_scope": "Hybrid 12-channel accuracy and static-Hybrid memory closure"
+}

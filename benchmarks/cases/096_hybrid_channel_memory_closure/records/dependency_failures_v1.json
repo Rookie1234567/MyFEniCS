@@ -1,0 +1,58 @@
+{
+  "failures": [
+    {
+      "classification": "failed_dependency_exception",
+      "expected_exception": "ValueError: Task033 qualifies exact cross-section N1curl constraints for p=1..4.",
+      "failure_id": "p6_cross_section_p5p6_not_implemented",
+      "later_success_does_not_delete_this_evidence": true,
+      "memory_authority_pass": true,
+      "numeric_pass": false,
+      "raw_solver_record_exists": false,
+      "raw_solver_record_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10/task035c_p6_h10_hybrid_standard_m120_hybrid_p6_h10_mpi8_20260726T011727Z/solver_record.json",
+      "return_code": 1,
+      "source_sha": "c30fad7696d202d1691c69ce9c0ca15dda69048f",
+      "status": "formal_not_pass",
+      "stdout_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10/task035c_p6_h10_hybrid_standard_m120_hybrid_p6_h10_mpi8_20260726T011727Z/worker_stdout.txt",
+      "stdout_sha256": "82df197de471bc83349016c9c49e38b99118fdaa2c66705cecbb1e3cb0c0ce86",
+      "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_standard_m120_mpi8_c30fad7.json",
+      "watchdog_sha256": "f5d47a68429e269b7016f09365077f669b11ac6dbab2c0946804489561234e79"
+    },
+    {
+      "classification": "failed_dependency_exception",
+      "expected_exception": "ValueError: MPC vector has nonzero eliminated interior/slave entries: 1.187e-12",
+      "failure_id": "static_trace_projection_absolute_tolerance",
+      "later_success_does_not_delete_this_evidence": true,
+      "memory_authority_pass": true,
+      "numeric_pass": false,
+      "raw_solver_record_exists": false,
+      "raw_solver_record_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10/task035c_p6_h10_hybrid_static_m120_hybrid_p6_h10_mpi8_20260726T013457Z/solver_record.json",
+      "return_code": 1,
+      "source_sha": "b40644ba21e511fe359673f416f54d20bffaee01",
+      "status": "formal_not_pass",
+      "stdout_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10/task035c_p6_h10_hybrid_static_m120_hybrid_p6_h10_mpi8_20260726T013457Z/worker_stdout.txt",
+      "stdout_sha256": "6a0662e1dc596dceb3f0be925cfec1caf179c829ade289739871e7d668cc710a",
+      "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_static_m120_mpi8_b40644b.json",
+      "watchdog_sha256": "188f5447454442282161f510bdbff33af2ed3ccfbaf0ee6c64a27696598cecef"
+    },
+    {
+      "classification": "resource_telemetry_terminal_race_superseded",
+      "expected_exception": null,
+      "failure_id": "mpi8_terminal_sampler_race_superseded_by_retry1",
+      "later_success_does_not_delete_this_evidence": true,
+      "memory_authority_pass": false,
+      "numeric_pass": false,
+      "raw_solver_record_exists": false,
+      "raw_solver_record_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_static_m120_hybrid_p6_h10_mpi8_20260726T023552Z/solver_record.json",
+      "return_code": 1,
+      "source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+      "status": "formal_not_pass",
+      "stdout_path": "benchmarks/artifacts/cases/091/task035c_p6_h10_hybrid_static_m120_hybrid_p6_h10_mpi8_20260726T023552Z/worker_stdout.txt",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "watchdog_path": "benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_hybrid_static_m120_mpi8_244b62e.json",
+      "watchdog_sha256": "4c0d0b22bce9750550b26863f22b43d4cc93128a33e3021feda656f7969ae41a"
+    }
+  ],
+  "ordinary_default_changed": false,
+  "schema_version": "task035c.case096-dependency-failures.v1",
+  "status": "preserved_failed_and_superseded_evidence"
+}

@@ -1,0 +1,57 @@
+{
+  "generator": "benchmarks/cases/096_hybrid_channel_memory_closure/generate_compact_records.py",
+  "not_promoted": [
+    "irregular_geometry",
+    "p3_h7p5",
+    "h13_adaptive_hybrid",
+    "production_selective_trace",
+    "tetra_or_mixed_static_condensation",
+    "condensed_iterative"
+  ],
+  "numerical_source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+  "ordinary_default_changed": false,
+  "p2_diagnostic_source_sha": "8a1e40c420e36407cd827e1fd7e8f11401a0d39b",
+  "record_count": 5,
+  "records": [
+    {
+      "name": "dependency_failures_v1.json",
+      "schema_version": "task035c.case096-dependency-failures.v1",
+      "sha256": "72ca3b3422fe51091dccc7f35119091ec671134aa16e16adee21381d63ef420d",
+      "status": "preserved_failed_and_superseded_evidence"
+    },
+    {
+      "name": "execution_ledger_v1.json",
+      "schema_version": "task035c.case096-execution-ledger.v1",
+      "sha256": "0422a4d88ca63a3cfa7cb3a45bac64238b7788f74503de80bc8ce0cba03f60dd",
+      "status": "task035c_compact_execution_ledger"
+    },
+    {
+      "name": "p2_h5_root_cause_v1.json",
+      "schema_version": "task035c.case096-p2-root-cause.v1",
+      "sha256": "7a16de719097a57944d89812c4c7477d0812d4eff73691cc130e79f85fa46f3b",
+      "status": "p2_h5_channel_root_cause_closed"
+    },
+    {
+      "name": "p6_h10_mpi8_six_path_v1.json",
+      "schema_version": "task035c.case096-p6-six-path.v1",
+      "sha256": "7e7474fa5b67d65ae255c198982010acc5d6d4d5087f793eb7c2de76c5bbee0a",
+      "status": "p6_h10_mpi8_channel_and_resource_authority_pass"
+    },
+    {
+      "name": "p6_h10_static_rank_study_v1.json",
+      "schema_version": "task035c.case096-static-rank-study.v1",
+      "sha256": "515d575e9b1409c1e50da9e336a903e25ad814a2d9a99868d3fd4bc2bab5205a",
+      "status": "rank_study_complete_with_controlled_negatives"
+    }
+  ],
+  "schema_version": "task035c.case096-compact-authority.v1",
+  "significant_channel_reference_v1": {
+    "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json",
+    "phase_convention": "atan2 boundary-amplitude phase, nearest 2pi branch around each p6/h10 channel center",
+    "schema_version": "task035b.significant-channel-reference.v1",
+    "sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3",
+    "significant_power_floor": 1e-08,
+    "status": "significant_channel_reference_v1_frozen"
+  },
+  "status": "case096_compact_authority"
+}

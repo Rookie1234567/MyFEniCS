@@ -45,6 +45,7 @@
 | [`task034_workstation_wsl_adaptive_scalability/README.md`](task034_workstation_wsl_adaptive_scalability/README.md) | Task034 PASS_WITH_QUALIFICATIONS：WSL、Case093、p3/h3+p4/h5 closure、representative MPI、graded-h negative；Review V4 final findings 由 Response V5 关闭，等待最终 file-level selective merge Gate |
 | [`task035_hcurl_goal_oriented_adaptivity/README.md`](task035_hcurl_goal_oriented_adaptivity/README.md) | Task035 Review V6 research baseline：periodic tetra、DWR/R5、one-cycle h 与 fixed-mesh p-up 证据 |
 | [`task035b_high_order_local_hp_resource_envelope/README.md`](task035b_high_order_local_hp_resource_envelope/README.md) | Task035b Review V2 批次：h13 仍为 10/12 + 10/12；setup/cache 与 rank-memory 为工程正结果，三条 iterative screen 为受控负结果，仍无 Hybrid-eligible candidate |
+| [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -69,6 +70,7 @@
 | Task034 | WSL + fixed-geometry high-order + controlled graded-h | PASS_WITH_QUALIFICATIONS；Review V4 pending；未合并 master |
 | Task035 | H(curl) field/goal-oriented adaptivity | Review V6 research baseline；Task035b 从其 stacked branch 继续 |
 | Task035b | high-order local-hp resource envelope | PARTIAL_WITH_CONTROLLED_NEGATIVES；Review V2 后最强 h13 仍为 10/12 + 10/12，Hybrid/resource v3 stopped by Gate |
+| Task035c | Hybrid channel accuracy + static memory closure | p2/h5 root cause closed；p6/h10 MPI8 six-path physics pass；mandatory memory pass with 50% gap |
 
 ## 当前任务
 
@@ -85,6 +87,7 @@
 | Task034 | `task034_workstation_wsl_adaptive_scalability/` | 实现完成；Review V4/用户 merge 授权待定；adaptive code 仍 research-only |
 | Task035 | `task035_hcurl_goal_oriented_adaptivity/` | Review V6 research baseline；不再继续该分支开发 |
 | Task035b | `task035b_high_order_local_hp_resource_envelope/` | Review V2 连续研究批次形成 `response_v3.md`；等待集中审阅，ordinary default 不变 |
+| Task035c | `task035c_hybrid_channel_memory_closure/` | 执行完成待集中Review；ordinary default不变；未授权master merge或h13 adaptive |
 
 ## Task28 审计入口
 
