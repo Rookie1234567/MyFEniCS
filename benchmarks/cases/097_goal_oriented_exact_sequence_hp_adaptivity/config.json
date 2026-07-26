@@ -28,6 +28,11 @@
     ],
     "starts_heavy_pde": false
   },
+  "compact_authority": {
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/compact_authority_v1.json",
+    "sha256": "2e896ef45bbfc5c11901503269d11c0321106c9e41f71729ac7c6fc722687403",
+    "record_count": 2
+  },
   "formal_candidate": {
     "degree_set": [
       4,

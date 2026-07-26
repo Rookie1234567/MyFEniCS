@@ -1,0 +1,1729 @@
+{
+  "environment": {
+    "basix_version": "0.10.0",
+    "dolfinx_version": "0.10.0.post2",
+    "mpi_size": 2,
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128"
+  },
+  "fixture": {
+    "periodic_x": {
+      "active_trace_rows_before_periodic_elimination": 1656,
+      "axes": [
+        "x"
+      ],
+      "checks": {
+        "all_boundary_entities_paired": true,
+        "double_periodic_cycles_close": true,
+        "orbit_rows_reduce_trace_numbering": true,
+        "periodic_degrees_synchronized": true,
+        "transforms_square_and_invertible": true
+      },
+      "cycle_closure_error_max": 1.1443916996305594e-16,
+      "edge_relation_count": 12,
+      "face_relation_count": 4,
+      "geometry_tolerance": 1e-11,
+      "inactive_p6_rows_globally_numbered": false,
+      "independent_periodic_trace_rows": 1448,
+      "maximum_orbit_size": 2,
+      "mpi_size": 2,
+      "orbit_count": 16,
+      "orbits": [
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            0,
+            31
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            6,
+            40
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            15,
+            47
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            3,
+            35
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            10,
+            44
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            19,
+            50
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            12,
+            46
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            21,
+            52
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            0,
+            20
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            1,
+            32
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            10,
+            31
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            7,
+            41
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            6,
+            28
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            3,
+            24
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            9,
+            43
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            4,
+            36
+          ],
+          "mode_count": 4
+        }
+      ],
+      "ordinary_default_changed": false,
+      "pass": true,
+      "periodic_slave_rows": 208,
+      "relation_count": 16,
+      "relations": [
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 0,
+          "mode_count": 4,
+          "slave_entity": 31,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 1,
+          "mode_count": 4,
+          "slave_entity": 32,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 3,
+          "mode_count": 4,
+          "slave_entity": 35,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 4,
+          "mode_count": 4,
+          "slave_entity": 36,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 6,
+          "mode_count": 4,
+          "slave_entity": 40,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 7,
+          "mode_count": 4,
+          "slave_entity": 41,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 9,
+          "mode_count": 4,
+          "slave_entity": 43,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 10,
+          "mode_count": 4,
+          "slave_entity": 44,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 12,
+          "mode_count": 4,
+          "slave_entity": 46,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 15,
+          "mode_count": 4,
+          "slave_entity": 47,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 19,
+          "mode_count": 4,
+          "slave_entity": 50,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 21,
+          "mode_count": 4,
+          "slave_entity": 52,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 0,
+          "mode_count": 40,
+          "slave_entity": 20,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "d6761f8584f22754bfebdd6866f24599f30a26e490075d92e2d9b61572bf6ba0",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 3,
+          "mode_count": 40,
+          "slave_entity": 24,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "d6761f8584f22754bfebdd6866f24599f30a26e490075d92e2d9b61572bf6ba0",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 6,
+          "mode_count": 40,
+          "slave_entity": 28,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "d6761f8584f22754bfebdd6866f24599f30a26e490075d92e2d9b61572bf6ba0",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 10,
+          "mode_count": 40,
+          "slave_entity": 31,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "d6761f8584f22754bfebdd6866f24599f30a26e490075d92e2d9b61572bf6ba0",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "schema_version": "task035d.variable-p-periodic-orbits.v1",
+      "status": "variable_p_periodic_orbit_audit_pass",
+      "transform_condition_number_max": 1.0
+    },
+    "periodic_xy": {
+      "active_trace_rows_before_periodic_elimination": 1656,
+      "axes": [
+        "x",
+        "y"
+      ],
+      "checks": {
+        "all_boundary_entities_paired": true,
+        "double_periodic_cycles_close": true,
+        "orbit_rows_reduce_trace_numbering": true,
+        "periodic_degrees_synchronized": true,
+        "transforms_square_and_invertible": true
+      },
+      "cycle_closure_error_max": 2.2887833992611187e-16,
+      "edge_relation_count": 24,
+      "face_relation_count": 8,
+      "geometry_tolerance": 1e-11,
+      "inactive_p6_rows_globally_numbered": false,
+      "independent_periodic_trace_rows": 1248,
+      "maximum_orbit_size": 4,
+      "mpi_size": 2,
+      "orbit_count": 26,
+      "orbits": [
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            0,
+            31
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            6,
+            40
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            49,
+            53
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            2,
+            12
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 4,
+          "member_entities": [
+            7,
+            15,
+            41,
+            47
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            19,
+            32
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            8,
+            14
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            3,
+            35
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            10,
+            44
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            19,
+            50
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            37,
+            48
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 4,
+          "member_entities": [
+            1,
+            12,
+            32,
+            46
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            21,
+            52
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            0,
+            20
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            16,
+            30
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            18,
+            39
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            8,
+            13
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            20,
+            23
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            10,
+            31
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            6,
+            28
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            3,
+            24
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            26,
+            33
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            9,
+            43
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            2,
+            13
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            4,
+            36
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            29,
+            45
+          ],
+          "mode_count": 4
+        }
+      ],
+      "ordinary_default_changed": false,
+      "pass": true,
+      "periodic_slave_rows": 408,
+      "relation_count": 32,
+      "relations": [
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 0,
+          "mode_count": 4,
+          "slave_entity": 31,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 1,
+          "mode_count": 4,
+          "slave_entity": 32,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 3,
+          "mode_count": 4,
+          "slave_entity": 35,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 4,
+          "mode_count": 4,
+          "slave_entity": 36,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 6,
+          "mode_count": 4,
+          "slave_entity": 40,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 7,
+          "mode_count": 4,
+          "slave_entity": 41,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 9,
+          "mode_count": 4,
+          "slave_entity": 43,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 10,
+          "mode_count": 4,
+          "slave_entity": 44,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 12,
+          "mode_count": 4,
+          "slave_entity": 46,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 15,
+          "mode_count": 4,
+          "slave_entity": 47,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 19,
+          "mode_count": 4,
+          "slave_entity": 50,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 21,
+          "mode_count": 4,
+          "slave_entity": 52,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "e36e39fa24ec6a77e051ba70b3e51034d2d7c0359b9efb792b1eb3c32872c61e",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 1,
+          "mode_count": 4,
+          "slave_entity": 12,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 2,
+          "mode_count": 4,
+          "slave_entity": 13,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 8,
+          "mode_count": 4,
+          "slave_entity": 14,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 7,
+          "mode_count": 4,
+          "slave_entity": 15,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 30,
+          "mode_count": 4,
+          "slave_entity": 16,
+          "transform_condition_number": 1.000000000000001,
+          "transform_sha256": "fc006e987fae769c0214cd83807dbb2ebb51f49a89501684165f44cf9720a7bd",
+          "vertex_permutation": [
+            1,
+            0
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 39,
+          "mode_count": 4,
+          "slave_entity": 18,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 20,
+          "mode_count": 4,
+          "slave_entity": 23,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 29,
+          "mode_count": 4,
+          "slave_entity": 45,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 32,
+          "mode_count": 4,
+          "slave_entity": 46,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 41,
+          "mode_count": 4,
+          "slave_entity": 47,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 37,
+          "mode_count": 4,
+          "slave_entity": 48,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 49,
+          "mode_count": 4,
+          "slave_entity": 53,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 0,
+          "mode_count": 40,
+          "slave_entity": 20,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "d6761f8584f22754bfebdd6866f24599f30a26e490075d92e2d9b61572bf6ba0",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 3,
+          "mode_count": 40,
+          "slave_entity": 24,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "d6761f8584f22754bfebdd6866f24599f30a26e490075d92e2d9b61572bf6ba0",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 6,
+          "mode_count": 40,
+          "slave_entity": 28,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "d6761f8584f22754bfebdd6866f24599f30a26e490075d92e2d9b61572bf6ba0",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "axis": "x",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 10,
+          "mode_count": 40,
+          "slave_entity": 31,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "d6761f8584f22754bfebdd6866f24599f30a26e490075d92e2d9b61572bf6ba0",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 2,
+          "mode_count": 40,
+          "slave_entity": 12,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "8d5ad1371fe528b59870ecd5636190c3ed7997085a36ed8efdee19960358da19",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 8,
+          "mode_count": 40,
+          "slave_entity": 13,
+          "transform_condition_number": 1.0000000000000064,
+          "transform_sha256": "8840881790fbfa0d2bdf1f926f6075ade2e1d5541170814b0669dfaa78760e29",
+          "vertex_permutation": [
+            0,
+            2,
+            1,
+            3
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 19,
+          "mode_count": 40,
+          "slave_entity": 32,
+          "transform_condition_number": 1.0000000000000135,
+          "transform_sha256": "c4047b63bddcfd86fa2b1163743b27f834e8a2d0aa58ffae2c5660bbd9e8f7cd",
+          "vertex_permutation": [
+            2,
+            0,
+            3,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 26,
+          "mode_count": 40,
+          "slave_entity": 33,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "8d5ad1371fe528b59870ecd5636190c3ed7997085a36ed8efdee19960358da19",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "schema_version": "task035d.variable-p-periodic-orbits.v1",
+      "status": "variable_p_periodic_orbit_audit_pass",
+      "transform_condition_number_max": 1.0000000000000135
+    },
+    "periodic_y": {
+      "active_trace_rows_before_periodic_elimination": 1656,
+      "axes": [
+        "y"
+      ],
+      "checks": {
+        "all_boundary_entities_paired": true,
+        "double_periodic_cycles_close": true,
+        "orbit_rows_reduce_trace_numbering": true,
+        "periodic_degrees_synchronized": true,
+        "transforms_square_and_invertible": true
+      },
+      "cycle_closure_error_max": 2.2887833992611187e-16,
+      "edge_relation_count": 12,
+      "face_relation_count": 4,
+      "geometry_tolerance": 1e-11,
+      "inactive_p6_rows_globally_numbered": false,
+      "independent_periodic_trace_rows": 1448,
+      "maximum_orbit_size": 2,
+      "mpi_size": 2,
+      "orbit_count": 16,
+      "orbits": [
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            49,
+            53
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            2,
+            12
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            7,
+            15
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            19,
+            32
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            8,
+            14
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            37,
+            48
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            32,
+            46
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            1,
+            12
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            16,
+            30
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            18,
+            39
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            8,
+            13
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            20,
+            23
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 5,
+          "dimension": 2,
+          "member_count": 2,
+          "member_entities": [
+            26,
+            33
+          ],
+          "mode_count": 40
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            2,
+            13
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            41,
+            47
+          ],
+          "mode_count": 4
+        },
+        {
+          "degree": 4,
+          "dimension": 1,
+          "member_count": 2,
+          "member_entities": [
+            29,
+            45
+          ],
+          "mode_count": 4
+        }
+      ],
+      "ordinary_default_changed": false,
+      "pass": true,
+      "periodic_slave_rows": 208,
+      "relation_count": 16,
+      "relations": [
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 1,
+          "mode_count": 4,
+          "slave_entity": 12,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 2,
+          "mode_count": 4,
+          "slave_entity": 13,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 8,
+          "mode_count": 4,
+          "slave_entity": 14,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 7,
+          "mode_count": 4,
+          "slave_entity": 15,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 30,
+          "mode_count": 4,
+          "slave_entity": 16,
+          "transform_condition_number": 1.000000000000001,
+          "transform_sha256": "fc006e987fae769c0214cd83807dbb2ebb51f49a89501684165f44cf9720a7bd",
+          "vertex_permutation": [
+            1,
+            0
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 39,
+          "mode_count": 4,
+          "slave_entity": 18,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 20,
+          "mode_count": 4,
+          "slave_entity": 23,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 29,
+          "mode_count": 4,
+          "slave_entity": 45,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 32,
+          "mode_count": 4,
+          "slave_entity": 46,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 41,
+          "mode_count": 4,
+          "slave_entity": 47,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 37,
+          "mode_count": 4,
+          "slave_entity": 48,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 4,
+          "dimension": 1,
+          "master_entity": 49,
+          "mode_count": 4,
+          "slave_entity": 53,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "24fc6c27e97334b90f6a59899600e2a769eca7451a542b35afb9b1cfc81ce7c9",
+          "vertex_permutation": [
+            0,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 2,
+          "mode_count": 40,
+          "slave_entity": 12,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "8d5ad1371fe528b59870ecd5636190c3ed7997085a36ed8efdee19960358da19",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 8,
+          "mode_count": 40,
+          "slave_entity": 13,
+          "transform_condition_number": 1.0000000000000064,
+          "transform_sha256": "8840881790fbfa0d2bdf1f926f6075ade2e1d5541170814b0669dfaa78760e29",
+          "vertex_permutation": [
+            0,
+            2,
+            1,
+            3
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 19,
+          "mode_count": 40,
+          "slave_entity": 32,
+          "transform_condition_number": 1.0000000000000135,
+          "transform_sha256": "c4047b63bddcfd86fa2b1163743b27f834e8a2d0aa58ffae2c5660bbd9e8f7cd",
+          "vertex_permutation": [
+            2,
+            0,
+            3,
+            1
+          ]
+        },
+        {
+          "axis": "y",
+          "degree": 5,
+          "dimension": 2,
+          "master_entity": 26,
+          "mode_count": 40,
+          "slave_entity": 33,
+          "transform_condition_number": 1.0,
+          "transform_sha256": "8d5ad1371fe528b59870ecd5636190c3ed7997085a36ed8efdee19960358da19",
+          "vertex_permutation": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "schema_version": "task035d.variable-p-periodic-orbits.v1",
+      "status": "variable_p_periodic_orbit_audit_pass",
+      "transform_condition_number_max": 1.0000000000000135
+    },
+    "uniform_p6_condensed_sparsity": {
+      "average_row_width": 567.0434782608696,
+      "condensed_trace": true,
+      "full_p6_global_matrix_constructed": false,
+      "inactive_p6_rows_globally_numbered": false,
+      "isolated_rows": 0,
+      "max_row_width": 1398,
+      "pass": true,
+      "rows": 2484,
+      "schema_version": "task035d.variable-p-structural-sparsity.v1",
+      "status": "variable_p_structural_sparsity_pass",
+      "structural_nnz": 1408536
+    },
+    "uniform_p6_entity_map": {
+      "active_cell_interior_rows": 3600,
+      "active_rows": 6084,
+      "active_trace_rows": 2484,
+      "all_active_rows_reached_by_owned_cells": true,
+      "canonical_degree_map_sha256": "6b466d61a2af347fb22ec993b7d7fd9d4f37e48590ee46f16afd2c2f6bb24f18",
+      "canonical_numbering_partition_independent": true,
+      "cell_pattern_count": 1,
+      "cell_pattern_signatures": [
+        "e[6,6,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]"
+      ],
+      "full_p6_global_matrix_constructed": false,
+      "global_entity_counts": {
+        "1": 54,
+        "2": 36,
+        "3": 8
+      },
+      "inactive_modes_globally_numbered": false,
+      "inactive_p6_rows": 0,
+      "inactive_p6_trace_rows": 0,
+      "mpi_size": 2,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "schema_version": "task035d.variable-p-global-entity-map.v1",
+      "status": "inactive_row_free_entity_numbering_pass",
+      "uniform_p6_rows": 6084,
+      "uniform_p6_trace_rows": 2484
+    },
+    "variable_condensed_sparsity": {
+      "average_row_width": 378.0289855072464,
+      "condensed_trace": true,
+      "full_p6_global_matrix_constructed": false,
+      "inactive_p6_rows_globally_numbered": false,
+      "isolated_rows": 0,
+      "max_row_width": 932,
+      "pass": true,
+      "rows": 1656,
+      "schema_version": "task035d.variable-p-structural-sparsity.v1",
+      "status": "variable_p_structural_sparsity_pass",
+      "structural_nnz": 626016
+    },
+    "variable_entity_map": {
+      "active_cell_interior_rows": 3600,
+      "active_rows": 5256,
+      "active_trace_rows": 1656,
+      "all_active_rows_reached_by_owned_cells": true,
+      "canonical_degree_map_sha256": "650000ffcf13855ac7713d35c03c15cf348aa983cca61e858128c553b85c1704",
+      "canonical_numbering_partition_independent": true,
+      "cell_pattern_count": 1,
+      "cell_pattern_signatures": [
+        "e[4,4,4,4,4,4,4,4,4,4,4,4]-f[5,5,5,5,5,5]-c[6]"
+      ],
+      "full_p6_global_matrix_constructed": false,
+      "global_entity_counts": {
+        "1": 54,
+        "2": 36,
+        "3": 8
+      },
+      "inactive_modes_globally_numbered": false,
+      "inactive_p6_rows": 828,
+      "inactive_p6_trace_rows": 828,
+      "mpi_size": 2,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "schema_version": "task035d.variable-p-global-entity-map.v1",
+      "status": "inactive_row_free_entity_numbering_pass",
+      "uniform_p6_rows": 6084,
+      "uniform_p6_trace_rows": 2484
+    }
+  },
+  "heavy_pde_started": false,
+  "ordinary_default_changed": false,
+  "owned_cell_count_sum": 8,
+  "pass": true,
+  "rank_identity_match": true,
+  "rank_identity_sha256": [
+    "650000ffcf13855ac7713d35c03c15cf348aa983cca61e858128c553b85c1704",
+    "650000ffcf13855ac7713d35c03c15cf348aa983cca61e858128c553b85c1704"
+  ],
+  "schema_version": "task035d.mpi2-fixture-authority.v1",
+  "source": {
+    "commit_sha": "37a78404532048bae127dd4e350b87d33695d13e",
+    "file_sha256": {
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_reference_authority.py": "c29174f975a9a57965f554905578ac7266ad5085a91ee6b14f7793f97efa043c",
+      "src/adaptivity/exact_sequence_variable_p.py": "636219b2151646af3647ba9b93c481ef47ac92c868446c0b4e0a3a157e89eb8e",
+      "src/adaptivity/variable_p_entity_map.py": "5e18311b8e76dbca36367a98b35a0392e08315d861b38f20d3f97fd3ffe82ade",
+      "src/adaptivity/variable_p_periodic_orbits.py": "9a66f09f88a18bd50003f00391a13fbcdf110fff09770ca17ae1cd6982a28a21",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/test/test_183_task035d_reference_active_space.py": "65719f7de4b37a07d7ec8f3ed0d4b1ec36e530bb208fc93ce82da5c1241eccc3",
+      "src/test/test_184_task035d_global_entity_numbering.py": "b28c957176b7d2d922823144bab9e58e4e86c138e9d2182ef7617957bbe1e0f7"
+    },
+    "ordinary_default_changed": false
+  },
+  "status": "task035d_phase_a_mpi2_fixture_pass"
+}
