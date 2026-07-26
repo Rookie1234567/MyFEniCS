@@ -223,6 +223,9 @@ class Task035dCase097CheckerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "timeline.csv"
             row = _timeline_row()
+            row["worker_rank_rss_sum_mb"] = (
+                float(row["worker_rank_rss_sum_mb"]) - 0.25
+            )
             _write_timeline(path, row)
             metrics = _timeline_resource_metrics(path)
             self.assertEqual(metrics["max_observed_worker_rank_count"], 8)

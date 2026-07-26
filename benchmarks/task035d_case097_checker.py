@@ -444,6 +444,34 @@ def _git_tracked(path: Path) -> bool:
     return result.returncode == 0
 
 
+def _checker_source_provenance() -> dict[str, Any]:
+    try:
+        head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            text=True,
+        ).strip()
+        status = subprocess.check_output(
+            ["git", "status", "--porcelain", "--untracked-files=all"],
+            cwd=ROOT,
+            text=True,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise Task035dEvidenceError(
+            f"checker source identity is unreadable: {error}"
+        ) from error
+    _require(_valid_sha(head, 40), "checker source SHA is invalid")
+    _require(
+        status == "",
+        "checker requires a clean source tree before evidence evaluation",
+    )
+    return {
+        "commit_sha": head,
+        "source_clean_verified": True,
+        "status": status,
+    }
+
+
 def _command_option(command: Sequence[str], option: str) -> str:
     indices = [index for index, value in enumerate(command) if value == option]
     _require(
@@ -862,7 +890,7 @@ def _timeline_resource_metrics(path: Path) -> dict[str, Any]:
             f"timeline row {index} does not contain all MPI8 smaps ranks",
         )
         reconstructed: dict[str, float] = {}
-        for name in ("rss_mb", "pss_mb", "uss_mb", "shared_mb", "swap_mb"):
+        for name in ("pss_mb", "uss_mb", "shared_mb", "swap_mb"):
             reconstructed[name] = sum(
                 _finite(
                     smaps_by_rank[rank].get(name),
@@ -871,7 +899,6 @@ def _timeline_resource_metrics(path: Path) -> dict[str, Any]:
                 for rank in expected_ranks
             )
         for ledger_key, name in (
-            ("worker_rank_rss_sum_mb", "rss_mb"),
             ("worker_rank_pss_sum_mb", "pss_mb"),
             ("worker_rank_uss_sum_mb", "uss_mb"),
             ("worker_rank_shared_sum_mb", "shared_mb"),
@@ -883,6 +910,16 @@ def _timeline_resource_metrics(path: Path) -> dict[str, Any]:
                 context=f"timeline row {index} {ledger_key}",
                 tolerance=1.0e-6,
             )
+        worker_rss_sum = _finite(
+            _csv_float(row, "worker_rank_rss_sum_mb"),
+            f"timeline row {index} worker rank RSS sum",
+        )
+        _require(
+            reconstructed["uss_mb"]
+            <= reconstructed["pss_mb"]
+            <= worker_rss_sum,
+            f"timeline row {index} violates USS <= PSS <= RSS",
+        )
         fully_readable_samples += 1
 
     _require(
@@ -1205,6 +1242,7 @@ def build_task035d_case097_candidate_check(
         compare_cross_mesh_fields
     ),
 ) -> dict[str, Any]:
+    checker_source = _checker_source_provenance()
     authorities = _load_frozen_authorities()
     candidate = _load_candidate_raw(watchdog_path, watchdog_sha256)
     watchdog = candidate["record"]
@@ -1296,6 +1334,7 @@ def build_task035d_case097_candidate_check(
         {
             "benchmark_id": "task035d_case097_t30_candidate",
             "source_sha": candidate["source_sha"],
+            "checker_source": checker_source,
             "candidate_watchdog": {
                 "path": _path_from_root(candidate["record_path"]),
                 "sha256": candidate["record_sha256"],
