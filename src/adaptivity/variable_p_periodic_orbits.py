@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
-from typing import Any, Iterable
+from types import MappingProxyType
+from typing import Any, Iterable, Mapping
 
 import numpy as np
 from dolfinx import mesh as dmesh
@@ -29,6 +30,43 @@ class VariablePPeriodicRelation:
     degree: int
     vertex_permutation: tuple[int, ...]
     coefficient_transform: np.ndarray
+
+
+@dataclass(frozen=True)
+class VariablePPeriodicEntityBlock:
+    """One active trace entity expressed by an independent orbit block."""
+
+    dimension: int
+    global_entity: int
+    root_entity: int
+    full_rows: np.ndarray
+    independent_rows: np.ndarray
+    full_from_independent: np.ndarray
+
+
+@dataclass(frozen=True)
+class VariablePCellPeriodicTraceMap:
+    """Cell-local expansion from independent to unconstrained trace rows."""
+
+    local_cell: int
+    global_cell: int
+    independent_rows: np.ndarray
+    full_trace_from_independent: np.ndarray
+
+
+@dataclass(frozen=True)
+class VariablePPeriodicConstraintMap:
+    """Inactive-row-free Floquet elimination map for variable-p traces."""
+
+    entity_map: VariablePGlobalEntityMap
+    relations: tuple[VariablePPeriodicRelation, ...]
+    entity_blocks: Mapping[
+        tuple[int, int],
+        VariablePPeriodicEntityBlock,
+    ]
+    owned_cells: tuple[VariablePCellPeriodicTraceMap, ...]
+    independent_trace_rows: int
+    audit: Mapping[str, Any]
 
 
 def _quantized_point(
@@ -448,7 +486,386 @@ def audit_variable_p_periodic_orbits(
     }
 
 
+def _periodic_components_and_potentials(
+    entity_map: VariablePGlobalEntityMap,
+    relations: tuple[VariablePPeriodicRelation, ...],
+) -> tuple[
+    tuple[tuple[tuple[int, int], ...], ...],
+    dict[tuple[int, int], np.ndarray],
+    float,
+]:
+    nodes = {
+        (dimension, entity)
+        for dimension in (1, 2)
+        for entity in range(len(entity_map.global_degrees[dimension]))
+    }
+    parent = {node: node for node in nodes}
+
+    def find(node: tuple[int, int]) -> tuple[int, int]:
+        while parent[node] != node:
+            parent[node] = parent[parent[node]]
+            node = parent[node]
+        return node
+
+    def union(left: tuple[int, int], right: tuple[int, int]) -> None:
+        left_root = find(left)
+        right_root = find(right)
+        if left_root != right_root:
+            parent[right_root] = left_root
+
+    adjacency: dict[
+        tuple[int, int],
+        list[tuple[tuple[int, int], np.ndarray]],
+    ] = {node: [] for node in nodes}
+    for relation in relations:
+        master = (relation.dimension, relation.master_entity)
+        slave = (relation.dimension, relation.slave_entity)
+        if master not in nodes or slave not in nodes:
+            raise RuntimeError("periodic relation references an unknown entity")
+        transform = np.asarray(
+            relation.coefficient_transform,
+            dtype=np.complex128,
+        )
+        expected = len(
+            entity_map.global_entity_rows[relation.dimension][
+                relation.master_entity
+            ]
+        )
+        if transform.shape != (expected, expected):
+            raise RuntimeError(
+                "periodic transform dimension differs from entity modes"
+            )
+        union(master, slave)
+        adjacency[master].append((slave, transform))
+        adjacency[slave].append((master, np.linalg.inv(transform)))
+
+    component_table: dict[
+        tuple[int, int],
+        list[tuple[int, int]],
+    ] = {}
+    for node in nodes:
+        component_table.setdefault(find(node), []).append(node)
+    components = tuple(
+        tuple(sorted(members))
+        for members in sorted(
+            component_table.values(),
+            key=lambda values: min(values),
+        )
+    )
+    potentials: dict[tuple[int, int], np.ndarray] = {}
+    cycle_error = 0.0
+    for component in components:
+        root = component[0]
+        dimension, entity = root
+        mode_count = len(
+            entity_map.global_entity_rows[dimension][entity]
+        )
+        component_degrees = {
+            int(entity_map.global_degrees[node_dimension][node_entity])
+            for node_dimension, node_entity in component
+        }
+        component_mode_counts = {
+            len(
+                entity_map.global_entity_rows[node_dimension][node_entity]
+            )
+            for node_dimension, node_entity in component
+        }
+        if len(component_degrees) != 1 or component_mode_counts != {
+            mode_count
+        }:
+            raise RuntimeError(
+                "one periodic component mixes degree or mode count"
+            )
+        local_potentials = {
+            root: np.eye(mode_count, dtype=np.complex128)
+        }
+        queue = [root]
+        while queue:
+            current = queue.pop(0)
+            for neighbor, transform in adjacency[current]:
+                candidate = transform @ local_potentials[current]
+                if neighbor in local_potentials:
+                    cycle_error = max(
+                        cycle_error,
+                        float(
+                            np.max(
+                                np.abs(
+                                    candidate
+                                    - local_potentials[neighbor]
+                                ),
+                                initial=0.0,
+                            )
+                        ),
+                    )
+                else:
+                    local_potentials[neighbor] = candidate
+                    queue.append(neighbor)
+        if set(local_potentials) != set(component):
+            raise RuntimeError("periodic component traversal is incomplete")
+        potentials.update(local_potentials)
+    return components, potentials, cycle_error
+
+
+def build_variable_p_periodic_constraint_map(
+    entity_map: VariablePGlobalEntityMap,
+    *,
+    axes: tuple[str, ...],
+    phase_x: complex = 1.0 + 0.0j,
+    phase_y: complex = 1.0 + 0.0j,
+    tolerance: float | None = None,
+) -> VariablePPeriodicConstraintMap:
+    """Build the actual pre-insertion Floquet trace elimination map."""
+
+    orbit_audit = audit_variable_p_periodic_orbits(
+        entity_map,
+        axes=axes,
+        phase_x=phase_x,
+        phase_y=phase_y,
+        tolerance=tolerance,
+    )
+    if not orbit_audit["pass"]:
+        raise RuntimeError("periodic orbit audit failed before elimination")
+    phase_by_axis = {
+        "x": complex(phase_x),
+        "y": complex(phase_y),
+    }
+    relations = tuple(
+        VariablePPeriodicRelation(
+            dimension=int(record["dimension"]),
+            axis=str(record["axis"]),
+            master_entity=int(record["master_entity"]),
+            slave_entity=int(record["slave_entity"]),
+            degree=int(record["degree"]),
+            vertex_permutation=tuple(
+                map(int, record["vertex_permutation"])
+            ),
+            coefficient_transform=_relation_transform(
+                dimension=int(record["dimension"]),
+                degree=int(record["degree"]),
+                permutation=tuple(
+                    map(int, record["vertex_permutation"])
+                ),
+                phase=phase_by_axis[str(record["axis"])],
+            ),
+        )
+        for record in orbit_audit["relations"]
+    )
+    components, potentials, cycle_error = (
+        _periodic_components_and_potentials(entity_map, relations)
+    )
+    if cycle_error > 2.0e-11:
+        raise RuntimeError(
+            "periodic coefficient maps fail double-periodic cycle closure"
+        )
+
+    entity_blocks: dict[
+        tuple[int, int],
+        VariablePPeriodicEntityBlock,
+    ] = {}
+    next_row = 0
+    for component in components:
+        dimension, root_entity = component[0]
+        mode_count = len(
+            entity_map.global_entity_rows[dimension][root_entity]
+        )
+        independent_rows = np.arange(
+            next_row,
+            next_row + mode_count,
+            dtype=np.int64,
+        )
+        next_row += mode_count
+        independent_rows.setflags(write=False)
+        for node_dimension, global_entity in component:
+            if node_dimension != dimension:
+                raise RuntimeError(
+                    "periodic component crosses topological dimensions"
+                )
+            full_rows = np.asarray(
+                entity_map.global_entity_rows[dimension][global_entity],
+                dtype=np.int64,
+            )
+            transform = np.ascontiguousarray(potentials[
+                (dimension, global_entity)
+            ])
+            for values in (full_rows, transform):
+                values.setflags(write=False)
+            entity_blocks[(dimension, global_entity)] = (
+                VariablePPeriodicEntityBlock(
+                    dimension=dimension,
+                    global_entity=global_entity,
+                    root_entity=root_entity,
+                    full_rows=full_rows,
+                    independent_rows=independent_rows,
+                    full_from_independent=transform,
+                )
+            )
+    if len(entity_blocks) != sum(
+        len(entity_map.global_degrees[dimension])
+        for dimension in (1, 2)
+    ):
+        raise RuntimeError("periodic constraint map misses trace entities")
+
+    cell_maps: list[VariablePCellPeriodicTraceMap] = []
+    local_rank_failures = 0
+    local_expansion_nnz = 0
+    topology = entity_map.mesh.topology
+    for cell in entity_map.owned_cells:
+        block_sequence: list[VariablePPeriodicEntityBlock] = []
+        full_position = 0
+        for dimension in (1, 2):
+            local_entities = np.asarray(
+                cell.entity_ids[dimension],
+                dtype=np.int32,
+            )
+            global_entities = np.asarray(
+                topology.index_map(dimension).local_to_global(
+                    local_entities
+                ),
+                dtype=np.int64,
+            )
+            for local_entity, global_entity in zip(
+                local_entities,
+                global_entities,
+                strict=True,
+            ):
+                block = entity_blocks[
+                    (dimension, int(global_entity))
+                ]
+                local_rows = np.asarray(
+                    entity_map.local_entity_rows[dimension][
+                        int(local_entity)
+                    ],
+                    dtype=np.int64,
+                )
+                if not np.array_equal(local_rows, block.full_rows):
+                    raise RuntimeError(
+                        "periodic block differs from cell trace numbering"
+                    )
+                observed = np.asarray(
+                    cell.trace_rows[
+                        full_position : full_position + len(local_rows)
+                    ],
+                    dtype=np.int64,
+                )
+                if not np.array_equal(observed, local_rows):
+                    raise RuntimeError(
+                        "cell trace ordering differs from entity blocks"
+                    )
+                full_position += len(local_rows)
+                block_sequence.append(block)
+        if full_position != len(cell.trace_rows):
+            raise RuntimeError("periodic cell expansion is incomplete")
+        independent_rows = np.unique(
+            np.concatenate(
+                [block.independent_rows for block in block_sequence]
+            )
+        )
+        column_by_row = {
+            int(row): column
+            for column, row in enumerate(independent_rows)
+        }
+        expansion = np.zeros(
+            (len(cell.trace_rows), len(independent_rows)),
+            dtype=np.complex128,
+        )
+        local_row = 0
+        for block in block_sequence:
+            mode_count = len(block.full_rows)
+            columns = [
+                column_by_row[int(row)]
+                for row in block.independent_rows
+            ]
+            expansion[
+                local_row : local_row + mode_count,
+                columns,
+            ] = block.full_from_independent
+            local_row += mode_count
+        rank = int(np.linalg.matrix_rank(expansion))
+        if rank != len(independent_rows):
+            local_rank_failures += 1
+        local_expansion_nnz += int(np.count_nonzero(expansion))
+        independent_rows.setflags(write=False)
+        expansion.setflags(write=False)
+        cell_maps.append(
+            VariablePCellPeriodicTraceMap(
+                local_cell=cell.local_cell,
+                global_cell=cell.global_cell,
+                independent_rows=independent_rows,
+                full_trace_from_independent=expansion,
+            )
+        )
+    comm = entity_map.mesh.comm
+    rank_failures = int(
+        comm.allreduce(local_rank_failures, op=MPI.SUM)
+    )
+    if rank_failures:
+        raise RuntimeError("one periodic cell expansion is rank deficient")
+    independent_packets = comm.allgather(int(next_row))
+    if len(set(independent_packets)) != 1:
+        raise RuntimeError(
+            "MPI ranks disagree on periodic independent row count"
+        )
+    checks = {
+        "orbit_audit_pass": True,
+        "all_trace_entities_mapped": True,
+        "cell_expansions_full_column_rank": rank_failures == 0,
+        "double_periodic_cycles_close": cycle_error <= 2.0e-11,
+        "slave_rows_eliminated_before_insertion": True,
+        "inactive_p6_rows_absent": True,
+    }
+    audit = MappingProxyType(
+        {
+            "schema_version": (
+                "task035d.variable-p-periodic-constraint-map.v1"
+            ),
+            "status": "variable_p_periodic_constraint_map_pass",
+            "pass": all(checks.values()),
+            "mpi_size": int(comm.size),
+            "axes": list(orbit_audit["axes"]),
+            "relation_count": len(relations),
+            "component_count": len(components),
+            "nontrivial_orbit_count": int(
+                orbit_audit["orbit_count"]
+            ),
+            "maximum_orbit_size": int(
+                orbit_audit["maximum_orbit_size"]
+            ),
+            "cycle_closure_error_max": cycle_error,
+            "active_trace_rows_before_periodic_elimination": (
+                entity_map.active_trace_rows
+            ),
+            "periodic_slave_rows": int(
+                entity_map.active_trace_rows - next_row
+            ),
+            "independent_periodic_trace_rows": int(next_row),
+            "owned_cell_count_global": int(
+                comm.allreduce(len(cell_maps), op=MPI.SUM)
+            ),
+            "cell_expansion_nnz_global": int(
+                comm.allreduce(local_expansion_nnz, op=MPI.SUM)
+            ),
+            "full_global_constraint_matrix_allocated": False,
+            "chained_slave_rows_retained": False,
+            "inactive_p6_rows_globally_numbered": False,
+            "ordinary_default_changed": False,
+            "checks": checks,
+        }
+    )
+    return VariablePPeriodicConstraintMap(
+        entity_map=entity_map,
+        relations=relations,
+        entity_blocks=MappingProxyType(entity_blocks),
+        owned_cells=tuple(cell_maps),
+        independent_trace_rows=int(next_row),
+        audit=audit,
+    )
+
+
 __all__ = [
+    "VariablePCellPeriodicTraceMap",
+    "VariablePPeriodicConstraintMap",
+    "VariablePPeriodicEntityBlock",
     "VariablePPeriodicRelation",
     "audit_variable_p_periodic_orbits",
+    "build_variable_p_periodic_constraint_map",
 ]

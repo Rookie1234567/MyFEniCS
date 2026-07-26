@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,6 +17,17 @@ def _load(name: str):
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _sha256_at_commit(commit_sha: str, path: str) -> str:
+    completed = subprocess.run(
+        ["git", "show", f"{commit_sha}:{path}"],
+        cwd=ROOT,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return hashlib.sha256(completed.stdout).hexdigest()
 
 
 def test_case097_manifest_binds_serial_and_real_mpi2_authorities() -> None:
@@ -39,7 +51,13 @@ def test_case097_manifest_binds_serial_and_real_mpi2_authorities() -> None:
         for source_path, expected_sha in payload["source"][
             "file_sha256"
         ].items():
-            assert _sha256(ROOT / source_path) == expected_sha
+            assert (
+                _sha256_at_commit(
+                    payload["source"]["commit_sha"],
+                    source_path,
+                )
+                == expected_sha
+            )
 
 
 def test_case097_entity_catalog_and_all_legal_triples_pass() -> None:

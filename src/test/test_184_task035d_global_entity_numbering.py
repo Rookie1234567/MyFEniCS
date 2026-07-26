@@ -13,6 +13,7 @@ from src.adaptivity.variable_p_entity_map import (
 )
 from src.adaptivity.variable_p_periodic_orbits import (
     audit_variable_p_periodic_orbits,
+    build_variable_p_periodic_constraint_map,
 )
 
 
@@ -201,6 +202,42 @@ class Task035dGlobalEntityNumberingTests(unittest.TestCase):
             periodic_xy["independent_periodic_trace_rows"],
             1248,
         )
+        constraints = build_variable_p_periodic_constraint_map(
+            variable,
+            axes=("x", "y"),
+            phase_x=phase_x,
+            phase_y=phase_y,
+        )
+        self.assertTrue(constraints.audit["pass"])
+        self.assertEqual(constraints.independent_trace_rows, 1248)
+        self.assertEqual(constraints.audit["periodic_slave_rows"], 408)
+        self.assertFalse(
+            constraints.audit["full_global_constraint_matrix_allocated"]
+        )
+        self.assertFalse(
+            constraints.audit["chained_slave_rows_retained"]
+        )
+        for cell in constraints.owned_cells:
+            expansion = cell.full_trace_from_independent
+            self.assertEqual(expansion.shape[0], 288)
+            self.assertEqual(
+                np.linalg.matrix_rank(expansion),
+                expansion.shape[1],
+            )
+        for relation in constraints.relations:
+            master = constraints.entity_blocks[
+                (relation.dimension, relation.master_entity)
+            ]
+            slave = constraints.entity_blocks[
+                (relation.dimension, relation.slave_entity)
+            ]
+            np.testing.assert_allclose(
+                slave.full_from_independent,
+                relation.coefficient_transform
+                @ master.full_from_independent,
+                rtol=2.0e-12,
+                atol=2.0e-12,
+            )
 
 
 if __name__ == "__main__":

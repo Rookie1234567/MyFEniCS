@@ -255,6 +255,42 @@ class Task035dReferenceActiveSpaceTests(unittest.TestCase):
                 )
                 self.assertLessEqual(relative, 2.0e-12)
 
+    def test_oriented_active_p6_transfer_is_complex_adjoint(self) -> None:
+        degree_map = HexaEntityDegreeMap(
+            edges=(5,) + (4,) * 11,
+            faces=(5,) * 6,
+            cell=6,
+        )
+        space = build_variable_p_reference_space(degree_map)
+        cell_info = (
+            1
+            | (2 << 1)
+            | (1 << (3 * 3 + 1))
+            | (1 << (18 + 1))
+            | (1 << (18 + 9))
+        )
+        rng = np.random.default_rng(35183)
+        active = (
+            rng.standard_normal(space.hcurl_dimension)
+            + 1j * rng.standard_normal(space.hcurl_dimension)
+        )
+        p6_dual = (
+            rng.standard_normal(882)
+            + 1j * rng.standard_normal(882)
+        )
+        expanded = space.active_to_p6_oriented(
+            active,
+            cell_info=cell_info,
+        )
+        projected = space.project_p6_oriented_dual(
+            p6_dual,
+            cell_info=cell_info,
+        )
+        left = np.vdot(p6_dual, expanded)
+        right = np.vdot(projected, active)
+        relative = abs(left - right) / max(abs(left), abs(right), 1.0)
+        self.assertLessEqual(relative, 2.0e-11)
+
     def test_local_schur_recovers_active_and_p6_coefficients(self) -> None:
         degree_map = HexaEntityDegreeMap.dimension_uniform(
             edge_degree=4,

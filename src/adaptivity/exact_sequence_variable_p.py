@@ -211,6 +211,7 @@ class VariablePReferenceSpace:
         values: np.ndarray,
         *,
         cell_info: int,
+        transpose: bool = False,
     ) -> np.ndarray:
         """Apply the explicit per-entity Basix transform to active data."""
 
@@ -219,6 +220,7 @@ class VariablePReferenceSpace:
             values,
             family=_HCURL_FAMILY,
             cell_info=cell_info,
+            transpose=transpose,
         )
 
     def orient_hcurl_tensor(
@@ -244,6 +246,65 @@ class VariablePReferenceSpace:
             cell_info=cell_info,
         )
         return np.ascontiguousarray(transposed.T)
+
+    def active_to_p6_oriented(
+        self,
+        active_coefficients: np.ndarray,
+        *,
+        cell_info: int,
+    ) -> np.ndarray:
+        """Map oriented active coefficients to oriented p6 coefficients."""
+
+        active = np.asarray(active_coefficients)
+        if active.shape != (self.hcurl_dimension,):
+            raise ValueError("active local coefficient vector has wrong size")
+        active_reference = self.apply_hcurl_dof_transform(
+            active,
+            cell_info=cell_info,
+            transpose=True,
+        )
+        p6_reference = np.ascontiguousarray(
+            self.hcurl_to_p6 @ active_reference
+        )
+        p6_space = build_variable_p_reference_space(
+            HexaEntityDegreeMap.uniform(6)
+        )
+        return apply_active_dof_transformation(
+            p6_space,
+            p6_reference,
+            family=_HCURL_FAMILY,
+            cell_info=cell_info,
+        )
+
+    def project_p6_oriented_dual(
+        self,
+        p6_dual: np.ndarray,
+        *,
+        cell_info: int,
+    ) -> np.ndarray:
+        """Apply the Hermitian transpose of the oriented local expansion."""
+
+        values = np.asarray(p6_dual)
+        expected = (self.hcurl_to_p6.shape[0],)
+        if values.shape != expected:
+            raise ValueError("p6 local dual vector has wrong size")
+        p6_space = build_variable_p_reference_space(
+            HexaEntityDegreeMap.uniform(6)
+        )
+        p6_reference_dual = apply_active_dof_transformation(
+            p6_space,
+            values,
+            family=_HCURL_FAMILY,
+            cell_info=cell_info,
+            transpose=True,
+        )
+        active_reference_dual = np.ascontiguousarray(
+            self.hcurl_to_p6.conj().T @ p6_reference_dual
+        )
+        return self.apply_hcurl_dof_transform(
+            active_reference_dual,
+            cell_info=cell_info,
+        )
 
 
 def allowed_dimension_degree_triples() -> tuple[tuple[int, int, int], ...]:
@@ -724,6 +785,7 @@ def apply_active_dof_transformation(
     *,
     family: str,
     cell_info: int,
+    transpose: bool = False,
 ) -> np.ndarray:
     """Apply Basix transforms with each entity's own active degree.
 
@@ -762,7 +824,9 @@ def apply_active_dof_transformation(
                     degree,
                 ).entity_transformations()["interval"][0]
             )
-            flattened[dofs] = reflection @ flattened[dofs]
+            flattened[dofs] = (
+                reflection.T if transpose else reflection
+            ) @ flattened[dofs]
 
     for face in range(6):
         dofs = np.asarray(
@@ -778,11 +842,17 @@ def apply_active_dof_transformation(
                 degree,
             ).entity_transformations()["quadrilateral"]
         )
-        if (info >> (3 * face)) & 1:
-            flattened[dofs] = generators[1] @ flattened[dofs]
         rotations = (info >> (3 * face + 1)) & 3
-        for _ in range(rotations):
-            flattened[dofs] = generators[0] @ flattened[dofs]
+        if transpose:
+            for _ in range(rotations):
+                flattened[dofs] = generators[0].T @ flattened[dofs]
+            if (info >> (3 * face)) & 1:
+                flattened[dofs] = generators[1].T @ flattened[dofs]
+        else:
+            if (info >> (3 * face)) & 1:
+                flattened[dofs] = generators[1] @ flattened[dofs]
+            for _ in range(rotations):
+                flattened[dofs] = generators[0] @ flattened[dofs]
     return transformed
 
 

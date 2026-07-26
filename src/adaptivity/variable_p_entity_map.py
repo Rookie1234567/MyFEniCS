@@ -56,6 +56,7 @@ class VariablePGlobalEntityMap:
 
     mesh: Any
     global_degrees: Mapping[int, np.ndarray]
+    global_entity_rows: Mapping[int, tuple[np.ndarray, ...]]
     local_entity_rows: Mapping[int, tuple[np.ndarray, ...]]
     owned_cells: tuple[VariablePCellDofMap, ...]
     active_rows: int
@@ -384,10 +385,12 @@ def build_variable_p_global_entity_map(
         }
     )
     frozen_degrees = MappingProxyType(global_degrees)
+    frozen_global_rows = MappingProxyType(global_rows)
     frozen_rows = MappingProxyType(local_entity_rows)
     return VariablePGlobalEntityMap(
         mesh=msh,
         global_degrees=frozen_degrees,
+        global_entity_rows=frozen_global_rows,
         local_entity_rows=frozen_rows,
         owned_cells=tuple(owned_cells),
         active_rows=int(next_row),
