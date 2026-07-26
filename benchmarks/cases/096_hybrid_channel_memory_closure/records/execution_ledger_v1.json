@@ -26,6 +26,12 @@
       "status": "rank_study_complete_with_controlled_negatives"
     },
     {
+      "classification": "completed_from_existing_raw_timeline_no_pde_rerun",
+      "lane": "p6_h10_pss_uss_backfill",
+      "record": "records/p6_h10_mpi8_pss_uss_ledger_v1.json",
+      "status": "p6_h10_mpi8_historical_pss_uss_backfill_qualified"
+    },
+    {
       "classification": "preserved_failed_evidence",
       "lane": "dependency_failures",
       "record": "records/dependency_failures_v1.json",

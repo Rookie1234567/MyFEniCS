@@ -15,6 +15,7 @@
 | MPI8 six paths | 6/6 完成并通过数值与资源采样 | measured | Full3D standard/static；Hybrid standard/static M120/M160 | Case096 |
 | significant channels | 12/12 powers + 12/12 boundary-plane complex amplitudes | measured + independent recomputation | reference-v1 tolerance 未放宽 | channel checker |
 | static Hybrid memory | M120 `-31.8919%`；M160 `-29.4977%` | derived from measured RSS | 同 p/h/M/MPI/输出合同的 standard baseline | §5 |
+| MPI8 PSS/USS | M120 PSS `-38.8828%`、USS `-40.3146%`；M160 PSS `-35.8083%`、USS `-37.1575%` | derived from original simultaneous per-rank smaps samples | 全 8 rank 同时可读；不是 RSS 推算；不替代正式 RSS Gate | PSS/USS ledger |
 | 50% user target | not achieved | measured negative | M120/M160 同路径比较 | §6 |
 | p3/h7.5 | `out_of_scope / not_run` | not_run | 用户和修订 Review V4 明确禁止 | task |
 | M240 | `not_run_no_M_signal` | not_run | M120→M160 已在 `1e-9` 以下闭合 | §4 |
@@ -23,6 +24,30 @@
 这里的“闭合成功”有明确限定：Task035c 正式门槛要求 static Hybrid 峰值至少
 下降 15%，优选 25%；M120/M160 都超过这两个门槛。用户进一步希望下降 50%
 以上，这一更强研究目标没有达到，不能把 `31.89%` 写成“已经接近理论最低内存”。
+
+### 1.1 资格化范围
+
+正式通过只覆盖：
+
+```text
+fixed rectangular block grating
+structured tensor-product mesh
+axis-aligned first-order affine hexahedra
+uniform z segmentation in the modal middle region
+one well-defined axial h for the scalar CG(p) chain
+supported axial degree p1-p6
+complex128
+Floquet periodicity
+sparse auxiliary DtN
+direct standard/static Full3D and Hybrid
+```
+
+以下范围没有被 Task035c 证明：nonuniform z、local-h/hanging-node hexa、
+curved/distorted hexa、高阶曲面 geometry mapping、tetra static condensation、
+hexa/tetra/prism/pyramid mixed mesh、sloped/rounded/rough/defect geometry、
+任意 irregular geometry 和 production automatic hp adaptivity。离散
+`full3d_uniform_cg` phase 与 `scalar_cg_discrete_derivative` traction 对
+这些输入必须 fail closed，不能静默使用 ordinary continuous symbol。
 
 ## 2. 方法与根因
 
@@ -138,7 +163,30 @@ reference v1 使用 `p6/h10` Full3D standard 的 physical boundary plane
 用户取消了 modal time `<=1.25×` 硬限制；上表只报告实测比值。即便沿用旧
 1.25×标准，两点也仍通过。总时间都远低于 `1.35×` 上限。
 
-### 5.2 为什么矩阵缩小约80%，峰值只降约30%
+### 5.2 PSS/USS historical backfill
+
+原始六路径 MPI8 timeline 含逐 rank `/proc/<pid>/smaps_rollup` 字段。compact
+生成器逐文件验证 timeline 和 watchdog SHA，只接受 rank 0–7 在同一时刻全部
+可读的样本；启动、退出或部分可读样本不参与峰值。各指标独立取自身时间序列
+最大值，因此 PSS、USS 与正式 watchdog RSS peak 不要求出现在同一时刻。
+
+| path | qualified samples | PSS peak GiB | USS peak GiB | smaps swap |
+|---|---:|---:|---:|---|
+| Full3D standard | 7,617 | 32.298626 | 32.047173 | 0 |
+| Full3D static | 818 | 12.806003 | 12.602608 | 0 |
+| Hybrid standard M120 | 2,990 | 9.440656 | 9.200600 | 0 |
+| Hybrid static M120 | 1,071 | 5.769862 | 5.491413 | 0 |
+| Hybrid standard M160 | 3,215 | 9.610866 | 9.370529 | 0 |
+| Hybrid static M160 | 1,294 | 6.169376 | 5.888676 | 0 |
+
+Full3D standard→static 的 PSS/USS 降幅为 `60.3512%/60.6748%`；Hybrid M120
+为 `38.8828%/40.3146%`，M160 为 `35.8083%/37.1575%`。这些值来自原始
+smaps 样本，不是由 RSS 反推，也没有重跑 PDE。正式 Task035c 相对内存 Gate
+仍使用同一原 campaign 的 simultaneous process-tree/live-worker RSS，以保持
+与已冻结 resource contract 一致。证据见
+[`p6_h10_mpi8_pss_uss_ledger_v1.json`](../../../benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_pss_uss_ledger_v1.json)。
+
+### 5.3 为什么矩阵缩小约80%，峰值只降约30%
 
 M120 static 的 `interface_projection_and_coupling` stage peak 为
 `5894.387 MiB = 5.756237 GiB`，低于最终 `7.544262 GiB`。峰值随后出现在：
@@ -158,8 +206,8 @@ M120 static 的 `interface_projection_and_coupling` stage peak 为
 1. 在生成 compact observable 后立即销毁 local factor/native solver objects；
 2. 把 middle reconstruction 改为分平面/分 mode streaming；
 3. 避免 record builder 同时持有完整嵌套 Python dict 和大 native payload；
-4. 为 QEP/mode cache、projection matrix、factor 和 field sample 分别记录
-   PSS/USS/native-object ledger，再按峰值时刻逐个释放。
+4. 在现有 per-rank PSS/USS ledger 上增加 native-object create/release 事件，
+   再按峰值时刻逐个缩短生命周期。
 
 M120 的 50%目标要求峰值不超过 `5.538446 GiB`。当前 coupling stage 已为
 `5.756237 GiB`，local factor/Schur stage 又达到 `6.817 GiB`；因此只在
@@ -223,6 +271,10 @@ MPI1 Full3D 相对 MPI8 内存低 `58.12%`，但总时间为 `4.817×`。这个�
 | 0.7 nm / 2 TiB update | not run | Task035c非目标 |
 | irregular / tetra / mixed static | not run / unsupported | 非资格化范围 |
 | production selective trace / new iterative | not run | Review V4明确排除 |
+
+Task035c PSS/USS compact ledger 已由历史 raw timeline 回填；后续 heavy
+campaign 仍必须从进程启动时同步保存 RSS、PSS、USS、cgroup 和 swap，不能把
+本次回填机制当成缺失采样时的估算许可。
 | ordinary default | unchanged | opt-in only |
 
 ## 10. 证据索引

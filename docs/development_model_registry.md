@@ -745,14 +745,34 @@ Task035c先用p2/h5解释“总R/T接近但弱衍射级不对”的原因，再�
 
 | Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
 |---|---|---|---|---|---|---|
+| `task035c_p2_h5_continuous_symbol_baseline` | Task035b H1-A + Case096 root-cause ledger | `F-STAGE4-S`；p2/h5；MPI8 | Hybrid continuous QEP phase + continuous traction；M120/M160 | M160 对 same-source Full3D 仅 `3/12 powers + 2/12 amplitudes`；提高 M 未修复 | `controlled_negative_root_cause_baseline`；不是 M 截断不足 | `benchmarks/cases/096_hybrid_channel_memory_closure/records/p2_h5_root_cause_v1.json` |
+| `task035c_p2_h5_discrete_phase_only` | source/record hash见 Case096 compact | 同一 fixed rectangular p2/h5 | 只启用 scalar-CG discrete phase，traction仍连续 | `4/12 powers + 4/12 amplitudes`；相对原始有改善但未闭合 | `controlled_negative_discriminator`；phase必要但不充分 | same compact record |
 | `task035c_p2_h5_discrete_phase_traction` | source `8a1e40c...`；Case096 compact | `F-STAGE4-S`；p2/h5；MPI8 | Hybrid M120/M160；`full3d_uniform_cg` + `scalar_cg_discrete_derivative` opt-in | 两点均12/12 powers+12/12 boundary amplitudes；phase-only仅4/12+4/12 | `diagnostic_success`；root cause closed | `benchmarks/cases/096_hybrid_channel_memory_closure/records/p2_h5_root_cause_v1.json` |
 | `task035c_p6_h10_full_standard` | source `244b62e1...`；clean MPI8 | `F-HO-S`；global p6/h10；173,802 FE | standard Full3D direct；173,882 rows；210,353,168 matrix NNZ；438,050,956 factor NNZ | R/T/A=`0.000762881475133/0.602701633983338/0.396535484541529`；residual`1.709e-11`；peak34.041GiB；2581.55s；12/12+12/12 | `success; discrete_reference` | `benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_six_path_v1.json` |
 | `task035c_p6_h10_full_static` | same source/mesh/MPI | `F-HO-S`；p6/h10 | exact cell-interior static；51,272 rows；41,989,040 NNZ；212,343,992 factor NNZ | R/T/A=`0.000762881475126/0.602701633985538/0.396535484539337`；residual`3.092e-11`；14.722GiB；260.74s；12/12+12/12 | `engineering_success`；peak -56.75% | same compact record |
 | `task035c_p6_h10_hybrid_standard_M120_M160` | same source；MPI8 | local p6/h10 ends + discrete modal middle | M120/M160；52,292/52,372 total rows；60,434,236 NNZ；141,010,528 factor NNZ | peaks11.077/11.247GiB；times942.03/1014.71s；两点12/12+12/12 | `success baselines` | same compact record |
-| `task035c_p6_h10_hybrid_static_M120` | same source；MPI8 formal authority | local exact static + modal middle；17,168 rows | 12,313,232 matrix NNZ；45,293,792 factor NNZ | R/T/A=`0.000762881475142/0.602701633984217/0.396535484540641`；residual`2.079e-12`；7.544GiB；322.78s；12/12+12/12 | `success; selected`；peak -31.89%；用户50%目标仍open | same compact record |
-| `task035c_p6_h10_hybrid_static_M160` | same source；MPI8 | 17,248 rows；same local matrix/factor inventory | 7.929GiB；393.84s；12/12+12/12；相对M120无物理收益 | `success_not_selected`；peak -29.50% | same compact record |
+| `task035c_p6_h10_hybrid_static_M120` | same source；MPI8 formal authority | local exact static + modal middle；17,168 rows | 12,313,232 matrix NNZ；45,293,792 factor NNZ | R/T/A=`0.000762881475142/0.602701633984217/0.396535484540641`；residual`2.079e-12`；RSS7.544GiB；PSS/USS `5.769862/5.491413 GiB`；322.78s；12/12+12/12 | `success; selected`；RSS -31.89%，PSS/USS -38.88%/-40.31%；用户50%目标仍open | six-path + PSS/USS compact records |
+| `task035c_p6_h10_hybrid_static_M160` | same source；MPI8 | 17,248 rows；same local matrix/factor inventory | RSS7.929GiB；PSS/USS `6.169376/5.888676 GiB`；393.84s；12/12+12/12；相对M120无物理收益 | `success_not_selected`；RSS -29.50%，PSS/USS -35.81%/-37.16% | same compact records |
 | `task035c_static_rank_MPI1` | source `244b62e1...`；measured | Full static formal pass；Hybrid static M120 | Hybrid measured1.752GiB、1328.72s | 12/12+12/12但positive QEP biorthogonality `1.197600e-6 > 1e-6` | `controlled_negative_numerical`；非内存floor | `benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_static_rank_study_v1.json` |
 | `task035c_static_rank_MPI2` | same source；measured | Full static formal pass；Hybrid numeric pass | Hybrid measured3.142GiB、798.20s | terminal launcher-drain RSS/swap readability失败 | `controlled_negative_resource_authority`；MPI4 not run by stop rule | same rank record |
+
+### 3.38.1 Task035c 选择、内存口径与能力边界
+
+M120 被选择是因为它与 M160 都通过 12/12 功率、12/12 physical-boundary
+complex amplitudes、R/T/A/场/残差 Gate，而 M160 没有可测物理收益，却使 static
+RSS增加 `5.1052%`、modal coupling 增加 `38.9106%`、总时间增加
+`22.0146%`；因此停止 M160 lane，不运行 M240。用户提出的 `>=50%` static
+Hybrid RSS 降幅仍为 `not_achieved/open_engineering_gap`。
+
+PSS/USS 来自原始 MPI8 timeline 中逐 rank `/proc/<pid>/smaps_rollup` 的历史
+回填。只使用 8 个 rank 同时可读的样本，不由 RSS 推算且没有重跑 PDE。正式
+Task035c relative-memory authority 仍为 simultaneous process-tree/live-worker
+RSS；PSS/USS 是共享页/私有页诊断。compact authority 为
+`benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_pss_uss_ledger_v1.json`。
+
+| qualified scope | not qualified / must fail closed |
+|---|---|
+| fixed rectangular block grating；structured tensor-product；axis-aligned first-order affine hexa；modal middle uniform z；single axial h；p1–p6；complex128；Floquet；sparse auxiliary DtN；direct standard/static Full3D/Hybrid | nonuniform z；local-h/hanging hexa；curved/distorted/high-order geometry；tetra static；hexa/tetra/prism/pyramid mixed；sloped/rounded/rough/defect或任意 irregular geometry；production automatic hp adaptivity |
 
 ---
 

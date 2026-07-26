@@ -123,7 +123,37 @@ total time <= 1.35x standard
 
 只有 Task035c 同时完成逐通道精度和 p6/h10 内存闭合后，才重新开放后续自适应研究。
 
-## 8. 交付
+## 8. 最终能力边界
+
+Task035c 完成后允许陈述的资格化能力仅为：
+
+```text
+fixed rectangular block grating
+structured tensor-product mesh
+axis-aligned first-order affine hexahedra
+uniform z segmentation in the modal middle region
+one well-defined axial h for the scalar CG(p) chain
+supported axial degree p1-p6
+complex128
+Floquet periodicity
+sparse auxiliary DtN
+direct standard/static Full3D and Hybrid
+```
+
+以下能力仍为 `not_qualified`：nonuniform z、local-h/hanging-node hexa、
+curved/distorted hexa、高阶曲面 geometry mapping、tetra static condensation、
+mixed hexa/tetra/prism/pyramid、任意不规则几何和 production automatic hp
+adaptivity。选择 `full3d_uniform_cg` 或
+`scalar_cg_discrete_derivative` 时，配置入口、日志和数值路径必须显式显示这一
+边界；不支持的输入必须 fail closed，不能回落到 ordinary continuous symbol。
+
+Task035c 正式相对内存 authority 为同一 campaign 的 simultaneous
+process-tree/live-worker RSS。若原始 timeline 含逐 rank
+`/proc/<pid>/smaps_rollup`，允许不重跑 PDE 而重建 PSS/USS diagnostic ledger；
+不得从 RSS 估算 PSS/USS。此后新的 heavy campaign 必须从启动时同时记录 RSS、
+PSS、USS、cgroup 和 swap。
+
+## 9. 交付
 
 必须维护：
 

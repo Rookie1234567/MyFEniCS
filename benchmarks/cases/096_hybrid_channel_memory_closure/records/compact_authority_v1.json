@@ -11,7 +11,7 @@
   "numerical_source_sha": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
   "ordinary_default_changed": false,
   "p2_diagnostic_source_sha": "8a1e40c420e36407cd827e1fd7e8f11401a0d39b",
-  "record_count": 5,
+  "record_count": 6,
   "records": [
     {
       "name": "dependency_failures_v1.json",
@@ -22,7 +22,7 @@
     {
       "name": "execution_ledger_v1.json",
       "schema_version": "task035c.case096-execution-ledger.v1",
-      "sha256": "0422a4d88ca63a3cfa7cb3a45bac64238b7788f74503de80bc8ce0cba03f60dd",
+      "sha256": "f90f2d5b508f6378b9c3384fc424a314354a33e8a79f0897a8dd3340b8654936",
       "status": "task035c_compact_execution_ledger"
     },
     {
@@ -30,6 +30,12 @@
       "schema_version": "task035c.case096-p2-root-cause.v1",
       "sha256": "7a16de719097a57944d89812c4c7477d0812d4eff73691cc130e79f85fa46f3b",
       "status": "p2_h5_channel_root_cause_closed"
+    },
+    {
+      "name": "p6_h10_mpi8_pss_uss_ledger_v1.json",
+      "schema_version": "task035c.case096-p6-mpi8-pss-uss-ledger.v1",
+      "sha256": "4a52c390a10d6c94c2c2fad4385fc8cfcb71e6a139dbf5da0a6313975e692ff3",
+      "status": "p6_h10_mpi8_historical_pss_uss_backfill_qualified"
     },
     {
       "name": "p6_h10_mpi8_six_path_v1.json",

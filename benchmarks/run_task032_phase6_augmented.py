@@ -112,6 +112,52 @@ REFERENCE_BY_DEGREE_AND_H = {
 }
 
 
+def _discrete_axial_qualification_scope(
+    propagation_model: str,
+    traction_model: str,
+) -> dict[str, Any]:
+    """Expose the fail-closed scope of the Task035c discrete axial symbols."""
+
+    selected = (
+        propagation_model == "full3d_uniform_cg"
+        or traction_model == "scalar_cg_discrete_derivative"
+    )
+    return {
+        "selected": selected,
+        "status": (
+            "qualified_only_for_listed_scope"
+            if selected
+            else "not_selected_ordinary_continuous_symbols"
+        ),
+        "qualified": [
+            "fixed rectangular block grating",
+            "structured tensor-product mesh",
+            "axis-aligned first-order affine hexahedra",
+            "uniform z segmentation in the modal middle region",
+            "one axial h for the scalar CG(p) chain",
+            "supported axial degree p1-p6",
+            "complex128",
+            "Floquet periodicity",
+            "sparse auxiliary DtN",
+            "direct standard/static Full3D and Hybrid",
+        ],
+        "not_qualified": [
+            "nonuniform z spacing",
+            "locally refined or hanging-node hexa mesh",
+            "curved or distorted hexahedra",
+            "high-order curved geometry mapping",
+            "tetrahedral static condensation",
+            "hexa/tetra/prism/pyramid mixed meshes",
+            "irregular geometry",
+            "production automatic hp adaptivity",
+        ],
+        "failure_policy": (
+            "unsupported meshes and inconsistent propagation/traction "
+            "combinations fail closed; no fallback is permitted"
+        ),
+    }
+
+
 def _git(*args: str) -> str | None:
     try:
         return subprocess.check_output(
@@ -648,7 +694,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="continuous_beta",
         help=(
             "Axial propagation used between the two Hybrid interfaces. "
-            "full3d_uniform_cg is an explicit same-p/h Full3D closure audit; "
+            "full3d_uniform_cg is an explicit same-p/h Full3D closure audit "
+            "qualified only for a fixed rectangular, axis-aligned affine "
+            "tensor-hexa mesh with uniform middle-region z spacing, one "
+            "axial h, p1-p6, complex128, Floquet and sparse auxiliary DtN; "
+            "nonuniform/local-h/curved/mixed meshes fail closed. "
             "continuous_beta remains the ordinary default."
         ),
     )
@@ -661,7 +711,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="continuous_qep_beta",
         help=(
             "Modal interface traction symbol. The scalar-CG derivative is an "
-            "explicit diagnostic and requires full3d_uniform_cg propagation; "
+            "explicit diagnostic and requires full3d_uniform_cg propagation "
+            "under the same uniform-z affine-hexa qualification scope; "
+            "unsupported meshes fail closed without fallback. "
             "continuous_qep_beta remains the ordinary default."
         ),
     )
@@ -1096,6 +1148,12 @@ def main() -> None:
                 args.internal_propagation_model
             ),
             "internal_traction_model": args.internal_traction_model,
+            "discrete_axial_qualification_scope": (
+                _discrete_axial_qualification_scope(
+                    args.internal_propagation_model,
+                    args.internal_traction_model,
+                )
+            ),
             "requested_modes_per_direction": args.requested_modes,
             "candidate_modes_per_target_branch": candidate_modes,
             "near_degenerate_tolerance": args.near_degenerate_tolerance,
@@ -2095,6 +2153,12 @@ def main() -> None:
                     args.internal_propagation_model
                 ),
                 "internal_traction_model": args.internal_traction_model,
+                "discrete_axial_qualification_scope": (
+                    _discrete_axial_qualification_scope(
+                        args.internal_propagation_model,
+                        args.internal_traction_model,
+                    )
+                ),
                 "requested_modes_per_direction": args.requested_modes,
                 "candidate_modes_per_target_branch": candidate_modes,
                 "near_degenerate_tolerance": args.near_degenerate_tolerance,

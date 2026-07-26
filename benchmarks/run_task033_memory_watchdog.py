@@ -1360,8 +1360,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=("continuous_beta", "full3d_uniform_cg"),
         default="continuous_beta",
         help=(
-            "Explicit Hybrid middle-segment propagation model; the ordinary "
-            "default remains continuous_beta."
+            "Explicit Hybrid middle-segment propagation model. "
+            "full3d_uniform_cg is qualified only for fixed rectangular, "
+            "axis-aligned affine tensor-hexa meshes with uniform middle-z "
+            "spacing, one axial h and p1-p6; nonuniform/local-h/curved/mixed "
+            "meshes fail closed. The ordinary default remains continuous_beta."
         ),
     )
     parser.add_argument(
@@ -1372,8 +1375,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
         default="continuous_qep_beta",
         help=(
-            "Explicit Hybrid traction-symbol diagnostic; the ordinary "
-            "default remains continuous_qep_beta."
+            "Explicit Hybrid traction-symbol diagnostic. "
+            "scalar_cg_discrete_derivative requires full3d_uniform_cg and its "
+            "same uniform-z affine-hexa qualification scope; unsupported "
+            "meshes fail closed. The ordinary default remains "
+            "continuous_qep_beta."
         ),
     )
     parser.add_argument(

@@ -112,6 +112,18 @@ static path 直接构造 trace Schur，没有先组装173,882行完整p6矩阵�
 M120 是当前推荐点。它通过所有物理 Gate，且比 M160 少5.1%峰值、少38.9%
 coupling时间、少22.0%总时间。
 
+### PSS/USS diagnostic
+
+原始 MPI8 timeline 的逐 rank `smaps_rollup` 允许在不重跑 PDE 的情况下重建
+PSS/USS。只有 8 个 rank 同时可读的样本参与；不是由 RSS 估算。M120
+standard/static 的 PSS 为 `9.440656/5.769862 GiB`、USS 为
+`9.200600/5.491413 GiB`，降幅 `38.8828%/40.3146%`。M160 对应 PSS 为
+`9.610866/6.169376 GiB`、USS 为 `9.370529/5.888676 GiB`，降幅
+`35.8083%/37.1575%`。
+
+正式 Task035c 相对资源 Gate 继续使用原 campaign simultaneous
+process-tree/live-worker RSS；PSS/USS 是内存归因诊断，不改变冻结判定。
+
 ## 6. Raw artifact hash
 
 | authority | SHA-256 |
@@ -126,6 +138,7 @@ coupling时间、少22.0%总时间。
 Tracked compact authority：
 
 - `benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_six_path_v1.json`
+- `benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_pss_uss_ledger_v1.json`
 - `benchmarks/cases/096_hybrid_channel_memory_closure/records/compact_authority_v1.json`
 
 重型原始文件保持 ignored，由生成器在存在本地 artifact 时逐 hash 复算。

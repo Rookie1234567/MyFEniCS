@@ -18,6 +18,9 @@ mandatory_15pct_memory_gate = pass
 preferred_25pct_memory_gate = pass
 user_50pct_memory_target = not_achieved
 user_50pct_memory_target_status = open_engineering_gap
+pss_uss_backfill = qualified_from_original_mpi8_smaps_rollup
+pss_uss_inferred_from_rss = false
+formal_relative_memory_authority = simultaneous_process_tree_live_worker_rss
 modal_time_hard_gate = removed_by_user
 ordinary_default = standard_full
 ordinary_default_changed = false
@@ -32,6 +35,14 @@ QEP相位和traction，而Full3D在z方向使用scalar CG(p)有限元链的离�
 static Hybrid也取得实测高阶资源正结果。M120/M160峰值分别下降31.89%和
 29.50%，通过Review的15% mandatory、25% preferred和1.35×总时间Gate。
 但用户希望的50%没有达到；这部分明确保留为工程缺口。
+
+Task035c 原始 MPI8 timeline 实际保存了逐 rank
+`/proc/<pid>/smaps_rollup`。本次只重建 compact PSS/USS ledger，没有重跑
+PDE，也没有从 RSS 推算：只有 rank 0–7 在同一采样时刻全部可读的样本才参与
+峰值。M120 standard/static 的 PSS 为 `9.440656/5.769862 GiB`
+（下降 `38.8828%`），USS 为 `9.200600/5.491413 GiB`
+（下降 `40.3146%`）。正式 Task035c 相对内存 Gate 仍以原 campaign 的
+simultaneous live-worker RSS 为 authority。
 
 ## 2. Review执行矩阵
 
@@ -105,6 +116,14 @@ authority。两个连续成本/数值负信号后关闭lane，不运行MPI4。MP
 - channel/resource independent checker；
 - Case096 compact evidence generator与hermetic tests。
 
+正式适用范围限于 fixed rectangular block grating、structured tensor-product
+mesh、axis-aligned first-order affine hexahedra、modal middle region 均匀 z
+分段、单一 axial h、p1–p6、complex128、Floquet、sparse auxiliary DtN 以及
+direct standard/static Full3D/Hybrid。nonuniform z、local-h/hanging hexa、
+curved/distorted/high-order geometry、tetra/mixed mesh、不规则几何和
+production automatic hp adaptivity 均未资格化；离散 phase/traction 端口对此
+必须 fail closed。
+
 权威证据：
 
 - [`outcomes/summary.md`](outcomes/summary.md)
@@ -127,4 +146,6 @@ Ruff / compileall / JSON parse / git diff --check = pass
 
 没有修改ordinary default，没有运行p3/h7.5、h13 adaptive、0.7nm、不规则
 几何、tetra/mixed static、production selective trace或新iterative profile。
-提交推送后停止等待集中Review；本response不自行授权master merge或后续adaptive。
+Review V2 已授权在 M0–M4 完成后选择性整合到 master；本 response 中的数值
+结论仍绑定 `244b62e1...`，文档、PSS/USS compact 回填和 manifest 不改变该
+numerical authority。

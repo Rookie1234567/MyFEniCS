@@ -25,6 +25,7 @@ Task035c 只关闭两个在 Task035b 中暴露的问题：
 | `p6/h10` MPI8 六路径 | Full3D standard/static、Hybrid standard/static M120/M160 全部完成；物理、残差、场、12 通道 Gate 通过 | measured；numerical source `244b62e1...` |
 | static Hybrid M120 | `11.076893 → 7.544262 GiB`，下降 `31.8919%`；总时间比 `0.342646×` | 通过 Review mandatory 15% 和 preferred 25% |
 | static Hybrid M160 | `11.247025 → 7.929413 GiB`，下降 `29.4977%`；总时间比 `0.388133×` | 同样通过正式 Gate |
+| MPI8 PSS/USS diagnostic | M120 PSS `9.440656 → 5.769862 GiB`（`-38.8828%`）；USS `9.200600 → 5.491413 GiB`（`-40.3146%`） | 从原始逐 rank `smaps_rollup` timeline 回填；不是 RSS 推算，未重跑 PDE |
 | 用户期望的 50% Hybrid 内存下降 | 未达到 | 峰值在 `record_and_release`；modal coupling 本身的 M120 stage peak 约 `5.756 GiB` |
 | 推荐点 | static Hybrid M120 | M160 没有物理收益，反而增加内存、coupling 和总时间 |
 | MPI rank lane | MPI1 数值 Gate 失败；MPI2 资源 authority 末端采样失败；两个连续负信号后关闭，不跑 MPI4 | 两条 controlled negative 均保留 |
@@ -35,6 +36,36 @@ Task035c 只关闭两个在 Task035b 中暴露的问题：
 用户已明确取消 modal-coupling `<=1.25×` 的硬限制。本任务仍测量并尽量降低
 该时间，但只把它作为诊断指标，不据此否决已经满足物理、内存和总时间 Gate 的
 候选。
+
+## 正式适用边界
+
+Task035c 的离散传播/traction 与 static Full3D/Hybrid 只在以下组合中得到正式
+资格化：
+
+```text
+fixed rectangular block grating
+structured tensor-product mesh
+axis-aligned first-order affine hexahedra
+uniform z segmentation in the modal middle region
+one well-defined axial h for the scalar CG(p) chain
+supported axial degree p1-p6
+complex128
+Floquet periodicity
+sparse auxiliary DtN
+direct standard/static Full3D and Hybrid
+```
+
+尚未资格化的范围包括：非均匀 z 间距、local-h 或 hanging-node hexa、曲面或
+畸变 hexa、高阶曲面几何映射、tetra static condensation、hexa/tetra/prism/
+pyramid mixed mesh、不规则几何以及 production automatic hp adaptivity。
+`full3d_uniform_cg` 和 `scalar_cg_discrete_derivative` 对这些范围必须
+fail closed，不允许静默退回连续符号后仍报告该后端。
+
+正式 Task035c 相对内存结论继续使用原 campaign 的 simultaneous process-tree/
+live-worker RSS。新增 PSS/USS ledger 只使用 8 个 rank 在同一时刻全部可读的
+原始 `/proc/<pid>/smaps_rollup` 样本，排除了启动/退出不完整样本；它是共享页/
+私有页诊断，不替代 RSS Gate。详见
+[Case096 PSS/USS ledger](../../benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_pss_uss_ledger_v1.json)。
 
 ## 文档入口
 

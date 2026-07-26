@@ -16,6 +16,10 @@ Full3D 会把整个三维结构一次性离散成大矩阵。Hybrid 则只在上
 ## 固定范围
 
 - 几何：Task034 fixed rectangular block grating；
+- 网格：structured tensor-product、axis-aligned first-order affine hexa；
+- modal middle：uniform z segmentation、scalar CG(p) chain 使用单一 axial h；
+- 离散/ABI：p1–p6、complex128、Floquet、sparse auxiliary DtN；
+- solver：direct standard/static Full3D 与 Hybrid；
 - 诊断模型：`p2/h5`；
 - 正式高阶 authority：`p6/h10`；
 - 正式进程数：MPI8；
@@ -29,6 +33,13 @@ Full3D 会把整个三维结构一次性离散成大矩阵。Hybrid 则只在上
 本 case 没有运行或提升 irregular geometry、h13 adaptive Hybrid、
 production selective trace、tetra/mixed static condensation 或 condensed
 iterative profile。
+
+`full3d_uniform_cg` 和 `scalar_cg_discrete_derivative` 尚未资格化用于
+nonuniform z、local-h/hanging-node hexa、curved/distorted hexa、高阶曲面
+geometry mapping、tetra static、hexa/tetra/prism/pyramid mixed mesh、
+sloped/rounded/rough/defect geometry、任意 irregular geometry 或 production
+automatic hp adaptivity。这些输入必须 fail closed，不能静默回退后仍把结果
+标为离散 axial backend。
 
 ## p2/h5 根因
 
@@ -89,6 +100,24 @@ factor错峰的资源算法重构，并在新同一源码上重跑六路径autho
 M120/M160 的 static/standard 比为 `1.076/1.076`，用于后续优化但不参与
 通过判定。
 
+### PSS/USS historical backfill
+
+六条正式 MPI8 原始 timeline 已保存逐 rank
+`/proc/<pid>/smaps_rollup`。生成器验证 raw SHA 后，只使用同一时刻 rank 0–7
+全部可读的样本，并独立选择 PSS/USS 峰值；没有从 RSS 推算，也没有重跑 PDE。
+
+| path | qualified samples | PSS GiB | USS GiB |
+|---|---:|---:|---:|
+| Full3D standard | 7,617 | 32.298626 | 32.047173 |
+| Full3D static | 818 | 12.806003 | 12.602608 |
+| Hybrid standard/static M120 | 2,990 / 1,071 | 9.440656 / 5.769862 | 9.200600 / 5.491413 |
+| Hybrid standard/static M160 | 3,215 / 1,294 | 9.610866 / 6.169376 | 9.370529 / 5.888676 |
+
+M120 PSS/USS 降幅为 `38.8828%/40.3146%`，M160 为
+`35.8083%/37.1575%`。正式 Task035c relative-memory authority 仍是原
+campaign 的 simultaneous process-tree/live-worker RSS；PSS/USS 用于解释
+shared/private pages，不替代 RSS Gate。
+
 ## rank study 的证据边界
 
 - MPI1 Full3D static 通过；Hybrid static M120 的 positive-QEP
@@ -114,6 +143,8 @@ M120/M160 的 static/standard 比为 `1.076/1.076`，用于后续优化但不参
   MPI1/2/8 与 authority 边界；
 - [`records/dependency_failures_v1.json`](records/dependency_failures_v1.json)：
   p5/p6 Floquet 约束、scale-aware trace audit 和 sampler race 的历史失败；
+- [`records/p6_h10_mpi8_pss_uss_ledger_v1.json`](records/p6_h10_mpi8_pss_uss_ledger_v1.json)：
+  原始 MPI8 smaps timeline 的 PSS/USS 峰值、样本资格和standard/static对照；
 - [`records/execution_ledger_v1.json`](records/execution_ledger_v1.json)：
   完成、负结果和未运行范围总账；
 - [`records/compact_authority_v1.json`](records/compact_authority_v1.json)：

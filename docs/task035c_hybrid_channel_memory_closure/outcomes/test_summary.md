@@ -24,7 +24,7 @@
 | real cross-rank scale | MPI2 distributed active-scale reduction | pass |
 | p6 launch gates | final source/full reference/hash/MPI/profile/preflight | pass |
 | channel/resource checker | boundary-plane amplitude、nested reference hash、six-path and resource comparisons | pass after final checker update |
-| Case096 compact generator | raw SHA验证、六路径/rank/negative ledger重新生成 | `--check` pass |
+| Case096 compact generator | raw SHA验证、六路径/rank/negative ledger及MPI8 PSS/USS smaps ledger重新生成 | `--check` pass |
 | Case096 hermetic contract | 不读取ignored artifact，只校验tracked compact records | pass |
 
 ## 3. 数值运行Gate
@@ -45,11 +45,12 @@
 | Task035c focused：test179–182 + Case095/096 | `29 passed` |
 | documentation contract + Case096 | `19 passed` |
 | Task034 numerical-blob hardening targeted | `13 passed` |
-| Case095/096 compact contracts | `6 passed` |
+| Case096 PSS/USS backfill contract | 仅全8-rank同时可读样本；独立复算峰值与降幅 | `6 passed`（单文件当前契约） |
+| Case095/096 compact contracts | closeout 时重跑，见选择性合并验证 |
 | Case096 raw regeneration `--check` | pass |
 | 四个 p6 Hybrid authority 的独立 checker | 每条 `recomputed_pass`，均12/12+12/12 |
 | full repository `python -m pytest -q` | `616 passed, 28 skipped in 452.07 s` |
-| JSON parse | Case096 `7` files pass |
+| JSON parse | Case096 compact authority 当前登记 `6` 个 records；全部 parse pass |
 | Ruff / compileall / `git diff --check` | pass |
 
 首次full repository运行得到`615 passed, 28 skipped, 1 failed`；唯一失败是

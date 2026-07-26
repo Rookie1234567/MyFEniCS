@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import math
@@ -65,7 +66,7 @@ def _pairwise_recompute(
 def test_case096_manifest_binds_every_compact_record() -> None:
     manifest = _load("compact_authority_v1.json")
     assert manifest["status"] == "case096_compact_authority"
-    assert manifest["record_count"] == 5
+    assert manifest["record_count"] == 6
     assert manifest["ordinary_default_changed"] is False
     assert manifest["numerical_source_sha"] == (
         "244b62e1fb4f299a468363cf90a2dd548dc34ff6"
@@ -168,6 +169,41 @@ def test_case096_resource_gates_are_recomputed_from_models() -> None:
         assert gate["pass"] is True
 
 
+def test_case096_historical_pss_uss_backfill_is_hash_bound_and_recomputable() -> None:
+    record = _load("p6_h10_mpi8_pss_uss_ledger_v1.json")
+    assert record["pass"] is True
+    assert record["is_pde_rerun"] is False
+    assert record["numerical_source_sha"] == (
+        "244b62e1fb4f299a468363cf90a2dd548dc34ff6"
+    )
+    assert len(record["models"]) == 6
+    for model in record["models"].values():
+        assert model["mpi_size"] == 8
+        assert model["source_sha"] == record["numerical_source_sha"]
+        assert model["fully_readable_mpi8_sample_count"] > 0
+        assert model["all_qualified_samples_have_zero_smaps_swap"] is True
+        assert len(model["timeline_sha256"]) == 64
+        for metric in ("worker_rank_pss_peak", "worker_rank_uss_peak"):
+            peak = model[metric]
+            assert peak["simultaneous_sum_gib"] > 0.0
+            assert peak["rank_count"] == 8
+            assert len(peak["per_rank"]) == 8
+
+    for comparison in record["comparisons"].values():
+        for metric in ("pss", "uss"):
+            row = comparison[metric]
+            expected = (
+                row["standard_gib"] - row["static_gib"]
+            ) / row["standard_gib"]
+            assert math.isclose(
+                expected,
+                row["saving_fraction"],
+                rel_tol=0.0,
+                abs_tol=1.0e-15,
+            )
+            assert row["saving_fraction"] > 0.0
+
+
 def test_case096_p2_and_rank_negatives_are_preserved() -> None:
     p2 = _load("p2_h5_root_cause_v1.json")
     assert p2["pass"] is True
@@ -212,3 +248,28 @@ def test_case096_scope_and_dependency_failure_contract() -> None:
         for row in failures
     ) == 2
     assert all(row["later_success_does_not_delete_this_evidence"] for row in failures)
+
+
+def test_task035c_selective_merge_manifest_is_file_level_and_complete() -> None:
+    manifest_path = (
+        ROOT
+        / "docs"
+        / "task035c_hybrid_channel_memory_closure"
+        / "outcomes"
+        / "selective_merge_manifest_v1.csv"
+    )
+    with manifest_path.open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream))
+
+    assert len(rows) == 69
+    paths = [row["path"] for row in rows]
+    assert len(paths) == len(set(paths))
+    assert {row["category"] for row in rows} == {
+        "production_core",
+        "reusable_benchmark",
+        "compact_evidence",
+        "project_docs",
+    }
+    assert "do_not_merge" not in {row["category"] for row in rows}
+    assert all(row["default_behavior_change"] for row in rows)
+    assert all((ROOT / path).is_file() for path in paths)

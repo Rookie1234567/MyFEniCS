@@ -9,6 +9,7 @@ not a PDE runner: it only reads already completed, hash-bound raw records.
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import math
@@ -57,6 +58,25 @@ P6_MPI8_AUTHORITIES = {
     "hybrid_static_m160": (
         "p6_h10_hybrid_static_m160_mpi8_244b62e.json",
         "58281f5f0be5c9d30b441d9b573018070502734043a81cb8cd10ddd068f5c137",
+    ),
+}
+
+# The Hybrid watchdog is itself the memory-sampler summary and binds the
+# solver record, but its historical schema did not store the timeline digest.
+# Review V2 therefore freezes the already completed raw timelines here before
+# extracting PSS/USS; --check fails if any ignored raw timeline drifts.
+P6_MPI8_HYBRID_TIMELINE_SHA256 = {
+    "hybrid_standard_m120": (
+        "76445bb6ecb186361a6881674d64b80d8315581d392a0ea437ec0aebead736ea"
+    ),
+    "hybrid_standard_m160": (
+        "2c2153e0a31a1d1017a9d7a61e48809c12f74ef64f7abb64882d7be5d3e74eba"
+    ),
+    "hybrid_static_m120": (
+        "8e0b652de1a4af2c3eced21ce9e053eb143739e37259b3c6479b3989e52af510"
+    ),
+    "hybrid_static_m160": (
+        "24c9147ef4d33b37faae401f0ee05722f561742896478792639e732a1734636c"
     ),
 }
 
@@ -436,6 +456,231 @@ def load_hybrid(
             f"{name} is not a formal Hybrid authority",
         )
     return model
+
+
+def _timeline_path_and_sha(
+    role: str,
+    record: dict[str, Any],
+) -> tuple[Path, str]:
+    if role.startswith("full_"):
+        path = (ROOT / record["raw_evidence"]["timeline"]).resolve()
+        expected_sha = str(record["timeline_sha256"])
+    else:
+        candidate = Path(record["timeline_ignored_path"])
+        path = (candidate if candidate.is_absolute() else ROOT / candidate).resolve()
+        expected_sha = P6_MPI8_HYBRID_TIMELINE_SHA256[role]
+    observed_sha = sha256(path)
+    require(
+        observed_sha == expected_sha,
+        f"{rel(path)} SHA-256 mismatch: expected {expected_sha}, got {observed_sha}",
+    )
+    return path, observed_sha
+
+
+def _smaps_peak(
+    rows: list[dict[str, Any]],
+    metric: str,
+) -> dict[str, Any]:
+    row = max(rows, key=lambda item: float(item[metric]))
+    per_rank = json.loads(row["worker_rank_smaps_rollup_json"])
+    require(isinstance(per_rank, list), "smaps peak payload is not a list")
+    return {
+        "simultaneous_sum_mb": float(row[metric]),
+        "simultaneous_sum_gib": float(row[metric]) / 1024.0,
+        "timestamp_utc": row["timestamp_utc"],
+        "elapsed_seconds": float(row["elapsed_seconds"]),
+        "stage": row["stage"],
+        "rank_count": len(per_rank),
+        "per_rank": [
+            {
+                "rank": int(item["rank"]),
+                "rss_mb": float(item["rss_mb"]),
+                "pss_mb": float(item["pss_mb"]),
+                "uss_mb": float(item["uss_mb"]),
+                "shared_mb": float(item["shared_mb"]),
+                "swap_mb": float(item["swap_mb"]),
+            }
+            for item in sorted(per_rank, key=lambda item: int(item["rank"]))
+        ],
+    }
+
+
+def _load_pss_uss_timeline(role: str) -> dict[str, Any]:
+    watchdog_name, watchdog_sha = P6_MPI8_AUTHORITIES[role]
+    watchdog_path = ARTIFACTS / watchdog_name
+    record, observed_watchdog_sha = load_bound(watchdog_path, watchdog_sha)
+    require(source_sha(record) == P6_SOURCE_SHA, f"{role} source SHA drifted")
+    if role.startswith("full_"):
+        require(
+            record["schema_version"] == "task033.full3d-watchdog.v1",
+            f"{role} has the wrong watchdog schema",
+        )
+        require(
+            bool(record["qualification"]["pass"]),
+            f"{role} is not a formal Full3D authority",
+        )
+        mpi_size = int(record["mpi_size"])
+    else:
+        require(
+            record["schema_version"] == "task033.memory-watchdog.v2",
+            f"{role} has the wrong watchdog schema",
+        )
+        require(
+            bool(record["formal_pass"])
+            and bool(record["numeric_pass"])
+            and bool(record["memory_authority_pass"]),
+            f"{role} is not a formal Hybrid authority",
+        )
+        mpi_size = int(record["worker_source"]["mpi_size"])
+    require(mpi_size == 8, f"{role} PSS/USS backfill requires MPI8")
+
+    timeline_path, timeline_sha = _timeline_path_and_sha(role, record)
+    with timeline_path.open("r", encoding="utf-8", newline="") as stream:
+        reader = csv.DictReader(stream)
+        required_columns = {
+            "timestamp_utc",
+            "elapsed_seconds",
+            "stage",
+            "worker_rank_rss_sum_mb",
+            "worker_rank_pss_sum_mb",
+            "worker_rank_uss_sum_mb",
+            "worker_rank_shared_sum_mb",
+            "worker_rank_smaps_swap_sum_mb",
+            "worker_rank_smaps_rollup_json",
+            "worker_rank_smaps_readable_count",
+        }
+        require(
+            reader.fieldnames is not None
+            and required_columns.issubset(reader.fieldnames),
+            f"{rel(timeline_path)} lacks PSS/USS timeline columns",
+        )
+        all_rows = list(reader)
+
+    expected_ranks = set(range(mpi_size))
+    fully_readable: list[dict[str, Any]] = []
+    partial_readable = 0
+    no_smaps = 0
+    for row in all_rows:
+        payload = json.loads(row["worker_rank_smaps_rollup_json"] or "[]")
+        require(isinstance(payload, list), "smaps timeline payload is not a list")
+        ranks = {int(item["rank"]) for item in payload if "rank" in item}
+        readable_count = int(float(row["worker_rank_smaps_readable_count"] or 0))
+        if ranks == expected_ranks and readable_count == mpi_size:
+            sums = {
+                "worker_rank_pss_sum_mb": sum(float(item["pss_mb"]) for item in payload),
+                "worker_rank_uss_sum_mb": sum(float(item["uss_mb"]) for item in payload),
+                "worker_rank_shared_sum_mb": sum(
+                    float(item["shared_mb"]) for item in payload
+                ),
+                "worker_rank_smaps_swap_sum_mb": sum(
+                    float(item["swap_mb"]) for item in payload
+                ),
+            }
+            for name, reconstructed in sums.items():
+                require(
+                    math.isclose(
+                        float(row[name]),
+                        reconstructed,
+                        rel_tol=0.0,
+                        abs_tol=1.0e-8,
+                    ),
+                    f"{role} {name} differs from per-rank smaps reconstruction",
+                )
+            require(
+                float(row["worker_rank_uss_sum_mb"])
+                <= float(row["worker_rank_pss_sum_mb"])
+                <= float(row["worker_rank_rss_sum_mb"]),
+                f"{role} has invalid USS/PSS/RSS ordering",
+            )
+            require(
+                float(row["worker_rank_smaps_swap_sum_mb"]) == 0.0,
+                f"{role} smaps timeline contains swap",
+            )
+            fully_readable.append(row)
+        elif readable_count > 0:
+            partial_readable += 1
+        else:
+            no_smaps += 1
+
+    require(fully_readable, f"{role} has no fully readable MPI8 smaps samples")
+    return {
+        "source_sha": P6_SOURCE_SHA,
+        "mpi_size": mpi_size,
+        "watchdog_path": rel(watchdog_path),
+        "watchdog_sha256": observed_watchdog_sha,
+        "timeline_path": rel(timeline_path),
+        "timeline_sha256": timeline_sha,
+        "sample_count": len(all_rows),
+        "fully_readable_mpi8_sample_count": len(fully_readable),
+        "partial_terminal_or_startup_sample_count": partial_readable,
+        "no_live_rank_smaps_sample_count": no_smaps,
+        "all_qualified_samples_have_zero_smaps_swap": True,
+        "qualification": (
+            "qualified historical backfill from simultaneous per-rank "
+            "/proc/<pid>/smaps_rollup samples; only samples with all eight "
+            "rank snapshots readable are eligible"
+        ),
+        "worker_rank_rss_peak": _smaps_peak(
+            fully_readable, "worker_rank_rss_sum_mb"
+        ),
+        "worker_rank_pss_peak": _smaps_peak(
+            fully_readable, "worker_rank_pss_sum_mb"
+        ),
+        "worker_rank_uss_peak": _smaps_peak(
+            fully_readable, "worker_rank_uss_sum_mb"
+        ),
+    }
+
+
+def _smaps_pair(
+    standard: dict[str, Any],
+    static: dict[str, Any],
+) -> dict[str, Any]:
+    output: dict[str, Any] = {}
+    for metric in ("pss", "uss"):
+        key = f"worker_rank_{metric}_peak"
+        standard_gib = float(standard[key]["simultaneous_sum_gib"])
+        static_gib = float(static[key]["simultaneous_sum_gib"])
+        output[metric] = {
+            "standard_gib": standard_gib,
+            "static_gib": static_gib,
+            "saving_fraction": (standard_gib - static_gib) / standard_gib,
+        }
+    return output
+
+
+def p6_pss_uss_record() -> dict[str, Any]:
+    models = {
+        role: _load_pss_uss_timeline(role)
+        for role in P6_MPI8_AUTHORITIES
+    }
+    comparisons = {
+        "full_standard_vs_static": _smaps_pair(
+            models["full_standard"], models["full_static"]
+        ),
+        "hybrid_m120_standard_vs_static": _smaps_pair(
+            models["hybrid_standard_m120"], models["hybrid_static_m120"]
+        ),
+        "hybrid_m160_standard_vs_static": _smaps_pair(
+            models["hybrid_standard_m160"], models["hybrid_static_m160"]
+        ),
+    }
+    return {
+        "schema_version": "task035c.case096-p6-mpi8-pss-uss-ledger.v1",
+        "status": "p6_h10_mpi8_historical_pss_uss_backfill_qualified",
+        "pass": True,
+        "numerical_source_sha": P6_SOURCE_SHA,
+        "is_pde_rerun": False,
+        "formal_task035c_relative_memory_authority": (
+            "simultaneous process-tree/live-worker RSS from the original campaign"
+        ),
+        "pss_uss_semantics": (
+            "diagnostic memory decomposition reconstructed from the original "
+            "simultaneous MPI8 smaps_rollup timeline; no RSS-to-PSS/USS inference"
+        ),
+        "models": models,
+        "comparisons": comparisons,
+    }
 
 
 def channel_map(model: dict[str, Any]) -> dict[tuple[str, int, int, str], dict[str, Any]]:
@@ -901,6 +1146,12 @@ def execution_ledger(records: dict[str, dict[str, Any]]) -> dict[str, Any]:
                 "status": records["p6_h10_static_rank_study_v1.json"]["status"],
             },
             {
+                "lane": "p6_h10_pss_uss_backfill",
+                "classification": "completed_from_existing_raw_timeline_no_pde_rerun",
+                "record": "records/p6_h10_mpi8_pss_uss_ledger_v1.json",
+                "status": records["p6_h10_mpi8_pss_uss_ledger_v1.json"]["status"],
+            },
+            {
                 "lane": "dependency_failures",
                 "classification": "preserved_failed_evidence",
                 "record": "records/dependency_failures_v1.json",
@@ -953,6 +1204,7 @@ def main() -> int:
             reference, reference_authority
         ),
         "p6_h10_static_rank_study_v1.json": rank_record(reference),
+        "p6_h10_mpi8_pss_uss_ledger_v1.json": p6_pss_uss_record(),
         "dependency_failures_v1.json": dependency_record(),
     }
     payloads["execution_ledger_v1.json"] = execution_ledger(payloads)

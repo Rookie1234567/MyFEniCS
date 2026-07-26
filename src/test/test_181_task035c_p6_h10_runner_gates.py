@@ -6,6 +6,7 @@ from pathlib import Path
 import unittest
 
 from benchmarks.run_task032_phase6_augmented import (
+    _discrete_axial_qualification_scope,
     _parse_args as parse_phase6_args,
 )
 from benchmarks.run_task033_full3d_watchdog import (
@@ -208,6 +209,33 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
             full3d.stage4_full3d_assembly_backend, "standard_full"
         )
         self.assertFalse(full3d.task035c_p6_h10_gate)
+
+    def test_discrete_axial_scope_is_user_visible_and_fail_closed(self) -> None:
+        ordinary = _discrete_axial_qualification_scope(
+            "continuous_beta",
+            "continuous_qep_beta",
+        )
+        self.assertFalse(ordinary["selected"])
+        self.assertEqual(
+            ordinary["status"],
+            "not_selected_ordinary_continuous_symbols",
+        )
+
+        selected = _discrete_axial_qualification_scope(
+            "full3d_uniform_cg",
+            "scalar_cg_discrete_derivative",
+        )
+        self.assertTrue(selected["selected"])
+        self.assertIn(
+            "uniform z segmentation in the modal middle region",
+            selected["qualified"],
+        )
+        self.assertIn("nonuniform z spacing", selected["not_qualified"])
+        self.assertIn(
+            "locally refined or hanging-node hexa mesh",
+            selected["not_qualified"],
+        )
+        self.assertIn("no fallback", selected["failure_policy"])
 
     def test_p6_remains_closed_without_explicit_task035c_gate(self) -> None:
         with self.assertRaises(SystemExit):
