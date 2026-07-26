@@ -25,6 +25,7 @@ from src.adaptivity.exact_sequence_variable_p import (
     build_variable_p_reference_space,
 )
 from src.adaptivity.hcurl_broken_cell_trace import (
+    _maximal_rank_profile,
     build_broken_hexa_cell_trace_constraint_map,
 )
 from src.adaptivity.hcurl_broken_trace_graph import (
@@ -53,6 +54,16 @@ def _degree_array(msh, dimension: int, degree: int) -> np.ndarray:
         int(degree),
         dtype=np.int32,
     )
+
+
+def test_wide_hanging_cell_expansion_requires_maximal_not_column_rank() -> None:
+    rng = np.random.default_rng(350201)
+    expansion = rng.standard_normal((300, 340))
+    rank, expected_rank, condition = _maximal_rank_profile(expansion)
+
+    assert rank == 300
+    assert expected_rank == 300
+    assert np.isfinite(condition)
 
 
 def _single_hanging_fixture(

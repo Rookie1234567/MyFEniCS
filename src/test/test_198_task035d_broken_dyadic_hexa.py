@@ -3,6 +3,7 @@ from __future__ import annotations
 from basix.ufl import element
 from dolfinx import default_real_type, fem
 from mpi4py import MPI
+import numpy as np
 import pytest
 
 from src.adaptivity.dyadic_hexa_broken_mesh import (
@@ -119,6 +120,37 @@ def test_material_protection_makes_material_interface_conforming() -> None:
         for tag, count in local_counts.items()
     }
     assert global_counts == {11: 8, 22: 8}
+
+
+def test_stage4_boundary_markers_are_explicit_and_hanging_faces_untagged() -> None:
+    markers = {
+        "x_lower": 11,
+        "x_upper": 12,
+        "y_lower": 13,
+        "y_upper": 14,
+        "z_lower": 15,
+        "z_upper": 16,
+    }
+    carrier = build_broken_dyadic_hexa_carrier(
+        _single_hanging_forest(),
+        comm=MPI.COMM_WORLD,
+        boundary_markers=markers,
+    )
+    local_values = tuple(
+        map(int, np.unique(carrier.physical_boundary_tags.values))
+    )
+    observed_values = {
+        value
+        for packet in MPI.COMM_WORLD.allgather(local_values)
+        for value in packet
+    }
+
+    assert dict(carrier.boundary_markers) == markers
+    assert carrier.audit["boundary_markers"] == markers
+    assert observed_values == set(markers.values())
+    assert len(carrier.physical_boundary_tags.indices) < carrier.audit[
+        "topological_exterior_facet_count"
+    ]
 
 
 def test_xy_periodic_corner_refinement_has_complete_carrier_catalog() -> None:

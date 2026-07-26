@@ -243,11 +243,25 @@ def build_broken_dyadic_hexa_carrier(
     forest: BalancedDyadicHexForest,
     *,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
+    boundary_markers: Mapping[str, int] | None = None,
 ) -> BrokenDyadicHexCarrier:
     """Build and fully classify a partition-stable broken-hexa carrier."""
 
     if forest.audit["pass"] is not True:
         raise ValueError("dyadic forest must pass before carrier construction")
+    markers = dict(
+        _BOUNDARY_MARKERS
+        if boundary_markers is None
+        else boundary_markers
+    )
+    if set(markers) != set(_BOUNDARY_MARKERS):
+        raise ValueError(
+            "broken-hexa boundary markers must define exactly "
+            f"{sorted(_BOUNDARY_MARKERS)}"
+        )
+    markers = {str(label): int(value) for label, value in markers.items()}
+    if len(set(markers.values())) != len(markers):
+        raise ValueError("broken-hexa physical boundary markers must be unique")
     leaves = tuple(forest.leaves)
     point_keys, connectivity = _canonical_vertex_catalog(leaves)
     leaf_count = len(leaves)
@@ -401,7 +415,7 @@ def build_broken_dyadic_hexa_carrier(
         dtype=np.int32,
     )
     boundary_values = np.asarray(
-        [_BOUNDARY_MARKERS[label] for _key, label, _facet in local_physical],
+        [markers[label] for _key, label, _facet in local_physical],
         dtype=np.int32,
     )
     order = np.argsort(boundary_indices)
@@ -514,7 +528,7 @@ def build_broken_dyadic_hexa_carrier(
                     for cell in leaves
                 ]
             ),
-            "boundary_markers": dict(_BOUNDARY_MARKERS),
+            "boundary_markers": dict(markers),
             "checks": checks,
             "failures": failures,
             "hanging_relation_source": "global_geometry_catalog",
@@ -531,7 +545,7 @@ def build_broken_dyadic_hexa_carrier(
         mesh=msh,
         cell_tags=cell_tags,
         physical_boundary_tags=physical_boundary_tags,
-        boundary_markers=_BOUNDARY_MARKERS,
+        boundary_markers=MappingProxyType(markers),
         canonical_leaf_by_local_cell=canonical_leaf_by_local_cell,
         audit=audit,
     )

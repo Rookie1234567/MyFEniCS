@@ -3,6 +3,7 @@ from __future__ import annotations
 from mpi4py import MPI
 import numpy as np
 import pytest
+from scipy import sparse
 
 from src.adaptivity.hcurl_hanging_trace import (
     build_hanging_face_reference_pair,
@@ -101,6 +102,24 @@ def test_hanging_rows_flatten_before_global_numbering_and_schur() -> None:
         @ graph.raw_from_independent
     )
     np.testing.assert_allclose(observed, expected, rtol=2.0e-12, atol=2.0e-10)
+
+
+def test_large_root_identity_audit_stays_sparse(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = _rows(90, 1024)
+
+    def reject_dense_identity(*_args, **_kwargs):
+        raise AssertionError("large root identity audit allocated dense storage")
+
+    monkeypatch.setattr(np, "eye", reject_dense_identity)
+    monkeypatch.setattr(sparse.csr_matrix, "toarray", reject_dense_identity)
+    graph = compose_and_flatten_trace_constraints(rows, ())
+
+    assert sparse.issparse(graph.raw_from_independent)
+    assert sparse.issparse(graph.component_gram)
+    assert graph.audit["root_identity_error"] == 0.0
+    assert graph.audit["independent_trace_rows"] == 1024
 
 
 def _periodic_hanging_chain(*, fine_phase_shift: float = 0.0):

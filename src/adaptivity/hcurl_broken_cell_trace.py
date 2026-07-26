@@ -103,6 +103,37 @@ def _array_identity(values: np.ndarray) -> dict[str, Any]:
     }
 
 
+def _maximal_rank_profile(
+    expansion: np.ndarray,
+) -> tuple[int, int, float]:
+    """Return numerical rank, maximal possible rank, and condition.
+
+    A hanging-face cell expansion may be wide: one cell's local trace
+    coefficients can depend on more independent global roots because a fine
+    face-interior block also depends on coarse-patch edge modes. Such an
+    expansion is valid when it has full row rank. Tall expansions must retain
+    full column rank.
+    """
+
+    values = np.asarray(expansion, dtype=np.complex128)
+    if values.ndim != 2 or min(values.shape, default=0) <= 0:
+        raise ValueError("cell trace expansion must be a nonempty matrix")
+    singular_values = np.linalg.svd(values, compute_uv=False)
+    threshold = (
+        max(values.shape)
+        * np.finfo(np.float64).eps
+        * singular_values[0]
+    )
+    rank = int(np.count_nonzero(singular_values > threshold))
+    expected_rank = int(min(values.shape))
+    condition = (
+        float(singular_values[0] / singular_values[rank - 1])
+        if rank
+        else float("inf")
+    )
+    return rank, expected_rank, condition
+
+
 def _json_sha256(payload: Any) -> str:
     return hashlib.sha256(
         json.dumps(
@@ -1571,6 +1602,8 @@ def build_broken_hexa_cell_trace_constraint_map(
     maximum_canonical_chart_error = 0.0
     maximum_trace_interior_mixing_error = 0.0
     local_rank_failures = 0
+    local_wide_cell_count = 0
+    local_maximum_independent_rows_per_cell = 0
     local_cell_expansion_bytes = 0
     local_cell_binding_error: str | None = None
     try:
@@ -1636,21 +1669,17 @@ def build_broken_hexa_cell_trace_constraint_map(
                 maximum_canonical_chart_error,
                 chart_error,
             )
-            singular_values = np.linalg.svd(
-                expansion,
-                compute_uv=False,
+            rank, expected_rank, condition = _maximal_rank_profile(
+                expansion
             )
-            positive = singular_values[
-                singular_values
-                > max(expansion.shape)
-                * np.finfo(np.float64).eps
-                * singular_values[0]
-            ]
-            if len(positive) != len(independent):
+            local_wide_cell_count += expansion.shape[1] > expansion.shape[0]
+            local_maximum_independent_rows_per_cell = max(
+                local_maximum_independent_rows_per_cell,
+                int(expansion.shape[1]),
+            )
+            if rank != expected_rank:
                 local_rank_failures += 1
                 condition = float("inf")
-            else:
-                condition = float(positive[0] / positive[-1])
             maximum_local_condition = max(
                 maximum_local_condition,
                 condition,
@@ -1799,8 +1828,17 @@ def build_broken_hexa_cell_trace_constraint_map(
     )
     if rank_failures:
         raise RuntimeError(
-            "one broken-hexa cell trace expansion is rank deficient"
+            "one broken-hexa cell trace expansion lacks maximal rank"
         )
+    wide_cell_count = int(
+        carrier.mesh.comm.allreduce(local_wide_cell_count, op=MPI.SUM)
+    )
+    maximum_independent_rows_per_cell = int(
+        carrier.mesh.comm.allreduce(
+            local_maximum_independent_rows_per_cell,
+            op=MPI.MAX,
+        )
+    )
     maximum_orthogonality = float(
         carrier.mesh.comm.allreduce(orthogonality_error, op=MPI.MAX)
     )
@@ -1950,7 +1988,7 @@ def build_broken_hexa_cell_trace_constraint_map(
         "all_owned_cells_bound": (
             len(owned_cells) == len(entity_map.owned_cells)
         ),
-        "cell_expansions_full_column_rank": rank_failures == 0,
+        "cell_expansions_maximal_rank": rank_failures == 0,
         "all_independent_roots_reached": (
             len(all_used_roots) == independent_rows
         ),
@@ -2061,6 +2099,14 @@ def build_broken_hexa_cell_trace_constraint_map(
                 maximum_orthogonality
             ),
             "maximum_cell_expansion_condition": maximum_condition,
+            "wide_cell_expansion_count": wide_cell_count,
+            "maximum_independent_rows_per_cell": (
+                maximum_independent_rows_per_cell
+            ),
+            "cell_expansion_rank_semantics": (
+                "rank_equals_min(local_trace_rows, independent_root_rows); "
+                "wide hanging/Floquet cell expansions require full row rank"
+            ),
             "maximum_cell_transform_error": maximum_transform_error,
             "maximum_unpermuted_cell_chart_error": maximum_chart_error,
             "maximum_trace_interior_mixing_error": maximum_mixing_error,

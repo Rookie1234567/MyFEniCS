@@ -428,13 +428,21 @@ def compose_and_flatten_trace_constraints(
     root_indices = [row_index[row] for row in root_rows]
     root_identity = raw_from_independent[root_indices]
     if sparse.issparse(root_identity):
-        root_identity = root_identity.toarray()
-    root_identity_error = float(
-        np.max(
-            np.abs(root_identity - np.eye(len(root_rows))),
-            initial=0.0,
+        root_delta = sparse.csr_matrix(root_identity) - sparse.eye(
+            len(root_rows),
+            dtype=np.complex128,
+            format="csr",
         )
-    )
+        root_identity_error = float(
+            np.max(np.abs(root_delta.data), initial=0.0)
+        )
+    else:
+        root_identity_error = float(
+            np.max(
+                np.abs(root_identity - np.eye(len(root_rows))),
+                initial=0.0,
+            )
+        )
     gram_rank = len(root_rows) if root_identity_error <= tolerance else 0
     if gram_rank != len(root_rows):
         raise RuntimeError("flattened root rows do not contain an identity block")
