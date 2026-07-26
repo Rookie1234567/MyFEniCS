@@ -14,6 +14,7 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import sys
 from typing import Any
 
 import basix
@@ -23,30 +24,34 @@ from dolfinx import mesh
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from src.adaptivity.exact_sequence_variable_p import (
+
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.adaptivity.exact_sequence_variable_p import (  # noqa: E402
     HexaEntityDegreeMap,
     allowed_dimension_degree_triples,
     build_p4_p6_entity_dof_catalog,
     build_variable_p_reference_space,
 )
-from src.adaptivity.variable_p_entity_map import (
+from src.adaptivity.variable_p_entity_map import (  # noqa: E402
     build_variable_p_global_entity_map,
     structural_sparsity_audit,
 )
-from src.adaptivity.variable_p_periodic_orbits import (
+from src.adaptivity.variable_p_periodic_orbits import (  # noqa: E402
     audit_variable_p_periodic_orbits,
 )
-from src.solvers.hcurl_affine_isotropic_tensor import (
+from src.solvers.hcurl_affine_isotropic_tensor import (  # noqa: E402
     AffineIsotropicMaxwellTensorFactory,
     AffineIsotropicMaxwellTensorSpec,
 )
-from src.solvers.hcurl_variable_p_local import (
+from src.solvers.hcurl_variable_p_local import (  # noqa: E402
     condense_variable_p_local_tensor,
     project_p6_local_tensor,
 )
 
 
-ROOT = Path(__file__).resolve().parents[3]
 CASE = ROOT / "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity"
 RECORDS = CASE / "records"
 SERIAL_RECORD = RECORDS / "reference_active_space_authority_v1.json"
