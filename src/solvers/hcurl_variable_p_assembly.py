@@ -25,7 +25,11 @@ from src.adaptivity.variable_p_periodic_orbits import (
 )
 
 from .hcurl_assembly_time_condensation import (
+    _canonical_axis_aligned_coordinates,
+    _cell_integral_kernels,
+    _cell_tag_array,
     _distributed_trace_preallocation,
+    _global_raw_tensor_cache,
 )
 from .hcurl_variable_p_local import project_p6_local_tensor
 
@@ -46,6 +50,8 @@ class VariablePCondensedTraceSystem:
     matrix: PETSc.Mat
     entity_map: VariablePGlobalEntityMap
     periodic_constraints: VariablePPeriodicConstraintMap | None
+    active_trace_rows: int
+    appended_rows: int
     cell_recovery: tuple[VariablePCellRecovery, ...]
     interior_from_trace_by_class: dict[tuple[Any, ...], np.ndarray]
     interior_lu_by_class: dict[
@@ -70,7 +76,7 @@ class VariablePCondensedTraceSystem:
         """Recover active local coefficients for each locally owned cell."""
 
         trace = np.asarray(trace_values, dtype=np.complex128)
-        expected_trace_rows = int(self.matrix.getSize()[0])
+        expected_trace_rows = self.active_trace_rows
         if trace.shape != (expected_trace_rows,):
             raise ValueError("global active trace vector has the wrong size")
         rhs_local = None
@@ -144,10 +150,21 @@ def build_variable_p_condensed_trace_system(
     *,
     tensor_class_keys: Sequence[Any] | None = None,
     periodic_constraints: VariablePPeriodicConstraintMap | None = None,
+    appended_global_rows: int = 0,
+    appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
+    appended_support_group_by_row: tuple[int, ...] = (),
+    defer_final_assembly: bool = False,
 ) -> VariablePCondensedTraceSystem:
     """Project p6 cell tensors, condense interiors, and assemble active rows."""
 
     comm = entity_map.mesh.comm
+    appended_global_rows = int(appended_global_rows)
+    if appended_global_rows < 0:
+        raise ValueError("appended global rows must be non-negative")
+    if appended_global_rows and not defer_final_assembly:
+        raise ValueError(
+            "appended rows require deferred final assembly by the caller"
+        )
     cells = entity_map.owned_cells
     tensors = tuple(np.asarray(tensor) for tensor in p6_tensors_by_owned_cell)
     if len(tensors) != len(cells):
@@ -199,6 +216,10 @@ def build_variable_p_condensed_trace_system(
         if periodic_constraints is not None
         else entity_map.active_trace_rows
     )
+    matrix_rows = active_rows + appended_global_rows
+    local_appended = (
+        appended_global_rows if comm.rank == comm.size - 1 else 0
+    )
     insertion_rows = tuple(
         periodic_cell.independent_rows
         if periodic_cell is not None
@@ -217,9 +238,13 @@ def build_variable_p_condensed_trace_system(
             comm,
             insertion_rows,
             active_counts=active_counts,
-            appended_global_rows=0,
-            appended_support_owned_cell_groups=(),
-            appended_support_group_by_row=(),
+            appended_global_rows=appended_global_rows,
+            appended_support_owned_cell_groups=(
+                appended_support_owned_cell_groups
+            ),
+            appended_support_group_by_row=(
+                appended_support_group_by_row
+            ),
         )
     )
     preallocation_seconds = float(
@@ -230,8 +255,14 @@ def build_variable_p_condensed_trace_system(
     )
     matrix = PETSc.Mat().createAIJ(
         size=(
-            (active_counts[comm.rank], active_rows),
-            (active_counts[comm.rank], active_rows),
+            (
+                active_counts[comm.rank] + local_appended,
+                matrix_rows,
+            ),
+            (
+                active_counts[comm.rank] + local_appended,
+                matrix_rows,
+            ),
         ),
         nnz=(
             diagonal_nnz
@@ -334,22 +365,33 @@ def build_variable_p_condensed_trace_system(
                 class_key=class_key,
             )
         )
-    assembly_started = perf_counter()
-    matrix.assemble()
-    assembly_seconds = float(
-        comm.allreduce(
-            perf_counter() - assembly_started,
-            op=MPI.MAX,
+    if defer_final_assembly:
+        assembly_seconds = 0.0
+        info: dict[str, float] = {}
+    else:
+        assembly_started = perf_counter()
+        matrix.assemble()
+        assembly_seconds = float(
+            comm.allreduce(
+                perf_counter() - assembly_started,
+                op=MPI.MAX,
+            )
         )
-    )
-    info = matrix.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
+        info = matrix.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
     matrix_rows, matrix_columns = matrix.getSize()
     expected_nnz = int(preallocation["preallocated_structural_nnz"])
-    actual_nnz = int(round(float(info.get("nz_used", 0.0))))
+    actual_nnz = (
+        None
+        if defer_final_assembly
+        else int(round(float(info.get("nz_used", 0.0))))
+    )
     if (
-        matrix_rows != active_rows
-        or matrix_columns != active_rows
-        or actual_nnz != expected_nnz
+        matrix_rows != active_rows + appended_global_rows
+        or matrix_columns != active_rows + appended_global_rows
+        or (
+            not defer_final_assembly
+            and actual_nnz != expected_nnz
+        )
     ):
         matrix.destroy()
         raise RuntimeError(
@@ -367,6 +409,7 @@ def build_variable_p_condensed_trace_system(
             entity_map.active_trace_rows
         ),
         "active_trace_rows": active_rows,
+        "appended_rows": appended_global_rows,
         "periodic_slave_rows": int(
             entity_map.active_trace_rows - active_rows
         ),
@@ -384,12 +427,15 @@ def build_variable_p_condensed_trace_system(
         ),
         "matrix_rows": int(matrix_rows),
         "matrix_nnz": actual_nnz,
+        "matrix_nnz_preallocated": expected_nnz,
         "matrix_nnz_allocated": int(
             round(float(info.get("nz_allocated", 0.0)))
         ),
         "matrix_mallocs": int(
             round(float(info.get("mallocs", 0.0)))
-        ),
+        )
+        if not defer_final_assembly
+        else None,
         "local_reference_class_count_sum": int(
             comm.allreduce(len(schur_cache), op=MPI.SUM)
         ),
@@ -403,6 +449,7 @@ def build_variable_p_condensed_trace_system(
             comm.allreduce(insertion_seconds, op=MPI.MAX)
         ),
         "final_assembly_seconds": assembly_seconds,
+        "final_assembly_deferred": bool(defer_final_assembly),
         "preallocation_seconds": preallocation_seconds,
         "total_build_seconds": float(
             comm.allreduce(perf_counter() - started, op=MPI.MAX)
@@ -419,6 +466,8 @@ def build_variable_p_condensed_trace_system(
         matrix=matrix,
         entity_map=entity_map,
         periodic_constraints=periodic_constraints,
+        active_trace_rows=active_rows,
+        appended_rows=appended_global_rows,
         cell_recovery=tuple(recoveries),
         interior_from_trace_by_class=interior_from_trace,
         interior_lu_by_class=interior_lu,
@@ -427,8 +476,387 @@ def build_variable_p_condensed_trace_system(
     )
 
 
+def build_variable_p_condensed_trace_system_from_compiled_form(
+    compiled_form: Any,
+    p6_space: Any,
+    cell_tags: Any,
+    entity_map: VariablePGlobalEntityMap,
+    *,
+    periodic_constraints: VariablePPeriodicConstraintMap | None = None,
+    appended_global_rows: int = 0,
+    appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
+    appended_support_group_by_row: tuple[int, ...] = (),
+    defer_final_assembly: bool = False,
+    geometry_tolerance: float = 1.0e-11,
+) -> VariablePCondensedTraceSystem:
+    """Evaluate p6 FFCx tensor classes and assemble the true active system."""
+
+    if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
+        raise TypeError("variable-p compiled form must use complex128")
+    if p6_space.mesh is not entity_map.mesh:
+        raise ValueError(
+            "compiled p6 space and variable-p entity map use different meshes"
+        )
+    element = p6_space.element.basix_element
+    if (
+        int(element.dim) != 882
+        or "hexahedron" not in str(element.cell_type).lower()
+        or "covariant" not in str(element.map_type).lower()
+    ):
+        raise ValueError(
+            "variable-p compiled builder requires hexahedral N1curl p6"
+        )
+    form_spaces = tuple(compiled_form.function_spaces)
+    p6_cpp_mesh = getattr(
+        p6_space.mesh,
+        "_cpp_object",
+        p6_space.mesh,
+    )
+    if not form_spaces or any(
+        space.mesh is not p6_cpp_mesh for space in form_spaces
+    ):
+        raise ValueError("compiled form uses a different finite-element mesh")
+    if any(
+        int(space.element.basix_element.hash()) != int(element.hash())
+        for space in form_spaces
+    ):
+        raise ValueError("compiled form is not the supplied p6 space")
+
+    msh = entity_map.mesh
+    comm = msh.comm
+    owned_cells = int(msh.topology.index_map(3).size_local)
+    if owned_cells != len(entity_map.owned_cells):
+        raise RuntimeError("variable-p entity map misses owned mesh cells")
+    tags = _cell_tag_array(cell_tags, owned_cells)
+    kernels = _cell_integral_kernels(compiled_form)
+    unknown_tags = (
+        []
+        if -1 in kernels
+        else sorted(set(map(int, tags)) - set(kernels))
+    )
+    if unknown_tags:
+        raise ValueError(
+            f"compiled p6 form has no cell integral for tags {unknown_tags}"
+        )
+
+    metadata_started = perf_counter()
+    coordinates_by_class: dict[tuple[Any, ...], np.ndarray] = {}
+    cell_policy_keys: list[tuple[Any, ...]] = []
+    tensor_keys: list[tuple[Any, ...]] = []
+    for cell in range(owned_cells):
+        coordinates, widths = _canonical_axis_aligned_coordinates(
+            msh,
+            cell,
+            tolerance=float(geometry_tolerance),
+        )
+        tag = int(tags[cell])
+        policy_key = ("p6_actual_space", tag, *widths)
+        previous = coordinates_by_class.get(policy_key)
+        if previous is not None and not np.array_equal(
+            previous,
+            coordinates,
+        ):
+            raise RuntimeError(
+                "p6 tensor class has inconsistent canonical coordinates"
+            )
+        coordinates_by_class.setdefault(policy_key, coordinates)
+        cell_policy_keys.append(policy_key)
+        tensor_keys.append((tag, *widths))
+    metadata_seconds = float(
+        comm.allreduce(
+            perf_counter() - metadata_started,
+            op=MPI.MAX,
+        )
+    )
+    raw_cache, raw_audit, local_kernel_seconds = (
+        _global_raw_tensor_cache(
+            comm,
+            coordinates_by_class,
+            {
+                "p6_actual_space": (
+                    compiled_form,
+                    kernels,
+                    882,
+                )
+            },
+        )
+    )
+    system = build_variable_p_condensed_trace_system(
+        entity_map,
+        tuple(raw_cache[key] for key in cell_policy_keys),
+        tensor_class_keys=tuple(tensor_keys),
+        periodic_constraints=periodic_constraints,
+        appended_global_rows=appended_global_rows,
+        appended_support_owned_cell_groups=(
+            appended_support_owned_cell_groups
+        ),
+        appended_support_group_by_row=(
+            appended_support_group_by_row
+        ),
+        defer_final_assembly=defer_final_assembly,
+    )
+    system.build_audit.update(
+        {
+            "compiled_p6_tensor_builder": True,
+            "compiled_p6_form_dtype": str(
+                np.dtype(compiled_form.dtype)
+            ),
+            "compiled_p6_element_hash": int(element.hash()),
+            "raw_tensor_metadata_seconds": metadata_seconds,
+            "raw_tensor_kernel_seconds_max": float(
+                comm.allreduce(local_kernel_seconds, op=MPI.MAX)
+            ),
+            **raw_audit,
+        }
+    )
+    return system
+
+
+def _global_active_vector_values(
+    system: VariablePCondensedTraceSystem,
+    vector: PETSc.Vec,
+) -> np.ndarray:
+    if vector.getSize() != system.entity_map.active_rows:
+        raise ValueError("active full vector has the wrong global size")
+    owned = np.asarray(
+        vector.getArray(readonly=True),
+        dtype=np.complex128,
+    ).copy()
+    values = np.concatenate(system.entity_map.mesh.comm.allgather(owned))
+    if values.shape != (system.entity_map.active_rows,):
+        raise RuntimeError("active vector ownership packets do not close")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("active full vector contains non-finite entries")
+    return values
+
+
+def condense_variable_p_active_vector_to_trace(
+    system: VariablePCondensedTraceSystem,
+    active_full_vector: PETSc.Vec,
+    *,
+    side: str,
+    relative_tolerance: float = 1.0e-14,
+) -> PETSc.Vec:
+    """Apply local Schur and Floquet reductions to an active full vector."""
+
+    if side not in {"right", "left"}:
+        raise ValueError("vector condensation side must be right or left")
+    values = _global_active_vector_values(system, active_full_vector)
+    cutoff = max(
+        1.0e-30,
+        float(relative_tolerance)
+        * float(np.max(np.abs(values), initial=0.0)),
+    )
+    target = system.matrix.createVecRight()
+    row_start, row_end = map(
+        int,
+        active_full_vector.getOwnershipRange(),
+    )
+    if system.periodic_constraints is None:
+        start = max(row_start, 0)
+        stop = min(row_end, system.entity_map.active_trace_rows)
+        if stop > start:
+            rows = np.arange(start, stop, dtype=PETSc.IntType)
+            retained = np.abs(values[start:stop]) > cutoff
+            target.setValues(
+                rows[retained],
+                np.asarray(
+                    values[start:stop][retained],
+                    dtype=PETSc.ScalarType,
+                ),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+        periodic_by_cell: dict[int, Any] = {}
+    else:
+        constraints = system.periodic_constraints
+        periodic_by_cell = {
+            cell.global_cell: cell for cell in constraints.owned_cells
+        }
+        for block in constraints.entity_blocks.values():
+            if not (
+                row_start <= int(block.full_rows[0]) < row_end
+            ):
+                continue
+            projected = (
+                block.full_from_independent.conj().T
+                @ values[block.full_rows]
+            )
+            retained = np.abs(projected) > cutoff
+            target.setValues(
+                np.asarray(
+                    block.independent_rows[retained],
+                    dtype=PETSc.IntType,
+                ),
+                np.asarray(
+                    projected[retained],
+                    dtype=PETSc.ScalarType,
+                ),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+
+    for recovery in system.cell_recovery:
+        interior_values = values[recovery.cell.interior_rows]
+        if (
+            float(
+                np.max(np.abs(interior_values), initial=0.0)
+            )
+            <= cutoff
+        ):
+            continue
+        if side == "right":
+            correction = (
+                system.trace_from_interior_rhs_by_class[
+                    recovery.class_key
+                ]
+                @ interior_values
+            )
+        else:
+            correction = (
+                system.interior_from_trace_by_class[
+                    recovery.class_key
+                ].conj().T
+                @ interior_values
+            )
+        if system.periodic_constraints is None:
+            rows = recovery.cell.trace_rows
+        else:
+            periodic_cell = periodic_by_cell[
+                recovery.cell.global_cell
+            ]
+            correction = (
+                periodic_cell.full_trace_from_independent.conj().T
+                @ correction
+            )
+            rows = periodic_cell.independent_rows
+        retained = np.abs(correction) > cutoff
+        target.setValues(
+            np.asarray(rows[retained], dtype=PETSc.IntType),
+            np.asarray(
+                correction[retained],
+                dtype=PETSc.ScalarType,
+            ),
+            addv=PETSc.InsertMode.ADD_VALUES,
+        )
+    target.assemble()
+    return target
+
+
+def variable_p_cell_interior_schur_bilinear(
+    system: VariablePCondensedTraceSystem,
+    left_active_full: PETSc.Vec,
+    right_active_full: PETSc.Vec,
+) -> complex:
+    """Return the eliminated active-interior cross bilinear."""
+
+    left = _global_active_vector_values(system, left_active_full)
+    right = _global_active_vector_values(system, right_active_full)
+    local = 0.0 + 0.0j
+    for recovery in system.cell_recovery:
+        rows = recovery.cell.interior_rows
+        left_values = left[rows]
+        right_values = right[rows]
+        if not np.any(left_values) or not np.any(right_values):
+            continue
+        local += np.vdot(
+            left_values,
+            lu_solve(
+                system.interior_lu_by_class[recovery.class_key],
+                right_values,
+            ),
+        )
+    return complex(
+        system.entity_map.mesh.comm.allreduce(local, op=MPI.SUM)
+    )
+
+
+def recover_variable_p_active_full_vector(
+    system: VariablePCondensedTraceSystem,
+    trace_values: PETSc.Vec | np.ndarray,
+    *,
+    active_full_rhs: PETSc.Vec | None = None,
+) -> PETSc.Vec:
+    """Recover the conforming full active coefficient vector."""
+
+    if isinstance(trace_values, PETSc.Vec):
+        owned = np.asarray(
+            trace_values.getArray(readonly=True),
+            dtype=np.complex128,
+        ).copy()
+        supplied = np.concatenate(
+            system.entity_map.mesh.comm.allgather(owned)
+        )
+    else:
+        supplied = np.asarray(trace_values, dtype=np.complex128)
+    if supplied.shape == (system.matrix.getSize()[0],):
+        trace = supplied[: system.active_trace_rows]
+    elif supplied.shape == (system.active_trace_rows,):
+        trace = supplied
+    else:
+        raise ValueError("reduced trace vector has the wrong global size")
+
+    comm = system.entity_map.mesh.comm
+    active_counts = _balanced_counts(
+        system.entity_map.active_rows,
+        comm.size,
+    )
+    recovered = PETSc.Vec().createMPI(
+        (
+            active_counts[comm.rank],
+            system.entity_map.active_rows,
+        ),
+        comm=comm,
+    )
+    row_start, row_end = map(int, recovered.getOwnershipRange())
+    if system.periodic_constraints is None:
+        start = max(row_start, 0)
+        stop = min(row_end, system.entity_map.active_trace_rows)
+        if stop > start:
+            recovered.setValues(
+                np.arange(start, stop, dtype=PETSc.IntType),
+                np.asarray(
+                    trace[start:stop],
+                    dtype=PETSc.ScalarType,
+                ),
+                addv=PETSc.InsertMode.INSERT_VALUES,
+            )
+    else:
+        for block in system.periodic_constraints.entity_blocks.values():
+            if not (
+                row_start <= int(block.full_rows[0]) < row_end
+            ):
+                continue
+            values = (
+                block.full_from_independent
+                @ trace[block.independent_rows]
+            )
+            recovered.setValues(
+                np.asarray(block.full_rows, dtype=PETSc.IntType),
+                np.asarray(values, dtype=PETSc.ScalarType),
+                addv=PETSc.InsertMode.INSERT_VALUES,
+            )
+    for cell, local_active in system.recover_owned_active_cells(
+        trace,
+        active_full_rhs=active_full_rhs,
+    ):
+        space = build_variable_p_reference_space(cell.degree_map)
+        recovered.setValues(
+            np.asarray(cell.interior_rows, dtype=PETSc.IntType),
+            np.asarray(
+                local_active[space.interior_dofs],
+                dtype=PETSc.ScalarType,
+            ),
+            addv=PETSc.InsertMode.INSERT_VALUES,
+        )
+    recovered.assemble()
+    return recovered
+
+
 __all__ = [
     "VariablePCellRecovery",
     "VariablePCondensedTraceSystem",
     "build_variable_p_condensed_trace_system",
+    "build_variable_p_condensed_trace_system_from_compiled_form",
+    "condense_variable_p_active_vector_to_trace",
+    "recover_variable_p_active_full_vector",
+    "variable_p_cell_interior_schur_bilinear",
 ]

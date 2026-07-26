@@ -211,6 +211,7 @@ class Stage4GratingInputs3D:
     stage4_dtn_order_policy: str = "zero_order"
     stage4_dtn_assembly: str = "auxiliary"
     stage4_full3d_assembly_backend: str = "standard_full"
+    stage4_variable_p_cell_degree_plan: str | None = None
     stage4_pml_outer_bc: str = "natural"
     diffraction_zero_order_only: bool = False
     diffraction_order_max_m: int | None = 2
@@ -627,6 +628,7 @@ def _pycharm_args_3d(preset_name: str | None = None) -> list[str]:
         "stage4_dtn_order_policy",
         "stage4_dtn_assembly",
         "stage4_full3d_assembly_backend",
+        "stage4_variable_p_cell_degree_plan",
         "stage4_pml_outer_bc",
         "diffraction_order_max_m",
         "diffraction_order_max_n",

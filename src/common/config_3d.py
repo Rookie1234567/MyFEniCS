@@ -17,10 +17,14 @@ SI_SUBSTRATE_INDEX_EUV_13P5_NM = SI_GRATING_INDEX_EUV_13P5_NM
 NUMERICAL_SANITY_ONLY = "numerical_sanity_only"
 STANDARD_FULL_ASSEMBLY_BACKEND = "standard_full"
 ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND = "assembly_time_static_condensed"
+ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND = (
+    "assembly_time_variable_p_condensed"
+)
 _STAGE4_FULL3D_ASSEMBLY_BACKENDS = frozenset(
     {
         STANDARD_FULL_ASSEMBLY_BACKEND,
         ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+        ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
     }
 )
 
@@ -160,6 +164,9 @@ class SimulationConfig3D:
     # the reviewed ordinary full augmented system.  These three booleans are
     # internal compatibility state, not public user-selection ports.
     stage4_full3d_assembly_backend: str = STANDARD_FULL_ASSEMBLY_BACKEND
+    # Task035d research opt-in. The JSON is bound to the actual cell-box
+    # geometry and closes cell p4/p5/p6 decisions onto shared edge/face modes.
+    stage4_variable_p_cell_degree_plan: str | None = None
     stage4_cell_static_condensation: bool = False
     # Task035b opt-in memory path: call the compiled cell kernels directly,
     # condense cell interiors, and apply Floquet constraints before global
@@ -698,15 +705,17 @@ def resolve_stage4_full3d_assembly_backend(
     legacy_post_assembly = (True, False, False)
     assembly_time = (True, True, True)
 
-    if requested == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND:
+    if requested in {
+        ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+        ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
+    }:
         if legacy_state not in {ordinary, assembly_time}:
             raise ValueError(
-                "stage4_full3d_assembly_backend="
-                "'assembly_time_static_condensed' conflicts with a partial "
+                "the selected assembly-time backend conflicts with a partial "
                 "legacy condensation state. Clear the three internal legacy "
                 "booleans and select only the public backend."
             )
-        actual = ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+        actual = requested
         selection_source = "public_port"
         resolved_state = assembly_time
     elif legacy_state == ordinary:
@@ -725,7 +734,8 @@ def resolve_stage4_full3d_assembly_backend(
         raise ValueError(
             "The legacy Stage-4 condensation booleans form an unsupported "
             "partial combination. Use stage4_full3d_assembly_backend="
-            "'standard_full' or 'assembly_time_static_condensed'."
+            "'standard_full', 'assembly_time_static_condensed', or "
+            "'assembly_time_variable_p_condensed'."
         )
 
     if apply:
@@ -739,7 +749,12 @@ def resolve_stage4_full3d_assembly_backend(
         "requested": requested,
         "actual": actual,
         "selection_source": selection_source,
-        "ordinary_default_unchanged": actual == STANDARD_FULL_ASSEMBLY_BACKEND,
+        # This states whether the repository default was changed, not whether
+        # the caller explicitly selected the ordinary backend for this run.
+        "ordinary_default_unchanged": True,
+        "ordinary_default_selected": (
+            actual == STANDARD_FULL_ASSEMBLY_BACKEND
+        ),
         "legacy_internal_state": {
             "stage4_cell_static_condensation": resolved_state[0],
             "stage4_assembly_time_cell_static_condensation": resolved_state[1],
@@ -760,7 +775,10 @@ def qualify_stage4_full3d_assembly_backend(
         else audit
     )
     actual = str(resolved["actual"])
-    if actual != ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND:
+    if actual not in {
+        ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+        ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
+    }:
         return {
             "status": "not_required",
             "qualified_scope": False,
@@ -768,6 +786,7 @@ def qualify_stage4_full3d_assembly_backend(
         }
 
     failures: list[str] = []
+    element_contract: str | None = None
     if cfg.stage_case != "stage4_block_grating":
         failures.append("stage_case must be 'stage4_block_grating'")
     if cfg.geometry_kind != "rectangular_block_grating" or not cfg.has_grating_block:
@@ -790,14 +809,29 @@ def qualify_stage4_full3d_assembly_backend(
         failures.append(
             "a complete direct solve with field recovery and explicit residual is required"
         )
-    try:
-        element_contract = cfg.nedelec_fixed_trace_contract
-    except ValueError as exc:
-        failures.append(str(exc))
+    if actual == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND:
+        if int(cfg.nedelec_degree) != 6:
+            failures.append(
+                "variable-p requires nedelec_degree=6 as the local container"
+            )
+        if cfg.nedelec_fixed_trace_enabled:
+            failures.append(
+                "variable-p cannot be combined with the fixed-trace element"
+            )
+        if not cfg.stage4_variable_p_cell_degree_plan:
+            failures.append(
+                "variable-p requires a geometry-bound cell degree plan"
+            )
+        element_contract = "exact_sequence_variable_p4_p5_p6_in_p6_container"
+    else:
+        try:
+            element_contract = cfg.nedelec_fixed_trace_contract
+        except ValueError as exc:
+            failures.append(str(exc))
 
     if failures:
         raise ValueError(
-            "assembly_time_static_condensed is outside its qualified scope: "
+            f"{actual} is outside its qualified scope: "
             + "; ".join(failures)
             + ". Use stage4_full3d_assembly_backend='standard_full'."
         )
@@ -814,6 +848,12 @@ def qualify_stage4_full3d_assembly_backend(
             "fixed_rectangular_block_grating",
             "assembly_time_cell_interior_condensation",
             "floquet_slave_elimination_before_global_insertion",
+            (
+                "geometry_bound_inactive_row_free_variable_p"
+                if actual
+                == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+                else "uniform_or_fixed_trace_active_space"
+            ),
             "sparse_auxiliary_dtn",
             "full_recovery_and_explicit_residual",
         ),

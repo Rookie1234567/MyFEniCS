@@ -8,6 +8,7 @@ from mpi4py import MPI
 
 from ..common.config_3d import (
     ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+    ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
     EUV_REFERENCE_WAVELENGTH_NM,
     NUMERICAL_SANITY_ONLY,
     SimulationConfig3D,
@@ -224,6 +225,10 @@ def _config_updates(args) -> dict[str, object]:
     if args.stage4_full3d_assembly_backend is not None:
         updates["stage4_full3d_assembly_backend"] = (
             args.stage4_full3d_assembly_backend
+        )
+    if args.stage4_variable_p_cell_degree_plan is not None:
+        updates["stage4_variable_p_cell_degree_plan"] = (
+            args.stage4_variable_p_cell_degree_plan
         )
     if args.stage4_pml_outer_bc is not None:
         updates["stage4_pml_outer_bc"] = args.stage4_pml_outer_bc
@@ -611,12 +616,21 @@ def main(argv: list[str] | None = None):
         choices=(
             STANDARD_FULL_ASSEMBLY_BACKEND,
             ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
         ),
         default=None,
         help=(
             "Stage-4 Full3D assembly backend. The ordinary default is "
             "standard_full; assembly_time_static_condensed is qualified only "
             "for the fixed affine rectangular hexahedral target."
+        ),
+    )
+    parser.add_argument(
+        "--stage4-variable-p-cell-degree-plan",
+        default=None,
+        help=(
+            "Task035d geometry-bound p4/p5/p6 cell-plan JSON. It is "
+            "required only by assembly_time_variable_p_condensed."
         ),
     )
     parser.add_argument(

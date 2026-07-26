@@ -17,6 +17,7 @@ from dolfinx.fem import petsc as fem_petsc
 from dolfinx.la.petsc import _ghost_update, create_vector
 
 from ..common.config_3d import (
+    ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
     SimulationConfig3D,
     qualify_stage4_full3d_assembly_backend,
     resolve_stage4_full3d_assembly_backend,
@@ -47,6 +48,11 @@ from .hcurl_assembly_time_condensation import (
     cell_interior_schur_bilinear,
     condense_unconstrained_vector_to_active_trace,
     recover_owned_cell_interiors,
+)
+from .hcurl_variable_p_reduction import (
+    VariablePAssemblyTimeReduction,
+    VariablePRecoveredSolution,
+    build_variable_p_assembly_time_reduction,
 )
 from .mpc_form_action import MpcFormActionContext
 from .solve_vector_maxwell import _json_default
@@ -1618,6 +1624,10 @@ def solve_stage4_dtn_port_total_field(
     floquet_slave_elimination = bool(
         internal_backend_state["stage4_floquet_slave_elimination"]
     )
+    variable_p_backend = (
+        assembly_backend_audit["actual"]
+        == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+    )
     log(
         "Stage-4 Full3D assembly backend "
         f"requested={assembly_backend_audit['requested']} "
@@ -1703,40 +1713,79 @@ def solve_stage4_dtn_port_total_field(
     timing_details["stage4_dtn_surface_quadrature_degree"] = int(
         dtn_quadrature_degree
     )
-    assembly_time_system = None
-    assembly_time_full_rhs = None
+    assembly_time_system: AssemblyTimeCondensedSystem | None = None
+    variable_p_reduction: VariablePAssemblyTimeReduction | None = None
+    assembly_time_full_rhs: PETSc.Vec | None = None
 
     t0 = time.perf_counter()
     if assembly_time_cell_static_condensation:
-        assembly_time_system = (
-            build_unconstrained_assembly_time_condensation(
-                fem.form(a),
-                V,
-                mesh_data.cell_tags,
-                mpc=floquet_data.mpc,
-                appended_global_rows=n_aux,
-                appended_support_owned_cell_groups=(
-                    _owned_cells_adjacent_to_facet_tag(
-                        mesh_data,
-                        cfg.tags.z_max,
-                    ),
-                    _owned_cells_adjacent_to_facet_tag(
-                        mesh_data,
-                        cfg.tags.z_min,
-                    ),
-                ),
-                appended_support_group_by_row=tuple(
-                    0 if mode.side == "top" else 1 for mode in modes
-                ),
-                defer_final_assembly=True,
-            )
+        support_cell_groups = (
+            _owned_cells_adjacent_to_facet_tag(
+                mesh_data,
+                cfg.tags.z_max,
+            ),
+            _owned_cells_adjacent_to_facet_tag(
+                mesh_data,
+                cfg.tags.z_min,
+            ),
         )
+        support_group_by_row = tuple(
+            0 if mode.side == "top" else 1 for mode in modes
+        )
+        if variable_p_backend:
+            if cfg.stage4_variable_p_cell_degree_plan is None:
+                raise RuntimeError(
+                    "qualified variable-p backend lost its degree plan"
+                )
+            variable_p_reduction = (
+                build_variable_p_assembly_time_reduction(
+                    fem.form(a),
+                    V,
+                    mesh_data.cell_tags,
+                    degree_plan_path=(
+                        cfg.stage4_variable_p_cell_degree_plan
+                    ),
+                    phase_x=floquet_data.phase_x,
+                    phase_y=floquet_data.phase_y,
+                    appended_global_rows=n_aux,
+                    appended_support_owned_cell_groups=(
+                        support_cell_groups
+                    ),
+                    appended_support_group_by_row=(
+                        support_group_by_row
+                    ),
+                    defer_final_assembly=True,
+                )
+            )
+            reduction_system = variable_p_reduction.system
+        else:
+            assembly_time_system = (
+                build_unconstrained_assembly_time_condensation(
+                    fem.form(a),
+                    V,
+                    mesh_data.cell_tags,
+                    mpc=floquet_data.mpc,
+                    appended_global_rows=n_aux,
+                    appended_support_owned_cell_groups=(
+                        support_cell_groups
+                    ),
+                    appended_support_group_by_row=(
+                        support_group_by_row
+                    ),
+                    defer_final_assembly=True,
+                )
+            )
+            reduction_system = assembly_time_system
         A_base = None
-        A_aug = assembly_time_system.matrix
-        n_fe = int(assembly_time_system.active_rows)
+        A_aug = reduction_system.matrix
+        n_fe = int(
+            reduction_system.active_trace_rows
+            if variable_p_reduction is not None
+            else reduction_system.active_rows
+        )
         base_matrix_stats = _deferred_preallocation_matrix_stats(
             A_aug,
-            assembly_time_system.build_audit["trace_preallocation"],
+            reduction_system.build_audit["trace_preallocation"],
         )
         base_matrix_lifecycle = (
             "preallocated_values_pending_augmented_final_assembly"
@@ -1744,7 +1793,7 @@ def solve_stage4_dtn_port_total_field(
         timing_details.update(
             {
                 f"stage4_dtn_assembly_time_{key}": value
-                for key, value in assembly_time_system.build_audit.items()
+                for key, value in reduction_system.build_audit.items()
                 if key.endswith("_seconds")
             }
         )
@@ -1759,6 +1808,50 @@ def solve_stage4_dtn_port_total_field(
         n_fe = A_base.getSize()[0]
         base_matrix_stats = _petsc_matrix_stats(A_base)
         base_matrix_lifecycle = "assembled"
+    assembly_time_active = (
+        assembly_time_system is not None
+        or variable_p_reduction is not None
+    )
+
+    def reduce_assembly_time_vector(
+        vector: PETSc.Vec,
+        *,
+        side: str,
+    ) -> PETSc.Vec:
+        if variable_p_reduction is not None:
+            return variable_p_reduction.reduce_p6_vector(
+                vector,
+                side=side,
+            )
+        if assembly_time_system is None:
+            raise RuntimeError(
+                "assembly-time vector reduction is not active"
+            )
+        return condense_unconstrained_vector_to_active_trace(
+            assembly_time_system,
+            vector,
+            side=side,
+        )
+
+    def assembly_time_interior_bilinear(
+        left: PETSc.Vec,
+        right: PETSc.Vec,
+    ) -> complex:
+        if variable_p_reduction is not None:
+            return variable_p_reduction.interior_cross_bilinear(
+                left,
+                right,
+            )
+        if assembly_time_system is None:
+            raise RuntimeError(
+                "assembly-time interior bilinear is not active"
+            )
+        return cell_interior_schur_bilinear(
+            assembly_time_system,
+            left,
+            right,
+        )
+
     _write_progress_event(
         out_dir,
         comm,
@@ -1792,11 +1885,10 @@ def solve_stage4_dtn_port_total_field(
     )
 
     t0 = time.perf_counter()
-    if assembly_time_system is not None:
+    if assembly_time_active:
         full_b_base = _assemble_unconstrained_vector(L)
         assembly_time_full_rhs = full_b_base
-        b_aug = condense_unconstrained_vector_to_active_trace(
-            assembly_time_system,
+        b_aug = reduce_assembly_time_vector(
             full_b_base,
             side="right",
         )
@@ -1829,7 +1921,7 @@ def solve_stage4_dtn_port_total_field(
         log(f"Stage-4 DtN surface quadrature degree = {dtn_quadrature_degree}")
 
     t0 = time.perf_counter()
-    if assembly_time_system is None:
+    if not assembly_time_active:
         if A_base is None or b_base is None:
             raise RuntimeError("ordinary DtN base matrix lifecycle is invalid")
         A_aug = _copy_base_matrix_to_augmented(
@@ -1881,10 +1973,10 @@ def solve_stage4_dtn_port_total_field(
     )
     timing_details["stage4_dtn_augmented_block_copy_seconds"] = float(
         comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
-    ) if assembly_time_system is None else 0.0
+    ) if not assembly_time_active else 0.0
     if (
         cfg.direct_release_base_after_augmentation
-        and assembly_time_system is None
+        and not assembly_time_active
     ):
         if A_base is None or b_base is None:
             raise RuntimeError("ordinary DtN base release state is invalid")
@@ -1906,7 +1998,7 @@ def solve_stage4_dtn_port_total_field(
                 "released_objects": ["A_base", "b_base"],
             },
         )
-    elif assembly_time_system is not None:
+    elif assembly_time_active:
         _write_progress_event(
             out_dir,
             comm,
@@ -1928,14 +2020,13 @@ def solve_stage4_dtn_port_total_field(
         )
 
     t0 = time.perf_counter()
-    if assembly_time_system is not None:
+    if assembly_time_active:
         if assembly_time_full_rhs is None:
             raise RuntimeError("assembly-time full RHS was not initialized")
         incident_traction_vec = _assemble_unconstrained_vector(
             _incident_top_traction_form(V, mesh_data, cfg)
         )
-        reduced_incident = condense_unconstrained_vector_to_active_trace(
-            assembly_time_system,
+        reduced_incident = reduce_assembly_time_vector(
             incident_traction_vec,
             side="right",
         )
@@ -2004,7 +2095,7 @@ def solve_stage4_dtn_port_total_field(
     ell_cols_total_local = 0
     matrix_insert_mode = (
         PETSc.InsertMode.ADD_VALUES
-        if assembly_time_system is not None
+        if assembly_time_active
         else PETSc.InsertMode.INSERT_VALUES
     )
     matrix_row_start, matrix_row_end = A_aug.getOwnershipRange()
@@ -2013,7 +2104,7 @@ def solve_stage4_dtn_port_total_field(
         mode_key = (mode.side, int(mode.m), int(mode.n), complex(mode.k_vector[2]))
         if mode_key != component_key or component_right_entries is None:
             t_component = time.perf_counter()
-            if assembly_time_system is not None:
+            if assembly_time_active:
                 if component_full_vectors is not None:
                     for vector in component_full_vectors:
                         vector.destroy()
@@ -2026,16 +2117,14 @@ def solve_stage4_dtn_port_total_field(
                     ].assemble_unconstrained_vector(mode),
                 )
                 right_vectors = tuple(
-                    condense_unconstrained_vector_to_active_trace(
-                        assembly_time_system,
+                    reduce_assembly_time_vector(
                         vector,
                         side="right",
                     )
                     for vector in component_full_vectors
                 )
                 left_vectors = tuple(
-                    condense_unconstrained_vector_to_active_trace(
-                        assembly_time_system,
+                    reduce_assembly_time_vector(
                         vector,
                         side="left",
                     )
@@ -2054,8 +2143,7 @@ def solve_stage4_dtn_port_total_field(
                 component_interior_bilinear = np.asarray(
                     [
                         [
-                            cell_interior_schur_bilinear(
-                                assembly_time_system,
+                            assembly_time_interior_bilinear(
                                 left,
                                 right,
                             )
@@ -2306,18 +2394,20 @@ def solve_stage4_dtn_port_total_field(
     solve_A = A_aug
     solve_b = b_aug
     solve_dofs = (
-        int(assembly_time_system.active_rows + n_aux)
-        if assembly_time_system is not None
+        int(n_fe + n_aux)
+        if assembly_time_active
         else int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs)
     )
     solve_prefix = (
-        f"stage4_3d_dtn_assembly_time_condensed_{cfg.case_name}_"
-        if assembly_time_system is not None
+        f"stage4_3d_dtn_variable_p_condensed_{cfg.case_name}_"
+        if variable_p_reduction is not None
+        else f"stage4_3d_dtn_assembly_time_condensed_{cfg.case_name}_"
+        if assembly_time_active
         else f"stage4_3d_dtn_{cfg.case_name}_"
     )
     if (
         cell_static_condensation
-        and assembly_time_system is None
+        and not assembly_time_active
     ):
         condensation_started = time.perf_counter()
         _write_progress_event(
@@ -2473,8 +2563,12 @@ def solve_stage4_dtn_port_total_field(
                 ),
                 "assembly_time_cell_static_condensation": (
                     None
-                    if assembly_time_system is None
-                    else assembly_time_system.build_audit
+                    if not assembly_time_active
+                    else (
+                        variable_p_reduction.build_audit
+                        if variable_p_reduction is not None
+                        else assembly_time_system.build_audit
+                    )
                 ),
             }
         )
@@ -2537,7 +2631,29 @@ def solve_stage4_dtn_port_total_field(
 
     assembly_time_field = None
     embedded_fe_solution = None
-    if assembly_time_system is not None:
+    variable_p_recovered: VariablePRecoveredSolution | None = None
+    if variable_p_reduction is not None:
+        if assembly_time_full_rhs is None:
+            raise RuntimeError(
+                "variable-p recovery requires the full p6 RHS"
+            )
+        recovery_started = time.perf_counter()
+        variable_p_recovered = variable_p_reduction.recover(
+            solve_x,
+            assembly_time_full_rhs,
+        )
+        assembly_time_field = variable_p_recovered.field
+        condensation_recovery = variable_p_recovered.audit
+        x_aug = solve_x
+        timing_details[
+            "stage4_dtn_cell_static_condensation_recovery_seconds"
+        ] = float(
+            comm.allreduce(
+                time.perf_counter() - recovery_started,
+                op=MPI.MAX,
+            )
+        )
+    elif assembly_time_system is not None:
         if assembly_time_full_rhs is None:
             raise RuntimeError(
                 "assembly-time recovery requires the full-space RHS"
@@ -2599,6 +2715,32 @@ def solve_stage4_dtn_port_total_field(
         x_aug = solve_x
 
     if (
+        variable_p_reduction is not None
+        and variable_p_recovered is not None
+    ):
+        residual_started = time.perf_counter()
+        linear_residual = variable_p_reduction.full_active_residual(
+            A_aug,
+            b_aug,
+            x_aug,
+            variable_p_recovered,
+        )
+        variable_p_recovered.active_full_solution.destroy()
+        variable_p_recovered.active_full_rhs.destroy()
+        variable_p_recovered = None
+        if assembly_time_full_rhs is None:
+            raise RuntimeError("variable-p full RHS lifecycle is invalid")
+        assembly_time_full_rhs.destroy()
+        assembly_time_full_rhs = None
+        timing_details[
+            "stage4_dtn_matrix_free_full_residual_seconds"
+        ] = float(
+            comm.allreduce(
+                time.perf_counter() - residual_started,
+                op=MPI.MAX,
+            )
+        )
+    elif (
         assembly_time_system is not None
         and embedded_fe_solution is not None
     ):
@@ -2711,6 +2853,35 @@ def solve_stage4_dtn_port_total_field(
             "same_full_operator_used_for_recovery_and_residual": True,
             "ordinary_default_changed": False,
         }
+    elif variable_p_reduction is not None:
+        periodic_constraints = (
+            variable_p_reduction.system.periodic_constraints
+        )
+        if periodic_constraints is None:
+            raise RuntimeError(
+                "variable-p audit lost its periodic constraints"
+            )
+        cell_static_condensation_audit = {
+            **variable_p_reduction.build_audit,
+            "condensed_matrix_stats": (
+                augmented_matrix_stats_after_finalize
+            ),
+            "floquet_independent_matrix_stats": (
+                augmented_matrix_stats_after_finalize
+            ),
+            "floquet_slave_elimination": (
+                dict(periodic_constraints.audit)
+            ),
+            "recovery": condensation_recovery,
+            "full_operator_true_residual": linear_residual,
+            "full_explicit_true_residual": linear_residual,
+            "true_residual_semantics": (
+                "exact active variable-p C_t^H Schur C_t plus DtN "
+                "operator and explicit eliminated active-interior residual"
+            ),
+            "same_full_operator_used_for_recovery_and_residual": True,
+            "ordinary_default_changed": False,
+        }
     elif assembly_time_system is not None:
         cell_static_condensation_audit = {
             **assembly_time_system.build_audit,
@@ -2735,9 +2906,13 @@ def solve_stage4_dtn_port_total_field(
         }
     solver_info = {
         "solver_backend": (
+            "PETSc exact-sequence inactive-row-free variable-p assembly-time "
+            "trace Schur + Floquet-independent auxiliary Fourier-DtN port"
+            if variable_p_reduction is not None
+            else
             "PETSc assembly-time exact cell-interior trace Schur + direct "
             "Floquet-independent insertion + auxiliary Fourier-DtN port"
-            if assembly_time_system is not None
+            if assembly_time_active
             else
             "PETSc exact cell-interior trace Schur + auxiliary Fourier-DtN "
             "port with dolfinx_mpc Floquet constraints"
@@ -2755,27 +2930,37 @@ def solve_stage4_dtn_port_total_field(
         ),
         "num_active_trace_dofs": (
             None
-            if assembly_time_system is None
-            else int(assembly_time_system.active_rows)
+            if not assembly_time_active
+            else int(n_fe)
         ),
         "num_total_augmented_dofs": int(n_fe + n_aux),
         "num_active_condensed_dofs": (
-            int(assembly_time_system.active_rows + n_aux)
-            if assembly_time_system is not None
+            int(n_fe + n_aux)
+            if assembly_time_active
             else None
             if condensed_system is None
             else int(condensed_system.trace_rows)
         ),
         "stage4_cell_static_condensation": bool(
             condensed_system is not None
-            or assembly_time_system is not None
+            or assembly_time_active
         ),
         "stage4_assembly_time_cell_static_condensation": bool(
-            assembly_time_system is not None
+            assembly_time_active
+        ),
+        "stage4_variable_p_active": bool(
+            variable_p_reduction is not None
+        ),
+        "num_actual_conforming_active_fe_dofs": (
+            None
+            if variable_p_reduction is None
+            else int(
+                variable_p_reduction.system.entity_map.active_rows
+            )
         ),
         "stage4_floquet_slave_elimination": bool(
             independent_trace_system is not None
-            or assembly_time_system is not None
+            or assembly_time_active
         ),
         "cell_static_condensation": cell_static_condensation_audit,
         "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
@@ -2788,12 +2973,12 @@ def solve_stage4_dtn_port_total_field(
         "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
         "dtn_condensed_matrix_stats": (
             augmented_matrix_stats_after_finalize
-            if assembly_time_system is not None
+            if assembly_time_active
             else condensed_matrix_stats
         ),
         "dtn_floquet_independent_matrix_stats": (
             augmented_matrix_stats_after_finalize
-            if assembly_time_system is not None
+            if assembly_time_active
             else independent_trace_matrix_stats
         ),
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,

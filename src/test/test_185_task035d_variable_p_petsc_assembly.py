@@ -22,6 +22,9 @@ from src.adaptivity.variable_p_periodic_orbits import (
 )
 from src.solvers.hcurl_variable_p_assembly import (
     build_variable_p_condensed_trace_system,
+    condense_variable_p_active_vector_to_trace,
+    recover_variable_p_active_full_vector,
+    variable_p_cell_interior_schur_bilinear,
 )
 from src.solvers.hcurl_variable_p_local import project_p6_local_tensor
 
@@ -301,6 +304,138 @@ class Task035dVariablePPETScAssemblyTests(unittest.TestCase):
                 )
         finally:
             periodic_system.destroy()
+
+    def test_periodic_rhs_schur_bilinear_and_full_recovery_are_exact(
+        self,
+    ) -> None:
+        if MPI.COMM_WORLD.size != 1:
+            self.skipTest("serial dense variable-p Schur identity")
+        msh = mesh.create_unit_cube(
+            MPI.COMM_SELF,
+            1,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        entity_map = _entity_map(msh, 4, 5, 6)
+        constraints = build_variable_p_periodic_constraint_map(
+            entity_map,
+            axes=("x", "y"),
+            phase_x=np.exp(0.2j),
+            phase_y=np.exp(-0.3j),
+        )
+        p6_tensor = _dense_p6_tensor().astype(np.complex128)
+        system = build_variable_p_condensed_trace_system(
+            entity_map,
+            [p6_tensor],
+            tensor_class_keys=("one-cell-p6",),
+            periodic_constraints=constraints,
+        )
+        try:
+            cell = entity_map.owned_cells[0]
+            space = build_variable_p_reference_space(cell.degree_map)
+            active_tensor = project_p6_local_tensor(space, p6_tensor)
+            oriented = space.orient_hcurl_tensor(
+                active_tensor,
+                cell_info=cell.cell_info,
+            )
+            periodic_cell = constraints.owned_cells[0]
+            rng = np.random.default_rng(3518503)
+            expected_trace = (
+                rng.standard_normal(constraints.independent_trace_rows)
+                + 1j
+                * rng.standard_normal(
+                    constraints.independent_trace_rows
+                )
+            )
+            expected_active = np.zeros(
+                space.hcurl_dimension,
+                dtype=np.complex128,
+            )
+            expected_active[space.trace_dofs] = (
+                periodic_cell.full_trace_from_independent
+                @ expected_trace
+            )
+            expected_active[space.interior_dofs] = (
+                rng.standard_normal(len(space.interior_dofs))
+                + 1j * rng.standard_normal(len(space.interior_dofs))
+            )
+            active_rhs_values = oriented @ expected_active
+            active_rhs = PETSc.Vec().createSeq(entity_map.active_rows)
+            active_rhs.getArray()[:] = active_rhs_values
+            active_rhs.assemble()
+
+            reduced = condense_variable_p_active_vector_to_trace(
+                system,
+                active_rhs,
+                side="right",
+            )
+            matrix_dense = np.asarray(
+                system.matrix.convert("dense").getDenseArray()
+            ).copy()
+            np.testing.assert_allclose(
+                reduced.getArray(readonly=True),
+                matrix_dense @ expected_trace,
+                rtol=2.0e-11,
+                atol=2.0e-9,
+            )
+            solved_trace = np.linalg.solve(
+                matrix_dense,
+                reduced.getArray(readonly=True),
+            )
+            recovered = recover_variable_p_active_full_vector(
+                system,
+                solved_trace,
+                active_full_rhs=active_rhs,
+            )
+            np.testing.assert_allclose(
+                recovered.getArray(readonly=True),
+                expected_active,
+                rtol=2.0e-9,
+                atol=2.0e-8,
+            )
+
+            left = PETSc.Vec().createSeq(entity_map.active_rows)
+            right = PETSc.Vec().createSeq(entity_map.active_rows)
+            left_values = (
+                rng.standard_normal(entity_map.active_rows)
+                + 1j * rng.standard_normal(entity_map.active_rows)
+            )
+            right_values = (
+                rng.standard_normal(entity_map.active_rows)
+                + 1j * rng.standard_normal(entity_map.active_rows)
+            )
+            left.getArray()[:] = left_values
+            right.getArray()[:] = right_values
+            left.assemble()
+            right.assemble()
+            expected_bilinear = np.vdot(
+                left_values[cell.interior_rows],
+                np.linalg.solve(
+                    oriented[
+                        np.ix_(
+                            space.interior_dofs,
+                            space.interior_dofs,
+                        )
+                    ],
+                    right_values[cell.interior_rows],
+                ),
+            )
+            self.assertAlmostEqual(
+                variable_p_cell_interior_schur_bilinear(
+                    system,
+                    left,
+                    right,
+                ),
+                expected_bilinear,
+                places=10,
+            )
+        finally:
+            for name in ("left", "right", "recovered", "reduced", "active_rhs"):
+                value = locals().get(name)
+                if value is not None:
+                    value.destroy()
+            system.destroy()
 
 
 if __name__ == "__main__":
