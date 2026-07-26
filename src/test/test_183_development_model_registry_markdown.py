@@ -60,7 +60,6 @@ def _table_errors(path: Path) -> list[str]:
         if not lines[index].lstrip().startswith("|"):
             index += 1
             continue
-        start = index
         block: list[tuple[int, str]] = []
         while index < len(lines) and lines[index].lstrip().startswith("|"):
             block.append((index + 1, lines[index]))
@@ -71,11 +70,11 @@ def _table_errors(path: Path) -> list[str]:
         if not _is_separator(parsed[1][1]):
             continue
         expected = len(parsed[0][1])
-        for line_no, cells in parsed:
+        for (line_no, original), (_, cells) in zip(block, parsed, strict=True):
             if len(cells) != expected:
                 errors.append(
                     f"{path.relative_to(ROOT)}:{line_no}: "
-                    f"expected {expected} cells, found {len(cells)}"
+                    f"expected {expected} cells, found {len(cells)}; row={original!r}"
                 )
     return errors
 
