@@ -776,6 +776,52 @@ RSS；PSS/USS 是共享页/私有页诊断。compact authority 为
 
 ---
 
+## 3.39 Task035d：exact-sequence local-p 与 true local-h 自适应
+
+Task035d 固定使用 Task034 矩形块光栅、p6/h10 Full3D static reference-v1、
+MPI8 direct MUMPS 和冻结的 12 个显著功率/复振幅 Gate。首批只检验真实
+assembly-time variable-p active space：inactive 高阶模式不生成 global row，
+并继续使用 exact cell-interior static condensation。两个正式 p-only 候选均为
+结构与资源成功、同精度失败的 controlled negative；不能把资源压缩写成物理
+成功，也不能据此放宽 12/12 Gate。
+
+| Model ID | source / plan identity | p4/p5/p6 cells | FE DoF / active rows | matrix / factor NNZ | residual / peak | strict physics | status / evidence |
+|---|---|---:|---:|---:|---:|---|---|
+| `task035d_t30_h10_mpi8` | solver `c3768cf4723c2ae949c82d1ce8b18a56f5ab0f7b`；checker `5f960f912809b162e363259b0896af25ef3b0018` | `144/56/52` | `87,600 / 28,990` | `15,253,176 / 63,564,300` | `1.410e-11 / 10.0929 GiB` | `0/12 power + 0/12 amplitude`；R/T/A L2 `21.214`；volume/interface `9.337%/9.884%` | `controlled_negative_accuracy`；`benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/t30_h10_mpi8_controlled_negative_v1.json` |
+| `task035d_sidewall_z0_guard_h10_mpi8` | solver/checker source `a6f2d8a3b88efda581aa0e36f5ebcd9d6776e0cf`；plan SHA `31922411775580b2f44b474897dbf877d96b7887f74d22e02b3f0e410c205bc2` | `72/168/12` | `89,870 / 31,064` | `16,490,572 / 76,721,484` | `7.560e-12 / 8.38265 GiB` | `1/12 power + 0/12 amplitude`；R/T/A L2 `13.271`；volume/interface `3.733%/4.016%` | `controlled_negative_accuracy`；`benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/sidewall_z0_guard_h10_mpi8_controlled_negative_v1.json` |
+
+相对 global-p6 static baseline（173,802 FE DoF、51,272 rows、
+41,989,040 matrix NNZ、212,343,992 factor NNZ、14.72176 GiB），T30 的
+rows/matrix/factor/peak 分别下降 `43.46%/63.67%/70.07%/31.44%`；
+sidewall guard 分别下降 `39.41%/60.73%/63.87%/43.06%`。这些是正式实测
+的资源正信号，但两条精度结果连续为负，因此 T25、T15 和第三条 p-only PDE
+均不运行，研究转向 true local-h。
+
+`sidewall_z0_guard_v1` 冻结通道误差如下。误差与 tolerance 均来自独立
+checker；只有 `top(-1,0)` power 通过，所有 complex amplitude 均失败。
+
+| side/order | power error / tolerance | amplitude error / tolerance |
+|---|---:|---:|
+| bottom -7 | `7.25323e-7 / 2.15869e-9` | `1.23293e-3 / 1.21657e-5` |
+| bottom -5 | `7.92214e-9 / 3.89127e-10` | `9.95785e-6 / 1.28065e-6` |
+| bottom -4 | `4.38440e-9 / 5.25100e-10` | `2.07690e-5 / 2.54166e-6` |
+| bottom -2 | `4.61647e-8 / 4.65105e-9` | `2.99641e-5 / 4.58081e-6` |
+| bottom -1 | `1.84990e-6 / 1.11441e-7` | `2.06358e-4 / 1.27290e-5` |
+| bottom 0 | `1.86466e-3 / 2.17577e-4` | `5.08728e-2 / 6.77963e-3` |
+| top -7 | `2.28277e-7 / 1.24944e-9` | `6.72145e-4 / 7.99504e-7` |
+| top -5 | `8.23809e-9 / 1.19430e-9` | `7.92162e-6 / 1.11321e-6` |
+| top -4 | `1.58210e-8 / 1.08649e-9` | `1.60124e-5 / 1.88152e-6` |
+| top -2 | `3.03981e-9 / 1.24228e-9` | `2.03888e-5 / 3.18649e-6` |
+| top -1 | `4.78904e-8 / 5.11184e-8` pass | `8.61368e-5 / 7.41338e-6` |
+| top 0 | `1.21288e-4 / 3.19529e-5` | `2.83493e-3 / 8.33027e-4` |
+
+当前 true local-h 仍是 `in_progress/no_PDE_credit`。进入任何 local-h PDE
+前必须分别通过 dyadic hexa material/periodic/2:1 closure、H(curl) coarse-to-fine
+tangential trace、3D orientation、hanging+Floquet graph、static-condensation
+交换性和 serial/MPI ownership identity；否则必须 fail closed。
+
+---
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

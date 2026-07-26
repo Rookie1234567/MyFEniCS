@@ -203,8 +203,7 @@ records/physics_guard_plan_authority_mpi8_v1.json
 
 MPI1/2/8 已重现相同 plan content SHA
 `8172bcc9ca2e2fcbc23a8ca15524f80b7658ccf0c19d24da4dcff1ed32fee062`。
-这仍是 `pre_pde_authority_pass`；只有 fresh MPI8 direct PDE 通过完整 checker
-后才能取得物理信用。
+该 authority 随后启动了唯一 fresh MPI8 direct recovery PDE；正式结果见下节。
 
 复现：
 
@@ -229,6 +228,61 @@ mpiexec -n 8 python \
 python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_physics_guard_recovery.py \
   --mode check
 ```
+
+### Physics-guard 正式 MPI8 结果：controlled negative
+
+`sidewall_z0_guard_v1` 在 clean source
+`a6f2d8a3b88efda581aa0e36f5ebcd9d6776e0cf` 上完成 MPI8 direct
+PDE。solver identity、full explicit true residual、exact-sequence recovery
+和资源 Gate 全部通过，但独立 checker 判定物理精度失败：
+
+```text
+watchdog sha256 =
+  13a017d70892a7877fa8abd1e61846ed8db37804a253a07e26b9c27fb67a60c0
+compact checker sha256 =
+  c850259c31d8e6554aa3956167fa6ae319c0b2ad335f32ff5cf19371eeebd96f
+record =
+  records/sidewall_z0_guard_h10_mpi8_controlled_negative_v1.json
+```
+
+| metric | measured | p6 reference / Gate | result |
+|---|---:|---:|---|
+| active FE DoF | 89,870 | `<=90,000` | pass |
+| direct rows | 31,064 | p6 static 51,272 | `-39.41%` |
+| matrix NNZ | 16,490,572 | 41,989,040 | `-60.73%` |
+| factor NNZ | 76,721,484 | 212,343,992 | `-63.87%` |
+| process-tree peak | 8.38265 GiB | 14.72176 GiB | `-43.06%`, preferred pass |
+| simultaneous worker PSS / USS | 7.38039 / 7.21696 GiB | diagnostic | measured |
+| full explicit true residual | `7.5595e-12` | `<=1e-9` | pass |
+| significant powers | 1/12 | 12/12 | fail |
+| significant complex amplitudes | 0/12 | 12/12 | fail |
+| R00 / R / T / Aclosure normalized errors | 3.796 / 3.799 / 8.571 / 9.393 | each `<=1` | fail |
+| Avolume absolute error | 0.00174412 | 0.000185676 | fail |
+| volume field rel-L2 | 3.7330% | 2.2205% | fail |
+| interface field rel-L2 | 4.0155% | 2.4467% | fail |
+| zero swap | true | mandatory | pass |
+
+12 个冻结显著通道的独立误差/限值如下；`top(-1,0)` 是唯一 power pass，
+但其复振幅仍失败：
+
+| side/order | power error / tolerance | amplitude error / tolerance |
+|---|---:|---:|
+| bottom -7 | `7.25323e-7 / 2.15869e-9` | `1.23293e-3 / 1.21657e-5` |
+| bottom -5 | `7.92214e-9 / 3.89127e-10` | `9.95785e-6 / 1.28065e-6` |
+| bottom -4 | `4.38440e-9 / 5.25100e-10` | `2.07690e-5 / 2.54166e-6` |
+| bottom -2 | `4.61647e-8 / 4.65105e-9` | `2.99641e-5 / 4.58081e-6` |
+| bottom -1 | `1.84990e-6 / 1.11441e-7` | `2.06358e-4 / 1.27290e-5` |
+| bottom 0 | `1.86466e-3 / 2.17577e-4` | `5.08728e-2 / 6.77963e-3` |
+| top -7 | `2.28277e-7 / 1.24944e-9` | `6.72145e-4 / 7.99504e-7` |
+| top -5 | `8.23809e-9 / 1.19430e-9` | `7.92162e-6 / 1.11321e-6` |
+| top -4 | `1.58210e-8 / 1.08649e-9` | `1.60124e-5 / 1.88152e-6` |
+| top -2 | `3.03981e-9 / 1.24228e-9` | `2.03888e-5 / 3.18649e-6` |
+| top -1 | `4.78904e-8 / 5.11184e-8` pass | `8.61368e-5 / 7.41338e-6` |
+| top 0 | `1.21288e-4 / 3.19529e-5` | `2.83493e-3 / 8.33027e-4` |
+
+与 T30 的 `0/12 + 0/12` 相比，这不是足以继续 p-only 扫描的精度正信号。
+按照同一 lane 连续两个数值负信号后的停止规则，T25/T15 和第三个 p-only
+恢复 PDE 均不启动；p-only lane 关闭并切换到真正 local-h 能力。
 
 ## Variable-p DtN 一致性 Gate
 

@@ -3,17 +3,22 @@
 ## 当前身份
 
 ```text
-status = staged_after_Task035c
-execution_branch = create_after_Task035c_master_merge
-planned_branch = codex/20260726-task35d-goal-oriented-exact-sequence-hp-adaptivity
-base = exact post-Task035c master SHA
+status = active_local_h_attempt_1
+execution_branch = codex/20260726-task35d-goal-oriented-exact-sequence-hp-adaptivity
+base = 9c2160d41382026352908d692ad479dc4508424d
 ordinary_default = unchanged
 irregular_geometry = out_of_scope
 iterative_solver = out_of_scope_until_hp_space_freezes
 matrix_free_low_memory = out_of_scope_until_hp_and_iterative_close
 ```
 
-本目录先保存在Task035c分支中，随Task035c选择性合并进入master。**ChatGPT不提前创建Task035d分支。** Codex只有在Task035c成功整合master、测试通过并确认工作树干净后，才从新master创建上述Task035d分支。
+Task035c 已按 Review V2 完成选择性整合；本执行分支从上述干净
+post-Task035c master 创建。Task035d 已完成 variable-p 结构资格化，并正式运行
+T30 与 `sidewall_z0_guard_v1` 两个 MPI8 direct p-only 候选。两者都真实压缩
+rows、NNZ、factor NNZ 和内存，且通过 exact-sequence/残差/资源 Gate，但分别
+只有 `0/12 + 0/12` 与 `1/12 + 0/12` 显著通道通过。因此按连续两个数值负信号
+关闭 p-only lane，保留 controlled-negative evidence，并进入真正 local-h
+Attempt 1；尚未取得 local-h PDE 精度信用。
 
 ## 这个任务要解决什么问题
 
