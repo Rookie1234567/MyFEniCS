@@ -1,0 +1,61 @@
+{
+  "checks": {
+    "input_records_pass": true,
+    "mpi_sizes_are_1_2_8": true,
+    "no_heavy_pde": true,
+    "no_pde_accuracy_credit": true,
+    "same_source_sha": true,
+    "stable_physical_identity": true
+  },
+  "compiled_cell_tensor_binding_complete": false,
+  "component_scope": "dyadic forest + broken carrier + p4/p5/p6 orientation + physical hanging/Floquet flattened graph",
+  "failures": [],
+  "heavy_pde_started": false,
+  "input_records": [
+    {
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt1_mpi1_v1.json",
+      "sha256": "e652641ff8f7677f235abfe4d3c968032ee41adcc8737dc9c32e782aacba5e63"
+    },
+    {
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt1_mpi2_v1.json",
+      "sha256": "4682639ca2ff985408231a950bde9686da5edec2504312a864a3b2dce9675c8e"
+    },
+    {
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt1_mpi8_v1.json",
+      "sha256": "62d3d8f1d61f5055bc2e09f385dc3735c581b24db5b4c4b0cadb21b29ce188d1"
+    }
+  ],
+  "mpi_sizes": [
+    1,
+    2,
+    8
+  ],
+  "ordinary_default_changed": false,
+  "pass": true,
+  "pde_accuracy_credit": false,
+  "schema_version": "case097.local-h-attempt1-mpi-comparison.v1",
+  "source_sha": "b12b1887ca3acb534f36186c93e9e5efb10cf2ad",
+  "stable_identity": {
+    "canonical_hcurl_restriction_sha256": {
+      "4": "7c1a37b9f99da5ba01015257afa712d427457eaee1dabb6ff36e6ac62ac14e2b",
+      "5": "90bd8eb7c612f044c0026ce0551c2f96d8241adc9b63b8e402652b5b738ccf2a",
+      "6": "2ceef9c5827f88e74080a69929687be2b68ea826988417e60f5d5d8899d44a5f"
+    },
+    "oriented_catalog_sha256": {
+      "4": "b2e12f1b43174a7c681209d1334d086b0394c1b9c2fb58f9f643e45b0572a14e",
+      "5": "8e661967c239624a7bf5aa7bc45370c6d2450be011232e64ff95b7c1e6624f24",
+      "6": "29913cdcac10255fe623f3c42531be43d6a069818ecac30196316d10b88a4c6e"
+    },
+    "periodic_carrier_connectivity_sha256": "764259d25dc801949aa118d1ce7ba575a64979e9ed1c500e78a3175cfb190ba1",
+    "periodic_leaf_catalog_sha256": "85083ba15cce04d2ce48ff5990ac5914742c54f2a6417a4fba40e0308b33c695",
+    "periodic_physical_authority_sha256": "19e032d3b15828dda119a0eef7e5c25b575ea94a0324e30df79b7e35c096afa8",
+    "simple_carrier_connectivity_sha256": "7dba211efb1e14ba378bbf1d79ca9bfc3f0cb8f117b53b67010c50ec4ba74070",
+    "simple_leaf_catalog_sha256": "703850c6f451146cedc9940d29932947e767f665646202bb4ce75e9aa50aaeb3",
+    "simple_physical_authority_sha256": {
+      "4": "d65bc72969f7ee2180d08563bc75f4c60067a954a518da0b14afed2750ba2177",
+      "5": "47bf22902d63a3428a3d1ebdcab1bfcbb5bd2fd55ee932b5c4351b76592e982d",
+      "6": "b0f12be62cf5c7947d5e682599491b869029a9efff8d0caccf53fcacf1c8aa9e"
+    }
+  },
+  "status": "local_h_attempt1_mpi1_mpi2_mpi8_identity_pass"
+}

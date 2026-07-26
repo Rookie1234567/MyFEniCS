@@ -284,6 +284,98 @@ record =
 按照同一 lane 连续两个数值负信号后的停止规则，T25/T15 和第三个 p-only
 恢复 PDE 均不启动；p-only lane 关闭并切换到真正 local-h 能力。
 
+## True local-h Attempt 1：component authority pass
+
+clean source `b12b1887ca3acb534f36186c93e9e5efb10cf2ad` 新增了真实
+dyadic 8-way cell split、face/edge/vertex strong 2:1 closure、material-interface
+保护、x/y 周期镜像细化，以及拓扑上 broken、几何上 Q1 affine 的 DOLFINx
+hexa carrier。DOLFINx 0.10 不支持原生 hexa refine，且不会把一个 coarse face
+与四个 fine faces 识别为共享 facet；因此所有粗细邻接均由物理 geometry-key
+catalog 管理，不依赖 `shared_facet` ghost 或 partition-dependent entity ID。
+
+最小 2-cell fixture 中，只细化左 cell：
+
+| metric | authority |
+|---|---:|
+| leaves | 9（而全局坐标平面 control 为 12） |
+| canonical vertices / topological facets | 31 / 42 |
+| DOLFINx topological exterior | 30 |
+| true physical exterior | 25 |
+| catalogued hanging artificial exterior | 5 = 1 coarse + 4 fine |
+| unexplained exterior | 0 |
+| physical boundary area | 10.0，exact |
+
+p4/p5/p6 的 canonical coarse-to-four-fine H(curl) restriction 分别为
+`144x40`、`220x60`、`312x84`，均 full column rank，并与配对 H1
+restriction 保持 gradient commuting。进一步覆盖：
+
+- 6 个 hexa local face chart；
+- 8 个 quadrilateral D4 orientation；
+- 4 quadrants × 8 coarse D4 × 8 fine D4 = 256 种组合/degree；
+- local static condensation 后施加 hanging constraint 与 one-shot
+  constrained Schur 等价；
+- fine patch 的全部 144/220/312 rows 是 dependent slave；`104/160/228`
+  只是 fine 坐标数相对 coarse 的 excess，不能冒充实际 slave row 数。
+
+实际 3×3×1 x/y-periodic corner fixture 使用非平凡
+`phase_x=exp(0.2i)`、`phase_y=exp(-0.3i)`：
+
+| metric | p4 measured |
+|---|---:|
+| leaves / hanging patches | 37 / 8 |
+| physical edges / faces | 260 / 170 |
+| raw trace rows | 5,120 |
+| hanging primary / secondary blocks | 8 / 4 |
+| periodic primary / secondary blocks | 64 / 8 |
+| independent trace rows | 3,384 |
+| maximum flattened chain depth | 2 |
+| maximum hanging/Floquet compatibility residual | `1.4621e-15` |
+| physical authority SHA256 | `19e032d3b15828dda119a0eef7e5c25b575ea94a0324e30df79b7e35c096afa8` |
+
+MPI1/2/8 独立运行重现相同 physical identity：
+
+```text
+records/local_h_attempt1_mpi1_v1.json
+  sha256 = e652641ff8f7677f235abfe4d3c968032ee41adcc8737dc9c32e782aacba5e63
+records/local_h_attempt1_mpi2_v1.json
+  sha256 = 4682639ca2ff985408231a950bde9686da5edec2504312a864a3b2dce9675c8e
+records/local_h_attempt1_mpi8_v1.json
+  sha256 = 62d3d8f1d61f5055bc2e09f385dc3735c581b24db5b4c4b0cadb21b29ce188d1
+records/local_h_attempt1_mpi_identity_v1.json
+  sha256 = d341ad69dd52df6bbedcec8a522084cd75ae99fd9fd7d751bab7bfb73655fe44
+```
+
+复现入口：
+
+```bash
+python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt1_authority.py \
+  --source-sha b12b1887ca3acb534f36186c93e9e5efb10cf2ad \
+  --output /tmp/local_h_attempt1_mpi1.json
+
+mpiexec -n 2 python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt1_authority.py \
+  --source-sha b12b1887ca3acb534f36186c93e9e5efb10cf2ad \
+  --output /tmp/local_h_attempt1_mpi2.json
+
+mpiexec -n 8 python benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_attempt1_authority.py \
+  --source-sha b12b1887ca3acb534f36186c93e9e5efb10cf2ad \
+  --output /tmp/local_h_attempt1_mpi8.json
+```
+
+本 authority 的边界是明确的：
+
+```text
+compiled_cell_tensor_binding_complete = false
+mpi_constraint_row_ownership_qualified = false
+mpi_ghost_expansion_qualified = false
+heavy_pde_started = false
+pde_accuracy_credit = false
+```
+
+因此它是 Attempt 1 的结构正信号，不是 local-h PDE success。下一步为
+Attempt 2：把 physical-key flattened graph 绑定到每个实际 cell 的 oriented
+trace、compiled FFCx tensor、`C_K^H S_K C_K`、RHS/recovery 和 PETSc row
+ownership；全部 component Gate 通过后才允许启动最少的 MPI8 local-h PDE。
+
 ## Variable-p DtN 一致性 Gate
 
 assembly-time variable-p backend 对每个 port surface functional 先投影到

@@ -820,6 +820,30 @@ checker；只有 `top(-1,0)` power 通过，所有 complex amplitude 均失败�
 tangential trace、3D orientation、hanging+Floquet graph、static-condensation
 交换性和 serial/MPI ownership identity；否则必须 fail closed。
 
+### 3.39.1 True local-h Attempt 1 component authority
+
+source `b12b1887ca3acb534f36186c93e9e5efb10cf2ad` 已完成前述 Gate
+中的几何与纯约束图部分：
+
+| capability | measured authority | status |
+|---|---|---|
+| true local split | 2-cell fixture `2→9` leaves；全局坐标平面 control 需12 cells | pass |
+| broken carrier boundary identity | 42 facets；30 topological exterior = 25 physical + 5 catalogued hanging；unexplained=0 | pass |
+| H(curl)/H1 face restriction | p4 `144x40`、p5 `220x60`、p6 `312x84`；full rank/commuting | pass |
+| 3D orientation | 6 hexa faces；每阶 `4×8×8=256` child/D4 组合 | pass |
+| static Schur exchange | local-condense-then-hanging 与 one-shot 误差 `<=2e-12` | pass |
+| periodic+hanging graph | 37 cells、8 patches、raw 5,120→independent 3,384、chain depth2、residual `1.4621e-15` | pass |
+| MPI identity | MPI1/2/8 stable physical authority SHA `19e032d3...96afa8` | pass |
+| compiled cell tensor / PETSc ownership / PDE | 未绑定、未运行 | `in_progress/no_PDE_credit` |
+
+MPI comparison authority 为
+`benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt1_mpi_identity_v1.json`
+（SHA256 `d341ad69dd52df6bbedcec8a522084cd75ae99fd9fd7d751bab7bfb73655fe44`）。
+该记录明确保持 `heavy_pde_started=false`、`pde_accuracy_credit=false`。
+因此 Attempt 1 是结构正信号；下一步必须完成实际 cell-oriented
+`C_K`、compiled FFCx tensor、RHS/recovery、PETSc row ownership 与 MPI2
+matrix/action identity，才能进入 local-h PDE。
+
 ---
 
 # 4. 今后新增模型的登记模板

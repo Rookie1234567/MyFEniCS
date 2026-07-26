@@ -3,7 +3,7 @@
 ## 当前身份
 
 ```text
-status = active_local_h_attempt_1
+status = active_local_h_attempt_2_cell_tensor_binding
 execution_branch = codex/20260726-task35d-goal-oriented-exact-sequence-hp-adaptivity
 base = 9c2160d41382026352908d692ad479dc4508424d
 ordinary_default = unchanged
@@ -17,8 +17,11 @@ post-Task035c master 创建。Task035d 已完成 variable-p 结构资格化，�
 T30 与 `sidewall_z0_guard_v1` 两个 MPI8 direct p-only 候选。两者都真实压缩
 rows、NNZ、factor NNZ 和内存，且通过 exact-sequence/残差/资源 Gate，但分别
 只有 `0/12 + 0/12` 与 `1/12 + 0/12` 显著通道通过。因此按连续两个数值负信号
-关闭 p-only lane，保留 controlled-negative evidence，并进入真正 local-h
-Attempt 1；尚未取得 local-h PDE 精度信用。
+关闭 p-only lane，保留 controlled-negative evidence。True local-h Attempt 1
+现已通过 dyadic/broken-carrier、p4/p5/p6 六面+D4 orientation、物理
+hanging+Floquet graph 和 MPI1/2/8 identity component Gate；它尚未绑定
+compiled cell tensor、PETSc row ownership 或正式 PDE。当前进入 Attempt 2，
+仍未取得 local-h PDE 精度信用。
 
 ## 这个任务要解决什么问题
 
