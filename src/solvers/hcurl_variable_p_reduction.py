@@ -419,8 +419,16 @@ class VariablePAssemblyTimeReduction:
                 "exact block-Gaussian transformed residual: explicit "
                 "variable-p reduced trace+DtN Mat action plus "
                 "LU-reconstructed action on every eliminated active "
-                "cell-interior equation, including the solved auxiliary "
-                "DtN column action"
+                "cell-interior equation"
+                + (
+                    ", including the solved auxiliary DtN column action"
+                    if recovered.active_auxiliary_interior_action
+                    is not None
+                    else (
+                        "; the trace-only port gate makes auxiliary "
+                        "cell-interior columns structurally zero"
+                    )
+                )
             ),
             "linear_system_norm_definition": (
                 "constraint-induced norm of [reduced trace+DtN equations, "

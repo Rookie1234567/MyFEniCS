@@ -118,6 +118,7 @@ class Task035dMixedVariablePStage4Tests(unittest.TestCase):
         self.assertEqual(
             audit["degree_plan"]["cell_degree_counts"],
             {
+                "p4": 0,
                 "p5": sum(degree == 5 for degree in degrees.values()),
                 "p6": sum(degree == 6 for degree in degrees.values()),
             },

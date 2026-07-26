@@ -1,0 +1,95 @@
+{
+  "schema_version": "task035d.mixed-variable-p-component.v1",
+  "status": "numerical_pass_harness_postcondition_fail",
+  "pass": false,
+  "classification": "controlled_negative_postcondition_only",
+  "task": "Task035d",
+  "case_id": "097_goal_oriented_exact_sequence_hp_adaptivity",
+  "source_commit_sha": "10e8dd98f7a46c93d7d336fa6a6db7c1327061fc",
+  "run": {
+    "mpi_size": 1,
+    "degree_container": 6,
+    "h_nm": 100.0,
+    "mesh_cells": 24,
+    "actual_axis_counts": [
+      3,
+      2,
+      4
+    ],
+    "cell_degree_policy": "periodic z-layer p5/p6 split",
+    "cell_degree_counts": {
+      "p4": 0,
+      "p5": 12,
+      "p6": 12
+    },
+    "formal_candidate": false,
+    "heavy_pde": true,
+    "elapsed_seconds": 498.4726988959592
+  },
+  "numerical_result": {
+    "case_status": "completed",
+    "official_result": true,
+    "p6_storage_dofs": 17478,
+    "actual_conforming_active_fe_dofs": 13843,
+    "periodic_independent_trace_rows": 4296,
+    "dtn_rows": 80,
+    "matrix_rows": 4376,
+    "matrix_nnz_used": 2775602,
+    "matrix_nnz_allocated": 2953874,
+    "matrix_mallocs": 0,
+    "full_explicit_true_relative_residual": 2.7518917101782665e-12,
+    "eliminated_cell_interior_residual_norm": 0.0,
+    "R_total": 0.01764767645934236,
+    "T_total": 0.48910666743378295,
+    "A_volume_total": 0.49324565610692395,
+    "R_plus_T_plus_A_volume": 1.0000000000000493,
+    "energy_closure_error": 4.929390229335695e-14,
+    "max_rss_mb": 943.37109375,
+    "total_peak_rss_mb": 943.37109375,
+    "swap_bytes": null,
+    "swap_measurement": "not_available_in_component_fixture"
+  },
+  "uniform_p6_component_comparison": {
+    "uniform_record": "p6_h100_variable_p_component_anchor_v2.json",
+    "active_fe_dof_reduction_fraction": 0.20797574093145665,
+    "matrix_row_reduction_fraction": 0.16869300911854104,
+    "matrix_nnz_reduction_fraction": 0.28734381451028157,
+    "total_peak_rss_change_fraction": 0.058253618393665496,
+    "memory_signal": "negative_in_component_fixture",
+    "memory_interpretation": "Python, JIT, p6 storage, and temporary local-tensor lifetime dominate this single-process component peak; no formal resource credit"
+  },
+  "trace_only_gate": {
+    "pass": true,
+    "surface_functional_count": 81,
+    "removed_active_interior_max_abs": 2.5280404402561893e-12,
+    "auxiliary_interior_columns_allocated": false,
+    "auxiliary_interior_column_bytes_local_max": 0
+  },
+  "timing_seconds": {
+    "base_matrix_assembly": 479.45149192097597,
+    "modal_loop": 7.990480802021921,
+    "modal_vector_assembly": 7.950405602052342,
+    "ksp_setup": 3.8927251489949413,
+    "ksp_solve": 0.02335286099696532,
+    "recovery": 0.16963037400273606,
+    "matrix_free_full_residual": 0.2328558000153862
+  },
+  "artifact_identity": {
+    "artifact_root": "/tmp/task035d_mixed_p5_p6_dtn_smoke_mpi1/solve",
+    "artifact_retention": "local_tmp_not_git",
+    "degree_plan_sha256": "d717b242ff7a5c807e1e5ea348a5578115d36d7b0f9eabb07c8206bd563dfda9",
+    "run_summary_sha256": "f7d123d90bb719b023d2e7db102c5f2da3b0180af0188aaf0c99cd09f2f2d824",
+    "progress_3d_jsonl_sha256": "1716b093e99de6d622e43ab2637b9d169e1ab61d712f124bde2183ab18fcbb19",
+    "dtn_port_diffraction_orders_sha256": "0d95367038f886526a09632eadf1aec219b76886944c3a571f4465602f7203ad"
+  },
+  "harness_failure": {
+    "exception": "AssertionError",
+    "failed_assertion": "expected cell_degree_counts omitted the explicit p4=0 entry",
+    "root_cause": "test postcondition dictionary was incomplete; generated plan and solver audit agreed on p5=12 and p6=12",
+    "numerical_kernel_failure": false,
+    "serialization_failure": false,
+    "heavy_pde_rerun_required_for_this_fix": false
+  },
+  "accuracy_credit": "component qualification only; its h100 R/T/A differs materially from the uniform-p6 h100 control",
+  "ordinary_default_changed": false
+}
