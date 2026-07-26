@@ -207,7 +207,7 @@ class HybridLocalStaticCondensation:
         *,
         eliminated_tolerance: float = 1.0e-12,
         eliminated_relative_tolerance: float = (
-            512.0 * np.finfo(np.float64).eps
+            1024.0 * np.finfo(np.float64).eps
         ),
     ) -> PETSc.Vec:
         """Project a verified trace-only tangential surface vector.

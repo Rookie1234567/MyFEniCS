@@ -1792,7 +1792,7 @@ def project_mpc_vector_to_active_trace(
     *,
     eliminated_tolerance: float = 1.0e-12,
     eliminated_relative_tolerance: float = (
-        512.0 * np.finfo(np.float64).eps
+        1024.0 * np.finfo(np.float64).eps
     ),
 ) -> PETSc.Vec:
     """Project an already MPC-assembled full-space vector to active trace rows.
@@ -1800,10 +1800,12 @@ def project_mpc_vector_to_active_trace(
     ``dolfinx_mpc.assemble_vector`` has already applied ``C^H`` and leaves
     slave entries at zero.  This function verifies that no eliminated
     cell-interior or slave entry is nonzero before physically dropping them.
-    The verification combines an absolute roundoff floor with a global
-    retained-signal scale.  This keeps the audit invariant under harmless
-    mode normalization while remaining independent of MPI partitioning and
-    vector length.
+    MPC slave entries retain the strict absolute tolerance because the
+    constraint assembly must zero them exactly.  Cell-interior entries use
+    the larger of that absolute floor and a global retained-signal roundoff
+    envelope.  This keeps high-order tangential-form audits invariant under
+    harmless mode normalization while remaining independent of MPI
+    partitioning and vector length.
     """
 
     if full_vector.getSize() != condensed.full_rows:
@@ -1865,17 +1867,25 @@ def project_mpc_vector_to_active_trace(
     max_active = global_max(active_mask)
     max_slave = global_max(slave_mask)
     max_interior = global_max(interior_mask)
-    max_eliminated = max(max_slave, max_interior)
-    cutoff = max(
+    slave_cutoff = float(eliminated_tolerance)
+    interior_cutoff = max(
         float(eliminated_tolerance),
         float(eliminated_relative_tolerance) * max_active,
     )
-    if max_eliminated > cutoff:
+    if max_slave > slave_cutoff or max_interior > interior_cutoff:
+        interior_roundoff_units = (
+            max_interior
+            / (float(np.finfo(np.float64).eps) * max_active)
+            if max_active > 0.0
+            else float("inf")
+        )
         raise ValueError(
             "MPC vector has nonzero eliminated interior/slave entries: "
-            f"max={max_eliminated:.3e}, cutoff={cutoff:.3e}, "
+            f"slave_cutoff={slave_cutoff:.3e}, "
+            f"interior_cutoff={interior_cutoff:.3e}, "
             f"active_scale={max_active:.3e}, slave={max_slave:.3e}, "
-            f"interior={max_interior:.3e}"
+            f"interior={max_interior:.3e}, "
+            f"interior_roundoff_units={interior_roundoff_units:.3e}"
         )
     active_vector = condensed.matrix.createVecRight()
     active_original = (

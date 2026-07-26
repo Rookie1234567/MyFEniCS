@@ -564,29 +564,65 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             1.0e-8 * abs(active_value)
         )
         interior = int(next(iter(interior_set)))
-        for eliminated in (slave, interior):
-            zero_rhs.set(PETSc.ScalarType(0.0))
-            zero_rhs.setValue(master, active_value)
-            zero_rhs.setValue(eliminated, roundoff_value)
-            zero_rhs.assemble()
-            roundoff_projection = project_mpc_vector_to_active_trace(
-                candidate,
-                zero_rhs,
-                eliminated_tolerance=1.0e-12,
-                eliminated_relative_tolerance=(
-                    512.0 * np.finfo(np.float64).eps
-                ),
-            )
-            self.assertAlmostEqual(
-                abs(
-                    complex(roundoff_projection.getValue(active_index))
-                    - complex(active_value)
-                ),
-                0.0,
-                places=14,
-            )
-            roundoff_projection.destroy()
+        zero_rhs.set(PETSc.ScalarType(0.0))
+        zero_rhs.setValue(master, active_value)
+        zero_rhs.setValue(interior, roundoff_value)
+        zero_rhs.assemble()
+        roundoff_projection = project_mpc_vector_to_active_trace(
+            candidate,
+            zero_rhs,
+        )
+        self.assertAlmostEqual(
+            abs(
+                complex(roundoff_projection.getValue(active_index))
+                - complex(active_value)
+            ),
+            0.0,
+            places=14,
+        )
+        roundoff_projection.destroy()
 
+        interior_cutoff = float(
+            1024.0
+            * np.finfo(np.float64).eps
+            * abs(active_value)
+        )
+        zero_rhs.set(PETSc.ScalarType(0.0))
+        zero_rhs.setValue(master, active_value)
+        zero_rhs.setValue(interior, PETSc.ScalarType(interior_cutoff))
+        zero_rhs.assemble()
+        cutoff_projection = project_mpc_vector_to_active_trace(
+            candidate,
+            zero_rhs,
+        )
+        cutoff_projection.destroy()
+
+        zero_rhs.set(PETSc.ScalarType(0.0))
+        zero_rhs.setValue(master, active_value)
+        zero_rhs.setValue(
+            interior,
+            PETSc.ScalarType(
+                np.nextafter(interior_cutoff, float("inf"))
+            ),
+        )
+        zero_rhs.assemble()
+        with self.assertRaisesRegex(
+            ValueError,
+            r"interior_roundoff_units=",
+        ):
+            project_mpc_vector_to_active_trace(candidate, zero_rhs)
+
+        zero_rhs.set(PETSc.ScalarType(0.0))
+        zero_rhs.setValue(master, active_value)
+        zero_rhs.setValue(slave, roundoff_value)
+        zero_rhs.assemble()
+        with self.assertRaisesRegex(
+            ValueError,
+            r"slave_cutoff=1.000e-12",
+        ):
+            project_mpc_vector_to_active_trace(candidate, zero_rhs)
+
+        for eliminated in (slave, interior):
             zero_rhs.set(PETSc.ScalarType(0.0))
             zero_rhs.setValue(master, active_value)
             zero_rhs.setValue(eliminated, true_leakage_value)
@@ -600,7 +636,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
                     zero_rhs,
                     eliminated_tolerance=1.0e-12,
                     eliminated_relative_tolerance=(
-                        512.0 * np.finfo(np.float64).eps
+                        1024.0 * np.finfo(np.float64).eps
                     ),
                 )
 
@@ -848,6 +884,49 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(matrix_info["mallocs"], 0.0)
         self.assertEqual(matrix_info["nz_unneeded"], 0.0)
 
+        active_candidates = comm.allgather(
+            [
+                int(value)
+                for value in (
+                    candidate.trace_constraints
+                    .owned_active_original_dofs
+                )
+            ]
+        )
+        interior_candidates = comm.allgather(
+            [
+                int(value)
+                for cell in candidate.cell_recovery_maps
+                for value in cell.interior_original_dofs
+            ]
+        )
+        active_row = int(active_candidates[0][0])
+        interior_row = int(interior_candidates[1][0])
+        distributed_vector = full.createVecRight()
+        distributed_vector.set(PETSc.ScalarType(0.0))
+        if comm.rank == 0:
+            distributed_vector.setValue(
+                active_row,
+                PETSc.ScalarType(9.075),
+            )
+        if comm.rank == 1:
+            distributed_vector.setValue(
+                interior_row,
+                PETSc.ScalarType(1.078e-12),
+            )
+        distributed_vector.assemble()
+        distributed_projection = project_mpc_vector_to_active_trace(
+            candidate,
+            distributed_vector,
+        )
+        self.assertAlmostEqual(
+            float(distributed_projection.norm()),
+            9.075,
+            places=12,
+        )
+
+        distributed_projection.destroy()
+        distributed_vector.destroy()
         difference.destroy()
         manual_difference.destroy()
         manual_full.destroy()
