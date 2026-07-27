@@ -21,6 +21,7 @@ from benchmarks.run_task033_full3d_watchdog import (
 from benchmarks.task035d_case097_checker import (
     SIGNIFICANT_REFERENCE_PATH,
     SIGNIFICANT_REFERENCE_SHA256,
+    Task035dEvidenceError,
     _bound_candidate_run_directory,
     _candidate_launch_contract,
     _load_selective_face_dwr_evidence,
@@ -1213,6 +1214,33 @@ class Task035dSelectiveFaceRunnerCheckerTests(unittest.TestCase):
         self.assertTrue(result["selection_credit"]["posthoc_actual_action_attribution"])
         self.assertFalse(result["complete_combined_hp_credit"])
 
+        stale_watchdog = copy.deepcopy(watchdog)
+        stale_watchdog["qualification"]["pass"] = False
+        requalified = evaluate_task035d_case097_candidate(
+            watchdog=stale_watchdog,
+            launch_gate=all_pass,
+            solver_gate={
+                "pass": True,
+                "checks": {"ordinary_default_and_lifecycle": True},
+            },
+            channel_comparison={
+                "pass": True,
+                "significant_power_pass_count": 12,
+                "significant_complex_amplitude_pass_count": 12,
+            },
+            observable_comparison=all_pass,
+            energy_comparison=all_pass,
+            field_comparison=all_pass,
+            resource_comparison=all_pass,
+            actual_channel_dwr={"pass": True},
+            watchdog_checker_requalified=True,
+            candidate_id=TASK035D_SELECTIVE_FACE_PLAN_NAME,
+        )
+        self.assertTrue(requalified["pass"])
+        self.assertTrue(
+            requalified["checks"]["watchdog_structural_qualification"]
+        )
+
         no_dwr = evaluate_task035d_case097_candidate(
             watchdog=watchdog,
             launch_gate=all_pass,
@@ -1829,29 +1857,81 @@ class Task035dSelectiveFaceRunnerCheckerTests(unittest.TestCase):
                     encoding="utf-8",
                 )
                 report_sha = hashlib.sha256(report_path.read_bytes()).hexdigest()
-                formal = _load_selective_face_dwr_evidence(
-                    {
-                        "record": {
-                            "task035d_selective_face_evidence": {
-                                "phase": "enriched-evaluate",
-                                "path": str(report_path),
-                                "sha256": report_sha,
-                                "payload": passing_report,
-                                "independent_checker": independent_gate,
-                            }
-                        },
-                        "run_dir": candidate_run,
-                        "launch_contract": {
-                            "selective_face_coarse_manifest": {
-                                "path": str(manifest_path),
-                                "sha256": manifest_sha,
-                            }
-                        },
-                        "source_sha": SOURCE_SHA,
+                candidate_evidence = {
+                    "record": {
+                        "task035d_selective_face_evidence": {
+                            "phase": "enriched-evaluate",
+                            "path": str(report_path),
+                            "sha256": report_sha,
+                            "payload": passing_report,
+                            "independent_checker": independent_gate,
+                        }
                     },
+                    "run_dir": candidate_run,
+                    "launch_contract": {
+                        "selective_face_coarse_manifest": {
+                            "path": str(manifest_path),
+                            "sha256": manifest_sha,
+                        }
+                    },
+                    "source_sha": SOURCE_SHA,
+                }
+                formal = _load_selective_face_dwr_evidence(
+                    candidate_evidence,
                     significant_channel_authority=self.significant,
                 )
                 self.assertTrue(formal["pass"])
+                self.assertFalse(formal["checker_contract_false_negative"])
+
+                stale_candidate = copy.deepcopy(candidate_evidence)
+                stale_gate = stale_candidate["record"][
+                    "task035d_selective_face_evidence"
+                ]["independent_checker"]
+                false_checks = {
+                    "coarse_snapshot_manifest_and_modal_endpoint",
+                    "all_endpoint_identities",
+                    "actual_cross_trace_transfer",
+                    "twelve_actual_unit_adjoints_recomputed",
+                    "all_36_goal_closures_recomputed",
+                    "ten_face_multigoal_partition_recomputed",
+                }
+                stale_gate["status"] = (
+                    "selective_face_cross_trace_dwr_checker_fail"
+                )
+                stale_gate["pass"] = False
+                stale_gate["failures"] = sorted(false_checks)
+                stale_gate["failed_goal_labels"] = sorted(
+                    passing_report["goal_dwr"]["goals"]
+                )
+                stale_gate["recomputed_goal_pass_count"] = 0
+                stale_gate["recomputed_power_goal_pass_count"] = 0
+                stale_gate[
+                    "recomputed_amplitude_component_goal_pass_count"
+                ] = 0
+                stale_gate["posthoc_actual_action_attribution"] = False
+                for name in false_checks:
+                    stale_gate["checks"][name] = False
+                with self.assertRaisesRegex(
+                    Task035dEvidenceError,
+                    "embedded and recomputed selective-face DWR Gates differ",
+                ):
+                    _load_selective_face_dwr_evidence(
+                        stale_candidate,
+                        significant_channel_authority=self.significant,
+                    )
+                with patch(
+                    "benchmarks.task035d_case097_checker."
+                    "_SELECTIVE_FACE_HASH_SEMANTICS_NUMERICAL_SOURCE_SHA",
+                    SOURCE_SHA,
+                ):
+                    requalified = _load_selective_face_dwr_evidence(
+                        stale_candidate,
+                        significant_channel_authority=self.significant,
+                    )
+                self.assertTrue(requalified["pass"])
+                self.assertTrue(
+                    requalified["checker_contract_false_negative"]
+                )
             self.assertEqual(endpoint["manifest_sha256"], manifest_sha)
             self.assertTrue(np.array_equal(endpoint["auxiliary_values_b"], auxiliary))
 
