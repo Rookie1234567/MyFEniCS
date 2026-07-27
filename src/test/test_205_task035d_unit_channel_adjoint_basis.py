@@ -7,6 +7,7 @@ import pytest
 
 from src.adaptivity.dtn_goal_adjoint import (
     DtnChannelGoal,
+    dtn_channel_goal_value,
     evaluate_actual_dtn_unit_channel_adjoint_basis,
 )
 from src.common.config_3d import target_stage4_config
@@ -84,14 +85,32 @@ def test_36_real_goals_use_12_unit_channel_backsolves() -> None:
     captured: dict[tuple[str, int, int, str], np.ndarray] = {}
     try:
         state_values = _global_values(state)
+        mode_indices = np.arange(len(modes), dtype=np.float64)
+        coordinate_scales = (
+            1.15
+            + 0.003 * mode_indices
+            + 1j * (0.11 + 0.002 * mode_indices)
+        ).astype(np.complex128)
+        solver_auxiliary_values = state_values[n_fe:].copy()
+        physical_auxiliary_values = (
+            solver_auxiliary_values / coordinate_scales
+        )
+        incident_projections = np.zeros(
+            len(modes),
+            dtype=np.complex128,
+        )
+        for mode_index, mode in enumerate(modes):
+            if mode.side == "top":
+                incident_projections[mode_index] = (
+                    0.04 * np.cos(0.13 * (mode_index + 1.0))
+                    + 0.03j * np.sin(0.17 * (mode_index + 1.0))
+                )
         goal_context = {
             "num_fem_dofs_after_mpc": n_fe,
             "modes": modes,
-            "auxiliary_values": state_values[n_fe:].copy(),
-            "incident_projections": np.zeros(
-                len(modes),
-                dtype=np.complex128,
-            ),
+            "auxiliary_values": physical_auxiliary_values,
+            "auxiliary_coordinate_scales": coordinate_scales,
+            "incident_projections": incident_projections,
             "normalization": (
                 "finite-port outgoing modal power / incident power"
             ),
@@ -152,10 +171,47 @@ def test_36_real_goals_use_12_unit_channel_backsolves() -> None:
         assert report["factor_backsolve_reduction_fraction"] == pytest.approx(
             2.0 / 3.0
         )
-        assert report["unit_gradient_coefficient_matrix_rank"] == 12
-        assert report["expected_unit_gradient_span_rank"] == 12
+        assert report["complex_linear_backsolve_basis_rank"] == 12
+        assert (
+            report["expected_complex_linear_backsolve_basis_rank"]
+            == 12
+        )
+        assert report["real_functional_gradient_span_rank"] == 24
+        assert (
+            report[
+                "expected_real_functional_gradient_span_rank"
+            ]
+            == 24
+        )
         assert report["per_goal_scaled_adjoint_residual_checked"] is True
         assert report["per_goal_finite_difference_verification"] is False
+        assert report["selected_goal_set_complete"] is False
+        assert (
+            report["goal_set_completeness_must_be_asserted_by_caller"]
+            is True
+        )
+        assert report["fem_field_gather"] is False
+        assert (
+            report[
+                "full_adjoint_vector_gather_to_root_for_content_identity"
+            ]
+            is True
+        )
+        assert (
+            report["full_adjoint_vector_gather_bytes_global"]
+            == len(dense) * np.dtype(np.complex128).itemsize
+        )
+        assert report["auxiliary_scalar_gather_only"] is False
+        assert (
+            report["unit_adjoint_observer_vector_lifetime"]
+            == "callback_only_borrowed_vector"
+        )
+        assert (
+            report[
+                "scaled_goal_adjoint_observer_vector_lifetime"
+            ]
+            == "callback_only_borrowed_vector"
+        )
         assert len(captured) == 12
 
         for key, observed in captured.items():
@@ -196,6 +252,54 @@ def test_36_real_goals_use_12_unit_channel_backsolves() -> None:
                     "relative_residual"
                 ]
                 <= 1.0e-12
+            )
+            mode_index = int(goal_report["auxiliary_mode_index"])
+            direction = complex(
+                0.31 + 0.002 * mode_index,
+                -0.27 + 0.001 * mode_index,
+            )
+            step = 1.0e-6
+            solver_minus = solver_auxiliary_values.copy()
+            solver_plus = solver_auxiliary_values.copy()
+            solver_minus[mode_index] -= step * direction
+            solver_plus[mode_index] += step * direction
+            goal_minus = dtn_channel_goal_value(
+                config,
+                modes,
+                solver_minus / coordinate_scales,
+                incident_projections,
+                goal=goal,
+            )
+            goal_plus = dtn_channel_goal_value(
+                config,
+                modes,
+                solver_plus / coordinate_scales,
+                incident_projections,
+                goal=goal,
+            )
+            finite_difference = (goal_plus - goal_minus) / (2.0 * step)
+            pair = goal_report[
+                "gradient_scalar_solver_coordinate"
+            ]
+            scalar = complex(float(pair[0]), float(pair[1]))
+            expected_directional_derivative = float(
+                np.real(np.conj(scalar) * direction)
+            )
+            assert finite_difference == pytest.approx(
+                expected_directional_derivative,
+                rel=2.0e-8,
+                abs=2.0e-10,
+            )
+            assert goal_report["goal_value"] == pytest.approx(
+                dtn_channel_goal_value(
+                    config,
+                    modes,
+                    physical_auxiliary_values,
+                    incident_projections,
+                    goal=goal,
+                ),
+                rel=2.0e-13,
+                abs=2.0e-13,
             )
     finally:
         state.destroy()

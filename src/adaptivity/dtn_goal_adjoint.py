@@ -1229,12 +1229,18 @@ def evaluate_actual_dtn_unit_channel_adjoint_basis(
             "unit channel adjoints require live matrix/state/direct-factor "
             "objects"
         )
-    matrix_comm = matrix.getComm().tompi4py()
-    relation = MPI.Comm.Compare(communicator, matrix_comm)
-    if relation not in {MPI.IDENT, MPI.CONGRUENT}:
-        raise ValueError(
-            "unit channel adjoints use a different MPI communicator"
-        )
+    for object_name, petsc_object in (
+        ("matrix", matrix),
+        ("state", state),
+        ("solver", solver),
+    ):
+        object_comm = petsc_object.getComm().tompi4py()
+        relation = MPI.Comm.Compare(communicator, object_comm)
+        if relation not in {MPI.IDENT, MPI.CONGRUENT}:
+            raise ValueError(
+                "unit channel adjoints use a different MPI communicator "
+                f"for the {object_name}"
+            )
 
     grouped: dict[
         tuple[str, int, int, str],
@@ -1246,6 +1252,10 @@ def evaluate_actual_dtn_unit_channel_adjoint_basis(
     coefficient_matrix = np.zeros(
         (len(selected_goals), len(ordered_keys)),
         dtype=np.complex128,
+    )
+    real_functional_coefficient_matrix = np.zeros(
+        (len(selected_goals), 2 * len(ordered_keys)),
+        dtype=np.float64,
     )
     goal_row = {
         goal.label: row for row, goal in enumerate(selected_goals)
@@ -1308,6 +1318,10 @@ def evaluate_actual_dtn_unit_channel_adjoint_basis(
                     coefficient_matrix[goal_row[goal.label], column] = (
                         scalar
                     )
+                    real_functional_coefficient_matrix[
+                        goal_row[goal.label],
+                        2 * column : 2 * column + 2,
+                    ] = (float(scalar.real), float(scalar.imag))
                     scaled_unit_gradient = unit_gradient.copy()
                     scaled_unit_gradient.scale(PETSc.ScalarType(scalar))
                     gradient_difference = gradient.copy()
@@ -1385,7 +1399,15 @@ def evaluate_actual_dtn_unit_channel_adjoint_basis(
                 unit_adjoint.destroy()
             unit_gradient.destroy()
 
-    rank = int(np.linalg.matrix_rank(coefficient_matrix))
+    complex_linear_rank = int(
+        np.linalg.matrix_rank(coefficient_matrix)
+    )
+    real_functional_rank = int(
+        np.linalg.matrix_rank(real_functional_coefficient_matrix)
+    )
+    expected_real_functional_rank = sum(
+        min(2, len(grouped[key])) for key in ordered_keys
+    )
     amplitude_keys = {
         _canonical_channel_key(goal)
         for goal in selected_goals
@@ -1403,10 +1425,18 @@ def evaluate_actual_dtn_unit_channel_adjoint_basis(
         }
         == {"amplitude_real", "amplitude_imag"}
     }
-    passed = bool(all_pass and rank == len(ordered_keys))
+    passed = bool(
+        all_pass
+        and complex_linear_rank == len(ordered_keys)
+        and real_functional_rank == expected_real_functional_rank
+    )
+    matrix_rows = int(matrix.getSize()[0])
+    gathered_bytes_per_identity = (
+        matrix_rows * np.dtype(np.complex128).itemsize
+    )
     return {
         "schema_version": (
-            "task035d.actual-dtn-unit-channel-adjoint-basis.v1"
+            "task035d.actual-dtn-unit-channel-adjoint-basis.v2"
         ),
         "status": (
             "actual_dtn_unit_channel_adjoint_basis_pass"
@@ -1436,18 +1466,39 @@ def evaluate_actual_dtn_unit_channel_adjoint_basis(
         "factor_backsolve_reduction_fraction": (
             1.0 - len(ordered_keys) / len(selected_goals)
         ),
-        "unit_gradient_coefficient_matrix_rank": rank,
-        "expected_unit_gradient_span_rank": len(ordered_keys),
+        "complex_linear_backsolve_basis_rank": complex_linear_rank,
+        "expected_complex_linear_backsolve_basis_rank": len(
+            ordered_keys
+        ),
+        "real_functional_gradient_span_rank": real_functional_rank,
+        "expected_real_functional_gradient_span_rank": (
+            expected_real_functional_rank
+        ),
         "one_unit_gradient_per_auxiliary_coordinate": True,
         "per_goal_scaled_adjoint_residual_checked": True,
         "per_goal_finite_difference_verification": False,
         "finite_difference_qualification_source": (
-            "existing actual discrete channel-adjoint component tests"
+            "current_component_test_only_not_runtime_verification"
         ),
         "complex_conjugation": "Hermitian A^H, never plain transpose",
         "normalization": goal_context["normalization"],
-        "field_gather": False,
-        "auxiliary_scalar_gather_only": True,
+        "selected_goal_set_complete": False,
+        "goal_set_completeness_must_be_asserted_by_caller": True,
+        "fem_field_gather": False,
+        "full_adjoint_vector_gather_to_root_for_content_identity": True,
+        "full_adjoint_vector_gather_bytes_global": (
+            gathered_bytes_per_identity
+        ),
+        "full_adjoint_vector_gather_bytes_all_unit_identities": (
+            gathered_bytes_per_identity * len(ordered_keys)
+        ),
+        "auxiliary_scalar_gather_only": False,
+        "unit_adjoint_observer_vector_lifetime": (
+            "callback_only_borrowed_vector"
+        ),
+        "scaled_goal_adjoint_observer_vector_lifetime": (
+            "callback_only_borrowed_vector"
+        ),
         "channels": channel_reports,
         "goals": goal_reports,
     }
