@@ -1,0 +1,2884 @@
+{
+  "candidate_id": "h15_symmetric_top_air_remote_p5_interior_v1",
+  "checks": {
+    "cell_interior_policy": true,
+    "constraint_kinds": true,
+    "expected_dimensions": true,
+    "mesh_authority": true,
+    "ordinary_default_unchanged": true,
+    "owner_routing_qualified": true,
+    "physical_dof_gate": true,
+    "plan_is_tracked": true,
+    "prior_attempt2_hash_bound": true,
+    "reduction_authority": true
+  },
+  "environment": {
+    "all_ranks_identical": true,
+    "mpi_size": 2,
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128",
+    "rank_environments": [
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 0
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 1
+      }
+    ]
+  },
+  "failures": [],
+  "formal_MPI": 8,
+  "heavy_pde_started": false,
+  "mesh_audit": {
+    "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+    "carrier": {
+      "artificial_facet_catalog_sha256": "37f77216c62ad53aacf78479f1434276178a94ad3b8280f6858e51f46e37ef22",
+      "artificial_hanging_exterior_facet_count": 60,
+      "axis_aligned_affine_hexahedra": true,
+      "boundary_markers": {
+        "x_lower": 11,
+        "x_upper": 12,
+        "y_lower": 13,
+        "y_upper": 14,
+        "z_lower": 15,
+        "z_upper": 16
+      },
+      "canonical_connectivity_sha256": "13a15c1b4e77ad23fbe308fa98fee7f34d0867bec2a6dea2136cc5ebb973c76f",
+      "canonical_leaf_count": 148,
+      "canonical_vertex_count": 297,
+      "carrier_global_cell_count": 148,
+      "carrier_global_topological_facet_count": 578,
+      "carrier_global_vertex_count": 297,
+      "checks": {
+        "all_artificial_exterior_is_hanging": true,
+        "artificial_exterior_count_is_five_per_patch": true,
+        "canonical_vertex_count_matches_carrier": true,
+        "forest_authority_pass": true,
+        "original_cell_crosswalk_matches_geometry": true,
+        "owned_cells_cover_forest_once": true,
+        "physical_and_artificial_exterior_partition": true,
+        "physical_boundary_area": true
+      },
+      "cross_rank_hanging_patch_count": 0,
+      "dolfinx_cell_type": "CellType.hexahedron",
+      "dolfinx_shared_facet_is_not_hanging_authority": true,
+      "expected_boundary_area": 23500.0,
+      "failures": [],
+      "geometry_degree": 1,
+      "ghost_cell_counts_by_rank": [
+        0,
+        0
+      ],
+      "hanging_patch_count": 12,
+      "hanging_relation_source": "global_geometry_catalog",
+      "hcurl_hanging_constraints_built": false,
+      "leaf_catalog_sha256": "4b1df873d791e4716a0744b36aa524d0a9e5c842aba9395516c9d8792f93f846",
+      "material_catalog_sha256": "c79dc64620f2a13ed88e1cb0e6fb4e7757c74583bdd7f8d7be01ab9548034f6f",
+      "mpi_constraint_ownership_qualified": false,
+      "mpi_size": 2,
+      "ordinary_default_changed": false,
+      "owned_cell_counts_by_rank": [
+        74,
+        74
+      ],
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "physical_boundary_area": 23500.0,
+      "physical_exterior_facet_count": 208,
+      "physical_facet_catalog_sha256": "c3f9ac50081be93ae6a1402f922953339065af8586e045b6810a25a777c80191",
+      "schema_version": "task035d.broken-dyadic-hexa-carrier.v1",
+      "status": "broken_dyadic_hexa_carrier_component_pass",
+      "topological_exterior_facet_count": 268
+    },
+    "cell_interior_degree": 6,
+    "cell_interior_degree_counts": {
+      "p4": 0,
+      "p5": 32,
+      "p6": 116
+    },
+    "cell_interior_degree_plan_sha256": "c78634f2cb0cf6b0a1ca417d483e25b74cc2f28b54fa3e78af139731a300b7cf",
+    "forest": {
+      "axis_aligned_affine_hexahedra": true,
+      "balance_touch_class": "face_edge_vertex",
+      "closure_split_counts": {
+        "balance": 0,
+        "material": 0,
+        "periodic": 2,
+        "user": 2
+      },
+      "face_adjacency_count": 358,
+      "hanging_face_catalog_sha256": "2f7c6c4bcb6c7d71a71c78ac2dab1caddc2914b01b041949b7371b68f309bd27",
+      "hanging_face_count": 12,
+      "hanging_fine_face_count": 48,
+      "leaf_catalog_sha256": "4b1df873d791e4716a0744b36aa524d0a9e5c842aba9395516c9d8792f93f846",
+      "leaf_cell_count": 148,
+      "leaf_level_counts": {
+        "0": 116,
+        "1": 32
+      },
+      "local_h_is_real_cell_split": true,
+      "material_interface_hanging_face_count": 0,
+      "material_interface_protection": true,
+      "maximum_adjacent_level_jump": 1,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "periodic_boundary_audit": {
+        "x": {
+          "lower_patch_count": 20,
+          "lower_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4",
+          "matching": true,
+          "upper_patch_count": 20,
+          "upper_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4"
+        },
+        "y": {
+          "lower_patch_count": 66,
+          "lower_sha256": "b620e350777eac0f666c7889a895392b3a0483e4b2c614d89a8d8e68fd2606a9",
+          "matching": true,
+          "upper_patch_count": 66,
+          "upper_sha256": "b620e350777eac0f666c7889a895392b3a0483e4b2c614d89a8d8e68fd2606a9"
+        }
+      },
+      "refined_root_count": 4,
+      "root_cell_count": 120,
+      "schema_version": "task035d.dyadic-hexa-forest.v1",
+      "status": "balanced_periodic_dyadic_hexa_forest_pass",
+      "strong_2_to_1_balance": true,
+      "touching_pair_count": 1034
+    },
+    "full3d_equivalent_dof_gate_limit": 90000,
+    "hanging_patch_count": 12,
+    "leaf_cell_count": 148,
+    "ordinary_default_changed": false,
+    "pass": true,
+    "pde_accuracy_credit": false,
+    "plan_file_sha256": "1d0b1ef0d6cfb28f463efb0df70d3b4c864e26fbeaeeb413e28e71689f5de520",
+    "plan_path": "/home/Projects/MyFEniCS/benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_symmetric_top_air_remote_p5_interior_plan_v1.json",
+    "root_cell_count": 120,
+    "schema_version": "task035d.stage4-local-h-mesh.v1",
+    "status": "stage4_balanced_local_h_mesh_pass",
+    "trace_degree": 5,
+    "variable_cell_interior_degree": true
+  },
+  "ordinary_default_changed": false,
+  "pass": true,
+  "pde_accuracy_credit": false,
+  "plan": {
+    "file_sha256": "1d0b1ef0d6cfb28f463efb0df70d3b4c864e26fbeaeeb413e28e71689f5de520",
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_symmetric_top_air_remote_p5_interior_plan_v1.json",
+    "payload": {
+      "base_config": {
+        "axis_values": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            12.5,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            15.0,
+            30.0,
+            45.0,
+            60.0,
+            75.0,
+            90.0,
+            105.0,
+            120.0,
+            130.0
+          ]
+        },
+        "boundary_tags": {
+          "x_lower": 11,
+          "x_upper": 12,
+          "y_lower": 13,
+          "y_upper": 14,
+          "z_lower": 15,
+          "z_upper": 16
+        },
+        "domain_z_max": 130.0,
+        "domain_z_min": -10.0,
+        "geometry_kind": "rectangular_block_grating",
+        "grating_bounds": [
+          16.5,
+          0.0,
+          0.0,
+          33.5,
+          25.0,
+          120.0
+        ],
+        "identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+        "interface_z": 0.0,
+        "material_tags": {
+          "air": 1,
+          "grating": 3,
+          "substrate": 2
+        },
+        "mesh_cells_resolved": [
+          6,
+          2,
+          10
+        ],
+        "mesh_spacing_mode_resolved": "boundary_fitted",
+        "mesh_target_size": 15.0,
+        "period_x": 50.0,
+        "period_y": 25.0,
+        "stage_case": "stage4_block_grating"
+      },
+      "cell_interior_degree": 6,
+      "cell_interior_degree_plan_sha256": "c78634f2cb0cf6b0a1ca417d483e25b74cc2f28b54fa3e78af139731a300b7cf",
+      "cell_interior_degrees": [
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            0.0,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            12.375,
+            6.25,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            125.0
+          ],
+          "upper": [
+            12.375,
+            6.25,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            6.25,
+            120.0
+          ],
+          "upper": [
+            12.375,
+            12.5,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            6.25,
+            125.0
+          ],
+          "upper": [
+            12.375,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            12.375,
+            18.75,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            125.0
+          ],
+          "upper": [
+            12.375,
+            18.75,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            18.75,
+            120.0
+          ],
+          "upper": [
+            12.375,
+            25.0,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            18.75,
+            125.0
+          ],
+          "upper": [
+            12.375,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            12.375,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            6.25,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            12.375,
+            0.0,
+            125.0
+          ],
+          "upper": [
+            16.5,
+            6.25,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            12.375,
+            6.25,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            12.375,
+            6.25,
+            125.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            12.375,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            18.75,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            12.375,
+            12.5,
+            125.0
+          ],
+          "upper": [
+            16.5,
+            18.75,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            12.375,
+            18.75,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            12.375,
+            18.75,
+            125.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            37.625,
+            6.25,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            125.0
+          ],
+          "upper": [
+            37.625,
+            6.25,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            6.25,
+            120.0
+          ],
+          "upper": [
+            37.625,
+            12.5,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            6.25,
+            125.0
+          ],
+          "upper": [
+            37.625,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            37.625,
+            18.75,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            125.0
+          ],
+          "upper": [
+            37.625,
+            18.75,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            18.75,
+            120.0
+          ],
+          "upper": [
+            37.625,
+            25.0,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            18.75,
+            125.0
+          ],
+          "upper": [
+            37.625,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            37.625,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            41.75,
+            6.25,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            37.625,
+            0.0,
+            125.0
+          ],
+          "upper": [
+            41.75,
+            6.25,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            37.625,
+            6.25,
+            120.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            37.625,
+            6.25,
+            125.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            37.625,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            41.75,
+            18.75,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            37.625,
+            12.5,
+            125.0
+          ],
+          "upper": [
+            41.75,
+            18.75,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            37.625,
+            18.75,
+            120.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            125.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            37.625,
+            18.75,
+            125.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            41.75,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            130.0
+          ]
+        }
+      ],
+      "expected_forest": {
+        "closure_counts": {
+          "balance": 0,
+          "material": 0,
+          "periodic": 2,
+          "user": 2
+        },
+        "hanging_face_catalog_sha256": "2f7c6c4bcb6c7d71a71c78ac2dab1caddc2914b01b041949b7371b68f309bd27",
+        "hanging_patch_count": 12,
+        "leaf_catalog_sha256": "4b1df873d791e4716a0744b36aa524d0a9e5c842aba9395516c9d8792f93f846",
+        "leaf_cell_count": 148,
+        "root_catalog_sha256": "4d9368ac6a4fdd5442ac3bc001294214f6eccc7fcd3d6d13c3a6d54a0ef87fca",
+        "root_cell_count": 120
+      },
+      "marked_root_boxes": [
+        {
+          "lower": [
+            8.25,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "lower": [
+            33.5,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            130.0
+          ]
+        }
+      ],
+      "maximum_level": 1,
+      "ordinary_default_changed": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "protect_material_interfaces": true,
+      "provenance": {
+        "accuracy_credit": false,
+        "candidate_id": "h15_symmetric_top_air_remote_p5_interior_v1",
+        "complete_combined_hp_credit": false,
+        "h_action": "one split in each top-air root immediately outside the left and right grating sidewalls, then y-periodic closure",
+        "h_action_evidence": "symmetric diagnostic response to the h15 one-sided local-h 6/12 power plus 6/12 amplitude controlled negative; heuristic channel-directed action, not actual DWR or adjoint credit",
+        "ordinary_default_changed": false,
+        "p_action": "p6-to-p5 cell-interior only in 32 unrefined homogeneous air leaves at the two far lateral columns, excluding grating, sidewall-adjacent, local-h, top-port, and bottom-port cells",
+        "p_action_evidence": "geometry smoothness and distance guard; no variable trace, DWR, or full combined-hp completion credit",
+        "purpose": "Task035d first local-h plus true variable-interior candidate"
+      },
+      "root_cell_box_catalog_sha256": "539557f657ee327803467f92643c01995f5217c4b37a51ac0f69b7e0c10f695c",
+      "schema_version": "task035d.stage4-local-h-refinement-plan.v1",
+      "status": "stage4_balanced_local_h_plan",
+      "trace_degree": 5
+    }
+  },
+  "prior_authorities": {
+    "local_h_attempt2_mpi_identity_v3": {
+      "pass": true,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt2_mpi_identity_v3.json",
+      "sha256": "c293fc07284435c075fc54ba4948f5809d9553cb4693929c270848aca8fd15e2",
+      "status": "local_h_attempt2_owner_routed_component_pass_pde_launch_ready"
+    },
+    "phase_a_compact": {
+      "pass": true,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/compact_authority_v1.json",
+      "sha256": "2e896ef45bbfc5c11901503269d11c0321106c9e41f71729ac7c6fc722687403",
+      "status": "case097_phase_a_compact_authority"
+    }
+  },
+  "reduction_audit": {
+    "active_fe_dof_gate_limit": 90000,
+    "active_fe_dof_gate_pass": true,
+    "actual_full3d_equivalent_active_fe_dofs": 84240,
+    "degree_plan": {
+      "active_rows": 86740,
+      "active_trace_rows": 26860,
+      "adaptation_cycle_scope": "first p6-to-p5 cell-interior-only cycle",
+      "cell_count": 148,
+      "cell_degree_counts": {
+        "p4": 0,
+        "p5": 32,
+        "p6": 116
+      },
+      "cell_degree_plan_sha256": "c78634f2cb0cf6b0a1ca417d483e25b74cc2f28b54fa3e78af139731a300b7cf",
+      "cell_interior_container_degree": 6,
+      "cell_interior_degree": 6,
+      "cell_interior_p6_modes_globally_numbered_when_inactive": false,
+      "complete_combined_hp_credit": false,
+      "entity_degree_closure": "uniform fixed trace degree on every physical edge/face; geometry-bound p5/p6 cell-interior degree with trace_degree <= cell degree",
+      "geometry_bound_not_global_entity_id_bound": true,
+      "geometry_canonical_entity_degree_sha256": "61d3dfcea2854a3fc543537301e07ce9dd173820bb6665a96bfcba753cfe4ff7",
+      "inactive_p6_rows": 19028,
+      "inactive_p6_trace_rows": 12308,
+      "local_variable_trace_implemented": false,
+      "mesh_cell_box_catalog_sha256": "c2a50a595f06166d2ee5c52b8bf5ab327ccd5155015b046d905fe9b9ace2d681",
+      "mpi_size": 2,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "runtime_global_entity_degree_sha256": "84a4bc467794c879307d510b2d381421389223ea671f0130a62b8fcfb468c85b",
+      "runtime_global_entity_id_order_partition_independent": false,
+      "schema_version": "task035d.local-h-fixed-trace-variable-interior-plan.v1",
+      "status": "local_h_fixed_trace_variable_interior_plan_closed",
+      "trace_degree": 5,
+      "variable_cell_interior_degree": true
+    },
+    "hanging_or_floquet_slave_rows_globally_numbered": false,
+    "hanging_slave_rows": 2500,
+    "independent_trace_rows": 19980,
+    "mesh": {
+      "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+      "carrier": {
+        "artificial_facet_catalog_sha256": "37f77216c62ad53aacf78479f1434276178a94ad3b8280f6858e51f46e37ef22",
+        "artificial_hanging_exterior_facet_count": 60,
+        "axis_aligned_affine_hexahedra": true,
+        "boundary_markers": {
+          "x_lower": 11,
+          "x_upper": 12,
+          "y_lower": 13,
+          "y_upper": 14,
+          "z_lower": 15,
+          "z_upper": 16
+        },
+        "canonical_connectivity_sha256": "13a15c1b4e77ad23fbe308fa98fee7f34d0867bec2a6dea2136cc5ebb973c76f",
+        "canonical_leaf_count": 148,
+        "canonical_vertex_count": 297,
+        "carrier_global_cell_count": 148,
+        "carrier_global_topological_facet_count": 578,
+        "carrier_global_vertex_count": 297,
+        "checks": {
+          "all_artificial_exterior_is_hanging": true,
+          "artificial_exterior_count_is_five_per_patch": true,
+          "canonical_vertex_count_matches_carrier": true,
+          "forest_authority_pass": true,
+          "original_cell_crosswalk_matches_geometry": true,
+          "owned_cells_cover_forest_once": true,
+          "physical_and_artificial_exterior_partition": true,
+          "physical_boundary_area": true
+        },
+        "cross_rank_hanging_patch_count": 0,
+        "dolfinx_cell_type": "CellType.hexahedron",
+        "dolfinx_shared_facet_is_not_hanging_authority": true,
+        "expected_boundary_area": 23500.0,
+        "failures": [],
+        "geometry_degree": 1,
+        "ghost_cell_counts_by_rank": [
+          0,
+          0
+        ],
+        "hanging_patch_count": 12,
+        "hanging_relation_source": "global_geometry_catalog",
+        "hcurl_hanging_constraints_built": false,
+        "leaf_catalog_sha256": "4b1df873d791e4716a0744b36aa524d0a9e5c842aba9395516c9d8792f93f846",
+        "material_catalog_sha256": "c79dc64620f2a13ed88e1cb0e6fb4e7757c74583bdd7f8d7be01ab9548034f6f",
+        "mpi_constraint_ownership_qualified": false,
+        "mpi_size": 2,
+        "ordinary_default_changed": false,
+        "owned_cell_counts_by_rank": [
+          74,
+          74
+        ],
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "physical_boundary_area": 23500.0,
+        "physical_exterior_facet_count": 208,
+        "physical_facet_catalog_sha256": "c3f9ac50081be93ae6a1402f922953339065af8586e045b6810a25a777c80191",
+        "schema_version": "task035d.broken-dyadic-hexa-carrier.v1",
+        "status": "broken_dyadic_hexa_carrier_component_pass",
+        "topological_exterior_facet_count": 268
+      },
+      "cell_interior_degree": 6,
+      "cell_interior_degree_counts": {
+        "p4": 0,
+        "p5": 32,
+        "p6": 116
+      },
+      "cell_interior_degree_plan_sha256": "c78634f2cb0cf6b0a1ca417d483e25b74cc2f28b54fa3e78af139731a300b7cf",
+      "forest": {
+        "axis_aligned_affine_hexahedra": true,
+        "balance_touch_class": "face_edge_vertex",
+        "closure_split_counts": {
+          "balance": 0,
+          "material": 0,
+          "periodic": 2,
+          "user": 2
+        },
+        "face_adjacency_count": 358,
+        "hanging_face_catalog_sha256": "2f7c6c4bcb6c7d71a71c78ac2dab1caddc2914b01b041949b7371b68f309bd27",
+        "hanging_face_count": 12,
+        "hanging_fine_face_count": 48,
+        "leaf_catalog_sha256": "4b1df873d791e4716a0744b36aa524d0a9e5c842aba9395516c9d8792f93f846",
+        "leaf_cell_count": 148,
+        "leaf_level_counts": {
+          "0": 116,
+          "1": 32
+        },
+        "local_h_is_real_cell_split": true,
+        "material_interface_hanging_face_count": 0,
+        "material_interface_protection": true,
+        "maximum_adjacent_level_jump": 1,
+        "ordinary_default_changed": false,
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "periodic_axes": [
+          "x",
+          "y"
+        ],
+        "periodic_boundary_audit": {
+          "x": {
+            "lower_patch_count": 20,
+            "lower_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4",
+            "matching": true,
+            "upper_patch_count": 20,
+            "upper_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4"
+          },
+          "y": {
+            "lower_patch_count": 66,
+            "lower_sha256": "b620e350777eac0f666c7889a895392b3a0483e4b2c614d89a8d8e68fd2606a9",
+            "matching": true,
+            "upper_patch_count": 66,
+            "upper_sha256": "b620e350777eac0f666c7889a895392b3a0483e4b2c614d89a8d8e68fd2606a9"
+          }
+        },
+        "refined_root_count": 4,
+        "root_cell_count": 120,
+        "schema_version": "task035d.dyadic-hexa-forest.v1",
+        "status": "balanced_periodic_dyadic_hexa_forest_pass",
+        "strong_2_to_1_balance": true,
+        "touching_pair_count": 1034
+      },
+      "full3d_equivalent_dof_gate_limit": 90000,
+      "hanging_patch_count": 12,
+      "leaf_cell_count": 148,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "plan_file_sha256": "1d0b1ef0d6cfb28f463efb0df70d3b4c864e26fbeaeeb413e28e71689f5de520",
+      "plan_path": "/home/Projects/MyFEniCS/benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_symmetric_top_air_remote_p5_interior_plan_v1.json",
+      "root_cell_count": 120,
+      "schema_version": "task035d.stage4-local-h-mesh.v1",
+      "status": "stage4_balanced_local_h_mesh_pass",
+      "trace_degree": 5,
+      "variable_cell_interior_degree": true
+    },
+    "ordinary_default_changed": false,
+    "pass": true,
+    "periodic_slave_rows": 4380,
+    "physical_trace": {
+      "checks": {
+        "all_hanging_patches_have_relations": true,
+        "flattened_graph_pass": true,
+        "forest_carrier_identity": true,
+        "mpi_physical_authority_identity": true,
+        "no_slave_rows_numbered": true,
+        "periodic_cycle_closure": true
+      },
+      "compiled_cell_tensor_binding_complete": false,
+      "degree": 5,
+      "distributed_scalability_qualified": false,
+      "entity_catalog_sha256": "0fcaa1826e383b27a7593e0aeaeda5c2968207f468701a9b843a3504585a7c27",
+      "failures": [],
+      "flattened_graph_sha256": "097b07aa5657270a5b5dce00752c1e9353bf75fdccc16b8ffa78f290f41eb8a3",
+      "hanging_patch_count": 12,
+      "hanging_primary_relation_count": 12,
+      "hanging_relation_count": 22,
+      "hanging_secondary_relation_count": 10,
+      "hanging_slave_rows": 2500,
+      "independent_trace_rows": 19980,
+      "maximum_chain_depth": 2,
+      "maximum_relation_residual": 3.929734507748659e-15,
+      "mpi_constraint_row_ownership_qualified": false,
+      "mpi_ghost_expansion_qualified": false,
+      "mpi_physical_catalog_identity_qualified": true,
+      "mpi_size": 2,
+      "ordinary_default_changed": false,
+      "partition_independent_physical_keys": true,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "periodic_cycle_error": 5.551115123125783e-17,
+      "periodic_primary_relation_count": 274,
+      "periodic_relation_count": 286,
+      "periodic_secondary_relation_count": 12,
+      "phase_x": [
+        -0.6007411348979813,
+        -0.7994436120462065
+      ],
+      "phase_y": [
+        1.0,
+        0.0
+      ],
+      "physical_authority_sha256": "1315a11c31da9aebfb5c04489feb4d96f16c4749d9891691b8d16bd9cfab06dc",
+      "physical_edge_count": 748,
+      "physical_face_count": 578,
+      "raw_trace_rows": 26860,
+      "schema_version": "task035d.broken-hexa-trace-authority.v1",
+      "status": "broken_hexa_trace_constraint_component_pass"
+    },
+    "raw_broken_active_fe_dofs": 86740,
+    "raw_broken_trace_rows": 26860,
+    "schema_version": "task035d.stage4-local-h-reduction-authority.v1",
+    "status": "stage4_local_h_reduction_authority_pass",
+    "trace_constraints": {
+      "active_trace_work_ownership_ranges": [
+        [
+          0,
+          13430
+        ],
+        [
+          13430,
+          26860
+        ]
+      ],
+      "active_vector_block_work_owner_counts_by_rank": [
+        991,
+        335
+      ],
+      "canonical_cell_graph_sha256": "691bf41fb9c2df3d93cbb079c0251830bdc462709ba06e9d30bd42117515ce87",
+      "canonical_root_numbering_partition_independent": true,
+      "cell_expansion_inverse_used": false,
+      "cell_expansion_rank_semantics": "rank_equals_min(local_trace_rows, independent_root_rows); wide hanging/Floquet cell expansions require full row rank",
+      "cell_expansion_svd_used_for_rank_audit": true,
+      "checks": {
+        "active_vector_block_work_ownership_closes": true,
+        "all_independent_roots_reached": true,
+        "all_owned_cells_bound": true,
+        "all_physical_entities_bound_once": true,
+        "canonical_cell_graph_mpi_identity": true,
+        "cell_expansions_maximal_rank": true,
+        "cell_transform_matches_dolfinx_cell_info": true,
+        "constraint_relations_have_one_canonical_owner": true,
+        "cross_rank_hanging_graph_and_cell_expansions_close": true,
+        "entity_transform_orthogonality": true,
+        "forest_carrier_identity": true,
+        "no_slave_rows_numbered": true,
+        "off_process_root_insertion_path_exercised": true,
+        "owner_routed_remote_cache_pass": true,
+        "petsc_root_row_ownership_closes": true,
+        "physical_rows_have_one_dolfinx_owner": true,
+        "trace_transform_does_not_mix_cell_interior": true,
+        "unpermuted_cell_chart_matches_forest": true
+      },
+      "compiled_cell_tensor_binding_complete": false,
+      "constraint_kinds": [
+        "hanging",
+        "floquet"
+      ],
+      "constraint_relation_owner_counts_by_rank": [
+        154,
+        154
+      ],
+      "constraint_relation_owner_sha256": "e3a695914c98212e2d16af424e256bbc245e48b3e575f8b7f7783ecdcc2e1d65",
+      "contains_floquet_constraints": true,
+      "contains_hanging_constraints": true,
+      "cross_rank_hanging_participant_entities": [],
+      "cross_rank_hanging_participant_entity_count": 0,
+      "cross_rank_hanging_participant_entity_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "cross_rank_hanging_patch_count": 0,
+      "cross_rank_hanging_relation_count": 0,
+      "cross_rank_hanging_remote_lookup_counts_by_rank": [
+        0,
+        0
+      ],
+      "cross_rank_hanging_remote_participant_entities": [],
+      "cross_rank_hanging_remote_participant_entity_count": 0,
+      "cross_rank_hanging_remote_participant_entity_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "cross_rank_hanging_remote_participant_semantics": "unique canonical physical entities that participate in a cross-rank hanging relation and are consumed by an owned cell through an owner-routed remote block",
+      "cross_rank_hanging_resolution_semantics": "replicated_physical_graph_plus_owner_routed_entity_blocks_plus_all_owned_cell_expansions",
+      "cross_rank_relation_counts_by_kind": {
+        "floquet_star": 12
+      },
+      "degree": 5,
+      "dense_cell_expansion_retained": true,
+      "distributed_scalability_qualified": false,
+      "dolfinx_entity_order_bound_exactly_once": true,
+      "dolfinx_entity_owner_counts_by_rank": [
+        619,
+        707
+      ],
+      "eliminated_hanging_or_floquet_rows": 6880,
+      "entity_block_bytes_are_logical_native_arrays_not_peak_rss": true,
+      "entity_catalog_distribution": "owner_routed_requested_dense_cache",
+      "failures": [],
+      "flattened_graph_sha256": "097b07aa5657270a5b5dce00752c1e9353bf75fdccc16b8ffa78f290f41eb8a3",
+      "full_dense_entity_catalog_replicated": false,
+      "full_p6_trace_matrix_constructed": false,
+      "global_cell_count": 148,
+      "global_entity_declarations_distribution": "allgather_metadata_only",
+      "hanging_cell_ghost_counts_by_rank": [
+        0,
+        0
+      ],
+      "hanging_or_floquet_slave_rows_globally_numbered": false,
+      "hanging_slave_rows": 2500,
+      "independent_trace_rows": 19980,
+      "local_entity_block_cache_bytes_by_rank": [
+        23515040,
+        28905760
+      ],
+      "local_entity_block_cache_bytes_global_sum": 52420800,
+      "maximum_cell_expansion_condition": 154038033.95099297,
+      "maximum_cell_transform_error": 8.615330671091215e-14,
+      "maximum_entity_transform_orthogonality_error": 1.7047215689850554e-14,
+      "maximum_independent_rows_per_cell": 340,
+      "maximum_trace_interior_mixing_error": 0.0,
+      "maximum_unpermuted_cell_chart_error": 0.0,
+      "mpi_ghost_expansion_qualified": true,
+      "mpi_size": 2,
+      "off_process_root_reference_counts_by_rank": [
+        9180,
+        12520
+      ],
+      "off_process_root_reference_local_digests_by_rank": [
+        "dc03462fb836d6c5193381296cb8ff8cab4866617b6983c0219ad10ad5cae54f",
+        "e3b9ffd3b049333078887cfb49e1f021eb7c063820fe3459da714e3eead249d7"
+      ],
+      "ordinary_default_changed": false,
+      "owned_cell_expansion_bytes_by_rank": [
+        106737600,
+        107891520
+      ],
+      "owned_cell_expansion_bytes_global_sum": 214629120,
+      "owner_routed_trace_cache_audit": {
+        "active_trace_work_ownership_ranges": [
+          [
+            0,
+            13430
+          ],
+          [
+            13430,
+            26860
+          ]
+        ],
+        "canonical_content_sha256": "abb9f8e7eb8b2f7806059341376be523a3e63ed7cdb7eb055d9b4f4f60c2190f",
+        "cell_needed_block_counts_by_rank": [
+          648,
+          732
+        ],
+        "collective_fail_closed": true,
+        "declaration_catalog_is_metadata_only": true,
+        "declaration_count": 1326,
+        "dense_global_entity_catalog_replicated": false,
+        "dolfinx_ghost_entity_counts_by_dimension_by_rank": {
+          "1": [
+            23,
+            16
+          ],
+          "2": [
+            6,
+            9
+          ]
+        },
+        "dolfinx_owned_entity_counts_by_dimension_by_rank": {
+          "1": [
+            340,
+            408
+          ],
+          "2": [
+            279,
+            299
+          ]
+        },
+        "duplicate_reply_count": 0,
+        "local_cache_block_counts_by_dimension_by_rank": {
+          "1": [
+            748,
+            424
+          ],
+          "2": [
+            285,
+            344
+          ]
+        },
+        "local_cache_block_counts_by_rank": [
+          1033,
+          768
+        ],
+        "local_cache_native_array_bytes_by_rank": [
+          23515040,
+          28905760
+        ],
+        "missing_reply_count": 0,
+        "native_array_bytes_are_logical_not_rss_pss_peak": true,
+        "owner_assignment_sha256": "443423b602012d5fe3994f5f86b427cbe312bb085a8fafed000270a7d5713e19",
+        "owner_policy": "dolfinx_unique_entity_owner",
+        "pass": true,
+        "received_reply_counts_by_rank": [
+          414,
+          61
+        ],
+        "received_reply_native_array_bytes_by_rank": [
+          1474080,
+          3505280
+        ],
+        "received_request_counts_by_rank": [
+          61,
+          414
+        ],
+        "reply_counts_by_rank": [
+          61,
+          414
+        ],
+        "reply_native_array_bytes_by_rank": [
+          3505280,
+          1474080
+        ],
+        "reply_validation": "token_key_owner_global_entity_orientation_and_block_sha256",
+        "request_counts_by_rank": [
+          414,
+          61
+        ],
+        "request_key": "canonical_physical_dimension_and_geometry",
+        "request_reply_count_closes": true,
+        "retained_cache_duplication_factor": 1.104958028255466,
+        "retained_cache_native_array_bytes_global_sum": 52420800,
+        "retained_cache_native_array_bytes_max": 28905760,
+        "schema_version": "task035d.owner-routed-trace-cache.v1",
+        "stale_or_corrupt_reply_count": 0,
+        "temporary_reply_bytes_are_logical_not_peak_rss": true,
+        "unique_dolfinx_owner_native_array_bytes_by_rank": [
+          22040960,
+          25400480
+        ],
+        "unique_dolfinx_owner_native_array_bytes_global_sum": 47441440,
+        "unrequested_reply_count": 0,
+        "work_owned_block_counts_by_dimension_by_rank": {
+          "1": [
+            748,
+            0
+          ],
+          "2": [
+            243,
+            335
+          ]
+        },
+        "work_owned_block_counts_by_rank": [
+          991,
+          335
+        ],
+        "work_owned_native_array_bytes_by_rank": [
+          20262560,
+          27178880
+        ],
+        "work_owned_native_array_bytes_max": 27178880,
+        "work_owned_native_array_bytes_mean": 23720720.0,
+        "work_owner_straddling_block_count": 1,
+        "work_owner_straddling_block_counts_by_rank": [
+          1,
+          0
+        ],
+        "wrong_owner_reply_count": 0
+      },
+      "ownership_policy": {
+        "active_vector_block_work_owner": "owner_of_first_active_trace_entity_row",
+        "physical_entity_owner": "dolfinx_unique_entity_owner",
+        "reduced_petsc_row_owner": "balanced_contiguous_root_rows",
+        "relation_owner": "owner_of_lexicographically_first_physical_slave_row",
+        "remote_entity_resolution": "owner_routed_canonical_key_query_reply"
+      },
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "pde_launch_ownership_gate": true,
+      "periodic_slave_rows": 4380,
+      "petsc_constraint_row_ownership_qualified": true,
+      "physical_authority_sha256": "1315a11c31da9aebfb5c04489feb4d96f16c4749d9891691b8d16bd9cfab06dc",
+      "physical_entity_owner_sha256": "630a9f3c7571f86f700b0757f5c9ff1a9215bf90d9abad21bee7dac2e0b76a07",
+      "raw_trace_rows": 26860,
+      "reduced_petsc_root_ownership_ranges": [
+        [
+          0,
+          9990
+        ],
+        [
+          9990,
+          19980
+        ]
+      ],
+      "remote_entity_lookup_counts_by_rank": [
+        41,
+        33
+      ],
+      "remote_entity_lookup_local_digests_by_rank": [
+        "75d8e7be16eaa1f5c258cd1fd82312b8ad55b9e7ecbb533340221fc5bfb374c7",
+        "7e7dbe8d275919b24dd08f59b1a7253d4a01f0085a9b3a4ef22677d8167b9738"
+      ],
+      "remote_resolution_audit_is_count_and_digest_only": true,
+      "remote_resolution_sha256": "bd94aa2cee868796b600f1a2c88ec4c7ff30407e21715d6504bbf48c9ad79af4",
+      "replicated_component_gram_bytes_per_rank": 883124,
+      "replicated_entity_block_bytes_per_rank": 0,
+      "replicated_entity_block_bytes_semantics": "no_complete_dense_global_entity_catalog_is_retained_per_rank",
+      "schema_version": "task035d.broken-hexa-cell-trace-map.v2",
+      "status": "broken_hexa_cell_trace_binding_pass",
+      "wide_cell_expansion_count": 8
+    }
+  },
+  "schema_version": "case097.combined-hp-interior-component.v2",
+  "source_identity": {
+    "expected_sha": "459dea914b2508cd9a22f4348bdcba85351272d0",
+    "head": "459dea914b2508cd9a22f4348bdcba85351272d0",
+    "numerical_file_sha256": {
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_production_authority.py": "2f53945379c86f297d75bf0d064d16142ea6e16f1793eafc3a8c6994889943c5",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_production_authority.py": "5f13abd89435da5ae697488f0e8cc2be08be952c55b4f8fc7c629009884fea8f",
+      "src/adaptivity/dyadic_hexa_broken_mesh.py": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+      "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "7889c1f21f943380494375acf25760d96c6e209cfbd078ceea0e9ba443a72ef4",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "a6aa48cbf0c596eaa97fe2470fed6f6faf02b979d63e057fb2d7b133da7f3c85",
+      "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "src/adaptivity/hcurl_trace_constraint_graph.py": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+      "src/adaptivity/stage4_local_h.py": "67dc7a28ce2efeb115e781a08d2401585e57ea579f97e7b04d44335a7f7ed5d8",
+      "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+      "src/adaptivity/variable_p_transfer.py": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+      "src/common/config_3d.py": "573ce574a12115cfcf4cfb924e4287824dfc6efc6ab8348b50937fbc043d7c9f",
+      "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+      "src/geometry/mesh_builder_3d.py": "cece033930810eef39fc00e8638fbe76317b9860749c53b5523a70443bc1dc16",
+      "src/solvers/common_3d_case_flow.py": "4c017ab52983ea062c4959b7d51ac3116dec670b3e97cad746470fe9ce233e1d",
+      "src/solvers/dtn_port_3d.py": "23e21cf473cf4e69ca0f3eb9b43ca96dff6e6fd14c978fc2ac3487ce557100ea",
+      "src/solvers/hcurl_variable_p_assembly.py": "db46b78c77a9353a54de36f7c2a1ad0efcf1e86452a941e13ca44cd3d5cbbdce",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/solvers/hcurl_variable_p_reduction.py": "eb7a07a2e387ed031f29ab340d30b4224c88e344f6365fa18167613bba4618e7"
+    },
+    "rank_checks": [
+      {
+        "expected_sha": "459dea914b2508cd9a22f4348bdcba85351272d0",
+        "head": "459dea914b2508cd9a22f4348bdcba85351272d0",
+        "mismatched_files": [],
+        "rank": 0,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "459dea914b2508cd9a22f4348bdcba85351272d0",
+        "head": "459dea914b2508cd9a22f4348bdcba85351272d0",
+        "mismatched_files": [],
+        "rank": 1,
+        "status_lines": []
+      }
+    ],
+    "verified_clean_numerical_source": true
+  },
+  "source_sha": "459dea914b2508cd9a22f4348bdcba85351272d0",
+  "stable_identity": {
+    "actual_full3d_equivalent_active_fe_dofs": 84240,
+    "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+    "canonical_cell_graph_sha256": "691bf41fb9c2df3d93cbb079c0251830bdc462709ba06e9d30bd42117515ce87",
+    "carrier_connectivity_sha256": "13a15c1b4e77ad23fbe308fa98fee7f34d0867bec2a6dea2136cc5ebb973c76f",
+    "cell_degree_counts": {
+      "p4": 0,
+      "p5": 32,
+      "p6": 116
+    },
+    "cell_degree_plan_sha256": "c78634f2cb0cf6b0a1ca417d483e25b74cc2f28b54fa3e78af139731a300b7cf",
+    "flattened_graph_sha256": "097b07aa5657270a5b5dce00752c1e9353bf75fdccc16b8ffa78f290f41eb8a3",
+    "geometry_canonical_entity_degree_sha256": "61d3dfcea2854a3fc543537301e07ce9dd173820bb6665a96bfcba753cfe4ff7",
+    "hanging_face_catalog_sha256": "2f7c6c4bcb6c7d71a71c78ac2dab1caddc2914b01b041949b7371b68f309bd27",
+    "hanging_patch_count": 12,
+    "hanging_slave_rows": 2500,
+    "independent_trace_rows": 19980,
+    "leaf_catalog_sha256": "4b1df873d791e4716a0744b36aa524d0a9e5c842aba9395516c9d8792f93f846",
+    "leaf_cell_count": 148,
+    "material_catalog_sha256": "c79dc64620f2a13ed88e1cb0e6fb4e7757c74583bdd7f8d7be01ab9548034f6f",
+    "mesh_cell_box_catalog_sha256": "c2a50a595f06166d2ee5c52b8bf5ab327ccd5155015b046d905fe9b9ace2d681",
+    "periodic_slave_rows": 4380,
+    "physical_authority_sha256": "1315a11c31da9aebfb5c04489feb4d96f16c4749d9891691b8d16bd9cfab06dc",
+    "physical_facet_catalog_sha256": "c3f9ac50081be93ae6a1402f922953339065af8586e045b6810a25a777c80191",
+    "plan_file_sha256": "1d0b1ef0d6cfb28f463efb0df70d3b4c864e26fbeaeeb413e28e71689f5de520",
+    "predicted_direct_solve_rows": 20060,
+    "raw_broken_active_fe_dofs": 86740,
+    "raw_broken_trace_rows": 26860,
+    "root_cell_count": 120
+  },
+  "status": "combined_hp_interior_component_pass"
+}
