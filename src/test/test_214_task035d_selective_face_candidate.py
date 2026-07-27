@@ -10,6 +10,9 @@ from src.adaptivity.stage4_local_h import (
     build_stage4_local_h_mesh_data,
     build_stage4_local_h_reduction_authority,
 )
+from src.adaptivity.selective_face_root_transfer import (
+    build_selective_face_root_transfer,
+)
 from src.common.config_3d import target_stage4_config
 
 
@@ -99,3 +102,66 @@ def test_selective_face_candidate_has_only_200_new_physical_rows() -> None:
         "hanging_or_floquet_slave_rows_globally_numbered"
     ] is False
     assert reduction.audit["active_fe_dof_gate_pass"] is True
+
+
+def test_actual_ten_face_full_closure_transfer_and_shared_edges_close() -> None:
+    cfg = target_stage4_config(degree=6, h_nm=15.0)
+    coarse_mesh = build_stage4_local_h_mesh_data(
+        cfg,
+        BASE_PLAN,
+        comm=MPI.COMM_WORLD,
+    )
+    enriched_mesh = build_stage4_local_h_mesh_data(
+        cfg,
+        PLAN,
+        comm=MPI.COMM_WORLD,
+    )
+    assert coarse_mesh.local_h_context is not None
+    assert enriched_mesh.local_h_context is not None
+    coarse = build_stage4_local_h_reduction_authority(
+        coarse_mesh.local_h_context,
+        phase_x=cfg.floquet_phase_x,
+        phase_y=cfg.floquet_phase_y,
+    )
+    enriched = build_stage4_local_h_reduction_authority(
+        enriched_mesh.local_h_context,
+        phase_x=cfg.floquet_phase_x,
+        phase_y=cfg.floquet_phase_y,
+    )
+    assert coarse.trace_constraints is not None
+    assert enriched.trace_constraints is not None
+    transfer = build_selective_face_root_transfer(
+        coarse.trace_constraints.authority,
+        enriched.trace_constraints.authority,
+        auxiliary_rows=80,
+    )
+    audit = transfer.audit
+    assert audit["pass"] is True
+    assert transfer.trace_injection.shape == (18_590, 18_390)
+    assert transfer.total_injection.shape == (18_670, 18_470)
+    assert (
+        audit["affected_root_row_count"]
+        - audit["affected_coarse_column_count"]
+        == 200
+    )
+    assert (
+        audit["selected_patch_injection_rank"]
+        == audit["affected_coarse_column_count"]
+    )
+    assert audit["face_generator_rank"] == 200
+    support = audit["selected_face_root_support_catalog"]
+    assert len(support) == 10
+    assert sum(
+        row["constrained_physical_closure_rows"] for row in support
+    ) > 0
+    assert all(
+        row["physical_closure_rows"] == 80
+        and row["independent_root_support_rows"]
+        - row["local_injection_rank"]
+        == 20
+        and row["local_complement_dimension"] == 20
+        for row in support
+    )
+    assert audit["face_generator_global_cross_error_max"] <= 2.0e-10
+    assert audit["face_generator_projector_error_max"] <= 2.0e-10
+    assert 1.0 <= audit["face_generator_gram_condition_number"] <= 1.0e8

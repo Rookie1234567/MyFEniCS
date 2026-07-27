@@ -44,7 +44,16 @@ _ENDPOINT_IDENTITY_CHECKS = {
 _ROOT_TRANSFER_CHECKS = {
     "same_physical_entity_geometry_catalog",
     "only_selected_whole_faces_change_degree",
+    "full_face_closure_embedding_is_nested",
+    "edge_to_face_coupling_is_present",
+    "reference_face_closure_has_no_outside_coupling",
     "physical_constraint_graph_injection_closes",
+    "selected_patch_injection_is_full_rank",
+    "each_graph_expanded_face_has_20_quotient_modes",
+    "face_generators_form_direct_sum",
+    "face_generators_are_global_complement",
+    "generator_and_orthonormal_projectors_agree",
+    "face_generator_gram_is_well_conditioned",
     "root_dimension_delta_is_20_per_selected_face",
     "complement_dimension_is_20_per_selected_face",
     "complement_is_solver_coordinate_orthogonal",
@@ -920,6 +929,138 @@ def _changed_entities_pass(rows: Any) -> bool:
     )
 
 
+def _selected_root_support_catalog_pass(rows: Any) -> bool:
+    if not isinstance(rows, list) or len(rows) != SELECTED_FACE_COUNT:
+        return False
+    normalized_keys: set[tuple[int, ...]] = set()
+    constrained_rows = 0
+    expected_fields = {
+        "geometry_key",
+        "physical_closure_rows",
+        "independent_root_support_rows",
+        "constrained_physical_closure_rows",
+        "coarse_root_support_columns",
+        "local_injection_rank",
+        "local_rank_tolerance",
+        "local_smallest_singular_value",
+        "local_condition_number",
+        "local_complement_dimension",
+    }
+    for row in rows:
+        if not isinstance(row, Mapping) or set(row) != expected_fields:
+            return False
+        try:
+            key = tuple(int(value) for value in row["geometry_key"])
+            support = int(row["independent_root_support_rows"])
+            constrained = int(row["constrained_physical_closure_rows"])
+            coarse = int(row["coarse_root_support_columns"])
+            rank = int(row["local_injection_rank"])
+            tolerance = float(row["local_rank_tolerance"])
+            smallest = float(row["local_smallest_singular_value"])
+            condition = float(row["local_condition_number"])
+            complement = int(row["local_complement_dimension"])
+        except (KeyError, TypeError, ValueError):
+            return False
+        if (
+            key not in set(TASK035D_SELECTIVE_FACE_GEOMETRY_KEYS)
+            or row["physical_closure_rows"] != 80
+            or support <= 0
+            or constrained < 0
+            or constrained > 80
+            or coarse <= 0
+            or rank != coarse
+            or not math.isfinite(tolerance)
+            or tolerance < 0.0
+            or not math.isfinite(smallest)
+            or smallest <= tolerance
+            or not math.isfinite(condition)
+            or condition < 1.0
+            or condition > 1.0e8
+            or support - rank != 20
+            or complement != 20
+        ):
+            return False
+        normalized_keys.add(key)
+        constrained_rows += constrained
+    return bool(
+        normalized_keys == set(TASK035D_SELECTIVE_FACE_GEOMETRY_KEYS)
+        and constrained_rows > 0
+    )
+
+
+def _rank_statistics_pass(
+    row: Mapping[str, Any],
+    *,
+    tolerance_field: str,
+    smallest_field: str,
+    condition_field: str,
+) -> bool:
+    tolerance = _number(row.get(tolerance_field))
+    smallest = _number(row.get(smallest_field))
+    condition = _number(row.get(condition_field))
+    return bool(
+        tolerance is not None
+        and tolerance >= 0.0
+        and smallest is not None
+        and smallest > tolerance
+        and condition is not None
+        and 1.0 <= condition <= 1.0e8
+    )
+
+
+def _unit_pairing_content_pass(
+    content: Any,
+    identity: Any,
+    *,
+    expected_channels: set[str],
+) -> bool:
+    if not isinstance(content, Mapping) or set(content) != expected_channels:
+        return False
+    if not isinstance(identity, Mapping):
+        return False
+    expected_face_keys = {
+        str(key) for key in TASK035D_SELECTIVE_FACE_GEOMETRY_KEYS
+    }
+    for row in content.values():
+        if (
+            not isinstance(row, Mapping)
+            or set(row)
+            != {
+                "effective",
+                "unexplained",
+                "faces",
+                "adjoint_l2_norm",
+            }
+            or _complex_pair(row.get("effective")) is None
+            or _complex_pair(row.get("unexplained")) is None
+        ):
+            return False
+        norm = _number(row.get("adjoint_l2_norm"))
+        faces = row.get("faces")
+        if (
+            norm is None
+            or norm <= 0.0
+            or not isinstance(faces, Mapping)
+            or set(faces) != expected_face_keys
+            or any(
+                _complex_pair(value) is None
+                for value in faces.values()
+            )
+        ):
+            return False
+    return bool(
+        identity.get("schema_version")
+        == "task035d.selective-face-unit-pairing-content.v1"
+        and identity.get("sha256")
+        == _json_sha256(
+            content,
+            namespace="task035d.selective-face-unit-pairings.v1",
+        )
+        and identity.get("mpi_size") == 8
+        and identity.get("all_ranks_identical") is True
+    )
+
+
 def _basis_report_pass(
     basis: Mapping[str, Any],
     *,
@@ -1178,6 +1319,7 @@ def _goal_closure_audit(
     *,
     basis_channels: Mapping[str, Any],
     basis_goals: Mapping[str, Any],
+    unit_pairings: Mapping[str, Any],
     coarse_endpoint: Mapping[str, Any],
     state_delta_l2_norm: float | None,
     complement_unexplained_limit: float | None,
@@ -1201,14 +1343,20 @@ def _goal_closure_audit(
         return failure
     channel = basis_channels.get(channel_label)
     basis_goal = basis_goals.get(label)
+    unit_pairing = unit_pairings.get(channel_label)
     if (
         not isinstance(channel, Mapping)
         or not isinstance(basis_goal, Mapping)
+        or not isinstance(unit_pairing, Mapping)
         or expected_label != label
         or metadata.get("label") != label
         or basis_goal.get("goal") != metadata
     ):
         return failure
+    unit_effective = _complex_pair(unit_pairing.get("effective"))
+    unit_unexplained = _complex_pair(unit_pairing.get("unexplained"))
+    unit_faces = unit_pairing.get("faces")
+    unit_pairing_l2_norm = _number(unit_pairing.get("adjoint_l2_norm"))
     actual = _number(goal.get("actual_goal_delta_a_minus_b"))
     estimate = _number(goal.get("signed_dwr_estimate"))
     value_a = _number(goal.get("value_a"))
@@ -1321,6 +1469,11 @@ def _goal_closure_audit(
         or basis_goal_value is None
         or channel_unit_norm is None
         or channel_unit_norm < 0.0
+        or unit_effective is None
+        or unit_unexplained is None
+        or not isinstance(unit_faces, Mapping)
+        or unit_pairing_l2_norm is None
+        or unit_pairing_l2_norm <= 0.0
         or recomputed_basis_scalar is None
         or input_scale is None
         or input_phase is None
@@ -1373,6 +1526,7 @@ def _goal_closure_audit(
     closure_limit = 8.0 * (residual_bound + roundoff)
 
     expected_face_keys = set(TASK035D_SELECTIVE_FACE_GEOMETRY_KEYS)
+    expected_unit_face_keys = {str(key) for key in expected_face_keys}
     face_values: dict[tuple[int, ...], dict[str, float | complex]] = {}
     face_sum = 0.0 + 0.0j
     face_absolute_sum = 0.0
@@ -1388,6 +1542,7 @@ def _goal_closure_audit(
             face_rows_valid = False
             continue
         pairing = _complex_pair(row.get("complex_pairing"))
+        unit_face_pairing = _complex_pair(unit_faces.get(str(key)))
         signed = _number(row.get("signed_real_contribution"))
         absolute = _number(row.get("absolute_marking_weight"))
         normalized = _number(row.get("normalized_absolute_contribution"))
@@ -1395,12 +1550,17 @@ def _goal_closure_audit(
             key in face_values
             or key not in expected_face_keys
             or pairing is None
+            or unit_face_pairing is None
             or signed is None
             or absolute is None
             or normalized is None
             or not _roundoff_equal(signed, pairing.real)
             or not _roundoff_equal(absolute, abs(signed))
             or not _roundoff_equal(normalized, abs(signed) / tolerance)
+            or not _complex_roundoff_equal(
+                pairing,
+                np.conj(gamma) * unit_face_pairing,
+            )
         ):
             face_rows_valid = False
             continue
@@ -1437,6 +1597,7 @@ def _goal_closure_audit(
     passed = bool(
         face_rows_valid
         and set(face_values) == expected_face_keys
+        and set(unit_faces) == expected_unit_face_keys
         and isinstance(scalar_inputs, Mapping)
         and scalar_inputs.get("quantity") == quantity
         and _linear_residual_report_pass(residual)
@@ -1458,6 +1619,7 @@ def _goal_closure_audit(
         and _complex_roundoff_equal(basis_scale, coarse_scale)
         and _roundoff_equal(basis_goal_value, expected_value_a)
         and _roundoff_equal(unit_adjoint_l2_norm, channel_unit_norm)
+        and _roundoff_equal(unit_adjoint_l2_norm, unit_pairing_l2_norm)
         and _complex_roundoff_equal(input_scale, coarse_scale)
         and _complex_roundoff_equal(
             input_phase,
@@ -1497,9 +1659,17 @@ def _goal_closure_audit(
         and _roundoff_equal(stored_limit, closure_limit)
         and abs(recomputed_error) <= closure_limit
         and _roundoff_equal(global_pairing.real, estimate)
+        and _complex_roundoff_equal(
+            global_pairing,
+            np.conj(gamma) * unit_effective,
+        )
         and _complex_roundoff_equal(stored_face_sum, face_sum)
         and _complex_roundoff_equal(stored_face_error, face_error)
         and _complex_roundoff_equal(unexplained_pairing, face_error)
+        and _complex_roundoff_equal(
+            unexplained_pairing,
+            np.conj(gamma) * unit_unexplained,
+        )
         and stored_face_limit is not None
         and _roundoff_equal(stored_face_limit, face_closure_limit)
         and stored_face_theoretical is not None
@@ -1683,6 +1853,10 @@ def task035d_selective_face_dwr_report_gate(
     basis_channels = basis_channels if isinstance(basis_channels, Mapping) else {}
     basis_goals = basis.get("goals")
     basis_goals = basis_goals if isinstance(basis_goals, Mapping) else {}
+    unit_pairing_content = report.get("unit_pairing_content")
+    unit_pairing_identity = report.get(
+        "unit_pairing_content_identity"
+    )
     goals = report.get("goal_dwr")
     goals = goals if isinstance(goals, Mapping) else {}
     goal_rows = goals.get("goals")
@@ -1745,6 +1919,11 @@ def task035d_selective_face_dwr_report_gate(
             goal_rows.get(label),
             basis_channels=basis_channels,
             basis_goals=basis_goals,
+            unit_pairings=(
+                unit_pairing_content
+                if isinstance(unit_pairing_content, Mapping)
+                else {}
+            ),
             coarse_endpoint=coarse_snapshot_endpoint,
             state_delta_l2_norm=state_delta,
             complement_unexplained_limit=complement_limit,
@@ -1773,7 +1952,14 @@ def task035d_selective_face_dwr_report_gate(
     transfer_errors = [
         _number(transfer.get(name))
         for name in (
+            "reference_edge_identity_error_max",
+            "reference_edge_target_face_source_error_max",
+            "reference_face_interior_block_error_max",
+            "reference_closure_target_from_outside_source_max",
+            "reference_outside_target_from_closure_source_max",
             "graph_injection_closure_error_max",
+            "face_generator_global_cross_error_max",
+            "face_generator_projector_error_max",
             "complement_cross_error_max",
             "complement_gram_error_max",
         )
@@ -1960,7 +2146,31 @@ def task035d_selective_face_dwr_report_gate(
             "trace_complement_projector_sha256",
             "complement_basis_sha256_noncanonical",
             "selected_root_positions_sha256",
+            "reference_face_closure_injection_sha256",
+            "face_generator_slices_sha256",
+            "face_generator_gram_sha256",
+            "selected_face_root_support_catalog_sha256",
         )
+    )
+    expected_face_generator_slices = {
+        str(key): [20 * index, 20 * (index + 1)]
+        for index, key in enumerate(
+            sorted(TASK035D_SELECTIVE_FACE_GEOMETRY_KEYS)
+        )
+    }
+    transfer_payload_hashes_pass = bool(
+        isinstance(
+            transfer.get("selected_face_root_support_catalog"),
+            list,
+        )
+        and transfer.get(
+            "selected_face_root_support_catalog_sha256"
+        )
+        == _json_sha256(
+            transfer["selected_face_root_support_catalog"]
+        )
+        and transfer.get("face_generator_slices_sha256")
+        == _json_sha256(expected_face_generator_slices)
     )
     checks = {
         "report_schema_and_status": (
@@ -2019,13 +2229,85 @@ def task035d_selective_face_dwr_report_gate(
             report.get("same_trace_only") is False
             and report.get("actual_cross_trace_primal_prolongation_used") is True
             and transfer.get("schema_version")
-            == "task035d.selective-face-physical-root-transfer.v1"
+            == "task035d.selective-face-physical-root-transfer.v2"
             and transfer.get("status") == "selective_face_physical_root_transfer_pass"
             and transfer.get("pass") is True
             and transfer.get("coarse_raw_trace_rows") == 23_875
             and transfer.get("selected_p6_face_count") == SELECTED_FACE_COUNT
             and transfer.get("selected_p6_face_geometry_keys") == expected_face_keys
             and transfer.get("trace_dimension_delta") == 200
+            and transfer.get("reference_face_closure_shape") == [80, 60]
+            and transfer.get("reference_face_closure_rank") == 60
+            and transfer.get(
+                "reference_face_generator_face_block_rank"
+            )
+            == 20
+            and _rank_statistics_pass(
+                transfer,
+                tolerance_field=(
+                    "reference_face_closure_rank_tolerance"
+                ),
+                smallest_field=(
+                    "reference_face_closure_smallest_singular_value"
+                ),
+                condition_field=(
+                    "reference_face_closure_condition_number"
+                ),
+            )
+            and _number(
+                transfer.get("reference_face_target_edge_source_max")
+            )
+            is not None
+            and float(
+                transfer.get("reference_face_target_edge_source_max")
+            )
+            > 1.0e-12
+            and isinstance(transfer.get("affected_root_row_count"), int)
+            and isinstance(
+                transfer.get("affected_coarse_column_count"),
+                int,
+            )
+            and transfer.get("affected_root_row_count")
+            - transfer.get("affected_coarse_column_count")
+            == 200
+            and transfer.get("dense_patch_shape")
+            == [
+                transfer.get("affected_root_row_count"),
+                transfer.get("affected_coarse_column_count"),
+            ]
+            and transfer.get("full_width_dense_transfer_materialized")
+            is False
+            and transfer.get("selected_patch_injection_rank")
+            == transfer.get("affected_coarse_column_count")
+            and _rank_statistics_pass(
+                transfer,
+                tolerance_field="selected_patch_rank_tolerance",
+                smallest_field=(
+                    "selected_patch_smallest_singular_value"
+                ),
+                condition_field="selected_patch_condition_number",
+            )
+            and transfer.get("face_generator_rank") == 200
+            and _rank_statistics_pass(
+                transfer,
+                tolerance_field="face_generator_rank_tolerance",
+                smallest_field=(
+                    "face_generator_smallest_singular_value"
+                ),
+                condition_field="face_generator_condition_number",
+            )
+            and _selected_root_support_catalog_pass(
+                transfer.get("selected_face_root_support_catalog")
+            )
+            and _number(
+                transfer.get("face_generator_gram_condition_number")
+            )
+            is not None
+            and 1.0
+            <= float(
+                transfer.get("face_generator_gram_condition_number")
+            )
+            <= 1.0e8
             and transfer.get("coarse_independent_trace_rows") == COARSE_SOLVE_ROWS - 80
             and transfer.get("enriched_independent_trace_rows")
             == ENRICHED_SOLVE_ROWS - 80
@@ -2034,6 +2316,7 @@ def task035d_selective_face_dwr_report_gate(
             and transfer_input_identity_pass
             and _changed_entities_pass(transfer.get("changed_entities"))
             and transfer_hashes_pass
+            and transfer_payload_hashes_pass
             and transfer.get("complement_basis_is_identity_authority") is False
             and all(value is not None for value in transfer_errors)
             and all(
@@ -2044,9 +2327,18 @@ def task035d_selective_face_dwr_report_gate(
             and set(transfer_checks) == _ROOT_TRANSFER_CHECKS
             and all(value is True for value in transfer_checks.values())
             and transfer.get("cross_trace_dwr_scope")
-            == "whole non-hanging non-periodic physical p6 face roots"
-            and transfer.get("periodic_selected_face_backend_supported_but_dwr_v1")
+            == (
+                "whole non-periodic physical p6 faces with "
+                "graph-expanded closure-root support"
+            )
+            and transfer.get("periodic_selected_face_backend_supported_but_dwr_v2")
             is False
+            and transfer.get(
+                "physical_closure_rows_assumed_independent_roots"
+            )
+            is False
+            and transfer.get("signed_face_attribution")
+            == "direct_sum_face_generators_with_full_gram_decomposition"
             and transfer.get("ordinary_default_changed") is False
         ),
         "galerkin_and_complement_recomputed": (_galerkin_audit_pass(galerkin)),
@@ -2056,6 +2348,13 @@ def task035d_selective_face_dwr_report_gate(
         ),
         "twelve_actual_unit_adjoints_recomputed": (
             basis_schema_pass and channel_residuals_pass
+        ),
+        "all_rank_unit_pairing_content_identity": (
+            _unit_pairing_content_pass(
+                unit_pairing_content,
+                unit_pairing_identity,
+                expected_channels=expected_channels,
+            )
         ),
         "all_scaled_goal_residuals_recomputed": goal_residuals_pass,
         "goal_inventory_exact": (set(goal_rows) == set(expected_goal_tolerances)),

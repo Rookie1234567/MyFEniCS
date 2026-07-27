@@ -52,6 +52,54 @@ def test_one_face_is_true_nested_exact_sequence_complement() -> None:
         rtol=5.0e-11,
         atol=5.0e-11,
     )
+    coarse_closure = np.asarray(
+        result.coarse_space.hcurl_element.entity_closure_dofs[2][0],
+        dtype=np.int64,
+    )
+    enriched_closure = np.asarray(
+        result.enriched_space.hcurl_element.entity_closure_dofs[2][0],
+        dtype=np.int64,
+    )
+    closure_injection = result.hcurl.injection[
+        np.ix_(enriched_closure, coarse_closure)
+    ]
+    assert closure_injection.shape == (80, 60)
+    assert np.linalg.matrix_rank(closure_injection) == 60
+    np.testing.assert_allclose(
+        closure_injection[:20, :20],
+        np.eye(20),
+        rtol=5.0e-11,
+        atol=5.0e-11,
+    )
+    assert np.max(np.abs(closure_injection[20:, :20])) > 0.4
+    np.testing.assert_allclose(
+        closure_injection[20:, 20:],
+        result.face_interior.p5_to_p6,
+        rtol=5.0e-11,
+        atol=5.0e-11,
+    )
+    outside_coarse = np.setdiff1d(
+        np.arange(result.hcurl.injection.shape[1]),
+        coarse_closure,
+    )
+    outside_enriched = np.setdiff1d(
+        np.arange(result.hcurl.injection.shape[0]),
+        enriched_closure,
+    )
+    assert np.max(
+        np.abs(
+            result.hcurl.injection[
+                np.ix_(enriched_closure, outside_coarse)
+            ]
+        )
+    ) <= 5.0e-11
+    assert np.max(
+        np.abs(
+            result.hcurl.injection[
+                np.ix_(outside_enriched, coarse_closure)
+            ]
+        )
+    ) <= 5.0e-11
 
 
 def test_catalog_covers_all_faces_and_is_deterministic() -> None:
@@ -70,6 +118,35 @@ def test_catalog_covers_all_faces_and_is_deterministic() -> None:
         and entry["dtn_port_complement_qualified"] is False
         for entry in first["entries"]
     )
+    canonical = None
+    for local_face in range(6):
+        result = build_selective_p6_face_reference_complement(local_face)
+        coarse_closure = np.asarray(
+            result.coarse_space.hcurl_element.entity_closure_dofs[2][
+                local_face
+            ],
+            dtype=np.int64,
+        )
+        enriched_closure = np.asarray(
+            result.enriched_space.hcurl_element.entity_closure_dofs[2][
+                local_face
+            ],
+            dtype=np.int64,
+        )
+        closure = result.hcurl.injection[
+            np.ix_(enriched_closure, coarse_closure)
+        ]
+        assert closure.shape == (80, 60)
+        assert np.linalg.matrix_rank(closure) == 60
+        if canonical is None:
+            canonical = closure
+        else:
+            np.testing.assert_allclose(
+                closure,
+                canonical,
+                rtol=5.0e-11,
+                atol=5.0e-11,
+            )
 
 
 @pytest.mark.parametrize("local_face", (-1, 6))

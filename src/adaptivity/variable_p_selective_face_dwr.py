@@ -1015,7 +1015,7 @@ def _goal_reports(
             "sum_normalized_absolute_contribution": 0.0,
             "goal_contributions": {},
         }
-        for key in transfer.complement_slices
+        for key in transfer.face_generator_slices
     }
     reports: dict[str, Any] = {}
     passed = 0
@@ -1101,7 +1101,7 @@ def _goal_reports(
         face_sum = 0.0 + 0.0j
         face_absolute_sum = 0.0
         tolerance = tolerances[goal.label]
-        for key in sorted(transfer.complement_slices):
+        for key in sorted(transfer.face_generator_slices):
             unit_face = complex(unit["faces"][key])
             face_pairing = scaled_unit_adjoint_pairing(
                 unit_face,
@@ -1381,6 +1381,21 @@ def evaluate_selective_face_enriched_snapshot(
         "trace_complement_projector_sha256": transfer.audit[
             "trace_complement_projector_sha256"
         ],
+        "reference_face_closure_injection_sha256": transfer.audit[
+            "reference_face_closure_injection_sha256"
+        ],
+        "face_generator_slices_sha256": transfer.audit[
+            "face_generator_slices_sha256"
+        ],
+        "face_generator_gram_sha256": transfer.audit[
+            "face_generator_gram_sha256"
+        ],
+        "selected_face_root_support_catalog_sha256": transfer.audit[
+            "selected_face_root_support_catalog_sha256"
+        ],
+        "selected_root_positions_sha256": transfer.audit[
+            "selected_root_positions_sha256"
+        ],
         "coarse_input_identity": transfer.audit["coarse_input_identity"],
         "enriched_input_identity": transfer.audit["enriched_input_identity"],
         "selected_p6_face_geometry_keys": transfer.audit[
@@ -1471,16 +1486,13 @@ def evaluate_selective_face_enriched_snapshot(
     ) -> None:
         label = _channel_label(identity)
         z, _ = _global_petsc_values(unit_adjoint, comm)
-        z_complement = transfer.complement_coordinates(z)
-        r_complement = transfer.complement_coordinates(effective)
-        faces: dict[tuple[int, ...], complex] = {}
-        for key, (start, stop) in transfer.complement_slices.items():
-            faces[key] = complex(
-                np.vdot(
-                    z_complement[start:stop],
-                    r_complement[start:stop],
-                )
+        reconstructed = np.ascontiguousarray(effective - unexplained)
+        faces = dict(
+            transfer.partition_pairing(
+                z,
+                reconstructed,
             )
+        )
         unit_pairings[label] = {
             "effective": complex(np.vdot(z, effective)),
             "unexplained": complex(np.vdot(z, unexplained)),
@@ -1575,6 +1587,24 @@ def evaluate_selective_face_enriched_snapshot(
             "failure_stage": failure["failure_stage"],
             "ordinary_default_changed": False,
         }
+    unit_pairing_content = _jsonable(unit_pairings)
+    unit_pairings_sha256 = _json_sha256(
+        unit_pairing_content,
+        namespace="task035d.selective-face-unit-pairings.v1",
+    )
+    all_unit_pairing_hashes = comm.allgather(unit_pairings_sha256)
+    if len(set(all_unit_pairing_hashes)) != 1:
+        raise RuntimeError(
+            "selective-face unit pairings differ across MPI ranks"
+        )
+    unit_pairing_content_identity = {
+        "schema_version": (
+            "task035d.selective-face-unit-pairing-content.v1"
+        ),
+        "sha256": unit_pairings_sha256,
+        "mpi_size": int(comm.size),
+        "all_ranks_identical": True,
+    }
     for label, pairing in unit_pairings.items():
         basis_report["channels"][label]["unit_adjoint_l2_norm"] = float(
             pairing["adjoint_l2_norm"]
@@ -1635,6 +1665,10 @@ def evaluate_selective_face_enriched_snapshot(
             "real_goal_count": 36,
         },
         "unit_channel_adjoint_basis": basis_report,
+        "unit_pairing_content": unit_pairing_content,
+        "unit_pairing_content_identity": (
+            unit_pairing_content_identity
+        ),
         "goal_dwr": goal_dwr,
         "selected_face_multigoal_marking": {
             "normalization": (

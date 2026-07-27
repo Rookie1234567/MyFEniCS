@@ -454,12 +454,14 @@ def build_broken_hexa_entity_degree_arrays(
     return arrays[1], arrays[2]
 
 
-def _face_full_rows(
+def physical_face_closure_rows(
     face: PhysicalTraceEntity,
     entities: Mapping[tuple[int, tuple[int, ...]], PhysicalTraceEntity],
 ) -> tuple[PhysicalTraceRowKey, ...]:
+    """Return canonical edge-plus-face rows for one physical face closure."""
+
     if face.dimension != 2:
-        raise ValueError("full face trace requires a face entity")
+        raise ValueError("physical face closure requires a face entity")
     topology = basix.topology(basix.CellType.quadrilateral)
     points = face.canonical_points
     rows: list[PhysicalTraceRowKey] = []
@@ -498,7 +500,7 @@ def _build_hanging_relations(
         coarse_face = entities.get((2, coarse_key))
         if coarse_face is None:
             raise RuntimeError("hanging coarse face is absent from carrier")
-        coarse_rows = _face_full_rows(coarse_face, entities)
+        coarse_rows = physical_face_closure_rows(coarse_face, entities)
         fine_unique: list[PhysicalTraceRowKey | None] = [
             None
         ] * pair.hcurl_unique_fine_from_coarse.shape[0]
@@ -532,7 +534,7 @@ def _build_hanging_relations(
             fine_face = entities.get((2, fine_key))
             if fine_face is None:
                 raise RuntimeError("hanging fine face is absent from carrier")
-            local_rows = _face_full_rows(fine_face, entities)
+            local_rows = physical_face_closure_rows(fine_face, entities)
             aggregate_rows = pair.hcurl_child_rows[child]
             for local_row, aggregate_row in enumerate(aggregate_rows):
                 physical_row = local_rows[local_row]
@@ -1030,4 +1032,5 @@ __all__ = [
     "PhysicalTraceEntity",
     "build_broken_hexa_entity_degree_arrays",
     "build_broken_hexa_trace_constraint_authority",
+    "physical_face_closure_rows",
 ]

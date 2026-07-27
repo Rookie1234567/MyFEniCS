@@ -245,7 +245,10 @@ def _task035d_selective_face_controlled_negative(
         )
         and isinstance(transfer, Mapping)
         and transfer.get("schema_version")
-        == "task035d.selective-face-physical-root-transfer.v1"
+        in {
+            "task035d.selective-face-physical-root-transfer.v1",
+            "task035d.selective-face-physical-root-transfer.v2",
+        }
         and transfer.get("pass") is True
         and isinstance(galerkin, Mapping)
         and galerkin.get("schema_version")

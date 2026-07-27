@@ -258,6 +258,7 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
     channels: dict[str, dict] = {}
     basis_goals: dict[str, dict] = {}
     goal_rows: dict[str, dict] = {}
+    unit_pairing_content: dict[str, dict] = {}
     accumulated = {
         key: {
             "goal_contributions": {},
@@ -286,6 +287,7 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
             1.0e-6 * (mode_index + 1),
             -0.5e-6 * (mode_index + 1),
         )
+        unit_effective = scale * (outgoing_a - outgoing_b)
         channel_goal_labels: list[str] = []
         gate = authority_row["unchanged_v0_acceptance_gate"]
         for quantity in (
@@ -328,7 +330,9 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
                 basis_scalar = gamma
                 reported_weight = None
                 scaling_semantics = "exact_affine_amplitude_gradient"
-            estimate = value_a - value_b
+            global_pairing = gamma.conjugate() * unit_effective
+            actual_delta = value_a - value_b
+            estimate = global_pairing.real
             residual_bound = 0.0
             roundoff = (
                 512.0
@@ -336,9 +340,10 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
                 * max(abs(value_a), abs(value_b), abs(estimate), 1.0)
             )
             closure_limit = 8.0 * (residual_bound + roundoff)
-            face_pairings = [estimate / len(face_keys) + 0.0j for _ in face_keys]
+            face_pairings = [
+                global_pairing / len(face_keys) for _ in face_keys
+            ]
             face_sum = sum(face_pairings, 0.0 + 0.0j)
-            global_pairing = estimate + 0.0j
             face_error = global_pairing - face_sum
             face_absolute_sum = sum(abs(value) for value in face_pairings)
             face_roundoff = (
@@ -417,9 +422,9 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
                 "pass": True,
                 "value_a": value_a,
                 "value_b": value_b,
-                "actual_goal_delta_a_minus_b": estimate,
+                "actual_goal_delta_a_minus_b": actual_delta,
                 "signed_dwr_estimate": estimate,
-                "signed_goal_closure_error": 0.0,
+                "signed_goal_closure_error": estimate - actual_delta,
                 "goal_closure_limit": closure_limit,
                 "unit_adjoint_residual_error_bound": 0.0,
                 "unit_adjoint_l2_norm": 1.0,
@@ -482,6 +487,15 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
             "independent_factor_backsolve_performed": True,
             "unit_adjoint_l2_norm": 1.0,
         }
+        unit_pairing_content[channel_name] = {
+            "effective": _complex_pair(unit_effective),
+            "unexplained": [0.0, 0.0],
+            "faces": {
+                str(key): _complex_pair(unit_effective / len(face_keys))
+                for key in face_keys
+            },
+            "adjoint_l2_norm": 1.0,
+        }
     ranked = [
         {
             "geometry_key": list(key),
@@ -497,13 +511,43 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
     transfer_checks = {
         "same_physical_entity_geometry_catalog": True,
         "only_selected_whole_faces_change_degree": True,
+        "full_face_closure_embedding_is_nested": True,
+        "edge_to_face_coupling_is_present": True,
+        "reference_face_closure_has_no_outside_coupling": True,
         "physical_constraint_graph_injection_closes": True,
+        "selected_patch_injection_is_full_rank": True,
+        "each_graph_expanded_face_has_20_quotient_modes": True,
+        "face_generators_form_direct_sum": True,
+        "face_generators_are_global_complement": True,
+        "generator_and_orthonormal_projectors_agree": True,
+        "face_generator_gram_is_well_conditioned": True,
         "root_dimension_delta_is_20_per_selected_face": True,
         "complement_dimension_is_20_per_selected_face": True,
         "complement_is_solver_coordinate_orthogonal": True,
         "complement_is_solver_coordinate_orthonormal": True,
         "auxiliary_coordinates_are_identity": True,
         "no_hidden_global_p6_matrix": True,
+    }
+    root_support_catalog = [
+        {
+            "geometry_key": list(key),
+            "physical_closure_rows": 80,
+            "independent_root_support_rows": 80,
+            "constrained_physical_closure_rows": (
+                5 if index == 0 else 0
+            ),
+            "coarse_root_support_columns": 60,
+            "local_injection_rank": 60,
+            "local_rank_tolerance": 1.0e-12,
+            "local_smallest_singular_value": 0.01,
+            "local_condition_number": 240.0,
+            "local_complement_dimension": 20,
+        }
+        for index, key in enumerate(face_keys)
+    ]
+    face_generator_slices = {
+        str(key): [20 * index, 20 * (index + 1)]
+        for index, key in enumerate(sorted(face_keys))
     }
     mode_identity, mode_index_by_channel = _coarse_mode_identity(authority)
     entity_catalog = _coarse_entity_catalog()
@@ -606,13 +650,49 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
         },
         "endpoint_identity_authorities": endpoint_identity_authorities,
         "root_transfer": {
-            "schema_version": ("task035d.selective-face-physical-root-transfer.v1"),
+            "schema_version": ("task035d.selective-face-physical-root-transfer.v2"),
             "status": "selective_face_physical_root_transfer_pass",
             "pass": True,
             "coarse_raw_trace_rows": 23_875,
             "selected_p6_face_count": len(face_keys),
             "selected_p6_face_geometry_keys": [list(key) for key in face_keys],
             "trace_dimension_delta": 200,
+            "reference_face_closure_shape": [80, 60],
+            "reference_face_closure_rank": 60,
+            "reference_face_closure_rank_tolerance": 1.0e-12,
+            "reference_face_closure_smallest_singular_value": 0.01,
+            "reference_face_closure_condition_number": 240.0,
+            "reference_face_generator_face_block_rank": 20,
+            "reference_closure_target_from_outside_source_max": 0.0,
+            "reference_outside_target_from_closure_source_max": 0.0,
+            "reference_face_closure_injection_sha256": "e" * 64,
+            "reference_edge_identity_error_max": 0.0,
+            "reference_edge_target_face_source_error_max": 0.0,
+            "reference_face_target_edge_source_max": 0.5,
+            "reference_face_interior_block_error_max": 0.0,
+            "affected_root_row_count": 745,
+            "affected_coarse_column_count": 545,
+            "dense_patch_shape": [745, 545],
+            "full_width_dense_transfer_materialized": False,
+            "selected_patch_injection_rank": 545,
+            "selected_patch_rank_tolerance": 1.0e-12,
+            "selected_patch_smallest_singular_value": 0.01,
+            "selected_patch_condition_number": 250.0,
+            "selected_face_root_support_catalog": root_support_catalog,
+            "selected_face_root_support_catalog_sha256": _json_sha256(
+                root_support_catalog
+            ),
+            "face_generator_rank": 200,
+            "face_generator_rank_tolerance": 1.0e-12,
+            "face_generator_smallest_singular_value": 0.5,
+            "face_generator_condition_number": 2.0,
+            "face_generator_gram_condition_number": 2.0,
+            "face_generator_global_cross_error_max": 0.0,
+            "face_generator_projector_error_max": 0.0,
+            "face_generator_slices_sha256": _json_sha256(
+                face_generator_slices
+            ),
+            "face_generator_gram_sha256": "a" * 64,
             "coarse_independent_trace_rows": 18_390,
             "enriched_raw_trace_rows": 24_075,
             "enriched_independent_trace_rows": 18_590,
@@ -662,9 +742,14 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
             "complement_gram_error_max": 0.0,
             "checks": transfer_checks,
             "cross_trace_dwr_scope": (
-                "whole non-hanging non-periodic physical p6 face roots"
+                "whole non-periodic physical p6 faces with "
+                "graph-expanded closure-root support"
             ),
-            "periodic_selected_face_backend_supported_but_dwr_v1": False,
+            "periodic_selected_face_backend_supported_but_dwr_v2": False,
+            "physical_closure_rows_assumed_independent_roots": False,
+            "signed_face_attribution": (
+                "direct_sum_face_generators_with_full_gram_decomposition"
+            ),
             "ordinary_default_changed": False,
         },
         "galerkin_audit": {
@@ -733,6 +818,20 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
             "complex_conjugation": "Hermitian A^H, never plain transpose",
             "channels": channels,
             "goals": basis_goals,
+        },
+        "unit_pairing_content": unit_pairing_content,
+        "unit_pairing_content_identity": {
+            "schema_version": (
+                "task035d.selective-face-unit-pairing-content.v1"
+            ),
+            "sha256": _json_sha256(
+                unit_pairing_content,
+                namespace=(
+                    "task035d.selective-face-unit-pairings.v1"
+                ),
+            ),
+            "mpi_size": 8,
+            "all_ranks_identical": True,
         },
         "goal_dwr": {
             "schema_version": ("task035d.selective-face-live-36-goal-dwr.v1"),
@@ -908,6 +1007,31 @@ class Task035dSelectiveFaceRunnerCheckerTests(unittest.TestCase):
         made_up_transfer["root_transfer"]["checks"] = {"made_up": True}
         self.assertFalse(self._dwr_gate(made_up_transfer, endpoint)["pass"])
 
+        stale_face_interior_transfer = copy.deepcopy(report)
+        stale_face_interior_transfer["root_transfer"]["schema_version"] = (
+            "task035d.selective-face-physical-root-transfer.v1"
+        )
+        self.assertFalse(
+            self._dwr_gate(stale_face_interior_transfer, endpoint)["pass"]
+        )
+
+        missing_edge_coupling = copy.deepcopy(report)
+        missing_edge_coupling["root_transfer"][
+            "reference_face_target_edge_source_max"
+        ] = 0.0
+        self.assertFalse(
+            self._dwr_gate(missing_edge_coupling, endpoint)["pass"]
+        )
+
+        fake_root_support = copy.deepcopy(report)
+        for row in fake_root_support["root_transfer"][
+            "selected_face_root_support_catalog"
+        ]:
+            row["constrained_physical_closure_rows"] = 0
+        self.assertFalse(
+            self._dwr_gate(fake_root_support, endpoint)["pass"]
+        )
+
         negative_norm = copy.deepcopy(report)
         negative_norm["root_transfer"]["complement_gram_error_max"] = -1.0
         self.assertFalse(self._dwr_gate(negative_norm, endpoint)["pass"])
@@ -932,7 +1056,7 @@ class Task035dSelectiveFaceRunnerCheckerTests(unittest.TestCase):
 
         duplicated_adjoint = copy.deepcopy(report)
         channels = list(
-            duplicated_adjoint["unit_channel_adjoint_basis"]["channels"].values()
+        duplicated_adjoint["unit_channel_adjoint_basis"]["channels"].values()
         )
         channels[1]["unit_adjoint_content_identity"] = copy.deepcopy(
             channels[0]["unit_adjoint_content_identity"]
@@ -941,6 +1065,34 @@ class Task035dSelectiveFaceRunnerCheckerTests(unittest.TestCase):
             "unit_adjoint_content_sha256"
         ]
         self.assertFalse(self._dwr_gate(duplicated_adjoint, endpoint)["pass"])
+
+        divergent_rank_pairing = copy.deepcopy(report)
+        first_pairing = next(
+            iter(divergent_rank_pairing["unit_pairing_content"].values())
+        )
+        first_pairing["effective"][0] = 1.0
+        self.assertFalse(
+            self._dwr_gate(divergent_rank_pairing, endpoint)["pass"]
+        )
+
+        self_consistent_but_unlinked_pairing = copy.deepcopy(report)
+        first_pairing = next(
+            iter(
+                self_consistent_but_unlinked_pairing[
+                    "unit_pairing_content"
+                ].values()
+            )
+        )
+        first_pairing["effective"][0] += 1.0
+        self_consistent_but_unlinked_pairing[
+            "unit_pairing_content_identity"
+        ]["sha256"] = _json_sha256(
+            self_consistent_but_unlinked_pairing["unit_pairing_content"],
+            namespace="task035d.selective-face-unit-pairings.v1",
+        )
+        self.assertFalse(
+            self._dwr_gate(self_consistent_but_unlinked_pairing, endpoint)["pass"]
+        )
 
         wrong_mode = copy.deepcopy(report)
         channel = next(
