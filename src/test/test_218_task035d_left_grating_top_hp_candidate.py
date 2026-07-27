@@ -22,6 +22,9 @@ SELECTION = (
 PLAN = (
     RECORDS / "h15_left_grating_top_closure_p5fine_plan_v1.json"
 )
+LANE_CLOSURE = (
+    RECORDS / "bounded_single_root_top_air_lane_closure_v1.json"
+)
 ANALYZER_RELATIVE = (
     "benchmarks/cases/"
     "097_goal_oriented_exact_sequence_hp_adaptivity/"
@@ -145,3 +148,89 @@ def test_selected_plan_physically_omits_fine_child_p6_interiors() -> None:
     )
     assert plan["provenance"]["accuracy_credit"] is False
     assert plan["provenance"]["complete_combined_hp_credit"] is False
+
+
+def test_bounded_single_root_lane_closes_without_overclaiming() -> None:
+    closure = json.loads(LANE_CLOSURE.read_text(encoding="utf-8"))
+    assert closure["pass"] is True
+    assert closure["production_qualified"] is False
+    assert (
+        closure["status"]
+        == "bounded_single_root_top_air_local_h_lane_closed"
+    )
+    assert (
+        closure["lane"]["status"]
+        == "closed_after_two_formal_accuracy_negatives"
+    )
+    assert closure["lane"]["formal_interior_variants"] == [
+        {
+            "candidate_id": "h15_top_air_local_h_v1",
+            "fine_child_degree": 6,
+        },
+        {
+            "candidate_id": CANDIDATE_ID,
+            "fine_child_degree": 5,
+        },
+    ]
+
+    negatives = closure["formal_negative_signals"]
+    assert [row["candidate_id"] for row in negatives] == [
+        "h15_top_air_local_h_v1",
+        CANDIDATE_ID,
+    ]
+    assert all(
+        row["accuracy_status"] == "controlled_negative"
+        for row in negatives
+    )
+    assert [
+        (
+            row["significant_power_pass_count"],
+            row["significant_complex_amplitude_pass_count"],
+        )
+        for row in negatives
+    ] == [(6, 6), (4, 6)]
+
+    tracked_bindings = [
+        negatives[0]["record"],
+        negatives[1]["full_checker"],
+        negatives[1]["compact_checker"],
+        closure["remaining_actions"]["outer_periodic"][
+            "historical_stop_record"
+        ],
+        closure["remaining_actions"][
+            "frozen_ten_face_selective_p6_subset"
+        ]["record"],
+    ]
+    for binding in tracked_bindings:
+        path = ROOT / binding["path"]
+        assert path.is_file()
+        assert _sha256(path) == binding["sha256"]
+
+    remaining = closure["remaining_actions"]
+    outer = remaining["outer_periodic"]
+    assert outer["status"] == "not_run_by_lane_stop"
+    assert outer["pde_failure"] is False
+    assert (
+        remaining["multi_seed_combinations"]["status"]
+        == "not_evaluated_by_stop_rule"
+    )
+    assert (
+        remaining["frozen_ten_face_selective_p6_subset"]["status"]
+        == "closed_controlled_negative"
+    )
+    assert (
+        remaining["whole_top_port_selective_p6_trace"]["status"]
+        == "incomplete_not_run_no_authorized_candidate"
+    )
+    assert (
+        remaining["hybrid_phase_f"]["status"]
+        == "not_run_full3d_hp_gate_failed"
+    )
+
+    credit = closure["selection_credit"]
+    assert credit["compact_dwr_location_oracle"] is True
+    assert credit["actual_local_h_dwr_surplus"] is False
+    assert credit["actual_channel_dwr"] is False
+    assert credit["goal_oriented_selection_credit"] is False
+    assert credit["complete_combined_hp_credit"] is False
+    assert closure["ordinary_default_changed"] is False

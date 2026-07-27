@@ -1,5 +1,8 @@
 {
-  "schema_version": "task035d.case097-expected.v1",
+  "schema_version": "task035d.case097-expected.v2",
+  "classification": "PARTIAL_WITH_CONTROLLED_NEGATIVES",
+  "production_qualified": false,
+  "pde_accuracy_credit": false,
   "phase_a": {
     "entity_catalog_pass": true,
     "allowed_dimension_degree_triple_count": 10,
@@ -20,21 +23,58 @@
     "serial_required": true,
     "mpi2_required": true
   },
-  "phase_b_p_only": "t30_controlled_negative_0_of_12",
-  "phase_b_recovery_authority": {
-    "candidate": "sidewall_z0_guard_v1",
-    "status": "pre_pde_authority_pass",
-    "cell_degree_counts": {
-      "p4": 72,
-      "p5": 168,
-      "p6": 12
-    },
-    "active_fe_dofs": 89870,
-    "periodic_trace_plus_dtn80_rows": 31064,
-    "fresh_12_channel_pde_required": true
+  "phase_b_p_only": {
+    "status": "closed_after_two_formal_accuracy_negatives",
+    "t30_power_and_amplitude_pass": [
+      0,
+      0
+    ],
+    "sidewall_guard_power_and_amplitude_pass": [
+      1,
+      0
+    ]
   },
-  "phase_c_h_only": "not_run",
-  "phase_e_combined_hp": "not_run",
-  "phase_f_hybrid": "not_run",
+  "phase_c_true_local_h": {
+    "capability": "pass",
+    "formal_candidate": "h15_top_air_local_h_v1",
+    "active_fe_dofs": 82925,
+    "active_rows": 18470,
+    "power_and_amplitude_pass": [
+      6,
+      6
+    ],
+    "status": "controlled_negative_accuracy"
+  },
+  "phase_d_multigoal": {
+    "nested_p_dwr_real_goals_pass": [
+      36,
+      36
+    ],
+    "selective_trace_dwr_real_goals_pass": [
+      36,
+      36
+    ],
+    "actual_local_h_dwr_surplus_available": false,
+    "goal_oriented_selection_credit": false
+  },
+  "phase_e_combined_hp": {
+    "status": "bounded_single_root_top_air_local_h_lane_closed",
+    "final_candidate": "h15_left_grating_top_closure_p5fine_v1",
+    "active_fe_dofs": 88915,
+    "active_rows": 21650,
+    "peak_memory_gib": 8.061199188232422,
+    "full_explicit_true_residual": 3.267074937444803e-11,
+    "power_and_amplitude_pass": [
+      4,
+      6
+    ],
+    "production_qualified": false
+  },
+  "remaining_actions": {
+    "outer_periodic": "not_run_by_lane_stop",
+    "multi_seed": "not_evaluated_by_stop_rule",
+    "whole_top_port_selective_p6_trace": "incomplete_not_run_no_authorized_candidate"
+  },
+  "phase_f_hybrid": "not_run_full3d_hp_gate_failed",
   "ordinary_default_changed": false
 }

@@ -70,6 +70,7 @@ ACTIVE_RESEARCH_CASES = {
     "094_hcurl_goal_oriented_adaptivity",
     "095_high_order_local_hp_resource_envelope",
     "096_hybrid_channel_memory_closure",
+    "097_goal_oriented_exact_sequence_hp_adaptivity",
 }
 
 RECORDED_CASES = {
@@ -381,8 +382,7 @@ class DocumentationContractTests(unittest.TestCase):
                     )
                     self.assertFalse(irregular["run"])
                     self.assertFalse(irregular["completion_gate"])
-                else:
-                    self.assertTrue(case.startswith("096_"), case)
+                elif case.startswith("096_"):
                     self.assertEqual(config["geometry_scope"], "fixed_only")
                     self.assertEqual(config["degrees"], [2, 6])
                     self.assertEqual(config["mpi_size"], 8)
@@ -406,6 +406,142 @@ class DocumentationContractTests(unittest.TestCase):
                     )
                     self.assertFalse(irregular["run"])
                     self.assertFalse(irregular["completion_gate"])
+                else:
+                    self.assertTrue(case.startswith("097_"), case)
+                    self.assertEqual(
+                        config["schema_version"],
+                        "task035d.case097-config.v2",
+                    )
+                    self.assertEqual(
+                        config["status"],
+                        "partial_with_controlled_negatives",
+                    )
+                    self.assertEqual(
+                        config["classification"],
+                        "PARTIAL_WITH_CONTROLLED_NEGATIVES",
+                    )
+                    self.assertFalse(config["canonical"])
+                    self.assertFalse(config["production_qualified"])
+                    self.assertTrue(config["pde_run"])
+                    self.assertEqual(config["formal_mpi_size"], 8)
+                    self.assertEqual(config["geometry_scope"], "fixed_only")
+                    self.assertEqual(config["mesh_cell_type"], "hexahedron")
+                    self.assertEqual(
+                        config["qualified_entity_degrees"],
+                        [4, 5, 6],
+                    )
+                    self.assertEqual(
+                        config["formal_candidate_gate"],
+                        {
+                            "degree_set": [4, 5, 6],
+                            "active_full3d_dof_max": 90000,
+                            "significant_power_pass_required": 12,
+                            "significant_complex_amplitude_pass_required": 12,
+                            "true_residual_max": 1.0e-9,
+                        },
+                    )
+                    self.assertEqual(
+                        config["out_of_scope"],
+                        {
+                            "iterative_solver": "not_researched",
+                            "matrix_free": "not_researched",
+                            "wavelength_0p7_nm": "not_researched",
+                            "irregular_geometry": "not_researched",
+                        },
+                    )
+                    self.assertEqual(
+                        config["final_authority"],
+                        {
+                            "lane_closure": {
+                                "path": (
+                                    "benchmarks/cases/"
+                                    "097_goal_oriented_exact_sequence_hp_adaptivity/"
+                                    "records/"
+                                    "bounded_single_root_top_air_lane_closure_v1.json"
+                                ),
+                                "sha256": (
+                                    "a00e0824ae806b333b7ad4368526a483cd5c6c9f80"
+                                    "bbef4fd728d131aefc1d4e"
+                                ),
+                            },
+                            "final_candidate_compact": {
+                                "path": (
+                                    "benchmarks/cases/"
+                                    "097_goal_oriented_exact_sequence_hp_adaptivity/"
+                                    "records/"
+                                    "h15_left_grating_top_closure_p5fine_mpi8_"
+                                    "controlled_negative_compact_v1.json"
+                                ),
+                                "sha256": (
+                                    "d6e03061465b29ce4e958bfd6ac7972f245130fdf66de"
+                                    "197541caed09e8e4225"
+                                ),
+                            },
+                        },
+                    )
+                    expected = _load(folder / "expected.json")
+                    self.assertEqual(
+                        expected["schema_version"],
+                        "task035d.case097-expected.v2",
+                    )
+                    self.assertEqual(
+                        expected["classification"],
+                        "PARTIAL_WITH_CONTROLLED_NEGATIVES",
+                    )
+                    self.assertFalse(expected["production_qualified"])
+                    self.assertFalse(expected["pde_accuracy_credit"])
+                    self.assertEqual(
+                        expected["phase_b_p_only"]["status"],
+                        "closed_after_two_formal_accuracy_negatives",
+                    )
+                    self.assertEqual(
+                        expected["phase_c_true_local_h"][
+                            "power_and_amplitude_pass"
+                        ],
+                        [6, 6],
+                    )
+                    self.assertEqual(
+                        expected["phase_d_multigoal"][
+                            "nested_p_dwr_real_goals_pass"
+                        ],
+                        [36, 36],
+                    )
+                    self.assertEqual(
+                        expected["phase_d_multigoal"][
+                            "selective_trace_dwr_real_goals_pass"
+                        ],
+                        [36, 36],
+                    )
+                    self.assertFalse(
+                        expected["phase_d_multigoal"][
+                            "actual_local_h_dwr_surplus_available"
+                        ]
+                    )
+                    self.assertEqual(
+                        expected["phase_e_combined_hp"][
+                            "power_and_amplitude_pass"
+                        ],
+                        [4, 6],
+                    )
+                    self.assertFalse(
+                        expected["phase_e_combined_hp"][
+                            "production_qualified"
+                        ]
+                    )
+                    self.assertEqual(
+                        expected["remaining_actions"],
+                        {
+                            "outer_periodic": "not_run_by_lane_stop",
+                            "multi_seed": "not_evaluated_by_stop_rule",
+                            "whole_top_port_selective_p6_trace": (
+                                "incomplete_not_run_no_authorized_candidate"
+                            ),
+                        },
+                    )
+                    self.assertEqual(
+                        expected["phase_f_hybrid"],
+                        "not_run_full3d_hp_gate_failed",
+                    )
                 records = sorted((folder / "records").glob("*.json"))
                 self.assertGreaterEqual(len(records), 2)
                 readme = _read(folder / "README.md")

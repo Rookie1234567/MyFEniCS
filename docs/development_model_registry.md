@@ -280,9 +280,9 @@ H1-B p2/h3 为 `not_run_by_review_prerequisite`，不是普通待运行项。
 
 ---
 
-# 3. Task000–Task035c 逐任务统一总账
+# 3. Task000–Task035d 逐任务统一总账
 
-> 本节编号固定为 `3.1 Task000` 至 `3.38 Task035c`。每个 Task 先用通俗语言回答“研究什么、为什么研究、改变了哪段流程、最终结论是什么”，再用同一表头登记身份、物理、离散、算法、规模、总量、逐级结果、资源和处置。历史没有保存的字段统一写“历史未记录”，不填 0、不由功率反推复振幅。早期 `linear_system_relative_residual` 明确标成 legacy explicit residual，不冒充 Task035b/035c 的 full explicit true residual。
+> 本节编号固定为 `3.1 Task000` 至 `3.39 Task035d`。每个 Task 先用通俗语言回答“研究什么、为什么研究、改变了哪段流程、最终结论是什么”，再用同一表头登记身份、物理、离散、算法、规模、总量、逐级结果、资源和处置。历史没有保存的字段统一写“历史未记录”，不填 0、不由功率反推复振幅。早期 `linear_system_relative_residual` 明确标成 legacy explicit residual，不冒充 Task035b/035c/035d 的 full explicit true residual。
 
 统一表头如下，后续 checker 会检查每个 Task 都存在这一表头：
 
@@ -785,6 +785,10 @@ assembly-time variable-p active space：inactive 高阶模式不生成 global ro
 结构与资源成功、同精度失败的 controlled negative；不能把资源压缩写成物理
 成功，也不能据此放宽 12/12 Gate。
 
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `task035d_case097_closeout` | source、plan、MPI identity 与 checker SHA 均冻结 | Task034 fixed rectangular grating；p4/p5/p6 exact-sequence local-p；balanced-hexa local-h | MPI8 direct static；最佳资源点76,205 DoF/18,470 rows；最终判别点88,915/21,650 | 最佳通道6/12+6/12；最终4/12+6/12；峰值最低7.29866 GiB；Hybrid未运行 | `PARTIAL_WITH_CONTROLLED_NEGATIVES`；无 production hp candidate | `docs/task035d_goal_oriented_exact_sequence_hp_adaptivity/outcomes/summary.md` |
+
 | Model ID | source / plan identity | p4/p5/p6 cells | FE DoF / active rows | matrix / factor NNZ | residual / peak | strict physics | status / evidence |
 |---|---|---:|---:|---:|---:|---|---|
 | `task035d_t30_h10_mpi8` | solver `c3768cf4723c2ae949c82d1ce8b18a56f5ab0f7b`；checker `5f960f912809b162e363259b0896af25ef3b0018` | `144/56/52` | `87,600 / 28,990` | `15,253,176 / 63,564,300` | `1.410e-11 / 10.0929 GiB` | `0/12 power + 0/12 amplitude`；R/T/A L2 `21.214`；volume/interface `9.337%/9.884%` | `controlled_negative_accuracy`；`benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/t30_h10_mpi8_controlled_negative_v1.json` |
@@ -815,10 +819,10 @@ checker；只有 `top(-1,0)` power 通过，所有 complex amplitude 均失败�
 | top -1 | `4.78904e-8 / 5.11184e-8` pass | `8.61368e-5 / 7.41338e-6` |
 | top 0 | `1.21288e-4 / 3.19529e-5` | `2.83493e-3 / 8.33027e-4` |
 
-当前 true local-h 仍是 `in_progress/no_PDE_credit`。进入任何 local-h PDE
-前必须分别通过 dyadic hexa material/periodic/2:1 closure、H(curl) coarse-to-fine
-tangential trace、3D orientation、hanging+Floquet graph、static-condensation
-交换性和 serial/MPI ownership identity；否则必须 fail closed。
+该段登记的是当时的阶段状态。后续 Attempt 2 已补齐 compiled tensor、
+PETSc ownership、full recovery/residual 和 MPI1/2/8 production identity，
+并启动最小正式 local-h/hp PDE；最终结果登记在 3.39.2–3.39.6。Attempt 1
+记录仍保留为能力演进证据，不回写成当时已经具备 PDE credit。
 
 ### 3.39.1 True local-h Attempt 1 component authority
 
@@ -843,6 +847,109 @@ MPI comparison authority 为
 因此 Attempt 1 是结构正信号；下一步必须完成实际 cell-oriented
 `C_K`、compiled FFCx tensor、RHS/recovery、PETSc row ownership 与 MPI2
 matrix/action identity，才能进入 local-h PDE。
+
+### 3.39.2 Attempt 2、正式 local-h 与 combined-hp 总账
+
+Attempt 2 将 physical geometry-key graph 绑定到 compiled FFCx tensor、
+`C_K^H S_K C_K`、RHS/recovery、DtN、PETSc owner-routed rows 和完整
+active-space residual。MPI1/2/8 production identity 通过；inactive p6 mode、
+hanging slave 和 periodic slave 不生成 global row。
+
+正式模型均为 Task034 fixed rectangular block grating、13.5 nm、S 偏振、
+MPI8 direct MUMPS、assembly-time static condensation、zero swap：
+
+| Model ID | numerical source | local-h / p plan | FE DoF / rows | matrix / factor NNZ | residual / peak / total | strict physics | status / evidence |
+|---|---|---|---:|---:|---:|---|---|
+| `task035d_h15_top_air_local_h_mpi8` | `ed9c8fc6002bf086f19bef94492b23d7c24b7287` | 120 roots→134 leaves；p5 trace/p6 interior | `82,925 / 18,470` | `10,186,108 / 30,865,200` | `5.740e-12 / 7.50068 GiB / 202.762 s` | R/T/A、Avolume、fields pass；`6/12 power + 6/12 amplitude` | `controlled_negative_accuracy`；`h15_top_air_local_h_nested_p_mpi8_controlled_negative_v2.json` |
+| `task035d_h15_symmetric_remote_p5_mpi8` | `54cb665e05e72027d8e617b1a1c546413c127f0e` | 120→148 leaves；p5 trace；p5/p6 interiors `32/116` | `84,240 / 20,060` | `11,176,430 / 32,658,700` | `2.124e-11 / 7.50883 GiB / 208.766 s` | scalar/energy/fields pass；`4/12 + 4/12` | `controlled_negative_accuracy`；`h15_symmetric_top_air_remote_p5_interior_mpi8_candidate_check_v2.json` |
+| `task035d_h15_factorial_bridge_mpi8` | `d194075dda0aceef8bf566dd76412c9517fe4bb3` | 120→134 leaves；p5 trace；p5/p6 interiors `32/102` | `76,205 / 18,470` | `10,186,108 / 30,865,200` | `3.433e-12 / 7.29866 GiB / 198.400 s` | scalar/energy/fields pass；`4/12 + 4/12` | `controlled_negative_accuracy`；`h15_top_air_remote_p5_interior_bridge_mpi8_candidate_check_v1.json` |
+| `task035d_h15_selective_ten_face_mpi8` | `0ecd914b246f433614252f6f3c0513b06b078542` | 120→134 leaves；10 physical p6 faces；其他 trace p5 | `83,125 / 18,670` | `10,406,108 / 32,683,000` | `1.287e-11 / 8.06898 GiB / 279.206 s` | scalar/energy/fields pass；`5/12 + 6/12` | `controlled_negative_accuracy`；`selective_face_selection_compact_v1.json` |
+| `task035d_h15_left_grating_single_root_mpi8` | `333cb7e437906c78c95c94788abb76e2f263bc80` | 120→162 leaves；p5 trace；p5/p6 interiors `48/114` | `88,915 / 21,650` | `12,382,332 / 37,250,750` | `3.267e-11 / 8.06120 GiB / 297.114 s` | scalar/energy/interface pass；volume max fail；`4/12 + 6/12` | `controlled_negative_accuracy`；`h15_left_grating_top_closure_p5fine_mpi8_controlled_negative_compact_v1.json` |
+
+相对 p6/h10 Full3D static，实测压缩：
+
+| Model ID | rows | matrix NNZ | factor NNZ | peak RSS | PSS / USS |
+|---|---:|---:|---:|---:|---:|
+| h15 top-air local-h | `-63.9764%` | `-75.7410%` | `-85.4645%` | `-49.0504%` | `6.41306 / 6.25235 GiB` |
+| symmetric remote-p5 | `-60.8753%` | `-73.3825%` | `-84.6199%` | `-48.9950%` | `6.42191 / 6.26128 GiB` |
+| factorial bridge | `-63.9764%` | `-75.7410%` | `-85.4645%` | `-50.4227%` | `6.21633 / 6.05586 GiB` |
+| ten-face selective trace | `-63.5864%` | `-75.2171%` | `-84.6085%` | `-45.1901%` | `6.98143 / 6.83401 GiB` |
+| left-grating single-root | `-57.7742%` | `-70.5106%` | `-82.4574%` | `-45.2430%` | `6.92657 / 6.77756 GiB` |
+
+最小 `76,205` DoF 候选仍高于 preferred `75,000` 上界，并且物理 Gate
+失败；不得因资源正信号将其登记为 same-error hp success。
+
+Task035d `task.md` §3.2 的统一控制组没有遗漏：global p6/p5 h10、
+Task035 p4→p5 DWR theta0.7、Task035b fixed h15/h14/h13，以及 Task035d
+p-only、h-only、combined resource best 和 final discriminator 的
+DoF/rows/NNZ/peak/channel/status 对照集中登记在 Task035d
+`outcomes/summary.md` §4.1。Task035 tetra DWR 与 global p5 缺少同一
+Case095 12-channel/peak 口径的字段均明确写为未记录，不由其他量推断。
+
+### 3.39.3 弱通道失败总账
+
+下表列出所有失败通道身份；每行最后给出该候选最大超限的实际
+error/tolerance，完整 12 行保存在对应 checker。
+
+| Model ID | power failures | amplitude failures | 最大 power error/tol | 最大 amplitude error/tol |
+|---|---|---|---:|---:|
+| h15 top-air local-h | bottom `-5,-4,-2`；top `-5,-4,-2` | bottom `-5,-4,-2`；top `-7,-5,-4` | bottom -4 `2.333561e-8/5.251003e-10` | bottom -4 `1.589564e-5/2.541658e-6` |
+| symmetric remote-p5 | bottom `-7,-5,-4,-2`；top `-7,-5,-4,-2` | bottom `-7,-5,-4,-2`；top `-7,-5,-4,-1` | bottom -7 `1.008269e-7/2.158694e-9` | top -7 `2.285933e-5/7.995039e-7` |
+| factorial bridge | bottom `-7,-5,-4,-2`；top `-7,-5,-4,-2` | bottom `-7,-5,-4,-2`；top `-7,-5,-4,-1` | bottom -7 `9.977858e-8/2.158694e-9` | top -7 `2.371900e-5/7.995039e-7` |
+| ten-face selective trace | bottom `-7,-5,-4`；top `-7,-5,-4,-2` | bottom `-5,-4,-2`；top `-7,-5,-4` | bottom -4 `2.221993e-8/5.251003e-10` | bottom -4 `2.051506e-5/2.541658e-6` |
+| left-grating single-root | bottom `-7,-5,-4,-2`；top `-7,-5,-4,-2` | bottom `-5,-4,-2`；top `-7,-5,-4` | bottom -4 `1.204267e-8/5.251003e-10` | top -4 `1.087300e-5/1.881525e-6` |
+
+### 3.39.4 DWR 与 h/p 归因
+
+| Authority | measured conclusion | credit boundary |
+|---|---|---|
+| `h15_top_air_nested_p_dwr_mpi8_checker_v2.json` | 12 unit-channel、36 real-goal closure pass；16 periodic p-down pairs 无 conservative-safe action | 不授权继续 remote p-down |
+| selective-face raw DWR `bd19254a...76bf1` | independent checker `36/36`；ten-face contribution 可重算 | posthoc attribution；不授予 causal selection credit |
+| `hp_factorial_bridge_attribution_v1.json` | local-h、symmetric combined、factorial bridge 三点实测归因 | factorial attribution pass；combined-hp accuracy false |
+| `bounded_single_seed_top_air_hp_selection_v2.json` | compact-DWR location oracle；left-grating cost-normalized score最高 | actual local-h DWR unavailable；success forecast false |
+
+### 3.39.5 Final left-grating observables
+
+| R00 | Rtotal | Ttotal | Aclosure | Avolume | normalized R/T/A L2 |
+|---:|---:|---:|---:|---:|---:|
+| `0.000755218940191` | `0.000764349909195` | `0.602685528512531` | `0.396550121578274` | `0.396550121578974` | `0.117446` |
+
+volume weighted relative L2 `0.01229361` 通过，但 maximum point error
+`0.04688675 > 0.04102079`；interface relative L2/max
+`0.00788774/0.02208509` 均通过。最终 raw watchdog/full/compact checker
+SHA256 分别为：
+
+```text
+7d4c7a1efa0068c7a6c478ad4cef4b88fdfa1f5acbd10532d4c2794a356f7165
+1b9dd3cdb931f5fe69da5a0a567ff278a47416f7082d47cef2e0b5e4109e2492
+d6e03061465b29ce4e958bfd6ac7972f245130fdf66de197541caed09e8e4225
+```
+
+### 3.39.6 Lane closure 与 Task035d 分类
+
+| item | final status |
+|---|---|
+| p-only | closed after T30 and guard formal negatives |
+| remote p5 interior | closed controlled negative |
+| frozen ten-face selective subset | closed controlled negative |
+| whole top-port selective trace | incomplete/not run；未运行 modes 未被证伪 |
+| bounded single-root top-air local-h | closed after top-air and left-grating formal negatives |
+| outer-periodic | `not_run_by_lane_stop`；不是 PDE failure |
+| multi-seed | `not_evaluated_by_stop_rule` |
+| automatic cycles 1–4 | `not_completed`；只有 manual bounded discriminators，没有 per-cycle authority |
+| Hybrid Phase F | `not_run_full3d_hp_gate_failed` |
+
+Task035d 最终登记：
+
+```text
+classification = PARTIAL_WITH_CONTROLLED_NEGATIVES
+production_hp_candidate = none
+phase_e = partial_manual_bounded_discriminators
+ordinary_default_changed = false
+```
+
+重新开启该 lane 前，必须先在新 candidate space 上产生 actual per-channel
+local-h 或 trace-orbit DWR；当前 compact location oracle 不足以授权继续扫描。
 
 ---
 
@@ -878,7 +985,7 @@ matrix/action identity，才能进入 local-h PDE。
 
 # 5. 当前数据缺口与后续自动化
 
-1. Task000–035c 已逐项回填；早期没有保存的 source SHA、geometry hash、12 通道、factor NNZ 或 PSS/cgroup 明确标成“历史未记录”。
+1. Task000–035d 已逐项回填；早期没有保存的 source SHA、geometry hash、12 通道、factor NNZ 或 PSS/cgroup 明确标成“历史未记录”。
 2. Task032–034 的 heavy JSON 包含比总账更细的衍射级、场误差和资源字段；总账保留权威 evidence path，不建立第二份易漂移的逐字段副本。
 3. COMSOL 参考只计算零级；非零衍射级不能写 0。
 4. 不同物理配置、偏振、网格和软件之间的数值只能做标注清楚的横向参考，不能混成单一收敛序列。

@@ -3,25 +3,38 @@
 ## 当前身份
 
 ```text
-status = active_local_h_attempt_2_cell_tensor_binding
+status = PARTIAL_WITH_CONTROLLED_NEGATIVES
 execution_branch = codex/20260726-task35d-goal-oriented-exact-sequence-hp-adaptivity
 base = 9c2160d41382026352908d692ad479dc4508424d
 ordinary_default = unchanged
 irregular_geometry = out_of_scope
 iterative_solver = out_of_scope_until_hp_space_freezes
 matrix_free_low_memory = out_of_scope_until_hp_and_iterative_close
+full3d_hp_production_candidate = none
+hybrid_phase_f = not_run_full3d_hp_gate_failed
 ```
 
 Task035c 已按 Review V2 完成选择性整合；本执行分支从上述干净
-post-Task035c master 创建。Task035d 已完成 variable-p 结构资格化，并正式运行
-T30 与 `sidewall_z0_guard_v1` 两个 MPI8 direct p-only 候选。两者都真实压缩
-rows、NNZ、factor NNZ 和内存，且通过 exact-sequence/残差/资源 Gate，但分别
-只有 `0/12 + 0/12` 与 `1/12 + 0/12` 显著通道通过。因此按连续两个数值负信号
-关闭 p-only lane，保留 controlled-negative evidence。True local-h Attempt 1
-现已通过 dyadic/broken-carrier、p4/p5/p6 六面+D4 orientation、物理
-hanging+Floquet graph 和 MPI1/2/8 identity component Gate；它尚未绑定
-compiled cell tensor、PETSc row ownership 或正式 PDE。当前进入 Attempt 2，
-仍未取得 local-h PDE 精度信用。
+post-Task035c master 创建。Task035d 已完成 reference active-space、真实
+assembly-time local-p、2:1 balanced hexa local-h、H(curl) hanging/Floquet
+约束、compiled cell tensor、PETSc ownership、静态凝聚、完整场恢复和
+MPI1/2/8 identity 的同一离散架构。所有正式候选都真实删除 inactive rows，
+没有构造完整 p6 矩阵后置零。
+
+正式 MPI8 研究先关闭 p-only lane，随后运行 h15 local-h、combined hp、
+factorial bridge、十面 selective-p6-trace 和 bounded single-root local-h
+判别点。最强资源结果达到 `76,205` active FE DoF、`18,470` rows、
+`7.29866 GiB`；最终 left-grating 判别点为 `88,915` DoF、`21,650` rows、
+`8.06120 GiB`，相对 p6/h10 static 的 rows、matrix NNZ、factor NNZ 和峰值
+分别下降 `57.77%/70.51%/82.46%/45.24%`。但正式候选最佳显著通道仍只有
+`6/12 powers + 6/12 amplitudes`，没有任何候选达到 `12/12 + 12/12`。
+
+因此本任务按任务书定义归类为
+`PARTIAL_WITH_CONTROLLED_NEGATIVES`。bounded single-root top-air local-h
+lane 在两个正式精度负信号后关闭；outer-periodic、multi-seed 和整个
+top-port selective-trace 能力分别保留为 `not_run_by_lane_stop`、
+`not_evaluated_by_stop_rule` 和 `incomplete_not_run`，不得误写成数值失败。
+Full3D hp Gate 未通过，所以 static Hybrid M120 Phase F 没有运行。
 
 ## 这个任务要解决什么问题
 
