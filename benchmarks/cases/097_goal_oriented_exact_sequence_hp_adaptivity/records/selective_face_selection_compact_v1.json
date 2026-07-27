@@ -1,0 +1,4714 @@
+{
+  "checks": {
+    "all_36_real_goals_pass": true,
+    "dwr_report_pass": true,
+    "selective_endpoint_is_controlled_negative": true,
+    "source_identity": true,
+    "ten_face_contributions_per_goal": true
+  },
+  "endpoint_identity_authorities": {
+    "coarse": {
+      "auxiliary_coordinate_scales_sha256": "17938665417c7f3d82afc190089958ad1c3ba8008239073c8c8d1f07553e7974",
+      "cell_interior_degree_sha256": "3850f97e05590c811418d87b62b31fe6bc597d6c1a7e662e3d0c7efe395a934e",
+      "incident_projections_sha256": "af74a4b291ecdb9ede170518ef48571c7210b29660061c99b5831e3dc2774193",
+      "mesh_sha256": "4a62417d0eba298acaa51a4077efa6014d6c87966f71c87b13ca8c259486dccd",
+      "normalized_config_sha256": "8f26e1334bce04ec4049a3b7f7deab9ebae41ffec3a34c99e14b0c69d1c6b519",
+      "ordered_modes_sha256": "63fadf87fd654fa6a3fd8699293b45f401d7973616dc563ccf8c186bbd574735",
+      "source_sha": "0ecd914b246f433614252f6f3c0513b06b078542"
+    },
+    "enriched": {
+      "auxiliary_coordinate_scales_sha256": "17938665417c7f3d82afc190089958ad1c3ba8008239073c8c8d1f07553e7974",
+      "cell_interior_degree_sha256": "3850f97e05590c811418d87b62b31fe6bc597d6c1a7e662e3d0c7efe395a934e",
+      "incident_projections_sha256": "af74a4b291ecdb9ede170518ef48571c7210b29660061c99b5831e3dc2774193",
+      "mesh_sha256": "4a62417d0eba298acaa51a4077efa6014d6c87966f71c87b13ca8c259486dccd",
+      "normalized_config_sha256": "8f26e1334bce04ec4049a3b7f7deab9ebae41ffec3a34c99e14b0c69d1c6b519",
+      "ordered_modes_sha256": "63fadf87fd654fa6a3fd8699293b45f401d7973616dc563ccf8c186bbd574735",
+      "source_sha": "0ecd914b246f433614252f6f3c0513b06b078542"
+    },
+    "schema_version": "task035d.selective-face-endpoint-identities.v1"
+  },
+  "failures": [],
+  "goal_dwr": {
+    "goals": {
+      "R_m-1_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": -4.721015517812578e-07,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.5091860177471675e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.509186017727011e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.3060620227646352e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.3060620227611494e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -3.1753783022796255e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -3.175378302200288e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -9.70536086227622e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -9.70536086257152e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.582281885013359e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.582281885017561e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -4.721015507337092e-07,
+        "signed_goal_closure_error": 1.0475485686985283e-15,
+        "unchanged_v0_absolute_tolerance": 7.413384075620187e-06
+      },
+      "R_m-1_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": 4.019290049265059e-07,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.6087688271370234e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.6087688272613546e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.476400644455843e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.4764006444483686e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 6.38912832301789e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 6.389128322638305e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.3706820005015568e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.3706820005031985e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.9373276530980886e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.9373276531001308e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 4.0192900378436223e-07,
+        "signed_goal_closure_error": -1.1421436730006717e-15,
+        "unchanged_v0_absolute_tolerance": 7.413384075620187e-06
+      },
+      "R_m-1_n0_s_power": {
+        "actual_goal_delta_a_minus_b": -6.270120807886765e-09,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.940122343289042e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.940122343286867e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 6.271351575621762e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 6.271351575581274e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.5014975796897697e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.501497579608989e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.5725723360934067e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.5725723361130957e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -6.282483994098758e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -6.282483994089657e-10
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -6.27012079189363e-09,
+        "signed_goal_closure_error": 1.599313513393509e-17,
+        "unchanged_v0_absolute_tolerance": 5.111835340427464e-08
+      },
+      "R_m-2_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": 1.4885086843097184e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.374590444434906e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.374590444394512e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.0129703936869218e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.012970393686497e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.907222769850455e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.90722276982608e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -6.095368863578826e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -6.095368863611749e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 8.690020760354137e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 8.690020760340846e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 1.4885086835397407e-06,
+        "signed_goal_closure_error": -7.699777247678662e-16,
+        "unchanged_v0_absolute_tolerance": 3.1864912826411788e-06
+      },
+      "R_m-2_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": -1.4239234038927002e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -8.665360802378639e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -8.665360802373034e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.8084095260810574e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.8084095260378174e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -9.93751296371146e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -9.93751296349508e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 6.493414433709496e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 6.49341443372644e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.1814325420650332e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.181432542061807e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -1.4239234033742985e-06,
+        "signed_goal_closure_error": 5.184017396532873e-16,
+        "unchanged_v0_absolute_tolerance": 3.1864912826411788e-06
+      },
+      "R_m-2_n0_s_power": {
+        "actual_goal_delta_a_minus_b": -1.0421458763208507e-08,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -3.9110190942936024e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -3.911019094299335e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -7.227087451605677e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -7.227087451816997e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.446062798709195e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.44606279860411e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 4.60516004106615e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 4.605160041081786e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -7.360987386732643e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -7.360987386720824e-10
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -1.042145875892931e-08,
+        "signed_goal_closure_error": 4.2791972146389245e-18,
+        "unchanged_v0_absolute_tolerance": 1.2422824425350593e-09
+      },
+      "R_m-4_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": 2.3031721903747193e-07,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.8871984223953066e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.8871984224004684e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.196920025426454e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.196920025431903e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.1868159968167824e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.1868159967955117e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.3255050133139616e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.325505013339578e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.8944862364841366e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.8944862364840705e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 2.3031721862901824e-07,
+        "signed_goal_closure_error": -4.0845368672612695e-16,
+        "unchanged_v0_absolute_tolerance": 1.8815249525164472e-06
+      },
+      "R_m-4_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": -5.331968044321915e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.0292011490752829e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.029201149068478e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.347420208262881e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.3474202082532625e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.4019991663665883e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.4019991663825546e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.156869210823916e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.156869210826004e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.0442327005187367e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.0442327005226004e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -5.3319680439548545e-06,
+        "signed_goal_closure_error": 3.670608806597038e-16,
+        "unchanged_v0_absolute_tolerance": 1.8815249525164472e-06
+      },
+      "R_m-4_n0_s_power": {
+        "actual_goal_delta_a_minus_b": -1.2600315819028263e-08,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -3.5783249209531955e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -3.5783249209405078e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.7815275710336307e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.7815275710077697e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.635648911847224e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.635648911871296e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 4.956643537666361e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 4.956643537669646e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.2613000534254209e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.2613000534344893e-09
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -1.2600315817916676e-08,
+        "signed_goal_closure_error": 1.111586813844685e-18,
+        "unchanged_v0_absolute_tolerance": 1.086491588133722e-09
+      },
+      "R_m-5_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": -2.669275783983389e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.09101361870848e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.0910136187107636e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -7.424632002441801e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -7.424631997571785e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.2059570906652137e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.2059570906428484e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.145189808735654e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.1451898087405674e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -6.707998000237854e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -6.707997999901058e-08
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -2.6692757830252144e-06,
+        "signed_goal_closure_error": 9.581746813623788e-16,
+        "unchanged_v0_absolute_tolerance": 1.113206415872461e-06
+      },
+      "R_m-5_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": -8.517512654814745e-08,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -6.16121190156724e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -6.161211901519003e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.4765804195936646e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.4765804195923236e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 8.499532779013006e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 8.499532779014702e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -5.040628709503392e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -5.040628709490188e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.2489371842233154e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.2489371842224855e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -8.517512645274062e-08,
+        "signed_goal_closure_error": 9.5406826563409e-17,
+        "unchanged_v0_absolute_tolerance": 1.113206415872461e-06
+      },
+      "R_m-5_n0_s_power": {
+        "actual_goal_delta_a_minus_b": 2.038879469519224e-09,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.3547267626043153e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.35472676267269e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.5776512216537895e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.577651221655905e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -3.135764790654655e-11
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -3.135764792304653e-11
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.3759702592729232e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.3759702592750925e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.3879510052701472e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.3879510052668e-09
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 2.0388794687178273e-09,
+        "signed_goal_closure_error": -8.0139656567913725e-19,
+        "unchanged_v0_absolute_tolerance": 1.1943015599631952e-09
+      },
+      "R_m-7_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": -2.6151530933973355e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 7.06533323659622e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 7.065333236541297e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 8.05220289142321e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 8.052202891422598e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.1179594974222657e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.1179594974550755e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.2285103794319203e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.228510379426549e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.728602883846463e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.72860288389881e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -2.6151530930634046e-06,
+        "signed_goal_closure_error": 3.3393088099374635e-16,
+        "unchanged_v0_absolute_tolerance": 7.995038740979746e-07
+      },
+      "R_m-7_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": -7.692425873195548e-07,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.052414569661204e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.0524145696724549e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.5403079215671884e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.5403079215777105e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.3085492236792448e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.3085492237103165e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.5513679027831115e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.551367902834014e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.1566843726230219e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.1566843726267018e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -7.692425882807801e-07,
+        "signed_goal_closure_error": -9.612252705219152e-16,
+        "unchanged_v0_absolute_tolerance": 7.995038740979746e-07
+      },
+      "R_m-7_n0_s_power": {
+        "actual_goal_delta_a_minus_b": 2.2732253842126945e-09,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.7051253362432807e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.7051253362703606e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.6998256840913464e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.6998256841174046e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.3972641598643803e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.3972641599459324e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.5840242590157097e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.5840242591493055e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.7969490942243326e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.7969490942327045e-09
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 2.2732253865453178e-09,
+        "signed_goal_closure_error": 2.3326232712102426e-18,
+        "unchanged_v0_absolute_tolerance": 1.2494442957486303e-09
+      },
+      "R_m0_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": -5.0438088184778795e-05,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.435241143963554e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.43524114399653e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -6.04045217036932e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -6.040452170396585e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -6.004677950297236e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -6.004677950451312e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.3755133505825344e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.375513350563916e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.363159609073478e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.363159609101168e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -5.043808818539656e-05,
+        "signed_goal_closure_error": -6.177648453550844e-16,
+        "unchanged_v0_absolute_tolerance": 0.0008330266538614554
+      },
+      "R_m0_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": 2.5186274623670984e-05,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.1413717759195086e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.1413717759303955e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.120398355244489e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.1203983552784382e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.031819234329272e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.03181923442555e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.1513781549781117e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.151378154968432e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.1481695558439343e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.1481695558485574e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 2.5186274627736566e-05,
+        "signed_goal_closure_error": 4.065581963967613e-15,
+        "unchanged_v0_absolute_tolerance": 0.0008330266538614554
+      },
+      "R_m0_n0_s_power": {
+        "actual_goal_delta_a_minus_b": -2.362499283004157e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.0403832486925356e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.0403832487051625e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.88191304163571e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.8819130416587537e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.829430894838668e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.8294308949206076e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.0325300261673655e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.0325300261584513e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.0282391132062022e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.0282391132145224e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -2.3624992832228475e-06,
+        "signed_goal_closure_error": -2.1869035445390428e-16,
+        "unchanged_v0_absolute_tolerance": 3.195286914614711e-05
+      },
+      "T_m-1_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": 4.5204503872769974e-07,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.655024783990561e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.6550247841491855e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.2505368047008389e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.2505368046882961e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 7.972443564276346e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 7.97244356413685e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.4121328744378733e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.412132874453033e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.7668871947741396e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.7668871947503528e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 4.520450401809337e-07,
+        "signed_goal_closure_error": 1.4532339399947914e-15,
+        "unchanged_v0_absolute_tolerance": 1.2728990676557803e-05
+      },
+      "T_m-1_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": 4.005223645377025e-07,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.3363409676239997e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.3363409676148055e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.0993216878206343e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.0993216878234473e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.1551614132988835e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.155161413229477e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 6.528369397287543e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 6.528369397566971e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.5683676600172627e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.5683676600081886e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 4.005223640323872e-07,
+        "signed_goal_closure_error": -5.053152923764452e-16,
+        "unchanged_v0_absolute_tolerance": 1.2728990676557803e-05
+      },
+      "T_m-1_n0_s_power": {
+        "actual_goal_delta_a_minus_b": 3.000611924691899e-09,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -3.5424454474629904e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -3.5424454474344457e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 5.385734513303623e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 5.385734513297998e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 4.644822182133509e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 4.644822182028372e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -8.936081110261751e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -8.936081109917242e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.094197820636952e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.09419782060207e-09
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 3.0006119042026187e-09,
+        "signed_goal_closure_error": -2.0489280316550747e-17,
+        "unchanged_v0_absolute_tolerance": 1.1144136652304436e-07
+      },
+      "T_m-2_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": 1.8097262527737084e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.5510780942103992e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.551078094243712e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 7.53176470487651e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 7.531764704875479e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.4355600810042494e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.4355600809874993e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -7.956925801223372e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -7.956925801257607e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 6.48715442488115e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 6.487154424864186e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 1.8097262543486641e-06,
+        "signed_goal_closure_error": 1.5749556979492273e-15,
+        "unchanged_v0_absolute_tolerance": 4.580806193893276e-06
+      },
+      "T_m-2_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": -5.744744103899175e-07,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -8.337529829104643e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -8.337529829084289e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 7.003582999308911e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 7.003582999276005e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.0136298855995892e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.013629885579496e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.200140026246412e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.20014002626342e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 5.39773383135536e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 5.397733831355173e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -5.744744101817206e-07,
+        "signed_goal_closure_error": 2.0819688678684438e-16,
+        "unchanged_v0_absolute_tolerance": 4.580806193893276e-06
+      },
+      "T_m-2_n0_s_power": {
+        "actual_goal_delta_a_minus_b": 9.797333377571562e-09,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 6.436868387451823e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 6.4368683874477925e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.6250240983565623e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.62502409833341e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 7.683831139198177e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 7.683831139049544e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.7887422665075675e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.788742266530482e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.8082665571050517e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.8082665571102604e-09
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 9.797333381046282e-09,
+        "signed_goal_closure_error": 3.474719401178027e-18,
+        "unchanged_v0_absolute_tolerance": 4.651045293875445e-09
+      },
+      "T_m-4_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": 4.899233799182334e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 4.762628294196209e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 4.762628294070352e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.7578208361330203e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.7578208361309734e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 7.91230512159669e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 7.912305121461063e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.013695346376259e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.013695346379949e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.4379980649353029e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.4379980649426098e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 4.899233800148131e-06,
+        "signed_goal_closure_error": 9.657971308547203e-16,
+        "unchanged_v0_absolute_tolerance": 2.541657906333072e-06
+      },
+      "T_m-4_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": 1.5833285296213014e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.076685459873545e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.076685459877961e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.6715735795930952e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.6715735795945225e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.2808967436432866e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.280896743638432e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -3.496994027616322e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -3.4969940275375976e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.5446449973370796e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.5446449973331068e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 1.5833285295811476e-06,
+        "signed_goal_closure_error": -4.015380862282692e-17,
+        "unchanged_v0_absolute_tolerance": 2.541657906333072e-06
+      },
+      "T_m-4_n0_s_power": {
+        "actual_goal_delta_a_minus_b": 1.1156795517305225e-09,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -5.387014910355474e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -5.387014910382588e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 6.801496245877066e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 6.801496245878787e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -5.608017111704726e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -5.608017111706467e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.3190999546293445e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.3190999546560935e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 6.07047561999651e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 6.070475619993569e-09
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 1.1156795529572582e-09,
+        "signed_goal_closure_error": 1.226735731786048e-18,
+        "unchanged_v0_absolute_tolerance": 5.251002536670234e-10
+      },
+      "T_m-5_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": -7.999283004813285e-07,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.744272849212518e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.7442728491446984e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.3983288653486902e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.3983288653478127e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.761993522629941e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.761993522552683e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -7.576676906080238e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -7.576676906053339e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.1423973926234011e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.1423973926222134e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -7.999283001288099e-07,
+        "signed_goal_closure_error": 3.5251859550476834e-16,
+        "unchanged_v0_absolute_tolerance": 1.28064572388584e-06
+      },
+      "T_m-5_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": 2.473465806233688e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.145723747467144e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.1457237474684024e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 4.456572558122107e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 4.4565725581022055e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.339470972448587e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.3394709724320596e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 8.697105475247482e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 8.697105475309683e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.7238213913739926e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.723821391417726e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 2.4734658056964653e-06,
+        "signed_goal_closure_error": -5.372225999830411e-16,
+        "unchanged_v0_absolute_tolerance": 1.28064572388584e-06
+      },
+      "T_m-5_n0_s_power": {
+        "actual_goal_delta_a_minus_b": 2.5012352771894235e-09,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.1540392285334892e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.154039228524922e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.831342901849348e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.831342901844988e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.603749840788477e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.6037498407515903e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.4418188422007915e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.4418188423362568e-10
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.174617781241632e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.174617781246404e-09
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 2.501235276922153e-09,
+        "signed_goal_closure_error": -2.6727032772200877e-19,
+        "unchanged_v0_absolute_tolerance": 3.891272584918786e-10
+      },
+      "T_m-7_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": 5.39649124314714e-07,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -8.809061000503418e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -8.809061000629989e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.4837745043901234e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.483774504400796e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.086104986670058e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.0861049866932411e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -3.371581997843918e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -3.3715819978830023e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.081990648924206e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.0819906489310797e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 5.396491252915852e-07,
+        "signed_goal_closure_error": 9.768711337280046e-16,
+        "unchanged_v0_absolute_tolerance": 1.2165650664394503e-05
+      },
+      "T_m-7_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": -2.3970285918919945e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 7.287640598347547e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 7.287640598332654e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 5.983961366855532e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 5.983961366865068e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.1271088328411874e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.1271088328717102e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.0767249238149328e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.0767249238082847e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -3.2184078970540187e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -3.218407897105768e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -2.3970285927975663e-06,
+        "signed_goal_closure_error": -9.055718177555187e-16,
+        "unchanged_v0_absolute_tolerance": 1.2165650664394503e-05
+      },
+      "T_m-7_n0_s_power": {
+        "actual_goal_delta_a_minus_b": -1.1664089595194696e-08,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.850312372214355e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.85031237221262e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 2.2252254899819598e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 2.2252254899819817e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -5.837688696723539e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -5.8376886968789854e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -4.993543908376156e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -4.9935439083427825e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -1.0763503033807955e-09
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -1.0763503034025665e-09
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -1.1664089599929643e-08,
+        "signed_goal_closure_error": -4.734947262376041e-18,
+        "unchanged_v0_absolute_tolerance": 2.1586938039525714e-09
+      },
+      "T_m0_n0_s_amplitude_imag": {
+        "actual_goal_delta_a_minus_b": 3.553105600528905e-05,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.128655148608822e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.128655148629845e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 4.241225598019207e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 4.241225598033218e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 4.23647857853967e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 4.236478578647085e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.08649132525007e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.0864913252349557e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.0726775533353734e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.0726775533561312e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 3.5531056006464266e-05,
+        "signed_goal_closure_error": 1.1752141686020845e-15,
+        "unchanged_v0_absolute_tolerance": 0.006779628645197135
+      },
+      "T_m0_n0_s_amplitude_real": {
+        "actual_goal_delta_a_minus_b": -2.554219773298616e-05,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.188419003353334e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.1884190033673528e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -3.1441933865222846e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -3.1441933865490275e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -3.071039358261715e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -3.071039358352991e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.189352956961095e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.189352956953564e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": -2.178094218213827e-06
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": -2.1780942182194022e-06
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": -2.554219773013397e-05,
+        "signed_goal_closure_error": 2.8521903263668824e-15,
+        "unchanged_v0_absolute_tolerance": 0.006779628645197135
+      },
+      "T_m0_n0_s_power": {
+        "actual_goal_delta_a_minus_b": 1.27492676915697e-06,
+        "face_contributions": [
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.864891012515385e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              0,
+              5892857143,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.8648910125363067e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 3.559506083882774e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              11785714286,
+              17857142857,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 3.559506081893623e-08
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.2074110451697638e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              17857142857,
+              23928571429,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.2074110450363286e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.4675439592476852e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              23928571429,
+              29821428571,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.4675439592014658e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              0,
+              8928571429
+            ],
+            "signed_real_contribution": 1.47883836602488e-07
+          },
+          {
+            "geometry_key": [
+              2,
+              92857142857,
+              29821428571,
+              35714285714,
+              8928571429,
+              17857142857
+            ],
+            "signed_real_contribution": 1.4788383661466769e-07
+          }
+        ],
+        "pass": true,
+        "signed_dwr_estimate": 1.2749267737044103e-06,
+        "signed_goal_closure_error": 4.5474403729357446e-15,
+        "unchanged_v0_absolute_tolerance": 0.00021757657401122454
+      }
+    },
+    "passed_real_goal_count": 36,
+    "requested_real_goal_count": 36
+  },
+  "ordinary_default_changed": false,
+  "pass": true,
+  "production_qualified": false,
+  "raw_inputs": {
+    "benchmarks/artifacts/task035d/case097/selective_face_h15_v2/p6_h15_pols_full-solve_mpi8_20260727T154023Z/selective_face_dwr_report.json": "bd19254aff1096b864d30b70d1e44d93802b4721e19c861ad8064939d1776bf1",
+    "benchmarks/artifacts/task035d/case097/selective_face_h15_v2/selective_face_case097_requalified_full.json": "258439c0c7a8dffb91d87c9fc5dca3fe749ff65fce1de7675695ed06fe64b875"
+  },
+  "schema_version": "case097.selective-face-selection-compact.v1",
+  "selected_p6_face_geometry_keys": [
+    [
+      2,
+      92857142857,
+      0,
+      5892857143,
+      0,
+      8928571429
+    ],
+    [
+      2,
+      92857142857,
+      0,
+      5892857143,
+      8928571429,
+      17857142857
+    ],
+    [
+      2,
+      92857142857,
+      11785714286,
+      17857142857,
+      0,
+      8928571429
+    ],
+    [
+      2,
+      92857142857,
+      11785714286,
+      17857142857,
+      8928571429,
+      17857142857
+    ],
+    [
+      2,
+      92857142857,
+      17857142857,
+      23928571429,
+      0,
+      8928571429
+    ],
+    [
+      2,
+      92857142857,
+      17857142857,
+      23928571429,
+      8928571429,
+      17857142857
+    ],
+    [
+      2,
+      92857142857,
+      23928571429,
+      29821428571,
+      0,
+      8928571429
+    ],
+    [
+      2,
+      92857142857,
+      23928571429,
+      29821428571,
+      8928571429,
+      17857142857
+    ],
+    [
+      2,
+      92857142857,
+      29821428571,
+      35714285714,
+      0,
+      8928571429
+    ],
+    [
+      2,
+      92857142857,
+      29821428571,
+      35714285714,
+      8928571429,
+      17857142857
+    ]
+  ],
+  "selective_channel_comparison": {
+    "acceptance_gate": "unchanged v0 h10 p5-to-p6 absolute corrections only",
+    "all_12_significant_complex_amplitudes_pass": false,
+    "all_12_significant_powers_pass": false,
+    "analytic_channel_identity_pass": true,
+    "candidate_authority": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/selective_face_h15_v2/p6_h15_pols_full-solve_mpi8_20260727T154023Z/dtn_port_diffraction_orders_3d.json",
+      "sha256": "3a62fe58001b11557ce8faae2583ba1a6f05a2e5d7bbca42cbd6eaa3978fdf80"
+    },
+    "channels": [
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.00097876558164743,
+          -8.687443842284541e-05
+        ],
+        "candidate_power_ratio": 2.3501422855939278e-06,
+        "candidate_vs_reference_amplitude_absolute_error": 2.482164850583236e-06,
+        "candidate_vs_reference_power_absolute_error": 1.1868163646062171e-08,
+        "complex_amplitude_pass": true,
+        "m": -7,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.0009812210508338983,
+          -8.723749960195404e-05
+        ],
+        "reference_power_ratio": 2.36201044923999e-06,
+        "side": "bottom",
+        "unchanged_v0_complex_amplitude_tolerance": 1.2165650664394503e-05,
+        "unchanged_v0_power_tolerance": 2.1586938039525714e-09
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.00014226579747770936,
+          0.0001437156395091982
+        ],
+        "candidate_power_ratio": 2.1898001059617745e-07,
+        "candidate_vs_reference_amplitude_absolute_error": 8.866171812092849e-06,
+        "candidate_vs_reference_power_absolute_error": 7.059184875732663e-09,
+        "complex_amplitude_pass": false,
+        "m": -5,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.0001340326966067936,
+          0.0001470057842857811
+        ],
+        "reference_power_ratio": 2.1192082572044478e-07,
+        "side": "bottom",
+        "unchanged_v0_complex_amplitude_tolerance": 1.28064572388584e-06,
+        "unchanged_v0_power_tolerance": 3.891272584918786e-10
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.00024874399561048945,
+          0.00010297651022362772
+        ],
+        "candidate_power_ratio": 4.1506896348922793e-07,
+        "candidate_vs_reference_amplitude_absolute_error": 2.0515059163390586e-05,
+        "candidate_vs_reference_power_absolute_error": 2.2219933717395102e-08,
+        "complex_amplitude_pass": false,
+        "m": -4,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          -0.0002621322075309105,
+          8.743226903753854e-05
+        ],
+        "reference_power_ratio": 4.3728889720662304e-07,
+        "side": "bottom",
+        "unchanged_v0_complex_amplitude_tolerance": 2.541657906333072e-06,
+        "unchanged_v0_power_tolerance": 5.251002536670234e-10
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.0006927871860129343,
+          0.0003065507483144663
+        ],
+        "candidate_power_ratio": 2.9564677462684884e-06,
+        "candidate_vs_reference_amplitude_absolute_error": 9.585426182987375e-06,
+        "candidate_vs_reference_power_absolute_error": 3.3736488606586977e-09,
+        "complex_amplitude_pass": false,
+        "m": -2,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": true,
+        "reference_outgoing_amplitude_at_boundary": [
+          -0.0006970027805581116,
+          0.0002979420807206879
+        ],
+        "reference_power_ratio": 2.959841395129147e-06,
+        "side": "bottom",
+        "unchanged_v0_complex_amplitude_tolerance": 4.580806193893276e-06,
+        "unchanged_v0_power_tolerance": 4.651045293875445e-09
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.00209110586891035,
+          -0.0010265595920119182
+        ],
+        "candidate_power_ratio": 2.180942546253924e-05,
+        "candidate_vs_reference_amplitude_absolute_error": 3.1810738439879475e-06,
+        "candidate_vs_reference_power_absolute_error": 2.7751476992407228e-08,
+        "complex_amplitude_pass": true,
+        "m": -1,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": true,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.0020910133853029866,
+          -0.0010233798628436913
+        ],
+        "reference_power_ratio": 2.1781673985546834e-05,
+        "side": "bottom",
+        "unchanged_v0_complex_amplitude_tolerance": 1.2728990676557803e-05,
+        "unchanged_v0_power_tolerance": 1.1144136652304436e-07
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.6316563694946299,
+          0.4726334264474342
+        ],
+        "candidate_power_ratio": 0.6026585818870871,
+        "candidate_vs_reference_amplitude_absolute_error": 0.00047675680363446415,
+        "candidate_vs_reference_power_absolute_error": 1.529045987958e-05,
+        "complex_amplitude_pass": true,
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": true,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.6313787033482007,
+          0.4730209810383487
+        ],
+        "reference_power_ratio": 0.6026738723469667,
+        "side": "bottom",
+        "unchanged_v0_complex_amplitude_tolerance": 0.006779628645197135,
+        "unchanged_v0_power_tolerance": 0.00021757657401122454
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.0005061525808319855,
+          -3.011693419620963e-05
+        ],
+        "candidate_power_ratio": 6.292437256364749e-07,
+        "candidate_vs_reference_amplitude_absolute_error": 4.137088697004646e-06,
+        "candidate_vs_reference_power_absolute_error": 2.889483414001513e-09,
+        "complex_amplitude_pass": false,
+        "m": -7,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          -0.0005052091112470741,
+          -2.6088861700681443e-05
+        ],
+        "reference_power_ratio": 6.263542422224734e-07,
+        "side": "top",
+        "unchanged_v0_complex_amplitude_tolerance": 7.995038740979746e-07,
+        "unchanged_v0_power_tolerance": 1.2494442957486303e-09
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.00010003448048859699,
+          -6.938336287629632e-05
+        ],
+        "candidate_power_ratio": 7.945546633629462e-08,
+        "candidate_vs_reference_amplitude_absolute_error": 4.4355012963363565e-06,
+        "candidate_vs_reference_power_absolute_error": 4.882460968589472e-09,
+        "complex_amplitude_pass": false,
+        "m": -5,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          -9.81780791859067e-05,
+          -6.535503245871992e-05
+        ],
+        "reference_power_ratio": 7.457300536770515e-08,
+        "side": "top",
+        "unchanged_v0_complex_amplitude_tolerance": 1.113206415872461e-06,
+        "unchanged_v0_power_tolerance": 1.1943015599631952e-09
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.00020110624743486117,
+          -5.413428826075909e-05
+        ],
+        "candidate_power_ratio": 2.486480309801743e-07,
+        "candidate_vs_reference_amplitude_absolute_error": 1.0124979989823181e-05,
+        "candidate_vs_reference_power_absolute_error": 1.8875929987146567e-08,
+        "complex_amplitude_pass": false,
+        "m": -4,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.00021022333612521896,
+          -4.9730436128083666e-05
+        ],
+        "reference_power_ratio": 2.6752396096732086e-07,
+        "side": "top",
+        "unchanged_v0_complex_amplitude_tolerance": 1.8815249525164472e-06,
+        "unchanged_v0_power_tolerance": 1.086491588133722e-09
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.0004933133902662657,
+          -0.00020538578647388893
+        ],
+        "candidate_power_ratio": 1.4727384197533463e-06,
+        "candidate_vs_reference_amplitude_absolute_error": 9.273813148243341e-07,
+        "candidate_vs_reference_power_absolute_error": 4.952431549573907e-09,
+        "complex_amplitude_pass": true,
+        "m": -2,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.000494231617061504,
+          -0.00020551576976355208
+        ],
+        "reference_power_ratio": 1.4776908513029202e-06,
+        "side": "top",
+        "unchanged_v0_complex_amplitude_tolerance": 3.1864912826411788e-06,
+        "unchanged_v0_power_tolerance": 1.2422824425350593e-09
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.0010316655732367534,
+          0.0007702099669309263
+        ],
+        "candidate_power_ratio": 6.675362943169511e-06,
+        "candidate_vs_reference_amplitude_absolute_error": 2.5945427455761317e-06,
+        "candidate_vs_reference_power_absolute_error": 6.053288917312747e-09,
+        "complex_amplitude_pass": true,
+        "m": -1,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": true,
+        "reference_outgoing_amplitude_at_boundary": [
+          -0.001032707715920447,
+          0.0007678339217534421
+        ],
+        "reference_power_ratio": 6.6693096542521985e-06,
+        "side": "top",
+        "unchanged_v0_complex_amplitude_tolerance": 7.413384075620187e-06,
+        "unchanged_v0_power_tolerance": 5.111835340427464e-08
+      },
+      {
+        "analytic_identity_pass": true,
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.025247621425400334,
+          0.010780879285328695
+        ],
+        "candidate_power_ratio": 0.0007536697458051618,
+        "candidate_vs_reference_amplitude_absolute_error": 8.196962363050507e-06,
+        "candidate_vs_reference_power_absolute_error": 9.14742623418785e-08,
+        "complex_amplitude_pass": true,
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "power_pass": true,
+        "reference_outgoing_amplitude_at_boundary": [
+          -0.02525230435359647,
+          0.010774151702145181
+        ],
+        "reference_power_ratio": 0.0007537612200675036,
+        "side": "top",
+        "unchanged_v0_complex_amplitude_tolerance": 0.0008330266538614554,
+        "unchanged_v0_power_tolerance": 3.195286914614711e-05
+      }
+    ],
+    "frozen_significant_channel_count": 12,
+    "numerical_convergence_band_used_as_gate": false,
+    "pass": false,
+    "reference_authority": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json",
+      "reference_payload_sha256": "bb78f17a0eb3a664620b9acf7cad47dd75c1881899cf885cc243328e320177ba",
+      "sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3"
+    },
+    "schema_version": "task035b.significant-channel-reference-v1-comparison.v1",
+    "significant_complex_amplitude_pass_count": 6,
+    "significant_power_pass_count": 5,
+    "status": "significant_channel_controlled_negative",
+    "thresholds_relaxed": false
+  },
+  "source_sha": "0ecd914b246f433614252f6f3c0513b06b078542",
+  "status": "selective_face_selection_compact_pass"
+}

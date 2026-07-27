@@ -125,7 +125,7 @@ def _paired_contributions(
             band = _face_band(row)
             by_band[band] += float(row["signed_real_contribution"])
             counts[band] += 1
-        if set(counts.values()) != {2}:
+        if set(counts) != set(bands) or set(counts.values()) != {2}:
             raise ValueError(f"{label} does not have two y faces per x band")
         result[str(label)] = by_band
     return tuple(bands), result

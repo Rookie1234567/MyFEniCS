@@ -18,6 +18,9 @@ RECORD_DIR = CASE_DIR / "records"
 DEFAULT_CANDIDATE_ID = "h15_top_air_local_h_v1"
 SELECTIVE_FACE_CANDIDATE_ID = "h15_grating_top_selective_p6_faces_v1"
 OUTER_TOP_HP_CANDIDATE_ID = "h15_outer_top_periodic_p5fine_v1"
+LEFT_GRATING_TOP_HP_CANDIDATE_ID = (
+    "h15_left_grating_top_closure_p5fine_v1"
+)
 SELECTIVE_P6_FACE_GEOMETRY_KEYS = (
     (2, 92857142857, 0, 5892857143, 0, 8928571429),
     (2, 92857142857, 0, 5892857143, 8928571429, 17857142857),
@@ -98,6 +101,9 @@ CANDIDATE_SPECS = {
             "predicted_direct_solve_rows": 18_470,
         },
         "variable_interior": False,
+        "marked_root_boxes": (
+            (8.25, 0.0, 120.0, 16.5, 12.5, 130.0),
+        ),
     },
     "h15_symmetric_top_air_remote_p5_interior_v1": {
         "plan_relative": (
@@ -135,6 +141,10 @@ CANDIDATE_SPECS = {
         },
         "variable_interior": True,
         "cell_degree_counts": {"p4": 0, "p5": 32, "p6": 116},
+        "marked_root_boxes": (
+            (8.25, 0.0, 120.0, 16.5, 12.5, 130.0),
+            (33.5, 0.0, 120.0, 41.75, 12.5, 130.0),
+        ),
     },
     "h15_top_air_remote_p5_interior_bridge_v1": {
         "plan_relative": (
@@ -172,6 +182,9 @@ CANDIDATE_SPECS = {
         },
         "variable_interior": True,
         "cell_degree_counts": {"p4": 0, "p5": 32, "p6": 102},
+        "marked_root_boxes": (
+            (8.25, 0.0, 120.0, 16.5, 12.5, 130.0),
+        ),
     },
     SELECTIVE_FACE_CANDIDATE_ID: {
         "plan_relative": (
@@ -211,6 +224,9 @@ CANDIDATE_SPECS = {
         "selected_p6_face_geometry_keys": (
             SELECTIVE_P6_FACE_GEOMETRY_KEYS
         ),
+        "marked_root_boxes": (
+            (8.25, 0.0, 120.0, 16.5, 12.5, 130.0),
+        ),
     },
     OUTER_TOP_HP_CANDIDATE_ID: {
         "plan_relative": (
@@ -248,6 +264,67 @@ CANDIDATE_SPECS = {
         },
         "variable_interior": True,
         "cell_degree_counts": {"p4": 0, "p5": 32, "p6": 116},
+        "marked_root_boxes": (
+            (41.75, 0.0, 120.0, 50.0, 12.5, 130.0),
+        ),
+    },
+    LEFT_GRATING_TOP_HP_CANDIDATE_ID: {
+        "plan_relative": (
+            "benchmarks/cases/"
+            "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+            "h15_left_grating_top_closure_p5fine_plan_v1.json"
+        ),
+        "record_names": {
+            1: "left_grating_top_closure_p5fine_mpi1_v1.json",
+            2: "left_grating_top_closure_p5fine_mpi2_v1.json",
+            8: "left_grating_top_closure_p5fine_mpi8_v1.json",
+        },
+        "selection_relative": (
+            "benchmarks/cases/"
+            "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+            "bounded_single_seed_top_air_hp_selection_v2.json"
+        ),
+        "selection_algorithm_relative": (
+            "benchmarks/cases/"
+            "097_goal_oriented_exact_sequence_hp_adaptivity/"
+            "analyze_bounded_single_seed_top_air_hp_selection.py"
+        ),
+        "output_name": (
+            "left_grating_top_closure_p5fine_mpi_identity_v1.json"
+        ),
+        "schema": (
+            "case097.left-grating-top-closure-p5fine-component.v1"
+        ),
+        "pass_status": (
+            "left_grating_top_closure_p5fine_component_pass"
+        ),
+        "identity_schema": (
+            "case097.left-grating-top-closure-p5fine-mpi-identity.v1"
+        ),
+        "identity_status": (
+            "left_grating_top_closure_p5fine_mpi_identity_pass"
+        ),
+        "pde_launch_scope": (
+            "one formal MPI8 h15 left-grating-top local-h closure plus "
+            "fine-cell p5-interior direct PDE"
+        ),
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 162,
+            "hanging_patch_count": 14,
+            "raw_broken_active_fe_dofs": 91_805,
+            "raw_broken_trace_rows": 28_985,
+            "hanging_slave_rows": 2_890,
+            "periodic_slave_rows": 4_525,
+            "actual_full3d_equivalent_active_fe_dofs": 88_915,
+            "independent_trace_rows": 21_570,
+            "predicted_direct_solve_rows": 21_650,
+        },
+        "variable_interior": True,
+        "cell_degree_counts": {"p4": 0, "p5": 48, "p6": 114},
+        "marked_root_boxes": (
+            (16.5, 0.0, 120.0, 25.0, 12.5, 130.0),
+        ),
     },
 }
 
@@ -283,6 +360,16 @@ def _commit_blob_sha(source_sha: str, relative: str) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
+def _json_sha256(payload: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("ascii")
+    ).hexdigest()
+
+
 def _validate_one(
     path: Path,
     payload: Mapping[str, Any],
@@ -296,7 +383,9 @@ def _validate_one(
         source_sha = str(payload["source_sha"])
         source = payload["source_identity"]
         stable = payload["stable_identity"]
+        mesh = payload["mesh_audit"]
         reduction = payload["reduction_audit"]
+        reduction_mesh = reduction["mesh"]
         trace = reduction["trace_constraints"]
         environment = payload["environment"]
         rank_rows = environment["rank_environments"]
@@ -346,11 +435,238 @@ def _validate_one(
         if payload["plan"]["path"] != plan_relative:
             failures.append("plan_path")
         plan_path = ROOT / plan_relative
-        if (
-            payload["plan"]["file_sha256"] != _sha256(plan_path)
-            or payload["plan"]["payload"] != _strict_load(plan_path)
+        live_plan = _strict_load(plan_path)
+        live_plan_sha = _sha256(plan_path)
+        committed_plan_sha = _commit_blob_sha(source_sha, plan_relative)
+        plan_status = subprocess.check_output(
+            (
+                "git",
+                "status",
+                "--short",
+                "--untracked-files=all",
+                "--",
+                plan_relative,
+            ),
+            cwd=ROOT,
+            text=True,
+        ).strip()
+        if not (
+            payload["plan"]["file_sha256"]
+            == live_plan_sha
+            == committed_plan_sha
+            and payload["plan"]["payload"] == live_plan
+            and not plan_status
         ):
-            failures.append("plan_identity")
+            failures.append("plan_source_identity")
+        selected_p6_faces = tuple(
+            tuple(map(int, key))
+            for key in spec.get("selected_p6_face_geometry_keys", ())
+        )
+        expected_face_keys = [list(key) for key in selected_p6_faces]
+        expected_marked_roots = [
+            {
+                "lower": list(mark[:3]),
+                "upper": list(mark[3:]),
+            }
+            for mark in spec["marked_root_boxes"]
+        ]
+        plan_degree_rows = live_plan.get("cell_interior_degrees")
+        plan_degree_rows = (
+            plan_degree_rows
+            if isinstance(plan_degree_rows, list)
+            else []
+        )
+        plan_degree_counts = {
+            f"p{degree}": sum(
+                isinstance(row, dict)
+                and int(row.get("degree", -1)) == degree
+                for row in plan_degree_rows
+            )
+            for degree in (4, 5, 6)
+        }
+        plan_scope_pass = (
+            live_plan.get("schema_version")
+            == "task035d.stage4-local-h-refinement-plan.v1"
+            and live_plan.get("trace_degree") == 5
+            and live_plan.get("cell_interior_degree") == 6
+            and live_plan.get("marked_root_boxes")
+            == expected_marked_roots
+            and live_plan.get(
+                "selected_p6_face_geometry_keys",
+                [],
+            )
+            == expected_face_keys
+            and live_plan.get("ordinary_default_changed") is False
+        )
+        if spec["variable_interior"]:
+            plan_scope_pass = (
+                plan_scope_pass
+                and isinstance(
+                    live_plan.get(
+                        "cell_interior_degree_plan_sha256"
+                    ),
+                    str,
+                )
+                and plan_degree_counts == spec["cell_degree_counts"]
+            )
+        elif plan_degree_rows:
+            plan_scope_pass = False
+        if not plan_scope_pass:
+            failures.append("plan_scope_identity")
+        selection_relative = spec.get("selection_relative")
+        selection = None
+        if selection_relative is not None:
+            selection_relative = str(selection_relative)
+            selection_path = ROOT / selection_relative
+            selection = _strict_load(selection_path)
+            selection_status = subprocess.check_output(
+                (
+                    "git",
+                    "status",
+                    "--short",
+                    "--untracked-files=all",
+                    "--",
+                    selection_relative,
+                ),
+                cwd=ROOT,
+                text=True,
+            ).strip()
+            plan_selection = live_plan.get("provenance", {}).get(
+                "selection_authority"
+            )
+            selection_inputs = selection.get("inputs")
+            selection_inputs_pass = (
+                isinstance(selection_inputs, dict)
+                and bool(selection_inputs)
+            )
+            selection_source_files = selection.get(
+                "source_identity",
+                {},
+            ).get("file_sha256")
+            selection_source_sha = str(
+                selection.get("source_sha", "")
+            )
+            expected_selection_files = (
+                set(selection_inputs)
+                if isinstance(selection_inputs, dict)
+                else set()
+            ) | {str(spec["selection_algorithm_relative"])}
+            selection_inputs_pass = bool(
+                selection_inputs_pass
+                and isinstance(selection_source_files, dict)
+                and bool(selection_source_files)
+                and set(selection_source_files)
+                == expected_selection_files
+                and selection.get("source_identity", {}).get(
+                    "verified_clean_algorithm_and_inputs"
+                )
+                is True
+                and selection.get("source_identity", {}).get("head")
+                == selection_source_sha
+                and re.fullmatch(
+                    r"[0-9a-f]{40}",
+                    selection_source_sha,
+                )
+                and all(
+                    selection_source_files.get(str(relative))
+                    == str(digest)
+                    for relative, digest in (
+                        selection_inputs.items()
+                        if isinstance(selection_inputs, dict)
+                        else ()
+                    )
+                )
+                and all(
+                    _commit_blob_sha(
+                        selection_source_sha,
+                        str(relative),
+                    )
+                    == str(digest)
+                    for relative, digest in (
+                        selection_source_files.items()
+                        if isinstance(selection_source_files, dict)
+                        else ()
+                    )
+                )
+            )
+            if isinstance(selection_source_files, dict):
+                for relative, recorded_digest in (
+                    selection_source_files.items()
+                ):
+                    relative = str(relative)
+                    dependency = (ROOT / relative).resolve()
+                    try:
+                        dependency.relative_to(ROOT.resolve())
+                    except ValueError:
+                        selection_inputs_pass = False
+                        continue
+                    dependency_status = subprocess.check_output(
+                        (
+                            "git",
+                            "status",
+                            "--short",
+                            "--untracked-files=all",
+                            "--",
+                            relative,
+                        ),
+                        cwd=ROOT,
+                        text=True,
+                    ).strip()
+                    selection_inputs_pass = bool(
+                        selection_inputs_pass
+                        and dependency.is_file()
+                        and not dependency_status
+                        and _sha256(dependency)
+                        == str(recorded_digest)
+                        == _commit_blob_sha(source_sha, relative)
+                        and isinstance(numerical, dict)
+                        and numerical.get(relative)
+                        == str(recorded_digest)
+                    )
+            selected_action = selection.get("selected_action")
+            selected_action = (
+                selected_action
+                if isinstance(selected_action, dict)
+                else {}
+            )
+            if not (
+                isinstance(plan_selection, dict)
+                and plan_selection.get("path") == selection_relative
+                and plan_selection.get("sha256")
+                == _sha256(selection_path)
+                == _commit_blob_sha(source_sha, selection_relative)
+                and plan_selection.get("location_oracle_only") is True
+                and plan_selection.get(
+                    "actual_local_h_dwr_surplus_available"
+                )
+                is False
+                and selection.get("pass") is True
+                and selection.get("selected_action", {}).get(
+                    "candidate_id"
+                )
+                == candidate_id
+                and selection_inputs_pass
+                and selected_action.get("marked_root_nm")
+                == list(spec["marked_root_boxes"][0])
+                and selected_action.get(
+                    "actual_full3d_equivalent_active_fe_dofs"
+                )
+                == spec["expected"][
+                    "actual_full3d_equivalent_active_fe_dofs"
+                ]
+                and selected_action.get(
+                    "predicted_direct_solve_rows"
+                )
+                == spec["expected"]["predicted_direct_solve_rows"]
+                and selected_action.get("fine_p5_cell_count")
+                == spec["cell_degree_counts"]["p5"]
+                and selected_action.get("remaining_p6_cell_count")
+                == spec["cell_degree_counts"]["p6"]
+                and selected_action.get("selected_p6_face_count")
+                == len(expected_face_keys)
+                and not selection_status
+            ):
+                failures.append("selection_source_identity")
         if any(
             int(stable.get(name, -1)) != expected
             for name, expected in spec["expected"].items()
@@ -390,37 +706,164 @@ def _validate_one(
             )
         ):
             failures.append("variable_interior_scope")
-        selected_p6_faces = tuple(
-            tuple(map(int, key))
-            for key in spec.get("selected_p6_face_geometry_keys", ())
-        )
         physical = reduction["physical_trace"]
         degree_plan = reduction["degree_plan"]
-        if selected_p6_faces and not (
-            degree_plan.get("trace_degree_values") == [5, 6]
-            and degree_plan.get("selected_p6_face_count")
-            == len(selected_p6_faces)
-            and degree_plan.get("local_variable_trace_implemented")
-            is True
-            and trace.get("local_variable_trace_implemented") is True
-            and physical.get("selected_p6_face_count")
-            == len(selected_p6_faces)
-            and tuple(
-                tuple(map(int, key))
-                for key in physical.get(
-                    "selected_p6_face_geometry_keys",
-                    (),
-                )
+        recorded_plan_degree_sha = live_plan.get(
+            "cell_interior_degree_plan_sha256"
+        )
+        runtime_plan_degree_sha = mesh.get(
+            "cell_interior_degree_plan_sha256"
+        )
+        effective_plan_degree_sha = (
+            recorded_plan_degree_sha or runtime_plan_degree_sha
+        )
+        entity_degree_identity: dict[str, Any] = {
+            "edge_degree": int(live_plan["trace_degree"]),
+            "face_degree": int(live_plan["trace_degree"]),
+            "cell_interior_degree_plan_sha256": (
+                effective_plan_degree_sha
+            ),
+        }
+        if selected_p6_faces:
+            entity_degree_identity["selected_p6_face_geometry_keys"] = (
+                expected_face_keys
             )
-            == selected_p6_faces
-            and physical.get("selected_p6_periodic_orbit_count") == 0
-            and physical.get("selective_trace_full3d_dof_delta")
-            == 20 * len(selected_p6_faces)
-            and stable.get("selected_p6_face_geometry_keys")
-            == [list(key) for key in selected_p6_faces]
-            and stable.get("local_variable_trace_implemented") is True
+        expected_entity_degree_sha = _json_sha256(
+            entity_degree_identity
+        )
+        legacy_uniform_component = (
+            candidate_id == DEFAULT_CANDIDATE_ID
+            and "cell_degree_plan_sha256" not in degree_plan
+            and "selected_p6_face_count" not in physical
+            and not selected_p6_faces
+            and not spec["variable_interior"]
+        )
+        if mesh != reduction_mesh:
+            failures.append("mesh_audit_identity")
+        degree_identity_pass = (
+            degree_plan.get("cell_degree_counts")
+            == {"p4": 0, "p5": 0, "p6": 134}
+            and degree_plan.get("trace_degree") == 5
+            and physical.get("degree") == 5
+            if legacy_uniform_component
+            else (
+                (
+                    not spec["variable_interior"]
+                    or recorded_plan_degree_sha
+                    == runtime_plan_degree_sha
+                )
+                and effective_plan_degree_sha
+                == runtime_plan_degree_sha
+                == reduction_mesh.get(
+                    "cell_interior_degree_plan_sha256"
+                )
+                == degree_plan.get("cell_degree_plan_sha256")
+                == stable.get("cell_degree_plan_sha256")
+                and degree_plan.get("mesh_cell_box_catalog_sha256")
+                == stable.get("mesh_cell_box_catalog_sha256")
+                and degree_plan.get(
+                    "geometry_canonical_entity_degree_sha256"
+                )
+                == stable.get(
+                    "geometry_canonical_entity_degree_sha256"
+                )
+                == expected_entity_degree_sha
+            )
+        )
+        if not degree_identity_pass:
+            failures.append("degree_identity")
+        expected_forest = live_plan.get("expected_forest")
+        expected_forest = (
+            expected_forest
+            if isinstance(expected_forest, dict)
+            else {}
+        )
+        mesh_forest = mesh.get("forest")
+        mesh_forest = mesh_forest if isinstance(mesh_forest, dict) else {}
+        reduction_forest = reduction_mesh.get("forest")
+        reduction_forest = (
+            reduction_forest
+            if isinstance(reduction_forest, dict)
+            else {}
+        )
+        if not (
+            expected_forest.get("leaf_catalog_sha256")
+            == mesh_forest.get("leaf_catalog_sha256")
+            == reduction_forest.get("leaf_catalog_sha256")
+            == stable.get("leaf_catalog_sha256")
+            and expected_forest.get("hanging_face_catalog_sha256")
+            == mesh_forest.get("hanging_face_catalog_sha256")
+            == reduction_forest.get("hanging_face_catalog_sha256")
+            == stable.get("hanging_face_catalog_sha256")
         ):
-            failures.append("selective_trace_scope")
+            failures.append("forest_catalog_identity")
+        expected_trace_values = [5, 6] if selected_p6_faces else [5]
+        expected_variable_trace = bool(selected_p6_faces)
+        expected_selective_action = (
+            "non_hanging_whole_physical_face_p5_to_p6"
+            if selected_p6_faces
+            else "uniform_base_trace"
+        )
+        trace_rows = (
+            mesh,
+            reduction_mesh,
+            degree_plan,
+            physical,
+            trace,
+            stable,
+        )
+        trace_scope_pass = (
+            (
+                degree_plan.get("trace_degree") == 5
+                and physical.get("degree") == 5
+                and trace.get("degree") == 5
+                and live_plan.get(
+                    "selected_p6_face_geometry_keys",
+                    [],
+                )
+                == []
+            )
+            if legacy_uniform_component
+            else (
+            mesh.get("selected_p6_face_geometry_keys")
+            == expected_face_keys
+            and reduction_mesh.get("selected_p6_face_geometry_keys")
+            == expected_face_keys
+            and physical.get("selected_p6_face_geometry_keys")
+            == expected_face_keys
+            and stable.get("selected_p6_face_geometry_keys")
+            == expected_face_keys
+            and all(
+                row.get("selected_p6_face_count")
+                == len(expected_face_keys)
+                for row in trace_rows
+            )
+            and physical.get("selected_p6_periodic_orbit_count") == 0
+            and physical.get("selected_p6_periodic_orbits") == []
+            and stable.get("selected_p6_periodic_orbit_count") == 0
+            and physical.get("selective_trace_full3d_dof_delta")
+            == stable.get("selective_trace_full3d_dof_delta")
+            == 20 * len(expected_face_keys)
+            and all(
+                row.get("trace_degree_values")
+                == expected_trace_values
+                for row in (degree_plan, physical, trace, stable)
+            )
+            and all(
+                row.get("local_variable_trace_implemented")
+                is expected_variable_trace
+                for row in (degree_plan, trace, stable)
+            )
+            and trace.get("selective_trace_action")
+            == expected_selective_action
+            )
+        )
+        if not trace_scope_pass:
+            failures.append(
+                "selective_trace_scope"
+                if selected_p6_faces
+                else "p5_only_trace_scope"
+            )
         checks = payload.get("checks")
         if not isinstance(checks, dict) or not checks or not all(checks.values()):
             failures.append("embedded_checks")

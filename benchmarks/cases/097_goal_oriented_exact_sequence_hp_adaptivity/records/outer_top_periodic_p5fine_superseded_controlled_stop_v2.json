@@ -1,0 +1,48 @@
+{
+  "schema_version": "case097.outer-top-periodic-p5fine-controlled-stop.v2",
+  "status": "outer_top_periodic_p5fine_superseded_controlled_stop",
+  "pass": true,
+  "candidate_id": "h15_outer_top_periodic_p5fine_v1",
+  "component_source_sha": "a842b8c8c1fd0f24765f9efda6f903b622bb4390",
+  "completed_component_records": [
+    {
+      "mpi_size": 1,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_mpi1_v2.json",
+      "sha256": "fd4367ef1c976c9e538022a666ffad7d331b6d8f4b1afaf41c507cc7a47410f7",
+      "status": "outer_top_periodic_p5fine_component_pass",
+      "pass": true
+    },
+    {
+      "mpi_size": 2,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_mpi2_v2.json",
+      "sha256": "d565d2bd25e08ac69a1cad63e48876d557205398b85e0a1698b99e0d840a56b8",
+      "status": "outer_top_periodic_p5fine_component_pass",
+      "pass": true
+    }
+  ],
+  "mpi8_component": {
+    "status": "not_run",
+    "reason": "the complete bounded single-root-seed catalog superseded this candidate before the MPI8 component was started"
+  },
+  "heavy_pde": {
+    "status": "not_run",
+    "reason": "no complete MPI1/2/8 component identity and a stronger budget-feasible action was selected"
+  },
+  "selection_v1": {
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_selection_v1.json",
+    "sha256": "c74d4e97db0e768cd4508f9aa37793bca8c3bf919349f2a3d4963cf7d8f144fa",
+    "classification": "incomplete_action_catalog_controlled_negative"
+  },
+  "reason": {
+    "omitted_action": "x=16.5..25 nm left-grating-top closure",
+    "outer_failed_goal_alignment": 351.512705127,
+    "selected_failed_goal_alignment": 775.317155385,
+    "outer_alignment_per_1000_added_dofs": 35.292440274,
+    "selected_alignment_per_1000_added_dofs": 55.281080598,
+    "outer_alignment_per_1000_added_rows": 101.009398025,
+    "selected_alignment_per_1000_added_rows": 162.540284148
+  },
+  "historical_evidence_preserved": true,
+  "ordinary_default_changed": false,
+  "production_qualified": false
+}

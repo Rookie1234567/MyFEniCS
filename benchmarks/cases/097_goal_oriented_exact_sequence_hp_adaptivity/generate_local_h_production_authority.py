@@ -48,6 +48,9 @@ GENERATOR_NAME = Path(__file__).name
 DEFAULT_CANDIDATE_ID = "h15_top_air_local_h_v1"
 SELECTIVE_FACE_CANDIDATE_ID = "h15_grating_top_selective_p6_faces_v1"
 OUTER_TOP_HP_CANDIDATE_ID = "h15_outer_top_periodic_p5fine_v1"
+LEFT_GRATING_TOP_HP_CANDIDATE_ID = (
+    "h15_left_grating_top_closure_p5fine_v1"
+)
 SELECTIVE_P6_FACE_GEOMETRY_KEYS = (
     (2, 92857142857, 0, 5892857143, 0, 8928571429),
     (2, 92857142857, 0, 5892857143, 8928571429, 17857142857),
@@ -237,6 +240,46 @@ CANDIDATE_SPECS = {
             "predicted_direct_solve_rows": 20_360,
         },
     },
+    LEFT_GRATING_TOP_HP_CANDIDATE_ID: {
+        "plan_name": "h15_left_grating_top_closure_p5fine_plan_v1.json",
+        "selection_name": (
+            "bounded_single_seed_top_air_hp_selection_v2.json"
+        ),
+        "selection_algorithm_relative": (
+            "benchmarks/cases/"
+            "097_goal_oriented_exact_sequence_hp_adaptivity/"
+            "analyze_bounded_single_seed_top_air_hp_selection.py"
+        ),
+        "component_names": {
+            1: "left_grating_top_closure_p5fine_mpi1_v1.json",
+            2: "left_grating_top_closure_p5fine_mpi2_v1.json",
+            8: "left_grating_top_closure_p5fine_mpi8_v1.json",
+        },
+        "schema_version": (
+            "case097.left-grating-top-closure-p5fine-component.v1"
+        ),
+        "pass_status": (
+            "left_grating_top_closure_p5fine_component_pass"
+        ),
+        "marked_root_boxes": (
+            (16.5, 0.0, 120.0, 25.0, 12.5, 130.0),
+        ),
+        "variable_interior": True,
+        "cell_interior_policy": "all_refined_children_p5",
+        "cell_degree_counts": {"p4": 0, "p5": 48, "p6": 114},
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 162,
+            "hanging_patch_count": 14,
+            "raw_broken_active_fe_dofs": 91_805,
+            "raw_broken_trace_rows": 28_985,
+            "hanging_slave_rows": 2_890,
+            "periodic_slave_rows": 4_525,
+            "actual_full3d_equivalent_active_fe_dofs": 88_915,
+            "independent_trace_rows": 21_570,
+            "predicted_direct_solve_rows": 21_650,
+        },
+    },
 }
 
 
@@ -273,6 +316,7 @@ PRIOR_AUTHORITIES = {
 }
 NUMERICAL_RELATIVE_FILES = (
     "src/common/config_3d.py",
+    "src/common/units.py",
     "src/geometry/mesh_builder_3d.py",
     "src/adaptivity/stage4_local_h.py",
     "src/adaptivity/dyadic_hexa_refinement.py",
@@ -281,6 +325,8 @@ NUMERICAL_RELATIVE_FILES = (
     "src/adaptivity/hcurl_broken_trace_graph.py",
     "src/adaptivity/hcurl_broken_cell_trace.py",
     "src/adaptivity/hcurl_trace_constraint_graph.py",
+    "src/adaptivity/exact_sequence_variable_p.py",
+    "src/adaptivity/variable_p_degree_plan.py",
     "src/adaptivity/variable_p_entity_map.py",
     "src/adaptivity/variable_p_transfer.py",
     "src/adaptivity/selective_face_complement.py",
@@ -358,9 +404,13 @@ def _live_source_identity(
     comm: MPI.Intracomm,
     *,
     expected_sha: str,
+    extra_relative_files: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     if not re.fullmatch(r"[0-9a-f]{40}", expected_sha):
         raise ValueError("source SHA must be 40 lowercase hexadecimal digits")
+    relative_files = tuple(
+        dict.fromkeys((*NUMERICAL_RELATIVE_FILES, *extra_relative_files))
+    )
     head = _git_output("rev-parse", "HEAD")
     status = [
         line
@@ -369,17 +419,17 @@ def _live_source_identity(
             "--short",
             "--untracked-files=all",
             "--",
-            *NUMERICAL_RELATIVE_FILES,
+            *relative_files,
         ).splitlines()
         if line
     ]
     live = {
         relative: _sha256(ROOT / relative)
-        for relative in NUMERICAL_RELATIVE_FILES
+        for relative in relative_files
     }
     committed = {
         relative: _commit_blob_sha(expected_sha, relative)
-        for relative in NUMERICAL_RELATIVE_FILES
+        for relative in relative_files
     }
     local = {
         "rank": int(comm.rank),
@@ -388,7 +438,7 @@ def _live_source_identity(
         "status_lines": status,
         "mismatched_files": sorted(
             relative
-            for relative in NUMERICAL_RELATIVE_FILES
+            for relative in relative_files
             if live[relative] != committed[relative]
         ),
     }
@@ -521,26 +571,79 @@ def build_plan_payload(
             candidate_id
             == "h15_top_air_remote_p5_interior_bridge_v1"
         )
-        is_outer_top_hp = candidate_id == OUTER_TOP_HP_CANDIDATE_ID
-        if is_outer_top_hp:
+        is_bounded_fine_p5_hp = candidate_id in {
+            OUTER_TOP_HP_CANDIDATE_ID,
+            LEFT_GRATING_TOP_HP_CANDIDATE_ID,
+        }
+        if is_bounded_fine_p5_hp:
+            is_selected_left_grating = (
+                candidate_id == LEFT_GRATING_TOP_HP_CANDIDATE_ID
+            )
+            selection_authority = None
+            if is_selected_left_grating:
+                selection_path = RECORD_DIR / str(
+                    spec["selection_name"]
+                )
+                selection_payload = json.loads(
+                    selection_path.read_text(encoding="utf-8")
+                )
+                if not (
+                    selection_payload.get("pass") is True
+                    and selection_payload.get("selected_action", {}).get(
+                        "candidate_id"
+                    )
+                    == candidate_id
+                ):
+                    raise RuntimeError(
+                        "bounded single-seed selection authority is invalid"
+                    )
+                selection_authority = {
+                    "path": str(selection_path.relative_to(ROOT)),
+                    "sha256": _sha256(selection_path),
+                    "status": selection_payload["status"],
+                    "location_oracle_only": True,
+                    "actual_local_h_dwr_surplus_available": False,
+                }
             provenance = {
                 "purpose": (
-                    "Task035d cost-aware outer-top periodic local-h plus "
-                    "fine-cell p5-interior discriminator"
+                    "Task035d bounded single-seed-catalog left-grating-top "
+                    "local-h closure plus fine-cell p5-interior "
+                    "discriminator"
+                    if is_selected_left_grating
+                    else (
+                        "Task035d cost-aware outer-top periodic local-h plus "
+                        "fine-cell p5-interior discriminator"
+                    )
                 ),
                 "candidate_id": candidate_id,
                 "h_action": (
-                    "split the x-periodic outer top-air root orbit at "
-                    "z=120..130 nm, with exact x/y periodic closure"
+                    "split the x=16.5..25 nm grating-top root at "
+                    "z=120..130 nm, with exact y-periodic and material "
+                    "interface closure"
+                    if is_selected_left_grating
+                    else (
+                        "split the x-periodic outer top-air root orbit at "
+                        "z=120..130 nm, with exact x/y periodic closure"
+                    )
                 ),
                 "h_action_evidence": (
-                    "the frozen actual selected-face DWR ranks both outer "
-                    "top-port periodic faces among the sensitive actions, "
-                    "while directional-z h13 is the positive h oracle; "
-                    "this is not an unrun-face or local-h DWR claim"
+                    "the complete bounded single-seed compact-DWR catalog gives "
+                    "this budget-feasible closure the largest positive "
+                    "failed-goal alignment and the best alignment per "
+                    "added DoF and solve row; face DWR remains a location "
+                    "oracle, not an unrun local-h surplus"
+                    if is_selected_left_grating
+                    else (
+                        "the frozen actual selected-face DWR ranks both "
+                        "outer top-port periodic faces among the sensitive "
+                        "actions, while directional-z h13 is the positive "
+                        "h oracle; this is not an unrun-face or local-h "
+                        "DWR claim"
+                    )
                 ),
                 "p_action": (
-                    "use p5 cell interiors on all 32 h/2 children and "
+                    f"use p5 cell interiors on all {expected_p5} h/2 "
+                    "children and "
                     "physically omit their inactive p6 interior modes"
                 ),
                 "p_action_evidence": (
@@ -553,6 +656,14 @@ def build_plan_payload(
                 "complete_combined_hp_credit": False,
                 "ordinary_default_changed": False,
             }
+            if is_selected_left_grating:
+                provenance.update(
+                    {
+                        "single_seed_closure_catalog_complete_for_"
+                        "available_compact_dwr": True,
+                        "selection_authority": selection_authority,
+                    }
+                )
         else:
             provenance = {
             "purpose": (
@@ -744,9 +855,6 @@ def generate_component(
     spec = _candidate_spec(candidate_id)
     plan_path = _plan_path(spec)
     plan_relative = str(plan_path.relative_to(ROOT))
-    source = _live_source_identity(comm, expected_sha=source_sha)
-    environment = _environment(comm)
-    prior = _prior_authorities()
     if not plan_path.is_file():
         raise FileNotFoundError(f"tracked local-h plan is missing: {plan_path}")
     tracked = subprocess.run(
@@ -758,6 +866,111 @@ def generate_component(
     ).returncode == 0
     if not tracked:
         raise RuntimeError("production local-h plan must be tracked")
+    extra_relative_files = [plan_relative]
+    selection_relative = None
+    selection_input_identity = True
+    if spec.get("selection_name") is not None:
+        selection_path = RECORD_DIR / str(spec["selection_name"])
+        selection_relative = str(selection_path.relative_to(ROOT))
+        if not selection_path.is_file():
+            raise FileNotFoundError(
+                f"tracked selection authority is missing: {selection_path}"
+            )
+        selection_tracked = subprocess.run(
+            (
+                "git",
+                "ls-files",
+                "--error-unmatch",
+                selection_relative,
+            ),
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode == 0
+        if not selection_tracked:
+            raise RuntimeError(
+                "production selection authority must be tracked"
+            )
+        extra_relative_files.append(selection_relative)
+        selection_payload = json.loads(
+            selection_path.read_text(encoding="utf-8")
+        )
+        selection_inputs = selection_payload.get("inputs")
+        if not isinstance(selection_inputs, dict) or not selection_inputs:
+            raise RuntimeError(
+                "selection authority has no frozen input manifest"
+            )
+        selection_source_files = selection_payload.get(
+            "source_identity",
+            {},
+        ).get("file_sha256")
+        selection_source_sha = str(
+            selection_payload.get("source_sha", "")
+        )
+        expected_selection_files = set(selection_inputs) | {
+            str(spec["selection_algorithm_relative"])
+        }
+        if (
+            not isinstance(selection_source_files, dict)
+            or not selection_source_files
+            or set(selection_source_files) != expected_selection_files
+            or selection_payload.get("source_identity", {}).get(
+                "verified_clean_algorithm_and_inputs"
+            )
+            is not True
+            or selection_payload.get("source_identity", {}).get("head")
+            != selection_source_sha
+            or not re.fullmatch(
+                r"[0-9a-f]{40}",
+                selection_source_sha,
+            )
+            or any(
+                selection_source_files.get(str(relative))
+                != str(digest)
+                for relative, digest in selection_inputs.items()
+            )
+            or any(
+                _commit_blob_sha(selection_source_sha, str(relative))
+                != str(digest)
+                for relative, digest in selection_source_files.items()
+            )
+        ):
+            raise RuntimeError(
+                "selection algorithm/input source manifest is invalid"
+            )
+        for relative, expected_digest in selection_source_files.items():
+            relative = str(relative)
+            dependency = (ROOT / relative).resolve()
+            try:
+                dependency.relative_to(ROOT.resolve())
+            except ValueError as exc:
+                raise RuntimeError(
+                    "selection dependency escapes repository root"
+                ) from exc
+            dependency_tracked = subprocess.run(
+                ("git", "ls-files", "--error-unmatch", relative),
+                cwd=ROOT,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            ).returncode == 0
+            if not dependency_tracked or not dependency.is_file():
+                raise RuntimeError(
+                    f"selection dependency is not tracked: {relative}"
+                )
+            if _sha256(dependency) != str(expected_digest):
+                raise RuntimeError(
+                    f"selection dependency hash drifted: {relative}"
+                )
+            extra_relative_files.append(relative)
+    source = _live_source_identity(
+        comm,
+        expected_sha=source_sha,
+        extra_relative_files=tuple(extra_relative_files),
+    )
+    environment = _environment(comm)
+    prior = _prior_authorities()
 
     cfg = target_stage4_config(degree=6, h_nm=15.0)
     mesh_data = build_stage4_local_h_mesh_data(
@@ -780,10 +993,146 @@ def generate_component(
     )
     physical = reduction.audit["physical_trace"]
     degree_plan = reduction.audit["degree_plan"]
+    trace = reduction.audit["trace_constraints"]
+    reduction_mesh = reduction.audit["mesh"]
+    plan_payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    expected_face_keys = [list(key) for key in selected_p6_faces]
+    recorded_degree_plan_sha = plan_payload.get(
+        "cell_interior_degree_plan_sha256"
+    )
+    runtime_degree_plan_sha = context.audit[
+        "cell_interior_degree_plan_sha256"
+    ]
+    effective_degree_plan_sha = (
+        recorded_degree_plan_sha or runtime_degree_plan_sha
+    )
+    entity_degree_identity: dict[str, Any] = {
+        "edge_degree": int(plan_payload["trace_degree"]),
+        "face_degree": int(plan_payload["trace_degree"]),
+        "cell_interior_degree_plan_sha256": (
+            effective_degree_plan_sha
+        ),
+    }
+    if selected_p6_faces:
+        entity_degree_identity["selected_p6_face_geometry_keys"] = (
+            expected_face_keys
+        )
+    expected_entity_degree_sha = hashlib.sha256(
+        json.dumps(
+            entity_degree_identity,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("ascii")
+    ).hexdigest()
+    forest = context.audit["forest"]
+    reduction_forest = reduction_mesh["forest"]
+    expected_forest = plan_payload["expected_forest"]
+    trace_values = [5, 6] if selected_p6_faces else [5]
+    expected_selective_action = (
+        "non_hanging_whole_physical_face_p5_to_p6"
+        if selected_p6_faces
+        else "uniform_base_trace"
+    )
+    expected_variable_trace = bool(selected_p6_faces)
+    expected_marked_roots = [
+        {
+            "lower": list(mark[:3]),
+            "upper": list(mark[3:]),
+        }
+        for mark in spec["marked_root_boxes"]
+    ]
+    plan_degree_rows = plan_payload.get("cell_interior_degrees")
+    plan_degree_rows = (
+        plan_degree_rows
+        if isinstance(plan_degree_rows, list)
+        else []
+    )
+    plan_degree_counts = {
+        f"p{degree}": sum(
+            isinstance(row, dict)
+            and int(row.get("degree", -1)) == degree
+            for row in plan_degree_rows
+        )
+        for degree in (4, 5, 6)
+    }
+    plan_scope_identity = (
+        plan_payload["schema_version"]
+        == "task035d.stage4-local-h-refinement-plan.v1"
+        and plan_payload["trace_degree"] == 5
+        and plan_payload["cell_interior_degree"] == 6
+        and plan_payload["marked_root_boxes"] == expected_marked_roots
+        and plan_payload.get("selected_p6_face_geometry_keys", [])
+        == expected_face_keys
+        and plan_payload["ordinary_default_changed"] is False
+        and (
+            (
+                isinstance(recorded_degree_plan_sha, str)
+                and plan_degree_counts == spec["cell_degree_counts"]
+            )
+            if spec["variable_interior"]
+            else not plan_degree_rows
+        )
+    )
     checks = {
         "plan_is_tracked": tracked,
+        "plan_scope_identity": plan_scope_identity,
+        "plan_source_identity": (
+            source["numerical_file_sha256"][plan_relative]
+            == _sha256(plan_path)
+            == _commit_blob_sha(source_sha, plan_relative)
+        ),
+        "selection_source_identity": (
+            selection_relative is None
+            or (
+                plan_payload["provenance"]["selection_authority"][
+                    "path"
+                ]
+                == selection_relative
+                and plan_payload["provenance"]["selection_authority"][
+                    "sha256"
+                ]
+                == source["numerical_file_sha256"][selection_relative]
+                == _commit_blob_sha(source_sha, selection_relative)
+                and selection_input_identity
+                and all(
+                    source["numerical_file_sha256"].get(str(relative))
+                    == str(digest)
+                    for relative, digest in selection_payload[
+                        "source_identity"
+                    ]["file_sha256"].items()
+                )
+            )
+        ),
         "mesh_authority": context.audit["pass"] is True,
         "reduction_authority": reduction.audit["pass"] is True,
+        "mesh_audit_identity": context.audit == reduction_mesh,
+        "forest_catalog_identity": (
+            expected_forest["leaf_catalog_sha256"]
+            == forest["leaf_catalog_sha256"]
+            == reduction_forest["leaf_catalog_sha256"]
+            == stable["leaf_catalog_sha256"]
+            and expected_forest["hanging_face_catalog_sha256"]
+            == forest["hanging_face_catalog_sha256"]
+            == reduction_forest["hanging_face_catalog_sha256"]
+            == stable["hanging_face_catalog_sha256"]
+        ),
+        "degree_identity": (
+            (
+                not spec["variable_interior"]
+                or recorded_degree_plan_sha
+                == runtime_degree_plan_sha
+            )
+            and effective_degree_plan_sha
+            == runtime_degree_plan_sha
+            == reduction_mesh["cell_interior_degree_plan_sha256"]
+            == degree_plan["cell_degree_plan_sha256"]
+            == stable["cell_degree_plan_sha256"]
+            and degree_plan["mesh_cell_box_catalog_sha256"]
+            == stable["mesh_cell_box_catalog_sha256"]
+            and degree_plan["geometry_canonical_entity_degree_sha256"]
+            == stable["geometry_canonical_entity_degree_sha256"]
+            == expected_entity_degree_sha
+        ),
         "expected_dimensions": all(
             int(stable[name]) == int(expected)
             for name, expected in spec["expected"].items()
@@ -825,34 +1174,42 @@ def generate_component(
             )
         ),
         "selective_trace_policy": (
-            (
-                degree_plan["trace_degree_values"] == [5, 6]
-                and degree_plan["selected_p6_face_count"]
-                == len(selected_p6_faces)
-                and tuple(
-                    tuple(map(int, key))
-                    for key in physical[
-                        "selected_p6_face_geometry_keys"
-                    ]
+            context.audit["selected_p6_face_geometry_keys"]
+            == expected_face_keys
+            and reduction_mesh["selected_p6_face_geometry_keys"]
+            == expected_face_keys
+            and physical["selected_p6_face_geometry_keys"]
+            == expected_face_keys
+            and stable["selected_p6_face_geometry_keys"]
+            == expected_face_keys
+            and all(
+                row["selected_p6_face_count"] == len(expected_face_keys)
+                for row in (
+                    context.audit,
+                    reduction_mesh,
+                    degree_plan,
+                    physical,
+                    trace,
+                    stable,
                 )
-                == selected_p6_faces
-                and physical["selected_p6_periodic_orbit_count"] == 0
-                and physical["selective_trace_full3d_dof_delta"]
-                == 20 * len(selected_p6_faces)
-                and degree_plan["local_variable_trace_implemented"]
-                is True
-                and reduction.audit["trace_constraints"][
-                    "local_variable_trace_implemented"
-                ]
-                is True
             )
-            if selected_p6_faces
-            else (
-                degree_plan["trace_degree_values"] == [5]
-                and degree_plan["selected_p6_face_count"] == 0
-                and degree_plan["local_variable_trace_implemented"]
-                is False
+            and physical["selected_p6_periodic_orbit_count"] == 0
+            and physical["selected_p6_periodic_orbits"] == []
+            and stable["selected_p6_periodic_orbit_count"] == 0
+            and physical["selective_trace_full3d_dof_delta"]
+            == stable["selective_trace_full3d_dof_delta"]
+            == 20 * len(expected_face_keys)
+            and all(
+                row["trace_degree_values"] == trace_values
+                for row in (degree_plan, physical, trace, stable)
             )
+            and all(
+                row["local_variable_trace_implemented"]
+                is expected_variable_trace
+                for row in (degree_plan, trace, stable)
+            )
+            and trace["selective_trace_action"]
+            == expected_selective_action
         ),
         "prior_attempt2_hash_bound": all(
             row["pass"] is True for row in prior.values()
@@ -880,7 +1237,7 @@ def generate_component(
         "plan": {
             "path": plan_relative,
             "file_sha256": _sha256(plan_path),
-            "payload": json.loads(plan_path.read_text(encoding="utf-8")),
+            "payload": plan_payload,
         },
         "prior_authorities": prior,
         "stable_identity": stable,

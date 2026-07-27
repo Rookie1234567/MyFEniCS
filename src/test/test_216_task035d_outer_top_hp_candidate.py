@@ -77,16 +77,12 @@ def test_outer_top_hp_plan_physically_removes_fine_p6_interiors() -> None:
     assert tracked["provenance"]["complete_combined_hp_credit"] is False
 
 
-def test_outer_top_hp_selection_closes_face_lane_and_bounds_one_pde() -> None:
-    analyzer = _module(
-        "task035d_outer_top_hp_selection",
-        "analyze_outer_top_hp_selection.py",
-    )
+def test_outer_top_hp_selection_is_preserved_as_incomplete_history() -> None:
     tracked = json.loads(SELECTION.read_text(encoding="utf-8"))
-    rebuilt = analyzer.analyze()
 
-    assert rebuilt == tracked
     assert tracked["pass"] is True
+    # This is immutable historical evidence.  The complete action-catalog
+    # authority supersedes its broad lane wording and selected action.
     assert (
         tracked["selective_face_lane"]["decision"]
         == "close_top_port_selective_p6_face_lane"
