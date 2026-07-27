@@ -22,19 +22,17 @@ matrix_free = out of scope
 irregular_geometry = out of scope
 ```
 
-Task035e 只有在：
+Task035e 只有在以下文档规定的 M0–M4 全部完成、Task035d 已选择性合并 master、工作树干净后才能启动：
 
 ```text
 docs/task035d_goal_oriented_exact_sequence_hp_adaptivity/review_report_v1.md
 ```
 
-规定的 M0–M4 全部完成、Task035d 已选择性合并 master、工作树干净后才能启动。
-
 本任务在 13.5 nm 上模拟未来 0.7 nm 的核心困难：
 
-> 完整收敛参考解不可获得，自适应程序不能读取一个已知高精度答案来选择网格或阶次，只能依赖自身的残差、伴随、局部 h/p 富集和误差预算。
+> 完整收敛参考解不可获得，自适应程序不能读取一个已知高精度答案来选择网格、阶次或停止时刻，只能依赖自身的残差、伴随、局部 h/p 富集和误差预算。
 
-13.5 nm 的 p6 高阶序列只用于独立验证这种“无参考解”流程是否可信，不得泄漏给自适应控制器。
+13.5 nm 的 p6 高阶序列只用于独立检验这种“无参考解”流程是否可信，不得泄漏给自适应控制器。
 
 ---
 
@@ -42,10 +40,10 @@ docs/task035d_goal_oriented_exact_sequence_hp_adaptivity/review_report_v1.md
 
 Task035e 必须回答：
 
-1. 在 adaptive controller 不读取 p6/h10、p6/h7.5、p6/h5 结果的条件下，能否从一个明显较粗的非均匀网格开始，自动生成包含多个 h level 与多个 p level 的 H(curl) 空间？
+1. adaptive controller 不读取 p6/h10、p6/h7.5、p6/h5 结果时，能否从明显较粗的非均匀网格开始，自动生成包含多个 h level 与多个 p level 的 H(curl) 空间？
 2. 能否仅根据 current solution、full residual、multi-goal adjoint、local p-shadow、local h-shadow 和误差预算判断何时停止？
-3. 冻结候选后，hidden auditor 是否能确认全部正式低阶衍射输出、R/T/A 和场量达到误差要求？
-4. 最终内存下降是否来自 active space、rows、matrix NNZ 和 factor NNZ 的真实结构压缩，而不是对象生命周期、不同 MPI 数或遥测口径变化？
+3. 候选冻结后，hidden auditor 是否能确认全部正式低阶衍射输出、R/T/A 和场量达到误差要求？
+4. 内存下降是否来自 active space、rows、matrix NNZ 和 factor NNZ 的真实结构压缩，而不是对象生命周期、不同 MPI 数或遥测口径变化？
 5. Full3D blind hp 候选通过后，能否把同一空间接入 static Hybrid M120 并进一步降低内存？
 
 ---
@@ -88,20 +86,18 @@ p6/h5
 
 ## 2.3 Final hidden auditor
 
-只有在：
+只有在以下条件都满足后，hidden auditor 才能读取 sealed reference package：
 
 - 自适应停止条件通过；
 - 最终 mesh 与 degree map 冻结；
 - source SHA、plan SHA、output SHA 冻结；
-- 不再允许根据结果修改候选；
+- 不再允许根据隐藏结果修改候选。
 
-之后，hidden auditor 才能读取 sealed reference package。
-
-hidden audit 失败后，不得根据具体失败通道在同一正式 blind trial 中修网格后重新宣称成功。可以保留失败并在新任务或新算法版本中重新进行一次从头 blind trial。
+hidden audit 失败后，不得根据具体失败通道在同一正式 blind trial 中修网格后重新宣称成功。可以保留失败，并在新任务或新算法版本中重新进行一次从头 blind trial。
 
 ## 2.4 防止 reference 泄漏
 
-必须建立独立文件与接口：
+必须建立独立接口或目录：
 
 ```text
 reference_certifier/
@@ -126,7 +122,7 @@ hidden_auditor/
 - 同一入射；
 - 同一 S 偏振；
 - 同一 DtN 物理定义；
-- 同一 p6 Nédélec first-family；
+- 同一 p6 Nedelec first-family；
 - Full3D assembly-time static condensation；
 - direct MUMPS；
 - MPI8 正式口径；
@@ -138,9 +134,9 @@ hidden_auditor/
 严格顺序：
 
 ```text
-p6/h10 现有 authority 校验
-→ p6/h7.5 preflight + full solve
-→ p6/h5 preflight + full solve
+p6/h10 existing authority verification
+-> p6/h7.5 preflight + full solve
+-> p6/h5 preflight + full solve
 ```
 
 一次只运行一个 heavy PDE。
@@ -155,7 +151,7 @@ p6/h5 必须尝试，但设置 fail-closed resource Gate：
 - 不允许以 OOM kill 作为结果；
 - 若当前工作站无法安全运行，记录为 `controlled_resource_stop`，Task035e 不得获得完整 hidden-reference success。
 
-允许用较少 MPI rank 减少进程复制，但正式三点必须采用同一资格化 MPI 口径；不同 rank 的结果只能作为资源诊断。
+允许用较少 MPI rank 减少进程复制，但正式三点必须采用同一资格化 MPI 口径；不同 rank 结果只能作为资源诊断。
 
 ## A3. 比较的完整输出
 
@@ -179,21 +175,20 @@ selected interface and volume field probes
 
 ## A4. 三层收敛分析
 
-对每个输出 \(J\)：
+对每个输出 J 计算：
 
-\[
- d_{10,7.5}=|J_{h10}-J_{h7.5}|,
- \qquad
- d_{7.5,5}=|J_{h7.5}-J_{h5}|.
-\]
+```text
+d_10_7p5 = abs(J_h10 - J_h7p5)
+d_7p5_5 = abs(J_h7p5 - J_h5)
+```
 
 需要记录：
 
 - 是否单调；
 - 是否发生符号振荡；
 - fine difference 是否明显小于 coarse difference；
-- 三点拟合 \(J(h)=J_*+Ch^q\) 是否稳定；
-- 拟合阶次 \(q\) 是否为正且条件数可接受；
+- 三点拟合 `J(h) = J_star + C*h^q` 是否稳定；
+- 拟合阶次 q 是否为正且条件数可接受；
 - h5 与外推中心的差；
 - reference uncertainty。
 
@@ -201,15 +196,15 @@ selected interface and volume field probes
 
 对每个输出定义：
 
-\[
- u_{ref,J}=\max\left(d_{7.5,5},\ |J_{h5}-J_*|ight)
-\]
+```text
+u_ref_J = max(d_7p5_5, abs(J_h5 - J_star))
+```
 
 若外推不稳定，则：
 
-\[
- u_{ref,J}=\max(d_{10,7.5},d_{7.5,5}).
-\]
+```text
+u_ref_J = max(d_10_7p5, d_7p5_5)
+```
 
 ## A5. Reference qualification
 
@@ -249,7 +244,7 @@ m = 0, -1, -2, -3, -4, -5, -6, -7
 - co-polarized complex amplitude；
 - cross-polarized power/amplitude 诊断；
 - 是否传播；
-- kz / admittance / normalization identity。
+- kz、admittance 和 normalization identity。
 
 如果某一级在某端口为 evanescent，则不把它当作远场功率，但仍保存其身份与近场系数诊断。
 
@@ -267,47 +262,44 @@ m = 0, -1, -2, -3, -4, -5, -6, -7
 
 ## B3. 最终 hidden audit 容差
 
-对每个 reference power \(P_{ref}\)：
+对每个 reference power P_ref：
 
-\[
- 	au_P=\max\left(10^{-9},\ 5	imes10^{-4}|P_{ref}|,\ 2u_{ref,P}ight).
-\]
+```text
+tau_power = max(1e-9, 5e-4*abs(P_ref), 2*u_ref_power)
+```
 
-对每个 reference complex amplitude \(a_{ref}\)：
+对每个 reference complex amplitude a_ref：
 
-\[
- 	au_a=\max\left(10^{-6},\ 10^{-3}|a_{ref}|,\ 2u_{ref,a}ight).
-\]
+```text
+tau_amplitude = max(1e-6, 1e-3*abs(a_ref), 2*u_ref_amplitude)
+```
 
 对 `R00_total/Rtotal/Ttotal/Aclosure/Avolume`：
 
-\[
- 	au_J=\max\left(10^{-6},\ 2	imes10^{-4}|J_{ref}|,\ 2u_{ref,J}ight).
-\]
+```text
+tau_total = max(1e-6, 2e-4*abs(J_ref), 2*u_ref_total)
+```
 
 其他硬 Gate：
 
 ```text
 full explicit true residual <= 1e-9
-|R+T+Avolume-1| <= 1e-9
-Aclosure-Avolume <= 1e-9
+abs(R + T + Avolume - 1) <= 1e-9
+abs(Aclosure - Avolume) <= 1e-9
 interface field rel-L2 <= max(1%, 2*reference uncertainty)
 volume field rel-L2 <= max(1.5%, 2*reference uncertainty)
 ```
 
-这些是本任务的工程误差上限。若高阶 reference uncertainty 本身大于目标值，最终容差自动由 `2u_ref` 控制，不得假装 reference 更准确。
+若高阶 reference uncertainty 本身大于目标值，最终容差自动由 `2*u_ref` 控制，不得假装 reference 更准确。
 
 ## B4. Blind controller 使用的容差
 
-blind controller 看不到 \(P_{ref},a_{ref},u_{ref}\)。它使用当前候选与 shadow enrichment 的尺度：
+blind controller 看不到 reference value 或 u_ref。它使用当前候选与 shadow enrichment 的尺度：
 
-\[
- \widehat	au_P=\max(10^{-9},5	imes10^{-4}\max(|P_h|,|P_{shadow}|)),
-\]
-
-\[
- \widehat	au_a=\max(10^{-6},10^{-3}\max(|a_h|,|a_{shadow}|)).
-\]
+```text
+blind_tau_power = max(1e-9, 5e-4*max(abs(P_current), abs(P_shadow)))
+blind_tau_amplitude = max(1e-6, 1e-3*max(abs(a_current), abs(a_shadow)))
+```
 
 最终 hidden tolerance 只由 auditor 使用。
 
@@ -337,7 +329,7 @@ nominal local h levels = 15 / 7.5 / 3.75 nm
 
 作为独立初始网格和最终自洽性检查。
 
-如果 h20 boundary-fitted root 产生非法材料切分、极端 aspect ratio 或 exact-sequence blocker，可受控切换为另一套能产生 `coarse/medium/fine` 三层尺寸的 root family，但必须说明原因，不得退化成全域统一 h10。
+如果 h20 boundary-fitted root 产生非法材料切分、极端 aspect ratio 或 exact-sequence blocker，可受控切换为另一套能产生 coarse/medium/fine 三层尺寸的 root family，但必须说明原因，不得退化成全域统一 h10。
 
 ## C2. 真正非均匀要求
 
@@ -370,13 +362,7 @@ nominal local h levels = 15 / 7.5 / 3.75 nm
 p in {4,5,6}
 ```
 
-允许：
-
-- edge degree；
-- face degree；
-- cell-interior degree；
-
-分别变化并保持 exact sequence。
+允许 edge degree、face degree、cell-interior degree 分别变化并保持 exact sequence。
 
 p3 只在 p4/p5/p6 blind controller 已稳定、且低敏感区域有两轮连续安全证据后开放。
 
@@ -422,7 +408,7 @@ selected interface/volume probes
 
 ## D2. Local p-shadow
 
-对候选 edge/face/cell orbit 构造一个不改变当前生产解的局部富集动作：
+对候选 edge/face/cell orbit 构造不改变当前生产解的局部富集动作：
 
 ```text
 p -> p+1
@@ -468,16 +454,16 @@ vs
 actual candidate goal delta
 ```
 
-记录：
+定义：
 
-\[
- I_{eff,J}=rac{\eta_J}{\Delta J_{actual}}.
-\]
+```text
+effectivity = DWR_estimate / actual_goal_delta
+```
 
 正式要求：
 
 - 高优先级目标不得出现系统性符号相反；
-- 至少90%的正式目标满足 `0.5 <= |I_eff| <= 2.0`；
+- 至少90%的正式目标满足 `0.5 <= abs(effectivity) <= 2.0`；
 - 超出范围的目标必须触发保守标记或 estimator repair；
 - 不能用绝对值贡献和替代 signed closure。
 
@@ -496,7 +482,7 @@ predicted normalized goal reduction / predicted solver-phase peak
 
 ```text
 p-shadow strong, h-shadow weak
-    -> p-up / keep high p
+    -> p-up or keep high p
 
 h-shadow strong, p-shadow weak
     -> local h-refine
@@ -504,11 +490,11 @@ h-shadow strong, p-shadow weak
 both strong
     -> compare structural memory cost; allow combined action
 
-both weak and two consecutive cycles low impact
+both weak for two consecutive cycles
     -> p-down or local coarsening candidate
 
-estimator disagreement / sign conflict
-    -> keep current space, fail closed
+estimator disagreement or sign conflict
+    -> keep current space and fail closed
 ```
 
 不得再次使用“远离结构，所以降 p”的几何启发式作为正式依据。
@@ -521,16 +507,16 @@ estimator disagreement / sign conflict
 
 ```text
 solve current blind space
-→ full residual and all goals
-→ build p-shadow/h-shadow catalog
-→ compute signed multi-goal DWR
-→ cost-aware marking
-→ periodic/material/2:1 closure
-→ build true active space
-→ static-condensed solve
-→ verify selected shadow actions
-→ update estimator and memory model
-→ accept/reject cycle
+-> full residual and all goals
+-> build p-shadow/h-shadow catalog
+-> compute signed multi-goal DWR
+-> cost-aware marking
+-> periodic/material/2:1 closure
+-> build true active space
+-> static-condensed solve
+-> verify selected shadow actions
+-> update estimator and memory model
+-> accept/reject cycle
 ```
 
 ## E1. Cycle 数量
@@ -558,13 +544,13 @@ solve current blind space
 
 允许使用 multi-goal Dörfler marking，但权重必须来自固定误差合同，不得来自 hidden reference。
 
-目标归一化采用 blind tolerances \(\widehat	au\)。
+目标归一化采用 blind tolerances。
 
 ## E3. Coarsening
 
 初始两轮只允许 refine 或 p-up/keep。
 
-只有某个 entity/patch 在连续两轮中：
+只有某个 entity/patch 在连续两轮中同时满足：
 
 - normalized DWR 很小；
 - p-shadow/h-shadow 均很小；
@@ -589,18 +575,16 @@ max normalized p-shadow delta <= 0.5
 max normalized h-shadow delta <= 0.5
 ```
 
-这里 normalized 使用 blind tolerance。
+normalized 使用 blind tolerance。
 
 ## F2. 连续两轮稳定
 
-连续两个 accepted cycle 的：
+连续两个 accepted cycle 的以下结果均在 blind tolerance 内稳定：
 
 - N-order powers；
 - complex amplitudes；
 - R/T/A；
-- selected fields；
-
-均在 blind tolerance 内稳定。
+- selected fields。
 
 ## F3. 两条初始路径一致
 
@@ -636,16 +620,7 @@ hanging constraint residual pass
 serial/MPI identity pass
 ```
 
-完成F1–F5后，冻结：
-
-- source；
-- mesh；
-- p-map；
-- output；
-- internal error certificate；
-- resource authority。
-
-然后才允许 hidden audit。
+完成F1–F5后，冻结 source、mesh、p-map、output、internal error certificate 和 resource authority，然后才允许 hidden audit。
 
 ---
 
@@ -695,7 +670,7 @@ REFERENCE_BLIND_HP_ACCURACY_PASS
 
 ## H2. Hybrid 内部自洽
 
-不需要读取 p6 hidden reference来选择 M。比较：
+不需要读取 p6 hidden reference 来选择 M。比较：
 
 ```text
 M120
@@ -704,7 +679,7 @@ M160 only if internal M signal requires
 
 并检查：
 
-- hp Full3D ↔ hp Hybrid；
+- hp Full3D 与 hp Hybrid；
 - interface E/H；
 - all N-order outputs；
 - residual；
@@ -713,7 +688,7 @@ M160 only if internal M signal requires
 ## H3. Hybrid Gate
 
 ```text
-hp Full3D ↔ hp Hybrid:
+hp Full3D vs hp Hybrid:
     all N-order powers pass
     all N-order amplitudes pass
     R/T/A pass
@@ -774,7 +749,7 @@ zero swap
 
 以下变化必须单列，不能计入 hp structural gain：
 
-- 提前 `del` / `malloc_trim`；
+- 提前删除对象或调用内存整理；
 - 改变输出内容；
 - 改变 MPI rank；
 - 改变 watchdog 采样；
@@ -840,7 +815,7 @@ record serialization
 
 在上一分类基础上：
 
-- hp Full3D ↔ hp Hybrid pass；
+- hp Full3D 与 hp Hybrid pass；
 - Hybrid peak <7.544262 GiB；
 - preferred <=6.4 GiB。
 
