@@ -1,0 +1,477 @@
+{
+  "attribution": {
+    "A_pass_counts": {
+      "amplitude": 6,
+      "power": 6
+    },
+    "A_to_B_gained_amplitude_passes": 0,
+    "A_to_B_gained_power_passes": 0,
+    "A_to_B_lost_amplitude_passes": 2,
+    "A_to_B_lost_power_passes": 2,
+    "B_and_D_same_pass_mask": true,
+    "B_pass_counts": {
+      "amplitude": 4,
+      "power": 4
+    },
+    "B_vs_D_max_normalized_amplitude_delta": 1.4168080857574012,
+    "B_vs_D_max_normalized_power_delta": 2.2579262162248295,
+    "D_pass_counts": {
+      "amplitude": 4,
+      "power": 4
+    },
+    "conclusion": "The 32-cell remote p6-to-p5 interior action is the identified cause of the 6/12+6/12 to 4/12+4/12 loss. The second symmetric h split does not restore a channel and is not the primary cause of the degradation."
+  },
+  "channel_rows": [
+    {
+      "A_normalized_amplitude_error": 0.015289525391159495,
+      "A_normalized_power_error": 0.09453590926261579,
+      "A_pass_mask": [
+        true,
+        true
+      ],
+      "B_normalized_amplitude_error": 3.172909959586546,
+      "B_normalized_power_error": 46.22173808667257,
+      "B_pass_mask": [
+        false,
+        false
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.06378399784813056,
+      "B_vs_D_normalized_power_delta": 0.48561735455132377,
+      "D_normalized_amplitude_error": 3.1315779091737688,
+      "D_normalized_power_error": 46.707355441223896,
+      "D_pass_mask": [
+        false,
+        false
+      ],
+      "m": -7,
+      "n": 0,
+      "polarization": "s",
+      "side": "bottom"
+    },
+    {
+      "A_normalized_amplitude_error": 4.899806539235193,
+      "A_normalized_power_error": 11.713262207538687,
+      "A_pass_mask": [
+        false,
+        false
+      ],
+      "B_normalized_amplitude_error": 13.794793249527803,
+      "B_normalized_power_error": 6.460731194091211,
+      "B_pass_mask": [
+        false,
+        false
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.18080943590921084,
+      "B_vs_D_normalized_power_delta": 1.237141594166326,
+      "D_normalized_amplitude_error": 13.833833401475822,
+      "D_normalized_power_error": 7.697872788257536,
+      "D_pass_mask": [
+        false,
+        false
+      ],
+      "m": -5,
+      "n": 0,
+      "polarization": "s",
+      "side": "bottom"
+    },
+    {
+      "A_normalized_amplitude_error": 6.2540448815683005,
+      "A_normalized_power_error": 44.44030075709376,
+      "A_pass_mask": [
+        false,
+        false
+      ],
+      "B_normalized_amplitude_error": 6.901023399944484,
+      "B_normalized_power_error": 31.6043854525086,
+      "B_pass_mask": [
+        false,
+        false
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.16430285847734033,
+      "B_vs_D_normalized_power_delta": 2.2579262162248295,
+      "D_normalized_amplitude_error": 6.797086257058529,
+      "D_normalized_power_error": 29.34645923628377,
+      "D_pass_mask": [
+        false,
+        false
+      ],
+      "m": -4,
+      "n": 0,
+      "polarization": "s",
+      "side": "bottom"
+    },
+    {
+      "A_normalized_amplitude_error": 1.8155913809066162,
+      "A_normalized_power_error": 2.8318327066579925,
+      "A_pass_mask": [
+        false,
+        false
+      ],
+      "B_normalized_amplitude_error": 2.3751225031855676,
+      "B_normalized_power_error": 2.1195120850262485,
+      "B_pass_mask": [
+        false,
+        false
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.0560625355396127,
+      "B_vs_D_normalized_power_delta": 0.42807644430542,
+      "D_normalized_amplitude_error": 2.363699882804858,
+      "D_normalized_power_error": 1.6914356407208286,
+      "D_pass_mask": [
+        false,
+        false
+      ],
+      "m": -2,
+      "n": 0,
+      "polarization": "s",
+      "side": "bottom"
+    },
+    {
+      "A_normalized_amplitude_error": 0.286339617483204,
+      "A_normalized_power_error": 0.2220976434121174,
+      "A_pass_mask": [
+        true,
+        true
+      ],
+      "B_normalized_amplitude_error": 0.95676838679912,
+      "B_normalized_power_error": 0.07120219144891729,
+      "B_pass_mask": [
+        true,
+        true
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.01429126267142637,
+      "B_vs_D_normalized_power_delta": 0.018920743532059702,
+      "D_normalized_amplitude_error": 0.9683027587690775,
+      "D_normalized_power_error": 0.090122934980977,
+      "D_pass_mask": [
+        true,
+        true
+      ],
+      "m": -1,
+      "n": 0,
+      "polarization": "s",
+      "side": "bottom"
+    },
+    {
+      "A_normalized_amplitude_error": 0.07677645652407175,
+      "A_normalized_power_error": 0.07613589261771657,
+      "A_pass_mask": [
+        true,
+        true
+      ],
+      "B_normalized_amplitude_error": 0.3144273752168614,
+      "B_normalized_power_error": 0.4044203968216582,
+      "B_pass_mask": [
+        true,
+        true
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.0008623989578433513,
+      "B_vs_D_normalized_power_delta": 0.00035640005873035466,
+      "D_normalized_amplitude_error": 0.31356548656186345,
+      "D_normalized_power_error": 0.4047767968803886,
+      "D_pass_mask": [
+        true,
+        true
+      ],
+      "m": 0,
+      "n": 0,
+      "polarization": "s",
+      "side": "bottom"
+    },
+    {
+      "A_normalized_amplitude_error": 1.780630422403215,
+      "A_normalized_power_error": 0.49322569197909527,
+      "A_pass_mask": [
+        true,
+        false
+      ],
+      "B_normalized_amplitude_error": 29.667148057506548,
+      "B_normalized_power_error": 22.615532381844268,
+      "B_pass_mask": [
+        false,
+        false
+      ],
+      "B_vs_D_normalized_amplitude_delta": 1.4168080857574012,
+      "B_vs_D_normalized_power_delta": 0.407306838189753,
+      "D_normalized_amplitude_error": 28.591894272154615,
+      "D_normalized_power_error": 23.022839220034022,
+      "D_pass_mask": [
+        false,
+        false
+      ],
+      "m": -7,
+      "n": 0,
+      "polarization": "s",
+      "side": "top"
+    },
+    {
+      "A_normalized_amplitude_error": 2.005511491553944,
+      "A_normalized_power_error": 2.380957720812651,
+      "A_pass_mask": [
+        false,
+        false
+      ],
+      "B_normalized_amplitude_error": 3.951672771749824,
+      "B_normalized_power_error": 4.564461976723788,
+      "B_pass_mask": [
+        false,
+        false
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.30693419792415466,
+      "B_vs_D_normalized_power_delta": 0.3133089338452682,
+      "D_normalized_amplitude_error": 4.24464064360441,
+      "D_normalized_power_error": 4.877770910569056,
+      "D_pass_mask": [
+        false,
+        false
+      ],
+      "m": -5,
+      "n": 0,
+      "polarization": "s",
+      "side": "top"
+    },
+    {
+      "A_normalized_amplitude_error": 3.180150611222698,
+      "A_normalized_power_error": 5.776035687639621,
+      "A_pass_mask": [
+        false,
+        false
+      ],
+      "B_normalized_amplitude_error": 8.986433671294321,
+      "B_normalized_power_error": 14.021504366255785,
+      "B_pass_mask": [
+        false,
+        false
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.26049499172439605,
+      "B_vs_D_normalized_power_delta": 1.081770162801001,
+      "D_normalized_amplitude_error": 8.925672179166023,
+      "D_normalized_power_error": 12.939734203454783,
+      "D_pass_mask": [
+        false,
+        false
+      ],
+      "m": -4,
+      "n": 0,
+      "polarization": "s",
+      "side": "top"
+    },
+    {
+      "A_normalized_amplitude_error": 0.4549182890528933,
+      "A_normalized_power_error": 4.4024024849164665,
+      "A_pass_mask": [
+        false,
+        true
+      ],
+      "B_normalized_amplitude_error": 0.350208418987142,
+      "B_normalized_power_error": 4.861164281708082,
+      "B_pass_mask": [
+        false,
+        true
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.03399388842572694,
+      "B_vs_D_normalized_power_delta": 0.4796491393310273,
+      "D_normalized_amplitude_error": 0.3840586018277842,
+      "D_normalized_power_error": 5.340813421039109,
+      "D_pass_mask": [
+        false,
+        true
+      ],
+      "m": -2,
+      "n": 0,
+      "polarization": "s",
+      "side": "top"
+    },
+    {
+      "A_normalized_amplitude_error": 0.39377623941215795,
+      "A_normalized_power_error": 0.24107603331969715,
+      "A_pass_mask": [
+        true,
+        true
+      ],
+      "B_normalized_amplitude_error": 1.6141011153380498,
+      "B_normalized_power_error": 0.270342814691959,
+      "B_pass_mask": [
+        true,
+        false
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.026823739902080604,
+      "B_vs_D_normalized_power_delta": 0.038719038212733606,
+      "D_normalized_amplitude_error": 1.6248048462979134,
+      "D_normalized_power_error": 0.30906185290469257,
+      "D_pass_mask": [
+        true,
+        false
+      ],
+      "m": -1,
+      "n": 0,
+      "polarization": "s",
+      "side": "top"
+    },
+    {
+      "A_normalized_amplitude_error": 0.07290449270390341,
+      "A_normalized_power_error": 0.0710742128608789,
+      "A_pass_mask": [
+        true,
+        true
+      ],
+      "B_normalized_amplitude_error": 0.1558122990676609,
+      "B_normalized_power_error": 0.15755552961803332,
+      "B_pass_mask": [
+        true,
+        true
+      ],
+      "B_vs_D_normalized_amplitude_delta": 0.008114675248354039,
+      "B_vs_D_normalized_power_delta": 0.00448373768576732,
+      "D_normalized_amplitude_error": 0.1528987782051905,
+      "D_normalized_power_error": 0.16203926730380064,
+      "D_pass_mask": [
+        true,
+        true
+      ],
+      "m": 0,
+      "n": 0,
+      "polarization": "s",
+      "side": "top"
+    }
+  ],
+  "checks": {
+    "A_and_B_have_identical_local_h_action": true,
+    "A_broad_physics_and_resource_gates_pass_with_known_residual_negative": true,
+    "A_is_6_plus_6_positive_anchor": true,
+    "B_and_D_all_nonchannel_gates_pass": true,
+    "B_and_D_are_independent_4_plus_4_negatives": true,
+    "B_and_D_have_identical_remote_p5_boxes": true,
+    "D_adds_exactly_one_symmetric_h_root": true,
+    "remote_pdown_loses_passing_channels_without_any_new_pass": true
+  },
+  "classification": "controlled_negative",
+  "factorial_design": {
+    "A": "one-sided local-h, all p6 cell interiors",
+    "B": "same one-sided local-h plus 32 remote p5 interiors",
+    "D": "symmetric local-h plus the same 32 remote p5 interiors",
+    "isolated_contrasts": {
+      "B_minus_A": "remote p6-to-p5 cell-interior action",
+      "D_minus_B": "second symmetric top-air h split"
+    }
+  },
+  "failures": [],
+  "inputs": {
+    "A_one_sided_h": {
+      "candidate_id": "h15_top_air_local_h_v1",
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_local_h_mpi8_controlled_negative_v1.json",
+      "sha256": "995026ed9d2e6e70c8f681d8dfc7a7d1c49ff2bb2574d49733e9ce90c661fe23",
+      "status": "task035d_h15_local_h_controlled_negative"
+    },
+    "B_one_sided_h_remote_p5": {
+      "candidate_id": "h15_top_air_remote_p5_interior_bridge_v1",
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_remote_p5_interior_bridge_mpi8_candidate_check_v1.json",
+      "sha256": "8ab6ecf79b3c8750be9338e842668da51724a3e96d75d41055e340d3de01f799",
+      "status": "task035d_hp_factorial_bridge_controlled_negative"
+    },
+    "D_symmetric_h_remote_p5": {
+      "candidate_id": "h15_symmetric_top_air_remote_p5_interior_v1",
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_symmetric_top_air_remote_p5_interior_mpi8_candidate_check_v2.json",
+      "sha256": "3eaa00584387f60db3d5e570774537dd0ec60848235ad8db0d39651436730870",
+      "status": "task035d_combined_hp_interior_controlled_negative"
+    }
+  },
+  "lane_decision": {
+    "closed": true,
+    "eight_cell_C_discriminator": "not_run",
+    "eight_cell_C_reason": "two independent formal negatives close this heuristic p-down lane; additional subset scanning would be blind",
+    "formal_negative_signal_count": 2,
+    "lane": "remote_homogeneous_air_p6_to_p5_cell_interior",
+    "next_route": "actual 12-channel nested-p complement DWR with signed cell and port/aux closure"
+  },
+  "ordinary_default_changed": false,
+  "pass": true,
+  "plans": {
+    "A_one_sided_h": {
+      "marked_root_boxes": [
+        {
+          "lower": [
+            8.25,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            130.0
+          ]
+        }
+      ],
+      "p5_interior_box_count": 0,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_local_h_plan_v1.json",
+      "sha256": "c4d8a5bd3cb16735f9027c21e531b720517180ee5f2d510042f6ed23dad112a1"
+    },
+    "B_one_sided_h_remote_p5": {
+      "marked_root_boxes": [
+        {
+          "lower": [
+            8.25,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            130.0
+          ]
+        }
+      ],
+      "p5_interior_box_count": 32,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_remote_p5_interior_bridge_plan_v1.json",
+      "sha256": "6775a173939175af0a84e3941276c2d2fe8116353b8ee609fd1dbfa61f3c1859"
+    },
+    "D_symmetric_h_remote_p5": {
+      "marked_root_boxes": [
+        {
+          "lower": [
+            8.25,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "lower": [
+            33.5,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            130.0
+          ]
+        }
+      ],
+      "p5_interior_box_count": 32,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_symmetric_top_air_remote_p5_interior_plan_v1.json",
+      "sha256": "1d0b1ef0d6cfb28f463efb0df70d3b4c864e26fbeaeeb413e28e71689f5de520"
+    }
+  },
+  "schema_version": "case097.hp-factorial-bridge-attribution.v1",
+  "selection_credit": {
+    "actual_channel_dwr": false,
+    "complete_combined_hp_credit": false,
+    "factorial_attribution_credit": true,
+    "goal_oriented_selection_credit": false
+  },
+  "source_identity": {
+    "committed_script_sha256": "a5d7dc5c51cb0f40309e9188699ddc0cbba889e82079834a36f0a73c2a4424de",
+    "live_head": "8c336196a56a3ecec3c4b83a08cc246a0b725994",
+    "live_script_sha256": "a5d7dc5c51cb0f40309e9188699ddc0cbba889e82079834a36f0a73c2a4424de",
+    "script_path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/analyze_hp_factorial_bridge.py",
+    "source_sha": "8c336196a56a3ecec3c4b83a08cc246a0b725994",
+    "status_lines": [],
+    "verified_clean_source": true
+  },
+  "status": "remote_p5_interior_lane_closed_controlled_negative"
+}
