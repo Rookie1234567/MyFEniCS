@@ -16,6 +16,12 @@ from benchmarks.run_task033_full3d_watchdog import (
 )
 from benchmarks.task035d_case097_gates import (
     TASK035D_CASE097_BACKEND,
+    TASK035D_COMBINED_HP_ACTIVE_FE_DOFS,
+    TASK035D_COMBINED_HP_AUTHORITY_PATH,
+    TASK035D_COMBINED_HP_PLAN_NAME,
+    TASK035D_COMBINED_HP_PLAN_PATH,
+    TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS,
+    TASK035D_COMBINED_HP_SOLVE_ROWS,
     TASK035D_H10_CELL_TAG_SHA256,
     TASK035D_H10_FACET_TAG_SHA256,
     TASK035D_H10_MESH_SHA256,
@@ -37,6 +43,7 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_T30_PLAN_CONTENT_SHA256,
     TASK035D_T30_SOLVE_ROWS,
     task035d_case097_local_h_solver_gate,
+    task035d_case097_combined_hp_solver_gate,
     task035d_case097_plan_authority_gate,
     task035d_case097_sidewall_guard_plan_authority_gate,
     task035d_case097_sidewall_guard_solver_gate,
@@ -69,6 +76,15 @@ LOCAL_H_AUTHORITY_SHA256 = hashlib.sha256(
     LOCAL_H_AUTHORITY.read_bytes()
 ).hexdigest()
 LOCAL_H_COMPONENT = RECORDS / "local_h_production_mpi8_v3_owner_gate_fix1.json"
+COMBINED_HP_PLAN = ROOT / TASK035D_COMBINED_HP_PLAN_PATH
+COMBINED_HP_AUTHORITY = ROOT / TASK035D_COMBINED_HP_AUTHORITY_PATH
+COMBINED_HP_PLAN_SHA256 = hashlib.sha256(
+    COMBINED_HP_PLAN.read_bytes()
+).hexdigest()
+COMBINED_HP_AUTHORITY_SHA256 = hashlib.sha256(
+    COMBINED_HP_AUTHORITY.read_bytes()
+).hexdigest()
+COMBINED_HP_COMPONENT = RECORDS / "combined_hp_interior_mpi8_v2.json"
 SOURCE_SHA = "a" * 40
 
 
@@ -150,6 +166,26 @@ def _local_h_cli() -> list[str]:
         "--verified-clean-sha",
         SOURCE_SHA,
     ]
+
+
+def _combined_hp_cli() -> list[str]:
+    cli = _local_h_cli()
+    cli[cli.index("--task035d-candidate-id") + 1] = (
+        TASK035D_COMBINED_HP_PLAN_NAME
+    )
+    cli[cli.index("--stage4-local-h-refinement-plan") + 1] = str(
+        COMBINED_HP_PLAN
+    )
+    cli[
+        cli.index("--stage4-local-h-refinement-plan-sha256") + 1
+    ] = COMBINED_HP_PLAN_SHA256
+    cli[cli.index("--task035d-plan-authority") + 1] = str(
+        COMBINED_HP_AUTHORITY
+    )
+    cli[cli.index("--task035d-plan-authority-sha256") + 1] = (
+        COMBINED_HP_AUTHORITY_SHA256
+    )
+    return cli
 
 
 def _solver_summary(*, sidewall: bool = False) -> dict:
@@ -469,6 +505,70 @@ def _local_h_solver_summary() -> dict:
     return summary
 
 
+def _combined_hp_solver_summary() -> dict:
+    summary = copy.deepcopy(_local_h_solver_summary())
+    reduction = json.loads(
+        COMBINED_HP_COMPONENT.read_text(encoding="utf-8")
+    )["reduction_audit"]
+    matrix = {
+        "matrix_rows": TASK035D_COMBINED_HP_SOLVE_ROWS,
+        "matrix_nnz_used": 234_567.0,
+        "matrix_mallocs": 0.0,
+    }
+    summary["matrix_stats"] = matrix
+    summary["stage4_dtn_factor_inventory"]["matrix_stats"] = matrix
+    summary["config"]["stage4_local_h_refinement_plan"] = str(
+        COMBINED_HP_PLAN
+    )
+    summary["stage4_full3d_assembly_backend_qualification"][
+        "element_contract"
+    ] = (
+        "exact_sequence_balanced_local_h_fixed_trace_"
+        "variable_cell_interior"
+    )
+    summary["stage4_local_h_constraint_audit"] = reduction
+    summary["num_raw_broken_active_fe_dofs"] = (
+        TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
+    )
+    summary["num_actual_conforming_active_fe_dofs"] = (
+        TASK035D_COMBINED_HP_ACTIVE_FE_DOFS
+    )
+    summary["num_active_trace_dofs"] = reduction[
+        "independent_trace_rows"
+    ]
+    summary["num_active_condensed_dofs"] = (
+        TASK035D_COMBINED_HP_SOLVE_ROWS
+    )
+    audit = summary["cell_static_condensation"]
+    audit["degree_plan"] = reduction["degree_plan"]
+    audit["trace_constraints"] = reduction["trace_constraints"]
+    audit["local_h"] = reduction
+    condensed = audit["condensed_system"]
+    condensed["active_full3d_rows_before_condensation"] = (
+        TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
+    )
+    condensed["active_trace_rows_before_constraint_elimination"] = (
+        reduction["raw_broken_trace_rows"]
+    )
+    condensed["active_trace_rows"] = reduction[
+        "independent_trace_rows"
+    ]
+    condensed[
+        "interior_rhs_recovery_iterative_refinement_max_steps"
+    ] = 2
+    audit["recovery"][
+        "interior_rhs_recovery_iterative_refinement_max_steps"
+    ] = 2
+    trace_recovery = audit["recovery"]["trace_constraint_recovery"]
+    trace_recovery["covered_raw_trace_rows"] = reduction[
+        "raw_broken_trace_rows"
+    ]
+    trace_recovery["expected_raw_trace_rows"] = reduction[
+        "raw_broken_trace_rows"
+    ]
+    return summary
+
+
 def _resource_summary() -> dict:
     per_rank = {
         str(rank): {"pss_mb": 100.0 + rank, "uss_mb": 90.0 + rank}
@@ -486,6 +586,65 @@ def _resource_summary() -> dict:
 
 
 class Task035dCase097RunnerGateTests(unittest.TestCase):
+    def test_combined_hp_launch_is_hash_bound_and_local_h_scoped(
+        self,
+    ) -> None:
+        args = _parse_args(_combined_hp_cli())
+        launch = _validate_task035d_case097_plan(args)
+        self.assertTrue(launch["pass"], launch["failures"])
+        self.assertEqual(
+            launch["plan_identity"]["actual_conforming_active_fe_dofs"],
+            TASK035D_COMBINED_HP_ACTIVE_FE_DOFS,
+        )
+        self.assertEqual(
+            launch["plan_identity"]["predicted_direct_solve_rows"],
+            TASK035D_COMBINED_HP_SOLVE_ROWS,
+        )
+        self.assertFalse(
+            launch["selection_credit"]["complete_combined_hp_credit"]
+        )
+        cfg = _full3d_config(args)
+        self.assertEqual(
+            cfg.stage4_local_h_refinement_plan,
+            str(COMBINED_HP_PLAN.resolve()),
+        )
+        self.assertIsNone(cfg.stage4_variable_p_cell_degree_plan)
+        command = _worker_command(
+            args,
+            Path("/tmp/task035d-combined-hp"),
+        )
+        self.assertEqual(command[command.index("--h-nm") + 1], "15.0")
+        self.assertEqual(
+            command[
+                command.index("--stage4-local-h-refinement-plan") + 1
+            ],
+            str(COMBINED_HP_PLAN.resolve()),
+        )
+        self.assertNotIn(
+            "--stage4-variable-p-cell-degree-plan",
+            command,
+        )
+
+        solver = _combined_hp_solver_summary()
+        solver_gate = task035d_case097_combined_hp_solver_gate(solver)
+        self.assertTrue(solver_gate["pass"], solver_gate["failures"])
+        qualification = _qualify(
+            args=args,
+            solver_summary=solver,
+            events=[{"stage": "after_ksp_solve"}],
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            terminated_for_authority_unreadable=False,
+            no_swap=True,
+            observed_worker_rank_count=8,
+            resource_summary=_resource_summary(),
+        )
+        self.assertTrue(
+            qualification["pass"],
+            qualification["failures"],
+        )
+
     def test_h15_local_h_launch_and_solver_identity_are_frozen(self) -> None:
         args = _parse_args(_local_h_cli())
         launch = _validate_task035d_case097_plan(args)

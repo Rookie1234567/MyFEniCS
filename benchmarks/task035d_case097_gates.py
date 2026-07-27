@@ -174,6 +174,80 @@ TASK035D_LOCAL_H_ACTIVE_FE_DOFS = 82_925
 TASK035D_LOCAL_H_INDEPENDENT_TRACE_ROWS = 18_390
 TASK035D_LOCAL_H_DTN_ROWS = 80
 TASK035D_LOCAL_H_SOLVE_ROWS = 18_470
+TASK035D_COMBINED_HP_PLAN_NAME = (
+    "h15_symmetric_top_air_remote_p5_interior_v1"
+)
+TASK035D_COMBINED_HP_PLAN_PATH = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+    "h15_symmetric_top_air_remote_p5_interior_plan_v1.json"
+)
+TASK035D_COMBINED_HP_PLAN_FILE_SHA256 = (
+    "1d0b1ef0d6cfb28f463efb0df70d3b4c864e26fbeaeeb413e28e71689f5de520"
+)
+TASK035D_COMBINED_HP_AUTHORITY_PATH = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+    "combined_hp_interior_mpi_identity_v2.json"
+)
+TASK035D_COMBINED_HP_AUTHORITY_FILE_SHA256 = (
+    "f978cc3430b3cb6e8445f5aa268590fd8c03214153456a1a0cb14f409351bdd7"
+)
+TASK035D_COMBINED_HP_COMPONENT_SOURCE_SHA = (
+    "459dea914b2508cd9a22f4348bdcba85351272d0"
+)
+TASK035D_COMBINED_HP_CHECKER_SOURCE_SHA = (
+    "459dea914b2508cd9a22f4348bdcba85351272d0"
+)
+TASK035D_COMBINED_HP_LEAF_CATALOG_SHA256 = (
+    "4b1df873d791e4716a0744b36aa524d0a9e5c842aba9395516c9d8792f93f846"
+)
+TASK035D_COMBINED_HP_HANGING_CATALOG_SHA256 = (
+    "2f7c6c4bcb6c7d71a71c78ac2dab1caddc2914b01b041949b7371b68f309bd27"
+)
+TASK035D_COMBINED_HP_CARRIER_SHA256 = (
+    "13a15c1b4e77ad23fbe308fa98fee7f34d0867bec2a6dea2136cc5ebb973c76f"
+)
+TASK035D_COMBINED_HP_PHYSICAL_FACET_SHA256 = (
+    "c3f9ac50081be93ae6a1402f922953339065af8586e045b6810a25a777c80191"
+)
+TASK035D_COMBINED_HP_MATERIAL_SHA256 = (
+    "c79dc64620f2a13ed88e1cb0e6fb4e7757c74583bdd7f8d7be01ab9548034f6f"
+)
+TASK035D_COMBINED_HP_PHYSICAL_AUTHORITY_SHA256 = (
+    "1315a11c31da9aebfb5c04489feb4d96f16c4749d9891691b8d16bd9cfab06dc"
+)
+TASK035D_COMBINED_HP_FLATTENED_GRAPH_SHA256 = (
+    "097b07aa5657270a5b5dce00752c1e9353bf75fdccc16b8ffa78f290f41eb8a3"
+)
+TASK035D_COMBINED_HP_CELL_GRAPH_SHA256 = (
+    "691bf41fb9c2df3d93cbb079c0251830bdc462709ba06e9d30bd42117515ce87"
+)
+TASK035D_COMBINED_HP_BOX_CATALOG_SHA256 = (
+    "c2a50a595f06166d2ee5c52b8bf5ab327ccd5155015b046d905fe9b9ace2d681"
+)
+TASK035D_COMBINED_HP_CELL_DEGREE_PLAN_SHA256 = (
+    "c78634f2cb0cf6b0a1ca417d483e25b74cc2f28b54fa3e78af139731a300b7cf"
+)
+TASK035D_COMBINED_HP_ENTITY_DEGREE_SHA256 = (
+    "61d3dfcea2854a3fc543537301e07ce9dd173820bb6665a96bfcba753cfe4ff7"
+)
+TASK035D_COMBINED_HP_ROOT_CELLS = 120
+TASK035D_COMBINED_HP_LEAF_CELLS = 148
+TASK035D_COMBINED_HP_HANGING_PATCHES = 12
+TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS = 86_740
+TASK035D_COMBINED_HP_RAW_TRACE_ROWS = 26_860
+TASK035D_COMBINED_HP_HANGING_SLAVE_ROWS = 2_500
+TASK035D_COMBINED_HP_PERIODIC_SLAVE_ROWS = 4_380
+TASK035D_COMBINED_HP_ACTIVE_FE_DOFS = 84_240
+TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS = 19_980
+TASK035D_COMBINED_HP_DTN_ROWS = 80
+TASK035D_COMBINED_HP_SOLVE_ROWS = 20_060
+TASK035D_COMBINED_HP_CELL_DEGREE_COUNTS = {
+    "p4": 0,
+    "p5": 32,
+    "p6": 116,
+}
 
 
 def _valid_hex(value: Any, length: int) -> bool:
@@ -1017,6 +1091,299 @@ def task035d_case097_local_h_plan_authority_gate(
     }
 
 
+def task035d_case097_combined_hp_plan_authority_gate(
+    plan: dict[str, Any] | None,
+    authority: dict[str, Any] | None,
+    *,
+    expected_plan_file_sha256: str | None,
+    observed_plan_file_sha256: str | None,
+    expected_authority_sha256: str | None,
+    observed_authority_sha256: str | None,
+    plan_is_tracked: bool,
+    authority_is_tracked: bool,
+    plan_path_from_root: str | None,
+    authority_path_from_root: str | None,
+) -> dict[str, Any]:
+    """Validate the first fixed-trace local-h/variable-interior launch."""
+
+    plan = plan if isinstance(plan, dict) else {}
+    authority = authority if isinstance(authority, dict) else {}
+    base = plan.get("base_config")
+    base = base if isinstance(base, dict) else {}
+    forest = plan.get("expected_forest")
+    forest = forest if isinstance(forest, dict) else {}
+    provenance = plan.get("provenance")
+    provenance = provenance if isinstance(provenance, dict) else {}
+    degree_rows = plan.get("cell_interior_degrees")
+    degree_rows = degree_rows if isinstance(degree_rows, list) else []
+    stable = authority.get("stable_identity")
+    stable = stable if isinstance(stable, dict) else {}
+    cross = authority.get("cross_checks")
+    cross = cross if isinstance(cross, dict) else {}
+    checker = authority.get("checker_identity")
+    checker = checker if isinstance(checker, dict) else {}
+    expected_stable = {
+        "actual_full3d_equivalent_active_fe_dofs": (
+            TASK035D_COMBINED_HP_ACTIVE_FE_DOFS
+        ),
+        "base_config_identity_sha256": (
+            TASK035D_LOCAL_H_BASE_CONFIG_SHA256
+        ),
+        "canonical_cell_graph_sha256": (
+            TASK035D_COMBINED_HP_CELL_GRAPH_SHA256
+        ),
+        "carrier_connectivity_sha256": (
+            TASK035D_COMBINED_HP_CARRIER_SHA256
+        ),
+        "cell_degree_counts": TASK035D_COMBINED_HP_CELL_DEGREE_COUNTS,
+        "cell_degree_plan_sha256": (
+            TASK035D_COMBINED_HP_CELL_DEGREE_PLAN_SHA256
+        ),
+        "flattened_graph_sha256": (
+            TASK035D_COMBINED_HP_FLATTENED_GRAPH_SHA256
+        ),
+        "geometry_canonical_entity_degree_sha256": (
+            TASK035D_COMBINED_HP_ENTITY_DEGREE_SHA256
+        ),
+        "hanging_face_catalog_sha256": (
+            TASK035D_COMBINED_HP_HANGING_CATALOG_SHA256
+        ),
+        "hanging_patch_count": TASK035D_COMBINED_HP_HANGING_PATCHES,
+        "hanging_slave_rows": TASK035D_COMBINED_HP_HANGING_SLAVE_ROWS,
+        "independent_trace_rows": (
+            TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS
+        ),
+        "leaf_catalog_sha256": (
+            TASK035D_COMBINED_HP_LEAF_CATALOG_SHA256
+        ),
+        "leaf_cell_count": TASK035D_COMBINED_HP_LEAF_CELLS,
+        "material_catalog_sha256": TASK035D_COMBINED_HP_MATERIAL_SHA256,
+        "mesh_cell_box_catalog_sha256": (
+            TASK035D_COMBINED_HP_BOX_CATALOG_SHA256
+        ),
+        "periodic_slave_rows": TASK035D_COMBINED_HP_PERIODIC_SLAVE_ROWS,
+        "physical_authority_sha256": (
+            TASK035D_COMBINED_HP_PHYSICAL_AUTHORITY_SHA256
+        ),
+        "physical_facet_catalog_sha256": (
+            TASK035D_COMBINED_HP_PHYSICAL_FACET_SHA256
+        ),
+        "plan_file_sha256": TASK035D_COMBINED_HP_PLAN_FILE_SHA256,
+        "predicted_direct_solve_rows": TASK035D_COMBINED_HP_SOLVE_ROWS,
+        "raw_broken_active_fe_dofs": (
+            TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
+        ),
+        "raw_broken_trace_rows": TASK035D_COMBINED_HP_RAW_TRACE_ROWS,
+        "root_cell_count": TASK035D_COMBINED_HP_ROOT_CELLS,
+    }
+    expected_inputs = [
+        {
+            "mpi_size": 1,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "combined_hp_interior_mpi1_v2.json"
+            ),
+            "sha256": (
+                "6f13691de05b9471b51fbab0865c713f4d49f7a03b27a082df2ae4c2f2b41d9e"
+            ),
+        },
+        {
+            "mpi_size": 2,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "combined_hp_interior_mpi2_v2.json"
+            ),
+            "sha256": (
+                "e5d6272a2ee7ec45e86b8aa06defd6d7d81bcb93ca9c7ae2b3c0add9d6235093"
+            ),
+        },
+        {
+            "mpi_size": 8,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "combined_hp_interior_mpi8_v2.json"
+            ),
+            "sha256": (
+                "012353dc18da1a91b13963d88d6b98826c0614db10b9aae7152a95cdc2cf29b4"
+            ),
+        },
+    ]
+    degree_counts = Counter(
+        int(row.get("degree", -1))
+        for row in degree_rows
+        if isinstance(row, dict)
+    )
+    checks = {
+        "plan_and_authority_tracked": plan_is_tracked and authority_is_tracked,
+        "expected_hashes_valid": (
+            _valid_hex(expected_plan_file_sha256, 64)
+            and _valid_hex(expected_authority_sha256, 64)
+        ),
+        "frozen_file_hashes": (
+            observed_plan_file_sha256
+            == expected_plan_file_sha256
+            == TASK035D_COMBINED_HP_PLAN_FILE_SHA256
+            and observed_authority_sha256
+            == expected_authority_sha256
+            == TASK035D_COMBINED_HP_AUTHORITY_FILE_SHA256
+        ),
+        "path_identity": (
+            plan_path_from_root == TASK035D_COMBINED_HP_PLAN_PATH
+            and authority_path_from_root
+            == TASK035D_COMBINED_HP_AUTHORITY_PATH
+        ),
+        "plan_schema_and_h15_identity": (
+            plan.get("schema_version")
+            == "task035d.stage4-local-h-refinement-plan.v1"
+            and plan.get("status") == "stage4_balanced_local_h_plan"
+            and base.get("identity_sha256")
+            == TASK035D_LOCAL_H_BASE_CONFIG_SHA256
+            and base.get("stage_case") == "stage4_block_grating"
+            and base.get("geometry_kind") == "rectangular_block_grating"
+            and base.get("mesh_target_size") == 15.0
+            and base.get("mesh_cells_resolved") == [6, 2, 10]
+        ),
+        "symmetric_balanced_periodic_h_action": (
+            plan.get("periodic_axes") == ["x", "y"]
+            and plan.get("protect_material_interfaces") is True
+            and plan.get("maximum_level") == 1
+            and plan.get("marked_root_boxes")
+            == [
+                {
+                    "lower": [8.25, 0.0, 120.0],
+                    "upper": [16.5, 12.5, 130.0],
+                },
+                {
+                    "lower": [33.5, 0.0, 120.0],
+                    "upper": [41.75, 12.5, 130.0],
+                },
+            ]
+            and forest.get("closure_counts")
+            == {"balance": 0, "material": 0, "periodic": 2, "user": 2}
+        ),
+        "true_p5_p6_variable_interiors": (
+            plan.get("trace_degree") == 5
+            and plan.get("cell_interior_degree") == 6
+            and len(degree_rows) == TASK035D_COMBINED_HP_LEAF_CELLS
+            and degree_counts == Counter({6: 116, 5: 32})
+            and plan.get("cell_interior_degree_plan_sha256")
+            == TASK035D_COMBINED_HP_CELL_DEGREE_PLAN_SHA256
+        ),
+        "forest_identity": (
+            forest.get("root_cell_count") == TASK035D_COMBINED_HP_ROOT_CELLS
+            and forest.get("leaf_cell_count")
+            == TASK035D_COMBINED_HP_LEAF_CELLS
+            and forest.get("hanging_patch_count")
+            == TASK035D_COMBINED_HP_HANGING_PATCHES
+            and forest.get("leaf_catalog_sha256")
+            == TASK035D_COMBINED_HP_LEAF_CATALOG_SHA256
+            and forest.get("hanging_face_catalog_sha256")
+            == TASK035D_COMBINED_HP_HANGING_CATALOG_SHA256
+        ),
+        "selection_credit_is_limited": (
+            provenance.get("candidate_id")
+            == TASK035D_COMBINED_HP_PLAN_NAME
+            and provenance.get("accuracy_credit") is False
+            and provenance.get("complete_combined_hp_credit") is False
+            and "not actual DWR" in str(
+                provenance.get("h_action_evidence", "")
+            )
+            and "no variable trace" in str(
+                provenance.get("p_action_evidence", "")
+            )
+        ),
+        "ordinary_default_unchanged": (
+            plan.get("ordinary_default_changed") is False
+            and provenance.get("ordinary_default_changed") is False
+            and authority.get("ordinary_default_changed") is False
+        ),
+        "authority_identity": (
+            authority.get("schema_version")
+            == "case097.combined-hp-interior-mpi-identity.v2"
+            and authority.get("status")
+            == "combined_hp_interior_mpi_identity_pass"
+            and authority.get("pass") is True
+            and authority.get("candidate_id")
+            == TASK035D_COMBINED_HP_PLAN_NAME
+            and authority.get("source_sha")
+            == TASK035D_COMBINED_HP_COMPONENT_SOURCE_SHA
+            and authority.get("live_head")
+            == TASK035D_COMBINED_HP_CHECKER_SOURCE_SHA
+            and checker.get("source_sha")
+            == TASK035D_COMBINED_HP_CHECKER_SOURCE_SHA
+            and checker.get("verified_clean_checker") is True
+            and checker.get("status_lines") == []
+        ),
+        "authority_inputs_and_cross_checks": (
+            authority.get("input_records") == expected_inputs
+            and bool(cross)
+            and all(value is True for value in cross.values())
+        ),
+        "authority_stable_identity": stable == expected_stable,
+        "authority_plan_identity": (
+            authority.get("plan")
+            == {
+                "path": TASK035D_COMBINED_HP_PLAN_PATH,
+                "sha256": TASK035D_COMBINED_HP_PLAN_FILE_SHA256,
+            }
+        ),
+        "authority_is_pre_pde_only": (
+            authority.get("pde_launch_gate") is True
+            and authority.get("pde_accuracy_credit") is False
+            and authority.get("failures") == []
+        ),
+        "active_fe_dof_gate": (
+            stable.get("actual_full3d_equivalent_active_fe_dofs")
+            == TASK035D_COMBINED_HP_ACTIVE_FE_DOFS
+            and TASK035D_COMBINED_HP_ACTIVE_FE_DOFS <= 90_000
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {
+        "schema_version": (
+            "task035d.case097-combined-hp-interior-launch-gate.v1"
+        ),
+        "status": (
+            "task035d_combined_hp_interior_launch_authority_pass"
+            if not failures
+            else "task035d_combined_hp_interior_launch_authority_fail"
+        ),
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "plan_identity": {
+            "name": TASK035D_COMBINED_HP_PLAN_NAME,
+            "path": plan_path_from_root,
+            "file_sha256": observed_plan_file_sha256,
+            "base_config_identity_sha256": base.get("identity_sha256"),
+            "leaf_catalog_sha256": forest.get("leaf_catalog_sha256"),
+            "actual_conforming_active_fe_dofs": (
+                TASK035D_COMBINED_HP_ACTIVE_FE_DOFS
+            ),
+            "raw_broken_active_fe_dofs": (
+                TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
+            ),
+            "periodic_independent_trace_rows": (
+                TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS
+            ),
+            "predicted_direct_solve_rows": TASK035D_COMBINED_HP_SOLVE_ROWS,
+        },
+        "selection_credit": {
+            "structural_resource_anchor": True,
+            "actual_channel_dwr": False,
+            "goal_oriented_selection_credit": False,
+            "complete_combined_hp_credit": False,
+        },
+        "accuracy_credit": (
+            "none_until_fresh_12_channel_checker_passes"
+        ),
+        "ordinary_default_changed": False,
+    }
+
+
 def _task035d_case097_solver_gate(
     solver_summary: dict[str, Any] | None,
     *,
@@ -1796,8 +2163,409 @@ def task035d_case097_local_h_solver_gate(
     }
 
 
+def task035d_case097_combined_hp_solver_gate(
+    solver_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Check the exact combined local-h/variable-interior solver identity."""
+
+    summary = solver_summary if isinstance(solver_summary, dict) else {}
+    config = summary.get("config")
+    config = config if isinstance(config, dict) else {}
+    matrix = summary.get("matrix_stats")
+    matrix = matrix if isinstance(matrix, dict) else {}
+    audit = summary.get("cell_static_condensation")
+    audit = audit if isinstance(audit, dict) else {}
+    local_h = audit.get("local_h")
+    local_h = local_h if isinstance(local_h, dict) else {}
+    mesh = local_h.get("mesh")
+    mesh = mesh if isinstance(mesh, dict) else {}
+    forest = mesh.get("forest")
+    forest = forest if isinstance(forest, dict) else {}
+    carrier = mesh.get("carrier")
+    carrier = carrier if isinstance(carrier, dict) else {}
+    degree_plan = audit.get("degree_plan")
+    degree_plan = degree_plan if isinstance(degree_plan, dict) else {}
+    physical = local_h.get("physical_trace")
+    physical = physical if isinstance(physical, dict) else {}
+    trace = audit.get("trace_constraints")
+    trace = trace if isinstance(trace, dict) else {}
+    condensed = audit.get("condensed_system")
+    condensed = condensed if isinstance(condensed, dict) else {}
+    transfer = audit.get("global_transfer")
+    transfer = transfer if isinstance(transfer, dict) else {}
+    recovery = audit.get("recovery")
+    recovery = recovery if isinstance(recovery, dict) else {}
+    trace_recovery = recovery.get("trace_constraint_recovery")
+    trace_recovery = (
+        trace_recovery if isinstance(trace_recovery, dict) else {}
+    )
+    residual = audit.get("full_explicit_true_residual")
+    residual = residual if isinstance(residual, dict) else {}
+    qualification = summary.get(
+        "stage4_full3d_assembly_backend_qualification"
+    )
+    qualification = (
+        qualification if isinstance(qualification, dict) else {}
+    )
+    backend_audit = summary.get("stage4_full3d_assembly_backend_audit")
+    backend_audit = (
+        backend_audit if isinstance(backend_audit, dict) else {}
+    )
+    backend_contract = qualification.get("contract")
+    backend_contract = (
+        set(backend_contract) if isinstance(backend_contract, list) else set()
+    )
+    factor = summary.get("stage4_dtn_factor_inventory")
+    factor = factor if isinstance(factor, dict) else {}
+    factor_matrix = factor.get("matrix_stats")
+    factor_matrix = (
+        factor_matrix if isinstance(factor_matrix, dict) else {}
+    )
+    release = summary.get("solver_release_audit")
+    release = release if isinstance(release, dict) else {}
+    heap_trim = release.get("process_heap_trim")
+    heap_trim = heap_trim if isinstance(heap_trim, dict) else {}
+    domain_volumes = summary.get("domain_tag_volumes")
+    domain_volumes = (
+        domain_volumes if isinstance(domain_volumes, dict) else {}
+    )
+    checks = {
+        "fixed_rectangular_h15_config": (
+            config.get("stage_case") == "stage4_block_grating"
+            and config.get("geometry_kind") == "rectangular_block_grating"
+            and config.get("mesh_cell_type_resolved") == "hexahedron"
+            and config.get("nedelec_degree") == 6
+            and config.get("mesh_target_size") == 15.0
+            and config.get("use_floquet_xy") is True
+            and config.get("stage4_boundary_model") == "dtn_port"
+            and config.get("stage4_dtn_assembly") == "auxiliary"
+            and config.get("stage4_variable_p_cell_degree_plan") is None
+            and isinstance(
+                config.get("stage4_local_h_refinement_plan"),
+                str,
+            )
+        ),
+        "fixed_task034_physics_and_volumes": (
+            config.get("lambda0") == 13.5
+            and config.get("incident_theta_deg") == 80.0
+            and config.get("incident_phi_deg") == 0.0
+            and config.get("period_x") == 50.0
+            and config.get("period_y") == 25.0
+            and config.get("z_min") == -10.0
+            and config.get("z_max") == 130.0
+            and config.get("grating_height") == 120.0
+            and config.get("grating_width_x") == 17.0
+            and config.get("grating_width_y") == 25.0
+            and config.get("scattering_background") == "layered"
+            and config.get("polarization_kind") == "s"
+            and math.isclose(
+                float(domain_volumes.get("air", math.nan)),
+                111_500.0,
+                rel_tol=1.0e-12,
+                abs_tol=1.0e-8,
+            )
+            and math.isclose(
+                float(domain_volumes.get("substrate", math.nan)),
+                12_500.0,
+                rel_tol=1.0e-12,
+                abs_tol=1.0e-8,
+            )
+            and math.isclose(
+                float(domain_volumes.get("grating", math.nan)),
+                51_000.0,
+                rel_tol=1.0e-12,
+                abs_tol=1.0e-8,
+            )
+        ),
+        "combined_backend_actual": (
+            summary.get("stage4_full3d_assembly_backend_actual")
+            == TASK035D_CASE097_BACKEND
+            and summary.get("stage4_variable_p_active") is True
+            and summary.get("stage4_local_h_active") is True
+            and qualification.get("status") == "qualified"
+            and qualification.get("qualified_scope") is True
+            and qualification.get("element_contract")
+            == (
+                "exact_sequence_balanced_local_h_fixed_trace_"
+                "variable_cell_interior"
+            )
+            and {
+                "geometry_bound_balanced_local_h_hanging_trace_elimination",
+                "floquet_slave_elimination_before_global_insertion",
+                "full_recovery_and_explicit_residual",
+            }.issubset(backend_contract)
+        ),
+        "mesh_identity": (
+            mesh.get("pass") is True
+            and mesh.get("plan_file_sha256")
+            == TASK035D_COMBINED_HP_PLAN_FILE_SHA256
+            and mesh.get("base_config_identity_sha256")
+            == TASK035D_LOCAL_H_BASE_CONFIG_SHA256
+            and mesh.get("trace_degree") == 5
+            and mesh.get("cell_interior_degree") == 6
+            and mesh.get("cell_interior_degree_counts")
+            == TASK035D_COMBINED_HP_CELL_DEGREE_COUNTS
+            and mesh.get("cell_interior_degree_plan_sha256")
+            == TASK035D_COMBINED_HP_CELL_DEGREE_PLAN_SHA256
+            and mesh.get("variable_cell_interior_degree") is True
+            and mesh.get("root_cell_count")
+            == TASK035D_COMBINED_HP_ROOT_CELLS
+            and mesh.get("leaf_cell_count")
+            == TASK035D_COMBINED_HP_LEAF_CELLS
+            and mesh.get("hanging_patch_count")
+            == TASK035D_COMBINED_HP_HANGING_PATCHES
+            and forest.get("leaf_catalog_sha256")
+            == TASK035D_COMBINED_HP_LEAF_CATALOG_SHA256
+            and forest.get("hanging_face_catalog_sha256")
+            == TASK035D_COMBINED_HP_HANGING_CATALOG_SHA256
+            and carrier.get("canonical_connectivity_sha256")
+            == TASK035D_COMBINED_HP_CARRIER_SHA256
+            and carrier.get("physical_facet_catalog_sha256")
+            == TASK035D_COMBINED_HP_PHYSICAL_FACET_SHA256
+            and carrier.get("material_catalog_sha256")
+            == TASK035D_COMBINED_HP_MATERIAL_SHA256
+            and carrier.get("checks", {}).get(
+                "all_artificial_exterior_is_hanging"
+            )
+            is True
+        ),
+        "combined_reduction_identity": (
+            local_h.get("pass") is True
+            and summary.get("stage4_local_h_constraint_audit") == local_h
+            and local_h.get("raw_broken_active_fe_dofs")
+            == TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
+            and local_h.get("raw_broken_trace_rows")
+            == TASK035D_COMBINED_HP_RAW_TRACE_ROWS
+            and local_h.get("hanging_slave_rows")
+            == TASK035D_COMBINED_HP_HANGING_SLAVE_ROWS
+            and local_h.get("periodic_slave_rows")
+            == TASK035D_COMBINED_HP_PERIODIC_SLAVE_ROWS
+            and local_h.get("actual_full3d_equivalent_active_fe_dofs")
+            == TASK035D_COMBINED_HP_ACTIVE_FE_DOFS
+            and local_h.get("independent_trace_rows")
+            == TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS
+            and local_h.get("active_fe_dof_gate_pass") is True
+        ),
+        "physical_and_constraint_identity": (
+            physical.get("pass") is True
+            and physical.get("mpi_size") == 8
+            and physical.get("degree") == 5
+            and physical.get("physical_authority_sha256")
+            == TASK035D_COMBINED_HP_PHYSICAL_AUTHORITY_SHA256
+            and audit.get("periodic_constraints") is None
+            and trace.get("pass") is True
+            and trace.get("mpi_size") == 8
+            and trace.get("constraint_kinds") == ["hanging", "floquet"]
+            and trace.get("raw_trace_rows")
+            == TASK035D_COMBINED_HP_RAW_TRACE_ROWS
+            and trace.get("independent_trace_rows")
+            == TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS
+            and trace.get("hanging_slave_rows")
+            == TASK035D_COMBINED_HP_HANGING_SLAVE_ROWS
+            and trace.get("periodic_slave_rows")
+            == TASK035D_COMBINED_HP_PERIODIC_SLAVE_ROWS
+            and trace.get("flattened_graph_sha256")
+            == TASK035D_COMBINED_HP_FLATTENED_GRAPH_SHA256
+            and trace.get("canonical_cell_graph_sha256")
+            == TASK035D_COMBINED_HP_CELL_GRAPH_SHA256
+            and trace.get("pde_launch_ownership_gate") is True
+            and trace.get(
+                "hanging_or_floquet_slave_rows_globally_numbered"
+            )
+            is False
+        ),
+        "variable_interior_degree_identity": (
+            degree_plan.get("pass") is True
+            and degree_plan.get("mpi_size") == 8
+            and degree_plan.get("cell_count")
+            == TASK035D_COMBINED_HP_LEAF_CELLS
+            and degree_plan.get("cell_degree_counts")
+            == TASK035D_COMBINED_HP_CELL_DEGREE_COUNTS
+            and degree_plan.get("trace_degree") == 5
+            and degree_plan.get("cell_interior_degree") == 6
+            and degree_plan.get("cell_degree_plan_sha256")
+            == TASK035D_COMBINED_HP_CELL_DEGREE_PLAN_SHA256
+            and degree_plan.get(
+                "geometry_canonical_entity_degree_sha256"
+            )
+            == TASK035D_COMBINED_HP_ENTITY_DEGREE_SHA256
+            and degree_plan.get("variable_cell_interior_degree") is True
+            and degree_plan.get("local_variable_trace_implemented") is False
+            and degree_plan.get("complete_combined_hp_credit") is False
+            and degree_plan.get(
+                "cell_interior_p6_modes_globally_numbered_when_inactive"
+            )
+            is False
+            and degree_plan.get("active_rows")
+            == TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
+            and degree_plan.get("active_trace_rows")
+            == TASK035D_COMBINED_HP_RAW_TRACE_ROWS
+            and degree_plan.get("mesh_cell_box_catalog_sha256")
+            == TASK035D_COMBINED_HP_BOX_CATALOG_SHA256
+        ),
+        "active_dimension_and_matrix_gates": (
+            summary.get("num_raw_broken_active_fe_dofs")
+            == TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
+            and summary.get("num_actual_conforming_active_fe_dofs")
+            == TASK035D_COMBINED_HP_ACTIVE_FE_DOFS
+            and summary.get("num_active_trace_dofs")
+            == TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS
+            and summary.get("num_active_condensed_dofs")
+            == TASK035D_COMBINED_HP_SOLVE_ROWS
+            and summary.get("stage4_dtn_num_auxiliary_dofs")
+            == TASK035D_COMBINED_HP_DTN_ROWS
+            and matrix.get("matrix_rows")
+            == TASK035D_COMBINED_HP_SOLVE_ROWS
+            and isinstance(matrix.get("matrix_nnz_used"), (int, float))
+            and float(matrix["matrix_nnz_used"]) > 0.0
+            and matrix.get("matrix_mallocs") == 0.0
+            and factor.get("available") is True
+            and factor.get("factor_solver_type") == "mumps"
+            and factor_matrix.get("matrix_rows")
+            == TASK035D_COMBINED_HP_SOLVE_ROWS
+            and isinstance(
+                factor_matrix.get("matrix_nnz_used"),
+                (int, float),
+            )
+            and float(factor_matrix["matrix_nnz_used"]) > 0.0
+        ),
+        "assembly_reduction_chain": (
+            audit.get("schema_version")
+            == "task035d.variable-p-assembly-reduction.v1"
+            and audit.get("status")
+            == "variable_p_assembly_time_reduction_built"
+            and audit.get("pass") is True
+            and condensed.get("pass") is True
+            and condensed.get("mpi_size") == 8
+            and condensed.get("active_full3d_rows_before_condensation")
+            == TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
+            and condensed.get(
+                "active_trace_rows_before_constraint_elimination"
+            )
+            == TASK035D_COMBINED_HP_RAW_TRACE_ROWS
+            and condensed.get("active_trace_rows")
+            == TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS
+            and condensed.get("appended_rows")
+            == TASK035D_COMBINED_HP_DTN_ROWS
+            and condensed.get(
+                "interior_rhs_recovery_iterative_refinement_max_steps"
+            )
+            == 2
+            and condensed.get(
+                "floquet_elimination_applied_before_insertion"
+            )
+            is True
+            and condensed.get(
+                "hanging_elimination_applied_before_insertion"
+            )
+            is True
+            and set(condensed.get("trace_constraint_kinds") or ())
+            == {"hanging", "floquet"}
+            and condensed.get(
+                "hanging_or_floquet_slave_rows_globally_numbered"
+            )
+            is False
+            and transfer.get("pass") is True
+            and transfer.get("mpi_size") == 8
+            and audit.get("full_p6_global_matrix_allocated") is False
+            and audit.get("inactive_p6_rows_globally_numbered") is False
+            and audit.get("active_fe_dof_gate_pass") is True
+        ),
+        "trace_only_dtn": (
+            summary.get("stage4_dtn_variable_p_trace_only_gate_pass") is True
+            and summary.get(
+                "stage4_dtn_variable_p_auxiliary_interior_columns_allocated"
+            )
+            is False
+            and summary.get(
+                "stage4_dtn_variable_p_auxiliary_interior_column_bytes_local_max"
+            )
+            == 0
+            and summary.get(
+                "stage4_dtn_variable_p_trace_functional_count"
+            )
+            == 81
+        ),
+        "full_field_and_hanging_recovery": (
+            recovery.get("status") == "variable_p_full_field_recovery_pass"
+            and recovery.get("pass") is True
+            and recovery.get(
+                "interior_rhs_recovery_iterative_refinement_max_steps"
+            )
+            == 2
+            and trace_recovery.get("pass") is True
+            and trace_recovery.get("hanging_trace_recovery_explicitly_checked")
+            is True
+            and set(trace_recovery.get("constraint_kinds") or ())
+            == {"hanging", "floquet"}
+            and trace_recovery.get("covered_raw_trace_rows")
+            == TASK035D_COMBINED_HP_RAW_TRACE_ROWS
+            and trace_recovery.get("expected_raw_trace_rows")
+            == TASK035D_COMBINED_HP_RAW_TRACE_ROWS
+            and trace_recovery.get("maximum_abs_error", math.inf)
+            <= 5.0e-11
+            and trace_recovery.get("relative_l2_error", math.inf)
+            <= 5.0e-11
+        ),
+        "full_explicit_true_residual": (
+            isinstance(
+                residual.get("linear_system_relative_residual"),
+                (int, float),
+            )
+            and residual.get("linear_system_relative_residual")
+            == summary.get("linear_system_relative_residual")
+            and float(residual["linear_system_relative_residual"])
+            <= 1.0e-9
+            and float(
+                residual.get(
+                    "eliminated_cell_interior_residual_norm",
+                    math.inf,
+                )
+            )
+            <= 1.0e-9
+        ),
+        "ordinary_default_and_lifecycle": (
+            audit.get("ordinary_default_changed") is False
+            and backend_audit.get("ordinary_default_unchanged") is True
+            and backend_audit.get("selection_source") == "public_port"
+            and config.get("stage4_full3d_assembly_backend")
+            == TASK035D_CASE097_BACKEND
+            and summary.get("direct_release_solver_before_postprocess") is True
+            and summary.get("solver_objects_released_before_postprocess")
+            is True
+            and release.get("petsc_garbage_cleanup_called") is True
+            and heap_trim.get("supported_on_all_ranks") is True
+            and heap_trim.get("succeeded_on_all_ranks") is True
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {
+        "schema_version": (
+            "task035d.case097-combined-hp-interior-solver-gate.v1"
+        ),
+        "status": (
+            "task035d_combined_hp_interior_solver_identity_pass"
+            if not failures
+            else "task035d_combined_hp_interior_solver_identity_fail"
+        ),
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "candidate": TASK035D_COMBINED_HP_PLAN_NAME,
+        "accuracy_credit": "structural_and_residual_only",
+        "complete_combined_hp_credit": False,
+    }
+
+
 __all__ = [
     "TASK035D_CASE097_BACKEND",
+    "TASK035D_COMBINED_HP_ACTIVE_FE_DOFS",
+    "TASK035D_COMBINED_HP_AUTHORITY_FILE_SHA256",
+    "TASK035D_COMBINED_HP_AUTHORITY_PATH",
+    "TASK035D_COMBINED_HP_PLAN_FILE_SHA256",
+    "TASK035D_COMBINED_HP_PLAN_NAME",
+    "TASK035D_COMBINED_HP_PLAN_PATH",
+    "TASK035D_COMBINED_HP_SOLVE_ROWS",
     "TASK035D_H10_CELL_TAG_SHA256",
     "TASK035D_H10_FACET_TAG_SHA256",
     "TASK035D_H10_MESH_SHA256",
@@ -1838,6 +2606,8 @@ __all__ = [
     "TASK035D_T30_SOLVE_ROWS",
     "task035d_case097_local_h_plan_authority_gate",
     "task035d_case097_local_h_solver_gate",
+    "task035d_case097_combined_hp_plan_authority_gate",
+    "task035d_case097_combined_hp_solver_gate",
     "task035d_case097_plan_authority_gate",
     "task035d_case097_sidewall_guard_plan_authority_gate",
     "task035d_case097_sidewall_guard_solver_gate",
