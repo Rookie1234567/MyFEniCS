@@ -464,7 +464,8 @@ def _local_h_solver_summary() -> dict:
     summary["stage4_full3d_assembly_backend_qualification"].update(
         {
             "element_contract": (
-                "exact_sequence_balanced_local_h_fixed_trace_p6_interior"
+                "exact_sequence_balanced_local_h_fixed_trace_"
+                "variable_cell_interior"
             ),
             "contract": [
                 "geometry_bound_balanced_local_h_hanging_trace_elimination",
@@ -856,6 +857,16 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
             resource_summary=_resource_summary(),
         )
         self.assertTrue(qualification["pass"], qualification["failures"])
+
+        stale_contract = copy.deepcopy(solver)
+        stale_contract[
+            "stage4_full3d_assembly_backend_qualification"
+        ]["element_contract"] = (
+            "exact_sequence_balanced_local_h_fixed_trace_p6_interior"
+        )
+        rejected = task035d_case097_local_h_solver_gate(stale_contract)
+        self.assertFalse(rejected["pass"])
+        self.assertIn("local_h_backend_actual", rejected["failures"])
 
         tampered = copy.deepcopy(solver)
         tampered["cell_static_condensation"]["trace_constraints"][

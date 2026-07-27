@@ -2233,7 +2233,10 @@ def task035d_case097_local_h_solver_gate(
             and qualification.get("status") == "qualified"
             and qualification.get("qualified_scope") is True
             and qualification.get("element_contract")
-            == "exact_sequence_balanced_local_h_fixed_trace_p6_interior"
+            == (
+                "exact_sequence_balanced_local_h_fixed_trace_"
+                "variable_cell_interior"
+            )
             and {
                 "geometry_bound_balanced_local_h_hanging_trace_elimination",
                 "floquet_slave_elimination_before_global_insertion",
