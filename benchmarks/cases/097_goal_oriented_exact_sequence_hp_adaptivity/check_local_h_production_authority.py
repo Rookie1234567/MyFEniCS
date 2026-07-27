@@ -17,6 +17,7 @@ CASE_DIR = Path(__file__).resolve().parent
 RECORD_DIR = CASE_DIR / "records"
 DEFAULT_CANDIDATE_ID = "h15_top_air_local_h_v1"
 SELECTIVE_FACE_CANDIDATE_ID = "h15_grating_top_selective_p6_faces_v1"
+OUTER_TOP_HP_CANDIDATE_ID = "h15_outer_top_periodic_p5fine_v1"
 SELECTIVE_P6_FACE_GEOMETRY_KEYS = (
     (2, 92857142857, 0, 5892857143, 0, 8928571429),
     (2, 92857142857, 0, 5892857143, 8928571429, 17857142857),
@@ -210,6 +211,43 @@ CANDIDATE_SPECS = {
         "selected_p6_face_geometry_keys": (
             SELECTIVE_P6_FACE_GEOMETRY_KEYS
         ),
+    },
+    OUTER_TOP_HP_CANDIDATE_ID: {
+        "plan_relative": (
+            "benchmarks/cases/"
+            "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+            "h15_outer_top_periodic_p5fine_plan_v1.json"
+        ),
+        "record_names": {
+            1: "outer_top_periodic_p5fine_mpi1_v1.json",
+            2: "outer_top_periodic_p5fine_mpi2_v1.json",
+            8: "outer_top_periodic_p5fine_mpi8_v1.json",
+        },
+        "output_name": "outer_top_periodic_p5fine_mpi_identity_v1.json",
+        "schema": "case097.outer-top-periodic-p5fine-component.v1",
+        "pass_status": "outer_top_periodic_p5fine_component_pass",
+        "identity_schema": (
+            "case097.outer-top-periodic-p5fine-mpi-identity.v1"
+        ),
+        "identity_status": "outer_top_periodic_p5fine_mpi_identity_pass",
+        "pde_launch_scope": (
+            "one formal MPI8 h15 outer-top periodic local-h plus "
+            "fine-cell p5-interior direct PDE"
+        ),
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 148,
+            "hanging_patch_count": 8,
+            "raw_broken_active_fe_dofs": 86_530,
+            "raw_broken_trace_rows": 26_650,
+            "hanging_slave_rows": 1_680,
+            "periodic_slave_rows": 4_690,
+            "actual_full3d_equivalent_active_fe_dofs": 84_850,
+            "independent_trace_rows": 20_280,
+            "predicted_direct_solve_rows": 20_360,
+        },
+        "variable_interior": True,
+        "cell_degree_counts": {"p4": 0, "p5": 32, "p6": 116},
     },
 }
 

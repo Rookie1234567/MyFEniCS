@@ -47,6 +47,7 @@ CHECKER_NAME = "check_local_h_production_authority.py"
 GENERATOR_NAME = Path(__file__).name
 DEFAULT_CANDIDATE_ID = "h15_top_air_local_h_v1"
 SELECTIVE_FACE_CANDIDATE_ID = "h15_grating_top_selective_p6_faces_v1"
+OUTER_TOP_HP_CANDIDATE_ID = "h15_outer_top_periodic_p5fine_v1"
 SELECTIVE_P6_FACE_GEOMETRY_KEYS = (
     (2, 92857142857, 0, 5892857143, 0, 8928571429),
     (2, 92857142857, 0, 5892857143, 8928571429, 17857142857),
@@ -204,6 +205,36 @@ CANDIDATE_SPECS = {
             "actual_full3d_equivalent_active_fe_dofs": 83_125,
             "independent_trace_rows": 18_590,
             "predicted_direct_solve_rows": 18_670,
+        },
+    },
+    OUTER_TOP_HP_CANDIDATE_ID: {
+        "plan_name": "h15_outer_top_periodic_p5fine_plan_v1.json",
+        "component_names": {
+            1: "outer_top_periodic_p5fine_mpi1_v1.json",
+            2: "outer_top_periodic_p5fine_mpi2_v1.json",
+            8: "outer_top_periodic_p5fine_mpi8_v1.json",
+        },
+        "schema_version": (
+            "case097.outer-top-periodic-p5fine-component.v1"
+        ),
+        "pass_status": "outer_top_periodic_p5fine_component_pass",
+        "marked_root_boxes": (
+            (41.75, 0.0, 120.0, 50.0, 12.5, 130.0),
+        ),
+        "variable_interior": True,
+        "cell_interior_policy": "all_refined_children_p5",
+        "cell_degree_counts": {"p4": 0, "p5": 32, "p6": 116},
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 148,
+            "hanging_patch_count": 8,
+            "raw_broken_active_fe_dofs": 86_530,
+            "raw_broken_trace_rows": 26_650,
+            "hanging_slave_rows": 1_680,
+            "periodic_slave_rows": 4_690,
+            "actual_full3d_equivalent_active_fe_dofs": 84_850,
+            "independent_trace_rows": 20_280,
+            "predicted_direct_solve_rows": 20_360,
         },
     },
 }
@@ -451,29 +482,79 @@ def build_plan_payload(
             marked_root_boxes=marked,
             maximum_level=1,
         )
-        overrides = {
-            cell.box: 5
-            for cell in forest.leaves
-            if (
-                cell.key.level == 0
-                and cell.material_tag == int(cfg.tags.air)
-                and cell.box[2] >= 0.0
-                and cell.box[5] <= 120.0
-                and (
-                    cell.box[3] <= 8.25
-                    or cell.box[0] >= 41.75
+        policy = spec.get(
+            "cell_interior_policy",
+            "remote_outer_level0_p5",
+        )
+        if policy == "remote_outer_level0_p5":
+            overrides = {
+                cell.box: 5
+                for cell in forest.leaves
+                if (
+                    cell.key.level == 0
+                    and cell.material_tag == int(cfg.tags.air)
+                    and cell.box[2] >= 0.0
+                    and cell.box[5] <= 120.0
+                    and (
+                        cell.box[3] <= 8.25
+                        or cell.box[0] >= 41.75
+                    )
                 )
-            )
-        }
-        if len(overrides) != 32:
+            }
+        elif policy == "all_refined_children_p5":
+            overrides = {
+                cell.box: 5
+                for cell in forest.leaves
+                if cell.key.level == 1
+            }
+        else:
             raise RuntimeError(
-                "combined h/p remote-air classifier must mark 32 cells"
+                f"unknown local-h cell-interior policy {policy!r}"
+            )
+        expected_p5 = int(spec["cell_degree_counts"]["p5"])
+        if len(overrides) != expected_p5:
+            raise RuntimeError(
+                "combined h/p classifier marked "
+                f"{len(overrides)} cells, expected {expected_p5}"
             )
         is_factorial_bridge = (
             candidate_id
             == "h15_top_air_remote_p5_interior_bridge_v1"
         )
-        provenance = {
+        is_outer_top_hp = candidate_id == OUTER_TOP_HP_CANDIDATE_ID
+        if is_outer_top_hp:
+            provenance = {
+                "purpose": (
+                    "Task035d cost-aware outer-top periodic local-h plus "
+                    "fine-cell p5-interior discriminator"
+                ),
+                "candidate_id": candidate_id,
+                "h_action": (
+                    "split the x-periodic outer top-air root orbit at "
+                    "z=120..130 nm, with exact x/y periodic closure"
+                ),
+                "h_action_evidence": (
+                    "the frozen actual selected-face DWR ranks both outer "
+                    "top-port periodic faces among the sensitive actions, "
+                    "while directional-z h13 is the positive h oracle; "
+                    "this is not an unrun-face or local-h DWR claim"
+                ),
+                "p_action": (
+                    "use p5 cell interiors on all 32 h/2 children and "
+                    "physically omit their inactive p6 interior modes"
+                ),
+                "p_action_evidence": (
+                    "cost guard required by the 90000 active-FE-DoF gate; "
+                    "the p5 action is restricted to newly h-refined cells "
+                    "and carries no standalone accuracy credit"
+                ),
+                "factorial_bridge": False,
+                "accuracy_credit": False,
+                "complete_combined_hp_credit": False,
+                "ordinary_default_changed": False,
+            }
+        else:
+            provenance = {
             "purpose": (
                 "Task035d factorial bridge isolating remote interior "
                 "p-down on the accepted one-sided local-h mesh"
@@ -527,7 +608,7 @@ def build_plan_payload(
             "accuracy_credit": False,
             "complete_combined_hp_credit": False,
             "ordinary_default_changed": False,
-        }
+            }
     elif selected_p6_faces:
         provenance = {
             "purpose": (
