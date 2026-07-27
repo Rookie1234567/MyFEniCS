@@ -41,23 +41,61 @@ from .hcurl_variable_p_assembly import (
 )
 
 
-@dataclass(frozen=True)
+@dataclass
 class VariablePRecoveredSolution:
-    """Recovered p6 storage field and active-space residual inputs."""
+    """Recovered p6 storage field and owned active-space PETSc vectors."""
 
     field: Any
-    active_full_solution: PETSc.Vec
-    active_full_rhs: PETSc.Vec
+    active_full_solution: PETSc.Vec | None
+    active_full_rhs: PETSc.Vec | None
     active_auxiliary_interior_action: PETSc.Vec | None
     audit: dict[str, Any]
+    _destroyed: bool = field(default=False, init=False, repr=False)
+
+    def destroy(self) -> None:
+        """Release the three owned active-space vectors exactly once."""
+
+        if self._destroyed:
+            return
+        owned = (
+            ("active_full_solution", self.active_full_solution),
+            ("active_full_rhs", self.active_full_rhs),
+            (
+                "active_auxiliary_interior_action",
+                self.active_auxiliary_interior_action,
+            ),
+        )
+        self.active_full_solution = None
+        self.active_full_rhs = None
+        self.active_auxiliary_interior_action = None
+        self._destroyed = True
+        errors: list[str] = []
+        for name, vector in owned:
+            if vector is None:
+                continue
+            try:
+                vector.destroy()
+            except Exception as exc:
+                errors.append(f"{name}: {type(exc).__name__}: {exc}")
+        if errors:
+            raise RuntimeError(
+                "variable-p recovered-solution cleanup failed: "
+                + "; ".join(errors)
+            )
+
+    def __enter__(self) -> VariablePRecoveredSolution:
+        return self
+
+    def __exit__(self, *_args: Any) -> None:
+        self.destroy()
 
 
 @dataclass
 class VariablePRecoveredAdjoint:
     """Recovered active adjoint component with explicit PETSc lifecycle."""
 
-    active_full_adjoint: PETSc.Vec
-    active_full_goal: PETSc.Vec
+    active_full_adjoint: PETSc.Vec | None
+    active_full_goal: PETSc.Vec | None
     audit: dict[str, Any]
     _destroyed: bool = field(default=False, init=False, repr=False)
 
@@ -66,9 +104,26 @@ class VariablePRecoveredAdjoint:
 
         if self._destroyed:
             return
-        self.active_full_adjoint.destroy()
-        self.active_full_goal.destroy()
+        owned = (
+            ("active_full_adjoint", self.active_full_adjoint),
+            ("active_full_goal", self.active_full_goal),
+        )
+        self.active_full_adjoint = None
+        self.active_full_goal = None
         self._destroyed = True
+        errors: list[str] = []
+        for name, vector in owned:
+            if vector is None:
+                continue
+            try:
+                vector.destroy()
+            except Exception as exc:
+                errors.append(f"{name}: {type(exc).__name__}: {exc}")
+        if errors:
+            raise RuntimeError(
+                "variable-p recovered-adjoint cleanup failed: "
+                + "; ".join(errors)
+            )
 
     def __enter__(self) -> VariablePRecoveredAdjoint:
         return self

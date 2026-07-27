@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import copy
 import csv
+from dataclasses import dataclass
 import json
 import time
 from pathlib import Path
-from typing import Any, Callable
+from types import MappingProxyType
+from typing import Any, Callable, Mapping
 
 import numpy as np
 import ufl
@@ -62,6 +65,244 @@ DTN_PORT_MODAL_POWER_SOURCE = "dtn_port_modal_amplitudes"
 DTN_PORT_MODAL_REFERENCE = (
     "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation"
 )
+
+
+class Stage4VariablePLiveObserverError(RuntimeError):
+    """Collective failure from a controlled live variable-p observer."""
+
+
+@dataclass(frozen=True)
+class Stage4VariablePLiveView:
+    """Callback-only borrowed view of one solved variable-p Stage-4 system.
+
+    A callback may perform matched collective transpose/backsolves through
+    ``ksp``.  It must not change its operators/options, destroy or retain any
+    borrowed PETSc object, or modify ``A``, ``b``, ``x``, ``field``, geometry,
+    constraints, or the read-only evidence mappings.  All ranks must execute
+    the same collective phases; arbitrary rank-divergent callback failures
+    cannot be recovered once another rank has entered a PETSc collective.
+    """
+
+    field: Any
+    mesh_data: Any
+    config: SimulationConfig3D
+    floquet_data: DoubleFloquet3DData
+    A: PETSc.Mat
+    b: PETSc.Vec
+    x: PETSc.Vec
+    ksp: PETSc.KSP
+    reduction: VariablePAssemblyTimeReduction
+    recovered: VariablePRecoveredSolution
+    goal_context: Mapping[str, Any]
+    port_metrics: Mapping[str, Any]
+    full_active_residual: Mapping[str, Any]
+    primal_solver_telemetry: Mapping[str, Any]
+
+
+def _readonly_goal_context(
+    goal_context: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    copied = dict(goal_context)
+    modes = copy.deepcopy(tuple(copied["modes"]))
+    for mode in modes:
+        for attribute in ("e_vector", "k_vector", "h_vector"):
+            getattr(mode, attribute).setflags(write=False)
+    copied["modes"] = modes
+    for key in (
+        "auxiliary_values",
+        "incident_projections",
+        "auxiliary_coordinate_scales",
+    ):
+        if key not in copied:
+            continue
+        values = np.asarray(copied[key], dtype=np.complex128).copy()
+        values.setflags(write=False)
+        copied[key] = values
+    return MappingProxyType(copied)
+
+
+def _deep_readonly_copy(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {
+                key: _deep_readonly_copy(item)
+                for key, item in value.items()
+            }
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(_deep_readonly_copy(item) for item in value)
+    if isinstance(value, np.ndarray):
+        copied = np.asarray(value).copy()
+        copied.setflags(write=False)
+        return copied
+    return copy.deepcopy(value)
+
+
+def _ksp_configuration_signature(ksp: PETSc.KSP) -> tuple[Any, ...]:
+    operator, preconditioning_operator = ksp.getOperators()
+    pc = ksp.getPC()
+    try:
+        factor_solver_type = pc.getFactorSolverType()
+    except Exception:
+        factor_solver_type = None
+    return (
+        ksp.getType(),
+        pc.getType(),
+        factor_solver_type,
+        ksp.getOptionsPrefix(),
+        tuple(ksp.getTolerances()),
+        int(operator.handle),
+        int(preconditioning_operator.handle),
+    )
+
+
+def _invoke_collective_variable_p_live_observer(
+    observer: Callable[[Stage4VariablePLiveView], None],
+    view: Stage4VariablePLiveView,
+    communicator: MPI.Intracomm,
+) -> None:
+    """Invoke one controlled callback and close its recovered vectors."""
+
+    protected_objects: dict[str, Any] = {}
+    protected_states: dict[str, int] = {}
+    ksp_configuration: tuple[Any, ...] | None = None
+    preflight_errors: list[dict[str, Any]] = []
+    try:
+        protected_objects = {
+            "matrix": view.A,
+            "rhs": view.b,
+            "solution": view.x,
+            "field": view.field.x.petsc_vec,
+        }
+        protected_states = {
+            name: int(petsc_object.stateGet())
+            for name, petsc_object in protected_objects.items()
+        }
+        ksp_configuration = _ksp_configuration_signature(view.ksp)
+    except Exception as exc:
+        preflight_errors.append(
+            {
+                "rank": int(communicator.rank),
+                "phase": "callback_preflight",
+                "exception_type": type(exc).__name__,
+                "message": str(exc),
+            }
+        )
+    collective_preflight_errors = [
+        error
+        for rank_errors in communicator.allgather(preflight_errors)
+        for error in rank_errors
+    ]
+    if collective_preflight_errors:
+        cleanup_errors: list[dict[str, Any]] = []
+        try:
+            view.recovered.destroy()
+        except Exception as exc:
+            cleanup_errors.append(
+                {
+                    "rank": int(communicator.rank),
+                    "phase": "preflight_recovered_vector_cleanup",
+                    "exception_type": type(exc).__name__,
+                    "message": str(exc),
+                }
+            )
+        collective_cleanup_errors = [
+            error
+            for rank_errors in communicator.allgather(cleanup_errors)
+            for error in rank_errors
+        ]
+        raise Stage4VariablePLiveObserverError(
+            "variable-p live observer preflight failed collectively: "
+            + json.dumps(
+                collective_preflight_errors
+                + collective_cleanup_errors,
+                sort_keys=True,
+            )
+        )
+    if ksp_configuration is None:
+        raise AssertionError("collective callback preflight lost KSP identity")
+    local_errors: list[dict[str, Any]] = []
+    try:
+        observer(view)
+    except Exception as exc:
+        local_errors.append(
+            {
+                "rank": int(communicator.rank),
+                "phase": "callback",
+                "exception_type": type(exc).__name__,
+                "message": str(exc),
+            }
+        )
+    for name, petsc_object in protected_objects.items():
+        try:
+            observed_state = int(petsc_object.stateGet())
+        except Exception as exc:
+            local_errors.append(
+                {
+                    "rank": int(communicator.rank),
+                    "phase": f"borrowed_{name}_state_audit",
+                    "exception_type": type(exc).__name__,
+                    "message": str(exc),
+                }
+            )
+            continue
+        if observed_state != protected_states[name]:
+            local_errors.append(
+                {
+                    "rank": int(communicator.rank),
+                    "phase": f"borrowed_{name}_state_audit",
+                    "exception_type": "BorrowedObjectMutation",
+                    "message": (
+                        f"PETSc state changed from "
+                        f"{protected_states[name]} to {observed_state}"
+                    ),
+                }
+            )
+    try:
+        observed_ksp_configuration = _ksp_configuration_signature(
+            view.ksp
+        )
+    except Exception as exc:
+        local_errors.append(
+            {
+                "rank": int(communicator.rank),
+                "phase": "borrowed_ksp_configuration_audit",
+                "exception_type": type(exc).__name__,
+                "message": str(exc),
+            }
+        )
+    else:
+        if observed_ksp_configuration != ksp_configuration:
+            local_errors.append(
+                {
+                    "rank": int(communicator.rank),
+                    "phase": "borrowed_ksp_configuration_audit",
+                    "exception_type": "BorrowedObjectMutation",
+                    "message": "KSP operator/options configuration changed",
+                }
+            )
+    try:
+        view.recovered.destroy()
+    except Exception as exc:
+        local_errors.append(
+            {
+                "rank": int(communicator.rank),
+                "phase": "recovered_vector_cleanup",
+                "exception_type": type(exc).__name__,
+                "message": str(exc),
+            }
+        )
+    observer_errors = [
+        error
+        for rank_errors in communicator.allgather(local_errors)
+        for error in rank_errors
+    ]
+    if observer_errors:
+        raise Stage4VariablePLiveObserverError(
+            "variable-p live observer failed collectively after all ranks "
+            "left the callback: "
+            + json.dumps(observer_errors, sort_keys=True)
+        )
 
 
 def _assembly_backend_summary_fields(
@@ -1602,7 +1843,7 @@ def _port_mode_count_metrics(modes: list[PortMode3D]) -> dict[str, int]:
     }
 
 
-def solve_stage4_dtn_port_total_field(
+def _solve_stage4_dtn_port_total_field_impl(
     *,
     a,
     L,
@@ -1614,8 +1855,17 @@ def solve_stage4_dtn_port_total_field(
     out_dir: Path,
     log,
     started: float | None = None,
+    variable_p_live_observer: (
+        Callable[[Stage4VariablePLiveView], None] | None
+    ) = None,
+    _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
-    """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports."""
+    """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
+
+    ``variable_p_live_observer`` is a default-off controlled research hook.
+    It runs after primal telemetry and residuals are frozen but before the
+    matrix, factor, and recovered active vectors leave this solver.
+    """
 
     assembly_backend_audit = resolve_stage4_full3d_assembly_backend(
         cfg,
@@ -1653,6 +1903,18 @@ def solve_stage4_dtn_port_total_field(
         assembly_backend_audit["actual"]
         == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
     )
+    if variable_p_live_observer is not None and not variable_p_backend:
+        raise ValueError(
+            "the variable-p live observer requires the exact-sequence "
+            "assembly-time variable-p backend"
+        )
+    if variable_p_live_observer is not None and (
+        cfg.matrix_diagnostics_assemble_only
+        or cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError(
+            "the variable-p live observer requires a complete solve"
+        )
     log(
         "Stage-4 Full3D assembly backend "
         f"requested={assembly_backend_audit['requested']} "
@@ -2815,6 +3077,7 @@ def solve_stage4_dtn_port_total_field(
             assembly_time_full_rhs,
             active_full_rhs_override=variable_p_active_full_rhs,
         )
+        _recovery_cleanup_sink.append(variable_p_recovered)
         assembly_time_field = variable_p_recovered.field
         condensation_recovery = variable_p_recovered.audit
         x_aug = solve_x
@@ -2898,20 +3161,17 @@ def solve_stage4_dtn_port_total_field(
             x_aug,
             variable_p_recovered,
         )
-        variable_p_recovered.active_full_solution.destroy()
-        variable_p_recovered.active_full_rhs.destroy()
-        if (
-            variable_p_recovered.active_auxiliary_interior_action
-            is not None
-        ):
-            variable_p_recovered.active_auxiliary_interior_action.destroy()
-        variable_p_recovered = None
         if assembly_time_full_rhs is None:
             raise RuntimeError("variable-p full RHS lifecycle is invalid")
         assembly_time_full_rhs.destroy()
         assembly_time_full_rhs = None
+        if variable_p_active_full_rhs is None:
+            raise RuntimeError("variable-p active RHS lifecycle is invalid")
         variable_p_active_full_rhs.destroy()
         variable_p_active_full_rhs = None
+        if variable_p_live_observer is None:
+            variable_p_recovered.destroy()
+            variable_p_recovered = None
         timing_details[
             "stage4_dtn_matrix_free_full_residual_seconds"
         ] = float(
@@ -3169,9 +3429,14 @@ def solve_stage4_dtn_port_total_field(
         "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
         "ksp_converged_reason": int(ksp.getConvergedReason()),
         "ksp_iterations": int(ksp.getIterationNumber()),
+        "primal_ksp_residual_norm": float(ksp.getResidualNorm()),
         "actual_ksp_type": ksp.getType(),
         "actual_pc_type": ksp.getPC().getType(),
         "actual_pc_factor_solver_type": None,
+        "variable_p_live_observer_requested": bool(
+            variable_p_live_observer is not None
+        ),
+        "variable_p_live_observer_invoked": False,
         "dtn_base_matrix_stats": base_matrix_stats,
         "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
         "dtn_condensed_matrix_stats": (
@@ -3213,6 +3478,149 @@ def solve_stage4_dtn_port_total_field(
         returned_b = b_aug
         returned_x = x_aug
 
+    goal_context = {
+        "num_fem_dofs_after_mpc": int(n_fe),
+        "modes": modes,
+        "auxiliary_values": aux_values,
+        "incident_projections": incident_projections,
+        "normalization": "finite-port outgoing modal power / incident power",
+    }
+    if variable_p_live_observer is not None:
+        live_view = None
+        local_view_errors: list[dict[str, Any]] = []
+        try:
+            if (
+                variable_p_reduction is None
+                or variable_p_recovered is None
+            ):
+                raise RuntimeError(
+                    "requested variable-p live observer lost its recovered "
+                    "state"
+                )
+            relative_residual = linear_residual.get(
+                "linear_system_relative_residual"
+            )
+            callback_gate_pass = bool(
+                solver_info["ksp_converged_reason"] > 0
+                and relative_residual is not None
+                and np.isfinite(float(relative_residual))
+                and float(relative_residual) <= 1.0e-9
+            )
+            if not callback_gate_pass:
+                raise RuntimeError(
+                    "variable-p live observer requires a converged primal "
+                    "solve and full active true residual <= 1e-9"
+                )
+            live_view = Stage4VariablePLiveView(
+                field=E_total,
+                mesh_data=mesh_data,
+                config=cfg,
+                floquet_data=floquet_data,
+                A=returned_A,
+                b=returned_b,
+                x=returned_x,
+                ksp=ksp,
+                reduction=variable_p_reduction,
+                recovered=variable_p_recovered,
+                goal_context=_readonly_goal_context(goal_context),
+                port_metrics=_deep_readonly_copy(port_metrics),
+                full_active_residual=_deep_readonly_copy(
+                    linear_residual
+                ),
+                primal_solver_telemetry=_deep_readonly_copy(
+                    {
+                        "converged_reason": solver_info[
+                            "ksp_converged_reason"
+                        ],
+                        "iterations": solver_info["ksp_iterations"],
+                        "residual_norm": solver_info[
+                            "primal_ksp_residual_norm"
+                        ],
+                        "ksp_type": solver_info["actual_ksp_type"],
+                        "pc_type": solver_info["actual_pc_type"],
+                        "pc_factor_solver_type": solver_info[
+                            "actual_pc_factor_solver_type"
+                        ],
+                        **dict(linear_residual),
+                    }
+                ),
+            )
+        except Exception as exc:
+            local_view_errors.append(
+                {
+                    "rank": int(comm.rank),
+                    "phase": "live_view_preflight",
+                    "exception_type": type(exc).__name__,
+                    "message": str(exc),
+                }
+            )
+        collective_view_errors = [
+            error
+            for rank_errors in comm.allgather(local_view_errors)
+            for error in rank_errors
+        ]
+        try:
+            if collective_view_errors:
+                raise Stage4VariablePLiveObserverError(
+                    "variable-p live-view preflight failed collectively: "
+                    + json.dumps(
+                        collective_view_errors,
+                        sort_keys=True,
+                    )
+                )
+            if live_view is None:
+                raise AssertionError(
+                    "collective live-view preflight lost its view"
+                )
+            _invoke_collective_variable_p_live_observer(
+                variable_p_live_observer,
+                live_view,
+                comm,
+            )
+        except Exception as exc:
+            try:
+                _write_progress_event(
+                    out_dir,
+                    comm,
+                    stage="variable_p_live_observer",
+                    status="failed",
+                    started=started,
+                    dofs=int(
+                        V.dofmap.index_map.size_global
+                        * V.dofmap.index_map_bs
+                    ),
+                    constraints=floquet_data.num_constraints,
+                    matrix_stats=(
+                        augmented_matrix_stats_after_finalize
+                    ),
+                    petsc_options=petsc_options,
+                    extra={
+                        "exception_type": type(exc).__name__,
+                        "message": str(exc),
+                        "official_port_outputs_written_before_failure": True,
+                        "completed_summary_written": False,
+                    },
+                )
+            except Exception:
+                # Preserve the collective observer failure if a best-effort
+                # progress marker cannot be written.
+                pass
+            for petsc_object in (
+                ksp,
+                returned_x,
+                returned_b,
+                returned_A,
+            ):
+                try:
+                    petsc_object.destroy()
+                except Exception:
+                    pass
+            raise
+        finally:
+            live_view = None
+        variable_p_recovered = None
+        solver_info["variable_p_live_observer_invoked"] = True
+
     return {
         "E_total": E_total,
         "A": returned_A,
@@ -3221,11 +3629,71 @@ def solve_stage4_dtn_port_total_field(
         "ksp": ksp,
         "solver_info": solver_info,
         "port_metrics": port_metrics,
-        "goal_context": {
-            "num_fem_dofs_after_mpc": int(n_fe),
-            "modes": modes,
-            "auxiliary_values": aux_values,
-            "incident_projections": incident_projections,
-            "normalization": "finite-port outgoing modal power / incident power",
-        },
+        "goal_context": goal_context,
     }
+
+
+def solve_stage4_dtn_port_total_field(
+    *,
+    a,
+    L,
+    V,
+    mesh_data,
+    cfg: SimulationConfig3D,
+    floquet_data: DoubleFloquet3DData,
+    petsc_options: dict[str, Any],
+    out_dir: Path,
+    log,
+    started: float | None = None,
+    variable_p_live_observer: (
+        Callable[[Stage4VariablePLiveView], None] | None
+    ) = None,
+) -> dict[str, Any]:
+    """Run the DtN solver with exception-safe recovered-vector ownership."""
+
+    comm = (
+        mesh_data.mesh.comm
+        if mesh_data is not None
+        else V.mesh.comm
+        if V is not None
+        else MPI.COMM_WORLD
+    )
+    observer_flags = comm.allgather(
+        variable_p_live_observer is not None
+    )
+    if len(set(observer_flags)) != 1:
+        raise ValueError(
+            "the variable-p live observer must be enabled on every MPI rank"
+        )
+    recovered_cleanup: list[VariablePRecoveredSolution] = []
+    implementation_failed = False
+    try:
+        return _solve_stage4_dtn_port_total_field_impl(
+            a=a,
+            L=L,
+            V=V,
+            mesh_data=mesh_data,
+            cfg=cfg,
+            floquet_data=floquet_data,
+            petsc_options=petsc_options,
+            out_dir=out_dir,
+            log=log,
+            started=started,
+            variable_p_live_observer=variable_p_live_observer,
+            _recovery_cleanup_sink=recovered_cleanup,
+        )
+    except BaseException:
+        implementation_failed = True
+        raise
+    finally:
+        cleanup_errors: list[str] = []
+        for recovered in reversed(recovered_cleanup):
+            try:
+                recovered.destroy()
+            except Exception as exc:
+                cleanup_errors.append(f"{type(exc).__name__}: {exc}")
+        if cleanup_errors and not implementation_failed:
+            raise RuntimeError(
+                "variable-p recovered-state final cleanup failed: "
+                + "; ".join(cleanup_errors)
+            )

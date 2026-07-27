@@ -71,9 +71,53 @@ class Task035dVariablePStage4SmokeTests(unittest.TestCase):
             ),
             stage4_variable_p_cell_degree_plan=str(plan_path),
         )
+        captured: dict[str, object] = {}
+
+        def live_observer(view) -> None:
+            self.assertGreater(view.A.getSize()[0], 0)
+            self.assertEqual(view.A.getSize()[0], view.b.getSize())
+            self.assertEqual(view.A.getSize()[1], view.x.getSize())
+            self.assertGreater(view.ksp.getConvergedReason(), 0)
+            self.assertFalse(view.recovered._destroyed)
+            self.assertEqual(
+                view.recovered.active_full_solution.getSize(),
+                view.reduction.system.entity_map.active_rows,
+            )
+            self.assertEqual(
+                view.recovered.active_full_rhs.getSize(),
+                view.reduction.system.entity_map.active_rows,
+            )
+            self.assertLessEqual(
+                view.full_active_residual[
+                    "linear_system_relative_residual"
+                ],
+                1.0e-9,
+            )
+            self.assertEqual(
+                view.goal_context["num_fem_dofs_after_mpc"]
+                + len(view.goal_context["modes"]),
+                view.A.getSize()[0],
+            )
+            captured["recovered"] = view.recovered
+            captured["primal_solver_telemetry"] = dict(
+                view.primal_solver_telemetry
+            )
+            transpose_rhs = view.b.copy()
+            transpose_solution = view.x.duplicate()
+            try:
+                view.ksp.solveTranspose(
+                    transpose_rhs,
+                    transpose_solution,
+                )
+                self.assertGreater(view.ksp.getConvergedReason(), 0)
+            finally:
+                transpose_solution.destroy()
+                transpose_rhs.destroy()
+
         summary = run_stage4b_block_grating_3d_case(
             cfg,
             root / "solve",
+            variable_p_live_observer=live_observer,
             mesh_data_override=mesh_data,
         )
         self.assertEqual(summary["case_status"], "completed")
@@ -105,6 +149,26 @@ class Task035dVariablePStage4SmokeTests(unittest.TestCase):
         self.assertEqual(
             summary["matrix_stats"]["matrix_mallocs"],
             0.0,
+        )
+        self.assertTrue(summary["variable_p_live_observer_requested"])
+        self.assertTrue(summary["variable_p_live_observer_invoked"])
+        self.assertTrue(
+            summary["solver_objects_released_before_postprocess"]
+        )
+        recovered = captured["recovered"]
+        self.assertTrue(recovered._destroyed)
+        primal = captured["primal_solver_telemetry"]
+        self.assertEqual(
+            summary["ksp_converged_reason"],
+            primal["converged_reason"],
+        )
+        self.assertEqual(
+            summary["ksp_iterations"],
+            primal["iterations"],
+        )
+        self.assertEqual(
+            summary["solver_residual_norm"],
+            primal["residual_norm"],
         )
 
 

@@ -13,7 +13,11 @@ from petsc4py import PETSc
 from dolfinx import default_scalar_type, fem
 from dolfinx.fem import petsc as fem_petsc
 
-from ..common.config_3d import SimulationConfig3D
+from ..common.config_3d import (
+    ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
+    SimulationConfig3D,
+    resolve_stage4_full3d_assembly_backend,
+)
 from ..constraints.floquet_3d import DoubleFloquet3DData, build_double_floquet_mpc
 from ..geometry.mesh_builder_3d import AirBox3DMesh, build_airbox_mesh_3d
 from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
@@ -73,7 +77,10 @@ from .common_3d_utils import (
     _write_case_outputs,
     _write_progress_event,
 )
-from .dtn_port_3d import solve_stage4_dtn_port_total_field
+from .dtn_port_3d import (
+    Stage4VariablePLiveView,
+    solve_stage4_dtn_port_total_field,
+)
 from .solve_vector_maxwell import _json_default
 
 
@@ -686,6 +693,9 @@ def run_prepared_3d_case_flow(
     apply_strong_boundary_bc: bool = True,
     run_diffraction_postprocess: bool = False,
     solution_observer: Callable[..., None] | None = None,
+    variable_p_live_observer: (
+        Callable[[Stage4VariablePLiveView], None] | None
+    ) = None,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -695,17 +705,75 @@ def run_prepared_3d_case_flow(
     before entering this flow.  ``solution_observer`` is an explicit research
     hook invoked only after the official solve and postprocess have completed;
     the ordinary solver path leaves it unset.
+    ``variable_p_live_observer`` is a separate default-off collective research
+    hook invoked after primal solver telemetry is frozen but before the direct
+    factor and recovered active vectors are released.  Its PETSc objects are
+    borrowed for the callback lifetime only.
     ``mesh_data_override`` is a default-off research hook for solving on an
     already audited conforming mesh; ordinary callers continue to build a mesh.
     """
 
+    comm = (
+        MPI.COMM_WORLD
+        if mesh_data_override is None
+        else mesh_data_override.mesh.comm
+    )
+    live_observer_flags = comm.allgather(
+        variable_p_live_observer is not None
+    )
+    if len(set(live_observer_flags)) != 1:
+        raise ValueError(
+            "the variable-p live observer must be enabled on every MPI rank"
+        )
     if cfg.stage_case != expected_stage_case:
         raise ValueError(f"This solver accepts only stage_case={expected_stage_case!r}.")
     if not np.issubdtype(default_scalar_type, np.complexfloating):
         raise RuntimeError("The 3D Maxwell solver requires complex-mode DOLFINx/PETSc.")
+    if variable_p_live_observer is not None:
+        local_validation_errors: list[str] = []
+        try:
+            if solution_observer is not None:
+                raise ValueError(
+                    "the late solution observer and variable-p live "
+                    "observer cannot be enabled together"
+                )
+            if not solve_stage4_dtn_port:
+                raise ValueError(
+                    "the variable-p live observer requires the Stage-4 "
+                    "DtN flow"
+                )
+            backend = resolve_stage4_full3d_assembly_backend(cfg)
+            if (
+                backend["actual"]
+                != ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+            ):
+                raise ValueError(
+                    "the variable-p live observer requires the exact-"
+                    "sequence assembly-time variable-p backend"
+                )
+            if (
+                cfg.matrix_diagnostics_assemble_only
+                or cfg.matrix_diagnostics_factorization_only
+            ):
+                raise ValueError(
+                    "the variable-p live observer requires a complete solve"
+                )
+        except Exception as exc:
+            local_validation_errors.append(
+                f"rank {comm.rank}: {type(exc).__name__}: {exc}"
+            )
+        collective_validation_errors = [
+            error
+            for rank_errors in comm.allgather(local_validation_errors)
+            for error in rank_errors
+        ]
+        if collective_validation_errors:
+            raise ValueError(
+                "variable-p live observer validation failed: "
+                + "; ".join(collective_validation_errors)
+            )
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    comm = MPI.COMM_WORLD
     log_lines: list[str] = []
     timings: dict[str, float] = {}
     started = _start_timed_stage(comm)
@@ -1070,6 +1138,7 @@ def run_prepared_3d_case_flow(
                 out_dir=out_dir,
                 log=log,
                 started=started,
+                variable_p_live_observer=variable_p_live_observer,
             )
         except DirectSolveFailure as failure:
             _finish_timed_stage(
@@ -1262,6 +1331,10 @@ def run_prepared_3d_case_flow(
     if dtn_base_matrix_stats is not None:
         log(f"DtN augmented/base nnz ratio = {constraint_matrix_transform['dtn_augmented_to_base_nnz_ratio']}")
 
+    live_observer_primal_snapshot = bool(
+        dtn_solver_info is not None
+        and dtn_solver_info.get("variable_p_live_observer_invoked")
+    )
     if assemble_only_result:
         reason = 0
         reason_name = "ASSEMBLE_ONLY_SKIPPED_SOLVE"
@@ -1272,15 +1345,29 @@ def run_prepared_3d_case_flow(
         reason_name = "FACTORIZATION_ONLY_SKIPPED_SOLVE"
         iterations = 0
         residual_norm = None
+    elif live_observer_primal_snapshot:
+        reason = int(dtn_solver_info["ksp_converged_reason"])
+        reason_name = _ksp_reason_name(reason)
+        iterations = int(dtn_solver_info["ksp_iterations"])
+        residual_norm = float(
+            dtn_solver_info["primal_ksp_residual_norm"]
+        )
     else:
         reason = int(system_ksp.getConvergedReason())
         reason_name = _ksp_reason_name(reason)
         iterations = int(system_ksp.getIterationNumber())
         residual_norm = float(system_ksp.getResidualNorm())
-    ksp_type = system_ksp.getType()
-    pc = system_ksp.getPC()
-    pc_type = pc.getType()
-    pc_factor_solver_type = _pc_factor_solver_type(pc)
+    if live_observer_primal_snapshot:
+        ksp_type = dtn_solver_info["actual_ksp_type"]
+        pc_type = dtn_solver_info["actual_pc_type"]
+        pc_factor_solver_type = dtn_solver_info[
+            "actual_pc_factor_solver_type"
+        ]
+    else:
+        ksp_type = system_ksp.getType()
+        pc = system_ksp.getPC()
+        pc_type = pc.getType()
+        pc_factor_solver_type = _pc_factor_solver_type(pc)
     condensed_full_residual = (
         None
         if dtn_solver_info is None
@@ -1310,6 +1397,27 @@ def run_prepared_3d_case_flow(
     log(f"linear system RHS norm = {linear_system_diagnostics['linear_system_rhs_norm']}")
     log(f"linear system solution norm = {linear_system_diagnostics['linear_system_solution_norm']}")
     log(f"linear system true relative residual = {linear_system_diagnostics['linear_system_relative_residual']}")
+    variable_p_live_observer_invoked = bool(
+        dtn_solver_info is not None
+        and dtn_solver_info.get("variable_p_live_observer_invoked")
+    )
+    if variable_p_live_observer_invoked:
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="variable_p_live_observer",
+            status="end",
+            started=started,
+            dofs=num_dofs,
+            constraints=floquet_data.num_constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={
+                "callback_lifetime": "borrowed_live_objects_only",
+                "recovered_active_vectors_released_after_callback": True,
+                "ordinary_default_changed": False,
+            },
+        )
     solver_objects_released_before_postprocess = bool(
         cfg.direct_release_solver_before_postprocess
         and solve_stage4_dtn_port
@@ -1780,6 +1888,18 @@ def run_prepared_3d_case_flow(
             **_retain_mumps_ooc_directory_on_failure(ooc_info),
         },
     }
+    if variable_p_live_observer is not None:
+        summary.update(
+            {
+                "variable_p_live_observer_requested": True,
+                "variable_p_live_observer_invoked": (
+                    variable_p_live_observer_invoked
+                ),
+                "variable_p_live_observer_contract": (
+                    "controlled_collective_callback_borrowed_objects"
+                ),
+            }
+        )
 
     if not converged:
         summary["mumps_ooc_runtime"] = {
