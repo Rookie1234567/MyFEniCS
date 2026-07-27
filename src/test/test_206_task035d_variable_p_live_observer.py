@@ -269,6 +269,27 @@ def test_live_observer_rejects_non_variable_backend_before_mesh(
     assert not (tmp_path / "must_not_build").exists()
 
 
+def test_schur_retention_rejects_missing_live_observer_before_mesh(
+    tmp_path,
+) -> None:
+    config = replace(
+        target_stage4_config(degree=2, h_nm=50.0),
+        stage4_full3d_assembly_backend=(
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match="Schur retention requires a variable-p live observer",
+    ):
+        run_stage4b_block_grating_3d_case(
+            config,
+            tmp_path / "must_not_build",
+            variable_p_retain_local_schur_for_research=True,
+        )
+    assert not (tmp_path / "must_not_build").exists()
+
+
 def test_rank_inconsistent_live_observer_fails_before_validation(
     tmp_path,
 ) -> None:
@@ -283,6 +304,29 @@ def test_rank_inconsistent_live_observer_fails_before_validation(
             config,
             tmp_path / "must_not_build",
             variable_p_live_observer=observer,
+        )
+    assert not (tmp_path / "must_not_build").exists()
+
+
+def test_rank_inconsistent_schur_retention_fails_before_mesh(
+    tmp_path,
+) -> None:
+    if MPI.COMM_WORLD.size != 2:
+        pytest.skip("rank-inconsistent Schur gate requires MPI2")
+    config = replace(
+        target_stage4_config(degree=2, h_nm=50.0),
+        stage4_full3d_assembly_backend=(
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+        ),
+    )
+    with pytest.raises(ValueError, match="retention flags must match"):
+        run_stage4b_block_grating_3d_case(
+            config,
+            tmp_path / "must_not_build",
+            variable_p_live_observer=lambda _view: None,
+            variable_p_retain_local_schur_for_research=(
+                MPI.COMM_WORLD.rank == 0
+            ),
         )
     assert not (tmp_path / "must_not_build").exists()
 

@@ -24,6 +24,7 @@ from src.solvers.hcurl_variable_p_assembly import (
     build_variable_p_condensed_trace_system,
     condense_variable_p_active_vector_to_trace,
     recover_variable_p_active_full_vector,
+    retained_variable_p_owned_cell_schur_actions,
     variable_p_cell_interior_schur_bilinear,
 )
 from src.solvers.hcurl_variable_p_local import project_p6_local_tensor
@@ -161,6 +162,17 @@ class Task035dVariablePPETScAssemblyTests(unittest.TestCase):
             self.assertEqual(system.build_audit["matrix_rows"], 432)
             self.assertEqual(system.build_audit["matrix_nnz"], 432**2)
             self.assertEqual(system.build_audit["matrix_mallocs"], 0)
+            self.assertIsNone(
+                system.retained_local_schur_by_class
+            )
+            retention = system.build_audit[
+                "research_local_schur_retention"
+            ]
+            self.assertFalse(retention["enabled"])
+            self.assertEqual(
+                retention["numpy_payload_bytes_local"],
+                0,
+            )
         finally:
             system.destroy()
 
@@ -248,6 +260,7 @@ class Task035dVariablePPETScAssemblyTests(unittest.TestCase):
             tensors,
             tensor_class_keys=("shared-p6-tensor",) * len(tensors),
             periodic_constraints=constraints,
+            retain_local_schur_for_research=True,
         )
         try:
             audit = periodic_system.build_audit
@@ -282,6 +295,126 @@ class Task035dVariablePPETScAssemblyTests(unittest.TestCase):
                 + 1j
                 * rng.standard_normal(constraints.independent_trace_rows)
             )
+            retained = periodic_system.retained_local_schur_by_class
+            self.assertIsNotNone(retained)
+            self.assertEqual(
+                set(retained),
+                {
+                    recovery.class_key
+                    for recovery in periodic_system.cell_recovery
+                },
+            )
+            with self.assertRaises(TypeError):
+                retained[("forbidden",)] = np.eye(1)
+            retained_bytes = int(
+                sum(value.nbytes for value in retained.values())
+            )
+            retention = periodic_system.build_audit[
+                "research_local_schur_retention"
+            ]
+            self.assertTrue(retention["enabled"])
+            self.assertTrue(retention["readonly"])
+            self.assertEqual(
+                retention["numpy_payload_bytes_local"],
+                retained_bytes,
+            )
+            self.assertEqual(retention["new_array_copy_bytes"], 0)
+            for value in retained.values():
+                self.assertFalse(value.flags.writeable)
+                with self.assertRaises(ValueError):
+                    value.flat[0] = 0.0
+            actions, action_audit = (
+                retained_variable_p_owned_cell_schur_actions(
+                    periodic_system,
+                    reduced_trace_values=independent_trace,
+                )
+            )
+            self.assertTrue(action_audit["pass"])
+            self.assertEqual(
+                action_audit["owned_cell_count_local"],
+                len(entity_map.owned_cells),
+            )
+            recovery_by_global_cell = {
+                recovery.cell.global_cell: recovery
+                for recovery in periodic_system.cell_recovery
+            }
+            constraint_by_global_cell = {
+                cell.global_cell: cell
+                for cell in constraints.owned_cells
+            }
+            for action in actions:
+                recovery = recovery_by_global_cell[
+                    action.global_cell
+                ]
+                constrained = constraint_by_global_cell[
+                    action.global_cell
+                ]
+                expected_local_trace = (
+                    constrained.full_trace_from_independent
+                    @ independent_trace[constrained.independent_rows]
+                )
+                np.testing.assert_allclose(
+                    action.local_trace_values,
+                    expected_local_trace,
+                    rtol=2.0e-13,
+                    atol=2.0e-13,
+                )
+                np.testing.assert_allclose(
+                    action.local_condensed_action,
+                    retained[recovery.class_key]
+                    @ expected_local_trace,
+                    rtol=2.0e-13,
+                    atol=2.0e-13,
+                )
+            replayed, replay_audit = (
+                retained_variable_p_owned_cell_schur_actions(
+                    periodic_system,
+                    local_trace_values_by_global_cell={
+                        action.global_cell: action.local_trace_values
+                        for action in actions
+                    },
+                )
+            )
+            self.assertEqual(
+                replay_audit["trace_source"],
+                "hash_qualified_per_global_cell_snapshot",
+            )
+            for original, replay in zip(
+                actions,
+                replayed,
+                strict=True,
+            ):
+                self.assertEqual(
+                    replay.global_cell,
+                    original.global_cell,
+                )
+                np.testing.assert_array_equal(
+                    replay.trace_rows,
+                    original.trace_rows,
+                )
+                np.testing.assert_allclose(
+                    replay.local_condensed_action,
+                    original.local_condensed_action,
+                    rtol=2.0e-13,
+                    atol=2.0e-13,
+                )
+            release = periodic_system.release_retained_local_schur()
+            self.assertTrue(release["pass"])
+            self.assertEqual(
+                release["local_bytes_released"],
+                retained_bytes,
+            )
+            self.assertIsNone(
+                periodic_system.retained_local_schur_by_class
+            )
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "explicit research retention",
+            ):
+                retained_variable_p_owned_cell_schur_actions(
+                    periodic_system,
+                    reduced_trace_values=independent_trace,
+                )
             recovered = periodic_system.recover_owned_active_cells(
                 independent_trace
             )

@@ -5,7 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 from time import perf_counter
-from typing import Any, Protocol, Sequence
+from types import MappingProxyType
+from typing import Any, Mapping, Protocol, Sequence
 
 import numpy as np
 from mpi4py import MPI
@@ -123,6 +124,19 @@ class VariablePCellRecovery:
     class_key: tuple[Any, ...]
 
 
+@dataclass(frozen=True)
+class VariablePOwnedCellSchurAction:
+    """One owned cell's pre-constraint trace and condensed action."""
+
+    local_cell: int
+    global_cell: int
+    cell_info: int
+    degree_signature: str
+    trace_rows: np.ndarray
+    local_trace_values: np.ndarray
+    local_condensed_action: np.ndarray
+
+
 @dataclass
 class VariablePCondensedTraceSystem:
     """Physically reduced PETSc trace matrix and local recovery caches."""
@@ -142,6 +156,9 @@ class VariablePCondensedTraceSystem:
         tuple[Any, ...],
         np.ndarray,
     ]
+    retained_local_schur_by_class: (
+        Mapping[tuple[Any, ...], np.ndarray] | None
+    )
     build_audit: dict[str, Any]
 
     @property
@@ -156,7 +173,55 @@ class VariablePCondensedTraceSystem:
         return self.periodic_constraints
 
     def destroy(self) -> None:
+        self.release_retained_local_schur()
         self.matrix.destroy()
+
+    def release_retained_local_schur(self) -> dict[str, Any]:
+        """Release the explicit research-only local Schur lease."""
+
+        retained = self.retained_local_schur_by_class
+        requested = bool(
+            self.build_audit.get(
+                "retain_local_schur_for_research_requested",
+                False,
+            )
+        )
+        previously_released = bool(
+            self.build_audit.get(
+                "retained_local_schur_released",
+                False,
+            )
+        )
+        local_class_count = 0 if retained is None else len(retained)
+        local_bytes = (
+            0
+            if retained is None
+            else int(sum(value.nbytes for value in retained.values()))
+        )
+        self.retained_local_schur_by_class = None
+        self.build_audit.update(
+            {
+                "retained_local_schur_active": False,
+                "retained_local_schur_released": bool(
+                    requested
+                    and (retained is not None or previously_released)
+                ),
+            }
+        )
+        return {
+            "schema_version": (
+                "task035d.variable-p-local-schur-release.v1"
+            ),
+            "status": (
+                "retained_local_schur_released"
+                if retained is not None
+                else "no_active_retained_local_schur"
+            ),
+            "pass": True,
+            "local_class_count_released": local_class_count,
+            "local_bytes_released": local_bytes,
+            "ordinary_default_changed": False,
+        }
 
     def recover_owned_active_cells(
         self,
@@ -776,6 +841,7 @@ def build_variable_p_condensed_trace_system(
     appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
     appended_support_group_by_row: tuple[int, ...] = (),
     defer_final_assembly: bool = False,
+    retain_local_schur_for_research: bool = False,
 ) -> VariablePCondensedTraceSystem:
     """Project p6 cell tensors, condense interiors, and assemble active rows."""
 
@@ -1084,6 +1150,42 @@ def build_variable_p_condensed_trace_system(
     eliminated_trace_rows = int(
         entity_map.active_trace_rows - active_rows
     )
+    local_retained_schur_bytes = int(
+        sum(value.nbytes for value in schur_cache.values())
+    )
+    retained_schur: Mapping[tuple[Any, ...], np.ndarray] | None = None
+    if retain_local_schur_for_research:
+        for value in schur_cache.values():
+            value.setflags(write=False)
+        retained_schur = MappingProxyType(dict(schur_cache))
+    retained_schur_bytes_sum = int(
+        comm.allreduce(
+            (
+                local_retained_schur_bytes
+                if retain_local_schur_for_research
+                else 0
+            ),
+            op=MPI.SUM,
+        )
+    )
+    retained_schur_bytes_max = int(
+        comm.allreduce(
+            (
+                local_retained_schur_bytes
+                if retain_local_schur_for_research
+                else 0
+            ),
+            op=MPI.MAX,
+        )
+    )
+    retained_schur_class_count_sum = int(
+        comm.allreduce(
+            len(schur_cache)
+            if retain_local_schur_for_research
+            else 0,
+            op=MPI.SUM,
+        )
+    )
     audit = {
         "schema_version": "task035d.variable-p-condensed-trace-system.v1",
         "status": "variable_p_condensed_trace_matrix_pass",
@@ -1199,6 +1301,75 @@ def build_variable_p_condensed_trace_system(
             constraints is not None
         ),
         "cell_p6_tensors_are_local_only": True,
+        "retain_local_schur_for_research_requested": bool(
+            retain_local_schur_for_research
+        ),
+        "retained_local_schur_active": bool(
+            retain_local_schur_for_research
+        ),
+        "retained_local_schur_released": False,
+        "retained_local_schur_local_class_count": (
+            len(schur_cache)
+            if retain_local_schur_for_research
+            else 0
+        ),
+        "retained_local_schur_local_bytes": (
+            local_retained_schur_bytes
+            if retain_local_schur_for_research
+            else 0
+        ),
+        "retained_local_schur_sum_rank_bytes": (
+            retained_schur_bytes_sum
+        ),
+        "retained_local_schur_max_rank_bytes": (
+            retained_schur_bytes_max
+        ),
+        "retained_local_schur_scope": (
+            "controlled_live_observer_callback_only"
+            if retain_local_schur_for_research
+            else "not_retained"
+        ),
+        "research_local_schur_retention": {
+            "enabled": bool(retain_local_schur_for_research),
+            "pre_constraint_local_schur": True,
+            "readonly": bool(retain_local_schur_for_research),
+            "class_count_local": (
+                len(schur_cache)
+                if retain_local_schur_for_research
+                else 0
+            ),
+            "class_count_sum_across_ranks": (
+                retained_schur_class_count_sum
+            ),
+            "numpy_payload_bytes_local": (
+                local_retained_schur_bytes
+                if retain_local_schur_for_research
+                else 0
+            ),
+            "numpy_payload_bytes_sum_across_ranks": (
+                retained_schur_bytes_sum
+            ),
+            "numpy_payload_bytes_max_rank": (
+                retained_schur_bytes_max
+            ),
+            "new_array_copy_bytes": 0,
+            "includes_Aii": False,
+            "includes_Ati": False,
+            "includes_Ait": False,
+            "ownership": (
+                "rank-local classes used by locally owned cells"
+            ),
+            "lifetime": (
+                "builder return through live-observer finally"
+                if retain_local_schur_for_research
+                else "builder-local only"
+            ),
+            "rss_pss_uss_semantics": (
+                "numpy payload only; not RSS, PSS, USS, allocator "
+                "overhead, PETSc matrix, or MUMPS factor"
+            ),
+            "ordinary_default_changed": False,
+        },
         "ordinary_default_changed": False,
     }
     return VariablePCondensedTraceSystem(
@@ -1211,6 +1382,7 @@ def build_variable_p_condensed_trace_system(
         interior_from_trace_by_class=interior_from_trace,
         interior_lu_by_class=interior_lu,
         trace_from_interior_rhs_by_class=trace_from_interior_rhs,
+        retained_local_schur_by_class=retained_schur,
         build_audit=audit,
     )
 
@@ -1228,6 +1400,7 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
     appended_support_group_by_row: tuple[int, ...] = (),
     defer_final_assembly: bool = False,
     geometry_tolerance: float = 1.0e-11,
+    retain_local_schur_for_research: bool = False,
 ) -> VariablePCondensedTraceSystem:
     """Evaluate p6 FFCx tensor classes and assemble the true active system."""
 
@@ -1339,6 +1512,9 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
             appended_support_group_by_row
         ),
         defer_final_assembly=defer_final_assembly,
+        retain_local_schur_for_research=(
+            retain_local_schur_for_research
+        ),
     )
     system.build_audit.update(
         {
@@ -1567,6 +1743,149 @@ def _global_reduced_trace_values(
     if not np.all(np.isfinite(trace)):
         raise ValueError("reduced trace vector contains non-finite entries")
     return np.ascontiguousarray(trace)
+
+
+def retained_variable_p_owned_cell_schur_actions(
+    system: VariablePCondensedTraceSystem,
+    *,
+    reduced_trace_values: PETSc.Vec | np.ndarray | None = None,
+    local_trace_values_by_global_cell: (
+        Mapping[int, np.ndarray] | None
+    ) = None,
+) -> tuple[
+    tuple[VariablePOwnedCellSchurAction, ...],
+    dict[str, Any],
+]:
+    """Apply retained pre-constraint Schur classes on owned cells.
+
+    Exactly one trace source is required.  A reduced vector is expanded
+    through the qualified Floquet/hanging map.  A per-global-cell mapping is
+    intended for a separately hash-qualified same-trace snapshot.
+    """
+
+    retained = system.retained_local_schur_by_class
+    if retained is None:
+        raise RuntimeError(
+            "local Schur actions require explicit research retention"
+        )
+    if (reduced_trace_values is None) == (
+        local_trace_values_by_global_cell is None
+    ):
+        raise ValueError(
+            "supply exactly one reduced or per-cell local trace source"
+        )
+    expected_keys = {
+        recovery.class_key for recovery in system.cell_recovery
+    }
+    if set(retained) != expected_keys:
+        raise RuntimeError(
+            "retained local Schur classes do not match owned recovery cells"
+        )
+
+    reduced_trace = (
+        None
+        if reduced_trace_values is None
+        else _global_reduced_trace_values(
+            system,
+            reduced_trace_values,
+        )
+    )
+    constrained_by_cell = (
+        {}
+        if system.trace_constraints is None
+        else {
+            int(cell.global_cell): cell
+            for cell in system.trace_constraints.owned_cells
+        }
+    )
+    actions: list[VariablePOwnedCellSchurAction] = []
+    local_action_bytes = 0
+    for recovery in system.cell_recovery:
+        cell = recovery.cell
+        if reduced_trace is not None:
+            if system.trace_constraints is None:
+                local_trace = reduced_trace[cell.trace_rows].copy()
+            else:
+                constrained = constrained_by_cell[cell.global_cell]
+                local_trace = np.asarray(
+                    constrained.full_trace_from_independent
+                    @ reduced_trace[constrained.independent_rows],
+                    dtype=np.complex128,
+                )
+        else:
+            raw = local_trace_values_by_global_cell.get(
+                cell.global_cell
+            )
+            if raw is None:
+                raise ValueError(
+                    "per-cell trace snapshot is missing owned global cell "
+                    f"{cell.global_cell}"
+                )
+            local_trace = np.asarray(
+                raw,
+                dtype=np.complex128,
+            ).copy()
+        expected_shape = (len(cell.trace_rows),)
+        if local_trace.shape != expected_shape:
+            raise ValueError(
+                "local trace snapshot has the wrong shape for global cell "
+                f"{cell.global_cell}: {local_trace.shape} != "
+                f"{expected_shape}"
+            )
+        if not np.all(np.isfinite(local_trace)):
+            raise ValueError("local trace snapshot contains non-finite values")
+        schur = retained[recovery.class_key]
+        if schur.shape != (
+            len(cell.trace_rows),
+            len(cell.trace_rows),
+        ):
+            raise RuntimeError(
+                "retained local Schur shape does not match its cell trace"
+            )
+        action = np.ascontiguousarray(schur @ local_trace)
+        if not np.all(np.isfinite(action)):
+            raise RuntimeError(
+                "retained local Schur action contains non-finite values"
+            )
+        trace_rows = np.asarray(cell.trace_rows, dtype=np.int64).copy()
+        for values in (trace_rows, local_trace, action):
+            values.setflags(write=False)
+        local_action_bytes += int(
+            trace_rows.nbytes + local_trace.nbytes + action.nbytes
+        )
+        actions.append(
+            VariablePOwnedCellSchurAction(
+                local_cell=int(cell.local_cell),
+                global_cell=int(cell.global_cell),
+                cell_info=int(cell.cell_info),
+                degree_signature=str(cell.degree_map.signature),
+                trace_rows=trace_rows,
+                local_trace_values=local_trace,
+                local_condensed_action=action,
+            )
+        )
+    comm = system.entity_map.mesh.comm
+    global_cell_count = int(
+        comm.allreduce(len(actions), op=MPI.SUM)
+    )
+    return tuple(actions), {
+        "schema_version": (
+            "task035d.variable-p-owned-cell-schur-actions.v1"
+        ),
+        "status": "owned_cell_schur_actions_evaluated",
+        "pass": True,
+        "trace_source": (
+            "qualified_reduced_trace_constraint_expansion"
+            if reduced_trace is not None
+            else "hash_qualified_per_global_cell_snapshot"
+        ),
+        "owned_cell_count_local": len(actions),
+        "owned_cell_count_global": global_cell_count,
+        "action_payload_bytes_local": local_action_bytes,
+        "schur_payload_gathered_across_ranks": False,
+        "cell_owner_computes_local_action": True,
+        "ordinary_default_changed": False,
+    }
 
 
 def _expand_variable_p_reduced_trace(
@@ -1823,11 +2142,13 @@ def audit_variable_p_active_full_adjoint_recovery(
 __all__ = [
     "VariablePCellRecovery",
     "VariablePCondensedTraceSystem",
+    "VariablePOwnedCellSchurAction",
     "audit_variable_p_active_full_adjoint_recovery",
     "build_variable_p_condensed_trace_system",
     "build_variable_p_condensed_trace_system_from_compiled_form",
     "condense_variable_p_active_vector_to_trace",
     "recover_variable_p_active_full_adjoint_vector",
     "recover_variable_p_active_full_vector",
+    "retained_variable_p_owned_cell_schur_actions",
     "variable_p_cell_interior_schur_bilinear",
 ]

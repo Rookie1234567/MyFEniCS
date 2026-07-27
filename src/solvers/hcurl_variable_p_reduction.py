@@ -144,6 +144,15 @@ class VariablePAssemblyTimeReduction:
     def destroy(self) -> None:
         self.system.destroy()
 
+    def release_retained_local_schur(self) -> dict[str, Any]:
+        """Close the optional callback-only Schur lease."""
+
+        audit = self.system.release_retained_local_schur()
+        self.build_audit["condensed_system"] = dict(
+            self.system.build_audit
+        )
+        return audit
+
     def reduce_p6_vector(
         self,
         p6_vector: PETSc.Vec,
@@ -977,6 +986,7 @@ def build_variable_p_assembly_time_reduction(
     appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
     appended_support_group_by_row: tuple[int, ...] = (),
     defer_final_assembly: bool = False,
+    retain_local_schur_for_research: bool = False,
 ) -> VariablePAssemblyTimeReduction:
     """Build one hash-bound Task035d p4/p5/p6 reduction."""
 
@@ -1047,6 +1057,9 @@ def build_variable_p_assembly_time_reduction(
                 appended_support_group_by_row
             ),
             defer_final_assembly=defer_final_assembly,
+            retain_local_schur_for_research=(
+                retain_local_schur_for_research
+            ),
         )
     )
     audit = {

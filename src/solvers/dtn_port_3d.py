@@ -1858,6 +1858,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     variable_p_live_observer: (
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
+    variable_p_retain_local_schur_for_research: bool = False,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
@@ -1865,6 +1866,8 @@ def _solve_stage4_dtn_port_total_field_impl(
     ``variable_p_live_observer`` is a default-off controlled research hook.
     It runs after primal telemetry and residuals are frozen but before the
     matrix, factor, and recovered active vectors leave this solver.
+    Local Schur matrices are retained only under the separate explicit
+    ``variable_p_retain_local_schur_for_research`` opt-in.
     """
 
     assembly_backend_audit = resolve_stage4_full3d_assembly_backend(
@@ -1914,6 +1917,13 @@ def _solve_stage4_dtn_port_total_field_impl(
     ):
         raise ValueError(
             "the variable-p live observer requires a complete solve"
+        )
+    if (
+        variable_p_retain_local_schur_for_research
+        and variable_p_live_observer is None
+    ):
+        raise ValueError(
+            "research Schur retention requires a variable-p live observer"
         )
     log(
         "Stage-4 Full3D assembly backend "
@@ -2047,6 +2057,9 @@ def _solve_stage4_dtn_port_total_field_impl(
                         support_group_by_row
                     ),
                     defer_final_assembly=True,
+                    retain_local_schur_for_research=(
+                        variable_p_retain_local_schur_for_research
+                    ),
                 )
             )
             reduction_system = variable_p_reduction.system
@@ -3559,6 +3572,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             for rank_errors in comm.allgather(local_view_errors)
             for error in rank_errors
         ]
+        local_schur_release: dict[str, Any] | None = None
         try:
             if collective_view_errors:
                 raise Stage4VariablePLiveObserverError(
@@ -3618,8 +3632,14 @@ def _solve_stage4_dtn_port_total_field_impl(
             raise
         finally:
             live_view = None
+            local_schur_release = (
+                variable_p_reduction.release_retained_local_schur()
+            )
         variable_p_recovered = None
         solver_info["variable_p_live_observer_invoked"] = True
+        solver_info["variable_p_local_schur_release"] = (
+            local_schur_release
+        )
 
     return {
         "E_total": E_total,
@@ -3648,6 +3668,7 @@ def solve_stage4_dtn_port_total_field(
     variable_p_live_observer: (
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
+    variable_p_retain_local_schur_for_research: bool = False,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
 
@@ -3659,11 +3680,15 @@ def solve_stage4_dtn_port_total_field(
         else MPI.COMM_WORLD
     )
     observer_flags = comm.allgather(
-        variable_p_live_observer is not None
+        (
+            variable_p_live_observer is not None,
+            bool(variable_p_retain_local_schur_for_research),
+        )
     )
     if len(set(observer_flags)) != 1:
         raise ValueError(
-            "the variable-p live observer must be enabled on every MPI rank"
+            "the variable-p live observer must be enabled on every MPI rank "
+            "and research Schur retention flags must match"
         )
     recovered_cleanup: list[VariablePRecoveredSolution] = []
     implementation_failed = False
@@ -3680,6 +3705,9 @@ def solve_stage4_dtn_port_total_field(
             log=log,
             started=started,
             variable_p_live_observer=variable_p_live_observer,
+            variable_p_retain_local_schur_for_research=(
+                variable_p_retain_local_schur_for_research
+            ),
             _recovery_cleanup_sink=recovered_cleanup,
         )
     except BaseException:

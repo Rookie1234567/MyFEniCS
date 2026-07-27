@@ -696,6 +696,7 @@ def run_prepared_3d_case_flow(
     variable_p_live_observer: (
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
+    variable_p_retain_local_schur_for_research: bool = False,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -709,6 +710,8 @@ def run_prepared_3d_case_flow(
     hook invoked after primal solver telemetry is frozen but before the direct
     factor and recovered active vectors are released.  Its PETSc objects are
     borrowed for the callback lifetime only.
+    ``variable_p_retain_local_schur_for_research`` is an independent opt-in
+    lease for pre-constraint cell Schur matrices during that callback only.
     ``mesh_data_override`` is a default-off research hook for solving on an
     already audited conforming mesh; ordinary callers continue to build a mesh.
     """
@@ -719,11 +722,15 @@ def run_prepared_3d_case_flow(
         else mesh_data_override.mesh.comm
     )
     live_observer_flags = comm.allgather(
-        variable_p_live_observer is not None
+        (
+            variable_p_live_observer is not None,
+            bool(variable_p_retain_local_schur_for_research),
+        )
     )
     if len(set(live_observer_flags)) != 1:
         raise ValueError(
-            "the variable-p live observer must be enabled on every MPI rank"
+            "the variable-p live observer must be enabled on every MPI rank "
+            "and research Schur retention flags must match"
         )
     if cfg.stage_case != expected_stage_case:
         raise ValueError(f"This solver accepts only stage_case={expected_stage_case!r}.")
@@ -772,6 +779,10 @@ def run_prepared_3d_case_flow(
                 "variable-p live observer validation failed: "
                 + "; ".join(collective_validation_errors)
             )
+    elif variable_p_retain_local_schur_for_research:
+        raise ValueError(
+            "research Schur retention requires a variable-p live observer"
+        )
 
     out_dir.mkdir(parents=True, exist_ok=True)
     log_lines: list[str] = []
@@ -1139,6 +1150,9 @@ def run_prepared_3d_case_flow(
                 log=log,
                 started=started,
                 variable_p_live_observer=variable_p_live_observer,
+                variable_p_retain_local_schur_for_research=(
+                    variable_p_retain_local_schur_for_research
+                ),
             )
         except DirectSolveFailure as failure:
             _finish_timed_stage(
@@ -1897,6 +1911,16 @@ def run_prepared_3d_case_flow(
                 ),
                 "variable_p_live_observer_contract": (
                     "controlled_collective_callback_borrowed_objects"
+                ),
+                "variable_p_retain_local_schur_for_research": bool(
+                    variable_p_retain_local_schur_for_research
+                ),
+                "variable_p_local_schur_release": (
+                    None
+                    if dtn_solver_info is None
+                    else dtn_solver_info.get(
+                        "variable_p_local_schur_release"
+                    )
                 ),
             }
         )
