@@ -13,14 +13,15 @@ from scipy import sparse
 
 from benchmarks.task035d_case097_gates import (
     TASK035D_LOCAL_H_ENTITY_CATALOG_SHA256,
-    TASK035D_LOCAL_H_FLATTENED_GRAPH_SHA256,
     TASK035D_LOCAL_H_PHYSICAL_AUTHORITY_SHA256,
+    TASK035D_LOCAL_H_TRANSFER_ENTITY_CATALOG_SHA256,
+    TASK035D_LOCAL_H_TRANSFER_FLATTENED_GRAPH_SHA256,
 )
 from benchmarks.task035d_selective_face_case097_gates import (
-    TASK035D_SELECTIVE_FACE_ENTITY_CATALOG_SHA256,
-    TASK035D_SELECTIVE_FACE_FLATTENED_GRAPH_SHA256,
     TASK035D_SELECTIVE_FACE_GEOMETRY_KEYS,
     TASK035D_SELECTIVE_FACE_PHYSICAL_AUTHORITY_SHA256,
+    TASK035D_SELECTIVE_FACE_TRANSFER_ENTITY_CATALOG_SHA256,
+    TASK035D_SELECTIVE_FACE_TRANSFER_FLATTENED_GRAPH_SHA256,
 )
 
 
@@ -471,6 +472,17 @@ def load_selective_face_coarse_endpoint(
         catalog,
         namespace="task035d.selective-face-entity-catalog.v1",
     )
+    authority_catalog_sha256 = _json_sha256(
+        [
+            [
+                row["dimension"],
+                row["geometry_key"],
+                row["canonical_points"],
+                row["mode_count"],
+            ]
+            for row in catalog
+        ]
+    )
     transfer_catalog_sha256 = _json_sha256(catalog)
     graph_sha256 = _csr_sha256(
         graph,
@@ -484,8 +496,11 @@ def load_selective_face_coarse_endpoint(
         or manifest.get("physical_graph_sha256") != graph_sha256
         or manifest.get("physical_authority_sha256")
         != TASK035D_LOCAL_H_PHYSICAL_AUTHORITY_SHA256
-        or transfer_catalog_sha256 != TASK035D_LOCAL_H_ENTITY_CATALOG_SHA256
-        or transfer_graph_sha256 != TASK035D_LOCAL_H_FLATTENED_GRAPH_SHA256
+        or authority_catalog_sha256 != TASK035D_LOCAL_H_ENTITY_CATALOG_SHA256
+        or transfer_catalog_sha256
+        != TASK035D_LOCAL_H_TRANSFER_ENTITY_CATALOG_SHA256
+        or transfer_graph_sha256
+        != TASK035D_LOCAL_H_TRANSFER_FLATTENED_GRAPH_SHA256
         or not isinstance(root_indices, list)
         or len(root_indices) != COARSE_SOLVE_ROWS - 80
         or any(
@@ -594,6 +609,7 @@ def load_selective_face_coarse_endpoint(
         "vector_identity": dict(vector_identity),
         "physical_entity_catalog": catalog,
         "physical_entity_catalog_sha256": catalog_sha256,
+        "authority_entity_catalog_sha256": authority_catalog_sha256,
         "transfer_entity_catalog_sha256": transfer_catalog_sha256,
         "physical_graph_sha256": graph_sha256,
         "transfer_flattened_graph_sha256": transfer_graph_sha256,
@@ -2096,10 +2112,12 @@ def task035d_selective_face_dwr_report_gate(
             normalized_raw_catalog,
             namespace="task035d.selective-face-entity-catalog.v1",
         )
-        and coarse_snapshot_endpoint.get("transfer_entity_catalog_sha256")
+        and coarse_snapshot_endpoint.get("authority_entity_catalog_sha256")
         == TASK035D_LOCAL_H_ENTITY_CATALOG_SHA256
+        and coarse_snapshot_endpoint.get("transfer_entity_catalog_sha256")
+        == TASK035D_LOCAL_H_TRANSFER_ENTITY_CATALOG_SHA256
         and coarse_snapshot_endpoint.get("transfer_flattened_graph_sha256")
-        == TASK035D_LOCAL_H_FLATTENED_GRAPH_SHA256
+        == TASK035D_LOCAL_H_TRANSFER_FLATTENED_GRAPH_SHA256
         and set(TASK035D_SELECTIVE_FACE_GEOMETRY_KEYS) <= raw_catalog_keys
     )
     coarse_manifest_identity_pass = bool(
@@ -2121,8 +2139,12 @@ def task035d_selective_face_dwr_report_gate(
         _transfer_input_identity_pass(
             transfer.get("coarse_input_identity"),
             physical_authority_sha256=(TASK035D_LOCAL_H_PHYSICAL_AUTHORITY_SHA256),
-            entity_catalog_sha256=(TASK035D_LOCAL_H_ENTITY_CATALOG_SHA256),
-            flattened_graph_sha256=(TASK035D_LOCAL_H_FLATTENED_GRAPH_SHA256),
+            entity_catalog_sha256=(
+                TASK035D_LOCAL_H_TRANSFER_ENTITY_CATALOG_SHA256
+            ),
+            flattened_graph_sha256=(
+                TASK035D_LOCAL_H_TRANSFER_FLATTENED_GRAPH_SHA256
+            ),
             raw_trace_rows=23_875,
             independent_trace_rows=18_390,
         )
@@ -2131,8 +2153,12 @@ def task035d_selective_face_dwr_report_gate(
             physical_authority_sha256=(
                 TASK035D_SELECTIVE_FACE_PHYSICAL_AUTHORITY_SHA256
             ),
-            entity_catalog_sha256=(TASK035D_SELECTIVE_FACE_ENTITY_CATALOG_SHA256),
-            flattened_graph_sha256=(TASK035D_SELECTIVE_FACE_FLATTENED_GRAPH_SHA256),
+            entity_catalog_sha256=(
+                TASK035D_SELECTIVE_FACE_TRANSFER_ENTITY_CATALOG_SHA256
+            ),
+            flattened_graph_sha256=(
+                TASK035D_SELECTIVE_FACE_TRANSFER_FLATTENED_GRAPH_SHA256
+            ),
             raw_trace_rows=24_075,
             independent_trace_rows=18_590,
         )

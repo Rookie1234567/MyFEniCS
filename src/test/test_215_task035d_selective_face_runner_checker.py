@@ -29,21 +29,22 @@ from benchmarks.task035d_case097_checker import (
 from benchmarks.task035d_case097_gates import (
     TASK035D_CASE097_BACKEND,
     TASK035D_LOCAL_H_ENTITY_CATALOG_SHA256,
-    TASK035D_LOCAL_H_FLATTENED_GRAPH_SHA256,
     TASK035D_LOCAL_H_PHYSICAL_AUTHORITY_SHA256,
     TASK035D_LOCAL_H_PLAN_FILE_SHA256,
+    TASK035D_LOCAL_H_TRANSFER_ENTITY_CATALOG_SHA256,
+    TASK035D_LOCAL_H_TRANSFER_FLATTENED_GRAPH_SHA256,
 )
 from benchmarks.task035d_selective_face_case097_gates import (
     TASK035D_SELECTIVE_FACE_ACTIVE_FE_DOFS,
     TASK035D_SELECTIVE_FACE_AUTHORITY_FILE_SHA256,
     TASK035D_SELECTIVE_FACE_AUTHORITY_PATH,
-    TASK035D_SELECTIVE_FACE_ENTITY_CATALOG_SHA256,
-    TASK035D_SELECTIVE_FACE_FLATTENED_GRAPH_SHA256,
     TASK035D_SELECTIVE_FACE_GEOMETRY_KEYS,
     TASK035D_SELECTIVE_FACE_PHYSICAL_AUTHORITY_SHA256,
     TASK035D_SELECTIVE_FACE_PLAN_FILE_SHA256,
     TASK035D_SELECTIVE_FACE_PLAN_NAME,
     TASK035D_SELECTIVE_FACE_PLAN_PATH,
+    TASK035D_SELECTIVE_FACE_TRANSFER_ENTITY_CATALOG_SHA256,
+    TASK035D_SELECTIVE_FACE_TRANSFER_FLATTENED_GRAPH_SHA256,
     _finite_nonnegative_le,
     task035d_case097_selective_face_plan_authority_gate,
 )
@@ -611,8 +612,15 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
             entity_catalog,
             namespace="task035d.selective-face-entity-catalog.v1",
         ),
-        "transfer_entity_catalog_sha256": (TASK035D_LOCAL_H_ENTITY_CATALOG_SHA256),
-        "transfer_flattened_graph_sha256": (TASK035D_LOCAL_H_FLATTENED_GRAPH_SHA256),
+        "authority_entity_catalog_sha256": (
+            TASK035D_LOCAL_H_ENTITY_CATALOG_SHA256
+        ),
+        "transfer_entity_catalog_sha256": (
+            TASK035D_LOCAL_H_TRANSFER_ENTITY_CATALOG_SHA256
+        ),
+        "transfer_flattened_graph_sha256": (
+            TASK035D_LOCAL_H_TRANSFER_FLATTENED_GRAPH_SHA256
+        ),
         "auxiliary_values_b": auxiliary_b,
         "incident_projections": incident,
         "coordinate_scales": coordinate_scales,
@@ -701,8 +709,12 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
                 "declared_physical_authority_sha256": (
                     TASK035D_LOCAL_H_PHYSICAL_AUTHORITY_SHA256
                 ),
-                "entity_catalog_sha256": (TASK035D_LOCAL_H_ENTITY_CATALOG_SHA256),
-                "flattened_graph_sha256": (TASK035D_LOCAL_H_FLATTENED_GRAPH_SHA256),
+                "entity_catalog_sha256": (
+                    TASK035D_LOCAL_H_TRANSFER_ENTITY_CATALOG_SHA256
+                ),
+                "flattened_graph_sha256": (
+                    TASK035D_LOCAL_H_TRANSFER_FLATTENED_GRAPH_SHA256
+                ),
                 "raw_trace_rows": 23_875,
                 "independent_trace_rows": 18_390,
             },
@@ -711,10 +723,10 @@ def _passing_dwr_fixture(authority: dict) -> tuple[dict, dict]:
                     TASK035D_SELECTIVE_FACE_PHYSICAL_AUTHORITY_SHA256
                 ),
                 "entity_catalog_sha256": (
-                    TASK035D_SELECTIVE_FACE_ENTITY_CATALOG_SHA256
+                    TASK035D_SELECTIVE_FACE_TRANSFER_ENTITY_CATALOG_SHA256
                 ),
                 "flattened_graph_sha256": (
-                    TASK035D_SELECTIVE_FACE_FLATTENED_GRAPH_SHA256
+                    TASK035D_SELECTIVE_FACE_TRANSFER_FLATTENED_GRAPH_SHA256
                 ),
                 "raw_trace_rows": 24_075,
                 "independent_trace_rows": 18_590,
@@ -1596,6 +1608,17 @@ class Task035dSelectiveFaceRunnerCheckerTests(unittest.TestCase):
             entity_catalog = _coarse_entity_catalog()
             normalized_config = {"fixture": "coarse"}
             transfer_catalog_sha = _json_sha256(entity_catalog)
+            authority_catalog_sha = _json_sha256(
+                [
+                    [
+                        row["dimension"],
+                        row["geometry_key"],
+                        row["canonical_points"],
+                        row["mode_count"],
+                    ]
+                    for row in entity_catalog
+                ]
+            )
             transfer_graph_sha = _transfer_csr_sha256(graph)
             fixture_candidate = {
                 "candidate_id": "h15_top_air_local_h_v1",
@@ -1724,11 +1747,16 @@ class Task035dSelectiveFaceRunnerCheckerTests(unittest.TestCase):
                 patch(
                     "benchmarks.task035d_selective_face_dwr_checker."
                     "TASK035D_LOCAL_H_ENTITY_CATALOG_SHA256",
+                    authority_catalog_sha,
+                ),
+                patch(
+                    "benchmarks.task035d_selective_face_dwr_checker."
+                    "TASK035D_LOCAL_H_TRANSFER_ENTITY_CATALOG_SHA256",
                     transfer_catalog_sha,
                 ),
                 patch(
                     "benchmarks.task035d_selective_face_dwr_checker."
-                    "TASK035D_LOCAL_H_FLATTENED_GRAPH_SHA256",
+                    "TASK035D_LOCAL_H_TRANSFER_FLATTENED_GRAPH_SHA256",
                     transfer_graph_sha,
                 ),
             ):

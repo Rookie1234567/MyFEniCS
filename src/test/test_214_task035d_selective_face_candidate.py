@@ -6,6 +6,14 @@ from pathlib import Path
 
 from mpi4py import MPI
 
+from benchmarks.task035d_case097_gates import (
+    TASK035D_LOCAL_H_TRANSFER_ENTITY_CATALOG_SHA256,
+    TASK035D_LOCAL_H_TRANSFER_FLATTENED_GRAPH_SHA256,
+)
+from benchmarks.task035d_selective_face_case097_gates import (
+    TASK035D_SELECTIVE_FACE_TRANSFER_ENTITY_CATALOG_SHA256,
+    TASK035D_SELECTIVE_FACE_TRANSFER_FLATTENED_GRAPH_SHA256,
+)
 from src.adaptivity.stage4_local_h import (
     build_stage4_local_h_mesh_data,
     build_stage4_local_h_reduction_authority,
@@ -165,3 +173,15 @@ def test_actual_ten_face_full_closure_transfer_and_shared_edges_close() -> None:
     assert audit["face_generator_global_cross_error_max"] <= 2.0e-10
     assert audit["face_generator_projector_error_max"] <= 2.0e-10
     assert 1.0 <= audit["face_generator_gram_condition_number"] <= 1.0e8
+    assert audit["coarse_input_identity"]["entity_catalog_sha256"] == (
+        TASK035D_LOCAL_H_TRANSFER_ENTITY_CATALOG_SHA256
+    )
+    assert audit["coarse_input_identity"]["flattened_graph_sha256"] == (
+        TASK035D_LOCAL_H_TRANSFER_FLATTENED_GRAPH_SHA256
+    )
+    assert audit["enriched_input_identity"]["entity_catalog_sha256"] == (
+        TASK035D_SELECTIVE_FACE_TRANSFER_ENTITY_CATALOG_SHA256
+    )
+    assert audit["enriched_input_identity"]["flattened_graph_sha256"] == (
+        TASK035D_SELECTIVE_FACE_TRANSFER_FLATTENED_GRAPH_SHA256
+    )
