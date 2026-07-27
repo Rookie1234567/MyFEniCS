@@ -73,38 +73,28 @@ AUTHORITY_SHA256 = hashlib.sha256(AUTHORITY.read_bytes()).hexdigest()
 SIDEWALL_PLAN = RECORDS / "sidewall_z0_guard_h10_cell_degree_plan_v1.json"
 SIDEWALL_AUTHORITY = RECORDS / "physics_guard_plan_authority_mpi8_v1.json"
 SIDEWALL_PLAN_SHA256 = hashlib.sha256(SIDEWALL_PLAN.read_bytes()).hexdigest()
-SIDEWALL_AUTHORITY_SHA256 = hashlib.sha256(
-    SIDEWALL_AUTHORITY.read_bytes()
-).hexdigest()
+SIDEWALL_AUTHORITY_SHA256 = hashlib.sha256(SIDEWALL_AUTHORITY.read_bytes()).hexdigest()
 LOCAL_H_PLAN = ROOT / TASK035D_LOCAL_H_PLAN_PATH
 LOCAL_H_AUTHORITY = ROOT / TASK035D_LOCAL_H_AUTHORITY_PATH
 LOCAL_H_PLAN_SHA256 = hashlib.sha256(LOCAL_H_PLAN.read_bytes()).hexdigest()
-LOCAL_H_AUTHORITY_SHA256 = hashlib.sha256(
-    LOCAL_H_AUTHORITY.read_bytes()
-).hexdigest()
+LOCAL_H_AUTHORITY_SHA256 = hashlib.sha256(LOCAL_H_AUTHORITY.read_bytes()).hexdigest()
 LOCAL_H_COMPONENT = RECORDS / "local_h_production_mpi8_v3_owner_gate_fix1.json"
 COMBINED_HP_PLAN = ROOT / TASK035D_COMBINED_HP_PLAN_PATH
 COMBINED_HP_AUTHORITY = ROOT / TASK035D_COMBINED_HP_AUTHORITY_PATH
-COMBINED_HP_PLAN_SHA256 = hashlib.sha256(
-    COMBINED_HP_PLAN.read_bytes()
-).hexdigest()
+COMBINED_HP_PLAN_SHA256 = hashlib.sha256(COMBINED_HP_PLAN.read_bytes()).hexdigest()
 COMBINED_HP_AUTHORITY_SHA256 = hashlib.sha256(
     COMBINED_HP_AUTHORITY.read_bytes()
 ).hexdigest()
 COMBINED_HP_COMPONENT = RECORDS / "combined_hp_interior_mpi8_v2.json"
 HP_FACTORIAL_BRIDGE_PLAN = ROOT / TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH
-HP_FACTORIAL_BRIDGE_AUTHORITY = (
-    ROOT / TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH
-)
+HP_FACTORIAL_BRIDGE_AUTHORITY = ROOT / TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH
 HP_FACTORIAL_BRIDGE_PLAN_SHA256 = hashlib.sha256(
     HP_FACTORIAL_BRIDGE_PLAN.read_bytes()
 ).hexdigest()
 HP_FACTORIAL_BRIDGE_AUTHORITY_SHA256 = hashlib.sha256(
     HP_FACTORIAL_BRIDGE_AUTHORITY.read_bytes()
 ).hexdigest()
-HP_FACTORIAL_BRIDGE_COMPONENT = (
-    RECORDS / "hp_factorial_bridge_mpi8_v1.json"
-)
+HP_FACTORIAL_BRIDGE_COMPONENT = RECORDS / "hp_factorial_bridge_mpi8_v1.json"
 SOURCE_SHA = "a" * 40
 
 
@@ -141,18 +131,12 @@ def _task035d_cli() -> list[str]:
 def _sidewall_cli() -> list[str]:
     cli = _task035d_cli()
     cli.extend(("--task035d-candidate-id", "sidewall_z0_guard_v1"))
-    cli[cli.index("--stage4-variable-p-cell-degree-plan") + 1] = str(
-        SIDEWALL_PLAN
+    cli[cli.index("--stage4-variable-p-cell-degree-plan") + 1] = str(SIDEWALL_PLAN)
+    cli[cli.index("--stage4-variable-p-cell-degree-plan-sha256") + 1] = (
+        SIDEWALL_PLAN_SHA256
     )
-    cli[
-        cli.index("--stage4-variable-p-cell-degree-plan-sha256") + 1
-    ] = SIDEWALL_PLAN_SHA256
-    cli[cli.index("--task035d-plan-authority") + 1] = str(
-        SIDEWALL_AUTHORITY
-    )
-    cli[cli.index("--task035d-plan-authority-sha256") + 1] = (
-        SIDEWALL_AUTHORITY_SHA256
-    )
+    cli[cli.index("--task035d-plan-authority") + 1] = str(SIDEWALL_AUTHORITY)
+    cli[cli.index("--task035d-plan-authority-sha256") + 1] = SIDEWALL_AUTHORITY_SHA256
     return cli
 
 
@@ -190,18 +174,12 @@ def _local_h_cli() -> list[str]:
 
 def _combined_hp_cli() -> list[str]:
     cli = _local_h_cli()
-    cli[cli.index("--task035d-candidate-id") + 1] = (
-        TASK035D_COMBINED_HP_PLAN_NAME
+    cli[cli.index("--task035d-candidate-id") + 1] = TASK035D_COMBINED_HP_PLAN_NAME
+    cli[cli.index("--stage4-local-h-refinement-plan") + 1] = str(COMBINED_HP_PLAN)
+    cli[cli.index("--stage4-local-h-refinement-plan-sha256") + 1] = (
+        COMBINED_HP_PLAN_SHA256
     )
-    cli[cli.index("--stage4-local-h-refinement-plan") + 1] = str(
-        COMBINED_HP_PLAN
-    )
-    cli[
-        cli.index("--stage4-local-h-refinement-plan-sha256") + 1
-    ] = COMBINED_HP_PLAN_SHA256
-    cli[cli.index("--task035d-plan-authority") + 1] = str(
-        COMBINED_HP_AUTHORITY
-    )
+    cli[cli.index("--task035d-plan-authority") + 1] = str(COMBINED_HP_AUTHORITY)
     cli[cli.index("--task035d-plan-authority-sha256") + 1] = (
         COMBINED_HP_AUTHORITY_SHA256
     )
@@ -216,12 +194,10 @@ def _hp_factorial_bridge_cli() -> list[str]:
     cli[cli.index("--stage4-local-h-refinement-plan") + 1] = str(
         HP_FACTORIAL_BRIDGE_PLAN
     )
-    cli[
-        cli.index("--stage4-local-h-refinement-plan-sha256") + 1
-    ] = HP_FACTORIAL_BRIDGE_PLAN_SHA256
-    cli[cli.index("--task035d-plan-authority") + 1] = str(
-        HP_FACTORIAL_BRIDGE_AUTHORITY
+    cli[cli.index("--stage4-local-h-refinement-plan-sha256") + 1] = (
+        HP_FACTORIAL_BRIDGE_PLAN_SHA256
     )
+    cli[cli.index("--task035d-plan-authority") + 1] = str(HP_FACTORIAL_BRIDGE_AUTHORITY)
     cli[cli.index("--task035d-plan-authority-sha256") + 1] = (
         HP_FACTORIAL_BRIDGE_AUTHORITY_SHA256
     )
@@ -245,9 +221,7 @@ def _solver_summary(*, sidewall: bool = False) -> dict:
         else TASK035D_T30_PERIODIC_TRACE_ROWS
     )
     solve_rows = (
-        TASK035D_SIDEWALL_GUARD_SOLVE_ROWS
-        if sidewall
-        else TASK035D_T30_SOLVE_ROWS
+        TASK035D_SIDEWALL_GUARD_SOLVE_ROWS if sidewall else TASK035D_T30_SOLVE_ROWS
     )
     plan_content_sha = (
         TASK035D_SIDEWALL_GUARD_PLAN_CONTENT_SHA256
@@ -305,16 +279,12 @@ def _solver_summary(*, sidewall: bool = False) -> dict:
             "scattering_background": "layered",
             "polarization_kind": "s",
         },
-        "stage4_full3d_assembly_backend_actual": (
-            TASK035D_CASE097_BACKEND
-        ),
+        "stage4_full3d_assembly_backend_actual": (TASK035D_CASE097_BACKEND),
         "stage4_full3d_assembly_backend_qualification": {
             "status": "qualified",
             "qualified_scope": True,
             "actual": TASK035D_CASE097_BACKEND,
-            "element_contract": (
-                "exact_sequence_variable_p4_p5_p6_in_p6_container"
-            ),
+            "element_contract": ("exact_sequence_variable_p4_p5_p6_in_p6_container"),
             "contract": [
                 "geometry_bound_inactive_row_free_variable_p",
                 "floquet_slave_elimination_before_global_insertion",
@@ -360,9 +330,7 @@ def _solver_summary(*, sidewall: bool = False) -> dict:
             "used_full_boundary_gather": False,
             "created_dense_boundary_square": False,
         },
-        "num_actual_conforming_active_fe_dofs": (
-            active_fe_dofs
-        ),
+        "num_actual_conforming_active_fe_dofs": (active_fe_dofs),
         "num_active_trace_dofs": periodic_trace_rows,
         "num_active_condensed_dofs": solve_rows,
         "stage4_dtn_num_auxiliary_dofs": 80,
@@ -392,12 +360,9 @@ def _solver_summary(*, sidewall: bool = False) -> dict:
             "degree_plan": {
                 "pass": True,
                 "mpi_size": 8,
-                "cell_degree_plan_sha256": (
-                    plan_content_sha
-                ),
+                "cell_degree_plan_sha256": (plan_content_sha),
                 "mesh_cell_box_catalog_sha256": (
-                    "e33ae0611cfe3d9d380ec04af0b86efec7f7f751cdb2dd90"
-                    "a9bd936d71dbcf64"
+                    "e33ae0611cfe3d9d380ec04af0b86efec7f7f751cdb2dd90a9bd936d71dbcf64"
                 ),
                 "cell_degree_counts": degree_counts,
                 "active_rows": active_fe_dofs,
@@ -406,9 +371,7 @@ def _solver_summary(*, sidewall: bool = False) -> dict:
             "periodic_constraints": {
                 "pass": True,
                 "mpi_size": 8,
-                "independent_periodic_trace_rows": (
-                    periodic_trace_rows
-                ),
+                "independent_periodic_trace_rows": (periodic_trace_rows),
                 "inactive_p6_rows_globally_numbered": False,
             },
             "global_transfer": {
@@ -436,9 +399,9 @@ def _solver_summary(*, sidewall: bool = False) -> dict:
 
 def _local_h_solver_summary() -> dict:
     summary = copy.deepcopy(_solver_summary())
-    reduction = json.loads(
-        LOCAL_H_COMPONENT.read_text(encoding="utf-8")
-    )["reduction_audit"]
+    reduction = json.loads(LOCAL_H_COMPONENT.read_text(encoding="utf-8"))[
+        "reduction_audit"
+    ]
     matrix = {
         "matrix_rows": TASK035D_LOCAL_H_SOLVE_ROWS,
         "matrix_nnz_used": 123_456.0,
@@ -464,8 +427,7 @@ def _local_h_solver_summary() -> dict:
     summary["stage4_full3d_assembly_backend_qualification"].update(
         {
             "element_contract": (
-                "exact_sequence_balanced_local_h_fixed_trace_"
-                "variable_cell_interior"
+                "exact_sequence_balanced_local_h_fixed_trace_variable_cell_interior"
             ),
             "contract": [
                 "geometry_bound_balanced_local_h_hanging_trace_elimination",
@@ -476,15 +438,9 @@ def _local_h_solver_summary() -> dict:
     )
     summary["stage4_local_h_active"] = True
     summary["stage4_local_h_constraint_audit"] = reduction
-    summary["num_raw_broken_active_fe_dofs"] = (
-        TASK035D_LOCAL_H_RAW_ACTIVE_FE_DOFS
-    )
-    summary["num_actual_conforming_active_fe_dofs"] = (
-        TASK035D_LOCAL_H_ACTIVE_FE_DOFS
-    )
-    summary["num_active_trace_dofs"] = (
-        reduction["independent_trace_rows"]
-    )
+    summary["num_raw_broken_active_fe_dofs"] = TASK035D_LOCAL_H_RAW_ACTIVE_FE_DOFS
+    summary["num_actual_conforming_active_fe_dofs"] = TASK035D_LOCAL_H_ACTIVE_FE_DOFS
+    summary["num_active_trace_dofs"] = reduction["independent_trace_rows"]
     summary["num_active_condensed_dofs"] = TASK035D_LOCAL_H_SOLVE_ROWS
     summary["cell_static_condensation"] = {
         "schema_version": "task035d.variable-p-assembly-reduction.v1",
@@ -500,9 +456,7 @@ def _local_h_solver_summary() -> dict:
             "mpi_size": 8,
         },
         "condensed_system": {
-            "schema_version": (
-                "task035d.variable-p-condensed-trace-system.v1"
-            ),
+            "schema_version": ("task035d.variable-p-condensed-trace-system.v1"),
             "status": "variable_p_condensed_trace_matrix_pass",
             "pass": True,
             "mpi_size": 8,
@@ -527,12 +481,8 @@ def _local_h_solver_summary() -> dict:
                 "pass": True,
                 "hanging_trace_recovery_explicitly_checked": True,
                 "constraint_kinds": ["floquet", "hanging"],
-                "covered_raw_trace_rows": reduction[
-                    "raw_broken_trace_rows"
-                ],
-                "expected_raw_trace_rows": reduction[
-                    "raw_broken_trace_rows"
-                ],
+                "covered_raw_trace_rows": reduction["raw_broken_trace_rows"],
+                "expected_raw_trace_rows": reduction["raw_broken_trace_rows"],
                 "maximum_abs_error": 1.0e-13,
                 "relative_l2_error": 1.0e-13,
             },
@@ -548,9 +498,9 @@ def _local_h_solver_summary() -> dict:
 
 def _combined_hp_solver_summary() -> dict:
     summary = copy.deepcopy(_local_h_solver_summary())
-    reduction = json.loads(
-        COMBINED_HP_COMPONENT.read_text(encoding="utf-8")
-    )["reduction_audit"]
+    reduction = json.loads(COMBINED_HP_COMPONENT.read_text(encoding="utf-8"))[
+        "reduction_audit"
+    ]
     matrix = {
         "matrix_rows": TASK035D_COMBINED_HP_SOLVE_ROWS,
         "matrix_nnz_used": 234_567.0,
@@ -558,28 +508,17 @@ def _combined_hp_solver_summary() -> dict:
     }
     summary["matrix_stats"] = matrix
     summary["stage4_dtn_factor_inventory"]["matrix_stats"] = matrix
-    summary["config"]["stage4_local_h_refinement_plan"] = str(
-        COMBINED_HP_PLAN
-    )
-    summary["stage4_full3d_assembly_backend_qualification"][
-        "element_contract"
-    ] = (
-        "exact_sequence_balanced_local_h_fixed_trace_"
-        "variable_cell_interior"
+    summary["config"]["stage4_local_h_refinement_plan"] = str(COMBINED_HP_PLAN)
+    summary["stage4_full3d_assembly_backend_qualification"]["element_contract"] = (
+        "exact_sequence_balanced_local_h_fixed_trace_variable_cell_interior"
     )
     summary["stage4_local_h_constraint_audit"] = reduction
-    summary["num_raw_broken_active_fe_dofs"] = (
-        TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
-    )
+    summary["num_raw_broken_active_fe_dofs"] = TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
     summary["num_actual_conforming_active_fe_dofs"] = (
         TASK035D_COMBINED_HP_ACTIVE_FE_DOFS
     )
-    summary["num_active_trace_dofs"] = reduction[
-        "independent_trace_rows"
-    ]
-    summary["num_active_condensed_dofs"] = (
-        TASK035D_COMBINED_HP_SOLVE_ROWS
-    )
+    summary["num_active_trace_dofs"] = reduction["independent_trace_rows"]
+    summary["num_active_condensed_dofs"] = TASK035D_COMBINED_HP_SOLVE_ROWS
     audit = summary["cell_static_condensation"]
     audit["degree_plan"] = reduction["degree_plan"]
     audit["trace_constraints"] = reduction["trace_constraints"]
@@ -588,39 +527,25 @@ def _combined_hp_solver_summary() -> dict:
     condensed["active_full3d_rows_before_condensation"] = (
         TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS
     )
-    condensed["active_trace_rows_before_constraint_elimination"] = (
-        reduction["raw_broken_trace_rows"]
-    )
-    condensed["active_trace_rows"] = reduction[
-        "independent_trace_rows"
+    condensed["active_trace_rows_before_constraint_elimination"] = reduction[
+        "raw_broken_trace_rows"
     ]
-    condensed[
-        "interior_rhs_recovery_iterative_refinement_max_steps"
-    ] = 2
-    audit["recovery"][
-        "interior_rhs_recovery_iterative_refinement_max_steps"
-    ] = 2
-    audit["recovery"]["interior_trace_source"] = (
-        "assembled_global_active_trace"
-    )
-    audit["recovery"][
-        "trace_vector_assembled_before_interior_recovery"
-    ] = True
+    condensed["active_trace_rows"] = reduction["independent_trace_rows"]
+    condensed["interior_rhs_recovery_iterative_refinement_max_steps"] = 2
+    audit["recovery"]["interior_rhs_recovery_iterative_refinement_max_steps"] = 2
+    audit["recovery"]["interior_trace_source"] = "assembled_global_active_trace"
+    audit["recovery"]["trace_vector_assembled_before_interior_recovery"] = True
     trace_recovery = audit["recovery"]["trace_constraint_recovery"]
-    trace_recovery["covered_raw_trace_rows"] = reduction[
-        "raw_broken_trace_rows"
-    ]
-    trace_recovery["expected_raw_trace_rows"] = reduction[
-        "raw_broken_trace_rows"
-    ]
+    trace_recovery["covered_raw_trace_rows"] = reduction["raw_broken_trace_rows"]
+    trace_recovery["expected_raw_trace_rows"] = reduction["raw_broken_trace_rows"]
     return summary
 
 
 def _hp_factorial_bridge_solver_summary() -> dict:
     summary = _combined_hp_solver_summary()
-    reduction = json.loads(
-        HP_FACTORIAL_BRIDGE_COMPONENT.read_text(encoding="utf-8")
-    )["reduction_audit"]
+    reduction = json.loads(HP_FACTORIAL_BRIDGE_COMPONENT.read_text(encoding="utf-8"))[
+        "reduction_audit"
+    ]
     matrix = {
         "matrix_rows": TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
         "matrix_nnz_used": 222_222.0,
@@ -628,9 +553,7 @@ def _hp_factorial_bridge_solver_summary() -> dict:
     }
     summary["matrix_stats"] = matrix
     summary["stage4_dtn_factor_inventory"]["matrix_stats"] = matrix
-    summary["config"]["stage4_local_h_refinement_plan"] = str(
-        HP_FACTORIAL_BRIDGE_PLAN
-    )
+    summary["config"]["stage4_local_h_refinement_plan"] = str(HP_FACTORIAL_BRIDGE_PLAN)
     summary["stage4_local_h_constraint_audit"] = reduction
     summary["num_raw_broken_active_fe_dofs"] = (
         TASK035D_HP_FACTORIAL_BRIDGE_RAW_ACTIVE_FE_DOFS
@@ -638,12 +561,8 @@ def _hp_factorial_bridge_solver_summary() -> dict:
     summary["num_actual_conforming_active_fe_dofs"] = (
         TASK035D_HP_FACTORIAL_BRIDGE_ACTIVE_FE_DOFS
     )
-    summary["num_active_trace_dofs"] = reduction[
-        "independent_trace_rows"
-    ]
-    summary["num_active_condensed_dofs"] = (
-        TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS
-    )
+    summary["num_active_trace_dofs"] = reduction["independent_trace_rows"]
+    summary["num_active_condensed_dofs"] = TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS
     audit = summary["cell_static_condensation"]
     audit["degree_plan"] = reduction["degree_plan"]
     audit["trace_constraints"] = reduction["trace_constraints"]
@@ -652,26 +571,19 @@ def _hp_factorial_bridge_solver_summary() -> dict:
     condensed["active_full3d_rows_before_condensation"] = (
         TASK035D_HP_FACTORIAL_BRIDGE_RAW_ACTIVE_FE_DOFS
     )
-    condensed["active_trace_rows_before_constraint_elimination"] = (
-        reduction["raw_broken_trace_rows"]
-    )
-    condensed["active_trace_rows"] = reduction[
-        "independent_trace_rows"
+    condensed["active_trace_rows_before_constraint_elimination"] = reduction[
+        "raw_broken_trace_rows"
     ]
+    condensed["active_trace_rows"] = reduction["independent_trace_rows"]
     trace_recovery = audit["recovery"]["trace_constraint_recovery"]
-    trace_recovery["covered_raw_trace_rows"] = reduction[
-        "raw_broken_trace_rows"
-    ]
-    trace_recovery["expected_raw_trace_rows"] = reduction[
-        "raw_broken_trace_rows"
-    ]
+    trace_recovery["covered_raw_trace_rows"] = reduction["raw_broken_trace_rows"]
+    trace_recovery["expected_raw_trace_rows"] = reduction["raw_broken_trace_rows"]
     return summary
 
 
 def _resource_summary() -> dict:
     per_rank = {
-        str(rank): {"pss_mb": 100.0 + rank, "uss_mb": 90.0 + rank}
-        for rank in range(8)
+        str(rank): {"pss_mb": 100.0 + rank, "uss_mb": 90.0 + rank} for rank in range(8)
     }
     return {
         "max_worker_rank_smaps_readable_count": 8.0,
@@ -699,9 +611,7 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
             launch["plan_identity"]["predicted_direct_solve_rows"],
             TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
         )
-        self.assertFalse(
-            launch["selection_credit"]["goal_oriented_selection_credit"]
-        )
+        self.assertFalse(launch["selection_credit"]["goal_oriented_selection_credit"])
         cfg = _full3d_config(args)
         self.assertEqual(
             cfg.stage4_local_h_refinement_plan,
@@ -710,9 +620,7 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
         self.assertIsNone(cfg.stage4_variable_p_cell_degree_plan)
 
         solver = _hp_factorial_bridge_solver_summary()
-        solver_gate = task035d_case097_hp_factorial_bridge_solver_gate(
-            solver
-        )
+        solver_gate = task035d_case097_hp_factorial_bridge_solver_gate(solver)
         self.assertTrue(solver_gate["pass"], solver_gate["failures"])
         qualification = _qualify(
             args=args,
@@ -732,12 +640,10 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
         )
 
         tampered = copy.deepcopy(solver)
-        tampered["cell_static_condensation"]["degree_plan"][
-            "cell_degree_counts"
-        ]["p5"] = 31
-        rejected = task035d_case097_hp_factorial_bridge_solver_gate(
-            tampered
-        )
+        tampered["cell_static_condensation"]["degree_plan"]["cell_degree_counts"][
+            "p5"
+        ] = 31
+        rejected = task035d_case097_hp_factorial_bridge_solver_gate(tampered)
         self.assertFalse(rejected["pass"])
         self.assertIn(
             "variable_interior_degree_identity",
@@ -758,9 +664,7 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
             launch["plan_identity"]["predicted_direct_solve_rows"],
             TASK035D_COMBINED_HP_SOLVE_ROWS,
         )
-        self.assertFalse(
-            launch["selection_credit"]["complete_combined_hp_credit"]
-        )
+        self.assertFalse(launch["selection_credit"]["complete_combined_hp_credit"])
         cfg = _full3d_config(args)
         self.assertEqual(
             cfg.stage4_local_h_refinement_plan,
@@ -773,9 +677,7 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
         )
         self.assertEqual(command[command.index("--h-nm") + 1], "15.0")
         self.assertEqual(
-            command[
-                command.index("--stage4-local-h-refinement-plan") + 1
-            ],
+            command[command.index("--stage4-local-h-refinement-plan") + 1],
             str(COMBINED_HP_PLAN.resolve()),
         )
         self.assertNotIn(
@@ -815,9 +717,7 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
             launch["plan_identity"]["predicted_direct_solve_rows"],
             TASK035D_LOCAL_H_SOLVE_ROWS,
         )
-        self.assertFalse(
-            launch["selection_credit"]["goal_oriented_selection_credit"]
-        )
+        self.assertFalse(launch["selection_credit"]["goal_oriented_selection_credit"])
 
         cfg = _full3d_config(args)
         self.assertEqual(
@@ -831,9 +731,7 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
             "15.0",
         )
         self.assertEqual(
-            command[
-                command.index("--stage4-local-h-refinement-plan") + 1
-            ],
+            command[command.index("--stage4-local-h-refinement-plan") + 1],
             str(LOCAL_H_PLAN.resolve()),
         )
         self.assertNotIn(
@@ -859,11 +757,9 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
         self.assertTrue(qualification["pass"], qualification["failures"])
 
         stale_contract = copy.deepcopy(solver)
-        stale_contract[
-            "stage4_full3d_assembly_backend_qualification"
-        ]["element_contract"] = (
-            "exact_sequence_balanced_local_h_fixed_trace_p6_interior"
-        )
+        stale_contract["stage4_full3d_assembly_backend_qualification"][
+            "element_contract"
+        ] = "exact_sequence_balanced_local_h_fixed_trace_p6_interior"
         rejected = task035d_case097_local_h_solver_gate(stale_contract)
         self.assertFalse(rejected["pass"])
         self.assertIn("local_h_backend_actual", rejected["failures"])
@@ -954,9 +850,7 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
         self,
     ) -> None:
         plan = json.loads(SIDEWALL_PLAN.read_text(encoding="utf-8"))
-        authority = json.loads(
-            SIDEWALL_AUTHORITY.read_text(encoding="utf-8")
-        )
+        authority = json.loads(SIDEWALL_AUTHORITY.read_text(encoding="utf-8"))
         gate = task035d_case097_sidewall_guard_plan_authority_gate(
             plan,
             authority,
@@ -1052,12 +946,14 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
         )
         self.assertTrue(cfg.direct_release_base_after_augmentation)
         self.assertTrue(cfg.direct_release_solver_before_postprocess)
+        self.assertEqual(
+            cfg.petsc_extra_options.get("mat_mumps_icntl_14"),
+            100,
+        )
         command = _worker_command(args, Path("/tmp/task035d-worker"))
         self.assertEqual(command[command.index("--mpi-size") + 1], "8")
         self.assertEqual(
-            command[
-                command.index("--stage4-variable-p-cell-degree-plan") + 1
-            ],
+            command[command.index("--stage4-variable-p-cell-degree-plan") + 1],
             str(PLAN),
         )
         self.assertEqual(
@@ -1107,11 +1003,11 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
             "standard_full",
         )
         self.assertIsNone(ordinary_cfg.stage4_variable_p_cell_degree_plan)
-        self.assertFalse(
-            ordinary_cfg.direct_release_base_after_augmentation
-        )
-        self.assertFalse(
-            ordinary_cfg.direct_release_solver_before_postprocess
+        self.assertFalse(ordinary_cfg.direct_release_base_after_augmentation)
+        self.assertFalse(ordinary_cfg.direct_release_solver_before_postprocess)
+        self.assertNotIn(
+            "mat_mumps_icntl_14",
+            ordinary_cfg.petsc_extra_options,
         )
 
     def test_solver_gate_and_full_qualification_are_fail_closed(self) -> None:
@@ -1136,9 +1032,7 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
             qualification["pass"],
             qualification["failures"],
         )
-        self.assertTrue(
-            qualification["task035d_case097_solver_gate"]["pass"]
-        )
+        self.assertTrue(qualification["task035d_case097_solver_gate"]["pass"])
 
         missing_rank = _resource_summary()
         del missing_rank["per_rank_smaps_rollup_peak_mb"]["7"]
@@ -1247,28 +1141,24 @@ class Task035dCase097RunnerGateTests(unittest.TestCase):
             "variable_p_backend_actual": lambda row: row[
                 "stage4_full3d_assembly_backend_qualification"
             ].update({"contract": []}),
-            "mesh_and_tag_identity": lambda row: row[
-                "variable_p_mesh_identity"
-            ].update({"cell_tag_sha256": "0" * 64}),
-            "periodic_identity": lambda row: row[
-                "cell_static_condensation"
-            ]["periodic_constraints"].update({"mpi_size": 4}),
-            "inactive_rows_absent": lambda row: row[
-                "cell_static_condensation"
-            ].update({"inactive_p6_rows_globally_numbered": True}),
+            "mesh_and_tag_identity": lambda row: row["variable_p_mesh_identity"].update(
+                {"cell_tag_sha256": "0" * 64}
+            ),
+            "periodic_identity": lambda row: row["cell_static_condensation"][
+                "periodic_constraints"
+            ].update({"mpi_size": 4}),
+            "inactive_rows_absent": lambda row: row["cell_static_condensation"].update(
+                {"inactive_p6_rows_globally_numbered": True}
+            ),
             "trace_only_gate": lambda row: row.update(
                 {"stage4_dtn_variable_p_trace_functional_count": 80}
             ),
-            "full_explicit_true_residual": lambda row: row[
-                "cell_static_condensation"
-            ]["full_explicit_true_residual"].update(
-                {"linear_system_relative_residual": 1.0e-8}
-            ),
-            "solver_lifecycle_release": lambda row: row[
-                "solver_release_audit"
-            ]["process_heap_trim"].update(
-                {"succeeded_on_all_ranks": False}
-            ),
+            "full_explicit_true_residual": lambda row: row["cell_static_condensation"][
+                "full_explicit_true_residual"
+            ].update({"linear_system_relative_residual": 1.0e-8}),
+            "solver_lifecycle_release": lambda row: row["solver_release_audit"][
+                "process_heap_trim"
+            ].update({"succeeded_on_all_ranks": False}),
         }
         for expected_failure, mutate in mutations.items():
             summary = copy.deepcopy(_solver_summary())

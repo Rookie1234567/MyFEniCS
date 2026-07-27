@@ -376,6 +376,10 @@ def _full3d_config(args: argparse.Namespace):
         direct_release_base_after_augmentation=bool(args.task035d_case097_gate),
         direct_release_solver_before_postprocess=bool(args.task035d_case097_gate),
         petsc_direct_solver_profile=args.profile,
+        petsc_extra_options={
+            **cfg.petsc_extra_options,
+            **({"mat_mumps_icntl_14": 100} if args.task035d_case097_gate else {}),
+        },
         matrix_diagnostics_assemble_only=args.run_kind == "assembly-only",
         matrix_diagnostics_factorization_only=factorization_only,
         full3d_reference_export=full_solve,
