@@ -46,6 +46,47 @@ RECORD_DIR = CASE_DIR / "records"
 CHECKER_NAME = "check_local_h_production_authority.py"
 GENERATOR_NAME = Path(__file__).name
 DEFAULT_CANDIDATE_ID = "h15_top_air_local_h_v1"
+SELECTIVE_FACE_CANDIDATE_ID = "h15_grating_top_selective_p6_faces_v1"
+SELECTIVE_P6_FACE_GEOMETRY_KEYS = (
+    (2, 92857142857, 0, 5892857143, 0, 8928571429),
+    (2, 92857142857, 0, 5892857143, 8928571429, 17857142857),
+    (2, 92857142857, 11785714286, 17857142857, 0, 8928571429),
+    (
+        2,
+        92857142857,
+        11785714286,
+        17857142857,
+        8928571429,
+        17857142857,
+    ),
+    (2, 92857142857, 17857142857, 23928571429, 0, 8928571429),
+    (
+        2,
+        92857142857,
+        17857142857,
+        23928571429,
+        8928571429,
+        17857142857,
+    ),
+    (2, 92857142857, 23928571429, 29821428571, 0, 8928571429),
+    (
+        2,
+        92857142857,
+        23928571429,
+        29821428571,
+        8928571429,
+        17857142857,
+    ),
+    (2, 92857142857, 29821428571, 35714285714, 0, 8928571429),
+    (
+        2,
+        92857142857,
+        29821428571,
+        35714285714,
+        8928571429,
+        17857142857,
+    ),
+)
 CANDIDATE_SPECS = {
     DEFAULT_CANDIDATE_ID: {
         "plan_name": "h15_top_air_local_h_plan_v1.json",
@@ -136,6 +177,35 @@ CANDIDATE_SPECS = {
             "predicted_direct_solve_rows": 18_470,
         },
     },
+    SELECTIVE_FACE_CANDIDATE_ID: {
+        "plan_name": "h15_grating_top_selective_p6_faces_plan_v1.json",
+        "component_names": {
+            1: "selective_p6_face_mpi1_v1.json",
+            2: "selective_p6_face_mpi2_v1.json",
+            8: "selective_p6_face_mpi8_v1.json",
+        },
+        "schema_version": "case097.selective-p6-face-component.v1",
+        "pass_status": "selective_p6_face_component_pass",
+        "marked_root_boxes": (
+            (8.25, 0.0, 120.0, 16.5, 12.5, 130.0),
+        ),
+        "variable_interior": False,
+        "selected_p6_face_geometry_keys": (
+            SELECTIVE_P6_FACE_GEOMETRY_KEYS
+        ),
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 134,
+            "hanging_patch_count": 6,
+            "raw_broken_active_fe_dofs": 84_375,
+            "raw_broken_trace_rows": 24_075,
+            "hanging_slave_rows": 1_250,
+            "periodic_slave_rows": 4_235,
+            "actual_full3d_equivalent_active_fe_dofs": 83_125,
+            "independent_trace_rows": 18_590,
+            "predicted_direct_solve_rows": 18_670,
+        },
+    },
 }
 
 
@@ -182,6 +252,9 @@ NUMERICAL_RELATIVE_FILES = (
     "src/adaptivity/hcurl_trace_constraint_graph.py",
     "src/adaptivity/variable_p_entity_map.py",
     "src/adaptivity/variable_p_transfer.py",
+    "src/adaptivity/selective_face_complement.py",
+    "src/adaptivity/selective_face_root_transfer.py",
+    "src/adaptivity/variable_p_selective_face_dwr.py",
     "src/constraints/high_order_floquet_trace.py",
     "src/solvers/hcurl_variable_p_local.py",
     "src/solvers/hcurl_variable_p_assembly.py",
@@ -365,6 +438,10 @@ def build_plan_payload(
     spec = _candidate_spec(candidate_id)
     cfg = target_stage4_config(degree=6, h_nm=15.0)
     marked = tuple(spec["marked_root_boxes"])
+    selected_p6_faces = tuple(
+        tuple(map(int, key))
+        for key in spec.get("selected_p6_face_geometry_keys", ())
+    )
     overrides = None
     provenance: dict[str, Any]
     if spec["variable_interior"]:
@@ -451,6 +528,27 @@ def build_plan_payload(
             "complete_combined_hp_credit": False,
             "ordinary_default_changed": False,
         }
+    elif selected_p6_faces:
+        provenance = {
+            "purpose": (
+                "Task035d root-cause-guided selective p6 whole-face "
+                "enrichment on the accepted one-sided local-h mesh"
+            ),
+            "candidate_id": candidate_id,
+            "seed": (
+                "ten safe non-hanging, non-periodic grating-top z=120 "
+                "physical faces; no port face and no periodic slave"
+            ),
+            "selection_evidence": (
+                "root-cause-guided first discriminator only; no pre-run "
+                "DWR credit. The actual cross-trace Galerkin and "
+                "12-channel adjoint report must independently qualify "
+                "or reject this action"
+            ),
+            "accuracy_credit": False,
+            "goal_oriented_selection_credit_before_run": False,
+            "ordinary_default_changed": False,
+        }
     else:
         provenance = {
             "purpose": "Task035d h-only first formal candidate",
@@ -470,6 +568,7 @@ def build_plan_payload(
         cell_interior_degree=6,
         provenance=provenance,
         cell_interior_degree_overrides=overrides,
+        selected_p6_face_geometry_keys=selected_p6_faces,
     )
 
 
@@ -520,6 +619,20 @@ def _stable_identity(
         "cell_degree_counts": degree_plan["cell_degree_counts"],
         "geometry_canonical_entity_degree_sha256": degree_plan[
             "geometry_canonical_entity_degree_sha256"
+        ],
+        "trace_degree_values": degree_plan["trace_degree_values"],
+        "selected_p6_face_count": physical["selected_p6_face_count"],
+        "selected_p6_face_geometry_keys": physical[
+            "selected_p6_face_geometry_keys"
+        ],
+        "selected_p6_periodic_orbit_count": physical[
+            "selected_p6_periodic_orbit_count"
+        ],
+        "selective_trace_full3d_dof_delta": physical[
+            "selective_trace_full3d_dof_delta"
+        ],
+        "local_variable_trace_implemented": degree_plan[
+            "local_variable_trace_implemented"
         ],
         "raw_broken_active_fe_dofs": reduction.audit[
             "raw_broken_active_fe_dofs"
@@ -580,6 +693,12 @@ def generate_component(
         phase_y=cfg.floquet_phase_y,
     )
     stable = _stable_identity(context, reduction)
+    selected_p6_faces = tuple(
+        tuple(map(int, key))
+        for key in spec.get("selected_p6_face_geometry_keys", ())
+    )
+    physical = reduction.audit["physical_trace"]
+    degree_plan = reduction.audit["degree_plan"]
     checks = {
         "plan_is_tracked": tracked,
         "mesh_authority": context.audit["pass"] is True,
@@ -622,6 +741,36 @@ def generate_component(
                     "cell_degree_counts"
                 ]
                 == {"p4": 0, "p5": 0, "p6": 134}
+            )
+        ),
+        "selective_trace_policy": (
+            (
+                degree_plan["trace_degree_values"] == [5, 6]
+                and degree_plan["selected_p6_face_count"]
+                == len(selected_p6_faces)
+                and tuple(
+                    tuple(map(int, key))
+                    for key in physical[
+                        "selected_p6_face_geometry_keys"
+                    ]
+                )
+                == selected_p6_faces
+                and physical["selected_p6_periodic_orbit_count"] == 0
+                and physical["selective_trace_full3d_dof_delta"]
+                == 20 * len(selected_p6_faces)
+                and degree_plan["local_variable_trace_implemented"]
+                is True
+                and reduction.audit["trace_constraints"][
+                    "local_variable_trace_implemented"
+                ]
+                is True
+            )
+            if selected_p6_faces
+            else (
+                degree_plan["trace_degree_values"] == [5]
+                and degree_plan["selected_p6_face_count"] == 0
+                and degree_plan["local_variable_trace_implemented"]
+                is False
             )
         ),
         "prior_attempt2_hash_bound": all(

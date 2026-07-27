@@ -16,6 +16,47 @@ ROOT = Path(__file__).resolve().parents[3]
 CASE_DIR = Path(__file__).resolve().parent
 RECORD_DIR = CASE_DIR / "records"
 DEFAULT_CANDIDATE_ID = "h15_top_air_local_h_v1"
+SELECTIVE_FACE_CANDIDATE_ID = "h15_grating_top_selective_p6_faces_v1"
+SELECTIVE_P6_FACE_GEOMETRY_KEYS = (
+    (2, 92857142857, 0, 5892857143, 0, 8928571429),
+    (2, 92857142857, 0, 5892857143, 8928571429, 17857142857),
+    (2, 92857142857, 11785714286, 17857142857, 0, 8928571429),
+    (
+        2,
+        92857142857,
+        11785714286,
+        17857142857,
+        8928571429,
+        17857142857,
+    ),
+    (2, 92857142857, 17857142857, 23928571429, 0, 8928571429),
+    (
+        2,
+        92857142857,
+        17857142857,
+        23928571429,
+        8928571429,
+        17857142857,
+    ),
+    (2, 92857142857, 23928571429, 29821428571, 0, 8928571429),
+    (
+        2,
+        92857142857,
+        23928571429,
+        29821428571,
+        8928571429,
+        17857142857,
+    ),
+    (2, 92857142857, 29821428571, 35714285714, 0, 8928571429),
+    (
+        2,
+        92857142857,
+        29821428571,
+        35714285714,
+        8928571429,
+        17857142857,
+    ),
+)
 CHECKER_RELATIVE = (
     "benchmarks/cases/"
     "097_goal_oriented_exact_sequence_hp_adaptivity/"
@@ -130,6 +171,45 @@ CANDIDATE_SPECS = {
         },
         "variable_interior": True,
         "cell_degree_counts": {"p4": 0, "p5": 32, "p6": 102},
+    },
+    SELECTIVE_FACE_CANDIDATE_ID: {
+        "plan_relative": (
+            "benchmarks/cases/"
+            "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+            "h15_grating_top_selective_p6_faces_plan_v1.json"
+        ),
+        "record_names": {
+            1: "selective_p6_face_mpi1_v1.json",
+            2: "selective_p6_face_mpi2_v1.json",
+            8: "selective_p6_face_mpi8_v1.json",
+        },
+        "output_name": "selective_p6_face_mpi_identity_v1.json",
+        "schema": "case097.selective-p6-face-component.v1",
+        "pass_status": "selective_p6_face_component_pass",
+        "identity_schema": (
+            "case097.selective-p6-face-mpi-identity.v1"
+        ),
+        "identity_status": "selective_p6_face_mpi_identity_pass",
+        "pde_launch_scope": (
+            "one formal MPI8 h15 one-sided local-h plus ten "
+            "selective-p6-whole-face direct PDE"
+        ),
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 134,
+            "hanging_patch_count": 6,
+            "raw_broken_active_fe_dofs": 84_375,
+            "raw_broken_trace_rows": 24_075,
+            "hanging_slave_rows": 1_250,
+            "periodic_slave_rows": 4_235,
+            "actual_full3d_equivalent_active_fe_dofs": 83_125,
+            "independent_trace_rows": 18_590,
+            "predicted_direct_solve_rows": 18_670,
+        },
+        "variable_interior": False,
+        "selected_p6_face_geometry_keys": (
+            SELECTIVE_P6_FACE_GEOMETRY_KEYS
+        ),
     },
 }
 
@@ -272,6 +352,37 @@ def _validate_one(
             )
         ):
             failures.append("variable_interior_scope")
+        selected_p6_faces = tuple(
+            tuple(map(int, key))
+            for key in spec.get("selected_p6_face_geometry_keys", ())
+        )
+        physical = reduction["physical_trace"]
+        degree_plan = reduction["degree_plan"]
+        if selected_p6_faces and not (
+            degree_plan.get("trace_degree_values") == [5, 6]
+            and degree_plan.get("selected_p6_face_count")
+            == len(selected_p6_faces)
+            and degree_plan.get("local_variable_trace_implemented")
+            is True
+            and trace.get("local_variable_trace_implemented") is True
+            and physical.get("selected_p6_face_count")
+            == len(selected_p6_faces)
+            and tuple(
+                tuple(map(int, key))
+                for key in physical.get(
+                    "selected_p6_face_geometry_keys",
+                    (),
+                )
+            )
+            == selected_p6_faces
+            and physical.get("selected_p6_periodic_orbit_count") == 0
+            and physical.get("selective_trace_full3d_dof_delta")
+            == 20 * len(selected_p6_faces)
+            and stable.get("selected_p6_face_geometry_keys")
+            == [list(key) for key in selected_p6_faces]
+            and stable.get("local_variable_trace_implemented") is True
+        ):
+            failures.append("selective_trace_scope")
         checks = payload.get("checks")
         if not isinstance(checks, dict) or not checks or not all(checks.values()):
             failures.append("embedded_checks")
@@ -343,6 +454,21 @@ def check_records(
         "same_source_sha": len(sources) == 1,
         "same_numerical_blobs": all(row == numerical[0] for row in numerical[1:]),
         "same_physical_identity": all(row == stable[0] for row in stable[1:]),
+        "same_selective_trace_identity": all(
+            (
+                row.get("selected_p6_face_count"),
+                row.get("selected_p6_face_geometry_keys"),
+                row.get("geometry_canonical_entity_degree_sha256"),
+            )
+            == (
+                stable[0].get("selected_p6_face_count"),
+                stable[0].get("selected_p6_face_geometry_keys"),
+                stable[0].get(
+                    "geometry_canonical_entity_degree_sha256"
+                ),
+            )
+            for row in stable[1:]
+        ),
         "rank_local_and_cross_rank_hanging_partitions_qualified": (
             bool(zero_cross_rank)
             and bool(positive_cross_rank)
