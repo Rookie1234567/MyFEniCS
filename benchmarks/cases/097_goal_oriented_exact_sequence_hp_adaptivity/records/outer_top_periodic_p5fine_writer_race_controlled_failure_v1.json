@@ -1,0 +1,42 @@
+{
+  "classification": "infrastructure_controlled_negative",
+  "evidence_integrity_pass": true,
+  "failure": {
+    "cause": "all MPI ranks checked the shared immutable output path after independently building the component payload; rank 0 created the file first and two non-root ranks then raised FileExistsError before the final broadcast",
+    "heavy_pde_started": false,
+    "mpi8_component_payload_written_by_rank0": true,
+    "mpi_job_exit_code": 130,
+    "manual_termination_reason": "remaining ranks were waiting in the unmatched final collective after peer exceptions",
+    "numerical_or_constraint_failure": false
+  },
+  "formal_component_authority": false,
+  "ordinary_default_changed": false,
+  "preserved_payloads": [
+    {
+      "mpi_size": 1,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_mpi1_v1.json",
+      "sha256": "bed5c0593510f8845584954db50f2492e65f6cb9cebf5eb0686f9a3e266f1696",
+      "status": "outer_top_periodic_p5fine_component_pass"
+    },
+    {
+      "mpi_size": 2,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_mpi2_v1.json",
+      "sha256": "4b5122b025e733ddf764d3b8b7d7c078b83d5299caa53b09448e89556210e49d",
+      "status": "outer_top_periodic_p5fine_component_pass"
+    },
+    {
+      "mpi_size": 8,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_mpi8_v1.json",
+      "sha256": "97298c9e2e72baa48752ce76c7b33d5ea41755ed9b3db9a4edd55855e9faf4e3",
+      "status": "rank0_payload_pass_but_wrapper_failed"
+    }
+  ],
+  "recovery": {
+    "formal_record_revision": "v2",
+    "required_fix": "rank 0 alone checks and creates the output, then broadcasts a success or immutable-output error envelope to every rank",
+    "rerun_scope": "MPI1, MPI2, and MPI8 component authorities only; no PDE"
+  },
+  "schema_version": "case097.outer-top-periodic-p5fine-writer-race.v1",
+  "source_sha": "9d1494057e9763694ea2bba92e7a6e6a90531952",
+  "status": "outer_top_periodic_p5fine_writer_race_controlled_failure"
+}

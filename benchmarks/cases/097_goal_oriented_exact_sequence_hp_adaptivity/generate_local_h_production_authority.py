@@ -210,12 +210,12 @@ CANDIDATE_SPECS = {
     OUTER_TOP_HP_CANDIDATE_ID: {
         "plan_name": "h15_outer_top_periodic_p5fine_plan_v1.json",
         "component_names": {
-            1: "outer_top_periodic_p5fine_mpi1_v1.json",
-            2: "outer_top_periodic_p5fine_mpi2_v1.json",
-            8: "outer_top_periodic_p5fine_mpi8_v1.json",
+            1: "outer_top_periodic_p5fine_mpi1_v2.json",
+            2: "outer_top_periodic_p5fine_mpi2_v2.json",
+            8: "outer_top_periodic_p5fine_mpi8_v2.json",
         },
         "schema_version": (
-            "case097.outer-top-periodic-p5fine-component.v1"
+            "case097.outer-top-periodic-p5fine-component.v2"
         ),
         "pass_status": "outer_top_periodic_p5fine_component_pass",
         "marked_root_boxes": (
@@ -938,20 +938,26 @@ def main() -> int:
             source_sha=str(args.source_sha),
             candidate_id=args.candidate,
         )
-    if output.exists():
-        raise FileExistsError(f"authority output is immutable: {output}")
     if comm.rank == 0:
-        digest = _write_new(output, payload)
-        envelope = {
-            "ok": True,
-            "path": str(output),
-            "sha256": digest,
-            "status": payload["status"],
-            "pass": payload.get("pass", True),
-        }
+        if output.exists():
+            envelope = {
+                "ok": False,
+                "error": f"authority output is immutable: {output}",
+            }
+        else:
+            digest = _write_new(output, payload)
+            envelope = {
+                "ok": True,
+                "path": str(output),
+                "sha256": digest,
+                "status": payload["status"],
+                "pass": payload.get("pass", True),
+            }
     else:
         envelope = None
     envelope = comm.bcast(envelope, root=0)
+    if not envelope["ok"]:
+        raise FileExistsError(str(envelope["error"]))
     if comm.rank == 0:
         print(json.dumps(envelope, sort_keys=True))
     return 0 if payload.get("pass", True) else 1

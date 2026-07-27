@@ -219,15 +219,15 @@ CANDIDATE_SPECS = {
             "h15_outer_top_periodic_p5fine_plan_v1.json"
         ),
         "record_names": {
-            1: "outer_top_periodic_p5fine_mpi1_v1.json",
-            2: "outer_top_periodic_p5fine_mpi2_v1.json",
-            8: "outer_top_periodic_p5fine_mpi8_v1.json",
+            1: "outer_top_periodic_p5fine_mpi1_v2.json",
+            2: "outer_top_periodic_p5fine_mpi2_v2.json",
+            8: "outer_top_periodic_p5fine_mpi8_v2.json",
         },
-        "output_name": "outer_top_periodic_p5fine_mpi_identity_v1.json",
-        "schema": "case097.outer-top-periodic-p5fine-component.v1",
+        "output_name": "outer_top_periodic_p5fine_mpi_identity_v2.json",
+        "schema": "case097.outer-top-periodic-p5fine-component.v2",
         "pass_status": "outer_top_periodic_p5fine_component_pass",
         "identity_schema": (
-            "case097.outer-top-periodic-p5fine-mpi-identity.v1"
+            "case097.outer-top-periodic-p5fine-mpi-identity.v2"
         ),
         "identity_status": "outer_top_periodic_p5fine_mpi_identity_pass",
         "pde_launch_scope": (
