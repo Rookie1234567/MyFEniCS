@@ -117,9 +117,7 @@ def _csr_sha256(
         digest.update(b"\0")
         digest.update(contiguous.dtype.str.encode("ascii"))
         digest.update(b"\0")
-        digest.update(
-            np.asarray(contiguous.shape, dtype=np.int64).tobytes()
-        )
+        digest.update(np.asarray(contiguous.shape, dtype=np.int64).tobytes())
         digest.update(contiguous.view(np.uint8))
     return digest.hexdigest()
 
@@ -182,9 +180,7 @@ def _entity_catalog(
             "dimension": int(entity.dimension),
             "geometry_key": list(entity.geometry_key),
             "degree": int(entity.degree),
-            "canonical_points": [
-                list(point) for point in entity.canonical_points
-            ],
+            "canonical_points": [list(point) for point in entity.canonical_points],
             "mode_count": len(entity.rows),
         }
         for entity in authority.entities
@@ -234,19 +230,15 @@ def _authority_from_snapshot(
             geometry_key=geometry_key,
             degree=degree,
             canonical_points=tuple(
-                tuple(map(int, point))
-                for point in record["canonical_points"]
+                tuple(map(int, point)) for point in record["canonical_points"]
             ),
             rows=entity_rows,
         )
         entities.append(entity)
         raw_rows.extend(entity_rows)
-    root_indices = tuple(
-        map(int, manifest["physical_root_raw_indices"])
-    )
-    if (
-        len(set(root_indices)) != len(root_indices)
-        or any(index < 0 or index >= len(raw_rows) for index in root_indices)
+    root_indices = tuple(map(int, manifest["physical_root_raw_indices"]))
+    if len(set(root_indices)) != len(root_indices) or any(
+        index < 0 or index >= len(raw_rows) for index in root_indices
     ):
         raise ValueError("coarse physical root-row indices are malformed")
     root_rows = tuple(raw_rows[index] for index in root_indices)
@@ -256,17 +248,13 @@ def _authority_from_snapshot(
         raw_rows=tuple(raw_rows),
         root_rows=root_rows,
         raw_from_independent=expansion,
-        component_gram=(
-            expansion.conj().T @ expansion
-        ).tocsr(),
+        component_gram=(expansion.conj().T @ expansion).tocsr(),
         cells=(),
         audit=MappingProxyType(
             {
                 "pass": True,
                 "snapshot_reconstruction_only": True,
-                "raw_from_independent_sha256": manifest[
-                    "physical_graph_sha256"
-                ],
+                "raw_from_independent_sha256": manifest["physical_graph_sha256"],
             }
         ),
     )
@@ -281,9 +269,7 @@ def _authority_from_snapshot(
             {
                 "pass": True,
                 "snapshot_reconstruction_only": True,
-                "physical_authority_sha256": manifest[
-                    "physical_authority_sha256"
-                ],
+                "physical_authority_sha256": manifest["physical_authority_sha256"],
             }
         ),
     )
@@ -292,20 +278,14 @@ def _authority_from_snapshot(
 def _physical_identity(view: Any) -> dict[str, Any]:
     constraints = view.reduction.system.trace_constraints
     if constraints is None or not hasattr(constraints, "authority"):
-        raise RuntimeError(
-            "selective-face DWR requires a physical trace authority"
-        )
+        raise RuntimeError("selective-face DWR requires a physical trace authority")
     authority = constraints.authority
     graph = sparse.csr_matrix(
         authority.graph.raw_from_independent,
         dtype=np.complex128,
     )
-    raw_index = {
-        row: index for index, row in enumerate(authority.graph.raw_rows)
-    }
-    root_indices = [
-        raw_index[row] for row in authority.graph.root_rows
-    ]
+    raw_index = {row: index for index, row in enumerate(authority.graph.raw_rows)}
+    root_indices = [raw_index[row] for row in authority.graph.root_rows]
     catalog = _entity_catalog(authority)
     return {
         "authority": authority,
@@ -341,17 +321,13 @@ def _probe_vectors(
         raise ValueError("Galerkin probes require trace and auxiliary rows")
     rng = np.random.default_rng(int(seed))
     probes = np.zeros((rows, _PROBE_COUNT), dtype=np.complex128)
-    probes[:trace_rows, 0] = (
-        rng.standard_normal(trace_rows)
-        + 1j * rng.standard_normal(trace_rows)
+    probes[:trace_rows, 0] = rng.standard_normal(trace_rows) + 1j * rng.standard_normal(
+        trace_rows
     )
-    probes[trace_rows:, 1] = (
-        rng.standard_normal(rows - trace_rows)
-        + 1j * rng.standard_normal(rows - trace_rows)
-    )
-    probes[:, 2] = (
-        rng.standard_normal(rows) + 1j * rng.standard_normal(rows)
-    )
+    probes[trace_rows:, 1] = rng.standard_normal(
+        rows - trace_rows
+    ) + 1j * rng.standard_normal(rows - trace_rows)
+    probes[:, 2] = rng.standard_normal(rows) + 1j * rng.standard_normal(rows)
     for column in range(_PROBE_COUNT):
         norm = np.linalg.norm(probes[:, column])
         if not np.isfinite(norm) or norm <= np.finfo(float).tiny:
@@ -420,9 +396,7 @@ def write_selective_face_coarse_snapshot(
     physical = _physical_identity(view)
     physical_authority = physical["authority"]
     if physical_authority.selected_p6_face_geometry_keys:
-        raise ValueError(
-            "coarse selective-face snapshot must have a pure p5 trace"
-        )
+        raise ValueError("coarse selective-face snapshot must have a pure p5 trace")
     if physical_authority.degree != 5:
         raise ValueError("coarse selective-face snapshot requires p5 trace")
     state_b, ownership = _global_petsc_values(view.x, comm)
@@ -442,31 +416,24 @@ def write_selective_face_coarse_snapshot(
         raise RuntimeError("coarse matrix action ownership differs")
     residual_b = np.ascontiguousarray(rhs_b - action_b)
     relative_residual = float(
-        np.linalg.norm(residual_b)
-        / max(np.linalg.norm(rhs_b), np.finfo(float).tiny)
+        np.linalg.norm(residual_b) / max(np.linalg.norm(rhs_b), np.finfo(float).tiny)
     )
     residual_gate = _primal_residual_gate(
         full_active_residual=view.full_active_residual,
         reduced_relative_residual=relative_residual,
     )
     if not residual_gate["pass"]:
-        raise RuntimeError(
-            "coarse selective-face endpoint failed primal residual Gate"
-        )
+        raise RuntimeError("coarse selective-face endpoint failed primal residual Gate")
     trace_rows = int(view.reduction.system.active_trace_rows)
     auxiliary_rows = int(view.reduction.system.appended_rows)
     if trace_rows + auxiliary_rows != len(state_b):
         raise RuntimeError("coarse trace plus auxiliary dimensions do not close")
     normalized_config = _normalized_config_identity(view.config)
     mode_identity = _mode_identity(view.goal_context)
-    mesh_identity = partition_independent_linear_mesh_identity(
-        view.mesh_data
-    )
+    mesh_identity = partition_independent_linear_mesh_identity(view.mesh_data)
     seed_identity = {
         "candidate": candidate,
-        "mesh_sha256": mesh_identity[
-            "partition_independent_mesh_sha256"
-        ],
+        "mesh_sha256": mesh_identity["partition_independent_mesh_sha256"],
         "config_sha256": normalized_config["normalized_config_sha256"],
         "mode_sha256": mode_identity["ordered_modes_sha256"],
         "physical_graph_sha256": physical["graph_sha256"],
@@ -522,8 +489,7 @@ def write_selective_face_coarse_snapshot(
     write_errors = comm.allgather(write_error)
     if any(error is not None for error in write_errors):
         raise RuntimeError(
-            "selective-face coarse array publication failed: "
-            f"{write_errors}"
+            f"selective-face coarse array publication failed: {write_errors}"
         )
     root_arrays_sha256 = comm.bcast(arrays_sha256, root=0)
     arrays_sha256 = _collective_local_call(
@@ -532,9 +498,7 @@ def write_selective_face_coarse_snapshot(
         lambda: _file_sha256(arrays_path),
     )
     if arrays_sha256 != root_arrays_sha256:
-        raise RuntimeError(
-            "selective-face coarse array publication SHA changed"
-        )
+        raise RuntimeError("selective-face coarse array publication SHA changed")
     manifest = {
         "schema_version": _SNAPSHOT_SCHEMA,
         "status": "selective_face_coarse_snapshot_pass",
@@ -561,9 +525,7 @@ def write_selective_face_coarse_snapshot(
         "independent_trace_rows": trace_rows,
         "auxiliary_rows": auxiliary_rows,
         "matrix_rows": len(state_b),
-        "matrix_vector_ownership_ranges": [
-            list(values) for values in ownership
-        ],
+        "matrix_vector_ownership_ranges": [list(values) for values in ownership],
         "physical_entity_catalog": physical["catalog"],
         "physical_entity_catalog_sha256": physical["catalog_sha256"],
         "physical_root_raw_indices": physical["root_raw_indices"],
@@ -573,9 +535,7 @@ def write_selective_face_coarse_snapshot(
         ),
         "port_operator_audit": _jsonable(view.port_operator_audit),
         "primal_residual_gate": residual_gate,
-        "primal_solver_telemetry": _jsonable(
-            view.primal_solver_telemetry
-        ),
+        "primal_solver_telemetry": _jsonable(view.primal_solver_telemetry),
         "probe_contract": {
             "probe_count": _PROBE_COUNT,
             "roles": [
@@ -616,21 +576,15 @@ def write_selective_face_coarse_snapshot(
             ),
             "auxiliary_values_b_sha256": _array_sha256(
                 auxiliary,
-                namespace=(
-                    "task035d.selective-face-auxiliary-values-b.v1"
-                ),
+                namespace=("task035d.selective-face-auxiliary-values-b.v1"),
             ),
             "incident_projections_sha256": _array_sha256(
                 incident,
-                namespace=(
-                    "task035d.selective-face-incident-projections.v1"
-                ),
+                namespace=("task035d.selective-face-incident-projections.v1"),
             ),
             "coordinate_scales_sha256": _array_sha256(
                 scales,
-                namespace=(
-                    "task035d.selective-face-coordinate-scales.v1"
-                ),
+                namespace=("task035d.selective-face-coordinate-scales.v1"),
             ),
             "relative_residual": relative_residual,
         },
@@ -708,8 +662,7 @@ def load_selective_face_coarse_snapshot(
             namespace="task035d.selective-face-physical-graph.v1",
         )
         if (
-            catalog_sha256
-            != manifest["physical_entity_catalog_sha256"]
+            catalog_sha256 != manifest["physical_entity_catalog_sha256"]
             or graph_sha256 != manifest["physical_graph_sha256"]
         ):
             raise ValueError(
@@ -729,12 +682,9 @@ def load_selective_face_coarse_snapshot(
         root_identity_error.eliminate_zeros()
         if (
             root_identity_error.nnz
-            and float(np.max(np.abs(root_identity_error.data)))
-            > 2.0e-13
+            and float(np.max(np.abs(root_identity_error.data))) > 2.0e-13
         ):
-            raise ValueError(
-                "selective-face physical roots do not inject as identity"
-            )
+            raise ValueError("selective-face physical roots do not inject as identity")
 
         matrix_rows = int(manifest["matrix_rows"])
         trace_rows = int(manifest["independent_trace_rows"])
@@ -743,15 +693,11 @@ def load_selective_face_coarse_snapshot(
             matrix_rows != trace_rows + auxiliary_rows
             or expansion.shape[1] != trace_rows
         ):
-            raise ValueError(
-                "selective-face snapshot dimensions do not close"
-            )
+            raise ValueError("selective-face snapshot dimensions do not close")
         vector_namespaces = {
             "state_b": "task035d.selective-face-state-b.v1",
             "rhs_b": "task035d.selective-face-rhs-b.v1",
-            "action_b_on_b": (
-                "task035d.selective-face-action-b.v1"
-            ),
+            "action_b_on_b": ("task035d.selective-face-action-b.v1"),
             "residual_b": "task035d.selective-face-residual-b.v1",
         }
         identity = manifest["vector_identity"]
@@ -763,9 +709,7 @@ def load_selective_face_coarse_snapshot(
                 or _array_sha256(values, namespace=namespace)
                 != identity[f"{name}_sha256"]
             ):
-                raise ValueError(
-                    f"selective-face coarse {name} identity is malformed"
-                )
+                raise ValueError(f"selective-face coarse {name} identity is malformed")
         residual_rebuilt = np.asarray(
             arrays["rhs_b"] - arrays["action_b_on_b"],
             dtype=np.complex128,
@@ -779,9 +723,7 @@ def load_selective_face_coarse_snapshot(
             np.linalg.norm(residual_rebuilt - arrays["residual_b"])
             > 2.0e-13 + 2.0e-13 * residual_scale
         ):
-            raise ValueError(
-                "selective-face coarse residual is not rhs minus action"
-            )
+            raise ValueError("selective-face coarse residual is not rhs minus action")
         observed_relative_residual = float(
             np.linalg.norm(arrays["residual_b"])
             / max(
@@ -795,9 +737,7 @@ def load_selective_face_coarse_snapshot(
             rtol=2.0e-13,
             atol=2.0e-15,
         ):
-            raise ValueError(
-                "selective-face coarse residual scalar identity mismatch"
-            )
+            raise ValueError("selective-face coarse residual scalar identity mismatch")
 
         probes = np.asarray(
             arrays["probe_vectors"],
@@ -820,25 +760,15 @@ def load_selective_face_coarse_snapshot(
             != probe_contract["probe_vectors_sha256"]
             or _array_sha256(
                 actions,
-                namespace=(
-                    "task035d.selective-face-probe-actions.v1"
-                ),
+                namespace=("task035d.selective-face-probe-actions.v1"),
             )
             != probe_contract["probe_actions_sha256"]
         ):
-            raise ValueError(
-                "selective-face Galerkin probe identity is malformed"
-            )
+            raise ValueError("selective-face Galerkin probe identity is malformed")
         endpoint_namespaces = {
-            "auxiliary_values_b": (
-                "task035d.selective-face-auxiliary-values-b.v1"
-            ),
-            "incident_projections": (
-                "task035d.selective-face-incident-projections.v1"
-            ),
-            "coordinate_scales": (
-                "task035d.selective-face-coordinate-scales.v1"
-            ),
+            "auxiliary_values_b": ("task035d.selective-face-auxiliary-values-b.v1"),
+            "incident_projections": ("task035d.selective-face-incident-projections.v1"),
+            "coordinate_scales": ("task035d.selective-face-coordinate-scales.v1"),
         }
         endpoints: dict[str, np.ndarray] = {}
         for name, namespace in endpoint_namespaces.items():
@@ -849,24 +779,17 @@ def load_selective_face_coarse_snapshot(
                 or _array_sha256(values, namespace=namespace)
                 != identity[f"{name}_sha256"]
             ):
-                raise ValueError(
-                    f"selective-face coarse {name} identity is malformed"
-                )
+                raise ValueError(f"selective-face coarse {name} identity is malformed")
             endpoints[name] = values
         if np.any(np.abs(endpoints["coordinate_scales"]) <= 0.0):
-            raise ValueError(
-                "selective-face coarse coordinate scale is zero"
-            )
+            raise ValueError("selective-face coarse coordinate scale is zero")
         if not np.allclose(
             endpoints["auxiliary_values_b"],
-            np.asarray(arrays["state_b"][trace_rows:])
-            / endpoints["coordinate_scales"],
+            np.asarray(arrays["state_b"][trace_rows:]) / endpoints["coordinate_scales"],
             rtol=2.0e-12,
             atol=2.0e-13,
         ):
-            raise ValueError(
-                "selective-face coarse auxiliary endpoint is inconsistent"
-            )
+            raise ValueError("selective-face coarse auxiliary endpoint is inconsistent")
         return SelectiveFaceCoarseSnapshot(
             manifest=MappingProxyType(manifest),
             manifest_path=path,
@@ -898,19 +821,20 @@ def load_selective_face_coarse_snapshot(
     identity_packet = {
         "manifest_sha256": expected_manifest,
         "arrays_sha256": snapshot.manifest["arrays"]["sha256"],
-        "physical_graph_sha256": snapshot.manifest[
-            "physical_graph_sha256"
-        ],
+        "physical_graph_sha256": snapshot.manifest["physical_graph_sha256"],
         "physical_entity_catalog_sha256": snapshot.manifest[
             "physical_entity_catalog_sha256"
         ],
     }
-    if len(
-        {
-            json.dumps(packet, sort_keys=True)
-            for packet in communicator.allgather(identity_packet)
-        }
-    ) != 1:
+    if (
+        len(
+            {
+                json.dumps(packet, sort_keys=True)
+                for packet in communicator.allgather(identity_packet)
+            }
+        )
+        != 1
+    ):
         raise RuntimeError("MPI ranks loaded different coarse snapshots")
     return snapshot
 
@@ -958,9 +882,7 @@ def _galerkin_audit(
     )
     probe_rows: list[dict[str, Any]] = []
     for column in range(snapshot.probe_vectors.shape[1]):
-        prolonged = transfer.prolong_primal(
-            snapshot.probe_vectors[:, column]
-        )
+        prolonged = transfer.prolong_primal(snapshot.probe_vectors[:, column])
         source = _temporary_vector_from_global(view.x, prolonged)
         target = view.x.duplicate()
         try:
@@ -1013,31 +935,22 @@ def _galerkin_audit(
     complement_reconstruction = np.asarray(
         transfer.total_complement @ complement_coordinates
     )
-    complement_unexplained = np.ascontiguousarray(
-        effective - complement_reconstruction
-    )
-    common_residual_bound = (
-        np.linalg.norm(snapshot.residual_b)
-        + np.linalg.norm(residual_a)
+    complement_unexplained = np.ascontiguousarray(effective - complement_reconstruction)
+    common_residual_bound = np.linalg.norm(snapshot.residual_b) + np.linalg.norm(
+        residual_a
     )
     complement_limit = float(5.0e-9 + 20.0 * common_residual_bound)
     complement_error = float(np.linalg.norm(complement_unexplained))
     checks = {
         "rhs_galerkin_identity": rhs_gate["pass"],
-        "all_operator_galerkin_probes": all(
-            row["pass"] for row in probe_rows
-        ),
-        "injected_coarse_solution_is_galerkin_orthogonal": (
-            orthogonality_gate["pass"]
-        ),
+        "all_operator_galerkin_probes": all(row["pass"] for row in probe_rows),
+        "injected_coarse_solution_is_galerkin_orthogonal": (orthogonality_gate["pass"]),
         "effective_residual_lies_in_selected_face_complement": (
             complement_error <= complement_limit
         ),
     }
     audit = {
-        "schema_version": (
-            "task035d.selective-face-cross-trace-galerkin-audit.v1"
-        ),
+        "schema_version": ("task035d.selective-face-cross-trace-galerkin-audit.v1"),
         "status": (
             "selective_face_cross_trace_galerkin_pass"
             if all(checks.values())
@@ -1049,15 +962,9 @@ def _galerkin_audit(
         "operator_probes": probe_rows,
         "injected_coarse_galerkin_orthogonality": orthogonality_gate,
         "residuals": {
-            "coarse_l2_norm": float(
-                np.linalg.norm(snapshot.residual_b)
-            ),
-            "enriched_endpoint_l2_norm": float(
-                np.linalg.norm(residual_a)
-            ),
-            "injected_l2_norm": float(
-                np.linalg.norm(residual_injected)
-            ),
+            "coarse_l2_norm": float(np.linalg.norm(snapshot.residual_b)),
+            "enriched_endpoint_l2_norm": float(np.linalg.norm(residual_a)),
+            "injected_l2_norm": float(np.linalg.norm(residual_injected)),
             "effective_l2_norm": float(np.linalg.norm(effective)),
             "complement_coordinate_l2_norm": float(
                 np.linalg.norm(complement_coordinates)
@@ -1116,9 +1023,7 @@ def _goal_reports(
     amplitude_passed = 0
     for goal in authority.goals:
         goal_metadata = dict(basis_report["goals"][goal.label])
-        channel_label = _channel_label(
-            goal_metadata["canonical_channel_identity"]
-        )
+        channel_label = _channel_label(goal_metadata["canonical_channel_identity"])
         unit = unit_pairings[channel_label]
         value_a = dtn_channel_goal_value(
             view.config,
@@ -1134,40 +1039,41 @@ def _goal_reports(
             np.asarray(context_b["incident_projections"]),
             goal=goal,
         )
+        mode_index = int(goal_metadata["auxiliary_mode_index"])
+        mode = modes[mode_index]
+        outgoing_b = complex(snapshot.auxiliary_values_b[mode_index])
+        if mode.side == "top":
+            outgoing_b -= complex(snapshot.incident_projections[mode_index])
+        outgoing_a_pair = goal_metadata["outgoing_amplitude"]
+        outgoing_a = complex(
+            float(outgoing_a_pair[0]),
+            float(outgoing_a_pair[1]),
+        )
+        scale_pair = goal_metadata["auxiliary_coordinate_scale"]
+        coordinate_scale = complex(
+            float(scale_pair[0]),
+            float(scale_pair[1]),
+        )
+        boundary_phase_pair = goal_metadata["boundary_phase"]
+        boundary_phase = complex(
+            float(boundary_phase_pair[0]),
+            float(boundary_phase_pair[1]),
+        )
+        gamma = unit_channel_goal_scalar(
+            quantity=goal.quantity,
+            coordinate_scale=coordinate_scale,
+            boundary_phase=boundary_phase,
+            power_weight=(
+                None
+                if goal_metadata["power_weight"] is None
+                else float(goal_metadata["power_weight"])
+            ),
+            outgoing_a=outgoing_a,
+            outgoing_b=outgoing_b,
+        )
         if goal.quantity == "power":
-            mode_index = int(goal_metadata["auxiliary_mode_index"])
-            mode = modes[mode_index]
-            outgoing_b = complex(snapshot.auxiliary_values_b[mode_index])
-            if mode.side == "top":
-                outgoing_b -= complex(
-                    snapshot.incident_projections[mode_index]
-                )
-            outgoing_a_pair = goal_metadata["outgoing_amplitude"]
-            outgoing_a = complex(
-                float(outgoing_a_pair[0]),
-                float(outgoing_a_pair[1]),
-            )
-            scale_pair = goal_metadata["auxiliary_coordinate_scale"]
-            coordinate_scale = complex(
-                float(scale_pair[0]),
-                float(scale_pair[1]),
-            )
-            gamma = unit_channel_goal_scalar(
-                quantity="power",
-                coordinate_scale=coordinate_scale,
-                power_weight=float(goal_metadata["power_weight"]),
-                outgoing_a=outgoing_a,
-                outgoing_b=outgoing_b,
-            )
             scaling_semantics = "exact_A_B_midpoint_power_gradient"
         else:
-            scalar_pair = goal_metadata[
-                "gradient_scalar_solver_coordinate"
-            ]
-            gamma = complex(
-                float(scalar_pair[0]),
-                float(scalar_pair[1]),
-            )
             scaling_semantics = "exact_affine_amplitude_gradient"
         actual_delta = float(value_a - value_b)
         pairing = scaled_unit_adjoint_pairing(
@@ -1177,9 +1083,7 @@ def _goal_reports(
         estimate = float(pairing.real)
         closure_error = float(estimate - actual_delta)
         channel_report = basis_report["channels"][channel_label]
-        adjoint_residual = float(
-            channel_report["adjoint_residual"]["residual_norm"]
-        )
+        adjoint_residual = float(channel_report["adjoint_residual"]["residual_norm"])
         residual_bound = abs(gamma) * adjoint_residual * state_delta_norm
         roundoff = (
             512.0
@@ -1192,10 +1096,7 @@ def _goal_reports(
                 1.0,
             )
         )
-        closure_limit = float(
-            8.0
-            * (residual_bound + roundoff)
-        )
+        closure_limit = float(8.0 * (residual_bound + roundoff))
         face_reports: list[dict[str, Any]] = []
         face_sum = 0.0 + 0.0j
         face_absolute_sum = 0.0
@@ -1210,19 +1111,11 @@ def _goal_reports(
             normalized = abs(signed) / tolerance
             accumulator = face_accumulator[key]
             accumulator["goal_contributions"][goal.label] = signed
-            accumulator[
-                "maximum_normalized_absolute_contribution"
-            ] = max(
-                float(
-                    accumulator[
-                        "maximum_normalized_absolute_contribution"
-                    ]
-                ),
+            accumulator["maximum_normalized_absolute_contribution"] = max(
+                float(accumulator["maximum_normalized_absolute_contribution"]),
                 normalized,
             )
-            accumulator[
-                "sum_normalized_absolute_contribution"
-            ] += normalized
+            accumulator["sum_normalized_absolute_contribution"] += normalized
             face_reports.append(
                 {
                     "geometry_key": list(key),
@@ -1249,17 +1142,13 @@ def _goal_reports(
             * float(unit["adjoint_l2_norm"])
             * float(complement_unexplained_limit)
         )
-        face_theoretical_limit = float(
-            8.0 * (face_residual_bound + face_roundoff)
-        )
+        face_theoretical_limit = float(8.0 * (face_residual_bound + face_roundoff))
         face_tolerance_budget = float(0.05 * tolerance)
         face_closure_limit = max(
             float(8.0 * face_roundoff),
             min(face_theoretical_limit, face_tolerance_budget),
         )
-        face_closure_pass = (
-            abs(face_closure_error) <= face_closure_limit
-        )
+        face_closure_pass = abs(face_closure_error) <= face_closure_limit
         goal_pass = bool(
             channel_report["pass"]
             and goal_metadata["pass"]
@@ -1269,8 +1158,7 @@ def _goal_reports(
         passed += int(goal_pass)
         power_passed += int(goal.quantity == "power" and goal_pass)
         amplitude_passed += int(
-            goal.quantity in {"amplitude_real", "amplitude_imag"}
-            and goal_pass
+            goal.quantity in {"amplitude_real", "amplitude_imag"} and goal_pass
         )
         reports[goal.label] = {
             "goal": goal.as_dict(),
@@ -1282,24 +1170,25 @@ def _goal_reports(
             "signed_goal_closure_error": closure_error,
             "goal_closure_limit": closure_limit,
             "unit_adjoint_residual_error_bound": residual_bound,
+            "unit_adjoint_l2_norm": float(unit["adjoint_l2_norm"]),
             "endpoint_closure_does_not_use_partition_error": True,
-            "unexplained_residual_complex_pairing": _complex_pair(
-                unexplained_pairing
-            ),
+            "unexplained_residual_complex_pairing": _complex_pair(unexplained_pairing),
             "scaling_semantics": scaling_semantics,
+            "goal_scalar_inputs": {
+                "quantity": goal.quantity,
+                "coordinate_scale": _complex_pair(coordinate_scale),
+                "boundary_phase": _complex_pair(boundary_phase),
+                "power_weight": goal_metadata["power_weight"],
+                "outgoing_a": _complex_pair(outgoing_a),
+                "outgoing_b": _complex_pair(outgoing_b),
+            },
             "unit_adjoint_goal_scalar": _complex_pair(gamma),
             "global_complex_pairing": _complex_pair(pairing),
             "selected_face_complex_pairing_sum": _complex_pair(face_sum),
-            "selected_face_pairing_closure_error": _complex_pair(
-                face_closure_error
-            ),
+            "selected_face_pairing_closure_error": _complex_pair(face_closure_error),
             "selected_face_pairing_closure_limit": face_closure_limit,
-            "selected_face_pairing_theoretical_limit": (
-                face_theoretical_limit
-            ),
-            "selected_face_pairing_tolerance_budget": (
-                face_tolerance_budget
-            ),
+            "selected_face_pairing_theoretical_limit": (face_theoretical_limit),
+            "selected_face_pairing_tolerance_budget": (face_tolerance_budget),
             "selected_face_pairing_closure_pass": face_closure_pass,
             "face_contributions": face_reports,
             "unchanged_v0_absolute_tolerance": tolerance,
@@ -1313,9 +1202,7 @@ def _goal_reports(
     )
     return (
         {
-            "schema_version": (
-                "task035d.selective-face-live-36-goal-dwr.v1"
-            ),
+            "schema_version": ("task035d.selective-face-live-36-goal-dwr.v1"),
             "status": (
                 "selective_face_live_36_goal_dwr_pass"
                 if passed == len(authority.goals)
@@ -1327,9 +1214,7 @@ def _goal_reports(
             "power_goal_count": 12,
             "power_goal_pass_count": power_passed,
             "complex_amplitude_component_goal_count": 24,
-            "complex_amplitude_component_goal_pass_count": (
-                amplitude_passed
-            ),
+            "complex_amplitude_component_goal_pass_count": (amplitude_passed),
             "physical_channel_count": 12,
             "power_uses_exact_midpoint_gradient": True,
             "signed_sum_used_for_closure": True,
@@ -1365,9 +1250,7 @@ def evaluate_selective_face_enriched_snapshot(
         ),
     )
     if authority is None:
-        raise RuntimeError(
-            "selective-face enriched significant authority is absent"
-        )
+        raise RuntimeError("selective-face enriched significant authority is absent")
     snapshot = load_selective_face_coarse_snapshot(
         coarse_manifest_path,
         communicator=comm,
@@ -1388,55 +1271,95 @@ def evaluate_selective_face_enriched_snapshot(
         ),
     )
     if candidate is None:
-        raise RuntimeError(
-            "selective-face enriched candidate identity is absent"
-        )
-    current_mesh = partition_independent_linear_mesh_identity(
-        view.mesh_data
+        raise RuntimeError("selective-face enriched candidate identity is absent")
+    current_mesh = partition_independent_linear_mesh_identity(view.mesh_data)
+    current_config = _normalized_config_identity(view.config)
+    current_modes = _mode_identity(view.goal_context)
+    current_incident = np.asarray(
+        view.goal_context["incident_projections"],
+        dtype=np.complex128,
     )
-    identity_checks = {
-        "same_source_sha": (
-            snapshot.manifest["source_sha"] == str(source_sha)
-        ),
-        "same_mesh": (
-            snapshot.manifest["mesh_identity"][
+    current_scales = _coordinate_scales(view.goal_context)
+    current_incident_sha256 = _array_sha256(
+        current_incident,
+        namespace="task035d.selective-face-incident-projections.v1",
+    )
+    current_scales_sha256 = _array_sha256(
+        current_scales,
+        namespace="task035d.selective-face-coordinate-scales.v1",
+    )
+    endpoint_identity_authorities = {
+        "schema_version": "task035d.selective-face-endpoint-identities.v1",
+        "coarse": {
+            "source_sha": snapshot.manifest["source_sha"],
+            "mesh_sha256": snapshot.manifest["mesh_identity"][
                 "partition_independent_mesh_sha256"
-            ]
+            ],
+            "normalized_config_sha256": snapshot.manifest["normalized_config_identity"][
+                "normalized_config_sha256"
+            ],
+            "ordered_modes_sha256": snapshot.manifest["mode_identity"][
+                "ordered_modes_sha256"
+            ],
+            "cell_interior_degree_sha256": snapshot.manifest["candidate"][
+                "cell_interior_degree_sha256"
+            ],
+            "incident_projections_sha256": snapshot.manifest["vector_identity"][
+                "incident_projections_sha256"
+            ],
+            "auxiliary_coordinate_scales_sha256": snapshot.manifest["vector_identity"][
+                "coordinate_scales_sha256"
+            ],
+        },
+        "enriched": {
+            "source_sha": str(source_sha),
+            "mesh_sha256": current_mesh["partition_independent_mesh_sha256"],
+            "normalized_config_sha256": current_config["normalized_config_sha256"],
+            "ordered_modes_sha256": current_modes["ordered_modes_sha256"],
+            "cell_interior_degree_sha256": candidate["cell_interior_degree_sha256"],
+            "incident_projections_sha256": current_incident_sha256,
+            "auxiliary_coordinate_scales_sha256": current_scales_sha256,
+        },
+    }
+    identity_checks = {
+        "same_source_sha": (snapshot.manifest["source_sha"] == str(source_sha)),
+        "same_mesh": (
+            snapshot.manifest["mesh_identity"]["partition_independent_mesh_sha256"]
             == current_mesh["partition_independent_mesh_sha256"]
         ),
         "same_normalized_config": (
-            snapshot.manifest["normalized_config_identity"][
-                "normalized_config_sha256"
-            ]
-            == _normalized_config_identity(view.config)[
-                "normalized_config_sha256"
-            ]
+            snapshot.manifest["normalized_config_identity"]["normalized_config_sha256"]
+            == current_config["normalized_config_sha256"]
         ),
         "same_ordered_modes": (
             snapshot.manifest["mode_identity"]["ordered_modes_sha256"]
-            == _mode_identity(view.goal_context)["ordered_modes_sha256"]
+            == current_modes["ordered_modes_sha256"]
         ),
         "same_cell_interior_degree_map": (
-            snapshot.manifest["candidate"][
-                "cell_interior_degree_sha256"
-            ]
+            snapshot.manifest["candidate"]["cell_interior_degree_sha256"]
             == candidate["cell_interior_degree_sha256"]
         ),
-        "same_incident_projections": np.array_equal(
-            snapshot.incident_projections,
-            np.asarray(view.goal_context["incident_projections"]),
+        "same_incident_projections": (
+            snapshot.manifest["vector_identity"]["incident_projections_sha256"]
+            == current_incident_sha256
+            and np.array_equal(
+                snapshot.incident_projections,
+                current_incident,
+            )
         ),
-        "same_auxiliary_coordinate_scales": np.array_equal(
-            snapshot.coordinate_scales,
-            _coordinate_scales(view.goal_context),
+        "same_auxiliary_coordinate_scales": (
+            snapshot.manifest["vector_identity"]["coordinate_scales_sha256"]
+            == current_scales_sha256
+            and np.array_equal(
+                snapshot.coordinate_scales,
+                current_scales,
+            )
         ),
     }
     if not all(identity_checks.values()):
         raise ValueError(
             "selective-face coarse/enriched identity mismatch: "
-            + ", ".join(
-                name for name, passed in identity_checks.items() if not passed
-            )
+            + ", ".join(name for name, passed in identity_checks.items() if not passed)
         )
     constraints = view.reduction.system.trace_constraints
     if constraints is None or not hasattr(constraints, "authority"):
@@ -1453,34 +1376,27 @@ def evaluate_selective_face_enriched_snapshot(
     if transfer is None:
         raise RuntimeError("selective-face physical-root transfer is absent")
     transfer_identity = {
-        "trace_injection_sha256": transfer.audit[
-            "trace_injection_sha256"
-        ],
-        "total_injection_sha256": transfer.audit[
-            "total_injection_sha256"
-        ],
+        "trace_injection_sha256": transfer.audit["trace_injection_sha256"],
+        "total_injection_sha256": transfer.audit["total_injection_sha256"],
         "trace_complement_projector_sha256": transfer.audit[
             "trace_complement_projector_sha256"
         ],
-        "coarse_input_identity": transfer.audit[
-            "coarse_input_identity"
-        ],
-        "enriched_input_identity": transfer.audit[
-            "enriched_input_identity"
-        ],
+        "coarse_input_identity": transfer.audit["coarse_input_identity"],
+        "enriched_input_identity": transfer.audit["enriched_input_identity"],
         "selected_p6_face_geometry_keys": transfer.audit[
             "selected_p6_face_geometry_keys"
         ],
     }
-    if len(
-        {
-            json.dumps(packet, sort_keys=True)
-            for packet in comm.allgather(transfer_identity)
-        }
-    ) != 1:
-        raise RuntimeError(
-            "selective-face transfer identity differs across MPI ranks"
+    if (
+        len(
+            {
+                json.dumps(packet, sort_keys=True)
+                for packet in comm.allgather(transfer_identity)
+            }
         )
+        != 1
+    ):
+        raise RuntimeError("selective-face transfer identity differs across MPI ranks")
     galerkin, effective, residual_a, unexplained = _galerkin_audit(
         view,
         snapshot,
@@ -1494,6 +1410,7 @@ def evaluate_selective_face_enriched_snapshot(
             "controlled_negative": True,
             "failure_stage": "cross_trace_galerkin_before_adjoints",
             "identity_checks": identity_checks,
+            "endpoint_identity_authorities": endpoint_identity_authorities,
             "root_transfer": dict(transfer.audit),
             "galerkin_audit": galerkin,
             "ordinary_default_changed": False,
@@ -1512,9 +1429,7 @@ def evaluate_selective_face_enriched_snapshot(
     enriched_relative_residual = float(
         np.linalg.norm(residual_a)
         / max(
-            np.linalg.norm(
-                _global_petsc_values(view.b, comm)[0]
-            ),
+            np.linalg.norm(_global_petsc_values(view.b, comm)[0]),
             np.finfo(float).tiny,
         )
     )
@@ -1530,6 +1445,7 @@ def evaluate_selective_face_enriched_snapshot(
             "controlled_negative": True,
             "failure_stage": "enriched_primal_residual_before_adjoints",
             "identity_checks": identity_checks,
+            "endpoint_identity_authorities": endpoint_identity_authorities,
             "root_transfer": dict(transfer.audit),
             "galerkin_audit": galerkin,
             "enriched_primal_residual_gate": enriched_residual_gate,
@@ -1595,9 +1511,7 @@ def evaluate_selective_face_enriched_snapshot(
             "message": str(exc),
         }
     basis_errors = [
-        error
-        for error in comm.allgather(local_basis_error)
-        if error is not None
+        error for error in comm.allgather(local_basis_error) if error is not None
     ]
     if basis_errors:
         failure = {
@@ -1609,6 +1523,7 @@ def evaluate_selective_face_enriched_snapshot(
             "errors": basis_errors,
             "completed_unit_channel_pairing_count": len(unit_pairings),
             "identity_checks": identity_checks,
+            "endpoint_identity_authorities": endpoint_identity_authorities,
             "root_transfer": dict(transfer.audit),
             "galerkin_audit": galerkin,
             "enriched_primal_residual_gate": enriched_residual_gate,
@@ -1626,12 +1541,8 @@ def evaluate_selective_face_enriched_snapshot(
             "ordinary_default_changed": False,
         }
     if basis_report is None:
-        raise RuntimeError(
-            "selective-face unit-channel adjoint basis is absent"
-        )
-    expected_labels = {
-        str(channel["label"]) for channel in authority.channels
-    }
+        raise RuntimeError("selective-face unit-channel adjoint basis is absent")
+    expected_labels = {str(channel["label"]) for channel in authority.channels}
     if (
         basis_report["pass"] is not True
         or set(unit_pairings) != expected_labels
@@ -1647,6 +1558,7 @@ def evaluate_selective_face_enriched_snapshot(
             "expected_unit_pairing_labels": sorted(expected_labels),
             "unit_channel_adjoint_basis": basis_report,
             "identity_checks": identity_checks,
+            "endpoint_identity_authorities": endpoint_identity_authorities,
             "root_transfer": dict(transfer.audit),
             "galerkin_audit": galerkin,
             "enriched_primal_residual_gate": enriched_residual_gate,
@@ -1663,6 +1575,10 @@ def evaluate_selective_face_enriched_snapshot(
             "failure_stage": failure["failure_stage"],
             "ordinary_default_changed": False,
         }
+    for label, pairing in unit_pairings.items():
+        basis_report["channels"][label]["unit_adjoint_l2_norm"] = float(
+            pairing["adjoint_l2_norm"]
+        )
     state_a, _ = _global_petsc_values(view.x, comm)
     injected_b = transfer.prolong_primal(snapshot.state_b)
     goal_dwr, ranked_faces = _goal_reports(
@@ -1691,6 +1607,7 @@ def evaluate_selective_face_enriched_snapshot(
             else "selective_face_cross_trace_live_dwr_fail"
         ),
         "pass": final_pass,
+        "controlled_negative": not final_pass,
         "canonical": False,
         "production_qualified": False,
         "ordinary_default_changed": False,
@@ -1703,16 +1620,13 @@ def evaluate_selective_face_enriched_snapshot(
         },
         "enriched_candidate": candidate,
         "identity_checks": identity_checks,
+        "endpoint_identity_authorities": endpoint_identity_authorities,
         "root_transfer": dict(transfer.audit),
         "galerkin_audit": galerkin,
         "primal_endpoints": {
-            "coarse_residual_gate": snapshot.manifest[
-                "primal_residual_gate"
-            ],
+            "coarse_residual_gate": snapshot.manifest["primal_residual_gate"],
             "enriched_residual_gate": enriched_residual_gate,
-            "state_delta_l2_norm": float(
-                np.linalg.norm(state_a - injected_b)
-            ),
+            "state_delta_l2_norm": float(np.linalg.norm(state_a - injected_b)),
         },
         "significant_channel_authority": {
             "path": str(authority.path),
@@ -1751,12 +1665,8 @@ def evaluate_selective_face_enriched_snapshot(
         "controlled_negative": not bool(report["pass"]),
         "report_path": str(output),
         "report_sha256": report_sha256,
-        "unit_adjoint_solve_count": int(
-            basis_report["unit_adjoint_solve_count"]
-        ),
-        "passed_real_goal_count": int(
-            goal_dwr["passed_real_goal_count"]
-        ),
+        "unit_adjoint_solve_count": int(basis_report["unit_adjoint_solve_count"]),
+        "passed_real_goal_count": int(goal_dwr["passed_real_goal_count"]),
         "ordinary_default_changed": False,
     }
 

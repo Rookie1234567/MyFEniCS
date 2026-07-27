@@ -1,0 +1,176 @@
+{
+  "candidate_id": "h15_grating_top_selective_p6_faces_v1",
+  "checker_identity": {
+    "committed_sha256": "46b582af719e35b6b424621ad1d93548f4bf0bc7540fab75f3d71ae03eb5fdc6",
+    "live_sha256": "46b582af719e35b6b424621ad1d93548f4bf0bc7540fab75f3d71ae03eb5fdc6",
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_production_authority.py",
+    "source_sha": "478379329d60e379f7b62e22f3979175fd15da60",
+    "status_lines": [],
+    "verified_clean_checker": true
+  },
+  "cross_checks": {
+    "mpi_sizes_are_1_2_8": true,
+    "no_heavy_pde_or_accuracy_credit": true,
+    "rank_local_and_cross_rank_hanging_partitions_qualified": true,
+    "same_numerical_blobs": true,
+    "same_physical_identity": true,
+    "same_selective_trace_identity": true,
+    "same_source_sha": true
+  },
+  "failures": [],
+  "input_records": [
+    {
+      "mpi_size": 1,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/selective_p6_face_mpi1_v1.json",
+      "sha256": "e4e8d22916213adc8b0d4e8b0d9fb5910b75ba5158faa36344c8e4bb61258a7f"
+    },
+    {
+      "mpi_size": 2,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/selective_p6_face_mpi2_v1.json",
+      "sha256": "34b8a5df103d090353181fb99466c88217e5626f14b7f24816188a83680add51"
+    },
+    {
+      "mpi_size": 8,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/selective_p6_face_mpi8_v1.json",
+      "sha256": "0d680ec981b47039084b104234493436a5553394d58506f24ae935f399080d8c"
+    }
+  ],
+  "live_head": "478379329d60e379f7b62e22f3979175fd15da60",
+  "ordinary_default_changed": false,
+  "pass": true,
+  "pde_accuracy_credit": false,
+  "pde_launch_gate": true,
+  "pde_launch_scope": "one formal MPI8 h15 one-sided local-h plus ten selective-p6-whole-face direct PDE",
+  "plan": {
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_grating_top_selective_p6_faces_plan_v1.json",
+    "sha256": "8691695f7bac96c1ab8094637e8bb1d0adfe5e2d4770427f126857e7909a1e60"
+  },
+  "record_failures": {
+    "selective_p6_face_mpi1_v1.json": [],
+    "selective_p6_face_mpi2_v1.json": [],
+    "selective_p6_face_mpi8_v1.json": []
+  },
+  "schema_version": "case097.selective-p6-face-mpi-identity.v1",
+  "source_sha": "478379329d60e379f7b62e22f3979175fd15da60",
+  "stable_identity": {
+    "actual_full3d_equivalent_active_fe_dofs": 83125,
+    "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+    "canonical_cell_graph_sha256": "f4efbd2a866878cb920144a9d288ba9ce695974835293115af4df2017b15f0ff",
+    "carrier_connectivity_sha256": "b94b6a85a439ce5170e9e628e88e60adb22b91fc43590a8f7f753cbfc20f9aec",
+    "cell_degree_counts": {
+      "p4": 0,
+      "p5": 0,
+      "p6": 134
+    },
+    "cell_degree_plan_sha256": "433b4e88368ae95672e66ec203fdf1988d6e284409f43a99f507cdac3eff1e64",
+    "flattened_graph_sha256": "0c6ddad703585a8ebf84243b3faee9335dc57233781472ee03d3990f6c06ba08",
+    "geometry_canonical_entity_degree_sha256": "99dc671f60f7f04e8b2b43b3c1fd24b69f065c5f5727a1066f1023f0e5bb6b73",
+    "hanging_face_catalog_sha256": "8b70b5c1d679eceb638ff9c3c55ef8c8cf18e007ba939a84b1b39334902d0712",
+    "hanging_patch_count": 6,
+    "hanging_slave_rows": 1250,
+    "independent_trace_rows": 18590,
+    "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+    "leaf_cell_count": 134,
+    "local_variable_trace_implemented": true,
+    "material_catalog_sha256": "806a2a9ed3e63a9a5df4d0b981df6a9ef52c5466ed64a48671ab2917389bef6e",
+    "mesh_cell_box_catalog_sha256": "de8f9293edacfdfe30f5972c36347121add8c88203912330b0ab8e9d71d88c20",
+    "periodic_slave_rows": 4235,
+    "physical_authority_sha256": "cf525a98007dd9930dd8f40b50e44e14e87e6e3db6c6d704a7dc0f8efbf789d7",
+    "physical_facet_catalog_sha256": "41b250c6629025e82a674c2d9a67bd1d0e60857c6b77a9dbfca98f3d138a5f97",
+    "plan_file_sha256": "8691695f7bac96c1ab8094637e8bb1d0adfe5e2d4770427f126857e7909a1e60",
+    "predicted_direct_solve_rows": 18670,
+    "raw_broken_active_fe_dofs": 84375,
+    "raw_broken_trace_rows": 24075,
+    "root_cell_count": 120,
+    "selected_p6_face_count": 10,
+    "selected_p6_face_geometry_keys": [
+      [
+        2,
+        92857142857,
+        0,
+        5892857143,
+        0,
+        8928571429
+      ],
+      [
+        2,
+        92857142857,
+        0,
+        5892857143,
+        8928571429,
+        17857142857
+      ],
+      [
+        2,
+        92857142857,
+        11785714286,
+        17857142857,
+        0,
+        8928571429
+      ],
+      [
+        2,
+        92857142857,
+        11785714286,
+        17857142857,
+        8928571429,
+        17857142857
+      ],
+      [
+        2,
+        92857142857,
+        17857142857,
+        23928571429,
+        0,
+        8928571429
+      ],
+      [
+        2,
+        92857142857,
+        17857142857,
+        23928571429,
+        8928571429,
+        17857142857
+      ],
+      [
+        2,
+        92857142857,
+        23928571429,
+        29821428571,
+        0,
+        8928571429
+      ],
+      [
+        2,
+        92857142857,
+        23928571429,
+        29821428571,
+        8928571429,
+        17857142857
+      ],
+      [
+        2,
+        92857142857,
+        29821428571,
+        35714285714,
+        0,
+        8928571429
+      ],
+      [
+        2,
+        92857142857,
+        29821428571,
+        35714285714,
+        8928571429,
+        17857142857
+      ]
+    ],
+    "selected_p6_periodic_orbit_count": 0,
+    "selective_trace_full3d_dof_delta": 200,
+    "trace_degree_values": [
+      5,
+      6
+    ]
+  },
+  "status": "selective_p6_face_mpi_identity_pass"
+}

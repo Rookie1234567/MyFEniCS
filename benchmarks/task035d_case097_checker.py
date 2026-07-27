@@ -55,6 +55,21 @@ from benchmarks.task035d_case097_gates import (
     task035d_case097_sidewall_guard_solver_gate,
     task035d_case097_t30_solver_gate,
 )
+from benchmarks.task035d_selective_face_case097_gates import (
+    TASK035D_SELECTIVE_FACE_ACTIVE_FE_DOFS,
+    TASK035D_SELECTIVE_FACE_AUTHORITY_FILE_SHA256,
+    TASK035D_SELECTIVE_FACE_AUTHORITY_PATH,
+    TASK035D_SELECTIVE_FACE_PLAN_FILE_SHA256,
+    TASK035D_SELECTIVE_FACE_PLAN_NAME,
+    TASK035D_SELECTIVE_FACE_PLAN_PATH,
+    TASK035D_SELECTIVE_FACE_SOLVE_ROWS,
+    task035d_case097_selective_face_plan_authority_gate,
+    task035d_case097_selective_face_solver_gate,
+)
+from benchmarks.task035d_selective_face_dwr_checker import (
+    load_selective_face_coarse_endpoint,
+    task035d_selective_face_dwr_report_gate,
+)
 from src.adaptivity.high_order_same_error import (
     compare_cross_mesh_fields,
     compare_observables,
@@ -89,9 +104,7 @@ P5P6_CONTROL_PATH = (
     / "records"
     / "global_hexa_p5_p6_h10_assembly_time_condensed_independent_mpi8.json"
 )
-P5P6_CONTROL_SHA256 = (
-    "9f7f44efb52b44c587ef59a57524849e08da81a6fcd5d90ec18e7b69e4f33ded"
-)
+P5P6_CONTROL_SHA256 = "9f7f44efb52b44c587ef59a57524849e08da81a6fcd5d90ec18e7b69e4f33ded"
 FIELD_AUTHORITY_PATH = (
     ROOT
     / "benchmarks"
@@ -131,9 +144,7 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
             "plan_path": TASK035D_T30_PLAN_PATH,
             "plan_file_sha256": TASK035D_T30_PLAN_FILE_SHA256,
             "authority_path": TASK035D_T30_AUTHORITY_PATH,
-            "authority_file_sha256": (
-                TASK035D_T30_AUTHORITY_FILE_SHA256
-            ),
+            "authority_file_sha256": (TASK035D_T30_AUTHORITY_FILE_SHA256),
             "active_fe_dofs": TASK035D_T30_ACTIVE_FE_DOFS,
             "solve_rows": TASK035D_T30_SOLVE_ROWS,
             "launch_schema": "task035d.case097-t30-launch-gate.v1",
@@ -141,9 +152,7 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
             "check_schema": "task035d.case097-t30-candidate-check.v1",
             "pass_status": "task035d_t30_p_only_candidate_pass",
             "negative_status": "task035d_t30_p_only_controlled_negative",
-            "evidence_failure_status": (
-                "task035d_t30_checker_evidence_failure"
-            ),
+            "evidence_failure_status": ("task035d_t30_checker_evidence_failure"),
             "benchmark_id": "task035d_case097_t30_candidate",
             "plan_context": "frozen T30 plan",
             "authority_context": "frozen MPI8 T30 plan authority",
@@ -152,14 +161,10 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
             "candidate_option_required": False,
             "h_nm": 10.0,
             "plan_option": "--stage4-variable-p-cell-degree-plan",
-            "plan_sha_option": (
-                "--stage4-variable-p-cell-degree-plan-sha256"
-            ),
+            "plan_sha_option": ("--stage4-variable-p-cell-degree-plan-sha256"),
             "forbidden_plan_option": "--stage4-local-h-refinement-plan",
             "classification_pass": "p_only_candidate_pass_pending_local_h",
-            "pass_accuracy_credit": (
-                "fresh_p_only_accuracy_and_resource_pass"
-            ),
+            "pass_accuracy_credit": ("fresh_p_only_accuracy_and_resource_pass"),
             "selection_credit": None,
             "ordinary_default_check": "ordinary_default_unchanged",
         }
@@ -167,57 +172,33 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
         return {
             "candidate_id": "sidewall_z0_guard_v1",
             "plan_path": TASK035D_SIDEWALL_GUARD_PLAN_PATH,
-            "plan_file_sha256": (
-                TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256
-            ),
+            "plan_file_sha256": (TASK035D_SIDEWALL_GUARD_PLAN_FILE_SHA256),
             "authority_path": TASK035D_SIDEWALL_GUARD_AUTHORITY_PATH,
-            "authority_file_sha256": (
-                TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256
-            ),
-            "active_fe_dofs": (
-                TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS
-            ),
+            "authority_file_sha256": (TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256),
+            "active_fe_dofs": (TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS),
             "solve_rows": TASK035D_SIDEWALL_GUARD_SOLVE_ROWS,
-            "launch_schema": (
-                "task035d.case097-sidewall-z0-guard-launch-gate.v1"
-            ),
-            "launch_status": (
-                "task035d_sidewall_z0_guard_launch_authority_pass"
-            ),
-            "check_schema": (
-                "task035d.case097-sidewall-z0-guard-candidate-check.v1"
-            ),
-            "pass_status": (
-                "task035d_sidewall_z0_guard_p_only_candidate_pass"
-            ),
+            "launch_schema": ("task035d.case097-sidewall-z0-guard-launch-gate.v1"),
+            "launch_status": ("task035d_sidewall_z0_guard_launch_authority_pass"),
+            "check_schema": ("task035d.case097-sidewall-z0-guard-candidate-check.v1"),
+            "pass_status": ("task035d_sidewall_z0_guard_p_only_candidate_pass"),
             "negative_status": (
                 "task035d_sidewall_z0_guard_p_only_controlled_negative"
             ),
             "evidence_failure_status": (
                 "task035d_sidewall_z0_guard_checker_evidence_failure"
             ),
-            "benchmark_id": (
-                "task035d_case097_sidewall_z0_guard_candidate"
-            ),
+            "benchmark_id": ("task035d_case097_sidewall_z0_guard_candidate"),
             "plan_context": "frozen sidewall-z0 guard plan",
-            "authority_context": (
-                "frozen MPI8 sidewall-z0 guard plan authority"
-            ),
-            "plan_gate": (
-                task035d_case097_sidewall_guard_plan_authority_gate
-            ),
+            "authority_context": ("frozen MPI8 sidewall-z0 guard plan authority"),
+            "plan_gate": (task035d_case097_sidewall_guard_plan_authority_gate),
             "solver_gate": task035d_case097_sidewall_guard_solver_gate,
             "candidate_option_required": True,
             "h_nm": 10.0,
             "plan_option": "--stage4-variable-p-cell-degree-plan",
-            "plan_sha_option": (
-                "--stage4-variable-p-cell-degree-plan-sha256"
-            ),
+            "plan_sha_option": ("--stage4-variable-p-cell-degree-plan-sha256"),
             "forbidden_plan_option": "--stage4-local-h-refinement-plan",
             "classification_pass": "p_only_candidate_pass_pending_local_h",
-            "pass_accuracy_credit": (
-                "fresh_p_only_accuracy_and_resource_pass"
-            ),
+            "pass_accuracy_credit": ("fresh_p_only_accuracy_and_resource_pass"),
             "selection_credit": None,
             "ordinary_default_check": "ordinary_default_unchanged",
         }
@@ -227,45 +208,27 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
             "plan_path": TASK035D_LOCAL_H_PLAN_PATH,
             "plan_file_sha256": TASK035D_LOCAL_H_PLAN_FILE_SHA256,
             "authority_path": TASK035D_LOCAL_H_AUTHORITY_PATH,
-            "authority_file_sha256": (
-                TASK035D_LOCAL_H_AUTHORITY_FILE_SHA256
-            ),
+            "authority_file_sha256": (TASK035D_LOCAL_H_AUTHORITY_FILE_SHA256),
             "active_fe_dofs": TASK035D_LOCAL_H_ACTIVE_FE_DOFS,
             "solve_rows": TASK035D_LOCAL_H_SOLVE_ROWS,
-            "launch_schema": (
-                "task035d.case097-h15-local-h-launch-gate.v1"
-            ),
-            "launch_status": (
-                "task035d_h15_local_h_launch_authority_pass"
-            ),
-            "check_schema": (
-                "task035d.case097-h15-local-h-candidate-check.v1"
-            ),
+            "launch_schema": ("task035d.case097-h15-local-h-launch-gate.v1"),
+            "launch_status": ("task035d_h15_local_h_launch_authority_pass"),
+            "check_schema": ("task035d.case097-h15-local-h-candidate-check.v1"),
             "pass_status": "task035d_h15_local_h_candidate_pass",
-            "negative_status": (
-                "task035d_h15_local_h_controlled_negative"
-            ),
+            "negative_status": ("task035d_h15_local_h_controlled_negative"),
             "evidence_failure_status": (
                 "task035d_h15_local_h_checker_evidence_failure"
             ),
-            "benchmark_id": (
-                "task035d_case097_h15_top_air_local_h_candidate"
-            ),
+            "benchmark_id": ("task035d_case097_h15_top_air_local_h_candidate"),
             "plan_context": "frozen h15 top-air local-h plan",
-            "authority_context": (
-                "frozen MPI1/2/8 h15 local-h production authority"
-            ),
+            "authority_context": ("frozen MPI1/2/8 h15 local-h production authority"),
             "plan_gate": task035d_case097_local_h_plan_authority_gate,
             "solver_gate": task035d_case097_local_h_solver_gate,
             "candidate_option_required": True,
             "h_nm": 15.0,
             "plan_option": "--stage4-local-h-refinement-plan",
-            "plan_sha_option": (
-                "--stage4-local-h-refinement-plan-sha256"
-            ),
-            "forbidden_plan_option": (
-                "--stage4-variable-p-cell-degree-plan"
-            ),
+            "plan_sha_option": ("--stage4-local-h-refinement-plan-sha256"),
+            "forbidden_plan_option": ("--stage4-variable-p-cell-degree-plan"),
             "classification_pass": (
                 "local_h_structural_resource_anchor_pass_without_dwr_credit"
             ),
@@ -283,58 +246,33 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
         return {
             "candidate_id": TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
             "plan_path": TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH,
-            "plan_file_sha256": (
-                TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256
-            ),
+            "plan_file_sha256": (TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256),
             "authority_path": TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH,
             "authority_file_sha256": (
                 TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_FILE_SHA256
             ),
             "active_fe_dofs": TASK035D_HP_FACTORIAL_BRIDGE_ACTIVE_FE_DOFS,
             "solve_rows": TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
-            "launch_schema": (
-                "task035d.case097-hp-factorial-bridge-launch-gate.v1"
-            ),
-            "launch_status": (
-                "task035d_hp_factorial_bridge_launch_authority_pass"
-            ),
-            "check_schema": (
-                "task035d.case097-hp-factorial-bridge-candidate-check.v1"
-            ),
-            "pass_status": (
-                "task035d_hp_factorial_bridge_candidate_pass"
-            ),
-            "negative_status": (
-                "task035d_hp_factorial_bridge_controlled_negative"
-            ),
+            "launch_schema": ("task035d.case097-hp-factorial-bridge-launch-gate.v1"),
+            "launch_status": ("task035d_hp_factorial_bridge_launch_authority_pass"),
+            "check_schema": ("task035d.case097-hp-factorial-bridge-candidate-check.v1"),
+            "pass_status": ("task035d_hp_factorial_bridge_candidate_pass"),
+            "negative_status": ("task035d_hp_factorial_bridge_controlled_negative"),
             "evidence_failure_status": (
                 "task035d_hp_factorial_bridge_checker_evidence_failure"
             ),
-            "benchmark_id": (
-                "task035d_case097_hp_factorial_bridge_candidate"
-            ),
+            "benchmark_id": ("task035d_case097_hp_factorial_bridge_candidate"),
             "plan_context": (
-                "frozen h15 one-sided top-air plus remote-p5-interior "
-                "factorial bridge"
+                "frozen h15 one-sided top-air plus remote-p5-interior factorial bridge"
             ),
-            "authority_context": (
-                "frozen MPI1/2/8 hp-factorial-bridge authority"
-            ),
-            "plan_gate": (
-                task035d_case097_hp_factorial_bridge_plan_authority_gate
-            ),
-            "solver_gate": (
-                task035d_case097_hp_factorial_bridge_solver_gate
-            ),
+            "authority_context": ("frozen MPI1/2/8 hp-factorial-bridge authority"),
+            "plan_gate": (task035d_case097_hp_factorial_bridge_plan_authority_gate),
+            "solver_gate": (task035d_case097_hp_factorial_bridge_solver_gate),
             "candidate_option_required": True,
             "h_nm": 15.0,
             "plan_option": "--stage4-local-h-refinement-plan",
-            "plan_sha_option": (
-                "--stage4-local-h-refinement-plan-sha256"
-            ),
-            "forbidden_plan_option": (
-                "--stage4-variable-p-cell-degree-plan"
-            ),
+            "plan_sha_option": ("--stage4-local-h-refinement-plan-sha256"),
+            "forbidden_plan_option": ("--stage4-variable-p-cell-degree-plan"),
             "classification_pass": (
                 "hp_factorial_bridge_candidate_pass_without_dwr_or_"
                 "variable_trace_credit"
@@ -350,9 +288,7 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
                 "goal_oriented_selection_credit": False,
                 "complete_combined_hp_credit": False,
             },
-            "ordinary_default_check": (
-                "ordinary_default_and_lifecycle"
-            ),
+            "ordinary_default_check": ("ordinary_default_and_lifecycle"),
         }
     if candidate_id == TASK035D_COMBINED_HP_PLAN_NAME:
         return {
@@ -360,51 +296,29 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
             "plan_path": TASK035D_COMBINED_HP_PLAN_PATH,
             "plan_file_sha256": TASK035D_COMBINED_HP_PLAN_FILE_SHA256,
             "authority_path": TASK035D_COMBINED_HP_AUTHORITY_PATH,
-            "authority_file_sha256": (
-                TASK035D_COMBINED_HP_AUTHORITY_FILE_SHA256
-            ),
+            "authority_file_sha256": (TASK035D_COMBINED_HP_AUTHORITY_FILE_SHA256),
             "active_fe_dofs": TASK035D_COMBINED_HP_ACTIVE_FE_DOFS,
             "solve_rows": TASK035D_COMBINED_HP_SOLVE_ROWS,
-            "launch_schema": (
-                "task035d.case097-combined-hp-interior-launch-gate.v1"
-            ),
-            "launch_status": (
-                "task035d_combined_hp_interior_launch_authority_pass"
-            ),
+            "launch_schema": ("task035d.case097-combined-hp-interior-launch-gate.v1"),
+            "launch_status": ("task035d_combined_hp_interior_launch_authority_pass"),
             "check_schema": (
                 "task035d.case097-combined-hp-interior-candidate-check.v1"
             ),
-            "pass_status": (
-                "task035d_combined_hp_interior_candidate_pass"
-            ),
-            "negative_status": (
-                "task035d_combined_hp_interior_controlled_negative"
-            ),
+            "pass_status": ("task035d_combined_hp_interior_candidate_pass"),
+            "negative_status": ("task035d_combined_hp_interior_controlled_negative"),
             "evidence_failure_status": (
                 "task035d_combined_hp_interior_checker_evidence_failure"
             ),
-            "benchmark_id": (
-                "task035d_case097_combined_hp_interior_candidate"
-            ),
-            "plan_context": (
-                "frozen h15 symmetric top-air variable-interior plan"
-            ),
-            "authority_context": (
-                "frozen MPI1/2/8 combined hp-interior authority"
-            ),
-            "plan_gate": (
-                task035d_case097_combined_hp_plan_authority_gate
-            ),
+            "benchmark_id": ("task035d_case097_combined_hp_interior_candidate"),
+            "plan_context": ("frozen h15 symmetric top-air variable-interior plan"),
+            "authority_context": ("frozen MPI1/2/8 combined hp-interior authority"),
+            "plan_gate": (task035d_case097_combined_hp_plan_authority_gate),
             "solver_gate": task035d_case097_combined_hp_solver_gate,
             "candidate_option_required": True,
             "h_nm": 15.0,
             "plan_option": "--stage4-local-h-refinement-plan",
-            "plan_sha_option": (
-                "--stage4-local-h-refinement-plan-sha256"
-            ),
-            "forbidden_plan_option": (
-                "--stage4-variable-p-cell-degree-plan"
-            ),
+            "plan_sha_option": ("--stage4-local-h-refinement-plan-sha256"),
+            "forbidden_plan_option": ("--stage4-variable-p-cell-degree-plan"),
             "classification_pass": (
                 "combined_local_h_variable_interior_p_candidate_pass_"
                 "without_dwr_or_variable_trace_credit"
@@ -419,13 +333,56 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
                 "goal_oriented_selection_credit": False,
                 "complete_combined_hp_credit": False,
             },
-            "ordinary_default_check": (
-                "ordinary_default_and_lifecycle"
-            ),
+            "ordinary_default_check": ("ordinary_default_and_lifecycle"),
+            "requires_actual_channel_dwr": False,
         }
-    raise Task035dEvidenceError(
-        f"unsupported Task035d candidate id: {candidate_id}"
-    )
+    if candidate_id == TASK035D_SELECTIVE_FACE_PLAN_NAME:
+        return {
+            "candidate_id": TASK035D_SELECTIVE_FACE_PLAN_NAME,
+            "plan_path": TASK035D_SELECTIVE_FACE_PLAN_PATH,
+            "plan_file_sha256": (TASK035D_SELECTIVE_FACE_PLAN_FILE_SHA256),
+            "authority_path": TASK035D_SELECTIVE_FACE_AUTHORITY_PATH,
+            "authority_file_sha256": (TASK035D_SELECTIVE_FACE_AUTHORITY_FILE_SHA256),
+            "active_fe_dofs": (TASK035D_SELECTIVE_FACE_ACTIVE_FE_DOFS),
+            "solve_rows": TASK035D_SELECTIVE_FACE_SOLVE_ROWS,
+            "launch_schema": ("task035d.case097-selective-p6-face-launch-gate.v1"),
+            "launch_status": ("task035d_selective_p6_face_launch_authority_pass"),
+            "check_schema": ("task035d.case097-selective-p6-face-candidate-check.v1"),
+            "pass_status": ("task035d_selective_p6_face_candidate_pass"),
+            "negative_status": ("task035d_selective_p6_face_controlled_negative"),
+            "evidence_failure_status": (
+                "task035d_selective_p6_face_checker_evidence_failure"
+            ),
+            "benchmark_id": ("task035d_case097_selective_p6_face_candidate"),
+            "plan_context": (
+                "frozen h15 one-sided local-h plus ten selective p6 faces"
+            ),
+            "authority_context": ("frozen MPI1/2/8 selective-p6-face authority"),
+            "plan_gate": (task035d_case097_selective_face_plan_authority_gate),
+            "solver_gate": task035d_case097_selective_face_solver_gate,
+            "candidate_option_required": True,
+            "h_nm": 15.0,
+            "plan_option": "--stage4-local-h-refinement-plan",
+            "plan_sha_option": ("--stage4-local-h-refinement-plan-sha256"),
+            "forbidden_plan_option": ("--stage4-variable-p-cell-degree-plan"),
+            "classification_pass": (
+                "selective_face_candidate_pass_with_posthoc_dwr_attribution"
+            ),
+            "pass_accuracy_credit": (
+                "fresh_selective_face_accuracy_resource_and_actual_36_goal_"
+                "posthoc_dwr_attribution_pass"
+            ),
+            "selection_credit": {
+                "structural_resource_anchor": True,
+                "actual_channel_dwr": False,
+                "goal_oriented_selection_credit": False,
+                "posthoc_actual_action_attribution": False,
+                "complete_combined_hp_credit": False,
+            },
+            "ordinary_default_check": ("ordinary_default_and_lifecycle"),
+            "requires_actual_channel_dwr": True,
+        }
+    raise Task035dEvidenceError(f"unsupported Task035d candidate id: {candidate_id}")
 
 
 class Task035dEvidenceError(ValueError):
@@ -498,9 +455,7 @@ def _load_json(
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
-        raise Task035dEvidenceError(
-            f"{context} is not valid JSON: {error}"
-        ) from error
+        raise Task035dEvidenceError(f"{context} is not valid JSON: {error}") from error
     return dict(_mapping(value, context)), observed_sha256
 
 
@@ -551,10 +506,8 @@ def _load_frozen_authorities() -> dict[str, Any]:
         context="significant channel reference v1",
     )
     _require(
-        significant.get("schema_version")
-        == "task035b.significant-channel-reference.v1"
-        and significant.get("status")
-        == "significant_channel_reference_v1_frozen"
+        significant.get("schema_version") == "task035b.significant-channel-reference.v1"
+        and significant.get("status") == "significant_channel_reference_v1_frozen"
         and significant.get("pass") is True
         and significant.get("mechanical_validation_pass") is True,
         "significant channel reference v1 is not frozen and qualified",
@@ -596,10 +549,8 @@ def _load_frozen_authorities() -> dict[str, Any]:
         "frozen field-probe authority gate",
     )
     _require(
-        field_gate.get("schema_version")
-        == "task035b.cross-mesh-field-comparison.v1"
-        and field_gate.get("status")
-        == "measured_frozen_physical_gauss_probes"
+        field_gate.get("schema_version") == "task035b.cross-mesh-field-comparison.v1"
+        and field_gate.get("status") == "measured_frozen_physical_gauss_probes"
         and field_gate.get("no_probe_dropping") is True
         and field_gate.get("no_threshold_relaxation") is True,
         "frozen field-probe authority is invalid",
@@ -706,10 +657,7 @@ def _control_field_directories(
             if role in expected_by_role:
                 _require(
                     [item.get("sha256") for item in shards]
-                    == [
-                        item.get("sha256")
-                        for item in expected_by_role[role]
-                    ],
+                    == [item.get("sha256") for item in expected_by_role[role]],
                     f"{role} shard hashes differ between field selections",
                 )
             else:
@@ -826,8 +774,7 @@ def _optional_command_option(
 ) -> str | None:
     indices = [index for index, value in enumerate(command) if value == option]
     _require(
-        len(indices) <= 1
-        and (not indices or indices[0] + 1 < len(command)),
+        len(indices) <= 1 and (not indices or indices[0] + 1 < len(command)),
         f"candidate command contains an invalid {option}",
     )
     return command[indices[0] + 1] if indices else None
@@ -841,8 +788,7 @@ def _candidate_launch_contract(
 ) -> dict[str, Any]:
     spec = _candidate_spec(candidate_id)
     command = [
-        str(value)
-        for value in _sequence(record.get("command"), "candidate command")
+        str(value) for value in _sequence(record.get("command"), "candidate command")
     ]
     plan_path = Path(
         _command_option(
@@ -870,19 +816,194 @@ def _candidate_launch_contract(
         "--task035d-candidate-id",
     )
     record_candidate = record.get("task035d_candidate_id")
+    requires_actual_channel_dwr = bool(spec.get("requires_actual_channel_dwr"))
+    selective_phase = _optional_command_option(
+        command,
+        "--task035d-selective-face-dwr-phase",
+    )
+    nested_phase = _optional_command_option(
+        command,
+        "--task035d-nested-p-dwr-phase",
+    )
+    selective_authority_path = _optional_command_option(
+        command,
+        "--task035d-significant-channel-authority",
+    )
+    selective_authority_sha = _optional_command_option(
+        command,
+        "--task035d-significant-channel-authority-sha256",
+    )
+    coarse_manifest_value = _optional_command_option(
+        command,
+        "--task035d-selective-face-coarse-manifest",
+    )
+    coarse_manifest_sha = _optional_command_option(
+        command,
+        "--task035d-selective-face-coarse-manifest-sha256",
+    )
+    selective_launch = record.get("task035d_selective_face_launch_gate")
+    selective_launch = selective_launch if isinstance(selective_launch, Mapping) else {}
+    selective_launch_checks = selective_launch.get("checks")
+    selective_launch_checks = (
+        selective_launch_checks if isinstance(selective_launch_checks, Mapping) else {}
+    )
+    selective_significant = selective_launch.get("significant_channel_authority")
+    selective_significant = (
+        selective_significant if isinstance(selective_significant, Mapping) else {}
+    )
+    selective_coarse = selective_launch.get("coarse_snapshot")
+    selective_coarse = selective_coarse if isinstance(selective_coarse, Mapping) else {}
+    selective_dwr_command_pass = True
+    process_bound_parent_contract_pass = True
+    command_run_dir = _optional_command_option(command, "--run-dir")
+    manifest_path: Path | None = None
+    if requires_actual_channel_dwr:
+        if isinstance(coarse_manifest_value, str):
+            raw_manifest_path = Path(coarse_manifest_value)
+            manifest_path = (
+                raw_manifest_path
+                if raw_manifest_path.is_absolute()
+                else ROOT / raw_manifest_path
+            ).resolve()
+        significant_authority_path = None
+        if isinstance(selective_authority_path, str):
+            raw_authority_path = Path(selective_authority_path)
+            significant_authority_path = (
+                raw_authority_path
+                if raw_authority_path.is_absolute()
+                else ROOT / raw_authority_path
+            ).resolve()
+        selective_dwr_command_pass = bool(
+            selective_phase == "enriched-evaluate"
+            and nested_phase is None
+            and significant_authority_path == SIGNIFICANT_REFERENCE_PATH.resolve()
+            and selective_authority_sha == SIGNIFICANT_REFERENCE_SHA256
+            and manifest_path is not None
+            and manifest_path.is_file()
+            and _valid_sha(coarse_manifest_sha, 64)
+            and _sha256(manifest_path) == coarse_manifest_sha
+        )
+        descriptor_option = _optional_command_option(
+            command,
+            "--parent-launch-descriptor",
+        )
+        descriptor_sha_option = _optional_command_option(
+            command,
+            "--parent-launch-descriptor-sha256",
+        )
+        run_dir_option = command_run_dir
+        parent_descriptor = record.get("parent_launch_descriptor")
+        parent_descriptor = (
+            parent_descriptor if isinstance(parent_descriptor, Mapping) else {}
+        )
+        parent_payload = parent_descriptor.get("payload")
+        parent_payload = parent_payload if isinstance(parent_payload, Mapping) else {}
+        parent_process = parent_payload.get("parent_process")
+        parent_process = parent_process if isinstance(parent_process, Mapping) else {}
+        worker_contract = parent_payload.get("worker_contract")
+        worker_contract = (
+            worker_contract if isinstance(worker_contract, Mapping) else {}
+        )
+        descriptor_path: Path | None = None
+        recorded_descriptor_path: Path | None = None
+        descriptor_payload: Mapping[str, Any] = {}
+        if isinstance(descriptor_option, str):
+            descriptor_path = Path(descriptor_option).resolve()
+        if isinstance(parent_descriptor.get("path"), str):
+            recorded_descriptor_path = _resolve_path(
+                parent_descriptor["path"],
+                context="watchdog parent-launch descriptor",
+            )
+        if descriptor_path is not None and descriptor_path.is_file():
+            try:
+                loaded_descriptor = json.loads(
+                    descriptor_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                loaded_descriptor = {}
+            if isinstance(loaded_descriptor, Mapping):
+                descriptor_payload = loaded_descriptor
+        expected_worker_contract = {
+            "degree": int(_command_option(command, "--degree")),
+            "h_nm": float(_command_option(command, "--h-nm")),
+            "polarization_kind": _command_option(
+                command,
+                "--polarization-kind",
+            ),
+            "run_kind": _command_option(command, "--run-kind"),
+            "mpi_size": int(_command_option(command, "--mpi-size")),
+            "profile": _command_option(command, "--profile"),
+            "run_dir": (
+                str(Path(run_dir_option).resolve())
+                if isinstance(run_dir_option, str)
+                else None
+            ),
+            "stage4_full3d_assembly_backend": _command_option(
+                command,
+                "--stage4-full3d-assembly-backend",
+            ),
+            "task035d_case097_gate": ("--task035d-case097-gate" in command),
+            "task035d_candidate_id": str(command_candidate),
+            "task035d_nested_p_dwr_phase": nested_phase,
+            "task035d_selective_face_dwr_phase": selective_phase,
+            "task035d_plan_authority_sha256": _command_option(
+                command,
+                "--task035d-plan-authority-sha256",
+            ),
+            "task035d_significant_channel_authority_sha256": (selective_authority_sha),
+            "task035d_coarse_snapshot_manifest_sha256": (
+                _optional_command_option(
+                    command,
+                    "--task035d-coarse-snapshot-manifest-sha256",
+                )
+            ),
+            "task035d_selective_face_coarse_manifest_sha256": (coarse_manifest_sha),
+            "verified_clean_sha": _command_option(
+                command,
+                "--verified-clean-sha",
+            ),
+        }
+        process_bound_parent_contract_pass = bool(
+            descriptor_path is not None
+            and isinstance(run_dir_option, str)
+            and descriptor_path.parent == Path(run_dir_option).resolve()
+            and descriptor_path.name == "parent_launch_descriptor.json"
+            and _valid_sha(descriptor_sha_option, 64)
+            and _sha256(descriptor_path) == descriptor_sha_option
+            and recorded_descriptor_path == descriptor_path
+            and parent_descriptor.get("sha256") == descriptor_sha_option
+            and parent_descriptor.get("secret_token_persisted") is False
+            and descriptor_payload == parent_payload
+            and parent_payload.get("schema_version")
+            == "task033.watchdog-parent-launch.v1"
+            and _valid_sha(parent_payload.get("token_sha256"), 64)
+            and set(parent_process)
+            == {
+                "pid",
+                "parent_pid",
+                "start_time_ticks",
+                "role",
+            }
+            and parent_process.get("role") == "resource_watchdog_parent"
+            and isinstance(parent_process.get("pid"), int)
+            and parent_process.get("pid") > 0
+            and isinstance(parent_process.get("parent_pid"), int)
+            and parent_process.get("parent_pid") >= 0
+            and isinstance(parent_process.get("start_time_ticks"), int)
+            and parent_process.get("start_time_ticks") > 0
+            and worker_contract == expected_worker_contract
+        )
     checks = {
         "mpiexec_mpi8_worker": (
             len(command) >= 6
             and command[:3] == ["mpiexec", "-n", "8"]
             and command[3] == str(ROOT / ".venv" / "bin" / "python")
-            and command[4:6]
-            == ["-m", "benchmarks.run_task033_full3d_watchdog"]
+            and command[4:6] == ["-m", "benchmarks.run_task033_full3d_watchdog"]
             and "--worker" in command
         ),
         "command_scope": (
             _command_option(command, "--degree") == "6"
-            and _command_option(command, "--h-nm")
-            == str(spec["h_nm"])
+            and _command_option(command, "--h-nm") == str(spec["h_nm"])
             and _command_option(command, "--polarization-kind") == "s"
             and _command_option(command, "--run-kind") == "full-solve"
             and _command_option(command, "--mpi-size") == "8"
@@ -927,8 +1048,7 @@ def _candidate_launch_contract(
             _command_option(command, "--verified-clean-sha") == source_sha
         ),
         "embedded_launch_gate_pass": (
-            embedded.get("schema_version")
-            == spec["launch_schema"]
+            embedded.get("schema_version") == spec["launch_schema"]
             and embedded.get("status") == spec["launch_status"]
             and embedded.get("pass") is True
             and embedded.get("failures") == []
@@ -938,23 +1058,42 @@ def _candidate_launch_contract(
             and all(value is True for value in embedded_checks.values())
         ),
         "embedded_plan_identity": (
-            (embedded.get("plan_identity") or {}).get("path")
-            == spec["plan_path"]
+            (embedded.get("plan_identity") or {}).get("path") == spec["plan_path"]
             and (embedded.get("plan_identity") or {}).get("file_sha256")
             == spec["plan_file_sha256"]
             and (embedded.get("plan_identity") or {}).get(
                 "actual_conforming_active_fe_dofs"
             )
             == spec["active_fe_dofs"]
-            and (embedded.get("plan_identity") or {}).get(
-                "predicted_direct_solve_rows"
-            )
+            and (embedded.get("plan_identity") or {}).get("predicted_direct_solve_rows")
             == spec["solve_rows"]
         ),
         "embedded_selection_credit": (
             spec["selection_credit"] is None
-            or embedded.get("selection_credit")
-            == spec["selection_credit"]
+            or embedded.get("selection_credit") == spec["selection_credit"]
+        ),
+        "actual_channel_dwr_command_scope": (selective_dwr_command_pass),
+        "process_bound_parent_watchdog_contract": (process_bound_parent_contract_pass),
+        "actual_channel_dwr_launch_inputs": (
+            not requires_actual_channel_dwr
+            or (
+                selective_launch.get("schema_version")
+                == ("task035d.selective-face-cross-trace-launch-gate.v1")
+                and selective_launch.get("phase") == "enriched-evaluate"
+                and selective_launch.get("pass") is True
+                and selective_launch.get("failures") == []
+                and bool(selective_launch_checks)
+                and all(value is True for value in selective_launch_checks.values())
+                and selective_launch.get("same_trace_only") is False
+                and selective_launch.get("cross_trace_primal_prolongation") is True
+                and selective_significant.get("path")
+                == _path_from_root(SIGNIFICANT_REFERENCE_PATH)
+                and selective_significant.get("sha256") == SIGNIFICANT_REFERENCE_SHA256
+                and (selective_coarse.get("artifact_gate") or {}).get("pass") is True
+                and manifest_path is not None
+                and selective_coarse.get("path") == _path_from_root(manifest_path)
+                and selective_coarse.get("sha256") == coarse_manifest_sha
+            )
         ),
         "watchdog_no_swap_contract": (
             resource_policy.get("swap_allowed") is False
@@ -976,7 +1115,20 @@ def _candidate_launch_contract(
         "checks": checks,
         "pass": True,
         "command": command,
+        "run_dir": (
+            str(Path(command_run_dir).resolve())
+            if isinstance(command_run_dir, str)
+            else None
+        ),
         "embedded_launch_gate": dict(embedded),
+        "selective_face_coarse_manifest": (
+            {
+                "path": str(manifest_path),
+                "sha256": coarse_manifest_sha,
+            }
+            if requires_actual_channel_dwr and manifest_path is not None
+            else None
+        ),
     }
 
 
@@ -1002,6 +1154,27 @@ def _artifact(
         f"candidate raw {key} SHA-256 mismatch",
     )
     return path, observed
+
+
+def _bound_candidate_run_directory(
+    raw: Mapping[str, Any],
+    launch_contract: Mapping[str, Any],
+) -> Path:
+    run_value = raw.get("run_directory")
+    _require(
+        isinstance(run_value, str) and bool(run_value),
+        "candidate run directory is missing",
+    )
+    run_dir = Path(run_value)
+    run_dir = run_dir if run_dir.is_absolute() else ROOT / run_dir
+    run_dir = run_dir.resolve()
+    _require(run_dir.is_dir(), f"candidate run directory is missing: {run_dir}")
+    launch_run_dir = launch_contract.get("run_dir")
+    _require(
+        launch_run_dir is None or Path(str(launch_run_dir)).resolve() == run_dir,
+        "candidate command/descriptor and raw evidence run directories differ",
+    )
+    return run_dir
 
 
 def _load_candidate_raw(
@@ -1037,15 +1210,7 @@ def _load_candidate_raw(
         candidate_id=candidate_id,
     )
     raw = _mapping(record.get("raw_evidence"), "candidate raw evidence")
-    run_value = raw.get("run_directory")
-    _require(
-        isinstance(run_value, str) and bool(run_value),
-        "candidate run directory is missing",
-    )
-    run_dir = Path(run_value)
-    run_dir = run_dir if run_dir.is_absolute() else ROOT / run_dir
-    run_dir = run_dir.resolve()
-    _require(run_dir.is_dir(), f"candidate run directory is missing: {run_dir}")
+    run_dir = _bound_candidate_run_directory(raw, launch_contract)
 
     artifact_specs = {
         "solver_summary": record.get("solver_summary_sha256"),
@@ -1106,8 +1271,7 @@ def _load_candidate_raw(
         )
         _require(
             path.parent == run_dir
-            and path.name
-            == f"fields_3d_for_paraview_rank{rank:04d}.vtu",
+            and path.name == f"fields_3d_for_paraview_rank{rank:04d}.vtu",
             f"candidate field shard {rank} path identity is invalid",
         )
         expected = row.get("sha256")
@@ -1137,6 +1301,109 @@ def _load_candidate_raw(
     }
 
 
+def _load_selective_face_dwr_evidence(
+    candidate: Mapping[str, Any],
+    *,
+    significant_channel_authority: Mapping[str, Any],
+) -> dict[str, Any]:
+    record = _mapping(
+        candidate.get("record"),
+        "selective-face candidate watchdog",
+    )
+    evidence = _mapping(
+        record.get("task035d_selective_face_evidence"),
+        "selective-face DWR evidence",
+    )
+    _require(
+        evidence.get("phase") == "enriched-evaluate",
+        "selective-face candidate lacks enriched DWR evidence",
+    )
+    path = _resolve_path(
+        evidence.get("path"),
+        context="selective-face DWR report",
+    )
+    run_dir = Path(candidate["run_dir"]).resolve()
+    _require(
+        path.parent == run_dir and path.name == "selective_face_dwr_report.json",
+        "selective-face DWR report is outside the candidate run",
+    )
+    expected_sha = evidence.get("sha256")
+    _require(
+        _valid_sha(expected_sha, 64) and _sha256(path) == expected_sha,
+        "selective-face DWR report SHA-256 mismatch",
+    )
+    report, observed_sha = _load_json(
+        path,
+        expected_sha256=str(expected_sha),
+        context="selective-face DWR report",
+    )
+    embedded_payload = _mapping(
+        evidence.get("payload"),
+        "embedded selective-face DWR report",
+    )
+    _require(
+        report == embedded_payload,
+        "embedded and raw selective-face DWR reports differ",
+    )
+    launch_contract = _mapping(
+        candidate.get("launch_contract"),
+        "selective-face candidate launch contract",
+    )
+    coarse_descriptor = _mapping(
+        launch_contract.get("selective_face_coarse_manifest"),
+        "selective-face coarse manifest launch identity",
+    )
+    coarse_manifest_path = _resolve_path(
+        coarse_descriptor.get("path"),
+        context="selective-face coarse manifest",
+    )
+    coarse_manifest_sha = coarse_descriptor.get("sha256")
+    _require(
+        _valid_sha(coarse_manifest_sha, 64)
+        and _sha256(coarse_manifest_path) == coarse_manifest_sha,
+        "selective-face coarse manifest launch SHA-256 mismatch",
+    )
+    try:
+        coarse_endpoint = load_selective_face_coarse_endpoint(
+            coarse_manifest_path,
+            expected_manifest_sha256=str(coarse_manifest_sha),
+        )
+    except (OSError, TypeError, ValueError) as error:
+        raise Task035dEvidenceError(
+            f"selective-face coarse modal endpoint failed: {error}"
+        ) from error
+    gate = task035d_selective_face_dwr_report_gate(
+        report,
+        significant_channel_authority,
+        coarse_endpoint,
+        expected_source_sha=str(candidate["source_sha"]),
+        expected_coarse_plan_sha256=TASK035D_LOCAL_H_PLAN_FILE_SHA256,
+        expected_enriched_plan_sha256=(TASK035D_SELECTIVE_FACE_PLAN_FILE_SHA256),
+        expected_coarse_manifest_sha256=str(coarse_manifest_sha),
+        expected_significant_channel_authority_sha256=(SIGNIFICANT_REFERENCE_SHA256),
+    )
+    embedded_gate = _mapping(
+        evidence.get("independent_checker"),
+        "embedded selective-face DWR checker",
+    )
+    _require(
+        gate == embedded_gate,
+        "embedded and recomputed selective-face DWR Gates differ",
+    )
+    return {
+        "schema_version": ("task035d.case097-selective-face-dwr-evidence.v1"),
+        "path": _path_from_root(path),
+        "sha256": observed_sha,
+        "report_status": report.get("status"),
+        "report_pass": report.get("pass"),
+        "report_controlled_negative": report.get("controlled_negative"),
+        "coarse_manifest_path": _path_from_root(coarse_manifest_path),
+        "coarse_manifest_sha256": coarse_manifest_sha,
+        "independent_checker": gate,
+        "pass": gate["pass"] is True,
+    }
+
+
 def _csv_float(row: Mapping[str, str], key: str) -> float | None:
     value = row.get(key)
     if value is None or value.strip() == "":
@@ -1157,11 +1424,7 @@ def _timeline_resource_metrics(path: Path) -> dict[str, Any]:
     _require(bool(rows), "candidate memory timeline is empty")
 
     def maximum(key: str) -> float | None:
-        values = [
-            value
-            for row in rows
-            if (value := _csv_float(row, key)) is not None
-        ]
+        values = [value for row in rows if (value := _csv_float(row, key)) is not None]
         return max(values) if values else None
 
     process_rss = maximum("mpi_process_tree_rss_mb")
@@ -1192,17 +1455,13 @@ def _timeline_resource_metrics(path: Path) -> dict[str, Any]:
     dedicated_rows = [
         row
         for row in rows
-        if str(row.get("job_cgroup_dedicated", "")).lower()
-        in {"true", "1"}
+        if str(row.get("job_cgroup_dedicated", "")).lower() in {"true", "1"}
     ]
     dedicated_current = max(
         (
             value
             for row in dedicated_rows
-            if (
-                value := _csv_float(row, "container_cgroup_current_mb")
-            )
-            is not None
+            if (value := _csv_float(row, "container_cgroup_current_mb")) is not None
         ),
         default=None,
     )
@@ -1210,10 +1469,7 @@ def _timeline_resource_metrics(path: Path) -> dict[str, Any]:
         (
             value
             for row in dedicated_rows
-            if (
-                value := _csv_float(row, "container_swap_current_mb")
-            )
-            is not None
+            if (value := _csv_float(row, "container_swap_current_mb")) is not None
         ),
         default=None,
     )
@@ -1225,9 +1481,7 @@ def _timeline_resource_metrics(path: Path) -> dict[str, Any]:
     for index, row in enumerate(rows):
         try:
             workers = json.loads(row.get("worker_rank_rss_mb_json") or "[]")
-            smaps = json.loads(
-                row.get("worker_rank_smaps_rollup_json") or "[]"
-            )
+            smaps = json.loads(row.get("worker_rank_smaps_rollup_json") or "[]")
         except json.JSONDecodeError as error:
             raise Task035dEvidenceError(
                 f"timeline row {index} contains invalid rank JSON"
@@ -1260,9 +1514,7 @@ def _timeline_resource_metrics(path: Path) -> dict[str, Any]:
         if readable != float(EXPECTED_MPI_SIZE):
             continue
         smaps_by_rank = {
-            item.get("rank"): item
-            for item in smaps
-            if isinstance(item, Mapping)
+            item.get("rank"): item for item in smaps if isinstance(item, Mapping)
         }
         _require(
             set(smaps_by_rank) == expected_ranks,
@@ -1294,9 +1546,7 @@ def _timeline_resource_metrics(path: Path) -> dict[str, Any]:
             f"timeline row {index} worker rank RSS sum",
         )
         _require(
-            reconstructed["uss_mb"]
-            <= reconstructed["pss_mb"]
-            <= worker_rss_sum,
+            reconstructed["uss_mb"] <= reconstructed["pss_mb"] <= worker_rss_sum,
             f"timeline row {index} violates USS <= PSS <= RSS",
         )
         fully_readable_samples += 1
@@ -1314,10 +1564,7 @@ def _timeline_resource_metrics(path: Path) -> dict[str, Any]:
         float(process_swap) == 0.0
         and float(worker_smaps_swap) == 0.0
         and (dedicated_swap is None or float(dedicated_swap) == 0.0)
-        and all(
-            values.get("swap_mb") == 0.0
-            for values in per_rank_peaks.values()
-        )
+        and all(values.get("swap_mb") == 0.0 for values in per_rank_peaks.values())
     )
     return {
         "sample_count": len(rows),
@@ -1388,12 +1635,8 @@ def _resource_comparison(
         "candidate factor matrix",
     )
     rows = int(_finite(matrix.get("matrix_rows"), "candidate rows"))
-    matrix_nnz = int(
-        _finite(matrix.get("matrix_nnz_used"), "candidate matrix NNZ")
-    )
-    factor_nnz = int(
-        _finite(factor.get("matrix_nnz_used"), "candidate factor NNZ")
-    )
+    matrix_nnz = int(_finite(matrix.get("matrix_nnz_used"), "candidate matrix NNZ"))
+    factor_nnz = int(_finite(factor.get("matrix_nnz_used"), "candidate factor NNZ"))
     peak_gib = _finite(
         timeline.get("memory_authority_gib"),
         "candidate memory authority GiB",
@@ -1408,17 +1651,12 @@ def _resource_comparison(
         "active_rows_decrease": rows < STATIC_P6_ROWS,
         "matrix_nnz_decrease": matrix_nnz < STATIC_P6_MATRIX_NNZ,
         "factor_nnz_decrease": factor_nnz < STATIC_P6_FACTOR_NNZ,
-        "mandatory_peak_reduction_ge_20_percent": (
-            peak_gib <= MANDATORY_PEAK_GIB
-        ),
+        "mandatory_peak_reduction_ge_20_percent": (peak_gib <= MANDATORY_PEAK_GIB),
         "zero_swap": timeline.get("zero_swap") is True,
         "mpi8_pss_uss_complete": (
             timeline.get("fully_readable_mpi8_smaps_sample_count", 0) > 0
-            and timeline.get("max_observed_worker_rank_count")
-            == EXPECTED_MPI_SIZE
-            and set(
-                (timeline.get("per_rank_smaps_rollup_peak_mb") or {}).keys()
-            )
+            and timeline.get("max_observed_worker_rank_count") == EXPECTED_MPI_SIZE
+            and set((timeline.get("per_rank_smaps_rollup_peak_mb") or {}).keys())
             == {str(rank) for rank in range(EXPECTED_MPI_SIZE)}
         ),
         "cgroup_ledger_present": (
@@ -1474,9 +1712,7 @@ def _resource_comparison(
         },
         "mandatory_peak_limit_gib": MANDATORY_PEAK_GIB,
         "preferred_peak_limit_gib": PREFERRED_PEAK_GIB,
-        "preferred_peak_reduction_ge_40_percent": (
-            peak_gib <= PREFERRED_PEAK_GIB
-        ),
+        "preferred_peak_reduction_ge_40_percent": (peak_gib <= PREFERRED_PEAK_GIB),
         "timeline_reconstruction": dict(timeline),
         "checks": checks,
         "pass": all(checks.values()),
@@ -1516,12 +1752,8 @@ def _energy_comparison(
     )
     checks = {
         "Avolume_same_code_band": volume_error <= tolerance,
-        "Aclosure_matches_Avolume": (
-            closure_error <= ENERGY_CLOSURE_TOLERANCE
-        ),
-        "reported_energy_closure": (
-            abs(reported) <= ENERGY_CLOSURE_TOLERANCE
-        ),
+        "Aclosure_matches_Avolume": (closure_error <= ENERGY_CLOSURE_TOLERANCE),
+        "reported_energy_closure": (abs(reported) <= ENERGY_CLOSURE_TOLERANCE),
         "reported_energy_closure_matches_reconstruction": math.isclose(
             abs(reported),
             closure_error,
@@ -1556,9 +1788,13 @@ def evaluate_task035d_case097_candidate(
     energy_comparison: Mapping[str, Any],
     field_comparison: Mapping[str, Any],
     resource_comparison: Mapping[str, Any],
+    actual_channel_dwr: Mapping[str, Any] | None = None,
     candidate_id: str = "t30",
 ) -> dict[str, Any]:
     spec = _candidate_spec(candidate_id)
+    actual_channel_dwr = (
+        actual_channel_dwr if isinstance(actual_channel_dwr, Mapping) else {}
+    )
     qualification = _mapping(
         watchdog.get("qualification"),
         "candidate watchdog qualification",
@@ -1570,42 +1806,32 @@ def evaluate_task035d_case097_candidate(
             and watchdog.get("terminated_for_timeout") is False
             and watchdog.get("terminated_for_authority_unreadable") is False
         ),
-        "watchdog_structural_qualification": (
-            qualification.get("pass") is True
-        ),
+        "watchdog_structural_qualification": (qualification.get("pass") is True),
         "launch_authority": launch_gate.get("pass") is True,
         "solver_identity_and_residual": solver_gate.get("pass") is True,
         "significant_12_power_and_12_amplitude": (
             channel_comparison.get("pass") is True
             and channel_comparison.get("significant_power_pass_count") == 12
-            and channel_comparison.get(
-                "significant_complex_amplitude_pass_count"
-            )
-            == 12
+            and channel_comparison.get("significant_complex_amplitude_pass_count") == 12
         ),
         "R00_R_T_Aclosure": observable_comparison.get("pass") is True,
         "Avolume_and_energy_closure": energy_comparison.get("pass") is True,
         "selected_field_and_interface": field_comparison.get("pass") is True,
         "rows_nnz_factor_memory": resource_comparison.get("pass") is True,
+        "actual_cross_trace_36_goal_dwr": (
+            not spec.get("requires_actual_channel_dwr")
+            or actual_channel_dwr.get("pass") is True
+        ),
         "ordinary_default_unchanged": (
-            solver_gate.get("checks", {}).get(
-                spec["ordinary_default_check"]
-            )
-            is True
+            solver_gate.get("checks", {}).get(spec["ordinary_default_check"]) is True
         ),
     }
     failures = [name for name, passed in checks.items() if not passed]
     result = {
         "schema_version": spec["check_schema"],
-        "status": (
-            spec["pass_status"]
-            if not failures
-            else spec["negative_status"]
-        ),
+        "status": (spec["pass_status"] if not failures else spec["negative_status"]),
         "classification": (
-            spec["classification_pass"]
-            if not failures
-            else "controlled_negative"
+            spec["classification_pass"] if not failures else "controlled_negative"
         ),
         "checks": checks,
         "failures": failures,
@@ -1614,15 +1840,26 @@ def evaluate_task035d_case097_candidate(
         "energy_comparison": dict(energy_comparison),
         "field_comparison": dict(field_comparison),
         "resource_comparison": dict(resource_comparison),
+        "actual_channel_dwr": dict(actual_channel_dwr),
         "pass": not failures,
         "candidate_id": candidate_id,
         "ordinary_default_changed": False,
     }
     if spec["selection_credit"] is not None:
-        result["selection_credit"] = dict(spec["selection_credit"])
-        if "complete_combined_hp_credit" in spec["selection_credit"]:
+        selection_credit = dict(spec["selection_credit"])
+        if spec.get("requires_actual_channel_dwr"):
+            selection_credit.update(
+                {
+                    "actual_channel_dwr": not failures,
+                    "goal_oriented_selection_credit": False,
+                    "posthoc_actual_action_attribution": not failures,
+                    "complete_combined_hp_credit": False,
+                }
+            )
+        result["selection_credit"] = selection_credit
+        if "complete_combined_hp_credit" in selection_credit:
             result["complete_combined_hp_credit"] = bool(
-                spec["selection_credit"]["complete_combined_hp_credit"]
+                selection_credit["complete_combined_hp_credit"]
             )
     return result
 
@@ -1631,9 +1868,7 @@ def build_task035d_case097_candidate_check(
     *,
     watchdog_path: Path,
     watchdog_sha256: str,
-    field_comparator: Callable[..., dict[str, Any]] = (
-        compare_cross_mesh_fields
-    ),
+    field_comparator: Callable[..., dict[str, Any]] = (compare_cross_mesh_fields),
     candidate_id: str = "t30",
 ) -> dict[str, Any]:
     spec = _candidate_spec(candidate_id)
@@ -1646,6 +1881,14 @@ def build_task035d_case097_candidate_check(
     )
     watchdog = candidate["record"]
     summary = candidate["solver_summary"]
+    actual_channel_dwr = (
+        _load_selective_face_dwr_evidence(
+            candidate,
+            significant_channel_authority=authorities["significant"],
+        )
+        if spec.get("requires_actual_channel_dwr")
+        else {}
+    )
 
     plan, _ = _load_json(
         ROOT / spec["plan_path"],
@@ -1665,9 +1908,7 @@ def build_task035d_case097_candidate_check(
         expected_authority_sha256=spec["authority_file_sha256"],
         observed_authority_sha256=spec["authority_file_sha256"],
         plan_is_tracked=_git_tracked(ROOT / spec["plan_path"]),
-        authority_is_tracked=_git_tracked(
-            ROOT / spec["authority_path"]
-        ),
+        authority_is_tracked=_git_tracked(ROOT / spec["authority_path"]),
         plan_path_from_root=spec["plan_path"],
         authority_path_from_root=spec["authority_path"],
     )
@@ -1707,9 +1948,7 @@ def build_task035d_case097_candidate_check(
         dict(enriched),
     )
     energy_comparison = _energy_comparison(summary, coarse, enriched)
-    p5_dir, p6_dir, control_field_artifacts = _control_field_directories(
-        authorities
-    )
+    p5_dir, p6_dir, control_field_artifacts = _control_field_directories(authorities)
     field_comparison = field_comparator(
         global_p5_dir=p5_dir,
         global_p6_dir=p6_dir,
@@ -1737,6 +1976,7 @@ def build_task035d_case097_candidate_check(
         energy_comparison=energy_comparison,
         field_comparison=field_comparison,
         resource_comparison=resource_comparison,
+        actual_channel_dwr=actual_channel_dwr,
         candidate_id=candidate_id,
     )
     original_qualification = _mapping(
@@ -1753,8 +1993,7 @@ def build_task035d_case097_candidate_check(
     )
     checker_contract_false_negative = bool(
         candidate_id == TASK035D_LOCAL_H_PLAN_NAME
-        and original_false_checks
-        == ["task035d_solver_local_h_backend_actual"]
+        and original_false_checks == ["task035d_solver_local_h_backend_actual"]
         and solver_gate.get("pass") is True
     )
     result.update(
@@ -1773,20 +2012,12 @@ def build_task035d_case097_candidate_check(
             "candidate_launch_contract": candidate["launch_contract"],
             "solver_gate": solver_gate,
             "watchdog_checker_requalification": {
-                "schema_version": (
-                    "task035d.watchdog-checker-requalification.v1"
-                ),
-                "original_watchdog_pass": (
-                    original_qualification.get("pass")
-                ),
+                "schema_version": ("task035d.watchdog-checker-requalification.v1"),
+                "original_watchdog_pass": (original_qualification.get("pass")),
                 "original_false_checks": original_false_checks,
                 "current_solver_gate_pass": solver_gate.get("pass"),
-                "current_solver_gate_failures": solver_gate.get(
-                    "failures"
-                ),
-                "checker_contract_false_negative": (
-                    checker_contract_false_negative
-                ),
+                "current_solver_gate_failures": solver_gate.get("failures"),
+                "checker_contract_false_negative": (checker_contract_false_negative),
                 "numerical_kernel_rerun_required": False,
                 "candidate_physical_status_is_not_changed": True,
             },
@@ -1884,9 +2115,7 @@ def compact_task035d_case097_candidate_check(
         "candidate launch gate",
     )
     return {
-        "schema_version": (
-            "task035d.case097-candidate-check-compact.v1"
-        ),
+        "schema_version": ("task035d.case097-candidate-check-compact.v1"),
         "status": result.get("status"),
         "classification": result.get("classification"),
         "candidate_id": result.get("candidate_id"),
@@ -1894,6 +2123,9 @@ def compact_task035d_case097_candidate_check(
         "checks": result.get("checks"),
         "failures": result.get("failures"),
         "accuracy_credit": result.get("accuracy_credit"),
+        "selection_credit": result.get("selection_credit"),
+        "complete_combined_hp_credit": result.get("complete_combined_hp_credit"),
+        "actual_channel_dwr": result.get("actual_channel_dwr"),
         "source_sha": result.get("source_sha"),
         "checker_source": result.get("checker_source"),
         "candidate_watchdog": result.get("candidate_watchdog"),
@@ -1930,17 +2162,13 @@ def compact_task035d_case097_candidate_check(
         | {"selections": compact_selections},
         "resource_comparison": compact_resource,
         "production_qualified": result.get("pass") is True,
-        "ordinary_default_changed": result.get(
-            "ordinary_default_changed"
-        ),
+        "ordinary_default_changed": result.get("ordinary_default_changed"),
     }
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description=(
-            "Independently check one frozen Task035d Case097 MPI8 candidate."
-        )
+        description=("Independently check one frozen Task035d Case097 MPI8 candidate.")
     )
     parser.add_argument(
         "--candidate-id",
@@ -1950,6 +2178,7 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             TASK035D_LOCAL_H_PLAN_NAME,
             TASK035D_COMBINED_HP_PLAN_NAME,
             TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
+            TASK035D_SELECTIVE_FACE_PLAN_NAME,
         ),
         default="t30",
     )
@@ -1981,9 +2210,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except Exception as error:
         watchdog_path = args.watchdog
         watchdog_path = (
-            watchdog_path
-            if watchdog_path.is_absolute()
-            else ROOT / watchdog_path
+            watchdog_path if watchdog_path.is_absolute() else ROOT / watchdog_path
         )
         result = {
             "schema_version": spec["check_schema"],
@@ -2001,9 +2228,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "path": _path_from_root(watchdog_path),
                 "expected_sha256": args.watchdog_sha256,
                 "observed_sha256": (
-                    _sha256(watchdog_path)
-                    if watchdog_path.is_file()
-                    else None
+                    _sha256(watchdog_path) if watchdog_path.is_file() else None
                 ),
             },
             "accuracy_credit": "none_fail_closed",

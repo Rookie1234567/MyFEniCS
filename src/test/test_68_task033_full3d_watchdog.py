@@ -84,6 +84,22 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             observed_worker_rank_count=4,
         )
         self.assertTrue(result["pass"])
+        for invalid_residual in (-1.0, float("-inf"), False):
+            with self.subTest(invalid_residual=invalid_residual):
+                summary["linear_system_relative_residual"] = invalid_residual
+                rejected = _qualify(
+                    args=args,
+                    solver_summary=summary,
+                    events=[{"stage": "after_kspsolve"}],
+                    return_code=0,
+                    terminated_for_memory=False,
+                    terminated_for_timeout=False,
+                    terminated_for_authority_unreadable=False,
+                    no_swap=False,
+                    observed_worker_rank_count=4,
+                )
+                self.assertFalse(rejected["pass"])
+        summary["linear_system_relative_residual"] = 1.0e-12
         summary["full3d_reference_exported"] = False
         result = _qualify(
             args=args,
@@ -219,22 +235,36 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             )
             legacy = _parse_args(
                 [
-                    "--degree", "4", "--h-nm", "3",
-                    "--p3-gate-record", str(path),
-                    "--p4-trace-record", str(trace_path),
-                    "--verified-clean-sha", source_sha,
-                    "--warning-gib", "155",
+                    "--degree",
+                    "4",
+                    "--h-nm",
+                    "3",
+                    "--p3-gate-record",
+                    str(path),
+                    "--p4-trace-record",
+                    str(trace_path),
+                    "--verified-clean-sha",
+                    source_sha,
+                    "--warning-gib",
+                    "155",
                 ]
             )
             with self.assertRaises(SystemExit):
                 _validate_p4_gate(legacy)
             workstation = _parse_args(
                 [
-                    "--degree", "4", "--h-nm", "3",
-                    "--p3-gate-record", str(path),
-                    "--p4-trace-record", str(trace_path),
-                    "--verified-clean-sha", source_sha,
-                    "--warning-gib", "155",
+                    "--degree",
+                    "4",
+                    "--h-nm",
+                    "3",
+                    "--p3-gate-record",
+                    str(path),
+                    "--p4-trace-record",
+                    str(trace_path),
+                    "--verified-clean-sha",
+                    source_sha,
+                    "--warning-gib",
+                    "155",
                     "--task034-p4-h3-added-point",
                 ]
             )
@@ -244,8 +274,7 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             self.assertEqual(gate["p3_memory_threshold_gib"], 155.0)
             with self.assertRaises(SystemExit):
                 _parse_args(
-                    ["--degree", "4", "--h-nm", "5",
-                     "--task034-p4-h3-added-point"]
+                    ["--degree", "4", "--h-nm", "5", "--task034-p4-h3-added-point"]
                 )
 
     def test_factorization_stage_detection_is_fail_closed(self) -> None:
