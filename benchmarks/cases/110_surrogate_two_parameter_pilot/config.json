@@ -1,0 +1,26 @@
+{
+  "schema_version": "task001.case110-config.v1",
+  "wavelength_nm": 13.5,
+  "geometry": {
+    "height_nm": [115.0, 120.0, 125.0],
+    "width_x_nm": [16.0, 17.0, 18.0]
+  },
+  "illumination": {
+    "primary_theta_deg": [70.0, 80.0],
+    "fallback_theta_deg": [75.0],
+    "phi_deg": [0.0, 90.0],
+    "polarization": ["S", "P"]
+  },
+  "order_schema_id": "task001.fixed-n0-orders.v1",
+  "fixed_m_orders": [0, -1, -2, -3, -4, -5, -6, -7, 1],
+  "fixed_n": 0,
+  "fidelities": {
+    "HF10": {"degree": 6, "h_nm": 10.0, "modes": 120, "axis_counts": [6, 3, 14]},
+    "HF7P5": {"degree": 6, "h_nm": 7.5, "modes": 120, "axis_counts": [9, 4, 20]},
+    "LF4": {"degree": 4, "h_nm": 10.0, "modes": 120, "axis_counts": [6, 3, 14]},
+    "LF5": {"degree": 5, "h_nm": 10.0, "modes": 120, "axis_counts": [6, 3, 14]}
+  },
+  "formal_mpi_preference": 2,
+  "threads_per_rank": 1,
+  "max_parallel_forward_solves": 1
+}

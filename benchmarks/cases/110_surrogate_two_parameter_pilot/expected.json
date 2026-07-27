@@ -1,0 +1,16 @@
+{
+  "schema_version": "task001.case110-expected.v1",
+  "ordinary_default_changed": false,
+  "bulk_49_point_generation_allowed": false,
+  "formal_source_policy": "one clean Task001 implementation baseline SHA",
+  "hard_ceiling_rule": "min(10.5 GiB, 0.77 * WSL MemTotal)",
+  "launch_projection_fraction": 0.9,
+  "minimum_disk_free_gib": 20.0,
+  "swap_used_required_bytes": 0,
+  "hf7p5_requires_hf10_pass": true,
+  "hf7p5_requires_three_estimates": true,
+  "fixed_topology_geometry_count": 9,
+  "fixed_order_count_per_side_polarization": 9,
+  "nonpropagating_power_semantics": null,
+  "n_nonzero_leakage_recomputed": true
+}

@@ -9,6 +9,16 @@ from typing import Any, Mapping
 
 PARAMETER_SCHEMA_VERSION = "task000.forward-parameters.v1"
 OBSERVABLE_SCHEMA_VERSION = "task000.forward-observables.v1"
+TASK001_PARAMETER_SCHEMA_VERSION = "task001.forward-parameters.v2"
+TASK001_OBSERVABLE_SCHEMA_VERSION = "task001.fixed-n0-orders.v1"
+TASK001_MANIFEST_SCHEMA_VERSION = "task001.forward-manifest.v2"
+
+TASK001_FIDELITIES = {
+    "HF10": {"degree": 6, "h_nm": 10.0, "modes": 120, "axis_counts": (6, 3, 14)},
+    "HF7P5": {"degree": 6, "h_nm": 7.5, "modes": 120, "axis_counts": (9, 4, 20)},
+    "LF4": {"degree": 4, "h_nm": 10.0, "modes": 120, "axis_counts": (6, 3, 14)},
+    "LF5": {"degree": 5, "h_nm": 10.0, "modes": 120, "axis_counts": (6, 3, 14)},
+}
 
 MODEL_PRESETS = {
     "euv_2d_complex_absorption_v1": "2d_complex_absorption",
@@ -61,6 +71,110 @@ def parameter_catalog() -> dict[str, Any]:
             "freezes justified ranges; runner CLI capability is not a range authority"
         ),
     }
+
+
+def task001_parameter_catalog() -> dict[str, Any]:
+    """Return the explicit two-parameter Task001 contract."""
+
+    return {
+        "schema_version": TASK001_PARAMETER_SCHEMA_VERSION,
+        "physics": {
+            "wavelength_nm": {
+                "type": "number", "unit": "nm", "allowed": [13.5],
+                "invertible": False, "source": "target_stage4_config",
+            },
+        },
+        "geometry": {
+            "height_nm": {"type": "number", "unit": "nm", "range": [115.0, 125.0], "invertible": True},
+            "width_x_nm": {"type": "number", "unit": "nm", "range": [16.0, 18.0], "invertible": True},
+        },
+        "illumination": {
+            "theta_deg": {"type": "number", "allowed": [70.0, 75.0, 80.0]},
+            "phi_deg": {"type": "number", "allowed": [0.0, 90.0]},
+            "incident_polarization": {"type": "enum", "allowed": ["S", "P"]},
+        },
+        "fidelity": {"model_id": {"type": "enum", "allowed": sorted(TASK001_FIDELITIES)}},
+        "observables": {"order_schema_id": {"allowed": [TASK001_OBSERVABLE_SCHEMA_VERSION]}},
+        "execution": {
+            "mpi_ranks": {"type": "integer", "allowed": [1, 2]},
+            "threads_per_rank": {"type": "integer", "allowed": [1]},
+            "max_parallel_forward_solves": 1,
+        },
+    }
+
+
+@dataclass(frozen=True)
+class Task001ForwardParameters:
+    height_nm: float
+    width_x_nm: float
+    theta_deg: float
+    phi_deg: float
+    incident_polarization: str
+    model_id: str
+    mpi_ranks: int = 2
+    threads_per_rank: int = 1
+    wavelength_nm: float = 13.5
+    order_schema_id: str = TASK001_OBSERVABLE_SCHEMA_VERSION
+    schema_version: str = TASK001_PARAMETER_SCHEMA_VERSION
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "Task001ForwardParameters":
+        allowed = {
+            "height_nm", "width_x_nm", "theta_deg", "phi_deg",
+            "incident_polarization", "model_id", "mpi_ranks",
+            "threads_per_rank", "wavelength_nm", "order_schema_id",
+            "schema_version",
+        }
+        extra = sorted(set(value) - allowed)
+        if extra:
+            raise ValueError(f"unsupported Task001 parameter fields: {extra}")
+        result = cls(**dict(value))
+        result.validate()
+        return result
+
+    def validate(self) -> None:
+        if self.schema_version != TASK001_PARAMETER_SCHEMA_VERSION:
+            raise ValueError("unsupported Task001 parameter schema version")
+        if self.model_id not in TASK001_FIDELITIES:
+            raise ValueError(f"unsupported Task001 model_id: {self.model_id}")
+        if float(self.wavelength_nm) != 13.5:
+            raise ValueError("Task001 supports only wavelength_nm=13.5")
+        if not 115.0 <= float(self.height_nm) <= 125.0:
+            raise ValueError("height_nm must lie in [115, 125]")
+        if not 16.0 <= float(self.width_x_nm) <= 18.0:
+            raise ValueError("width_x_nm must lie in [16, 18]")
+        if float(self.theta_deg) not in {70.0, 75.0, 80.0}:
+            raise ValueError("theta_deg must be one of 70, 75, 80")
+        if float(self.phi_deg) not in {0.0, 90.0}:
+            raise ValueError("phi_deg must be 0 or 90")
+        if self.incident_polarization.upper() not in {"S", "P"}:
+            raise ValueError("incident_polarization must be S or P")
+        if self.mpi_ranks not in {1, 2}:
+            raise ValueError("Task001 mpi_ranks must be 1 or 2")
+        if self.threads_per_rank != 1:
+            raise ValueError("Task001 threads_per_rank must equal 1")
+        if self.order_schema_id != TASK001_OBSERVABLE_SCHEMA_VERSION:
+            raise ValueError("unsupported Task001 order_schema_id")
+
+    @property
+    def fidelity(self) -> dict[str, Any]:
+        self.validate()
+        return dict(TASK001_FIDELITIES[self.model_id])
+
+    def as_dict(self) -> dict[str, Any]:
+        self.validate()
+        return {
+            "schema_version": self.schema_version,
+            "physics": {"wavelength_nm": float(self.wavelength_nm)},
+            "geometry": {"height_nm": float(self.height_nm), "width_x_nm": float(self.width_x_nm)},
+            "illumination": {
+                "theta_deg": float(self.theta_deg), "phi_deg": float(self.phi_deg),
+                "incident_polarization": self.incident_polarization.upper(),
+            },
+            "fidelity": {"model_id": self.model_id, **self.fidelity},
+            "observables": {"order_schema_id": self.order_schema_id},
+            "execution": {"mpi_ranks": self.mpi_ranks, "threads_per_rank": self.threads_per_rank},
+        }
 
 
 @dataclass(frozen=True)

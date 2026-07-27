@@ -77,6 +77,8 @@ from src.solvers.common_3d_solve import (
     _petsc_factor_inventory,
     _petsc_matrix_stats,
 )
+from src.forward_data.schema import TASK001_FIDELITIES, Task001ForwardParameters
+from src.forward_data.task001_config import task001_config_identity, task001_stage4_config
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -670,7 +672,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--h-nm", type=float, default=5.0)
-    parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4, 6), default=2)
+    parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4, 5, 6), default=2)
     parser.add_argument(
         "--modal-h-nm",
         type=float,
@@ -682,7 +684,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--modal-degree",
         type=int,
-        choices=(1, 2, 3, 4, 6),
+        choices=(1, 2, 3, 4, 5, 6),
         help=(
             "Optional independent cross-section QEP polynomial degree. The "
             "local 3D FEM degree remains controlled by --degree."
@@ -747,6 +749,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "M120/M160 Hybrid path. Ordinary defaults remain unchanged."
         ),
     )
+    parser.add_argument(
+        "--task001-surrogate-pilot-gate", action="store_true",
+        help="Explicit clean-source Task001 two-parameter Hybrid pilot gate.",
+    )
+    parser.add_argument("--task001-model-id", choices=tuple(TASK001_FIDELITIES))
+    parser.add_argument("--task001-height-nm", type=float)
+    parser.add_argument("--task001-width-x-nm", type=float)
+    parser.add_argument("--incident-theta-deg", type=float)
+    parser.add_argument("--incident-phi-deg", type=float, default=0.0)
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
@@ -817,11 +828,70 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=os.environ.get("TASK032_HOST_ENVIRONMENT_ID", "SK-20260601OSDE"),
     )
     args = parser.parse_args(argv)
-    if args.degree == 6 and not args.task035c_p6_h10_gate:
+    if args.degree == 6 and not (
+        args.task035c_p6_h10_gate or args.task001_surrogate_pilot_gate
+    ):
         parser.error(
             "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
             "Task035c p6/h10 Hybrid authority only."
         )
+    if args.task035c_p6_h10_gate and args.task001_surrogate_pilot_gate:
+        parser.error("Task035c and Task001 gates are mutually exclusive.")
+    if args.task001_surrogate_pilot_gate:
+        required = (
+            args.task001_model_id, args.task001_height_nm,
+            args.task001_width_x_nm, args.incident_theta_deg,
+        )
+        if any(value is None for value in required):
+            parser.error("Task001 gate requires model, height, width and theta.")
+        try:
+            task001_parameters = Task001ForwardParameters(
+                height_nm=args.task001_height_nm,
+                width_x_nm=args.task001_width_x_nm,
+                theta_deg=args.incident_theta_deg,
+                phi_deg=args.incident_phi_deg,
+                incident_polarization=args.polarization_kind,
+                model_id=args.task001_model_id,
+            )
+            task001_parameters.validate()
+        except ValueError as exc:
+            parser.error(str(exc))
+        fidelity = task001_parameters.fidelity
+        scoped = bool(
+            args.degree == fidelity["degree"]
+            and math.isclose(args.h_nm, fidelity["h_nm"])
+            and args.modal_degree == args.degree
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, args.h_nm)
+            and args.requested_modes == fidelity["modes"]
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.allow_dirty_research
+            and args.full3d_reference is None
+            and not args.task035c_p6_h10_gate
+        )
+        if not scoped:
+            parser.error(
+                "Task001 gate requires its exact fidelity identity, static memory-minimal "
+                "M120/2M, 10/110 interfaces, qualified discrete axial models and clean SHA."
+            )
+    elif any(
+        value is not None
+        for value in (
+            args.task001_model_id, args.task001_height_nm,
+            args.task001_width_x_nm, args.incident_theta_deg,
+        )
+    ) or not math.isclose(args.incident_phi_deg, 0.0):
+        parser.error("Task001 parameter overrides require --task001-surrogate-pilot-gate.")
     if args.task035c_p6_h10_gate:
         scoped = bool(
             args.degree == 6
@@ -1045,10 +1115,13 @@ def main() -> None:
         or args.graded_reference_h is not None
         or not np.isclose(args.incident_grazing_deg, 10.0)
         or args.polarization_kind != "s"
+        or not np.isclose(args.incident_phi_deg, 0.0)
         or args.internal_propagation_model != "continuous_beta"
         or args.internal_traction_model != "continuous_qep_beta"
     )
     comm = MPI.COMM_WORLD
+    if args.task001_surrogate_pilot_gate and comm.size not in (1, 2):
+        raise SystemExit("Task001 formal Hybrid pilot is restricted to MPI1 or MPI2.")
     provenance = _source_provenance(
         comm, args.verified_clean_sha, args.allow_dirty_research
     )
@@ -1091,18 +1164,34 @@ def main() -> None:
 
     total_started = time.perf_counter()
     timings: dict[str, float] = {}
-    cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
+    task001_parameters = None
+    if args.task001_surrogate_pilot_gate:
+        task001_parameters = Task001ForwardParameters(
+            height_nm=args.task001_height_nm,
+            width_x_nm=args.task001_width_x_nm,
+            theta_deg=args.incident_theta_deg,
+            phi_deg=args.incident_phi_deg,
+            incident_polarization=args.polarization_kind,
+            model_id=args.task001_model_id,
+            mpi_ranks=comm.size,
+        )
+        cfg = task001_stage4_config(task001_parameters)
+    else:
+        cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
     cfg.stage4_full3d_assembly_backend = (
         args.stage4_full3d_assembly_backend
     )
     cfg.matrix_diagnostics_assemble_only = False
     cfg.matrix_diagnostics_factorization_only = False
-    cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
-    cfg.polarization_kind = args.polarization_kind
-    modal_cfg = target_stage4_config(
-        degree=modal_degree,
-        h_nm=modal_h_nm,
-    )
+    if task001_parameters is None:
+        cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
+        cfg.polarization_kind = args.polarization_kind
+        modal_cfg = target_stage4_config(
+            degree=modal_degree,
+            h_nm=modal_h_nm,
+        )
+    else:
+        modal_cfg = task001_stage4_config(task001_parameters)
     modal_cfg.incident_theta_deg = cfg.incident_theta_deg
     modal_cfg.incident_phi_deg = cfg.incident_phi_deg
     modal_cfg.polarization_kind = cfg.polarization_kind
@@ -1164,6 +1253,12 @@ def main() -> None:
             "wavelength_nm": cfg.lambda0,
             "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
             "polarization_kind": cfg.polarization_kind,
+            "incident_theta_deg": cfg.incident_theta_deg,
+            "incident_phi_deg": cfg.incident_phi_deg,
+            "task001_parameter_identity": (
+                None if task001_parameters is None
+                else task001_config_identity(task001_parameters)
+            ),
             "mesh_policy": "reviewed_stage4_axis_plan",
             "graded_reference_h_nm": args.graded_reference_h,
             "graded_coarse_factor": None,
@@ -1226,6 +1321,10 @@ def main() -> None:
                     args.stage4_full3d_assembly_backend
                 ),
                 "task035c_p6_h10_authority_gate": task035c_p6_gate,
+                "task001_surrogate_pilot_gate": (
+                    None if task001_parameters is None
+                    else task001_config_identity(task001_parameters)
+                ),
                 "task33_variant": True,
                 "provenance": (
                     "clean_task033_finite_spectrum_capacity_negative"
@@ -2081,7 +2180,9 @@ def main() -> None:
         record = {
             "schema_version": 1,
             "benchmark_id": (
-                "task032_phase6_hybrid_augmented_direct"
+                "task001_surrogate_two_parameter_hybrid_pilot"
+                if task001_parameters is not None
+                else "task032_phase6_hybrid_augmented_direct"
                 if args.degree == 2
                 and args.bottom_interface_nm == 10.0
                 and args.top_interface_nm == 110.0
@@ -2128,6 +2229,10 @@ def main() -> None:
                     args.stage4_full3d_assembly_backend
                 ),
                 "task035c_p6_h10_authority_gate": task035c_p6_gate,
+                "task001_surrogate_pilot_gate": (
+                    None if task001_parameters is None
+                    else task001_config_identity(task001_parameters)
+                ),
                 "task33_variant": task33_variant,
                 "provenance": (
                     (
@@ -2171,6 +2276,12 @@ def main() -> None:
                 "wavelength_nm": cfg.lambda0,
                 "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
                 "polarization_kind": cfg.polarization_kind,
+                "incident_theta_deg": cfg.incident_theta_deg,
+                "incident_phi_deg": cfg.incident_phi_deg,
+                "task001_parameter_identity": (
+                    None if task001_parameters is None
+                    else task001_config_identity(task001_parameters)
+                ),
                 "mesh_policy": (
                     "task034_periodic_conforming_fixed_p_graded_opt_in"
                     if graded_plan is not None
