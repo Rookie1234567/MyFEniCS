@@ -98,7 +98,22 @@ class Task035dVariablePStage4SmokeTests(unittest.TestCase):
                 + len(view.goal_context["modes"]),
                 view.A.getSize()[0],
             )
+            self.assertTrue(view.port_operator_audit["pass"])
+            self.assertTrue(
+                view.port_operator_audit["checks"][
+                    "removed_interior_is_qualified_roundoff"
+                ]
+            )
+            self.assertLessEqual(
+                view.port_operator_audit[
+                    "removed_active_interior_over_threshold_max"
+                ],
+                1.0,
+            )
             captured["recovered"] = view.recovered
+            captured["port_operator_audit"] = dict(
+                view.port_operator_audit
+            )
             captured["primal_solver_telemetry"] = dict(
                 view.primal_solver_telemetry
             )
@@ -152,6 +167,7 @@ class Task035dVariablePStage4SmokeTests(unittest.TestCase):
         )
         self.assertTrue(summary["variable_p_live_observer_requested"])
         self.assertTrue(summary["variable_p_live_observer_invoked"])
+        self.assertTrue(captured["port_operator_audit"]["pass"])
         self.assertTrue(
             summary["solver_objects_released_before_postprocess"]
         )

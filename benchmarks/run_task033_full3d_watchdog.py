@@ -41,6 +41,12 @@ from benchmarks.task035d_case097_gates import (
     task035d_case097_sidewall_guard_solver_gate,
     task035d_case097_t30_solver_gate,
 )
+from benchmarks.task035d_nested_p_snapshot_gate import (
+    task035d_coarse_snapshot_artifact_gate,
+)
+from benchmarks.task035d_nested_p_dwr_checker import (
+    task035d_nested_p_dwr_report_gate,
+)
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
     _add_cpu_core_equivalents,
@@ -62,6 +68,10 @@ TASK035D_LOCAL_H_CANDIDATES = {
     TASK035D_LOCAL_H_PLAN_NAME,
     TASK035D_COMBINED_HP_PLAN_NAME,
     TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
+}
+TASK035D_NESTED_P_PHASES = {
+    "coarse-snapshot",
+    "enriched-evaluate",
 }
 
 
@@ -133,6 +143,15 @@ def _sha256(path: Path) -> str | None:
     return digest.hexdigest()
 
 
+def _finite_number_le(value: Any, limit: float) -> bool:
+    return bool(
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        and 0.0 <= float(value) <= float(limit)
+    )
+
+
 def _path_from_root(path: Path) -> str:
     try:
         return str(path.resolve().relative_to(ROOT))
@@ -185,7 +204,58 @@ def _worker(args: argparse.Namespace) -> int:
         run_stage4b_block_grating_3d_case,
     )
 
-    run_stage4b_block_grating_3d_case(_full3d_config(args), args.run_dir)
+    observer = None
+    retain_local_schur = False
+    if args.task035d_nested_p_dwr_phase is not None:
+        from src.adaptivity.variable_p_nested_dwr import (
+            build_variable_p_nested_coarse_snapshot_observer,
+            build_variable_p_nested_enriched_evaluator_observer,
+        )
+
+        common = {
+            "candidate_id": args.task035d_candidate_id,
+            "expected_plan_sha256": (
+                args.stage4_local_h_refinement_plan_sha256
+            ),
+            "source_sha": args.verified_clean_sha,
+            "significant_channel_authority_path": (
+                args.task035d_significant_channel_authority
+            ),
+            "significant_channel_authority_sha256": (
+                args.task035d_significant_channel_authority_sha256
+            ),
+        }
+        if args.task035d_nested_p_dwr_phase == "coarse-snapshot":
+            observer = build_variable_p_nested_coarse_snapshot_observer(
+                artifact_directory=(
+                    args.run_dir / "nested_p_snapshot"
+                ),
+                **common,
+            )
+        else:
+            observer = (
+                build_variable_p_nested_enriched_evaluator_observer(
+                    coarse_manifest_path=(
+                        args.task035d_coarse_snapshot_manifest
+                    ),
+                    coarse_manifest_sha256=(
+                        args.task035d_coarse_snapshot_manifest_sha256
+                    ),
+                    artifact_path=(
+                        args.run_dir / "nested_p_dwr_report.json"
+                    ),
+                    **common,
+                )
+            )
+        retain_local_schur = True
+    run_stage4b_block_grating_3d_case(
+        _full3d_config(args),
+        args.run_dir,
+        variable_p_live_observer=observer,
+        variable_p_retain_local_schur_for_research=(
+            retain_local_schur
+        ),
+    )
     return 0
 
 
@@ -264,6 +334,35 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task035d-plan-authority", type=Path)
     parser.add_argument("--task035d-plan-authority-sha256")
+    parser.add_argument(
+        "--task035d-nested-p-dwr-phase",
+        choices=tuple(sorted(TASK035D_NESTED_P_PHASES)),
+        help=(
+            "Explicitly add the same-trace nested-p coarse snapshot or "
+            "enriched DWR live observer to one qualified Case097 MPI8 run."
+        ),
+    )
+    parser.add_argument(
+        "--task035d-significant-channel-authority",
+        type=Path,
+    )
+    parser.add_argument(
+        "--task035d-significant-channel-authority-sha256",
+    )
+    parser.add_argument(
+        "--task035d-nested-p-pair-authority",
+        type=Path,
+    )
+    parser.add_argument(
+        "--task035d-nested-p-pair-authority-sha256",
+    )
+    parser.add_argument(
+        "--task035d-coarse-snapshot-manifest",
+        type=Path,
+    )
+    parser.add_argument(
+        "--task035d-coarse-snapshot-manifest-sha256",
+    )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -429,6 +528,65 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "with one tracked, hash-bound candidate plan and MPI8 "
                 "plan authority."
             )
+        nested_phase = args.task035d_nested_p_dwr_phase
+        if nested_phase is not None:
+            expected_candidate = (
+                TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME
+                if nested_phase == "coarse-snapshot"
+                else TASK035D_LOCAL_H_PLAN_NAME
+            )
+            nested_scope = bool(
+                args.task035d_candidate_id == expected_candidate
+                and args.task035d_significant_channel_authority
+                is not None
+                and valid_hex_digest(
+                    args.task035d_significant_channel_authority_sha256,
+                    64,
+                )
+                and args.task035d_nested_p_pair_authority is not None
+                and valid_hex_digest(
+                    args.task035d_nested_p_pair_authority_sha256,
+                    64,
+                )
+                and (
+                    (
+                        args.task035d_coarse_snapshot_manifest is None
+                        and args.task035d_coarse_snapshot_manifest_sha256
+                        is None
+                    )
+                    if nested_phase == "coarse-snapshot"
+                    else (
+                        args.task035d_coarse_snapshot_manifest is not None
+                        and valid_hex_digest(
+                            args.task035d_coarse_snapshot_manifest_sha256,
+                            64,
+                        )
+                    )
+                )
+            )
+            if not nested_scope:
+                parser.error(
+                    "Task035d nested-p DWR is restricted to the frozen "
+                    "remote-p5-interior coarse B snapshot followed by the "
+                    "all-p6-interior enriched A evaluation, with one "
+                    "hash-bound A/B pair authority, significant-channel "
+                    "authority, and coarse manifest."
+                )
+        elif any(
+            value is not None
+            for value in (
+                args.task035d_significant_channel_authority,
+                args.task035d_significant_channel_authority_sha256,
+                args.task035d_nested_p_pair_authority,
+                args.task035d_nested_p_pair_authority_sha256,
+                args.task035d_coarse_snapshot_manifest,
+                args.task035d_coarse_snapshot_manifest_sha256,
+            )
+        ):
+            parser.error(
+                "Task035d nested-p authority arguments require "
+                "--task035d-nested-p-dwr-phase."
+            )
     elif (
         args.task035d_plan_authority is not None
         or args.task035d_plan_authority_sha256 is not None
@@ -439,6 +597,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.stage4_full3d_assembly_backend
         == TASK035D_CASE097_BACKEND
         or args.task035d_candidate_id != "t30"
+        or args.task035d_nested_p_dwr_phase is not None
+        or args.task035d_significant_channel_authority is not None
+        or args.task035d_significant_channel_authority_sha256 is not None
+        or args.task035d_nested_p_pair_authority is not None
+        or args.task035d_nested_p_pair_authority_sha256 is not None
+        or args.task035d_coarse_snapshot_manifest is not None
+        or args.task035d_coarse_snapshot_manifest_sha256 is not None
     ):
         parser.error(
             "Task035d variable-p arguments require "
@@ -602,6 +767,608 @@ def _validate_task035d_case097_plan(
     else:
         args.stage4_variable_p_cell_degree_plan = plan_path
     args.task035d_plan_authority = authority_path
+    return gate
+
+
+def _validate_task035d_nested_p_inputs(
+    args: argparse.Namespace,
+) -> dict[str, Any] | None:
+    phase = args.task035d_nested_p_dwr_phase
+    if phase is None:
+        return None
+    pair_path = args.task035d_nested_p_pair_authority
+    if pair_path is None:
+        raise SystemExit(
+            "Task035d nested-p A/B pair authority is required."
+        )
+    pair_path = (
+        pair_path if pair_path.is_absolute() else ROOT / pair_path
+    ).resolve()
+    try:
+        pair_authority = json.loads(
+            pair_path.read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            f"Task035d nested-p pair authority is unreadable: {exc}"
+        ) from exc
+    if not isinstance(pair_authority, dict):
+        pair_authority = {}
+    try:
+        pair_relative = pair_path.relative_to(ROOT).as_posix()
+    except ValueError:
+        pair_relative = None
+    pair_tracked = bool(
+        pair_relative is not None
+        and subprocess.run(
+            [
+                "git",
+                "ls-files",
+                "--error-unmatch",
+                "--",
+                pair_relative,
+            ],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        == 0
+    )
+    pair_sha = _sha256(pair_path)
+
+    def load_pair_reference(
+        entry: dict[str, Any],
+        field: str,
+    ) -> tuple[dict[str, Any] | None, dict[str, bool]]:
+        reference = entry.get(field, {})
+        raw_path = reference.get("path")
+        expected_sha = reference.get("sha256")
+        payload = None
+        reference_path = None
+        within_root = False
+        tracked = False
+        readable = False
+        sha_matches = False
+        if isinstance(raw_path, str):
+            reference_path = (ROOT / raw_path).resolve()
+            try:
+                relative = reference_path.relative_to(ROOT).as_posix()
+                within_root = True
+            except ValueError:
+                relative = None
+            if within_root:
+                tracked = (
+                    subprocess.run(
+                        [
+                            "git",
+                            "ls-files",
+                            "--error-unmatch",
+                            "--",
+                            str(relative),
+                        ],
+                        cwd=ROOT,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        check=False,
+                    ).returncode
+                    == 0
+                )
+                try:
+                    payload = json.loads(
+                        reference_path.read_text(encoding="utf-8")
+                    )
+                    readable = isinstance(payload, dict)
+                except (OSError, json.JSONDecodeError):
+                    payload = None
+                sha_matches = bool(
+                    readable
+                    and isinstance(expected_sha, str)
+                    and _sha256(reference_path) == expected_sha
+                )
+        return payload, {
+            "within_root": within_root,
+            "tracked": tracked,
+            "readable": readable,
+            "sha256": sha_matches,
+        }
+
+    pair_reference_payloads: dict[str, dict[str, Any] | None] = {}
+    pair_reference_checks: dict[str, dict[str, bool]] = {}
+    for role_name, role in (
+        ("coarse_B", pair_authority.get("coarse_B", {})),
+        ("enriched_A", pair_authority.get("enriched_A", {})),
+    ):
+        role = role if isinstance(role, dict) else {}
+        for field in ("plan", "mpi8_launch_authority"):
+            payload, checks = load_pair_reference(role, field)
+            key = f"{role_name}_{field}"
+            pair_reference_payloads[key] = payload
+            pair_reference_checks[key] = checks
+
+    authority_path = args.task035d_significant_channel_authority
+    if authority_path is None:
+        raise SystemExit(
+            "Task035d nested-p significant-channel authority is required."
+        )
+    authority_path = (
+        authority_path
+        if authority_path.is_absolute()
+        else ROOT / authority_path
+    ).resolve()
+    try:
+        authority = json.loads(
+            authority_path.read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            "Task035d nested-p significant-channel authority is "
+            f"unreadable: {exc}"
+        ) from exc
+    try:
+        authority_relative = authority_path.relative_to(ROOT).as_posix()
+    except ValueError:
+        authority_relative = None
+    authority_tracked = bool(
+        authority_relative is not None
+        and subprocess.run(
+            [
+                "git",
+                "ls-files",
+                "--error-unmatch",
+                "--",
+                authority_relative,
+            ],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        == 0
+    )
+    authority_sha = _sha256(authority_path)
+    authority_checks = {
+        "tracked": authority_tracked,
+        "sha256": (
+            authority_sha
+            == args.task035d_significant_channel_authority_sha256
+        ),
+        "schema": (
+            authority.get("schema_version")
+            == "task035b.significant-channel-reference.v1"
+        ),
+        "pass": authority.get("pass") is True,
+        "twelve_channels": (
+            authority.get("significant_channel_selection", {}).get(
+                "channel_count"
+            )
+            == 12
+            and len(authority.get("channels", ())) == 12
+        ),
+    }
+    failures = [
+        f"significant_channel_{name}"
+        for name, passed in authority_checks.items()
+        if not passed
+    ]
+    coarse_pair = pair_authority.get("coarse_B", {})
+    coarse_pair = coarse_pair if isinstance(coarse_pair, dict) else {}
+    enriched_pair = pair_authority.get("enriched_A", {})
+    enriched_pair = (
+        enriched_pair if isinstance(enriched_pair, dict) else {}
+    )
+    common_pair = pair_authority.get("frozen_common_identity", {})
+    common_pair = common_pair if isinstance(common_pair, dict) else {}
+    formal_contract = pair_authority.get("formal_run_contract", {})
+    formal_contract = (
+        formal_contract if isinstance(formal_contract, dict) else {}
+    )
+    stable_identity_keys = (
+        "base_config_identity_sha256",
+        "leaf_catalog_sha256",
+        "hanging_face_catalog_sha256",
+        "carrier_connectivity_sha256",
+        "material_catalog_sha256",
+        "physical_facet_catalog_sha256",
+        "physical_authority_sha256",
+        "flattened_graph_sha256",
+        "canonical_cell_graph_sha256",
+    )
+    common_stable_identity_matches = all(
+        all(
+            payload is not None
+            and payload.get("stable_identity", {}).get(key)
+            == common_pair.get(key)
+            for payload in (
+                pair_reference_payloads[
+                    "coarse_B_mpi8_launch_authority"
+                ],
+                pair_reference_payloads[
+                    "enriched_A_mpi8_launch_authority"
+                ],
+            )
+        )
+        for key in stable_identity_keys
+    )
+    common_root_identity_matches = all(
+        payload is not None
+        and payload.get("root_cell_box_catalog_sha256")
+        == common_pair.get("root_cell_box_catalog_sha256")
+        and payload.get("expected_forest", {}).get(
+            "root_catalog_sha256"
+        )
+        == common_pair.get("root_catalog_sha256")
+        for payload in (
+            pair_reference_payloads["coarse_B_plan"],
+            pair_reference_payloads["enriched_A_plan"],
+        )
+    )
+    active_pair = (
+        coarse_pair
+        if phase == "coarse-snapshot"
+        else enriched_pair
+    )
+    expected_candidate = (
+        TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME
+        if phase == "coarse-snapshot"
+        else TASK035D_LOCAL_H_PLAN_NAME
+    )
+    pair_checks = {
+        "tracked": pair_tracked,
+        "sha256": (
+            pair_sha == args.task035d_nested_p_pair_authority_sha256
+        ),
+        "schema": (
+            pair_authority.get("schema_version")
+            == "task035d.same-trace-nested-p-pair-authority.v1"
+        ),
+        "pass": pair_authority.get("pass") is True,
+        "same_trace_only": (
+            pair_authority.get("scope", {}).get("same_trace_only")
+            is True
+            and pair_authority.get("scope", {}).get(
+                "cross_trace_primal_prolongation"
+            )
+            is False
+            and pair_authority.get("scope", {}).get(
+                "dense_local_schur_persistence"
+            )
+            is False
+        ),
+        "mpi8": (
+            pair_authority.get("scope", {}).get("mpi_size") == 8
+        ),
+        "referenced_files": all(
+            all(checks.values())
+            for checks in pair_reference_checks.values()
+        ),
+        "common_stable_identity": common_stable_identity_matches,
+        "common_root_identity": common_root_identity_matches,
+        "coarse_candidate": (
+            coarse_pair.get("candidate_id")
+            == TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME
+        ),
+        "enriched_candidate": (
+            enriched_pair.get("candidate_id")
+            == TASK035D_LOCAL_H_PLAN_NAME
+        ),
+        "coarse_degree_and_dof_contract": (
+            coarse_pair.get("cell_interior_degree_counts")
+            == {"p5": 32, "p6": 102}
+            and coarse_pair.get(
+                "actual_full3d_equivalent_active_fe_dofs"
+            )
+            == 76_205
+            and coarse_pair.get(
+                "reduced_trace_plus_auxiliary_rows"
+            )
+            == 18_470
+        ),
+        "enriched_degree_and_dof_contract": (
+            enriched_pair.get("cell_interior_degree_counts")
+            == {"p5": 0, "p6": 134}
+            and enriched_pair.get(
+                "actual_full3d_equivalent_active_fe_dofs"
+            )
+            == 82_925
+            and enriched_pair.get(
+                "reduced_trace_plus_auxiliary_rows"
+            )
+            == 18_470
+        ),
+        "active_candidate": (
+            active_pair.get("candidate_id")
+            == expected_candidate
+            == args.task035d_candidate_id
+        ),
+        "active_plan": (
+            active_pair.get("plan", {}).get("sha256")
+            == args.stage4_local_h_refinement_plan_sha256
+        ),
+        "active_launch_authority": (
+            active_pair.get("mpi8_launch_authority", {}).get("sha256")
+            == args.task035d_plan_authority_sha256
+        ),
+        "common_rows": (
+            common_pair.get("leaf_cell_count") == 134
+            and common_pair.get("trace_degree") == 5
+            and common_pair.get("raw_trace_rows") == 23_875
+            and common_pair.get("independent_trace_rows") == 18_390
+            and common_pair.get("auxiliary_rows") == 80
+            and common_pair.get("reduced_rows") == 18_470
+        ),
+        "same_channel_authority": (
+            pair_authority.get(
+                "significant_channel_authority", {}
+            ).get("sha256")
+            == authority_sha
+        ),
+        "formal_residual_contract": (
+            formal_contract.get(
+                "coarse_full_explicit_true_residual_max"
+            )
+            == 1.0e-9
+            and formal_contract.get(
+                "enriched_full_explicit_true_residual_max"
+            )
+            == 1.0e-9
+            and formal_contract.get(
+                "unit_channel_adjoint_relative_residual_max"
+            )
+            == 1.0e-9
+        ),
+        "formal_goal_contract": (
+            formal_contract.get("unit_channel_adjoint_solve_count")
+            == 12
+            and formal_contract.get(
+                "all_36_signed_goal_closures_required"
+            )
+            is True
+            and formal_contract.get(
+                "trace_only_functional_roundoff_must_pass_"
+                "recorded_scale_aware_threshold"
+            )
+            is True
+            and formal_contract.get(
+                "trace_only_external_operator_content_sha_match_required"
+            )
+            is True
+            and formal_contract.get(
+                "trace_only_external_rhs_content_sha_match_required"
+            )
+            is True
+            and formal_contract.get(
+                "external_delta_may_be_derived_from_complete_minus_cell"
+            )
+            is False
+            and formal_contract.get(
+                "unexplained_residual_may_be_added_back"
+            )
+            is False
+            and formal_contract.get(
+                "absolute_indicator_sum_may_close_goals"
+            )
+            is False
+        ),
+    }
+    failures.extend(
+        f"pair_authority_{name}"
+        for name, passed in pair_checks.items()
+        if not passed
+    )
+    snapshot_gate = None
+    if phase == "enriched-evaluate":
+        snapshot_path = args.task035d_coarse_snapshot_manifest
+        if snapshot_path is None:
+            raise SystemExit(
+                "Task035d enriched nested-p DWR requires a coarse manifest."
+            )
+        snapshot_path = (
+            snapshot_path
+            if snapshot_path.is_absolute()
+            else ROOT / snapshot_path
+        ).resolve()
+        try:
+            snapshot = json.loads(
+                snapshot_path.read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError) as exc:
+            raise SystemExit(
+                f"Task035d coarse snapshot is unreadable: {exc}"
+            ) from exc
+        if not isinstance(snapshot, dict):
+            snapshot = {}
+        snapshot_artifact_gate = (
+            task035d_coarse_snapshot_artifact_gate(
+                snapshot_path,
+                snapshot,
+                expected_mpi_size=8,
+                expected_cell_count=134,
+            )
+        )
+        snapshot_checks = {
+            "sha256": (
+                _sha256(snapshot_path)
+                == args.task035d_coarse_snapshot_manifest_sha256
+            ),
+            "schema": (
+                snapshot.get("schema_version")
+                == "task035d.variable-p-nested-coarse-snapshot.v1"
+            ),
+            "pass": snapshot.get("pass") is True,
+            "role": snapshot.get("role") == "coarse_B",
+            "candidate": (
+                snapshot.get("candidate", {}).get("candidate_id")
+                == TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME
+            ),
+            "candidate_plan": (
+                snapshot.get("candidate", {}).get("plan_file_sha256")
+                == coarse_pair.get("plan", {}).get("sha256")
+            ),
+            "candidate_degree_counts": (
+                snapshot.get("candidate", {}).get(
+                    "cell_interior_degree_counts"
+                )
+                == {"5": 32, "6": 102}
+            ),
+            "candidate_dofs": (
+                snapshot.get("candidate", {}).get(
+                    "actual_full3d_equivalent_active_fe_dofs"
+                )
+                == 76_205
+            ),
+            "source": (
+                snapshot.get("candidate", {}).get("source_sha")
+                == args.verified_clean_sha
+            ),
+            "mpi8": (
+                snapshot.get("same_trace_identity", {}).get("mpi_size")
+                == 8
+            ),
+            "trace_rows": (
+                snapshot.get("same_trace_identity", {}).get(
+                    "independent_trace_rows"
+                )
+                == 18_390
+            ),
+            "matrix_rows": (
+                snapshot.get("same_trace_identity", {}).get(
+                    "matrix_rows"
+                )
+                == 18_470
+            ),
+            "auxiliary_rows": (
+                snapshot.get("same_trace_identity", {}).get(
+                    "auxiliary_rows"
+                )
+                == 80
+            ),
+            "same_channel_authority": (
+                snapshot.get(
+                    "significant_channel_authority",
+                    {},
+                ).get("sha256")
+                == authority_sha
+            ),
+            "all_shards_preflight": (
+                snapshot_artifact_gate["pass"] is True
+            ),
+            "trace_only_port_operator_content": (
+                snapshot.get("port_operator_audit", {}).get("pass")
+                is True
+                and all(
+                    snapshot.get("port_operator_audit", {})
+                    .get("checks", {})
+                    .values()
+                )
+                and isinstance(
+                    snapshot.get("port_operator_audit", {}).get(
+                        "removed_active_interior_over_threshold_max"
+                    ),
+                    (int, float),
+                )
+                and 0.0
+                <= float(
+                    snapshot["port_operator_audit"][
+                        "removed_active_interior_over_threshold_max"
+                    ]
+                )
+                <= 1.0
+                and isinstance(
+                    snapshot.get("port_operator_audit", {}).get(
+                        "external_operator_content_sha256"
+                    ),
+                    str,
+                )
+                and len(
+                    snapshot["port_operator_audit"][
+                        "external_operator_content_sha256"
+                    ]
+                )
+                == 64
+                and isinstance(
+                    snapshot.get("port_operator_audit", {}).get(
+                        "external_rhs_content_sha256"
+                    ),
+                    str,
+                )
+                and len(
+                    snapshot["port_operator_audit"][
+                        "external_rhs_content_sha256"
+                    ]
+                )
+                == 64
+            ),
+            "primal_residual_gate": (
+                snapshot.get("primal_residual_gate", {}).get("pass")
+                is True
+                and all(
+                    snapshot.get("primal_residual_gate", {})
+                    .get("checks", {})
+                    .values()
+                )
+                and isinstance(
+                    snapshot.get("vector_identity", {}).get(
+                        "relative_residual"
+                    ),
+                    (int, float),
+                )
+                and float(
+                    snapshot["vector_identity"]["relative_residual"]
+                )
+                <= 1.0e-9
+                and isinstance(
+                    snapshot.get("full_active_residual", {}).get(
+                        "linear_system_relative_residual"
+                    ),
+                    (int, float),
+                )
+                and float(
+                    snapshot["full_active_residual"][
+                        "linear_system_relative_residual"
+                    ]
+                )
+                <= 1.0e-9
+            ),
+        }
+        failures.extend(
+            f"coarse_snapshot_{name}"
+            for name, passed in snapshot_checks.items()
+            if not passed
+        )
+        snapshot_gate = {
+            "path": _path_from_root(snapshot_path),
+            "sha256": _sha256(snapshot_path),
+            "checks": snapshot_checks,
+            "artifact_gate": snapshot_artifact_gate,
+        }
+        args.task035d_coarse_snapshot_manifest = snapshot_path
+    args.task035d_significant_channel_authority = authority_path
+    args.task035d_nested_p_pair_authority = pair_path
+    gate = {
+        "schema_version": "task035d.nested-p-launch-gate.v1",
+        "phase": phase,
+        "pass": not failures,
+        "failures": failures,
+        "significant_channel_authority": {
+            "path": _path_from_root(authority_path),
+            "sha256": authority_sha,
+            "checks": authority_checks,
+        },
+        "nested_p_pair_authority": {
+            "path": _path_from_root(pair_path),
+            "sha256": pair_sha,
+            "checks": pair_checks,
+            "referenced_file_checks": pair_reference_checks,
+        },
+        "coarse_snapshot": snapshot_gate,
+        "same_trace_only": True,
+        "cross_trace_primal_prolongation": False,
+    }
+    if failures:
+        raise SystemExit(
+            f"Task035d nested-p launch inputs failed: {failures}"
+        )
     return gate
 
 
@@ -1135,6 +1902,37 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
                 str(args.verified_clean_sha),
             )
         )
+        if args.task035d_nested_p_dwr_phase is not None:
+            command.extend(
+                (
+                    "--task035d-nested-p-dwr-phase",
+                    str(args.task035d_nested_p_dwr_phase),
+                    "--task035d-significant-channel-authority",
+                    str(args.task035d_significant_channel_authority),
+                    "--task035d-significant-channel-authority-sha256",
+                    str(
+                        args.task035d_significant_channel_authority_sha256
+                    ),
+                    "--task035d-nested-p-pair-authority",
+                    str(args.task035d_nested_p_pair_authority),
+                    "--task035d-nested-p-pair-authority-sha256",
+                    str(args.task035d_nested_p_pair_authority_sha256),
+                )
+            )
+            if (
+                args.task035d_nested_p_dwr_phase
+                == "enriched-evaluate"
+            ):
+                command.extend(
+                    (
+                        "--task035d-coarse-snapshot-manifest",
+                        str(args.task035d_coarse_snapshot_manifest),
+                        "--task035d-coarse-snapshot-manifest-sha256",
+                        str(
+                            args.task035d_coarse_snapshot_manifest_sha256
+                        ),
+                    )
+                )
     return command
 
 
@@ -1161,6 +1959,7 @@ def _run_parent(args: argparse.Namespace) -> int:
     p4_gate = _validate_p4_gate(args)
     task035c_p6_gate = _validate_task035c_p6_preflight(args)
     task035d_case097_gate = _validate_task035d_case097_plan(args)
+    task035d_nested_p_gate = _validate_task035d_nested_p_inputs(args)
     source_before = _source_provenance(args)
     if args.task035d_case097_gate:
         task035d_status_before = subprocess.check_output(
@@ -1313,6 +2112,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         observed_worker_rank_count=sampler["max_observed_worker_rank_count"],
         resource_summary=sampler,
     )
+    task035d_nested_p_evidence = None
     if args.task035d_case097_gate:
         raw_artifact_checks = {
             "task035d_solver_summary_hash_bound": (
@@ -1338,6 +2138,294 @@ def _run_parent(args: argparse.Namespace) -> int:
                 )
             ),
         }
+        if args.task035d_nested_p_dwr_phase == "coarse-snapshot":
+            nested_path = (
+                run_dir / "nested_p_snapshot" / "manifest.json"
+            )
+            try:
+                nested_payload = json.loads(
+                    nested_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                nested_payload = {}
+            if not isinstance(nested_payload, dict):
+                nested_payload = {}
+            nested_shards = (
+                nested_payload.get("shards", ())
+            )
+            nested_primal_gate = nested_payload.get(
+                "primal_residual_gate", {}
+            )
+            nested_candidate = nested_payload.get("candidate", {})
+            nested_trace = nested_payload.get(
+                "same_trace_identity", {}
+            )
+            nested_checks = {
+                "task035d_nested_p_coarse_manifest": (
+                    _sha256(nested_path) is not None
+                    and nested_payload.get("schema_version")
+                    == (
+                        "task035d.variable-p-nested-coarse-"
+                        "snapshot.v1"
+                    )
+                    and nested_payload.get("pass") is True
+                    and nested_payload.get("role") == "coarse_B"
+                ),
+                "task035d_nested_p_coarse_source": (
+                    nested_candidate.get("source_sha")
+                    == args.verified_clean_sha
+                ),
+                "task035d_nested_p_coarse_candidate": (
+                    nested_candidate.get("candidate_id")
+                    == TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME
+                    and nested_candidate.get("plan_file_sha256")
+                    == args.stage4_local_h_refinement_plan_sha256
+                    and nested_candidate.get(
+                        "cell_interior_degree_counts"
+                    )
+                    == {"5": 32, "6": 102}
+                    and nested_candidate.get(
+                        "actual_full3d_equivalent_active_fe_dofs"
+                    )
+                    == 76_205
+                ),
+                "task035d_nested_p_coarse_trace_identity": (
+                    nested_trace.get("mpi_size") == 8
+                    and nested_trace.get("independent_trace_rows")
+                    == 18_390
+                    and nested_trace.get("auxiliary_rows") == 80
+                    and nested_trace.get("matrix_rows") == 18_470
+                ),
+                "task035d_nested_p_coarse_channel_authority": (
+                    nested_payload.get(
+                        "significant_channel_authority", {}
+                    ).get("sha256")
+                    == args.task035d_significant_channel_authority_sha256
+                ),
+                "task035d_nested_p_coarse_port_content": (
+                    nested_payload.get(
+                        "port_operator_audit", {}
+                    ).get("pass")
+                    is True
+                    and isinstance(
+                        nested_payload.get(
+                            "port_operator_audit", {}
+                        ).get("external_operator_content_sha256"),
+                        str,
+                    )
+                    and isinstance(
+                        nested_payload.get(
+                            "port_operator_audit", {}
+                        ).get("external_rhs_content_sha256"),
+                        str,
+                    )
+                ),
+                "task035d_nested_p_coarse_primal_residual": (
+                    nested_primal_gate.get("pass") is True
+                    and len(nested_primal_gate.get("checks", {})) == 4
+                    and all(
+                        nested_primal_gate.get("checks", {}).values()
+                    )
+                    and _finite_number_le(
+                        nested_payload.get(
+                            "vector_identity", {}
+                        ).get("relative_residual"),
+                        1.0e-9,
+                    )
+                    and _finite_number_le(
+                        nested_payload.get(
+                            "full_active_residual", {}
+                        ).get("linear_system_relative_residual"),
+                        1.0e-9,
+                    )
+                ),
+                "task035d_nested_p_eight_hash_bound_shards": (
+                    len(nested_shards) == 8
+                    and all(
+                        _sha256(
+                            nested_path.parent / str(shard["path"])
+                        )
+                        == shard.get("sha256")
+                        for shard in nested_shards
+                    )
+                ),
+            }
+            task035d_nested_p_evidence = {
+                "phase": "coarse-snapshot",
+                "path": _path_from_root(nested_path),
+                "sha256": _sha256(nested_path),
+                "payload": nested_payload,
+            }
+            raw_artifact_checks.update(nested_checks)
+        elif args.task035d_nested_p_dwr_phase == "enriched-evaluate":
+            nested_path = run_dir / "nested_p_dwr_report.json"
+            try:
+                nested_payload = json.loads(
+                    nested_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                nested_payload = {}
+            if not isinstance(nested_payload, dict):
+                nested_payload = {}
+            goal_dwr = (
+                nested_payload.get("goal_dwr", {})
+            )
+            basis = (
+                nested_payload.get(
+                    "unit_channel_adjoint_basis",
+                    {},
+                )
+            )
+            primal_endpoints = nested_payload.get(
+                "primal_endpoints", {}
+            )
+            coarse_endpoint_gate = primal_endpoints.get(
+                "coarse_residual_gate", {}
+            )
+            enriched_endpoint_gate = primal_endpoints.get(
+                "enriched_residual_gate", {}
+            )
+            basis_channels = basis.get("channels", {})
+            basis_goals = basis.get("goals", {})
+            try:
+                channel_authority_payload = json.loads(
+                    args.task035d_significant_channel_authority.read_text(
+                        encoding="utf-8"
+                    )
+                )
+            except (OSError, json.JSONDecodeError):
+                channel_authority_payload = {}
+            independent_checker_gate = (
+                task035d_nested_p_dwr_report_gate(
+                    nested_payload,
+                    channel_authority_payload,
+                )
+            )
+            nested_checks = {
+                "task035d_nested_p_dwr_report": (
+                    _sha256(nested_path) is not None
+                    and nested_payload.get("schema_version")
+                    == "task035d.variable-p-nested-live-dwr.v1"
+                    and nested_payload.get("pass") is True
+                ),
+                "task035d_nested_p_endpoint_identity": (
+                    nested_payload.get(
+                        "enriched_candidate", {}
+                    ).get("candidate_id")
+                    == TASK035D_LOCAL_H_PLAN_NAME
+                    and nested_payload.get(
+                        "enriched_candidate", {}
+                    ).get("source_sha")
+                    == args.verified_clean_sha
+                    and nested_payload.get(
+                        "enriched_candidate", {}
+                    ).get("plan_file_sha256")
+                    == args.stage4_local_h_refinement_plan_sha256
+                    and nested_payload.get(
+                        "coarse_snapshot", {}
+                    ).get("manifest_sha256")
+                    == args.task035d_coarse_snapshot_manifest_sha256
+                    and nested_payload.get(
+                        "significant_channel_authority", {}
+                    ).get("sha256")
+                    == args.task035d_significant_channel_authority_sha256
+                ),
+                "task035d_nested_p_primal_endpoint_residuals": (
+                    coarse_endpoint_gate.get("pass") is True
+                    and enriched_endpoint_gate.get("pass") is True
+                    and all(
+                        coarse_endpoint_gate.get("checks", {}).values()
+                    )
+                    and all(
+                        enriched_endpoint_gate.get(
+                            "checks", {}
+                        ).values()
+                    )
+                    and _finite_number_le(
+                        primal_endpoints.get(
+                            "coarse_relative_residual"
+                        ),
+                        1.0e-9,
+                    )
+                    and _finite_number_le(
+                        primal_endpoints.get(
+                            "enriched_relative_residual"
+                        ),
+                        1.0e-9,
+                    )
+                ),
+                "task035d_nested_p_residual_partition": (
+                    nested_payload.get("residual_partition", {}).get(
+                        "pass"
+                    )
+                    is True
+                ),
+                "task035d_nested_p_twelve_unit_adjoints": (
+                    basis.get("pass") is True
+                    and basis.get("unit_adjoint_solve_count") == 12
+                    and basis.get("physical_channel_count") == 12
+                    and len(basis_channels) == 12
+                    and all(
+                        channel.get("pass") is True
+                        and _finite_number_le(
+                            channel.get(
+                                "adjoint_residual", {}
+                            ).get("relative_residual"),
+                            1.0e-9,
+                        )
+                        for channel in basis_channels.values()
+                    )
+                ),
+                "task035d_nested_p_36_goal_closure": (
+                    goal_dwr.get("pass") is True
+                    and goal_dwr.get("passed_real_goal_count") == 36
+                    and goal_dwr.get("power_goal_pass_count") == 12
+                    and goal_dwr.get(
+                        "complex_amplitude_component_goal_pass_count"
+                    )
+                    == 24
+                    and len(goal_dwr.get("goals", {})) == 36
+                    and all(
+                        goal.get("pass") is True
+                        for goal in goal_dwr.get("goals", {}).values()
+                    )
+                    and len(basis_goals) == 36
+                    and all(
+                        goal.get("pass") is True
+                        and _finite_number_le(
+                            goal.get(
+                                "scaled_adjoint_residual", {}
+                            ).get("relative_residual"),
+                            1.0e-9,
+                        )
+                        for goal in basis_goals.values()
+                    )
+                    and nested_payload.get(
+                        "significant_channel_authority", {}
+                    ).get(
+                        "selected_goal_set_complete_by_frozen_authority"
+                    )
+                    is True
+                ),
+                "task035d_nested_p_same_trace_only": (
+                    nested_payload.get("same_trace_only") is True
+                    and nested_payload.get(
+                        "cross_trace_primal_prolongation_used"
+                    )
+                    is False
+                ),
+                "task035d_nested_p_independent_checker": (
+                    independent_checker_gate["pass"] is True
+                ),
+            }
+            task035d_nested_p_evidence = {
+                "phase": "enriched-evaluate",
+                "path": _path_from_root(nested_path),
+                "sha256": _sha256(nested_path),
+                "payload": nested_payload,
+                "independent_checker": independent_checker_gate,
+            }
+            raw_artifact_checks.update(nested_checks)
         qualification["checks"].update(raw_artifact_checks)
         qualification["failures"].extend(
             name
@@ -1365,6 +2453,16 @@ def _run_parent(args: argparse.Namespace) -> int:
         if qualification["pass"] and args.run_kind == "assembly-only"
         else "factorization_calibration_pass"
         if qualification["pass"] and args.run_kind == "factorization-only"
+        else "task035d_nested_p_coarse_snapshot_pass"
+        if (
+            qualification["pass"]
+            and args.task035d_nested_p_dwr_phase == "coarse-snapshot"
+        )
+        else "task035d_nested_p_live_dwr_pass"
+        if (
+            qualification["pass"]
+            and args.task035d_nested_p_dwr_phase == "enriched-evaluate"
+        )
         else "task035d_candidate_numerical_pass"
         if qualification["pass"] and args.task035d_case097_gate
         else "full3d_reference_pass"
@@ -1402,6 +2500,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         "p4_prerequisite_gate": p4_gate,
         "task035c_p6_h10_preflight_gate": task035c_p6_gate,
         "task035d_case097_launch_gate": task035d_case097_gate,
+        "task035d_nested_p_launch_gate": task035d_nested_p_gate,
         "task035d_candidate_id": (
             args.task035d_candidate_id
             if args.task035d_case097_gate
@@ -1412,6 +2511,10 @@ def _run_parent(args: argparse.Namespace) -> int:
             if args.task035d_case097_gate
             else None
         ),
+        "task035d_nested_p_dwr_phase": (
+            args.task035d_nested_p_dwr_phase
+        ),
+        "task035d_nested_p_evidence": task035d_nested_p_evidence,
         "resource_policy": {
             "swap_allowed": args.allow_swap,
             "warning_gib": args.warning_gib,

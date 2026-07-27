@@ -153,6 +153,76 @@ class CellSchurDeltaResidual:
     global_residual: np.ndarray
 
 
+def cell_schur_action_delta_residual(
+    *,
+    global_size: int,
+    rows: np.ndarray,
+    expansion: np.ndarray,
+    action_a_on_trace_b: np.ndarray,
+    action_b_on_trace_b: np.ndarray,
+    interior_rhs_correction_a: np.ndarray,
+    interior_rhs_correction_b: np.ndarray,
+) -> CellSchurDeltaResidual:
+    """Build one cell residual from streamed Schur actions.
+
+    The formal live path deliberately persists only ``S_A t_B`` and
+    ``S_B t_B`` rather than either dense local Schur matrix.  The two RHS
+    correction vectors are ``-A_ti A_ii^-1 f_i`` in the same oriented local
+    trace coordinates.  Direct trace RHS entries remain part of the external
+    (port/auxiliary) partition.
+    """
+
+    size = int(global_size)
+    if size <= 0:
+        raise ValueError("global residual size must be positive")
+    selected_rows = np.asarray(rows, dtype=np.int64)
+    if (
+        selected_rows.ndim != 1
+        or np.any(selected_rows < 0)
+        or np.any(selected_rows >= size)
+    ):
+        raise ValueError("cell independent rows are invalid")
+    constraint = _complex_matrix(expansion, name="cell expansion")
+    if constraint.shape[1] != len(selected_rows):
+        raise ValueError(
+            "cell expansion columns do not match independent rows"
+        )
+    local_size = int(constraint.shape[0])
+    vectors = tuple(
+        _complex_vector(values, name=name)
+        for values, name in (
+            (action_a_on_trace_b, "enriched cell Schur action"),
+            (action_b_on_trace_b, "coarse cell Schur action"),
+            (
+                interior_rhs_correction_a,
+                "enriched cell interior RHS correction",
+            ),
+            (
+                interior_rhs_correction_b,
+                "coarse cell interior RHS correction",
+            ),
+        )
+    )
+    if any(vector.shape != (local_size,) for vector in vectors):
+        raise ValueError("cell action or RHS correction has the wrong shape")
+    local_residual = np.ascontiguousarray(
+        vectors[2] - vectors[3] - (vectors[0] - vectors[1])
+    )
+    reduced = np.ascontiguousarray(
+        constraint.conj().T @ local_residual
+    )
+    global_residual = np.zeros(size, dtype=np.complex128)
+    np.add.at(global_residual, selected_rows, reduced)
+    local_trace = np.empty(0, dtype=np.complex128)
+    for values in (local_trace, local_residual, global_residual):
+        values.setflags(write=False)
+    return CellSchurDeltaResidual(
+        local_trace=local_trace,
+        local_residual=local_residual,
+        global_residual=global_residual,
+    )
+
+
 def cell_schur_delta_residual(
     *,
     global_size: int,
@@ -438,6 +508,7 @@ __all__ = [
     "CellSchurDeltaResidual",
     "affine_channel_value",
     "affine_goal_gradient",
+    "cell_schur_action_delta_residual",
     "cell_schur_delta_residual",
     "complex_pairing",
     "effective_enriched_residual",

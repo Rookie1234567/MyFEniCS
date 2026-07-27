@@ -8,6 +8,7 @@ import pytest
 from src.adaptivity.nested_p_dwr import (
     affine_channel_value,
     affine_goal_gradient,
+    cell_schur_action_delta_residual,
     cell_schur_delta_residual,
     complex_pairing,
     effective_enriched_residual,
@@ -238,6 +239,44 @@ def _fixture() -> _Fixture:
         effective=effective,
         cells=cells,
         components=components,
+    )
+
+
+def test_streamed_cell_action_matches_dense_schur_identity() -> None:
+    fixture = _fixture()
+    cell = fixture.cells[0]
+    local_trace = cell.expansion @ fixture.state_b[cell.rows]
+    dense = cell_schur_delta_residual(
+        global_size=len(fixture.state_b),
+        rows=cell.rows,
+        expansion=cell.expansion,
+        schur_a=cell.schur_a,
+        schur_b=cell.schur_b,
+        rhs_a=cell.rhs_a,
+        rhs_b=cell.rhs_b,
+        state_b=fixture.state_b,
+    )
+    streamed = cell_schur_action_delta_residual(
+        global_size=len(fixture.state_b),
+        rows=cell.rows,
+        expansion=cell.expansion,
+        action_a_on_trace_b=cell.schur_a @ local_trace,
+        action_b_on_trace_b=cell.schur_b @ local_trace,
+        interior_rhs_correction_a=cell.rhs_a,
+        interior_rhs_correction_b=cell.rhs_b,
+    )
+    assert streamed.local_trace.shape == (0,)
+    np.testing.assert_allclose(
+        streamed.local_residual,
+        dense.local_residual,
+        rtol=2.0e-13,
+        atol=2.0e-13,
+    )
+    np.testing.assert_allclose(
+        streamed.global_residual,
+        dense.global_residual,
+        rtol=2.0e-13,
+        atol=2.0e-13,
     )
 
 

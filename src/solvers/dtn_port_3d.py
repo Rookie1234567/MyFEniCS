@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import csv
 from dataclasses import dataclass
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -95,6 +96,7 @@ class Stage4VariablePLiveView:
     recovered: VariablePRecoveredSolution
     goal_context: Mapping[str, Any]
     port_metrics: Mapping[str, Any]
+    port_operator_audit: Mapping[str, Any]
     full_active_residual: Mapping[str, Any]
     primal_solver_telemetry: Mapping[str, Any]
 
@@ -136,6 +138,190 @@ def _deep_readonly_copy(value: Any) -> Any:
         copied.setflags(write=False)
         return copied
     return copy.deepcopy(value)
+
+
+def _update_evidence_digest_array(
+    digest: Any,
+    name: str,
+    values: Any,
+    *,
+    dtype: np.dtype[Any],
+) -> None:
+    array = np.ascontiguousarray(np.asarray(values), dtype=dtype)
+    digest.update(name.encode("ascii"))
+    digest.update(b"\0")
+    digest.update(array.dtype.str.encode("ascii"))
+    digest.update(b"\0")
+    digest.update(
+        np.asarray(array.shape, dtype=np.dtype("<i8")).tobytes()
+    )
+    digest.update(array.tobytes(order="C"))
+
+
+def _update_evidence_digest_sparse(
+    digest: Any,
+    name: str,
+    rows: Any,
+    values: Any,
+) -> None:
+    canonical_rows = np.asarray(rows, dtype=np.int64)
+    canonical_values = np.asarray(values, dtype=np.complex128)
+    if canonical_rows.shape != canonical_values.shape:
+        raise ValueError("sparse evidence rows and values are misaligned")
+    order = np.argsort(canonical_rows, kind="stable")
+    _update_evidence_digest_array(
+        digest,
+        f"{name}.rows",
+        canonical_rows[order],
+        dtype=np.dtype("<i8"),
+    )
+    _update_evidence_digest_array(
+        digest,
+        f"{name}.values",
+        canonical_values[order],
+        dtype=np.dtype("<c16"),
+    )
+
+
+def _partition_bound_evidence_sha256(
+    communicator: MPI.Intracomm,
+    *,
+    namespace: str,
+    local_sha256: str,
+) -> str:
+    rank_hashes = communicator.allgather(
+        {
+            "rank": int(communicator.rank),
+            "sha256": str(local_sha256),
+        }
+    )
+    rank_hashes.sort(key=lambda row: int(row["rank"]))
+    if [int(row["rank"]) for row in rank_hashes] != list(
+        range(communicator.size)
+    ):
+        raise RuntimeError("partition evidence does not cover MPI ranks")
+    digest = hashlib.sha256()
+    digest.update(namespace.encode("ascii"))
+    digest.update(b"\0")
+    digest.update(
+        json.dumps(
+            rank_hashes,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("ascii")
+    )
+    return digest.hexdigest()
+
+
+def _variable_p_port_operator_audit(
+    timing_details: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Freeze the trace-only DtN invariance required by nested-p DWR."""
+
+    def valid_sha256(value: Any) -> bool:
+        return bool(
+            isinstance(value, str)
+            and len(value) == 64
+            and all(character in "0123456789abcdef" for character in value)
+        )
+
+    functional_count = timing_details.get(
+        "stage4_dtn_variable_p_trace_functional_count"
+    )
+    removed_max = timing_details.get(
+        "stage4_dtn_variable_p_removed_interior_max_abs"
+    )
+    removed_over_threshold_max = timing_details.get(
+        "stage4_dtn_variable_p_removed_interior_over_threshold_max"
+    )
+    acceptance_threshold_max = timing_details.get(
+        "stage4_dtn_variable_p_acceptance_threshold_max_abs"
+    )
+    trace_only = (
+        timing_details.get(
+            "stage4_dtn_variable_p_trace_only_gate_pass"
+        )
+        is True
+    )
+    auxiliary_columns = timing_details.get(
+        "stage4_dtn_variable_p_auxiliary_interior_columns_allocated"
+    )
+    operator_sha256 = timing_details.get(
+        "stage4_dtn_trace_only_external_operator_sha256"
+    )
+    rhs_sha256 = timing_details.get(
+        "stage4_dtn_trace_only_external_rhs_sha256"
+    )
+    base_rhs_norm = timing_details.get(
+        "stage4_dtn_trace_only_base_reduced_rhs_norm"
+    )
+    checks = {
+        "trace_functionals_present": (
+            isinstance(functional_count, int) and functional_count > 0
+        ),
+        "trace_only_gate": trace_only,
+        "removed_interior_is_qualified_roundoff": (
+            isinstance(removed_max, (int, float))
+            and np.isfinite(float(removed_max))
+            and 0.0 <= float(removed_max)
+            and isinstance(
+                removed_over_threshold_max,
+                (int, float),
+            )
+            and np.isfinite(float(removed_over_threshold_max))
+            and 0.0 <= float(removed_over_threshold_max) <= 1.0
+            and isinstance(
+                acceptance_threshold_max,
+                (int, float),
+            )
+            and np.isfinite(float(acceptance_threshold_max))
+            and 0.0 < float(acceptance_threshold_max)
+        ),
+        "no_auxiliary_interior_columns": auxiliary_columns is False,
+        "external_operator_content_hash": valid_sha256(
+            operator_sha256
+        ),
+        "external_rhs_content_hash": valid_sha256(rhs_sha256),
+        "zero_volume_base_rhs": (
+            isinstance(base_rhs_norm, (int, float))
+            and np.isfinite(float(base_rhs_norm))
+            and 0.0 <= float(base_rhs_norm) <= 5.0e-13
+        ),
+    }
+    return {
+        "schema_version": (
+            "task035d.variable-p-trace-only-port-operator.v1"
+        ),
+        "pass": all(checks.values()),
+        "checks": checks,
+        "trace_functional_count": functional_count,
+        "removed_active_interior_max_abs": removed_max,
+        "removed_active_interior_over_threshold_max": (
+            removed_over_threshold_max
+        ),
+        "acceptance_threshold_max_abs": acceptance_threshold_max,
+        "roundoff_gate_semantics": (
+            "each functional is checked against max(1e-12, "
+            "5e-12 * active_trace_max_abs) before its interior entries "
+            "are zeroed; the reported ratio is the maximum of "
+            "removed_max/acceptance_threshold over all functionals"
+        ),
+        "auxiliary_interior_columns_allocated": auxiliary_columns,
+        "external_operator_content_sha256": operator_sha256,
+        "external_rhs_content_sha256": rhs_sha256,
+        "base_reduced_rhs_l2_norm": base_rhs_norm,
+        "content_identity_is_partition_bound": True,
+        "content_identity_requires_same_mpi_ownership": True,
+        "invariance_contract": (
+            "for one clean source SHA, identical geometry, trace "
+            "constraints, modes, Floquet phases, incident projections, "
+            "and auxiliary coordinates imply identical DtN/port/aux "
+            "operator and exterior-RHS actions when every surface "
+            "functional is trace-only and auxiliary-to-interior columns "
+            "are absent"
+        ),
+        "interior_degree_may_affect_port_operator": False,
+    }
 
 
 def _ksp_configuration_signature(ksp: PETSc.KSP) -> tuple[Any, ...]:
@@ -2333,6 +2519,59 @@ def _solve_stage4_dtn_port_total_field_impl(
             },
         )
 
+    trace_only_content_identity_active = bool(
+        variable_p_live_observer is not None
+        and variable_p_reduction is not None
+    )
+    external_operator_digest = (
+        hashlib.sha256() if trace_only_content_identity_active else None
+    )
+    external_rhs_digest = (
+        hashlib.sha256() if trace_only_content_identity_active else None
+    )
+    if (
+        external_operator_digest is not None
+        and external_rhs_digest is not None
+    ):
+        timing_details[
+            "stage4_dtn_trace_only_base_reduced_rhs_norm"
+        ] = float(b_aug.norm())
+        external_operator_digest.update(
+            b"task035d.trace-only-external-operator.local.v1\0"
+        )
+        external_rhs_digest.update(
+            b"task035d.trace-only-external-rhs.local.v1\0"
+        )
+        dimensions = np.asarray(
+            [
+                int(n_fe),
+                int(n_aux),
+                int(comm.rank),
+                int(comm.size),
+                *map(int, A_aug.getOwnershipRange()),
+                *map(int, b_aug.getOwnershipRange()),
+            ],
+            dtype=np.int64,
+        )
+        _update_evidence_digest_array(
+            external_operator_digest,
+            "dimensions",
+            dimensions,
+            dtype=np.dtype("<i8"),
+        )
+        _update_evidence_digest_array(
+            external_rhs_digest,
+            "dimensions",
+            dimensions,
+            dtype=np.dtype("<i8"),
+        )
+        _update_evidence_digest_array(
+            external_rhs_digest,
+            "base-reduced-rhs-owned",
+            b_aug.getArray(readonly=True),
+            dtype=np.dtype("<c16"),
+        )
+
     t0 = time.perf_counter()
     if assembly_time_active:
         if assembly_time_full_rhs is None:
@@ -2390,6 +2629,13 @@ def _solve_stage4_dtn_port_total_field_impl(
             incident_traction_vec
         )
         incident_traction_vec.destroy()
+    if external_rhs_digest is not None:
+        _update_evidence_digest_sparse(
+            external_rhs_digest,
+            "incident-top-traction",
+            inc_rows,
+            inc_values,
+        )
     if len(inc_rows):
         b_aug.setValues(inc_rows, inc_values, addv=PETSc.InsertMode.ADD_VALUES)
     timing_details["stage4_dtn_incident_source_vector_seconds"] = float(
@@ -2577,6 +2823,20 @@ def _solve_stage4_dtn_port_total_field_impl(
         denominator = _mode_projection_denominator(mode, cfg)
         incident_projection = _incident_projection_onto_top_mode(mode, cfg)
         incident_projections.append(incident_projection)
+        if external_rhs_digest is not None:
+            external_rhs_digest.update(
+                (
+                    f"mode-rhs:{aux_index}:{mode.side}:"
+                    f"{mode.m}:{mode.n}:{mode.polarization}"
+                ).encode("ascii")
+            )
+            external_rhs_digest.update(b"\0")
+            _update_evidence_digest_sparse(
+                external_rhs_digest,
+                f"mode-{aux_index}-incident-projection",
+                traction_rows,
+                -traction_values * incident_projection,
+            )
 
         t_insert = time.perf_counter()
         if len(traction_rows):
@@ -2664,6 +2924,32 @@ def _solve_stage4_dtn_port_total_field_impl(
                 )
                 / denominator
             )
+        if external_operator_digest is not None:
+            external_operator_digest.update(
+                (
+                    f"mode-operator:{aux_index}:{mode.side}:"
+                    f"{mode.m}:{mode.n}:{mode.polarization}"
+                ).encode("ascii")
+            )
+            external_operator_digest.update(b"\0")
+            _update_evidence_digest_sparse(
+                external_operator_digest,
+                f"mode-{aux_index}-upper-right",
+                traction_rows,
+                -traction_values,
+            )
+            _update_evidence_digest_sparse(
+                external_operator_digest,
+                f"mode-{aux_index}-lower-left",
+                ell_cols,
+                -np.conj(ell_values) / denominator,
+            )
+            _update_evidence_digest_array(
+                external_operator_digest,
+                f"mode-{aux_index}-auxiliary-diagonal",
+                np.asarray([auxiliary_diagonal]),
+                dtype=np.dtype("<c16"),
+            )
         if matrix_row_start <= aux_global < matrix_row_end:
             A_aug.setValue(
                 aux_global,
@@ -2687,6 +2973,33 @@ def _solve_stage4_dtn_port_total_field_impl(
         for vector in component_active_vectors:
             vector.destroy()
 
+    if (
+        external_operator_digest is not None
+        and external_rhs_digest is not None
+    ):
+        timing_details[
+            "stage4_dtn_trace_only_external_operator_sha256"
+        ] = _partition_bound_evidence_sha256(
+            comm,
+            namespace=(
+                "task035d.trace-only-external-operator.partition.v1"
+            ),
+            local_sha256=external_operator_digest.hexdigest(),
+        )
+        timing_details[
+            "stage4_dtn_trace_only_external_rhs_sha256"
+        ] = _partition_bound_evidence_sha256(
+            comm,
+            namespace="task035d.trace-only-external-rhs.partition.v1",
+            local_sha256=external_rhs_digest.hexdigest(),
+        )
+        timing_details[
+            "stage4_dtn_trace_only_content_identity_mpi_size"
+        ] = int(comm.size)
+        timing_details[
+            "stage4_dtn_trace_only_content_identity_partition_bound"
+        ] = True
+
     if variable_p_reduction is not None:
         timing_details[
             "stage4_dtn_variable_p_auxiliary_interior_columns_allocated"
@@ -2695,6 +3008,11 @@ def _solve_stage4_dtn_port_total_field_impl(
             "stage4_dtn_variable_p_auxiliary_interior_column_bytes_local_max"
         ] = 0
     if variable_p_trace_functional_audits:
+        removed_over_threshold = [
+            float(audit["removed_active_interior_max_abs"])
+            / float(audit["acceptance_threshold"])
+            for audit in variable_p_trace_functional_audits
+        ]
         timing_details[
             "stage4_dtn_variable_p_trace_functional_count"
         ] = len(variable_p_trace_functional_audits)
@@ -2704,6 +3022,15 @@ def _solve_stage4_dtn_port_total_field_impl(
             float(audit["removed_active_interior_max_abs"])
             for audit in variable_p_trace_functional_audits
         )
+        timing_details[
+            "stage4_dtn_variable_p_acceptance_threshold_max_abs"
+        ] = max(
+            float(audit["acceptance_threshold"])
+            for audit in variable_p_trace_functional_audits
+        )
+        timing_details[
+            "stage4_dtn_variable_p_removed_interior_over_threshold_max"
+        ] = max(removed_over_threshold)
         timing_details[
             "stage4_dtn_variable_p_trace_only_gate_pass"
         ] = True
@@ -3524,6 +3851,15 @@ def _solve_stage4_dtn_port_total_field_impl(
                     "variable-p live observer requires a converged primal "
                     "solve and full active true residual <= 1e-9"
                 )
+            port_operator_audit = _variable_p_port_operator_audit(
+                timing_details
+            )
+            if not port_operator_audit["pass"]:
+                raise RuntimeError(
+                    "variable-p live observer requires a qualified "
+                    "trace-only DtN/port operator: "
+                    f"{port_operator_audit}"
+                )
             live_view = Stage4VariablePLiveView(
                 field=E_total,
                 mesh_data=mesh_data,
@@ -3537,6 +3873,9 @@ def _solve_stage4_dtn_port_total_field_impl(
                 recovered=variable_p_recovered,
                 goal_context=_readonly_goal_context(goal_context),
                 port_metrics=_deep_readonly_copy(port_metrics),
+                port_operator_audit=_deep_readonly_copy(
+                    port_operator_audit
+                ),
                 full_active_residual=_deep_readonly_copy(
                     linear_residual
                 ),

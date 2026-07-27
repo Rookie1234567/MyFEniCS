@@ -21,6 +21,7 @@ from src.solvers.dtn_port_3d import (
     _deep_readonly_copy,
     _invoke_collective_variable_p_live_observer,
     _readonly_goal_context,
+    _variable_p_port_operator_audit,
 )
 from src.common.modes_3d import outgoing_port_modes_3d
 from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
@@ -110,6 +111,75 @@ def test_live_evidence_snapshots_are_deep_readonly() -> None:
         nested["orders"][0]["value"] = (3.0,)
     assert auxiliary[0] == 0.0
     assert modes[0].e_vector.flags.writeable is True
+
+
+def _qualified_port_operator_timing() -> dict[str, object]:
+    return {
+        "stage4_dtn_variable_p_trace_functional_count": 81,
+        "stage4_dtn_variable_p_removed_interior_max_abs": 2.53e-12,
+        "stage4_dtn_variable_p_removed_interior_over_threshold_max": 0.51,
+        "stage4_dtn_variable_p_acceptance_threshold_max_abs": 5.0e-12,
+        "stage4_dtn_variable_p_trace_only_gate_pass": True,
+        "stage4_dtn_variable_p_auxiliary_interior_columns_allocated": False,
+        "stage4_dtn_trace_only_external_operator_sha256": "a" * 64,
+        "stage4_dtn_trace_only_external_rhs_sha256": "b" * 64,
+        "stage4_dtn_trace_only_base_reduced_rhs_norm": 0.0,
+    }
+
+
+def test_port_operator_audit_uses_scale_aware_roundoff_gate() -> None:
+    audit = _variable_p_port_operator_audit(
+        _qualified_port_operator_timing()
+    )
+    assert audit["pass"] is True
+    assert audit["checks"][
+        "removed_interior_is_qualified_roundoff"
+    ] is True
+    assert audit["removed_active_interior_max_abs"] == pytest.approx(
+        2.53e-12
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (
+        (
+            "stage4_dtn_variable_p_removed_interior_over_threshold_max",
+            1.0001,
+        ),
+        (
+            "stage4_dtn_variable_p_acceptance_threshold_max_abs",
+            None,
+        ),
+    ),
+)
+def test_port_operator_audit_rejects_unqualified_roundoff(
+    field: str,
+    value: object,
+) -> None:
+    timing = _qualified_port_operator_timing()
+    timing[field] = value
+    audit = _variable_p_port_operator_audit(timing)
+    assert audit["pass"] is False
+    assert audit["checks"][
+        "removed_interior_is_qualified_roundoff"
+    ] is False
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "stage4_dtn_trace_only_external_operator_sha256",
+        "stage4_dtn_trace_only_external_rhs_sha256",
+    ),
+)
+def test_port_operator_audit_rejects_non_hex_content_hash(
+    field: str,
+) -> None:
+    timing = _qualified_port_operator_timing()
+    timing[field] = "g" * 64
+    audit = _variable_p_port_operator_audit(timing)
+    assert audit["pass"] is False
 
 
 def test_recovered_solution_cleanup_is_best_effort_and_idempotent() -> None:
