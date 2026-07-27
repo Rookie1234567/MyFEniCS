@@ -685,6 +685,18 @@ def build_stage4_local_h_reduction_authority(
     variable_interior = len(
         set(context.cell_interior_degree_by_box.values())
     ) > 1
+    cell_degree_plan_sha256 = _cell_interior_degree_sha256(
+        context.cell_interior_degree_by_box
+    )
+    geometry_canonical_entity_degree_sha256 = _json_sha256(
+        {
+            "edge_degree": int(context.trace_degree),
+            "face_degree": int(context.trace_degree),
+            "cell_interior_degree_plan_sha256": (
+                cell_degree_plan_sha256
+            ),
+        }
+    )
     degree_audit = MappingProxyType(
         {
             "schema_version": (
@@ -702,10 +714,15 @@ def build_stage4_local_h_reduction_authority(
             ),
             "cell_count": len(boxes),
             "cell_degree_counts": degree_counts,
-            "cell_degree_plan_sha256": (
-                _cell_interior_degree_sha256(
-                    context.cell_interior_degree_by_box
-                )
+            "cell_degree_plan_sha256": cell_degree_plan_sha256,
+            "geometry_canonical_entity_degree_sha256": (
+                geometry_canonical_entity_degree_sha256
+            ),
+            "runtime_global_entity_degree_sha256": (
+                entity_map.audit["canonical_degree_map_sha256"]
+            ),
+            "runtime_global_entity_id_order_partition_independent": (
+                False
             ),
             "trace_degree": context.trace_degree,
             "cell_interior_container_degree": (

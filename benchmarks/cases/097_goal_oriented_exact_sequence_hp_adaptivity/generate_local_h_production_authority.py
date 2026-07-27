@@ -80,12 +80,12 @@ CANDIDATE_SPECS = {
             "h15_symmetric_top_air_remote_p5_interior_plan_v1.json"
         ),
         "component_names": {
-            1: "combined_hp_interior_mpi1_v1.json",
-            2: "combined_hp_interior_mpi2_v1.json",
-            8: "combined_hp_interior_mpi8_v1.json",
+            1: "combined_hp_interior_mpi1_v2.json",
+            2: "combined_hp_interior_mpi2_v2.json",
+            8: "combined_hp_interior_mpi8_v2.json",
         },
         "schema_version": (
-            "case097.combined-hp-interior-component.v1"
+            "case097.combined-hp-interior-component.v2"
         ),
         "pass_status": "combined_hp_interior_component_pass",
         "marked_root_boxes": (
@@ -424,7 +424,6 @@ def _stable_identity(
     physical = reduction.audit["physical_trace"]
     constraints = reduction.audit["trace_constraints"]
     degree_plan = reduction.audit["degree_plan"]
-    entity_map = reduction.degree_plan.entity_map.audit
     return {
         "plan_file_sha256": context.plan_file_sha256,
         "base_config_identity_sha256": mesh[
@@ -460,8 +459,8 @@ def _stable_identity(
             "cell_degree_plan_sha256"
         ],
         "cell_degree_counts": degree_plan["cell_degree_counts"],
-        "canonical_degree_map_sha256": entity_map[
-            "canonical_degree_map_sha256"
+        "geometry_canonical_entity_degree_sha256": degree_plan[
+            "geometry_canonical_entity_degree_sha256"
         ],
         "raw_broken_active_fe_dofs": reduction.audit[
             "raw_broken_active_fe_dofs"

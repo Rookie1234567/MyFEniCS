@@ -209,6 +209,17 @@ def test_h100_true_variable_cell_interiors_remove_p6_rows() -> None:
         "p6": 51,
     }
     assert mixed.degree_plan.cell_degree_by_box[p5_box] == 5
+    assert len(
+        mixed.degree_plan.audit[
+            "geometry_canonical_entity_degree_sha256"
+        ]
+    ) == 64
+    assert (
+        mixed.degree_plan.audit[
+            "runtime_global_entity_id_order_partition_independent"
+        ]
+        is False
+    )
     assert (
         mixed.degree_plan.entity_map.active_trace_rows
         == uniform.degree_plan.entity_map.active_trace_rows

@@ -64,15 +64,15 @@ CANDIDATE_SPECS = {
             "h15_symmetric_top_air_remote_p5_interior_plan_v1.json"
         ),
         "record_names": {
-            1: "combined_hp_interior_mpi1_v1.json",
-            2: "combined_hp_interior_mpi2_v1.json",
-            8: "combined_hp_interior_mpi8_v1.json",
+            1: "combined_hp_interior_mpi1_v2.json",
+            2: "combined_hp_interior_mpi2_v2.json",
+            8: "combined_hp_interior_mpi8_v2.json",
         },
-        "output_name": "combined_hp_interior_mpi_identity_v1.json",
-        "schema": "case097.combined-hp-interior-component.v1",
+        "output_name": "combined_hp_interior_mpi_identity_v2.json",
+        "schema": "case097.combined-hp-interior-component.v2",
         "pass_status": "combined_hp_interior_component_pass",
         "identity_schema": (
-            "case097.combined-hp-interior-mpi-identity.v1"
+            "case097.combined-hp-interior-mpi-identity.v2"
         ),
         "identity_status": "combined_hp_interior_mpi_identity_pass",
         "pde_launch_scope": (
@@ -227,7 +227,9 @@ def _validate_one(
             == {"p4": 0, "p5": 32, "p6": 116}
             and isinstance(stable.get("cell_degree_plan_sha256"), str)
             and isinstance(
-                stable.get("canonical_degree_map_sha256"),
+                stable.get(
+                    "geometry_canonical_entity_degree_sha256"
+                ),
                 str,
             )
         ):
