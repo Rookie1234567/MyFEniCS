@@ -1,0 +1,95 @@
+{
+  "schema_version": "task035d.variable-p-live-observer-anchor.v1",
+  "status": "component_pass",
+  "pass": true,
+  "classification": "component_qualification_only",
+  "task": "Task035d",
+  "case_id": "097_goal_oriented_exact_sequence_hp_adaptivity",
+  "source_identity": {
+    "executed_worktree_parent_sha": "85c8f1d978465cecde202556dbdb8dd2f862a75a",
+    "committed_source_sha": "17a7c3eacd6b405f7e65671ba9ef4d71913dc6b3",
+    "exact_executed_source_committed_without_intervening_source_change": true
+  },
+  "command": "MYFENICS_RUN_TASK035D_PDE_FIXTURE=1 mpiexec -n 2 python -m pytest -q -s src/test/test_190_task035d_variable_p_stage4_smoke.py",
+  "environment": {
+    "activation": "source scripts/activate_myfenics_wsl.sh",
+    "mpi_size": 2,
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "direct_factor_solver": "mumps"
+  },
+  "run": {
+    "degree_container": 6,
+    "h_nm": 100.0,
+    "mesh_cells": 24,
+    "actual_axis_counts": [
+      3,
+      2,
+      4
+    ],
+    "cell_degree_policy": "uniform_p6_degenerate_control",
+    "formal_candidate": false,
+    "heavy_pde": true,
+    "pytest_result_per_rank": "1 passed",
+    "pytest_wall_seconds": 355.72,
+    "solver_elapsed_seconds": 350.6996062800172
+  },
+  "live_observer_gate": {
+    "requested": true,
+    "invoked": true,
+    "contract": "controlled_collective_callback_borrowed_objects",
+    "real_mumps_factor_reused_by_solve_transpose": true,
+    "transpose_backsolve_converged_reason_positive": true,
+    "borrowed_matrix_rhs_solution_field_state_unchanged": true,
+    "borrowed_ksp_configuration_unchanged": true,
+    "recovered_active_vectors_released_after_callback": true,
+    "solver_objects_released_before_postprocess": true,
+    "ordinary_default_changed": false
+  },
+  "numerical_result": {
+    "case_status": "completed",
+    "official_result": true,
+    "active_fe_dofs": 17478,
+    "periodic_independent_trace_rows": 5184,
+    "dtn_rows": 80,
+    "matrix_rows": 5264,
+    "matrix_nnz_used": 3894728,
+    "matrix_nnz_allocated": 4106888,
+    "matrix_mallocs": 0,
+    "full_explicit_true_relative_residual": 1.2490581806142924e-11,
+    "R_total": 0.003164570717010695,
+    "T_total": 0.5911613800926182,
+    "A_volume_total": 0.4056740491903019,
+    "R_plus_T_plus_A_volume": 0.9999999999999308,
+    "energy_closure_error": -6.916689443414725e-14
+  },
+  "resource_result": {
+    "max_rank_historical_peak_rss_mb": 822.84375,
+    "sum_rank_historical_peaks_mb_upper_bound": 1584.9921875,
+    "simultaneous_rss_after_live_observer_mb": 1585.3046875,
+    "simultaneous_rss_after_solver_release_mb": 753.48828125,
+    "simultaneous_rss_released_mb": 831.81640625,
+    "swap_used_mb": 0.0
+  },
+  "timing_seconds": {
+    "stage4_dtn_port_assembly_and_solve": 341.4422146669822,
+    "base_matrix_assembly": 324.88032838498475,
+    "variable_p_condensed_build": 55.95401360699907,
+    "modal_loop": 8.440106122987345,
+    "ksp_setup": 6.90571706200717,
+    "ksp_solve": 0.02633760095341131,
+    "recovery": 0.2984857800183818,
+    "matrix_free_full_residual": 0.32706170401070267,
+    "postprocess": 3.0258577429922298
+  },
+  "artifact_identity": {
+    "artifact_root": "/tmp/task035d_variable_p_dtn_smoke_mpi2/solve",
+    "artifact_retention": "local_tmp_not_git",
+    "run_summary_sha256": "07b07875a7a6aa26974de4eb96e6f0f4a257ab411c15fa3af36d6e337d590285",
+    "progress_3d_jsonl_sha256": "1d7a633f65571565f710dd9d57595e51be824622a6f47cf47a1401bdab206664",
+    "dtn_port_diffraction_orders_sha256": "35fb18cd40b3e3eebed04eb96eff16e1f30fed67d06190d072a0c8ab4fd3bf21"
+  },
+  "accuracy_credit": "component qualification only; no p6/h10 reference-v1 channel credit",
+  "next_use": "live factor and recovered-state bridge for nested-p signed DWR snapshots",
+  "ordinary_default_changed": false
+}
