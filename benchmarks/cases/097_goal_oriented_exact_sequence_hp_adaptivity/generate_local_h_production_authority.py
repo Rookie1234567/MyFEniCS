@@ -93,6 +93,7 @@ CANDIDATE_SPECS = {
             (33.5, 0.0, 120.0, 41.75, 12.5, 130.0),
         ),
         "variable_interior": True,
+        "cell_degree_counts": {"p4": 0, "p5": 32, "p6": 116},
         "expected": {
             "root_cell_count": 120,
             "leaf_cell_count": 148,
@@ -104,6 +105,35 @@ CANDIDATE_SPECS = {
             "actual_full3d_equivalent_active_fe_dofs": 84_240,
             "independent_trace_rows": 19_980,
             "predicted_direct_solve_rows": 20_060,
+        },
+    },
+    "h15_top_air_remote_p5_interior_bridge_v1": {
+        "plan_name": (
+            "h15_top_air_remote_p5_interior_bridge_plan_v1.json"
+        ),
+        "component_names": {
+            1: "hp_factorial_bridge_mpi1_v1.json",
+            2: "hp_factorial_bridge_mpi2_v1.json",
+            8: "hp_factorial_bridge_mpi8_v1.json",
+        },
+        "schema_version": "case097.hp-factorial-bridge-component.v1",
+        "pass_status": "hp_factorial_bridge_component_pass",
+        "marked_root_boxes": (
+            (8.25, 0.0, 120.0, 16.5, 12.5, 130.0),
+        ),
+        "variable_interior": True,
+        "cell_degree_counts": {"p4": 0, "p5": 32, "p6": 102},
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 134,
+            "hanging_patch_count": 6,
+            "raw_broken_active_fe_dofs": 77_455,
+            "raw_broken_trace_rows": 23_875,
+            "hanging_slave_rows": 1_250,
+            "periodic_slave_rows": 4_235,
+            "actual_full3d_equivalent_active_fe_dofs": 76_205,
+            "independent_trace_rows": 18_390,
+            "predicted_direct_solve_rows": 18_470,
         },
     },
 }
@@ -362,21 +392,42 @@ def build_plan_payload(
             raise RuntimeError(
                 "combined h/p remote-air classifier must mark 32 cells"
             )
+        is_factorial_bridge = (
+            candidate_id
+            == "h15_top_air_remote_p5_interior_bridge_v1"
+        )
         provenance = {
             "purpose": (
-                "Task035d first local-h plus true variable-interior "
-                "candidate"
+                "Task035d factorial bridge isolating remote interior "
+                "p-down on the accepted one-sided local-h mesh"
+                if is_factorial_bridge
+                else (
+                    "Task035d first local-h plus true variable-interior "
+                    "candidate"
+                )
             ),
             "candidate_id": candidate_id,
             "h_action": (
-                "one split in each top-air root immediately outside the "
-                "left and right grating sidewalls, then y-periodic closure"
+                "the frozen one-sided top-air split and y-periodic closure "
+                "are unchanged from h15_top_air_local_h_v1"
+                if is_factorial_bridge
+                else (
+                    "one split in each top-air root immediately outside "
+                    "the left and right grating sidewalls, then "
+                    "y-periodic closure"
+                )
             ),
             "h_action_evidence": (
-                "symmetric diagnostic response to the h15 one-sided "
-                "local-h 6/12 power plus 6/12 amplitude controlled "
-                "negative; heuristic channel-directed action, not actual "
-                "DWR or adjoint credit"
+                "factorial control: no new h action relative to the "
+                "one-sided 6/12 power plus 6/12 amplitude anchor; "
+                "not actual DWR or adjoint credit"
+                if is_factorial_bridge
+                else (
+                    "symmetric diagnostic response to the h15 one-sided "
+                    "local-h 6/12 power plus 6/12 amplitude controlled "
+                    "negative; heuristic channel-directed action, not "
+                    "actual DWR or adjoint credit"
+                )
             ),
             "p_action": (
                 "p6-to-p5 cell-interior only in 32 unrefined homogeneous "
@@ -385,9 +436,17 @@ def build_plan_payload(
                 "bottom-port cells"
             ),
             "p_action_evidence": (
-                "geometry smoothness and distance guard; no variable "
-                "trace, DWR, or full combined-hp completion credit"
+                "factorial A-to-B discriminator for the degradation seen "
+                "after the mixed symmetric-h plus remote-p5 action; "
+                "no variable trace, DWR, or full combined-hp completion "
+                "credit"
+                if is_factorial_bridge
+                else (
+                    "geometry smoothness and distance guard; no variable "
+                    "trace, DWR, or full combined-hp completion credit"
+                )
             ),
+            "factorial_bridge": is_factorial_bridge,
             "accuracy_credit": False,
             "complete_combined_hp_credit": False,
             "ordinary_default_changed": False,
@@ -547,7 +606,7 @@ def generate_component(
                 reduction.degree_plan.audit[
                     "cell_degree_counts"
                 ]
-                == {"p4": 0, "p5": 32, "p6": 116}
+                == spec["cell_degree_counts"]
                 and reduction.degree_plan.audit[
                     "local_variable_trace_implemented"
                 ]

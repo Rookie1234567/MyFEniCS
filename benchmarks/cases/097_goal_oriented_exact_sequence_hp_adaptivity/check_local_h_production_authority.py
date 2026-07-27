@@ -92,6 +92,44 @@ CANDIDATE_SPECS = {
             "predicted_direct_solve_rows": 20_060,
         },
         "variable_interior": True,
+        "cell_degree_counts": {"p4": 0, "p5": 32, "p6": 116},
+    },
+    "h15_top_air_remote_p5_interior_bridge_v1": {
+        "plan_relative": (
+            "benchmarks/cases/"
+            "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+            "h15_top_air_remote_p5_interior_bridge_plan_v1.json"
+        ),
+        "record_names": {
+            1: "hp_factorial_bridge_mpi1_v1.json",
+            2: "hp_factorial_bridge_mpi2_v1.json",
+            8: "hp_factorial_bridge_mpi8_v1.json",
+        },
+        "output_name": "hp_factorial_bridge_mpi_identity_v1.json",
+        "schema": "case097.hp-factorial-bridge-component.v1",
+        "pass_status": "hp_factorial_bridge_component_pass",
+        "identity_schema": (
+            "case097.hp-factorial-bridge-mpi-identity.v1"
+        ),
+        "identity_status": "hp_factorial_bridge_mpi_identity_pass",
+        "pde_launch_scope": (
+            "one formal MPI8 h15 one-sided local-h plus remote-p5 "
+            "interior factorial-bridge direct PDE"
+        ),
+        "expected": {
+            "root_cell_count": 120,
+            "leaf_cell_count": 134,
+            "hanging_patch_count": 6,
+            "raw_broken_active_fe_dofs": 77_455,
+            "raw_broken_trace_rows": 23_875,
+            "hanging_slave_rows": 1_250,
+            "periodic_slave_rows": 4_235,
+            "actual_full3d_equivalent_active_fe_dofs": 76_205,
+            "independent_trace_rows": 18_390,
+            "predicted_direct_solve_rows": 18_470,
+        },
+        "variable_interior": True,
+        "cell_degree_counts": {"p4": 0, "p5": 32, "p6": 102},
     },
 }
 
@@ -214,7 +252,7 @@ def _validate_one(
             failures.append("production_reduction")
         if spec["variable_interior"] and not (
             reduction["degree_plan"].get("cell_degree_counts")
-            == {"p4": 0, "p5": 32, "p6": 116}
+            == spec["cell_degree_counts"]
             and reduction["degree_plan"].get(
                 "local_variable_trace_implemented"
             )
@@ -224,7 +262,7 @@ def _validate_one(
             )
             is False
             and stable.get("cell_degree_counts")
-            == {"p4": 0, "p5": 32, "p6": 116}
+            == spec["cell_degree_counts"]
             and isinstance(stable.get("cell_degree_plan_sha256"), str)
             and isinstance(
                 stable.get(
