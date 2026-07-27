@@ -1,0 +1,87 @@
+{
+  "candidate_id": "h15_symmetric_top_air_remote_p5_interior_v1",
+  "checker_identity": {
+    "committed_sha256": "fa6b8d37e3663dd87b8694c1838abea6ed90f9ceda3e5c99fe9b89267d026e6d",
+    "live_sha256": "fa6b8d37e3663dd87b8694c1838abea6ed90f9ceda3e5c99fe9b89267d026e6d",
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_production_authority.py",
+    "source_sha": "1c95213723d366d31d687d5f02ca96bbe2ad0df2",
+    "status_lines": [],
+    "verified_clean_checker": true
+  },
+  "cross_checks": {
+    "mpi_sizes_are_1_2_8": true,
+    "no_heavy_pde_or_accuracy_credit": true,
+    "rank_local_and_cross_rank_hanging_partitions_qualified": true,
+    "same_numerical_blobs": true,
+    "same_physical_identity": false,
+    "same_source_sha": true
+  },
+  "failures": [
+    "cross:same_physical_identity"
+  ],
+  "input_records": [
+    {
+      "mpi_size": 1,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/combined_hp_interior_mpi1_v1.json",
+      "sha256": "785632ffe7dd833bdb825fcf7bc3af2268da4a085cf1832e79ba6869526c7dc9"
+    },
+    {
+      "mpi_size": 2,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/combined_hp_interior_mpi2_v1.json",
+      "sha256": "4527b127fb6c5fb834f1db67a5e987f78e779498f34c66230402d706b6d8137b"
+    },
+    {
+      "mpi_size": 8,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/combined_hp_interior_mpi8_v1.json",
+      "sha256": "ff9b7e0c73767b53575b7fdd49b3e850c8798bacd166a38aae77b010ddfa791a"
+    }
+  ],
+  "live_head": "1c95213723d366d31d687d5f02ca96bbe2ad0df2",
+  "ordinary_default_changed": false,
+  "pass": false,
+  "pde_accuracy_credit": false,
+  "pde_launch_gate": false,
+  "pde_launch_scope": "one formal MPI8 h15 symmetric local-h plus variable-interior direct PDE",
+  "plan": {
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_symmetric_top_air_remote_p5_interior_plan_v1.json",
+    "sha256": "1d0b1ef0d6cfb28f463efb0df70d3b4c864e26fbeaeeb413e28e71689f5de520"
+  },
+  "record_failures": {
+    "combined_hp_interior_mpi1_v1.json": [],
+    "combined_hp_interior_mpi2_v1.json": [],
+    "combined_hp_interior_mpi8_v1.json": []
+  },
+  "schema_version": "case097.combined-hp-interior-mpi-identity.v1",
+  "source_sha": "1c95213723d366d31d687d5f02ca96bbe2ad0df2",
+  "stable_identity": {
+    "actual_full3d_equivalent_active_fe_dofs": 84240,
+    "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+    "canonical_cell_graph_sha256": "691bf41fb9c2df3d93cbb079c0251830bdc462709ba06e9d30bd42117515ce87",
+    "canonical_degree_map_sha256": "678696cd5999942ef07bf7b6872e86a29e94e28376bb3a676951d12762e00869",
+    "carrier_connectivity_sha256": "13a15c1b4e77ad23fbe308fa98fee7f34d0867bec2a6dea2136cc5ebb973c76f",
+    "cell_degree_counts": {
+      "p4": 0,
+      "p5": 32,
+      "p6": 116
+    },
+    "cell_degree_plan_sha256": "c78634f2cb0cf6b0a1ca417d483e25b74cc2f28b54fa3e78af139731a300b7cf",
+    "flattened_graph_sha256": "097b07aa5657270a5b5dce00752c1e9353bf75fdccc16b8ffa78f290f41eb8a3",
+    "hanging_face_catalog_sha256": "2f7c6c4bcb6c7d71a71c78ac2dab1caddc2914b01b041949b7371b68f309bd27",
+    "hanging_patch_count": 12,
+    "hanging_slave_rows": 2500,
+    "independent_trace_rows": 19980,
+    "leaf_catalog_sha256": "4b1df873d791e4716a0744b36aa524d0a9e5c842aba9395516c9d8792f93f846",
+    "leaf_cell_count": 148,
+    "material_catalog_sha256": "c79dc64620f2a13ed88e1cb0e6fb4e7757c74583bdd7f8d7be01ab9548034f6f",
+    "mesh_cell_box_catalog_sha256": "c2a50a595f06166d2ee5c52b8bf5ab327ccd5155015b046d905fe9b9ace2d681",
+    "periodic_slave_rows": 4380,
+    "physical_authority_sha256": "1315a11c31da9aebfb5c04489feb4d96f16c4749d9891691b8d16bd9cfab06dc",
+    "physical_facet_catalog_sha256": "c3f9ac50081be93ae6a1402f922953339065af8586e045b6810a25a777c80191",
+    "plan_file_sha256": "1d0b1ef0d6cfb28f463efb0df70d3b4c864e26fbeaeeb413e28e71689f5de520",
+    "predicted_direct_solve_rows": 20060,
+    "raw_broken_active_fe_dofs": 86740,
+    "raw_broken_trace_rows": 26860,
+    "root_cell_count": 120
+  },
+  "status": "combined_hp_interior_mpi_identity_pass_failed"
+}
