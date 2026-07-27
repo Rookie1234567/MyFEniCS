@@ -1,30 +1,33 @@
-# Task000：代理模型与反演支线初始化
+# Task000：本地 WSL 前向环境与数据生成入口初始化
 
 ## 当前身份
 
 ```text
-status = ready_for_codex_initialization
+status = ready_for_local_laptop_initialization
 execution_branch = codex/only-one-13p5nm-surrogate-inversion
-repository_root = /home/Projects/MyFEniCS-Surrogate
-base_sha = 9c2160d41382026352908d692ad479dc4508424d
-forward_solver_role = training-data generator
+local_platform = Windows laptop + WSL2 Ubuntu
+local_physical_memory = approximately 16 GB
+initial_forward_source_sha = 9c2160d41382026352908d692ad479dc4508424d
+forward_solver_role = local training-data generator
 formal_wavelength = 13.5 nm
 max_parallel_forward_solves = 1
-master_or_task035d_modification = forbidden
+workstation_role = later GPU surrogate training and inversion
 ```
 
 ## 目标
 
-本任务不开发代理网络和反演算法，也不改变现有有限元物理内核。它只完成支线的安全初始化，使后续工作具备：
+本任务不开发正式代理网络和反演算法，也不改变现有有限元物理定义。它只完成本地笔记本上的可复现前向环境和最小可用数据生成入口，使后续工作具备：
 
-1. 唯一工作树、唯一分支和唯一 upstream；
-2. 防误提交、防误推送和防误切分支保护；
-3. 独立 `.venv`、缓存、临时目录和 artifact 根目录；
-4. 与 Task035d 共用的 heavy FEM 非阻塞锁；
-5. 一个薄的、参数化的前向模型封装设计；
-6. 数据集版本、provenance 和 observable schema 合同；
-7. 单个 13.5 nm 小算例的安全 smoke 验证；
-8. 不触碰 `/home/Projects/MyFEniCS` 工作树的证据。
+1. 在本地 clone 的唯一代理分支上安全工作；
+2. 审计并在用户确认后卸载不再使用的 Docker Desktop/旧 Docker WSL 组件；
+3. 新建独立 WSL2 Ubuntu，而不是继续依赖 Docker；
+4. 在 Linux 文件系统内安装并资格化 complex PETSc/SLEPc/DOLFINx/MPI 环境；
+5. 建立项目本地 `.venv`、独立缓存、日志和 artifact；
+6. 对现有 13.5 nm FEM 建立参数化薄封装；
+7. 形成一条命令输入参数、输出结构化结果的 Linux CLI；
+8. 评估 Windows launcher `.exe` 调用 WSL CLI 的方案；
+9. 从轻量 smoke 逐级尝试 `p6/h10`，并在 16 GB 资源不足时真实受控停止；
+10. 为下一阶段的正式训练数据生成给出明确 go/no-go 结论。
 
 ## 执行顺序
 
@@ -34,45 +37,51 @@ Codex 必须完整阅读：
 - `surrogate_tasks/AGENTS.md`；
 - 本目录 `task.md`。
 
-随后严格按 `task.md` 的 M0–M7 执行。每个阶段先完成轻量 Gate，再进入下一阶段；任何路径、分支、ABI、锁或资源 Gate 失败时受控停止。
+随后严格按 `task.md` 的 M0–M9 执行。任何 destructive Docker/WSL 操作前必须先给出审计结果、保留项和删除项，并等待用户明确确认；不得把卸载 Docker 与删除其他 WSL distributions 混为一谈。
 
 ## 主要交付
 
 ```text
 surrogate_tasks/task000_initialization/
+    outcomes/environment_inventory.md
+    outcomes/environment_qualification.md
+    outcomes/p6h10_feasibility.md
+    outcomes/packaging_feasibility.md
     outcomes/summary.md
     outcomes/test_summary.md
     response_v1.md
 
 scripts/
+    install_local_wsl_environment.sh
     activate_myfenics_surrogate_wsl.sh
     audit_surrogate_workspace.sh
-    install_surrogate_git_guards.sh
-    run_with_myfenics_heavy_lock.sh
+    run_forward_case.sh
 
 src/forward_data/
     __init__.py
     schema.py
     forward_model.py
     provenance.py
+    cli.py
 
 src/test/
     test_surrogate_task000_*.py
 ```
 
-实际文件名可在不改变职责边界的前提下轻微调整，但不得把新数值核心塞进 Task000，也不得改动 Task035d 工作树。
+实际文件名可在不改变职责边界的前提下轻微调整。不得为了打包或通过 smoke 而复制、弱化或绕过现有 FEM 数值核心。
 
 ## 完成定义
 
 Task000 只有在以下条件全部满足后才可结束：
 
-- branch/upstream/path guards 生效并有受控负测试；
-- 普通 `git push` 只能指向代理分支；
-- 支线 activation 与缓存隔离通过；
-- heavy lock 的 acquired/busy 两条路径均通过测试；
-- 参数、输出、provenance 和 dataset manifest schema 可独立验证；
-- 单个小型 13.5 nm FEM smoke 通过 residual/physics Gate，或因已有模型入口不适配而真实记录 blocker；
-- 没有运行两个 FEM 并发；
-- `/home/Projects/MyFEniCS` 的 HEAD、branch 和 status 未被本任务改变；
+- 本地真实 repo root、branch、upstream 和 origin 已审计；
+- Docker/WSL 现状已盘点，破坏性卸载只在用户明确确认后执行；
+- 新 Ubuntu 可以稳定启动，仓库位于 WSL Linux 文件系统；
+- complex ABI preflight 通过；
+- 项目本地 `.venv`、缓存、日志和 artifact 隔离通过；
+- 现有 FEM 可通过参数 schema 和 `ForwardModel.evaluate(...)` 薄调用；
+- Linux CLI 能运行至少一个低资源 13.5 nm development smoke；
+- p6/h10 已完成逐级资源预检和一次受控尝试，结果被分类为 `passed`、`controlled_stop` 或 `blocked`，不得伪造成功；
+- `.exe` 路径给出实验证据：优先 Windows launcher 调用 WSL，不把 Linux 依赖错误宣称为原生单文件程序；
 - 所有改动只提交并推送到本执行分支；
-- Codex 给出完整 HEAD、changed paths、测试与资源证据后停止。
+- Codex 给出完整 HEAD、changed paths、测试、环境、资源和数值证据后停止，不开始批量数据生成。
