@@ -32,6 +32,13 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_COMBINED_HP_PLAN_NAME,
     TASK035D_COMBINED_HP_PLAN_PATH,
     TASK035D_COMBINED_HP_SOLVE_ROWS,
+    TASK035D_HP_FACTORIAL_BRIDGE_ACTIVE_FE_DOFS,
+    TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_FILE_SHA256,
+    TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH,
+    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256,
+    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
+    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH,
+    TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
     TASK035D_LOCAL_H_ACTIVE_FE_DOFS,
     TASK035D_LOCAL_H_AUTHORITY_FILE_SHA256,
     TASK035D_LOCAL_H_AUTHORITY_PATH,
@@ -52,6 +59,7 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_T30_PLAN_PATH,
     TASK035D_T30_SOLVE_ROWS,
     task035d_case097_combined_hp_plan_authority_gate,
+    task035d_case097_hp_factorial_bridge_plan_authority_gate,
     task035d_case097_local_h_plan_authority_gate,
     task035d_case097_sidewall_guard_plan_authority_gate,
 )
@@ -547,6 +555,110 @@ class Task035dCase097CheckerTests(unittest.TestCase):
                 candidate_id=TASK035D_LOCAL_H_PLAN_NAME,
             )
 
+    def test_hp_factorial_bridge_launch_contract_is_hash_bound(self) -> None:
+        source_sha = "e" * 40
+        plan_path = ROOT / TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH
+        authority_path = (
+            ROOT / TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH
+        )
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        authority = json.loads(
+            authority_path.read_text(encoding="utf-8")
+        )
+        embedded = (
+            task035d_case097_hp_factorial_bridge_plan_authority_gate(
+                plan,
+                authority,
+                expected_plan_file_sha256=(
+                    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256
+                ),
+                observed_plan_file_sha256=(
+                    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256
+                ),
+                expected_authority_sha256=(
+                    TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_FILE_SHA256
+                ),
+                observed_authority_sha256=(
+                    TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_FILE_SHA256
+                ),
+                plan_is_tracked=True,
+                authority_is_tracked=True,
+                plan_path_from_root=(
+                    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH
+                ),
+                authority_path_from_root=(
+                    TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH
+                ),
+            )
+        )
+        self.assertTrue(embedded["pass"], embedded["failures"])
+        command = [
+            "mpiexec",
+            "-n",
+            "8",
+            str(ROOT / ".venv" / "bin" / "python"),
+            "-m",
+            "benchmarks.run_task033_full3d_watchdog",
+            "--worker",
+            "--degree",
+            "6",
+            "--h-nm",
+            "15.0",
+            "--polarization-kind",
+            "s",
+            "--run-kind",
+            "full-solve",
+            "--mpi-size",
+            "8",
+            "--profile",
+            "default",
+            "--stage4-full3d-assembly-backend",
+            TASK035D_CASE097_BACKEND,
+            "--stage4-local-h-refinement-plan",
+            str(plan_path),
+            "--stage4-local-h-refinement-plan-sha256",
+            TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256,
+            "--task035d-case097-gate",
+            "--task035d-candidate-id",
+            TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
+            "--task035d-plan-authority",
+            str(authority_path),
+            "--task035d-plan-authority-sha256",
+            TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_FILE_SHA256,
+            "--verified-clean-sha",
+            source_sha,
+        ]
+        contract = _candidate_launch_contract(
+            {
+                "command": command,
+                "task035d_candidate_id": (
+                    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME
+                ),
+                "task035d_case097_launch_gate": embedded,
+                "resource_policy": {"swap_allowed": False},
+                "no_swap": True,
+                "task035d_accuracy_credit": (
+                    "pending_independent_12_channel_and_field_checker"
+                ),
+            },
+            source_sha=source_sha,
+            candidate_id=TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
+        )
+        self.assertTrue(contract["pass"])
+        self.assertEqual(
+            embedded["plan_identity"][
+                "actual_conforming_active_fe_dofs"
+            ],
+            TASK035D_HP_FACTORIAL_BRIDGE_ACTIVE_FE_DOFS,
+        )
+        self.assertEqual(
+            embedded["plan_identity"]["predicted_direct_solve_rows"],
+            TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
+        )
+        self.assertFalse(
+            embedded["selection_credit"]["complete_combined_hp_credit"]
+        )
+
     def test_combined_hp_launch_contract_is_hash_bound(self) -> None:
         source_sha = "d" * 40
         plan_path = ROOT / TASK035D_COMBINED_HP_PLAN_PATH
@@ -849,6 +961,29 @@ class Task035dCase097CheckerTests(unittest.TestCase):
             },
         )
         self.assertFalse(combined["complete_combined_hp_credit"])
+
+        bridge = evaluate_task035d_case097_candidate(
+            watchdog=watchdog,
+            launch_gate=_pass_payload(),
+            solver_gate={
+                "pass": True,
+                "checks": {
+                    "ordinary_default_and_lifecycle": True,
+                },
+            },
+            channel_comparison=channels,
+            observable_comparison=_pass_payload(),
+            energy_comparison=_pass_payload(),
+            field_comparison=_pass_payload(),
+            resource_comparison=_pass_payload(),
+            candidate_id=TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
+        )
+        self.assertTrue(bridge["pass"])
+        self.assertTrue(
+            bridge["selection_credit"]["factorial_bridge_credit"]
+        )
+        self.assertFalse(bridge["selection_credit"]["actual_channel_dwr"])
+        self.assertFalse(bridge["complete_combined_hp_credit"])
 
         rejected = evaluate_task035d_case097_candidate(
             watchdog=watchdog,

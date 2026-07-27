@@ -18,6 +18,13 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_COMBINED_HP_PLAN_NAME,
     TASK035D_COMBINED_HP_PLAN_PATH,
     TASK035D_COMBINED_HP_SOLVE_ROWS,
+    TASK035D_HP_FACTORIAL_BRIDGE_ACTIVE_FE_DOFS,
+    TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_FILE_SHA256,
+    TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH,
+    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256,
+    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
+    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH,
+    TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
     TASK035D_LOCAL_H_ACTIVE_FE_DOFS,
     TASK035D_LOCAL_H_AUTHORITY_FILE_SHA256,
     TASK035D_LOCAL_H_AUTHORITY_PATH,
@@ -39,6 +46,8 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_T30_SOLVE_ROWS,
     task035d_case097_combined_hp_plan_authority_gate,
     task035d_case097_combined_hp_solver_gate,
+    task035d_case097_hp_factorial_bridge_plan_authority_gate,
+    task035d_case097_hp_factorial_bridge_solver_gate,
     task035d_case097_local_h_plan_authority_gate,
     task035d_case097_local_h_solver_gate,
     task035d_case097_plan_authority_gate,
@@ -269,6 +278,81 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
                 "goal_oriented_selection_credit": False,
             },
             "ordinary_default_check": "ordinary_default_unchanged",
+        }
+    if candidate_id == TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME:
+        return {
+            "candidate_id": TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
+            "plan_path": TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH,
+            "plan_file_sha256": (
+                TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256
+            ),
+            "authority_path": TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH,
+            "authority_file_sha256": (
+                TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_FILE_SHA256
+            ),
+            "active_fe_dofs": TASK035D_HP_FACTORIAL_BRIDGE_ACTIVE_FE_DOFS,
+            "solve_rows": TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
+            "launch_schema": (
+                "task035d.case097-hp-factorial-bridge-launch-gate.v1"
+            ),
+            "launch_status": (
+                "task035d_hp_factorial_bridge_launch_authority_pass"
+            ),
+            "check_schema": (
+                "task035d.case097-hp-factorial-bridge-candidate-check.v1"
+            ),
+            "pass_status": (
+                "task035d_hp_factorial_bridge_candidate_pass"
+            ),
+            "negative_status": (
+                "task035d_hp_factorial_bridge_controlled_negative"
+            ),
+            "evidence_failure_status": (
+                "task035d_hp_factorial_bridge_checker_evidence_failure"
+            ),
+            "benchmark_id": (
+                "task035d_case097_hp_factorial_bridge_candidate"
+            ),
+            "plan_context": (
+                "frozen h15 one-sided top-air plus remote-p5-interior "
+                "factorial bridge"
+            ),
+            "authority_context": (
+                "frozen MPI1/2/8 hp-factorial-bridge authority"
+            ),
+            "plan_gate": (
+                task035d_case097_hp_factorial_bridge_plan_authority_gate
+            ),
+            "solver_gate": (
+                task035d_case097_hp_factorial_bridge_solver_gate
+            ),
+            "candidate_option_required": True,
+            "h_nm": 15.0,
+            "plan_option": "--stage4-local-h-refinement-plan",
+            "plan_sha_option": (
+                "--stage4-local-h-refinement-plan-sha256"
+            ),
+            "forbidden_plan_option": (
+                "--stage4-variable-p-cell-degree-plan"
+            ),
+            "classification_pass": (
+                "hp_factorial_bridge_candidate_pass_without_dwr_or_"
+                "variable_trace_credit"
+            ),
+            "pass_accuracy_credit": (
+                "fresh_factorial_bridge_accuracy_and_resource_pass_"
+                "no_dwr_or_variable_trace_credit"
+            ),
+            "selection_credit": {
+                "structural_resource_anchor": True,
+                "factorial_bridge_credit": True,
+                "actual_channel_dwr": False,
+                "goal_oriented_selection_credit": False,
+                "complete_combined_hp_credit": False,
+            },
+            "ordinary_default_check": (
+                "ordinary_default_and_lifecycle"
+            ),
         }
     if candidate_id == TASK035D_COMBINED_HP_PLAN_NAME:
         return {

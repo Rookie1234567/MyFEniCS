@@ -28,9 +28,12 @@ from benchmarks.task035c_p6_h10_gates import (
 from benchmarks.task035d_case097_gates import (
     TASK035D_CASE097_BACKEND,
     TASK035D_COMBINED_HP_PLAN_NAME,
+    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
     TASK035D_LOCAL_H_PLAN_NAME,
     task035d_case097_combined_hp_plan_authority_gate,
     task035d_case097_combined_hp_solver_gate,
+    task035d_case097_hp_factorial_bridge_plan_authority_gate,
+    task035d_case097_hp_factorial_bridge_solver_gate,
     task035d_case097_local_h_plan_authority_gate,
     task035d_case097_local_h_solver_gate,
     task035d_case097_plan_authority_gate,
@@ -58,6 +61,7 @@ GIB = 1024**3
 TASK035D_LOCAL_H_CANDIDATES = {
     TASK035D_LOCAL_H_PLAN_NAME,
     TASK035D_COMBINED_HP_PLAN_NAME,
+    TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
 }
 
 
@@ -254,6 +258,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "sidewall_z0_guard_v1",
             TASK035D_LOCAL_H_PLAN_NAME,
             TASK035D_COMBINED_HP_PLAN_NAME,
+            TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
         ),
         default="t30",
     )
@@ -550,7 +555,14 @@ def _validate_task035d_case097_plan(
 
     plan_tracked, plan_relative = tracked(plan_path)
     authority_tracked, authority_relative = tracked(authority_path)
-    if args.task035d_candidate_id == TASK035D_COMBINED_HP_PLAN_NAME:
+    if (
+        args.task035d_candidate_id
+        == TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME
+    ):
+        gate_builder = (
+            task035d_case097_hp_factorial_bridge_plan_authority_gate
+        )
+    elif args.task035d_candidate_id == TASK035D_COMBINED_HP_PLAN_NAME:
         gate_builder = task035d_case097_combined_hp_plan_authority_gate
     elif local_h_candidate:
         gate_builder = task035d_case097_local_h_plan_authority_gate
@@ -944,6 +956,13 @@ def _qualify(
     task035d_solver_gate = None
     if args.task035d_case097_gate:
         if (
+            args.task035d_candidate_id
+            == TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME
+        ):
+            solver_gate_builder = (
+                task035d_case097_hp_factorial_bridge_solver_gate
+            )
+        elif (
             args.task035d_candidate_id
             == TASK035D_COMBINED_HP_PLAN_NAME
         ):

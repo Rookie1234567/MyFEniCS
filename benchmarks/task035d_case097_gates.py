@@ -248,6 +248,286 @@ TASK035D_COMBINED_HP_CELL_DEGREE_COUNTS = {
     "p5": 32,
     "p6": 116,
 }
+TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME = (
+    "h15_top_air_remote_p5_interior_bridge_v1"
+)
+TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+    "h15_top_air_remote_p5_interior_bridge_plan_v1.json"
+)
+TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256 = (
+    "6775a173939175af0a84e3941276c2d2fe8116353b8ee609fd1dbfa61f3c1859"
+)
+TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+    "hp_factorial_bridge_mpi_identity_v1.json"
+)
+TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_FILE_SHA256 = (
+    "5914f01c13eb031b9a8075734c0e1718a1bfa7b339eb9abba9cfc40584cf5f59"
+)
+TASK035D_HP_FACTORIAL_BRIDGE_COMPONENT_SOURCE_SHA = (
+    "289ca9a85d407efc8d6382a081ae13d6925e29a6"
+)
+TASK035D_HP_FACTORIAL_BRIDGE_CHECKER_SOURCE_SHA = (
+    "289ca9a85d407efc8d6382a081ae13d6925e29a6"
+)
+TASK035D_HP_FACTORIAL_BRIDGE_CELL_DEGREE_PLAN_SHA256 = (
+    "ab62c9e369125424068d04edc170172064aed5e63da02fdc741b27664bd7adb6"
+)
+TASK035D_HP_FACTORIAL_BRIDGE_ENTITY_DEGREE_SHA256 = (
+    "d17a503fa0d28bbd91e94087df5a4bfa7309fe65ab49263c295b66fd37af9f8a"
+)
+TASK035D_HP_FACTORIAL_BRIDGE_RAW_ACTIVE_FE_DOFS = 77_455
+TASK035D_HP_FACTORIAL_BRIDGE_RAW_TRACE_ROWS = 23_875
+TASK035D_HP_FACTORIAL_BRIDGE_ACTIVE_FE_DOFS = 76_205
+TASK035D_HP_FACTORIAL_BRIDGE_INDEPENDENT_TRACE_ROWS = 18_390
+TASK035D_HP_FACTORIAL_BRIDGE_DTN_ROWS = 80
+TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS = 18_470
+TASK035D_HP_FACTORIAL_BRIDGE_CELL_DEGREE_COUNTS = {
+    "p4": 0,
+    "p5": 32,
+    "p6": 102,
+}
+
+_COMBINED_HP_GATE_SPEC = {
+    "candidate_name": TASK035D_COMBINED_HP_PLAN_NAME,
+    "plan_path": TASK035D_COMBINED_HP_PLAN_PATH,
+    "plan_file_sha256": TASK035D_COMBINED_HP_PLAN_FILE_SHA256,
+    "authority_path": TASK035D_COMBINED_HP_AUTHORITY_PATH,
+    "authority_file_sha256": TASK035D_COMBINED_HP_AUTHORITY_FILE_SHA256,
+    "component_source_sha": TASK035D_COMBINED_HP_COMPONENT_SOURCE_SHA,
+    "checker_source_sha": TASK035D_COMBINED_HP_CHECKER_SOURCE_SHA,
+    "leaf_catalog_sha256": TASK035D_COMBINED_HP_LEAF_CATALOG_SHA256,
+    "hanging_catalog_sha256": (
+        TASK035D_COMBINED_HP_HANGING_CATALOG_SHA256
+    ),
+    "carrier_sha256": TASK035D_COMBINED_HP_CARRIER_SHA256,
+    "physical_facet_sha256": TASK035D_COMBINED_HP_PHYSICAL_FACET_SHA256,
+    "material_sha256": TASK035D_COMBINED_HP_MATERIAL_SHA256,
+    "physical_authority_sha256": (
+        TASK035D_COMBINED_HP_PHYSICAL_AUTHORITY_SHA256
+    ),
+    "flattened_graph_sha256": (
+        TASK035D_COMBINED_HP_FLATTENED_GRAPH_SHA256
+    ),
+    "cell_graph_sha256": TASK035D_COMBINED_HP_CELL_GRAPH_SHA256,
+    "box_catalog_sha256": TASK035D_COMBINED_HP_BOX_CATALOG_SHA256,
+    "cell_degree_plan_sha256": (
+        TASK035D_COMBINED_HP_CELL_DEGREE_PLAN_SHA256
+    ),
+    "entity_degree_sha256": TASK035D_COMBINED_HP_ENTITY_DEGREE_SHA256,
+    "root_cells": TASK035D_COMBINED_HP_ROOT_CELLS,
+    "leaf_cells": TASK035D_COMBINED_HP_LEAF_CELLS,
+    "hanging_patches": TASK035D_COMBINED_HP_HANGING_PATCHES,
+    "raw_active_fe_dofs": TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS,
+    "raw_trace_rows": TASK035D_COMBINED_HP_RAW_TRACE_ROWS,
+    "hanging_slave_rows": TASK035D_COMBINED_HP_HANGING_SLAVE_ROWS,
+    "periodic_slave_rows": TASK035D_COMBINED_HP_PERIODIC_SLAVE_ROWS,
+    "active_fe_dofs": TASK035D_COMBINED_HP_ACTIVE_FE_DOFS,
+    "independent_trace_rows": (
+        TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS
+    ),
+    "dtn_rows": TASK035D_COMBINED_HP_DTN_ROWS,
+    "solve_rows": TASK035D_COMBINED_HP_SOLVE_ROWS,
+    "cell_degree_counts": TASK035D_COMBINED_HP_CELL_DEGREE_COUNTS,
+    "marked_root_boxes": [
+        {
+            "lower": [8.25, 0.0, 120.0],
+            "upper": [16.5, 12.5, 130.0],
+        },
+        {
+            "lower": [33.5, 0.0, 120.0],
+            "upper": [41.75, 12.5, 130.0],
+        },
+    ],
+    "closure_counts": {
+        "balance": 0,
+        "material": 0,
+        "periodic": 2,
+        "user": 2,
+    },
+    "authority_schema": "case097.combined-hp-interior-mpi-identity.v2",
+    "authority_status": "combined_hp_interior_mpi_identity_pass",
+    "launch_schema": (
+        "task035d.case097-combined-hp-interior-launch-gate.v1"
+    ),
+    "launch_pass_status": (
+        "task035d_combined_hp_interior_launch_authority_pass"
+    ),
+    "launch_fail_status": (
+        "task035d_combined_hp_interior_launch_authority_fail"
+    ),
+    "solver_schema": (
+        "task035d.case097-combined-hp-interior-solver-gate.v1"
+    ),
+    "solver_pass_status": (
+        "task035d_combined_hp_interior_solver_identity_pass"
+    ),
+    "solver_fail_status": (
+        "task035d_combined_hp_interior_solver_identity_fail"
+    ),
+    "selection_credit": {
+        "structural_resource_anchor": True,
+        "actual_channel_dwr": False,
+        "goal_oriented_selection_credit": False,
+        "complete_combined_hp_credit": False,
+    },
+    "expected_inputs": [
+        {
+            "mpi_size": 1,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "combined_hp_interior_mpi1_v2.json"
+            ),
+            "sha256": (
+                "6f13691de05b9471b51fbab0865c713f4d49f7a03b27a082df2ae4c2f2b41d9e"
+            ),
+        },
+        {
+            "mpi_size": 2,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "combined_hp_interior_mpi2_v2.json"
+            ),
+            "sha256": (
+                "e5d6272a2ee7ec45e86b8aa06defd6d7d81bcb93ca9c7ae2b3c0add9d6235093"
+            ),
+        },
+        {
+            "mpi_size": 8,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "combined_hp_interior_mpi8_v2.json"
+            ),
+            "sha256": (
+                "012353dc18da1a91b13963d88d6b98826c0614db10b9aae7152a95cdc2cf29b4"
+            ),
+        },
+    ],
+}
+
+_HP_FACTORIAL_BRIDGE_GATE_SPEC = {
+    **_COMBINED_HP_GATE_SPEC,
+    "candidate_name": TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
+    "plan_path": TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH,
+    "plan_file_sha256": TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256,
+    "authority_path": TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH,
+    "authority_file_sha256": (
+        TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_FILE_SHA256
+    ),
+    "component_source_sha": (
+        TASK035D_HP_FACTORIAL_BRIDGE_COMPONENT_SOURCE_SHA
+    ),
+    "checker_source_sha": TASK035D_HP_FACTORIAL_BRIDGE_CHECKER_SOURCE_SHA,
+    "leaf_catalog_sha256": TASK035D_LOCAL_H_LEAF_CATALOG_SHA256,
+    "hanging_catalog_sha256": TASK035D_LOCAL_H_HANGING_CATALOG_SHA256,
+    "carrier_sha256": TASK035D_LOCAL_H_CARRIER_SHA256,
+    "physical_facet_sha256": TASK035D_LOCAL_H_PHYSICAL_FACET_SHA256,
+    "material_sha256": TASK035D_LOCAL_H_MATERIAL_SHA256,
+    "physical_authority_sha256": (
+        TASK035D_LOCAL_H_PHYSICAL_AUTHORITY_SHA256
+    ),
+    "flattened_graph_sha256": TASK035D_LOCAL_H_FLATTENED_GRAPH_SHA256,
+    "cell_graph_sha256": TASK035D_LOCAL_H_CELL_GRAPH_SHA256,
+    "box_catalog_sha256": TASK035D_LOCAL_H_BOX_CATALOG_SHA256,
+    "cell_degree_plan_sha256": (
+        TASK035D_HP_FACTORIAL_BRIDGE_CELL_DEGREE_PLAN_SHA256
+    ),
+    "entity_degree_sha256": TASK035D_HP_FACTORIAL_BRIDGE_ENTITY_DEGREE_SHA256,
+    "root_cells": TASK035D_LOCAL_H_ROOT_CELLS,
+    "leaf_cells": TASK035D_LOCAL_H_LEAF_CELLS,
+    "hanging_patches": TASK035D_LOCAL_H_HANGING_PATCHES,
+    "raw_active_fe_dofs": TASK035D_HP_FACTORIAL_BRIDGE_RAW_ACTIVE_FE_DOFS,
+    "raw_trace_rows": TASK035D_HP_FACTORIAL_BRIDGE_RAW_TRACE_ROWS,
+    "hanging_slave_rows": TASK035D_LOCAL_H_HANGING_SLAVE_ROWS,
+    "periodic_slave_rows": TASK035D_LOCAL_H_PERIODIC_SLAVE_ROWS,
+    "active_fe_dofs": TASK035D_HP_FACTORIAL_BRIDGE_ACTIVE_FE_DOFS,
+    "independent_trace_rows": (
+        TASK035D_HP_FACTORIAL_BRIDGE_INDEPENDENT_TRACE_ROWS
+    ),
+    "dtn_rows": TASK035D_HP_FACTORIAL_BRIDGE_DTN_ROWS,
+    "solve_rows": TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
+    "cell_degree_counts": TASK035D_HP_FACTORIAL_BRIDGE_CELL_DEGREE_COUNTS,
+    "marked_root_boxes": [
+        {
+            "lower": [8.25, 0.0, 120.0],
+            "upper": [16.5, 12.5, 130.0],
+        },
+    ],
+    "closure_counts": {
+        "balance": 0,
+        "material": 0,
+        "periodic": 1,
+        "user": 1,
+    },
+    "authority_schema": "case097.hp-factorial-bridge-mpi-identity.v1",
+    "authority_status": "hp_factorial_bridge_mpi_identity_pass",
+    "launch_schema": (
+        "task035d.case097-hp-factorial-bridge-launch-gate.v1"
+    ),
+    "launch_pass_status": (
+        "task035d_hp_factorial_bridge_launch_authority_pass"
+    ),
+    "launch_fail_status": (
+        "task035d_hp_factorial_bridge_launch_authority_fail"
+    ),
+    "solver_schema": (
+        "task035d.case097-hp-factorial-bridge-solver-gate.v1"
+    ),
+    "solver_pass_status": (
+        "task035d_hp_factorial_bridge_solver_identity_pass"
+    ),
+    "solver_fail_status": (
+        "task035d_hp_factorial_bridge_solver_identity_fail"
+    ),
+    "selection_credit": {
+        "structural_resource_anchor": True,
+        "factorial_bridge_credit": True,
+        "actual_channel_dwr": False,
+        "goal_oriented_selection_credit": False,
+        "complete_combined_hp_credit": False,
+    },
+    "expected_inputs": [
+        {
+            "mpi_size": 1,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "hp_factorial_bridge_mpi1_v1.json"
+            ),
+            "sha256": (
+                "b3c0bbaa4eaae9506c1b89456c54f69605d5d93f0d31279ee9d052d72025bf9f"
+            ),
+        },
+        {
+            "mpi_size": 2,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "hp_factorial_bridge_mpi2_v1.json"
+            ),
+            "sha256": (
+                "d5bd3e71f09fb714cff627cc465ca56762e250b27b5debf874e850b7edf74934"
+            ),
+        },
+        {
+            "mpi_size": 8,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "hp_factorial_bridge_mpi8_v1.json"
+            ),
+            "sha256": (
+                "0620be15b293c65b3440ef2504bf830cdc63a657910a1c664d0d90a036196cc1"
+            ),
+        },
+    ],
+}
 
 
 def _valid_hex(value: Any, length: int) -> bool:
@@ -1091,7 +1371,7 @@ def task035d_case097_local_h_plan_authority_gate(
     }
 
 
-def task035d_case097_combined_hp_plan_authority_gate(
+def _task035d_case097_variable_interior_plan_authority_gate(
     plan: dict[str, Any] | None,
     authority: dict[str, Any] | None,
     *,
@@ -1103,8 +1383,67 @@ def task035d_case097_combined_hp_plan_authority_gate(
     authority_is_tracked: bool,
     plan_path_from_root: str | None,
     authority_path_from_root: str | None,
+    spec: dict[str, Any],
 ) -> dict[str, Any]:
-    """Validate the first fixed-trace local-h/variable-interior launch."""
+    """Validate one fixed-trace local-h/variable-interior launch."""
+
+    TASK035D_COMBINED_HP_PLAN_NAME = spec["candidate_name"]
+    TASK035D_COMBINED_HP_PLAN_PATH = spec["plan_path"]
+    TASK035D_COMBINED_HP_PLAN_FILE_SHA256 = spec["plan_file_sha256"]
+    TASK035D_COMBINED_HP_AUTHORITY_PATH = spec["authority_path"]
+    TASK035D_COMBINED_HP_AUTHORITY_FILE_SHA256 = spec[
+        "authority_file_sha256"
+    ]
+    TASK035D_COMBINED_HP_COMPONENT_SOURCE_SHA = spec[
+        "component_source_sha"
+    ]
+    TASK035D_COMBINED_HP_CHECKER_SOURCE_SHA = spec["checker_source_sha"]
+    TASK035D_COMBINED_HP_LEAF_CATALOG_SHA256 = spec[
+        "leaf_catalog_sha256"
+    ]
+    TASK035D_COMBINED_HP_HANGING_CATALOG_SHA256 = spec[
+        "hanging_catalog_sha256"
+    ]
+    TASK035D_COMBINED_HP_CARRIER_SHA256 = spec["carrier_sha256"]
+    TASK035D_COMBINED_HP_PHYSICAL_FACET_SHA256 = spec[
+        "physical_facet_sha256"
+    ]
+    TASK035D_COMBINED_HP_MATERIAL_SHA256 = spec["material_sha256"]
+    TASK035D_COMBINED_HP_PHYSICAL_AUTHORITY_SHA256 = spec[
+        "physical_authority_sha256"
+    ]
+    TASK035D_COMBINED_HP_FLATTENED_GRAPH_SHA256 = spec[
+        "flattened_graph_sha256"
+    ]
+    TASK035D_COMBINED_HP_CELL_GRAPH_SHA256 = spec["cell_graph_sha256"]
+    TASK035D_COMBINED_HP_BOX_CATALOG_SHA256 = spec[
+        "box_catalog_sha256"
+    ]
+    TASK035D_COMBINED_HP_CELL_DEGREE_PLAN_SHA256 = spec[
+        "cell_degree_plan_sha256"
+    ]
+    TASK035D_COMBINED_HP_ENTITY_DEGREE_SHA256 = spec[
+        "entity_degree_sha256"
+    ]
+    TASK035D_COMBINED_HP_ROOT_CELLS = spec["root_cells"]
+    TASK035D_COMBINED_HP_LEAF_CELLS = spec["leaf_cells"]
+    TASK035D_COMBINED_HP_HANGING_PATCHES = spec["hanging_patches"]
+    TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS = spec["raw_active_fe_dofs"]
+    TASK035D_COMBINED_HP_RAW_TRACE_ROWS = spec["raw_trace_rows"]
+    TASK035D_COMBINED_HP_HANGING_SLAVE_ROWS = spec[
+        "hanging_slave_rows"
+    ]
+    TASK035D_COMBINED_HP_PERIODIC_SLAVE_ROWS = spec[
+        "periodic_slave_rows"
+    ]
+    TASK035D_COMBINED_HP_ACTIVE_FE_DOFS = spec["active_fe_dofs"]
+    TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS = spec[
+        "independent_trace_rows"
+    ]
+    TASK035D_COMBINED_HP_SOLVE_ROWS = spec["solve_rows"]
+    TASK035D_COMBINED_HP_CELL_DEGREE_COUNTS = spec[
+        "cell_degree_counts"
+    ]
 
     plan = plan if isinstance(plan, dict) else {}
     authority = authority if isinstance(authority, dict) else {}
@@ -1176,41 +1515,7 @@ def task035d_case097_combined_hp_plan_authority_gate(
         "raw_broken_trace_rows": TASK035D_COMBINED_HP_RAW_TRACE_ROWS,
         "root_cell_count": TASK035D_COMBINED_HP_ROOT_CELLS,
     }
-    expected_inputs = [
-        {
-            "mpi_size": 1,
-            "path": (
-                "benchmarks/cases/"
-                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
-                "combined_hp_interior_mpi1_v2.json"
-            ),
-            "sha256": (
-                "6f13691de05b9471b51fbab0865c713f4d49f7a03b27a082df2ae4c2f2b41d9e"
-            ),
-        },
-        {
-            "mpi_size": 2,
-            "path": (
-                "benchmarks/cases/"
-                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
-                "combined_hp_interior_mpi2_v2.json"
-            ),
-            "sha256": (
-                "e5d6272a2ee7ec45e86b8aa06defd6d7d81bcb93ca9c7ae2b3c0add9d6235093"
-            ),
-        },
-        {
-            "mpi_size": 8,
-            "path": (
-                "benchmarks/cases/"
-                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
-                "combined_hp_interior_mpi8_v2.json"
-            ),
-            "sha256": (
-                "012353dc18da1a91b13963d88d6b98826c0614db10b9aae7152a95cdc2cf29b4"
-            ),
-        },
-    ]
+    expected_inputs = list(spec["expected_inputs"])
     degree_counts = Counter(
         int(row.get("degree", -1))
         for row in degree_rows
@@ -1246,29 +1551,25 @@ def task035d_case097_combined_hp_plan_authority_gate(
             and base.get("mesh_target_size") == 15.0
             and base.get("mesh_cells_resolved") == [6, 2, 10]
         ),
-        "symmetric_balanced_periodic_h_action": (
+        "balanced_periodic_h_action": (
             plan.get("periodic_axes") == ["x", "y"]
             and plan.get("protect_material_interfaces") is True
             and plan.get("maximum_level") == 1
-            and plan.get("marked_root_boxes")
-            == [
-                {
-                    "lower": [8.25, 0.0, 120.0],
-                    "upper": [16.5, 12.5, 130.0],
-                },
-                {
-                    "lower": [33.5, 0.0, 120.0],
-                    "upper": [41.75, 12.5, 130.0],
-                },
-            ]
-            and forest.get("closure_counts")
-            == {"balance": 0, "material": 0, "periodic": 2, "user": 2}
+            and plan.get("marked_root_boxes") == spec["marked_root_boxes"]
+            and forest.get("closure_counts") == spec["closure_counts"]
         ),
         "true_p5_p6_variable_interiors": (
             plan.get("trace_degree") == 5
             and plan.get("cell_interior_degree") == 6
             and len(degree_rows) == TASK035D_COMBINED_HP_LEAF_CELLS
-            and degree_counts == Counter({6: 116, 5: 32})
+            and degree_counts
+            == Counter(
+                {
+                    int(key.removeprefix("p")): int(value)
+                    for key, value in spec["cell_degree_counts"].items()
+                    if int(value) > 0
+                }
+            )
             and plan.get("cell_interior_degree_plan_sha256")
             == TASK035D_COMBINED_HP_CELL_DEGREE_PLAN_SHA256
         ),
@@ -1301,10 +1602,8 @@ def task035d_case097_combined_hp_plan_authority_gate(
             and authority.get("ordinary_default_changed") is False
         ),
         "authority_identity": (
-            authority.get("schema_version")
-            == "case097.combined-hp-interior-mpi-identity.v2"
-            and authority.get("status")
-            == "combined_hp_interior_mpi_identity_pass"
+            authority.get("schema_version") == spec["authority_schema"]
+            and authority.get("status") == spec["authority_status"]
             and authority.get("pass") is True
             and authority.get("candidate_id")
             == TASK035D_COMBINED_HP_PLAN_NAME
@@ -1343,13 +1642,11 @@ def task035d_case097_combined_hp_plan_authority_gate(
     }
     failures = [name for name, passed in checks.items() if not passed]
     return {
-        "schema_version": (
-            "task035d.case097-combined-hp-interior-launch-gate.v1"
-        ),
+        "schema_version": spec["launch_schema"],
         "status": (
-            "task035d_combined_hp_interior_launch_authority_pass"
+            spec["launch_pass_status"]
             if not failures
-            else "task035d_combined_hp_interior_launch_authority_fail"
+            else spec["launch_fail_status"]
         ),
         "pass": not failures,
         "checks": checks,
@@ -1371,17 +1668,42 @@ def task035d_case097_combined_hp_plan_authority_gate(
             ),
             "predicted_direct_solve_rows": TASK035D_COMBINED_HP_SOLVE_ROWS,
         },
-        "selection_credit": {
-            "structural_resource_anchor": True,
-            "actual_channel_dwr": False,
-            "goal_oriented_selection_credit": False,
-            "complete_combined_hp_credit": False,
-        },
+        "selection_credit": dict(spec["selection_credit"]),
         "accuracy_credit": (
             "none_until_fresh_12_channel_checker_passes"
         ),
         "ordinary_default_changed": False,
     }
+
+
+def task035d_case097_combined_hp_plan_authority_gate(
+    plan: dict[str, Any] | None,
+    authority: dict[str, Any] | None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Validate the symmetric fixed-trace h/interior-p launch."""
+
+    return _task035d_case097_variable_interior_plan_authority_gate(
+        plan,
+        authority,
+        spec=_COMBINED_HP_GATE_SPEC,
+        **kwargs,
+    )
+
+
+def task035d_case097_hp_factorial_bridge_plan_authority_gate(
+    plan: dict[str, Any] | None,
+    authority: dict[str, Any] | None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Validate the one-sided-h/remote-interior-p factorial bridge."""
+
+    return _task035d_case097_variable_interior_plan_authority_gate(
+        plan,
+        authority,
+        spec=_HP_FACTORIAL_BRIDGE_GATE_SPEC,
+        **kwargs,
+    )
 
 
 def _task035d_case097_solver_gate(
@@ -2163,10 +2485,62 @@ def task035d_case097_local_h_solver_gate(
     }
 
 
-def task035d_case097_combined_hp_solver_gate(
+def _task035d_case097_variable_interior_solver_gate(
     solver_summary: dict[str, Any] | None,
+    *,
+    spec: dict[str, Any],
 ) -> dict[str, Any]:
-    """Check the exact combined local-h/variable-interior solver identity."""
+    """Check one exact local-h/variable-interior solver identity."""
+
+    TASK035D_COMBINED_HP_PLAN_NAME = spec["candidate_name"]
+    TASK035D_COMBINED_HP_PLAN_FILE_SHA256 = spec["plan_file_sha256"]
+    TASK035D_COMBINED_HP_LEAF_CATALOG_SHA256 = spec[
+        "leaf_catalog_sha256"
+    ]
+    TASK035D_COMBINED_HP_HANGING_CATALOG_SHA256 = spec[
+        "hanging_catalog_sha256"
+    ]
+    TASK035D_COMBINED_HP_CARRIER_SHA256 = spec["carrier_sha256"]
+    TASK035D_COMBINED_HP_PHYSICAL_FACET_SHA256 = spec[
+        "physical_facet_sha256"
+    ]
+    TASK035D_COMBINED_HP_MATERIAL_SHA256 = spec["material_sha256"]
+    TASK035D_COMBINED_HP_PHYSICAL_AUTHORITY_SHA256 = spec[
+        "physical_authority_sha256"
+    ]
+    TASK035D_COMBINED_HP_FLATTENED_GRAPH_SHA256 = spec[
+        "flattened_graph_sha256"
+    ]
+    TASK035D_COMBINED_HP_CELL_GRAPH_SHA256 = spec["cell_graph_sha256"]
+    TASK035D_COMBINED_HP_BOX_CATALOG_SHA256 = spec[
+        "box_catalog_sha256"
+    ]
+    TASK035D_COMBINED_HP_CELL_DEGREE_PLAN_SHA256 = spec[
+        "cell_degree_plan_sha256"
+    ]
+    TASK035D_COMBINED_HP_ENTITY_DEGREE_SHA256 = spec[
+        "entity_degree_sha256"
+    ]
+    TASK035D_COMBINED_HP_ROOT_CELLS = spec["root_cells"]
+    TASK035D_COMBINED_HP_LEAF_CELLS = spec["leaf_cells"]
+    TASK035D_COMBINED_HP_HANGING_PATCHES = spec["hanging_patches"]
+    TASK035D_COMBINED_HP_RAW_ACTIVE_FE_DOFS = spec["raw_active_fe_dofs"]
+    TASK035D_COMBINED_HP_RAW_TRACE_ROWS = spec["raw_trace_rows"]
+    TASK035D_COMBINED_HP_HANGING_SLAVE_ROWS = spec[
+        "hanging_slave_rows"
+    ]
+    TASK035D_COMBINED_HP_PERIODIC_SLAVE_ROWS = spec[
+        "periodic_slave_rows"
+    ]
+    TASK035D_COMBINED_HP_ACTIVE_FE_DOFS = spec["active_fe_dofs"]
+    TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS = spec[
+        "independent_trace_rows"
+    ]
+    TASK035D_COMBINED_HP_DTN_ROWS = spec["dtn_rows"]
+    TASK035D_COMBINED_HP_SOLVE_ROWS = spec["solve_rows"]
+    TASK035D_COMBINED_HP_CELL_DEGREE_COUNTS = spec[
+        "cell_degree_counts"
+    ]
 
     summary = solver_summary if isinstance(solver_summary, dict) else {}
     config = summary.get("config")
@@ -2546,13 +2920,11 @@ def task035d_case097_combined_hp_solver_gate(
     }
     failures = [name for name, passed in checks.items() if not passed]
     return {
-        "schema_version": (
-            "task035d.case097-combined-hp-interior-solver-gate.v1"
-        ),
+        "schema_version": spec["solver_schema"],
         "status": (
-            "task035d_combined_hp_interior_solver_identity_pass"
+            spec["solver_pass_status"]
             if not failures
-            else "task035d_combined_hp_interior_solver_identity_fail"
+            else spec["solver_fail_status"]
         ),
         "pass": not failures,
         "checks": checks,
@@ -2561,6 +2933,28 @@ def task035d_case097_combined_hp_solver_gate(
         "accuracy_credit": "structural_and_residual_only",
         "complete_combined_hp_credit": False,
     }
+
+
+def task035d_case097_combined_hp_solver_gate(
+    solver_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Check the symmetric local-h/variable-interior solver identity."""
+
+    return _task035d_case097_variable_interior_solver_gate(
+        solver_summary,
+        spec=_COMBINED_HP_GATE_SPEC,
+    )
+
+
+def task035d_case097_hp_factorial_bridge_solver_gate(
+    solver_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Check the one-sided-h/remote-interior-p factorial bridge."""
+
+    return _task035d_case097_variable_interior_solver_gate(
+        solver_summary,
+        spec=_HP_FACTORIAL_BRIDGE_GATE_SPEC,
+    )
 
 
 __all__ = [
@@ -2575,6 +2969,13 @@ __all__ = [
     "TASK035D_H10_CELL_TAG_SHA256",
     "TASK035D_H10_FACET_TAG_SHA256",
     "TASK035D_H10_MESH_SHA256",
+    "TASK035D_HP_FACTORIAL_BRIDGE_ACTIVE_FE_DOFS",
+    "TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_FILE_SHA256",
+    "TASK035D_HP_FACTORIAL_BRIDGE_AUTHORITY_PATH",
+    "TASK035D_HP_FACTORIAL_BRIDGE_PLAN_FILE_SHA256",
+    "TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME",
+    "TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH",
+    "TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS",
     "TASK035D_LOCAL_H_ACTIVE_FE_DOFS",
     "TASK035D_LOCAL_H_AUTHORITY_FILE_SHA256",
     "TASK035D_LOCAL_H_AUTHORITY_PATH",
@@ -2614,6 +3015,8 @@ __all__ = [
     "task035d_case097_local_h_solver_gate",
     "task035d_case097_combined_hp_plan_authority_gate",
     "task035d_case097_combined_hp_solver_gate",
+    "task035d_case097_hp_factorial_bridge_plan_authority_gate",
+    "task035d_case097_hp_factorial_bridge_solver_gate",
     "task035d_case097_plan_authority_gate",
     "task035d_case097_sidewall_guard_plan_authority_gate",
     "task035d_case097_sidewall_guard_solver_gate",
