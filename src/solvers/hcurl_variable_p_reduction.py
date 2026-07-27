@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
@@ -32,8 +32,10 @@ from src.adaptivity.stage4_local_h import (
 from .hcurl_variable_p_assembly import (
     VariablePCondensedTraceSystem,
     _lu_factor_matrix_action,
+    audit_variable_p_active_full_adjoint_recovery,
     build_variable_p_condensed_trace_system_from_compiled_form,
     condense_variable_p_active_vector_to_trace,
+    recover_variable_p_active_full_adjoint_vector,
     recover_variable_p_active_full_vector,
     variable_p_cell_interior_schur_bilinear,
 )
@@ -48,6 +50,31 @@ class VariablePRecoveredSolution:
     active_full_rhs: PETSc.Vec
     active_auxiliary_interior_action: PETSc.Vec | None
     audit: dict[str, Any]
+
+
+@dataclass
+class VariablePRecoveredAdjoint:
+    """Recovered active adjoint component with explicit PETSc lifecycle."""
+
+    active_full_adjoint: PETSc.Vec
+    active_full_goal: PETSc.Vec
+    audit: dict[str, Any]
+    _destroyed: bool = field(default=False, init=False, repr=False)
+
+    def destroy(self) -> None:
+        """Release the retained adjoint and copied goal vectors once."""
+
+        if self._destroyed:
+            return
+        self.active_full_adjoint.destroy()
+        self.active_full_goal.destroy()
+        self._destroyed = True
+
+    def __enter__(self) -> VariablePRecoveredAdjoint:
+        return self
+
+    def __exit__(self, *_args: Any) -> None:
+        self.destroy()
 
 
 @dataclass
@@ -201,6 +228,113 @@ class VariablePAssemblyTimeReduction:
             self.system,
             left_active_full,
             right_active_full,
+        )
+
+    def recover_adjoint(
+        self,
+        reduced_adjoint: PETSc.Vec,
+        p6_full_goal: PETSc.Vec | None,
+        *,
+        active_full_goal_override: PETSc.Vec | None = None,
+        appended_auxiliary_interior_coupling_absent: bool | None = None,
+    ) -> VariablePRecoveredAdjoint:
+        """Recover interior/constraint components of one reduced adjoint.
+
+        This routine does not solve or audit the reduced adjoint equation.
+        Callers must separately bind ``A_r^H z_r = g_r`` to a KSP residual.
+        """
+
+        if (
+            self.system.appended_rows
+            and appended_auxiliary_interior_coupling_absent is not True
+        ):
+            raise RuntimeError(
+                "adjoint recovery with appended auxiliary rows requires "
+                "an explicit trace-only interior-coupling qualification"
+            )
+        if active_full_goal_override is None:
+            if p6_full_goal is None:
+                raise ValueError(
+                    "adjoint recovery requires a p6 or active full goal"
+                )
+            active_goal = project_p6_dual_to_active_full(
+                self.transfer,
+                p6_full_goal,
+            )
+            goal_source = "projected_p6_full_goal"
+        else:
+            if (
+                active_full_goal_override.getSize()
+                != self.system.entity_map.active_rows
+            ):
+                raise ValueError("active full goal override has the wrong size")
+            active_goal = active_full_goal_override.copy()
+            goal_source = "preprojected_active_full_goal"
+        try:
+            active_adjoint = (
+                recover_variable_p_active_full_adjoint_vector(
+                    self.system,
+                    reduced_adjoint,
+                    active_full_goal=active_goal,
+                )
+            )
+        except Exception:
+            active_goal.destroy()
+            raise
+        try:
+            interior_audit = (
+                audit_variable_p_active_full_adjoint_recovery(
+                    self.system,
+                    active_adjoint,
+                    active_full_goal=active_goal,
+                )
+            )
+            trace_audit = _trace_constraint_recovery_audit(
+                self.system,
+                reduced_adjoint,
+                active_adjoint,
+            )
+        except Exception:
+            active_adjoint.destroy()
+            active_goal.destroy()
+            raise
+        return VariablePRecoveredAdjoint(
+            active_full_adjoint=active_adjoint,
+            active_full_goal=active_goal,
+            audit={
+                "schema_version": (
+                    "task035d.variable-p-adjoint-recovery.v1"
+                ),
+                "status": (
+                    "variable_p_adjoint_interior_constraint_recovery_pass"
+                ),
+                "pass": True,
+                "active_full_rows": self.system.entity_map.active_rows,
+                "active_trace_rows": self.system.active_trace_rows,
+                "appended_auxiliary_rows": self.system.appended_rows,
+                "appended_auxiliary_interior_coupling_absent": (
+                    True
+                    if not self.system.appended_rows
+                    else bool(
+                        appended_auxiliary_interior_coupling_absent
+                    )
+                ),
+                "active_full_goal_source": goal_source,
+                "interior_recovery": interior_audit,
+                "trace_constraint_recovery": trace_audit,
+                "adjoint_formula": (
+                    "z_i=-A_ii^-H*A_ti^H*z_t+A_ii^-H*g_i"
+                ),
+                "primal_recovery_operator_reused_for_adjoint": False,
+                "reduced_adjoint_equation_checked": False,
+                "reduced_adjoint_ksp_residual_checked": False,
+                "full_adjoint_solve_pass": False,
+                "qualification_scope": (
+                    "conditional_on_qualified_trace_constraint_map"
+                ),
+                "full_p6_global_matrix_allocated": False,
+                "ordinary_default_changed": False,
+            },
         )
 
     def recover(
@@ -904,6 +1038,7 @@ def build_variable_p_assembly_time_reduction(
 
 __all__ = [
     "VariablePAssemblyTimeReduction",
+    "VariablePRecoveredAdjoint",
     "VariablePRecoveredSolution",
     "build_variable_p_assembly_time_reduction",
 ]

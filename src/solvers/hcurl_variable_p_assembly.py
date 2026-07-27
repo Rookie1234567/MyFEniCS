@@ -47,8 +47,10 @@ class VariablePTraceConstraintMap(Protocol):
 def _lu_factor_matrix_action(
     factor: tuple[np.ndarray, np.ndarray],
     values: np.ndarray,
+    *,
+    trans: int = 0,
 ) -> np.ndarray:
-    """Apply the original matrix represented by SciPy ``lu_factor``."""
+    """Apply the factored matrix or its Hermitian transpose."""
 
     lu, pivots = factor
     dimension = int(lu.shape[0])
@@ -63,9 +65,16 @@ def _lu_factor_matrix_action(
         permutation[[row, int(pivot)]] = permutation[
             [int(pivot), row]
         ]
-    return np.ascontiguousarray(
-        permuted[np.argsort(permutation)]
-    )
+    if trans == 0:
+        return np.ascontiguousarray(
+            permuted[np.argsort(permutation)]
+        )
+    if trans == 2:
+        rhs = np.asarray(values)[permutation]
+        return np.ascontiguousarray(
+            upper.conj().T @ (lower.conj().T @ rhs)
+        )
+    raise ValueError("factored matrix action supports trans=0 or trans=2")
 
 
 def _iteratively_refined_lu_solve(
@@ -73,18 +82,28 @@ def _iteratively_refined_lu_solve(
     right_hand_side: np.ndarray,
     *,
     maximum_steps: int = 2,
+    trans: int = 0,
 ) -> np.ndarray:
     """Return the best same-precision LU solution after residual refinement."""
 
     rhs = np.asarray(right_hand_side, dtype=np.complex128)
-    best = np.ascontiguousarray(lu_solve(factor, rhs))
-    residual = _lu_factor_matrix_action(factor, best) - rhs
+    if trans not in {0, 2}:
+        raise ValueError("iterative LU solve supports trans=0 or trans=2")
+    best = np.ascontiguousarray(lu_solve(factor, rhs, trans=trans))
+    residual = (
+        _lu_factor_matrix_action(factor, best, trans=trans) - rhs
+    )
     best_norm = float(np.linalg.norm(residual))
     for _step in range(int(maximum_steps)):
-        correction = lu_solve(factor, residual)
+        correction = lu_solve(factor, residual, trans=trans)
         candidate = np.ascontiguousarray(best - correction)
         candidate_residual = (
-            _lu_factor_matrix_action(factor, candidate) - rhs
+            _lu_factor_matrix_action(
+                factor,
+                candidate,
+                trans=trans,
+            )
+            - rhs
         )
         candidate_norm = float(np.linalg.norm(candidate_residual))
         if not np.isfinite(candidate_norm) or candidate_norm >= best_norm:
@@ -220,6 +239,82 @@ class VariablePCondensedTraceSystem:
             result.append((cell, active))
         return tuple(result)
 
+    def recover_owned_active_adjoint_cells(
+        self,
+        trace_values: np.ndarray,
+        *,
+        active_full_goal: PETSc.Vec | None = None,
+        assembled_active_trace_values: np.ndarray | None = None,
+    ) -> tuple[tuple[VariablePCellDofMap, np.ndarray], ...]:
+        """Recover local adjoints with the exact conjugate-transpose Schur map."""
+
+        trace = np.asarray(trace_values, dtype=np.complex128)
+        if trace.shape != (self.active_trace_rows,):
+            raise ValueError("global reduced adjoint trace has the wrong size")
+        assembled_trace = (
+            None
+            if assembled_active_trace_values is None
+            else np.asarray(
+                assembled_active_trace_values,
+                dtype=np.complex128,
+            )
+        )
+        if (
+            assembled_trace is not None
+            and assembled_trace.shape
+            != (self.entity_map.active_trace_rows,)
+        ):
+            raise ValueError(
+                "assembled active adjoint trace has the wrong size"
+            )
+        goal_values = None
+        if active_full_goal is not None:
+            goal_values = _global_active_vector_values(
+                self,
+                active_full_goal,
+            )
+        constrained_by_cell = (
+            {
+                cell.global_cell: cell
+                for cell in self.periodic_constraints.owned_cells
+            }
+            if self.periodic_constraints is not None
+            else {}
+        )
+        result: list[tuple[VariablePCellDofMap, np.ndarray]] = []
+        for recovery in self.cell_recovery:
+            cell = recovery.cell
+            if assembled_trace is not None:
+                local_trace = assembled_trace[cell.trace_rows]
+            elif self.periodic_constraints is None:
+                local_trace = trace[cell.trace_rows]
+            else:
+                constrained_cell = constrained_by_cell[cell.global_cell]
+                local_trace = (
+                    constrained_cell.full_trace_from_independent
+                    @ trace[constrained_cell.independent_rows]
+                )
+            interior = (
+                self.trace_from_interior_rhs_by_class[
+                    recovery.class_key
+                ].conj().T
+                @ local_trace
+            )
+            if goal_values is not None:
+                interior += _iteratively_refined_lu_solve(
+                    self.interior_lu_by_class[recovery.class_key],
+                    goal_values[cell.interior_rows],
+                    trans=2,
+                )
+            active = np.zeros(
+                recovery.space.hcurl_dimension,
+                dtype=np.complex128,
+            )
+            active[recovery.space.trace_dofs] = local_trace
+            active[recovery.space.interior_dofs] = interior
+            result.append((cell, active))
+        return tuple(result)
+
 
 def _balanced_counts(total: int, size: int) -> tuple[int, ...]:
     quotient, remainder = divmod(int(total), int(size))
@@ -227,6 +322,19 @@ def _balanced_counts(total: int, size: int) -> tuple[int, ...]:
         quotient + (1 if rank < remainder else 0)
         for rank in range(size)
     )
+
+
+def _validate_vector_communicator(
+    system: VariablePCondensedTraceSystem,
+    vector: PETSc.Vec,
+    *,
+    role: str,
+) -> None:
+    expected = system.entity_map.mesh.comm
+    actual = vector.comm.tompi4py()
+    comparison = MPI.Comm.Compare(expected, actual)
+    if comparison not in {MPI.IDENT, MPI.CONGRUENT}:
+        raise ValueError(f"{role} uses a different MPI communicator")
 
 
 def _tensor_sha256(tensor: np.ndarray) -> str:
@@ -1256,6 +1364,11 @@ def _global_active_vector_values(
     system: VariablePCondensedTraceSystem,
     vector: PETSc.Vec,
 ) -> np.ndarray:
+    _validate_vector_communicator(
+        system,
+        vector,
+        role="active full vector",
+    )
     if vector.getSize() != system.entity_map.active_rows:
         raise ValueError("active full vector has the wrong global size")
     owned = np.asarray(
@@ -1424,15 +1537,18 @@ def variable_p_cell_interior_schur_bilinear(
     )
 
 
-def recover_variable_p_active_full_vector(
+def _global_reduced_trace_values(
     system: VariablePCondensedTraceSystem,
     trace_values: PETSc.Vec | np.ndarray,
-    *,
-    active_full_rhs: PETSc.Vec | None = None,
-) -> PETSc.Vec:
-    """Recover the conforming full active coefficient vector."""
+) -> np.ndarray:
+    """Gather and validate the trace part of one reduced vector."""
 
     if isinstance(trace_values, PETSc.Vec):
+        _validate_vector_communicator(
+            system,
+            trace_values,
+            role="reduced trace vector",
+        )
         owned = np.asarray(
             trace_values.getArray(readonly=True),
             dtype=np.complex128,
@@ -1448,6 +1564,16 @@ def recover_variable_p_active_full_vector(
         trace = supplied
     else:
         raise ValueError("reduced trace vector has the wrong global size")
+    if not np.all(np.isfinite(trace)):
+        raise ValueError("reduced trace vector contains non-finite entries")
+    return np.ascontiguousarray(trace)
+
+
+def _expand_variable_p_reduced_trace(
+    system: VariablePCondensedTraceSystem,
+    trace: np.ndarray,
+) -> tuple[PETSc.Vec, np.ndarray]:
+    """Expand one independent trace into all raw active trace rows."""
 
     comm = system.entity_map.mesh.comm
     active_counts = _balanced_counts(
@@ -1510,6 +1636,21 @@ def recover_variable_p_active_full_vector(
         system,
         recovered,
     )[: system.entity_map.active_trace_rows].copy()
+    return recovered, assembled_active_trace
+
+
+def recover_variable_p_active_full_vector(
+    system: VariablePCondensedTraceSystem,
+    trace_values: PETSc.Vec | np.ndarray,
+    *,
+    active_full_rhs: PETSc.Vec | None = None,
+) -> PETSc.Vec:
+    """Recover the conforming full active primal coefficient vector."""
+
+    trace = _global_reduced_trace_values(system, trace_values)
+    recovered, assembled_active_trace = (
+        _expand_variable_p_reduced_trace(system, trace)
+    )
     for cell, local_active in system.recover_owned_active_cells(
         trace,
         active_full_rhs=active_full_rhs,
@@ -1528,12 +1669,165 @@ def recover_variable_p_active_full_vector(
     return recovered
 
 
+def recover_variable_p_active_full_adjoint_vector(
+    system: VariablePCondensedTraceSystem,
+    trace_values: PETSc.Vec | np.ndarray,
+    *,
+    active_full_goal: PETSc.Vec | None = None,
+) -> PETSc.Vec:
+    """Recover the exact active adjoint after trace/interior elimination.
+
+    If ``z_t`` is the raw trace adjoint and ``g_i`` is the optional
+    cell-interior goal block, every owned cell is recovered as
+
+    ``z_i = -A_ii^{-H} A_ti^H z_t + A_ii^{-H} g_i``.
+
+    This is intentionally separate from primal recovery: using the primal
+    ``-A_ii^{-1} A_it`` map is wrong for complex non-Hermitian Maxwell
+    operators.
+    """
+
+    trace = _global_reduced_trace_values(system, trace_values)
+    recovered, assembled_active_trace = (
+        _expand_variable_p_reduced_trace(system, trace)
+    )
+    for cell, local_active in system.recover_owned_active_adjoint_cells(
+        trace,
+        active_full_goal=active_full_goal,
+        assembled_active_trace_values=assembled_active_trace,
+    ):
+        space = build_variable_p_reference_space(cell.degree_map)
+        recovered.setValues(
+            np.asarray(cell.interior_rows, dtype=PETSc.IntType),
+            np.asarray(
+                local_active[space.interior_dofs],
+                dtype=PETSc.ScalarType,
+            ),
+            addv=PETSc.InsertMode.INSERT_VALUES,
+        )
+    recovered.assemble()
+    return recovered
+
+
+def audit_variable_p_active_full_adjoint_recovery(
+    system: VariablePCondensedTraceSystem,
+    active_full_adjoint: PETSc.Vec,
+    *,
+    active_full_goal: PETSc.Vec | None = None,
+    relative_tolerance: float = 5.0e-11,
+    absolute_tolerance: float = 5.0e-9,
+) -> dict[str, Any]:
+    """Audit every eliminated equation of one recovered active adjoint."""
+
+    adjoint = _global_active_vector_values(system, active_full_adjoint)
+    goal = (
+        np.zeros(system.entity_map.active_rows, dtype=np.complex128)
+        if active_full_goal is None
+        else _global_active_vector_values(system, active_full_goal)
+    )
+    local_residual_sq = 0.0
+    local_reference_sq = 0.0
+    local_maximum = 0.0
+    local_equations = 0
+    for recovery in system.cell_recovery:
+        cell = recovery.cell
+        factor = system.interior_lu_by_class[recovery.class_key]
+        trace = adjoint[cell.trace_rows]
+        interior = adjoint[cell.interior_rows]
+        interior_goal = goal[cell.interior_rows]
+        adjoint_trace_lift = (
+            -system.trace_from_interior_rhs_by_class[
+                recovery.class_key
+            ].conj().T
+            @ trace
+        )
+        interior_action = _lu_factor_matrix_action(
+            factor,
+            interior,
+            trans=2,
+        )
+        coupling_action = _lu_factor_matrix_action(
+            factor,
+            adjoint_trace_lift,
+            trans=2,
+        )
+        residual = (
+            interior_action + coupling_action - interior_goal
+        )
+        local_residual_sq += float(np.vdot(residual, residual).real)
+        local_reference_sq += float(
+            np.vdot(interior_action, interior_action).real
+            + np.vdot(coupling_action, coupling_action).real
+            + np.vdot(interior_goal, interior_goal).real
+        )
+        local_maximum = max(
+            local_maximum,
+            float(np.max(np.abs(residual), initial=0.0)),
+        )
+        local_equations += len(cell.interior_rows)
+    comm = system.entity_map.mesh.comm
+    residual_norm = float(
+        np.sqrt(comm.allreduce(local_residual_sq, op=MPI.SUM))
+    )
+    reference_norm = float(
+        np.sqrt(comm.allreduce(local_reference_sq, op=MPI.SUM))
+    )
+    maximum = float(comm.allreduce(local_maximum, op=MPI.MAX))
+    equations = int(comm.allreduce(local_equations, op=MPI.SUM))
+    relative = residual_norm / max(reference_norm, 1.0)
+    passed = (
+        equations
+        == system.entity_map.active_rows
+        - system.entity_map.active_trace_rows
+        and relative <= float(relative_tolerance)
+        and maximum <= float(absolute_tolerance)
+    )
+    audit = {
+        "schema_version": (
+            "task035d.variable-p-active-adjoint-recovery.v1"
+        ),
+        "status": (
+            "variable_p_active_adjoint_recovery_pass"
+            if passed
+            else "variable_p_active_adjoint_recovery_fail"
+        ),
+        "pass": passed,
+        "adjoint_formula": (
+            "z_i=-A_ii^-H*A_ti^H*z_t+A_ii^-H*g_i"
+        ),
+        "eliminated_cell_interior_equations": equations,
+        "expected_cell_interior_equations": (
+            system.entity_map.active_rows
+            - system.entity_map.active_trace_rows
+        ),
+        "residual_norm": residual_norm,
+        "reference_norm": reference_norm,
+        "relative_residual": relative,
+        "maximum_abs_residual": maximum,
+        "relative_tolerance": float(relative_tolerance),
+        "absolute_tolerance": float(absolute_tolerance),
+        "active_full_goal_supplied": active_full_goal is not None,
+        "uses_primal_recovery_operator": False,
+        "ordinary_default_changed": False,
+    }
+    if not passed:
+        raise RuntimeError(
+            "variable-p active adjoint recovery failed: "
+            f"equations={equations}/"
+            f"{audit['expected_cell_interior_equations']}, "
+            f"relative={relative:.6e}, max={maximum:.6e}"
+        )
+    return audit
+
+
 __all__ = [
     "VariablePCellRecovery",
     "VariablePCondensedTraceSystem",
+    "audit_variable_p_active_full_adjoint_recovery",
     "build_variable_p_condensed_trace_system",
     "build_variable_p_condensed_trace_system_from_compiled_form",
     "condense_variable_p_active_vector_to_trace",
+    "recover_variable_p_active_full_adjoint_vector",
     "recover_variable_p_active_full_vector",
     "variable_p_cell_interior_schur_bilinear",
 ]
