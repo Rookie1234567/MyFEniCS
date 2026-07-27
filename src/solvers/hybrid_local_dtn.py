@@ -313,10 +313,12 @@ def _assemble_one_sided_external_dtn(
         projection_cols, projection_values = _combine_owned_entries(
             component_left_entries,
             (mode.e_vector[0], mode.e_vector[1]),
+            comm=comm,
         )
         traction_rows, traction_values = _combine_owned_entries(
             component_right_entries,
             (traction[0], traction[1]),
+            comm=comm,
         )
         aux_global = n_fe + aux_index
         incident_projection = _incident_projection_onto_top_mode(mode, cfg)
