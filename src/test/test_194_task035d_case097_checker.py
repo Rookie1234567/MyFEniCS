@@ -640,6 +640,34 @@ class Task035dCase097CheckerTests(unittest.TestCase):
         self.assertFalse(
             embedded["selection_credit"]["complete_combined_hp_credit"]
         )
+        mixed = json.loads(
+            json.dumps(
+                {
+                    "command": command,
+                    "task035d_candidate_id": (
+                        TASK035D_COMBINED_HP_PLAN_NAME
+                    ),
+                    "task035d_case097_launch_gate": embedded,
+                    "resource_policy": {"swap_allowed": False},
+                    "no_swap": True,
+                    "task035d_accuracy_credit": (
+                        "pending_independent_12_channel_and_field_checker"
+                    ),
+                }
+            )
+        )
+        mixed["command"].extend(
+            (
+                "--stage4-variable-p-cell-degree-plan",
+                str(ROOT / TASK035D_T30_PLAN_PATH),
+            )
+        )
+        with self.assertRaises(Task035dEvidenceError):
+            _candidate_launch_contract(
+                mixed,
+                source_sha=source_sha,
+                candidate_id=TASK035D_COMBINED_HP_PLAN_NAME,
+            )
 
     def test_frozen_control_field_shards_remain_hash_bound(self) -> None:
         authorities = _load_frozen_authorities()
@@ -811,6 +839,16 @@ class Task035dCase097CheckerTests(unittest.TestCase):
             "without_dwr_or_variable_trace_credit",
             combined["classification"],
         )
+        self.assertEqual(
+            combined["selection_credit"],
+            {
+                "structural_resource_anchor": True,
+                "actual_channel_dwr": False,
+                "goal_oriented_selection_credit": False,
+                "complete_combined_hp_credit": False,
+            },
+        )
+        self.assertFalse(combined["complete_combined_hp_credit"])
 
         rejected = evaluate_task035d_case097_candidate(
             watchdog=watchdog,

@@ -1511,7 +1511,7 @@ def evaluate_task035d_case097_candidate(
         ),
     }
     failures = [name for name, passed in checks.items() if not passed]
-    return {
+    result = {
         "schema_version": spec["check_schema"],
         "status": (
             spec["pass_status"]
@@ -1534,6 +1534,13 @@ def evaluate_task035d_case097_candidate(
         "candidate_id": candidate_id,
         "ordinary_default_changed": False,
     }
+    if spec["selection_credit"] is not None:
+        result["selection_credit"] = dict(spec["selection_credit"])
+        if "complete_combined_hp_credit" in spec["selection_credit"]:
+            result["complete_combined_hp_credit"] = bool(
+                spec["selection_credit"]["complete_combined_hp_credit"]
+            )
+    return result
 
 
 def build_task035d_case097_candidate_check(
