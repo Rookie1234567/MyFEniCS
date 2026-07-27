@@ -1,0 +1,3198 @@
+{
+  "catalog": {
+    "action": "whole_physical_face_p5_to_p6",
+    "catalog_sha256": "88dca65fb4f6a413c1fc313b302db90a01fd88a69846538dc943491fcaa2415f",
+    "checks": {
+      "all_actions_are_preflight_only": true,
+      "all_actions_are_whole_face": true,
+      "all_six_local_faces_qualified": true,
+      "ordinary_default_unchanged": true
+    },
+    "entries": [
+      {
+        "action": "whole_physical_face_p5_to_p6",
+        "checks": {
+          "coarse_reference_space": true,
+          "enriched_reference_space": true,
+          "exact_sequence_injection_commutes": true,
+          "face_interior_tangential_riesz": true,
+          "h1_d4_orientation": true,
+          "hcurl_d4_orientation": true,
+          "whole_face_h1_complement_has_9_modes": true,
+          "whole_face_hcurl_complement_has_20_modes": true
+        },
+        "coarse_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[6]",
+          "uniform_degree": null
+        },
+        "dtn_port_complement_qualified": false,
+        "enriched_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            6,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[6,5,5,5,5,5]-c[6]",
+          "uniform_degree": null
+        },
+        "face_interior": {
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "complement_riesz_orthonormal": true,
+            "d4_complement_representation_unitary": true,
+            "d4_embedding_commutes": true,
+            "d4_preserves_complement_subspace": true,
+            "d4_preserves_tangential_riesz": true,
+            "enriched_face_is_p6_container": true,
+            "p5_complement_riesz_orthogonal": true,
+            "p5_embedding_has_no_other_entity_support": true,
+            "p5_face_embedding_rank_40": true,
+            "p5_hexa_piola_trace_qualified": true,
+            "p5_plus_complement_reconstructs_p6_face": true,
+            "p6_face_complement_rank_20": true,
+            "p6_face_modes_have_no_other_entity_support": true,
+            "p6_hexa_piola_trace_qualified": true,
+            "tangential_riesz_positive_definite": true
+          },
+          "combined_rank": 60,
+          "combined_rank_tolerance": 1.0106705523579978e-11,
+          "complement_dimension": 20,
+          "complement_gram_error_max": 7.771561172376096e-16,
+          "complement_to_p6_sha256": "bb0a13532aee39e6fffff599ea9afe626afe535efec80719f0edded7a8a39675",
+          "d4_actions": [
+            {
+              "complement_closure_error_max": 1.5543122344752192e-15,
+              "complement_unitarity_error_max": 1.5543122344752192e-15,
+              "embedding_commuting_error_max": 0.0,
+              "riesz_invariance_error_max": 0.0,
+              "vertex_permutation": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 3.9968028886505635e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 2.1256001282967808e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                0,
+                2,
+                1,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 3.774758283725532e-15,
+              "complement_unitarity_error_max": 2.4424906541753444e-15,
+              "embedding_commuting_error_max": 2.930988785010413e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                1,
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 3.3306690738754696e-15,
+              "complement_unitarity_error_max": 2.4424906541753444e-15,
+              "embedding_commuting_error_max": 1.9539925233402755e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                1,
+                3,
+                0,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.218847493575595e-15,
+              "complement_unitarity_error_max": 2.4424906541753444e-15,
+              "embedding_commuting_error_max": 3.5523013353513175e-14,
+              "riesz_invariance_error_max": 3.552713678800501e-13,
+              "vertex_permutation": [
+                2,
+                0,
+                3,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 5.329070518200751e-15,
+              "complement_unitarity_error_max": 3.1086244689504383e-15,
+              "embedding_commuting_error_max": 3.258721492961839e-14,
+              "riesz_invariance_error_max": 1.6342482922482304e-13,
+              "vertex_permutation": [
+                2,
+                3,
+                0,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.218847493575595e-15,
+              "complement_unitarity_error_max": 2.6645352591003757e-15,
+              "embedding_commuting_error_max": 2.9978473409626115e-14,
+              "riesz_invariance_error_max": 3.694822225952521e-13,
+              "vertex_permutation": [
+                3,
+                1,
+                2,
+                0
+              ]
+            },
+            {
+              "complement_closure_error_max": 3.885780586188048e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 2.7533531010703882e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                3,
+                2,
+                1,
+                0
+              ]
+            }
+          ],
+          "enriched_face_identity_error_max": 9.001480116843652e-15,
+          "individual_complement_modes_are_not_production_rows": true,
+          "local_face": 0,
+          "maximum_d4_complement_closure_error": 5.329070518200751e-15,
+          "maximum_d4_complement_unitarity_error": 3.1086244689504383e-15,
+          "maximum_d4_embedding_commuting_error": 3.5523013353513175e-14,
+          "maximum_d4_riesz_invariance_error": 3.694822225952521e-13,
+          "p5_complement_riesz_error_max": 3.535366444040733e-15,
+          "p5_embedding_rank": 40,
+          "p5_embedding_rank_tolerance": 1.0106705523579978e-11,
+          "p5_face_interior_dimension": 40,
+          "p5_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 5,
+            "failures": [],
+            "gradient_commuting_error": 8.881784197001252e-15,
+            "h1_closure_map_sha256": "352c187f3b16d016822769090119624004f25a0912012401955884489187feb3",
+            "h1_outside_closure_max": 6.356026815979021e-15,
+            "h1_trace_condition_number": 1.0000000000000029,
+            "h1_trace_dimension": 36,
+            "h1_trace_rank": 36,
+            "hcurl_closure_map_sha256": "94f4a4e4e4881003ff25ce09fa97903495f0252833ff19f3ea893aa12f54071a",
+            "hcurl_outside_closure_max": 2.5670039204271283e-14,
+            "hcurl_trace_condition_number": 1.0000000000000042,
+            "hcurl_trace_dimension": 60,
+            "hcurl_trace_rank": 60,
+            "local_face": 0,
+            "normal_axis": 2,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 0,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              0,
+              1
+            ]
+          },
+          "p5_other_entity_support_error_max": 1.2551729605091627e-14,
+          "p5_to_p6_sha256": "bfe287d20c38f4ebf5f8cf1e1745257ceecf5b8efd12d9212c8543666ae98617",
+          "p6_face_interior_dimension": 60,
+          "p6_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 6,
+            "failures": [],
+            "gradient_commuting_error": 9.668786359950943e-15,
+            "h1_closure_map_sha256": "bd196b1b9d1a6366516702c638a6420982cd15ee655d089ca4b16225048a052d",
+            "h1_outside_closure_max": 9.145462165349727e-15,
+            "h1_trace_condition_number": 1.000000000000003,
+            "h1_trace_dimension": 49,
+            "h1_trace_rank": 49,
+            "hcurl_closure_map_sha256": "516a3eea0c6c529f250022042e17deb13737c5e462cde225fa091d8ef0539d5a",
+            "hcurl_outside_closure_max": 4.386058956944909e-14,
+            "hcurl_trace_condition_number": 1.0000000000000235,
+            "hcurl_trace_dimension": 84,
+            "hcurl_trace_rank": 84,
+            "local_face": 0,
+            "normal_axis": 2,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 0,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              0,
+              1
+            ]
+          },
+          "p6_other_entity_support_error_max": 1.066046493565549e-14,
+          "p6_tangential_riesz_condition_number": 2408.8857521489913,
+          "p6_tangential_riesz_gram_sha256": "2144d0397b4da7f1659f5680b1728f6fbcf44008fa8cf79b973f24231c10f1d8",
+          "pass": true,
+          "prefix_assumption_used": false,
+          "quadrature_degree": 14,
+          "riesz_metric": "reference_affine_face_tangential_l2_p6_gram",
+          "schema_version": "task035d.p5-p6-face-interior-riesz-complement.v1",
+          "status": "p5_p6_face_interior_riesz_complement_pass",
+          "whitened_reconstruction_projector_error_max": 6.661338147750939e-16
+        },
+        "full_p6_matrix_constructed": false,
+        "gradient_injection_commuting_error_max": 1.1455203105525946e-13,
+        "h1": {
+          "augmented_rank": 286,
+          "augmented_rank_tolerance": 4.5718511534768574e-12,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 3.052781858204604e-15,
+          "coarse_dimension": 277,
+          "complement_dimension": 9,
+          "complement_embedding_error_max": 1.27675647831893e-15,
+          "complement_gram_error_max": 2.6645352591003757e-15,
+          "complement_sha256": "b615b5c6958a0f4bde935a94d09a3d7c2ba13c55efadef072bc286d37823ae65",
+          "enriched_dimension": 286,
+          "family": "h1",
+          "injection_embedding_error_max": 3.1463198797382795e-15,
+          "injection_sha256": "154cccaecc48616ecf6c076b719315be57858b1f87beb50416b04cd98a607215",
+          "p6_container_dimension": 343,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 9,
+          "residual_rank_tolerance": 3.1910692211889253e-12,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "h1_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 2.54727959092606e-15,
+              "complement_gram_error_max": 1.9984014443252818e-15,
+              "injection_embedding_error_max": 3.1463198797382795e-15,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 2,
+              "coarse_complement_riesz_error_max": 4.145489901670166e-15,
+              "complement_gram_error_max": 6.5503158452884236e-15,
+              "injection_embedding_error_max": 3.6637359812630166e-15,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 4,
+              "coarse_complement_riesz_error_max": 6.46600067081532e-15,
+              "complement_gram_error_max": 9.880984919163893e-15,
+              "injection_embedding_error_max": 6.106226635438361e-15,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 6,
+              "coarse_complement_riesz_error_max": 6.710011307452889e-15,
+              "complement_gram_error_max": 1.0658141036401503e-14,
+              "injection_embedding_error_max": 5.440092820663267e-15,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 1,
+              "coarse_complement_riesz_error_max": 4.112909229464751e-15,
+              "complement_gram_error_max": 7.105427357601002e-15,
+              "injection_embedding_error_max": 3.1463198797382795e-15,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 3,
+              "coarse_complement_riesz_error_max": 6.635418197985887e-15,
+              "complement_gram_error_max": 9.880984919163893e-15,
+              "injection_embedding_error_max": 4.551914400963142e-15,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 5,
+              "coarse_complement_riesz_error_max": 6.535957215578633e-15,
+              "complement_gram_error_max": 1.1213252548714081e-14,
+              "injection_embedding_error_max": 6.5503158452884236e-15,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 7,
+              "coarse_complement_riesz_error_max": 8.013785353080523e-15,
+              "complement_gram_error_max": 1.2212453270876722e-14,
+              "injection_embedding_error_max": 6.439293542825908e-15,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "h1",
+          "local_face": 0,
+          "maximum_coarse_complement_riesz_error": 8.013785353080523e-15,
+          "maximum_complement_gram_error": 1.2212453270876722e-14,
+          "maximum_injection_embedding_error": 6.5503158452884236e-15,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "hanging_participant_supported": false,
+        "hcurl": {
+          "augmented_rank": 770,
+          "augmented_rank_tolerance": 1.2970272088594313e-10,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 1.94962449107876e-13,
+          "coarse_dimension": 750,
+          "complement_dimension": 20,
+          "complement_embedding_error_max": 1.085777161460713e-14,
+          "complement_gram_error_max": 5.995204332975845e-15,
+          "complement_sha256": "b83bb7d3ed061e41e28f59d97f273a2e24e75934c2e563836a5b964e68eb485f",
+          "enriched_dimension": 770,
+          "family": "hcurl",
+          "injection_embedding_error_max": 9.588447393770188e-14,
+          "injection_sha256": "8d74095db5bc440cb9af9ce4856db34a410e7c0e97c94f55d06f8f196a9b1e5b",
+          "p6_container_dimension": 882,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 20,
+          "residual_rank_tolerance": 1.1207924977924514e-11,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "hcurl_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 1.9503555691555996e-13,
+              "complement_gram_error_max": 5.995204332975845e-15,
+              "injection_embedding_error_max": 9.588447393770188e-14,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 2,
+              "coarse_complement_riesz_error_max": 2.391200811234901e-13,
+              "complement_gram_error_max": 3.962360496136136e-14,
+              "injection_embedding_error_max": 1.3433958116193828e-13,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 4,
+              "coarse_complement_riesz_error_max": 4.709511546809824e-13,
+              "complement_gram_error_max": 4.2508016421041796e-14,
+              "injection_embedding_error_max": 2.1122966854211494e-13,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 6,
+              "coarse_complement_riesz_error_max": 7.119283600331899e-13,
+              "complement_gram_error_max": 7.344941170030208e-14,
+              "injection_embedding_error_max": 2.6478819137309983e-13,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 1,
+              "coarse_complement_riesz_error_max": 2.2542387250805527e-13,
+              "complement_gram_error_max": 4.064882653566365e-14,
+              "injection_embedding_error_max": 1.2468809645497406e-13,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 3,
+              "coarse_complement_riesz_error_max": 4.68919458550028e-13,
+              "complement_gram_error_max": 4.365117208665634e-14,
+              "injection_embedding_error_max": 1.9617640845126516e-13,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 5,
+              "coarse_complement_riesz_error_max": 6.981766402665246e-13,
+              "complement_gram_error_max": 7.447419959373538e-14,
+              "injection_embedding_error_max": 2.753353101070388e-13,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 7,
+              "coarse_complement_riesz_error_max": 9.395628025617094e-13,
+              "complement_gram_error_max": 7.28721824636708e-14,
+              "injection_embedding_error_max": 3.6359804056473877e-13,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "hcurl",
+          "local_face": 0,
+          "maximum_coarse_complement_riesz_error": 9.395628025617094e-13,
+          "maximum_complement_gram_error": 7.447419959373538e-14,
+          "maximum_injection_embedding_error": 3.6359804056473877e-13,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "heavy_pde_authorized": false,
+        "inactive_modes_globally_numbered": false,
+        "individual_mode_selection_supported": false,
+        "local_face": 0,
+        "non_hanging_physical_face_only": true,
+        "ordinary_default_changed": false,
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "pde_launch_qualified": false,
+        "periodic_orbit_closure_required": true,
+        "schema_version": "task035d.selective-p6-face-reference-complement.v1",
+        "status": "selective_p6_face_reference_complement_pass"
+      },
+      {
+        "action": "whole_physical_face_p5_to_p6",
+        "checks": {
+          "coarse_reference_space": true,
+          "enriched_reference_space": true,
+          "exact_sequence_injection_commutes": true,
+          "face_interior_tangential_riesz": true,
+          "h1_d4_orientation": true,
+          "hcurl_d4_orientation": true,
+          "whole_face_h1_complement_has_9_modes": true,
+          "whole_face_hcurl_complement_has_20_modes": true
+        },
+        "coarse_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[6]",
+          "uniform_degree": null
+        },
+        "dtn_port_complement_qualified": false,
+        "enriched_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            6,
+            5,
+            5,
+            5,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,6,5,5,5,5]-c[6]",
+          "uniform_degree": null
+        },
+        "face_interior": {
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "complement_riesz_orthonormal": true,
+            "d4_complement_representation_unitary": true,
+            "d4_embedding_commutes": true,
+            "d4_preserves_complement_subspace": true,
+            "d4_preserves_tangential_riesz": true,
+            "enriched_face_is_p6_container": true,
+            "p5_complement_riesz_orthogonal": true,
+            "p5_embedding_has_no_other_entity_support": true,
+            "p5_face_embedding_rank_40": true,
+            "p5_hexa_piola_trace_qualified": true,
+            "p5_plus_complement_reconstructs_p6_face": true,
+            "p6_face_complement_rank_20": true,
+            "p6_face_modes_have_no_other_entity_support": true,
+            "p6_hexa_piola_trace_qualified": true,
+            "tangential_riesz_positive_definite": true
+          },
+          "combined_rank": 60,
+          "combined_rank_tolerance": 1.0106705523579975e-11,
+          "complement_dimension": 20,
+          "complement_gram_error_max": 1.4432899320127035e-15,
+          "complement_to_p6_sha256": "f1068bfdb1709d7929434c266e0e8dcd821bc46a92e163ed31b5e3f84f6c4b57",
+          "d4_actions": [
+            {
+              "complement_closure_error_max": 3.552713678800501e-15,
+              "complement_unitarity_error_max": 2.886579864025407e-15,
+              "embedding_commuting_error_max": 0.0,
+              "riesz_invariance_error_max": 0.0,
+              "vertex_permutation": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 5.329070518200751e-15,
+              "complement_unitarity_error_max": 1.5543122344752192e-15,
+              "embedding_commuting_error_max": 1.9770390116808335e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                0,
+                2,
+                1,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.218847493575595e-15,
+              "complement_unitarity_error_max": 2.6645352591003757e-15,
+              "embedding_commuting_error_max": 2.447060455849435e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                1,
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.884981308350689e-15,
+              "complement_unitarity_error_max": 1.9984014443252818e-15,
+              "embedding_commuting_error_max": 2.930988785010413e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                1,
+                3,
+                0,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 5.995204332975845e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 3.730349362740526e-14,
+              "riesz_invariance_error_max": 3.552713678800501e-13,
+              "vertex_permutation": [
+                2,
+                0,
+                3,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 8.43769498715119e-15,
+              "complement_unitarity_error_max": 3.1086244689504383e-15,
+              "embedding_commuting_error_max": 3.6118990210231766e-14,
+              "riesz_invariance_error_max": 1.6342482922482304e-13,
+              "vertex_permutation": [
+                2,
+                3,
+                0,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 5.329070518200751e-15,
+              "complement_unitarity_error_max": 2.886579864025407e-15,
+              "embedding_commuting_error_max": 3.850534521357211e-14,
+              "riesz_invariance_error_max": 3.694822225952521e-13,
+              "vertex_permutation": [
+                3,
+                1,
+                2,
+                0
+              ]
+            },
+            {
+              "complement_closure_error_max": 7.771561172376096e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 3.611207311926615e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                3,
+                2,
+                1,
+                0
+              ]
+            }
+          ],
+          "enriched_face_identity_error_max": 6.217248937900877e-15,
+          "individual_complement_modes_are_not_production_rows": true,
+          "local_face": 1,
+          "maximum_d4_complement_closure_error": 8.43769498715119e-15,
+          "maximum_d4_complement_unitarity_error": 3.1086244689504383e-15,
+          "maximum_d4_embedding_commuting_error": 3.850534521357211e-14,
+          "maximum_d4_riesz_invariance_error": 3.694822225952521e-13,
+          "p5_complement_riesz_error_max": 2.1024848528838902e-15,
+          "p5_embedding_rank": 40,
+          "p5_embedding_rank_tolerance": 1.0106705523579975e-11,
+          "p5_face_interior_dimension": 40,
+          "p5_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 5,
+            "failures": [],
+            "gradient_commuting_error": 6.661338147750939e-15,
+            "h1_closure_map_sha256": "94b476776a094f0a8e7840c27906343bc1a995dd141797c2718cd2bbe92fe3db",
+            "h1_outside_closure_max": 6.356026815979021e-15,
+            "h1_trace_condition_number": 1.0000000000000029,
+            "h1_trace_dimension": 36,
+            "h1_trace_rank": 36,
+            "hcurl_closure_map_sha256": "99055040be04382307c1c9ed70b43408add1b4af365096c38cfaddbc7dea24da",
+            "hcurl_outside_closure_max": 2.5670039204271283e-14,
+            "hcurl_trace_condition_number": 1.0000000000000042,
+            "hcurl_trace_dimension": 60,
+            "hcurl_trace_rank": 60,
+            "local_face": 1,
+            "normal_axis": 1,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 0,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              0,
+              2
+            ]
+          },
+          "p5_other_entity_support_error_max": 1.0857410947229896e-14,
+          "p5_to_p6_sha256": "7e6d84a81f43f49e0a784a3dabbb783f06a66a001379cbd137934ad75c30d203",
+          "p6_face_interior_dimension": 60,
+          "p6_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 6,
+            "failures": [],
+            "gradient_commuting_error": 8.932790505018227e-15,
+            "h1_closure_map_sha256": "3816299564d568efb24d3269f0e41fc7402249420bea00e259d49c1c27ec6892",
+            "h1_outside_closure_max": 1.0477729794899915e-14,
+            "h1_trace_condition_number": 1.0000000000000038,
+            "h1_trace_dimension": 49,
+            "h1_trace_rank": 49,
+            "hcurl_closure_map_sha256": "ca2f971dcc0ec2f8d253e532e8993534f2811c8e48ef695a4c5cb939b5371fb8",
+            "hcurl_outside_closure_max": 6.537572363294714e-14,
+            "hcurl_trace_condition_number": 1.000000000000024,
+            "hcurl_trace_dimension": 84,
+            "hcurl_trace_rank": 84,
+            "local_face": 1,
+            "normal_axis": 1,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 0,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              0,
+              2
+            ]
+          },
+          "p6_other_entity_support_error_max": 1.1238155511591324e-14,
+          "p6_tangential_riesz_condition_number": 2408.8857521489913,
+          "p6_tangential_riesz_gram_sha256": "2144d0397b4da7f1659f5680b1728f6fbcf44008fa8cf79b973f24231c10f1d8",
+          "pass": true,
+          "prefix_assumption_used": false,
+          "quadrature_degree": 14,
+          "riesz_metric": "reference_affine_face_tangential_l2_p6_gram",
+          "schema_version": "task035d.p5-p6-face-interior-riesz-complement.v1",
+          "status": "p5_p6_face_interior_riesz_complement_pass",
+          "whitened_reconstruction_projector_error_max": 6.661338147750939e-16
+        },
+        "full_p6_matrix_constructed": false,
+        "gradient_injection_commuting_error_max": 1.609823385706477e-13,
+        "h1": {
+          "augmented_rank": 286,
+          "augmented_rank_tolerance": 4.571851153476857e-12,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 3.3560831107097493e-15,
+          "coarse_dimension": 277,
+          "complement_dimension": 9,
+          "complement_embedding_error_max": 1.7763568394002505e-15,
+          "complement_gram_error_max": 3.1086244689504383e-15,
+          "complement_sha256": "794b2f83337aa990d9bf61141b3cfed468ae49f140d81a6aa73b04d0ab905228",
+          "enriched_dimension": 286,
+          "family": "h1",
+          "injection_embedding_error_max": 3.1340749761913614e-15,
+          "injection_sha256": "d4596412ae5e6f51fdaf22d9083464e4891320e318840f605b4c1de9ea4dc123",
+          "p6_container_dimension": 343,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 9,
+          "residual_rank_tolerance": 3.191069221188919e-12,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "h1_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 3.41107078007338e-15,
+              "complement_gram_error_max": 2.886579864025407e-15,
+              "injection_embedding_error_max": 3.1340749761913614e-15,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 16,
+              "coarse_complement_riesz_error_max": 6.467860688766268e-15,
+              "complement_gram_error_max": 6.439293542825908e-15,
+              "injection_embedding_error_max": 3.1340749761913614e-15,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 32,
+              "coarse_complement_riesz_error_max": 6.599520575370479e-15,
+              "complement_gram_error_max": 1.099120794378905e-14,
+              "injection_embedding_error_max": 5.218048215738236e-15,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 48,
+              "coarse_complement_riesz_error_max": 7.179762098142891e-15,
+              "complement_gram_error_max": 1.3988810110276972e-14,
+              "injection_embedding_error_max": 4.3298697960381105e-15,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 8,
+              "coarse_complement_riesz_error_max": 4.4085436613459495e-15,
+              "complement_gram_error_max": 7.549516567451064e-15,
+              "injection_embedding_error_max": 3.1340749761913614e-15,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 24,
+              "coarse_complement_riesz_error_max": 6.157598600838373e-15,
+              "complement_gram_error_max": 1.1657341758564144e-14,
+              "injection_embedding_error_max": 3.552713678800501e-15,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 40,
+              "coarse_complement_riesz_error_max": 7.38430504343168e-15,
+              "complement_gram_error_max": 1.509903313490213e-14,
+              "injection_embedding_error_max": 5.662137425588298e-15,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 56,
+              "coarse_complement_riesz_error_max": 7.564385134908121e-15,
+              "complement_gram_error_max": 1.4432899320127035e-14,
+              "injection_embedding_error_max": 4.884981308350689e-15,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "h1",
+          "local_face": 1,
+          "maximum_coarse_complement_riesz_error": 7.564385134908121e-15,
+          "maximum_complement_gram_error": 1.509903313490213e-14,
+          "maximum_injection_embedding_error": 5.662137425588298e-15,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "hanging_participant_supported": false,
+        "hcurl": {
+          "augmented_rank": 770,
+          "augmented_rank_tolerance": 1.2970272088594329e-10,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 8.463296902801302e-14,
+          "coarse_dimension": 750,
+          "complement_dimension": 20,
+          "complement_embedding_error_max": 9.175709008399082e-15,
+          "complement_gram_error_max": 4.6629367034256575e-15,
+          "complement_sha256": "66dfe7260356e0550ec2a8af39515bdefe65166d20313132e04e66c62de491d7",
+          "enriched_dimension": 770,
+          "family": "hcurl",
+          "injection_embedding_error_max": 1.198201346702945e-13,
+          "injection_sha256": "60268021c3f25a558b701c509313f0159500b6edc907b002a290ee297d4c075e",
+          "p6_container_dimension": 882,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 20,
+          "residual_rank_tolerance": 1.1207924977924506e-11,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "hcurl_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 8.237519909849827e-14,
+              "complement_gram_error_max": 4.6629367034256575e-15,
+              "injection_embedding_error_max": 1.198201346702945e-13,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 16,
+              "coarse_complement_riesz_error_max": 2.41058174802503e-13,
+              "complement_gram_error_max": 3.9540799020438164e-14,
+              "injection_embedding_error_max": 1.2455807027341602e-13,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 32,
+              "coarse_complement_riesz_error_max": 4.741040966091804e-13,
+              "complement_gram_error_max": 4.2424776799249606e-14,
+              "injection_embedding_error_max": 2.1678894155529803e-13,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 48,
+              "coarse_complement_riesz_error_max": 7.139219648634342e-13,
+              "complement_gram_error_max": 7.33655215572064e-14,
+              "injection_embedding_error_max": 2.580158309228864e-13,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 8,
+              "coarse_complement_riesz_error_max": 2.271954327333745e-13,
+              "complement_gram_error_max": 4.056515323300247e-14,
+              "injection_embedding_error_max": 1.198201346702945e-13,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 24,
+              "coarse_complement_riesz_error_max": 4.715172889659131e-13,
+              "complement_gram_error_max": 5.0306438702241144e-14,
+              "injection_embedding_error_max": 1.887379141862766e-13,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 40,
+              "coarse_complement_riesz_error_max": 6.999482004918436e-13,
+              "complement_gram_error_max": 7.43896589293362e-14,
+              "injection_embedding_error_max": 2.687849942617504e-13,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 56,
+              "coarse_complement_riesz_error_max": 9.422161441288253e-13,
+              "complement_gram_error_max": 8.413137807944392e-14,
+              "injection_embedding_error_max": 3.5416114485542494e-13,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "hcurl",
+          "local_face": 1,
+          "maximum_coarse_complement_riesz_error": 9.422161441288253e-13,
+          "maximum_complement_gram_error": 8.413137807944392e-14,
+          "maximum_injection_embedding_error": 3.5416114485542494e-13,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "heavy_pde_authorized": false,
+        "inactive_modes_globally_numbered": false,
+        "individual_mode_selection_supported": false,
+        "local_face": 1,
+        "non_hanging_physical_face_only": true,
+        "ordinary_default_changed": false,
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "pde_launch_qualified": false,
+        "periodic_orbit_closure_required": true,
+        "schema_version": "task035d.selective-p6-face-reference-complement.v1",
+        "status": "selective_p6_face_reference_complement_pass"
+      },
+      {
+        "action": "whole_physical_face_p5_to_p6",
+        "checks": {
+          "coarse_reference_space": true,
+          "enriched_reference_space": true,
+          "exact_sequence_injection_commutes": true,
+          "face_interior_tangential_riesz": true,
+          "h1_d4_orientation": true,
+          "hcurl_d4_orientation": true,
+          "whole_face_h1_complement_has_9_modes": true,
+          "whole_face_hcurl_complement_has_20_modes": true
+        },
+        "coarse_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[6]",
+          "uniform_degree": null
+        },
+        "dtn_port_complement_qualified": false,
+        "enriched_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            5,
+            6,
+            5,
+            5,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,6,5,5,5]-c[6]",
+          "uniform_degree": null
+        },
+        "face_interior": {
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "complement_riesz_orthonormal": true,
+            "d4_complement_representation_unitary": true,
+            "d4_embedding_commutes": true,
+            "d4_preserves_complement_subspace": true,
+            "d4_preserves_tangential_riesz": true,
+            "enriched_face_is_p6_container": true,
+            "p5_complement_riesz_orthogonal": true,
+            "p5_embedding_has_no_other_entity_support": true,
+            "p5_face_embedding_rank_40": true,
+            "p5_hexa_piola_trace_qualified": true,
+            "p5_plus_complement_reconstructs_p6_face": true,
+            "p6_face_complement_rank_20": true,
+            "p6_face_modes_have_no_other_entity_support": true,
+            "p6_hexa_piola_trace_qualified": true,
+            "tangential_riesz_positive_definite": true
+          },
+          "combined_rank": 60,
+          "combined_rank_tolerance": 1.0106705523579973e-11,
+          "complement_dimension": 20,
+          "complement_gram_error_max": 8.881784197001252e-16,
+          "complement_to_p6_sha256": "5e46afca54365f41ff4626b7309bbc1d597412dffb857b8ff3abc36ac3d80729",
+          "d4_actions": [
+            {
+              "complement_closure_error_max": 2.220446049250313e-15,
+              "complement_unitarity_error_max": 1.7763568394002505e-15,
+              "embedding_commuting_error_max": 0.0,
+              "riesz_invariance_error_max": 0.0,
+              "vertex_permutation": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 3.608224830031759e-15,
+              "complement_unitarity_error_max": 1.5543122344752192e-15,
+              "embedding_commuting_error_max": 2.042810365310288e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                0,
+                2,
+                1,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.884981308350689e-15,
+              "complement_unitarity_error_max": 2.886579864025407e-15,
+              "embedding_commuting_error_max": 2.2787720783032687e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                1,
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 6.217248937900877e-15,
+              "complement_unitarity_error_max": 2.4424906541753444e-15,
+              "embedding_commuting_error_max": 2.1316282072803006e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                1,
+                3,
+                0,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 5.329070518200751e-15,
+              "complement_unitarity_error_max": 2.4424906541753444e-15,
+              "embedding_commuting_error_max": 2.6109329805909877e-14,
+              "riesz_invariance_error_max": 3.552713678800501e-13,
+              "vertex_permutation": [
+                2,
+                0,
+                3,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 7.549516567451064e-15,
+              "complement_unitarity_error_max": 3.774758283725532e-15,
+              "embedding_commuting_error_max": 3.2837015110159026e-14,
+              "riesz_invariance_error_max": 1.6342482922482304e-13,
+              "vertex_permutation": [
+                2,
+                3,
+                0,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 6.217248937900877e-15,
+              "complement_unitarity_error_max": 2.4424906541753444e-15,
+              "embedding_commuting_error_max": 2.928355521527939e-14,
+              "riesz_invariance_error_max": 3.694822225952521e-13,
+              "vertex_permutation": [
+                3,
+                1,
+                2,
+                0
+              ]
+            },
+            {
+              "complement_closure_error_max": 7.327471962526033e-15,
+              "complement_unitarity_error_max": 1.9984014443252818e-15,
+              "embedding_commuting_error_max": 2.8375624881614827e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                3,
+                2,
+                1,
+                0
+              ]
+            }
+          ],
+          "enriched_face_identity_error_max": 7.830541770559307e-15,
+          "individual_complement_modes_are_not_production_rows": true,
+          "local_face": 2,
+          "maximum_d4_complement_closure_error": 7.549516567451064e-15,
+          "maximum_d4_complement_unitarity_error": 3.774758283725532e-15,
+          "maximum_d4_embedding_commuting_error": 3.2837015110159026e-14,
+          "maximum_d4_riesz_invariance_error": 3.694822225952521e-13,
+          "p5_complement_riesz_error_max": 2.9524993561125257e-15,
+          "p5_embedding_rank": 40,
+          "p5_embedding_rank_tolerance": 1.0106705523579973e-11,
+          "p5_face_interior_dimension": 40,
+          "p5_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 5,
+            "failures": [],
+            "gradient_commuting_error": 6.22210769471198e-15,
+            "h1_closure_map_sha256": "36d073037e0950e3541e266317d10a83a41cf22a2c6d4a38b0aaafdd84311cf5",
+            "h1_outside_closure_max": 5.467848396278896e-15,
+            "h1_trace_condition_number": 1.0000000000000027,
+            "h1_trace_dimension": 36,
+            "h1_trace_rank": 36,
+            "hcurl_closure_map_sha256": "8068ebc295d4b7ddde565b62626ae5a30c5ee62304b45b4383716e7a394bf7b0",
+            "hcurl_outside_closure_max": 2.910356041006991e-14,
+            "hcurl_trace_condition_number": 1.0000000000000053,
+            "hcurl_trace_dimension": 60,
+            "hcurl_trace_rank": 60,
+            "local_face": 2,
+            "normal_axis": 0,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 0,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              1,
+              2
+            ]
+          },
+          "p5_other_entity_support_error_max": 1.1071717615737911e-14,
+          "p5_to_p6_sha256": "c205db33b508967aae4673636f1b5462f31ebca525b0ca4d208527d34358accc",
+          "p6_face_interior_dimension": 60,
+          "p6_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 6,
+            "failures": [],
+            "gradient_commuting_error": 1.1102230246251565e-14,
+            "h1_closure_map_sha256": "16e7dfa7ca319d7f003cba392ceb8303659bd373969d4ef5c5282ce02c684aae",
+            "h1_outside_closure_max": 1.0422218643668657e-14,
+            "h1_trace_condition_number": 1.0000000000000042,
+            "h1_trace_dimension": 49,
+            "h1_trace_rank": 49,
+            "hcurl_closure_map_sha256": "5e4ef49abbdafdbcab9c46e69981d9e2651768c5feaeda280ae13b1ff8717feb",
+            "hcurl_outside_closure_max": 5.612308000793092e-14,
+            "hcurl_trace_condition_number": 1.0000000000000273,
+            "hcurl_trace_dimension": 84,
+            "hcurl_trace_rank": 84,
+            "local_face": 2,
+            "normal_axis": 0,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 0,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              1,
+              2
+            ]
+          },
+          "p6_other_entity_support_error_max": 2.2451989954595012e-14,
+          "p6_tangential_riesz_condition_number": 2408.8857521489913,
+          "p6_tangential_riesz_gram_sha256": "2144d0397b4da7f1659f5680b1728f6fbcf44008fa8cf79b973f24231c10f1d8",
+          "pass": true,
+          "prefix_assumption_used": false,
+          "quadrature_degree": 14,
+          "riesz_metric": "reference_affine_face_tangential_l2_p6_gram",
+          "schema_version": "task035d.p5-p6-face-interior-riesz-complement.v1",
+          "status": "p5_p6_face_interior_riesz_complement_pass",
+          "whitened_reconstruction_projector_error_max": 6.661338147750939e-16
+        },
+        "full_p6_matrix_constructed": false,
+        "gradient_injection_commuting_error_max": 2.4688707318949667e-13,
+        "h1": {
+          "augmented_rank": 286,
+          "augmented_rank_tolerance": 4.571851153476853e-12,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 3.946971813618179e-15,
+          "coarse_dimension": 277,
+          "complement_dimension": 9,
+          "complement_embedding_error_max": 1.530242946246041e-15,
+          "complement_gram_error_max": 3.1086244689504383e-15,
+          "complement_sha256": "e28d14e81a4ced063e943994073e514615cf74985a981ca7bd231cde5e36664e",
+          "enriched_dimension": 286,
+          "family": "h1",
+          "injection_embedding_error_max": 2.9391206782666626e-15,
+          "injection_sha256": "9098ba34aa2e95861f1085e9aad83c9cdaec197b857a689475246237030730cc",
+          "p6_container_dimension": 343,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 9,
+          "residual_rank_tolerance": 3.191069221188925e-12,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "h1_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 3.588350871488523e-15,
+              "complement_gram_error_max": 4.218847493575595e-15,
+              "injection_embedding_error_max": 2.9391206782666626e-15,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 128,
+              "coarse_complement_riesz_error_max": 4.5574562997154945e-15,
+              "complement_gram_error_max": 5.218048215738236e-15,
+              "injection_embedding_error_max": 3.219646771412954e-15,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 256,
+              "coarse_complement_riesz_error_max": 7.142454087506254e-15,
+              "complement_gram_error_max": 8.881784197001252e-15,
+              "injection_embedding_error_max": 5.329070518200751e-15,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 384,
+              "coarse_complement_riesz_error_max": 7.25978857008127e-15,
+              "complement_gram_error_max": 1.176836406102666e-14,
+              "injection_embedding_error_max": 4.440892098500626e-15,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 64,
+              "coarse_complement_riesz_error_max": 4.202960014023833e-15,
+              "complement_gram_error_max": 8.43769498715119e-15,
+              "injection_embedding_error_max": 3.1086244689504383e-15,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 192,
+              "coarse_complement_riesz_error_max": 7.0400478947727766e-15,
+              "complement_gram_error_max": 1.0658141036401503e-14,
+              "injection_embedding_error_max": 3.6637359812630166e-15,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 320,
+              "coarse_complement_riesz_error_max": 7.324317989105262e-15,
+              "complement_gram_error_max": 1.3100631690576847e-14,
+              "injection_embedding_error_max": 5.662137425588298e-15,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 448,
+              "coarse_complement_riesz_error_max": 7.325706216270892e-15,
+              "complement_gram_error_max": 1.3766765505351941e-14,
+              "injection_embedding_error_max": 4.884981308350689e-15,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "h1",
+          "local_face": 2,
+          "maximum_coarse_complement_riesz_error": 7.325706216270892e-15,
+          "maximum_complement_gram_error": 1.3766765505351941e-14,
+          "maximum_injection_embedding_error": 5.662137425588298e-15,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "hanging_participant_supported": false,
+        "hcurl": {
+          "augmented_rank": 770,
+          "augmented_rank_tolerance": 1.2970272088594298e-10,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 1.7187365366222232e-13,
+          "coarse_dimension": 750,
+          "complement_dimension": 20,
+          "complement_embedding_error_max": 1.809556678771515e-14,
+          "complement_gram_error_max": 4.6629367034256575e-15,
+          "complement_sha256": "90caac5965a1b64ed43106508a6f7a0a5a5d5571ce3fc8621372af40024c6890",
+          "enriched_dimension": 770,
+          "family": "hcurl",
+          "injection_embedding_error_max": 1.1177207909634162e-13,
+          "injection_sha256": "9f59ec4b4c0a42cdd47a4e2534509c601779e6dcd58569e92204cb889c35d389",
+          "p6_container_dimension": 882,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 20,
+          "residual_rank_tolerance": 1.120792497792451e-11,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "hcurl_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 1.7210556870914155e-13,
+              "complement_gram_error_max": 4.440892098500626e-15,
+              "injection_embedding_error_max": 1.1177207909634162e-13,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 128,
+              "coarse_complement_riesz_error_max": 2.43955837004683e-13,
+              "complement_gram_error_max": 3.286926937226554e-14,
+              "injection_embedding_error_max": 1.2446115958889146e-13,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 256,
+              "coarse_complement_riesz_error_max": 4.800836241681679e-13,
+              "complement_gram_error_max": 3.626412321475215e-14,
+              "injection_embedding_error_max": 2.105503444379274e-13,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 384,
+              "coarse_complement_riesz_error_max": 7.167086047631513e-13,
+              "complement_gram_error_max": 6.84897017572129e-14,
+              "injection_embedding_error_max": 2.561284517810236e-13,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 64,
+              "coarse_complement_riesz_error_max": 2.3098765592862934e-13,
+              "complement_gram_error_max": 3.481974908056696e-14,
+              "injection_embedding_error_max": 1.1466786123776632e-13,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 192,
+              "coarse_complement_riesz_error_max": 4.760535265928883e-13,
+              "complement_gram_error_max": 5.0379784979209795e-14,
+              "injection_embedding_error_max": 1.906367422833394e-13,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 320,
+              "coarse_complement_riesz_error_max": 7.028458626940234e-13,
+              "complement_gram_error_max": 6.504497461479195e-14,
+              "injection_embedding_error_max": 2.6689761511988763e-13,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 448,
+              "coarse_complement_riesz_error_max": 9.46696870604569e-13,
+              "complement_gram_error_max": 8.420407383510907e-14,
+              "injection_embedding_error_max": 3.460565167756613e-13,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "hcurl",
+          "local_face": 2,
+          "maximum_coarse_complement_riesz_error": 9.46696870604569e-13,
+          "maximum_complement_gram_error": 8.420407383510907e-14,
+          "maximum_injection_embedding_error": 3.460565167756613e-13,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "heavy_pde_authorized": false,
+        "inactive_modes_globally_numbered": false,
+        "individual_mode_selection_supported": false,
+        "local_face": 2,
+        "non_hanging_physical_face_only": true,
+        "ordinary_default_changed": false,
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "pde_launch_qualified": false,
+        "periodic_orbit_closure_required": true,
+        "schema_version": "task035d.selective-p6-face-reference-complement.v1",
+        "status": "selective_p6_face_reference_complement_pass"
+      },
+      {
+        "action": "whole_physical_face_p5_to_p6",
+        "checks": {
+          "coarse_reference_space": true,
+          "enriched_reference_space": true,
+          "exact_sequence_injection_commutes": true,
+          "face_interior_tangential_riesz": true,
+          "h1_d4_orientation": true,
+          "hcurl_d4_orientation": true,
+          "whole_face_h1_complement_has_9_modes": true,
+          "whole_face_hcurl_complement_has_20_modes": true
+        },
+        "coarse_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[6]",
+          "uniform_degree": null
+        },
+        "dtn_port_complement_qualified": false,
+        "enriched_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            5,
+            5,
+            6,
+            5,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,6,5,5]-c[6]",
+          "uniform_degree": null
+        },
+        "face_interior": {
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "complement_riesz_orthonormal": true,
+            "d4_complement_representation_unitary": true,
+            "d4_embedding_commutes": true,
+            "d4_preserves_complement_subspace": true,
+            "d4_preserves_tangential_riesz": true,
+            "enriched_face_is_p6_container": true,
+            "p5_complement_riesz_orthogonal": true,
+            "p5_embedding_has_no_other_entity_support": true,
+            "p5_face_embedding_rank_40": true,
+            "p5_hexa_piola_trace_qualified": true,
+            "p5_plus_complement_reconstructs_p6_face": true,
+            "p6_face_complement_rank_20": true,
+            "p6_face_modes_have_no_other_entity_support": true,
+            "p6_hexa_piola_trace_qualified": true,
+            "tangential_riesz_positive_definite": true
+          },
+          "combined_rank": 60,
+          "combined_rank_tolerance": 1.0106705523579975e-11,
+          "complement_dimension": 20,
+          "complement_gram_error_max": 6.661338147750939e-16,
+          "complement_to_p6_sha256": "73e6d2385d563b7a4948d86c469feb9fef41460b6d03a8d9ed5c54711ef95ca4",
+          "d4_actions": [
+            {
+              "complement_closure_error_max": 2.220446049250313e-15,
+              "complement_unitarity_error_max": 1.3322676295501878e-15,
+              "embedding_commuting_error_max": 0.0,
+              "riesz_invariance_error_max": 0.0,
+              "vertex_permutation": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.052314039881821e-15,
+              "complement_unitarity_error_max": 1.7763568394002505e-15,
+              "embedding_commuting_error_max": 1.865174681370263e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                0,
+                2,
+                1,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.440892098500626e-15,
+              "complement_unitarity_error_max": 1.5543122344752192e-15,
+              "embedding_commuting_error_max": 2.041829051861253e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                1,
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 6.661338147750939e-15,
+              "complement_unitarity_error_max": 1.7763568394002505e-15,
+              "embedding_commuting_error_max": 2.7533531010703882e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                1,
+                3,
+                0,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.6629367034256575e-15,
+              "complement_unitarity_error_max": 2.4424906541753444e-15,
+              "embedding_commuting_error_max": 2.7533531010703882e-14,
+              "riesz_invariance_error_max": 3.552713678800501e-13,
+              "vertex_permutation": [
+                2,
+                0,
+                3,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 5.551115123125783e-15,
+              "complement_unitarity_error_max": 2.6645352591003757e-15,
+              "embedding_commuting_error_max": 3.0672080212139984e-14,
+              "riesz_invariance_error_max": 1.6342482922482304e-13,
+              "vertex_permutation": [
+                2,
+                3,
+                0,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 6.661338147750939e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 2.987336119711151e-14,
+              "riesz_invariance_error_max": 3.694822225952521e-13,
+              "vertex_permutation": [
+                3,
+                1,
+                2,
+                0
+              ]
+            },
+            {
+              "complement_closure_error_max": 5.773159728050814e-15,
+              "complement_unitarity_error_max": 1.7763568394002505e-15,
+              "embedding_commuting_error_max": 2.525964305355526e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                3,
+                2,
+                1,
+                0
+              ]
+            }
+          ],
+          "enriched_face_identity_error_max": 6.156533616241688e-15,
+          "individual_complement_modes_are_not_production_rows": true,
+          "local_face": 3,
+          "maximum_d4_complement_closure_error": 6.661338147750939e-15,
+          "maximum_d4_complement_unitarity_error": 2.6645352591003757e-15,
+          "maximum_d4_embedding_commuting_error": 3.0672080212139984e-14,
+          "maximum_d4_riesz_invariance_error": 3.694822225952521e-13,
+          "p5_complement_riesz_error_max": 2.869232629265639e-15,
+          "p5_embedding_rank": 40,
+          "p5_embedding_rank_tolerance": 1.0106705523579975e-11,
+          "p5_face_interior_dimension": 40,
+          "p5_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 5,
+            "failures": [],
+            "gradient_commuting_error": 6.583337475535977e-15,
+            "h1_closure_map_sha256": "0628391d009a721367bddbc3e5c31f9386cf1cb82a8f2f22627db8535899463a",
+            "h1_outside_closure_max": 6.356026815979021e-15,
+            "h1_trace_condition_number": 1.0000000000000018,
+            "h1_trace_dimension": 36,
+            "h1_trace_rank": 36,
+            "hcurl_closure_map_sha256": "73b9e0ec93c11d9958d05713a25c419e44c43899fef52218df3db1fe0c010093",
+            "hcurl_outside_closure_max": 3.3667266165636515e-14,
+            "hcurl_trace_condition_number": 1.0000000000000044,
+            "hcurl_trace_dimension": 60,
+            "hcurl_trace_rank": 60,
+            "local_face": 3,
+            "normal_axis": 0,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 1,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              1,
+              2
+            ]
+          },
+          "p5_other_entity_support_error_max": 1.0456925932065823e-14,
+          "p5_to_p6_sha256": "d717aea354df5a6a7647dd4fe14acc9b7f0a623fcea66b2d11054ba49fe5b2c1",
+          "p6_face_interior_dimension": 60,
+          "p6_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 6,
+            "failures": [],
+            "gradient_commuting_error": 9.080994705259927e-15,
+            "h1_closure_map_sha256": "78381851dee53f1dbcd2aa5aed7e4b7971abcba4eb1da7fb263412663308f95e",
+            "h1_outside_closure_max": 1.0477729794899915e-14,
+            "h1_trace_condition_number": 1.0000000000000047,
+            "h1_trace_dimension": 49,
+            "h1_trace_rank": 49,
+            "hcurl_closure_map_sha256": "3a0d757a24f17915fd90bcacacba8a28dd3a47d58091067b069a8e669027ab54",
+            "hcurl_outside_closure_max": 5.405460232706395e-14,
+            "hcurl_trace_condition_number": 1.000000000000006,
+            "hcurl_trace_dimension": 84,
+            "hcurl_trace_rank": 84,
+            "local_face": 3,
+            "normal_axis": 0,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 1,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              1,
+              2
+            ]
+          },
+          "p6_other_entity_support_error_max": 1.9712772838202225e-14,
+          "p6_tangential_riesz_condition_number": 2408.8857521489913,
+          "p6_tangential_riesz_gram_sha256": "2144d0397b4da7f1659f5680b1728f6fbcf44008fa8cf79b973f24231c10f1d8",
+          "pass": true,
+          "prefix_assumption_used": false,
+          "quadrature_degree": 14,
+          "riesz_metric": "reference_affine_face_tangential_l2_p6_gram",
+          "schema_version": "task035d.p5-p6-face-interior-riesz-complement.v1",
+          "status": "p5_p6_face_interior_riesz_complement_pass",
+          "whitened_reconstruction_projector_error_max": 4.440892098500626e-16
+        },
+        "full_p6_matrix_constructed": false,
+        "gradient_injection_commuting_error_max": 3.066655702710769e-13,
+        "h1": {
+          "augmented_rank": 286,
+          "augmented_rank_tolerance": 4.571851153476859e-12,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 3.839599053039315e-15,
+          "coarse_dimension": 277,
+          "complement_dimension": 9,
+          "complement_embedding_error_max": 1.7208456881689926e-15,
+          "complement_gram_error_max": 1.5543122344752192e-15,
+          "complement_sha256": "0a5a555141f1d30d0fa4afa19435eb5ae41c957a6e6d801d89fa35d74f185745",
+          "enriched_dimension": 286,
+          "family": "h1",
+          "injection_embedding_error_max": 2.8334850704940465e-15,
+          "injection_sha256": "1161ab5cbab7f03c123477406b79926af6d1fb8ae506323a7a26913af92ac246",
+          "p6_container_dimension": 343,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 9,
+          "residual_rank_tolerance": 3.1910692211889176e-12,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "h1_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 3.440870116286684e-15,
+              "complement_gram_error_max": 8.881784197001252e-16,
+              "injection_embedding_error_max": 2.8334850704940465e-15,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 1024,
+              "coarse_complement_riesz_error_max": 6.115813716242918e-15,
+              "complement_gram_error_max": 6.106226635438361e-15,
+              "injection_embedding_error_max": 3.1086244689504383e-15,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 2048,
+              "coarse_complement_riesz_error_max": 7.180560979003027e-15,
+              "complement_gram_error_max": 9.547918011776346e-15,
+              "injection_embedding_error_max": 4.9960036108132044e-15,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 3072,
+              "coarse_complement_riesz_error_max": 6.4222835320938215e-15,
+              "complement_gram_error_max": 9.992007221626409e-15,
+              "injection_embedding_error_max": 5.218048215738236e-15,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 512,
+              "coarse_complement_riesz_error_max": 5.4377985634365254e-15,
+              "complement_gram_error_max": 6.439293542825908e-15,
+              "injection_embedding_error_max": 2.8334850704940465e-15,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 1536,
+              "coarse_complement_riesz_error_max": 5.9692519220522676e-15,
+              "complement_gram_error_max": 9.880984919163893e-15,
+              "injection_embedding_error_max": 4.3298697960381105e-15,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 2560,
+              "coarse_complement_riesz_error_max": 8.461290615510197e-15,
+              "complement_gram_error_max": 1.2656542480726785e-14,
+              "injection_embedding_error_max": 5.218048215738236e-15,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 3584,
+              "coarse_complement_riesz_error_max": 8.66585722592883e-15,
+              "complement_gram_error_max": 1.3877787807814457e-14,
+              "injection_embedding_error_max": 4.3298697960381105e-15,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "h1",
+          "local_face": 3,
+          "maximum_coarse_complement_riesz_error": 8.66585722592883e-15,
+          "maximum_complement_gram_error": 1.3877787807814457e-14,
+          "maximum_injection_embedding_error": 5.218048215738236e-15,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "hanging_participant_supported": false,
+        "hcurl": {
+          "augmented_rank": 770,
+          "augmented_rank_tolerance": 1.2970272088594316e-10,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 9.106471915599567e-14,
+          "coarse_dimension": 750,
+          "complement_dimension": 20,
+          "complement_embedding_error_max": 6.4308187879294705e-15,
+          "complement_gram_error_max": 5.10702591327572e-15,
+          "complement_sha256": "8273709d6292ed6e927197db46f8247340891e93f45af733a04edea0193dc736",
+          "enriched_dimension": 770,
+          "family": "hcurl",
+          "injection_embedding_error_max": 1.1167756010166849e-13,
+          "injection_sha256": "4f7899d21d056849eb1317bbdb0b40172e29b8fa89089aa476f582e9f9d7e07e",
+          "p6_container_dimension": 882,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 20,
+          "residual_rank_tolerance": 1.1207924977924514e-11,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "hcurl_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 9.145239684358444e-14,
+              "complement_gram_error_max": 4.884981308350689e-15,
+              "injection_embedding_error_max": 1.1167756010166849e-13,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 1024,
+              "coarse_complement_riesz_error_max": 2.4802646089910545e-13,
+              "complement_gram_error_max": 3.9446202380888444e-14,
+              "injection_embedding_error_max": 1.2097244290788728e-13,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 2048,
+              "coarse_complement_riesz_error_max": 4.754913133883918e-13,
+              "complement_gram_error_max": 4.2331047521437874e-14,
+              "injection_embedding_error_max": 2.0812243383886601e-13,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 3072,
+              "coarse_complement_riesz_error_max": 7.20668206355111e-13,
+              "complement_gram_error_max": 7.326897335374618e-14,
+              "injection_embedding_error_max": 2.5424107263916085e-13,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 512,
+              "coarse_complement_riesz_error_max": 2.3399718537628335e-13,
+              "complement_gram_error_max": 4.046882186997677e-14,
+              "injection_embedding_error_max": 1.1167756010166849e-13,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 1536,
+              "coarse_complement_riesz_error_max": 4.656195033878706e-13,
+              "complement_gram_error_max": 4.400592303749334e-14,
+              "injection_embedding_error_max": 1.8906623724712958e-13,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 2560,
+              "coarse_complement_riesz_error_max": 7.06805464285983e-13,
+              "complement_gram_error_max": 7.429462860891747e-14,
+              "injection_embedding_error_max": 2.645661467681748e-13,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 3584,
+              "coarse_complement_riesz_error_max": 9.362073362483204e-13,
+              "complement_gram_error_max": 7.269456304276336e-14,
+              "injection_embedding_error_max": 3.5138558729386205e-13,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "hcurl",
+          "local_face": 3,
+          "maximum_coarse_complement_riesz_error": 9.362073362483204e-13,
+          "maximum_complement_gram_error": 7.429462860891747e-14,
+          "maximum_injection_embedding_error": 3.5138558729386205e-13,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "heavy_pde_authorized": false,
+        "inactive_modes_globally_numbered": false,
+        "individual_mode_selection_supported": false,
+        "local_face": 3,
+        "non_hanging_physical_face_only": true,
+        "ordinary_default_changed": false,
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "pde_launch_qualified": false,
+        "periodic_orbit_closure_required": true,
+        "schema_version": "task035d.selective-p6-face-reference-complement.v1",
+        "status": "selective_p6_face_reference_complement_pass"
+      },
+      {
+        "action": "whole_physical_face_p5_to_p6",
+        "checks": {
+          "coarse_reference_space": true,
+          "enriched_reference_space": true,
+          "exact_sequence_injection_commutes": true,
+          "face_interior_tangential_riesz": true,
+          "h1_d4_orientation": true,
+          "hcurl_d4_orientation": true,
+          "whole_face_h1_complement_has_9_modes": true,
+          "whole_face_hcurl_complement_has_20_modes": true
+        },
+        "coarse_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[6]",
+          "uniform_degree": null
+        },
+        "dtn_port_complement_qualified": false,
+        "enriched_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            5,
+            5,
+            5,
+            6,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,6,5]-c[6]",
+          "uniform_degree": null
+        },
+        "face_interior": {
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "complement_riesz_orthonormal": true,
+            "d4_complement_representation_unitary": true,
+            "d4_embedding_commutes": true,
+            "d4_preserves_complement_subspace": true,
+            "d4_preserves_tangential_riesz": true,
+            "enriched_face_is_p6_container": true,
+            "p5_complement_riesz_orthogonal": true,
+            "p5_embedding_has_no_other_entity_support": true,
+            "p5_face_embedding_rank_40": true,
+            "p5_hexa_piola_trace_qualified": true,
+            "p5_plus_complement_reconstructs_p6_face": true,
+            "p6_face_complement_rank_20": true,
+            "p6_face_modes_have_no_other_entity_support": true,
+            "p6_hexa_piola_trace_qualified": true,
+            "tangential_riesz_positive_definite": true
+          },
+          "combined_rank": 60,
+          "combined_rank_tolerance": 1.010670552357997e-11,
+          "complement_dimension": 20,
+          "complement_gram_error_max": 1.1102230246251565e-15,
+          "complement_to_p6_sha256": "647064fa98a4b47310397aa4f1ebd218387cac2c0e298744e2a47051ddd58069",
+          "d4_actions": [
+            {
+              "complement_closure_error_max": 2.220446049250313e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 0.0,
+              "riesz_invariance_error_max": 0.0,
+              "vertex_permutation": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 3.1086244689504383e-15,
+              "complement_unitarity_error_max": 1.7763568394002505e-15,
+              "embedding_commuting_error_max": 2.220446049250313e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                0,
+                2,
+                1,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 3.552713678800501e-15,
+              "complement_unitarity_error_max": 2.6645352591003757e-15,
+              "embedding_commuting_error_max": 2.042810365310288e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                1,
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 3.9968028886505635e-15,
+              "complement_unitarity_error_max": 2.4424906541753444e-15,
+              "embedding_commuting_error_max": 2.220446049250313e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                1,
+                3,
+                0,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 3.774758283725532e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 2.7533531010703882e-14,
+              "riesz_invariance_error_max": 3.552713678800501e-13,
+              "vertex_permutation": [
+                2,
+                0,
+                3,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.884981308350689e-15,
+              "complement_unitarity_error_max": 3.1086244689504383e-15,
+              "embedding_commuting_error_max": 2.9580088418379375e-14,
+              "riesz_invariance_error_max": 1.6342482922482304e-13,
+              "vertex_permutation": [
+                2,
+                3,
+                0,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.3298697960381105e-15,
+              "complement_unitarity_error_max": 2.6645352591003757e-15,
+              "embedding_commuting_error_max": 2.261527817362454e-14,
+              "riesz_invariance_error_max": 3.694822225952521e-13,
+              "vertex_permutation": [
+                3,
+                1,
+                2,
+                0
+              ]
+            },
+            {
+              "complement_closure_error_max": 4.3298697960381105e-15,
+              "complement_unitarity_error_max": 2.4424906541753444e-15,
+              "embedding_commuting_error_max": 2.1316282072803006e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                3,
+                2,
+                1,
+                0
+              ]
+            }
+          ],
+          "enriched_face_identity_error_max": 8.200037870942367e-15,
+          "individual_complement_modes_are_not_production_rows": true,
+          "local_face": 4,
+          "maximum_d4_complement_closure_error": 4.884981308350689e-15,
+          "maximum_d4_complement_unitarity_error": 3.1086244689504383e-15,
+          "maximum_d4_embedding_commuting_error": 2.9580088418379375e-14,
+          "maximum_d4_riesz_invariance_error": 3.694822225952521e-13,
+          "p5_complement_riesz_error_max": 2.3175905639050143e-15,
+          "p5_embedding_rank": 40,
+          "p5_embedding_rank_tolerance": 1.010670552357997e-11,
+          "p5_face_interior_dimension": 40,
+          "p5_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 5,
+            "failures": [],
+            "gradient_commuting_error": 8.43769498715119e-15,
+            "h1_closure_map_sha256": "14fe5eec94b192effc38bcee3937dc2c698e4e1910c51282566418ceebd18b32",
+            "h1_outside_closure_max": 5.467848396278896e-15,
+            "h1_trace_condition_number": 1.0000000000000016,
+            "h1_trace_dimension": 36,
+            "h1_trace_rank": 36,
+            "hcurl_closure_map_sha256": "e90081685b8452669e77c6f7a184c89a6dd9befba86fe9561d3ed832b639e14e",
+            "hcurl_outside_closure_max": 2.8939886591979736e-14,
+            "hcurl_trace_condition_number": 1.000000000000004,
+            "hcurl_trace_dimension": 60,
+            "hcurl_trace_rank": 60,
+            "local_face": 4,
+            "normal_axis": 1,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 1,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              0,
+              2
+            ]
+          },
+          "p5_other_entity_support_error_max": 1.329082630575539e-14,
+          "p5_to_p6_sha256": "390dda1d511662e3e73cdb76be9203744e5daf1d3689121846b9202c5c740517",
+          "p6_face_interior_dimension": 60,
+          "p6_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 6,
+            "failures": [],
+            "gradient_commuting_error": 9.769962616701378e-15,
+            "h1_closure_map_sha256": "17477600298d65a174a1ee5df91978dafbea4c5a15ed30022e129ea827d3a77d",
+            "h1_outside_closure_max": 8.56259507742152e-15,
+            "h1_trace_condition_number": 1.0000000000000033,
+            "h1_trace_dimension": 49,
+            "h1_trace_rank": 49,
+            "hcurl_closure_map_sha256": "7ba65db9c80d89833526c7a3ebf4c1d0f427d5aac868563167d9ce295da8ad3a",
+            "hcurl_outside_closure_max": 5.612308000793092e-14,
+            "hcurl_trace_condition_number": 1.000000000000024,
+            "hcurl_trace_dimension": 84,
+            "hcurl_trace_rank": 84,
+            "local_face": 4,
+            "normal_axis": 1,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 1,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              0,
+              2
+            ]
+          },
+          "p6_other_entity_support_error_max": 1.2762101786987385e-14,
+          "p6_tangential_riesz_condition_number": 2408.8857521489913,
+          "p6_tangential_riesz_gram_sha256": "2144d0397b4da7f1659f5680b1728f6fbcf44008fa8cf79b973f24231c10f1d8",
+          "pass": true,
+          "prefix_assumption_used": false,
+          "quadrature_degree": 14,
+          "riesz_metric": "reference_affine_face_tangential_l2_p6_gram",
+          "schema_version": "task035d.p5-p6-face-interior-riesz-complement.v1",
+          "status": "p5_p6_face_interior_riesz_complement_pass",
+          "whitened_reconstruction_projector_error_max": 6.661338147750939e-16
+        },
+        "full_p6_matrix_constructed": false,
+        "gradient_injection_commuting_error_max": 2.9607922802479053e-13,
+        "h1": {
+          "augmented_rank": 286,
+          "augmented_rank_tolerance": 4.5718511534768615e-12,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 2.005339023762059e-15,
+          "coarse_dimension": 277,
+          "complement_dimension": 9,
+          "complement_embedding_error_max": 1.7694179454963432e-15,
+          "complement_gram_error_max": 1.2212453270876722e-15,
+          "complement_sha256": "ea502f2b7a11d3c99d73b784275cb5395691d36c207be1d31187947e02e6c0ed",
+          "enriched_dimension": 286,
+          "family": "h1",
+          "injection_embedding_error_max": 3.3032090518475348e-15,
+          "injection_sha256": "6437e7fb42ede1e793dd225eb8203e7a56d4a34e708c516b4860322886150475",
+          "p6_container_dimension": 343,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 9,
+          "residual_rank_tolerance": 3.1910692211889225e-12,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "h1_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 1.8390908989199527e-15,
+              "complement_gram_error_max": 1.4432899320127035e-15,
+              "injection_embedding_error_max": 3.3032090518475348e-15,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 8192,
+              "coarse_complement_riesz_error_max": 4.430475371249154e-15,
+              "complement_gram_error_max": 5.551115123125783e-15,
+              "injection_embedding_error_max": 4.107825191113079e-15,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 16384,
+              "coarse_complement_riesz_error_max": 6.168793123201321e-15,
+              "complement_gram_error_max": 9.103828801926284e-15,
+              "injection_embedding_error_max": 3.9968028886505635e-15,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 24576,
+              "coarse_complement_riesz_error_max": 6.883354843007101e-15,
+              "complement_gram_error_max": 1.199040866595169e-14,
+              "injection_embedding_error_max": 4.6629367034256575e-15,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 4096,
+              "coarse_complement_riesz_error_max": 4.02854415622655e-15,
+              "complement_gram_error_max": 6.328271240363392e-15,
+              "injection_embedding_error_max": 3.3032090518475348e-15,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 12288,
+              "coarse_complement_riesz_error_max": 5.399416414549309e-15,
+              "complement_gram_error_max": 9.547918011776346e-15,
+              "injection_embedding_error_max": 3.6637359812630166e-15,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 20480,
+              "coarse_complement_riesz_error_max": 7.11554446032987e-15,
+              "complement_gram_error_max": 1.3100631690576847e-14,
+              "injection_embedding_error_max": 4.773959005888173e-15,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 28672,
+              "coarse_complement_riesz_error_max": 7.506128292967773e-15,
+              "complement_gram_error_max": 1.2878587085651816e-14,
+              "injection_embedding_error_max": 6.661338147750939e-15,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "h1",
+          "local_face": 4,
+          "maximum_coarse_complement_riesz_error": 7.506128292967773e-15,
+          "maximum_complement_gram_error": 1.3100631690576847e-14,
+          "maximum_injection_embedding_error": 6.661338147750939e-15,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "hanging_participant_supported": false,
+        "hcurl": {
+          "augmented_rank": 770,
+          "augmented_rank_tolerance": 1.2970272088594313e-10,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 7.263385070943498e-14,
+          "coarse_dimension": 750,
+          "complement_dimension": 20,
+          "complement_embedding_error_max": 1.2197364514676127e-14,
+          "complement_gram_error_max": 3.6637359812630166e-15,
+          "complement_sha256": "05ad800967d52a249bff1b3d155a5b78ab66db736e4fbe29cd462da3040efd31",
+          "enriched_dimension": 770,
+          "family": "hcurl",
+          "injection_embedding_error_max": 1.3719627065661347e-13,
+          "injection_sha256": "f28cd4e4009fd2499bd4206c21d0747a4bc119682303de6504a9baaa7cd9c4b1",
+          "p6_container_dimension": 882,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 20,
+          "residual_rank_tolerance": 1.1207924977924506e-11,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "hcurl_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 7.320808821446834e-14,
+              "complement_gram_error_max": 3.552713678800501e-15,
+              "injection_embedding_error_max": 1.3719627065661347e-13,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 8192,
+              "coarse_complement_riesz_error_max": 2.374263143673907e-13,
+              "complement_gram_error_max": 3.9113406524045066e-14,
+              "injection_embedding_error_max": 1.3719627065661347e-13,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 16384,
+              "coarse_complement_riesz_error_max": 4.709935794857425e-13,
+              "complement_gram_error_max": 4.1996083260249525e-14,
+              "injection_embedding_error_max": 2.0455798182702538e-13,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 24576,
+              "coarse_complement_riesz_error_max": 7.101235709746284e-13,
+              "complement_gram_error_max": 7.293661117777184e-14,
+              "injection_embedding_error_max": 2.6423307986078726e-13,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 4096,
+              "coarse_complement_riesz_error_max": 2.239515238417604e-13,
+              "complement_gram_error_max": 4.0137327055740377e-14,
+              "injection_embedding_error_max": 1.3719627065661347e-13,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 12288,
+              "coarse_complement_riesz_error_max": 4.689063722035567e-13,
+              "complement_gram_error_max": 4.3825620216209035e-14,
+              "injection_embedding_error_max": 1.963984530561902e-13,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 20480,
+              "coarse_complement_riesz_error_max": 6.962053177542696e-13,
+              "complement_gram_error_max": 7.396226643294313e-14,
+              "injection_embedding_error_max": 2.750022431996513e-13,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 28672,
+              "coarse_complement_riesz_error_max": 9.394942050640064e-13,
+              "complement_gram_error_max": 7.236003246244405e-14,
+              "injection_embedding_error_max": 3.638200851696638e-13,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "hcurl",
+          "local_face": 4,
+          "maximum_coarse_complement_riesz_error": 9.394942050640064e-13,
+          "maximum_complement_gram_error": 7.396226643294313e-14,
+          "maximum_injection_embedding_error": 3.638200851696638e-13,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "heavy_pde_authorized": false,
+        "inactive_modes_globally_numbered": false,
+        "individual_mode_selection_supported": false,
+        "local_face": 4,
+        "non_hanging_physical_face_only": true,
+        "ordinary_default_changed": false,
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "pde_launch_qualified": false,
+        "periodic_orbit_closure_required": true,
+        "schema_version": "task035d.selective-p6-face-reference-complement.v1",
+        "status": "selective_p6_face_reference_complement_pass"
+      },
+      {
+        "action": "whole_physical_face_p5_to_p6",
+        "checks": {
+          "coarse_reference_space": true,
+          "enriched_reference_space": true,
+          "exact_sequence_injection_commutes": true,
+          "face_interior_tangential_riesz": true,
+          "h1_d4_orientation": true,
+          "hcurl_d4_orientation": true,
+          "whole_face_h1_complement_has_9_modes": true,
+          "whole_face_hcurl_complement_has_20_modes": true
+        },
+        "coarse_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[6]",
+          "uniform_degree": null
+        },
+        "dtn_port_complement_qualified": false,
+        "enriched_degree_map": {
+          "cell": 6,
+          "edges": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "exact_sequence_monotone": true,
+          "faces": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            6
+          ],
+          "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,6]-c[6]",
+          "uniform_degree": null
+        },
+        "face_interior": {
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "complement_riesz_orthonormal": true,
+            "d4_complement_representation_unitary": true,
+            "d4_embedding_commutes": true,
+            "d4_preserves_complement_subspace": true,
+            "d4_preserves_tangential_riesz": true,
+            "enriched_face_is_p6_container": true,
+            "p5_complement_riesz_orthogonal": true,
+            "p5_embedding_has_no_other_entity_support": true,
+            "p5_face_embedding_rank_40": true,
+            "p5_hexa_piola_trace_qualified": true,
+            "p5_plus_complement_reconstructs_p6_face": true,
+            "p6_face_complement_rank_20": true,
+            "p6_face_modes_have_no_other_entity_support": true,
+            "p6_hexa_piola_trace_qualified": true,
+            "tangential_riesz_positive_definite": true
+          },
+          "combined_rank": 60,
+          "combined_rank_tolerance": 1.0106705523579973e-11,
+          "complement_dimension": 20,
+          "complement_gram_error_max": 1.1102230246251565e-15,
+          "complement_to_p6_sha256": "a214f61d71cd725a445bd7ef270aa7202cc201d40e789f5575beb4d825c403f9",
+          "d4_actions": [
+            {
+              "complement_closure_error_max": 2.220446049250313e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 0.0,
+              "riesz_invariance_error_max": 0.0,
+              "vertex_permutation": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 3.4416913763379853e-15,
+              "complement_unitarity_error_max": 1.7763568394002505e-15,
+              "embedding_commuting_error_max": 2.853837043511845e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                0,
+                2,
+                1,
+                3
+              ]
+            },
+            {
+              "complement_closure_error_max": 6.661338147750939e-15,
+              "complement_unitarity_error_max": 2.4424906541753444e-15,
+              "embedding_commuting_error_max": 2.5199934732913727e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                1,
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 6.217248937900877e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 2.5757174171303632e-14,
+              "riesz_invariance_error_max": 2.6290081223123707e-13,
+              "vertex_permutation": [
+                1,
+                3,
+                0,
+                2
+              ]
+            },
+            {
+              "complement_closure_error_max": 5.551115123125783e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 3.2862601528904634e-14,
+              "riesz_invariance_error_max": 3.552713678800501e-13,
+              "vertex_permutation": [
+                2,
+                0,
+                3,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 5.329070518200751e-15,
+              "complement_unitarity_error_max": 2.6645352591003757e-15,
+              "embedding_commuting_error_max": 3.216829584453676e-14,
+              "riesz_invariance_error_max": 1.6342482922482304e-13,
+              "vertex_permutation": [
+                2,
+                3,
+                0,
+                1
+              ]
+            },
+            {
+              "complement_closure_error_max": 6.217248937900877e-15,
+              "complement_unitarity_error_max": 2.6645352591003757e-15,
+              "embedding_commuting_error_max": 2.8268036062312993e-14,
+              "riesz_invariance_error_max": 3.694822225952521e-13,
+              "vertex_permutation": [
+                3,
+                1,
+                2,
+                0
+              ]
+            },
+            {
+              "complement_closure_error_max": 6.217248937900877e-15,
+              "complement_unitarity_error_max": 2.220446049250313e-15,
+              "embedding_commuting_error_max": 2.669988200382123e-14,
+              "riesz_invariance_error_max": 1.9184653865522705e-13,
+              "vertex_permutation": [
+                3,
+                2,
+                1,
+                0
+              ]
+            }
+          ],
+          "enriched_face_identity_error_max": 1.0269562977782698e-14,
+          "individual_complement_modes_are_not_production_rows": true,
+          "local_face": 5,
+          "maximum_d4_complement_closure_error": 6.661338147750939e-15,
+          "maximum_d4_complement_unitarity_error": 2.6645352591003757e-15,
+          "maximum_d4_embedding_commuting_error": 3.2862601528904634e-14,
+          "maximum_d4_riesz_invariance_error": 3.694822225952521e-13,
+          "p5_complement_riesz_error_max": 2.2782340250437905e-15,
+          "p5_embedding_rank": 40,
+          "p5_embedding_rank_tolerance": 1.0106705523579973e-11,
+          "p5_face_interior_dimension": 40,
+          "p5_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 5,
+            "failures": [],
+            "gradient_commuting_error": 6.8833827526759706e-15,
+            "h1_closure_map_sha256": "736e355d2b4ea078eeb09b611635527efac18a6829263b0c7973dc7ce2ef9f20",
+            "h1_outside_closure_max": 5.4262150328554526e-15,
+            "h1_trace_condition_number": 1.000000000000001,
+            "h1_trace_dimension": 36,
+            "h1_trace_rank": 36,
+            "hcurl_closure_map_sha256": "deb89b92fcee00cb75709b45763693d8f4261fabe5fcc11cefa34790c20cc07e",
+            "hcurl_outside_closure_max": 2.379227194813622e-14,
+            "hcurl_trace_condition_number": 1.000000000000003,
+            "hcurl_trace_dimension": 60,
+            "hcurl_trace_rank": 60,
+            "local_face": 5,
+            "normal_axis": 2,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 1,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              0,
+              1
+            ]
+          },
+          "p5_other_entity_support_error_max": 9.244186241838242e-15,
+          "p5_to_p6_sha256": "9eb84259ebe9ac6a1b146b8715d588d3413ac3427c8a2aaffad41b823f0ea814",
+          "p6_face_interior_dimension": 60,
+          "p6_hexa_trace_audit": {
+            "checks": {
+              "h1_closure_condition": true,
+              "h1_closure_isomorphism": true,
+              "h1_trace_uses_face_closure_only": true,
+              "hcurl_closure_condition": true,
+              "hcurl_closure_isomorphism": true,
+              "hcurl_trace_uses_face_closure_only": true,
+              "hexa_trace_gradient_commutes": true
+            },
+            "degree": 6,
+            "failures": [],
+            "gradient_commuting_error": 8.22986041587721e-15,
+            "h1_closure_map_sha256": "41b88368f6f98cf92a8689181b0b205caed7763b4dc2f383c6cc29c33ebe1a7d",
+            "h1_outside_closure_max": 1.0477729794899915e-14,
+            "h1_trace_condition_number": 1.0000000000000036,
+            "h1_trace_dimension": 49,
+            "h1_trace_rank": 49,
+            "hcurl_closure_map_sha256": "75d6766b495c6a1d98b5509fad47c002c1da9eb8f2ae02494abb1d1c26c37475",
+            "hcurl_outside_closure_max": 4.8141943158040275e-14,
+            "hcurl_trace_condition_number": 1.000000000000009,
+            "hcurl_trace_dimension": 84,
+            "hcurl_trace_rank": 84,
+            "local_face": 5,
+            "normal_axis": 2,
+            "ordinary_default_changed": false,
+            "pass": true,
+            "pde_accuracy_credit": false,
+            "schema_version": "task035d.hexa-face-trace-pair.v1",
+            "side": 1,
+            "status": "hexa_face_trace_pair_pass",
+            "tangential_axes": [
+              0,
+              1
+            ]
+          },
+          "p6_other_entity_support_error_max": 9.493321267082086e-15,
+          "p6_tangential_riesz_condition_number": 2408.8857521489913,
+          "p6_tangential_riesz_gram_sha256": "2144d0397b4da7f1659f5680b1728f6fbcf44008fa8cf79b973f24231c10f1d8",
+          "pass": true,
+          "prefix_assumption_used": false,
+          "quadrature_degree": 14,
+          "riesz_metric": "reference_affine_face_tangential_l2_p6_gram",
+          "schema_version": "task035d.p5-p6-face-interior-riesz-complement.v1",
+          "status": "p5_p6_face_interior_riesz_complement_pass",
+          "whitened_reconstruction_projector_error_max": 6.661338147750939e-16
+        },
+        "full_p6_matrix_constructed": false,
+        "gradient_injection_commuting_error_max": 8.845424392944778e-13,
+        "h1": {
+          "augmented_rank": 286,
+          "augmented_rank_tolerance": 4.571851153476854e-12,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 2.1444841345405474e-15,
+          "coarse_dimension": 277,
+          "complement_dimension": 9,
+          "complement_embedding_error_max": 2.0617188511984352e-15,
+          "complement_gram_error_max": 1.1102230246251565e-15,
+          "complement_sha256": "0dce433c076b528641f1a16bf7003ac512ca8c0e9bac6cdfaa5119ebb3e7ae42",
+          "enriched_dimension": 286,
+          "family": "h1",
+          "injection_embedding_error_max": 2.663447779343814e-15,
+          "injection_sha256": "33a4fcdfa4fe31a49257de8c50a0e5c37f9a531100bbb04d2ae90ce280f94113",
+          "p6_container_dimension": 343,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 9,
+          "residual_rank_tolerance": 3.191069221188924e-12,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "h1_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 2.299809648276252e-15,
+              "complement_gram_error_max": 1.1102230246251565e-15,
+              "injection_embedding_error_max": 2.663447779343814e-15,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 65536,
+              "coarse_complement_riesz_error_max": 3.9749426623478246e-15,
+              "complement_gram_error_max": 5.218048215738236e-15,
+              "injection_embedding_error_max": 2.6645352591003757e-15,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 131072,
+              "coarse_complement_riesz_error_max": 7.172647892295103e-15,
+              "complement_gram_error_max": 7.882583474838611e-15,
+              "injection_embedding_error_max": 4.773959005888173e-15,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 196608,
+              "coarse_complement_riesz_error_max": 7.16093850883226e-15,
+              "complement_gram_error_max": 1.0880185641326534e-14,
+              "injection_embedding_error_max": 4.884981308350689e-15,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 32768,
+              "coarse_complement_riesz_error_max": 3.938798072422589e-15,
+              "complement_gram_error_max": 6.217248937900877e-15,
+              "injection_embedding_error_max": 2.663447779343814e-15,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 98304,
+              "coarse_complement_riesz_error_max": 6.531233887052679e-15,
+              "complement_gram_error_max": 1.0880185641326534e-14,
+              "injection_embedding_error_max": 3.885780586188048e-15,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 163840,
+              "coarse_complement_riesz_error_max": 7.271960811294775e-15,
+              "complement_gram_error_max": 1.4654943925052066e-14,
+              "injection_embedding_error_max": 5.329070518200751e-15,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 229376,
+              "coarse_complement_riesz_error_max": 7.322593052749848e-15,
+              "complement_gram_error_max": 1.3433698597964394e-14,
+              "injection_embedding_error_max": 4.773959005888173e-15,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "h1",
+          "local_face": 5,
+          "maximum_coarse_complement_riesz_error": 7.322593052749848e-15,
+          "maximum_complement_gram_error": 1.4654943925052066e-14,
+          "maximum_injection_embedding_error": 5.329070518200751e-15,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "hanging_participant_supported": false,
+        "hcurl": {
+          "augmented_rank": 770,
+          "augmented_rank_tolerance": 1.2970272088594292e-10,
+          "checks": {
+            "coarse_complement_riesz_orthogonal": true,
+            "coarse_is_nested_in_enriched": true,
+            "complement_is_in_enriched_space": true,
+            "complement_riesz_orthonormal": true,
+            "injection_plus_complement_spans_enriched": true
+          },
+          "coarse_complement_riesz_error_max": 2.261028112911157e-13,
+          "coarse_dimension": 750,
+          "complement_dimension": 20,
+          "complement_embedding_error_max": 1.3010462932375404e-14,
+          "complement_gram_error_max": 3.774758283725532e-15,
+          "complement_sha256": "135e7d9906947de4565ff15de65184525ab4d485ab953b95d231e7349c994a30",
+          "enriched_dimension": 770,
+          "family": "hcurl",
+          "injection_embedding_error_max": 1.119547949950831e-13,
+          "injection_sha256": "a83241caec896a281881aa25780dda4bb4d67d1e689d1833a4abcc941d25f348",
+          "p6_container_dimension": 882,
+          "pass": true,
+          "prefix_assumption_used": false,
+          "residual_rank": 20,
+          "residual_rank_tolerance": 1.1207924977924506e-11,
+          "riesz_metric": "euclidean_p6_coefficient_metric",
+          "schema_version": "task035d.selective-face-nested-coefficient-complement.v1",
+          "status": "selective_face_nested_complement_pass"
+        },
+        "hcurl_d4_orientation": {
+          "actions": [
+            {
+              "cell_info": 0,
+              "coarse_complement_riesz_error_max": 2.258499583612826e-13,
+              "complement_gram_error_max": 3.6637359812630166e-15,
+              "injection_embedding_error_max": 1.119547949950831e-13,
+              "reflected": false,
+              "rotations": 0
+            },
+            {
+              "cell_info": 65536,
+              "coarse_complement_riesz_error_max": 2.4097884731072364e-13,
+              "complement_gram_error_max": 3.9512230293192893e-14,
+              "injection_embedding_error_max": 1.2847607954309169e-13,
+              "reflected": false,
+              "rotations": 1
+            },
+            {
+              "cell_info": 131072,
+              "coarse_complement_riesz_error_max": 4.762546172224422e-13,
+              "complement_gram_error_max": 4.239664175287333e-14,
+              "injection_embedding_error_max": 2.1639703081845183e-13,
+              "reflected": false,
+              "rotations": 2
+            },
+            {
+              "cell_info": 196608,
+              "coarse_complement_riesz_error_max": 7.130099701031859e-13,
+              "complement_gram_error_max": 7.333716967039569e-14,
+              "injection_embedding_error_max": 2.5973667661105537e-13,
+              "reflected": false,
+              "rotations": 3
+            },
+            {
+              "cell_info": 32768,
+              "coarse_complement_riesz_error_max": 2.2726967128536627e-13,
+              "complement_gram_error_max": 4.0537885548364193e-14,
+              "injection_embedding_error_max": 1.188245948361275e-13,
+              "reflected": true,
+              "rotations": 0
+            },
+            {
+              "cell_info": 98304,
+              "coarse_complement_riesz_error_max": 4.723910531008564e-13,
+              "complement_gram_error_max": 4.4113150632352355e-14,
+              "injection_embedding_error_max": 1.933699546821449e-13,
+              "reflected": true,
+              "rotations": 1
+            },
+            {
+              "cell_info": 163840,
+              "coarse_complement_riesz_error_max": 6.992027391852889e-13,
+              "complement_gram_error_max": 7.436195756382897e-14,
+              "injection_embedding_error_max": 2.701172618913006e-13,
+              "reflected": true,
+              "rotations": 2
+            },
+            {
+              "cell_info": 229376,
+              "coarse_complement_riesz_error_max": 9.42923374810075e-13,
+              "complement_gram_error_max": 7.275950675289541e-14,
+              "injection_embedding_error_max": 3.5044189772293066e-13,
+              "reflected": true,
+              "rotations": 3
+            }
+          ],
+          "checks": {
+            "all_eight_d4_actions_covered": true,
+            "oriented_complement_is_riesz_orthogonal": true,
+            "oriented_complement_is_riesz_orthonormal": true,
+            "oriented_injection_is_nested": true
+          },
+          "family": "hcurl",
+          "local_face": 5,
+          "maximum_coarse_complement_riesz_error": 9.42923374810075e-13,
+          "maximum_complement_gram_error": 7.436195756382897e-14,
+          "maximum_injection_embedding_error": 3.5044189772293066e-13,
+          "pass": true,
+          "schema_version": "task035d.selective-face-d4-audit.v1",
+          "status": "selective_face_d4_pass"
+        },
+        "heavy_pde_authorized": false,
+        "inactive_modes_globally_numbered": false,
+        "individual_mode_selection_supported": false,
+        "local_face": 5,
+        "non_hanging_physical_face_only": true,
+        "ordinary_default_changed": false,
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "pde_launch_qualified": false,
+        "periodic_orbit_closure_required": true,
+        "schema_version": "task035d.selective-p6-face-reference-complement.v1",
+        "status": "selective_p6_face_reference_complement_pass"
+      }
+    ],
+    "heavy_pde_authorized": false,
+    "ordinary_default_changed": false,
+    "pass": true,
+    "production_qualified": false,
+    "qualified_local_faces": 6,
+    "schema_version": "task035d.selective-p6-face-reference-catalog.v1",
+    "status": "selective_p6_face_reference_catalog_pass"
+  },
+  "expected_catalog_identity_pass": true,
+  "expected_catalog_sha256": null,
+  "mpi_catalog_sha256_by_rank": [
+    "88dca65fb4f6a413c1fc313b302db90a01fd88a69846538dc943491fcaa2415f",
+    "88dca65fb4f6a413c1fc313b302db90a01fd88a69846538dc943491fcaa2415f"
+  ],
+  "mpi_partition_independent": true,
+  "mpi_size": 2,
+  "ordinary_default_changed": false,
+  "pass": true,
+  "production_qualified": false,
+  "schema_version": "task035d.selective-p6-face-component-authority.v1",
+  "scope": {
+    "dtn_port_complement_still_required": true,
+    "heavy_pde_authorized": false,
+    "heavy_pde_started": false,
+    "non_hanging_whole_face_only": true,
+    "periodic_orbit_closure_still_required": true
+  },
+  "source_sha": "48f4de3ba42f8c4d85d8c1e73a14c42f0ef2a344",
+  "status": "selective_p6_face_component_authority_pass"
+}
