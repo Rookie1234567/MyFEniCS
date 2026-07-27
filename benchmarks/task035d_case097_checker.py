@@ -1777,6 +1777,7 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             "sidewall_z0_guard_v1",
             TASK035D_LOCAL_H_PLAN_NAME,
             TASK035D_COMBINED_HP_PLAN_NAME,
+            TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
         ),
         default="t30",
     )
