@@ -559,6 +559,12 @@ def _combined_hp_solver_summary() -> dict:
     audit["recovery"][
         "interior_rhs_recovery_iterative_refinement_max_steps"
     ] = 2
+    audit["recovery"]["interior_trace_source"] = (
+        "assembled_global_active_trace"
+    )
+    audit["recovery"][
+        "trace_vector_assembled_before_interior_recovery"
+    ] = True
     trace_recovery = audit["recovery"]["trace_constraint_recovery"]
     trace_recovery["covered_raw_trace_rows"] = reduction[
         "raw_broken_trace_rows"

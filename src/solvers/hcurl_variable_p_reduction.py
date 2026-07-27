@@ -313,6 +313,10 @@ class VariablePAssemblyTimeReduction:
                         "interior_rhs_recovery_iterative_refinement_max_steps"
                     ]
                 ),
+                "interior_trace_source": (
+                    "assembled_global_active_trace"
+                ),
+                "trace_vector_assembled_before_interior_recovery": True,
                 "full_p6_global_matrix_allocated": False,
                 "ordinary_default_changed": False,
             },

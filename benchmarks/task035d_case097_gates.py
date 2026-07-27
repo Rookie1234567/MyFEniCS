@@ -2493,6 +2493,12 @@ def task035d_case097_combined_hp_solver_gate(
                 "interior_rhs_recovery_iterative_refinement_max_steps"
             )
             == 2
+            and recovery.get("interior_trace_source")
+            == "assembled_global_active_trace"
+            and recovery.get(
+                "trace_vector_assembled_before_interior_recovery"
+            )
+            is True
             and trace_recovery.get("pass") is True
             and trace_recovery.get("hanging_trace_recovery_explicitly_checked")
             is True

@@ -144,6 +144,7 @@ class VariablePCondensedTraceSystem:
         trace_values: np.ndarray,
         *,
         active_full_rhs: PETSc.Vec | None = None,
+        assembled_active_trace_values: np.ndarray | None = None,
     ) -> tuple[tuple[VariablePCellDofMap, np.ndarray], ...]:
         """Recover active local coefficients for each locally owned cell."""
 
@@ -151,6 +152,22 @@ class VariablePCondensedTraceSystem:
         expected_trace_rows = self.active_trace_rows
         if trace.shape != (expected_trace_rows,):
             raise ValueError("global active trace vector has the wrong size")
+        assembled_trace = (
+            None
+            if assembled_active_trace_values is None
+            else np.asarray(
+                assembled_active_trace_values,
+                dtype=np.complex128,
+            )
+        )
+        if (
+            assembled_trace is not None
+            and assembled_trace.shape
+            != (self.entity_map.active_trace_rows,)
+        ):
+            raise ValueError(
+                "assembled active trace vector has the wrong size"
+            )
         rhs_local = None
         if active_full_rhs is not None:
             if active_full_rhs.getSize() != self.entity_map.active_rows:
@@ -174,7 +191,9 @@ class VariablePCondensedTraceSystem:
         )
         for recovery in self.cell_recovery:
             cell = recovery.cell
-            if self.periodic_constraints is None:
+            if assembled_trace is not None:
+                local_trace = assembled_trace[cell.trace_rows]
+            elif self.periodic_constraints is None:
                 local_trace = trace[cell.trace_rows]
             else:
                 periodic_cell = periodic_by_cell[cell.global_cell]
@@ -1442,6 +1461,7 @@ def recover_variable_p_active_full_vector(
         ),
         comm=comm,
     )
+    recovered.set(PETSc.ScalarType(0.0))
     row_start, row_end = map(int, recovered.getOwnershipRange())
     if system.periodic_constraints is None:
         start = max(row_start, 0)
@@ -1485,9 +1505,15 @@ def recover_variable_p_active_full_vector(
                 np.asarray(values, dtype=PETSc.ScalarType),
                 addv=PETSc.InsertMode.INSERT_VALUES,
             )
+    recovered.assemble()
+    assembled_active_trace = _global_active_vector_values(
+        system,
+        recovered,
+    )[: system.entity_map.active_trace_rows].copy()
     for cell, local_active in system.recover_owned_active_cells(
         trace,
         active_full_rhs=active_full_rhs,
+        assembled_active_trace_values=assembled_active_trace,
     ):
         space = build_variable_p_reference_space(cell.degree_map)
         recovered.setValues(

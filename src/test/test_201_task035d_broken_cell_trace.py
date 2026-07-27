@@ -41,6 +41,8 @@ from src.solvers.hcurl_variable_p_assembly import (
     recover_variable_p_active_full_vector,
 )
 from src.solvers.hcurl_variable_p_reduction import (
+    VariablePAssemblyTimeReduction,
+    VariablePRecoveredSolution,
     _reduced_trace_auxiliary_norm,
 )
 from src.solvers.hcurl_variable_p_local import project_p6_local_tensor
@@ -931,6 +933,61 @@ def test_compiled_p6_kernel_binds_to_p5_hanging_trace_rows(
                 rtol=3.0e-12,
                 atol=3.0e-12,
             )
+        recovered_full = recover_variable_p_active_full_vector(
+            system,
+            root,
+        )
+        reduced_solution = system.matrix.createVecRight()
+        reduced_rhs = system.matrix.createVecLeft()
+        active_rhs = recovered_full.duplicate()
+        try:
+            global_active = _global_vector_values(recovered_full)
+            for recovery in system.cell_recovery:
+                cell = recovery.cell
+                expected_interior = (
+                    system.interior_from_trace_by_class[
+                        recovery.class_key
+                    ]
+                    @ global_active[cell.trace_rows]
+                )
+                np.testing.assert_array_equal(
+                    global_active[cell.interior_rows],
+                    expected_interior,
+                )
+            start, stop = reduced_solution.getOwnershipRange()
+            reduced_solution.getArray()[:] = root[start:stop]
+            reduced_solution.assemble()
+            system.matrix.mult(reduced_solution, reduced_rhs)
+            active_rhs.set(PETSc.ScalarType(0.0))
+            active_rhs.assemble()
+            reduction = VariablePAssemblyTimeReduction(
+                system=system,
+                transfer=None,  # type: ignore[arg-type]
+                degree_plan=None,  # type: ignore[arg-type]
+                build_audit={"pass": True},
+            )
+            residual = reduction.full_active_residual(
+                system.matrix,
+                reduced_rhs,
+                reduced_solution,
+                VariablePRecoveredSolution(
+                    field=None,
+                    active_full_solution=recovered_full,
+                    active_full_rhs=active_rhs,
+                    active_auxiliary_interior_action=None,
+                    audit={"pass": True},
+                ),
+            )
+            assert (
+                residual["eliminated_cell_interior_residual_norm"]
+                <= 1.0e-12
+            )
+            assert residual["linear_system_residual_norm"] <= 1.0e-12
+        finally:
+            active_rhs.destroy()
+            reduced_rhs.destroy()
+            reduced_solution.destroy()
+            recovered_full.destroy()
         assert constraints.audit["maximum_cell_expansion_condition"] > 1.0e8
         assert constraints.audit["cell_expansion_inverse_used"] is False
         assert constraints.audit["distributed_scalability_qualified"] is False

@@ -198,6 +198,15 @@ class Task035dVariablePReductionTests(unittest.TestCase):
             self.assertFalse(
                 recovered.audit["full_p6_global_matrix_allocated"]
             )
+            self.assertEqual(
+                recovered.audit["interior_trace_source"],
+                "assembled_global_active_trace",
+            )
+            self.assertTrue(
+                recovered.audit[
+                    "trace_vector_assembled_before_interior_recovery"
+                ]
+            )
         finally:
             recovered.active_full_solution.destroy()
             recovered.active_full_rhs.destroy()
