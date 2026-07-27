@@ -1,0 +1,94 @@
+{
+  "candidate_id": "h15_left_grating_top_closure_p5fine_v1",
+  "checker_identity": {
+    "committed_sha256": "559807851f57450fed4260afdc3c428454313db80d4dce560dc7055c6f380d7e",
+    "live_sha256": "559807851f57450fed4260afdc3c428454313db80d4dce560dc7055c6f380d7e",
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_production_authority.py",
+    "source_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+    "status_lines": [],
+    "verified_clean_checker": true
+  },
+  "cross_checks": {
+    "mpi_sizes_are_1_2_8": true,
+    "no_heavy_pde_or_accuracy_credit": true,
+    "rank_local_and_cross_rank_hanging_partitions_qualified": true,
+    "same_numerical_blobs": true,
+    "same_physical_identity": true,
+    "same_selective_trace_identity": true,
+    "same_source_sha": true
+  },
+  "failures": [],
+  "input_records": [
+    {
+      "mpi_size": 1,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/left_grating_top_closure_p5fine_mpi1_v1.json",
+      "sha256": "cb525a8d8dba0df0b2d3b003da926adbad5185b1a8ced356e5eb73681d10d40b"
+    },
+    {
+      "mpi_size": 2,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/left_grating_top_closure_p5fine_mpi2_v1.json",
+      "sha256": "46f7448bf5b486bd798a2d6440c751303bf9af9870de0d2e656fb82389c8bce9"
+    },
+    {
+      "mpi_size": 8,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/left_grating_top_closure_p5fine_mpi8_v1.json",
+      "sha256": "d19b1894d1c20bd726ea8bfb63dfd4c8c9076cac1b8cf1120c99bebbea4b06b4"
+    }
+  ],
+  "live_head": "e1e19ab83c28129a38378a37f96665324363f07e",
+  "ordinary_default_changed": false,
+  "pass": true,
+  "pde_accuracy_credit": false,
+  "pde_launch_gate": true,
+  "pde_launch_scope": "one formal MPI8 h15 left-grating-top local-h closure plus fine-cell p5-interior direct PDE",
+  "plan": {
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_left_grating_top_closure_p5fine_plan_v1.json",
+    "sha256": "08e33b5441460029bb3c88d18a63b884782cfc1aef734371f48324116885b393"
+  },
+  "record_failures": {
+    "left_grating_top_closure_p5fine_mpi1_v1.json": [],
+    "left_grating_top_closure_p5fine_mpi2_v1.json": [],
+    "left_grating_top_closure_p5fine_mpi8_v1.json": []
+  },
+  "schema_version": "case097.left-grating-top-closure-p5fine-mpi-identity.v1",
+  "source_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+  "stable_identity": {
+    "actual_full3d_equivalent_active_fe_dofs": 88915,
+    "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+    "canonical_cell_graph_sha256": "10fd9833f46cb547f50b2a03e6ea565f620fc079cf507c8d7f10202ecebd6f6c",
+    "carrier_connectivity_sha256": "2caf696d8ebe74ad56a2f75ca15bb82caa323c4814bcaeb45ae13e5f8ce9484d",
+    "cell_degree_counts": {
+      "p4": 0,
+      "p5": 48,
+      "p6": 114
+    },
+    "cell_degree_plan_sha256": "2213464a451400e4f211ce75367d636de4c13cc5c07de941666e6d68fce329eb",
+    "flattened_graph_sha256": "e798650de6ecf7af913e2921c44de1149f86d7ceb2c3de9deea6f3b6ea055b87",
+    "geometry_canonical_entity_degree_sha256": "14d9c9cc8998e9ed008e06e9d0676e7753e3f5b30ede6b6f0065fabcb8e0f692",
+    "hanging_face_catalog_sha256": "2ae67d34dae0d4fcb9f879b70920acab66eddcf3ab128113dd766edfd0a3e15b",
+    "hanging_patch_count": 14,
+    "hanging_slave_rows": 2890,
+    "independent_trace_rows": 21570,
+    "leaf_catalog_sha256": "80e73c85da82523f7fcee7c322e64ff0add3c1d845ac1bcc39bc0f00b815406d",
+    "leaf_cell_count": 162,
+    "local_variable_trace_implemented": false,
+    "material_catalog_sha256": "9a76db6a80740034426afc71d1b81775601621854cd123fd5adcc3320aba314d",
+    "mesh_cell_box_catalog_sha256": "3a810070f9b5f37d0e174adaf11de279114e4a8ff76cc724a763ec8173297cc6",
+    "periodic_slave_rows": 4525,
+    "physical_authority_sha256": "59bdc219fd5cd3c9d6e4d0071669f34a4178632e5a60d07e1e9b5b9b0477e7a4",
+    "physical_facet_catalog_sha256": "53163c8681c9aca6569979da027f880992f2c057ffedef2c6179ee1d51aa4d1f",
+    "plan_file_sha256": "08e33b5441460029bb3c88d18a63b884782cfc1aef734371f48324116885b393",
+    "predicted_direct_solve_rows": 21650,
+    "raw_broken_active_fe_dofs": 91805,
+    "raw_broken_trace_rows": 28985,
+    "root_cell_count": 120,
+    "selected_p6_face_count": 0,
+    "selected_p6_face_geometry_keys": [],
+    "selected_p6_periodic_orbit_count": 0,
+    "selective_trace_full3d_dof_delta": 0,
+    "trace_degree_values": [
+      5
+    ]
+  },
+  "status": "left_grating_top_closure_p5fine_mpi_identity_pass"
+}

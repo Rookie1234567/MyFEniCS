@@ -25,6 +25,16 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
     TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH,
     TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
+    TASK035D_LEFT_GRATING_TOP_ACTIVE_FE_DOFS,
+    TASK035D_LEFT_GRATING_TOP_AUTHORITY_FILE_SHA256,
+    TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH,
+    TASK035D_LEFT_GRATING_TOP_PLAN_FILE_SHA256,
+    TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+    TASK035D_LEFT_GRATING_TOP_PLAN_PATH,
+    TASK035D_LEFT_GRATING_TOP_SELECTION_FILE_SHA256,
+    TASK035D_LEFT_GRATING_TOP_SELECTION_PATH,
+    TASK035D_LEFT_GRATING_TOP_SELECTION_SOURCE_SHA,
+    TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS,
     TASK035D_LOCAL_H_ACTIVE_FE_DOFS,
     TASK035D_LOCAL_H_AUTHORITY_FILE_SHA256,
     TASK035D_LOCAL_H_AUTHORITY_PATH,
@@ -48,6 +58,8 @@ from benchmarks.task035d_case097_gates import (
     task035d_case097_combined_hp_solver_gate,
     task035d_case097_hp_factorial_bridge_plan_authority_gate,
     task035d_case097_hp_factorial_bridge_solver_gate,
+    task035d_case097_left_grating_top_plan_authority_gate,
+    task035d_case097_left_grating_top_solver_gate,
     task035d_case097_local_h_plan_authority_gate,
     task035d_case097_local_h_solver_gate,
     task035d_case097_plan_authority_gate,
@@ -345,6 +357,90 @@ def _candidate_spec(candidate_id: str) -> dict[str, Any]:
                 "complete_combined_hp_credit": False,
             },
             "ordinary_default_check": ("ordinary_default_and_lifecycle"),
+            "requires_actual_channel_dwr": False,
+        }
+    if candidate_id == TASK035D_LEFT_GRATING_TOP_PLAN_NAME:
+        return {
+            "candidate_id": TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+            "plan_path": TASK035D_LEFT_GRATING_TOP_PLAN_PATH,
+            "plan_file_sha256": TASK035D_LEFT_GRATING_TOP_PLAN_FILE_SHA256,
+            "authority_path": TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH,
+            "authority_file_sha256": (
+                TASK035D_LEFT_GRATING_TOP_AUTHORITY_FILE_SHA256
+            ),
+            "selection_path": TASK035D_LEFT_GRATING_TOP_SELECTION_PATH,
+            "selection_file_sha256": (
+                TASK035D_LEFT_GRATING_TOP_SELECTION_FILE_SHA256
+            ),
+            "selection_source_sha": TASK035D_LEFT_GRATING_TOP_SELECTION_SOURCE_SHA,
+            "active_fe_dofs": TASK035D_LEFT_GRATING_TOP_ACTIVE_FE_DOFS,
+            "solve_rows": TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS,
+            "launch_schema": (
+                "task035d.case097-left-grating-top-closure-p5fine-launch-gate.v1"
+            ),
+            "launch_status": (
+                "task035d_left_grating_top_closure_p5fine_"
+                "launch_authority_pass"
+            ),
+            "check_schema": (
+                "task035d.case097-left-grating-top-closure-p5fine-"
+                "candidate-check.v1"
+            ),
+            "pass_status": (
+                "task035d_left_grating_top_closure_p5fine_candidate_pass"
+            ),
+            "negative_status": (
+                "task035d_left_grating_top_closure_p5fine_controlled_negative"
+            ),
+            "evidence_failure_status": (
+                "task035d_left_grating_top_closure_p5fine_"
+                "checker_evidence_failure"
+            ),
+            "benchmark_id": (
+                "task035d_case097_left_grating_top_closure_p5fine_candidate"
+            ),
+            "plan_context": (
+                "frozen h15 left-grating-top closure plus fine-cell "
+                "p5-interior plan"
+            ),
+            "authority_context": (
+                "frozen MPI1/2/8 left-grating-top closure authority"
+            ),
+            "selection_context": (
+                "frozen bounded single-seed top-air hp selection"
+            ),
+            "plan_gate": (
+                task035d_case097_left_grating_top_plan_authority_gate
+            ),
+            "solver_gate": task035d_case097_left_grating_top_solver_gate,
+            "candidate_option_required": True,
+            "h_nm": 15.0,
+            "plan_option": "--stage4-local-h-refinement-plan",
+            "plan_sha_option": (
+                "--stage4-local-h-refinement-plan-sha256"
+            ),
+            "forbidden_plan_option": (
+                "--stage4-variable-p-cell-degree-plan"
+            ),
+            "classification_pass": (
+                "bounded_single_seed_compact_dwr_location_oracle_"
+                "candidate_pass_without_actual_local_h_dwr_credit"
+            ),
+            "pass_accuracy_credit": (
+                "fresh_left_grating_top_accuracy_and_resource_pass_"
+                "without_actual_local_h_dwr_credit"
+            ),
+            "selection_credit": {
+                "structural_resource_anchor": True,
+                "compact_dwr_location_oracle": True,
+                "actual_local_h_dwr_surplus": False,
+                "actual_channel_dwr": False,
+                "goal_oriented_selection_credit": False,
+                "complete_combined_hp_credit": False,
+            },
+            "ordinary_default_check": (
+                "ordinary_default_and_lifecycle"
+            ),
             "requires_actual_channel_dwr": False,
         }
     if candidate_id == TASK035D_SELECTIVE_FACE_PLAN_NAME:
@@ -742,6 +838,123 @@ def _git_tracked(path: Path) -> bool:
     return result.returncode == 0
 
 
+def _load_bounded_single_seed_selection(
+    spec: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    selection_relative = spec.get("selection_path")
+    if selection_relative is None:
+        return None
+    _require(
+        isinstance(selection_relative, str),
+        "candidate selection path is invalid",
+    )
+    selection_path = ROOT / selection_relative
+    selection, observed_sha = _load_json(
+        selection_path,
+        expected_sha256=str(spec.get("selection_file_sha256")),
+        context=str(spec.get("selection_context", "candidate selection")),
+    )
+    source = _mapping(
+        selection.get("source_identity"),
+        "candidate selection source identity",
+    )
+    selected = _mapping(
+        selection.get("selected_action"),
+        "candidate selected action",
+    )
+    multi_seed = _mapping(
+        selection.get("multi_seed_combinations"),
+        "candidate multi-seed boundary",
+    )
+    frozen_lane = _mapping(
+        selection.get("frozen_ten_face_subset_lane"),
+        "candidate frozen selective-face lane",
+    )
+    source_manifest = _mapping(
+        source.get("file_sha256"),
+        "candidate selection source manifest",
+    )
+    inputs = _mapping(
+        selection.get("inputs"),
+        "candidate selection inputs",
+    )
+    analyzer_relative = (
+        "benchmarks/cases/"
+        "097_goal_oriented_exact_sequence_hp_adaptivity/"
+        "analyze_bounded_single_seed_top_air_hp_selection.py"
+    )
+    checks = {
+        "tracked_frozen_record": (
+            _git_tracked(selection_path)
+            and observed_sha == spec["selection_file_sha256"]
+        ),
+        "schema_status_and_scope": (
+            selection.get("schema_version")
+            == "case097.bounded-single-seed-top-air-hp-selection.v2"
+            and selection.get("status")
+            == "bounded_single_seed_top_air_hp_selection_pass"
+            and selection.get("pass") is True
+            and selection.get("ordinary_default_changed") is False
+            and selection.get("failures") == []
+        ),
+        "clean_source_identity": (
+            selection.get("source_sha") == spec["selection_source_sha"]
+            and source.get("head") == spec["selection_source_sha"]
+            and source.get("status_lines") == []
+            and source.get("verified_clean_algorithm_and_inputs") is True
+        ),
+        "algorithm_and_inputs_bound": (
+            set(source_manifest) == set(inputs) | {analyzer_relative}
+            and all(_valid_sha(value, 64) for value in source_manifest.values())
+        ),
+        "selected_action_identity": (
+            selected.get("action_id") == "left_grating_top"
+            and selected.get("candidate_id") == spec["candidate_id"]
+            and selected.get("marked_root_nm")
+            == [16.5, 0.0, 120.0, 25.0, 12.5, 130.0]
+            and selected.get("closure_counts")
+            == {
+                "balance": 0,
+                "material": 4,
+                "periodic": 1,
+                "user": 1,
+            }
+            and selected.get("trace_degree") == 5
+            and selected.get("fine_child_interior_degree") == 5
+            and selected.get("fine_p5_cell_count") == 48
+            and selected.get("remaining_p6_cell_count") == 114
+            and selected.get("selected_p6_face_count") == 0
+            and selected.get("actual_full3d_equivalent_active_fe_dofs")
+            == spec["active_fe_dofs"]
+            and selected.get("predicted_direct_solve_rows")
+            == spec["solve_rows"]
+        ),
+        "selection_credit_limited": (
+            selected.get("actual_local_h_dwr_surplus_available") is False
+            and selected.get("success_forecast") is False
+            and multi_seed.get("status") == "not_evaluated"
+            and frozen_lane.get("decision")
+            == "close_frozen_ten_face_subset_lane"
+            and frozen_lane.get("whole_top_port_selective_p6_lane")
+            == "not_closed_unrun_faces_orbits_and_edge_modes_remain"
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    _require(
+        not failures,
+        f"candidate selection authority failed: {failures}",
+    )
+    return {
+        "path": selection_relative,
+        "sha256": observed_sha,
+        "source_sha": selection.get("source_sha"),
+        "status": selection.get("status"),
+        "selected_action": dict(selected),
+        "checks": checks,
+        "pass": True,
+    }
+
+
 def _checker_source_provenance() -> dict[str, Any]:
     try:
         head = subprocess.check_output(
@@ -1078,6 +1291,16 @@ def _candidate_launch_contract(
             == spec["active_fe_dofs"]
             and (embedded.get("plan_identity") or {}).get("predicted_direct_solve_rows")
             == spec["solve_rows"]
+        ),
+        "embedded_selection_authority": (
+            "selection_path" not in spec
+            or (embedded.get("plan_identity") or {}).get(
+                "selection_authority"
+            )
+            == {
+                "path": spec["selection_path"],
+                "sha256": spec["selection_file_sha256"],
+            }
         ),
         "embedded_selection_credit": (
             spec["selection_credit"] is None
@@ -1976,6 +2199,7 @@ def build_task035d_case097_candidate_check(
         if spec.get("requires_actual_channel_dwr")
         else {}
     )
+    selection_authority = _load_bounded_single_seed_selection(spec)
 
     plan, _ = _load_json(
         ROOT / spec["plan_path"],
@@ -2107,6 +2331,7 @@ def build_task035d_case097_candidate_check(
             "frozen_authorities": authorities["authorities"],
             "control_field_artifacts": control_field_artifacts,
             "launch_gate": launch_gate,
+            "selection_authority": selection_authority,
             "candidate_launch_contract": candidate["launch_contract"],
             "solver_gate": solver_gate,
             "watchdog_checker_requalification": {
@@ -2232,6 +2457,7 @@ def compact_task035d_case097_candidate_check(
         "candidate_watchdog": result.get("candidate_watchdog"),
         "raw_artifacts": result.get("raw_artifacts"),
         "frozen_authorities": result.get("frozen_authorities"),
+        "selection_authority": result.get("selection_authority"),
         "launch_identity": {
             "schema_version": launch.get("schema_version"),
             "status": launch.get("status"),
@@ -2279,6 +2505,7 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             TASK035D_LOCAL_H_PLAN_NAME,
             TASK035D_COMBINED_HP_PLAN_NAME,
             TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
+            TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
             TASK035D_SELECTIVE_FACE_PLAN_NAME,
         ),
         default="t30",

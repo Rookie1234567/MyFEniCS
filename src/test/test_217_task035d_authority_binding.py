@@ -18,6 +18,17 @@ CASE_DIR = (
 RECORDS = CASE_DIR / "records"
 OUTER_CANDIDATE_ID = "h15_outer_top_periodic_p5fine_v1"
 OUTER_MPI1 = RECORDS / "outer_top_periodic_p5fine_mpi1_v2.json"
+LEFT_GRATING_CANDIDATE_ID = (
+    "h15_left_grating_top_closure_p5fine_v1"
+)
+LEFT_GRATING_MPI1 = (
+    RECORDS / "left_grating_top_closure_p5fine_mpi1_v1.json"
+)
+SELECTION_ANALYZER_RELATIVE = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/"
+    "analyze_bounded_single_seed_top_air_hp_selection.py"
+)
 DEFAULT_MPI1 = (
     RECORDS / "local_h_production_mpi1_v3_owner_gate_fix1.json"
 )
@@ -143,6 +154,33 @@ def test_uniform_and_selective_face_historical_components_still_pass() -> None:
     ):
         payload = json.loads(path.read_text(encoding="utf-8"))
         assert _failures(checker, path, payload, candidate_id) == []
+
+
+def test_selected_component_requires_selection_algorithm_manifest() -> None:
+    checker = _module(
+        "task035d_selected_authority_checker",
+        "check_local_h_production_authority.py",
+    )
+    payload = json.loads(LEFT_GRATING_MPI1.read_text(encoding="utf-8"))
+    assert (
+        _failures(
+            checker,
+            LEFT_GRATING_MPI1,
+            payload,
+            LEFT_GRATING_CANDIDATE_ID,
+        )
+        == []
+    )
+    mutation = copy.deepcopy(payload)
+    mutation["source_identity"]["numerical_file_sha256"].pop(
+        SELECTION_ANALYZER_RELATIVE
+    )
+    assert "selection_source_identity" in _failures(
+        checker,
+        LEFT_GRATING_MPI1,
+        mutation,
+        LEFT_GRATING_CANDIDATE_ID,
+    )
 
 
 def test_compact_dwr_rejects_a_wholly_missing_x_band() -> None:

@@ -1,0 +1,6457 @@
+{
+  "candidate_id": "h15_left_grating_top_closure_p5fine_v1",
+  "checks": {
+    "cell_interior_policy": true,
+    "constraint_kinds": true,
+    "degree_identity": true,
+    "expected_dimensions": true,
+    "forest_catalog_identity": true,
+    "mesh_audit_identity": true,
+    "mesh_authority": true,
+    "ordinary_default_unchanged": true,
+    "owner_routing_qualified": true,
+    "physical_dof_gate": true,
+    "plan_is_tracked": true,
+    "plan_scope_identity": true,
+    "plan_source_identity": true,
+    "prior_attempt2_hash_bound": true,
+    "reduction_authority": true,
+    "selection_source_identity": true,
+    "selective_trace_policy": true
+  },
+  "environment": {
+    "all_ranks_identical": true,
+    "mpi_size": 8,
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128",
+    "rank_environments": [
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 0
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 1
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 2
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 3
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 4
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 5
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 6
+      },
+      {
+        "basix": "0.10.0",
+        "dolfinx": "0.10.0.post2",
+        "mpi4py": "3.1.5",
+        "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+        "mpi_vendor": [
+          "Open MPI",
+          [
+            4,
+            1,
+            6
+          ]
+        ],
+        "petsc4py": "3.19.6",
+        "petsc_int_type": "int32",
+        "petsc_scalar_type": "complex128",
+        "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+        "qualified_activation": "1",
+        "rank": 7
+      }
+    ]
+  },
+  "failures": [],
+  "formal_MPI": 8,
+  "heavy_pde_started": false,
+  "mesh_audit": {
+    "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+    "carrier": {
+      "artificial_facet_catalog_sha256": "7dd45a53f7cb2aa82f5c0491698669ae24683679c170abec9aa9ff7117cfb6d4",
+      "artificial_hanging_exterior_facet_count": 70,
+      "axis_aligned_affine_hexahedra": true,
+      "boundary_markers": {
+        "x_lower": 11,
+        "x_upper": 12,
+        "y_lower": 13,
+        "y_upper": 14,
+        "z_lower": 15,
+        "z_upper": 16
+      },
+      "canonical_connectivity_sha256": "2caf696d8ebe74ad56a2f75ca15bb82caa323c4814bcaeb45ae13e5f8ce9484d",
+      "canonical_leaf_count": 162,
+      "canonical_vertex_count": 312,
+      "carrier_global_cell_count": 162,
+      "carrier_global_topological_facet_count": 625,
+      "carrier_global_vertex_count": 312,
+      "checks": {
+        "all_artificial_exterior_is_hanging": true,
+        "artificial_exterior_count_is_five_per_patch": true,
+        "canonical_vertex_count_matches_carrier": true,
+        "forest_authority_pass": true,
+        "original_cell_crosswalk_matches_geometry": true,
+        "owned_cells_cover_forest_once": true,
+        "physical_and_artificial_exterior_partition": true,
+        "physical_boundary_area": true
+      },
+      "cross_rank_hanging_patch_count": 7,
+      "dolfinx_cell_type": "CellType.hexahedron",
+      "dolfinx_shared_facet_is_not_hanging_authority": true,
+      "expected_boundary_area": 23500.0,
+      "failures": [],
+      "geometry_degree": 1,
+      "ghost_cell_counts_by_rank": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "hanging_patch_count": 14,
+      "hanging_relation_source": "global_geometry_catalog",
+      "hcurl_hanging_constraints_built": false,
+      "leaf_catalog_sha256": "80e73c85da82523f7fcee7c322e64ff0add3c1d845ac1bcc39bc0f00b815406d",
+      "material_catalog_sha256": "9a76db6a80740034426afc71d1b81775601621854cd123fd5adcc3320aba314d",
+      "mpi_constraint_ownership_qualified": false,
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "owned_cell_counts_by_rank": [
+        20,
+        20,
+        20,
+        21,
+        20,
+        20,
+        20,
+        21
+      ],
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "physical_boundary_area": 23500.0,
+      "physical_exterior_facet_count": 208,
+      "physical_facet_catalog_sha256": "53163c8681c9aca6569979da027f880992f2c057ffedef2c6179ee1d51aa4d1f",
+      "schema_version": "task035d.broken-dyadic-hexa-carrier.v1",
+      "status": "broken_dyadic_hexa_carrier_component_pass",
+      "topological_exterior_facet_count": 278
+    },
+    "cell_interior_degree": 6,
+    "cell_interior_degree_counts": {
+      "p4": 0,
+      "p5": 48,
+      "p6": 114
+    },
+    "cell_interior_degree_plan_sha256": "2213464a451400e4f211ce75367d636de4c13cc5c07de941666e6d68fce329eb",
+    "forest": {
+      "axis_aligned_affine_hexahedra": true,
+      "balance_touch_class": "face_edge_vertex",
+      "closure_split_counts": {
+        "balance": 0,
+        "material": 4,
+        "periodic": 1,
+        "user": 1
+      },
+      "face_adjacency_count": 403,
+      "hanging_face_catalog_sha256": "2ae67d34dae0d4fcb9f879b70920acab66eddcf3ab128113dd766edfd0a3e15b",
+      "hanging_face_count": 14,
+      "hanging_fine_face_count": 56,
+      "leaf_catalog_sha256": "80e73c85da82523f7fcee7c322e64ff0add3c1d845ac1bcc39bc0f00b815406d",
+      "leaf_cell_count": 162,
+      "leaf_level_counts": {
+        "0": 114,
+        "1": 48
+      },
+      "local_h_is_real_cell_split": true,
+      "material_interface_hanging_face_count": 0,
+      "material_interface_protection": true,
+      "maximum_adjacent_level_jump": 1,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "periodic_boundary_audit": {
+        "x": {
+          "lower_patch_count": 20,
+          "lower_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4",
+          "matching": true,
+          "upper_patch_count": 20,
+          "upper_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4"
+        },
+        "y": {
+          "lower_patch_count": 69,
+          "lower_sha256": "f44e37dc65ea1ed3183786a89ec8a19b142b20eb726decb76d7b6cc0a3d361db",
+          "matching": true,
+          "upper_patch_count": 69,
+          "upper_sha256": "f44e37dc65ea1ed3183786a89ec8a19b142b20eb726decb76d7b6cc0a3d361db"
+        }
+      },
+      "refined_root_count": 6,
+      "root_cell_count": 120,
+      "schema_version": "task035d.dyadic-hexa-forest.v1",
+      "status": "balanced_periodic_dyadic_hexa_forest_pass",
+      "strong_2_to_1_balance": true,
+      "touching_pair_count": 1199
+    },
+    "full3d_equivalent_dof_gate_limit": 90000,
+    "hanging_patch_count": 14,
+    "leaf_cell_count": 162,
+    "ordinary_default_changed": false,
+    "pass": true,
+    "pde_accuracy_credit": false,
+    "plan_file_sha256": "08e33b5441460029bb3c88d18a63b884782cfc1aef734371f48324116885b393",
+    "plan_path": "/home/Projects/MyFEniCS/benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_left_grating_top_closure_p5fine_plan_v1.json",
+    "root_cell_count": 120,
+    "schema_version": "task035d.stage4-local-h-mesh.v1",
+    "selected_p6_face_count": 0,
+    "selected_p6_face_geometry_keys": [],
+    "status": "stage4_balanced_local_h_mesh_pass",
+    "trace_degree": 5,
+    "variable_cell_interior_degree": true
+  },
+  "ordinary_default_changed": false,
+  "pass": true,
+  "pde_accuracy_credit": false,
+  "plan": {
+    "file_sha256": "08e33b5441460029bb3c88d18a63b884782cfc1aef734371f48324116885b393",
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_left_grating_top_closure_p5fine_plan_v1.json",
+    "payload": {
+      "base_config": {
+        "axis_values": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            12.5,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            15.0,
+            30.0,
+            45.0,
+            60.0,
+            75.0,
+            90.0,
+            105.0,
+            120.0,
+            130.0
+          ]
+        },
+        "boundary_tags": {
+          "x_lower": 11,
+          "x_upper": 12,
+          "y_lower": 13,
+          "y_upper": 14,
+          "z_lower": 15,
+          "z_upper": 16
+        },
+        "domain_z_max": 130.0,
+        "domain_z_min": -10.0,
+        "geometry_kind": "rectangular_block_grating",
+        "grating_bounds": [
+          16.5,
+          0.0,
+          0.0,
+          33.5,
+          25.0,
+          120.0
+        ],
+        "identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+        "interface_z": 0.0,
+        "material_tags": {
+          "air": 1,
+          "grating": 3,
+          "substrate": 2
+        },
+        "mesh_cells_resolved": [
+          6,
+          2,
+          10
+        ],
+        "mesh_spacing_mode_resolved": "boundary_fitted",
+        "mesh_target_size": 15.0,
+        "period_x": 50.0,
+        "period_y": 25.0,
+        "stage_case": "stage4_block_grating"
+      },
+      "cell_interior_degree": 6,
+      "cell_interior_degree_plan_sha256": "2213464a451400e4f211ce75367d636de4c13cc5c07de941666e6d68fce329eb",
+      "cell_interior_degrees": [
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            8.25,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            0.0,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            8.25,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            8.25,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            12.375,
+            6.25,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            8.25,
+            0.0,
+            112.5
+          ],
+          "upper": [
+            12.375,
+            6.25,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            8.25,
+            6.25,
+            105.0
+          ],
+          "upper": [
+            12.375,
+            12.5,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            8.25,
+            6.25,
+            112.5
+          ],
+          "upper": [
+            12.375,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            8.25,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            12.375,
+            18.75,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            8.25,
+            12.5,
+            112.5
+          ],
+          "upper": [
+            12.375,
+            18.75,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            8.25,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            8.25,
+            18.75,
+            105.0
+          ],
+          "upper": [
+            12.375,
+            25.0,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            8.25,
+            18.75,
+            112.5
+          ],
+          "upper": [
+            12.375,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            12.375,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            16.5,
+            6.25,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            12.375,
+            0.0,
+            112.5
+          ],
+          "upper": [
+            16.5,
+            6.25,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            12.375,
+            6.25,
+            105.0
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            12.375,
+            6.25,
+            112.5
+          ],
+          "upper": [
+            16.5,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            12.375,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            16.5,
+            18.75,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            12.375,
+            12.5,
+            112.5
+          ],
+          "upper": [
+            16.5,
+            18.75,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            12.375,
+            18.75,
+            105.0
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            12.375,
+            18.75,
+            112.5
+          ],
+          "upper": [
+            16.5,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            20.75,
+            6.25,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            0.0,
+            112.5
+          ],
+          "upper": [
+            20.75,
+            6.25,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            20.75,
+            6.25,
+            125.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            0.0,
+            125.0
+          ],
+          "upper": [
+            20.75,
+            6.25,
+            130.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            6.25,
+            105.0
+          ],
+          "upper": [
+            20.75,
+            12.5,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            6.25,
+            112.5
+          ],
+          "upper": [
+            20.75,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            6.25,
+            120.0
+          ],
+          "upper": [
+            20.75,
+            12.5,
+            125.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            6.25,
+            125.0
+          ],
+          "upper": [
+            20.75,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            16.5,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            20.75,
+            18.75,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            12.5,
+            112.5
+          ],
+          "upper": [
+            20.75,
+            18.75,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            20.75,
+            18.75,
+            125.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            12.5,
+            125.0
+          ],
+          "upper": [
+            20.75,
+            18.75,
+            130.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            18.75,
+            105.0
+          ],
+          "upper": [
+            20.75,
+            25.0,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            18.75,
+            112.5
+          ],
+          "upper": [
+            20.75,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            18.75,
+            120.0
+          ],
+          "upper": [
+            20.75,
+            25.0,
+            125.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            16.5,
+            18.75,
+            125.0
+          ],
+          "upper": [
+            20.75,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            25.0,
+            6.25,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            0.0,
+            112.5
+          ],
+          "upper": [
+            25.0,
+            6.25,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            25.0,
+            6.25,
+            125.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            0.0,
+            125.0
+          ],
+          "upper": [
+            25.0,
+            6.25,
+            130.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            6.25,
+            105.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            6.25,
+            112.5
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            6.25,
+            120.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            125.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            6.25,
+            125.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            25.0,
+            18.75,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            12.5,
+            112.5
+          ],
+          "upper": [
+            25.0,
+            18.75,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            25.0,
+            18.75,
+            125.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            12.5,
+            125.0
+          ],
+          "upper": [
+            25.0,
+            18.75,
+            130.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            18.75,
+            105.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            112.5
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            18.75,
+            112.5
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            18.75,
+            120.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            125.0
+          ]
+        },
+        {
+          "degree": 5,
+          "lower": [
+            20.75,
+            18.75,
+            125.0
+          ],
+          "upper": [
+            25.0,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            33.5,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            25.0,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            33.5,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            41.75,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            33.5,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            41.75,
+            25.0,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            -10.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            0.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            15.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            30.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            45.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            60.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            75.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            90.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            105.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            50.0,
+            12.5,
+            130.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            -10.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            0.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            0.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            15.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            15.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            30.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            30.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            45.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            45.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            60.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            60.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            75.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            75.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            90.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            90.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            105.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            105.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            120.0
+          ]
+        },
+        {
+          "degree": 6,
+          "lower": [
+            41.75,
+            12.5,
+            120.0
+          ],
+          "upper": [
+            50.0,
+            25.0,
+            130.0
+          ]
+        }
+      ],
+      "expected_forest": {
+        "closure_counts": {
+          "balance": 0,
+          "material": 4,
+          "periodic": 1,
+          "user": 1
+        },
+        "hanging_face_catalog_sha256": "2ae67d34dae0d4fcb9f879b70920acab66eddcf3ab128113dd766edfd0a3e15b",
+        "hanging_patch_count": 14,
+        "leaf_catalog_sha256": "80e73c85da82523f7fcee7c322e64ff0add3c1d845ac1bcc39bc0f00b815406d",
+        "leaf_cell_count": 162,
+        "root_catalog_sha256": "4d9368ac6a4fdd5442ac3bc001294214f6eccc7fcd3d6d13c3a6d54a0ef87fca",
+        "root_cell_count": 120
+      },
+      "marked_root_boxes": [
+        {
+          "lower": [
+            16.5,
+            0.0,
+            120.0
+          ],
+          "upper": [
+            25.0,
+            12.5,
+            130.0
+          ]
+        }
+      ],
+      "maximum_level": 1,
+      "ordinary_default_changed": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "protect_material_interfaces": true,
+      "provenance": {
+        "accuracy_credit": false,
+        "candidate_id": "h15_left_grating_top_closure_p5fine_v1",
+        "complete_combined_hp_credit": false,
+        "factorial_bridge": false,
+        "h_action": "split the x=16.5..25 nm grating-top root at z=120..130 nm, with exact y-periodic and material interface closure",
+        "h_action_evidence": "the complete bounded single-seed compact-DWR catalog gives this budget-feasible closure the largest positive failed-goal alignment and the best alignment per added DoF and solve row; face DWR remains a location oracle, not an unrun local-h surplus",
+        "ordinary_default_changed": false,
+        "p_action": "use p5 cell interiors on all 48 h/2 children and physically omit their inactive p6 interior modes",
+        "p_action_evidence": "cost guard required by the 90000 active-FE-DoF gate; the p5 action is restricted to newly h-refined cells and carries no standalone accuracy credit",
+        "purpose": "Task035d bounded single-seed-catalog left-grating-top local-h closure plus fine-cell p5-interior discriminator",
+        "selection_authority": {
+          "actual_local_h_dwr_surplus_available": false,
+          "location_oracle_only": true,
+          "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/bounded_single_seed_top_air_hp_selection_v2.json",
+          "sha256": "828d6db42b973114d62303808a30567f116b05289981de4f899092f0487dba23",
+          "status": "bounded_single_seed_top_air_hp_selection_pass"
+        },
+        "single_seed_closure_catalog_complete_for_available_compact_dwr": true
+      },
+      "root_cell_box_catalog_sha256": "539557f657ee327803467f92643c01995f5217c4b37a51ac0f69b7e0c10f695c",
+      "schema_version": "task035d.stage4-local-h-refinement-plan.v1",
+      "status": "stage4_balanced_local_h_plan",
+      "trace_degree": 5
+    }
+  },
+  "prior_authorities": {
+    "local_h_attempt2_mpi_identity_v3": {
+      "pass": true,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/local_h_attempt2_mpi_identity_v3.json",
+      "sha256": "c293fc07284435c075fc54ba4948f5809d9553cb4693929c270848aca8fd15e2",
+      "status": "local_h_attempt2_owner_routed_component_pass_pde_launch_ready"
+    },
+    "phase_a_compact": {
+      "pass": true,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/compact_authority_v1.json",
+      "sha256": "2e896ef45bbfc5c11901503269d11c0321106c9e41f71729ac7c6fc722687403",
+      "status": "case097_phase_a_compact_authority"
+    }
+  },
+  "reduction_audit": {
+    "active_fe_dof_gate_limit": 90000,
+    "active_fe_dof_gate_pass": true,
+    "actual_full3d_equivalent_active_fe_dofs": 88915,
+    "degree_plan": {
+      "active_rows": 91805,
+      "active_trace_rows": 28985,
+      "adaptation_cycle_scope": "first p6-to-p5 cell-interior-only cycle",
+      "cell_count": 162,
+      "cell_degree_counts": {
+        "p4": 0,
+        "p5": 48,
+        "p6": 114
+      },
+      "cell_degree_plan_sha256": "2213464a451400e4f211ce75367d636de4c13cc5c07de941666e6d68fce329eb",
+      "cell_interior_container_degree": 6,
+      "cell_interior_degree": 6,
+      "cell_interior_p6_modes_globally_numbered_when_inactive": false,
+      "complete_combined_hp_credit": false,
+      "entity_degree_closure": "uniform fixed trace degree on every physical edge/face; geometry-bound p5/p6 cell-interior degree with trace_degree <= cell degree",
+      "geometry_bound_not_global_entity_id_bound": true,
+      "geometry_canonical_entity_degree_sha256": "14d9c9cc8998e9ed008e06e9d0676e7753e3f5b30ede6b6f0065fabcb8e0f692",
+      "inactive_p6_rows": 23377,
+      "inactive_p6_trace_rows": 13297,
+      "local_variable_trace_implemented": false,
+      "mesh_cell_box_catalog_sha256": "3a810070f9b5f37d0e174adaf11de279114e4a8ff76cc724a763ec8173297cc6",
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "runtime_global_entity_degree_sha256": "fbe80bf65aaba6667e774265ca814eadca71916fb719992c613c979317165c0e",
+      "runtime_global_entity_id_order_partition_independent": false,
+      "schema_version": "task035d.local-h-fixed-trace-variable-interior-plan.v1",
+      "selected_p6_face_count": 0,
+      "status": "local_h_fixed_trace_variable_interior_plan_closed",
+      "trace_degree": 5,
+      "trace_degree_values": [
+        5
+      ],
+      "variable_cell_interior_degree": true
+    },
+    "hanging_or_floquet_slave_rows_globally_numbered": false,
+    "hanging_slave_rows": 2890,
+    "independent_trace_rows": 21570,
+    "mesh": {
+      "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+      "carrier": {
+        "artificial_facet_catalog_sha256": "7dd45a53f7cb2aa82f5c0491698669ae24683679c170abec9aa9ff7117cfb6d4",
+        "artificial_hanging_exterior_facet_count": 70,
+        "axis_aligned_affine_hexahedra": true,
+        "boundary_markers": {
+          "x_lower": 11,
+          "x_upper": 12,
+          "y_lower": 13,
+          "y_upper": 14,
+          "z_lower": 15,
+          "z_upper": 16
+        },
+        "canonical_connectivity_sha256": "2caf696d8ebe74ad56a2f75ca15bb82caa323c4814bcaeb45ae13e5f8ce9484d",
+        "canonical_leaf_count": 162,
+        "canonical_vertex_count": 312,
+        "carrier_global_cell_count": 162,
+        "carrier_global_topological_facet_count": 625,
+        "carrier_global_vertex_count": 312,
+        "checks": {
+          "all_artificial_exterior_is_hanging": true,
+          "artificial_exterior_count_is_five_per_patch": true,
+          "canonical_vertex_count_matches_carrier": true,
+          "forest_authority_pass": true,
+          "original_cell_crosswalk_matches_geometry": true,
+          "owned_cells_cover_forest_once": true,
+          "physical_and_artificial_exterior_partition": true,
+          "physical_boundary_area": true
+        },
+        "cross_rank_hanging_patch_count": 7,
+        "dolfinx_cell_type": "CellType.hexahedron",
+        "dolfinx_shared_facet_is_not_hanging_authority": true,
+        "expected_boundary_area": 23500.0,
+        "failures": [],
+        "geometry_degree": 1,
+        "ghost_cell_counts_by_rank": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "hanging_patch_count": 14,
+        "hanging_relation_source": "global_geometry_catalog",
+        "hcurl_hanging_constraints_built": false,
+        "leaf_catalog_sha256": "80e73c85da82523f7fcee7c322e64ff0add3c1d845ac1bcc39bc0f00b815406d",
+        "material_catalog_sha256": "9a76db6a80740034426afc71d1b81775601621854cd123fd5adcc3320aba314d",
+        "mpi_constraint_ownership_qualified": false,
+        "mpi_size": 8,
+        "ordinary_default_changed": false,
+        "owned_cell_counts_by_rank": [
+          20,
+          20,
+          20,
+          21,
+          20,
+          20,
+          20,
+          21
+        ],
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "physical_boundary_area": 23500.0,
+        "physical_exterior_facet_count": 208,
+        "physical_facet_catalog_sha256": "53163c8681c9aca6569979da027f880992f2c057ffedef2c6179ee1d51aa4d1f",
+        "schema_version": "task035d.broken-dyadic-hexa-carrier.v1",
+        "status": "broken_dyadic_hexa_carrier_component_pass",
+        "topological_exterior_facet_count": 278
+      },
+      "cell_interior_degree": 6,
+      "cell_interior_degree_counts": {
+        "p4": 0,
+        "p5": 48,
+        "p6": 114
+      },
+      "cell_interior_degree_plan_sha256": "2213464a451400e4f211ce75367d636de4c13cc5c07de941666e6d68fce329eb",
+      "forest": {
+        "axis_aligned_affine_hexahedra": true,
+        "balance_touch_class": "face_edge_vertex",
+        "closure_split_counts": {
+          "balance": 0,
+          "material": 4,
+          "periodic": 1,
+          "user": 1
+        },
+        "face_adjacency_count": 403,
+        "hanging_face_catalog_sha256": "2ae67d34dae0d4fcb9f879b70920acab66eddcf3ab128113dd766edfd0a3e15b",
+        "hanging_face_count": 14,
+        "hanging_fine_face_count": 56,
+        "leaf_catalog_sha256": "80e73c85da82523f7fcee7c322e64ff0add3c1d845ac1bcc39bc0f00b815406d",
+        "leaf_cell_count": 162,
+        "leaf_level_counts": {
+          "0": 114,
+          "1": 48
+        },
+        "local_h_is_real_cell_split": true,
+        "material_interface_hanging_face_count": 0,
+        "material_interface_protection": true,
+        "maximum_adjacent_level_jump": 1,
+        "ordinary_default_changed": false,
+        "pass": true,
+        "pde_accuracy_credit": false,
+        "periodic_axes": [
+          "x",
+          "y"
+        ],
+        "periodic_boundary_audit": {
+          "x": {
+            "lower_patch_count": 20,
+            "lower_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4",
+            "matching": true,
+            "upper_patch_count": 20,
+            "upper_sha256": "21609f804f2592b869f74ce09ba57203def2a131813bfae0cb3cda92797f3ac4"
+          },
+          "y": {
+            "lower_patch_count": 69,
+            "lower_sha256": "f44e37dc65ea1ed3183786a89ec8a19b142b20eb726decb76d7b6cc0a3d361db",
+            "matching": true,
+            "upper_patch_count": 69,
+            "upper_sha256": "f44e37dc65ea1ed3183786a89ec8a19b142b20eb726decb76d7b6cc0a3d361db"
+          }
+        },
+        "refined_root_count": 6,
+        "root_cell_count": 120,
+        "schema_version": "task035d.dyadic-hexa-forest.v1",
+        "status": "balanced_periodic_dyadic_hexa_forest_pass",
+        "strong_2_to_1_balance": true,
+        "touching_pair_count": 1199
+      },
+      "full3d_equivalent_dof_gate_limit": 90000,
+      "hanging_patch_count": 14,
+      "leaf_cell_count": 162,
+      "ordinary_default_changed": false,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "plan_file_sha256": "08e33b5441460029bb3c88d18a63b884782cfc1aef734371f48324116885b393",
+      "plan_path": "/home/Projects/MyFEniCS/benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_left_grating_top_closure_p5fine_plan_v1.json",
+      "root_cell_count": 120,
+      "schema_version": "task035d.stage4-local-h-mesh.v1",
+      "selected_p6_face_count": 0,
+      "selected_p6_face_geometry_keys": [],
+      "status": "stage4_balanced_local_h_mesh_pass",
+      "trace_degree": 5,
+      "variable_cell_interior_degree": true
+    },
+    "ordinary_default_changed": false,
+    "pass": true,
+    "periodic_slave_rows": 4525,
+    "physical_trace": {
+      "checks": {
+        "all_edges_remain_at_base_degree": true,
+        "all_hanging_patches_have_relations": true,
+        "flattened_graph_pass": true,
+        "forest_carrier_identity": true,
+        "mpi_physical_authority_identity": true,
+        "no_slave_rows_numbered": true,
+        "only_selected_faces_use_p6": true,
+        "periodic_cycle_closure": true,
+        "selected_p6_faces_are_not_hanging": true,
+        "selected_p6_faces_close_periodic_orbits": true,
+        "selected_p6_faces_exist": true
+      },
+      "compiled_cell_tensor_binding_complete": false,
+      "degree": 5,
+      "distributed_scalability_qualified": false,
+      "entity_catalog_sha256": "38a5368464e159413e1d7c184327d3b01dab6a577924b6709061e05eb1cb994d",
+      "failures": [],
+      "flattened_graph_sha256": "e798650de6ecf7af913e2921c44de1149f86d7ceb2c3de9deea6f3b6ea055b87",
+      "hanging_face_participant_count": 70,
+      "hanging_patch_count": 14,
+      "hanging_primary_relation_count": 14,
+      "hanging_relation_count": 26,
+      "hanging_secondary_relation_count": 12,
+      "hanging_slave_rows": 2890,
+      "independent_trace_rows": 21570,
+      "maximum_chain_depth": 2,
+      "maximum_relation_residual": 3.929734507748659e-15,
+      "mpi_constraint_row_ownership_qualified": false,
+      "mpi_ghost_expansion_qualified": false,
+      "mpi_physical_catalog_identity_qualified": true,
+      "mpi_size": 8,
+      "ordinary_default_changed": false,
+      "partition_independent_physical_keys": true,
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "periodic_cycle_error": 5.551115123125783e-17,
+      "periodic_primary_relation_count": 282,
+      "periodic_relation_count": 296,
+      "periodic_secondary_relation_count": 14,
+      "phase_x": [
+        -0.6007411348979813,
+        -0.7994436120462065
+      ],
+      "phase_y": [
+        1.0,
+        0.0
+      ],
+      "physical_authority_sha256": "59bdc219fd5cd3c9d6e4d0071669f34a4178632e5a60d07e1e9b5b9b0477e7a4",
+      "physical_edge_count": 797,
+      "physical_face_count": 625,
+      "raw_trace_rows": 28985,
+      "schema_version": "task035d.broken-hexa-trace-authority.v1",
+      "selected_p6_face_count": 0,
+      "selected_p6_face_geometry_keys": [],
+      "selected_p6_periodic_orbit_count": 0,
+      "selected_p6_periodic_orbits": [],
+      "selective_trace_full3d_dof_delta": 0,
+      "status": "broken_hexa_trace_constraint_component_pass",
+      "trace_degree_values": [
+        5
+      ]
+    },
+    "raw_broken_active_fe_dofs": 91805,
+    "raw_broken_trace_rows": 28985,
+    "schema_version": "task035d.stage4-local-h-reduction-authority.v1",
+    "status": "stage4_local_h_reduction_authority_pass",
+    "trace_constraints": {
+      "active_trace_work_ownership_ranges": [
+        [
+          0,
+          3624
+        ],
+        [
+          3624,
+          7247
+        ],
+        [
+          7247,
+          10870
+        ],
+        [
+          10870,
+          14493
+        ],
+        [
+          14493,
+          18116
+        ],
+        [
+          18116,
+          21739
+        ],
+        [
+          21739,
+          25362
+        ],
+        [
+          25362,
+          28985
+        ]
+      ],
+      "active_vector_block_work_owner_counts_by_rank": [
+        725,
+        154,
+        91,
+        90,
+        91,
+        90,
+        91,
+        90
+      ],
+      "canonical_cell_graph_sha256": "10fd9833f46cb547f50b2a03e6ea565f620fc079cf507c8d7f10202ecebd6f6c",
+      "canonical_root_numbering_partition_independent": true,
+      "cell_expansion_inverse_used": false,
+      "cell_expansion_rank_semantics": "rank_equals_min(local_trace_rows, independent_root_rows); wide hanging/Floquet cell expansions require full row rank",
+      "cell_expansion_svd_used_for_rank_audit": true,
+      "checks": {
+        "active_vector_block_work_ownership_closes": true,
+        "all_independent_roots_reached": true,
+        "all_owned_cells_bound": true,
+        "all_physical_entities_bound_once": true,
+        "canonical_cell_graph_mpi_identity": true,
+        "cell_expansions_maximal_rank": true,
+        "cell_transform_matches_dolfinx_cell_info": true,
+        "constraint_relations_have_one_canonical_owner": true,
+        "cross_rank_hanging_graph_and_cell_expansions_close": true,
+        "entity_transform_orthogonality": true,
+        "forest_carrier_identity": true,
+        "no_slave_rows_numbered": true,
+        "off_process_root_insertion_path_exercised": true,
+        "owner_routed_remote_cache_pass": true,
+        "petsc_root_row_ownership_closes": true,
+        "physical_rows_have_one_dolfinx_owner": true,
+        "trace_transform_does_not_mix_cell_interior": true,
+        "unpermuted_cell_chart_matches_forest": true
+      },
+      "compiled_cell_tensor_binding_complete": false,
+      "constraint_kinds": [
+        "hanging",
+        "floquet"
+      ],
+      "constraint_relation_owner_counts_by_rank": [
+        41,
+        37,
+        50,
+        41,
+        43,
+        26,
+        38,
+        46
+      ],
+      "constraint_relation_owner_sha256": "9402ed545a2c04e64f06fa5d1011029cb85e59774bf820522fee2a26d7f06e0c",
+      "contains_floquet_constraints": true,
+      "contains_hanging_constraints": true,
+      "cross_rank_hanging_participant_entities": [
+        [
+          1,
+          [
+            5892857143,
+            0,
+            82142857143,
+            5892857143,
+            0,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            82142857143,
+            5892857143,
+            0,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            82142857143,
+            5892857143,
+            4464285714,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            82142857143,
+            5892857143,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            82142857143,
+            8839285714,
+            0,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            82142857143,
+            11785714286,
+            0,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            87500000000,
+            5892857143,
+            0,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            87500000000,
+            5892857143,
+            4464285714,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            5892857143,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            5892857143,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            8839285714,
+            0,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            11785714286,
+            0,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            82142857143,
+            5892857143,
+            4464285714,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            82142857143,
+            5892857143,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            82142857143,
+            8839285714,
+            4464285714,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            87500000000,
+            5892857143,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            87500000000,
+            5892857143,
+            8928571429,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            92857142857,
+            5892857143,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            4464285714,
+            92857142857,
+            8839285714,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            82142857143,
+            5892857143,
+            8928571429,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            82142857143,
+            5892857143,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            82142857143,
+            5892857143,
+            13392857143,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            82142857143,
+            5892857143,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            82142857143,
+            8839285714,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            82142857143,
+            11785714286,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            87500000000,
+            5892857143,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            87500000000,
+            5892857143,
+            13392857143,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            5892857143,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            5892857143,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            8839285714,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            82142857143,
+            5892857143,
+            13392857143,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            82142857143,
+            5892857143,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            82142857143,
+            8839285714,
+            13392857143,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            87500000000,
+            5892857143,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            87500000000,
+            5892857143,
+            17857142857,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            92857142857,
+            5892857143,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            13392857143,
+            92857142857,
+            8839285714,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            82142857143,
+            5892857143,
+            17857142857,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            82142857143,
+            5892857143,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            82142857143,
+            8839285714,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            82142857143,
+            11785714286,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            87500000000,
+            5892857143,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            92857142857,
+            8839285714,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            17857142857,
+            92857142857,
+            11785714286,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            0,
+            82142857143,
+            8839285714,
+            4464285714,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            0,
+            82142857143,
+            11785714286,
+            0,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            0,
+            92857142857,
+            8839285714,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            0,
+            92857142857,
+            11785714286,
+            0,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            4464285714,
+            82142857143,
+            8839285714,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            4464285714,
+            82142857143,
+            11785714286,
+            4464285714,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            4464285714,
+            92857142857,
+            8839285714,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            4464285714,
+            92857142857,
+            11785714286,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            82142857143,
+            8839285714,
+            13392857143,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            82142857143,
+            11785714286,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            92857142857,
+            8839285714,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            13392857143,
+            82142857143,
+            8839285714,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            13392857143,
+            82142857143,
+            11785714286,
+            13392857143,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            13392857143,
+            92857142857,
+            8839285714,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            13392857143,
+            92857142857,
+            11785714286,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            17857142857,
+            82142857143,
+            11785714286,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            17857142857,
+            92857142857,
+            11785714286,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            82142857143,
+            11785714286,
+            4464285714,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            82142857143,
+            11785714286,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            82142857143,
+            14821428571,
+            0,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            82142857143,
+            17857142857,
+            0,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            92857142857,
+            11785714286,
+            0,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            92857142857,
+            11785714286,
+            0,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            92857142857,
+            11785714286,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            96428571429,
+            11785714286,
+            0,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            96428571429,
+            11785714286,
+            4464285714,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            100000000000,
+            11785714286,
+            4464285714,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            100000000000,
+            11785714286,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            82142857143,
+            11785714286,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            82142857143,
+            14821428571,
+            4464285714,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            92857142857,
+            11785714286,
+            4464285714,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            96428571429,
+            11785714286,
+            4464285714,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            96428571429,
+            11785714286,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            100000000000,
+            11785714286,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            82142857143,
+            11785714286,
+            13392857143,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            82142857143,
+            11785714286,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            82142857143,
+            14821428571,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            82142857143,
+            17857142857,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            96428571429,
+            11785714286,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            96428571429,
+            11785714286,
+            13392857143,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            100000000000,
+            11785714286,
+            13392857143,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            100000000000,
+            11785714286,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            13392857143,
+            82142857143,
+            11785714286,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            13392857143,
+            82142857143,
+            14821428571,
+            13392857143,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            13392857143,
+            92857142857,
+            11785714286,
+            13392857143,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            13392857143,
+            92857142857,
+            11785714286,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            13392857143,
+            96428571429,
+            11785714286,
+            13392857143,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            13392857143,
+            96428571429,
+            11785714286,
+            17857142857,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            13392857143,
+            100000000000,
+            11785714286,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            17857142857,
+            82142857143,
+            14821428571,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            17857142857,
+            82142857143,
+            17857142857,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            17857142857,
+            92857142857,
+            11785714286,
+            17857142857,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            17857142857,
+            92857142857,
+            11785714286,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            17857142857,
+            96428571429,
+            11785714286,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            14821428571,
+            0,
+            82142857143,
+            14821428571,
+            4464285714,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            14821428571,
+            0,
+            82142857143,
+            17857142857,
+            0,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            14821428571,
+            4464285714,
+            82142857143,
+            14821428571,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            14821428571,
+            4464285714,
+            82142857143,
+            17857142857,
+            4464285714,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            14821428571,
+            8928571429,
+            82142857143,
+            14821428571,
+            13392857143,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            14821428571,
+            8928571429,
+            82142857143,
+            17857142857,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            14821428571,
+            13392857143,
+            82142857143,
+            14821428571,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            14821428571,
+            13392857143,
+            82142857143,
+            17857142857,
+            13392857143,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            14821428571,
+            17857142857,
+            82142857143,
+            17857142857,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            82142857143,
+            17857142857,
+            0,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            82142857143,
+            17857142857,
+            0,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            82142857143,
+            17857142857,
+            4464285714,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            82142857143,
+            17857142857,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            87500000000,
+            17857142857,
+            0,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            87500000000,
+            17857142857,
+            4464285714,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            92857142857,
+            17857142857,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            92857142857,
+            17857142857,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            4464285714,
+            82142857143,
+            17857142857,
+            4464285714,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            4464285714,
+            82142857143,
+            17857142857,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            4464285714,
+            87500000000,
+            17857142857,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            4464285714,
+            87500000000,
+            17857142857,
+            8928571429,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            4464285714,
+            92857142857,
+            17857142857,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            82142857143,
+            17857142857,
+            8928571429,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            82142857143,
+            17857142857,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            82142857143,
+            17857142857,
+            13392857143,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            82142857143,
+            17857142857,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            87500000000,
+            17857142857,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            87500000000,
+            17857142857,
+            13392857143,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            92857142857,
+            17857142857,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            92857142857,
+            17857142857,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            92857142857,
+            17857142857,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            92857142857,
+            17857142857,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            96428571429,
+            17857142857,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            96428571429,
+            17857142857,
+            13392857143,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            100000000000,
+            17857142857,
+            13392857143,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            100000000000,
+            17857142857,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            13392857143,
+            82142857143,
+            17857142857,
+            13392857143,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            13392857143,
+            82142857143,
+            17857142857,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            13392857143,
+            87500000000,
+            17857142857,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            13392857143,
+            87500000000,
+            17857142857,
+            17857142857,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            13392857143,
+            92857142857,
+            17857142857,
+            13392857143,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            13392857143,
+            92857142857,
+            17857142857,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            13392857143,
+            96428571429,
+            17857142857,
+            13392857143,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            13392857143,
+            96428571429,
+            17857142857,
+            17857142857,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            13392857143,
+            100000000000,
+            17857142857,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            17857142857,
+            82142857143,
+            17857142857,
+            17857142857,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            17857142857,
+            82142857143,
+            17857142857,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            17857142857,
+            87500000000,
+            17857142857,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            17857142857,
+            92857142857,
+            17857142857,
+            17857142857,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            17857142857,
+            92857142857,
+            17857142857,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            17857142857,
+            96428571429,
+            17857142857,
+            17857142857,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            0,
+            4464285714,
+            82142857143,
+            87500000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            0,
+            4464285714,
+            87500000000,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            0,
+            8928571429,
+            82142857143,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            4464285714,
+            8928571429,
+            82142857143,
+            87500000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            4464285714,
+            8928571429,
+            87500000000,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            8928571429,
+            13392857143,
+            82142857143,
+            87500000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            8928571429,
+            13392857143,
+            87500000000,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            8928571429,
+            17857142857,
+            82142857143,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            13392857143,
+            17857142857,
+            82142857143,
+            87500000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            5892857143,
+            13392857143,
+            17857142857,
+            87500000000,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            0,
+            4464285714,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            0,
+            4464285714,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            0,
+            8928571429,
+            92857142857,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            4464285714,
+            8928571429,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            4464285714,
+            8928571429,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            8928571429,
+            13392857143,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            8928571429,
+            13392857143,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            8928571429,
+            17857142857,
+            92857142857,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            13392857143,
+            17857142857,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            11785714286,
+            13392857143,
+            17857142857,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            0,
+            4464285714,
+            82142857143,
+            87500000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            0,
+            4464285714,
+            87500000000,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            0,
+            8928571429,
+            82142857143,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            4464285714,
+            8928571429,
+            82142857143,
+            87500000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            4464285714,
+            8928571429,
+            87500000000,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            8928571429,
+            13392857143,
+            82142857143,
+            87500000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            8928571429,
+            13392857143,
+            87500000000,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            8928571429,
+            13392857143,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            8928571429,
+            13392857143,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            8928571429,
+            17857142857,
+            82142857143,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            8928571429,
+            17857142857,
+            92857142857,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            13392857143,
+            17857142857,
+            82142857143,
+            87500000000
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            13392857143,
+            17857142857,
+            87500000000,
+            92857142857
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            13392857143,
+            17857142857,
+            92857142857,
+            96428571429
+          ]
+        ],
+        [
+          2,
+          [
+            0,
+            17857142857,
+            13392857143,
+            17857142857,
+            96428571429,
+            100000000000
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            5892857143,
+            8839285714,
+            0,
+            4464285714
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            5892857143,
+            8839285714,
+            4464285714,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            5892857143,
+            8839285714,
+            8928571429,
+            13392857143
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            5892857143,
+            8839285714,
+            13392857143,
+            17857142857
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            5892857143,
+            11785714286,
+            0,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            5892857143,
+            11785714286,
+            8928571429,
+            17857142857
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            8839285714,
+            11785714286,
+            0,
+            4464285714
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            8839285714,
+            11785714286,
+            4464285714,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            8839285714,
+            11785714286,
+            8928571429,
+            13392857143
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            8839285714,
+            11785714286,
+            13392857143,
+            17857142857
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            11785714286,
+            14821428571,
+            0,
+            4464285714
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            11785714286,
+            14821428571,
+            4464285714,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            11785714286,
+            14821428571,
+            8928571429,
+            13392857143
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            11785714286,
+            14821428571,
+            13392857143,
+            17857142857
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            11785714286,
+            17857142857,
+            0,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            11785714286,
+            17857142857,
+            8928571429,
+            17857142857
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            14821428571,
+            17857142857,
+            0,
+            4464285714
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            14821428571,
+            17857142857,
+            4464285714,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            14821428571,
+            17857142857,
+            8928571429,
+            13392857143
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            82142857143,
+            14821428571,
+            17857142857,
+            13392857143,
+            17857142857
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            8839285714,
+            0,
+            4464285714
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            8839285714,
+            4464285714,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            8839285714,
+            8928571429,
+            13392857143
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            8839285714,
+            13392857143,
+            17857142857
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            11785714286,
+            0,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            5892857143,
+            11785714286,
+            8928571429,
+            17857142857
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            8839285714,
+            11785714286,
+            0,
+            4464285714
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            8839285714,
+            11785714286,
+            4464285714,
+            8928571429
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            8839285714,
+            11785714286,
+            8928571429,
+            13392857143
+          ]
+        ],
+        [
+          2,
+          [
+            2,
+            92857142857,
+            8839285714,
+            11785714286,
+            13392857143,
+            17857142857
+          ]
+        ]
+      ],
+      "cross_rank_hanging_participant_entity_count": 222,
+      "cross_rank_hanging_participant_entity_sha256": "6f6cd0083bf655c5f0d03354a4db5947c8eaf70f1396a4aa9e0549da2ed0b45e",
+      "cross_rank_hanging_patch_count": 7,
+      "cross_rank_hanging_relation_count": 23,
+      "cross_rank_hanging_remote_lookup_counts_by_rank": [
+        0,
+        0,
+        0,
+        0,
+        7,
+        16,
+        14,
+        6
+      ],
+      "cross_rank_hanging_remote_participant_entities": [
+        [
+          1,
+          [
+            5892857143,
+            0,
+            92857142857,
+            5892857143,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            82142857143,
+            5892857143,
+            8928571429,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            82142857143,
+            5892857143,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            82142857143,
+            5892857143,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            82142857143,
+            8839285714,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            87500000000,
+            5892857143,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            5892857143,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            8839285714,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            5892857143,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            0,
+            82142857143,
+            8839285714,
+            4464285714,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            0,
+            92857142857,
+            8839285714,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            4464285714,
+            82142857143,
+            8839285714,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            4464285714,
+            92857142857,
+            8839285714,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            82142857143,
+            8839285714,
+            13392857143,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            82142857143,
+            11785714286,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            92857142857,
+            8839285714,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            13392857143,
+            82142857143,
+            8839285714,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            8839285714,
+            13392857143,
+            92857142857,
+            8839285714,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            0,
+            92857142857,
+            11785714286,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            92857142857,
+            11785714286,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            96428571429,
+            11785714286,
+            4464285714,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            4464285714,
+            96428571429,
+            11785714286,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            82142857143,
+            14821428571,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            96428571429
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            8928571429,
+            100000000000
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            8928571429,
+            92857142857,
+            11785714286,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            11785714286,
+            13392857143,
+            92857142857,
+            11785714286,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            14821428571,
+            8928571429,
+            82142857143,
+            17857142857,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            82142857143,
+            17857142857,
+            8928571429,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            92857142857,
+            17857142857,
+            4464285714,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            0,
+            92857142857,
+            17857142857,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            4464285714,
+            92857142857,
+            17857142857,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            82142857143,
+            17857142857,
+            8928571429,
+            87500000000
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            82142857143,
+            17857142857,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            82142857143,
+            17857142857,
+            17857142857,
+            82142857143
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            87500000000,
+            17857142857,
+            8928571429,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            92857142857,
+            17857142857,
+            13392857143,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            8928571429,
+            92857142857,
+            17857142857,
+            17857142857,
+            92857142857
+          ]
+        ],
+        [
+          1,
+          [
+            17857142857,
+            13392857143,
+            92857142857,
+            17857142857,
+            17857142857,
+            92857142857
+          ]
+        ]
+      ],
+      "cross_rank_hanging_remote_participant_entity_count": 40,
+      "cross_rank_hanging_remote_participant_entity_sha256": "908bc0d2b28386cf706ea7e70889e66181c689bba9e93aa888ed3d19aaafb6b2",
+      "cross_rank_hanging_remote_participant_semantics": "unique canonical physical entities that participate in a cross-rank hanging relation and are consumed by an owned cell through an owner-routed remote block",
+      "cross_rank_hanging_resolution_semantics": "replicated_physical_graph_plus_owner_routed_entity_blocks_plus_all_owned_cell_expansions",
+      "cross_rank_relation_counts_by_kind": {
+        "floquet_star": 119,
+        "hanging": 13,
+        "hanging_compatibility": 10
+      },
+      "degree": 5,
+      "dense_cell_expansion_retained": true,
+      "distributed_scalability_qualified": false,
+      "dolfinx_entity_order_bound_exactly_once": true,
+      "dolfinx_entity_owner_counts_by_rank": [
+        189,
+        151,
+        174,
+        166,
+        171,
+        180,
+        184,
+        207
+      ],
+      "eliminated_hanging_or_floquet_rows": 7415,
+      "entity_block_bytes_are_logical_native_arrays_not_peak_rss": true,
+      "entity_catalog_distribution": "owner_routed_requested_dense_cache",
+      "failures": [],
+      "flattened_graph_sha256": "e798650de6ecf7af913e2921c44de1149f86d7ceb2c3de9deea6f3b6ea055b87",
+      "full_dense_entity_catalog_replicated": false,
+      "full_p6_trace_matrix_constructed": false,
+      "global_cell_count": 162,
+      "global_entity_declarations_distribution": "allgather_metadata_only",
+      "hanging_cell_ghost_counts_by_rank": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "hanging_or_floquet_slave_rows_globally_numbered": false,
+      "hanging_slave_rows": 2890,
+      "independent_trace_rows": 21570,
+      "local_entity_block_cache_bytes_by_rank": [
+        8225720,
+        12790680,
+        11777280,
+        11084160,
+        10627440,
+        10023360,
+        9049120,
+        8453320
+      ],
+      "local_entity_block_cache_bytes_global_sum": 82031080,
+      "local_variable_trace_implemented": false,
+      "maximum_cell_expansion_condition": 154038033.81474853,
+      "maximum_cell_transform_error": 9.131584377541913e-14,
+      "maximum_entity_transform_orthogonality_error": 1.7047215689850554e-14,
+      "maximum_independent_rows_per_cell": 345,
+      "maximum_trace_interior_mixing_error": 0.0,
+      "maximum_unpermuted_cell_chart_error": 0.0,
+      "mpi_ghost_expansion_qualified": true,
+      "mpi_size": 8,
+      "off_process_root_reference_counts_by_rank": [
+        4640,
+        5360,
+        5320,
+        5500,
+        5256,
+        5950,
+        6108,
+        4800
+      ],
+      "off_process_root_reference_local_digests_by_rank": [
+        "c3b28f0a251d1d914c1da5c782988e1eb3c9c1cba0ad022cbcfcd296f56ad98f",
+        "05eb05b41fec6c81bc05e3774e723eb0b77f7617a1cf8076691f2a7299a45dee",
+        "c9731afee62b822b87a5aa2841091d48f995be67bdbee9bb45894804292b0216",
+        "58b6bf924a5bd2e95765c4e4c9f748e42be5ab6007fe1965ec83ef9774cd08f7",
+        "54f081ad469b76733772de86ede707e8cd0e3f1e7fc66fd315248ae948aa4152",
+        "57b11390f5e0618428a9ac4e6dba98ef9700c234403fc541af5babf367197773",
+        "7a492dd59e5044b163a26be6a738cd2c299a14d70fa51c9bd56c10597ca3111d",
+        "132c3cf1d34853cdc78817f01d36cf9235dd3ce2315fe933d507b2164272020a"
+      ],
+      "ordinary_default_changed": false,
+      "owned_cell_expansion_bytes_by_rank": [
+        28848000,
+        28848000,
+        28848000,
+        30290400,
+        28848000,
+        29953840,
+        30146160,
+        31155840
+      ],
+      "owned_cell_expansion_bytes_global_sum": 236938240,
+      "owner_routed_trace_cache_audit": {
+        "active_trace_work_ownership_ranges": [
+          [
+            0,
+            3624
+          ],
+          [
+            3624,
+            7247
+          ],
+          [
+            7247,
+            10870
+          ],
+          [
+            10870,
+            14493
+          ],
+          [
+            14493,
+            18116
+          ],
+          [
+            18116,
+            21739
+          ],
+          [
+            21739,
+            25362
+          ],
+          [
+            25362,
+            28985
+          ]
+        ],
+        "canonical_content_sha256": "54e8e8c52816b53c755aba1d7e5fb4ac036b80201857f0be51ea171e25c8a836",
+        "cell_needed_block_counts_by_rank": [
+          214,
+          221,
+          214,
+          220,
+          238,
+          240,
+          245,
+          249
+        ],
+        "collective_fail_closed": true,
+        "declaration_catalog_is_metadata_only": true,
+        "declaration_count": 1422,
+        "dense_global_entity_catalog_replicated": false,
+        "dolfinx_ghost_entity_counts_by_dimension_by_rank": {
+          "1": [
+            17,
+            50,
+            32,
+            37,
+            46,
+            44,
+            48,
+            32
+          ],
+          "2": [
+            8,
+            20,
+            8,
+            17,
+            21,
+            16,
+            13,
+            10
+          ]
+        },
+        "dolfinx_owned_entity_counts_by_dimension_by_rank": {
+          "1": [
+            109,
+            81,
+            94,
+            92,
+            98,
+            102,
+            102,
+            119
+          ],
+          "2": [
+            80,
+            70,
+            80,
+            74,
+            73,
+            78,
+            82,
+            88
+          ]
+        },
+        "duplicate_reply_count": 0,
+        "local_cache_block_counts_by_dimension_by_rank": {
+          "1": [
+            725,
+            203,
+            126,
+            129,
+            144,
+            146,
+            150,
+            151
+          ],
+          "2": [
+            88,
+            161,
+            150,
+            141,
+            131,
+            116,
+            106,
+            100
+          ]
+        },
+        "local_cache_block_counts_by_rank": [
+          813,
+          364,
+          276,
+          270,
+          275,
+          262,
+          256,
+          251
+        ],
+        "local_cache_native_array_bytes_by_rank": [
+          8225720,
+          12790680,
+          11777280,
+          11084160,
+          10627440,
+          10023360,
+          9049120,
+          8453320
+        ],
+        "missing_reply_count": 0,
+        "native_array_bytes_are_logical_not_rss_pss_peak": true,
+        "owner_assignment_sha256": "6abe1ce28a7193e80917f17645c4e21a07aa0cd3596965036ea9d6f84d61ec40",
+        "owner_policy": "dolfinx_unique_entity_owner",
+        "pass": true,
+        "received_reply_counts_by_rank": [
+          624,
+          213,
+          102,
+          104,
+          104,
+          82,
+          72,
+          44
+        ],
+        "received_reply_native_array_bytes_by_rank": [
+          1891000,
+          7266200,
+          5461760,
+          5235840,
+          4571400,
+          3144080,
+          2039280,
+          1012800
+        ],
+        "received_request_counts_by_rank": [
+          106,
+          176,
+          208,
+          176,
+          170,
+          177,
+          172,
+          160
+        ],
+        "reply_counts_by_rank": [
+          106,
+          176,
+          208,
+          176,
+          170,
+          177,
+          172,
+          160
+        ],
+        "reply_native_array_bytes_by_rank": [
+          6228480,
+          6013440,
+          5673600,
+          3880960,
+          2841760,
+          2603760,
+          2178200,
+          1202160
+        ],
+        "reply_validation": "token_key_owner_global_entity_orientation_and_block_sha256",
+        "request_counts_by_rank": [
+          624,
+          213,
+          102,
+          104,
+          104,
+          82,
+          72,
+          44
+        ],
+        "request_key": "canonical_physical_dimension_and_geometry",
+        "request_reply_count_closes": true,
+        "retained_cache_duplication_factor": 1.5956647043536583,
+        "retained_cache_native_array_bytes_global_sum": 82031080,
+        "retained_cache_native_array_bytes_max": 12790680,
+        "schema_version": "task035d.owner-routed-trace-cache.v1",
+        "stale_or_corrupt_reply_count": 0,
+        "temporary_reply_bytes_are_logical_not_peak_rss": true,
+        "unique_dolfinx_owner_native_array_bytes_by_rank": [
+          6334720,
+          5524480,
+          6315520,
+          5848320,
+          6056040,
+          6879280,
+          7009840,
+          7440520
+        ],
+        "unique_dolfinx_owner_native_array_bytes_global_sum": 51408720,
+        "unrequested_reply_count": 0,
+        "work_owned_block_counts_by_dimension_by_rank": {
+          "1": [
+            725,
+            72,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "2": [
+            0,
+            82,
+            91,
+            90,
+            91,
+            90,
+            91,
+            90
+          ]
+        },
+        "work_owned_block_counts_by_rank": [
+          725,
+          154,
+          91,
+          90,
+          91,
+          90,
+          91,
+          90
+        ],
+        "work_owned_native_array_bytes_by_rank": [
+          1411000,
+          6505240,
+          7047040,
+          6969600,
+          7150080,
+          7510560,
+          7484960,
+          7330240
+        ],
+        "work_owned_native_array_bytes_max": 7510560,
+        "work_owned_native_array_bytes_mean": 6426090.0,
+        "work_owner_straddling_block_count": 7,
+        "work_owner_straddling_block_counts_by_rank": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0
+        ],
+        "wrong_owner_reply_count": 0
+      },
+      "ownership_policy": {
+        "active_vector_block_work_owner": "owner_of_first_active_trace_entity_row",
+        "physical_entity_owner": "dolfinx_unique_entity_owner",
+        "reduced_petsc_row_owner": "balanced_contiguous_root_rows",
+        "relation_owner": "owner_of_lexicographically_first_physical_slave_row",
+        "remote_entity_resolution": "owner_routed_canonical_key_query_reply"
+      },
+      "pass": true,
+      "pde_accuracy_credit": false,
+      "pde_launch_ownership_gate": true,
+      "periodic_slave_rows": 4525,
+      "petsc_constraint_row_ownership_qualified": true,
+      "physical_authority_sha256": "59bdc219fd5cd3c9d6e4d0071669f34a4178632e5a60d07e1e9b5b9b0477e7a4",
+      "physical_entity_owner_sha256": "bb08dfbf6081ecbaedb980e840064c008e1c56046c29e6242d65735165e93f37",
+      "raw_trace_rows": 28985,
+      "reduced_petsc_root_ownership_ranges": [
+        [
+          0,
+          2697
+        ],
+        [
+          2697,
+          5394
+        ],
+        [
+          5394,
+          8090
+        ],
+        [
+          8090,
+          10786
+        ],
+        [
+          10786,
+          13482
+        ],
+        [
+          13482,
+          16178
+        ],
+        [
+          16178,
+          18874
+        ],
+        [
+          18874,
+          21570
+        ]
+      ],
+      "remote_entity_lookup_counts_by_rank": [
+        39,
+        97,
+        61,
+        74,
+        86,
+        74,
+        75,
+        55
+      ],
+      "remote_entity_lookup_local_digests_by_rank": [
+        "7b453ff3bb6bc91e82d6757318da063f6a66c72bc0ea1622523759718f38334a",
+        "44f16f4169079d1bb19d69333bf2d63232dc1cc5265a709bed322fddcf8a7a1b",
+        "18530201a9b08488717f1a5889a13c62e41543928e398b2076b10eee6db752d3",
+        "d607059856cfe104377340323ee2d85539001a8005f7576da0c181e6df00b26f",
+        "1a267cccedb582914ebed0d385f56cd02c564452382d0a1775cbc6e08f70ef6e",
+        "641536d93e25f59a8225db928cfdd7e5648c1b5bdd9dcf211f71a928194cfe3c",
+        "78e50405b0b6896b2dfe0ce1bc0fdf0b8be439e0a6b5c8163f868ec34f176e45",
+        "f0f05a7ef9f888da0ef00a723f4c18fd2baf74eac7947e4bac436f1fbb9ef478"
+      ],
+      "remote_resolution_audit_is_count_and_digest_only": true,
+      "remote_resolution_sha256": "a0240d771e11ce6d3ed3e5f97c34c7b474eb7fe95c6dd925d3a3b3c29b0dd683",
+      "replicated_component_gram_bytes_per_rank": 987484,
+      "replicated_entity_block_bytes_per_rank": 0,
+      "replicated_entity_block_bytes_semantics": "no_complete_dense_global_entity_catalog_is_retained_per_rank",
+      "schema_version": "task035d.broken-hexa-cell-trace-map.v2",
+      "selected_p6_face_count": 0,
+      "selective_trace_action": "uniform_base_trace",
+      "status": "broken_hexa_cell_trace_binding_pass",
+      "trace_degree_values": [
+        5
+      ],
+      "wide_cell_expansion_count": 24
+    }
+  },
+  "schema_version": "case097.left-grating-top-closure-p5fine-component.v1",
+  "source_identity": {
+    "expected_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+    "head": "e1e19ab83c28129a38378a37f96665324363f07e",
+    "numerical_file_sha256": {
+      "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_directional_z_mpi8.json": "81ba43d91c4c9a35121676ae40368d56116f3a381e4559d630fb547a94dc4a5c",
+      "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_tensor_dedup_preallocation_mpi8.json": "1ffde81be08c24232e62c1d2dfbf1b7ad2dcb3623444ea40af68b5c6585758e3",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/analyze_bounded_single_seed_top_air_hp_selection.py": "9f80d6b963cceec97fda9d0b34ab46edbc3eb8bef8037093ab625108c479ea78",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_production_authority.py": "559807851f57450fed4260afdc3c428454313db80d4dce560dc7055c6f380d7e",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_local_h_production_authority.py": "ff16321902ce7070ec8dbb049ee1fdb148140522cb1dbfbd8231c8a9171cb9b9",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/bounded_single_seed_top_air_hp_preflight_v1.json": "96d309aa89ca3d93b0049a748e92cc034294c027ca8826db2389b4ae95c94b56",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/bounded_single_seed_top_air_hp_selection_v2.json": "828d6db42b973114d62303808a30567f116b05289981de4f899092f0487dba23",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_left_grating_top_closure_p5fine_plan_v1.json": "08e33b5441460029bb3c88d18a63b884782cfc1aef734371f48324116885b393",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_local_h_nested_p_mpi8_controlled_negative_v2.json": "9d4011e9c7db4647620c09a85e4f2117d3e215a205c39846f874872f4b68fa01",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_selection_v1.json": "c74d4e97db0e768cd4508f9aa37793bca8c3bf919349f2a3d4963cf7d8f144fa",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/selective_face_selection_compact_v1.json": "3b843bbab70a8a0453b134c4dbe2e40bd9880420bedda33e3033c07beb8164bc",
+      "src/adaptivity/dyadic_hexa_broken_mesh.py": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+      "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+      "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9",
+      "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "src/adaptivity/hcurl_trace_constraint_graph.py": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+      "src/adaptivity/selective_face_complement.py": "008b18c1a36fb5f40661a9a728b56b04349b1b935c4e023b4bbf09f6a005ab1e",
+      "src/adaptivity/selective_face_root_transfer.py": "9c174c1e9ee74f47407300373edd175b471c78cafff8b7ce224aeab660aaa24e",
+      "src/adaptivity/stage4_local_h.py": "03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8",
+      "src/adaptivity/variable_p_degree_plan.py": "9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f",
+      "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+      "src/adaptivity/variable_p_selective_face_dwr.py": "17c05f5e56baf1d1144453677559410936070f22bd03ee063e858544fa7c8b16",
+      "src/adaptivity/variable_p_transfer.py": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+      "src/common/config_3d.py": "573ce574a12115cfcf4cfb924e4287824dfc6efc6ab8348b50937fbc043d7c9f",
+      "src/common/units.py": "a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be",
+      "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+      "src/geometry/mesh_builder_3d.py": "cece033930810eef39fc00e8638fbe76317b9860749c53b5523a70443bc1dc16",
+      "src/solvers/common_3d_case_flow.py": "1cf86c8b0e330118cb768d74a6c7cb60669767d272de05c4f2b307a821a75652",
+      "src/solvers/dtn_port_3d.py": "f2267793b55ecbad9d0c5d6471ead5a0dab60a7d70d7c8f1b53d8a21c08cf36c",
+      "src/solvers/hcurl_variable_p_assembly.py": "1dd75a3c33f09e8bf42dfe69219cd7e749b01b3074b75d1a198069559ce44db4",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/solvers/hcurl_variable_p_reduction.py": "e47e1a23bab6511df87772aacca381b590274ce1a76aa0c959ddadb56de4b930"
+    },
+    "rank_checks": [
+      {
+        "expected_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "head": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "mismatched_files": [],
+        "rank": 0,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "head": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "mismatched_files": [],
+        "rank": 1,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "head": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "mismatched_files": [],
+        "rank": 2,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "head": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "mismatched_files": [],
+        "rank": 3,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "head": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "mismatched_files": [],
+        "rank": 4,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "head": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "mismatched_files": [],
+        "rank": 5,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "head": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "mismatched_files": [],
+        "rank": 6,
+        "status_lines": []
+      },
+      {
+        "expected_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "head": "e1e19ab83c28129a38378a37f96665324363f07e",
+        "mismatched_files": [],
+        "rank": 7,
+        "status_lines": []
+      }
+    ],
+    "verified_clean_numerical_source": true
+  },
+  "source_sha": "e1e19ab83c28129a38378a37f96665324363f07e",
+  "stable_identity": {
+    "actual_full3d_equivalent_active_fe_dofs": 88915,
+    "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+    "canonical_cell_graph_sha256": "10fd9833f46cb547f50b2a03e6ea565f620fc079cf507c8d7f10202ecebd6f6c",
+    "carrier_connectivity_sha256": "2caf696d8ebe74ad56a2f75ca15bb82caa323c4814bcaeb45ae13e5f8ce9484d",
+    "cell_degree_counts": {
+      "p4": 0,
+      "p5": 48,
+      "p6": 114
+    },
+    "cell_degree_plan_sha256": "2213464a451400e4f211ce75367d636de4c13cc5c07de941666e6d68fce329eb",
+    "flattened_graph_sha256": "e798650de6ecf7af913e2921c44de1149f86d7ceb2c3de9deea6f3b6ea055b87",
+    "geometry_canonical_entity_degree_sha256": "14d9c9cc8998e9ed008e06e9d0676e7753e3f5b30ede6b6f0065fabcb8e0f692",
+    "hanging_face_catalog_sha256": "2ae67d34dae0d4fcb9f879b70920acab66eddcf3ab128113dd766edfd0a3e15b",
+    "hanging_patch_count": 14,
+    "hanging_slave_rows": 2890,
+    "independent_trace_rows": 21570,
+    "leaf_catalog_sha256": "80e73c85da82523f7fcee7c322e64ff0add3c1d845ac1bcc39bc0f00b815406d",
+    "leaf_cell_count": 162,
+    "local_variable_trace_implemented": false,
+    "material_catalog_sha256": "9a76db6a80740034426afc71d1b81775601621854cd123fd5adcc3320aba314d",
+    "mesh_cell_box_catalog_sha256": "3a810070f9b5f37d0e174adaf11de279114e4a8ff76cc724a763ec8173297cc6",
+    "periodic_slave_rows": 4525,
+    "physical_authority_sha256": "59bdc219fd5cd3c9d6e4d0071669f34a4178632e5a60d07e1e9b5b9b0477e7a4",
+    "physical_facet_catalog_sha256": "53163c8681c9aca6569979da027f880992f2c057ffedef2c6179ee1d51aa4d1f",
+    "plan_file_sha256": "08e33b5441460029bb3c88d18a63b884782cfc1aef734371f48324116885b393",
+    "predicted_direct_solve_rows": 21650,
+    "raw_broken_active_fe_dofs": 91805,
+    "raw_broken_trace_rows": 28985,
+    "root_cell_count": 120,
+    "selected_p6_face_count": 0,
+    "selected_p6_face_geometry_keys": [],
+    "selected_p6_periodic_orbit_count": 0,
+    "selective_trace_full3d_dof_delta": 0,
+    "trace_degree_values": [
+      5
+    ]
+  },
+  "status": "left_grating_top_closure_p5fine_component_pass"
+}

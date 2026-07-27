@@ -31,6 +31,12 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH,
     TASK035D_HP_FACTORIAL_BRIDGE_RAW_ACTIVE_FE_DOFS,
     TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
+    TASK035D_LEFT_GRATING_TOP_ACTIVE_FE_DOFS,
+    TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH,
+    TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+    TASK035D_LEFT_GRATING_TOP_PLAN_PATH,
+    TASK035D_LEFT_GRATING_TOP_RAW_ACTIVE_FE_DOFS,
+    TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS,
     TASK035D_LOCAL_H_ACTIVE_FE_DOFS,
     TASK035D_LOCAL_H_AUTHORITY_PATH,
     TASK035D_LOCAL_H_PLAN_NAME,
@@ -51,6 +57,8 @@ from benchmarks.task035d_case097_gates import (
     task035d_case097_local_h_solver_gate,
     task035d_case097_combined_hp_solver_gate,
     task035d_case097_hp_factorial_bridge_solver_gate,
+    task035d_case097_left_grating_top_plan_authority_gate,
+    task035d_case097_left_grating_top_solver_gate,
     task035d_case097_plan_authority_gate,
     task035d_case097_sidewall_guard_plan_authority_gate,
     task035d_case097_sidewall_guard_solver_gate,
@@ -95,6 +103,17 @@ HP_FACTORIAL_BRIDGE_AUTHORITY_SHA256 = hashlib.sha256(
     HP_FACTORIAL_BRIDGE_AUTHORITY.read_bytes()
 ).hexdigest()
 HP_FACTORIAL_BRIDGE_COMPONENT = RECORDS / "hp_factorial_bridge_mpi8_v1.json"
+LEFT_GRATING_TOP_PLAN = ROOT / TASK035D_LEFT_GRATING_TOP_PLAN_PATH
+LEFT_GRATING_TOP_AUTHORITY = ROOT / TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH
+LEFT_GRATING_TOP_PLAN_SHA256 = hashlib.sha256(
+    LEFT_GRATING_TOP_PLAN.read_bytes()
+).hexdigest()
+LEFT_GRATING_TOP_AUTHORITY_SHA256 = hashlib.sha256(
+    LEFT_GRATING_TOP_AUTHORITY.read_bytes()
+).hexdigest()
+LEFT_GRATING_TOP_COMPONENT = (
+    RECORDS / "left_grating_top_closure_p5fine_mpi8_v1.json"
+)
 SOURCE_SHA = "a" * 40
 
 
@@ -200,6 +219,26 @@ def _hp_factorial_bridge_cli() -> list[str]:
     cli[cli.index("--task035d-plan-authority") + 1] = str(HP_FACTORIAL_BRIDGE_AUTHORITY)
     cli[cli.index("--task035d-plan-authority-sha256") + 1] = (
         HP_FACTORIAL_BRIDGE_AUTHORITY_SHA256
+    )
+    return cli
+
+
+def _left_grating_top_cli() -> list[str]:
+    cli = _local_h_cli()
+    cli[cli.index("--task035d-candidate-id") + 1] = (
+        TASK035D_LEFT_GRATING_TOP_PLAN_NAME
+    )
+    cli[cli.index("--stage4-local-h-refinement-plan") + 1] = str(
+        LEFT_GRATING_TOP_PLAN
+    )
+    cli[cli.index("--stage4-local-h-refinement-plan-sha256") + 1] = (
+        LEFT_GRATING_TOP_PLAN_SHA256
+    )
+    cli[cli.index("--task035d-plan-authority") + 1] = str(
+        LEFT_GRATING_TOP_AUTHORITY
+    )
+    cli[cli.index("--task035d-plan-authority-sha256") + 1] = (
+        LEFT_GRATING_TOP_AUTHORITY_SHA256
     )
     return cli
 
@@ -581,6 +620,50 @@ def _hp_factorial_bridge_solver_summary() -> dict:
     return summary
 
 
+def _left_grating_top_solver_summary() -> dict:
+    summary = _combined_hp_solver_summary()
+    reduction = json.loads(LEFT_GRATING_TOP_COMPONENT.read_text(encoding="utf-8"))[
+        "reduction_audit"
+    ]
+    matrix = {
+        "matrix_rows": TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS,
+        "matrix_nnz_used": 333_333.0,
+        "matrix_mallocs": 0.0,
+    }
+    summary["matrix_stats"] = matrix
+    summary["stage4_dtn_factor_inventory"]["matrix_stats"] = matrix
+    summary["config"]["stage4_local_h_refinement_plan"] = str(
+        LEFT_GRATING_TOP_PLAN
+    )
+    summary["stage4_local_h_constraint_audit"] = reduction
+    summary["num_raw_broken_active_fe_dofs"] = (
+        TASK035D_LEFT_GRATING_TOP_RAW_ACTIVE_FE_DOFS
+    )
+    summary["num_actual_conforming_active_fe_dofs"] = (
+        TASK035D_LEFT_GRATING_TOP_ACTIVE_FE_DOFS
+    )
+    summary["num_active_trace_dofs"] = reduction["independent_trace_rows"]
+    summary["num_active_condensed_dofs"] = TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS
+    audit = summary["cell_static_condensation"]
+    audit["degree_plan"] = reduction["degree_plan"]
+    audit["trace_constraints"] = reduction["trace_constraints"]
+    audit["local_h"] = reduction
+    condensed = audit["condensed_system"]
+    condensed["active_full3d_rows_before_condensation"] = (
+        TASK035D_LEFT_GRATING_TOP_RAW_ACTIVE_FE_DOFS
+    )
+    condensed["active_trace_rows_before_constraint_elimination"] = reduction[
+        "raw_broken_trace_rows"
+    ]
+    condensed["active_trace_rows"] = reduction["independent_trace_rows"]
+    trace_recovery = audit["recovery"]["trace_constraint_recovery"]
+    trace_recovery["covered_raw_trace_rows"] = reduction["raw_broken_trace_rows"]
+    trace_recovery["expected_raw_trace_rows"] = reduction[
+        "raw_broken_trace_rows"
+    ]
+    return summary
+
+
 def _resource_summary() -> dict:
     per_rank = {
         str(rank): {"pss_mb": 100.0 + rank, "uss_mb": 90.0 + rank} for rank in range(8)
@@ -597,6 +680,161 @@ def _resource_summary() -> dict:
 
 
 class Task035dCase097RunnerGateTests(unittest.TestCase):
+    def test_left_grating_top_candidate_has_dedicated_fail_closed_gates(
+        self,
+    ) -> None:
+        plan = json.loads(LEFT_GRATING_TOP_PLAN.read_text(encoding="utf-8"))
+        authority = json.loads(
+            LEFT_GRATING_TOP_AUTHORITY.read_text(encoding="utf-8")
+        )
+        gate_kwargs = {
+            "expected_plan_file_sha256": LEFT_GRATING_TOP_PLAN_SHA256,
+            "observed_plan_file_sha256": LEFT_GRATING_TOP_PLAN_SHA256,
+            "expected_authority_sha256": LEFT_GRATING_TOP_AUTHORITY_SHA256,
+            "observed_authority_sha256": LEFT_GRATING_TOP_AUTHORITY_SHA256,
+            "plan_is_tracked": True,
+            "authority_is_tracked": True,
+            "plan_path_from_root": TASK035D_LEFT_GRATING_TOP_PLAN_PATH,
+            "authority_path_from_root": (
+                TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH
+            ),
+        }
+        launch = task035d_case097_left_grating_top_plan_authority_gate(
+            plan,
+            authority,
+            **gate_kwargs,
+        )
+        self.assertTrue(launch["pass"], launch["failures"])
+        self.assertEqual(
+            launch["schema_version"],
+            (
+                "task035d.case097-left-grating-top-closure-p5fine-"
+                "launch-gate.v1"
+            ),
+        )
+        self.assertEqual(
+            launch["plan_identity"]["actual_conforming_active_fe_dofs"],
+            TASK035D_LEFT_GRATING_TOP_ACTIVE_FE_DOFS,
+        )
+        self.assertEqual(
+            launch["plan_identity"]["predicted_direct_solve_rows"],
+            TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS,
+        )
+        self.assertTrue(
+            launch["selection_credit"]["compact_dwr_location_oracle"]
+        )
+        self.assertFalse(
+            launch["selection_credit"]["actual_local_h_dwr_surplus"]
+        )
+
+        selection_drift = copy.deepcopy(plan)
+        selection_drift["provenance"]["selection_authority"]["sha256"] = (
+            "0" * 64
+        )
+        rejected = task035d_case097_left_grating_top_plan_authority_gate(
+            selection_drift,
+            authority,
+            **gate_kwargs,
+        )
+        self.assertIn("selection_credit_is_limited", rejected["failures"])
+
+        stable_drift = copy.deepcopy(authority)
+        stable_drift["stable_identity"]["trace_degree_values"] = [5, 6]
+        rejected = task035d_case097_left_grating_top_plan_authority_gate(
+            plan,
+            stable_drift,
+            **gate_kwargs,
+        )
+        self.assertIn("authority_stable_identity", rejected["failures"])
+
+        args = _parse_args(_left_grating_top_cli())
+        integrated = _validate_task035d_case097_plan(args)
+        self.assertTrue(integrated["pass"], integrated["failures"])
+        self.assertEqual(integrated["schema_version"], launch["schema_version"])
+        command = _worker_command(
+            args,
+            Path("/tmp/task035d-left-grating-top"),
+        )
+        self.assertEqual(
+            command[command.index("--task035d-candidate-id") + 1],
+            TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+        )
+        self.assertNotIn(
+            "--stage4-variable-p-cell-degree-plan",
+            command,
+        )
+
+        solver = _left_grating_top_solver_summary()
+        solver_gate = task035d_case097_left_grating_top_solver_gate(solver)
+        self.assertTrue(solver_gate["pass"], solver_gate["failures"])
+        self.assertEqual(
+            solver_gate["schema_version"],
+            (
+                "task035d.case097-left-grating-top-closure-p5fine-"
+                "solver-gate.v1"
+            ),
+        )
+        qualification = _qualify(
+            args=args,
+            solver_summary=solver,
+            events=[{"stage": "after_ksp_solve"}],
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            terminated_for_authority_unreadable=False,
+            no_swap=True,
+            observed_worker_rank_count=8,
+            resource_summary=_resource_summary(),
+        )
+        self.assertTrue(qualification["pass"], qualification["failures"])
+        self.assertEqual(
+            qualification["task035d_case097_solver_gate"]["schema_version"],
+            solver_gate["schema_version"],
+        )
+
+        mutations = (
+            (
+                "p5_only_trace_mesh_identity",
+                ("cell_static_condensation", "local_h", "mesh"),
+                "selected_p6_face_count",
+                1,
+            ),
+            (
+                "p5_only_trace_degree_plan_identity",
+                ("cell_static_condensation", "degree_plan"),
+                "trace_degree_values",
+                [5, 6],
+            ),
+            (
+                "p5_only_trace_physical_identity",
+                (
+                    "cell_static_condensation",
+                    "local_h",
+                    "physical_trace",
+                ),
+                "selected_p6_face_geometry_keys",
+                [[0, 1, 2]],
+            ),
+            (
+                "p5_only_trace_constraint_identity",
+                ("cell_static_condensation", "trace_constraints"),
+                "selective_trace_action",
+                "selective_p6_faces",
+            ),
+        )
+        for expected_failure, path, key, value in mutations:
+            tampered = copy.deepcopy(solver)
+            target = tampered
+            for segment in path:
+                target = target[segment]
+            target[key] = value
+            rejected = task035d_case097_left_grating_top_solver_gate(
+                tampered
+            )
+            with self.subTest(expected_failure=expected_failure):
+                self.assertFalse(rejected["pass"])
+                self.assertIn(expected_failure, rejected["failures"])
+
     def test_hp_factorial_bridge_launch_and_solver_are_hash_bound(
         self,
     ) -> None:

@@ -243,6 +243,91 @@ TASK035D_COMBINED_HP_CELL_DEGREE_COUNTS = {
     "p5": 32,
     "p6": 116,
 }
+TASK035D_LEFT_GRATING_TOP_PLAN_NAME = (
+    "h15_left_grating_top_closure_p5fine_v1"
+)
+TASK035D_LEFT_GRATING_TOP_PLAN_PATH = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+    "h15_left_grating_top_closure_p5fine_plan_v1.json"
+)
+TASK035D_LEFT_GRATING_TOP_PLAN_FILE_SHA256 = (
+    "08e33b5441460029bb3c88d18a63b884782cfc1aef734371f48324116885b393"
+)
+TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+    "left_grating_top_closure_p5fine_mpi_identity_v1.json"
+)
+TASK035D_LEFT_GRATING_TOP_AUTHORITY_FILE_SHA256 = (
+    "ab6d4ab768feafd7309455bc99776fb383a7f2b6523cc16649158f66de358bd8"
+)
+TASK035D_LEFT_GRATING_TOP_SELECTION_PATH = (
+    "benchmarks/cases/"
+    "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+    "bounded_single_seed_top_air_hp_selection_v2.json"
+)
+TASK035D_LEFT_GRATING_TOP_SELECTION_FILE_SHA256 = (
+    "828d6db42b973114d62303808a30567f116b05289981de4f899092f0487dba23"
+)
+TASK035D_LEFT_GRATING_TOP_SELECTION_SOURCE_SHA = (
+    "fef142aff9c613189bd7650d7d92da8d011d0b9e"
+)
+TASK035D_LEFT_GRATING_TOP_COMPONENT_SOURCE_SHA = (
+    "e1e19ab83c28129a38378a37f96665324363f07e"
+)
+TASK035D_LEFT_GRATING_TOP_CHECKER_SOURCE_SHA = (
+    "e1e19ab83c28129a38378a37f96665324363f07e"
+)
+TASK035D_LEFT_GRATING_TOP_LEAF_CATALOG_SHA256 = (
+    "80e73c85da82523f7fcee7c322e64ff0add3c1d845ac1bcc39bc0f00b815406d"
+)
+TASK035D_LEFT_GRATING_TOP_HANGING_CATALOG_SHA256 = (
+    "2ae67d34dae0d4fcb9f879b70920acab66eddcf3ab128113dd766edfd0a3e15b"
+)
+TASK035D_LEFT_GRATING_TOP_CARRIER_SHA256 = (
+    "2caf696d8ebe74ad56a2f75ca15bb82caa323c4814bcaeb45ae13e5f8ce9484d"
+)
+TASK035D_LEFT_GRATING_TOP_PHYSICAL_FACET_SHA256 = (
+    "53163c8681c9aca6569979da027f880992f2c057ffedef2c6179ee1d51aa4d1f"
+)
+TASK035D_LEFT_GRATING_TOP_MATERIAL_SHA256 = (
+    "9a76db6a80740034426afc71d1b81775601621854cd123fd5adcc3320aba314d"
+)
+TASK035D_LEFT_GRATING_TOP_PHYSICAL_AUTHORITY_SHA256 = (
+    "59bdc219fd5cd3c9d6e4d0071669f34a4178632e5a60d07e1e9b5b9b0477e7a4"
+)
+TASK035D_LEFT_GRATING_TOP_FLATTENED_GRAPH_SHA256 = (
+    "e798650de6ecf7af913e2921c44de1149f86d7ceb2c3de9deea6f3b6ea055b87"
+)
+TASK035D_LEFT_GRATING_TOP_CELL_GRAPH_SHA256 = (
+    "10fd9833f46cb547f50b2a03e6ea565f620fc079cf507c8d7f10202ecebd6f6c"
+)
+TASK035D_LEFT_GRATING_TOP_BOX_CATALOG_SHA256 = (
+    "3a810070f9b5f37d0e174adaf11de279114e4a8ff76cc724a763ec8173297cc6"
+)
+TASK035D_LEFT_GRATING_TOP_CELL_DEGREE_PLAN_SHA256 = (
+    "2213464a451400e4f211ce75367d636de4c13cc5c07de941666e6d68fce329eb"
+)
+TASK035D_LEFT_GRATING_TOP_ENTITY_DEGREE_SHA256 = (
+    "14d9c9cc8998e9ed008e06e9d0676e7753e3f5b30ede6b6f0065fabcb8e0f692"
+)
+TASK035D_LEFT_GRATING_TOP_ROOT_CELLS = 120
+TASK035D_LEFT_GRATING_TOP_LEAF_CELLS = 162
+TASK035D_LEFT_GRATING_TOP_HANGING_PATCHES = 14
+TASK035D_LEFT_GRATING_TOP_RAW_ACTIVE_FE_DOFS = 91_805
+TASK035D_LEFT_GRATING_TOP_RAW_TRACE_ROWS = 28_985
+TASK035D_LEFT_GRATING_TOP_HANGING_SLAVE_ROWS = 2_890
+TASK035D_LEFT_GRATING_TOP_PERIODIC_SLAVE_ROWS = 4_525
+TASK035D_LEFT_GRATING_TOP_ACTIVE_FE_DOFS = 88_915
+TASK035D_LEFT_GRATING_TOP_INDEPENDENT_TRACE_ROWS = 21_570
+TASK035D_LEFT_GRATING_TOP_DTN_ROWS = 80
+TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS = 21_650
+TASK035D_LEFT_GRATING_TOP_CELL_DEGREE_COUNTS = {
+    "p4": 0,
+    "p5": 48,
+    "p6": 114,
+}
 TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME = "h15_top_air_remote_p5_interior_bridge_v1"
 TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH = (
     "benchmarks/cases/"
@@ -377,6 +462,138 @@ _COMBINED_HP_GATE_SPEC = {
             ),
             "sha256": (
                 "012353dc18da1a91b13963d88d6b98826c0614db10b9aae7152a95cdc2cf29b4"
+            ),
+        },
+    ],
+}
+
+_LEFT_GRATING_TOP_GATE_SPEC = {
+    **_COMBINED_HP_GATE_SPEC,
+    "candidate_name": TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+    "plan_path": TASK035D_LEFT_GRATING_TOP_PLAN_PATH,
+    "plan_file_sha256": TASK035D_LEFT_GRATING_TOP_PLAN_FILE_SHA256,
+    "authority_path": TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH,
+    "authority_file_sha256": TASK035D_LEFT_GRATING_TOP_AUTHORITY_FILE_SHA256,
+    "component_source_sha": TASK035D_LEFT_GRATING_TOP_COMPONENT_SOURCE_SHA,
+    "checker_source_sha": TASK035D_LEFT_GRATING_TOP_CHECKER_SOURCE_SHA,
+    "leaf_catalog_sha256": TASK035D_LEFT_GRATING_TOP_LEAF_CATALOG_SHA256,
+    "hanging_catalog_sha256": TASK035D_LEFT_GRATING_TOP_HANGING_CATALOG_SHA256,
+    "carrier_sha256": TASK035D_LEFT_GRATING_TOP_CARRIER_SHA256,
+    "physical_facet_sha256": TASK035D_LEFT_GRATING_TOP_PHYSICAL_FACET_SHA256,
+    "material_sha256": TASK035D_LEFT_GRATING_TOP_MATERIAL_SHA256,
+    "physical_authority_sha256": (
+        TASK035D_LEFT_GRATING_TOP_PHYSICAL_AUTHORITY_SHA256
+    ),
+    "flattened_graph_sha256": TASK035D_LEFT_GRATING_TOP_FLATTENED_GRAPH_SHA256,
+    "cell_graph_sha256": TASK035D_LEFT_GRATING_TOP_CELL_GRAPH_SHA256,
+    "box_catalog_sha256": TASK035D_LEFT_GRATING_TOP_BOX_CATALOG_SHA256,
+    "cell_degree_plan_sha256": (
+        TASK035D_LEFT_GRATING_TOP_CELL_DEGREE_PLAN_SHA256
+    ),
+    "entity_degree_sha256": TASK035D_LEFT_GRATING_TOP_ENTITY_DEGREE_SHA256,
+    "root_cells": TASK035D_LEFT_GRATING_TOP_ROOT_CELLS,
+    "leaf_cells": TASK035D_LEFT_GRATING_TOP_LEAF_CELLS,
+    "hanging_patches": TASK035D_LEFT_GRATING_TOP_HANGING_PATCHES,
+    "raw_active_fe_dofs": TASK035D_LEFT_GRATING_TOP_RAW_ACTIVE_FE_DOFS,
+    "raw_trace_rows": TASK035D_LEFT_GRATING_TOP_RAW_TRACE_ROWS,
+    "hanging_slave_rows": TASK035D_LEFT_GRATING_TOP_HANGING_SLAVE_ROWS,
+    "periodic_slave_rows": TASK035D_LEFT_GRATING_TOP_PERIODIC_SLAVE_ROWS,
+    "active_fe_dofs": TASK035D_LEFT_GRATING_TOP_ACTIVE_FE_DOFS,
+    "independent_trace_rows": TASK035D_LEFT_GRATING_TOP_INDEPENDENT_TRACE_ROWS,
+    "dtn_rows": TASK035D_LEFT_GRATING_TOP_DTN_ROWS,
+    "solve_rows": TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS,
+    "cell_degree_counts": TASK035D_LEFT_GRATING_TOP_CELL_DEGREE_COUNTS,
+    "marked_root_boxes": [
+        {
+            "lower": [16.5, 0.0, 120.0],
+            "upper": [25.0, 12.5, 130.0],
+        },
+    ],
+    "closure_counts": {
+        "balance": 0,
+        "material": 4,
+        "periodic": 1,
+        "user": 1,
+    },
+    "authority_schema": (
+        "case097.left-grating-top-closure-p5fine-mpi-identity.v1"
+    ),
+    "authority_status": (
+        "left_grating_top_closure_p5fine_mpi_identity_pass"
+    ),
+    "launch_schema": (
+        "task035d.case097-left-grating-top-closure-p5fine-launch-gate.v1"
+    ),
+    "launch_pass_status": (
+        "task035d_left_grating_top_closure_p5fine_launch_authority_pass"
+    ),
+    "launch_fail_status": (
+        "task035d_left_grating_top_closure_p5fine_launch_authority_fail"
+    ),
+    "solver_schema": (
+        "task035d.case097-left-grating-top-closure-p5fine-solver-gate.v1"
+    ),
+    "solver_pass_status": (
+        "task035d_left_grating_top_closure_p5fine_solver_identity_pass"
+    ),
+    "solver_fail_status": (
+        "task035d_left_grating_top_closure_p5fine_solver_identity_fail"
+    ),
+    "selection_credit": {
+        "structural_resource_anchor": True,
+        "compact_dwr_location_oracle": True,
+        "actual_local_h_dwr_surplus": False,
+        "actual_channel_dwr": False,
+        "goal_oriented_selection_credit": False,
+        "complete_combined_hp_credit": False,
+    },
+    "selection_authority": {
+        "path": TASK035D_LEFT_GRATING_TOP_SELECTION_PATH,
+        "sha256": TASK035D_LEFT_GRATING_TOP_SELECTION_FILE_SHA256,
+        "source_sha": TASK035D_LEFT_GRATING_TOP_SELECTION_SOURCE_SHA,
+        "status": "bounded_single_seed_top_air_hp_selection_pass",
+    },
+    "stable_identity_extra": {
+        "trace_degree_values": [5],
+        "selected_p6_face_count": 0,
+        "selected_p6_face_geometry_keys": [],
+        "selected_p6_periodic_orbit_count": 0,
+        "selective_trace_full3d_dof_delta": 0,
+        "local_variable_trace_implemented": False,
+    },
+    "p5_only_trace_required": True,
+    "expected_inputs": [
+        {
+            "mpi_size": 1,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "left_grating_top_closure_p5fine_mpi1_v1.json"
+            ),
+            "sha256": (
+                "cb525a8d8dba0df0b2d3b003da926adbad5185b1a8ced356e5eb73681d10d40b"
+            ),
+        },
+        {
+            "mpi_size": 2,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "left_grating_top_closure_p5fine_mpi2_v1.json"
+            ),
+            "sha256": (
+                "46f7448bf5b486bd798a2d6440c751303bf9af9870de0d2e656fb82389c8bce9"
+            ),
+        },
+        {
+            "mpi_size": 8,
+            "path": (
+                "benchmarks/cases/"
+                "097_goal_oriented_exact_sequence_hp_adaptivity/records/"
+                "left_grating_top_closure_p5fine_mpi8_v1.json"
+            ),
+            "sha256": (
+                "d19b1894d1c20bd726ea8bfb63dfd4c8c9076cac1b8cf1120c99bebbea4b06b4"
             ),
         },
     ],
@@ -1295,6 +1512,43 @@ def _task035d_case097_variable_interior_plan_authority_gate(
         "raw_broken_trace_rows": TASK035D_COMBINED_HP_RAW_TRACE_ROWS,
         "root_cell_count": TASK035D_COMBINED_HP_ROOT_CELLS,
     }
+    expected_stable.update(dict(spec.get("stable_identity_extra") or {}))
+    expected_selection = spec.get("selection_authority")
+    expected_selection = (
+        expected_selection if isinstance(expected_selection, dict) else None
+    )
+    observed_selection = provenance.get("selection_authority")
+    observed_selection = (
+        observed_selection if isinstance(observed_selection, dict) else {}
+    )
+    if expected_selection is None:
+        selection_credit_is_limited = bool(
+            provenance.get("candidate_id") == TASK035D_COMBINED_HP_PLAN_NAME
+            and provenance.get("accuracy_credit") is False
+            and provenance.get("complete_combined_hp_credit") is False
+            and "not actual DWR"
+            in str(provenance.get("h_action_evidence", ""))
+            and "no variable trace"
+            in str(provenance.get("p_action_evidence", ""))
+        )
+    else:
+        selection_credit_is_limited = bool(
+            provenance.get("candidate_id") == TASK035D_COMBINED_HP_PLAN_NAME
+            and provenance.get("accuracy_credit") is False
+            and provenance.get("complete_combined_hp_credit") is False
+            and provenance.get(
+                "single_seed_closure_catalog_complete_for_available_compact_dwr"
+            )
+            is True
+            and observed_selection.get("path") == expected_selection["path"]
+            and observed_selection.get("sha256") == expected_selection["sha256"]
+            and observed_selection.get("status") == expected_selection["status"]
+            and observed_selection.get("location_oracle_only") is True
+            and observed_selection.get(
+                "actual_local_h_dwr_surplus_available"
+            )
+            is False
+        )
     expected_inputs = list(spec["expected_inputs"])
     degree_counts = Counter(
         int(row.get("degree", -1)) for row in degree_rows if isinstance(row, dict)
@@ -1358,13 +1612,7 @@ def _task035d_case097_variable_interior_plan_authority_gate(
             and forest.get("hanging_face_catalog_sha256")
             == TASK035D_COMBINED_HP_HANGING_CATALOG_SHA256
         ),
-        "selection_credit_is_limited": (
-            provenance.get("candidate_id") == TASK035D_COMBINED_HP_PLAN_NAME
-            and provenance.get("accuracy_credit") is False
-            and provenance.get("complete_combined_hp_credit") is False
-            and "not actual DWR" in str(provenance.get("h_action_evidence", ""))
-            and "no variable trace" in str(provenance.get("p_action_evidence", ""))
-        ),
+        "selection_credit_is_limited": selection_credit_is_limited,
         "ordinary_default_unchanged": (
             plan.get("ordinary_default_changed") is False
             and provenance.get("ordinary_default_changed") is False
@@ -1426,6 +1674,14 @@ def _task035d_case097_variable_interior_plan_authority_gate(
                 TASK035D_COMBINED_HP_INDEPENDENT_TRACE_ROWS
             ),
             "predicted_direct_solve_rows": TASK035D_COMBINED_HP_SOLVE_ROWS,
+            "selection_authority": (
+                {
+                    "path": observed_selection.get("path"),
+                    "sha256": observed_selection.get("sha256"),
+                }
+                if expected_selection is not None
+                else None
+            ),
         },
         "selection_credit": dict(spec["selection_credit"]),
         "accuracy_credit": ("none_until_fresh_12_channel_checker_passes"),
@@ -1444,6 +1700,21 @@ def task035d_case097_combined_hp_plan_authority_gate(
         plan,
         authority,
         spec=_COMBINED_HP_GATE_SPEC,
+        **kwargs,
+    )
+
+
+def task035d_case097_left_grating_top_plan_authority_gate(
+    plan: dict[str, Any] | None,
+    authority: dict[str, Any] | None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Validate the selected left-grating-top fixed-trace h/p launch."""
+
+    return _task035d_case097_variable_interior_plan_authority_gate(
+        plan,
+        authority,
+        spec=_LEFT_GRATING_TOP_GATE_SPEC,
         **kwargs,
     )
 
@@ -2120,6 +2391,7 @@ def _task035d_case097_variable_interior_solver_gate(
 ) -> dict[str, Any]:
     """Check one exact local-h/variable-interior solver identity."""
 
+    p5_only_trace_required = bool(spec.get("p5_only_trace_required"))
     TASK035D_COMBINED_HP_PLAN_NAME = spec["candidate_name"]
     TASK035D_COMBINED_HP_PLAN_FILE_SHA256 = spec["plan_file_sha256"]
     TASK035D_COMBINED_HP_LEAF_CATALOG_SHA256 = spec["leaf_catalog_sha256"]
@@ -2286,6 +2558,14 @@ def _task035d_case097_variable_interior_solver_gate(
             and carrier.get("checks", {}).get("all_artificial_exterior_is_hanging")
             is True
         ),
+        "p5_only_trace_mesh_identity": (
+            not p5_only_trace_required
+            or (
+                mesh.get("trace_degree") == 5
+                and mesh.get("selected_p6_face_count") == 0
+                and mesh.get("selected_p6_face_geometry_keys") == []
+            )
+        ),
         "combined_reduction_identity": (
             local_h.get("pass") is True
             and summary.get("stage4_local_h_constraint_audit") == local_h
@@ -2327,6 +2607,27 @@ def _task035d_case097_variable_interior_solver_gate(
             and trace.get("pde_launch_ownership_gate") is True
             and trace.get("hanging_or_floquet_slave_rows_globally_numbered") is False
         ),
+        "p5_only_trace_physical_identity": (
+            not p5_only_trace_required
+            or (
+                physical.get("degree") == 5
+                and physical.get("trace_degree_values") == [5]
+                and physical.get("selected_p6_face_count") == 0
+                and physical.get("selected_p6_face_geometry_keys") == []
+                and physical.get("selected_p6_periodic_orbit_count") == 0
+                and physical.get("selective_trace_full3d_dof_delta") == 0
+            )
+        ),
+        "p5_only_trace_constraint_identity": (
+            not p5_only_trace_required
+            or (
+                trace.get("degree") == 5
+                and trace.get("trace_degree_values") == [5]
+                and trace.get("selected_p6_face_count") == 0
+                and trace.get("selective_trace_action") == "uniform_base_trace"
+                and trace.get("local_variable_trace_implemented") is False
+            )
+        ),
         "variable_interior_degree_identity": (
             degree_plan.get("pass") is True
             and degree_plan.get("mpi_size") == 8
@@ -2352,6 +2653,15 @@ def _task035d_case097_variable_interior_solver_gate(
             == TASK035D_COMBINED_HP_RAW_TRACE_ROWS
             and degree_plan.get("mesh_cell_box_catalog_sha256")
             == TASK035D_COMBINED_HP_BOX_CATALOG_SHA256
+        ),
+        "p5_only_trace_degree_plan_identity": (
+            not p5_only_trace_required
+            or (
+                degree_plan.get("trace_degree") == 5
+                and degree_plan.get("trace_degree_values") == [5]
+                and degree_plan.get("selected_p6_face_count") == 0
+                and degree_plan.get("local_variable_trace_implemented") is False
+            )
         ),
         "active_dimension_and_matrix_gates": (
             summary.get("num_raw_broken_active_fe_dofs")
@@ -2488,6 +2798,17 @@ def task035d_case097_combined_hp_solver_gate(
     )
 
 
+def task035d_case097_left_grating_top_solver_gate(
+    solver_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Check the selected left-grating-top fixed-p5-trace solver identity."""
+
+    return _task035d_case097_variable_interior_solver_gate(
+        solver_summary,
+        spec=_LEFT_GRATING_TOP_GATE_SPEC,
+    )
+
+
 def task035d_case097_hp_factorial_bridge_solver_gate(
     solver_summary: dict[str, Any] | None,
 ) -> dict[str, Any]:
@@ -2529,6 +2850,16 @@ __all__ = [
     "TASK035D_LOCAL_H_RAW_ACTIVE_FE_DOFS",
     "TASK035D_LOCAL_H_RAW_TRACE_ROWS",
     "TASK035D_LOCAL_H_SOLVE_ROWS",
+    "TASK035D_LEFT_GRATING_TOP_ACTIVE_FE_DOFS",
+    "TASK035D_LEFT_GRATING_TOP_AUTHORITY_FILE_SHA256",
+    "TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH",
+    "TASK035D_LEFT_GRATING_TOP_PLAN_FILE_SHA256",
+    "TASK035D_LEFT_GRATING_TOP_PLAN_NAME",
+    "TASK035D_LEFT_GRATING_TOP_PLAN_PATH",
+    "TASK035D_LEFT_GRATING_TOP_SELECTION_FILE_SHA256",
+    "TASK035D_LEFT_GRATING_TOP_SELECTION_PATH",
+    "TASK035D_LEFT_GRATING_TOP_SELECTION_SOURCE_SHA",
+    "TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS",
     "TASK035D_SIDEWALL_GUARD_ACTIVE_FE_DOFS",
     "TASK035D_SIDEWALL_GUARD_ACTIVE_TRACE_ROWS",
     "TASK035D_SIDEWALL_GUARD_AUTHORITY_FILE_SHA256",
@@ -2555,6 +2886,8 @@ __all__ = [
     "TASK035D_T30_SOLVE_ROWS",
     "task035d_case097_local_h_plan_authority_gate",
     "task035d_case097_local_h_solver_gate",
+    "task035d_case097_left_grating_top_plan_authority_gate",
+    "task035d_case097_left_grating_top_solver_gate",
     "task035d_case097_combined_hp_plan_authority_gate",
     "task035d_case097_combined_hp_solver_gate",
     "task035d_case097_hp_factorial_bridge_plan_authority_gate",

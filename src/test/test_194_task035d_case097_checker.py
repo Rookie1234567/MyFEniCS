@@ -14,10 +14,12 @@ from benchmarks.task035d_case097_checker import (
     STATIC_P6_FACTOR_NNZ,
     STATIC_P6_MATRIX_NNZ,
     Task035dEvidenceError,
+    _candidate_spec,
     _candidate_launch_contract,
     _control_field_directories,
     _energy_comparison,
     _load_frozen_authorities,
+    _load_bounded_single_seed_selection,
     _resource_comparison,
     _timeline_resource_metrics,
     compact_task035d_case097_candidate_check,
@@ -40,6 +42,15 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME,
     TASK035D_HP_FACTORIAL_BRIDGE_PLAN_PATH,
     TASK035D_HP_FACTORIAL_BRIDGE_SOLVE_ROWS,
+    TASK035D_LEFT_GRATING_TOP_ACTIVE_FE_DOFS,
+    TASK035D_LEFT_GRATING_TOP_AUTHORITY_FILE_SHA256,
+    TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH,
+    TASK035D_LEFT_GRATING_TOP_PLAN_FILE_SHA256,
+    TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+    TASK035D_LEFT_GRATING_TOP_PLAN_PATH,
+    TASK035D_LEFT_GRATING_TOP_SELECTION_FILE_SHA256,
+    TASK035D_LEFT_GRATING_TOP_SELECTION_PATH,
+    TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS,
     TASK035D_LOCAL_H_ACTIVE_FE_DOFS,
     TASK035D_LOCAL_H_AUTHORITY_FILE_SHA256,
     TASK035D_LOCAL_H_AUTHORITY_PATH,
@@ -61,6 +72,7 @@ from benchmarks.task035d_case097_gates import (
     TASK035D_T30_SOLVE_ROWS,
     task035d_case097_combined_hp_plan_authority_gate,
     task035d_case097_hp_factorial_bridge_plan_authority_gate,
+    task035d_case097_left_grating_top_plan_authority_gate,
     task035d_case097_local_h_plan_authority_gate,
     task035d_case097_sidewall_guard_plan_authority_gate,
 )
@@ -782,6 +794,123 @@ class Task035dCase097CheckerTests(unittest.TestCase):
                 candidate_id=TASK035D_COMBINED_HP_PLAN_NAME,
             )
 
+    def test_left_grating_top_launch_binds_selection_and_candidate(self) -> None:
+        spec = _candidate_spec(TASK035D_LEFT_GRATING_TOP_PLAN_NAME)
+        self.assertEqual(
+            spec["active_fe_dofs"],
+            TASK035D_LEFT_GRATING_TOP_ACTIVE_FE_DOFS,
+        )
+        self.assertEqual(
+            spec["solve_rows"],
+            TASK035D_LEFT_GRATING_TOP_SOLVE_ROWS,
+        )
+        self.assertFalse(spec["requires_actual_channel_dwr"])
+        selection = _load_bounded_single_seed_selection(spec)
+        self.assertIsNotNone(selection)
+        self.assertTrue(selection["pass"])
+        self.assertEqual(
+            selection["path"],
+            TASK035D_LEFT_GRATING_TOP_SELECTION_PATH,
+        )
+        self.assertEqual(
+            selection["sha256"],
+            TASK035D_LEFT_GRATING_TOP_SELECTION_FILE_SHA256,
+        )
+
+        plan_path = ROOT / TASK035D_LEFT_GRATING_TOP_PLAN_PATH
+        authority_path = ROOT / TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        authority = json.loads(authority_path.read_text(encoding="utf-8"))
+        embedded = (
+            task035d_case097_left_grating_top_plan_authority_gate(
+                plan,
+                authority,
+                expected_plan_file_sha256=(
+                    TASK035D_LEFT_GRATING_TOP_PLAN_FILE_SHA256
+                ),
+                observed_plan_file_sha256=(
+                    TASK035D_LEFT_GRATING_TOP_PLAN_FILE_SHA256
+                ),
+                expected_authority_sha256=(
+                    TASK035D_LEFT_GRATING_TOP_AUTHORITY_FILE_SHA256
+                ),
+                observed_authority_sha256=(
+                    TASK035D_LEFT_GRATING_TOP_AUTHORITY_FILE_SHA256
+                ),
+                plan_is_tracked=True,
+                authority_is_tracked=True,
+                plan_path_from_root=TASK035D_LEFT_GRATING_TOP_PLAN_PATH,
+                authority_path_from_root=(
+                    TASK035D_LEFT_GRATING_TOP_AUTHORITY_PATH
+                ),
+            )
+        )
+        self.assertTrue(embedded["pass"], embedded["failures"])
+        source_sha = "b" * 40
+        command = [
+            "mpiexec",
+            "-n",
+            "8",
+            str(ROOT / ".venv" / "bin" / "python"),
+            "-m",
+            "benchmarks.run_task033_full3d_watchdog",
+            "--worker",
+            "--degree",
+            "6",
+            "--h-nm",
+            "15.0",
+            "--polarization-kind",
+            "s",
+            "--run-kind",
+            "full-solve",
+            "--mpi-size",
+            "8",
+            "--profile",
+            "default",
+            "--stage4-full3d-assembly-backend",
+            TASK035D_CASE097_BACKEND,
+            "--stage4-local-h-refinement-plan",
+            str(plan_path),
+            "--stage4-local-h-refinement-plan-sha256",
+            TASK035D_LEFT_GRATING_TOP_PLAN_FILE_SHA256,
+            "--task035d-case097-gate",
+            "--task035d-candidate-id",
+            TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+            "--task035d-plan-authority",
+            str(authority_path),
+            "--task035d-plan-authority-sha256",
+            TASK035D_LEFT_GRATING_TOP_AUTHORITY_FILE_SHA256,
+            "--verified-clean-sha",
+            source_sha,
+        ]
+        record = {
+            "command": command,
+            "task035d_candidate_id": TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+            "task035d_case097_launch_gate": embedded,
+            "resource_policy": {"swap_allowed": False},
+            "no_swap": True,
+            "task035d_accuracy_credit": (
+                "pending_independent_12_channel_and_field_checker"
+            ),
+        }
+        contract = _candidate_launch_contract(
+            record,
+            source_sha=source_sha,
+            candidate_id=TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+        )
+        self.assertTrue(contract["pass"])
+
+        tampered = json.loads(json.dumps(record))
+        tampered["task035d_case097_launch_gate"]["plan_identity"][
+            "selection_authority"
+        ]["sha256"] = "0" * 64
+        with self.assertRaises(Task035dEvidenceError):
+            _candidate_launch_contract(
+                tampered,
+                source_sha=source_sha,
+                candidate_id=TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+            )
+
     def test_frozen_control_field_shards_remain_hash_bound(self) -> None:
         authorities = _load_frozen_authorities()
         p5_dir, p6_dir, observed = _control_field_directories(authorities)
@@ -986,6 +1115,33 @@ class Task035dCase097CheckerTests(unittest.TestCase):
         self.assertFalse(bridge["selection_credit"]["actual_channel_dwr"])
         self.assertFalse(bridge["complete_combined_hp_credit"])
 
+        left_grating = evaluate_task035d_case097_candidate(
+            watchdog=watchdog,
+            launch_gate=_pass_payload(),
+            solver_gate={
+                "pass": True,
+                "checks": {
+                    "ordinary_default_and_lifecycle": True,
+                },
+            },
+            channel_comparison=channels,
+            observable_comparison=_pass_payload(),
+            energy_comparison=_pass_payload(),
+            field_comparison=_pass_payload(),
+            resource_comparison=_pass_payload(),
+            candidate_id=TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+        )
+        self.assertTrue(left_grating["pass"])
+        self.assertTrue(
+            left_grating["selection_credit"]["compact_dwr_location_oracle"]
+        )
+        self.assertFalse(
+            left_grating["selection_credit"]["actual_local_h_dwr_surplus"]
+        )
+        self.assertFalse(
+            left_grating["selection_credit"]["goal_oriented_selection_credit"]
+        )
+
         rejected = evaluate_task035d_case097_candidate(
             watchdog=watchdog,
             launch_gate=_pass_payload(),
@@ -1004,6 +1160,31 @@ class Task035dCase097CheckerTests(unittest.TestCase):
         self.assertIn(
             "significant_12_power_and_12_amplitude",
             rejected["failures"],
+        )
+        rejected_amplitude = evaluate_task035d_case097_candidate(
+            watchdog=watchdog,
+            launch_gate=_pass_payload(),
+            solver_gate={
+                "pass": True,
+                "checks": {
+                    "ordinary_default_and_lifecycle": True,
+                },
+            },
+            channel_comparison={
+                **channels,
+                "pass": False,
+                "significant_complex_amplitude_pass_count": 11,
+            },
+            observable_comparison=_pass_payload(),
+            energy_comparison=_pass_payload(),
+            field_comparison=_pass_payload(),
+            resource_comparison=_pass_payload(),
+            candidate_id=TASK035D_LEFT_GRATING_TOP_PLAN_NAME,
+        )
+        self.assertFalse(rejected_amplitude["pass"])
+        self.assertIn(
+            "significant_12_power_and_12_amplitude",
+            rejected_amplitude["failures"],
         )
 
     def test_cli_persists_fail_closed_checker_error(self) -> None:
