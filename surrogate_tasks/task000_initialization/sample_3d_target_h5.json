@@ -1,0 +1,5 @@
+{
+  "schema_version": "task000.forward-parameters.v1",
+  "model_id": "euv_3d_target_grating_v1",
+  "wavelength_nm": 13.5
+}

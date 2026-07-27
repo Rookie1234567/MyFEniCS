@@ -673,11 +673,15 @@ def preset_cli_args(name: str) -> tuple[str, list[str]]:
 
 def main() -> None:
     _ensure_package_importable()
-    from src.runners.run_3d_cases import main as run_3d_cases_main
-    from src.runners.run_cases import main as run_cases_main
 
     def dispatch(dimension: str, runner_args: list[str]) -> None:
-        (run_3d_cases_main if dimension == "3d" else run_cases_main)(runner_args)
+        # Import only the selected dimensional runner.  In particular, a 2D
+        # case must not require the optional 3D PyVista postprocessing stack.
+        if dimension == "3d":
+            from src.runners.run_3d_cases import main as runner_main
+        else:
+            from src.runners.run_cases import main as runner_main
+        runner_main(runner_args)
 
     if len(sys.argv) > 1 and sys.argv[1] == "--list-presets":
         extra = sys.argv[2:]
@@ -695,7 +699,7 @@ def main() -> None:
     if len(sys.argv) > 1 and sys.argv[1].lower() in ("2d", "3d"):
         dispatch(sys.argv[1].lower(), sys.argv[2:])
         return
-    run_cases_main(sys.argv[1:])
+    dispatch("2d", sys.argv[1:])
 
 
 if __name__ == "__main__":

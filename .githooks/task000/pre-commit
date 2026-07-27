@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly TASK000_GUARD_ID="myfenics-surrogate-task000-v1"
+readonly EXPECTED_BRANCH="codex/only-one-13p5nm-surrogate-inversion"
+readonly EXPECTED_ORIGIN="https://github.com/Rookie1234567/MyFEniCS.git"
+
+root="$(git rev-parse --show-toplevel)"
+branch="$(git branch --show-current)"
+origin="$(git remote get-url origin)"
+upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}')"
+
+[[ "${branch}" == "${EXPECTED_BRANCH}" ]] || {
+  echo "BLOCKED: commit branch is ${branch:-detached}; expected ${EXPECTED_BRANCH}" >&2
+  exit 1
+}
+[[ "${origin}" == "${EXPECTED_ORIGIN}" ]] || {
+  echo "BLOCKED: origin URL is not the qualified Task000 remote" >&2
+  exit 1
+}
+[[ "${upstream}" == "origin/${EXPECTED_BRANCH}" ]] || {
+  echo "BLOCKED: upstream is ${upstream}; expected origin/${EXPECTED_BRANCH}" >&2
+  exit 1
+}
+[[ "$(git -C "${root}" rev-parse --show-toplevel)" == "${root}" ]]
