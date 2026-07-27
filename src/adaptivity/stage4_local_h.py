@@ -37,6 +37,7 @@ from .hcurl_broken_cell_trace import (
     build_broken_hexa_cell_trace_constraint_map,
 )
 from .hcurl_broken_trace_graph import (
+    build_broken_hexa_entity_degree_arrays,
     build_broken_hexa_trace_constraint_authority,
 )
 from .variable_p_degree_plan import (
@@ -62,6 +63,7 @@ class Stage4LocalHContext:
     trace_degree: int
     cell_interior_degree: int
     cell_interior_degree_by_box: Mapping[CellBoxKey, int]
+    selected_p6_face_geometry_keys: tuple[tuple[int, ...], ...]
     audit: Mapping[str, Any]
 
 
@@ -406,6 +408,7 @@ def stage4_local_h_refinement_plan_payload(
     cell_interior_degree_overrides: (
         Mapping[CellBoxKey, int] | None
     ) = None,
+    selected_p6_face_geometry_keys: Sequence[Sequence[int]] = (),
 ) -> dict[str, Any]:
     """Return a JSON-ready, geometry-bound one-cycle local h/p plan."""
 
@@ -418,6 +421,20 @@ def stage4_local_h_refinement_plan_payload(
             "current local-h production adapter requires a p6 container"
         )
     marked = tuple(_normalized_box(box) for box in marked_root_boxes)
+    selected_faces = tuple(
+        tuple(map(int, geometry_key))
+        for geometry_key in selected_p6_face_geometry_keys
+    )
+    if len(set(selected_faces)) != len(selected_faces):
+        raise ValueError("selected p6 physical face key is duplicated")
+    if any(len(geometry_key) != 6 for geometry_key in selected_faces):
+        raise ValueError(
+            "selected p6 physical face key must have six integers"
+        )
+    if selected_faces and trace_degree != 5:
+        raise ValueError(
+            "selective p6 physical faces require a p5 trace base"
+        )
     forest = _build_forest(
         cfg,
         comm_size=int(comm_size),
@@ -458,6 +475,10 @@ def stage4_local_h_refinement_plan_payload(
         payload["cell_interior_degree_plan_sha256"] = (
             _cell_interior_degree_sha256(degree_catalog)
         )
+    if selected_faces:
+        payload["selected_p6_face_geometry_keys"] = [
+            list(key) for key in sorted(selected_faces)
+        ]
     return payload
 
 
@@ -535,6 +556,31 @@ def build_stage4_local_h_mesh_data(
         raise ValueError(
             "Stage-4 local-h interior degree differs from the p6 container"
         )
+    selected_face_rows = payload.get(
+        "selected_p6_face_geometry_keys",
+        [],
+    )
+    if not isinstance(selected_face_rows, list):
+        raise ValueError("selected p6 physical face catalog is invalid")
+    selected_p6_face_geometry_keys = tuple(
+        tuple(map(int, geometry_key))
+        for geometry_key in selected_face_rows
+    )
+    if (
+        len(set(selected_p6_face_geometry_keys))
+        != len(selected_p6_face_geometry_keys)
+        or any(
+            len(geometry_key) != 6
+            for geometry_key in selected_p6_face_geometry_keys
+        )
+    ):
+        raise ValueError(
+            "selected p6 physical face catalog is duplicated or malformed"
+        )
+    if selected_p6_face_geometry_keys and trace_degree != 5:
+        raise ValueError(
+            "selected p6 physical faces require a p5 trace base"
+        )
     cell_interior_degree_by_box = _load_cell_interior_degree_catalog(
         payload,
         forest,
@@ -571,6 +617,13 @@ def build_stage4_local_h_mesh_data(
                 )
                 > 1
             ),
+            "selected_p6_face_count": len(
+                selected_p6_face_geometry_keys
+            ),
+            "selected_p6_face_geometry_keys": [
+                list(key)
+                for key in selected_p6_face_geometry_keys
+            ],
             "root_cell_count": len(forest.root_boxes),
             "leaf_cell_count": len(forest.leaves),
             "hanging_patch_count": len(forest.hanging_faces),
@@ -590,6 +643,9 @@ def build_stage4_local_h_mesh_data(
         cell_interior_degree=cell_interior_degree,
         cell_interior_degree_by_box=MappingProxyType(
             cell_interior_degree_by_box
+        ),
+        selected_p6_face_geometry_keys=(
+            selected_p6_face_geometry_keys
         ),
         audit=audit,
     )
@@ -617,16 +673,6 @@ def build_stage4_local_h_mesh_data(
     )
 
 
-def _degree_array(mesh: Any, dimension: int, degree: int) -> np.ndarray:
-    mesh.topology.create_entities(int(dimension))
-    index_map = mesh.topology.index_map(int(dimension))
-    return np.full(
-        index_map.size_local + index_map.num_ghosts,
-        int(degree),
-        dtype=np.int32,
-    )
-
-
 def build_stage4_local_h_reduction_authority(
     context: Stage4LocalHContext,
     *,
@@ -636,8 +682,23 @@ def build_stage4_local_h_reduction_authority(
     """Bind fixed trace and true variable interiors to physical roots."""
 
     mesh = context.carrier.mesh
-    edge_degrees = _degree_array(mesh, 1, context.trace_degree)
-    face_degrees = _degree_array(mesh, 2, context.trace_degree)
+    physical = build_broken_hexa_trace_constraint_authority(
+        context.forest,
+        context.carrier,
+        degree=context.trace_degree,
+        phase_x=complex(phase_x),
+        phase_y=complex(phase_y),
+        selected_p6_face_geometry_keys=(
+            context.selected_p6_face_geometry_keys
+        ),
+    )
+    edge_degrees, face_degrees = (
+        build_broken_hexa_entity_degree_arrays(
+            context.forest,
+            context.carrier,
+            physical,
+        )
+    )
     canonical_leaf = np.asarray(
         context.carrier.canonical_leaf_by_local_cell,
         dtype=np.int64,
@@ -656,13 +717,6 @@ def build_stage4_local_h_reduction_authority(
         edge_degrees=edge_degrees,
         face_degrees=face_degrees,
         cell_degrees=cell_degrees,
-    )
-    physical = build_broken_hexa_trace_constraint_authority(
-        context.forest,
-        context.carrier,
-        degree=context.trace_degree,
-        phase_x=complex(phase_x),
-        phase_y=complex(phase_y),
     )
     constraints = build_broken_hexa_cell_trace_constraint_map(
         context.forest,
@@ -688,14 +742,18 @@ def build_stage4_local_h_reduction_authority(
     cell_degree_plan_sha256 = _cell_interior_degree_sha256(
         context.cell_interior_degree_by_box
     )
+    entity_degree_identity = {
+        "edge_degree": int(context.trace_degree),
+        "face_degree": int(context.trace_degree),
+        "cell_interior_degree_plan_sha256": cell_degree_plan_sha256,
+    }
+    if context.selected_p6_face_geometry_keys:
+        entity_degree_identity["selected_p6_face_geometry_keys"] = [
+            list(key)
+            for key in context.selected_p6_face_geometry_keys
+        ]
     geometry_canonical_entity_degree_sha256 = _json_sha256(
-        {
-            "edge_degree": int(context.trace_degree),
-            "face_degree": int(context.trace_degree),
-            "cell_interior_degree_plan_sha256": (
-                cell_degree_plan_sha256
-            ),
-        }
+        entity_degree_identity
     )
     degree_audit = MappingProxyType(
         {
@@ -725,6 +783,12 @@ def build_stage4_local_h_reduction_authority(
                 False
             ),
             "trace_degree": context.trace_degree,
+            "trace_degree_values": list(
+                physical.audit["trace_degree_values"]
+            ),
+            "selected_p6_face_count": int(
+                physical.audit["selected_p6_face_count"]
+            ),
             "cell_interior_container_degree": (
                 context.cell_interior_degree
             ),
@@ -740,14 +804,25 @@ def build_stage4_local_h_reduction_authority(
                 - entity_map.active_trace_rows
             ),
             "entity_degree_closure": (
-                "uniform fixed trace degree on every physical edge/face; "
-                "geometry-bound p5/p6 cell-interior degree with "
-                "trace_degree <= cell degree"
+                (
+                    "p5 edge and base face degree with whole, non-hanging "
+                    "periodic-orbit p6 physical faces; geometry-bound "
+                    "p5/p6 cell-interior degree with "
+                    "trace_degree <= cell degree"
+                )
+                if context.selected_p6_face_geometry_keys
+                else (
+                    "uniform fixed trace degree on every physical "
+                    "edge/face; geometry-bound p5/p6 cell-interior degree "
+                    "with trace_degree <= cell degree"
+                )
             ),
             "adaptation_cycle_scope": (
                 "first p6-to-p5 cell-interior-only cycle"
             ),
-            "local_variable_trace_implemented": False,
+            "local_variable_trace_implemented": bool(
+                physical.audit["selected_p6_face_count"]
+            ),
             "complete_combined_hp_credit": False,
             "cell_interior_p6_modes_globally_numbered_when_inactive": (
                 False

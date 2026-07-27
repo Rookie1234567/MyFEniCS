@@ -56,6 +56,7 @@ def _h100_context(
     *,
     trace_degree: int = 5,
     cell_interior_degree_overrides=None,
+    selected_p6_face_geometry_keys=(),
 ):
     cfg = target_stage4_config(degree=6, h_nm=100.0)
     marked = ((0.0, 0.0, 120.0, 16.5, 12.5, 130.0),)
@@ -73,17 +74,25 @@ def _h100_context(
         cell_interior_degree_overrides=(
             cell_interior_degree_overrides
         ),
+        selected_p6_face_geometry_keys=(
+            selected_p6_face_geometry_keys
+        ),
     )
     override_label = (
         "uniform"
         if cell_interior_degree_overrides is None
         else "variable-interior"
     )
+    trace_label = (
+        "uniform-trace"
+        if not selected_p6_face_geometry_keys
+        else "selective-p6-face"
+    )
     path = _shared_plan_path(
         payload,
         name=(
             f"h100-p{trace_degree}-{override_label}-"
-            f"mpi{MPI.COMM_WORLD.size}"
+            f"{trace_label}-mpi{MPI.COMM_WORLD.size}"
         ),
     )
     mesh_data = build_stage4_local_h_mesh_data(
@@ -253,6 +262,70 @@ def test_h100_true_variable_cell_interiors_remove_p6_rows() -> None:
         == uniform.audit["periodic_slave_rows"]
     )
     assert mixed.audit["active_fe_dof_gate_pass"] is True
+
+
+def test_h100_selective_nonhanging_p6_face_enters_stage4_authority() -> None:
+    _cfg, _path, _mesh_data, base_context = _h100_context()
+    base = build_stage4_local_h_reduction_authority(
+        base_context,
+        phase_x=np.exp(0.2j),
+        phase_y=np.exp(-0.3j),
+    )
+    physical = base.trace_constraints.authority
+    constrained_face_keys = {
+        row.entity_geometry_key
+        for relation in (
+            *physical.hanging_relations,
+            *physical.periodic_relations,
+        )
+        for row in (*relation.slave_rows, *relation.master_rows)
+        if row.entity_dimension == 2
+    }
+    selected = next(
+        entity.geometry_key
+        for entity in physical.entities
+        if entity.dimension == 2
+        and entity.geometry_key not in constrained_face_keys
+    )
+    _cfg, path, _mesh_data, selected_context = _h100_context(
+        selected_p6_face_geometry_keys=(selected,),
+    )
+    enriched = build_stage4_local_h_reduction_authority(
+        selected_context,
+        phase_x=np.exp(0.2j),
+        phase_y=np.exp(-0.3j),
+    )
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["selected_p6_face_geometry_keys"] == [
+        list(selected)
+    ]
+    assert selected_context.audit["selected_p6_face_count"] == 1
+    assert enriched.degree_plan.audit["trace_degree_values"] == [5, 6]
+    assert enriched.degree_plan.audit["selected_p6_face_count"] == 1
+    assert (
+        enriched.degree_plan.audit["local_variable_trace_implemented"]
+        is True
+    )
+    assert enriched.trace_constraints.audit[
+        "local_variable_trace_implemented"
+    ] is True
+    assert (
+        enriched.degree_plan.entity_map.active_rows
+        - base.degree_plan.entity_map.active_rows
+        == 20
+    )
+    assert (
+        enriched.trace_constraints.independent_trace_rows
+        - base.trace_constraints.independent_trace_rows
+        == 20
+    )
+    assert (
+        enriched.audit["actual_full3d_equivalent_active_fe_dofs"]
+        - base.audit["actual_full3d_equivalent_active_fe_dofs"]
+        == 20
+    )
+    assert enriched.audit["active_fe_dof_gate_pass"] is True
 
 
 def test_local_h_variable_interior_plan_fails_closed() -> None:
