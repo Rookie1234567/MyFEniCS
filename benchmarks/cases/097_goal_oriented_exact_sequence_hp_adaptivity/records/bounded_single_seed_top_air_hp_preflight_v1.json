@@ -1,0 +1,599 @@
+{
+  "action_rows": {
+    "left_grating_top": {
+      "action_id": "left_grating_top",
+      "actual_full3d_equivalent_active_fe_dofs": 88915,
+      "appended_dtn_rows": 80,
+      "canonical_cell_graph_sha256": "10fd9833f46cb547f50b2a03e6ea565f620fc079cf507c8d7f10202ecebd6f6c",
+      "carrier_connectivity_sha256": "2caf696d8ebe74ad56a2f75ca15bb82caa323c4814bcaeb45ae13e5f8ce9484d",
+      "cell_degree_plan_sha256": "2213464a451400e4f211ce75367d636de4c13cc5c07de941666e6d68fce329eb",
+      "checks": {
+        "active_dof_identity": true,
+        "cell_degree_counts": true,
+        "dof_budget": true,
+        "exact_seed_and_closure": true,
+        "expected_dimensions": true,
+        "mesh_and_reduction_pass": true,
+        "ownership_gate": true,
+        "p5_is_exactly_refined_children": true,
+        "p5_only_trace": true,
+        "trace_row_identity": true
+      },
+      "closed_refined_root_boxes_nm": [
+        [
+          8.25,
+          0.0,
+          105.0,
+          16.5,
+          12.5,
+          120.0
+        ],
+        [
+          8.25,
+          12.5,
+          105.0,
+          16.5,
+          25.0,
+          120.0
+        ],
+        [
+          16.5,
+          0.0,
+          105.0,
+          25.0,
+          12.5,
+          120.0
+        ],
+        [
+          16.5,
+          0.0,
+          120.0,
+          25.0,
+          12.5,
+          130.0
+        ],
+        [
+          16.5,
+          12.5,
+          105.0,
+          25.0,
+          25.0,
+          120.0
+        ],
+        [
+          16.5,
+          12.5,
+          120.0,
+          25.0,
+          25.0,
+          130.0
+        ]
+      ],
+      "closure_counts": {
+        "balance": 0,
+        "material": 4,
+        "periodic": 1,
+        "user": 1
+      },
+      "failures": [],
+      "flattened_graph_sha256": "e798650de6ecf7af913e2921c44de1149f86d7ceb2c3de9deea6f3b6ea055b87",
+      "geometry_canonical_entity_degree_sha256": "14d9c9cc8998e9ed008e06e9d0676e7753e3f5b30ede6b6f0065fabcb8e0f692",
+      "hanging_face_catalog_sha256": "2ae67d34dae0d4fcb9f879b70920acab66eddcf3ab128113dd766edfd0a3e15b",
+      "hanging_patch_count": 14,
+      "hanging_slave_rows": 2890,
+      "independent_trace_rows": 21570,
+      "leaf_catalog_sha256": "80e73c85da82523f7fcee7c322e64ff0add3c1d845ac1bcc39bc0f00b815406d",
+      "leaf_cell_count": 162,
+      "mesh_cell_box_catalog_sha256": "3a810070f9b5f37d0e174adaf11de279114e4a8ff76cc724a763ec8173297cc6",
+      "p5_cell_count": 48,
+      "p6_cell_count": 114,
+      "pass": true,
+      "periodic_slave_rows": 4525,
+      "predicted_direct_solve_rows": 21650,
+      "raw_broken_active_fe_dofs": 91805,
+      "raw_broken_trace_rows": 28985,
+      "requested_mark_nm": [
+        16.5,
+        0.0,
+        120.0,
+        25.0,
+        12.5,
+        130.0
+      ],
+      "root_cell_count": 120,
+      "split_root_count": 6
+    },
+    "left_inner_without_compact_dwr": {
+      "action_id": "left_inner_without_compact_dwr",
+      "actual_full3d_equivalent_active_fe_dofs": 79565,
+      "appended_dtn_rows": 80,
+      "canonical_cell_graph_sha256": "8af31327df6760ad3f1ebbe0ecbf21af65ad656f7bcf78dea9c02f96c8995211",
+      "carrier_connectivity_sha256": "b94b6a85a439ce5170e9e628e88e60adb22b91fc43590a8f7f753cbfc20f9aec",
+      "cell_degree_plan_sha256": "5fffbb40932eb4b7a34cf1f82c7ba5b081f086983764f4e93ea6969a83a27113",
+      "checks": {
+        "active_dof_identity": true,
+        "cell_degree_counts": true,
+        "dof_budget": true,
+        "exact_seed_and_closure": true,
+        "expected_dimensions": true,
+        "mesh_and_reduction_pass": true,
+        "ownership_gate": true,
+        "p5_is_exactly_refined_children": true,
+        "p5_only_trace": true,
+        "trace_row_identity": true
+      },
+      "closed_refined_root_boxes_nm": [
+        [
+          8.25,
+          0.0,
+          120.0,
+          16.5,
+          12.5,
+          130.0
+        ],
+        [
+          8.25,
+          12.5,
+          120.0,
+          16.5,
+          25.0,
+          130.0
+        ]
+      ],
+      "closure_counts": {
+        "balance": 0,
+        "material": 0,
+        "periodic": 1,
+        "user": 1
+      },
+      "failures": [],
+      "flattened_graph_sha256": "7677482e10d5b159ce20344b566bc2704bbd5ad4a7cb5ac375d3c51826fa582d",
+      "geometry_canonical_entity_degree_sha256": "efdef208434086e3dc38f9a162272257d9b65270d58588a50986876813ff1fc8",
+      "hanging_face_catalog_sha256": "8b70b5c1d679eceb638ff9c3c55ef8c8cf18e007ba939a84b1b39334902d0712",
+      "hanging_patch_count": 6,
+      "hanging_slave_rows": 1250,
+      "independent_trace_rows": 18390,
+      "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+      "leaf_cell_count": 134,
+      "mesh_cell_box_catalog_sha256": "de8f9293edacfdfe30f5972c36347121add8c88203912330b0ab8e9d71d88c20",
+      "p5_cell_count": 16,
+      "p6_cell_count": 118,
+      "pass": true,
+      "periodic_slave_rows": 4235,
+      "predicted_direct_solve_rows": 18470,
+      "raw_broken_active_fe_dofs": 80815,
+      "raw_broken_trace_rows": 23875,
+      "requested_mark_nm": [
+        8.25,
+        0.0,
+        120.0,
+        16.5,
+        12.5,
+        130.0
+      ],
+      "root_cell_count": 120,
+      "split_root_count": 2
+    },
+    "outer_left_alias": {
+      "action_id": "outer_left_alias",
+      "actual_full3d_equivalent_active_fe_dofs": 84850,
+      "appended_dtn_rows": 80,
+      "canonical_cell_graph_sha256": "3fe2ccb10bdeb07f357aa80a5ea7b0c871f4ffdd8ac3b450e74568986aa13d02",
+      "carrier_connectivity_sha256": "a036ba1731feebbc0ba4035a6678b02e606f84569d8360042acb5863e34358fb",
+      "cell_degree_plan_sha256": "5ed9ac421ba195e8712fef166aeef16f445a6584566b198c2c399f449efc6b3c",
+      "checks": {
+        "active_dof_identity": true,
+        "cell_degree_counts": true,
+        "dof_budget": true,
+        "exact_seed_and_closure": true,
+        "expected_dimensions": true,
+        "mesh_and_reduction_pass": true,
+        "ownership_gate": true,
+        "p5_is_exactly_refined_children": true,
+        "p5_only_trace": true,
+        "trace_row_identity": true
+      },
+      "closed_refined_root_boxes_nm": [
+        [
+          0.0,
+          0.0,
+          120.0,
+          8.25,
+          12.5,
+          130.0
+        ],
+        [
+          0.0,
+          12.5,
+          120.0,
+          8.25,
+          25.0,
+          130.0
+        ],
+        [
+          41.75,
+          0.0,
+          120.0,
+          50.0,
+          12.5,
+          130.0
+        ],
+        [
+          41.75,
+          12.5,
+          120.0,
+          50.0,
+          25.0,
+          130.0
+        ]
+      ],
+      "closure_counts": {
+        "balance": 0,
+        "material": 0,
+        "periodic": 3,
+        "user": 1
+      },
+      "failures": [],
+      "flattened_graph_sha256": "3973a4201c78947da2ecec57ceba71abd24810bc3694573c6a534f1f38592316",
+      "geometry_canonical_entity_degree_sha256": "d55f4f945f38561bf11d1cfd58d5796a4c9c8dce37e1ac54e5bc439bfea075c6",
+      "hanging_face_catalog_sha256": "3a173f8066b961c32c232ef9a2fe84ce7ed25e32ddde34b2e8094a2730b1e470",
+      "hanging_patch_count": 8,
+      "hanging_slave_rows": 1680,
+      "independent_trace_rows": 20280,
+      "leaf_catalog_sha256": "2b2a983f823fd91c82e741e6cf12f63cd72d567f61d4cb604111502c9ca4afe6",
+      "leaf_cell_count": 148,
+      "mesh_cell_box_catalog_sha256": "fba5723dd1bfddb5011e2eeeddd254cceb99bf2d439c160cec3101523055e283",
+      "p5_cell_count": 32,
+      "p6_cell_count": 116,
+      "pass": true,
+      "periodic_slave_rows": 4690,
+      "predicted_direct_solve_rows": 20360,
+      "raw_broken_active_fe_dofs": 86530,
+      "raw_broken_trace_rows": 26650,
+      "requested_mark_nm": [
+        0.0,
+        0.0,
+        120.0,
+        8.25,
+        12.5,
+        130.0
+      ],
+      "root_cell_count": 120,
+      "split_root_count": 4
+    },
+    "outer_right_alias": {
+      "action_id": "outer_right_alias",
+      "actual_full3d_equivalent_active_fe_dofs": 84850,
+      "appended_dtn_rows": 80,
+      "canonical_cell_graph_sha256": "3fe2ccb10bdeb07f357aa80a5ea7b0c871f4ffdd8ac3b450e74568986aa13d02",
+      "carrier_connectivity_sha256": "a036ba1731feebbc0ba4035a6678b02e606f84569d8360042acb5863e34358fb",
+      "cell_degree_plan_sha256": "5ed9ac421ba195e8712fef166aeef16f445a6584566b198c2c399f449efc6b3c",
+      "checks": {
+        "active_dof_identity": true,
+        "cell_degree_counts": true,
+        "dof_budget": true,
+        "exact_seed_and_closure": true,
+        "expected_dimensions": true,
+        "mesh_and_reduction_pass": true,
+        "ownership_gate": true,
+        "p5_is_exactly_refined_children": true,
+        "p5_only_trace": true,
+        "trace_row_identity": true
+      },
+      "closed_refined_root_boxes_nm": [
+        [
+          0.0,
+          0.0,
+          120.0,
+          8.25,
+          12.5,
+          130.0
+        ],
+        [
+          0.0,
+          12.5,
+          120.0,
+          8.25,
+          25.0,
+          130.0
+        ],
+        [
+          41.75,
+          0.0,
+          120.0,
+          50.0,
+          12.5,
+          130.0
+        ],
+        [
+          41.75,
+          12.5,
+          120.0,
+          50.0,
+          25.0,
+          130.0
+        ]
+      ],
+      "closure_counts": {
+        "balance": 0,
+        "material": 0,
+        "periodic": 3,
+        "user": 1
+      },
+      "failures": [],
+      "flattened_graph_sha256": "3973a4201c78947da2ecec57ceba71abd24810bc3694573c6a534f1f38592316",
+      "geometry_canonical_entity_degree_sha256": "d55f4f945f38561bf11d1cfd58d5796a4c9c8dce37e1ac54e5bc439bfea075c6",
+      "hanging_face_catalog_sha256": "3a173f8066b961c32c232ef9a2fe84ce7ed25e32ddde34b2e8094a2730b1e470",
+      "hanging_patch_count": 8,
+      "hanging_slave_rows": 1680,
+      "independent_trace_rows": 20280,
+      "leaf_catalog_sha256": "2b2a983f823fd91c82e741e6cf12f63cd72d567f61d4cb604111502c9ca4afe6",
+      "leaf_cell_count": 148,
+      "mesh_cell_box_catalog_sha256": "fba5723dd1bfddb5011e2eeeddd254cceb99bf2d439c160cec3101523055e283",
+      "p5_cell_count": 32,
+      "p6_cell_count": 116,
+      "pass": true,
+      "periodic_slave_rows": 4690,
+      "predicted_direct_solve_rows": 20360,
+      "raw_broken_active_fe_dofs": 86530,
+      "raw_broken_trace_rows": 26650,
+      "requested_mark_nm": [
+        41.75,
+        0.0,
+        120.0,
+        50.0,
+        12.5,
+        130.0
+      ],
+      "root_cell_count": 120,
+      "split_root_count": 4
+    },
+    "right_grating_top": {
+      "action_id": "right_grating_top",
+      "actual_full3d_equivalent_active_fe_dofs": 88915,
+      "appended_dtn_rows": 80,
+      "canonical_cell_graph_sha256": "46399309c22d529716c9719c14996bab289642cd0355a8ebf176e467b171839e",
+      "carrier_connectivity_sha256": "9954d28583eb34231e3e95c7cf80cfe35d1dbc08d7f9bd3d6da33d93feeabf60",
+      "cell_degree_plan_sha256": "261a0fdbf466a43c18da6afc5d98b6f7d02868f1ed24c0df5bc9ef099eebab69",
+      "checks": {
+        "active_dof_identity": true,
+        "cell_degree_counts": true,
+        "dof_budget": true,
+        "exact_seed_and_closure": true,
+        "expected_dimensions": true,
+        "mesh_and_reduction_pass": true,
+        "ownership_gate": true,
+        "p5_is_exactly_refined_children": true,
+        "p5_only_trace": true,
+        "trace_row_identity": true
+      },
+      "closed_refined_root_boxes_nm": [
+        [
+          25.0,
+          0.0,
+          105.0,
+          33.5,
+          12.5,
+          120.0
+        ],
+        [
+          25.0,
+          0.0,
+          120.0,
+          33.5,
+          12.5,
+          130.0
+        ],
+        [
+          25.0,
+          12.5,
+          105.0,
+          33.5,
+          25.0,
+          120.0
+        ],
+        [
+          25.0,
+          12.5,
+          120.0,
+          33.5,
+          25.0,
+          130.0
+        ],
+        [
+          33.5,
+          0.0,
+          105.0,
+          41.75,
+          12.5,
+          120.0
+        ],
+        [
+          33.5,
+          12.5,
+          105.0,
+          41.75,
+          25.0,
+          120.0
+        ]
+      ],
+      "closure_counts": {
+        "balance": 0,
+        "material": 4,
+        "periodic": 1,
+        "user": 1
+      },
+      "failures": [],
+      "flattened_graph_sha256": "52eed638a684566253095d480ff2f056c198a8fbbc6e70f9d6ab78a546754b44",
+      "geometry_canonical_entity_degree_sha256": "7eb0a07ee1a045a0f5338c7061b000077eefabc5b66297f10e654779358305b0",
+      "hanging_face_catalog_sha256": "865621015b0d1c75efad87b9fc297222b736eea3cd703584d3d4f31cc4931027",
+      "hanging_patch_count": 14,
+      "hanging_slave_rows": 2890,
+      "independent_trace_rows": 21570,
+      "leaf_catalog_sha256": "d6224ba0462ac434e7b7c130a9b5617f41c73f3be048639fc2835e9ac7a09615",
+      "leaf_cell_count": 162,
+      "mesh_cell_box_catalog_sha256": "83b595fc9c4bb6ac7acd7b238f38822faf9d73377d18509d7fdb003f1fea1c7c",
+      "p5_cell_count": 48,
+      "p6_cell_count": 114,
+      "pass": true,
+      "periodic_slave_rows": 4525,
+      "predicted_direct_solve_rows": 21650,
+      "raw_broken_active_fe_dofs": 91805,
+      "raw_broken_trace_rows": 28985,
+      "requested_mark_nm": [
+        25.0,
+        0.0,
+        120.0,
+        33.5,
+        12.5,
+        130.0
+      ],
+      "root_cell_count": 120,
+      "split_root_count": 6
+    },
+    "right_inner": {
+      "action_id": "right_inner",
+      "actual_full3d_equivalent_active_fe_dofs": 79565,
+      "appended_dtn_rows": 80,
+      "canonical_cell_graph_sha256": "765aa6d6337bff015434d55e6bedcfff5466120fd987227fda221b1016db359a",
+      "carrier_connectivity_sha256": "d3f0b6e5e152ce5bf256d1ceba5fed599c3090d36e66ccc424c0bf493c6a9351",
+      "cell_degree_plan_sha256": "f97408724ce49c0b7be2c7580ef973647c60ed4958c4bcab42e7dc0e3b6e2554",
+      "checks": {
+        "active_dof_identity": true,
+        "cell_degree_counts": true,
+        "dof_budget": true,
+        "exact_seed_and_closure": true,
+        "expected_dimensions": true,
+        "mesh_and_reduction_pass": true,
+        "ownership_gate": true,
+        "p5_is_exactly_refined_children": true,
+        "p5_only_trace": true,
+        "trace_row_identity": true
+      },
+      "closed_refined_root_boxes_nm": [
+        [
+          33.5,
+          0.0,
+          120.0,
+          41.75,
+          12.5,
+          130.0
+        ],
+        [
+          33.5,
+          12.5,
+          120.0,
+          41.75,
+          25.0,
+          130.0
+        ]
+      ],
+      "closure_counts": {
+        "balance": 0,
+        "material": 0,
+        "periodic": 1,
+        "user": 1
+      },
+      "failures": [],
+      "flattened_graph_sha256": "796050073edfa426ff5db42623c10a1361a5da13c88f45ce6ee5878532286381",
+      "geometry_canonical_entity_degree_sha256": "af460eb8e67281df5d99d6fb58bbcebea8bb381c176cb835bc14db2a31cd0503",
+      "hanging_face_catalog_sha256": "ab8cee2701f2764769d457acc87c628319c7885fc289cc0e9c9f9f4db90f2a38",
+      "hanging_patch_count": 6,
+      "hanging_slave_rows": 1250,
+      "independent_trace_rows": 18390,
+      "leaf_catalog_sha256": "68fc861b4e98dc28557e32568a5cc5cd7591eec197615b6760e646814c7bd206",
+      "leaf_cell_count": 134,
+      "mesh_cell_box_catalog_sha256": "c88cf49eeaf8131bab066814037b2fbc1ca0c16dc8b737072fc93d9ae0f7255f",
+      "p5_cell_count": 16,
+      "p6_cell_count": 118,
+      "pass": true,
+      "periodic_slave_rows": 4235,
+      "predicted_direct_solve_rows": 18470,
+      "raw_broken_active_fe_dofs": 80815,
+      "raw_broken_trace_rows": 23875,
+      "requested_mark_nm": [
+        33.5,
+        0.0,
+        120.0,
+        41.75,
+        12.5,
+        130.0
+      ],
+      "root_cell_count": 120,
+      "split_root_count": 2
+    }
+  },
+  "checks": {
+    "all_actions_within_budget": true,
+    "all_six_alias_rows_pass": true,
+    "fixed_h15_baseline_identity": true,
+    "outer_periodic_alias_identity": true,
+    "source_identity": true
+  },
+  "environment": {
+    "formal_target_mpi_size": 8,
+    "mpi_size": 1,
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128",
+    "qualified_activation": true
+  },
+  "failures": [],
+  "fixed_h15_baseline": {
+    "actual_full3d_equivalent_active_fe_dofs": 74890,
+    "committed_sha256": "1ffde81be08c24232e62c1d2dfbf1b7ad2dcb3623444ea40af68b5c6585758e3",
+    "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_tensor_dedup_preallocation_mpi8.json",
+    "predicted_direct_solve_rows": 16880,
+    "recorded_active_fe_dofs": 74890,
+    "recorded_solve_rows": 16880,
+    "sha256": "1ffde81be08c24232e62c1d2dfbf1b7ad2dcb3623444ea40af68b5c6585758e3"
+  },
+  "measurement_scope": "production Stage-4 mesh, entity-map, hanging, and Floquet reduction only; no Maxwell assembly, factorization, or PDE",
+  "ordinary_default_changed": false,
+  "pass": true,
+  "production_qualified": false,
+  "schema_version": "case097.bounded-single-seed-top-air-hp-preflight.v1",
+  "source_identity": {
+    "head": "4567eeca9cd180add78654bec5c318624da81365",
+    "numerical_file_sha256": {
+      "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_tensor_dedup_preallocation_mpi8.json": "1ffde81be08c24232e62c1d2dfbf1b7ad2dcb3623444ea40af68b5c6585758e3",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/generate_bounded_single_seed_top_air_hp_preflight.py": "b7297ae84302ce4ed75306d2feae8427dc114007862b508adea931c1d001bf1e",
+      "src/adaptivity/dyadic_hexa_broken_mesh.py": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+      "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+      "src/adaptivity/exact_sequence_variable_p.py": "24091cfd47bf255672d2c0c8c402dcf522c7631571d0d0895b2daac152e9b22f",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "d135fe7b5b7ea0dc0add65ecbb25d53ca860e7de67c17b9adf1f746ac9183862",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "8a17be388c123444cddb4677bb79c361a6850f910164f1d8c3ce221e0ef7bdf9",
+      "src/adaptivity/hcurl_hanging_trace.py": "e076856fb92e4402a8c511cce28a6787b3dfb737e7679ba4aac8a18b78a45a11",
+      "src/adaptivity/hcurl_trace_constraint_graph.py": "f072299429a0b89fcae6adfd0094ea4a354b45545260a382872fe4c350a283ae",
+      "src/adaptivity/stage4_local_h.py": "03aa442f2e41a435e0c2dfc527b0fd2ea81ea227257fd7ffc3447c30f60013a8",
+      "src/adaptivity/variable_p_degree_plan.py": "9eff64074a65088c31d1977443c078a56fd39f8f8308fb02cf3386ac9dd1f75f",
+      "src/adaptivity/variable_p_entity_map.py": "a9b3c0a5ae11b11f6854bd427a70ee5e89b3a38feb3667d9c29ca08d0a34bcaf",
+      "src/adaptivity/variable_p_transfer.py": "442a7b1c2b7e3dfd069546170396040fa8fa8a0a87cfeef47ccdfb191a579a8f",
+      "src/common/config_3d.py": "573ce574a12115cfcf4cfb924e4287824dfc6efc6ab8348b50937fbc043d7c9f",
+      "src/common/units.py": "a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be",
+      "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+      "src/geometry/mesh_builder_3d.py": "cece033930810eef39fc00e8638fbe76317b9860749c53b5523a70443bc1dc16"
+    },
+    "status_lines": [],
+    "verified_clean_numerical_source": true
+  },
+  "source_sha": "4567eeca9cd180add78654bec5c318624da81365",
+  "status": "bounded_single_seed_top_air_hp_preflight_pass",
+  "unique_action_aliases": {
+    "left_grating_top": [
+      "left_grating_top"
+    ],
+    "left_inner_without_compact_dwr": [
+      "left_inner_without_compact_dwr"
+    ],
+    "outer_periodic": [
+      "outer_left_alias",
+      "outer_right_alias"
+    ],
+    "right_grating_top": [
+      "right_grating_top"
+    ],
+    "right_inner": [
+      "right_inner"
+    ]
+  }
+}

@@ -644,6 +644,43 @@ def _action_rows(
     return rows
 
 
+def _preflight_catalog_identity(
+    preflight: Mapping[str, Any],
+) -> bool:
+    rows = preflight.get("action_rows")
+    rows = rows if isinstance(rows, dict) else {}
+    return bool(
+        set(rows) == set(EXPECTED_PREFLIGHT_ACTIONS)
+        and preflight.get("unique_action_aliases")
+        == {
+            "outer_periodic": [
+                "outer_left_alias",
+                "outer_right_alias",
+            ],
+            "left_inner_without_compact_dwr": [
+                "left_inner_without_compact_dwr"
+            ],
+            "left_grating_top": ["left_grating_top"],
+            "right_grating_top": ["right_grating_top"],
+            "right_inner": ["right_inner"],
+        }
+        and all(
+            row.get("pass") is True
+            and row.get("requested_mark_nm")
+            == EXPECTED_PREFLIGHT_ACTIONS[action_id][
+                "requested_mark_nm"
+            ]
+            and row.get("closure_counts")
+            == EXPECTED_PREFLIGHT_ACTIONS[action_id]["closure_counts"]
+            and row.get("split_root_count")
+            == EXPECTED_PREFLIGHT_ACTIONS[action_id][
+                "split_root_count"
+            ]
+            for action_id, row in rows.items()
+        )
+    )
+
+
 def analyze(source_sha: str) -> dict[str, Any]:
     input_paths = (
         COMPACT,
@@ -699,39 +736,8 @@ def analyze(source_sha: str) -> dict[str, Any]:
     }
     left_action = by_action["left_grating_top"]
     outer_action = by_action["outer_periodic"]
-    preflight_rows = preflight.get("action_rows")
-    preflight_rows = (
-        preflight_rows if isinstance(preflight_rows, dict) else {}
-    )
-    preflight_catalog_exact = (
-        set(preflight_rows) == set(EXPECTED_PREFLIGHT_ACTIONS)
-        and preflight.get("unique_action_aliases")
-        == {
-            "outer_periodic": [
-                "outer_left_alias",
-                "outer_right_alias",
-            ],
-            "left_inner_without_compact_dwr": [
-                "left_inner_without_compact_dwr"
-            ],
-            "left_grating_top": ["left_grating_top"],
-            "right_grating_top": ["right_grating_top"],
-            "right_inner": ["right_inner"],
-        }
-        and all(
-            row.get("pass") is True
-            and row.get("requested_mark_nm")
-            == EXPECTED_PREFLIGHT_ACTIONS[action_id][
-                "requested_mark_nm"
-            ]
-            and row.get("closure_counts")
-            == EXPECTED_PREFLIGHT_ACTIONS[action_id]["closure_counts"]
-            and row.get("split_root_count")
-            == EXPECTED_PREFLIGHT_ACTIONS[action_id][
-                "split_root_count"
-            ]
-            for action_id, row in preflight_rows.items()
-        )
+    preflight_catalog_exact = _preflight_catalog_identity(
+        preflight
     )
     subset = _subset_screen(
         coarse=coarse,

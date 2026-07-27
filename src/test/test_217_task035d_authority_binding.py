@@ -23,6 +23,9 @@ DEFAULT_MPI1 = (
 )
 SELECTIVE_MPI1 = RECORDS / "selective_p6_face_mpi1_v1.json"
 COMPACT = RECORDS / "selective_face_selection_compact_v1.json"
+PREFLIGHT = (
+    RECORDS / "bounded_single_seed_top_air_hp_preflight_v1.json"
+)
 
 
 def _module(name: str, filename: str):
@@ -158,3 +161,20 @@ def test_compact_dwr_rejects_a_wholly_missing_x_band() -> None:
     ]
     with pytest.raises(ValueError, match="two y faces per x band"):
         analyzer._paired_contributions(goals)
+
+
+def test_preflight_catalog_rejects_closure_drift_at_fixed_dimensions() -> None:
+    analyzer = _module(
+        "task035d_preflight_catalog_checker",
+        "analyze_bounded_single_seed_top_air_hp_selection.py",
+    )
+    preflight = json.loads(PREFLIGHT.read_text(encoding="utf-8"))
+    assert analyzer._preflight_catalog_identity(preflight) is True
+    mutation = copy.deepcopy(preflight)
+    mutation["action_rows"]["left_grating_top"]["closure_counts"][
+        "material"
+    ] = 3
+    mutation["action_rows"]["left_grating_top"]["closure_counts"][
+        "balance"
+    ] = 1
+    assert analyzer._preflight_catalog_identity(mutation) is False
