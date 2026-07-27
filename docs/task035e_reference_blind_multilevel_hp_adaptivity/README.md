@@ -1,0 +1,44 @@
+# Task035e：无参考解、多层局部 h/p 自适应
+
+## 当前身份
+
+```text
+task = Task035e
+status_at_creation = staged_on_Task035d_branch
+execution_branch = codex/20260728-task35e-reference-blind-multilevel-hp-adaptivity
+branch_creation = by Codex after Task035d selective merge
+branch_base = exact post-Task035d master SHA
+ordinary_default = unchanged
+geometry = Task034 fixed rectangular block grating
+wavelength = 13.5 nm used as a reference-blind surrogate for future 0.7 nm
+primary_solver = Full3D assembly-time static condensation + MUMPS direct
+hybrid = only after Full3D blind hp candidate passes
+iterative_solver = out of scope
+heavy_PDE_concurrency = one at a time
+```
+
+Task035e 模拟未来 0.7 nm 的真实困难：完整收敛解不可获得，自适应程序不能读取一个“老师答案”来决定哪里细化、哪里升阶、何时停止。
+
+本任务把工作严格分成三层：
+
+1. **Reference certifier**：独立运行 p6/h10、p6/h7.5、p6/h5，检查高阶序列是否收敛，并生成封存的 hidden authority；
+2. **Blind adaptive controller**：只能使用当前解、残差、伴随、local p-shadow、local h-shadow 和误差预算，不能读取 hidden authority；
+3. **Final hidden auditor**：自适应候选完全冻结后，才读取 hidden authority 检查算法是否真的成功。
+
+当前不再按功率大小筛“显著通道”。对于固定13.5 nm、S偏振、10°掠入射、沿 y 不变化的结构，正式低阶输出集合固定为：
+
+```text
+N = 8
+n = 0
+m = 0, -1, -2, -3, -4, -5, -6, -7
+```
+
+对 top/bottom 两个端口分别审计每个级的功率和复振幅，并同时保存完整传播谱、R00、Rtotal、Ttotal、Aclosure、Avolume、场与残差。
+
+Task035e 的重点不是把 p6/h10 轻微删改，而是从真正粗网格开始，允许多个 local-h level 与 local-p 同时存在，使最终网格真实包含大、中、小不同单元。
+
+正式任务书：
+
+```text
+docs/task035e_reference_blind_multilevel_hp_adaptivity/task.md
+```
