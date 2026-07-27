@@ -29,6 +29,7 @@ from src.adaptivity.hcurl_broken_cell_trace import (
     build_broken_hexa_cell_trace_constraint_map,
 )
 from src.adaptivity.hcurl_broken_trace_graph import (
+    build_broken_hexa_entity_degree_arrays,
     build_broken_hexa_trace_constraint_authority,
 )
 from src.adaptivity.variable_p_entity_map import (
@@ -122,6 +123,88 @@ def _single_hanging_fixture(
         authority,
     )
     return forest, carrier, entity_map, authority, constraints
+
+
+def test_nonhanging_selective_p6_face_binds_real_active_rows() -> None:
+    forest = build_root_dyadic_hexa_forest(
+        [
+            (0.0, 0.0, 0.0, 1.0, 1.0, 1.0),
+            (1.0, 0.0, 0.0, 2.0, 1.0, 1.0),
+        ],
+        [1, 1],
+        periodic_axes=(),
+    )
+    forest = refine_balanced_dyadic_hexa_forest(
+        forest,
+        [DyadicHexKey(0, 0, 0, 0, 0)],
+    )
+    carrier = build_broken_dyadic_hexa_carrier(
+        forest,
+        comm=MPI.COMM_WORLD,
+    )
+    base = build_broken_hexa_trace_constraint_authority(
+        forest,
+        carrier,
+        degree=5,
+    )
+    hanging = {
+        row.entity_geometry_key
+        for relation in base.hanging_relations
+        for row in (*relation.slave_rows, *relation.master_rows)
+        if row.entity_dimension == 2
+    }
+    selected = next(
+        entity.geometry_key
+        for entity in base.entities
+        if entity.dimension == 2
+        and entity.geometry_key not in hanging
+    )
+    authority = build_broken_hexa_trace_constraint_authority(
+        forest,
+        carrier,
+        degree=5,
+        selected_p6_face_geometry_keys=(selected,),
+    )
+    edge_degrees, face_degrees = (
+        build_broken_hexa_entity_degree_arrays(
+            forest,
+            carrier,
+            authority,
+        )
+    )
+    selected_local_copies = int(np.count_nonzero(face_degrees == 6))
+    assert (
+        carrier.mesh.comm.allreduce(
+            selected_local_copies,
+            op=MPI.SUM,
+        )
+        >= 1
+    )
+    assert np.all(edge_degrees == 5)
+    entity_map = build_variable_p_global_entity_map(
+        carrier.mesh,
+        edge_degrees=edge_degrees,
+        face_degrees=face_degrees,
+        cell_degrees=_degree_array(carrier.mesh, 3, 6),
+    )
+    constraints = build_broken_hexa_cell_trace_constraint_map(
+        forest,
+        carrier,
+        entity_map,
+        authority,
+    )
+
+    assert constraints.audit["pass"] is True
+    assert constraints.audit["trace_degree_values"] == [5, 6]
+    assert constraints.audit["selected_p6_face_count"] == 1
+    assert constraints.audit["local_variable_trace_implemented"] is True
+    assert entity_map.active_trace_rows == (
+        base.audit["raw_trace_rows"] + 20
+    )
+    assert constraints.independent_trace_rows == (
+        base.audit["independent_trace_rows"] + 20
+    )
+    assert entity_map.audit["inactive_modes_globally_numbered"] is False
 
 
 def _periodic_corner_fixture():

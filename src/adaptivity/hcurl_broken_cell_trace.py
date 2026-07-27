@@ -424,7 +424,7 @@ def _build_local_entity_records(
             transform, permutation = _canonical_to_dolfinx_transform(
                 physical,
                 ordered_points,
-                degree=authority.degree,
+                degree=physical.degree,
             )
             independent, physical_expansion = _selected_graph_rows(
                 authority,
@@ -1404,11 +1404,6 @@ def build_broken_hexa_cell_trace_constraint_map(
     if str(authority.audit["physical_authority_sha256"]) == "":
         raise ValueError("physical trace authority identity is missing")
     degree = int(authority.degree)
-    for dimension in (1, 2):
-        if np.any(entity_map.global_degrees[dimension] != degree):
-            raise ValueError(
-                "broken local-h binding currently requires one trace degree"
-            )
 
     bounds = forest.domain_bounds
     origin = np.asarray(bounds[:3], dtype=np.float64)
@@ -2111,6 +2106,12 @@ def build_broken_hexa_cell_trace_constraint_map(
             "pass": True,
             "mpi_size": int(carrier.mesh.comm.size),
             "degree": degree,
+            "trace_degree_values": list(
+                authority.audit["trace_degree_values"]
+            ),
+            "selected_p6_face_count": int(
+                authority.audit["selected_p6_face_count"]
+            ),
             "constraint_kinds": [
                 kind
                 for kind, present in (
@@ -2290,6 +2291,14 @@ def build_broken_hexa_cell_trace_constraint_map(
             "cell_expansion_inverse_used": False,
             "distributed_scalability_qualified": False,
             "full_p6_trace_matrix_constructed": False,
+            "local_variable_trace_implemented": bool(
+                authority.audit["selected_p6_face_count"]
+            ),
+            "selective_trace_action": (
+                "non_hanging_whole_physical_face_p5_to_p6"
+                if authority.audit["selected_p6_face_count"]
+                else "uniform_base_trace"
+            ),
             "hanging_or_floquet_slave_rows_globally_numbered": False,
             "pde_accuracy_credit": False,
             "ordinary_default_changed": False,

@@ -54,6 +54,21 @@ def _single_hanging():
     return forest, carrier
 
 
+def _nonhanging_face_key(authority) -> tuple[int, ...]:
+    hanging = {
+        row.entity_geometry_key
+        for relation in authority.hanging_relations
+        for row in (*relation.slave_rows, *relation.master_rows)
+        if row.entity_dimension == 2
+    }
+    return next(
+        entity.geometry_key
+        for entity in authority.entities
+        if entity.dimension == 2
+        and entity.geometry_key not in hanging
+    )
+
+
 @pytest.mark.parametrize(
     ("degree", "raw_rows", "slave_rows", "independent_rows", "authority_sha"),
     (
@@ -179,3 +194,117 @@ def test_unmirrored_periodic_refinement_fails_closed() -> None:
             phase_x=np.exp(0.2j),
             phase_y=np.exp(-0.3j),
         )
+
+
+def test_one_nonhanging_whole_face_can_recover_p6_rows() -> None:
+    forest, carrier = _single_hanging()
+    base = build_broken_hexa_trace_constraint_authority(
+        forest,
+        carrier,
+        degree=5,
+    )
+    selected = _nonhanging_face_key(base)
+    enriched = build_broken_hexa_trace_constraint_authority(
+        forest,
+        carrier,
+        degree=5,
+        selected_p6_face_geometry_keys=(selected,),
+    )
+
+    assert enriched.audit["pass"] is True
+    assert enriched.audit["trace_degree_values"] == [5, 6]
+    assert enriched.audit["selected_p6_face_count"] == 1
+    assert enriched.audit["selective_trace_full3d_dof_delta"] == 20
+    assert enriched.audit["raw_trace_rows"] == (
+        base.audit["raw_trace_rows"] + 20
+    )
+    assert enriched.audit["independent_trace_rows"] == (
+        base.audit["independent_trace_rows"] + 20
+    )
+    selected_entity = next(
+        entity
+        for entity in enriched.entities
+        if entity.dimension == 2
+        and entity.geometry_key == selected
+    )
+    assert selected_entity.degree == 6
+    assert len(selected_entity.rows) == 60
+    assert all(
+        entity.degree == 5
+        for entity in enriched.entities
+        if entity.dimension == 1
+    )
+    assert enriched.audit["physical_authority_sha256"] != (
+        base.audit["physical_authority_sha256"]
+    )
+
+
+def test_selective_p6_face_rejects_hanging_participant() -> None:
+    forest, carrier = _single_hanging()
+    base = build_broken_hexa_trace_constraint_authority(
+        forest,
+        carrier,
+        degree=5,
+    )
+    hanging = next(
+        row.entity_geometry_key
+        for relation in base.hanging_relations
+        for row in (*relation.slave_rows, *relation.master_rows)
+        if row.entity_dimension == 2
+    )
+    with pytest.raises(ValueError, match="hanging participant"):
+        build_broken_hexa_trace_constraint_authority(
+            forest,
+            carrier,
+            degree=5,
+            selected_p6_face_geometry_keys=(hanging,),
+        )
+
+
+def test_selective_p6_face_requires_complete_periodic_orbit() -> None:
+    forest = build_root_dyadic_hexa_forest(
+        _tensor_boxes(3, 1, 1),
+        [1, 1, 1],
+        periodic_axes=("x",),
+    )
+    carrier = build_broken_dyadic_hexa_carrier(
+        forest,
+        comm=MPI.COMM_WORLD,
+    )
+    base = build_broken_hexa_trace_constraint_authority(
+        forest,
+        carrier,
+        degree=5,
+        phase_x=np.exp(0.2j),
+    )
+    face_relation = next(
+        relation
+        for relation in base.periodic_relations
+        if relation.slave_rows[0].entity_dimension == 2
+    )
+    master = face_relation.master_rows[0].entity_geometry_key
+    slave = face_relation.slave_rows[0].entity_geometry_key
+    with pytest.raises(ValueError, match="complete periodic orbit"):
+        build_broken_hexa_trace_constraint_authority(
+            forest,
+            carrier,
+            degree=5,
+            phase_x=np.exp(0.2j),
+            selected_p6_face_geometry_keys=(slave,),
+        )
+
+    enriched = build_broken_hexa_trace_constraint_authority(
+        forest,
+        carrier,
+        degree=5,
+        phase_x=np.exp(0.2j),
+        selected_p6_face_geometry_keys=(master, slave),
+    )
+    assert enriched.audit["selected_p6_face_count"] == 2
+    assert enriched.audit["selective_trace_full3d_dof_delta"] == 40
+    assert enriched.audit["raw_trace_rows"] == (
+        base.audit["raw_trace_rows"] + 40
+    )
+    assert enriched.audit["independent_trace_rows"] == (
+        base.audit["independent_trace_rows"] + 20
+    )

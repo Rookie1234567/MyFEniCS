@@ -43,8 +43,34 @@ class PhysicalTraceEntity:
 
     dimension: int
     geometry_key: tuple[int, ...]
+    degree: int
     canonical_points: tuple[tuple[int, int, int], ...]
     rows: tuple[PhysicalTraceRowKey, ...]
+
+    def __post_init__(self) -> None:
+        dimension = int(self.dimension)
+        geometry_key = tuple(map(int, self.geometry_key))
+        degree = int(self.degree)
+        rows = tuple(self.rows)
+        if dimension not in {1, 2} or degree not in {4, 5, 6}:
+            raise ValueError("physical trace entity degree is invalid")
+        if len(rows) != _mode_count(dimension, degree):
+            raise ValueError(
+                "physical trace entity row count differs from its degree"
+            )
+        if any(
+            row.entity_dimension != dimension
+            or row.entity_geometry_key != geometry_key
+            or row.degree != degree
+            for row in rows
+        ):
+            raise ValueError(
+                "physical trace entity rows disagree with its identity"
+            )
+        object.__setattr__(self, "dimension", dimension)
+        object.__setattr__(self, "geometry_key", geometry_key)
+        object.__setattr__(self, "degree", degree)
+        object.__setattr__(self, "rows", rows)
 
 
 @dataclass(frozen=True)
@@ -56,6 +82,7 @@ class BrokenHexTraceConstraintAuthority:
     hanging_relations: tuple[LinearTraceRelation, ...]
     periodic_relations: tuple[LinearTraceRelation, ...]
     graph: FlattenedTraceConstraintMap
+    selected_p6_face_geometry_keys: tuple[tuple[int, ...], ...]
     audit: Mapping[str, Any]
 
 
@@ -174,6 +201,7 @@ def _entity_catalog(
     carrier: BrokenDyadicHexCarrier,
     *,
     degree: int,
+    selected_p6_face_geometry_keys: set[tuple[int, ...]],
     origin: np.ndarray,
     tolerance: float,
 ) -> tuple[PhysicalTraceEntity, ...]:
@@ -222,22 +250,208 @@ def _entity_catalog(
             raise RuntimeError(
                 "physical trace entity geometry has duplicate owners"
             )
+        entity_degree = (
+            6
+            if (
+                int(dimension) == 2
+                and identity[1] in selected_p6_face_geometry_keys
+            )
+            else degree
+        )
         rows = tuple(
             PhysicalTraceRowKey(
                 entity_dimension=int(dimension),
                 entity_geometry_key=identity[1],
-                degree=degree,
+                degree=entity_degree,
                 mode=mode,
             )
-            for mode in range(_mode_count(int(dimension), degree))
+            for mode in range(
+                _mode_count(int(dimension), entity_degree)
+            )
         )
         by_key[identity] = PhysicalTraceEntity(
             dimension=int(dimension),
             geometry_key=identity[1],
+            degree=entity_degree,
             canonical_points=tuple(canonical_points),
             rows=rows,
         )
     return tuple(sorted(by_key.values()))
+
+
+def _hanging_face_geometry_keys(
+    forest: BalancedDyadicHexForest,
+    *,
+    origin: np.ndarray,
+    tolerance: float,
+) -> set[tuple[int, ...]]:
+    cells = forest.leaf_by_key
+    result: set[tuple[int, ...]] = set()
+    for patch in forest.hanging_faces:
+        coarse = cells[patch.coarse]
+        coarse_key = _physical_face_key_from_box(
+            coarse.box,
+            axis=patch.axis,
+            side=patch.side,
+            origin=origin,
+            tolerance=tolerance,
+        )
+        result.add(coarse_key)
+        for fine_cell_key in patch.fine:
+            fine = cells[fine_cell_key]
+            plane = coarse_key[1]
+            lower_step = int(
+                round(
+                    (fine.box[patch.axis] - origin[patch.axis])
+                    / tolerance
+                )
+            )
+            upper_step = int(
+                round(
+                    (fine.box[patch.axis + 3] - origin[patch.axis])
+                    / tolerance
+                )
+            )
+            if lower_step == plane:
+                fine_side = 0
+            elif upper_step == plane:
+                fine_side = 1
+            else:
+                raise RuntimeError(
+                    "fine hanging cell misses its coarse physical plane"
+                )
+            result.add(
+                _physical_face_key_from_box(
+                    fine.box,
+                    axis=patch.axis,
+                    side=fine_side,
+                    origin=origin,
+                    tolerance=tolerance,
+                )
+            )
+    return result
+
+
+def _periodic_face_orbits(
+    entities: tuple[PhysicalTraceEntity, ...],
+    *,
+    axes: tuple[str, ...],
+    domain_steps: tuple[int, int, int],
+) -> tuple[tuple[tuple[int, ...], ...], ...]:
+    normalized_axes = tuple(dict.fromkeys(str(axis).lower() for axis in axes))
+    if any(axis not in {"x", "y"} for axis in normalized_axes):
+        raise ValueError("Task035d periodic trace graph supports x/y only")
+    axis_indices = {"x": 0, "y": 1}
+    faces = {
+        entity.geometry_key: entity
+        for entity in entities
+        if entity.dimension == 2
+    }
+    parent = {key: key for key in faces}
+
+    def find(key):
+        while parent[key] != key:
+            parent[key] = parent[parent[key]]
+            key = parent[key]
+        return key
+
+    def union(left, right):
+        left_root = find(left)
+        right_root = find(right)
+        if left_root != right_root:
+            parent[right_root] = left_root
+
+    for geometry_key, entity in faces.items():
+        for axis_name in normalized_axes:
+            axis = axis_indices[axis_name]
+            maximum = int(domain_steps[axis])
+            if not all(
+                point[axis] == maximum
+                for point in entity.canonical_points
+            ):
+                continue
+            translated = []
+            for point in entity.canonical_points:
+                values = list(point)
+                values[axis] -= maximum
+                translated.append(tuple(values))
+            master_key = _entity_geometry_key(
+                2,
+                tuple(translated),
+            )
+            if master_key not in faces:
+                raise RuntimeError(
+                    "periodic physical face has no translated master"
+                )
+            union(master_key, geometry_key)
+    groups: dict[tuple[int, ...], list[tuple[int, ...]]] = {}
+    for key in faces:
+        groups.setdefault(find(key), []).append(key)
+    return tuple(
+        tuple(sorted(group))
+        for group in sorted(groups.values(), key=lambda row: min(row))
+    )
+
+
+def build_broken_hexa_entity_degree_arrays(
+    forest: BalancedDyadicHexForest,
+    carrier: BrokenDyadicHexCarrier,
+    authority: BrokenHexTraceConstraintAuthority,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Bind physical entity degrees to local and ghost DOLFINx entities."""
+
+    if authority.audit["pass"] is not True:
+        raise ValueError("physical trace authority must pass")
+    if str(carrier.audit["leaf_catalog_sha256"]) != str(
+        forest.audit["leaf_catalog_sha256"]
+    ):
+        raise ValueError("forest and carrier leaf identities differ")
+    bounds = forest.domain_bounds
+    origin = np.asarray(bounds[:3], dtype=np.float64)
+    extent = np.asarray(
+        [bounds[axis + 3] - bounds[axis] for axis in range(3)],
+        dtype=np.float64,
+    )
+    tolerance = max(float(np.max(extent)), 1.0) * 1.0e-11
+    by_identity = {
+        (entity.dimension, entity.geometry_key): entity
+        for entity in authority.entities
+    }
+    arrays: dict[int, np.ndarray] = {}
+    for dimension in (1, 2):
+        topology = carrier.mesh.topology
+        topology.create_entities(dimension)
+        index_map = topology.index_map(dimension)
+        local_count = int(index_map.size_local + index_map.num_ghosts)
+        entities = np.arange(local_count, dtype=np.int32)
+        geometry = mesh.entities_to_geometry(
+            carrier.mesh,
+            dimension,
+            entities,
+            permute=True,
+        )
+        values = np.empty(local_count, dtype=np.int32)
+        for local_entity, dofs in enumerate(geometry):
+            points = tuple(
+                _quantize_point(
+                    point,
+                    origin=origin,
+                    tolerance=tolerance,
+                )
+                for point in carrier.mesh.geometry.x[
+                    np.asarray(dofs),
+                    :3,
+                ]
+            )
+            key = _entity_geometry_key(dimension, points)
+            physical = by_identity.get((dimension, key))
+            if physical is None:
+                raise RuntimeError(
+                    "DOLFINx entity has no physical degree authority"
+                )
+            values[local_entity] = int(physical.degree)
+        arrays[dimension] = values
+    return arrays[1], arrays[2]
 
 
 def _face_full_rows(
@@ -530,6 +744,7 @@ def build_broken_hexa_trace_constraint_authority(
     periodic_axes: tuple[str, ...] | None = None,
     phase_x: complex = 1.0 + 0.0j,
     phase_y: complex = 1.0 + 0.0j,
+    selected_p6_face_geometry_keys: tuple[tuple[int, ...], ...] = (),
 ) -> BrokenHexTraceConstraintAuthority:
     """Build actual physical hanging/Floquet relations and flatten them."""
 
@@ -542,6 +757,17 @@ def build_broken_hexa_trace_constraint_authority(
         forest.audit["leaf_catalog_sha256"]
     ):
         raise ValueError("carrier and forest leaf identities differ")
+    selected_rows = tuple(
+        tuple(map(int, geometry_key))
+        for geometry_key in selected_p6_face_geometry_keys
+    )
+    if len(set(selected_rows)) != len(selected_rows):
+        raise ValueError("selected p6 physical face keys are duplicated")
+    selected = set(selected_rows)
+    if selected and degree != 5:
+        raise ValueError(
+            "selective whole-face p6 recovery requires a p5 trace base"
+        )
     bounds = forest.domain_bounds
     origin = np.asarray(bounds[:3], dtype=np.float64)
     extent = np.asarray(
@@ -555,8 +781,56 @@ def build_broken_hexa_trace_constraint_authority(
     entities = _entity_catalog(
         carrier,
         degree=degree,
+        selected_p6_face_geometry_keys=selected,
         origin=origin,
         tolerance=tolerance,
+    )
+    physical_face_keys = {
+        entity.geometry_key
+        for entity in entities
+        if entity.dimension == 2
+    }
+    unknown_selected = selected - physical_face_keys
+    if unknown_selected:
+        raise ValueError(
+            "selected p6 face keys are absent from the carrier: "
+            f"{sorted(unknown_selected)[:2]}"
+        )
+    hanging_face_keys = _hanging_face_geometry_keys(
+        forest,
+        origin=origin,
+        tolerance=tolerance,
+    )
+    selected_hanging = selected & hanging_face_keys
+    if selected_hanging:
+        raise ValueError(
+            "selective p6 face recovery does not support a hanging "
+            f"participant: {sorted(selected_hanging)[:2]}"
+        )
+    axes = (
+        tuple(forest.periodic_axes)
+        if periodic_axes is None
+        else tuple(periodic_axes)
+    )
+    periodic_face_orbits = _periodic_face_orbits(
+        entities,
+        axes=axes,
+        domain_steps=domain_steps,
+    )
+    partial_orbits = [
+        orbit
+        for orbit in periodic_face_orbits
+        if 0 < len(selected.intersection(orbit)) < len(orbit)
+    ]
+    if partial_orbits:
+        raise ValueError(
+            "selected p6 faces do not contain a complete periodic orbit: "
+            f"{partial_orbits[:1]}"
+        )
+    selected_periodic_orbits = tuple(
+        orbit
+        for orbit in periodic_face_orbits
+        if len(orbit) > 1 and set(orbit).issubset(selected)
     )
     entity_map = MappingProxyType(
         {
@@ -580,11 +854,6 @@ def build_broken_hexa_trace_constraint_authority(
         if relation.primary
         for row in relation.slave_rows
     }
-    axes = (
-        tuple(forest.periodic_axes)
-        if periodic_axes is None
-        else tuple(periodic_axes)
-    )
     periodic, cycle_error = _build_periodic_relations(
         entities,
         axes=axes,
@@ -647,6 +916,20 @@ def build_broken_hexa_trace_constraint_authority(
             is False
         ),
         "mpi_physical_authority_identity": len(set(sha_packets)) == 1,
+        "selected_p6_faces_exist": not unknown_selected,
+        "selected_p6_faces_are_not_hanging": not selected_hanging,
+        "selected_p6_faces_close_periodic_orbits": not partial_orbits,
+        "all_edges_remain_at_base_degree": all(
+            entity.degree == degree
+            for entity in entities
+            if entity.dimension == 1
+        ),
+        "only_selected_faces_use_p6": all(
+            entity.degree
+            == (6 if entity.geometry_key in selected else degree)
+            for entity in entities
+            if entity.dimension == 2
+        ),
     }
     failures = [name for name, passed in checks.items() if not passed]
     if failures:
@@ -660,6 +943,9 @@ def build_broken_hexa_trace_constraint_authority(
             "pass": True,
             "mpi_size": int(carrier.mesh.comm.size),
             "degree": degree,
+            "trace_degree_values": sorted(
+                {entity.degree for entity in entities}
+            ),
             "periodic_axes": list(axes),
             "phase_x": [float(np.real(phase_x)), float(np.imag(phase_x))],
             "phase_y": [float(np.real(phase_y)), float(np.imag(phase_y))],
@@ -669,6 +955,21 @@ def build_broken_hexa_trace_constraint_authority(
             "physical_face_count": sum(
                 entity.dimension == 2 for entity in entities
             ),
+            "selected_p6_face_count": len(selected),
+            "selected_p6_face_geometry_keys": [
+                list(key) for key in sorted(selected)
+            ],
+            "selected_p6_periodic_orbit_count": len(
+                selected_periodic_orbits
+            ),
+            "selected_p6_periodic_orbits": [
+                [list(key) for key in orbit]
+                for orbit in selected_periodic_orbits
+            ],
+            "hanging_face_participant_count": len(
+                hanging_face_keys
+            ),
+            "selective_trace_full3d_dof_delta": 20 * len(selected),
             "raw_trace_rows": len(raw_rows),
             "hanging_relation_count": len(hanging),
             "hanging_patch_count": len(forest.hanging_faces),
@@ -719,6 +1020,7 @@ def build_broken_hexa_trace_constraint_authority(
         hanging_relations=hanging,
         periodic_relations=periodic,
         graph=graph,
+        selected_p6_face_geometry_keys=tuple(sorted(selected)),
         audit=audit,
     )
 
@@ -726,5 +1028,6 @@ def build_broken_hexa_trace_constraint_authority(
 __all__ = [
     "BrokenHexTraceConstraintAuthority",
     "PhysicalTraceEntity",
+    "build_broken_hexa_entity_degree_arrays",
     "build_broken_hexa_trace_constraint_authority",
 ]
