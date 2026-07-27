@@ -80,6 +80,8 @@ def _passing_fixture(authority: dict) -> dict:
         {
             "canonical_leaf": leaf,
             "complex_pairing": [0.0, 0.0],
+            "signed_real_contribution": 0.0,
+            "normalized_absolute_contribution": 0.0,
         }
         for leaf in range(134)
     ]
@@ -90,6 +92,7 @@ def _passing_fixture(authority: dict) -> dict:
             "value_a": 0.0,
             "value_b": 0.0,
             "actual_goal_delta_a_minus_b": 0.0,
+            "unchanged_v0_absolute_tolerance": 1.0,
             "signed_dwr_estimate": 0.0,
             "signed_goal_closure_error": 0.0,
             "goal_closure_limit": (
@@ -135,6 +138,35 @@ def _passing_fixture(authority: dict) -> dict:
         }
         for leaf in range(134)
     ]
+    ranked_cells = []
+    for leaf in range(134):
+        if leaf < 32:
+            pair = leaf // 2
+            y0 = 0.0 if leaf % 2 == 0 else 12.5
+            box = [
+                0.0,
+                y0,
+                float(pair),
+                1.0,
+                y0 + 12.5,
+                float(pair + 1),
+            ]
+        else:
+            box = [
+                2.0,
+                0.0,
+                float(leaf),
+                3.0,
+                25.0,
+                float(leaf + 1),
+            ]
+        ranked_cells.append(
+            {
+                "canonical_leaf": leaf,
+                "box": box,
+                "interior_degree_changed": leaf < 32,
+            }
+        )
     port_a = _port_audit()
     port_b = deepcopy(port_a)
     return {
@@ -183,6 +215,9 @@ def _passing_fixture(authority: dict) -> dict:
             "dense_schur_persisted": False,
             "records": cell_records,
         },
+        "cell_multigoal_marking": {
+            "ranked_cells": ranked_cells,
+        },
         "unit_channel_adjoint_basis": {
             "pass": True,
             "channels": basis_channels,
@@ -199,9 +234,15 @@ def test_checker_recomputes_passing_raw_evidence() -> None:
     authority = json.loads(AUTHORITY_PATH.read_text(encoding="utf-8"))
     report = _passing_fixture(authority)
     gate = task035d_nested_p_dwr_report_gate(report, authority)
+    assert gate["schema_version"] == "task035d.nested-p-dwr-checker.v2"
+    assert gate["contract_revision"] == "periodic-absolute-budget-v1"
     assert gate["pass"] is True
     assert gate["recomputed_channel_count"] == 12
     assert gate["recomputed_goal_count"] == 36
+    action = gate["periodic_p_down_action_audit"]
+    assert action["pass"] is True
+    assert action["heavy_pde_authorized"] is True
+    assert action["eligible_pair_counts_by_budget"]["0.25"] == 16
 
 
 def test_checker_rejects_stored_pass_with_bad_closure_or_inventory() -> None:
@@ -291,3 +332,15 @@ def test_checker_recomputes_all_numeric_limits() -> None:
         "port_identity_recomputed"
         in joint_rhs_gate["failures"]
     )
+
+
+def test_checker_rejects_tampered_periodic_action_budget() -> None:
+    authority = json.loads(AUTHORITY_PATH.read_text(encoding="utf-8"))
+    report = _passing_fixture(authority)
+    first_label = next(iter(report["goal_dwr"]["goals"]))
+    report["goal_dwr"]["goals"][first_label]["cell_contributions"][0][
+        "normalized_absolute_contribution"
+    ] = 1.0
+    gate = task035d_nested_p_dwr_report_gate(report, authority)
+    assert gate["pass"] is False
+    assert "periodic_p_down_action_audit" in gate["failures"]

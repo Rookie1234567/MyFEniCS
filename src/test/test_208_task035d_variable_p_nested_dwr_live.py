@@ -862,6 +862,8 @@ def test_serial_live_snapshot_and_36_goal_dwr_roundtrip(
                 {
                     "canonical_leaf": leaf,
                     "complex_pairing": [0.0, 0.0],
+                    "signed_real_contribution": 0.0,
+                    "normalized_absolute_contribution": 0.0,
                 }
                 for leaf in range(1, 134)
             )
@@ -882,6 +884,34 @@ def test_serial_live_snapshot_and_36_goal_dwr_roundtrip(
         formalized_payload["cell_residuals"][
             "interior_degree_changed_cell_count"
         ] = 32
+        formalized_payload["cell_multigoal_marking"][
+            "ranked_cells"
+        ] = [
+            {
+                "canonical_leaf": leaf,
+                "box": (
+                    [
+                        0.0,
+                        0.0 if leaf % 2 == 0 else 12.5,
+                        float(leaf // 2),
+                        1.0,
+                        12.5 if leaf % 2 == 0 else 25.0,
+                        float(leaf // 2 + 1),
+                    ]
+                    if leaf < 32
+                    else [
+                        2.0,
+                        0.0,
+                        float(leaf),
+                        3.0,
+                        25.0,
+                        float(leaf + 1),
+                    ]
+                ),
+                "interior_degree_changed": leaf < 32,
+            }
+            for leaf in range(134)
+        ]
         independent_gate = task035d_nested_p_dwr_report_gate(
             formalized_payload,
             live_dwr.json.loads(

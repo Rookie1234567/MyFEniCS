@@ -3,10 +3,31 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
 from typing import Any, Mapping
+
+
+_PERIODIC_P_DOWN_BUDGET_THRESHOLDS = (
+    0.1,
+    0.25,
+    0.5,
+    1.0,
+    2.0,
+    5.0,
+    10.0,
+)
+_CONSERVATIVE_PERIODIC_P_DOWN_BUDGET = 0.25
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def _number(value: Any) -> float | None:
@@ -458,6 +479,237 @@ def _residual_partition_pass(partition: Any) -> bool:
     )
 
 
+def _periodic_p_down_action_audit(
+    report: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Recompute absolute multi-goal budgets for y-periodic cell pairs."""
+
+    failures: list[str] = []
+    cell_block = report.get("cell_residuals")
+    cell_block = cell_block if isinstance(cell_block, dict) else {}
+    cell_records = cell_block.get("records")
+    cell_records = cell_records if isinstance(cell_records, list) else []
+    changed_leaves = {
+        int(row["canonical_leaf"])
+        for row in cell_records
+        if (
+            isinstance(row, dict)
+            and isinstance(row.get("canonical_leaf"), int)
+            and row.get("interior_degree_changed") is True
+        )
+    }
+    marking = report.get("cell_multigoal_marking")
+    marking = marking if isinstance(marking, dict) else {}
+    ranked = marking.get("ranked_cells")
+    ranked = ranked if isinstance(ranked, list) else []
+    rows_by_leaf: dict[int, dict[str, Any]] = {}
+    groups: dict[tuple[float, float, float, float], list[int]] = {}
+    for raw in ranked:
+        if not isinstance(raw, dict) or not isinstance(
+            raw.get("canonical_leaf"), int
+        ):
+            failures.append("ranked_cell_identity")
+            continue
+        leaf = int(raw["canonical_leaf"])
+        box = raw.get("box")
+        if (
+            leaf in rows_by_leaf
+            or not isinstance(box, list)
+            or len(box) != 6
+            or any(_number(value) is None for value in box)
+        ):
+            failures.append("ranked_cell_box")
+            continue
+        rows_by_leaf[leaf] = raw
+        if leaf not in changed_leaves:
+            continue
+        values = tuple(float(value) for value in box)
+        key = (values[0], values[2], values[3], values[5])
+        groups.setdefault(key, []).append(leaf)
+    if set(rows_by_leaf) != set(range(134)):
+        failures.append("ranked_cell_coverage")
+    if len(changed_leaves) != 32 or len(groups) != 16:
+        failures.append("changed_periodic_pair_inventory")
+
+    goal_dwr = report.get("goal_dwr")
+    goal_dwr = goal_dwr if isinstance(goal_dwr, dict) else {}
+    goals = goal_dwr.get("goals")
+    goals = goals if isinstance(goals, dict) else {}
+    normalized_by_goal: dict[str, dict[int, float]] = {}
+    endpoint_ratios: list[dict[str, Any]] = []
+    for label, raw_goal in goals.items():
+        if not isinstance(label, str) or not isinstance(raw_goal, dict):
+            failures.append("goal_action_identity")
+            continue
+        tolerance = _number(
+            raw_goal.get("unchanged_v0_absolute_tolerance")
+        )
+        actual_delta = _number(
+            raw_goal.get("actual_goal_delta_a_minus_b")
+        )
+        contributions = raw_goal.get("cell_contributions")
+        if (
+            tolerance is None
+            or tolerance <= 0.0
+            or actual_delta is None
+            or not isinstance(contributions, list)
+        ):
+            failures.append(f"goal_action_payload:{label}")
+            continue
+        by_leaf: dict[int, float] = {}
+        for raw_cell in contributions:
+            if not isinstance(raw_cell, dict) or not isinstance(
+                raw_cell.get("canonical_leaf"), int
+            ):
+                failures.append(f"goal_action_cell_identity:{label}")
+                continue
+            leaf = int(raw_cell["canonical_leaf"])
+            signed = _number(raw_cell.get("signed_real_contribution"))
+            stored = _number(
+                raw_cell.get("normalized_absolute_contribution")
+            )
+            if (
+                leaf in by_leaf
+                or signed is None
+                or stored is None
+                or stored < 0.0
+                or not _roundoff_equal(
+                    stored,
+                    abs(signed) / tolerance,
+                )
+            ):
+                failures.append(f"goal_action_cell_value:{label}")
+                continue
+            by_leaf[leaf] = stored
+        if set(by_leaf) != set(range(134)):
+            failures.append(f"goal_action_cell_coverage:{label}")
+            continue
+        normalized_by_goal[label] = by_leaf
+        endpoint_ratios.append(
+            {
+                "goal": label,
+                "absolute_delta_over_tolerance": (
+                    abs(actual_delta) / tolerance
+                ),
+            }
+        )
+    if len(normalized_by_goal) != 36:
+        failures.append("goal_action_inventory")
+
+    pair_rows: list[dict[str, Any]] = []
+    for key, leaves in groups.items():
+        ordered = sorted(
+            leaves,
+            key=lambda leaf: float(rows_by_leaf[leaf]["box"][1]),
+        )
+        intervals = [
+            (
+                float(rows_by_leaf[leaf]["box"][1]),
+                float(rows_by_leaf[leaf]["box"][4]),
+            )
+            for leaf in ordered
+        ]
+        if (
+            len(ordered) != 2
+            or intervals != [(0.0, 12.5), (12.5, 25.0)]
+            or any(
+                rows_by_leaf[leaf].get("interior_degree_changed")
+                is not True
+                for leaf in ordered
+            )
+        ):
+            failures.append("periodic_pair_geometry")
+            continue
+        budgets = {
+            label: sum(by_leaf[leaf] for leaf in ordered)
+            for label, by_leaf in normalized_by_goal.items()
+        }
+        if not budgets:
+            failures.append("periodic_pair_goal_budget")
+            continue
+        limiting_goal = max(budgets, key=budgets.get)
+        maximum = budgets[limiting_goal]
+        pair_rows.append(
+            {
+                "periodic_pair": ordered,
+                "x_z_box": list(key),
+                "limiting_goal": limiting_goal,
+                "maximum_absolute_goal_budget": maximum,
+                "eligible_at_conservative_budget": (
+                    maximum
+                    <= _CONSERVATIVE_PERIODIC_P_DOWN_BUDGET
+                ),
+            }
+        )
+    pair_rows.sort(
+        key=lambda row: (
+            float(row["maximum_absolute_goal_budget"]),
+            row["periodic_pair"],
+        )
+    )
+    endpoint_ratios.sort(
+        key=lambda row: (
+            -float(row["absolute_delta_over_tolerance"]),
+            str(row["goal"]),
+        )
+    )
+    eligible_counts = {
+        str(threshold): sum(
+            float(row["maximum_absolute_goal_budget"]) <= threshold
+            for row in pair_rows
+        )
+        for threshold in _PERIODIC_P_DOWN_BUDGET_THRESHOLDS
+    }
+    checks = {
+        "ranked_cell_coverage": set(rows_by_leaf) == set(range(134)),
+        "changed_cell_count": len(changed_leaves) == 32,
+        "periodic_pair_count": len(pair_rows) == 16,
+        "goal_count": len(normalized_by_goal) == 36,
+        "all_pair_rows_complete": (
+            len(pair_rows) == 16
+            and all(
+                len(row["periodic_pair"]) == 2 for row in pair_rows
+            )
+        ),
+    }
+    failures.extend(
+        name for name, passed in checks.items() if not passed
+    )
+    failures = list(dict.fromkeys(failures))
+    conservative_eligible = eligible_counts[
+        str(_CONSERVATIVE_PERIODIC_P_DOWN_BUDGET)
+    ]
+    return {
+        "schema_version": "task035d.periodic-p-down-action-audit.v1",
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "absolute_budget_semantics": (
+            "sum over both y-periodic cells of "
+            "abs(signed cell DWR contribution) divided by each frozen "
+            "unchanged-v0 goal tolerance; signed cancellation is forbidden"
+        ),
+        "conservative_per_goal_budget": (
+            _CONSERVATIVE_PERIODIC_P_DOWN_BUDGET
+        ),
+        "eligible_pair_counts_by_budget": eligible_counts,
+        "periodic_pairs": pair_rows,
+        "endpoint_goal_count_over_one_tolerance": sum(
+            float(row["absolute_delta_over_tolerance"]) > 1.0
+            for row in endpoint_ratios
+        ),
+        "maximum_endpoint_delta": (
+            endpoint_ratios[0] if endpoint_ratios else None
+        ),
+        "decision": (
+            "p_down_candidate_available"
+            if conservative_eligible
+            else "controlled_stop_remote_p5_interior_no_safe_periodic_pair"
+        ),
+        "heavy_pde_authorized": conservative_eligible > 0,
+    }
+
+
 def task035d_nested_p_dwr_report_gate(
     report: Mapping[str, Any],
     significant_channel_authority: Mapping[str, Any],
@@ -516,6 +768,7 @@ def task035d_nested_p_dwr_report_gate(
         if isinstance(primal, dict)
         else None
     )
+    action_audit = _periodic_p_down_action_audit(report)
     channel_residuals_pass = bool(
         set(basis_channels) == expected_channels
         and all(
@@ -610,10 +863,12 @@ def task035d_nested_p_dwr_report_gate(
             )
             is True
         ),
+        "periodic_p_down_action_audit": action_audit["pass"] is True,
     }
     failures = [name for name, passed in checks.items() if not passed]
     return {
-        "schema_version": "task035d.nested-p-dwr-checker.v1",
+        "schema_version": "task035d.nested-p-dwr-checker.v2",
+        "contract_revision": "periodic-absolute-budget-v1",
         "pass": not failures,
         "checks": checks,
         "failures": failures,
@@ -625,6 +880,7 @@ def task035d_nested_p_dwr_report_gate(
             if isinstance(goal_dwr, dict)
             else None
         ),
+        "periodic_p_down_action_audit": action_audit,
     }
 
 
@@ -639,6 +895,16 @@ def main() -> int:
         args.significant_channel_authority.read_text(encoding="utf-8")
     )
     gate = task035d_nested_p_dwr_report_gate(report, authority)
+    gate["input_authorities"] = {
+        "report": {
+            "path": str(args.report),
+            "sha256": _sha256(args.report),
+        },
+        "significant_channel_authority": {
+            "path": str(args.significant_channel_authority),
+            "sha256": _sha256(args.significant_channel_authority),
+        },
+    }
     encoded = json.dumps(gate, indent=2, sort_keys=True) + "\n"
     if args.output is None:
         print(encoded, end="")

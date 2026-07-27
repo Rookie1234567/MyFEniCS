@@ -1,0 +1,307 @@
+{
+  "checks": {
+    "all_goal_closures_recomputed": true,
+    "authority_schema": true,
+    "cell_inventory_recomputed": true,
+    "frozen_goal_set_complete": true,
+    "goal_inventory_exact": true,
+    "not_controlled_negative": true,
+    "periodic_p_down_action_audit": true,
+    "port_identity_recomputed": true,
+    "primal_residuals_recomputed": true,
+    "report_schema": true,
+    "residual_partition_recomputed": true,
+    "scaled_goal_residuals_recomputed": true,
+    "unit_channel_residuals_recomputed": true
+  },
+  "contract_revision": "periodic-absolute-budget-v1",
+  "failures": [],
+  "input_authorities": {
+    "report": {
+      "path": "benchmarks/artifacts/task035d/case097/nested_p_h15_v1/p6_h15_pols_full-solve_mpi8_20260727T074713Z/nested_p_dwr_report.json",
+      "sha256": "86d8e4826cb7310956edd6be551504cf1399d263e64543695fdab8dc97936eba"
+    },
+    "significant_channel_authority": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json",
+      "sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3"
+    }
+  },
+  "pass": true,
+  "periodic_p_down_action_audit": {
+    "absolute_budget_semantics": "sum over both y-periodic cells of abs(signed cell DWR contribution) divided by each frozen unchanged-v0 goal tolerance; signed cancellation is forbidden",
+    "checks": {
+      "all_pair_rows_complete": true,
+      "changed_cell_count": true,
+      "goal_count": true,
+      "periodic_pair_count": true,
+      "ranked_cell_coverage": true
+    },
+    "conservative_per_goal_budget": 0.25,
+    "decision": "controlled_stop_remote_p5_interior_no_safe_periodic_pair",
+    "eligible_pair_counts_by_budget": {
+      "0.1": 0,
+      "0.25": 0,
+      "0.5": 0,
+      "1.0": 0,
+      "10.0": 0,
+      "2.0": 0,
+      "5.0": 0
+    },
+    "endpoint_goal_count_over_one_tolerance": 17,
+    "failures": [],
+    "heavy_pde_authorized": false,
+    "maximum_endpoint_delta": {
+      "absolute_delta_over_tolerance": 46.31627418045114,
+      "goal": "T_m-7_n0_s_power"
+    },
+    "pass": true,
+    "periodic_pairs": [
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-4_n0_s_power",
+        "maximum_absolute_goal_budget": 18.246127886846473,
+        "periodic_pair": [
+          65,
+          71
+        ],
+        "x_z_box": [
+          41.75,
+          60.0,
+          50.0,
+          75.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-4_n0_s_power",
+        "maximum_absolute_goal_budget": 24.060530444719795,
+        "periodic_pair": [
+          12,
+          18
+        ],
+        "x_z_box": [
+          0.0,
+          0.0,
+          8.25,
+          15.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "R_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 25.67752332714253,
+        "periodic_pair": [
+          96,
+          102
+        ],
+        "x_z_box": [
+          0.0,
+          105.0,
+          8.25,
+          120.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 26.08079042765904,
+        "periodic_pair": [
+          36,
+          42
+        ],
+        "x_z_box": [
+          0.0,
+          30.0,
+          8.25,
+          45.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 26.16924427866715,
+        "periodic_pair": [
+          72,
+          78
+        ],
+        "x_z_box": [
+          0.0,
+          75.0,
+          8.25,
+          90.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "R_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 26.170112293670464,
+        "periodic_pair": [
+          89,
+          95
+        ],
+        "x_z_box": [
+          41.75,
+          90.0,
+          50.0,
+          105.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-4_n0_s_power",
+        "maximum_absolute_goal_budget": 30.91476385710797,
+        "periodic_pair": [
+          41,
+          47
+        ],
+        "x_z_box": [
+          41.75,
+          30.0,
+          50.0,
+          45.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 39.20765441074495,
+        "periodic_pair": [
+          17,
+          23
+        ],
+        "x_z_box": [
+          41.75,
+          0.0,
+          50.0,
+          15.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 41.26084002512286,
+        "periodic_pair": [
+          48,
+          54
+        ],
+        "x_z_box": [
+          0.0,
+          45.0,
+          8.25,
+          60.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 41.57660982450045,
+        "periodic_pair": [
+          29,
+          35
+        ],
+        "x_z_box": [
+          41.75,
+          15.0,
+          50.0,
+          30.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 42.59759144619015,
+        "periodic_pair": [
+          60,
+          66
+        ],
+        "x_z_box": [
+          0.0,
+          60.0,
+          8.25,
+          75.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 49.14116489879151,
+        "periodic_pair": [
+          24,
+          30
+        ],
+        "x_z_box": [
+          0.0,
+          15.0,
+          8.25,
+          30.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 50.59076127362965,
+        "periodic_pair": [
+          101,
+          107
+        ],
+        "x_z_box": [
+          41.75,
+          105.0,
+          50.0,
+          120.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 52.73954485599339,
+        "periodic_pair": [
+          53,
+          59
+        ],
+        "x_z_box": [
+          41.75,
+          45.0,
+          50.0,
+          60.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 54.76606610487089,
+        "periodic_pair": [
+          84,
+          90
+        ],
+        "x_z_box": [
+          0.0,
+          90.0,
+          8.25,
+          105.0
+        ]
+      },
+      {
+        "eligible_at_conservative_budget": false,
+        "limiting_goal": "T_m-7_n0_s_power",
+        "maximum_absolute_goal_budget": 55.78296139357987,
+        "periodic_pair": [
+          77,
+          83
+        ],
+        "x_z_box": [
+          41.75,
+          75.0,
+          50.0,
+          90.0
+        ]
+      }
+    ],
+    "schema_version": "task035d.periodic-p-down-action-audit.v1"
+  },
+  "recomputed_channel_count": 12,
+  "recomputed_goal_count": 36,
+  "schema_version": "task035d.nested-p-dwr-checker.v2",
+  "stored_goal_pass": true,
+  "stored_top_level_pass": true
+}

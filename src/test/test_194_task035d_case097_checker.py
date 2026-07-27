@@ -20,6 +20,7 @@ from benchmarks.task035d_case097_checker import (
     _load_frozen_authorities,
     _resource_comparison,
     _timeline_resource_metrics,
+    compact_task035d_case097_candidate_check,
     evaluate_task035d_case097_candidate,
     main,
 )
@@ -1031,6 +1032,99 @@ class Task035dCase097CheckerTests(unittest.TestCase):
                 "fail_closed_evidence_error",
             )
             self.assertEqual(result["failures"], ["evidence_integrity"])
+
+    def test_compact_result_preserves_every_acceptance_gate(self) -> None:
+        result = {
+            "status": "controlled_negative",
+            "classification": "controlled_negative",
+            "candidate_id": TASK035D_LOCAL_H_PLAN_NAME,
+            "pass": False,
+            "checks": {"channels": False, "resources": True},
+            "failures": ["channels"],
+            "accuracy_credit": "none_controlled_negative_preserved",
+            "source_sha": "a" * 40,
+            "checker_source": {"commit_sha": "b" * 40},
+            "candidate_watchdog": {"sha256": "c" * 64},
+            "raw_artifacts": {"solver_summary": {"sha256": "d" * 64}},
+            "frozen_authorities": {"reference": {"sha256": "e" * 64}},
+            "launch_gate": {
+                "schema_version": "launch.v1",
+                "status": "pass",
+                "pass": True,
+                "plan_identity": {"name": "candidate"},
+                "selection_credit": {"actual_channel_dwr": False},
+            },
+            "solver_gate": {"pass": True, "failures": []},
+            "watchdog_checker_requalification": {
+                "checker_contract_false_negative": True,
+            },
+            "channel_comparison": {"pass": False, "channels": []},
+            "observable_comparison": {"pass": True},
+            "energy_comparison": {"pass": True},
+            "field_comparison": {
+                "schema_version": "field.v1",
+                "status": "pass",
+                "method": "frozen probes",
+                "no_native_point_intersection": True,
+                "no_probe_dropping": True,
+                "no_threshold_relaxation": True,
+                "relative_l2_floor": 1.0e-12,
+                "maximum_pointwise_floor": 1.0e-12,
+                "selections": {
+                    name: {
+                        "probe_count": 1,
+                        "probe_sha256": "f" * 64,
+                        "region_counts": {"region": 1},
+                        "global_p5_vs_p6_weighted_relative_l2": 0.1,
+                        "candidate_vs_p6_weighted_relative_l2": 0.05,
+                        "same_code_p5p6_weighted_relative_l2_tolerance": 0.1,
+                        "global_p5_vs_p6_max_pointwise_absolute_error": 0.2,
+                        "candidate_vs_p6_max_pointwise_absolute_error": 0.1,
+                        "same_code_p5p6_max_pointwise_tolerance": 0.2,
+                        "weighted_relative_l2_pass": True,
+                        "maximum_pointwise_pass": True,
+                        "pass": True,
+                    }
+                    for name in ("volume", "interface")
+                },
+                "pass": True,
+            },
+            "resource_comparison": {
+                "schema_version": "resource.v1",
+                "candidate_id": TASK035D_LOCAL_H_PLAN_NAME,
+                "baseline": {"active_rows": 10},
+                "candidate": {"active_rows": 5},
+                "savings": {"active_rows_fraction": 0.5},
+                "mandatory_peak_limit_gib": 10.0,
+                "preferred_peak_limit_gib": 8.0,
+                "preferred_peak_reduction_ge_40_percent": True,
+                "checks": {"active_rows_decrease": True},
+                "pass": True,
+                "timeline_reconstruction": {
+                    "sample_count": 1,
+                    "memory_authority_gib": 1.0,
+                    "zero_swap": True,
+                },
+            },
+            "ordinary_default_changed": False,
+        }
+        compact = compact_task035d_case097_candidate_check(result)
+        self.assertFalse(compact["pass"])
+        self.assertEqual(compact["checks"], result["checks"])
+        self.assertEqual(compact["failures"], ["channels"])
+        self.assertEqual(
+            compact["channel_comparison"],
+            result["channel_comparison"],
+        )
+        self.assertTrue(
+            compact["resource_comparison"]["checks"][
+                "active_rows_decrease"
+            ]
+        )
+        self.assertNotIn(
+            "sampling_authorities",
+            compact["field_comparison"]["selections"]["volume"],
+        )
 
 
 if __name__ == "__main__":

@@ -1739,6 +1739,24 @@ def build_task035d_case097_candidate_check(
         resource_comparison=resource_comparison,
         candidate_id=candidate_id,
     )
+    original_qualification = _mapping(
+        watchdog.get("qualification"),
+        "candidate watchdog qualification",
+    )
+    original_false_checks = sorted(
+        str(name)
+        for name, passed in _mapping(
+            original_qualification.get("checks"),
+            "candidate watchdog qualification checks",
+        ).items()
+        if passed is not True
+    )
+    checker_contract_false_negative = bool(
+        candidate_id == TASK035D_LOCAL_H_PLAN_NAME
+        and original_false_checks
+        == ["task035d_solver_local_h_backend_actual"]
+        and solver_gate.get("pass") is True
+    )
     result.update(
         {
             "benchmark_id": spec["benchmark_id"],
@@ -1754,6 +1772,24 @@ def build_task035d_case097_candidate_check(
             "launch_gate": launch_gate,
             "candidate_launch_contract": candidate["launch_contract"],
             "solver_gate": solver_gate,
+            "watchdog_checker_requalification": {
+                "schema_version": (
+                    "task035d.watchdog-checker-requalification.v1"
+                ),
+                "original_watchdog_pass": (
+                    original_qualification.get("pass")
+                ),
+                "original_false_checks": original_false_checks,
+                "current_solver_gate_pass": solver_gate.get("pass"),
+                "current_solver_gate_failures": solver_gate.get(
+                    "failures"
+                ),
+                "checker_contract_false_negative": (
+                    checker_contract_false_negative
+                ),
+                "numerical_kernel_rerun_required": False,
+                "candidate_physical_status_is_not_changed": True,
+            },
             "accuracy_credit": (
                 spec["pass_accuracy_credit"]
                 if result["pass"]
@@ -1762,6 +1798,142 @@ def build_task035d_case097_candidate_check(
         }
     )
     return result
+
+
+def compact_task035d_case097_candidate_check(
+    result: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Trim a full candidate check without removing any acceptance Gate."""
+
+    field = _mapping(
+        result.get("field_comparison"),
+        "candidate field comparison",
+    )
+    selections = _mapping(
+        field.get("selections"),
+        "candidate field selections",
+    )
+    compact_selections: dict[str, Any] = {}
+    for name in ("volume", "interface"):
+        row = _mapping(
+            selections.get(name),
+            f"candidate field selection {name}",
+        )
+        compact_selections[name] = {
+            key: row.get(key)
+            for key in (
+                "probe_count",
+                "probe_sha256",
+                "region_counts",
+                "global_p5_vs_p6_weighted_relative_l2",
+                "candidate_vs_p6_weighted_relative_l2",
+                "same_code_p5p6_weighted_relative_l2_tolerance",
+                "global_p5_vs_p6_max_pointwise_absolute_error",
+                "candidate_vs_p6_max_pointwise_absolute_error",
+                "same_code_p5p6_max_pointwise_tolerance",
+                "weighted_relative_l2_pass",
+                "maximum_pointwise_pass",
+                "pass",
+            )
+        }
+    resource = _mapping(
+        result.get("resource_comparison"),
+        "candidate resource comparison",
+    )
+    timeline = _mapping(
+        resource.get("timeline_reconstruction"),
+        "candidate timeline reconstruction",
+    )
+    compact_resource = {
+        key: resource.get(key)
+        for key in (
+            "schema_version",
+            "candidate_id",
+            "baseline",
+            "candidate",
+            "savings",
+            "mandatory_peak_limit_gib",
+            "preferred_peak_limit_gib",
+            "preferred_peak_reduction_ge_40_percent",
+            "checks",
+            "pass",
+        )
+    }
+    compact_resource["telemetry"] = {
+        key: timeline.get(key)
+        for key in (
+            "sample_count",
+            "fully_readable_mpi8_smaps_sample_count",
+            "max_observed_worker_rank_count",
+            "max_simultaneous_worker_rss_mb",
+            "max_simultaneous_worker_pss_mb",
+            "max_simultaneous_worker_uss_mb",
+            "max_simultaneous_worker_smaps_swap_mb",
+            "max_process_tree_rss_mb",
+            "max_process_tree_swap_mb",
+            "dedicated_job_cgroup_observed",
+            "max_container_cgroup_current_observed_mb",
+            "max_container_cgroup_peak_mb",
+            "memory_authority_mb",
+            "memory_authority_gib",
+            "zero_swap",
+        )
+    }
+    launch = _mapping(
+        result.get("launch_gate"),
+        "candidate launch gate",
+    )
+    return {
+        "schema_version": (
+            "task035d.case097-candidate-check-compact.v1"
+        ),
+        "status": result.get("status"),
+        "classification": result.get("classification"),
+        "candidate_id": result.get("candidate_id"),
+        "pass": result.get("pass"),
+        "checks": result.get("checks"),
+        "failures": result.get("failures"),
+        "accuracy_credit": result.get("accuracy_credit"),
+        "source_sha": result.get("source_sha"),
+        "checker_source": result.get("checker_source"),
+        "candidate_watchdog": result.get("candidate_watchdog"),
+        "raw_artifacts": result.get("raw_artifacts"),
+        "frozen_authorities": result.get("frozen_authorities"),
+        "launch_identity": {
+            "schema_version": launch.get("schema_version"),
+            "status": launch.get("status"),
+            "pass": launch.get("pass"),
+            "plan_identity": launch.get("plan_identity"),
+            "selection_credit": launch.get("selection_credit"),
+        },
+        "solver_gate": result.get("solver_gate"),
+        "watchdog_checker_requalification": result.get(
+            "watchdog_checker_requalification"
+        ),
+        "channel_comparison": result.get("channel_comparison"),
+        "observable_comparison": result.get("observable_comparison"),
+        "energy_comparison": result.get("energy_comparison"),
+        "field_comparison": {
+            key: field.get(key)
+            for key in (
+                "schema_version",
+                "status",
+                "method",
+                "no_native_point_intersection",
+                "no_probe_dropping",
+                "no_threshold_relaxation",
+                "relative_l2_floor",
+                "maximum_pointwise_floor",
+                "pass",
+            )
+        }
+        | {"selections": compact_selections},
+        "resource_comparison": compact_resource,
+        "production_qualified": result.get("pass") is True,
+        "ordinary_default_changed": result.get(
+            "ordinary_default_changed"
+        ),
+    }
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -1784,6 +1956,11 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--watchdog", type=Path, required=True)
     parser.add_argument("--watchdog-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--compact",
+        action="store_true",
+        help="Persist the review-sized hash-bound result.",
+    )
     return parser.parse_args(argv)
 
 
@@ -1798,6 +1975,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             watchdog_sha256=args.watchdog_sha256,
             candidate_id=args.candidate_id,
         )
+        if args.compact:
+            result = compact_task035d_case097_candidate_check(result)
         return_code = 0 if result["pass"] else 1
     except Exception as error:
         watchdog_path = args.watchdog
@@ -1872,5 +2051,6 @@ __all__ = [
     "_resource_comparison",
     "_timeline_resource_metrics",
     "build_task035d_case097_candidate_check",
+    "compact_task035d_case097_candidate_check",
     "evaluate_task035d_case097_candidate",
 ]
