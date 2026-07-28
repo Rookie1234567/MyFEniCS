@@ -41,6 +41,9 @@ from benchmarks.run_task032_phase6_augmented import _parse_args
 from src.solvers.hcurl_assembly_time_condensation import (
     project_mpc_vector_to_active_trace,
 )
+from src.solvers.hybrid_local_static_condensation import (
+    HybridLocalStaticCondensation,
+)
 
 
 def _parameters(**updates) -> Task001ForwardParameters:
@@ -162,9 +165,14 @@ def test_fisher_rank_deficiency_and_channel_selection() -> None:
 
 def test_p6_projection_roundoff_envelope_covers_measured_accumulation() -> None:
     defaults = project_mpc_vector_to_active_trace.__kwdefaults__
+    wrapper_defaults = (
+        HybridLocalStaticCondensation.reduce_tangential_surface_mpc_vector.__kwdefaults__
+    )
     expected = 2048.0 * np.finfo(np.float64).eps
     assert defaults is not None
+    assert wrapper_defaults is not None
     assert defaults["eliminated_relative_tolerance"] == expected
+    assert wrapper_defaults["eliminated_relative_tolerance"] == expected
     active_scale = 4.691
     measured_interior = 1.364e-12
     assert measured_interior < expected * active_scale
