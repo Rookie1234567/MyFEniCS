@@ -9,9 +9,9 @@ from typing import Any, Mapping
 
 PARAMETER_SCHEMA_VERSION = "task000.forward-parameters.v1"
 OBSERVABLE_SCHEMA_VERSION = "task000.forward-observables.v1"
-TASK001_PARAMETER_SCHEMA_VERSION = "task001.forward-parameters.v2"
+TASK001_PARAMETER_SCHEMA_VERSION = "task001.forward-parameters.v3"
 TASK001_OBSERVABLE_SCHEMA_VERSION = "task001.fixed-n0-orders.v1"
-TASK001_MANIFEST_SCHEMA_VERSION = "task001.forward-manifest.v2"
+TASK001_MANIFEST_SCHEMA_VERSION = "task001.forward-manifest.v3"
 
 TASK001_FIDELITIES = {
     "HF10": {"degree": 6, "h_nm": 10.0, "modes": 120, "axis_counts": (6, 3, 14)},
@@ -78,20 +78,30 @@ def task001_parameter_catalog() -> dict[str, Any]:
 
     return {
         "schema_version": TASK001_PARAMETER_SCHEMA_VERSION,
-        "physics": {
-            "wavelength_nm": {
-                "type": "number", "unit": "nm", "allowed": [13.5],
-                "invertible": False, "source": "target_stage4_config",
+        "configuration": {
+            "role": "DOE-controlled experimental configuration; not inverted",
+            "physics": {
+                "wavelength_nm": {
+                    "type": "number", "unit": "nm", "allowed": [13.5],
+                    "invertible": False, "source": "target_stage4_config",
+                },
+            },
+            "illumination": {
+                "grazing_deg": {
+                    "type": "number", "unit": "degree", "range": [0.5, 10.0],
+                    "reference": "angle above the sample surface",
+                },
+                "azimuth_deg": {
+                    "type": "number", "unit": "degree", "range": [0.0, 90.0],
+                },
+                "incident_polarization": {"type": "enum", "allowed": ["S", "P"]},
+                "solver_conversion": "incident_theta_deg = 90 - grazing_deg; incident_phi_deg = azimuth_deg",
             },
         },
         "geometry": {
+            "role": "invertible specimen parameters",
             "height_nm": {"type": "number", "unit": "nm", "range": [115.0, 125.0], "invertible": True},
             "width_x_nm": {"type": "number", "unit": "nm", "range": [16.0, 18.0], "invertible": True},
-        },
-        "illumination": {
-            "theta_deg": {"type": "number", "allowed": [70.0, 75.0, 80.0]},
-            "phi_deg": {"type": "number", "allowed": [0.0, 90.0]},
-            "incident_polarization": {"type": "enum", "allowed": ["S", "P"]},
         },
         "fidelity": {"model_id": {"type": "enum", "allowed": sorted(TASK001_FIDELITIES)}},
         "observables": {"order_schema_id": {"allowed": [TASK001_OBSERVABLE_SCHEMA_VERSION]}},
@@ -107,8 +117,8 @@ def task001_parameter_catalog() -> dict[str, Any]:
 class Task001ForwardParameters:
     height_nm: float
     width_x_nm: float
-    theta_deg: float
-    phi_deg: float
+    grazing_deg: float
+    azimuth_deg: float
     incident_polarization: str
     model_id: str
     mpi_ranks: int = 2
@@ -120,7 +130,7 @@ class Task001ForwardParameters:
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> "Task001ForwardParameters":
         allowed = {
-            "height_nm", "width_x_nm", "theta_deg", "phi_deg",
+            "height_nm", "width_x_nm", "grazing_deg", "azimuth_deg",
             "incident_polarization", "model_id", "mpi_ranks",
             "threads_per_rank", "wavelength_nm", "order_schema_id",
             "schema_version",
@@ -143,10 +153,10 @@ class Task001ForwardParameters:
             raise ValueError("height_nm must lie in [115, 125]")
         if not 16.0 <= float(self.width_x_nm) <= 18.0:
             raise ValueError("width_x_nm must lie in [16, 18]")
-        if float(self.theta_deg) not in {70.0, 75.0, 80.0}:
-            raise ValueError("theta_deg must be one of 70, 75, 80")
-        if float(self.phi_deg) not in {0.0, 90.0}:
-            raise ValueError("phi_deg must be 0 or 90")
+        if not 0.5 <= float(self.grazing_deg) <= 10.0:
+            raise ValueError("grazing_deg must lie in [0.5, 10]")
+        if not 0.0 <= float(self.azimuth_deg) <= 90.0:
+            raise ValueError("azimuth_deg must lie in [0, 90]")
         if self.incident_polarization.upper() not in {"S", "P"}:
             raise ValueError("incident_polarization must be S or P")
         if self.mpi_ranks not in {1, 2}:
@@ -161,16 +171,33 @@ class Task001ForwardParameters:
         self.validate()
         return dict(TASK001_FIDELITIES[self.model_id])
 
+    @property
+    def theta_deg(self) -> float:
+        """Solver angle measured from the downward surface normal."""
+
+        return 90.0 - float(self.grazing_deg)
+
+    @property
+    def phi_deg(self) -> float:
+        """Solver azimuth; identical to the user-facing azimuth convention."""
+
+        return float(self.azimuth_deg)
+
     def as_dict(self) -> dict[str, Any]:
         self.validate()
         return {
             "schema_version": self.schema_version,
-            "physics": {"wavelength_nm": float(self.wavelength_nm)},
-            "geometry": {"height_nm": float(self.height_nm), "width_x_nm": float(self.width_x_nm)},
-            "illumination": {
-                "theta_deg": float(self.theta_deg), "phi_deg": float(self.phi_deg),
-                "incident_polarization": self.incident_polarization.upper(),
+            "configuration": {
+                "physics": {"wavelength_nm": float(self.wavelength_nm)},
+                "illumination": {
+                    "grazing_deg": float(self.grazing_deg),
+                    "azimuth_deg": float(self.azimuth_deg),
+                    "solver_theta_from_downward_normal_deg": self.theta_deg,
+                    "solver_phi_deg": self.phi_deg,
+                    "incident_polarization": self.incident_polarization.upper(),
+                },
             },
+            "geometry": {"height_nm": float(self.height_nm), "width_x_nm": float(self.width_x_nm)},
             "fidelity": {"model_id": self.model_id, **self.fidelity},
             "observables": {"order_schema_id": self.order_schema_id},
             "execution": {"mpi_ranks": self.mpi_ranks, "threads_per_rank": self.threads_per_rank},

@@ -5,10 +5,15 @@
 
 ## 固定范围
 
+- 输入封装分为 `configuration` 和 `geometry`：前者是 DOE 可控的实验配置，
+  后者是待反演的样品参数；
 - geometry：height 115--125 nm，width-x 16--18 nm；
 - wavelength：13.5 nm fixed；period 50 x 25 nm 和材料保持
   `target_stage4_config` 权威；
-- illumination：theta 70/80（75 仅 fallback）、phi 0/90、S/P；
+- illumination 用户合同：掠射角连续 `0.5--10 deg`、方位角连续
+  `0--90 deg`、S/P 离散；求解器换算为 `theta=90-grazing`、`phi=azimuth`；
+- Task001 首轮只取掠射角 `0.5/10 deg`与方位角 `0/90 deg`的代表组合，
+  `5.25 deg` 仅在首轮可辨识性失败时 fallback；这不是连续扫描；
 - observable：固定 `m=(0,-1,-2,-3,-4,-5,-6,-7,+1), n=0` order schema；
 - Hybrid：static local FEM、M120、modal-Schur memory-minimal、discrete axial
   propagation/traction；

@@ -8,9 +8,17 @@ import time
 import subprocess
 
 import pytest
+import numpy as np
 
 from src.forward_data.orders import (
     FIXED_M_ORDERS, extract_fixed_orders, extract_task001_orders,
+)
+from src.forward_data.identifiability import (
+    central_geometry_jacobian,
+    fisher_metrics,
+    greedy_channel_indices,
+    local_linear_recovery,
+    rank_configuration_subsets,
 )
 from src.forward_data.schema import (
     TASK001_OBSERVABLE_SCHEMA_VERSION,
@@ -34,21 +42,24 @@ from benchmarks.run_task032_phase6_augmented import _parse_args
 
 def _parameters(**updates) -> Task001ForwardParameters:
     values = dict(
-        height_nm=120.0, width_x_nm=17.0, theta_deg=80.0, phi_deg=0.0,
+        height_nm=120.0, width_x_nm=17.0, grazing_deg=10.0, azimuth_deg=0.0,
         incident_polarization="S", model_id="HF10",
     )
     values.update(updates)
     return Task001ForwardParameters(**values)
 
 
-def test_v2_schema_boundaries_and_v1_compatibility() -> None:
-    assert task001_parameter_catalog()["physics"]["wavelength_nm"]["allowed"] == [13.5]
+def test_v3_schema_boundaries_and_v1_compatibility() -> None:
+    catalog = task001_parameter_catalog()
+    assert catalog["configuration"]["physics"]["wavelength_nm"]["allowed"] == [13.5]
+    assert catalog["configuration"]["role"].startswith("DOE-controlled")
+    assert catalog["geometry"]["role"] == "invertible specimen parameters"
     for height in (115.0, 125.0):
         for width in (16.0, 18.0):
             _parameters(height_nm=height, width_x_nm=width).validate()
     for field, value, message in (
         ("height_nm", 114.9, "height_nm"), ("width_x_nm", 18.1, "width_x_nm"),
-        ("theta_deg", 79.0, "theta_deg"), ("phi_deg", 45.0, "phi_deg"),
+        ("grazing_deg", 0.0, "grazing_deg"), ("azimuth_deg", 90.1, "azimuth_deg"),
         ("incident_polarization", "X", "polarization"), ("mpi_ranks", 8, "mpi_ranks"),
     ):
         with pytest.raises(ValueError, match=message):
@@ -58,12 +69,32 @@ def test_v2_schema_boundaries_and_v1_compatibility() -> None:
 
 
 def test_config_factory_has_exact_identity() -> None:
-    identity = task001_config_identity(_parameters(height_nm=115, width_x_nm=16, phi_deg=90, incident_polarization="P"))
+    identity = task001_config_identity(_parameters(height_nm=115, width_x_nm=16, grazing_deg=0.5, azimuth_deg=45, incident_polarization="P"))
     assert identity["axis_cell_counts"] == [6, 3, 14]
-    assert identity["theta_deg"] == 80
-    assert identity["phi_deg"] == 90
+    assert identity["theta_deg"] == 89.5
+    assert identity["phi_deg"] == 45
+    assert identity["grazing_deg"] == 0.5
+    assert identity["azimuth_deg"] == 45
     assert identity["polarization"] == "P"
     assert identity["solver_path"] == "modal-schur-memory-minimal"
+
+
+def test_continuous_illumination_domain_and_angle_conversion() -> None:
+    catalog = task001_parameter_catalog()["configuration"]["illumination"]
+    assert catalog["grazing_deg"]["range"] == [0.5, 10.0]
+    assert catalog["azimuth_deg"]["range"] == [0.0, 90.0]
+    for grazing, azimuth in ((0.5, 0.0), (3.25, 42.5), (10.0, 90.0)):
+        parameters = _parameters(grazing_deg=grazing, azimuth_deg=azimuth)
+        parameters.validate()
+        assert parameters.theta_deg == pytest.approx(90.0 - grazing)
+        assert parameters.phi_deg == azimuth
+        serialized = parameters.as_dict()
+        assert serialized["configuration"]["illumination"]["grazing_deg"] == grazing
+        assert serialized["geometry"] == {"height_nm": 120.0, "width_x_nm": 17.0}
+    for field, value in (("grazing_deg", 0.49), ("grazing_deg", 10.01),
+                         ("azimuth_deg", -0.01), ("azimuth_deg", 90.01)):
+        with pytest.raises(ValueError):
+            _parameters(**{field: value}).validate()
 
 
 def test_task001_dry_command_identity(tmp_path: Path) -> None:
@@ -98,6 +129,50 @@ def test_p6_h7p5_prediction_has_three_conservative_estimates() -> None:
     assert len(prediction["estimates"]) == 3
     assert prediction["central_estimate_bytes"] > 8 * GIB
     assert prediction["conservative_estimate_bytes"] >= prediction["central_estimate_bytes"]
+
+
+def test_geometry_jacobian_fisher_and_local_recovery() -> None:
+    jacobian = central_geometry_jacobian(
+        height_minus=[0.8, 2.0], height_plus=[1.2, 2.0],
+        width_minus=[1.0, 1.5], width_plus=[1.0, 2.5],
+    )
+    assert jacobian == pytest.approx(np.array([[0.08, 0.0], [0.0, 1.0]]))
+    metrics = fisher_metrics(jacobian, [1.0, 2.0], relative_noise=0.01)
+    assert metrics["rank"] == 2
+    assert metrics["condition_number"] < 10
+    assert abs(metrics["rho_hw"]) < 1.0e-12
+    target_delta = np.array([0.25, -0.1])
+    recovery = local_linear_recovery(jacobian, jacobian @ target_delta, [1.0, 2.0])
+    assert recovery["delta_height_nm"] == pytest.approx(0.25)
+    assert recovery["delta_width_nm"] == pytest.approx(-0.1)
+
+
+def test_fisher_rank_deficiency_and_channel_selection() -> None:
+    jacobian = np.array([[1.0, 1.0], [2.0, 2.0], [1.0, -1.0]])
+    deficient = fisher_metrics(jacobian[:2], [1.0, 1.0])
+    assert deficient["rank"] == 1
+    assert deficient["condition_number"] == float("inf")
+    selected = greedy_channel_indices(jacobian, [1.0, 1.0, 1.0], max_channels=2)
+    assert len(selected) == 2
+    assert fisher_metrics(jacobian[selected], [1.0, 1.0])["rank"] == 2
+
+
+def test_configuration_subset_doe_separates_configuration_from_geometry() -> None:
+    candidates = {
+        "g10_a0_s": {
+            "azimuth_class": "planar", "jacobian": [[1.0, 0.9]], "nominal_power": [1.0],
+        },
+        "g10_a90_p": {
+            "azimuth_class": "conical", "jacobian": [[0.8, -1.0]], "nominal_power": [1.0],
+        },
+        "g0p5_a90_s": {
+            "azimuth_class": "conical", "jacobian": [[0.2, 0.1]], "nominal_power": [1.0],
+        },
+    }
+    ranked = rank_configuration_subsets(candidates, max_configurations=3)
+    assert ranked[0]["passes"] is True
+    assert ranked[0]["rank"] == 2
+    assert set(ranked[0]["configuration_subset"]) == {"g10_a0_s", "g10_a90_p"}
 
 
 def test_task001_formal_preflight_fails_closed_on_dirty_source(

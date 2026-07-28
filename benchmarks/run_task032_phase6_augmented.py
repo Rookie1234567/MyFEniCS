@@ -848,8 +848,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             task001_parameters = Task001ForwardParameters(
                 height_nm=args.task001_height_nm,
                 width_x_nm=args.task001_width_x_nm,
-                theta_deg=args.incident_theta_deg,
-                phi_deg=args.incident_phi_deg,
+                grazing_deg=90.0 - args.incident_theta_deg,
+                azimuth_deg=args.incident_phi_deg,
                 incident_polarization=args.polarization_kind,
                 model_id=args.task001_model_id,
             )
@@ -1169,8 +1169,8 @@ def main() -> None:
         task001_parameters = Task001ForwardParameters(
             height_nm=args.task001_height_nm,
             width_x_nm=args.task001_width_x_nm,
-            theta_deg=args.incident_theta_deg,
-            phi_deg=args.incident_phi_deg,
+            grazing_deg=90.0 - args.incident_theta_deg,
+            azimuth_deg=args.incident_phi_deg,
             incident_polarization=args.polarization_kind,
             model_id=args.task001_model_id,
             mpi_ranks=comm.size,
