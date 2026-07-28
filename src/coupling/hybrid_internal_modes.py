@@ -56,6 +56,7 @@ class HybridInterfaceModeBlocks:
     negative_trace_to_positive: np.ndarray
     trace_gram_condition: float
     positive_projection_identity_error: float
+    canonical_trace_raw_consistency_error: float
     local_fem_outward_normal_sign: int
     lifted_query_points: int
     quadrature_degree: int
@@ -764,6 +765,7 @@ def _build_projection_matrix(
     system: HybridLocalDtnSystem,
     projection: ModalTraceProjection,
     negative_traces: Sequence[fem.Function],
+    canonical_negative_mapping: np.ndarray,
     surface_load: _ReusableInterfaceSurfaceLoad,
     trace_lifter: _ReusableInterfaceLifter,
     log=None,
@@ -776,6 +778,7 @@ def _build_projection_matrix(
     tuple[PETSc.Vec, ...],
     np.ndarray,
     np.ndarray,
+    float,
 ]:
     comm = system.local_mesh.mesh.comm
     mode_count = len(projection.left_traces)
@@ -854,11 +857,38 @@ def _build_projection_matrix(
             f"{system.side} lifted interface Gram is ill-conditioned: "
             f"{gram_condition:.6e}."
         )
-    inverse_gram = np.linalg.inv(surface_gram)
+    inverse_gram = np.linalg.solve(
+        surface_gram, np.eye(mode_count, dtype=np.complex128)
+    )
     positive_identity_error = float(
         np.linalg.norm(inverse_gram @ surface_gram - np.eye(mode_count), ord=np.inf)
     )
-    negative_mapping = inverse_gram @ negative_raw
+    expected_negative_raw = surface_gram @ canonical_negative_mapping
+    raw_scale = max(
+        float(np.linalg.norm(negative_raw, ord=np.inf)),
+        float(np.linalg.norm(expected_negative_raw, ord=np.inf)),
+        1.0e-30,
+    )
+    canonical_trace_raw_consistency_error = float(
+        np.linalg.norm(
+            negative_raw - expected_negative_raw, ord=np.inf
+        )
+        / raw_scale
+    )
+    if canonical_trace_raw_consistency_error > 1.0e-8:
+        matrix.destroy()
+        for entries in raw_entries:
+            if entries.full_vector is not None:
+                entries.full_vector.destroy()
+        raise RuntimeError(
+            "Canonicalized negative trace surface integrals disagree: "
+            f"relative_error={canonical_trace_raw_consistency_error:.3e}."
+        )
+    # Do not recover coordinates by multiplying this well-conditioned raw
+    # relation with the ill-conditioned lifted Gram inverse.  The exact
+    # canonical coordinates are already known and the raw surface-integral
+    # Gate above validates their 3D realization at the unchanged tolerance.
+    negative_mapping = canonical_negative_mapping.copy()
     for row in range(mode_count):
         for left_index, entries in enumerate(raw_entries):
             columns = entries.matrix_rows
@@ -912,6 +942,7 @@ def _build_projection_matrix(
         full_left_vectors,
         inverse_gram,
         modal_rhs_correction,
+        canonical_trace_raw_consistency_error,
     )
 
 
@@ -1008,6 +1039,7 @@ def _build_interface_blocks(
     positive_basis: BiorthogonalModeBasis,
     negative_basis: BiorthogonalModeBasis,
     negative_traces: Sequence[fem.Function],
+    canonical_negative_mapping: np.ndarray,
     traction_evaluator: _ReusableModeTractionEvaluator,
     positive_traction_beta_per_nm: Sequence[complex],
     negative_traction_beta_per_nm: Sequence[complex],
@@ -1031,10 +1063,12 @@ def _build_interface_blocks(
         full_left_vectors,
         inverse_gram,
         modal_rhs_correction,
+        canonical_trace_raw_consistency_error,
     ) = _build_projection_matrix(
         system,
         projection,
         negative_traces,
+        canonical_negative_mapping,
         surface_load,
         trace_lifter,
         log,
@@ -1092,6 +1126,9 @@ def _build_interface_blocks(
         negative_trace_to_positive=negative_mapping.copy(),
         trace_gram_condition=trace_gram_condition,
         positive_projection_identity_error=positive_identity_error,
+        canonical_trace_raw_consistency_error=(
+            canonical_trace_raw_consistency_error
+        ),
         local_fem_outward_normal_sign=(
             system.local_mesh.local_interface_outward_normal_sign
         ),
@@ -1241,6 +1278,7 @@ def build_hybrid_internal_mode_coupling(
             positive_basis,
             negative_basis,
             negative_traces,
+            canonical_negative_mapping,
             traction_evaluator,
             positive_traction_beta,
             negative_traction_beta,
@@ -1254,6 +1292,7 @@ def build_hybrid_internal_mode_coupling(
             positive_basis,
             negative_basis,
             negative_traces,
+            canonical_negative_mapping,
             traction_evaluator,
             positive_traction_beta,
             negative_traction_beta,

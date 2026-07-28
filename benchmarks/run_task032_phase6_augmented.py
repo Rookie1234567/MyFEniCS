@@ -2592,6 +2592,12 @@ def main() -> None:
                     "bottom": list(coupling.bottom.surface_reduction_audits),
                     "top": list(coupling.top.surface_reduction_audits),
                 },
+                "canonical_trace_raw_consistency_error": {
+                    "bottom": (
+                        coupling.bottom.canonical_trace_raw_consistency_error
+                    ),
+                    "top": coupling.top.canonical_trace_raw_consistency_error,
+                },
                 "cell_interior_modal_correction_norms": {
                     side: {
                         "positive_frobenius": float(
