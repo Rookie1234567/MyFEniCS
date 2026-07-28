@@ -240,8 +240,8 @@ def _wide_root_anchor_system(
     final_root_physical = np.ones((1, 1), dtype=np.complex128)
     slave_physical = np.asarray(
         [
-            [0.5 + 0.2j, 0.0 - 0.25j, 0.4 + 0.1j],
-            [-0.2 + 0.1j, 0.75 + 0.0j, -0.1 + 0.3j],
+            [independent[1], -independent[0], 0.0],
+            [independent[2], 0.0, -independent[0]],
         ],
         dtype=np.complex128,
     )
@@ -463,7 +463,7 @@ def test_physical_root_anchor_roundtrip_rejects_nonconforming_slave() -> None:
     try:
         with pytest.raises(
             RuntimeError,
-            match="physical-root primal trace round trip failed",
+            match="global round-trip gate failed",
         ):
             extract_variable_p_active_primal_to_reduced(
                 system,
@@ -471,6 +471,43 @@ def test_physical_root_anchor_roundtrip_rejects_nonconforming_slave() -> None:
                 auxiliary_reduced_values=auxiliary,
             )
     finally:
+        active.destroy()
+        system.matrix.destroy()
+
+
+def test_near_zero_slave_uses_global_scale_roundtrip_gate() -> None:
+    system, active, independent, auxiliary = _wide_root_anchor_system(
+        MPI.COMM_SELF
+    )
+    active.setValue(
+        3,
+        active.getValue(3) + PETSc.ScalarType(1.0e-13 + 0.0j),
+        addv=PETSc.InsertMode.INSERT_VALUES,
+    )
+    active.assemble()
+    reduced, audit = extract_variable_p_active_primal_to_reduced(
+        system,
+        active,
+        auxiliary_reduced_values=auxiliary,
+    )
+    try:
+        assert np.allclose(
+            _global_values(reduced),
+            np.concatenate((independent, auxiliary)),
+            rtol=2.0e-14,
+            atol=2.0e-14,
+        )
+        assert audit["maximum_block_roundtrip_relative_l2"] > 0.5
+        assert (
+            audit[
+                "maximum_block_roundtrip_relative_l2_is_diagnostic_only"
+            ]
+            is True
+        )
+        assert audit["global_roundtrip_relative_l2"] <= 5.0e-10
+        assert audit["global_roundtrip_relative_linf"] <= 5.0e-10
+    finally:
+        reduced.destroy()
         active.destroy()
         system.matrix.destroy()
 

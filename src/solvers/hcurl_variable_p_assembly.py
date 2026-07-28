@@ -2634,6 +2634,7 @@ def extract_variable_p_active_primal_to_reduced(
     pending_values: list[tuple[np.ndarray, np.ndarray]] = []
     local_error_sq = 0.0
     local_reference_sq = 0.0
+    local_reference_max = 0.0
     local_maximum_error = 0.0
     local_maximum_relative = 0.0
     local_maximum_condition = 0.0
@@ -2753,6 +2754,12 @@ def extract_variable_p_active_primal_to_reduced(
                         reference_norm = float(
                             np.linalg.norm(full_values)
                         )
+                        reference_maximum = float(
+                            np.max(
+                                np.abs(full_values),
+                                initial=0.0,
+                            )
+                        )
                         relative = (
                             error_norm
                             / max(
@@ -2791,6 +2798,10 @@ def extract_variable_p_active_primal_to_reduced(
                         )
                         local_error_sq += error_norm**2
                         local_reference_sq += reference_norm**2
+                        local_reference_max = max(
+                            local_reference_max,
+                            reference_maximum,
+                        )
                         local_maximum_error = max(
                             local_maximum_error,
                             maximum_error,
@@ -2888,6 +2899,12 @@ def extract_variable_p_active_primal_to_reduced(
                         reference_norm = float(
                             np.linalg.norm(full_values)
                         )
+                        reference_maximum = float(
+                            np.max(
+                                np.abs(full_values),
+                                initial=0.0,
+                            )
+                        )
                         relative = (
                             error_norm
                             / max(
@@ -2898,13 +2915,12 @@ def extract_variable_p_active_primal_to_reduced(
                         maximum_error = float(
                             np.max(np.abs(error), initial=0.0)
                         )
-                        if relative > float(roundtrip_tolerance):
-                            raise RuntimeError(
-                                "one primal trace block is not conforming: "
-                                f"relative round-trip={relative:.6e}"
-                            )
                         local_error_sq += error_norm**2
                         local_reference_sq += reference_norm**2
+                        local_reference_max = max(
+                            local_reference_max,
+                            reference_maximum,
+                        )
                         local_maximum_error = max(
                             local_maximum_error,
                             maximum_error,
@@ -2963,15 +2979,27 @@ def extract_variable_p_active_primal_to_reduced(
     global_reference_norm = float(
         np.sqrt(comm.allreduce(local_reference_sq, op=MPI.SUM))
     )
+    global_reference_max = float(
+        comm.allreduce(local_reference_max, op=MPI.MAX)
+    )
+    global_maximum_error = float(
+        comm.allreduce(local_maximum_error, op=MPI.MAX)
+    )
     global_relative = (
         global_error_norm
         / max(global_reference_norm, np.finfo(np.float64).tiny)
         if constraints is not None
         else 0.0
     )
+    global_relative_maximum = (
+        global_maximum_error
+        / max(global_reference_max, np.finfo(np.float64).tiny)
+        if constraints is not None
+        else 0.0
+    )
     audit = {
         "schema_version": (
-            "task035e.active-full-primal-to-independent-trace.v2"
+            "task035e.active-full-primal-to-independent-trace.v3"
         ),
         "status": "conforming_primal_trace_extracted",
         "pass": True,
@@ -3011,10 +3039,17 @@ def extract_variable_p_active_primal_to_reduced(
         "maximum_block_roundtrip_relative_l2": float(
             comm.allreduce(local_maximum_relative, op=MPI.MAX)
         ),
-        "global_roundtrip_relative_l2": global_relative,
-        "maximum_roundtrip_abs_error": float(
-            comm.allreduce(local_maximum_error, op=MPI.MAX)
+        "maximum_block_roundtrip_relative_l2_is_diagnostic_only": True,
+        "roundtrip_gate_semantics": (
+            "global trace L2 relative error plus maximum absolute error "
+            "normalized by the global maximum trace coefficient; per-block "
+            "relative L2 remains diagnostic because a valid trace block may "
+            "be arbitrarily close to zero"
         ),
+        "global_roundtrip_relative_l2": global_relative,
+        "global_roundtrip_relative_linf": global_relative_maximum,
+        "global_trace_reference_max_abs": global_reference_max,
+        "maximum_roundtrip_abs_error": global_maximum_error,
         "roundtrip_tolerance": float(roundtrip_tolerance),
         "maximum_left_inverse_condition": (
             None
@@ -3069,14 +3104,16 @@ def extract_variable_p_active_primal_to_reduced(
         "ordinary_default_changed": False,
     }
     if (
-        audit["maximum_block_roundtrip_relative_l2"]
+        audit["global_roundtrip_relative_l2"]
         > float(roundtrip_tolerance)
-        or audit["global_roundtrip_relative_l2"]
+        or audit["global_roundtrip_relative_linf"]
         > float(roundtrip_tolerance)
     ):
         target.destroy()
         raise RuntimeError(
-            "primal trace extraction global round-trip gate failed"
+            "primal trace extraction global round-trip gate failed: "
+            f"relative_l2={global_relative:.6e}, "
+            f"relative_linf={global_relative_maximum:.6e}"
         )
     return target, audit
 
