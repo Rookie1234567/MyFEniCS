@@ -492,6 +492,67 @@ def _degree_jump_audit(
     }
 
 
+def close_p_up_degree_jump_targets(
+    state: HPTransitionState,
+    requested_keys: Sequence[DyadicHexKey],
+) -> tuple[tuple[DyadicHexKey, ...], Mapping[str, Any]]:
+    """Add the minimum p4 neighbors needed around requested p5->p6 cells."""
+
+    _validate_state_identity(state)
+    requested = tuple(sorted(set(requested_keys)))
+    if (
+        not requested
+        or len(requested) != len(tuple(requested_keys))
+        or any(key not in state.cell_degree_by_key for key in requested)
+        or any(int(state.cell_degree_by_key[key]) >= 6 for key in requested)
+    ):
+        raise ValueError(
+            "p-up closure requires unique current p4/p5 leaf keys"
+        )
+    degrees = {
+        key: int(value)
+        for key, value in state.cell_degree_by_key.items()
+    }
+    closed = set(requested)
+    for left, right in _face_neighbor_pairs(state.forest):
+        if left in closed and degrees[left] == 5 and degrees[right] == 4:
+            closed.add(right)
+        if right in closed and degrees[right] == 5 and degrees[left] == 4:
+            closed.add(left)
+    ordered = tuple(sorted(closed))
+    next_degrees = dict(degrees)
+    for key in ordered:
+        next_degrees[key] += 1
+    degree_audit = _degree_jump_audit(state.forest, next_degrees)
+    closure = tuple(sorted(closed - set(requested)))
+    unsigned = {
+        "schema_version": "task035e.p-up-degree-jump-closure.v1",
+        "status": "p_up_degree_jump_closure_pass",
+        "pass": True,
+        "requested_target_count": len(requested),
+        "closure_target_count": len(closure),
+        "closed_target_count": len(ordered),
+        "requested_target_ids": [
+            canonical_hp_cell_target_id(key) for key in requested
+        ],
+        "closure_target_ids": [
+            canonical_hp_cell_target_id(key) for key in closure
+        ],
+        "closed_target_ids": [
+            canonical_hp_cell_target_id(key) for key in ordered
+        ],
+        "degree_jump_audit": degree_audit,
+        "hidden_reference_consumed": False,
+        "accuracy_credit": False,
+        "ordinary_default_changed": False,
+    }
+    audit = {
+        **unsigned,
+        "closure_sha256": _json_sha256(unsigned),
+    }
+    return ordered, MappingProxyType(audit)
+
+
 def _leaf_transition_explanation(
     current: BalancedDyadicHexForest,
     next_forest: BalancedDyadicHexForest,
@@ -1247,6 +1308,7 @@ __all__ = [
     "HPTransitionState",
     "build_initial_hp_transition_state",
     "canonical_hp_cell_target_id",
+    "close_p_up_degree_jump_targets",
     "close_hp_transition",
     "hp_transition_action_payload",
     "rebuild_hp_transition_state",

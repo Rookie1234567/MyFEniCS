@@ -143,6 +143,7 @@ def _receipt(
     attempt: AttemptHandle,
     *,
     record_path: Path,
+    exit_code: int = 0,
 ) -> CommandExecutionReceipt:
     stdout = _private_json(
         attempt.attempt_dir / "synthetic.stdout",
@@ -161,7 +162,7 @@ def _receipt(
         argv_sha256="1" * 64,
         pid=1,
         linux_start_ticks="1",
-        exit_code=0,
+        exit_code=exit_code,
         stdout_path=stdout,
         stdout_sha256=hashlib.sha256(stdout.read_bytes()).hexdigest(),
         stderr_path=stderr,
@@ -520,6 +521,31 @@ def test_discovery_producer_and_shadow_argv_cover_both_lanes(
         "h_discovery_transition_action",
         "h_discovery_plan",
     }
+    p_targets = json.loads(
+        discovered["p_discovery_targets"].path.read_text(encoding="ascii")
+    )
+    h_targets = json.loads(
+        discovered["h_discovery_targets"].path.read_text(encoding="ascii")
+    )
+    assert p_targets["eligible_target_count"] == 160
+    assert p_targets["window_selected_target_count"] == 32
+    assert 32 <= p_targets["selected_target_count"] <= 56
+    assert h_targets["eligible_target_count"] == 160
+    assert h_targets["selected_target_count"] == 4
+    assert (
+        p_targets["selection_audit"]["window"][
+            "hidden_reference_consumed"
+        ]
+        is False
+    )
+    assert (
+        p_targets["selection_audit"]["p_degree_jump_closure"]["pass"]
+        is True
+    )
+    assert (
+        h_targets["selection_audit"]["window"]["accuracy_credit"]
+        is False
+    )
     snapshot = _private_json(
         tmp_path / "current-snapshot.json",
         {"status": "synthetic_prepare_only"},
@@ -553,6 +579,107 @@ def test_discovery_producer_and_shadow_argv_cover_both_lanes(
         )
         assert prepared.argv[role_index + 1] == f"{lane}-shadow"
         assert prepared.argv[prepared.argv.index("--mpi-size") + 1] == "8"
+        assert prepared.allow_controlled_resource_stop is True
+
+
+def test_shadow_handler_classifies_hash_bound_11_gib_stop(
+    tmp_path: Path,
+) -> None:
+    plan, _authority, _config = _initial_bundle(tmp_path, path_id="A")
+    plan_binding = _binding("current_plan", plan)
+    context = _context(
+        tmp_path,
+        stage_name="shadow_target_discovery",
+        artifacts=(plan_binding,),
+        input_plan_sha256=plan_binding.sha256,
+        source_sha="a" * 40,
+    )
+    implementation = handlers.RepositoryFormalStageHandlers(
+        _settings(tmp_path)
+    )
+    discovery_attempt = _attempt(tmp_path, context)
+    discovery = implementation.shadow_target_discovery(
+        context,
+        discovery_attempt,
+    ).execute(discovery_attempt, ())
+    found = _by_role(discovery)
+    snapshot = _private_json(
+        tmp_path / "current-snapshot.json",
+        {"status": "synthetic_prepare_only"},
+    )
+    current_record = _private_json(
+        tmp_path / "current-watchdog.json",
+        {"status": "synthetic_prepare_only"},
+    )
+    lane_context = _context(
+        tmp_path / "p",
+        stage_name="p_shadow_discovery",
+        artifacts=(
+            found["p_discovery_targets"],
+            found["p_discovery_transition_action"],
+            found["p_discovery_plan"],
+            _binding("current_snapshot", snapshot),
+            _binding("current_watchdog_record", current_record),
+        ),
+        input_plan_sha256=plan_binding.sha256,
+        source_sha="a" * 40,
+    )
+    attempt = _attempt(tmp_path / "p", lane_context)
+    prepared = implementation.p_shadow_discovery(
+        lane_context,
+        attempt,
+    )
+    shadow_plan = found["p_discovery_plan"]
+    record = _private_json(
+        attempt.attempt_dir / "p-shadow-watchdog.json",
+        {
+            "status": "controlled_resource_stop",
+            "controlled_resource_stop": True,
+            "terminated_for_memory": True,
+            "terminated_for_timeout": False,
+            "terminated_for_authority_unreadable": False,
+            "controlled_resource_stop_reason": (
+                "effective_job_cap_reached"
+            ),
+            "no_swap": True,
+            "task035e_blind_candidate": None,
+            "source": {
+                "commit_sha": "a" * 40,
+                "head_after_sha": "a" * 40,
+                "stable_and_clean_after": True,
+                "tracked_source_dirty": False,
+            },
+            "task035e_blind_candidate_launch_gate": {
+                "selected": True,
+                "plan": {
+                    "pass": True,
+                    "observed_file_sha256": shadow_plan.sha256,
+                },
+                "live_resource_gate": {
+                    "controlled_resource_stop": True,
+                    "zero_swap_every_sample": True,
+                    "effective_job_cap_respected": False,
+                    "stop_reason": "effective_job_cap_reached",
+                },
+            },
+            "resource_policy": {"termination_gib": 11.0},
+            "resource_authority": {
+                "combined_memory_swap_authority_gib": 11.01,
+            },
+        },
+    )
+    result = prepared.execute(
+        attempt,
+        (_receipt(attempt, record_path=record, exit_code=2),),
+    )
+    assert result.status == "controlled_negative"
+    assert result.lane_decision == "controlled_negative"
+    blocker = json.loads(
+        _by_role(result)["stage_blocker"].path.read_text(encoding="ascii")
+    )
+    assert blocker["code"] == "p-shadow_controlled_resource_stop"
+    assert blocker["inputs"]["no_swap"] is True
+    assert blocker["inputs"]["accuracy_credit"] is False
 
 
 def test_actual_selected_shadow_fixture_runs_repository_bundle_handler(

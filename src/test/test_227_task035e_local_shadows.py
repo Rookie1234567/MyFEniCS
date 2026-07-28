@@ -9,6 +9,7 @@ from src.adaptivity.dyadic_hexa_refinement import (
 )
 from src.adaptivity.task035e_local_shadows import (
     build_h_shadow_geometry,
+    build_local_shadow_catalog,
     evaluate_nested_shadow_system,
 )
 
@@ -56,6 +57,73 @@ def test_actual_h_shadow_records_requested_and_closure_splits() -> None:
         row["matching"]
         for row in second.audit["periodic_boundary_audit"].values()
     )
+
+
+def test_blind_shadow_windows_are_bounded_rotating_and_order_independent() -> None:
+    targets = tuple(f"cell:r0:l1:i{index}:j0:k0" for index in range(160))
+    p0 = build_local_shadow_catalog(
+        targets,
+        lane="p",
+        path_id="A",
+        cycle_index=0,
+    )
+    p1 = build_local_shadow_catalog(
+        tuple(reversed(targets)),
+        lane="p",
+        path_id="A",
+        cycle_index=1,
+    )
+    h0 = build_local_shadow_catalog(
+        targets,
+        lane="h",
+        path_id="A",
+        cycle_index=0,
+    )
+    h1 = build_local_shadow_catalog(
+        targets,
+        lane="h",
+        path_id="A",
+        cycle_index=1,
+    )
+
+    assert len(p0.selected_target_ids) == 32
+    assert len(p1.selected_target_ids) == 32
+    assert set(p0.selected_target_ids).isdisjoint(p1.selected_target_ids)
+    assert len(h0.selected_target_ids) == 4
+    assert len(h1.selected_target_ids) == 4
+    assert set(h0.selected_target_ids).isdisjoint(h1.selected_target_ids)
+    assert p0.ordered_target_ids == p1.ordered_target_ids
+    assert p0.audit["hidden_reference_consumed"] is False
+    assert p0.audit["solved_field_consumed"] is False
+    assert p0.audit["accuracy_credit"] is False
+    assert p0.audit["eligible_target_count"] == 160
+
+    replay = build_local_shadow_catalog(
+        tuple(reversed(targets)),
+        lane="p",
+        path_id="A",
+        cycle_index=0,
+    )
+    assert replay.selected_target_ids == p0.selected_target_ids
+    assert replay.audit["catalog_sha256"] == p0.audit["catalog_sha256"]
+
+
+@pytest.mark.parametrize(
+    ("lane", "path_id", "cycle_index"),
+    (("q", "A", 0), ("p", "C", 0), ("p", "A", 6)),
+)
+def test_blind_shadow_window_rejects_invalid_identity(
+    lane: str,
+    path_id: str,
+    cycle_index: int,
+) -> None:
+    with pytest.raises(ValueError):
+        build_local_shadow_catalog(
+            ("cell:r0:l1:i0:j0:k0",),
+            lane=lane,
+            path_id=path_id,
+            cycle_index=cycle_index,
+        )
 
 
 @pytest.mark.parametrize("action_kind", ["p-up", "h-refine"])

@@ -25,6 +25,15 @@ from .dyadic_hexa_refinement import (
 )
 
 
+_DISCOVERY_WINDOW_LIMITS = MappingProxyType(
+    {
+        "p": 32,
+        "h": 4,
+    }
+)
+_DISCOVERY_WINDOW_NAMESPACE = "task035e.local-shadow-window.v1"
+
+
 def _json_sha256(payload: Any) -> str:
     return hashlib.sha256(
         json.dumps(
@@ -61,6 +70,106 @@ class HShadowGeometry:
     added_leaf_keys: tuple[DyadicHexKey, ...]
     net_added_leaf_count: int
     audit: Mapping[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class LocalShadowDiscoveryCatalog:
+    """One blind, resource-bounded window into legal local h/p actions."""
+
+    lane: str
+    eligible_target_ids: tuple[str, ...]
+    ordered_target_ids: tuple[str, ...]
+    selected_target_ids: tuple[str, ...]
+    window_limit: int
+    window_start: int
+    audit: Mapping[str, Any]
+
+
+def build_local_shadow_catalog(
+    canonical_target_ids: Sequence[str],
+    *,
+    lane: str,
+    path_id: str,
+    cycle_index: int,
+) -> LocalShadowDiscoveryCatalog:
+    """Select a deterministic local shadow window without reference data.
+
+    A discovery shadow is an estimator workspace, not a global enriched
+    reference solve.  The fixed windows keep the temporary p/h systems below
+    the formal resource cap while successive cycles rotate through a
+    source-independent permutation of the legal targets.
+    """
+
+    if lane not in _DISCOVERY_WINDOW_LIMITS:
+        raise ValueError("local shadow lane must be p or h")
+    if path_id not in {"A", "B"}:
+        raise ValueError("local shadow path must be A or B")
+    if (
+        isinstance(cycle_index, bool)
+        or not isinstance(cycle_index, int)
+        or not 0 <= cycle_index <= 5
+    ):
+        raise ValueError("local shadow cycle index must be in [0, 5]")
+    eligible = tuple(str(value) for value in canonical_target_ids)
+    if (
+        not eligible
+        or any(not value for value in eligible)
+        or len(set(eligible)) != len(eligible)
+    ):
+        raise ValueError(
+            "local shadow targets must be nonempty and unique"
+        )
+
+    def priority(value: str) -> str:
+        digest = hashlib.sha256()
+        digest.update(_DISCOVERY_WINDOW_NAMESPACE.encode("ascii"))
+        digest.update(b"\0")
+        digest.update(path_id.encode("ascii"))
+        digest.update(b"\0")
+        digest.update(value.encode("utf-8"))
+        return digest.hexdigest()
+
+    ordered = tuple(sorted(eligible, key=lambda value: (priority(value), value)))
+    limit = int(_DISCOVERY_WINDOW_LIMITS[lane])
+    start = (cycle_index * limit) % len(ordered)
+    count = min(limit, len(ordered))
+    selected = tuple(
+        ordered[(start + offset) % len(ordered)]
+        for offset in range(count)
+    )
+    unsigned = {
+        "schema_version": "task035e.local-shadow-discovery-catalog.v1",
+        "status": "resource_bounded_reference_blind_window",
+        "pass": True,
+        "lane": lane,
+        "path_id": path_id,
+        "cycle_index": cycle_index,
+        "algorithm_namespace": _DISCOVERY_WINDOW_NAMESPACE,
+        "eligible_target_count": len(eligible),
+        "eligible_target_catalog_sha256": _json_sha256(sorted(eligible)),
+        "ordered_target_catalog_sha256": _json_sha256(ordered),
+        "window_limit": limit,
+        "window_start": start,
+        "selected_target_count": len(selected),
+        "selected_target_ids": list(selected),
+        "hidden_reference_consumed": False,
+        "solved_field_consumed": False,
+        "accuracy_credit": False,
+        "ordinary_default_changed": False,
+    }
+    audit = {
+        **unsigned,
+        "catalog_sha256": _json_sha256(unsigned),
+    }
+    return LocalShadowDiscoveryCatalog(
+        lane=lane,
+        eligible_target_ids=eligible,
+        ordered_target_ids=ordered,
+        selected_target_ids=selected,
+        window_limit=limit,
+        window_start=start,
+        audit=MappingProxyType(audit),
+    )
 
 
 def build_h_shadow_geometry(
@@ -362,8 +471,10 @@ def evaluate_nested_shadow_system(
 
 __all__ = [
     "HShadowGeometry",
+    "LocalShadowDiscoveryCatalog",
     "NestedShadowEvidence",
     "SignedShadowGoal",
     "build_h_shadow_geometry",
+    "build_local_shadow_catalog",
     "evaluate_nested_shadow_system",
 ]

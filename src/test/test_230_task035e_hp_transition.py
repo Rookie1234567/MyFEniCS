@@ -12,6 +12,7 @@ from src.adaptivity.dyadic_hexa_refinement import (
 from src.adaptivity.task035e_hp_transition import (
     build_initial_hp_transition_state,
     canonical_hp_cell_target_id,
+    close_p_up_degree_jump_targets,
     close_hp_transition,
     hp_transition_action_payload,
     rebuild_hp_transition_state,
@@ -122,6 +123,45 @@ def test_same_forest_p_up_and_down_are_prefix_bound() -> None:
     assert lowered.cycle_index == 2
     assert lowered.audit["stage_prefix_sha256"] != (
         raised.audit["stage_prefix_sha256"]
+    )
+
+
+def test_p_up_discovery_closes_adjacent_p4_around_selected_p5() -> None:
+    initial = _initial_state()
+    center = DyadicHexKey(4, 0, 0, 0, 0)
+    mixed_degrees = dict(initial.cell_degree_by_key)
+    mixed_degrees[center] = 5
+    mixed = build_initial_hp_transition_state(
+        initial.forest,
+        mixed_degrees,
+        source_sha=_SOURCE_SHA,
+        algorithm_sha256=_ALGORITHM_SHA,
+    )
+
+    closed_keys, audit = close_p_up_degree_jump_targets(
+        mixed,
+        (center,),
+    )
+    assert audit["pass"] is True
+    assert audit["requested_target_count"] == 1
+    assert audit["closure_target_count"] > 0
+    assert audit["closed_target_count"] == len(closed_keys)
+    assert audit["degree_jump_audit"][
+        "adjacent_or_periodic_cell_p_jump_at_most_one"
+    ] is True
+
+    action = hp_transition_action_payload(
+        mixed,
+        action_id="cycle1.p-up.closed-window",
+        kind="p-up",
+        degree_deltas={key: 1 for key in closed_keys},
+    )
+    advanced = close_hp_transition(mixed, action)
+    assert advanced.cell_degree_by_key[center] == 6
+    assert all(
+        advanced.cell_degree_by_key[key]
+        == mixed.cell_degree_by_key[key] + 1
+        for key in closed_keys
     )
 
 

@@ -758,11 +758,16 @@ class PreparedStage:
     ]
     argv: tuple[str, ...] | None = None
     argvs: tuple[tuple[str, ...], ...] = ()
+    allow_controlled_resource_stop: bool = False
 
     def __post_init__(self) -> None:
         if self.argv is not None and self.argvs:
             raise BlindCampaignError(
                 "PreparedStage cannot mix argv and argvs"
+            )
+        if type(self.allow_controlled_resource_stop) is not bool:
+            raise BlindCampaignError(
+                "allow_controlled_resource_stop must be boolean"
             )
 
     @property
@@ -2481,7 +2486,10 @@ def _execute_declared_commands(
             execution=execution,
         )
         receipts.append(receipt)
-        if receipt.exit_code != 0:
+        if (
+            receipt.exit_code != 0
+            and not prepared.allow_controlled_resource_stop
+        ):
             raise CommandExecutionError(
                 "watchdog invocation "
                 f"{invocation_index} exited with {receipt.exit_code}"

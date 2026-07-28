@@ -52,7 +52,7 @@ from benchmarks.task035e_campaign_stages import (
 
 ROOT = Path(__file__).resolve().parents[1]
 HANDLER_SCHEMA = "task035e.repository-formal-campaign-handlers.v1"
-TARGET_CATALOG_SCHEMA = "task035e.shadow-discovery-target-catalog.v1"
+TARGET_CATALOG_SCHEMA = "task035e.shadow-discovery-target-catalog.v2"
 LEGAL_SKIP_SCHEMA = "task035e.formal-stage-legal-skip.v1"
 BLOCKER_SCHEMA = "task035e.formal-stage-blocker.v1"
 TRANSITION_MODE_SCHEMA = "task035e.cross-cycle-transition-mode.v1"
@@ -434,8 +434,97 @@ def _record_binding(
     role: str,
 ) -> StageArtifactBinding:
     if receipt.watchdog_record_path is None:
-        raise CampaignEvidenceError("successful command has no watchdog record")
+        raise CampaignEvidenceError("command has no watchdog record")
     return _artifact(role, receipt.watchdog_record_path)
+
+
+def _controlled_resource_stop(
+    context: StageExecutionContext,
+    attempt: AttemptHandle,
+    *,
+    receipt: CommandExecutionReceipt,
+    plan: StageArtifactBinding,
+    output_role: str,
+) -> StageResult | None:
+    """Turn only a fully bound 11 GiB watchdog stop into lane evidence."""
+
+    if receipt.exit_code == 0:
+        return None
+    record = _record_binding(receipt, role="controlled_resource_watchdog")
+    if (
+        receipt.exit_code != 2
+        or receipt.watchdog_record_sha256 != record.sha256
+    ):
+        raise CampaignEvidenceError(
+            "nonzero watchdog is not a hash-bound controlled resource stop"
+        )
+    payload = _strict_json(record, label="controlled-resource watchdog")
+    source = payload.get("source")
+    source = source if isinstance(source, Mapping) else {}
+    launch = payload.get("task035e_blind_candidate_launch_gate")
+    launch = launch if isinstance(launch, Mapping) else {}
+    launch_plan = launch.get("plan")
+    launch_plan = (
+        launch_plan if isinstance(launch_plan, Mapping) else {}
+    )
+    live = launch.get("live_resource_gate")
+    live = live if isinstance(live, Mapping) else {}
+    policy = payload.get("resource_policy")
+    policy = policy if isinstance(policy, Mapping) else {}
+    authority = payload.get("resource_authority")
+    authority = authority if isinstance(authority, Mapping) else {}
+    memory_gib = authority.get("combined_memory_swap_authority_gib")
+    checks = (
+        payload.get("status") == "controlled_resource_stop",
+        payload.get("controlled_resource_stop") is True,
+        payload.get("terminated_for_memory") is True,
+        payload.get("terminated_for_timeout") is False,
+        payload.get("terminated_for_authority_unreadable") is False,
+        payload.get("controlled_resource_stop_reason")
+        == "effective_job_cap_reached",
+        payload.get("no_swap") is True,
+        payload.get("task035e_blind_candidate") is None,
+        source.get("commit_sha") == context.source_sha,
+        source.get("head_after_sha") == context.source_sha,
+        source.get("stable_and_clean_after") is True,
+        source.get("tracked_source_dirty") is False,
+        launch.get("selected") is True,
+        launch_plan.get("pass") is True,
+        launch_plan.get("observed_file_sha256") == plan.sha256,
+        live.get("controlled_resource_stop") is True,
+        live.get("zero_swap_every_sample") is True,
+        live.get("effective_job_cap_respected") is False,
+        live.get("stop_reason") == "effective_job_cap_reached",
+        policy.get("termination_gib") == 11.0,
+        isinstance(memory_gib, (int, float)),
+        (
+            isinstance(memory_gib, (int, float))
+            and float(memory_gib) >= 11.0
+        ),
+    )
+    if not all(checks):
+        raise CampaignEvidenceError(
+            "nonzero watchdog failed the controlled-resource-stop contract"
+        )
+    return _blocker_result(
+        context,
+        attempt,
+        code=f"{output_role}_controlled_resource_stop",
+        message=(
+            f"{output_role} reached the formal 11 GiB cap before a "
+            "qualified field was available"
+        ),
+        inputs={
+            "watchdog_record_sha256": record.sha256,
+            "output_role": output_role,
+            "plan_file_sha256": plan.sha256,
+            "combined_memory_swap_authority_gib": float(memory_gib),
+            "no_swap": True,
+            "stop_reason": "effective_job_cap_reached",
+            "accuracy_credit": False,
+        },
+        receipts=(receipt,),
+    )
 
 
 def _candidate_and_live_paths(
@@ -619,6 +708,15 @@ class RepositoryFormalStageHandlers:
                 raise CampaignEvidenceError(
                     "current solve requires one watchdog receipt"
                 )
+            stopped = _controlled_resource_stop(
+                context,
+                checked_attempt,
+                receipt=receipts[0],
+                plan=plan,
+                output_role="current",
+            )
+            if stopped is not None:
+                return stopped
             from benchmarks.task035e_candidate_output import (
                 write_candidate_output,
             )
@@ -654,7 +752,11 @@ class RepositoryFormalStageHandlers:
                 receipts=receipts,
             )
 
-        return PreparedStage(execute=execute, argv=argv)
+        return PreparedStage(
+            execute=execute,
+            argv=argv,
+            allow_controlled_resource_stop=True,
+        )
 
     def shadow_target_discovery(
         self,
@@ -671,6 +773,10 @@ class RepositoryFormalStageHandlers:
                 )
             from src.adaptivity.task035e_hp_transition import (
                 canonical_hp_cell_target_id,
+                close_p_up_degree_jump_targets,
+            )
+            from src.adaptivity.task035e_local_shadows import (
+                build_local_shadow_catalog,
             )
             from src.adaptivity.task035e_plan_transition import (
                 rebuild_hp_transition_state_from_solver_plan,
@@ -739,6 +845,41 @@ class RepositoryFormalStageHandlers:
                         )
                     )
                     continue
+                catalog = build_local_shadow_catalog(
+                    ids[lane],
+                    lane=lane,
+                    path_id=context.stage.path_id,
+                    cycle_index=int(context.stage.cycle_index),
+                )
+                selected_set = set(catalog.selected_target_ids)
+                window_ids = tuple(
+                    target_id
+                    for target_id in ids[lane]
+                    if target_id in selected_set
+                )
+                selection_audit: dict[str, Any] = {
+                    "window": dict(catalog.audit),
+                }
+                if lane == "p":
+                    key_by_id = {
+                        canonical_hp_cell_target_id(key): key
+                        for key in state.cell_degree_by_key
+                    }
+                    closed_keys, closure_audit = (
+                        close_p_up_degree_jump_targets(
+                            state,
+                            tuple(key_by_id[value] for value in window_ids),
+                        )
+                    )
+                    selected_ids = tuple(
+                        canonical_hp_cell_target_id(key)
+                        for key in closed_keys
+                    )
+                    selection_audit["p_degree_jump_closure"] = dict(
+                        closure_audit
+                    )
+                else:
+                    selected_ids = window_ids
                 action_path = attempt.attempt_dir / f"{lane}-discovery-action.json"
                 next_plan_path = (
                     attempt.attempt_dir / f"{lane}-discovery-plan.json"
@@ -748,13 +889,13 @@ class RepositoryFormalStageHandlers:
                     current_plan_file_sha256=plan_binding.sha256,
                     source_sha=context.source_sha,
                     action_kind=kind,
-                    canonical_target_ids=ids[lane],
+                    canonical_target_ids=selected_ids,
                     action_path=action_path,
                     next_plan_path=next_plan_path,
                 )
                 unsigned = {
                     "schema_version": TARGET_CATALOG_SCHEMA,
-                    "status": "complete_eligible_catalog",
+                    "status": "resource_bounded_reference_blind_catalog",
                     "pass": True,
                     "lane": lane,
                     "action_kind": kind,
@@ -764,7 +905,10 @@ class RepositoryFormalStageHandlers:
                     "current_plan_file_sha256": plan_binding.sha256,
                     "current_state_sha256": state.state_sha256,
                     "eligible_target_count": len(ids[lane]),
-                    "canonical_target_ids": list(ids[lane]),
+                    "window_selected_target_count": len(window_ids),
+                    "selected_target_count": len(selected_ids),
+                    "canonical_target_ids": list(selected_ids),
+                    "selection_audit": selection_audit,
                     "discovery_action_file_sha256": (
                         transition_receipt.action_file_sha256
                     ),
@@ -772,7 +916,8 @@ class RepositoryFormalStageHandlers:
                         transition_receipt.plan_file_sha256
                     ),
                     "selection_inputs": (
-                        "closed_current_plan_degree_and_level_bounds"
+                        "closed current-plan degree/level bounds plus "
+                        "fixed source-independent rotating window"
                     ),
                     "solved_field_inputs_consumed": False,
                     "ordinary_default_changed": False,
@@ -863,6 +1008,15 @@ class RepositoryFormalStageHandlers:
                 raise CampaignEvidenceError(
                     "discovery shadow requires one watchdog receipt"
                 )
+            stopped = _controlled_resource_stop(
+                context,
+                checked_attempt,
+                receipt=receipts[0],
+                plan=plan,
+                output_role=output_role,
+            )
+            if stopped is not None:
+                return stopped
             from benchmarks.task035e_candidate_output import (
                 write_candidate_output,
             )
@@ -941,7 +1095,11 @@ class RepositoryFormalStageHandlers:
                 receipts=receipts,
             )
 
-        return PreparedStage(execute=execute, argv=argv)
+        return PreparedStage(
+            execute=execute,
+            argv=argv,
+            allow_controlled_resource_stop=True,
+        )
 
     def p_shadow_discovery(
         self,
@@ -1225,6 +1383,15 @@ class RepositoryFormalStageHandlers:
                 raise CampaignEvidenceError(
                     "selected verification requires one watchdog receipt"
                 )
+            stopped = _controlled_resource_stop(
+                context,
+                checked_attempt,
+                receipt=receipts[0],
+                plan=plan,
+                output_role=f"{output_role}-selected",
+            )
+            if stopped is not None:
+                return stopped
             from benchmarks.task035e_candidate_output import (
                 write_candidate_output,
             )
@@ -1305,7 +1472,11 @@ class RepositoryFormalStageHandlers:
                 receipts=receipts,
             )
 
-        return PreparedStage(execute=execute, argv=argv)
+        return PreparedStage(
+            execute=execute,
+            argv=argv,
+            allow_controlled_resource_stop=True,
+        )
 
     def p_selected_shadow_verification(
         self,
