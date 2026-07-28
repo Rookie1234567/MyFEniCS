@@ -480,6 +480,26 @@ def test_opt_in_mpi8_actual_dwr() -> None:
     comm.Barrier()
     fixture = _Fixture(plan_path, plan_sha, comm=comm)
     try:
+        fixture.view.full_active_residual.update(
+            {
+                "active_selected_rows": {
+                    "selected_value_bytes_local": 64 + comm.rank,
+                },
+                "reduced_constraint_norm": {
+                    "work_owned_component_count_local": comm.rank,
+                },
+            }
+        )
+        fixture.view.primal_solver_telemetry.update(
+            {
+                "active_selected_rows": {
+                    "selected_value_bytes_local": 64 + comm.rank,
+                },
+                "reduced_constraint_norm": {
+                    "work_owned_component_count_local": comm.rank,
+                },
+            }
+        )
         result = _evaluate(fixture, plan_sha)
         assert len(result.signed_eta) == 59
         assert max(
@@ -496,6 +516,18 @@ def test_opt_in_mpi8_actual_dwr() -> None:
         assert comm.allreduce(digest_prefix, op=MPI.MIN) == (
             comm.allreduce(digest_prefix, op=MPI.MAX)
         )
+        shadow_gate = result.report["shadow_primal_gate"]
+        assert "active_selected_rows" not in (
+            shadow_gate["full_active_true_residual"]
+        )
+        assert "reduced_constraint_norm" not in (
+            shadow_gate["primal_solver_telemetry"]
+        )
+        rank_catalog = shadow_gate[
+            "rank_local_solver_gate_identity"
+        ]["rank_local_content_sha256"]
+        assert len(rank_catalog) == comm.size
+        assert len(set(rank_catalog)) == comm.size
     finally:
         fixture.destroy()
         comm.Barrier()

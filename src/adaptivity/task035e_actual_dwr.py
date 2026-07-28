@@ -1405,7 +1405,10 @@ def _layout_identity(
     return identity
 
 
-def _qualified_shadow_gate(view: Any) -> dict[str, Any]:
+def _qualified_shadow_gate(
+    view: Any,
+    communicator: MPI.Intracomm,
+) -> dict[str, Any]:
     residual = view.full_active_residual
     relative = (
         residual.get("linear_system_relative_residual")
@@ -1433,17 +1436,75 @@ def _qualified_shadow_gate(view: Any) -> dict[str, Any]:
         raise ValueError(
             "shadow live view lacks a qualified primal/port Gate"
         )
+    rank_local_keys = {
+        "active_selected_rows",
+        "reduced_constraint_norm",
+    }
+    common_residual = {
+        str(name): _jsonable(value)
+        for name, value in residual.items()
+        if name not in rank_local_keys
+    }
+    common_telemetry = {
+        str(name): _jsonable(value)
+        for name, value in telemetry.items()
+        if name not in rank_local_keys
+    }
+    local_gate_identity = {
+        "rank": int(communicator.rank),
+        "mpi_size": int(communicator.size),
+        "full_active_residual_rank_local_sha256": _json_sha256(
+            {
+                name: residual.get(name)
+                for name in sorted(rank_local_keys)
+                if name in residual
+            },
+            namespace=(
+                "task035e.actual-dwr.rank-full-active-residual.v1"
+            ),
+        ),
+        "primal_solver_telemetry_rank_local_sha256": _json_sha256(
+            {
+                name: telemetry.get(name)
+                for name in sorted(rank_local_keys)
+                if name in telemetry
+            },
+            namespace=(
+                "task035e.actual-dwr.rank-primal-telemetry.v1"
+            ),
+        ),
+    }
+    local_gate_digest = _json_sha256(
+        local_gate_identity,
+        namespace="task035e.actual-dwr.rank-solver-gate.v1",
+    )
+    rank_gate_catalog = _native_rank_digest_catalog(
+        communicator,
+        local_gate_digest,
+    )
+    rank_gate_identity = {
+        "rank_local_content_sha256": list(rank_gate_catalog),
+        "rank_local_fields": sorted(rank_local_keys),
+        "native_fixed_size_hash_metadata_reduction": True,
+    }
+    rank_gate_identity["partition_bound_sha256"] = _json_sha256(
+        rank_gate_identity,
+        namespace=(
+            "task035e.actual-dwr.rank-solver-gate-catalog.v1"
+        ),
+    )
     return {
-        "full_active_true_residual": _jsonable(residual),
+        "full_active_true_residual": common_residual,
         "full_active_true_residual_sha256": _json_sha256(
-            residual,
+            common_residual,
             namespace="task035e.actual-dwr.shadow-primal-residual.v1",
         ),
-        "primal_solver_telemetry": _jsonable(telemetry),
+        "primal_solver_telemetry": common_telemetry,
         "primal_solver_telemetry_sha256": _json_sha256(
-            telemetry,
+            common_telemetry,
             namespace="task035e.actual-dwr.shadow-primal-telemetry.v1",
         ),
+        "rank_local_solver_gate_identity": rank_gate_identity,
         "port_operator_audit_sha256": _json_sha256(
             port,
             namespace="task035e.actual-dwr.shadow-port-operator.v1",
@@ -1537,7 +1598,10 @@ def _validate_inputs(
             source_sha=source_sha,
             expected_plan_sha256=expected_plan_sha256,
         ),
-        _qualified_shadow_gate(view),
+        _qualified_shadow_gate(
+            view,
+            view.mesh_data.mesh.comm,
+        ),
         _local_matrix_csr_payload(
             view.A,
             rank=int(view.mesh_data.mesh.comm.rank),
