@@ -582,6 +582,17 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         )
         roundoff_projection.destroy()
 
+        low_active_value = PETSc.ScalarType(2.058 + 0.0j)
+        zero_rhs.set(PETSc.ScalarType(0.0))
+        zero_rhs.setValue(master, low_active_value)
+        zero_rhs.setValue(interior, PETSc.ScalarType(1.364e-12))
+        zero_rhs.assemble()
+        low_active_roundoff_projection = project_mpc_vector_to_active_trace(
+            candidate,
+            zero_rhs,
+        )
+        low_active_roundoff_projection.destroy()
+
         interior_cutoff = float(
             2048.0
             * np.finfo(np.float64).eps
@@ -641,7 +652,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
                 )
 
         zero_rhs.set(PETSc.ScalarType(0.0))
-        zero_rhs.setValue(interior, roundoff_value)
+        zero_rhs.setValue(interior, PETSc.ScalarType(2.1e-12))
         zero_rhs.assemble()
         with self.assertRaisesRegex(
             ValueError,
