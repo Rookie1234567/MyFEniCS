@@ -9,7 +9,10 @@ readonly MPC_COMMIT="a444aa3006fdf492091443cc8c885c1eec006c2f"
 # 0.11 is the first release line with PEP 639 license-expression support,
 # which dolfinx_mpc v0.10.1 requires via `project.license = "MIT"`.
 readonly SCIKIT_BUILD_CORE_VERSION="0.11.1"
-readonly NANOBIND_VERSION="2.4.0"
+# Match the nanobind ABI used by the pinned FEniCS PPA DOLFINx package.  A
+# separately built extension can link the same libdolfinx yet still reject
+# DOLFINx Python objects when its nanobind internals ABI differs.
+readonly NANOBIND_VERSION="2.9.2"
 
 usage() {
   cat <<'EOF'

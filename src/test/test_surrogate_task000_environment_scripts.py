@@ -27,6 +27,8 @@ def test_install_script_pins_native_complex_abi_without_docker() -> None:
     assert "python3-pyvista" in text
     assert "1:0.10.0.post3-2~ppa2~noble7" in text
     assert "a444aa3006fdf492091443cc8c885c1eec006c2f" in text
+    assert 'NANOBIND_VERSION="2.9.2"' in text
+    assert "nanobind ABI" in text
     assert "--system" in text and "--user" in text
     assert "sudo apt" not in text
     assert "print $2; exit" not in text

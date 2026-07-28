@@ -13,6 +13,7 @@ from .resource_policy import task001_resource_limits
 from .schema import Task001ForwardParameters
 from .task001_config import task001_config_identity
 from .watchdog import WatchdogResult, run_with_watchdog
+from .forward_model import _abi_identity
 
 
 def task001_hybrid_command(
@@ -55,7 +56,7 @@ def formal_preflight(root: Path, baseline_sha: str) -> dict[str, Any]:
     resources = task001_resource_limits(root)
     if not resources["pass"]:
         raise RuntimeError(f"Task001 resource preflight failed: {resources['gates']}")
-    return {"source": identity, "resources": resources}
+    return {"source": identity, "abi": _abi_identity(root), "resources": resources}
 
 
 def run_formal_task001_hybrid(

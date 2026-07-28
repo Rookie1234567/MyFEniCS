@@ -39,6 +39,7 @@ def _abi_identity(root: Path) -> dict[str, Any]:
     from petsc4py import PETSc
     import dolfinx
     import dolfinx_mpc
+    import nanobind
 
     python = Path(sys.executable).absolute()
     expected_venv = (root / ".venv").resolve()
@@ -55,6 +56,7 @@ def _abi_identity(root: Path) -> dict[str, Any]:
         "qualified_activation": os.environ.get(
             "_MYFENICS_SURROGATE_WSL_QUALIFIED_ACTIVATION"
         ) == "1",
+        "nanobind_abi_matches_pinned_dolfinx": nanobind.__version__ == "2.9.2",
     }
     if not all(checks.values()):
         raise RuntimeError(f"ABI preflight failed: {checks}")
@@ -65,6 +67,7 @@ def _abi_identity(root: Path) -> dict[str, Any]:
         "petsc_int_bits": np.dtype(PETSc.IntType).itemsize * 8,
         "dolfinx_version": dolfinx.__version__,
         "dolfinx_mpc_path": str(mpc_path),
+        "nanobind_version": nanobind.__version__,
     }
 
 
