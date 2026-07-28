@@ -1292,6 +1292,12 @@ def main() -> None:
                 for index in range(1, subdivisions + 1)
             )
         cfg.mesh_axis_z_values = tuple(refined_z)
+        axis_counts = tuple(int(value) for value in cfg.mesh_axis_cell_counts)
+        cfg.mesh_axis_cell_counts = (
+            axis_counts[0],
+            axis_counts[1],
+            len(refined_z) - 1,
+        )
         cfg.mesh_axis_z_profile = (
             f"{cfg.mesh_axis_z_profile}-m9-local-z-subdivisions-{subdivisions}"
         )
