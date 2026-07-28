@@ -43,6 +43,25 @@ p6/h7.5 只能在 HF10 nominal 同一 Task001 baseline 通过后进行三路资�
 central 超过 prediction ceiling 或 conservative 明显超过 hard 时保持
 `controlled_stop_resource_projection / PDE launched=false`。
 
+## Task001 结果与证据
+
+- numerical source：`68f4f9bc92de6cd7ec2896755ef210fb182280a1`；所有正式 PDE
+  都绑定该 clean SHA；
+- selected HF/LF：`HF10 = global p6/h10/M120` 与 `LF4 = global p4/h10/M120`；
+- HF7P5：central 预测 11,588,731,106 bytes，conservative 预测
+  15,878,719,347 bytes，均越过相应启动/硬上限，因此 PDE 未启动；
+- selected configuration bundle：`grazing=10°, azimuth=0°, S` 与
+  `grazing=10°, azimuth=90°, S`；它们是 DOE 实验配置，不属于反演参数；
+- geometry 反演参数仍只有 height/width；Task001 没有训练 surrogate；
+- 0.5° 与 P 的失败/限制保留在 compact manifest 中，不能据本 pilot 宣称完整连续
+  `configuration` 域已经资格化。
+
+`records/` 由 `python -m benchmarks.check_case110_task001 --write-records` 从 ignored
+raw artifacts 重算；`--check-records` 会逐字检查 compact evidence 是否过期。提取器把
+正的向外 Poynting 功率定义为 `power_carrying`，并另存原始色散分类
+`dispersion_propagating`，从而正确处理有损基底中 `dispersion=false` 但仍计入端口 T
+的模式。
+
 ## 测试
 
 见 `test_command.txt`。formal records 必须绑定一个 clean Task001 implementation

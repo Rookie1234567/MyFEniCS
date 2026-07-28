@@ -1,0 +1,123 @@
+{
+  "numerical_source_sha": "68f4f9bc92de6cd7ec2896755ef210fb182280a1",
+  "observations": {
+    "reflection_and_transmission": {
+      "absolute_power_floor": 1e-08,
+      "condition_number": 1.2208346942014392,
+      "log_det_fisher": 14.81265145248313,
+      "maximum_single_channel_min_fraction_of_height_and_width_information": 0.08079457674286715,
+      "no_single_channel_dominates_both": true,
+      "rank": 2,
+      "relative_noise": 0.01,
+      "rho_hw": -0.147932190769799,
+      "selected_channels": [
+        "g10_a0_s:bottom:m-7:s",
+        "g10_a0_s:top:m-1:s",
+        "g10_a0_s:bottom:m-1:s",
+        "g10_a0_s:top:m-7:s",
+        "g10_a0_s:bottom:m-2:s",
+        "g10_a0_s:top:m-2:s",
+        "g10_a0_s:bottom:m-4:s",
+        "g10_a0_s:bottom:m-5:s",
+        "g10_a90_s:bottom:m0:s",
+        "g10_a90_s:top:m0:s"
+      ],
+      "sigma_height_nm": 0.026475595962468575,
+      "sigma_width_nm": 0.023197044983843285,
+      "singular_values": [
+        44.83236283381734,
+        36.722713604680656
+      ]
+    },
+    "reflection_only": {
+      "absolute_power_floor": 1e-08,
+      "condition_number": 1.32167023439597,
+      "log_det_fisher": 13.272663808347207,
+      "maximum_single_channel_min_fraction_of_height_and_width_information": 0.09642967660050723,
+      "no_single_channel_dominates_both": true,
+      "rank": 2,
+      "relative_noise": 0.01,
+      "rho_hw": 0.00018220218622130282,
+      "selected_channels": [
+        "g10_a0_s:top:m-1:s",
+        "g10_a0_s:top:m-7:s",
+        "g10_a0_s:top:m-2:s",
+        "g10_a0_s:top:m-4:s",
+        "g10_a0_s:top:m-5:s",
+        "g10_a0_s:top:m-6:s",
+        "g10_a0_s:top:m0:s",
+        "g10_a90_s:top:m0:s"
+      ],
+      "sigma_height_nm": 0.03150484151167328,
+      "sigma_width_nm": 0.041639008723226185,
+      "singular_values": [
+        31.74115440176163,
+        24.015941023494396
+      ]
+    }
+  },
+  "schema_version": "task001.case110-high-fidelity-identifiability.v1",
+  "selected_configuration_subset": [
+    "g10_a0_s",
+    "g10_a90_s"
+  ],
+  "synthetic_local_recovery": {
+    "center_self_recovery": {
+      "delta_height_nm": 0.0,
+      "delta_width_nm": 0.0,
+      "rank": 2,
+      "semantics": "local weighted linear sanity recovery; not a surrogate or formal inversion",
+      "singular_values": [
+        44.83236283381734,
+        36.722713604680656
+      ]
+    },
+    "noise_draw_count": 2000,
+    "rng_seed": 20260728,
+    "semantics": "local weighted linear sanity recovery; not surrogate training or formal inversion",
+    "targets": [
+      {
+        "noise_1pct_bias_height_nm": -0.000732737340816414,
+        "noise_1pct_bias_width_nm": 0.0008177272243883177,
+        "noise_1pct_empirical_correlation": -0.1634569426753782,
+        "noise_1pct_mean_delta_height_nm": 0.4992672626591836,
+        "noise_1pct_mean_delta_width_nm": 0.10081772722438832,
+        "noise_1pct_std_height_nm": 0.026704583281778823,
+        "noise_1pct_std_width_nm": 0.023733099071152758,
+        "noise_free_recovery": {
+          "delta_height_nm": 0.5,
+          "delta_width_nm": 0.09999999999999988,
+          "rank": 2,
+          "semantics": "local weighted linear sanity recovery; not a surrogate or formal inversion",
+          "singular_values": [
+            44.83236283381734,
+            36.722713604680656
+          ]
+        },
+        "true_delta_height_nm": 0.5,
+        "true_delta_width_nm": 0.1
+      },
+      {
+        "noise_1pct_bias_height_nm": -0.0006224582514128274,
+        "noise_1pct_bias_width_nm": -0.00015044750315915123,
+        "noise_1pct_empirical_correlation": -0.1342013143412537,
+        "noise_1pct_mean_delta_height_nm": -0.5006224582514128,
+        "noise_1pct_mean_delta_width_nm": -0.10015044750315916,
+        "noise_1pct_std_height_nm": 0.026430516712635965,
+        "noise_1pct_std_width_nm": 0.02355064941635715,
+        "noise_free_recovery": {
+          "delta_height_nm": -0.5,
+          "delta_width_nm": -0.09999999999999988,
+          "rank": 2,
+          "semantics": "local weighted linear sanity recovery; not a surrogate or formal inversion",
+          "singular_values": [
+            44.83236283381734,
+            36.722713604680656
+          ]
+        },
+        "true_delta_height_nm": -0.5,
+        "true_delta_width_nm": -0.1
+      }
+    ]
+  }
+}

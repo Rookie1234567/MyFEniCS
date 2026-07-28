@@ -17,6 +17,6 @@
   "hf7p5_requires_three_estimates": true,
   "fixed_topology_geometry_count": 9,
   "fixed_order_count_per_side_polarization": 9,
-  "nonpropagating_power_semantics": null,
+  "nonpropagating_power_semantics": "propagating in compact observables means positive outward power-carrying; dispersion_propagating preserves the raw solver classification; non-power-carrying power is null",
   "n_nonzero_leakage_recomputed": true
 }

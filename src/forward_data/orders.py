@@ -27,13 +27,26 @@ def _key(row: Mapping[str, Any]) -> tuple[str, int, int, str]:
 
 
 def _power(row: Mapping[str, Any]) -> float | None:
-    propagating = row.get("propagating", row.get("power_carrying", True))
-    if propagating is False:
-        return None
     value = row.get("power", row.get("outgoing_power", row.get("power_ratio")))
     if value is None:
-        raise ValueError("propagating diffraction order is missing power")
-    return float(value)
+        if row.get("power_carrying", row.get("propagating", True)) is False:
+            return None
+        raise ValueError("power-carrying diffraction order is missing power")
+    power = float(value)
+    if power < 0.0:
+        raise ValueError("outgoing diffraction power must be nonnegative")
+    # The solver's historical ``propagating`` flag is a dispersion
+    # classification.  A below-critical mode in a lossy substrate may retain
+    # propagating=false while carrying positive outward real-Poynting flux.
+    # Port R/T includes every such positive contribution.
+    carrying = row.get("power_carrying")
+    if carrying is None:
+        carrying = row.get("propagating", True) is not False or power > 0.0
+    return power if carrying else None
+
+
+def _dispersion_propagating(row: Mapping[str, Any]) -> bool:
+    return bool(row.get("dispersion_propagating", row.get("propagating", True)))
 
 
 def extract_fixed_orders(
@@ -52,8 +65,8 @@ def extract_fixed_orders(
             raise ValueError(f"duplicate diffraction identity: {key}")
         indexed[key] = row
         power = _power(row)
-        raw_r_total += float(row.get("R", power if key[0] == "top" else 0.0) or 0.0)
-        raw_t_total += float(row.get("T", power if key[0] == "bottom" else 0.0) or 0.0)
+        raw_r_total += float(power or 0.0) if key[0] == "top" else 0.0
+        raw_t_total += float(power or 0.0) if key[0] == "bottom" else 0.0
         if key[2] != 0 and power is not None:
             n_nonzero_leakage += power
     extracted: list[dict[str, Any]] = []
@@ -67,17 +80,22 @@ def extract_fixed_orders(
                     if expected_nonpropagating is not None and identity in expected_nonpropagating:
                         extracted.append({
                             "side": side, "m": m, "n": 0, "polarization": polarization,
-                            "propagating": False, "power": None,
+                            "propagating": False, "power_carrying": False,
+                            "dispersion_propagating": False, "power": None,
                             "outgoing_amplitude_at_boundary": None,
                         })
                         continue
                     missing.append({"side": side, "m": m, "n": 0, "polarization": polarization})
                     continue
                 amplitude = row.get("outgoing_amplitude_at_boundary", row.get("complex_amplitude"))
+                power = _power(row)
                 extracted.append({
                     "side": side, "m": m, "n": 0, "polarization": polarization,
-                    "propagating": bool(row.get("propagating", row.get("power_carrying", True))),
-                    "power": _power(row), "outgoing_amplitude_at_boundary": amplitude,
+                    # Task001's observable flag means experimentally
+                    # power-carrying; keep the solver dispersion flag beside it.
+                    "propagating": power is not None, "power_carrying": power is not None,
+                    "dispersion_propagating": _dispersion_propagating(row),
+                    "power": power, "outgoing_amplitude_at_boundary": amplitude,
                 })
     consistency = None
     if port_power is not None:
@@ -102,7 +120,11 @@ def extract_fixed_orders(
         "raw_t_total": raw_t_total,
         "port_power_consistency": consistency,
         "fixed_window_power_sum": sum(row["power"] for row in extracted if row["power"] is not None),
-        "semantics": "fixed identity window; not R/T total; nonpropagating power is null",
+        "semantics": (
+            "fixed identity window; not R/T total; propagating means positive outward "
+            "power-carrying; dispersion_propagating preserves the solver classification; "
+            "non-power-carrying power is null"
+        ),
     }
 
 

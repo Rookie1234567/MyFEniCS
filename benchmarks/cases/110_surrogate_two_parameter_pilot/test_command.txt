@@ -1,4 +1,5 @@
 source scripts/activate_myfenics_surrogate_wsl.sh
 python -m pytest -q src/test/test_surrogate_task000_forward_data.py src/test/test_surrogate_task001_foundation.py src/test/test_case095_compact_evidence_contract.py src/test/test_case096_compact_evidence_contract.py
-python -m compileall -q src/forward_data benchmarks/run_task032_phase6_augmented.py
+python -m benchmarks.check_case110_task001 --check-records
+python -m compileall -q src/forward_data benchmarks/check_case110_task001.py benchmarks/run_task032_phase6_augmented.py
 git diff --check

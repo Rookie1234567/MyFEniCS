@@ -266,6 +266,32 @@ def test_order_extractor_accepts_real_runner_power_ratio() -> None:
     assert result["orders"][0]["power"] == 0.25
 
 
+def test_order_extractor_preserves_lossy_dispersion_flag_but_counts_power() -> None:
+    row = {
+        "side": "bottom", "m": 0, "n": 0, "polarization": "s",
+        "propagating": False, "power_ratio": 8.24e-4, "R": 0.0, "T": 0.0,
+        "outgoing_amplitude_at_boundary": [0.01, -0.01],
+    }
+    result = extract_fixed_orders(
+        [row], port_power={"R_total": 0.0, "T_total": 8.24e-4}
+    )
+    extracted = result["orders"][0]
+    assert extracted["dispersion_propagating"] is False
+    assert extracted["power_carrying"] is True
+    assert extracted["propagating"] is True
+    assert extracted["power"] == pytest.approx(8.24e-4)
+    assert result["raw_t_total"] == pytest.approx(8.24e-4)
+
+
+def test_order_extractor_keeps_zero_power_for_dispersion_propagating_mode() -> None:
+    row = _order("top", 0, 0, "s", 0.0, propagating=True)
+    result = extract_fixed_orders([row], port_power={"R_total": 0.0, "T_total": 0.0})
+    extracted = next(item for item in result["orders"] if item["side"] == "top")
+    assert extracted["dispersion_propagating"] is True
+    assert extracted["power_carrying"] is True
+    assert extracted["power"] == 0.0
+
+
 def test_task001_extractor_classifies_omitted_plus_one_as_nonpropagating() -> None:
     rows = [
         _order(side, m, 0, pol, 0.01)

@@ -1,0 +1,324 @@
+{
+  "corner_nonlinearity": {
+    "g0p5_a90_s": {
+      "maximum": 0.03207554932788525,
+      "relative_local_linear_errors": [
+        0.03207554932788525,
+        0.028471835595949208,
+        0.024140165732215772,
+        0.022644402191552754
+      ]
+    },
+    "g10_a0_s": {
+      "maximum": 0.07906444011429008,
+      "relative_local_linear_errors": [
+        0.019523036604076133,
+        0.07519413879907712,
+        0.07906444011429008,
+        0.017276699496932852
+      ]
+    },
+    "g10_a90_s": {
+      "maximum": 0.1616686975347706,
+      "relative_local_linear_errors": [
+        0.010248863905251553,
+        0.1616686975347706,
+        0.13423260850827085,
+        0.00943778711985857
+      ]
+    }
+  },
+  "feature_semantics": "independent outgoing S/P component powers; active floor 1e-8",
+  "noise_semantics": "provisional DOE assumptions, not measured instrument uncertainty",
+  "numerical_source_sha": "68f4f9bc92de6cd7ec2896755ef210fb182280a1",
+  "observations": {
+    "reflection_and_transmission": {
+      "noise_stability": [
+        {
+          "absolute_power_floor": 1e-08,
+          "condition_number": 1.6601902025143565,
+          "log_det_fisher": 17.65870781469748,
+          "rank": 2,
+          "relative_noise": 0.005,
+          "rho_hw": -0.19261229476786482,
+          "sigma_height_nm": 0.015410323837875013,
+          "sigma_width_nm": 0.009679609721270811,
+          "singular_values": [
+            106.49979300053849,
+            64.1491516088004
+          ]
+        },
+        {
+          "absolute_power_floor": 1e-08,
+          "condition_number": 1.8385963653285975,
+          "log_det_fisher": 15.38964074533919,
+          "rank": 2,
+          "relative_noise": 0.01,
+          "rho_hw": -0.26585925603535493,
+          "sigma_height_nm": 0.02843963747298867,
+          "sigma_width_nm": 0.016602578499170156,
+          "singular_values": [
+            63.55536425867291,
+            34.56732834741255
+          ]
+        },
+        {
+          "absolute_power_floor": 1e-08,
+          "condition_number": 1.921493628449955,
+          "log_det_fisher": 13.020153495523786,
+          "rank": 2,
+          "relative_noise": 0.02,
+          "rho_hw": -0.3750837518486896,
+          "sigma_height_nm": 0.05165630418860382,
+          "sigma_width_nm": 0.031082130339748392,
+          "singular_values": [
+            35.93061729353947,
+            18.699316386765357
+          ]
+        }
+      ],
+      "per_configuration": {
+        "g0p5_a90_s": {
+          "absolute_power_floor": 1e-08,
+          "active_channel_count": 2,
+          "condition_number": 25.032757646874913,
+          "configuration": {
+            "azimuth_deg": 90.0,
+            "grazing_deg": 0.5,
+            "polarization": "S"
+          },
+          "log_det_fisher": 1.9426141172154712,
+          "rank": 2,
+          "relative_noise": 0.01,
+          "rho_hw": -0.9838584479242422,
+          "selected_channels": [
+            "bottom:m0:s",
+            "top:m0:s"
+          ],
+          "sigma_height_nm": 2.9991007244867562,
+          "sigma_width_nm": 0.7054198335321578,
+          "singular_values": [
+            8.131506159111904,
+            0.3248346136617929
+          ]
+        },
+        "g10_a0_s": {
+          "absolute_power_floor": 1e-08,
+          "active_channel_count": 15,
+          "condition_number": 1.8407907453605397,
+          "configuration": {
+            "azimuth_deg": 0.0,
+            "grazing_deg": 10.0,
+            "polarization": "S"
+          },
+          "log_det_fisher": 15.383797230285847,
+          "rank": 2,
+          "relative_noise": 0.01,
+          "rho_hw": -0.26745497392875134,
+          "selected_channels": [
+            "bottom:m-7:s",
+            "top:m-1:s",
+            "bottom:m-1:s",
+            "top:m-7:s",
+            "bottom:m-2:s",
+            "top:m-2:s",
+            "bottom:m-4:s",
+            "bottom:m-5:s"
+          ],
+          "sigma_height_nm": 0.028493260147380364,
+          "sigma_width_nm": 0.01662743661114367,
+          "singular_values": [
+            63.50044563067394,
+            34.49628687601678
+          ]
+        },
+        "g10_a90_s": {
+          "absolute_power_floor": 1e-08,
+          "active_channel_count": 2,
+          "condition_number": 1.7569238429560328,
+          "configuration": {
+            "azimuth_deg": 90.0,
+            "grazing_deg": 10.0,
+            "polarization": "S"
+          },
+          "log_det_fisher": 3.262018195923252,
+          "rank": 2,
+          "relative_noise": 0.01,
+          "rho_hw": 0.38584617623759476,
+          "selected_channels": [
+            "bottom:m0:s",
+            "top:m0:s"
+          ],
+          "sigma_height_nm": 0.5569304118685268,
+          "sigma_width_nm": 0.3809471432282528,
+          "singular_values": [
+            2.996026110232964,
+            1.705268058285404
+          ]
+        }
+      },
+      "selected_configuration_subset": [
+        "g10_a0_s",
+        "g10_a90_s"
+      ],
+      "selected_subset_metrics_1pct": {
+        "absolute_power_floor": 1e-08,
+        "condition_number": 1.8385963653285975,
+        "log_det_fisher": 15.38964074533919,
+        "rank": 2,
+        "relative_noise": 0.01,
+        "rho_hw": -0.26585925603535493,
+        "sigma_height_nm": 0.02843963747298867,
+        "sigma_width_nm": 0.016602578499170156,
+        "singular_values": [
+          63.55536425867291,
+          34.56732834741255
+        ]
+      }
+    },
+    "reflection_only": {
+      "noise_stability": [
+        {
+          "absolute_power_floor": 1e-08,
+          "condition_number": 1.9370904918999754,
+          "log_det_fisher": 14.416511215741068,
+          "rank": 2,
+          "relative_noise": 0.005,
+          "rho_hw": 0.25999079509362855,
+          "sigma_height_nm": 0.02053023891225459,
+          "sigma_width_nm": 0.03735064576830043,
+          "singular_values": [
+            51.14789583360381,
+            26.404494806763477
+          ]
+        },
+        {
+          "absolute_power_floor": 1e-08,
+          "condition_number": 1.325019317028971,
+          "log_det_fisher": 12.806336381922728,
+          "rank": 2,
+          "relative_noise": 0.01,
+          "rho_hw": -5.793192982073565e-05,
+          "sigma_height_nm": 0.0353556308531328,
+          "sigma_width_nm": 0.04684689355947841,
+          "singular_values": [
+            28.284037924613806,
+            21.346132513776315
+          ]
+        },
+        {
+          "absolute_power_floor": 1e-08,
+          "condition_number": 1.363637179060619,
+          "log_det_fisher": 10.979960401578737,
+          "rank": 2,
+          "relative_noise": 0.02,
+          "rho_hw": -0.2870277458650532,
+          "sigma_height_nm": 0.06264899681469316,
+          "sigma_width_nm": 0.06878401183515853,
+          "singular_values": [
+            18.17537877305195,
+            13.328603130029489
+          ]
+        }
+      ],
+      "per_configuration": {
+        "g0p5_a90_s": {
+          "absolute_power_floor": 1e-08,
+          "active_channel_count": 1,
+          "condition_number": "inf",
+          "configuration": {
+            "azimuth_deg": 90.0,
+            "grazing_deg": 0.5,
+            "polarization": "S"
+          },
+          "log_det_fisher": "-inf",
+          "rank": 1,
+          "relative_noise": 0.01,
+          "rho_hw": "nan",
+          "selected_channels": [
+            "top:m0:s"
+          ],
+          "sigma_height_nm": "inf",
+          "sigma_width_nm": "inf",
+          "singular_values": [
+            0.49623690575994495
+          ]
+        },
+        "g10_a0_s": {
+          "absolute_power_floor": 1e-08,
+          "active_channel_count": 7,
+          "condition_number": 1.3254920160865262,
+          "configuration": {
+            "azimuth_deg": 0.0,
+            "grazing_deg": 10.0,
+            "polarization": "S"
+          },
+          "log_det_fisher": 12.796487777739863,
+          "rank": 2,
+          "relative_noise": 0.01,
+          "rho_hw": -0.00497232043796107,
+          "selected_channels": [
+            "top:m-1:s",
+            "top:m-7:s",
+            "top:m-2:s",
+            "top:m-4:s",
+            "top:m-5:s",
+            "top:m-6:s",
+            "top:m0:s"
+          ],
+          "sigma_height_nm": 0.035437485370144066,
+          "sigma_width_nm": 0.04696998884655604,
+          "singular_values": [
+            28.21951630526421,
+            21.28984253604292
+          ]
+        },
+        "g10_a90_s": {
+          "absolute_power_floor": 1e-08,
+          "active_channel_count": 1,
+          "condition_number": "inf",
+          "configuration": {
+            "azimuth_deg": 90.0,
+            "grazing_deg": 10.0,
+            "polarization": "S"
+          },
+          "log_det_fisher": -34.04984839182439,
+          "rank": 1,
+          "relative_noise": 0.01,
+          "rho_hw": "nan",
+          "selected_channels": [
+            "top:m0:s"
+          ],
+          "sigma_height_nm": "inf",
+          "sigma_width_nm": "inf",
+          "singular_values": [
+            2.4587962307022266
+          ]
+        }
+      },
+      "selected_configuration_subset": [
+        "g10_a0_s",
+        "g10_a90_s"
+      ],
+      "selected_subset_metrics_1pct": {
+        "absolute_power_floor": 1e-08,
+        "condition_number": 1.325019317028971,
+        "log_det_fisher": 12.806336381922728,
+        "rank": 2,
+        "relative_noise": 0.01,
+        "rho_hw": -5.793192982073565e-05,
+        "sigma_height_nm": 0.0353556308531328,
+        "sigma_width_nm": 0.04684689355947841,
+        "singular_values": [
+          28.284037924613806,
+          21.346132513776315
+        ]
+      }
+    }
+  },
+  "schema_version": "task001.case110-identifiability.v1",
+  "selected_configuration_subset": [
+    "g10_a0_s",
+    "g10_a90_s"
+  ]
+}

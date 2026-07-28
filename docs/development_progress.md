@@ -2264,8 +2264,6 @@ Task031 的收益不是来自单一“神奇 PC”。solve 阶段不常驻 assem
 
 > Task031 在 clean MPI4 frozen target 上以 assembled-F-free public MPC form action、16 slabs overlap0.125 与 compact lifecycle 实现 h5/h3/h2 全部 true-residual + official-RTA 通过；h2 1977 步，external simultaneous / legacy internal 为 7.897675 / 8.176441 GiB，保守工程范围约 8.0–8.2 GiB，达到 `strong_memory_success_slow_but_memory_efficient`，但 solve 约 5.01x，ordinary default 未改变；Review V1 数值/内存通过，文档加固见 response_v1。
 
----
-
 # 47. Task035 Phase C/D：estimator 与 mesh-backend bake-off
 
 Review V3 接受 B1/B2 real-FE minimum Gate 后，Phase C/D 在同一执行分支连续完成。Phase C
@@ -2295,3 +2293,21 @@ phase_e_unlocked = false
 ```
 
 未运行 Phase E/F、目标 adaptive cycle、p4/h5 heavy 或 ordinary-default change。
+
+---
+
+# 48. Surrogate Task001：两参数 Hybrid 多保真与照明 DOE pilot
+
+Task001 在原生 WSL complex ABI、MPI2、global p6、单作业 watchdog 下完成有限元 pilot。
+全部正式 PDE 绑定 clean SHA `68f4f9bc92de6cd7ec2896755ef210fb182280a1`；37 个记录通过，
+5 个候选照明保留为失败。HF7P5 的 central/conservative peak 预测为 10.793/14.788 GiB，
+超过本机启动/硬上限，故 PDE 未启动；selected HF/LF 为 p6/h10/M120 与 p4/h10/M120。
+
+输入合同分为 DOE-controlled `configuration`（13.5 nm、grazing、azimuth、S/P）和待反演
+`geometry`（height 115--125 nm、width 16--18 nm）。选定实验配置为 10°/0°/S 与
+10°/90°/S；HF R+T Jacobian rank=2、cond=1.2208、rho=-0.1479，reflection-only 也为
+rank=2。P 与部分近掠射条件未资格化，不能把接口允许范围冒充已验证范围。
+
+有损基底 order 提取现区分 `power_carrying` 与 `dispersion_propagating`，从 raw 模式功率独立
+重算 R/T。Task002 只冻结 49 geometry x 2 configurations = 98 LF solves，加 18 initial HF、
+12--20 adaptive HF 和 12--16 independent validation；本任务没有生成这些数据、训练模型或反演。
