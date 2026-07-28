@@ -17,6 +17,8 @@ from src.adaptivity.task035e_shadow_observer import (
     _atomic_json,
     _collective_local_call,
     _current_auxiliary_solver_coordinates,
+    _json_sha256,
+    _public_affine_complement_audit,
     _validate_observed_shadow_kind,
 )
 from src.common.config_3d import target_stage4_config
@@ -363,3 +365,69 @@ def test_atomic_shadow_json_is_mode_0600_and_immutable(
     }
     with pytest.raises(FileExistsError, match="immutable"):
         _atomic_json(output, {"schema_version": "replacement"})
+
+
+def test_affine_complement_public_audit_uses_rank_hash_catalog() -> None:
+    comm = MPI.COMM_WORLD
+    local_audit = {
+        "schema_version": (
+            "task035e.variable-p-primal-affine-complement.v1"
+        ),
+        "status": "active_interior_affine_complement_pass",
+        "pass": True,
+        "definition": "fixture",
+        "active_full_rows": 17,
+        "raw_active_trace_rows": 11,
+        "active_interior_rows": 6,
+        "owned_cell_count_local": int(comm.rank + 1),
+        "owned_cell_count_global": int(
+            comm.size * (comm.size + 1) // 2
+        ),
+        "selected_row_layout": {
+            "requested_unique_rows_local": int(3 + comm.rank)
+        },
+    }
+    local_digest = _json_sha256(
+        local_audit,
+        namespace=(
+            "task035e.actual-dwr.rank-affine-complement-audit.v1"
+        ),
+    )
+    rank_catalog = comm.allgather(local_digest)
+    aggregate = {
+        "schema_version": local_audit["schema_version"],
+        "status": local_audit["status"],
+        "pass": True,
+        "definition": "fixture",
+        "active_full_rows": 17,
+        "raw_active_trace_rows": 11,
+        "active_interior_rows": 6,
+        "owned_cell_count_global": local_audit[
+            "owned_cell_count_global"
+        ],
+        "rank_local_audit_sha256": rank_catalog,
+    }
+    report = {
+        "active_interior_affine_complement": {
+            "present": True,
+            "audit_identity": aggregate,
+            "vector_identity": {"global_size": 17},
+            "active_full_gradient_goal_ids": ["fixture"],
+        }
+    }
+
+    public = _public_affine_complement_audit(
+        comm,
+        local_audit,
+        report,
+    )
+    assert public["audit_identity"] == aggregate
+    assert (
+        "owned_cell_count_local"
+        not in public["audit_identity"]
+    )
+    public_digest = _json_sha256(
+        public,
+        namespace="task035e.test.public-affine-audit.v1",
+    )
+    assert len(set(comm.allgather(public_digest))) == 1

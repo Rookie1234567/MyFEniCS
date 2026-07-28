@@ -179,6 +179,64 @@ def _require_same_hash(
         )
 
 
+def _public_affine_complement_audit(
+    communicator: MPI.Intracomm,
+    local_audit: Mapping[str, Any],
+    dwr_report: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Return the replay-safe aggregate affine-complement identity.
+
+    The owner-local audit intentionally contains rank-dependent row-layout
+    and owned-cell fields.  The actual-DWR report represents those fields by
+    an ordered catalog of per-rank hashes; only that aggregate identity is
+    suitable for the common shadow-evaluation payload.
+    """
+
+    raw_public = dwr_report.get(
+        "active_interior_affine_complement"
+    )
+    if not isinstance(raw_public, Mapping):
+        raise Task035eShadowObserverError(
+            "actual DWR omitted the affine-complement public identity"
+        )
+    public = _jsonable(raw_public)
+    if not isinstance(public, dict) or public.get("present") is not True:
+        raise Task035eShadowObserverError(
+            "actual DWR affine-complement public identity is invalid"
+        )
+    audit_identity = public.get("audit_identity")
+    if (
+        not isinstance(audit_identity, dict)
+        or audit_identity.get("pass") is not True
+    ):
+        raise Task035eShadowObserverError(
+            "actual DWR affine-complement aggregate audit is invalid"
+        )
+    rank_catalog = audit_identity.get("rank_local_audit_sha256")
+    if (
+        not isinstance(rank_catalog, list)
+        or len(rank_catalog) != int(communicator.size)
+    ):
+        raise Task035eShadowObserverError(
+            "actual DWR affine-complement rank catalog is invalid"
+        )
+    digests = [
+        _sha256(value, label="affine-complement rank audit SHA-256")
+        for value in rank_catalog
+    ]
+    expected_local_digest = _json_sha256(
+        local_audit,
+        namespace=(
+            "task035e.actual-dwr.rank-affine-complement-audit.v1"
+        ),
+    )
+    if digests[int(communicator.rank)] != expected_local_digest:
+        raise Task035eShadowObserverError(
+            "actual DWR affine-complement rank catalog lost the local audit"
+        )
+    return public
+
+
 def _collective_local_call(
     communicator: MPI.Intracomm,
     phase: str,
@@ -786,6 +844,13 @@ def evaluate_and_write_task035e_shadow(
             )
             gradient_audit = dict(goal_gradients.audit)
         affine_complement_audit = dict(affine_complement.audit)
+        affine_complement_public_audit = (
+            _public_affine_complement_audit(
+                comm,
+                affine_complement_audit,
+                dwr.report,
+            )
+        )
         del current_endpoint_view
         del transfer
     finally:
@@ -827,6 +892,17 @@ def evaluate_and_write_task035e_shadow(
         dwr.report_sha256,
         label="actual DWR report",
     )
+    _require_same_hash(
+        comm,
+        _json_sha256(
+            affine_complement_public_audit,
+            namespace=(
+                "task035e.shadow-evaluation."
+                "affine-complement-public-audit.v1"
+            ),
+        ),
+        label="affine-complement public audit",
+    )
     rank_catalog = _rank_pipeline_catalog(
         comm,
         transfer=transfer_audit,
@@ -850,8 +926,8 @@ def evaluate_and_write_task035e_shadow(
         "shadow_plan_file_sha256": shadow_plan_sha,
         "shadow_kind_closure": dict(shadow_kind_audit),
         "current_auxiliary_reconstruction": dict(auxiliary_audit),
-        "active_interior_affine_complement": dict(
-            affine_complement_audit
+        "active_interior_affine_complement": (
+            affine_complement_public_audit
         ),
         "pre_adjoint_heavy_state_release": dict(
             heavy_state_release_audit
