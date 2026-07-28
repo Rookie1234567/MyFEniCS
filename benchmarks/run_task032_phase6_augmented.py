@@ -759,7 +759,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--task001-m9-diagnostic-gate",
         action="store_true",
         help=(
-            "Clean-source LF4/G00 M9 diagnostic gate for M40/80/120/160, "
+            "Clean-source LF4/G00 M9 diagnostic gate for controlled M sweeps, "
             "standard/static and continuous/discrete axial A/B checks."
         ),
     )
@@ -913,7 +913,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.modal_degree == 4
             and args.modal_h_nm is not None
             and math.isclose(args.modal_h_nm, 10.0)
-            and args.requested_modes in (40, 80, 120, 160)
+            and args.requested_modes in (40, 80, 120, 160, 240, 320)
             and args.candidate_modes == 2 * args.requested_modes
             and args.solver_path == "modal-schur-memory-minimal"
             and not args.compare_modal_schur
@@ -938,7 +938,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         if args.task001_m9_diagnostic_gate and not diagnostic_scoped:
             parser.error(
                 "Task001 M9 diagnostics require clean LF4/G00, MPI-scoped "
-                "M40/80/120/160 with an exact 2M pool, standard/static "
+                "M40/80/120/160/240/320 with an exact 2M pool, standard/static "
                 "memory-minimal solve and explicit axial model identity."
             )
     elif any(
