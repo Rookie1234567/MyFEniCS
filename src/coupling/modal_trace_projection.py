@@ -498,6 +498,9 @@ class ModalTraceProjection:
         mode_indices: Sequence[int] | None = None,
         condition_limit: float = 1.0e12,
         quadrature_degree: int | None = None,
+        test_basis: Literal["biorthogonal_left", "right_galerkin"] = (
+            "biorthogonal_left"
+        ),
     ) -> None:
         selected = (
             tuple(range(len(basis.modes)))
@@ -521,14 +524,20 @@ class ModalTraceProjection:
             )
             for index in selected
         )
-        self.left_traces = tuple(
-            _trace_from_full_mode_vector(
-                basis.modes[index].left_full,
-                spaces,
-                name=f"task032_left_trace_{index}",
+        if test_basis == "biorthogonal_left":
+            self.left_traces = tuple(
+                _trace_from_full_mode_vector(
+                    basis.modes[index].left_full,
+                    spaces,
+                    name=f"task032_left_trace_{index}",
+                )
+                for index in selected
             )
-            for index in selected
-        )
+        elif test_basis == "right_galerkin":
+            self.left_traces = self.right_traces
+        else:
+            raise ValueError(f"Unsupported modal trace test basis {test_basis!r}.")
+        self.test_basis = test_basis
         if quadrature_degree is not None and int(quadrature_degree) < 1:
             raise ValueError("Trace quadrature degree must be positive.")
         self.quadrature_degree = (

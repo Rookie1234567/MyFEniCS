@@ -779,6 +779,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "p4/h10 transverse QEP and physical geometry remain unchanged."
         ),
     )
+    parser.add_argument(
+        "--task001-m9-trace-test-basis",
+        choices=("biorthogonal_left", "right_galerkin"),
+        default="biorthogonal_left",
+    )
     parser.add_argument("--task001-model-id", choices=tuple(TASK001_FIDELITIES))
     parser.add_argument("--task001-height-nm", type=float)
     parser.add_argument("--task001-width-x-nm", type=float)
@@ -984,6 +989,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task001_m9_diagnostic_gate
     ):
         parser.error("M9 local-z refinement requires the Task001 M9 gate.")
+    if (
+        args.task001_m9_trace_test_basis != "biorthogonal_left"
+        and not args.task001_m9_diagnostic_gate
+    ):
+        parser.error("M9 trace-test-basis override requires the Task001 M9 gate.")
     if args.task035c_p6_h10_gate:
         scoped = bool(
             args.degree == 6
@@ -1363,6 +1373,7 @@ def main() -> None:
             "task001_m9_local_z_subdivisions": (
                 args.task001_m9_local_z_subdivisions
             ),
+            "task001_m9_trace_test_basis": args.task001_m9_trace_test_basis,
             "bottom_interface_nm": args.bottom_interface_nm,
             "top_interface_nm": args.top_interface_nm,
             "middle_length_nm": args.top_interface_nm - args.bottom_interface_nm,
@@ -1727,6 +1738,7 @@ def main() -> None:
             interface_quadrature_degree_override=(
                 args.task001_m9_interface_quadrature_degree
             ),
+            trace_projection_test_basis=args.task001_m9_trace_test_basis,
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -2463,6 +2475,9 @@ def main() -> None:
                 "task001_m9_local_z_subdivisions": (
                     args.task001_m9_local_z_subdivisions
                 ),
+                "task001_m9_trace_test_basis": (
+                    args.task001_m9_trace_test_basis
+                ),
                 "bottom_interface_nm": args.bottom_interface_nm,
                 "top_interface_nm": args.top_interface_nm,
                 "middle_length_nm": (
@@ -2649,6 +2664,9 @@ def main() -> None:
                 },
                 "qep_to_interface_quadrature_degree": (
                     coupling.interface_quadrature_degree
+                ),
+                "trace_projection_test_basis": (
+                    coupling.trace_projection_test_basis
                 ),
                 "qep_to_interface_coefficient_degree": (
                     coupling.interface_quadrature_coefficient_degree

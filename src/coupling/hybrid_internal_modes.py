@@ -95,6 +95,7 @@ class HybridInternalModeCoupling:
     spaces: CrossSectionSpaces
     positive_basis: BiorthogonalModeBasis
     negative_basis: BiorthogonalModeBasis
+    trace_projection_test_basis: str = "biorthogonal_left"
     full_field_or_mode_gathered: bool = False
     dense_interface_square_formed: bool = False
 
@@ -1163,6 +1164,7 @@ def build_hybrid_internal_mode_coupling(
     propagation_model: AxialPropagationModel = "continuous_beta",
     modal_traction_model: ModalTractionModel = "continuous_qep_beta",
     interface_quadrature_degree_override: int | None = None,
+    trace_projection_test_basis: str = "biorthogonal_left",
     log=None,
 ) -> HybridInternalModeCoupling:
     """Build sparse internal-interface blocks without assembling the full solve."""
@@ -1186,7 +1188,11 @@ def build_hybrid_internal_mode_coupling(
 
     if log is not None:
         log("Task32 internal coupling: building canonical modal projection")
-    projection = ModalTraceProjection(spaces, positive_basis)
+    projection = ModalTraceProjection(
+        spaces,
+        positive_basis,
+        test_basis=trace_projection_test_basis,
+    )
     try:
         canonical_negative_mapping = np.empty(
             (mode_count, mode_count), dtype=np.complex128
@@ -1391,6 +1397,7 @@ def build_hybrid_internal_mode_coupling(
             spaces=spaces,
             positive_basis=positive_basis,
             negative_basis=negative_basis,
+            trace_projection_test_basis=trace_projection_test_basis,
         )
     except Exception:
         if bottom is not None:
