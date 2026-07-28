@@ -455,6 +455,9 @@ def _validate_partition(
         designation_unsigned.pop("designation_sha256", None),
         label="row designation SHA-256",
     )
+    affine_partition = (
+        raw.get("active_interior_affine_complement_present") is True
+    )
     if (
         designation_sha
         != _json_sha256(
@@ -464,10 +467,24 @@ def _validate_partition(
         or raw.get("schema_version") != CELLWISE_DWR_PARTITION_SCHEMA
         or raw.get("status") != "cellwise_signed_dwr_partition_pass"
         or raw.get("pass") is not True
-        or raw.get("method") != "element_residual_adjoint_pairing"
+        or raw.get("method")
+        not in {
+            "element_residual_adjoint_pairing",
+            (
+                "reduced_residual_adjoint_plus_active_interior_"
+                "affine_complement"
+            ),
+        }
         or raw.get("complete_current_leaf_partition") is not True
         or raw.get("global_signed_closure_verified") is not True
         or raw.get("actual_cellwise_residual_adjoint_pairing") is not True
+        or (
+            affine_partition
+            and (
+                type(raw.get("active_full_gradient_goal_count")) is not int
+                or raw["active_full_gradient_goal_count"] <= 0
+            )
+        )
         or raw.get("global_eta_evenly_distributed") is not False
         or raw.get("endpoint_delta_consumed") is not False
         or raw.get("formal_goal_count") != len(FORMAL_GOAL_IDS)
@@ -510,6 +527,7 @@ def _validate_partition(
     assigned_rows = 0
     assigned_trace = 0
     assigned_auxiliary = 0
+    assigned_active_interior = 0
     for index, raw_row in enumerate(raw_rows):
         row = _mapping(raw_row, label=f"cellwise DWR row {index}")
         unsigned_row = dict(row)
@@ -563,6 +581,11 @@ def _validate_partition(
                 label=f"cellwise row {index} adjoint partition",
             )
         )
+        if affine_partition:
+            _sha256(
+                row.get("local_affine_complement_partition_sha256"),
+                label=f"cellwise row {index} affine partition",
+            )
         total = _nonnegative_integer(
             row.get("assigned_reduced_row_count"),
             label=f"cellwise row {index} assigned reduced rows",
@@ -590,11 +613,55 @@ def _validate_partition(
             raise CellwiseAuthorityError(
                 f"cellwise DWR row {index} lacks the 59 goals"
             )
+        if affine_partition:
+            assigned_active_interior += _nonnegative_integer(
+                row.get("assigned_active_interior_row_count"),
+                label=(
+                    f"cellwise row {index} assigned active-interior rows"
+                ),
+            )
+            reduced = _mapping(
+                row.get("reduced_trace_auxiliary_contribution"),
+                label=f"cellwise row {index} reduced DWR",
+            )
+            affine = _mapping(
+                row.get(
+                    "active_interior_affine_complement_contribution"
+                ),
+                label=f"cellwise row {index} affine DWR",
+            )
+            if (
+                set(reduced) != set(FORMAL_GOAL_IDS)
+                or set(affine) != set(FORMAL_GOAL_IDS)
+            ):
+                raise CellwiseAuthorityError(
+                    f"cellwise DWR row {index} affine split is incomplete"
+                )
         for goal_id in FORMAL_GOAL_IDS:
             value = _finite(
                 contribution[goal_id],
                 label=f"cellwise row {index} contribution {goal_id}",
             )
+            if affine_partition:
+                component_sum = _finite(
+                    reduced[goal_id],
+                    label=(
+                        f"cellwise row {index} reduced component {goal_id}"
+                    ),
+                ) + _finite(
+                    affine[goal_id],
+                    label=(
+                        f"cellwise row {index} affine component {goal_id}"
+                    ),
+                )
+                if abs(value - component_sum) > (
+                    1.0e-12
+                    * max(abs(value), abs(component_sum), 1.0)
+                ):
+                    raise CellwiseAuthorityError(
+                        "cellwise reduced plus affine contribution does not "
+                        f"close for {goal_id}"
+                    )
             signed_sums[goal_id] += value
             absolute_sums[goal_id] += abs(value)
         rows[target_id] = row
@@ -606,6 +673,11 @@ def _validate_partition(
         assigned_rows != designation.get("total_reduced_rows")
         or assigned_trace != designation.get("independent_trace_rows")
         or assigned_auxiliary != designation.get("appended_auxiliary_rows")
+        or (
+            affine_partition
+            and assigned_active_interior
+            != designation.get("active_interior_rows")
+        )
         or raw.get("residual_partition_catalog_sha256")
         != _json_sha256(
             residual_hashes,

@@ -45,7 +45,7 @@ from .dtn_goal_adjoint import (
 )
 
 
-GRADIENT_SCHEMA = "task035e.formal-59-goal-live-gradients.v1"
+GRADIENT_SCHEMA = "task035e.formal-59-goal-live-gradients.v2"
 _FIELD_GOAL_IDS = (
     "scalar/interface_probe_l2",
     "scalar/volume_probe_l2",
@@ -53,6 +53,10 @@ _FIELD_GOAL_IDS = (
     "complex/interface_probe_complex/imag",
     "complex/volume_probe_complex/real",
     "complex/volume_probe_complex/imag",
+)
+INTERIOR_SENSITIVE_GOAL_IDS = (
+    "scalar/A_volume",
+    *_FIELD_GOAL_IDS,
 )
 
 
@@ -65,17 +69,26 @@ class Task035eFormalGoalGradients:
     """Owned PETSc gradients with an explicit collective lifecycle."""
 
     gradients: Mapping[str, PETSc.Vec]
+    active_full_gradients: Mapping[str, PETSc.Vec]
     audit: Mapping[str, Any]
     _destroyed: bool = False
 
     def destroy(self) -> None:
         if self._destroyed:
             return
-        vectors = tuple(self.gradients.values())
+        vectors = (
+            *self.gradients.values(),
+            *self.active_full_gradients.values(),
+        )
         self.gradients = MappingProxyType({})
+        self.active_full_gradients = MappingProxyType({})
         self._destroyed = True
         errors: list[str] = []
+        seen: set[int] = set()
         for vector in vectors:
+            if id(vector) in seen:
+                continue
+            seen.add(id(vector))
             try:
                 vector.destroy()
             except Exception as exc:
@@ -664,7 +677,11 @@ def _oriented_physical_basis(
 
 def _field_p6_gradients(
     view: Any,
-) -> tuple[dict[str, PETSc.Vec], dict[str, Any]]:
+) -> tuple[
+    dict[str, PETSc.Vec],
+    dict[str, PETSc.Vec],
+    dict[str, Any],
+]:
     field = view.field
     space = field.function_space
     comm = space.mesh.comm
@@ -894,21 +911,27 @@ def _field_p6_gradients(
             vector.destroy()
         raise
 
+    active_full: dict[str, PETSc.Vec] = {}
     reduced: dict[str, PETSc.Vec] = {}
     try:
         for goal_id, p6_gradient in p6_gradients.items():
-            reduced[goal_id] = view.reduction.reduce_p6_vector(
-                p6_gradient,
+            active_full[goal_id] = view.reduction.project_p6_vector(
+                p6_gradient
+            )
+            reduced[goal_id] = view.reduction.reduce_active_vector(
+                active_full[goal_id],
                 side="left",
             )
     except Exception:
         for vector in reduced.values():
             vector.destroy()
+        for vector in active_full.values():
+            vector.destroy()
         raise
     finally:
         for vector in p6_gradients.values():
             vector.destroy()
-    return reduced, {
+    return reduced, active_full, {
         "construction": (
             "transpose of exact oriented p6 point-evaluation rows; "
             "same grid and z-side convention as official field archive"
@@ -934,17 +957,20 @@ def build_task035e_formal_goal_gradients(
     comm = view.mesh_data.mesh.comm
     auxiliary: dict[str, PETSc.Vec] = {}
     field: dict[str, PETSc.Vec] = {}
+    active_full: dict[str, PETSc.Vec] = {}
     volume_p6 = None
-    volume_reduced = None
     try:
         auxiliary, auxiliary_metadata = _auxiliary_gradients(view)
         volume_p6, volume_metadata = _assemble_volume_p6_gradient(view)
-        volume_reduced = view.reduction.reduce_p6_vector(
-            volume_p6,
+        volume_active = view.reduction.project_p6_vector(volume_p6)
+        active_full["scalar/A_volume"] = volume_active
+        volume_reduced = view.reduction.reduce_active_vector(
+            volume_active,
             side="left",
         )
         auxiliary["scalar/A_volume"] = volume_reduced
-        field, field_metadata = _field_p6_gradients(view)
+        field, field_active, field_metadata = _field_p6_gradients(view)
+        active_full.update(field_active)
         gradients = {**auxiliary, **field}
         if tuple(gradients) != FORMAL_GOAL_IDS:
             gradients = {
@@ -955,6 +981,11 @@ def build_task035e_formal_goal_gradients(
             raise RuntimeError(
                 "constructed formal gradient inventory is incomplete"
             )
+        if tuple(active_full) != INTERIOR_SENSITIVE_GOAL_IDS:
+            active_full = {
+                goal_id: active_full[goal_id]
+                for goal_id in INTERIOR_SENSITIVE_GOAL_IDS
+            }
         identities = {
             goal_id: _vector_identity(
                 gradients[goal_id],
@@ -964,6 +995,16 @@ def build_task035e_formal_goal_gradients(
                 ),
             )
             for goal_id in FORMAL_GOAL_IDS
+        }
+        active_identities = {
+            goal_id: _vector_identity(
+                active_full[goal_id],
+                namespace=(
+                    "task035e.active-full-goal-gradient."
+                    + hashlib.sha256(goal_id.encode("utf-8")).hexdigest()
+                ),
+            )
+            for goal_id in INTERIOR_SENSITIVE_GOAL_IDS
         }
         nonzero = {
             goal_id: identities[goal_id]["norm_l2"] > 0.0
@@ -1012,6 +1053,13 @@ def build_task035e_formal_goal_gradients(
             "volume_goal_metadata": volume_metadata,
             "field_goal_metadata": field_metadata,
             "gradient_identities": identities,
+            "active_full_gradient_identities": active_identities,
+            "active_full_gradient_goal_ids": list(
+                INTERIOR_SENSITIVE_GOAL_IDS
+            ),
+            "active_full_gradient_role": (
+                "cell-interior affine-complement pairing only"
+            ),
             "structural_zero_evanescent_power_goal_ids": sorted(
                 evanescent_power_ids
             ),
@@ -1030,19 +1078,216 @@ def build_task035e_formal_goal_gradients(
         }
         return Task035eFormalGoalGradients(
             gradients=MappingProxyType(gradients),
+            active_full_gradients=MappingProxyType(active_full),
             audit=MappingProxyType(audit),
         )
     except Exception:
-        _destroy_vectors_once((*auxiliary.values(), *field.values()))
+        _destroy_vectors_once(
+            (
+                *auxiliary.values(),
+                *field.values(),
+                *active_full.values(),
+            )
+        )
         raise
     finally:
         if volume_p6 is not None:
             volume_p6.destroy()
 
 
+def _secant_weights(
+    goal_id: str,
+    *,
+    current_audit: Mapping[str, Any],
+    shadow_audit: Mapping[str, Any],
+) -> tuple[float, float, str]:
+    """Return exact analytic path-average weights for one real goal."""
+
+    if goal_id == "scalar/interface_probe_l2":
+        metadata_key = "interface_probe_l2"
+    elif goal_id == "scalar/volume_probe_l2":
+        metadata_key = "volume_probe_l2"
+    else:
+        return 0.5, 0.5, "arithmetic_endpoint_gradient_average"
+    current_norm = float(
+        current_audit["field_goal_metadata"][metadata_key]
+    )
+    shadow_norm = float(
+        shadow_audit["field_goal_metadata"][metadata_key]
+    )
+    denominator = current_norm + shadow_norm
+    if (
+        not math.isfinite(current_norm)
+        or not math.isfinite(shadow_norm)
+        or current_norm <= 0.0
+        or shadow_norm <= 0.0
+        or not math.isfinite(denominator)
+        or denominator <= 0.0
+    ):
+        raise RuntimeError(
+            f"{goal_id} endpoint norms cannot define a secant gradient"
+        )
+    return (
+        current_norm / denominator,
+        shadow_norm / denominator,
+        "exact_l2_secant_endpoint_norm_weighting",
+    )
+
+
+def build_task035e_formal_secant_goal_gradients(
+    current_view: Any,
+    shadow_view: Any,
+) -> Task035eFormalGoalGradients:
+    """Build exact analytic current-to-shadow averaged goal derivatives.
+
+    No endpoint difference is supplied or evaluated here.  Quadratic power
+    and absorption goals use the arithmetic mean of their endpoint
+    derivatives, linear complex-amplitude goals are unchanged by that mean,
+    and the two Euclidean-norm goals use their exact analytic secant weights.
+    """
+
+    current_bundle = build_task035e_formal_goal_gradients(current_view)
+    shadow_bundle = build_task035e_formal_goal_gradients(shadow_view)
+    reduced: dict[str, PETSc.Vec] = {}
+    active_full: dict[str, PETSc.Vec] = {}
+    weight_audit: dict[str, Any] = {}
+    try:
+        if (
+            set(current_bundle.gradients) != set(FORMAL_GOAL_IDS)
+            or set(shadow_bundle.gradients) != set(FORMAL_GOAL_IDS)
+            or tuple(current_bundle.active_full_gradients)
+            != INTERIOR_SENSITIVE_GOAL_IDS
+            or tuple(shadow_bundle.active_full_gradients)
+            != INTERIOR_SENSITIVE_GOAL_IDS
+        ):
+            raise RuntimeError(
+                "current/shadow endpoint gradient inventories differ"
+            )
+        for goal_id in FORMAL_GOAL_IDS:
+            current_weight, shadow_weight, rule = _secant_weights(
+                goal_id,
+                current_audit=current_bundle.audit,
+                shadow_audit=shadow_bundle.audit,
+            )
+            weights = (
+                complex(current_weight),
+                complex(shadow_weight),
+            )
+            reduced[goal_id] = _sum_vectors(
+                (
+                    current_bundle.gradients[goal_id],
+                    shadow_bundle.gradients[goal_id],
+                ),
+                coefficients=weights,
+            )
+            if goal_id in INTERIOR_SENSITIVE_GOAL_IDS:
+                active_full[goal_id] = _sum_vectors(
+                    (
+                        current_bundle.active_full_gradients[goal_id],
+                        shadow_bundle.active_full_gradients[goal_id],
+                    ),
+                    coefficients=weights,
+                )
+            weight_audit[goal_id] = {
+                "current_endpoint_weight": current_weight,
+                "shadow_endpoint_weight": shadow_weight,
+                "sum": current_weight + shadow_weight,
+                "rule": rule,
+            }
+
+        reduced_identities = {
+            goal_id: _vector_identity(
+                reduced[goal_id],
+                namespace=(
+                    "task035e.secant-goal-gradient."
+                    + hashlib.sha256(goal_id.encode("utf-8")).hexdigest()
+                ),
+            )
+            for goal_id in FORMAL_GOAL_IDS
+        }
+        active_identities = {
+            goal_id: _vector_identity(
+                active_full[goal_id],
+                namespace=(
+                    "task035e.secant-active-full-gradient."
+                    + hashlib.sha256(goal_id.encode("utf-8")).hexdigest()
+                ),
+            )
+            for goal_id in INTERIOR_SENSITIVE_GOAL_IDS
+        }
+        unsigned = {
+            "schema_version": (
+                "task035e.formal-59-goal-analytic-secant-gradients.v1"
+            ),
+            "status": "formal_59_goal_analytic_secant_gradients_pass",
+            "pass": True,
+            "mpi_size": int(current_view.mesh_data.mesh.comm.size),
+            "formal_goal_count": len(FORMAL_GOAL_IDS),
+            "formal_goal_inventory_sha256": (
+                FORMAL_GOAL_INVENTORY_SHA256
+            ),
+            "gradient_convention": "dJ=Re(g_secant^H dx)",
+            "path_derivative": (
+                "analytic current-to-shadow averaged derivative"
+            ),
+            "current_endpoint_gradient_inventory_sha256": (
+                current_bundle.audit["gradient_inventory_sha256"]
+            ),
+            "shadow_endpoint_gradient_inventory_sha256": (
+                shadow_bundle.audit["gradient_inventory_sha256"]
+            ),
+            "secant_weight_audit": weight_audit,
+            "gradient_identities": reduced_identities,
+            "active_full_gradient_identities": active_identities,
+            "active_full_gradient_goal_ids": list(
+                INTERIOR_SENSITIVE_GOAL_IDS
+            ),
+            "quadratic_goal_rule": (
+                "one-half current gradient plus one-half shadow gradient"
+            ),
+            "l2_goal_rule": (
+                "(norm_current*g_current+norm_shadow*g_shadow)"
+                "/(norm_current+norm_shadow)"
+            ),
+            "linear_goal_rule": (
+                "endpoint gradients are state-independent; their average "
+                "retains the same derivative"
+            ),
+            "hidden_reference_consumed": False,
+            "endpoint_difference_used_as_gradient": False,
+            "endpoint_goal_delta_consumed": False,
+            "full_vector_python_allgather_used": False,
+            "ordinary_default_changed": False,
+        }
+        audit = {
+            **unsigned,
+            "gradient_inventory_sha256": _json_sha256(
+                unsigned,
+                namespace=(
+                    "task035e.formal-secant-gradient-inventory.v1"
+                ),
+            ),
+        }
+        return Task035eFormalGoalGradients(
+            gradients=MappingProxyType(reduced),
+            active_full_gradients=MappingProxyType(active_full),
+            audit=MappingProxyType(audit),
+        )
+    except Exception:
+        _destroy_vectors_once(
+            (*reduced.values(), *active_full.values())
+        )
+        raise
+    finally:
+        shadow_bundle.destroy()
+        current_bundle.destroy()
+
+
 __all__ = [
     "GRADIENT_SCHEMA",
+    "INTERIOR_SENSITIVE_GOAL_IDS",
     "Task035eFormalGoalGradients",
     "Task035eGoalGradientError",
     "build_task035e_formal_goal_gradients",
+    "build_task035e_formal_secant_goal_gradients",
 ]

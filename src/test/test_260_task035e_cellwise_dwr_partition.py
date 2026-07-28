@@ -50,6 +50,7 @@ def _partition(size: int) -> _CellwiseRowPartition:
     designation = {
         "schema_version": "fixture",
         "designation_sha256": "a" * 64,
+        "active_interior_to_current_leaf_sha256": "d" * 64,
     }
     return _CellwiseRowPartition(
         target_ids=target_ids,
@@ -65,6 +66,12 @@ def _partition(size: int) -> _CellwiseRowPartition:
             dtype=np.int64,
         ),
         independent_trace_rows=size - 2,
+        active_interior_row_to_leaf=np.asarray(
+            [0, 1],
+            dtype=np.int64,
+        ),
+        raw_active_trace_rows=size - 2,
+        active_full_rows=size,
         current_plan_identity=MappingProxyType(
             {"forest_leaf_catalog_sha256": "b" * 64}
         ),
@@ -84,10 +91,17 @@ def _exercise_accumulator(comm: MPI.Intracomm) -> None:
     ).astype(np.complex128)
     residual = _vector(residual_values, comm)
     partition = _partition(size)
+    complement_values = np.zeros(size, dtype=np.complex128)
+    complement_values[-2:] = np.asarray(
+        [0.07 - 0.02j, -0.04 + 0.03j],
+        dtype=np.complex128,
+    )
+    complement = _vector(complement_values, comm)
     accumulator = _CellwiseDWRAccumulator(
         partition,
         residual,
         comm,
+        active_full_affine_complement=complement,
     )
     signed_eta: dict[str, float] = {}
     expected = np.zeros(
@@ -109,8 +123,9 @@ def _exercise_accumulator(comm: MPI.Intracomm) -> None:
                 )
             ).astype(np.complex128)
             adjoint = _vector(adjoint_values, comm)
+            active_gradient = None
             try:
-                signed_eta[goal_id] = float(
+                reduced_eta = float(
                     np.vdot(adjoint_values, residual_values).real
                 )
                 products = (
@@ -121,18 +136,63 @@ def _exercise_accumulator(comm: MPI.Intracomm) -> None:
                     partition.row_to_leaf,
                     products,
                 )
-                accumulator.consume(goal_id, adjoint)
+                complement_eta = 0.0
+                if goal_index % 4 == 0:
+                    active_gradient_values = (
+                        0.23
+                        * np.cos(
+                            0.03 * (goal_index + 1)
+                            + 0.05 * (indices + 1.0)
+                        )
+                        + 0.13j
+                        * np.sin(
+                            0.04 * (goal_index + 1)
+                            + 0.08 * (indices + 1.0)
+                        )
+                    ).astype(np.complex128)
+                    active_gradient = _vector(
+                        active_gradient_values,
+                        comm,
+                    )
+                    active_products = (
+                        np.conjugate(active_gradient_values[-2:])
+                        * complement_values[-2:]
+                    ).real
+                    np.add.at(
+                        expected[:, goal_index],
+                        partition.active_interior_row_to_leaf,
+                        active_products,
+                    )
+                    complement_eta = float(
+                        np.vdot(
+                            active_gradient_values,
+                            complement_values,
+                        ).real
+                    )
+                signed_eta[goal_id] = reduced_eta + complement_eta
+                accumulator.consume(
+                    goal_id,
+                    adjoint,
+                    active_full_gradient=active_gradient,
+                )
             finally:
+                if active_gradient is not None:
+                    active_gradient.destroy()
                 adjoint.destroy()
         result = accumulator.finalize(signed_eta)
     finally:
+        complement.destroy()
         residual.destroy()
 
     assert result["schema_version"] == CELLWISE_DWR_PARTITION_SCHEMA
     assert result["status"] == "cellwise_signed_dwr_partition_pass"
-    assert result["method"] == "element_residual_adjoint_pairing"
+    assert result["method"] == (
+        "reduced_residual_adjoint_plus_active_interior_affine_complement"
+    )
     assert result["global_eta_evenly_distributed"] is False
     assert result["endpoint_delta_consumed"] is False
+    assert result["active_interior_affine_complement_present"] is True
+    assert result["active_full_gradient_goal_count"] == 15
     assert result["formal_goal_count"] == 59
     assert len(result["rows"]) == 3
     assert len(result["partition_sha256"]) == 64
@@ -140,6 +200,7 @@ def _exercise_accumulator(comm: MPI.Intracomm) -> None:
         assert row["target_id"] == partition.target_ids[leaf_index]
         assert len(row["local_residual_partition_sha256"]) == 64
         assert len(row["local_adjoint_partition_sha256"]) == 64
+        assert len(row["local_affine_complement_partition_sha256"]) == 64
         assert len(row["row_sha256"]) == 64
         observed = np.asarray(
             [
@@ -236,10 +297,12 @@ def test_row_designation_uses_actual_incident_cells_and_dtn_side_support(
     constraints = SimpleNamespace(
         owned_cells=(
             SimpleNamespace(
+                global_cell=0,
                 canonical_leaf=0,
                 independent_rows=np.asarray([0, 2]),
             ),
             SimpleNamespace(
+                global_cell=1,
                 canonical_leaf=1,
                 independent_rows=np.asarray([1, 2]),
             ),
@@ -256,12 +319,30 @@ def test_row_designation_uses_actual_incident_cells_and_dtn_side_support(
             ),
         ),
         reduction=SimpleNamespace(
-            system=SimpleNamespace(
-                trace_constraints=constraints,
-                active_trace_rows=3,
-                appended_rows=2,
-            )
-        ),
+                system=SimpleNamespace(
+                    trace_constraints=constraints,
+                    active_trace_rows=3,
+                    appended_rows=2,
+                    entity_map=SimpleNamespace(
+                        active_trace_rows=3,
+                        active_rows=5,
+                    ),
+                    cell_recovery=(
+                        SimpleNamespace(
+                            cell=SimpleNamespace(
+                                global_cell=0,
+                                interior_rows=np.asarray([3]),
+                            )
+                        ),
+                        SimpleNamespace(
+                            cell=SimpleNamespace(
+                                global_cell=1,
+                                interior_rows=np.asarray([4]),
+                            )
+                        ),
+                    ),
+                )
+            ),
         goal_context={
             "modes": (
                 SimpleNamespace(side="top"),
@@ -289,6 +370,10 @@ def test_row_designation_uses_actual_incident_cells_and_dtn_side_support(
     np.testing.assert_array_equal(
         result.row_to_leaf,
         np.asarray([0, 1, 0, 0, 0], dtype=np.int64),
+    )
+    np.testing.assert_array_equal(
+        result.active_interior_row_to_leaf,
+        np.asarray([0, 1], dtype=np.int64),
     )
     assert (
         result.designation_identity["global_eta_evenly_distributed"]

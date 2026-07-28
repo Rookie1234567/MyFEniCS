@@ -1191,6 +1191,68 @@ def test_shadow_live_gate_accepts_sorted_json_goal_mapping(
     )
     assert gate["pass"] is True, gate["failures"]
 
+    secant = json.loads(json.dumps(payload))
+    secant_gradient = dict(secant["goal_gradient_inventory"])
+    secant_gradient.pop("gradient_inventory_sha256")
+    secant_gradient["schema_version"] = (
+        "task035e.formal-59-goal-analytic-secant-gradients.v1"
+    )
+    secant_gradient["status"] = (
+        "formal_59_goal_analytic_secant_gradients_pass"
+    )
+    secant["goal_gradient_inventory"] = {
+        **secant_gradient,
+        "gradient_inventory_sha256": (
+            _task035e_namespaced_json_sha256(
+                secant_gradient,
+                namespace="task035e.formal-secant-gradient-inventory.v1",
+            )
+        ),
+    }
+    secant_actual = dict(secant["actual_dwr"])
+    secant_actual.pop("report_sha256")
+    secant_actual["active_interior_affine_complement"] = {
+        "present": True,
+        "audit_identity": {"pass": True},
+        "vector_identity": {"partition_bound_sha256": "6" * 64},
+        "active_full_gradient_goal_ids": ["scalar/A_volume"],
+    }
+    secant_actual["capability_credit"] = {
+        "static_condensation_affine_complement_complete": True,
+    }
+    secant["actual_dwr"] = {
+        **secant_actual,
+        "report_sha256": _task035e_namespaced_json_sha256(
+            secant_actual,
+            namespace="task035e.actual-live-shadow-dwr-report.v1",
+        ),
+    }
+    secant["active_interior_affine_complement"] = {
+        "schema_version": (
+            "task035e.variable-p-primal-affine-complement.v1"
+        ),
+        "status": "active_interior_affine_complement_pass",
+        "pass": True,
+    }
+    secant["capability_credit"].update(
+        {
+            "static_condensation_affine_complement_complete": True,
+            "analytic_secant_goal_derivative_complete": True,
+        }
+    )
+    secant_unsigned = dict(secant)
+    secant_unsigned.pop("payload_sha256")
+    secant["payload_sha256"] = _task035e_namespaced_json_sha256(
+        secant_unsigned,
+        namespace="task035e.live-shadow-evaluation-payload.v1",
+    )
+    secant_gate = _task035e_blind_live_role_evidence_gate(
+        _parse_args(role_cli),
+        evidence_path=evidence,
+        payload=secant,
+    )
+    assert secant_gate["pass"] is True, secant_gate["failures"]
+
     malformed = json.loads(json.dumps(payload))
     malformed["rank_pipeline_audits"][0] = 1
     malformed_unsigned = dict(malformed)

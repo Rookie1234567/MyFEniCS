@@ -80,6 +80,9 @@ class _CellwiseRowPartition:
     current_leaf_degrees: tuple[int, ...]
     row_to_leaf: np.ndarray
     independent_trace_rows: int
+    active_interior_row_to_leaf: np.ndarray
+    raw_active_trace_rows: int
+    active_full_rows: int
     current_plan_identity: Mapping[str, Any]
     shadow_plan_identity: Mapping[str, Any]
     designation_identity: Mapping[str, Any]
@@ -835,6 +838,64 @@ def _build_cellwise_row_partition(
             "one independent trace row has no incident current leaf"
         )
 
+    raw_active_trace_rows = int(
+        system.entity_map.active_trace_rows
+    )
+    active_full_rows = int(system.entity_map.active_rows)
+    if not 0 <= raw_active_trace_rows <= active_full_rows:
+        raise ValueError("active full/trace row counts are invalid")
+    local_active_interior = np.full(
+        active_full_rows - raw_active_trace_rows,
+        sentinel,
+        dtype=np.int64,
+    )
+    constrained_by_global_cell = {
+        int(cell.global_cell): cell for cell in constrained_cells
+    }
+    for recovery in system.cell_recovery:
+        global_cell = int(recovery.cell.global_cell)
+        if global_cell not in constrained_by_global_cell:
+            raise ValueError(
+                "owned recovery cell has no trace-constraint identity"
+            )
+        shadow_leaf = int(
+            constrained_by_global_cell[global_cell].canonical_leaf
+        )
+        if not 0 <= shadow_leaf < len(shadow_to_current):
+            raise ValueError(
+                "recovery cell canonical leaf is outside the shadow forest"
+            )
+        rows = (
+            np.asarray(
+                recovery.cell.interior_rows,
+                dtype=np.int64,
+            )
+            - raw_active_trace_rows
+        )
+        if (
+            rows.ndim != 1
+            or np.any(rows < 0)
+            or np.any(rows >= len(local_active_interior))
+        ):
+            raise ValueError(
+                "recovery cell has invalid active-interior rows"
+            )
+        np.minimum.at(
+            local_active_interior,
+            rows,
+            np.int64(shadow_to_current[shadow_leaf]),
+        )
+    active_interior_to_leaf = np.empty_like(local_active_interior)
+    comm.Allreduce(
+        local_active_interior,
+        active_interior_to_leaf,
+        op=MPI.MIN,
+    )
+    if np.any(active_interior_to_leaf == sentinel):
+        raise ValueError(
+            "one active cell-interior row has no current-leaf designation"
+        )
+
     modes = tuple(view.goal_context.get("modes", ()))
     if len(modes) != appended_rows:
         raise ValueError(
@@ -895,6 +956,12 @@ def _build_cellwise_row_partition(
         row_to_leaf,
         namespace="task035e.actual-dwr.row-to-current-leaf.v1",
     )
+    active_interior_mapping_sha = _array_sha256(
+        active_interior_to_leaf,
+        namespace=(
+            "task035e.actual-dwr.active-interior-to-current-leaf.v1"
+        ),
+    )
     designation_identity = {
         "schema_version": (
             "task035e.actual-dwr-current-leaf-row-designation.v1"
@@ -910,6 +977,14 @@ def _build_cellwise_row_partition(
             list(row) for row in ownership_ranges
         ],
         "row_to_current_leaf_sha256": mapping_sha,
+        "raw_active_trace_rows": raw_active_trace_rows,
+        "active_full_rows": active_full_rows,
+        "active_interior_rows": (
+            active_full_rows - raw_active_trace_rows
+        ),
+        "active_interior_to_current_leaf_sha256": (
+            active_interior_mapping_sha
+        ),
         "trace_row_designation": (
             "minimum canonical current ancestor among actual incident "
             "Floquet/hanging-constrained shadow cells"
@@ -924,6 +999,7 @@ def _build_cellwise_row_partition(
         "every_auxiliary_row_side_supported": True,
         "every_shadow_leaf_has_one_current_ancestor": True,
         "every_current_leaf_has_shadow_descendants": True,
+        "every_active_interior_row_designated_once": True,
     }
     designation_identity["designation_sha256"] = _json_sha256(
         designation_identity,
@@ -950,6 +1026,12 @@ def _build_cellwise_row_partition(
         current_leaf_degrees=tuple(map(int, current_degrees)),
         row_to_leaf=row_to_leaf,
         independent_trace_rows=trace_rows,
+        active_interior_row_to_leaf=np.ascontiguousarray(
+            active_interior_to_leaf,
+            dtype=np.int64,
+        ),
+        raw_active_trace_rows=raw_active_trace_rows,
+        active_full_rows=active_full_rows,
         current_plan_identity=MappingProxyType(current_identity),
         shadow_plan_identity=MappingProxyType(
             dict(shadow_plan_identity)
@@ -984,13 +1066,15 @@ def _native_leaf_rank_digest_catalog(
 
 
 class _CellwiseDWRAccumulator:
-    """Accumulate true owner-row ``conj(z_i) r_i`` by current leaf."""
+    """Accumulate reduced DWR and affine-interior goal terms by leaf."""
 
     def __init__(
         self,
         partition: _CellwiseRowPartition,
         residual: PETSc.Vec,
         communicator: MPI.Intracomm,
+        *,
+        active_full_affine_complement: PETSc.Vec | None = None,
     ) -> None:
         self.partition = partition
         self.communicator = communicator
@@ -1018,11 +1102,16 @@ class _CellwiseDWRAccumulator:
             np.flatnonzero(self.local_leaf == leaf_index)
             for leaf_index in range(leaf_count)
         )
-        self.local_signed = np.zeros(
+        self.local_reduced_signed = np.zeros(
+            (leaf_count, len(FORMAL_GOAL_IDS)),
+            dtype=np.float64,
+        )
+        self.local_complement_signed = np.zeros(
             (leaf_count, len(FORMAL_GOAL_IDS)),
             dtype=np.float64,
         )
         self.adjoint_hashers: list[Any] = []
+        self.active_gradient_hashers: list[Any] = []
         residual_digests: list[str] = []
         for leaf_index, positions in enumerate(self.positions):
             target_id = partition.target_ids[leaf_index]
@@ -1059,13 +1148,128 @@ class _CellwiseDWRAccumulator:
             hasher.update(target_id.encode("ascii"))
             hasher.update(b"\0")
             self.adjoint_hashers.append(hasher)
+            active_hasher = hashlib.sha256()
+            active_hasher.update(
+                b"task035e.actual-dwr.local-active-gradient-catalog.v1\0"
+            )
+            active_hasher.update(target_id.encode("ascii"))
+            active_hasher.update(b"\0")
+            self.active_gradient_hashers.append(active_hasher)
         self.residual_rank_catalog = _native_leaf_rank_digest_catalog(
             communicator,
             tuple(residual_digests),
         )
+        self.active_complement_present = (
+            active_full_affine_complement is not None
+        )
+        self.active_ownership: tuple[int, int] | None = None
+        self.active_global_rows = np.empty(0, dtype=np.int64)
+        self.active_interior_mask = np.empty(0, dtype=bool)
+        self.complement_values = np.empty(0, dtype=np.complex128)
+        self.complement_leaf = np.empty(0, dtype=np.int64)
+        self.complement_positions = tuple(
+            np.empty(0, dtype=np.int64) for _ in range(leaf_count)
+        )
+        complement_digests: list[str] = []
+        if active_full_affine_complement is not None:
+            (
+                active_values,
+                active_ownership,
+                active_size,
+            ) = _owned_vector_values(
+                active_full_affine_complement,
+                label="cellwise active-full affine complement",
+            )
+            if active_size != partition.active_full_rows:
+                raise ValueError(
+                    "cellwise affine complement has the wrong active size"
+                )
+            active_rows = np.arange(
+                active_ownership[0],
+                active_ownership[1],
+                dtype=np.int64,
+            )
+            trace_mask = active_rows < partition.raw_active_trace_rows
+            if np.any(active_values[trace_mask] != 0.0):
+                raise ValueError(
+                    "affine complement has a nonzero active-trace entry"
+                )
+            interior_mask = ~trace_mask
+            interior_rows = active_rows[interior_mask]
+            complement_values = active_values[interior_mask]
+            complement_leaf = np.asarray(
+                partition.active_interior_row_to_leaf[
+                    interior_rows - partition.raw_active_trace_rows
+                ],
+                dtype=np.int64,
+            )
+            self.active_ownership = active_ownership
+            self.active_global_rows = active_rows
+            self.active_interior_mask = interior_mask
+            self.complement_values = complement_values
+            self.complement_leaf = complement_leaf
+            self.complement_positions = tuple(
+                np.flatnonzero(complement_leaf == leaf_index)
+                for leaf_index in range(leaf_count)
+            )
+            for leaf_index, positions in enumerate(
+                self.complement_positions
+            ):
+                complement_digests.append(
+                    _json_sha256(
+                        {
+                            "rank": int(communicator.rank),
+                            "target_id": partition.target_ids[leaf_index],
+                            "active_interior_rows_sha256": _array_sha256(
+                                interior_rows[positions],
+                                namespace=(
+                                    "task035e.actual-dwr.local-affine-"
+                                    "complement-rows.v1"
+                                ),
+                            ),
+                            "active_interior_values_sha256": _array_sha256(
+                                complement_values[positions],
+                                namespace=(
+                                    "task035e.actual-dwr.local-affine-"
+                                    "complement-values.v1"
+                                ),
+                            ),
+                        },
+                        namespace=(
+                            "task035e.actual-dwr.local-affine-complement-"
+                            "partition.v1"
+                        ),
+                    )
+                )
+        else:
+            complement_digests = [
+                _json_sha256(
+                    {
+                        "rank": int(communicator.rank),
+                        "target_id": target_id,
+                        "active_full_affine_complement_present": False,
+                    },
+                    namespace=(
+                        "task035e.actual-dwr.local-affine-complement-"
+                        "partition.v1"
+                    ),
+                )
+                for target_id in partition.target_ids
+            ]
+        self.complement_rank_catalog = _native_leaf_rank_digest_catalog(
+            communicator,
+            tuple(complement_digests),
+        )
+        self.active_full_gradient_goal_count = 0
         self.consumed_goals = 0
 
-    def consume(self, goal_id: str, adjoint: PETSc.Vec) -> None:
+    def consume(
+        self,
+        goal_id: str,
+        adjoint: PETSc.Vec,
+        *,
+        active_full_gradient: PETSc.Vec | None = None,
+    ) -> None:
         if (
             self.consumed_goals >= len(FORMAL_GOAL_IDS)
             or goal_id != FORMAL_GOAL_IDS[self.consumed_goals]
@@ -1089,7 +1293,7 @@ class _CellwiseDWRAccumulator:
             dtype=np.complex128,
         )
         np.add.at(
-            self.local_signed[:, self.consumed_goals],
+            self.local_reduced_signed[:, self.consumed_goals],
             self.local_leaf,
             products.real,
         )
@@ -1119,6 +1323,83 @@ class _CellwiseDWRAccumulator:
             hasher.update(goal_id.encode("utf-8"))
             hasher.update(b"\0")
             hasher.update(bytes.fromhex(local_digest))
+        if active_full_gradient is not None:
+            if (
+                not self.active_complement_present
+                or self.active_ownership is None
+            ):
+                raise ValueError(
+                    "active-full goal gradient lacks an affine complement"
+                )
+            (
+                active_values,
+                active_ownership,
+                active_size,
+            ) = _owned_vector_values(
+                active_full_gradient,
+                label=f"cellwise active-full gradient {goal_id}",
+            )
+            if (
+                active_ownership != self.active_ownership
+                or active_size != self.partition.active_full_rows
+            ):
+                raise ValueError(
+                    f"active-full gradient {goal_id} ownership differs"
+                )
+            interior_gradient = active_values[
+                self.active_interior_mask
+            ]
+            complement_products = np.asarray(
+                np.conjugate(interior_gradient)
+                * self.complement_values,
+                dtype=np.complex128,
+            )
+            np.add.at(
+                self.local_complement_signed[
+                    :,
+                    self.consumed_goals,
+                ],
+                self.complement_leaf,
+                complement_products.real,
+            )
+            self.active_full_gradient_goal_count += 1
+            for leaf_index, positions in enumerate(
+                self.complement_positions
+            ):
+                active_digest = _json_sha256(
+                    {
+                        "rank": int(self.communicator.rank),
+                        "goal_id": goal_id,
+                        "active_interior_rows_sha256": _array_sha256(
+                            self.active_global_rows[
+                                self.active_interior_mask
+                            ][positions],
+                            namespace=(
+                                "task035e.actual-dwr.local-active-"
+                                "gradient-rows.v1"
+                            ),
+                        ),
+                        "active_gradient_values_sha256": _array_sha256(
+                            interior_gradient[positions],
+                            namespace=(
+                                "task035e.actual-dwr.local-active-"
+                                "gradient-values.v1"
+                            ),
+                        ),
+                    },
+                    namespace=(
+                        "task035e.actual-dwr.local-goal-active-gradient-"
+                        "partition.v1"
+                    ),
+                )
+                hasher = self.active_gradient_hashers[leaf_index]
+                hasher.update(goal_id.encode("utf-8"))
+                hasher.update(b"\0")
+                hasher.update(bytes.fromhex(active_digest))
+        else:
+            for hasher in self.active_gradient_hashers:
+                hasher.update(goal_id.encode("utf-8"))
+                hasher.update(b"\0absent\0")
         self.consumed_goals += 1
 
     def finalize(
@@ -1132,15 +1413,35 @@ class _CellwiseDWRAccumulator:
             raise RuntimeError(
                 "cellwise DWR did not consume all 59 ordered adjoints"
             )
-        global_signed = np.zeros_like(self.local_signed)
+        global_reduced_signed = np.zeros_like(
+            self.local_reduced_signed
+        )
+        global_complement_signed = np.zeros_like(
+            self.local_complement_signed
+        )
         self.communicator.Allreduce(
-            self.local_signed,
-            global_signed,
+            self.local_reduced_signed,
+            global_reduced_signed,
             op=MPI.SUM,
+        )
+        self.communicator.Allreduce(
+            self.local_complement_signed,
+            global_complement_signed,
+            op=MPI.SUM,
+        )
+        global_signed = (
+            global_reduced_signed + global_complement_signed
         )
         adjoint_rank_catalog = _native_leaf_rank_digest_catalog(
             self.communicator,
             tuple(hasher.hexdigest() for hasher in self.adjoint_hashers),
+        )
+        active_gradient_rank_catalog = _native_leaf_rank_digest_catalog(
+            self.communicator,
+            tuple(
+                hasher.hexdigest()
+                for hasher in self.active_gradient_hashers
+            ),
         )
         leaf_count = len(self.partition.target_ids)
         local_counts = np.bincount(
@@ -1164,6 +1465,16 @@ class _CellwiseDWRAccumulator:
         self.communicator.Allreduce(
             local_trace_counts,
             global_trace_counts,
+            op=MPI.SUM,
+        )
+        local_active_counts = np.bincount(
+            self.complement_leaf,
+            minlength=leaf_count,
+        ).astype(np.int64)
+        global_active_counts = np.zeros_like(local_active_counts)
+        self.communicator.Allreduce(
+            local_active_counts,
+            global_active_counts,
             op=MPI.SUM,
         )
         closure_errors: dict[str, float] = {}
@@ -1214,10 +1525,45 @@ class _CellwiseDWRAccumulator:
                     "task035e.actual-dwr.leaf-adjoint-partition.v1"
                 ),
             )
+            complement_partition_sha = _json_sha256(
+                {
+                    "target_id": target_id,
+                    "current_leaf_key": list(
+                        self.partition.current_leaf_keys[leaf_index]
+                    ),
+                    "active_interior_designation_sha256": (
+                        self.partition.designation_identity[
+                            "active_interior_to_current_leaf_sha256"
+                        ]
+                    ),
+                    "rank_local_complement_sha256": list(
+                        self.complement_rank_catalog[leaf_index]
+                    ),
+                    "rank_local_active_gradient_catalog_sha256": list(
+                        active_gradient_rank_catalog[leaf_index]
+                    ),
+                },
+                namespace=(
+                    "task035e.actual-dwr.leaf-affine-complement-"
+                    "partition.v1"
+                ),
+            )
             residual_hashes.append(residual_partition_sha)
             adjoint_hashes.append(adjoint_partition_sha)
             contribution = {
                 goal_id: float(global_signed[leaf_index, goal_index])
+                for goal_index, goal_id in enumerate(FORMAL_GOAL_IDS)
+            }
+            reduced_contribution = {
+                goal_id: float(
+                    global_reduced_signed[leaf_index, goal_index]
+                )
+                for goal_index, goal_id in enumerate(FORMAL_GOAL_IDS)
+            }
+            complement_contribution = {
+                goal_id: float(
+                    global_complement_signed[leaf_index, goal_index]
+                )
                 for goal_index, goal_id in enumerate(FORMAL_GOAL_IDS)
             }
             unsigned_row = {
@@ -1241,11 +1587,23 @@ class _CellwiseDWRAccumulator:
                     global_counts[leaf_index]
                     - global_trace_counts[leaf_index]
                 ),
+                "assigned_active_interior_row_count": int(
+                    global_active_counts[leaf_index]
+                ),
                 "local_residual_partition_sha256": (
                     residual_partition_sha
                 ),
                 "local_adjoint_partition_sha256": (
                     adjoint_partition_sha
+                ),
+                "local_affine_complement_partition_sha256": (
+                    complement_partition_sha
+                ),
+                "reduced_trace_auxiliary_contribution": (
+                    reduced_contribution
+                ),
+                "active_interior_affine_complement_contribution": (
+                    complement_contribution
                 ),
                 "signed_dwr_contribution": contribution,
             }
@@ -1280,15 +1638,26 @@ class _CellwiseDWRAccumulator:
             "schema_version": CELLWISE_DWR_PARTITION_SCHEMA,
             "status": "cellwise_signed_dwr_partition_pass",
             "pass": True,
-            "method": "element_residual_adjoint_pairing",
+            "method": (
+                "reduced_residual_adjoint_plus_active_interior_"
+                "affine_complement"
+            ),
             "method_detail": (
                 "owner-local reduced-row Re(conj(z_i)*r_i), with each "
                 "trace row designated once through actual incident cells "
-                "and each DtN row designated once through its side support"
+                "and each DtN row designated once through its side support; "
+                "plus owner-local Re(conj(g_i)*c_i) on every unique active "
+                "cell-interior row"
             ),
             "complete_current_leaf_partition": True,
             "global_signed_closure_verified": True,
             "actual_cellwise_residual_adjoint_pairing": True,
+            "active_interior_affine_complement_present": (
+                self.active_complement_present
+            ),
+            "active_full_gradient_goal_count": (
+                self.active_full_gradient_goal_count
+            ),
             "global_eta_evenly_distributed": False,
             "endpoint_delta_consumed": False,
             "formal_goal_count": len(FORMAL_GOAL_IDS),
@@ -1537,6 +1906,10 @@ def _validate_inputs(
     *,
     source_sha: str,
     expected_plan_sha256: str,
+    active_full_affine_complement: PETSc.Vec | None,
+    active_full_goal_gradients: Mapping[str, PETSc.Vec] | None,
+    affine_complement_audit: Mapping[str, Any] | None,
+    require_affine_complement: bool,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     scalar = np.dtype(PETSc.ScalarType)
     integer = np.dtype(PETSc.IntType)
@@ -1586,6 +1959,70 @@ def _validate_inputs(
                 f"goal gradient {goal_id} has the wrong shadow layout"
             )
         _owned_vector_values(gradient, label=f"goal gradient {goal_id}")
+    complement_supplied = active_full_affine_complement is not None
+    gradients_supplied = active_full_goal_gradients is not None
+    audit_supplied = affine_complement_audit is not None
+    if len({complement_supplied, gradients_supplied, audit_supplied}) != 1:
+        raise ValueError(
+            "active affine complement, active gradients, and audit must be "
+            "supplied together"
+        )
+    if require_affine_complement and not complement_supplied:
+        raise ValueError(
+            "formal actual DWR requires the active-interior affine complement"
+        )
+    if complement_supplied:
+        assert active_full_affine_complement is not None
+        assert active_full_goal_gradients is not None
+        assert affine_complement_audit is not None
+        active_rows = int(view.reduction.system.entity_map.active_rows)
+        if (
+            int(active_full_affine_complement.getSize()) != active_rows
+            or affine_complement_audit.get("pass") is not True
+            or int(
+                affine_complement_audit.get("active_full_rows", -1)
+            )
+            != active_rows
+        ):
+            raise ValueError(
+                "active affine complement or its audit has the wrong layout"
+            )
+        active_range = tuple(
+            map(
+                int,
+                active_full_affine_complement.getOwnershipRange(),
+            )
+        )
+        _owned_vector_values(
+            active_full_affine_complement,
+            label="active-full affine complement",
+        )
+        if (
+            not active_full_goal_gradients
+            or not set(active_full_goal_gradients).issubset(
+                set(FORMAL_GOAL_IDS)
+            )
+        ):
+            raise ValueError(
+                "active-full goal-gradient inventory is empty or invalid"
+            )
+        for goal_id, active_gradient in (
+            active_full_goal_gradients.items()
+        ):
+            if (
+                int(active_gradient.getSize()) != active_rows
+                or tuple(
+                    map(int, active_gradient.getOwnershipRange())
+                )
+                != active_range
+            ):
+                raise ValueError(
+                    f"active-full gradient {goal_id} has the wrong layout"
+                )
+            _owned_vector_values(
+                active_gradient,
+                label=f"active-full gradient {goal_id}",
+            )
     operator, preconditioner = view.ksp.getOperators()
     if (
         int(operator.handle) != int(view.A.handle)
@@ -1621,6 +2058,10 @@ def evaluate_task035e_actual_dwr(
     current_plan_path: str | Path | None = None,
     expected_current_plan_sha256: str | None = None,
     require_cellwise_partition: bool = False,
+    active_full_affine_complement: PETSc.Vec | None = None,
+    active_full_goal_gradients: Mapping[str, PETSc.Vec] | None = None,
+    affine_complement_audit: Mapping[str, Any] | None = None,
+    require_affine_complement: bool = False,
 ) -> Task035eActualDWRResult:
     """Solve all 59 actual shadow adjoints and return signed DWR evidence."""
 
@@ -1665,6 +2106,17 @@ def evaluate_task035e_actual_dwr(
         "require_cellwise_partition": bool(
             require_cellwise_partition
         ),
+        "require_affine_complement": bool(
+            require_affine_complement
+        ),
+        "active_affine_complement_supplied": (
+            active_full_affine_complement is not None
+        ),
+        "active_full_gradient_goal_ids": (
+            []
+            if active_full_goal_gradients is None
+            else sorted(active_full_goal_gradients)
+        ),
         "formal_goal_inventory_sha256": FORMAL_GOAL_INVENTORY_SHA256,
     }
     request_sha = _json_sha256(
@@ -1685,6 +2137,12 @@ def evaluate_task035e_actual_dwr(
             goal_gradients,
             source_sha=source,
             expected_plan_sha256=plan_sha,
+            active_full_affine_complement=(
+                active_full_affine_complement
+            ),
+            active_full_goal_gradients=active_full_goal_gradients,
+            affine_complement_audit=affine_complement_audit,
+            require_affine_complement=require_affine_complement,
         ),
     )
     if validated is None:
@@ -1726,6 +2184,25 @@ def evaluate_task035e_actual_dwr(
             f"goal:{goal_id}": int(goal_gradients[goal_id].stateGet())
             for goal_id in FORMAL_GOAL_IDS
         },
+        **(
+            {}
+            if active_full_affine_complement is None
+            else {
+                "active_affine_complement": int(
+                    active_full_affine_complement.stateGet()
+                )
+            }
+        ),
+        **(
+            {}
+            if active_full_goal_gradients is None
+            else {
+                f"active_goal:{goal_id}": int(vector.stateGet())
+                for goal_id, vector in (
+                    active_full_goal_gradients.items()
+                )
+            }
+        ),
     }
 
     current_identity = _vector_partition_identity(
@@ -1768,13 +2245,77 @@ def evaluate_task035e_actual_dwr(
             FORMAL_GOAL_INVENTORY_SHA256
         ),
         "algebra": (
-            "r=b-A*x; A^H*z=g; eta=Re(z^H*r)"
+            "r_r=b_r-A_r*x_r; A_r^H*z_r=g_r; "
+            "eta=Re(z_r^H*r_r)+Re(g_i^H*c_i)"
         ),
     }
     implementation_sha256 = _json_sha256(
         implementation_identity,
         namespace="task035e.actual-dwr-implementation.v1",
     )
+    complement_identity = (
+        None
+        if active_full_affine_complement is None
+        else _vector_partition_identity(
+            active_full_affine_complement,
+            comm,
+            namespace=(
+                "task035e.actual-dwr.active-affine-complement.v1"
+            ),
+        )
+    )
+    complement_audit_identity = None
+    if affine_complement_audit is not None:
+        local_complement_audit_sha = _json_sha256(
+            affine_complement_audit,
+            namespace=(
+                "task035e.actual-dwr.rank-affine-complement-audit.v1"
+            ),
+        )
+        complement_audit_identity = {
+            "schema_version": affine_complement_audit.get(
+                "schema_version"
+            ),
+            "status": affine_complement_audit.get("status"),
+            "pass": affine_complement_audit.get("pass"),
+            "definition": affine_complement_audit.get("definition"),
+            "active_full_rows": affine_complement_audit.get(
+                "active_full_rows"
+            ),
+            "raw_active_trace_rows": affine_complement_audit.get(
+                "raw_active_trace_rows"
+            ),
+            "active_interior_rows": affine_complement_audit.get(
+                "active_interior_rows"
+            ),
+            "owned_cell_count_global": affine_complement_audit.get(
+                "owned_cell_count_global"
+            ),
+            "interior_residual_l2_norm": affine_complement_audit.get(
+                "interior_residual_l2_norm"
+            ),
+            "interior_local_solve_closure_l2_norm": (
+                affine_complement_audit.get(
+                    "interior_local_solve_closure_l2_norm"
+                )
+            ),
+            "active_full_complement_l2_norm": (
+                affine_complement_audit.get(
+                    "active_full_complement_l2_norm"
+                )
+            ),
+            "trace_entries_constructed_as_exact_zero": (
+                affine_complement_audit.get(
+                    "trace_entries_constructed_as_exact_zero"
+                )
+            ),
+            "rank_local_audit_sha256": list(
+                _native_rank_digest_catalog(
+                    comm,
+                    local_complement_audit_sha,
+                )
+            ),
+        }
 
     matrix_action = current_primal_in_shadow.duplicate()
     residual = view.b.copy()
@@ -1816,6 +2357,9 @@ def evaluate_task035e_actual_dwr(
                 cellwise_row_partition,
                 residual,
                 comm,
+                active_full_affine_complement=(
+                    active_full_affine_complement
+                ),
             )
         )
 
@@ -1823,6 +2367,11 @@ def evaluate_task035e_actual_dwr(
         signed_eta: dict[str, float] = {}
         for goal_id in FORMAL_GOAL_IDS:
             gradient = goal_gradients[goal_id]
+            active_full_gradient = (
+                None
+                if active_full_goal_gradients is None
+                else active_full_goal_gradients.get(goal_id)
+            )
             gradient_norm = float(
                 gradient.norm(PETSc.NormType.NORM_2)
             )
@@ -1883,7 +2432,18 @@ def evaluate_task035e_actual_dwr(
                         f"{adjoint_relative_residual:.6e} > "
                         f"{tolerance:.6e}"
                     )
-                pairing = complex(adjoint.dot(residual))
+                reduced_pairing = complex(adjoint.dot(residual))
+                complement_pairing = (
+                    0.0 + 0.0j
+                    if active_full_gradient is None
+                    or active_full_affine_complement is None
+                    else complex(
+                        active_full_gradient.dot(
+                            active_full_affine_complement
+                        )
+                    )
+                )
+                pairing = reduced_pairing + complement_pairing
                 eta = float(pairing.real)
                 if not math.isfinite(eta) or not math.isfinite(
                     pairing.imag
@@ -1914,7 +2474,11 @@ def evaluate_task035e_actual_dwr(
                     )
                 )
                 if cellwise_accumulator is not None:
-                    cellwise_accumulator.consume(goal_id, adjoint)
+                    cellwise_accumulator.consume(
+                        goal_id,
+                        adjoint,
+                        active_full_gradient=active_full_gradient,
+                    )
                 unsigned_goal = {
                     "goal_id": goal_id,
                     "goal_id_sha256": hashlib.sha256(
@@ -1942,10 +2506,27 @@ def evaluate_task035e_actual_dwr(
                     "adjoint_relative_tolerance": tolerance,
                     "ksp_converged_reason": converged_reason,
                     "complex_pairing_zH_r": [
+                        float(reduced_pairing.real),
+                        float(reduced_pairing.imag),
+                    ],
+                    "complex_pairing_giH_ci": [
+                        float(complement_pairing.real),
+                        float(complement_pairing.imag),
+                    ],
+                    "complex_pairing_total": [
                         float(pairing.real),
                         float(pairing.imag),
                     ],
                     "signed_eta_real_zH_r": eta,
+                    "signed_eta_reduced_residual_component": float(
+                        reduced_pairing.real
+                    ),
+                    "signed_eta_active_interior_affine_component": float(
+                        complement_pairing.real
+                    ),
+                    "active_full_gradient_present": (
+                        active_full_gradient is not None
+                    ),
                     "endpoint_goal_delta_consumed": False,
                     "actual_adjoint_solve_complete": True,
                 }
@@ -1990,6 +2571,25 @@ def evaluate_task035e_actual_dwr(
             f"goal:{goal_id}": int(goal_gradients[goal_id].stateGet())
             for goal_id in FORMAL_GOAL_IDS
         },
+        **(
+            {}
+            if active_full_affine_complement is None
+            else {
+                "active_affine_complement": int(
+                    active_full_affine_complement.stateGet()
+                )
+            }
+        ),
+        **(
+            {}
+            if active_full_goal_gradients is None
+            else {
+                f"active_goal:{goal_id}": int(vector.stateGet())
+                for goal_id, vector in (
+                    active_full_goal_gradients.items()
+                )
+            }
+        ),
     }
     if observed_states != protected_states:
         changed = sorted(
@@ -2030,6 +2630,16 @@ def evaluate_task035e_actual_dwr(
             "relative_residual": relative_residual,
             **residual_identity,
         },
+        "active_interior_affine_complement": {
+            "present": active_full_affine_complement is not None,
+            "audit_identity": complement_audit_identity,
+            "vector_identity": complement_identity,
+            "active_full_gradient_goal_ids": (
+                []
+                if active_full_goal_gradients is None
+                else list(active_full_goal_gradients)
+            ),
+        },
         "goal_inventory": {
             "formal_goal_count": len(FORMAL_GOAL_IDS),
             "formal_goal_inventory_sha256": (
@@ -2057,8 +2667,13 @@ def evaluate_task035e_actual_dwr(
             "transpose_reuse": (
                 "solve A^T*y=conj(g_J), then z_J=conj(y)"
             ),
-            "signed_estimator": "eta_J=Re(z_J^H*r)",
+            "signed_estimator": (
+                "eta_J=Re(z_r,J^H*r_r)+Re(g_i,J^H*c_i)"
+            ),
             "residual_sign": "b_shadow-A_shadow*x_current",
+            "affine_complement_sign": (
+                "x_shadow_affine(current_trace)-x_current_active"
+            ),
             "owner_local_petsc_vectors": True,
             "python_full_vector_allgather": False,
             "native_fixed_size_hash_metadata_reduction": True,
@@ -2069,6 +2684,9 @@ def evaluate_task035e_actual_dwr(
             "actual_enriched_residual_complete": True,
             "actual_59_goal_adjoint_complete": True,
             "actual_signed_dwr_complete": True,
+            "static_condensation_affine_complement_complete": (
+                active_full_affine_complement is not None
+            ),
             "goal_gradient_construction_complete": False,
             "current_to_shadow_injection_complete": False,
             "local_h_transfer_complete": False,

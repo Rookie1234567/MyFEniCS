@@ -35,6 +35,7 @@ from src.adaptivity.stage4_local_h import (
 
 from .hcurl_variable_p_assembly import (
     VariablePCondensedTraceSystem,
+    _iteratively_refined_lu_solve,
     _lu_factor_matrix_action,
     audit_variable_p_active_full_adjoint_recovery,
     build_variable_p_condensed_trace_system_from_compiled_form,
@@ -138,6 +139,272 @@ class VariablePRecoveredAdjoint:
 
 
 @dataclass
+class VariablePPrimalAffineComplement:
+    """Off-manifold active-interior correction for one injected primal."""
+
+    active_full_complement: PETSc.Vec | None
+    audit: dict[str, Any]
+    _destroyed: bool = field(default=False, init=False, repr=False)
+
+    def destroy(self) -> None:
+        """Release the owned active-space correction exactly once."""
+
+        if self._destroyed:
+            return
+        vector = self.active_full_complement
+        self.active_full_complement = None
+        self._destroyed = True
+        if vector is not None:
+            vector.destroy()
+
+    def __enter__(self) -> VariablePPrimalAffineComplement:
+        return self
+
+    def __exit__(self, *_args: Any) -> None:
+        self.destroy()
+
+
+def build_variable_p_primal_affine_complement(
+    system: VariablePCondensedTraceSystem,
+    active_full_primal: PETSc.Vec,
+    active_full_rhs: PETSc.Vec,
+    *,
+    active_auxiliary_interior_action: PETSc.Vec | None = None,
+) -> VariablePPrimalAffineComplement:
+    """Return the exact eliminated-interior correction for an injected field.
+
+    The injected current field has a conforming trace, but after transfer into
+    an enriched shadow space its cell-interior coefficients need not lie on
+    the shadow static-condensation affine manifold.  For every owned cell this
+    routine evaluates
+
+    ``c_i = -A_ii^-1 A_it x_t + A_ii^-1 (b_i + q_i) - x_i``
+
+    using the retained local factors.  Only rows needed by locally owned cells
+    are read through one reusable PETSc selected-row scatter; no complete
+    active vector or p6 matrix is gathered or assembled.
+    """
+
+    active_rows = int(system.entity_map.active_rows)
+    raw_trace_rows = int(system.entity_map.active_trace_rows)
+    if not 0 <= raw_trace_rows <= active_rows:
+        raise ValueError("variable-p active trace/full row counts are invalid")
+    vectors = (
+        ("active full primal", active_full_primal),
+        ("active full RHS", active_full_rhs),
+    )
+    if active_auxiliary_interior_action is not None:
+        vectors += (
+            (
+                "active auxiliary interior action",
+                active_auxiliary_interior_action,
+            ),
+        )
+    reference_layout = (
+        int(active_full_primal.getSize()),
+        int(active_full_primal.getLocalSize()),
+        tuple(map(int, active_full_primal.getOwnershipRange())),
+    )
+    for label, vector in vectors:
+        layout = (
+            int(vector.getSize()),
+            int(vector.getLocalSize()),
+            tuple(map(int, vector.getOwnershipRange())),
+        )
+        if layout != reference_layout or layout[0] != active_rows:
+            raise ValueError(f"{label} has the wrong active-space layout")
+
+    requested_rows = np.concatenate(
+        [
+            np.concatenate(
+                (recovery.cell.trace_rows, recovery.cell.interior_rows)
+            )
+            for recovery in system.cell_recovery
+        ]
+        or [np.empty(0, dtype=np.int64)]
+    )
+    complement = active_full_primal.duplicate()
+    complement.set(PETSc.ScalarType(0.0))
+    local_residual_sq = 0.0
+    local_residual_max = 0.0
+    local_closure_sq = 0.0
+    local_closure_max = 0.0
+    local_complement_sq = 0.0
+    local_complement_max = 0.0
+    selected_audit: dict[str, Any] | None = None
+    try:
+        with PETScSelectedRowLayout.create(
+            active_full_primal,
+            requested_rows,
+        ) as selected:
+            primal = selected.gather(active_full_primal)
+            rhs = selected.gather(active_full_rhs)
+            auxiliary = (
+                np.zeros_like(rhs)
+                if active_auxiliary_interior_action is None
+                else selected.gather(active_auxiliary_interior_action)
+            )
+            selected_audit = dict(selected.audit)
+            for recovery in system.cell_recovery:
+                cell = recovery.cell
+                trace_positions = selected.positions(cell.trace_rows)
+                interior_positions = selected.positions(cell.interior_rows)
+                local_trace = primal[trace_positions]
+                local_interior = primal[interior_positions]
+                effective_rhs = (
+                    rhs[interior_positions]
+                    + auxiliary[interior_positions]
+                )
+                homogeneous = (
+                    system.interior_from_trace_by_class[
+                        recovery.class_key
+                    ]
+                    @ local_trace
+                )
+                residual = effective_rhs - _lu_factor_matrix_action(
+                    system.interior_lu_by_class[recovery.class_key],
+                    local_interior - homogeneous,
+                )
+                correction = _iteratively_refined_lu_solve(
+                    system.interior_lu_by_class[recovery.class_key],
+                    residual,
+                )
+                closure = _lu_factor_matrix_action(
+                    system.interior_lu_by_class[recovery.class_key],
+                    correction,
+                ) - residual
+                if (
+                    not np.all(np.isfinite(residual))
+                    or not np.all(np.isfinite(correction))
+                    or not np.all(np.isfinite(closure))
+                ):
+                    raise RuntimeError(
+                        "variable-p affine complement contains non-finite "
+                        "cell-interior values"
+                    )
+                complement.setValues(
+                    np.asarray(cell.interior_rows, dtype=PETSc.IntType),
+                    np.asarray(correction, dtype=PETSc.ScalarType),
+                    addv=PETSc.InsertMode.INSERT_VALUES,
+                )
+                local_residual_sq += float(
+                    np.vdot(residual, residual).real
+                )
+                local_residual_max = max(
+                    local_residual_max,
+                    float(np.max(np.abs(residual), initial=0.0)),
+                )
+                local_closure_sq += float(
+                    np.vdot(closure, closure).real
+                )
+                local_closure_max = max(
+                    local_closure_max,
+                    float(np.max(np.abs(closure), initial=0.0)),
+                )
+                local_complement_sq += float(
+                    np.vdot(correction, correction).real
+                )
+                local_complement_max = max(
+                    local_complement_max,
+                    float(np.max(np.abs(correction), initial=0.0)),
+                )
+        complement.assemble()
+    except Exception:
+        complement.destroy()
+        raise
+
+    comm = system.entity_map.mesh.comm
+    residual_norm = float(
+        np.sqrt(comm.allreduce(local_residual_sq, op=MPI.SUM))
+    )
+    residual_max = float(
+        comm.allreduce(local_residual_max, op=MPI.MAX)
+    )
+    closure_norm = float(
+        np.sqrt(comm.allreduce(local_closure_sq, op=MPI.SUM))
+    )
+    closure_max = float(
+        comm.allreduce(local_closure_max, op=MPI.MAX)
+    )
+    complement_norm = float(
+        np.sqrt(comm.allreduce(local_complement_sq, op=MPI.SUM))
+    )
+    complement_max = float(
+        comm.allreduce(local_complement_max, op=MPI.MAX)
+    )
+    closure_tolerance = max(
+        1.0e-12,
+        5.0e-11 * max(residual_norm, 1.0),
+    )
+    if (
+        not all(
+            np.isfinite(value)
+            for value in (
+                residual_norm,
+                residual_max,
+                closure_norm,
+                closure_max,
+                complement_norm,
+                complement_max,
+            )
+        )
+        or closure_norm > closure_tolerance
+    ):
+        complement.destroy()
+        raise RuntimeError(
+            "variable-p affine-complement local solve did not close: "
+            f"closure={closure_norm:.6e}, "
+            f"tolerance={closure_tolerance:.6e}"
+        )
+    if selected_audit is None:
+        complement.destroy()
+        raise RuntimeError("affine-complement selected-row audit is absent")
+    audit = {
+        "schema_version": (
+            "task035e.variable-p-primal-affine-complement.v1"
+        ),
+        "status": "active_interior_affine_complement_pass",
+        "pass": True,
+        "definition": (
+            "c_i=-A_ii^-1*A_it*x_t+A_ii^-1*(b_i+q_i)-x_i"
+        ),
+        "active_full_rows": active_rows,
+        "raw_active_trace_rows": raw_trace_rows,
+        "active_interior_rows": active_rows - raw_trace_rows,
+        "owned_cell_count_local": len(system.cell_recovery),
+        "owned_cell_count_global": int(
+            comm.allreduce(len(system.cell_recovery), op=MPI.SUM)
+        ),
+        "interior_residual_l2_norm": residual_norm,
+        "interior_residual_max_abs": residual_max,
+        "interior_local_solve_closure_l2_norm": closure_norm,
+        "interior_local_solve_closure_max_abs": closure_max,
+        "interior_local_solve_closure_tolerance": closure_tolerance,
+        "active_full_complement_l2_norm": complement_norm,
+        "active_full_complement_max_abs": complement_max,
+        "auxiliary_interior_action_included": (
+            active_auxiliary_interior_action is not None
+        ),
+        "selected_row_layout": {
+            **selected_audit,
+            "shared_layout_vector_count": (
+                2
+                if active_auxiliary_interior_action is None
+                else 3
+            ),
+        },
+        "trace_entries_constructed_as_exact_zero": True,
+        "full_active_vector_python_gathered": False,
+        "full_p6_global_matrix_allocated": False,
+        "ordinary_default_changed": False,
+    }
+    return VariablePPrimalAffineComplement(
+        active_full_complement=complement,
+        audit=audit,
+    )
+
+
+@dataclass
 class VariablePAssemblyTimeReduction:
     """One physically reduced variable-p Full3D operator."""
 
@@ -163,6 +430,24 @@ class VariablePAssemblyTimeReduction:
             self.system.build_audit
         )
         return audit
+
+    def primal_affine_complement(
+        self,
+        active_full_primal: PETSc.Vec,
+        active_full_rhs: PETSc.Vec,
+        *,
+        active_auxiliary_interior_action: PETSc.Vec | None = None,
+    ) -> VariablePPrimalAffineComplement:
+        """Build the injected primal's eliminated-interior DWR correction."""
+
+        return build_variable_p_primal_affine_complement(
+            self.system,
+            active_full_primal,
+            active_full_rhs,
+            active_auxiliary_interior_action=(
+                active_auxiliary_interior_action
+            ),
+        )
 
     def reduce_p6_vector(
         self,
@@ -1480,7 +1765,9 @@ def build_variable_p_assembly_time_reduction(
 
 __all__ = [
     "VariablePAssemblyTimeReduction",
+    "VariablePPrimalAffineComplement",
     "VariablePRecoveredAdjoint",
     "VariablePRecoveredSolution",
+    "build_variable_p_primal_affine_complement",
     "build_variable_p_assembly_time_reduction",
 ]

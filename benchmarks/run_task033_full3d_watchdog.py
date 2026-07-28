@@ -5308,6 +5308,45 @@ def _task035e_blind_live_role_evidence_gate(
         expected_module_sha = _sha256(
             ROOT / "src" / "adaptivity" / "task035e_actual_dwr.py"
         )
+        legacy_gradient = (
+            gradient.get("schema_version")
+            == "task035e.formal-59-goal-live-gradients.v1"
+            and gradient.get("status")
+            == "formal_59_goal_live_gradients_pass"
+        )
+        secant_gradient = (
+            gradient.get("schema_version")
+            == "task035e.formal-59-goal-analytic-secant-gradients.v1"
+            and gradient.get("status")
+            == "formal_59_goal_analytic_secant_gradients_pass"
+        )
+        gradient_namespace = (
+            "task035e.formal-secant-gradient-inventory.v1"
+            if secant_gradient
+            else "task035e.formal-gradient-inventory.v1"
+        )
+        affine_complement = evidence.get(
+            "active_interior_affine_complement"
+        )
+        affine_complement = (
+            affine_complement
+            if isinstance(affine_complement, Mapping)
+            else {}
+        )
+        actual_affine = actual.get(
+            "active_interior_affine_complement"
+        )
+        actual_affine = (
+            actual_affine
+            if isinstance(actual_affine, Mapping)
+            else {}
+        )
+        actual_capability = actual.get("capability_credit")
+        actual_capability = (
+            actual_capability
+            if isinstance(actual_capability, Mapping)
+            else {}
+        )
         role_checks = {
             "schema_status_role": (
                 evidence.get("schema_version")
@@ -5358,18 +5397,34 @@ def _task035e_blind_live_role_evidence_gate(
                 and set(signed) == set(FORMAL_GOAL_IDS)
             ),
             "gradient_inventory_replayed": (
-                gradient.get("schema_version")
-                == "task035e.formal-59-goal-live-gradients.v1"
-                and
-                gradient.get("status")
-                == "formal_59_goal_live_gradients_pass"
+                (legacy_gradient or secant_gradient)
                 and gradient.get("pass") is True
                 and valid_hex_digest(gradient_sha, 64)
                 and _task035e_safe_namespaced_json_sha256(
                     gradient_unsigned,
-                    namespace="task035e.formal-gradient-inventory.v1",
+                    namespace=gradient_namespace,
                 )
                 == gradient_sha
+            ),
+            "affine_complement_bound": (
+                (
+                    not secant_gradient
+                    and not affine_complement
+                    and not actual_affine
+                )
+                or (
+                    secant_gradient
+                    and affine_complement.get("pass") is True
+                    and affine_complement.get("status")
+                    == "active_interior_affine_complement_pass"
+                    and actual_affine.get("present") is True
+                    and actual_affine.get("vector_identity") is not None
+                    and actual_affine.get("audit_identity") is not None
+                    and actual_capability.get(
+                        "static_condensation_affine_complement_complete"
+                    )
+                    is True
+                )
             ),
             "actual_dwr_report_replayed": (
                 actual.get("schema_version")
@@ -5454,8 +5509,7 @@ def _task035e_blind_live_role_evidence_gate(
                     rank_audits,
                     namespace="task035e.shadow-pipeline-rank-catalog.v1",
                 )
-                and set(capability)
-                == {
+                and {
                     "current_primal_snapshot_complete",
                     "current_to_shadow_injection_complete",
                     "local_h_transfer_complete",
@@ -5466,6 +5520,7 @@ def _task035e_blind_live_role_evidence_gate(
                     "shadow_endpoint_effectivity_complete",
                     "accuracy_credit",
                 }
+                .issubset(set(capability))
                 and capability.get("current_primal_snapshot_complete")
                 is True
                 and capability.get("current_to_shadow_injection_complete")
@@ -5481,6 +5536,19 @@ def _task035e_blind_live_role_evidence_gate(
                 and capability.get("actual_59_goal_adjoint_complete")
                 is True
                 and capability.get("actual_signed_dwr_complete") is True
+                and (
+                    not secant_gradient
+                    or (
+                        capability.get(
+                            "static_condensation_affine_complement_complete"
+                        )
+                        is True
+                        and capability.get(
+                            "analytic_secant_goal_derivative_complete"
+                        )
+                        is True
+                    )
+                )
                 and capability.get("shadow_endpoint_effectivity_complete")
                 is False
                 and capability.get("accuracy_credit") is False

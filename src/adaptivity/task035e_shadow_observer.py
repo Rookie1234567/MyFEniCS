@@ -21,7 +21,7 @@ import os
 from pathlib import Path
 import re
 import tempfile
-from types import MappingProxyType
+from types import MappingProxyType, SimpleNamespace
 from typing import Any, Callable, Mapping
 
 from mpi4py import MPI
@@ -37,7 +37,7 @@ from .blind_controller.contracts import (
 )
 from .task035e_actual_dwr import evaluate_task035e_actual_dwr
 from .task035e_goal_gradients import (
-    build_task035e_formal_goal_gradients,
+    build_task035e_formal_secant_goal_gradients,
 )
 from .task035e_multigoal_snapshot import (
     LoadedTask035eSnapshot,
@@ -645,6 +645,7 @@ def evaluate_and_write_task035e_shadow(
 
     active_current = None
     reduced_current = None
+    affine_complement = None
     heavy_state_release_audit = None
     try:
         transfer = transfer_task035e_snapshot_to_shadow_p6(
@@ -683,26 +684,84 @@ def evaluate_and_write_task035e_shadow(
                 auxiliary_reduced_values=auxiliary,
             )
         )
+        if shadow_view.recovered.active_full_rhs is None:
+            raise Task035eShadowObserverError(
+                "shadow recovery lost the active full RHS"
+            )
+        if (
+            shadow_view.recovered.active_auxiliary_interior_action
+            is not None
+        ):
+            raise Task035eShadowObserverError(
+                "formal Task035e trace-only port unexpectedly retained an "
+                "auxiliary-to-cell-interior action"
+            )
+        affine_complement = (
+            shadow_view.reduction.primal_affine_complement(
+                active_current,
+                shadow_view.recovered.active_full_rhs,
+            )
+        )
+        if affine_complement.active_full_complement is None:
+            raise Task035eShadowObserverError(
+                "affine-interior complement construction returned no vector"
+            )
+
+        current_goal_context = dict(shadow_view.goal_context)
+        raw_scales = current_goal_context.get(
+            "auxiliary_coordinate_scales"
+        )
+        scales = (
+            np.ones(len(auxiliary), dtype=np.complex128)
+            if raw_scales is None
+            else np.asarray(raw_scales, dtype=np.complex128)
+        )
+        if (
+            scales.shape != auxiliary.shape
+            or not np.all(np.isfinite(scales))
+            or np.any(np.abs(scales) <= 0.0)
+        ):
+            raise Task035eShadowObserverError(
+                "current endpoint auxiliary scales are invalid"
+            )
+        current_physical_auxiliary = np.asarray(
+            auxiliary / scales,
+            dtype=np.complex128,
+        )
+        current_physical_auxiliary.setflags(write=False)
+        current_goal_context["auxiliary_values"] = (
+            current_physical_auxiliary
+        )
+        current_endpoint_view = SimpleNamespace(
+            field=transfer.shadow_field,
+            mesh_data=shadow_view.mesh_data,
+            config=shadow_view.config,
+            x=reduced_current,
+            reduction=shadow_view.reduction,
+            goal_context=MappingProxyType(current_goal_context),
+            port_metrics=shadow_view.port_metrics,
+        )
         active_current.destroy()
         active_current = None
         del auxiliary
-        del transfer
         del snapshot
         heavy_state_release_audit = {
             "schema_version": (
-                "task035e.pre-adjoint-heavy-state-release.v1"
+                "task035e.pre-adjoint-heavy-state-release.v2"
             ),
             "pass": True,
             "active_current_vector_destroyed_before_gradients": True,
             "snapshot_python_reference_released_before_gradients": True,
-            "transfer_python_reference_released_before_gradients": True,
-            "current_mesh_and_p6_transfer_objects_not_retained_by_observer": (
+            "current_transferred_p6_field_retained_for_exact_secant_gradient": (
                 True
             ),
+            "current_transferred_p6_field_released_after_gradients": True,
+            "active_affine_complement_retained_through_dwr_only": True,
             "native_allocator_release_timing_claimed": False,
         }
-        with build_task035e_formal_goal_gradients(
-            shadow_view
+        with build_task035e_formal_secant_goal_gradients(
+            current_endpoint_view,
+            shadow_view,
         ) as goal_gradients:
             dwr = evaluate_task035e_actual_dwr(
                 shadow_view,
@@ -716,9 +775,22 @@ def evaluate_and_write_task035e_shadow(
                     current_plan_file_sha256
                 ),
                 require_cellwise_partition=True,
+                active_full_affine_complement=(
+                    affine_complement.active_full_complement
+                ),
+                active_full_goal_gradients=(
+                    goal_gradients.active_full_gradients
+                ),
+                affine_complement_audit=affine_complement.audit,
+                require_affine_complement=True,
             )
             gradient_audit = dict(goal_gradients.audit)
+        affine_complement_audit = dict(affine_complement.audit)
+        del current_endpoint_view
+        del transfer
     finally:
+        if affine_complement is not None:
+            affine_complement.destroy()
         if reduced_current is not None:
             reduced_current.destroy()
         if active_current is not None:
@@ -730,6 +802,7 @@ def evaluate_and_write_task035e_shadow(
         or projection_audit.get("pass") is not True
         or extraction_audit.get("pass") is not True
         or auxiliary_audit.get("pass") is not True
+        or affine_complement_audit.get("pass") is not True
         or gradient_audit.get("pass") is not True
         or dwr.report.get("pass") is not True
         or tuple(dwr.signed_eta) != FORMAL_GOAL_IDS
@@ -777,6 +850,9 @@ def evaluate_and_write_task035e_shadow(
         "shadow_plan_file_sha256": shadow_plan_sha,
         "shadow_kind_closure": dict(shadow_kind_audit),
         "current_auxiliary_reconstruction": dict(auxiliary_audit),
+        "active_interior_affine_complement": dict(
+            affine_complement_audit
+        ),
         "pre_adjoint_heavy_state_release": dict(
             heavy_state_release_audit
         ),
@@ -804,7 +880,13 @@ def evaluate_and_write_task035e_shadow(
             ),
             "shadow_residual": "b_shadow-A_shadow*x_current_in_shadow",
             "adjoint": "A_shadow^H*z_J=g_J",
-            "signed_estimator": "Re(z_J^H*r_shadow)",
+            "goal_derivative": (
+                "analytic current-to-shadow averaged derivative"
+            ),
+            "signed_estimator": (
+                "Re(z_reduced,J^H*r_reduced)"
+                "+Re(g_active-interior,J^H*c_affine)"
+            ),
             "python_full_vector_allgather": False,
         },
         "capability_credit": {
@@ -815,6 +897,8 @@ def evaluate_and_write_task035e_shadow(
             "actual_enriched_residual_complete": True,
             "actual_59_goal_adjoint_complete": True,
             "actual_signed_dwr_complete": True,
+            "static_condensation_affine_complement_complete": True,
+            "analytic_secant_goal_derivative_complete": True,
             "shadow_endpoint_effectivity_complete": False,
             "accuracy_credit": False,
         },

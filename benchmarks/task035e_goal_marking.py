@@ -129,6 +129,9 @@ _GLOBAL_DWR_FIELDS = frozenset(
         "report_sha256",
     }
 )
+_GLOBAL_DWR_OPTIONAL_FIELDS = frozenset(
+    {"active_interior_affine_complement"}
+)
 _CELLWISE_FIELDS = frozenset(
     {
         "schema_version",
@@ -200,6 +203,12 @@ _LOCALIZATION_FIELDS = frozenset(
         "partition_sha256",
     }
 )
+_LOCALIZATION_AFFINE_FIELDS = frozenset(
+    {
+        "active_interior_affine_complement_present",
+        "active_full_gradient_goal_count",
+    }
+)
 _CELL_ROW_FIELDS = frozenset(
     {
         "target_id",
@@ -213,6 +222,14 @@ _CELL_ROW_FIELDS = frozenset(
         "local_adjoint_partition_sha256",
         "signed_dwr_contribution",
         "row_sha256",
+    }
+)
+_CELL_ROW_AFFINE_FIELDS = frozenset(
+    {
+        "assigned_active_interior_row_count",
+        "local_affine_complement_partition_sha256",
+        "reduced_trace_auxiliary_contribution",
+        "active_interior_affine_complement_contribution",
     }
 )
 _COST_FIELDS = (
@@ -448,7 +465,12 @@ def _validate_global_dwr(
     action_kind: str,
     current_cycle_index: int,
 ) -> tuple[Mapping[str, float], str]:
-    if set(raw) != _GLOBAL_DWR_FIELDS:
+    if (
+        not _GLOBAL_DWR_FIELDS.issubset(set(raw))
+        or not set(raw).issubset(
+            _GLOBAL_DWR_FIELDS | _GLOBAL_DWR_OPTIONAL_FIELDS
+        )
+    ):
         raise GoalMarkingError(
             "global actual DWR report has unknown or missing fields"
         )
@@ -475,6 +497,14 @@ def _validate_global_dwr(
         raw.get("capability_credit"),
         label="actual DWR capability",
     )
+    affine = (
+        _mapping(
+            raw.get("active_interior_affine_complement"),
+            label="actual DWR affine complement",
+        )
+        if "active_interior_affine_complement" in raw
+        else None
+    )
     expected_shadow = _SHADOW_BY_ACTION[action_kind]
     if (
         observed_report_sha != expected_report_sha
@@ -495,6 +525,16 @@ def _validate_global_dwr(
         or capability.get("actual_enriched_residual_complete") is not True
         or capability.get("actual_59_goal_adjoint_complete") is not True
         or capability.get("actual_signed_dwr_complete") is not True
+        or (
+            affine is not None
+            and (
+                affine.get("present") is not True
+                or capability.get(
+                    "static_condensation_affine_complement_complete"
+                )
+                is not True
+            )
+        )
         or capability.get("accuracy_credit") is not False
     ):
         raise GoalMarkingError(
@@ -667,7 +707,22 @@ def _validate_cellwise_authority(
         raw.get("localization"),
         label="cellwise localization",
     )
-    if set(localization) != _LOCALIZATION_FIELDS:
+    localization_fields = set(localization)
+    affine_localization = bool(
+        localization_fields & _LOCALIZATION_AFFINE_FIELDS
+    )
+    if (
+        not _LOCALIZATION_FIELDS.issubset(localization_fields)
+        or not localization_fields.issubset(
+            _LOCALIZATION_FIELDS | _LOCALIZATION_AFFINE_FIELDS
+        )
+        or (
+            affine_localization
+            and not _LOCALIZATION_AFFINE_FIELDS.issubset(
+                localization_fields
+            )
+        )
+    ):
         raise GoalMarkingError(
             "cellwise localization has unknown or missing fields"
         )
@@ -701,11 +756,31 @@ def _validate_cellwise_authority(
         != "cellwise_signed_dwr_partition_pass"
         or localization.get("pass") is not True
         or localization.get("method")
-        != "element_residual_adjoint_pairing"
+        not in {
+            "element_residual_adjoint_pairing",
+            (
+                "reduced_residual_adjoint_plus_active_interior_"
+                "affine_complement"
+            ),
+        }
         or localization.get("complete_current_leaf_partition") is not True
         or localization.get("global_signed_closure_verified") is not True
         or localization.get("actual_cellwise_residual_adjoint_pairing")
         is not True
+        or (
+            affine_localization
+            and (
+                localization.get(
+                    "active_interior_affine_complement_present"
+                )
+                is not True
+                or type(
+                    localization.get("active_full_gradient_goal_count")
+                )
+                is not int
+                or localization["active_full_gradient_goal_count"] <= 0
+            )
+        )
         or localization.get("global_eta_evenly_distributed") is not False
         or localization.get("endpoint_delta_consumed") is not False
         or localization.get("formal_goal_count") != len(FORMAL_GOAL_IDS)
@@ -747,7 +822,17 @@ def _validate_cellwise_authority(
     adjoint_partition_hashes: list[str] = []
     for index, raw_row in enumerate(raw_rows):
         row = _mapping(raw_row, label=f"cellwise row {index}")
-        if set(row) != _CELL_ROW_FIELDS:
+        row_fields = set(row)
+        if (
+            not _CELL_ROW_FIELDS.issubset(row_fields)
+            or not row_fields.issubset(
+                _CELL_ROW_FIELDS | _CELL_ROW_AFFINE_FIELDS
+            )
+            or (
+                affine_localization
+                and not _CELL_ROW_AFFINE_FIELDS.issubset(row_fields)
+            )
+        ):
             raise GoalMarkingError(
                 f"cellwise row {index} has unknown or missing fields"
             )
@@ -784,10 +869,44 @@ def _validate_cellwise_authority(
                 label=f"cellwise row {index} adjoint partition",
             )
         )
+        if affine_localization:
+            _sha256(
+                row.get("local_affine_complement_partition_sha256"),
+                label=f"cellwise row {index} affine partition",
+            )
         contribution = _signed_goal_mapping(
             row.get("signed_dwr_contribution"),
             label=f"cellwise row {index} signed contribution",
         )
+        if affine_localization:
+            reduced_contribution = _signed_goal_mapping(
+                row.get("reduced_trace_auxiliary_contribution"),
+                label=f"cellwise row {index} reduced contribution",
+            )
+            affine_contribution = _signed_goal_mapping(
+                row.get(
+                    "active_interior_affine_complement_contribution"
+                ),
+                label=f"cellwise row {index} affine contribution",
+            )
+            for goal_id in FORMAL_GOAL_IDS:
+                component_sum = (
+                    reduced_contribution[goal_id]
+                    + affine_contribution[goal_id]
+                )
+                scale = max(
+                    abs(contribution[goal_id]),
+                    abs(component_sum),
+                    1.0,
+                )
+                if (
+                    abs(contribution[goal_id] - component_sum)
+                    > 1.0e-12 * scale
+                ):
+                    raise GoalMarkingError(
+                        "cellwise reduced plus affine contribution "
+                        f"does not close for {goal_id}"
+                    )
         rows[target_id] = {
             "target_id": target_id,
             "key": target_by_id[target_id],
@@ -828,6 +947,19 @@ def _validate_cellwise_authority(
         )
         for raw_row in raw_rows
     )
+    total_active_interior_rows = (
+        sum(
+            _nonnegative_integer(
+                _mapping(raw_row, label="cellwise row").get(
+                    "assigned_active_interior_row_count"
+                ),
+                label="cellwise assigned active-interior rows",
+            )
+            for raw_row in raw_rows
+        )
+        if affine_localization
+        else None
+    )
     if (
         total_reduced_rows != row_designation.get("total_reduced_rows")
         or total_trace_rows
@@ -835,6 +967,11 @@ def _validate_cellwise_authority(
         or total_auxiliary_rows
         != row_designation.get("appended_auxiliary_rows")
         or total_trace_rows + total_auxiliary_rows != total_reduced_rows
+        or (
+            affine_localization
+            and total_active_interior_rows
+            != row_designation.get("active_interior_rows")
+        )
         or localization.get("residual_partition_catalog_sha256")
         != _json_sha256(
             residual_partition_hashes,

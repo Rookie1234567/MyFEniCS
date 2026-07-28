@@ -366,6 +366,107 @@ def test_serial_actual_dwr_matches_dense_59_goal_algebra(
 
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 1,
+    reason="serial actual-DWR affine-complement component test",
+)
+def test_actual_dwr_adds_active_interior_affine_goal_pairing(
+    tmp_path: Path,
+) -> None:
+    plan_path = tmp_path / "shadow-plan.json"
+    plan_sha = _write_plan(plan_path)
+    fixture = _Fixture(plan_path, plan_sha, comm=MPI.COMM_WORLD)
+    active_size = fixture.size + 2
+    active_rows = np.arange(active_size, dtype=np.float64)
+    complement_values = (
+        0.012 * np.cos(0.19 * (active_rows + 1.0))
+        - 0.007j * np.sin(0.23 * (active_rows + 1.0))
+    ).astype(np.complex128)
+    active_gradient_values = (
+        0.21 * np.cos(0.11 * (active_rows + 1.0))
+        + 0.16j * np.sin(0.07 * (active_rows + 1.0))
+    ).astype(np.complex128)
+    complement = _vector_from_global(
+        complement_values,
+        MPI.COMM_WORLD,
+    )
+    active_gradient = _vector_from_global(
+        active_gradient_values,
+        MPI.COMM_WORLD,
+    )
+    goal_id = FORMAL_GOAL_IDS[-1]
+    complement_audit = {
+        "schema_version": (
+            "task035e.variable-p-primal-affine-complement.v1"
+        ),
+        "status": "active_interior_affine_complement_pass",
+        "pass": True,
+        "definition": "fixture",
+        "active_full_rows": active_size,
+        "raw_active_trace_rows": fixture.size,
+        "active_interior_rows": 2,
+        "owned_cell_count_global": 1,
+        "interior_residual_l2_norm": 0.1,
+        "interior_local_solve_closure_l2_norm": 1.0e-15,
+        "active_full_complement_l2_norm": float(
+            np.linalg.norm(complement_values)
+        ),
+        "trace_entries_constructed_as_exact_zero": False,
+    }
+    try:
+        result = evaluate_task035e_actual_dwr(
+            fixture.view,
+            fixture.current,
+            fixture.gradients,
+            source_sha=SOURCE_SHA,
+            expected_shadow_plan_sha256=plan_sha,
+            shadow_kind="p-shadow",
+            active_full_affine_complement=complement,
+            active_full_goal_gradients={goal_id: active_gradient},
+            affine_complement_audit=complement_audit,
+            require_affine_complement=True,
+        )
+        residual = (
+            fixture.dense @ fixture.shadow_exact_values
+            - fixture.dense @ fixture.current_values
+        )
+        reduced_gradient = fixture.gradient_values[goal_id]
+        reduced_adjoint = np.linalg.solve(
+            fixture.dense.conj().T,
+            reduced_gradient,
+        )
+        expected_reduced = float(
+            np.vdot(reduced_adjoint, residual).real
+        )
+        expected_complement = float(
+            np.vdot(active_gradient_values, complement_values).real
+        )
+        assert result.signed_eta[goal_id] == pytest.approx(
+            expected_reduced + expected_complement,
+            rel=2.0e-11,
+            abs=2.0e-12,
+        )
+        row = next(
+            row
+            for row in result.report["goals"]
+            if row["goal_id"] == goal_id
+        )
+        assert row[
+            "signed_eta_active_interior_affine_component"
+        ] == pytest.approx(expected_complement)
+        assert row["active_full_gradient_present"] is True
+        assert (
+            result.report["capability_credit"][
+                "static_condensation_affine_complement_complete"
+            ]
+            is True
+        )
+    finally:
+        active_gradient.destroy()
+        complement.destroy()
+        fixture.destroy()
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 1,
     reason="serial actual-DWR component test",
 )
 def test_actual_dwr_rejects_incomplete_goal_inventory_and_bad_gate(

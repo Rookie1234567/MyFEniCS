@@ -9,12 +9,14 @@ import numpy as np
 from petsc4py import PETSc
 import pytest
 from scipy import sparse
+from scipy.linalg import lu_factor
 
 from src.adaptivity.variable_p_transfer import (
     PETScSelectedRowLayout,
 )
 from src.solvers.hcurl_variable_p_reduction import (
     _reduced_trace_auxiliary_norms,
+    build_variable_p_primal_affine_complement,
 )
 
 
@@ -193,6 +195,129 @@ def test_work_owned_component_norm_matches_global_math() -> None:
         assert second_audit["replicated_reduced_vector_bytes_per_rank"] == 0
     finally:
         vector.destroy()
+
+
+def test_primal_affine_complement_recovers_only_cell_interiors() -> None:
+    """The reusable DWR correction closes the eliminated local equations."""
+
+    comm = MPI.COMM_WORLD
+    rank = int(comm.rank)
+    size = int(comm.size)
+    trace_rows = 2 * size
+    active_rows = 3 * size
+    rows = np.arange(active_rows, dtype=np.float64)
+    primal_values = (
+        0.2 * np.cos(0.17 * (rows + 1.0))
+        + 0.1j * np.sin(0.13 * (rows + 1.0))
+    ).astype(np.complex128)
+    rhs_values = np.zeros(active_rows, dtype=np.complex128)
+    auxiliary_values = np.zeros(active_rows, dtype=np.complex128)
+    interior_row = trace_rows + rank
+    for cell_rank in range(size):
+        rhs_values[trace_rows + cell_rank] = (
+            0.4 - 0.03j * (cell_rank + 1)
+        )
+        auxiliary_values[trace_rows + cell_rank] = (
+            0.02 + 0.01j * cell_rank
+        )
+
+    primal = _distributed_vector(active_rows)
+    rhs = _distributed_vector(active_rows)
+    auxiliary = _distributed_vector(active_rows)
+    for vector, values in (
+        (primal, primal_values),
+        (rhs, rhs_values),
+        (auxiliary, auxiliary_values),
+    ):
+        start, stop = map(int, vector.getOwnershipRange())
+        vector.getArray()[:] = values[start:stop]
+        vector.assemble()
+
+    trace = np.asarray([2 * rank, 2 * rank + 1], dtype=np.int64)
+    interior = np.asarray([interior_row], dtype=np.int64)
+    factor_value = np.asarray(
+        [[2.0 + 0.1 * rank + 0.2j]],
+        dtype=np.complex128,
+    )
+    trace_map = np.asarray(
+        [[0.15 + 0.02j, -0.08 + 0.01j]],
+        dtype=np.complex128,
+    )
+    class_key = ("fixture", rank)
+    system = SimpleNamespace(
+        entity_map=SimpleNamespace(
+            active_rows=active_rows,
+            active_trace_rows=trace_rows,
+            mesh=SimpleNamespace(comm=comm),
+        ),
+        cell_recovery=(
+            SimpleNamespace(
+                cell=SimpleNamespace(
+                    trace_rows=trace,
+                    interior_rows=interior,
+                ),
+                class_key=class_key,
+            ),
+        ),
+        interior_from_trace_by_class={class_key: trace_map},
+        interior_lu_by_class={class_key: lu_factor(factor_value)},
+    )
+    expected = np.zeros(active_rows, dtype=np.complex128)
+    for cell_rank in range(size):
+        cell_trace = np.asarray(
+            [2 * cell_rank, 2 * cell_rank + 1],
+            dtype=np.int64,
+        )
+        cell_interior = trace_rows + cell_rank
+        cell_factor = 2.0 + 0.1 * cell_rank + 0.2j
+        expected[cell_interior] = (
+            trace_map @ primal_values[cell_trace]
+            + (
+                rhs_values[cell_interior]
+                + auxiliary_values[cell_interior]
+            )
+            / cell_factor
+            - primal_values[cell_interior]
+        )[0]
+    try:
+        with build_variable_p_primal_affine_complement(
+            system,
+            primal,
+            rhs,
+            active_auxiliary_interior_action=auxiliary,
+        ) as result:
+            assert result.active_full_complement is not None
+            start, stop = map(
+                int,
+                result.active_full_complement.getOwnershipRange(),
+            )
+            np.testing.assert_allclose(
+                result.active_full_complement.getArray(readonly=True),
+                expected[start:stop],
+                rtol=2.0e-13,
+                atol=2.0e-13,
+            )
+            assert result.audit["pass"] is True
+            assert (
+                result.audit["trace_entries_constructed_as_exact_zero"]
+                is True
+            )
+            assert (
+                result.audit["selected_row_layout"][
+                    "full_vector_allgather_used"
+                ]
+                is False
+            )
+            assert (
+                result.audit["interior_local_solve_closure_l2_norm"]
+                <= result.audit[
+                    "interior_local_solve_closure_tolerance"
+                ]
+            )
+    finally:
+        auxiliary.destroy()
+        rhs.destroy()
+        primal.destroy()
 
 
 def test_formal_recovery_sources_do_not_call_allgather() -> None:

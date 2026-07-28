@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 from mpi4py import MPI
 import numpy as np
+import pytest
 
 from dolfinx import default_real_type, fem, mesh
 from basix.ufl import element
@@ -13,6 +14,7 @@ from src.adaptivity.task035e_goal_gradients import (
     _assemble_volume_p6_gradient,
     _oriented_physical_basis,
     _point_owners,
+    _secant_weights,
 )
 
 
@@ -165,3 +167,67 @@ def test_formal_builder_has_no_reference_or_endpoint_input() -> None:
         build_task035e_formal_goal_gradients
     ).parameters
     assert tuple(parameters) == ("view",)
+
+
+def test_analytic_secant_weights_close_quadratic_and_l2_goals() -> None:
+    current = np.asarray([0.7 + 0.2j, -0.3 + 0.4j])
+    shadow = np.asarray([0.2 - 0.1j, 0.5 + 0.3j])
+    delta = shadow - current
+
+    quadratic_matrix = np.asarray(
+        [[1.4, 0.2 - 0.1j], [0.2 + 0.1j, 0.9]],
+        dtype=np.complex128,
+    )
+    current_gradient = 2.0 * quadratic_matrix @ current
+    shadow_gradient = 2.0 * quadratic_matrix @ shadow
+    secant_gradient = 0.5 * (
+        current_gradient + shadow_gradient
+    )
+    quadratic_delta = float(
+        np.vdot(shadow, quadratic_matrix @ shadow).real
+        - np.vdot(current, quadratic_matrix @ current).real
+    )
+    assert float(np.vdot(secant_gradient, delta).real) == pytest.approx(
+        quadratic_delta,
+        rel=2.0e-15,
+        abs=2.0e-15,
+    )
+
+    current_norm = float(np.linalg.norm(current))
+    shadow_norm = float(np.linalg.norm(shadow))
+    audit_current = {
+        "field_goal_metadata": {
+            "interface_probe_l2": current_norm,
+            "volume_probe_l2": current_norm,
+        }
+    }
+    audit_shadow = {
+        "field_goal_metadata": {
+            "interface_probe_l2": shadow_norm,
+            "volume_probe_l2": shadow_norm,
+        }
+    }
+    current_weight, shadow_weight, rule = _secant_weights(
+        "scalar/volume_probe_l2",
+        current_audit=audit_current,
+        shadow_audit=audit_shadow,
+    )
+    assert rule == "exact_l2_secant_endpoint_norm_weighting"
+    l2_gradient = (
+        current_weight * current / current_norm
+        + shadow_weight * shadow / shadow_norm
+    )
+    assert float(np.vdot(l2_gradient, delta).real) == pytest.approx(
+        shadow_norm - current_norm,
+        rel=2.0e-15,
+        abs=2.0e-15,
+    )
+    assert _secant_weights(
+        "scalar/A_volume",
+        current_audit=audit_current,
+        shadow_audit=audit_shadow,
+    ) == (
+        0.5,
+        0.5,
+        "arithmetic_endpoint_gradient_average",
+    )
