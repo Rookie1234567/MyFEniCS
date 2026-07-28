@@ -5347,6 +5347,42 @@ def _task035e_blind_live_role_evidence_gate(
             if isinstance(actual_capability, Mapping)
             else {}
         )
+        affine_audit_identity = affine_complement.get(
+            "audit_identity"
+        )
+        affine_audit_identity = (
+            affine_audit_identity
+            if isinstance(affine_audit_identity, Mapping)
+            else {}
+        )
+        affine_rank_catalog = affine_audit_identity.get(
+            "rank_local_audit_sha256"
+        )
+        legacy_affine_complement_bound = bool(
+            affine_complement.get("pass") is True
+            and affine_complement.get("status")
+            == "active_interior_affine_complement_pass"
+            and actual_affine.get("present") is True
+            and actual_affine.get("vector_identity") is not None
+            and actual_affine.get("audit_identity") is not None
+        )
+        aggregate_affine_complement_bound = bool(
+            affine_complement == actual_affine
+            and affine_complement.get("present") is True
+            and affine_audit_identity.get("pass") is True
+            and affine_audit_identity.get("status")
+            == "active_interior_affine_complement_pass"
+            and isinstance(
+                affine_complement.get("vector_identity"),
+                Mapping,
+            )
+            and isinstance(affine_rank_catalog, list)
+            and len(affine_rank_catalog) == 8
+            and all(
+                valid_hex_digest(digest, 64)
+                for digest in affine_rank_catalog
+            )
+        )
         role_checks = {
             "schema_status_role": (
                 evidence.get("schema_version")
@@ -5414,12 +5450,10 @@ def _task035e_blind_live_role_evidence_gate(
                 )
                 or (
                     secant_gradient
-                    and affine_complement.get("pass") is True
-                    and affine_complement.get("status")
-                    == "active_interior_affine_complement_pass"
-                    and actual_affine.get("present") is True
-                    and actual_affine.get("vector_identity") is not None
-                    and actual_affine.get("audit_identity") is not None
+                    and (
+                        legacy_affine_complement_bound
+                        or aggregate_affine_complement_bound
+                    )
                     and actual_capability.get(
                         "static_condensation_affine_complement_complete"
                     )

@@ -1253,6 +1253,81 @@ def test_shadow_live_gate_accepts_sorted_json_goal_mapping(
     )
     assert secant_gate["pass"] is True, secant_gate["failures"]
 
+    aggregate_secant = json.loads(json.dumps(secant))
+    aggregate_actual = dict(aggregate_secant["actual_dwr"])
+    aggregate_actual.pop("report_sha256")
+    aggregate_affine = {
+        "present": True,
+        "audit_identity": {
+            "schema_version": (
+                "task035e.variable-p-primal-affine-complement.v1"
+            ),
+            "status": "active_interior_affine_complement_pass",
+            "pass": True,
+            "active_full_rows": 17,
+            "rank_local_audit_sha256": [
+                f"{rank + 1:064x}" for rank in range(8)
+            ],
+        },
+        "vector_identity": {
+            "global_size": 17,
+            "partition_bound_sha256": "6" * 64,
+        },
+        "active_full_gradient_goal_ids": ["scalar/A_volume"],
+    }
+    aggregate_actual["active_interior_affine_complement"] = (
+        aggregate_affine
+    )
+    aggregate_secant["actual_dwr"] = {
+        **aggregate_actual,
+        "report_sha256": _task035e_namespaced_json_sha256(
+            aggregate_actual,
+            namespace="task035e.actual-live-shadow-dwr-report.v1",
+        ),
+    }
+    aggregate_secant["active_interior_affine_complement"] = (
+        aggregate_affine
+    )
+    aggregate_unsigned = dict(aggregate_secant)
+    aggregate_unsigned.pop("payload_sha256")
+    aggregate_secant["payload_sha256"] = (
+        _task035e_namespaced_json_sha256(
+            aggregate_unsigned,
+            namespace="task035e.live-shadow-evaluation-payload.v1",
+        )
+    )
+    aggregate_gate = _task035e_blind_live_role_evidence_gate(
+        _parse_args(role_cli),
+        evidence_path=evidence,
+        payload=aggregate_secant,
+    )
+    assert aggregate_gate["pass"] is True, aggregate_gate["failures"]
+
+    malformed_aggregate = json.loads(json.dumps(aggregate_secant))
+    malformed_aggregate["active_interior_affine_complement"][
+        "audit_identity"
+    ]["rank_local_audit_sha256"] = ["1" * 64]
+    malformed_aggregate_unsigned = dict(malformed_aggregate)
+    malformed_aggregate_unsigned.pop("payload_sha256")
+    malformed_aggregate["payload_sha256"] = (
+        _task035e_namespaced_json_sha256(
+            malformed_aggregate_unsigned,
+            namespace="task035e.live-shadow-evaluation-payload.v1",
+        )
+    )
+    malformed_aggregate_gate = (
+        _task035e_blind_live_role_evidence_gate(
+            _parse_args(role_cli),
+            evidence_path=evidence,
+            payload=malformed_aggregate,
+        )
+    )
+    assert malformed_aggregate_gate["pass"] is False
+    assert (
+        "affine_complement_bound"
+        in malformed_aggregate_gate["failures"]
+    )
+
     malformed = json.loads(json.dumps(payload))
     malformed["rank_pipeline_audits"][0] = 1
     malformed_unsigned = dict(malformed)
