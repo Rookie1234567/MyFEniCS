@@ -937,7 +937,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             )
             and (
                 (args.bottom_interface_nm, args.top_interface_nm)
-                in ((10.0, 110.0), (20.0, 100.0), (30.0, 90.0))
+                in (
+                    (10.0, 110.0),
+                    (20.0, 100.0),
+                    (30.0, 90.0),
+                    (50.0, 70.0),
+                    (55.0, 65.0),
+                    (59.0, 61.0),
+                )
             )
             and args.graded_reference_h is None
             and valid_hex_digest(args.verified_clean_sha, 40)
