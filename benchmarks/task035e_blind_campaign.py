@@ -2305,7 +2305,6 @@ def _revalidate_receipt(
         if (
             loaded.argv_sha256 != row["argv_sha256"]
             or loaded.exit_code != row["exit_code"]
-            or loaded.exit_code != 0
             or loaded.stdout_sha256 != row["stdout_sha256"]
             or loaded.stderr_sha256 != row["stderr_sha256"]
             or loaded.watchdog_record_sha256
@@ -2360,6 +2359,25 @@ def _revalidate_receipt(
     if len(set(roles)) != len(roles):
         raise CampaignEvidenceError(
             "stage artifact receipt roles are duplicated"
+        )
+    nonzero_receipts = tuple(
+        receipt
+        for receipt in loaded_command_receipts
+        if receipt.exit_code != 0
+    )
+    if nonzero_receipts and (
+        any(
+            receipt.exit_code != 2
+            or receipt.watchdog_record_path is None
+            or receipt.watchdog_record_sha256 is None
+            for receipt in nonzero_receipts
+        )
+        or payload["status"] != "controlled_negative"
+        or payload["classification"] != "formal_stage_blocker"
+        or roles != ["stage_blocker"]
+    ):
+        raise CampaignEvidenceError(
+            "nonzero command receipt is not a formal controlled resource stop"
         )
     if payload["lane_decision"] not in _ALLOWED_LANE_DECISIONS:
         raise CampaignEvidenceError("receipt lane decision is invalid")

@@ -223,6 +223,7 @@ class _FakePreparer:
         internal_probe_batch: bool = False,
         reverse_internal_probes: bool = False,
         two_start_mismatch: bool = False,
+        controlled_stop_stage: str | None = None,
     ) -> None:
         self.freeze_cycle = freeze_cycle
         self.saturation = saturation
@@ -231,6 +232,7 @@ class _FakePreparer:
         self.internal_probe_batch = internal_probe_batch
         self.reverse_internal_probes = reverse_internal_probes
         self.two_start_mismatch = two_start_mismatch
+        self.controlled_stop_stage = controlled_stop_stage
         self.calls: list[str] = []
         self._failed = False
 
@@ -320,6 +322,11 @@ class _FakePreparer:
             h_saturation = "not_applicable"
             status = "completed"
             classification = "fake_stage_completed"
+            if stage_id == self.controlled_stop_stage:
+                status = "controlled_negative"
+                classification = "formal_stage_blocker"
+                lane_decision = "controlled_negative"
+                artifact_role = "stage_blocker"
             if context.stage.stage_name == "transition_or_pkeep":
                 next_plan = _sha(artifact)
                 artifact_role = "current_plan"
@@ -359,12 +366,25 @@ class _FakePreparer:
                 h_level3_saturation=h_saturation,
             )
 
-        return PreparedStage(execute=execute, argv=argv, argvs=argvs)
+        return PreparedStage(
+            execute=execute,
+            argv=argv,
+            argvs=argvs,
+            allow_controlled_resource_stop=(
+                context.stage.stage_id == self.controlled_stop_stage
+            ),
+        )
 
 
 class _FakeCommandRunner:
-    def __init__(self, *, exit_code: int = 0) -> None:
+    def __init__(
+        self,
+        *,
+        exit_code: int = 0,
+        write_watchdog_on_nonzero: bool = False,
+    ) -> None:
         self.exit_code = exit_code
+        self.write_watchdog_on_nonzero = write_watchdog_on_nonzero
         self.calls: list[tuple[str, int, str]] = []
 
     def __call__(
@@ -401,7 +421,7 @@ class _FakeCommandRunner:
         record_index = argv.index("--record")
         record = Path(argv[record_index + 1])
         watchdog = None
-        if self.exit_code == 0:
+        if self.exit_code == 0 or self.write_watchdog_on_nonzero:
             watchdog = attempt.write_artifact(
                 record.name,
                 b'{"status":"completed"}\n',
@@ -955,6 +975,46 @@ def test_command_receipt_drift_and_nonzero_exit_fail_closed(
             command_runner=_FakeCommandRunner(),
             maximum_new_stages=0,
         )
+
+
+def test_controlled_resource_stop_receipt_replays_and_advances_next_path(
+    tmp_path: Path,
+) -> None:
+    identity = _identity(tmp_path)
+    root = tmp_path / "controlled-stop"
+    stage_id = "path-a-cycle-0-current_solve"
+    first = run_campaign(
+        root,
+        identity,
+        prepare_stage=_FakePreparer(controlled_stop_stage=stage_id),
+        source_sha_provider=_constant(SOURCE_SHA),
+        abi_sha256_provider=_constant(ABI_SHA),
+        heavy_lock_path=tmp_path / "controlled-stop-heavy.lock",
+        command_runner=_FakeCommandRunner(
+            exit_code=2,
+            write_watchdog_on_nonzero=True,
+        ),
+        maximum_new_stages=2,
+    )
+    assert first["status"] == "partial"
+    assert first["lane_status"]["A"] == "controlled_negative"
+
+    resumed_preparer = _FakePreparer(freeze_cycle=0)
+    resumed = run_campaign(
+        root,
+        identity,
+        prepare_stage=resumed_preparer,
+        source_sha_provider=_constant(SOURCE_SHA),
+        abi_sha256_provider=_constant(ABI_SHA),
+        heavy_lock_path=tmp_path / "controlled-stop-heavy.lock",
+        command_runner=_FakeCommandRunner(),
+        maximum_new_stages=1,
+    )
+    assert resumed["status"] == "partial"
+    assert stage_id in resumed["reused_stage_ids"]
+    assert resumed["executed_stage_ids"] == [
+        "path-b-bootstrap-initial_plan"
+    ]
 
 
 def test_campaign_finalization_waits_for_both_paths_and_mismatch_stops_freeze(
