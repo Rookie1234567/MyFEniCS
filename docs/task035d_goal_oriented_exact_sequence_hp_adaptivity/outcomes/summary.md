@@ -15,6 +15,9 @@ true_local_h = structurally and numerically implemented
 complete_combined_hp_accuracy = failed
 production_hp_candidate = none
 hybrid_phase_f = not_run_full3d_hp_gate_failed
+capability_status = pass
+resource_status = pass
+accuracy_status = fail
 ```
 
 Task035d 建立了同一 exact-sequence 离散架构中的真实 local-p 和 true
@@ -34,6 +37,20 @@ physical-boundary complex amplitudes`。最佳计数为 h15 top-air local-h 的
 `6/12 + 6/12`；最终 left-grating 为 `4/12 + 6/12`。因此不能宣称
 goal-oriented combined-hp success，也不能接入 Hybrid 给失败的 Full3D
 候选补精度信用。
+
+三个状态必须独立读取：exact-sequence local-h/local-p
+`capability_status=pass`；rows/NNZ/factor/peak 的真实压缩
+`resource_status=pass`；完整 frozen physical Gate
+`accuracy_status=fail`。因此“local-h success”只表示能力通过，不是
+production-accuracy success。
+
+正式资源基线采用同 MPI8、同 process-tree watchdog 和同求解生命周期：
+
+| baseline | peak |
+|---|---:|
+| Full3D static p6/h10 | `14.721756 GiB` |
+| Hybrid standard p6/h10 M120 | `11.076893 GiB` |
+| Hybrid static p6/h10 M120 | `7.544262 GiB` |
 
 ## 2. 任务书执行矩阵
 
@@ -93,10 +110,17 @@ truth。所有 Task035d candidate 都是 MPI8 direct MUMPS、zero swap。
 | ten-face selective p6 trace | `83,125 / 18,670` | `10,406,108 / 32,683,000` | `1.287e-11` | `8.06898 GiB / 279.206 s` | `0.000753670 / 0.000762781 / 0.602686341 / 0.396550878` | `5/12 / 6/12` | pass | controlled negative |
 | left-grating single-root | `88,915 / 21,650` | `12,382,332 / 37,250,750` | `3.267e-11` | `8.06120 GiB / 297.114 s` | `0.000755219 / 0.000764350 / 0.602685529 / 0.396550122` | `4/12 / 6/12` | volume max fail | controlled negative |
 
-`total` 是 solver summary 的 elapsed time。`base matrix assembly` 和
-`total build` 等内部计时有嵌套，不相加。最终 left-grating 的 base matrix
-assembly、reported total build、MUMPS setup、backsolve 分别为
-`256.515 / 68.972 / 13.524 / 0.041 s`。
+最终 left-grating 的计时不是互斥 stage 分解：
+
+| field | value | exact semantics |
+|---|---:|---|
+| solver `elapsed_seconds` | `297.114 s` | 从 solver 入口到场输出的外层 wall clock；权威 total |
+| `stage4_dtn_base_matrix_assembly_seconds` | `256.515 s` | 完整 base/reduction build 的 MPI-max wall envelope；包含内层 builder |
+| legacy `total_build_seconds` | `68.972 s` | variable-p condensed-system builder 的 MPI-max 内层 diagnostic；嵌套于上一项 |
+| MUMPS setup / backsolve | `13.524 / 0.041 s` | MPI-max wall timers；嵌套于 outer total |
+
+四者禁止相加。Task035e 将以 mutually-exclusive timeline 替代这种历史
+嵌套命名。
 
 ### 4.1 任务书 §3.2 控制组统一对照
 
@@ -121,6 +145,12 @@ process-tree peak。因此这两行只作控制，不把缺失字段推断为通
 Task035d combined resource best 比 h-only best 少 `6,720` FE DoF、峰值低
 `0.20202 GiB`，但通道从 `6/12 + 6/12` 退化到 `4/12 + 4/12`。因此它
 没有满足“同精度下 hp 组合具有额外价值”的任务条件。
+
+横向比较更重要：Task035b fixed p5-trace/p6-interior h13 为
+`89,740 DoF / 20,120 rows / 6.411 GiB / 10/12 + 10/12`；Task035d
+h15 top-air 为 `82,925 / 18,470 / 7.50068 GiB / 6/12 + 6/12`。
+Task035d 架构更通用，但当前没有在“精度 + 内存”上超过 h13；后者仍是
+预算内最佳 accuracy/resource 工程候选。
 
 ## 5. 资源压缩
 
@@ -230,6 +260,12 @@ goal_oriented_selection_credit = false
 complete_combined_hp_credit = false
 ```
 
+16 个 periodic same-trace remote-interior p-down pair 在 conservative
+budget 下无一安全：远端均匀空气仍携带弱通道相位，几何距离不是 p-down
+充分条件；若 trace 不变，只降 cell interior 的 global-row 收益还可为零。
+该证据禁止继续当前 same-trace remote-interior 盲扫，但不证明任何
+local-p 都不可能成功。
+
 ## 8. Lane closure 与未运行项
 
 | Lane / item | final status | 原因 |
@@ -243,6 +279,12 @@ complete_combined_hp_credit = false
 | multi-seed | not evaluated by stop rule | 单 root lane 已关闭 |
 | automatic cycles 1–4 | not completed | 没有 per-cycle authority；manual discriminator 不冒充 automatic loop |
 | Hybrid M120/M160 | not run | Full3D hp Gate failed |
+
+local-h 数值能力支持非均匀叶单元；正式搜索却只覆盖
+`h15 + global p5 trace + bounded single requested root + mandatory closure`，
+未完成多层、多区域、多 refinement-level 自动网格。关闭该 lane 不代表
+所有 local-h 无效。十面 selective-trace 的关闭也没有证明其他 top-port
+faces、periodic orbits、edge modes 或 material-interface faces 无效。
 
 lane closure authority：
 
@@ -302,7 +344,8 @@ Task035d = PARTIAL_WITH_CONTROLLED_NEGATIVES
 production_hp_candidate = none
 complete_hp_success = false
 ordinary_default_changed = false
-master_merge = not_authorized_by_task
+selective_master_merge = authorized_after_review_v1_M0_M3
+next_task = Task035e
 ```
 
 Task035d 的可复用产出是 exact-sequence variable-p/local-h 数值架构、MPI
@@ -310,3 +353,8 @@ owner routing、完整 residual/recovery、36-goal adjoint/DWR checker 和
 fail-closed action-selection contract。其研究负结果同样是结论：在当前
 p6/h10 reference Gate 下，仅靠这些 p5-trace、single-root local-h、
 remote-interior p-down 和十面 selective-trace 动作不能恢复所有弱衍射通道。
+
+选择性合并完成后转入
+[`Task035e`](../../task035e_reference_blind_multilevel_hp_adaptivity/README.md)，
+由 hidden reference certifier、blind controller 和 hidden auditor 三层隔离地
+研究真正多层 local-h 与 reference-blind hp 循环。

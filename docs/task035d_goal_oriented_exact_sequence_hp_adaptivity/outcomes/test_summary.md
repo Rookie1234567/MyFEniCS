@@ -21,14 +21,14 @@ ordinary_default = unchanged
 |---|---|---|
 | left-grating lane closure contract | `python -m pytest -q src/test/test_218_task035d_left_grating_top_hp_candidate.py` | `3 passed` |
 | left-grating launch/solver/checker + Case097 contracts | test193/test194/test217/test218 + Case097 contracts | `39 passed` |
-| development registry contract | checker + pytest contract | pass；`1 passed` |
+| development registry + Markdown contracts | standalone checker + pytest contracts | pass；`40` Task sections / `83` evidence paths；`6 passed` |
 | Task035d focused serial | all `test_*task035d*.py` + Case097 contracts | `215 passed, 13 skipped` in `1308.33 s` |
 | Task035d MPI2 components | 14 periodic/hanging/PETSc/adjoint/DWR files | `80 passed, 10 skipped` in `1340.79 s` |
 | Task035d MPI8 representative | selector、compiled local-h、unit adjoint、selective trace | each of 8 ranks: `16 passed, 4 skipped` in about `357.6 s` |
 | affected Hybrid + documentation targeted | Task032/033/035b Hybrid + documentation | Hybrid group pass；documentation `14 passed` |
 | full repository final | `python -m pytest -q` | `837 passed, 41 skipped` in `1761.55 s` |
 | Case097 compact authority | generator `--mode check` | pass；2 records |
-| registry standalone checker | `check_development_model_registry.py` | pass；39 Task sections / 76 evidence paths |
+| registry standalone checker | `check_development_model_registry.py` | pass；40 Task sections / 83 evidence paths |
 | Ruff | `python -m ruff check src benchmarks` | pass |
 | compileall | `python -m compileall -q src benchmarks` | pass |
 | JSON | nonignored, non-artifact repository JSON parse | 998 files pass |

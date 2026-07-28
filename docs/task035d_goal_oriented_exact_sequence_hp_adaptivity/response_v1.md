@@ -15,6 +15,9 @@ best_significant_amplitude_count = 6/12
 production_hp_candidate = none
 hybrid_phase_f = not_run_full3d_hp_gate_failed
 ordinary_default = unchanged
+capability_status = pass
+resource_status = pass
+accuracy_status = fail
 ```
 
 Task035d 已完成真正的 assembly-time local-p、2:1 balanced-hexa local-h、
@@ -27,6 +30,18 @@ condensation、PETSc owner routing、完整场恢复和 MPI1/2/8 identity。inac
 12/12 complex amplitudes` Gate；没有删除通道或放宽 tolerance。最佳正式
 计数是 h15 top-air local-h 的 `6/12 + 6/12`，所以按任务书归类为
 `PARTIAL_WITH_CONTROLLED_NEGATIVES`，而不是成功。
+
+Review V1 的工程横向结论是：Task035b fixed p5-trace/p6-interior h13
+仍是预算内最佳 accuracy/resource 候选。它为
+`89,740 DoF / 20,120 rows / 6.411 GiB / 10/12 powers + 10/12 amplitudes`；
+Task035d 最强通道结果 h15 top-air 为
+`82,925 / 18,470 / 7.50068 GiB / 6/12 + 6/12`。Task035d 架构更通用，
+但尚未在精度与内存的组合指标上超过 h13。
+
+同 MPI8、同 process-tree watchdog 和同求解生命周期的资源基线是：
+Full3D static p6/h10 `14.721756 GiB`、Hybrid standard M120
+`11.076893 GiB`、Hybrid static M120 `7.544262 GiB`。本 response 中
+“能力通过”“资源通过”和“精度失败”是三个独立状态，不得互相替代。
 
 ## 2. Phase receipt
 
@@ -73,7 +88,10 @@ point error `0.04688675 > 0.04102079`，且八个 power、六个 amplitude
 
 - same-trace nested-p：12 unit channels / 36 real goals 的 independent
   checker 通过；16 个 remote periodic p-down pair 在 conservative budget
-  下无一安全，因而停止继续 p-down；
+  下无一安全。远端均匀空气仍携带弱衍射通道相位，几何距离不是 p-down
+  的充分条件；只降 cell interior 且 trace 不变时，global rows 收益还可为零。
+  该证据只关闭当前 same-trace remote-interior 盲扫，不证明其他 local-p
+  架构都不可能成功；
 - selective p6 trace：十面 coarse/enriched endpoint 的 36/36 goal closure
   通过，但物理 endpoint 只有 `5/12 + 6/12`。
 
@@ -117,6 +135,24 @@ left-grating：每 1000 added DoF 为 `35.29 < 55.28`，每 1000 added rows
 | whole top-port selective trace | `incomplete_not_run_no_authorized_candidate` |
 | Hybrid M120/M160 | `not_run_full3d_hp_gate_failed` |
 
+local-h 能力支持非均匀叶单元，但上述正式 lane 只覆盖 h15、global p5
+trace、一个 requested root 和 mandatory closure；没有完成多层、多区域、
+多 refinement-level 自动网格。关闭该 lane 不等于证明所有 local-h 失败。
+同样，十面 selective-trace 负结果没有证明其他 top-port faces、periodic
+orbits、edge modes 或 material-interface faces 无效。
+
+最终 left-grating 的计时口径经源码和原始 record 复核如下：
+
+| field | value | semantics |
+|---|---:|---|
+| outer elapsed | `297.114 s` | 从求解入口到场输出的外层 wall clock，权威 total |
+| base matrix assembly | `256.515 s` | 完整 base/reduction build 的 MPI-max wall envelope，嵌套于 total |
+| legacy `total_build_seconds` | `68.972 s` | variable-p condensed-system builder 的 MPI-max 内层 diagnostic，嵌套于上一项 |
+| MUMPS setup / backsolve | `13.524 / 0.041 s` | MPI-max wall timers，均嵌套于外层 total |
+
+这些字段不是互斥分解，禁止相加。Task035e 必须另建 mutually-exclusive
+timeline。
+
 ## 6. 证据与失败保留
 
 主要 authority：
@@ -158,5 +194,7 @@ suite 和第二次全库均通过。Task035d 正式 Full3D PDE 不走该 Hybrid 
 应先定义新的 candidate space，并生成 actual per-channel local-h 或
 trace-orbit DWR；只有出现独立正信号才授权一个新的 discriminator。
 
-Task035d 未获任务书授权自行 merge master。本 response 完成后提交并推送同一
-执行分支，等待集中 Review。
+Review V1 已授权在 M0–M3 全部通过后选择性合并。合并后的下一任务是
+[`Task035e`](../task035e_reference_blind_multilevel_hp_adaptivity/README.md)，
+其 independent reference certification 必须封存在 hidden package 中，
+blind controller 不得读取。

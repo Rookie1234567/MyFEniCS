@@ -20,9 +20,10 @@ TASK_IDS = [
     "Task035b",
     "Task035c",
     "Task035d",
+    "Task035e",
 ]
 SECTION_PATTERN = re.compile(
-    r"^## 3\.(\d+) (Task(?:\d{3}|014a|035[bdc]))(?:：.*)?$",
+    r"^## 3\.(\d+) (Task\d{3}[a-z]?)(?:：.*)?$",
     re.MULTILINE,
 )
 TRACKED_EVIDENCE_PATTERN = re.compile(
@@ -55,7 +56,8 @@ def check_registry(
     ]
     if actual != expected:
         errors.append(
-            "Task sections are not the exact continuous 3.1–3.39 sequence"
+            "Task sections are not the exact continuous "
+            f"3.1–3.{len(TASK_IDS)} sequence"
         )
 
     hierarchy = (

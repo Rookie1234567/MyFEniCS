@@ -7,15 +7,32 @@ case_id = 097_goal_oriented_exact_sequence_hp_adaptivity
 task = Task035d
 geometry = Task034 fixed rectangular block grating
 ordinary_default_changed = false
+capability_status = pass
+resource_status = pass
+accuracy_status = fail
+automatic_cycles_1_4 = not_completed
 ```
 
 Case097 是 Task035d 的统一证据入口。当前已建立 Phase A
-reference-cell 与小网格 authority，并完成 Phase B–E 的真实 local-p、
+reference-cell 与小网格 authority，并完成 Phase B–D 及 Phase E 的
+manual bounded discriminators（automatic cycles 1–4 未完成）的真实 local-p、
 2:1 balanced local-h、H(curl) hanging/Floquet、compiled cell tensor、
 PETSc ownership、静态凝聚、MPI1/2/8 identity 和正式 MPI8 direct PDE。
 最终分类为 `PARTIAL_WITH_CONTROLLED_NEGATIVES`：结构、残差和资源能力通过，
 但没有候选达到冻结的 `12/12 powers + 12/12 complex amplitudes`，所以
 Full3D hp production candidate 和 Hybrid Phase F 均未产生。
+
+当前预算内最佳 accuracy/resource 工程候选仍是 Task035b fixed
+p5-trace/p6-interior h13：
+`89,740 DoF / 20,120 rows / 6.411 GiB / 10/12 powers + 10/12 amplitudes`。
+Task035d h15 top-air 为
+`82,925 / 18,470 / 7.50068 GiB / 6/12 + 6/12`。Task035d 能力更通用，
+但尚未在“精度 + 内存”上超过 h13。
+
+同 MPI8、同 process-tree watchdog、同生命周期的基线为 Full3D static
+`14.721756 GiB`、Hybrid standard M120 `11.076893 GiB`、Hybrid static
+M120 `7.544262 GiB`。因此 Case097 的统一结论是 capability pass、
+resource pass、accuracy fail。
 
 ## Phase A 当前能力
 
@@ -92,8 +109,8 @@ Task035b 的 same-mesh p4/p5 DWR 只提供历史 seed，不提供 Task035d
 
 计划构造严格分成两轮：
 
-1. cycle 1 只允许 `p6 -> p5`；
-2. cycle 2 保留 p6 core 和 p5 face-ring，其余只允许 `p5 -> p4`；
+1. offline plan stage 1 只允许 `p6 -> p5`；
+2. offline plan stage 2 保留 p6 core 和 p5 face-ring，其余只允许 `p5 -> p4`；
 3. x/y periodic cell component 同步选择；
 4. shared edge/face degree 取 incident cell 的合法最小闭包；
 5. inactive p6 mode 不生成 active global row。
@@ -174,9 +191,9 @@ T30 的原始 MPI8 VTU 用冻结 probe 重新按物理区域分解。该分解�
 `8.38–298.83×` tolerance。由此只构造一个保守恢复点
 `sidewall_z0_guard_v1`：
 
-1. cycle 1 在 grating 核心 `x=16.5..33.5 nm`、下部
+1. offline plan stage 1 在 grating 核心 `x=16.5..33.5 nm`、下部
    `z=0..20 nm` 保留 p6，其余降到 p5；
-2. cycle 2 只把两条远离结构的外侧均匀空气带降到 p4；
+2. offline plan stage 2 只把两条远离结构的外侧均匀空气带降到 p4；
 3. 每个 p6 与 p4 区域之间保留 p5 corridor，最大相邻跳阶严格为 1；
 4. substrate、top port、全部 material interface 与 grating 主体至少为 p5。
 
@@ -581,6 +598,15 @@ authority hash 语义的 false negative，数值 kernel 不需要重跑；物理
 精度信用。`hp_factorial_bridge_attribution_v1.json` 将该 lane 关闭为
 controlled negative。
 
+### same-trace nested-p DWR 的边界
+
+`h15_top_air_nested_p_dwr_mpi8_checker_v2.json` 从 12 个 unit-channel
+adjoint 重算 36 个实目标并全部闭合；但 16 个 periodic same-trace
+remote-interior p-down pair 在 conservative budget 下无一安全。远端均匀
+空气仍携带弱衍射通道相位，几何距离不是 p-down 的充分条件；trace 不变时，
+只降 cell interior 的 global-row 收益还可为零。该 authority 只关闭当前
+same-trace remote-interior 盲扫，不证明其他 local-p 都不可能成功。
+
 ## Selective p6 trace 与 actual channel DWR
 
 十个 grating-top face 的 p6 trace mode 在 assembly 前进入真实 active space；
@@ -693,8 +719,11 @@ records/h15_left_grating_top_closure_p5fine_mpi8_controlled_negative_compact_v1.
   sha256 = d6e03061465b29ce4e958bfd6ac7972f245130fdf66de197541caed09e8e4225
 ```
 
-正式运行耗时 `297.114 s`；base matrix assembly `256.515 s`，MUMPS
-setup/solve `13.524/0.041 s`。这些阶段计时存在嵌套，不能相加为 total。
+正式运行的 `297.114 s` 是从 solver 入口到场输出的外层 wall clock。
+`256.515 s` 是完整 base/reduction build 的 MPI-max wall envelope；
+legacy `total_build_seconds=68.972 s` 只是其中 variable-p condensed-system
+builder 的 MPI-max 内层 diagnostic；MUMPS setup/backsolve
+`13.524/0.041 s` 也嵌套于 outer total。四者不是互斥分解，禁止相加。
 
 ## Lane closure 与未运行项
 
@@ -717,7 +746,14 @@ closure 范围；interior 是两个显式审计的 variant：top-air control 的
 | multi-seed combinations | `not_evaluated_by_stop_rule` | 单 seed lane 已关闭 |
 | frozen ten-face selective p6 subset | `closed_controlled_negative` | measured 5/12 + 6/12 |
 | whole top-port selective p6 trace | `incomplete_not_run_no_authorized_candidate` | 未运行 modes 不能被十面子集证伪 |
+| automatic cycles 1–4 | `not_completed` | Phase E 只有 manual bounded discriminators |
 | Hybrid Phase F | `not_run_full3d_hp_gate_failed` | Hybrid 不给失败 Full3D 候选精度信用 |
+
+local-h 技术层支持非均匀叶单元；正式搜索只覆盖 h15、global p5 trace、
+一个 requested root 和 mandatory closure，没有完成多层、多区域、
+多 refinement-level 自动网格。关闭该 lane 不等于证明所有 local-h 无效。
+十面子集也没有证明其他 top-port faces、periodic orbits、edge modes 或
+material-interface faces 无效。
 
 重新开启的最低条件是：先在新定义的 candidate space 上生成 actual
 per-channel local-h 或 trace-orbit DWR，再授权唯一判别点。当前 compact
