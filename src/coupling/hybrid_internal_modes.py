@@ -1212,14 +1212,6 @@ def build_hybrid_internal_mode_coupling(
             )
         if not np.all(np.isfinite(canonical_negative_mapping)):
             raise RuntimeError("Negative-to-positive interface map is non-finite.")
-        # From this point onward the E-trace coupling uses the already proven
-        # canonical coordinates.  This is algebraically the same negative
-        # trace, but avoids an ill-conditioned second coordinate recovery on
-        # each independently assembled 3D interface.
-        negative_traces = _canonicalized_negative_traces(
-            projection, canonical_negative_mapping
-        )
-
         propagation = build_two_sided_propagation(
             [*positive_basis.modes, *negative_basis.modes],
             length_nm,
@@ -1262,6 +1254,13 @@ def build_hybrid_internal_mode_coupling(
             raise ValueError(
                 f"Unsupported modal_traction_model {modal_traction_model!r}."
             )
+        # From this point onward the E-trace coupling uses the already proven
+        # canonical coordinates.  This is algebraically the same negative
+        # trace, but avoids an ill-conditioned second coordinate recovery on
+        # each independently assembled 3D interface.
+        negative_traces = _canonicalized_negative_traces(
+            projection, canonical_negative_mapping
+        )
     except Exception:
         projection.destroy()
         raise

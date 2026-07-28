@@ -47,6 +47,7 @@ from src.modes.cross_section_spaces import (
 )
 from src.modes.mode_classification import (
     PoyntingFluxEvaluator,
+    build_analytic_reciprocal_negative_basis,
     build_biorthogonal_mode_basis,
     pair_reciprocal_mode_bases,
     select_passive_direction_modes,
@@ -1627,6 +1628,16 @@ def main() -> None:
             f"{[group.indices for group in positive.groups[:8]]}"
         )
         pairs = pair_reciprocal_mode_bases(operators, positive, negative)
+        if task001_parameters is not None:
+            independent_negative = negative
+            negative = build_analytic_reciprocal_negative_basis(
+                positive, spaces
+            )
+            independent_negative.destroy()
+            progress(
+                "Task001 M9: analytic reciprocal negative basis activated; "
+                "independent negative QEP retained in reciprocal-pair audit"
+            )
         timings["positive_and_negative_biorthogonal_bases"] = _max_elapsed(
             comm, started
         )
@@ -2457,6 +2468,7 @@ def main() -> None:
                 ),
                 "positive": _basis_summary(positive),
                 "negative": _basis_summary(negative),
+                "negative_basis_origin": negative.basis_origin,
                 "reciprocal_pairs": [
                     {
                         "positive_index": pair.positive_index,

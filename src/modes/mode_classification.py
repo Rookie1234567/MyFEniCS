@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Literal, Sequence
 
 import numpy as np
@@ -100,6 +100,7 @@ class BiorthogonalModeBasis:
     max_entry_identity_error: float
     adjoint_solver_report: QuadraticBetaSolveReport
     left_pair_relative_errors: tuple[float, ...]
+    basis_origin: str = "independent_qep"
     full_vector_gathered: bool = False
 
     def destroy(self) -> None:
@@ -933,6 +934,109 @@ def pair_reciprocal_mode_bases(
             ),
         )
         for row, column in zip(rows, columns)
+    )
+
+
+def analytic_reciprocal_full_vector(
+    vector: PETSc.Vec, spaces: CrossSectionSpaces
+) -> PETSc.Vec:
+    """Copy a mixed mode while applying ``(Et, Ez) -> (Et, -Ez)``."""
+
+    field = fem.Function(spaces.mixed)
+    vector.copy(field.x.petsc_vec)
+    field.x.scatter_forward()
+    field.x.array[spaces.longitudinal_to_mixed] *= -1.0
+    field.x.scatter_forward()
+    result = field.x.petsc_vec.duplicate()
+    field.x.petsc_vec.copy(result)
+    return result
+
+
+def build_analytic_reciprocal_negative_basis(
+    positive: BiorthogonalModeBasis,
+    spaces: CrossSectionSpaces,
+) -> BiorthogonalModeBasis:
+    """Derive the exact reciprocal ``-beta`` basis from ``+beta`` modes.
+
+    For the scalar reciprocal middle material used by Task001, the mixed QEP
+    is invariant under ``(Et, Ez, beta) -> (Et, -Ez, -beta)``.  Constructing
+    that partner analytically preserves the transverse trace coordinates
+    through degenerate clusters; an independent negative eigensolve remains
+    useful as an audit but need not define a second arbitrary basis rotation.
+    """
+
+    modes: list[ClassifiedBiorthogonalMode] = []
+
+    def copied(vector: PETSc.Vec) -> PETSc.Vec:
+        result = vector.duplicate()
+        vector.copy(result)
+        return result
+
+    for source in positive.modes:
+        right = QuadraticBetaMode(
+            beta=-complex(source.beta),
+            # These reduced copies are retained only for bounded metadata and
+            # ownership compatibility.  Coupling, propagation and physical
+            # reconstruction consume the exact transformed full vectors.
+            right_reduced=copied(source.right.right_reduced),
+            right_full=analytic_reciprocal_full_vector(
+                source.right.right_full, spaces
+            ),
+            polynomial_relative_residual=(
+                source.right.polynomial_relative_residual
+            ),
+            slepc_relative_error=source.right.slepc_relative_error,
+            normalization_kind=(
+                source.right.normalization_kind + "_analytic_reciprocal"
+            ),
+            normalization_factor=source.right.normalization_factor,
+            electric_l2_norm_after=source.right.electric_l2_norm_after,
+            ownership=source.right.ownership,
+        )
+        modes.append(
+            ClassifiedBiorthogonalMode(
+                beta=-complex(source.beta),
+                right=right,
+                left_reduced=copied(source.left_reduced),
+                left_full=analytic_reciprocal_full_vector(
+                    source.left_full, spaces
+                ),
+                left_adjoint_beta=-complex(source.left_adjoint_beta),
+                left_polynomial_relative_residual=(
+                    source.left_polynomial_relative_residual
+                ),
+                poynting_z_before_normalization=(
+                    -source.poynting_z_before_normalization
+                ),
+                poynting_z_after_normalization=(
+                    -source.poynting_z_after_normalization
+                ),
+                flux_tolerance=source.flux_tolerance,
+                kind=source.kind,
+                direction="backward",
+                classification_basis="analytic_reciprocal_qep_symmetry",
+                passive_branch_valid=source.passive_branch_valid,
+                right_scale=source.right_scale,
+                qprime_overlap_after=source.qprime_overlap_after,
+                left_ownership=source.left_ownership,
+            )
+        )
+    return BiorthogonalModeBasis(
+        modes=modes,
+        groups=tuple(
+            replace(group, beta_center=-complex(group.beta_center))
+            for group in positive.groups
+        ),
+        biorthogonality_matrix=positive.biorthogonality_matrix.copy(),
+        max_identity_error=positive.max_identity_error,
+        max_entry_identity_error=positive.max_entry_identity_error,
+        adjoint_solver_report=replace(
+            positive.adjoint_solver_report,
+            target=-complex(positive.adjoint_solver_report.target),
+        ),
+        left_pair_relative_errors=positive.left_pair_relative_errors,
+        basis_origin="analytic_reciprocal_from_positive",
+        full_vector_gathered=False,
     )
 
 

@@ -19,6 +19,9 @@ from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
 )
+from src.modes.mode_classification import (
+    analytic_reciprocal_full_vector,
+)
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 
 
@@ -247,6 +250,33 @@ class Task032HybridInternalModeTests(unittest.TestCase):
         self.assertFalse(propagation.growing_inverse_factors_present)
         self.assertTrue(propagation.passivity_valid)
         self.assertLessEqual(propagation.max_factor_magnitude, 1.0 + 1.0e-14)
+
+    def test_analytic_reciprocal_basis_preserves_et_and_flips_ez(self):
+        for positive_mode in self.positive.modes:
+            reciprocal = analytic_reciprocal_full_vector(
+                positive_mode.right.right_full, self.spaces
+            )
+            try:
+                positive_field = fem.Function(self.spaces.mixed)
+                negative_field = fem.Function(self.spaces.mixed)
+                positive_mode.right.right_full.copy(positive_field.x.petsc_vec)
+                reciprocal.copy(negative_field.x.petsc_vec)
+                positive_field.x.scatter_forward()
+                negative_field.x.scatter_forward()
+                np.testing.assert_allclose(
+                    negative_field.x.array[self.spaces.transverse_to_mixed],
+                    positive_field.x.array[self.spaces.transverse_to_mixed],
+                    atol=1.0e-14,
+                )
+                np.testing.assert_allclose(
+                    negative_field.x.array[self.spaces.longitudinal_to_mixed],
+                    -positive_field.x.array[
+                        self.spaces.longitudinal_to_mixed
+                    ],
+                    atol=1.0e-14,
+                )
+            finally:
+                reciprocal.destroy()
 
     def test_projection_rows_recover_positive_and_negative_traces(self):
         for system, blocks in (
