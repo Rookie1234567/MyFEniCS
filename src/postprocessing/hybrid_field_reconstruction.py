@@ -12,6 +12,11 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from ..common.config_3d import SimulationConfig3D
+from ..coupling.hybrid_internal_modes import (
+    HybridInternalModeCoupling,
+    _ReusableInterfaceLifter,
+    _ReusableModeTractionEvaluator,
+)
 from ..modes.cross_section_spaces import CrossSectionMesh, CrossSectionSpaces
 from ..modes.mode_classification import BiorthogonalModeBasis
 from ..modes.stable_propagation import TwoSidedPropagation
@@ -180,6 +185,8 @@ class ModalFieldReconstructor:
         bottom_z_nm: float = 10.0,
         top_z_nm: float = 110.0,
         propagation: TwoSidedPropagation | None = None,
+        positive_traction_beta_per_nm: Sequence[complex] | None = None,
+        negative_traction_beta_per_nm: Sequence[complex] | None = None,
     ) -> None:
         if len(positive.modes) != len(negative.modes):
             raise ValueError("Positive and negative modal bases must have equal sizes.")
@@ -221,6 +228,35 @@ class ModalFieldReconstructor:
                 propagation.backward.effective_beta_per_nm,
                 dtype=np.complex128,
             )
+        if (positive_traction_beta_per_nm is None) != (
+            negative_traction_beta_per_nm is None
+        ):
+            raise ValueError(
+                "Positive and negative traction betas must be supplied together."
+            )
+        if positive_traction_beta_per_nm is None:
+            self.traction_model = "continuous_qep_beta"
+            self._positive_traction_beta = np.asarray(
+                [mode.beta for mode in positive.modes], dtype=np.complex128
+            )
+            self._negative_traction_beta = np.asarray(
+                [mode.beta for mode in negative.modes], dtype=np.complex128
+            )
+        else:
+            self.traction_model = "selected_coupling_traction_beta"
+            self._positive_traction_beta = np.asarray(
+                positive_traction_beta_per_nm, dtype=np.complex128
+            )
+            self._negative_traction_beta = np.asarray(
+                negative_traction_beta_per_nm, dtype=np.complex128
+            )
+            count = len(positive.modes)
+            if self._positive_traction_beta.shape != (count,) or (
+                self._negative_traction_beta.shape != (count,)
+            ):
+                raise ValueError(
+                    "Traction beta arrays must match each directional modal basis."
+                )
         msh = self.cross_section.mesh
         self._magnetic_space = fem.functionspace(
             msh,
@@ -300,12 +336,36 @@ class ModalFieldReconstructor:
             np.asarray(negative, dtype=np.complex128),
         )
 
+    def _effective_traction_betas(self) -> tuple[np.ndarray, np.ndarray]:
+        positive = getattr(self, "_positive_traction_beta", None)
+        negative = getattr(self, "_negative_traction_beta", None)
+        if positive is None:
+            positive = np.asarray(
+                [mode.beta for mode in self.positive.modes],
+                dtype=np.complex128,
+            )
+        if negative is None:
+            negative = np.asarray(
+                [mode.beta for mode in self.negative.modes],
+                dtype=np.complex128,
+            )
+        return (
+            np.asarray(positive, dtype=np.complex128),
+            np.asarray(negative, dtype=np.complex128),
+        )
+
     def _sample_mode_bases(
         self, points: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
         electric_rows = []
         magnetic_rows = []
-        for mode in self._modes:
+        positive_traction_beta, negative_traction_beta = (
+            self._effective_traction_betas()
+        )
+        magnetic_betas = np.concatenate(
+            (positive_traction_beta, negative_traction_beta)
+        )
+        for mode, magnetic_beta in zip(self._modes, magnetic_betas):
             mode.right.right_full.copy(self._sample_source.x.petsc_vec)
             self._sample_source.x.scatter_forward()
             self._sample_transverse.x.array[:] = self._sample_source.x.array[
@@ -329,9 +389,9 @@ class ModalFieldReconstructor:
                 )
             )
             try:
-                self._magnetic_beta.value[...] = PETSc.ScalarType(mode.beta)
+                self._magnetic_beta.value[...] = PETSc.ScalarType(magnetic_beta)
             except Exception:
-                self._magnetic_beta.value = PETSc.ScalarType(mode.beta)
+                self._magnetic_beta.value = PETSc.ScalarType(magnetic_beta)
             self._magnetic_scratch.interpolate(self._magnetic_expression)
             self._magnetic_scratch.x.scatter_forward()
             magnetic_rows.append(
@@ -868,6 +928,148 @@ def interface_field_continuity(
             "modal_trace_side": "positive_z" if side == "bottom" else "negative_z",
             "electric_tangential": relative_sample_error(local_e[..., :2], modal_e[..., :2]),
             "magnetic_tangential": relative_sample_error(local_h[..., :2], modal_h[..., :2]),
+        }
+    return reports
+
+
+def _assembled_surface_relative_error(
+    system: HybridLocalDtnSystem,
+    actual,
+    expected,
+    *,
+    quadrature_degree: int,
+) -> dict[str, object]:
+    """Return an MPI-global interface mass norm without point sampling."""
+
+    ds = ufl.Measure(
+        "ds",
+        domain=system.local_mesh.mesh,
+        subdomain_data=system.local_mesh.mesh_data.facet_tags,
+        metadata={"quadrature_degree": int(quadrature_degree)},
+    )
+    measure = ds(system.local_mesh.interface_facet_tag)
+    options = {"quadrature_degree": int(quadrature_degree)}
+    comm = system.local_mesh.mesh.comm
+
+    def norm(values) -> float:
+        form = fem.form(ufl.inner(values, values) * measure, form_compiler_options=options)
+        local = complex(fem.assemble_scalar(form))
+        total = complex(comm.allreduce(local, op=MPI.SUM))
+        return float(np.sqrt(max(total.real, 0.0)))
+
+    difference = actual - expected
+    actual_l2 = norm(actual)
+    expected_l2 = norm(expected)
+    absolute_l2 = norm(difference)
+    scale = max(actual_l2, expected_l2, 1.0e-30)
+    component_absolute_l2 = [
+        norm(ufl.as_vector((difference[index],))) for index in range(2)
+    ]
+    return {
+        "absolute_l2": absolute_l2,
+        "actual_l2": actual_l2,
+        "expected_l2": expected_l2,
+        "comparison_scale_l2": scale,
+        "relative_l2": float(absolute_l2 / scale),
+        "component_absolute_l2": component_absolute_l2,
+    }
+
+
+def assembled_interface_field_continuity(
+    cfg: SimulationConfig3D,
+    bottom_system: HybridLocalDtnSystem,
+    top_system: HybridLocalDtnSystem,
+    bottom_solution,
+    top_solution,
+    coupling: HybridInternalModeCoupling,
+    modal_amplitudes: Sequence[complex],
+) -> dict[str, object]:
+    """Compare exact assembled E-trace and traction densities at each interface.
+
+    The diagnostic uses the same modal coefficients, discrete propagation
+    factors, selected traction symbols, lifted coefficient space and surface
+    quadrature as the coupling.  It is independent of the sampled interface
+    grid and of one-sided point-location choices.
+    """
+
+    count = coupling.mode_count_per_direction
+    modal = np.asarray(modal_amplitudes, dtype=np.complex128)
+    if modal.shape != (2 * count,):
+        raise ValueError("Modal amplitudes have the wrong assembled-trace shape.")
+    forward = np.asarray(coupling.propagation.forward.factors, dtype=np.complex128)
+    backward = np.asarray(coupling.propagation.backward.factors, dtype=np.complex128)
+    coefficient_sets = {
+        "bottom": np.concatenate((modal[:count], backward * modal[count:])),
+        "top": np.concatenate((forward * modal[:count], modal[count:])),
+    }
+    modes = (*coupling.positive_basis.modes, *coupling.negative_basis.modes)
+    traction_betas = (
+        *coupling.positive_traction_beta_per_nm,
+        *coupling.negative_traction_beta_per_nm,
+    )
+    reports: dict[str, object] = {
+        "schema_version": "myfenics.hybrid-assembled-interface.v1",
+        "method": "surface_mass_norm_and_traction_density_dual_proxy",
+        "quadrature_degree": int(coupling.interface_quadrature_degree),
+        "lifted_coefficient_degree": int(
+            coupling.interface_quadrature_coefficient_degree
+        ),
+        "propagation_model": coupling.propagation.propagation_model,
+        "traction_model": coupling.modal_traction_model,
+    }
+    for side, system, solution in (
+        ("bottom", bottom_system, bottom_solution),
+        ("top", top_system, top_solution),
+    ):
+        coefficients = coefficient_sets[side]
+        mixed_total = fem.Function(coupling.spaces.mixed)
+        mixed_total.x.petsc_vec.set(0.0)
+        for coefficient, mode in zip(coefficients, modes):
+            mixed_total.x.petsc_vec.axpy(
+                PETSc.ScalarType(coefficient), mode.right.right_full
+            )
+        mixed_total.x.scatter_forward()
+        transverse_total = fem.Function(coupling.spaces.transverse)
+        transverse_total.x.array[:] = mixed_total.x.array[
+            coupling.spaces.transverse_to_mixed
+        ]
+        transverse_total.x.scatter_forward()
+        electric_lifter = _ReusableInterfaceLifter(system, target_space=system.V)
+        modal_electric, _queries = electric_lifter.lift(transverse_total)
+        local_electric = assign_local_total_electric_field(system, solution)
+
+        traction_evaluator = _ReusableModeTractionEvaluator(coupling.spaces)
+        traction_total = fem.Function(traction_evaluator.traction_space)
+        traction_total.x.petsc_vec.set(0.0)
+        normal_sign = system.local_mesh.local_interface_outward_normal_sign
+        for coefficient, mode, beta in zip(coefficients, modes, traction_betas):
+            traction = traction_evaluator.evaluate(
+                mode,
+                local_outward_normal_sign=normal_sign,
+                beta_override=beta,
+            )
+            traction_total.x.petsc_vec.axpy(
+                PETSc.ScalarType(coefficient), traction.x.petsc_vec
+            )
+        traction_total.x.scatter_forward()
+        modal_traction, _queries = _ReusableInterfaceLifter(system).lift(
+            traction_total
+        )
+        normal = ufl.as_vector((0.0, 0.0, float(normal_sign)))
+        local_traction = ufl.cross(ufl.curl(local_electric), normal)
+        reports[side] = {
+            "electric_tangential": _assembled_surface_relative_error(
+                system,
+                ufl.as_vector((local_electric[0], local_electric[1])),
+                ufl.as_vector((modal_electric[0], modal_electric[1])),
+                quadrature_degree=coupling.interface_quadrature_degree,
+            ),
+            "traction_magnetic_dual": _assembled_surface_relative_error(
+                system,
+                ufl.as_vector((local_traction[0], local_traction[1])),
+                ufl.as_vector((modal_traction[0], modal_traction[1])),
+                quadrature_degree=coupling.interface_quadrature_degree,
+            ),
         }
     return reports
 

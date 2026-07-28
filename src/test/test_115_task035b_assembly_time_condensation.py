@@ -568,9 +568,16 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         zero_rhs.setValue(master, active_value)
         zero_rhs.setValue(interior, roundoff_value)
         zero_rhs.assemble()
+        reduction_audit = {}
         roundoff_projection = project_mpc_vector_to_active_trace(
             candidate,
             zero_rhs,
+            audit=reduction_audit,
+        )
+        self.assertTrue(reduction_audit["pass"])
+        self.assertEqual(reduction_audit["first_offending_dof"], -1)
+        self.assertEqual(
+            reduction_audit["max_cell_interior"], abs(roundoff_value)
         )
         self.assertAlmostEqual(
             abs(

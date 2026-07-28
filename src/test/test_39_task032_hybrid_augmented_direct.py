@@ -16,6 +16,7 @@ from src.modes.cross_section_spaces import (
 )
 from src.postprocessing.hybrid_field_reconstruction import (
     ModalFieldReconstructor,
+    assembled_interface_field_continuity,
     interface_field_continuity,
 )
 from src.solvers.hybrid_fem_modal_augmented_direct import (
@@ -515,10 +516,23 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
             self.solution.top,
             interfaces,
         )
+        assembled = assembled_interface_field_continuity(
+            self.cfg,
+            self.bottom_system,
+            self.top_system,
+            self.solution.bottom_physical,
+            self.solution.top_physical,
+            self.coupling,
+            self.solution.modal_amplitudes,
+        )
         for side in ("bottom", "top"):
             for field in ("electric_tangential", "magnetic_tangential"):
                 self.assertTrue(
                     np.isfinite(continuity[side][field]["relative_l2"])
+                )
+            for field in ("electric_tangential", "traction_magnetic_dual"):
+                self.assertTrue(
+                    np.isfinite(assembled[side][field]["relative_l2"])
                 )
         absorption = reconstructor.absorbed_power_code_units(
             self.solution.modal_amplitudes

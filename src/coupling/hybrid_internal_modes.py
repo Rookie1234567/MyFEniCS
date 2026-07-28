@@ -6,7 +6,7 @@ dense modal arrays are not a scalable production API for the 0.7 nm target.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Sequence
 
 import numpy as np
@@ -59,6 +59,8 @@ class HybridInterfaceModeBlocks:
     local_fem_outward_normal_sign: int
     lifted_query_points: int
     quadrature_degree: int
+    quadrature_coefficient_degree: int
+    surface_reduction_audits: tuple[dict[str, object], ...]
     positive_interior_correction: np.ndarray
     negative_interior_correction: np.ndarray
     modal_rhs_correction: np.ndarray
@@ -88,6 +90,7 @@ class HybridInternalModeCoupling:
     positive_projection_identity_error: float
     mode_count_per_direction: int
     interface_quadrature_degree: int
+    interface_quadrature_coefficient_degree: int
     spaces: CrossSectionSpaces
     positive_basis: BiorthogonalModeBasis
     negative_basis: BiorthogonalModeBasis
@@ -487,18 +490,42 @@ class _InterfaceSurfaceLoadEntries:
 class _ReusableInterfaceSurfaceLoad:
     """Compile one interface load form and update only its lifted coefficient."""
 
-    def __init__(self, system: HybridLocalDtnSystem) -> None:
+    def __init__(
+        self,
+        system: HybridLocalDtnSystem,
+        *,
+        quadrature_degree_override: int | None = None,
+    ) -> None:
         self.system = system
+        self.reduction_audits: list[dict[str, object]] = []
         self.lifter = _ReusableInterfaceLifter(system)
+        lifted_coefficient_degree = _function_space_polynomial_degree(
+            self.lifter.target.function_space
+        )
         self.quadrature_policy: HighOrderQuadraturePolicy = (
             high_order_quadrature_policy(
                 field_degree=_function_space_polynomial_degree(system.V),
                 geometry_degree=int(
                     getattr(system.local_mesh.mesh.geometry.cmap, "degree", 1)
                 ),
-                coefficient_degree=0,
+                # The 2D modal trace is lifted into a DG(p) coefficient on
+                # the 3D interface.  Treating that coefficient as piecewise
+                # constant under-integrates the surface load and can create
+                # non-roundoff cell-interior entries after MPC assembly.
+                coefficient_degree=lifted_coefficient_degree,
             )
         )
+        if quadrature_degree_override is not None:
+            if quadrature_degree_override < 1:
+                raise ValueError(
+                    "Interface quadrature override must be positive."
+                )
+            self.quadrature_policy = replace(
+                self.quadrature_policy,
+                selected_degree=int(quadrature_degree_override),
+                raised_comparison_degree=int(quadrature_degree_override) + 2,
+                policy="explicit_task001_m9_diagnostic_override",
+            )
         v = ufl.TestFunction(system.V)
         ds = ufl.Measure(
             "ds",
@@ -538,15 +565,27 @@ class _ReusableInterfaceSurfaceLoad:
                 tangential_surface_trace_only_verified=False,
             )
         try:
+            reduction_audit: dict[str, object] = {
+                "side": self.system.side,
+                "role": role,
+                "source_name": str(source.name),
+                "quadrature_degree": self.quadrature_policy.selected_degree,
+                "coefficient_degree": self.quadrature_policy.coefficient_degree,
+            }
             reduced = (
                 self.system.static_condensation
-                .reduce_tangential_surface_mpc_vector(overlap_vector)
+                .reduce_tangential_surface_mpc_vector(
+                    overlap_vector, audit=reduction_audit
+                )
             )
             matrix_rows, matrix_values = _vec_nonzero_owned_entries(reduced)
             reduced.destroy()
         except Exception:
+            if "reduction_audit" in locals():
+                self.reduction_audits.append(reduction_audit)
             overlap_vector.destroy()
             raise
+        self.reduction_audits.append(reduction_audit)
         overlap_vector.destroy()
         return _InterfaceSurfaceLoadEntries(
             matrix_rows=matrix_rows,
@@ -722,7 +761,9 @@ def _build_projection_matrix(
                     f"{index + 1}/{mode_count}"
                 )
             raw_entries.append(
-                surface_load.assemble(left, role="row_functional")
+                surface_load.assemble(
+                    left, role=f"row_functional_mode_{index}"
+                )
             )
     except Exception:
         for entries in raw_entries:
@@ -873,7 +914,10 @@ def _build_traction_matrix(
                 local_outward_normal_sign=sign,
                 beta_override=traction_beta_per_nm[column],
             )
-            entries = surface_load.assemble(traction, role="load_column")
+            entries = surface_load.assemble(
+                traction,
+                role=f"load_column_{mode.direction}_mode_{column}",
+            )
             query_count += entries.queries
             if entries.full_vector is not None:
                 if system.static_condensation is None:
@@ -932,11 +976,14 @@ def _build_interface_blocks(
     traction_evaluator: _ReusableModeTractionEvaluator,
     positive_traction_beta_per_nm: Sequence[complex],
     negative_traction_beta_per_nm: Sequence[complex],
+    quadrature_degree_override: int | None = None,
     log=None,
 ) -> HybridInterfaceModeBlocks:
     if log is not None:
         log(f"Task32 {system.side}: compiling reusable interface surface form")
-    surface_load = _ReusableInterfaceSurfaceLoad(system)
+    surface_load = _ReusableInterfaceSurfaceLoad(
+        system, quadrature_degree_override=quadrature_degree_override
+    )
     trace_lifter = _ReusableInterfaceLifter(system, target_space=system.V)
     if log is not None:
         log(f"Task32 {system.side}: assembling canonical trace projection")
@@ -1017,6 +1064,10 @@ def _build_interface_blocks(
             projection_queries + positive_queries + negative_queries
         ),
         quadrature_degree=surface_load.quadrature_policy.selected_degree,
+        quadrature_coefficient_degree=(
+            surface_load.quadrature_policy.coefficient_degree
+        ),
+        surface_reduction_audits=tuple(surface_load.reduction_audits),
         positive_interior_correction=positive_interior_correction,
         negative_interior_correction=negative_interior_correction,
         modal_rhs_correction=modal_rhs_correction,
@@ -1039,6 +1090,7 @@ def build_hybrid_internal_mode_coupling(
     length_nm: float = 100.0,
     propagation_model: AxialPropagationModel = "continuous_beta",
     modal_traction_model: ModalTractionModel = "continuous_qep_beta",
+    interface_quadrature_degree_override: int | None = None,
     log=None,
 ) -> HybridInternalModeCoupling:
     """Build sparse internal-interface blocks without assembling the full solve."""
@@ -1150,6 +1202,7 @@ def build_hybrid_internal_mode_coupling(
             traction_evaluator,
             positive_traction_beta,
             negative_traction_beta,
+            interface_quadrature_degree_override,
             log,
         )
         top = _build_interface_blocks(
@@ -1162,6 +1215,7 @@ def build_hybrid_internal_mode_coupling(
             traction_evaluator,
             positive_traction_beta,
             negative_traction_beta,
+            interface_quadrature_degree_override,
             log,
         )
         mapping_scale = max(
@@ -1228,6 +1282,13 @@ def build_hybrid_internal_mode_coupling(
         )
         if bottom.quadrature_degree != top.quadrature_degree:
             raise RuntimeError("Bottom/top interface quadrature policies disagree.")
+        if (
+            bottom.quadrature_coefficient_degree
+            != top.quadrature_coefficient_degree
+        ):
+            raise RuntimeError(
+                "Bottom/top interface coefficient degrees disagree."
+            )
         return HybridInternalModeCoupling(
             projection=projection,
             bottom=bottom,
@@ -1244,6 +1305,9 @@ def build_hybrid_internal_mode_coupling(
             ),
             mode_count_per_direction=mode_count,
             interface_quadrature_degree=bottom.quadrature_degree,
+            interface_quadrature_coefficient_degree=(
+                bottom.quadrature_coefficient_degree
+            ),
             spaces=spaces,
             positive_basis=positive_basis,
             negative_basis=negative_basis,

@@ -41,6 +41,22 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
         self.assertTrue(np.all(np.abs(middle[2:]) < np.abs(amplitudes[2:])))
         self.assertTrue(np.all(np.isfinite(middle)))
 
+    def test_magnetic_reconstruction_uses_selected_traction_betas(self) -> None:
+        reconstructor = ModalFieldReconstructor.__new__(ModalFieldReconstructor)
+        reconstructor.positive = SimpleNamespace(
+            modes=[SimpleNamespace(beta=1.2 + 0.3j)]
+        )
+        reconstructor.negative = SimpleNamespace(
+            modes=[SimpleNamespace(beta=-1.2 - 0.3j)]
+        )
+        reconstructor._positive_traction_beta = np.asarray([0.9 + 0.2j])
+        reconstructor._negative_traction_beta = np.asarray([-0.8 - 0.1j])
+        positive, negative = reconstructor._effective_traction_betas()
+        np.testing.assert_array_equal(positive, [0.9 + 0.2j])
+        np.testing.assert_array_equal(negative, [-0.8 - 0.1j])
+        self.assertNotEqual(positive[0], reconstructor.positive.modes[0].beta)
+        self.assertNotEqual(negative[0], reconstructor.negative.modes[0].beta)
+
     def test_selected_plane_reference_comparison_round_trip(self) -> None:
         x = np.asarray([0.25, 0.75])
         y = np.asarray([0.5])

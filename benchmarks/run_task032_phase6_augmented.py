@@ -58,6 +58,7 @@ from src.modes.quadratic_beta_eigenproblem import (
 )
 from src.postprocessing.hybrid_field_reconstruction import (
     ModalFieldReconstructor,
+    assembled_interface_field_continuity,
     compare_selected_planes_to_reference,
     hybrid_volume_absorption,
     interface_field_continuity,
@@ -753,6 +754,19 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--task001-surrogate-pilot-gate", action="store_true",
         help="Explicit clean-source Task001 two-parameter Hybrid pilot gate.",
     )
+    parser.add_argument(
+        "--task001-m9-diagnostic-gate",
+        action="store_true",
+        help=(
+            "Clean-source LF4/G00 M9 diagnostic gate for M40/80/120/160, "
+            "standard/static and continuous/discrete axial A/B checks."
+        ),
+    )
+    parser.add_argument(
+        "--task001-m9-interface-quadrature-degree",
+        type=int,
+        choices=(12, 14, 16, 18),
+    )
     parser.add_argument("--task001-model-id", choices=tuple(TASK001_FIDELITIES))
     parser.add_argument("--task001-height-nm", type=float)
     parser.add_argument("--task001-width-x-nm", type=float)
@@ -835,9 +849,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
             "Task035c p6/h10 Hybrid authority only."
         )
-    if args.task035c_p6_h10_gate and args.task001_surrogate_pilot_gate:
-        parser.error("Task035c and Task001 gates are mutually exclusive.")
-    if args.task001_surrogate_pilot_gate:
+    research_gate_count = sum(
+        bool(value)
+        for value in (
+            args.task035c_p6_h10_gate,
+            args.task001_surrogate_pilot_gate,
+            args.task001_m9_diagnostic_gate,
+        )
+    )
+    if research_gate_count > 1:
+        parser.error("Task035c, Task001 formal and Task001 M9 gates are exclusive.")
+    if args.task001_surrogate_pilot_gate or args.task001_m9_diagnostic_gate:
         required = (
             args.task001_model_id, args.task001_height_nm,
             args.task001_width_x_nm, args.incident_theta_deg,
@@ -857,7 +879,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         except ValueError as exc:
             parser.error(str(exc))
         fidelity = task001_parameters.fidelity
-        scoped = bool(
+        formal_scoped = bool(
             args.degree == fidelity["degree"]
             and math.isclose(args.h_nm, fidelity["h_nm"])
             and args.modal_degree == args.degree
@@ -878,11 +900,45 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and not args.allow_dirty_research
             and args.full3d_reference is None
             and not args.task035c_p6_h10_gate
+            and args.task001_m9_interface_quadrature_degree is None
         )
-        if not scoped:
+        diagnostic_scoped = bool(
+            args.task001_m9_diagnostic_gate
+            and args.task001_model_id == "hybrid_lf_p4_h10_m120"
+            and math.isclose(args.task001_height_nm, 120.0)
+            and math.isclose(args.task001_width_x_nm, 17.0)
+            and args.degree == 4
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 4
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes in (40, 80, 120, 160)
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            in (
+                STANDARD_FULL_ASSEMBLY_BACKEND,
+                ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+            )
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.allow_dirty_research
+            and args.full3d_reference is None
+            and not args.task035c_p6_h10_gate
+        )
+        if args.task001_surrogate_pilot_gate and not formal_scoped:
             parser.error(
                 "Task001 gate requires its exact fidelity identity, static memory-minimal "
                 "M120/2M, 10/110 interfaces, qualified discrete axial models and clean SHA."
+            )
+        if args.task001_m9_diagnostic_gate and not diagnostic_scoped:
+            parser.error(
+                "Task001 M9 diagnostics require clean LF4/G00, MPI-scoped "
+                "M40/80/120/160 with an exact 2M pool, standard/static "
+                "memory-minimal solve and explicit axial model identity."
             )
     elif any(
         value is not None
@@ -891,7 +947,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             args.task001_width_x_nm, args.incident_theta_deg,
         )
     ) or not math.isclose(args.incident_phi_deg, 0.0):
-        parser.error("Task001 parameter overrides require --task001-surrogate-pilot-gate.")
+        parser.error(
+            "Task001 parameter overrides require a Task001 formal or M9 gate."
+        )
+    if (
+        args.task001_m9_interface_quadrature_degree is not None
+        and not args.task001_m9_diagnostic_gate
+    ):
+        parser.error("M9 quadrature override requires the Task001 M9 gate.")
     if args.task035c_p6_h10_gate:
         scoped = bool(
             args.degree == 6
@@ -1120,8 +1183,10 @@ def main() -> None:
         or args.internal_traction_model != "continuous_qep_beta"
     )
     comm = MPI.COMM_WORLD
-    if args.task001_surrogate_pilot_gate and comm.size not in (1, 2):
-        raise SystemExit("Task001 formal Hybrid pilot is restricted to MPI1 or MPI2.")
+    if (
+        args.task001_surrogate_pilot_gate or args.task001_m9_diagnostic_gate
+    ) and comm.size not in (1, 2):
+        raise SystemExit("Task001 Hybrid formal/diagnostic runs require MPI1 or MPI2.")
     provenance = _source_provenance(
         comm, args.verified_clean_sha, args.allow_dirty_research
     )
@@ -1165,7 +1230,7 @@ def main() -> None:
     total_started = time.perf_counter()
     timings: dict[str, float] = {}
     task001_parameters = None
-    if args.task001_surrogate_pilot_gate:
+    if args.task001_surrogate_pilot_gate or args.task001_m9_diagnostic_gate:
         task001_parameters = Task001ForwardParameters(
             height_nm=args.task001_height_nm,
             width_x_nm=args.task001_width_x_nm,
@@ -1322,8 +1387,21 @@ def main() -> None:
                 ),
                 "task035c_p6_h10_authority_gate": task035c_p6_gate,
                 "task001_surrogate_pilot_gate": (
-                    None if task001_parameters is None
+                    None if not args.task001_surrogate_pilot_gate
                     else task001_config_identity(task001_parameters)
+                ),
+                "task001_m9_diagnostic_gate": (
+                    None if not args.task001_m9_diagnostic_gate
+                    else {
+                        "configuration": task001_config_identity(
+                            task001_parameters
+                        ),
+                        "requested_modes": int(args.requested_modes),
+                        "candidate_modes": int(candidate_modes),
+                        "interface_quadrature_degree_override": (
+                            args.task001_m9_interface_quadrature_degree
+                        ),
+                    }
                 ),
                 "task33_variant": True,
                 "provenance": (
@@ -1585,6 +1663,9 @@ def main() -> None:
             length_nm=args.top_interface_nm - args.bottom_interface_nm,
             propagation_model=args.internal_propagation_model,
             modal_traction_model=args.internal_traction_model,
+            interface_quadrature_degree_override=(
+                args.task001_m9_interface_quadrature_degree
+            ),
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -1821,6 +1902,12 @@ def main() -> None:
             bottom_z_nm=args.bottom_interface_nm,
             top_z_nm=args.top_interface_nm,
             propagation=coupling.propagation,
+            positive_traction_beta_per_nm=(
+                coupling.positive_traction_beta_per_nm
+            ),
+            negative_traction_beta_per_nm=(
+                coupling.negative_traction_beta_per_nm
+            ),
         )
         trace_modal_oracle = None
         if reference_archive is not None:
@@ -1851,6 +1938,15 @@ def main() -> None:
             solution.bottom_physical,
             solution.top_physical,
             interface_samples,
+        )
+        assembled_interface_continuity = assembled_interface_field_continuity(
+            cfg,
+            bottom,
+            top,
+            solution.bottom_physical,
+            solution.top_physical,
+            coupling,
+            solution.modal_amplitudes,
         )
         absorption = hybrid_volume_absorption(
             cfg,
@@ -1915,6 +2011,7 @@ def main() -> None:
             ),
             "full_middle_volume_reconstructed": False,
             "interface_continuity": interface_continuity,
+            "assembled_interface_continuity": assembled_interface_continuity,
             "full3d_trace_modal_oracle": trace_modal_oracle,
             "volume_absorption": absorption,
             "selected_plane_full3d_comparison": field_reference,
@@ -2051,6 +2148,9 @@ def main() -> None:
             )
         if physical_fields is not None:
             interface_physical = physical_fields["interface_continuity"]
+            assembled_interface_physical = physical_fields[
+                "assembled_interface_continuity"
+            ]
             absorption_physical = physical_fields["volume_absorption"]
             gates.update(
                 {
@@ -2068,6 +2168,24 @@ def main() -> None:
                             interface_physical[side]["magnetic_tangential"][
                                 "relative_l2"
                             ]
+                            for side in ("bottom", "top")
+                        )
+                        <= 1.0e-2
+                    ),
+                    "assembled_interface_e_t_relative_l2_le_5e-3": (
+                        max(
+                            assembled_interface_physical[side][
+                                "electric_tangential"
+                            ]["relative_l2"]
+                            for side in ("bottom", "top")
+                        )
+                        <= 5.0e-3
+                    ),
+                    "assembled_interface_h_t_relative_l2_le_1e-2": (
+                        max(
+                            assembled_interface_physical[side][
+                                "traction_magnetic_dual"
+                            ]["relative_l2"]
                             for side in ("bottom", "top")
                         )
                         <= 1.0e-2
@@ -2230,8 +2348,21 @@ def main() -> None:
                 ),
                 "task035c_p6_h10_authority_gate": task035c_p6_gate,
                 "task001_surrogate_pilot_gate": (
-                    None if task001_parameters is None
+                    None if not args.task001_surrogate_pilot_gate
                     else task001_config_identity(task001_parameters)
+                ),
+                "task001_m9_diagnostic_gate": (
+                    None if not args.task001_m9_diagnostic_gate
+                    else {
+                        "configuration": task001_config_identity(
+                            task001_parameters
+                        ),
+                        "requested_modes": int(args.requested_modes),
+                        "candidate_modes": int(candidate_modes),
+                        "interface_quadrature_degree_override": (
+                            args.task001_m9_interface_quadrature_degree
+                        ),
+                    }
                 ),
                 "task33_variant": task33_variant,
                 "provenance": (
@@ -2454,6 +2585,13 @@ def main() -> None:
                 "qep_to_interface_quadrature_degree": (
                     coupling.interface_quadrature_degree
                 ),
+                "qep_to_interface_coefficient_degree": (
+                    coupling.interface_quadrature_coefficient_degree
+                ),
+                "surface_trace_reduction_audits": {
+                    "bottom": list(coupling.bottom.surface_reduction_audits),
+                    "top": list(coupling.top.surface_reduction_audits),
+                },
                 "cell_interior_modal_correction_norms": {
                     side: {
                         "positive_frobenius": float(
@@ -2599,6 +2737,7 @@ def main() -> None:
                         value
                         for key, value in gates.items()
                         if key.startswith("sampled_interface_")
+                        or key.startswith("assembled_interface_")
                         or key.startswith("volume_")
                         or key.startswith("middle_plane_")
                     )

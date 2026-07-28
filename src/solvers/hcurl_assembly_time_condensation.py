@@ -1794,6 +1794,7 @@ def project_mpc_vector_to_active_trace(
     eliminated_relative_tolerance: float = (
         8192.0 * np.finfo(np.float64).eps
     ),
+    audit: dict[str, object] | None = None,
 ) -> PETSc.Vec:
     """Project an already MPC-assembled full-space vector to active trace rows.
 
@@ -1877,20 +1878,58 @@ def project_mpc_vector_to_active_trace(
         4.0 * float(eliminated_tolerance),
         float(eliminated_relative_tolerance) * max_active,
     )
-    if max_slave > slave_cutoff or max_interior > interior_cutoff:
-        interior_roundoff_units = (
-            max_interior
-            / (float(np.finfo(np.float64).eps) * max_active)
-            if max_active > 0.0
-            else float("inf")
+    interior_roundoff_units = (
+        max_interior / (float(np.finfo(np.float64).eps) * max_active)
+        if max_active > 0.0
+        else float("inf")
+    )
+    offending_mask = (
+        (slave_mask & (np.abs(owned_values) > slave_cutoff))
+        | (interior_mask & (np.abs(owned_values) > interior_cutoff))
+    )
+    local_first = int(
+        np.min(owned_original[offending_mask], initial=condensed.full_rows)
+    )
+    first_offending_dof = int(comm.allreduce(local_first, op=MPI.MIN))
+    if first_offending_dof >= condensed.full_rows:
+        first_offending_dof = -1
+        first_offending_entity = None
+    else:
+        first_offending_entity = (
+            "floquet_slave_trace"
+            if max_slave > slave_cutoff
+            else "cell_interior"
         )
+    if audit is not None:
+        audit.update(
+            {
+                "max_active": max_active,
+                "max_slave": max_slave,
+                "max_cell_interior": max_interior,
+                "slave_absolute_cutoff": slave_cutoff,
+                "cell_interior_cutoff": interior_cutoff,
+                "eliminated_relative_tolerance": float(
+                    eliminated_relative_tolerance
+                ),
+                "cell_interior_roundoff_units": interior_roundoff_units,
+                "first_offending_dof": first_offending_dof,
+                "first_offending_entity": first_offending_entity,
+                "pass": bool(
+                    max_slave <= slave_cutoff
+                    and max_interior <= interior_cutoff
+                ),
+            }
+        )
+    if max_slave > slave_cutoff or max_interior > interior_cutoff:
         raise ValueError(
             "MPC vector has nonzero eliminated interior/slave entries: "
             f"slave_cutoff={slave_cutoff:.3e}, "
             f"interior_cutoff={interior_cutoff:.3e}, "
             f"active_scale={max_active:.3e}, slave={max_slave:.3e}, "
             f"interior={max_interior:.3e}, "
-            f"interior_roundoff_units={interior_roundoff_units:.3e}"
+            f"interior_roundoff_units={interior_roundoff_units:.3e}, "
+            f"first_offending_dof={first_offending_dof}, "
+            f"first_offending_entity={first_offending_entity}"
         )
     active_vector = condensed.matrix.createVecRight()
     active_original = (
