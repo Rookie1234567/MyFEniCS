@@ -311,6 +311,12 @@ class _Fixture:
             full_active_residual={
                 "linear_system_relative_residual": 2.0e-12,
                 "full_explicit_true_residual_pass": True,
+                "active_selected_rows": {
+                    "selected_value_bytes_local": 64 + comm.rank,
+                },
+                "reduced_constraint_norm": {
+                    "work_owned_component_count_local": comm.rank,
+                },
             },
             primal_solver_telemetry={
                 "converged_reason": 2,
@@ -319,6 +325,12 @@ class _Fixture:
                 "pc_type": "lu",
                 "pc_factor_solver_type": "mumps",
                 "linear_system_relative_residual": 2.0e-12,
+                "active_selected_rows": {
+                    "selected_value_bytes_local": 64 + comm.rank,
+                },
+                "reduced_constraint_norm": {
+                    "work_owned_component_count_local": comm.rank,
+                },
             },
         )
 

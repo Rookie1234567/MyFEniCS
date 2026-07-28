@@ -605,6 +605,34 @@ def _rank_local_reduction_identity(view: Any) -> dict[str, str]:
     }
 
 
+def _rank_local_solver_gate_identity(view: Any) -> dict[str, str]:
+    """Bind distributed residual telemetry to this rank's shard identity."""
+
+    names = ("active_selected_rows", "reduced_constraint_norm")
+    return {
+        "full_active_residual_rank_local_sha256": _json_sha256(
+            {
+                name: view.full_active_residual.get(name)
+                for name in names
+                if name in view.full_active_residual
+            },
+            namespace=(
+                "task035e.current-rank-full-active-residual-audit.v1"
+            ),
+        ),
+        "primal_solver_telemetry_rank_local_sha256": _json_sha256(
+            {
+                name: view.primal_solver_telemetry.get(name)
+                for name in names
+                if name in view.primal_solver_telemetry
+            },
+            namespace=(
+                "task035e.current-rank-primal-solver-telemetry-audit.v1"
+            ),
+        ),
+    }
+
+
 def _qualified_gate_identity(view: Any) -> dict[str, Any]:
     residual = view.full_active_residual
     if not isinstance(residual, Mapping):
@@ -638,10 +666,24 @@ def _qualified_gate_identity(view: Any) -> dict[str, Any]:
         or port.get("auxiliary_interior_columns_allocated") is not False
     ):
         raise ValueError("trace-only DtN/port operator audit is not qualified")
+    rank_local_solver_audit_keys = {
+        "active_selected_rows",
+        "reduced_constraint_norm",
+    }
+    common_residual = {
+        str(name): _jsonable(value)
+        for name, value in residual.items()
+        if name not in rank_local_solver_audit_keys
+    }
+    common_telemetry = {
+        str(name): _jsonable(value)
+        for name, value in telemetry.items()
+        if name not in rank_local_solver_audit_keys
+    }
     return {
-        "full_active_residual": _jsonable(residual),
+        "full_active_residual": common_residual,
         "full_active_residual_sha256": _json_sha256(
-            residual,
+            common_residual,
             namespace="task035e.current-full-active-residual.v1",
         ),
         "port_operator_audit_sha256": _json_sha256(
@@ -652,9 +694,9 @@ def _qualified_gate_identity(view: Any) -> dict[str, Any]:
             view.port_metrics,
             namespace="task035e.current-port-metrics.v1",
         ),
-        "primal_solver_telemetry": _jsonable(telemetry),
+        "primal_solver_telemetry": common_telemetry,
         "primal_solver_telemetry_sha256": _json_sha256(
-            telemetry,
+            common_telemetry,
             namespace="task035e.current-primal-telemetry.v1",
         ),
     }
@@ -956,7 +998,21 @@ def _manifest_payload(
     common_hashes = {str(row["common_identity_sha256"]) for row in rows}
     gate_hashes = {str(row["gate_identity_sha256"]) for row in rows}
     if len(common_hashes) != 1 or len(gate_hashes) != 1:
-        raise ValueError("snapshot common or Gate identity differs by rank")
+        common_ranks: dict[str, list[int]] = {}
+        gate_ranks: dict[str, list[int]] = {}
+        for row in rows:
+            common_ranks.setdefault(
+                str(row["common_identity_sha256"]),
+                [],
+            ).append(int(row["rank"]))
+            gate_ranks.setdefault(
+                str(row["gate_identity_sha256"]),
+                [],
+            ).append(int(row["rank"]))
+        raise ValueError(
+            "snapshot common or Gate identity differs by rank: "
+            f"common={common_ranks}; gate={gate_ranks}"
+        )
     reduced_ranges = _ownership_catalog(
         rows,
         family="reduced",
@@ -1299,6 +1355,9 @@ def write_task035e_multigoal_snapshot(
         ],
         "rank_local_reduction_identity": (
             _rank_local_reduction_identity(view)
+        ),
+        "rank_local_solver_gate_identity": (
+            _rank_local_solver_gate_identity(view)
         ),
     }
     local_identity_sha = _json_sha256(
