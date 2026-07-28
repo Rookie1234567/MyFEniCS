@@ -413,6 +413,35 @@ def _relative_form_error(
     return error / max(reference, np.finfo(float).tiny), error, reference
 
 
+def _require_world_communicator(
+    communicator: MPI.Intracomm,
+) -> int:
+    """Accept MPI_COMM_WORLD itself or one congruent duplicate.
+
+    DOLFINx owns a duplicated communicator for each mesh.  mpi4py object
+    equality therefore rejects ``mesh.comm`` even though MPI formally
+    classifies it as congruent to ``MPI_COMM_WORLD``.  A communicator with a
+    different group or rank ordering remains out of scope for the formal
+    Task035e transfer.
+    """
+
+    try:
+        relation = int(
+            MPI.Comm.Compare(communicator, MPI.COMM_WORLD)
+        )
+    except Exception as exc:
+        raise ValueError(
+            "Task035e formal shadow transfer requires a valid MPI "
+            "communicator"
+        ) from exc
+    if relation not in {int(MPI.IDENT), int(MPI.CONGRUENT)}:
+        raise ValueError(
+            "Task035e formal shadow transfer requires the world communicator "
+            "or one congruent duplicate"
+        )
+    return relation
+
+
 def transfer_task035e_snapshot_to_shadow_p6(
     snapshot: LoadedTask035eSnapshot,
     shadow_view: Any,
@@ -428,10 +457,7 @@ def transfer_task035e_snapshot_to_shadow_p6(
     """
 
     comm = shadow_view.mesh_data.mesh.comm
-    if comm != MPI.COMM_WORLD:
-        raise ValueError(
-            "Task035e formal shadow transfer requires the world communicator"
-        )
+    _require_world_communicator(comm)
     tolerance = float(relative_tolerance)
     if (
         not math.isfinite(tolerance)

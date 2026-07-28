@@ -14,6 +14,7 @@ from src.adaptivity.task035e_shadow_transfer import (
     _interpolate_nonmatching,
     _relative_coefficient_error,
     _relative_form_error,
+    _require_world_communicator,
     _shadow_transition_identity,
 )
 
@@ -36,6 +37,26 @@ def _space(domain: mesh.Mesh, degree: int = 2):
             dtype=default_real_type,
         ),
     )
+
+
+def test_world_communicator_gate_accepts_dolfinx_duplicate() -> None:
+    domain = mesh.create_unit_cube(
+        MPI.COMM_WORLD,
+        1,
+        1,
+        max(1, MPI.COMM_WORLD.size),
+        cell_type=mesh.CellType.hexahedron,
+    )
+    relation = _require_world_communicator(domain.comm)
+    assert relation in {MPI.IDENT, MPI.CONGRUENT}
+    assert MPI.Comm.Compare(domain.comm, MPI.COMM_WORLD) == MPI.CONGRUENT
+
+
+def test_world_communicator_gate_rejects_true_subcommunicator() -> None:
+    if MPI.COMM_WORLD.size == 1:
+        pytest.skip("a one-rank COMM_SELF is congruent to COMM_WORLD")
+    with pytest.raises(ValueError, match="congruent duplicate"):
+        _require_world_communicator(MPI.COMM_SELF)
 
 
 def test_nonmatching_nedelec_roundtrip_preserves_field_and_curl() -> None:
