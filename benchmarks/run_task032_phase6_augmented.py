@@ -2021,6 +2021,10 @@ def main() -> None:
             coupling,
             solution.modal_amplitudes,
         )
+        for side in ("bottom", "top"):
+            assembled_interface_continuity[side]["traction_hcurl_dual"] = (
+                validation["fe_modal_traction_equilibrium"][f"{side}_dual"]
+            )
         absorption = hybrid_volume_absorption(
             cfg,
             bottom,
@@ -2257,8 +2261,8 @@ def main() -> None:
                     "assembled_interface_h_t_relative_l2_le_1e-2": (
                         max(
                             assembled_interface_physical[side][
-                                "traction_magnetic_dual"
-                            ]["relative_l2"]
+                                "traction_hcurl_dual"
+                            ]["relative_dual"]
                             for side in ("bottom", "top")
                         )
                         <= 1.0e-2

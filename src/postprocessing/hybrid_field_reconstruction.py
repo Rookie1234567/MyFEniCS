@@ -1065,8 +1065,8 @@ def assembled_interface_field_continuity(
         *coupling.negative_traction_beta_per_nm,
     )
     reports: dict[str, object] = {
-        "schema_version": "myfenics.hybrid-assembled-interface.v1",
-        "method": "surface_mass_norm_and_traction_density_dual_proxy",
+        "schema_version": "myfenics.hybrid-assembled-interface.v2",
+        "method": "surface_mass_E_and_separate_raw_traction_density_proxy",
         "quadrature_degree": int(coupling.interface_quadrature_degree),
         "lifted_coefficient_degree": int(
             coupling.interface_quadrature_coefficient_degree
@@ -1121,7 +1121,7 @@ def assembled_interface_field_continuity(
                 ufl.as_vector((modal_electric[0], modal_electric[1])),
                 quadrature_degree=coupling.interface_quadrature_degree,
             ),
-            "traction_magnetic_dual": _assembled_surface_relative_error(
+            "traction_density_l2_proxy": _assembled_surface_relative_error(
                 system,
                 ufl.as_vector((local_traction[0], local_traction[1])),
                 ufl.as_vector((modal_traction[0], modal_traction[1])),

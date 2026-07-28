@@ -530,7 +530,7 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
                 self.assertTrue(
                     np.isfinite(continuity[side][field]["relative_l2"])
                 )
-            for field in ("electric_tangential", "traction_magnetic_dual"):
+            for field in ("electric_tangential", "traction_density_l2_proxy"):
                 self.assertTrue(
                     np.isfinite(assembled[side][field]["relative_l2"])
                 )
@@ -539,6 +539,9 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
         )
         self.assertGreaterEqual(absorption["absorbed_power_code_units"], 0.0)
         self.assertGreater(absorption["z_evaluation_count"], 0)
+        self.assertTrue(
+            np.isfinite(absorption["poynting_flux_loss_code_units"])
+        )
 
 
 if __name__ == "__main__":
