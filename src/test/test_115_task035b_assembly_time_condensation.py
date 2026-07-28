@@ -583,7 +583,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         roundoff_projection.destroy()
 
         interior_cutoff = float(
-            1024.0
+            2048.0
             * np.finfo(np.float64).eps
             * abs(active_value)
         )

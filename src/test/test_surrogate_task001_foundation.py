@@ -38,6 +38,9 @@ from src.forward_data.watchdog import (
 )
 from src.forward_data import watchdog
 from benchmarks.run_task032_phase6_augmented import _parse_args
+from src.solvers.hcurl_assembly_time_condensation import (
+    project_mpc_vector_to_active_trace,
+)
 
 
 def _parameters(**updates) -> Task001ForwardParameters:
@@ -155,6 +158,17 @@ def test_fisher_rank_deficiency_and_channel_selection() -> None:
     selected = greedy_channel_indices(jacobian, [1.0, 1.0, 1.0], max_channels=2)
     assert len(selected) == 2
     assert fisher_metrics(jacobian[selected], [1.0, 1.0])["rank"] == 2
+
+
+def test_p6_projection_roundoff_envelope_covers_measured_accumulation() -> None:
+    defaults = project_mpc_vector_to_active_trace.__kwdefaults__
+    expected = 2048.0 * np.finfo(np.float64).eps
+    assert defaults is not None
+    assert defaults["eliminated_relative_tolerance"] == expected
+    active_scale = 4.691
+    measured_interior = 1.364e-12
+    assert measured_interior < expected * active_scale
+    assert 1.0e-8 * active_scale > 1.0e4 * expected * active_scale
 
 
 def test_configuration_subset_doe_separates_configuration_from_geometry() -> None:

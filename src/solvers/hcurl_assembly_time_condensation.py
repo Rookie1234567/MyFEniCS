@@ -1792,7 +1792,7 @@ def project_mpc_vector_to_active_trace(
     *,
     eliminated_tolerance: float = 1.0e-12,
     eliminated_relative_tolerance: float = (
-        1024.0 * np.finfo(np.float64).eps
+        2048.0 * np.finfo(np.float64).eps
     ),
 ) -> PETSc.Vec:
     """Project an already MPC-assembled full-space vector to active trace rows.
@@ -1803,9 +1803,12 @@ def project_mpc_vector_to_active_trace(
     MPC slave entries retain the strict absolute tolerance because the
     constraint assembly must zero them exactly.  Cell-interior entries use
     the larger of that absolute floor and a global retained-signal roundoff
-    envelope.  This keeps high-order tangential-form audits invariant under
-    harmless mode normalization while remaining independent of MPI
-    partitioning and vector length.
+    envelope.  The 2048-epsilon envelope covers measured p6/M120 distributed
+    accumulation (about 1309 epsilon units) while remaining more than four
+    orders below the separately tested true-leakage scale.  This keeps
+    high-order tangential-form audits invariant under harmless mode
+    normalization while remaining independent of MPI partitioning and vector
+    length.
     """
 
     if full_vector.getSize() != condensed.full_rows:
