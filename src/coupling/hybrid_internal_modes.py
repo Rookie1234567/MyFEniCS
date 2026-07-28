@@ -629,6 +629,41 @@ def _surface_load_entries(
     return _ReusableInterfaceSurfaceLoad(system).assemble_entries(source)
 
 
+def _canonicalized_negative_traces(
+    projection: ModalTraceProjection,
+    canonical_mapping: np.ndarray,
+) -> list[fem.Function]:
+    """Represent negative E traces in the positive canonical trace basis.
+
+    Near a Rayleigh cutoff the lifted left/right surface Gram can be strongly
+    conditioned.  Independently lifting the reciprocal negative eigenvectors
+    and then applying the inverse Gram amplifies surface-integration roundoff.
+    The 2D biorthogonal projection has already established the exact change of
+    basis, so carrying that representation into 3D avoids a second unstable
+    coordinate recovery without changing the physical modal span.
+    """
+
+    count = len(projection.right_traces)
+    if canonical_mapping.shape != (count, count):
+        raise ValueError("Canonical negative trace map has the wrong shape.")
+    traces: list[fem.Function] = []
+    for column in range(count):
+        trace = fem.Function(
+            projection.right_traces[0].function_space,
+            name=f"task032_canonical_negative_trace_{column}",
+        )
+        trace.x.petsc_vec.set(0.0)
+        for row, source in enumerate(projection.right_traces):
+            coefficient = complex(canonical_mapping[row, column])
+            if abs(coefficient) > 0.0:
+                trace.x.petsc_vec.axpy(
+                    PETSc.ScalarType(coefficient), source.x.petsc_vec
+                )
+        trace.x.scatter_forward()
+        traces.append(trace)
+    return traces
+
+
 class _ReusableModeTractionEvaluator:
     """Compile one traction expression and update only field/beta/normal."""
 
@@ -1140,6 +1175,13 @@ def build_hybrid_internal_mode_coupling(
             )
         if not np.all(np.isfinite(canonical_negative_mapping)):
             raise RuntimeError("Negative-to-positive interface map is non-finite.")
+        # From this point onward the E-trace coupling uses the already proven
+        # canonical coordinates.  This is algebraically the same negative
+        # trace, but avoids an ill-conditioned second coordinate recovery on
+        # each independently assembled 3D interface.
+        negative_traces = _canonicalized_negative_traces(
+            projection, canonical_negative_mapping
+        )
 
         propagation = build_two_sided_propagation(
             [*positive_basis.modes, *negative_basis.modes],
