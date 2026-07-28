@@ -1,0 +1,101 @@
+{
+  "schema_version": "task035d.case097-combined-hp-residual-controlled-negative.v1",
+  "status": "combined_hp_solver_residual_controlled_negative",
+  "pass": false,
+  "official_result": false,
+  "candidate_id": "h15_symmetric_top_air_remote_p5_interior_v1",
+  "classification": "controlled_negative",
+  "failure_stage": "full_explicit_true_residual_gate",
+  "failures": [
+    "task035d_solver_full_explicit_true_residual"
+  ],
+  "source": {
+    "branch": "codex/20260726-task35d-goal-oriented-exact-sequence-hp-adaptivity",
+    "commit_sha": "73afdc1362054f9dfd4ae5764a3c709b4ea09e03",
+    "source_clean_verified": true,
+    "source_stable_after_run": true
+  },
+  "environment": {
+    "mpi_size": 8,
+    "degree": 6,
+    "h_nm": 15.0,
+    "polarization_kind": "s",
+    "profile": "default",
+    "assembly_backend": "assembly_time_variable_p_condensed",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32"
+  },
+  "plan_authority": {
+    "plan_path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_symmetric_top_air_remote_p5_interior_plan_v1.json",
+    "plan_sha256": "1d0b1ef0d6cfb28f463efb0df70d3b4c864e26fbeaeeb413e28e71689f5de520",
+    "mpi_identity_path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/combined_hp_interior_mpi_identity_v2.json",
+    "mpi_identity_sha256": "f978cc3430b3cb6e8445f5aa268590fd8c03214153456a1a0cb14f409351bdd7",
+    "launch_gate_pass": true,
+    "complete_combined_hp_credit": false,
+    "actual_channel_dwr_credit": false
+  },
+  "dimensions": {
+    "root_cells": 120,
+    "leaf_cells": 148,
+    "p5_interior_cells": 32,
+    "p6_interior_cells": 116,
+    "raw_broken_active_fe_dofs": 86740,
+    "full3d_equivalent_active_fe_dofs": 84240,
+    "independent_trace_rows": 19980,
+    "dtn_rows": 80,
+    "solve_rows": 20060,
+    "matrix_nnz": 11176430,
+    "matrix_average_nnz_per_row": 557.1500498504487,
+    "matrix_maximum_nnz_per_row": 1750,
+    "factor_nnz": 33197900
+  },
+  "residual": {
+    "gate_limit": 1e-09,
+    "linear_system_residual_norm": 1.55198377690861e-09,
+    "linear_system_relative_residual": 1.5337343883709876e-10,
+    "reduced_trace_dtn_residual_norm": 2.959617124657627e-10,
+    "reduced_trace_dtn_relative_residual": 2.924815728126239e-11,
+    "eliminated_cell_interior_residual_norm": 1.5235026447439622e-09,
+    "eliminated_cell_interior_max_abs_residual": 5.74822354086171e-11,
+    "eliminated_cell_interior_rhs_norm": 0.0,
+    "reduced_relative_gate_pass": true,
+    "eliminated_interior_absolute_gate_pass": false,
+    "full_explicit_gate_pass": false
+  },
+  "resource": {
+    "memory_authority_gib": 7.585918426513672,
+    "no_swap": true,
+    "elapsed_seconds": 208.9750710229855,
+    "base_matrix_assembly_seconds": 172.21965321799507,
+    "condensed_build_seconds": 59.20265500701498,
+    "mumps_setup_seconds": 12.08081063895952,
+    "mumps_backsolve_seconds": 0.03802199201891199,
+    "field_recovery_seconds": 0.4253031439729966,
+    "full_residual_seconds": 0.1409352229675278
+  },
+  "diagnostic_observables_not_official": {
+    "reason": "The absolute full explicit residual gate failed; these values cannot be promoted to official physics evidence.",
+    "R_total": 0.0007681015873241617,
+    "T_total": 0.6026136292031903
+  },
+  "root_cause": {
+    "classification": "recovery_trace_roundoff_path_mismatch",
+    "evidence": [
+      "The eliminated interior RHS is exactly zero while the eliminated residual dominates the full norm.",
+      "The local recovery operator residual is approximately 2.74e-15, excluding the retained LU operator as the dominant cause.",
+      "Interior recovery used a cell-level constraint expansion while the explicit residual re-read an entity-block-expanded global trace; their coefficient paths differed at approximately 1e-13."
+    ],
+    "not_a_gate_relaxation": true,
+    "same_point_rerun_allowed_only_after_numerical_recovery_blob_change": true
+  },
+  "raw_evidence": {
+    "watchdog_path": "benchmarks/artifacts/task035d/case097/h15_symmetric_hp_mpi8_watchdog_v1.json",
+    "watchdog_sha256": "93987d9e945528666eeb1a4beef947da5526dd74fd3daaedb6d63f9eb00ce4a7",
+    "run_summary_path": "benchmarks/artifacts/task035d/case097/p6_h15_symmetric_hp_full-solve_mpi8_20260727T001652Z/run_summary.json",
+    "run_summary_sha256": "9a4e50d3c6a4e26b99186a5a0b8f410106cad9824599960e66690dd68b62742a",
+    "memory_timeline_sha256": "21a7c6278f4fa99e15d4ba20ae768c1054f8f3b7b906d8eb9e6e1b027668e75a",
+    "progress_sha256": "9f3f35169c205f5fcec1e314d95668b0ae0d72a34cab6493ab7de8428c9048cd",
+    "worker_stdout_sha256": "7239bb044754509bde5f1be88374c1973ba48eff562a44dd0ff4de8d7e04d1f1"
+  },
+  "ordinary_default_changed": false
+}

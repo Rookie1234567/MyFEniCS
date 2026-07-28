@@ -136,6 +136,72 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         self.assertEqual(row["stage"], "process_start")
         self.assertGreaterEqual(float(row["container_process_rss_sum_mb"]), 0.0)
 
+    def test_worker_memory_is_scoped_to_the_sampled_process_tree(self) -> None:
+        def process(
+            pid: int,
+            ppid: int,
+            *,
+            rank: int | None,
+            rss_mb: float,
+        ) -> dict:
+            return {
+                "pid": pid,
+                "ppid": ppid,
+                "rss_mb": rss_mb,
+                "swap_mb": 0.0,
+                "cpu_affinity": "0",
+                "thread_count": 1,
+                "cpu_seconds": 0.0,
+                "cmdline": "",
+                "worker_rank": rank,
+                "smaps_rollup": None
+                if rank is None
+                else {
+                    "rss_mb": rss_mb,
+                    "pss_mb": rss_mb - 1.0,
+                    "uss_mb": rss_mb - 2.0,
+                    "shared_mb": 2.0,
+                    "anonymous_mb": rss_mb - 3.0,
+                    "swap_mb": 0.0,
+                    "swap_pss_mb": 0.0,
+                },
+                "thread_runtime": None,
+                "read_bytes": 0,
+                "write_bytes": 0,
+                "blkio_delay_seconds": 0.0,
+            }
+
+        processes = {
+            10: process(10, 0, rank=None, rss_mb=5.0),
+            11: process(11, 10, rank=0, rss_mb=100.0),
+            20: process(20, 0, rank=None, rss_mb=6.0),
+            21: process(21, 20, rank=1, rss_mb=900.0),
+        }
+        with tempfile.TemporaryDirectory() as tmp, patch(
+            "benchmarks.run_direct_memory_forensics._read_processes",
+            return_value=processes,
+        ), patch(
+            "benchmarks.run_direct_memory_forensics._vmstat_swap_pages",
+            return_value=(0, 0),
+        ), patch(
+            "benchmarks.run_direct_memory_forensics._cgroup_snapshot",
+            return_value={
+                "container_cgroup_current_mb": 111.0,
+                "container_cgroup_peak_mb": 112.0,
+                "container_swap_current_mb": 0.0,
+                "job_cgroup_path": "/test",
+                "job_cgroup_dedicated": True,
+            },
+        ):
+            row = _sample(10, Path(tmp) / "progress.jsonl", 0.0)
+
+        workers = json.loads(row["worker_rank_rss_mb_json"])
+        self.assertEqual([worker["rank"] for worker in workers], [0])
+        self.assertEqual(row["worker_rank_rss_sum_mb"], 100.0)
+        self.assertEqual(row["worker_rank_pss_sum_mb"], 99.0)
+        self.assertEqual(row["mpi_process_tree_rss_mb"], 105.0)
+        self.assertEqual(row["container_process_rss_sum_mb"], 1011.0)
+
     def test_stage_marker_reads_last_complete_json_event(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "progress.jsonl"

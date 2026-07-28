@@ -7,6 +7,7 @@ import pytest
 
 from src.common.config_3d import (
     ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+    ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
     STANDARD_FULL_ASSEMBLY_BACKEND,
     SimulationConfig3D,
     qualify_stage4_full3d_assembly_backend,
@@ -62,6 +63,86 @@ def test_public_condensed_backend_sets_the_complete_internal_contract():
     assert cfg.stage4_cell_static_condensation is True
     assert cfg.stage4_assembly_time_cell_static_condensation is True
     assert cfg.stage4_floquet_slave_elimination is True
+
+
+def test_variable_p_backend_is_explicit_and_fail_closed():
+    cfg = _qualified_config(
+        stage4_full3d_assembly_backend=(
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+        ),
+        nedelec_degree=6,
+        stage4_variable_p_cell_degree_plan="/tmp/task035d-plan.json",
+    )
+    audit = resolve_stage4_full3d_assembly_backend(cfg, apply=True)
+    qualification = qualify_stage4_full3d_assembly_backend(cfg, audit)
+
+    assert audit["actual"] == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+    assert audit["ordinary_default_unchanged"] is True
+    assert audit["ordinary_default_selected"] is False
+    assert qualification["status"] == "qualified"
+    assert qualification["element_contract"] == (
+        "exact_sequence_variable_p4_p5_p6_in_p6_container"
+    )
+    assert (
+        "geometry_bound_inactive_row_free_variable_p"
+        in qualification["contract"]
+    )
+
+    missing = _qualified_config(
+        stage4_full3d_assembly_backend=(
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+        ),
+        nedelec_degree=6,
+    )
+    missing_audit = resolve_stage4_full3d_assembly_backend(
+        missing,
+        apply=True,
+    )
+    with pytest.raises(ValueError, match="degree plan"):
+        qualify_stage4_full3d_assembly_backend(
+            missing,
+            missing_audit,
+        )
+
+
+def test_local_h_plan_reuses_variable_backend_and_is_mutually_exclusive():
+    cfg = _qualified_config(
+        stage4_full3d_assembly_backend=(
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+        ),
+        nedelec_degree=6,
+        stage4_local_h_refinement_plan="/tmp/task035d-local-h.json",
+    )
+    audit = resolve_stage4_full3d_assembly_backend(cfg, apply=True)
+    qualification = qualify_stage4_full3d_assembly_backend(cfg, audit)
+
+    assert qualification["status"] == "qualified"
+    assert qualification["element_contract"] == (
+        "exact_sequence_balanced_local_h_fixed_trace_"
+        "variable_cell_interior"
+    )
+    assert (
+        "geometry_bound_balanced_local_h_hanging_trace_elimination"
+        in qualification["contract"]
+    )
+
+    ordinary = _qualified_config(
+        stage4_full3d_assembly_backend=STANDARD_FULL_ASSEMBLY_BACKEND,
+        stage4_local_h_refinement_plan="/tmp/task035d-local-h.json",
+    )
+    with pytest.raises(ValueError, match="requires.*variable_p"):
+        qualify_stage4_full3d_assembly_backend(ordinary)
+
+    ambiguous = _qualified_config(
+        stage4_full3d_assembly_backend=(
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+        ),
+        nedelec_degree=6,
+        stage4_variable_p_cell_degree_plan="/tmp/task035d-p.json",
+        stage4_local_h_refinement_plan="/tmp/task035d-h.json",
+    )
+    with pytest.raises(ValueError, match="exactly one"):
+        qualify_stage4_full3d_assembly_backend(ambiguous)
 
 
 @pytest.mark.parametrize(
@@ -169,6 +250,8 @@ def test_json_snapshot_has_one_public_port_and_no_research_local_p_fields():
     assert data["nedelec_trace_degree"] is None
     assert data["nedelec_interior_degree"] is None
     assert data["nedelec_fixed_trace_contract"] == "uniform_n1curl"
+    assert data["stage4_variable_p_cell_degree_plan"] is None
+    assert data["stage4_local_h_refinement_plan"] is None
 
 
 def test_pycharm_facade_exposes_one_backend_value():

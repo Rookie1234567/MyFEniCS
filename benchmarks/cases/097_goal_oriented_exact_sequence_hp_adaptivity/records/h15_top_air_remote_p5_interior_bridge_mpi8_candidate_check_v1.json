@@ -1,0 +1,1767 @@
+{
+  "schema_version": "task035d.case097-hp-factorial-bridge-candidate-check.v1",
+  "status": "task035d_hp_factorial_bridge_controlled_negative",
+  "classification": "controlled_negative",
+  "checks": {
+    "watchdog_completed_without_termination": true,
+    "watchdog_structural_qualification": true,
+    "launch_authority": true,
+    "solver_identity_and_residual": true,
+    "significant_12_power_and_12_amplitude": false,
+    "R00_R_T_Aclosure": true,
+    "Avolume_and_energy_closure": true,
+    "selected_field_and_interface": true,
+    "rows_nnz_factor_memory": true,
+    "ordinary_default_unchanged": true
+  },
+  "failures": [
+    "significant_12_power_and_12_amplitude"
+  ],
+  "channel_comparison": {
+    "schema_version": "task035b.significant-channel-reference-v1-comparison.v1",
+    "status": "significant_channel_controlled_negative",
+    "reference_authority": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json",
+      "sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3",
+      "reference_payload_sha256": "bb78f17a0eb3a664620b9acf7cad47dd75c1881899cf885cc243328e320177ba"
+    },
+    "candidate_authority": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/dtn_port_diffraction_orders_3d.json",
+      "sha256": "6967a01b3ded0d91f9c29abf982aaa71b5880630c2559352e6144dc2fc1d1eb5"
+    },
+    "frozen_significant_channel_count": 12,
+    "significant_power_pass_count": 4,
+    "significant_complex_amplitude_pass_count": 4,
+    "all_12_significant_powers_pass": false,
+    "all_12_significant_complex_amplitudes_pass": false,
+    "analytic_channel_identity_pass": true,
+    "acceptance_gate": "unchanged v0 h10 p5-to-p6 absolute corrections only",
+    "numerical_convergence_band_used_as_gate": false,
+    "thresholds_relaxed": false,
+    "channels": [
+      {
+        "side": "bottom",
+        "m": -7,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 2.36201044923999e-06,
+        "candidate_power_ratio": 2.4617890288556086e-06,
+        "candidate_vs_reference_power_absolute_error": 9.977857961561867e-08,
+        "unchanged_v0_power_tolerance": 2.1586938039525714e-09,
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.0009812210508338983,
+          -8.723749960195404e-05
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.0010041136841900953,
+          -5.61581329534267e-05
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 3.8600514157908e-05,
+        "unchanged_v0_complex_amplitude_tolerance": 1.2165650664394503e-05,
+        "complex_amplitude_pass": false
+      },
+      {
+        "side": "bottom",
+        "m": -5,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 2.1192082572044478e-07,
+        "candidate_power_ratio": 2.094067791030351e-07,
+        "candidate_vs_reference_power_absolute_error": 2.514046617409674e-09,
+        "unchanged_v0_power_tolerance": 3.891272584918786e-10,
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.0001340326966067936,
+          0.0001470057842857811
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.00014568287733693244,
+          0.00013372536899757605
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 1.7666242986897032e-05,
+        "unchanged_v0_complex_amplitude_tolerance": 1.28064572388584e-06,
+        "complex_amplitude_pass": false
+      },
+      {
+        "side": "bottom",
+        "m": -4,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 4.3728889720662304e-07,
+        "candidate_power_ratio": 4.206934263885204e-07,
+        "candidate_vs_reference_power_absolute_error": 1.659547081810265e-08,
+        "unchanged_v0_power_tolerance": 5.251002536670234e-10,
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          -0.0002621322075309105,
+          8.743226903753854e-05
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.00025139249449130887,
+          0.00010129991451550673
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 1.7540040686258438e-05,
+        "unchanged_v0_complex_amplitude_tolerance": 2.541657906333072e-06,
+        "complex_amplitude_pass": false
+      },
+      {
+        "side": "bottom",
+        "m": -2,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 2.959841395129147e-06,
+        "candidate_power_ratio": 2.9499834484207736e-06,
+        "candidate_vs_reference_power_absolute_error": 9.857946708373466e-09,
+        "unchanged_v0_power_tolerance": 4.651045293875445e-09,
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          -0.0006970027805581116,
+          0.0002979420807206879
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.0006915264014111747,
+          0.0003073433118344572
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 1.087997587384775e-05,
+        "unchanged_v0_complex_amplitude_tolerance": 4.580806193893276e-06,
+        "complex_amplitude_pass": false
+      },
+      {
+        "side": "bottom",
+        "m": -1,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 2.1781673985546834e-05,
+        "candidate_power_ratio": 2.177373911603233e-05,
+        "candidate_vs_reference_power_absolute_error": 7.934869514502767e-09,
+        "unchanged_v0_power_tolerance": 1.1144136652304436e-07,
+        "power_pass": true,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.0020910133853029866,
+          -0.0010233798628436913
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.0020852539775722567,
+          -0.00103411065292698
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 1.2178695875191249e-05,
+        "unchanged_v0_complex_amplitude_tolerance": 1.2728990676557803e-05,
+        "complex_amplitude_pass": true
+      },
+      {
+        "side": "bottom",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 0.6026738723469667,
+        "candidate_power_ratio": 0.602585879942566,
+        "candidate_vs_reference_power_absolute_error": 8.799240440071632e-05,
+        "unchanged_v0_power_tolerance": 0.00021757657401122454,
+        "power_pass": true,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.6313787033482007,
+          0.4730209810383487
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.632607925468836,
+          0.47127938365411304
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 0.002131700839854381,
+        "unchanged_v0_complex_amplitude_tolerance": 0.006779628645197135,
+        "complex_amplitude_pass": true
+      },
+      {
+        "side": "top",
+        "m": -7,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 6.263542422224734e-07,
+        "candidate_power_ratio": 6.546110901522871e-07,
+        "candidate_vs_reference_power_absolute_error": 2.8256847929813755e-08,
+        "unchanged_v0_power_tolerance": 1.2494442957486303e-09,
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          -0.0005052091112470741,
+          -2.6088861700681443e-05
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.0005149620032998539,
+          -4.7709963623943525e-05
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 2.3718999805414686e-05,
+        "unchanged_v0_complex_amplitude_tolerance": 7.995038740979746e-07,
+        "complex_amplitude_pass": false
+      },
+      {
+        "side": "top",
+        "m": -5,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 7.457300536770515e-08,
+        "candidate_power_ratio": 8.002434942689906e-08,
+        "candidate_vs_reference_power_absolute_error": 5.451344059193909e-09,
+        "unchanged_v0_power_tolerance": 1.1943015599631952e-09,
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          -9.81780791859067e-05,
+          -6.535503245871992e-05
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.0001010266310580381,
+          -6.870722502888079e-05
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 4.399027482940415e-06,
+        "unchanged_v0_complex_amplitude_tolerance": 1.113206415872461e-06,
+        "complex_amplitude_pass": false
+      },
+      {
+        "side": "top",
+        "m": -4,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 2.6752396096732086e-07,
+        "candidate_power_ratio": 2.522897144204037e-07,
+        "candidate_vs_reference_power_absolute_error": 1.5234246546917165e-08,
+        "unchanged_v0_power_tolerance": 1.086491588133722e-09,
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.00021022333612521896,
+          -4.9730436128083666e-05
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.00020003133552773533,
+          -6.322155630237405e-05
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 1.690819918667425e-05,
+        "unchanged_v0_complex_amplitude_tolerance": 1.8815249525164472e-06,
+        "complex_amplitude_pass": false
+      },
+      {
+        "side": "top",
+        "m": -2,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 1.4776908513029202e-06,
+        "candidate_power_ratio": 1.4837297903403647e-06,
+        "candidate_vs_reference_power_absolute_error": 6.038939037444503e-09,
+        "unchanged_v0_power_tolerance": 1.2422824425350593e-09,
+        "power_pass": false,
+        "reference_outgoing_amplitude_at_boundary": [
+          0.000494231617061504,
+          -0.00020551576976355208
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          0.0004951532157671237,
+          -0.00020614503055807495
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 1.1159360742100775e-06,
+        "unchanged_v0_complex_amplitude_tolerance": 3.1864912826411788e-06,
+        "complex_amplitude_pass": true
+      },
+      {
+        "side": "top",
+        "m": -1,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 6.6693096542521985e-06,
+        "candidate_power_ratio": 6.683129133793928e-06,
+        "candidate_vs_reference_power_absolute_error": 1.381947954172989e-08,
+        "unchanged_v0_power_tolerance": 5.111835340427464e-08,
+        "power_pass": true,
+        "reference_outgoing_amplitude_at_boundary": [
+          -0.001032707715920447,
+          0.0007678339217534421
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.001026634167100661,
+          0.0007781439169111037
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 1.196595150488788e-05,
+        "unchanged_v0_complex_amplitude_tolerance": 7.413384075620187e-06,
+        "complex_amplitude_pass": false
+      },
+      {
+        "side": "top",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "analytic_identity_pass": true,
+        "reference_power_ratio": 0.0007537612200675036,
+        "candidate_power_ratio": 0.0007587955712886406,
+        "candidate_vs_reference_power_absolute_error": 5.034351221136924e-06,
+        "unchanged_v0_power_tolerance": 3.195286914614711e-05,
+        "power_pass": true,
+        "reference_outgoing_amplitude_at_boundary": [
+          -0.02525230435359647,
+          0.010774151702145181
+        ],
+        "candidate_outgoing_amplitude_at_boundary": [
+          -0.025300177596643037,
+          0.010894796228794912
+        ],
+        "candidate_vs_reference_amplitude_absolute_error": 0.00012979579812279392,
+        "unchanged_v0_complex_amplitude_tolerance": 0.0008330266538614554,
+        "complex_amplitude_pass": true
+      }
+    ],
+    "pass": false
+  },
+  "observable_comparison": {
+    "schema_version": "task035b.cross-mesh-observable-comparison.v1",
+    "same_code_band_definition": "absolute h10 p5-to-p6 change, frozen before the h15 candidate",
+    "observables": {
+      "R00_total": {
+        "candidate": 0.0007587955712886406,
+        "global_p5_control": 0.0007857140892103682,
+        "global_p6_reference": 0.0007537612200684781,
+        "candidate_vs_p6_absolute_error": 5.034351220162443e-06,
+        "same_code_p5p6_tolerance": 3.19528691418901e-05,
+        "normalized_error": 0.15755552960852665,
+        "pass": true
+      },
+      "R_total": {
+        "candidate": 0.0007679537077326248,
+        "global_p5_control": 0.0007948860603512376,
+        "global_p6_reference": 0.0007628814751331832,
+        "candidate_vs_p6_absolute_error": 5.072232599441615e-06,
+        "same_code_p5p6_tolerance": 3.200458521805444e-05,
+        "normalized_error": 0.15848455978677284,
+        "pass": true
+      },
+      "T_total": {
+        "candidate": 0.6026137051310116,
+        "global_p5_control": 0.6024839538850971,
+        "global_p6_reference": 0.6027016339861349,
+        "candidate_vs_p6_absolute_error": 8.792885512320936e-05,
+        "same_code_p5p6_tolerance": 0.0002176801010377316,
+        "normalized_error": 0.4039361186623494,
+        "pass": true
+      },
+      "A_closure": {
+        "candidate": 0.3966183411612557,
+        "global_p5_control": 0.3967211600545516,
+        "global_p6_reference": 0.396535484538732,
+        "candidate_vs_p6_absolute_error": 8.285662252371928e-05,
+        "same_code_p5p6_tolerance": 0.0001856755158196055,
+        "normalized_error": 0.4462442027317122,
+        "pass": true
+      }
+    },
+    "normalized_R_T_Aclosure_l2": 0.6224272103005075,
+    "normalized_R_T_Aclosure_reference_radius": 1.7320508075688772,
+    "all_scalar_same_code_bands_pass": true,
+    "normalized_R_T_Aclosure_vector_pass": true,
+    "pass": true
+  },
+  "energy_comparison": {
+    "schema_version": "task035d.case097-energy-comparison.v1",
+    "candidate_A_volume": 0.3966183411613626,
+    "global_p5_A_volume": 0.39672116005410896,
+    "global_p6_A_volume": 0.3965354845429826,
+    "candidate_vs_p6_absolute_error": 8.285661837997838e-05,
+    "same_code_p5p6_tolerance": 0.00018567551112635972,
+    "candidate_A_closure": 0.3966183411612557,
+    "A_closure_minus_A_volume_absolute": 1.0685896612017132e-13,
+    "reported_energy_closure_error": 1.0680345496894006e-13,
+    "R00_s_plus_p_identity_absolute_error": 4.8495827158004604e-26,
+    "checks": {
+      "Avolume_same_code_band": true,
+      "Aclosure_matches_Avolume": true,
+      "reported_energy_closure": true,
+      "reported_energy_closure_matches_reconstruction": true,
+      "R00_total_is_s_plus_p": true
+    },
+    "pass": true
+  },
+  "field_comparison": {
+    "schema_version": "task035b.cross-mesh-field-comparison.v1",
+    "status": "measured_frozen_physical_gauss_probes",
+    "method": "weighted complex-E comparison at candidate-independent open Gauss-Legendre probes, with exactly-one-shard ownership",
+    "no_native_point_intersection": true,
+    "no_probe_dropping": true,
+    "no_threshold_relaxation": true,
+    "relative_l2_floor": 1e-12,
+    "maximum_pointwise_floor": 1e-10,
+    "selections": {
+      "volume": {
+        "probe_count": 416,
+        "quadrature_weight_sum": 174999.99999999994,
+        "probe_sha256": "02f1e8e4275319164f04fcb19aaa2deebe95452c286a43535db196ac267f1820",
+        "definition": {
+          "rule": "open Gauss-Legendre tensor products in five disjoint materials",
+          "regions": [
+            {
+              "label": "substrate",
+              "lower_nm": [
+                0.0,
+                0.0,
+                -10.0
+              ],
+              "upper_nm": [
+                50.0,
+                25.0,
+                0.0
+              ],
+              "orders": [
+                4,
+                4,
+                4
+              ]
+            },
+            {
+              "label": "left_air",
+              "lower_nm": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "upper_nm": [
+                16.5,
+                25.0,
+                120.0
+              ],
+              "orders": [
+                4,
+                4,
+                6
+              ]
+            },
+            {
+              "label": "grating",
+              "lower_nm": [
+                16.5,
+                0.0,
+                0.0
+              ],
+              "upper_nm": [
+                33.5,
+                25.0,
+                120.0
+              ],
+              "orders": [
+                4,
+                4,
+                6
+              ]
+            },
+            {
+              "label": "right_air",
+              "lower_nm": [
+                33.5,
+                0.0,
+                0.0
+              ],
+              "upper_nm": [
+                50.0,
+                25.0,
+                120.0
+              ],
+              "orders": [
+                4,
+                4,
+                6
+              ]
+            },
+            {
+              "label": "top_air",
+              "lower_nm": [
+                0.0,
+                0.0,
+                120.0
+              ],
+              "upper_nm": [
+                50.0,
+                25.0,
+                130.0
+              ],
+              "orders": [
+                4,
+                4,
+                4
+              ]
+            }
+          ]
+        },
+        "region_counts": {
+          "grating": 96,
+          "left_air": 96,
+          "right_air": 96,
+          "substrate": 64,
+          "top_air": 64
+        },
+        "sampling_authorities": {
+          "global_p5_control": {
+            "probe_count": 416,
+            "unique_hit_histogram": {
+              "1": 416
+            },
+            "all_probes_covered_exactly_once": true,
+            "explicit_cell_position_fallback": "only standard-locator misses; per-owned-cell bounds plus vtkLagrangeHexahedron.EvaluatePosition; unique ownership remains mandatory",
+            "explicit_cell_position_fallback_hit_count": 0,
+            "shards": [
+              {
+                "rank": 0,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0000.vtu",
+                "sha256": "20ac58983c01e37f80e3ef541eac3ccc6a5057c94a506593a4b3a9d52fd0c755",
+                "cell_count": 31,
+                "point_count": 11448,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 56,
+                "standard_locator_probe_hits": 56,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 1,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0001.vtu",
+                "sha256": "5878b855b33f3e88503c6d37fe50299081f4e33c3b69962c413ca149887c5e3c",
+                "cell_count": 32,
+                "point_count": 13392,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 32,
+                "standard_locator_probe_hits": 32,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 2,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0002.vtu",
+                "sha256": "14ddf3a176e7541a23536555432ba81732f1fd6d58914e94db7b9f6dba664166",
+                "cell_count": 31,
+                "point_count": 12744,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 40,
+                "standard_locator_probe_hits": 40,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 3,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0003.vtu",
+                "sha256": "66d8e87c37994880036e0a6979b50666a1b4328f9fc6980d47f0f11e11d4d38a",
+                "cell_count": 32,
+                "point_count": 10800,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 80,
+                "standard_locator_probe_hits": 80,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 4,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0004.vtu",
+                "sha256": "d1648ae1e7080ada561f803527627281b284ee9a1c45ce4f9e95d23c2c3fcd60",
+                "cell_count": 31,
+                "point_count": 11016,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 64,
+                "standard_locator_probe_hits": 64,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 5,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0005.vtu",
+                "sha256": "22ff89c8482b5e3ef2c73125ebddc2b2034314a5fc6d88fd3da46cf92421eb00",
+                "cell_count": 32,
+                "point_count": 11448,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 68,
+                "standard_locator_probe_hits": 68,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 6,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0006.vtu",
+                "sha256": "deb3a1baddf1acd9ad2e4168f7722be9cae219def1bab516e197f9088e5c1124",
+                "cell_count": 31,
+                "point_count": 12528,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 36,
+                "standard_locator_probe_hits": 36,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 7,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0007.vtu",
+                "sha256": "cd68fc2ca8c83ec1298e9109ac6cf0a1dc7f0db9ffe3d4f1da787196879a821a",
+                "cell_count": 32,
+                "point_count": 12960,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 40,
+                "standard_locator_probe_hits": 40,
+                "explicit_cell_position_fallback_hits": 0
+              }
+            ]
+          },
+          "global_p6_reference": {
+            "probe_count": 416,
+            "unique_hit_histogram": {
+              "1": 416
+            },
+            "all_probes_covered_exactly_once": true,
+            "explicit_cell_position_fallback": "only standard-locator misses; per-owned-cell bounds plus vtkLagrangeHexahedron.EvaluatePosition; unique ownership remains mandatory",
+            "explicit_cell_position_fallback_hit_count": 0,
+            "shards": [
+              {
+                "rank": 0,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0000.vtu",
+                "sha256": "1a7763232c6c4d0855a9a8125bb123ec31a2f7f395224b11c05d8188cf115907",
+                "cell_count": 31,
+                "point_count": 18179,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 56,
+                "standard_locator_probe_hits": 56,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 1,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0001.vtu",
+                "sha256": "684bff9605cd33f5819dcda8141dbec0135ae5001fc5a8bb8669f1cfabac7f9c",
+                "cell_count": 32,
+                "point_count": 21266,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 32,
+                "standard_locator_probe_hits": 32,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 2,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0002.vtu",
+                "sha256": "cc5abf8af3a977c810516ed07b2144956aedd73e8f0ecb27f7f1d812e28b26d3",
+                "cell_count": 31,
+                "point_count": 20237,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 40,
+                "standard_locator_probe_hits": 40,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 3,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0003.vtu",
+                "sha256": "77dbaf78cc530396daeb43c1325e99e8aab7d91a691d52826dfc82718e672bb3",
+                "cell_count": 32,
+                "point_count": 17150,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 80,
+                "standard_locator_probe_hits": 80,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 4,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0004.vtu",
+                "sha256": "a8ca5f151865a68045f84d6bfe7112685fdd8fdc3a5231b6cc30f3a911fbf786",
+                "cell_count": 31,
+                "point_count": 17493,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 64,
+                "standard_locator_probe_hits": 64,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 5,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0005.vtu",
+                "sha256": "b9c53c162cb655a91d718e0432d37290b4d9cb9a90b7471ba1b24763bfe1c59e",
+                "cell_count": 32,
+                "point_count": 18179,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 68,
+                "standard_locator_probe_hits": 68,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 6,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0006.vtu",
+                "sha256": "1e17985bd792da6f103cc3c387f6170c4d727d2ea437a41d53a133dfef4c6567",
+                "cell_count": 31,
+                "point_count": 19894,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 36,
+                "standard_locator_probe_hits": 36,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 7,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0007.vtu",
+                "sha256": "1973cba75043d0ae55b752fa1cd58356de7c6547f5e0bf5ecb31f6ef859470d9",
+                "cell_count": 32,
+                "point_count": 20580,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 40,
+                "standard_locator_probe_hits": 40,
+                "explicit_cell_position_fallback_hits": 0
+              }
+            ]
+          },
+          "candidate_p6": {
+            "probe_count": 416,
+            "unique_hit_histogram": {
+              "1": 416
+            },
+            "all_probes_covered_exactly_once": true,
+            "explicit_cell_position_fallback": "only standard-locator misses; per-owned-cell bounds plus vtkLagrangeHexahedron.EvaluatePosition; unique ownership remains mandatory",
+            "explicit_cell_position_fallback_hit_count": 8,
+            "shards": [
+              {
+                "rank": 0,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0000.vtu",
+                "sha256": "a9fb95f3c57d5ec2012f7ff34c02580a994d5606bed8a34812ae2d160ddb9133",
+                "cell_count": 16,
+                "point_count": 5488,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 80,
+                "standard_locator_probe_hits": 80,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 1,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0001.vtu",
+                "sha256": "40064839160365be489cc9a8e2856347af1df2c847a805453223ad2b5b0390a2",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 68,
+                "standard_locator_probe_hits": 68,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 2,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0002.vtu",
+                "sha256": "7e2f8e2da146dd306788ef0914e6f8a4af1407aebb63ea9e8a8b26d3e78c4144",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 20,
+                "standard_locator_probe_hits": 20,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 3,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0003.vtu",
+                "sha256": "1c4a01ecf96f3e18e9a3af74517c525f3893f61b2476d0c921520b922be88a05",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 68,
+                "standard_locator_probe_hits": 68,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 4,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0004.vtu",
+                "sha256": "6f551cdb3719d9f8e0c3f49dfbba2d357c4655b603b0682bcc56910d96032255",
+                "cell_count": 16,
+                "point_count": 5488,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 20,
+                "standard_locator_probe_hits": 20,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 5,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0005.vtu",
+                "sha256": "4c9a17c7e6f98390fae11a354f6c18033f84d0c84c7af7712810c74df0cffa66",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 64,
+                "standard_locator_probe_hits": 64,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 6,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0006.vtu",
+                "sha256": "f896a2cb4599fe47e885495eec5ae8053fddcda530bb602ec7db864792351494",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 40,
+                "standard_locator_probe_hits": 40,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 7,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0007.vtu",
+                "sha256": "af9e8e102b54e533d2c284b7143679d22ff224b63a3d2adcfc75468d98a72a99",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 56,
+                "standard_locator_probe_hits": 48,
+                "explicit_cell_position_fallback_hits": 8
+              }
+            ]
+          }
+        },
+        "reference_weighted_energy": 146924.78131688788,
+        "global_p5_vs_p6_weighted_relative_l2": 0.022204555118442996,
+        "candidate_vs_p6_weighted_relative_l2": 0.011445733625677478,
+        "same_code_p5p6_weighted_relative_l2_tolerance": 0.022204555118442996,
+        "global_p5_vs_p6_max_pointwise_absolute_error": 0.041020793375531536,
+        "candidate_vs_p6_max_pointwise_absolute_error": 0.01927259073288567,
+        "same_code_p5p6_max_pointwise_tolerance": 0.041020793375531536,
+        "weighted_relative_l2_pass": true,
+        "maximum_pointwise_pass": true,
+        "pass": true
+      },
+      "interface": {
+        "probe_count": 320,
+        "quadrature_weight_sum": 15349.999999999995,
+        "probe_sha256": "ceb8e25d1684aa04ea647a582c833afffe1a1001e0513b3986a0f197087e2c35",
+        "definition": {
+          "rule": "open Gauss-Legendre tangential rules on both physical sides of the substrate, grating-top, and sidewall interfaces",
+          "normal_offset_nm": 0.0001,
+          "substrate_plane_x_intervals_nm": [
+            [
+              0.0,
+              16.5
+            ],
+            [
+              16.5,
+              33.5
+            ],
+            [
+              33.5,
+              50.0
+            ]
+          ],
+          "substrate_plane_xy_orders": [
+            6,
+            4
+          ],
+          "grating_top_xy_orders": [
+            6,
+            4
+          ],
+          "sidewall_yz_orders": [
+            4,
+            8
+          ]
+        },
+        "region_counts": {
+          "grating_sidewall_left_minus": 32,
+          "grating_sidewall_left_plus": 32,
+          "grating_sidewall_right_minus": 32,
+          "grating_sidewall_right_plus": 32,
+          "grating_top_minus": 24,
+          "grating_top_plus": 24,
+          "substrate_z0_minus_grating": 24,
+          "substrate_z0_minus_left_air": 24,
+          "substrate_z0_minus_right_air": 24,
+          "substrate_z0_plus_grating": 24,
+          "substrate_z0_plus_left_air": 24,
+          "substrate_z0_plus_right_air": 24
+        },
+        "sampling_authorities": {
+          "global_p5_control": {
+            "probe_count": 320,
+            "unique_hit_histogram": {
+              "1": 320
+            },
+            "all_probes_covered_exactly_once": true,
+            "explicit_cell_position_fallback": "only standard-locator misses; per-owned-cell bounds plus vtkLagrangeHexahedron.EvaluatePosition; unique ownership remains mandatory",
+            "explicit_cell_position_fallback_hit_count": 0,
+            "shards": [
+              {
+                "rank": 0,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0000.vtu",
+                "sha256": "20ac58983c01e37f80e3ef541eac3ccc6a5057c94a506593a4b3a9d52fd0c755",
+                "cell_count": 31,
+                "point_count": 11448,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 20,
+                "standard_locator_probe_hits": 20,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 1,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0001.vtu",
+                "sha256": "5878b855b33f3e88503c6d37fe50299081f4e33c3b69962c413ca149887c5e3c",
+                "cell_count": 32,
+                "point_count": 13392,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 12,
+                "standard_locator_probe_hits": 12,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 2,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0002.vtu",
+                "sha256": "14ddf3a176e7541a23536555432ba81732f1fd6d58914e94db7b9f6dba664166",
+                "cell_count": 31,
+                "point_count": 12744,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 14,
+                "standard_locator_probe_hits": 14,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 3,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0003.vtu",
+                "sha256": "66d8e87c37994880036e0a6979b50666a1b4328f9fc6980d47f0f11e11d4d38a",
+                "cell_count": 32,
+                "point_count": 10800,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 66,
+                "standard_locator_probe_hits": 66,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 4,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0004.vtu",
+                "sha256": "d1648ae1e7080ada561f803527627281b284ee9a1c45ce4f9e95d23c2c3fcd60",
+                "cell_count": 31,
+                "point_count": 11016,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 92,
+                "standard_locator_probe_hits": 92,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 5,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0005.vtu",
+                "sha256": "22ff89c8482b5e3ef2c73125ebddc2b2034314a5fc6d88fd3da46cf92421eb00",
+                "cell_count": 32,
+                "point_count": 11448,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 94,
+                "standard_locator_probe_hits": 94,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 6,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0006.vtu",
+                "sha256": "deb3a1baddf1acd9ad2e4168f7722be9cae219def1bab516e197f9088e5c1124",
+                "cell_count": 31,
+                "point_count": 12528,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 10,
+                "standard_locator_probe_hits": 10,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 7,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0007.vtu",
+                "sha256": "cd68fc2ca8c83ec1298e9109ac6cf0a1dc7f0db9ffe3d4f1da787196879a821a",
+                "cell_count": 32,
+                "point_count": 12960,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 12,
+                "standard_locator_probe_hits": 12,
+                "explicit_cell_position_fallback_hits": 0
+              }
+            ]
+          },
+          "global_p6_reference": {
+            "probe_count": 320,
+            "unique_hit_histogram": {
+              "1": 320
+            },
+            "all_probes_covered_exactly_once": true,
+            "explicit_cell_position_fallback": "only standard-locator misses; per-owned-cell bounds plus vtkLagrangeHexahedron.EvaluatePosition; unique ownership remains mandatory",
+            "explicit_cell_position_fallback_hit_count": 0,
+            "shards": [
+              {
+                "rank": 0,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0000.vtu",
+                "sha256": "1a7763232c6c4d0855a9a8125bb123ec31a2f7f395224b11c05d8188cf115907",
+                "cell_count": 31,
+                "point_count": 18179,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 20,
+                "standard_locator_probe_hits": 20,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 1,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0001.vtu",
+                "sha256": "684bff9605cd33f5819dcda8141dbec0135ae5001fc5a8bb8669f1cfabac7f9c",
+                "cell_count": 32,
+                "point_count": 21266,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 12,
+                "standard_locator_probe_hits": 12,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 2,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0002.vtu",
+                "sha256": "cc5abf8af3a977c810516ed07b2144956aedd73e8f0ecb27f7f1d812e28b26d3",
+                "cell_count": 31,
+                "point_count": 20237,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 14,
+                "standard_locator_probe_hits": 14,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 3,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0003.vtu",
+                "sha256": "77dbaf78cc530396daeb43c1325e99e8aab7d91a691d52826dfc82718e672bb3",
+                "cell_count": 32,
+                "point_count": 17150,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 66,
+                "standard_locator_probe_hits": 66,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 4,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0004.vtu",
+                "sha256": "a8ca5f151865a68045f84d6bfe7112685fdd8fdc3a5231b6cc30f3a911fbf786",
+                "cell_count": 31,
+                "point_count": 17493,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 92,
+                "standard_locator_probe_hits": 92,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 5,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0005.vtu",
+                "sha256": "b9c53c162cb655a91d718e0432d37290b4d9cb9a90b7471ba1b24763bfe1c59e",
+                "cell_count": 32,
+                "point_count": 18179,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 94,
+                "standard_locator_probe_hits": 94,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 6,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0006.vtu",
+                "sha256": "1e17985bd792da6f103cc3c387f6170c4d727d2ea437a41d53a133dfef4c6567",
+                "cell_count": 31,
+                "point_count": 19894,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 10,
+                "standard_locator_probe_hits": 10,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 7,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0007.vtu",
+                "sha256": "1973cba75043d0ae55b752fa1cd58356de7c6547f5e0bf5ecb31f6ef859470d9",
+                "cell_count": 32,
+                "point_count": 20580,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 12,
+                "standard_locator_probe_hits": 12,
+                "explicit_cell_position_fallback_hits": 0
+              }
+            ]
+          },
+          "candidate_p6": {
+            "probe_count": 320,
+            "unique_hit_histogram": {
+              "1": 320
+            },
+            "all_probes_covered_exactly_once": true,
+            "explicit_cell_position_fallback": "only standard-locator misses; per-owned-cell bounds plus vtkLagrangeHexahedron.EvaluatePosition; unique ownership remains mandatory",
+            "explicit_cell_position_fallback_hit_count": 2,
+            "shards": [
+              {
+                "rank": 0,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0000.vtu",
+                "sha256": "a9fb95f3c57d5ec2012f7ff34c02580a994d5606bed8a34812ae2d160ddb9133",
+                "cell_count": 16,
+                "point_count": 5488,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 108,
+                "standard_locator_probe_hits": 108,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 1,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0001.vtu",
+                "sha256": "40064839160365be489cc9a8e2856347af1df2c847a805453223ad2b5b0390a2",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 80,
+                "standard_locator_probe_hits": 80,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 2,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0002.vtu",
+                "sha256": "7e2f8e2da146dd306788ef0914e6f8a4af1407aebb63ea9e8a8b26d3e78c4144",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 6,
+                "standard_locator_probe_hits": 6,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 3,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0003.vtu",
+                "sha256": "1c4a01ecf96f3e18e9a3af74517c525f3893f61b2476d0c921520b922be88a05",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 22,
+                "standard_locator_probe_hits": 22,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 4,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0004.vtu",
+                "sha256": "6f551cdb3719d9f8e0c3f49dfbba2d357c4655b603b0682bcc56910d96032255",
+                "cell_count": 16,
+                "point_count": 5488,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 8,
+                "standard_locator_probe_hits": 8,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 5,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0005.vtu",
+                "sha256": "4c9a17c7e6f98390fae11a354f6c18033f84d0c84c7af7712810c74df0cffa66",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 40,
+                "standard_locator_probe_hits": 40,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 6,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0006.vtu",
+                "sha256": "f896a2cb4599fe47e885495eec5ae8053fddcda530bb602ec7db864792351494",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 32,
+                "standard_locator_probe_hits": 32,
+                "explicit_cell_position_fallback_hits": 0
+              },
+              {
+                "rank": 7,
+                "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0007.vtu",
+                "sha256": "af9e8e102b54e533d2c284b7143679d22ff224b63a3d2adcfc75468d98a72a99",
+                "cell_count": 17,
+                "point_count": 5831,
+                "cell_types": [
+                  72
+                ],
+                "probe_hits": 24,
+                "standard_locator_probe_hits": 22,
+                "explicit_cell_position_fallback_hits": 2
+              }
+            ]
+          }
+        },
+        "reference_weighted_energy": 12581.89779450845,
+        "global_p5_vs_p6_weighted_relative_l2": 0.024466936399824352,
+        "candidate_vs_p6_weighted_relative_l2": 0.00840062563675152,
+        "same_code_p5p6_weighted_relative_l2_tolerance": 0.024466936399824352,
+        "global_p5_vs_p6_max_pointwise_absolute_error": 0.12541424551824795,
+        "candidate_vs_p6_max_pointwise_absolute_error": 0.017473737011409366,
+        "same_code_p5p6_max_pointwise_tolerance": 0.12541424551824795,
+        "weighted_relative_l2_pass": true,
+        "maximum_pointwise_pass": true,
+        "pass": true
+      }
+    },
+    "pass": true
+  },
+  "resource_comparison": {
+    "schema_version": "task035d.case097-resource-comparison.v1",
+    "candidate_id": "h15_top_air_remote_p5_interior_bridge_v1",
+    "baseline": {
+      "source": "Case096 p6/h10 Full3D static MPI8",
+      "active_rows": 51272,
+      "matrix_nnz": 41989040,
+      "factor_nnz": 212343992,
+      "peak_memory_gib": 14.721755981445312
+    },
+    "candidate": {
+      "active_fe_dofs": 76205,
+      "active_rows": 18470,
+      "matrix_nnz": 10186108,
+      "factor_nnz": 30865200,
+      "factor_fill": 3.0301269140284,
+      "peak_memory_gib": 7.298656463623047,
+      "worker_pss_peak_gib": 6.216330528259277,
+      "worker_uss_peak_gib": 6.0558624267578125
+    },
+    "savings": {
+      "active_rows_fraction": 0.639764393821189,
+      "matrix_nnz_fraction": 0.7574103146916433,
+      "factor_nnz_fraction": 0.854645287067976,
+      "peak_memory_fraction": 0.5042265017283285
+    },
+    "mandatory_peak_limit_gib": 11.77740478515625,
+    "preferred_peak_limit_gib": 8.833053588867188,
+    "preferred_peak_reduction_ge_40_percent": true,
+    "timeline_reconstruction": {
+      "sample_count": 681,
+      "fully_readable_mpi8_smaps_sample_count": 678,
+      "max_observed_worker_rank_count": 8,
+      "max_simultaneous_worker_rss_mb": 7459.17578125,
+      "max_simultaneous_worker_pss_mb": 6365.5224609375,
+      "max_simultaneous_worker_uss_mb": 6201.203125,
+      "max_simultaneous_worker_smaps_swap_mb": 0.0,
+      "max_process_tree_rss_mb": 7473.82421875,
+      "max_process_tree_swap_mb": 0.0,
+      "dedicated_job_cgroup_observed": false,
+      "max_dedicated_cgroup_current_mb": null,
+      "max_dedicated_cgroup_swap_mb": null,
+      "max_container_cgroup_current_observed_mb": 9665.5078125,
+      "max_container_cgroup_peak_mb": 38958.75390625,
+      "per_rank_smaps_rollup_peak_mb": {
+        "0": {
+          "rss_mb": 927.125,
+          "pss_mb": 786.6220703125,
+          "uss_mb": 765.84375,
+          "shared_mb": 262.3828125,
+          "anonymous_mb": 762.41796875,
+          "swap_mb": 0.0,
+          "swap_pss_mb": 0.0
+        },
+        "1": {
+          "rss_mb": 930.16796875,
+          "pss_mb": 789.5205078125,
+          "uss_mb": 768.84375,
+          "shared_mb": 262.29296875,
+          "anonymous_mb": 768.56640625,
+          "swap_mb": 0.0,
+          "swap_pss_mb": 0.0
+        },
+        "2": {
+          "rss_mb": 945.1875,
+          "pss_mb": 804.5595703125,
+          "uss_mb": 783.77734375,
+          "shared_mb": 262.55078125,
+          "anonymous_mb": 783.44921875,
+          "swap_mb": 0.0,
+          "swap_pss_mb": 0.0
+        },
+        "3": {
+          "rss_mb": 915.32421875,
+          "pss_mb": 774.615234375,
+          "uss_mb": 753.92578125,
+          "shared_mb": 262.55859375,
+          "anonymous_mb": 753.75,
+          "swap_mb": 0.0,
+          "swap_pss_mb": 0.0
+        },
+        "4": {
+          "rss_mb": 918.4765625,
+          "pss_mb": 777.6328125,
+          "uss_mb": 756.91796875,
+          "shared_mb": 262.66796875,
+          "anonymous_mb": 756.75,
+          "swap_mb": 0.0,
+          "swap_pss_mb": 0.0
+        },
+        "5": {
+          "rss_mb": 929.3125,
+          "pss_mb": 788.74609375,
+          "uss_mb": 768.0,
+          "shared_mb": 262.25390625,
+          "anonymous_mb": 767.6875,
+          "swap_mb": 0.0,
+          "swap_pss_mb": 0.0
+        },
+        "6": {
+          "rss_mb": 960.89453125,
+          "pss_mb": 818.130859375,
+          "uss_mb": 795.18359375,
+          "shared_mb": 266.81640625,
+          "anonymous_mb": 794.91796875,
+          "swap_mb": 0.0,
+          "swap_pss_mb": 0.0
+        },
+        "7": {
+          "rss_mb": 932.75,
+          "pss_mb": 825.6953125,
+          "uss_mb": 808.7109375,
+          "shared_mb": 214.6015625,
+          "anonymous_mb": 808.2890625,
+          "swap_mb": 0.0,
+          "swap_pss_mb": 0.0
+        }
+      },
+      "memory_authority_mb": 7473.82421875,
+      "memory_authority_gib": 7.298656463623047,
+      "zero_swap": true
+    },
+    "checks": {
+      "active_fe_dofs_le_90000": true,
+      "condensed_rows_match_h15_top_air_remote_p5_interior_bridge_v1": true,
+      "active_rows_decrease": true,
+      "matrix_nnz_decrease": true,
+      "factor_nnz_decrease": true,
+      "mandatory_peak_reduction_ge_20_percent": true,
+      "zero_swap": true,
+      "mpi8_pss_uss_complete": true,
+      "cgroup_ledger_present": true
+    },
+    "pass": true
+  },
+  "pass": false,
+  "candidate_id": "h15_top_air_remote_p5_interior_bridge_v1",
+  "ordinary_default_changed": false,
+  "selection_credit": {
+    "structural_resource_anchor": true,
+    "factorial_bridge_credit": true,
+    "actual_channel_dwr": false,
+    "goal_oriented_selection_credit": false,
+    "complete_combined_hp_credit": false
+  },
+  "complete_combined_hp_credit": false,
+  "benchmark_id": "task035d_case097_hp_factorial_bridge_candidate",
+  "source_sha": "d194075dda0aceef8bf566dd76412c9517fe4bb3",
+  "checker_source": {
+    "commit_sha": "e8713376296279ed5e404b9665b5df3699c93aa3",
+    "source_clean_verified": true,
+    "status": ""
+  },
+  "candidate_watchdog": {
+    "path": "benchmarks/artifacts/task035d/case097/h15_hp_factorial_bridge_mpi8_watchdog_v1.json",
+    "sha256": "0486f1cb0cabfa774a1a5054779361dc4fcdb84c9a793f4f293008c87a0f4d5a"
+  },
+  "raw_artifacts": {
+    "solver_summary": {
+      "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/run_summary.json",
+      "sha256": "46dc71e754151354de485519ef3de8173e624211504c2620896d09fea519c409"
+    },
+    "timeline": {
+      "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/memory_timeline.csv",
+      "sha256": "a67f721245d62881cfb24201004ed1e412b16d960270b5a4b8f8e691ea62f11e"
+    },
+    "progress": {
+      "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/progress_3d.jsonl",
+      "sha256": "3f8e745db9ee15756743abcc0622f4eca0c38e8fba3e3fed529f83cd57cbc554"
+    },
+    "stdout": {
+      "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/worker_stdout.txt",
+      "sha256": "75842de70ba86ca221be7da7f2ceb850477999d9e2e0060bb617c294009a8214"
+    },
+    "dtn_orders": {
+      "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/dtn_port_diffraction_orders_3d.json",
+      "sha256": "6967a01b3ded0d91f9c29abf982aaa71b5880630c2559352e6144dc2fc1d1eb5"
+    },
+    "field_shards": [
+      {
+        "rank": 0,
+        "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0000.vtu",
+        "sha256": "a9fb95f3c57d5ec2012f7ff34c02580a994d5606bed8a34812ae2d160ddb9133"
+      },
+      {
+        "rank": 1,
+        "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0001.vtu",
+        "sha256": "40064839160365be489cc9a8e2856347af1df2c847a805453223ad2b5b0390a2"
+      },
+      {
+        "rank": 2,
+        "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0002.vtu",
+        "sha256": "7e2f8e2da146dd306788ef0914e6f8a4af1407aebb63ea9e8a8b26d3e78c4144"
+      },
+      {
+        "rank": 3,
+        "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0003.vtu",
+        "sha256": "1c4a01ecf96f3e18e9a3af74517c525f3893f61b2476d0c921520b922be88a05"
+      },
+      {
+        "rank": 4,
+        "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0004.vtu",
+        "sha256": "6f551cdb3719d9f8e0c3f49dfbba2d357c4655b603b0682bcc56910d96032255"
+      },
+      {
+        "rank": 5,
+        "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0005.vtu",
+        "sha256": "4c9a17c7e6f98390fae11a354f6c18033f84d0c84c7af7712810c74df0cffa66"
+      },
+      {
+        "rank": 6,
+        "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0006.vtu",
+        "sha256": "f896a2cb4599fe47e885495eec5ae8053fddcda530bb602ec7db864792351494"
+      },
+      {
+        "rank": 7,
+        "path": "benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z/fields_3d_for_paraview_rank0007.vtu",
+        "sha256": "af9e8e102b54e533d2c284b7143679d22ff224b63a3d2adcfc75468d98a72a99"
+      }
+    ]
+  },
+  "frozen_authorities": {
+    "significant_channel_reference_v1": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json",
+      "sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3"
+    },
+    "global_p5p6_h10": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_assembly_time_condensed_independent_mpi8.json",
+      "sha256": "9f7f44efb52b44c587ef59a57524849e08da81a6fcd5d90ec18e7b69e4f33ded"
+    },
+    "field_probe_authority": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_mpi8.json",
+      "sha256": "84c9b898100bc2f223913a144d9b7a9a324ef17d9164610c622b3ecc480d870a"
+    },
+    "case096_six_path": {
+      "path": "benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_six_path_v1.json",
+      "sha256": "7e7474fa5b67d65ae255c198982010acc5d6d4d5087f793eb7c2de76c5bbee0a"
+    }
+  },
+  "control_field_artifacts": {
+    "global_p5_control": [
+      {
+        "rank": 0,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0000.vtu",
+        "sha256": "20ac58983c01e37f80e3ef541eac3ccc6a5057c94a506593a4b3a9d52fd0c755"
+      },
+      {
+        "rank": 1,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0001.vtu",
+        "sha256": "5878b855b33f3e88503c6d37fe50299081f4e33c3b69962c413ca149887c5e3c"
+      },
+      {
+        "rank": 2,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0002.vtu",
+        "sha256": "14ddf3a176e7541a23536555432ba81732f1fd6d58914e94db7b9f6dba664166"
+      },
+      {
+        "rank": 3,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0003.vtu",
+        "sha256": "66d8e87c37994880036e0a6979b50666a1b4328f9fc6980d47f0f11e11d4d38a"
+      },
+      {
+        "rank": 4,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0004.vtu",
+        "sha256": "d1648ae1e7080ada561f803527627281b284ee9a1c45ce4f9e95d23c2c3fcd60"
+      },
+      {
+        "rank": 5,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0005.vtu",
+        "sha256": "22ff89c8482b5e3ef2c73125ebddc2b2034314a5fc6d88fd3da46cf92421eb00"
+      },
+      {
+        "rank": 6,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0006.vtu",
+        "sha256": "deb3a1baddf1acd9ad2e4168f7722be9cae219def1bab516e197f9088e5c1124"
+      },
+      {
+        "rank": 7,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/fields_3d_for_paraview_rank0007.vtu",
+        "sha256": "cd68fc2ca8c83ec1298e9109ac6cf0a1dc7f0db9ffe3d4f1da787196879a821a"
+      }
+    ],
+    "global_p6_reference": [
+      {
+        "rank": 0,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0000.vtu",
+        "sha256": "1a7763232c6c4d0855a9a8125bb123ec31a2f7f395224b11c05d8188cf115907"
+      },
+      {
+        "rank": 1,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0001.vtu",
+        "sha256": "684bff9605cd33f5819dcda8141dbec0135ae5001fc5a8bb8669f1cfabac7f9c"
+      },
+      {
+        "rank": 2,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0002.vtu",
+        "sha256": "cc5abf8af3a977c810516ed07b2144956aedd73e8f0ecb27f7f1d812e28b26d3"
+      },
+      {
+        "rank": 3,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0003.vtu",
+        "sha256": "77dbaf78cc530396daeb43c1325e99e8aab7d91a691d52826dfc82718e672bb3"
+      },
+      {
+        "rank": 4,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0004.vtu",
+        "sha256": "a8ca5f151865a68045f84d6bfe7112685fdd8fdc3a5231b6cc30f3a911fbf786"
+      },
+      {
+        "rank": 5,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0005.vtu",
+        "sha256": "b9c53c162cb655a91d718e0432d37290b4d9cb9a90b7471ba1b24763bfe1c59e"
+      },
+      {
+        "rank": 6,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0006.vtu",
+        "sha256": "1e17985bd792da6f103cc3c387f6170c4d727d2ea437a41d53a133dfef4c6567"
+      },
+      {
+        "rank": 7,
+        "path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/fields_3d_for_paraview_rank0007.vtu",
+        "sha256": "1973cba75043d0ae55b752fa1cd58356de7c6547f5e0bf5ecb31f6ef859470d9"
+      }
+    ]
+  },
+  "launch_gate": {
+    "schema_version": "task035d.case097-hp-factorial-bridge-launch-gate.v1",
+    "status": "task035d_hp_factorial_bridge_launch_authority_pass",
+    "pass": true,
+    "checks": {
+      "plan_and_authority_tracked": true,
+      "expected_hashes_valid": true,
+      "frozen_file_hashes": true,
+      "path_identity": true,
+      "plan_schema_and_h15_identity": true,
+      "balanced_periodic_h_action": true,
+      "true_p5_p6_variable_interiors": true,
+      "forest_identity": true,
+      "selection_credit_is_limited": true,
+      "ordinary_default_unchanged": true,
+      "authority_identity": true,
+      "authority_inputs_and_cross_checks": true,
+      "authority_stable_identity": true,
+      "authority_plan_identity": true,
+      "authority_is_pre_pde_only": true,
+      "active_fe_dof_gate": true
+    },
+    "failures": [],
+    "plan_identity": {
+      "name": "h15_top_air_remote_p5_interior_bridge_v1",
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_remote_p5_interior_bridge_plan_v1.json",
+      "file_sha256": "6775a173939175af0a84e3941276c2d2fe8116353b8ee609fd1dbfa61f3c1859",
+      "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+      "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+      "actual_conforming_active_fe_dofs": 76205,
+      "raw_broken_active_fe_dofs": 77455,
+      "periodic_independent_trace_rows": 18390,
+      "predicted_direct_solve_rows": 18470
+    },
+    "selection_credit": {
+      "structural_resource_anchor": true,
+      "factorial_bridge_credit": true,
+      "actual_channel_dwr": false,
+      "goal_oriented_selection_credit": false,
+      "complete_combined_hp_credit": false
+    },
+    "accuracy_credit": "none_until_fresh_12_channel_checker_passes",
+    "ordinary_default_changed": false
+  },
+  "candidate_launch_contract": {
+    "schema_version": "task035d.case097-candidate-launch-contract.v1",
+    "candidate_id": "h15_top_air_remote_p5_interior_bridge_v1",
+    "checks": {
+      "mpiexec_mpi8_worker": true,
+      "command_scope": true,
+      "command_plan_identity": true,
+      "command_authority_identity": true,
+      "command_clean_source_identity": true,
+      "embedded_launch_gate_pass": true,
+      "embedded_plan_identity": true,
+      "embedded_selection_credit": true,
+      "watchdog_no_swap_contract": true,
+      "watchdog_accuracy_credit_pending_checker": true
+    },
+    "pass": true,
+    "command": [
+      "mpiexec",
+      "-n",
+      "8",
+      "/home/Projects/MyFEniCS/.venv/bin/python",
+      "-m",
+      "benchmarks.run_task033_full3d_watchdog",
+      "--worker",
+      "--degree",
+      "6",
+      "--h-nm",
+      "15.0",
+      "--polarization-kind",
+      "s",
+      "--run-kind",
+      "full-solve",
+      "--mpi-size",
+      "8",
+      "--profile",
+      "default",
+      "--stage4-full3d-assembly-backend",
+      "assembly_time_variable_p_condensed",
+      "--run-dir",
+      "/home/Projects/MyFEniCS/benchmarks/artifacts/task035d/case097/p6_h15_pols_full-solve_mpi8_20260727T012624Z",
+      "--task035d-case097-gate",
+      "--task035d-candidate-id",
+      "h15_top_air_remote_p5_interior_bridge_v1",
+      "--stage4-local-h-refinement-plan",
+      "/home/Projects/MyFEniCS/benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_remote_p5_interior_bridge_plan_v1.json",
+      "--stage4-local-h-refinement-plan-sha256",
+      "6775a173939175af0a84e3941276c2d2fe8116353b8ee609fd1dbfa61f3c1859",
+      "--task035d-plan-authority",
+      "/home/Projects/MyFEniCS/benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/hp_factorial_bridge_mpi_identity_v1.json",
+      "--task035d-plan-authority-sha256",
+      "5914f01c13eb031b9a8075734c0e1718a1bfa7b339eb9abba9cfc40584cf5f59",
+      "--verified-clean-sha",
+      "d194075dda0aceef8bf566dd76412c9517fe4bb3"
+    ],
+    "embedded_launch_gate": {
+      "schema_version": "task035d.case097-hp-factorial-bridge-launch-gate.v1",
+      "status": "task035d_hp_factorial_bridge_launch_authority_pass",
+      "pass": true,
+      "checks": {
+        "plan_and_authority_tracked": true,
+        "expected_hashes_valid": true,
+        "frozen_file_hashes": true,
+        "path_identity": true,
+        "plan_schema_and_h15_identity": true,
+        "balanced_periodic_h_action": true,
+        "true_p5_p6_variable_interiors": true,
+        "forest_identity": true,
+        "selection_credit_is_limited": true,
+        "ordinary_default_unchanged": true,
+        "authority_identity": true,
+        "authority_inputs_and_cross_checks": true,
+        "authority_stable_identity": true,
+        "authority_plan_identity": true,
+        "authority_is_pre_pde_only": true,
+        "active_fe_dof_gate": true
+      },
+      "failures": [],
+      "plan_identity": {
+        "name": "h15_top_air_remote_p5_interior_bridge_v1",
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_remote_p5_interior_bridge_plan_v1.json",
+        "file_sha256": "6775a173939175af0a84e3941276c2d2fe8116353b8ee609fd1dbfa61f3c1859",
+        "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+        "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+        "actual_conforming_active_fe_dofs": 76205,
+        "raw_broken_active_fe_dofs": 77455,
+        "periodic_independent_trace_rows": 18390,
+        "predicted_direct_solve_rows": 18470
+      },
+      "selection_credit": {
+        "structural_resource_anchor": true,
+        "factorial_bridge_credit": true,
+        "actual_channel_dwr": false,
+        "goal_oriented_selection_credit": false,
+        "complete_combined_hp_credit": false
+      },
+      "accuracy_credit": "none_until_fresh_12_channel_checker_passes",
+      "ordinary_default_changed": false,
+      "plan_path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_remote_p5_interior_bridge_plan_v1.json",
+      "authority_path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/hp_factorial_bridge_mpi_identity_v1.json",
+      "authority_path_from_root": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/hp_factorial_bridge_mpi_identity_v1.json"
+    }
+  },
+  "solver_gate": {
+    "schema_version": "task035d.case097-hp-factorial-bridge-solver-gate.v1",
+    "status": "task035d_hp_factorial_bridge_solver_identity_pass",
+    "pass": true,
+    "checks": {
+      "fixed_rectangular_h15_config": true,
+      "fixed_task034_physics_and_volumes": true,
+      "combined_backend_actual": true,
+      "mesh_identity": true,
+      "combined_reduction_identity": true,
+      "physical_and_constraint_identity": true,
+      "variable_interior_degree_identity": true,
+      "active_dimension_and_matrix_gates": true,
+      "assembly_reduction_chain": true,
+      "trace_only_dtn": true,
+      "full_field_and_hanging_recovery": true,
+      "full_explicit_true_residual": true,
+      "ordinary_default_and_lifecycle": true
+    },
+    "failures": [],
+    "candidate": "h15_top_air_remote_p5_interior_bridge_v1",
+    "accuracy_credit": "structural_and_residual_only",
+    "complete_combined_hp_credit": false
+  },
+  "accuracy_credit": "none_controlled_negative_preserved"
+}

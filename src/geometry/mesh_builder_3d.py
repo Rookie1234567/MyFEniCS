@@ -26,6 +26,7 @@ class AirBox3DMesh:
     mesh_axis_cell_stats: dict[str, dict[str, float | int]]
     material_plane_alignment: dict[str, object]
     local_refinement_regions: dict[str, list[list[float]]]
+    local_h_context: object | None = None
 
 
 @dataclass(frozen=True)

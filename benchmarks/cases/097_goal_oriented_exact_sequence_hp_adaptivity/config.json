@@ -1,0 +1,70 @@
+{
+  "schema_version": "task035d.case097-config.v2",
+  "case_id": "097_goal_oriented_exact_sequence_hp_adaptivity",
+  "status": "partial_with_controlled_negatives",
+  "classification": "PARTIAL_WITH_CONTROLLED_NEGATIVES",
+  "canonical": false,
+  "production_qualified": false,
+  "pde_run": true,
+  "geometry": "Task034 fixed rectangular block grating",
+  "geometry_scope": "fixed_only",
+  "mesh_cell_type": "hexahedron",
+  "qualified_entity_degrees": [
+    4,
+    5,
+    6
+  ],
+  "reference_container_degree": 6,
+  "exact_sequence_degree_rule": "edge_degree <= incident_face_degree <= cell_degree",
+  "formal_mpi_size": 8,
+  "phase_a": {
+    "single_cell": true,
+    "two_shared_face_cells": true,
+    "small_mesh": [
+      2,
+      2,
+      2
+    ],
+    "serial": true,
+    "mpi2": true,
+    "periodic_axes": [
+      "x",
+      "y",
+      "xy"
+    ],
+    "starts_heavy_pde": false
+  },
+  "compact_authority": {
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/compact_authority_v1.json",
+    "sha256": "2e896ef45bbfc5c11901503269d11c0321106c9e41f71729ac7c6fc722687403",
+    "record_count": 2
+  },
+  "formal_candidate_gate": {
+    "degree_set": [
+      4,
+      5,
+      6
+    ],
+    "active_full3d_dof_max": 90000,
+    "significant_power_pass_required": 12,
+    "significant_complex_amplitude_pass_required": 12,
+    "true_residual_max": 1e-09
+  },
+  "final_authority": {
+    "lane_closure": {
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/bounded_single_root_top_air_lane_closure_v1.json",
+      "sha256": "a00e0824ae806b333b7ad4368526a483cd5c6c9f80bbef4fd728d131aefc1d4e"
+    },
+    "final_candidate_compact": {
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_left_grating_top_closure_p5fine_mpi8_controlled_negative_compact_v1.json",
+      "sha256": "d6e03061465b29ce4e958bfd6ac7972f245130fdf66de197541caed09e8e4225"
+    }
+  },
+  "out_of_scope": {
+    "iterative_solver": "not_researched",
+    "matrix_free": "not_researched",
+    "wavelength_0p7_nm": "not_researched",
+    "irregular_geometry": "not_researched"
+  },
+  "ordinary_default_changed": false
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": "case097.local-h-production-component-controlled-failure.v1",
+  "status": "local_h_production_mpi2_component_gate_controlled_failure",
+  "pass": false,
+  "candidate_id": "h15_top_air_local_h_v1",
+  "source_sha": "29b08e69f3bc2aabf58820299a35168b6017bf18",
+  "mpi_size": 2,
+  "stage": "build_broken_hexa_cell_trace_constraint_map",
+  "failure": "owner_routed_remote_cache_pass",
+  "diagnosis": {
+    "routing_pass": true,
+    "request_counts_by_rank": [
+      349,
+      65
+    ],
+    "remote_entity_lookup_counts_by_rank": [
+      40,
+      49
+    ],
+    "cross_rank_hanging_patch_count": 0,
+    "cross_rank_hanging_relation_count": 0,
+    "cross_rank_hanging_remote_lookup_counts_by_rank": [
+      0,
+      0
+    ],
+    "cross_rank_hanging_participant_entity_count": 0,
+    "cross_rank_hanging_remote_participant_entity_count": 0
+  },
+  "root_cause": "The old component Gate incorrectly required a cross-rank hanging lookup for every MPI run even when this valid partition kept every hanging patch rank-local.",
+  "numerical_method_failure": false,
+  "heavy_pde_started": false,
+  "pde_accuracy_credit": false,
+  "ordinary_default_changed": false
+}

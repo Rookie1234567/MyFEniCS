@@ -3,17 +3,70 @@
 ## 当前身份
 
 ```text
-status = staged_after_Task035c
-execution_branch = create_after_Task035c_master_merge
-planned_branch = codex/20260726-task35d-goal-oriented-exact-sequence-hp-adaptivity
-base = exact post-Task035c master SHA
+status = PARTIAL_WITH_CONTROLLED_NEGATIVES
+execution_branch = codex/20260726-task35d-goal-oriented-exact-sequence-hp-adaptivity
+base = 9c2160d41382026352908d692ad479dc4508424d
 ordinary_default = unchanged
 irregular_geometry = out_of_scope
 iterative_solver = out_of_scope_until_hp_space_freezes
 matrix_free_low_memory = out_of_scope_until_hp_and_iterative_close
+full3d_hp_production_candidate = none
+hybrid_phase_f = not_run_full3d_hp_gate_failed
+automatic_cycles_1_4 = not_completed
+capability_status = pass
+resource_status = pass
+accuracy_status = fail
 ```
 
-本目录先保存在Task035c分支中，随Task035c选择性合并进入master。**ChatGPT不提前创建Task035d分支。** Codex只有在Task035c成功整合master、测试通过并确认工作树干净后，才从新master创建上述Task035d分支。
+Task035c 已按 Review V2 完成选择性整合；本执行分支从上述干净
+post-Task035c master 创建。Task035d 已完成 reference active-space、真实
+assembly-time local-p、2:1 balanced hexa local-h、H(curl) hanging/Floquet
+约束、compiled cell tensor、PETSc ownership、静态凝聚、完整场恢复和
+MPI1/2/8 identity 的同一离散架构。所有正式候选都真实删除 inactive rows，
+没有构造完整 p6 矩阵后置零。
+
+正式 MPI8 研究先关闭 p-only lane，随后运行 h15 local-h、combined hp、
+factorial bridge、十面 selective-p6-trace 和 bounded single-root local-h
+判别点。最强资源结果达到 `76,205` active FE DoF、`18,470` rows、
+`7.29866 GiB`；最终 left-grating 判别点为 `88,915` DoF、`21,650` rows、
+`8.06120 GiB`，相对 p6/h10 static 的 rows、matrix NNZ、factor NNZ 和峰值
+分别下降 `57.77%/70.51%/82.46%/45.24%`。但正式候选最佳显著通道仍只有
+`6/12 powers + 6/12 amplitudes`，没有任何候选达到 `12/12 + 12/12`。
+
+因此本任务按任务书定义归类为
+`PARTIAL_WITH_CONTROLLED_NEGATIVES`。bounded single-root top-air local-h
+lane 在两个正式精度负信号后关闭；outer-periodic、multi-seed 和整个
+top-port selective-trace 能力分别保留为 `not_run_by_lane_stop`、
+`not_evaluated_by_stop_rule` 和 `incomplete_not_run`，不得误写成数值失败。
+Full3D hp Gate 未通过，所以 static Hybrid M120 Phase F 没有运行。
+
+Review V1 收口后的横向结论必须优先于“局部 h/p 能运行”这一能力结论：
+
+| 当前工程候选 | active FE DoF / rows | peak | significant powers / amplitudes |
+|---|---:|---:|---:|
+| Task035b fixed p5-trace/p6-interior h13 | `89,740 / 20,120` | `6.411 GiB` | `10/12 / 10/12` |
+| Task035d h15 top-air local-h | `82,925 / 18,470` | `7.50068 GiB` | `6/12 / 6/12` |
+
+Task035d 架构更通用，也真实减少了 rows、NNZ 和 factor inventory，但当前没有
+在“精度 + 内存”上超过 Task035b h13；h13 仍是预算内最佳
+accuracy/resource 工程候选。
+
+同 MPI8、同 process-tree watchdog、同求解生命周期下的正式资源基线为：
+
+```text
+Full3D static p6/h10             = 14.721756 GiB
+Hybrid standard p6/h10 M120      = 11.076893 GiB
+Hybrid static p6/h10 M120        =  7.544262 GiB
+```
+
+因此本任务的统一分类是：`capability_status=pass`、
+`resource_status=pass`、`accuracy_status=fail`。这里的 local-h/local-p
+“成功”只指 exact-sequence 能力和真实减行通过，不指 production accuracy。
+
+local-h 技术层支持非均匀叶单元；但正式物理搜索只覆盖
+`h15 + global p5 trace + bounded single requested root + mandatory closure`。
+本任务没有完成多层、多区域、多 refinement-level 自动网格，关闭这条
+single-root lane 不等于证明所有 local-h 都无效。
 
 ## 这个任务要解决什么问题
 
@@ -76,3 +129,7 @@ benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/
 ```
 
 并同步更新 `docs/development_model_registry.md`。
+
+选择性合并完成后的下一任务为
+[`Task035e reference-blind multilevel hp adaptivity`](../task035e_reference_blind_multilevel_hp_adaptivity/README.md)；
+其 hidden reference certifier 与 blind controller 必须保持隔离。

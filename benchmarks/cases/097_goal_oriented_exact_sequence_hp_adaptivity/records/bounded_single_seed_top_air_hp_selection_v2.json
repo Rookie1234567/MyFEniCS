@@ -1,0 +1,326 @@
+{
+  "checks": {
+    "compact_dwr_authority_pass": true,
+    "complete_available_single_seed_action_catalog": true,
+    "directional_z_h13_is_positive_h_oracle": true,
+    "frozen_ten_face_subset_has_no_complete_signal": true,
+    "preflight_single_seed_catalog_identity": true,
+    "selected_action_is_unique_cost_normalized_positive": true,
+    "selective_endpoint_is_controlled_negative": true,
+    "structural_preflight_pass": true,
+    "superseded_outer_v1_preserved": true,
+    "unavailable_action_is_not_zero_filled": true
+  },
+  "failures": [],
+  "frozen_ten_face_subset_lane": {
+    "catalog_sha256": "47253503ee231a142f8dfb85ca4f31aae2b133ab421d4f3e5eb8cd03fea0f46a",
+    "decision": "close_frozen_ten_face_subset_lane",
+    "linear_signed_dwr_subset_screen": {
+      "best_fail_closed_subset": {
+        "mask": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "predicted_complex_amplitude_pass_count": 6,
+        "predicted_power_pass_count": 6,
+        "regressed_previously_passing_channel_count": 0,
+        "selected_band_count": 0
+      },
+      "maximum_predicted_complex_amplitude_pass_count": 7,
+      "maximum_predicted_power_pass_count": 6,
+      "no_subset_predicts_12_plus_12": true,
+      "subset_count": 32
+    },
+    "selected_face_count": 10,
+    "whole_top_port_selective_p6_lane": "not_closed_unrun_faces_orbits_and_edge_modes_remain"
+  },
+  "inputs": {
+    "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_directional_z_mpi8.json": "81ba43d91c4c9a35121676ae40368d56116f3a381e4559d630fb547a94dc4a5c",
+    "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_tensor_dedup_preallocation_mpi8.json": "1ffde81be08c24232e62c1d2dfbf1b7ad2dcb3623444ea40af68b5c6585758e3",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/bounded_single_seed_top_air_hp_preflight_v1.json": "96d309aa89ca3d93b0049a748e92cc034294c027ca8826db2389b4ae95c94b56",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_local_h_nested_p_mpi8_controlled_negative_v2.json": "9d4011e9c7db4647620c09a85e4f2117d3e215a205c39846f874872f4b68fa01",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_selection_v1.json": "c74d4e97db0e768cd4508f9aa37793bca8c3bf919349f2a3d4963cf7d8f144fa",
+    "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/selective_face_selection_compact_v1.json": "3b843bbab70a8a0453b134c4dbe2e40bd9880420bedda33e3033c07beb8164bc"
+  },
+  "location_oracle": {
+    "action_rows": [
+      {
+        "action_id": "outer_periodic",
+        "actual_full3d_equivalent_active_fe_dofs": 84850,
+        "added_active_fe_dofs": 9960,
+        "added_solve_rows": 3480,
+        "alignment_per_1000_added_active_fe_dofs": 35.29244027377396,
+        "alignment_per_1000_added_solve_rows": 101.00939802493929,
+        "all_36_closure_combined_absolute_normalized_support": 78.72742331619126,
+        "all_36_sum_band_absolute_normalized_support": 134.05435209394273,
+        "dof_budget_pass": true,
+        "dwr_status": "available_from_frozen_ten_face_compact",
+        "failed_19_closure_combined_absolute_normalized_support": 75.06066011361774,
+        "failed_19_negative_error_dot_action": 351.5127051267887,
+        "failed_19_sum_band_absolute_normalized_support": 128.06604796105933,
+        "physical_x_bands_nm": [
+          [
+            0.0,
+            8.25
+          ],
+          [
+            41.75,
+            50.0
+          ]
+        ],
+        "positive_alignment": true,
+        "predicted_direct_solve_rows": 20360,
+        "quantized_x_bands": [
+          [
+            0,
+            5892857143
+          ],
+          [
+            29821428571,
+            35714285714
+          ]
+        ],
+        "ranking_eligible": true
+      },
+      {
+        "action_id": "left_grating_top",
+        "actual_full3d_equivalent_active_fe_dofs": 88915,
+        "added_active_fe_dofs": 14025,
+        "added_solve_rows": 4770,
+        "alignment_per_1000_added_active_fe_dofs": 55.28108059786711,
+        "alignment_per_1000_added_solve_rows": 162.5402841478168,
+        "all_36_closure_combined_absolute_normalized_support": 76.68503260491548,
+        "all_36_sum_band_absolute_normalized_support": 76.68503260491548,
+        "dof_budget_pass": true,
+        "dwr_status": "available_from_frozen_ten_face_compact",
+        "failed_19_closure_combined_absolute_normalized_support": 74.04078116009792,
+        "failed_19_negative_error_dot_action": 775.3171553850862,
+        "failed_19_sum_band_absolute_normalized_support": 74.04078116009792,
+        "physical_x_bands_nm": [
+          [
+            16.5,
+            25.0
+          ]
+        ],
+        "positive_alignment": true,
+        "predicted_direct_solve_rows": 21650,
+        "quantized_x_bands": [
+          [
+            11785714286,
+            17857142857
+          ]
+        ],
+        "ranking_eligible": true
+      },
+      {
+        "action_id": "right_grating_top",
+        "actual_full3d_equivalent_active_fe_dofs": 88915,
+        "added_active_fe_dofs": 14025,
+        "added_solve_rows": 4770,
+        "alignment_per_1000_added_active_fe_dofs": -100.92313423683285,
+        "alignment_per_1000_added_solve_rows": -296.7394041240211,
+        "all_36_closure_combined_absolute_normalized_support": 85.37615482184772,
+        "all_36_sum_band_absolute_normalized_support": 85.37615482184772,
+        "dof_budget_pass": true,
+        "dwr_status": "available_from_frozen_ten_face_compact",
+        "failed_19_closure_combined_absolute_normalized_support": 80.51307353584124,
+        "failed_19_negative_error_dot_action": -1415.4469576715808,
+        "failed_19_sum_band_absolute_normalized_support": 80.51307353584124,
+        "physical_x_bands_nm": [
+          [
+            25.0,
+            33.5
+          ]
+        ],
+        "positive_alignment": false,
+        "predicted_direct_solve_rows": 21650,
+        "quantized_x_bands": [
+          [
+            17857142857,
+            23928571429
+          ]
+        ],
+        "ranking_eligible": false
+      },
+      {
+        "action_id": "right_inner",
+        "actual_full3d_equivalent_active_fe_dofs": 79565,
+        "added_active_fe_dofs": 4675,
+        "added_solve_rows": 1590,
+        "alignment_per_1000_added_active_fe_dofs": -17.85768105743205,
+        "alignment_per_1000_added_solve_rows": -52.50607480722946,
+        "all_36_closure_combined_absolute_normalized_support": 47.33231834898122,
+        "all_36_sum_band_absolute_normalized_support": 47.33231834898122,
+        "dof_budget_pass": true,
+        "dwr_status": "available_from_frozen_ten_face_compact",
+        "failed_19_closure_combined_absolute_normalized_support": 43.96425002353865,
+        "failed_19_negative_error_dot_action": -83.48465894349484,
+        "failed_19_sum_band_absolute_normalized_support": 43.96425002353865,
+        "physical_x_bands_nm": [
+          [
+            33.5,
+            41.75
+          ]
+        ],
+        "positive_alignment": false,
+        "predicted_direct_solve_rows": 18470,
+        "quantized_x_bands": [
+          [
+            23928571429,
+            29821428571
+          ]
+        ],
+        "ranking_eligible": false
+      },
+      {
+        "action_id": "left_inner_without_compact_dwr",
+        "actual_full3d_equivalent_active_fe_dofs": 79565,
+        "dof_budget_pass": true,
+        "dwr_status": "not_available_from_compact",
+        "physical_x_bands_nm": [
+          [
+            8.25,
+            16.5
+          ]
+        ],
+        "predicted_direct_solve_rows": 18470,
+        "ranking_eligible": false,
+        "reason": "the compact DWR coarse endpoint already contains this local-h split; its contribution cannot be set to zero"
+      }
+    ],
+    "face_band_rows": [
+      {
+        "all_36_absolute_normalized_support": 71.84350072666822,
+        "failed_19_absolute_normalized_support": 67.82255400637412,
+        "failed_19_negative_error_dot_action": -760.0129598175281,
+        "physical_x_nm": [
+          0.0,
+          8.25
+        ],
+        "quantized_x_band": [
+          0,
+          5892857143
+        ]
+      },
+      {
+        "all_36_absolute_normalized_support": 76.68503260491548,
+        "failed_19_absolute_normalized_support": 74.04078116009792,
+        "failed_19_negative_error_dot_action": 775.3171553850862,
+        "physical_x_nm": [
+          16.5,
+          25.0
+        ],
+        "quantized_x_band": [
+          11785714286,
+          17857142857
+        ]
+      },
+      {
+        "all_36_absolute_normalized_support": 85.37615482184772,
+        "failed_19_absolute_normalized_support": 80.51307353584124,
+        "failed_19_negative_error_dot_action": -1415.4469576715808,
+        "physical_x_nm": [
+          25.0,
+          33.5
+        ],
+        "quantized_x_band": [
+          17857142857,
+          23928571429
+        ]
+      },
+      {
+        "all_36_absolute_normalized_support": 47.33231834898122,
+        "failed_19_absolute_normalized_support": 43.96425002353865,
+        "failed_19_negative_error_dot_action": -83.48465894349484,
+        "physical_x_nm": [
+          33.5,
+          41.75
+        ],
+        "quantized_x_band": [
+          23928571429,
+          29821428571
+        ]
+      },
+      {
+        "all_36_absolute_normalized_support": 62.2108513672745,
+        "failed_19_absolute_normalized_support": 60.24349395468522,
+        "failed_19_negative_error_dot_action": 1111.5256649443168,
+        "physical_x_nm": [
+          41.75,
+          50.0
+        ],
+        "quantized_x_band": [
+          29821428571,
+          35714285714
+        ]
+      }
+    ],
+    "formal_boundary": "actual selective-face DWR is a frozen ten-face location oracle only; it is not an unrun local-h surplus",
+    "ranked_positive_budget_feasible_action_ids": [
+      "left_grating_top",
+      "outer_periodic"
+    ]
+  },
+  "multi_seed_combinations": {
+    "reason": "this discriminator ranks only one requested root seed and its mandatory periodic/material closure",
+    "status": "not_evaluated"
+  },
+  "ordinary_default_changed": false,
+  "pass": true,
+  "production_qualified": false,
+  "schema_version": "case097.bounded-single-seed-top-air-hp-selection.v2",
+  "selected_action": {
+    "action_id": "left_grating_top",
+    "actual_full3d_equivalent_active_fe_dofs": 88915,
+    "actual_local_h_dwr_surplus_available": false,
+    "candidate_id": "h15_left_grating_top_closure_p5fine_v1",
+    "closure_counts": {
+      "balance": 0,
+      "material": 4,
+      "periodic": 1,
+      "user": 1
+    },
+    "fine_child_interior_degree": 5,
+    "fine_p5_cell_count": 48,
+    "formal_pde_authorization": "one MPI8 discriminator only after MPI1/2/8 component identity and dedicated launch/solver gates pass",
+    "marked_root_nm": [
+      16.5,
+      0.0,
+      120.0,
+      25.0,
+      12.5,
+      130.0
+    ],
+    "predicted_direct_solve_rows": 21650,
+    "remaining_p6_cell_count": 114,
+    "selected_p6_face_count": 0,
+    "success_forecast": false,
+    "trace_degree": 5
+  },
+  "source_identity": {
+    "file_sha256": {
+      "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_directional_z_mpi8.json": "81ba43d91c4c9a35121676ae40368d56116f3a381e4559d630fb547a94dc4a5c",
+      "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_tensor_dedup_preallocation_mpi8.json": "1ffde81be08c24232e62c1d2dfbf1b7ad2dcb3623444ea40af68b5c6585758e3",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/analyze_bounded_single_seed_top_air_hp_selection.py": "9f80d6b963cceec97fda9d0b34ab46edbc3eb8bef8037093ab625108c479ea78",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/bounded_single_seed_top_air_hp_preflight_v1.json": "96d309aa89ca3d93b0049a748e92cc034294c027ca8826db2389b4ae95c94b56",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_local_h_nested_p_mpi8_controlled_negative_v2.json": "9d4011e9c7db4647620c09a85e4f2117d3e215a205c39846f874872f4b68fa01",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_selection_v1.json": "c74d4e97db0e768cd4508f9aa37793bca8c3bf919349f2a3d4963cf7d8f144fa",
+      "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/selective_face_selection_compact_v1.json": "3b843bbab70a8a0453b134c4dbe2e40bd9880420bedda33e3033c07beb8164bc"
+    },
+    "head": "fef142aff9c613189bd7650d7d92da8d011d0b9e",
+    "status_lines": [],
+    "verified_clean_algorithm_and_inputs": true
+  },
+  "source_sha": "fef142aff9c613189bd7650d7d92da8d011d0b9e",
+  "status": "bounded_single_seed_top_air_hp_selection_pass",
+  "superseded_outer_v1": {
+    "classification": "incomplete_action_catalog_controlled_negative",
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_selection_v1.json",
+    "pde_started_for_superseded_v2_lane": false,
+    "reason": "v1 compared only outer-periodic and right-inner actions, omitting the stronger legal x=16.5..25 closure",
+    "sha256": "c74d4e97db0e768cd4508f9aa37793bca8c3bf919349f2a3d4963cf7d8f144fa"
+  }
+}

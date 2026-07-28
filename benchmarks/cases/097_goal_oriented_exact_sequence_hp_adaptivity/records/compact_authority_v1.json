@@ -1,0 +1,23 @@
+{
+  "heavy_pde_started": false,
+  "ordinary_default_changed": false,
+  "pass": true,
+  "record_count": 2,
+  "records": [
+    {
+      "name": "reference_active_space_authority_v1.json",
+      "schema_version": "task035d.reference-active-space-authority.v1",
+      "sha256": "4c1c5e68540dca4ddcc4165b0cc175abb4671ad254a44c1aa3518e4c9398ea9b",
+      "status": "task035d_phase_a_serial_authority_pass"
+    },
+    {
+      "name": "mpi2_fixture_authority_v1.json",
+      "schema_version": "task035d.mpi2-fixture-authority.v1",
+      "sha256": "4d146b826117782d717be97bc938699feacffe9dbbdbebbac1ca65489e32b1e3",
+      "status": "task035d_phase_a_mpi2_fixture_pass"
+    }
+  ],
+  "schema_version": "task035d.case097-compact-authority.v1",
+  "source_commit_sha": "37a78404532048bae127dd4e350b87d33695d13e",
+  "status": "case097_phase_a_compact_authority"
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": "task035d.case097-left-grating-top-closure-p5fine-candidate-check.v1",
+  "status": "task035d_left_grating_top_closure_p5fine_checker_evidence_failure",
+  "classification": "fail_closed_evidence_error",
+  "candidate_id": "h15_left_grating_top_closure_p5fine_v1",
+  "pass": false,
+  "checks": {
+    "evidence_integrity": false
+  },
+  "failures": [
+    "evidence_integrity"
+  ],
+  "error": {
+    "type": "Task035dEvidenceError",
+    "message": "checker requires a clean source tree before evidence evaluation"
+  },
+  "candidate_watchdog": {
+    "path": "benchmarks/artifacts/task035d/case097/left_grating_top_closure_p5fine_v1/h15_left_grating_top_closure_p5fine_mpi8_watchdog_v1.json",
+    "expected_sha256": "7d4c7a1efa0068c7a6c478ad4cef4b88fdfa1f5acbd10532d4c2794a356f7165",
+    "observed_sha256": "7d4c7a1efa0068c7a6c478ad4cef4b88fdfa1f5acbd10532d4c2794a356f7165"
+  },
+  "accuracy_credit": "none_fail_closed",
+  "ordinary_default_changed": false
+}

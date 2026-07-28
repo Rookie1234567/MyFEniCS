@@ -1,0 +1,114 @@
+{
+  "schema_version": "case097.bounded-single-root-top-air-lane-closure.v1",
+  "status": "bounded_single_root_top_air_local_h_lane_closed",
+  "pass": true,
+  "production_qualified": false,
+  "decision_source_sha": "40c5c53800952b627acab19b68e0afc21e433144",
+  "lane": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "mesh_family": "h15 balanced dyadic hexa local-h",
+    "trace_policy": "global p5 trace",
+    "interior_policy": "audited variants: p6 on all h/2 children for the top-air control, or p5 on newly refined h/2 children and p6 elsewhere for the left-grating discriminator",
+    "formal_interior_variants": [
+      {
+        "candidate_id": "h15_top_air_local_h_v1",
+        "fine_child_degree": 6
+      },
+      {
+        "candidate_id": "h15_left_grating_top_closure_p5fine_v1",
+        "fine_child_degree": 5
+      }
+    ],
+    "selection_scope": "bounded single requested root seed plus mandatory periodic/material closure",
+    "status": "closed_after_two_formal_accuracy_negatives"
+  },
+  "formal_negative_signals": [
+    {
+      "candidate_id": "h15_top_air_local_h_v1",
+      "record": {
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_local_h_nested_p_mpi8_controlled_negative_v2.json",
+        "sha256": "9d4011e9c7db4647620c09a85e4f2117d3e215a205c39846f874872f4b68fa01"
+      },
+      "active_fe_dofs": 82925,
+      "solve_rows": 18470,
+      "peak_memory_gib": 7.500682830810547,
+      "significant_power_pass_count": 6,
+      "significant_complex_amplitude_pass_count": 6,
+      "solver_and_residual_gate": "pass_after_checker_requalification",
+      "accuracy_status": "controlled_negative"
+    },
+    {
+      "candidate_id": "h15_left_grating_top_closure_p5fine_v1",
+      "watchdog": {
+        "path": "benchmarks/artifacts/task035d/case097/left_grating_top_closure_p5fine_v1/h15_left_grating_top_closure_p5fine_mpi8_watchdog_v1.json",
+        "sha256": "7d4c7a1efa0068c7a6c478ad4cef4b88fdfa1f5acbd10532d4c2794a356f7165"
+      },
+      "full_checker": {
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_left_grating_top_closure_p5fine_mpi8_candidate_check_v1.json",
+        "sha256": "1b9dd3cdb931f5fe69da5a0a567ff278a47416f7082d47cef2e0b5e4109e2492"
+      },
+      "compact_checker": {
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_left_grating_top_closure_p5fine_mpi8_controlled_negative_compact_v1.json",
+        "sha256": "d6e03061465b29ce4e958bfd6ac7972f245130fdf66de197541caed09e8e4225"
+      },
+      "active_fe_dofs": 88915,
+      "solve_rows": 21650,
+      "matrix_nnz": 12382332,
+      "factor_nnz": 37250750,
+      "peak_memory_gib": 8.061199188232422,
+      "worker_pss_peak_gib": 6.926573753356934,
+      "worker_uss_peak_gib": 6.777557373046875,
+      "full_explicit_true_residual": 3.267074937444803e-11,
+      "significant_power_pass_count": 4,
+      "significant_complex_amplitude_pass_count": 6,
+      "observable_gate": "pass",
+      "energy_gate": "pass",
+      "interface_field_gate": "pass",
+      "volume_field_gate": "fail_maximum_pointwise",
+      "accuracy_status": "controlled_negative"
+    }
+  ],
+  "remaining_actions": {
+    "outer_periodic": {
+      "candidate_id": "h15_outer_top_periodic_p5fine_v1",
+      "status": "not_run_by_lane_stop",
+      "historical_stop_record": {
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/outer_top_periodic_p5fine_superseded_controlled_stop_v2.json",
+        "sha256": "71377262684cfe577be3fbf39955c3879c62b490379d0a2c1aaa8feb14c82d93"
+      },
+      "reason": "the compact-DWR location-oracle score is weaker than the failed left-grating action and no actual local-h DWR surplus exists",
+      "pde_failure": false
+    },
+    "multi_seed_combinations": {
+      "status": "not_evaluated_by_stop_rule",
+      "reason": "the authorized bounded discriminator covered one requested root seed at a time and the lane closed after two formal accuracy negatives"
+    },
+    "frozen_ten_face_selective_p6_subset": {
+      "status": "closed_controlled_negative",
+      "record": {
+        "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/selective_face_selection_compact_v1.json",
+        "sha256": "3b843bbab70a8a0453b134c4dbe2e40bd9880420bedda33e3033c07beb8164bc"
+      },
+      "measured_significant_power_pass_count": 5,
+      "measured_significant_complex_amplitude_pass_count": 6,
+      "best_linear_subset_predicted_power_pass_count": 6,
+      "best_linear_subset_predicted_complex_amplitude_pass_count": 7
+    },
+    "whole_top_port_selective_p6_trace": {
+      "status": "incomplete_not_run_no_authorized_candidate",
+      "reason": "unrun faces, periodic orbits and edge modes were not disproved by the frozen ten-face subset"
+    },
+    "hybrid_phase_f": {
+      "status": "not_run_full3d_hp_gate_failed"
+    }
+  },
+  "selection_credit": {
+    "compact_dwr_location_oracle": true,
+    "actual_local_h_dwr_surplus": false,
+    "actual_channel_dwr": false,
+    "goal_oriented_selection_credit": false,
+    "complete_combined_hp_credit": false
+  },
+  "reopen_condition": "generate actual per-channel local-h or trace-orbit DWR on a newly defined candidate space before authorizing one new discriminator",
+  "ordinary_default_changed": false
+}

@@ -1,0 +1,48 @@
+cd /home/Projects/MyFEniCS
+source scripts/activate_myfenics_wsl.sh
+
+export TMPDIR=/tmp
+export TMP=/tmp
+export TEMP=/tmp
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+
+python -m pytest -q \
+  src/test/test_178_task035b_public_assembly_backend.py \
+  src/test/test_183_task035d_reference_active_space.py \
+  src/test/test_184_task035d_global_entity_numbering.py \
+  src/test/test_185_task035d_variable_p_petsc_assembly.py \
+  src/test/test_186_task035d_variable_p_transfer.py \
+  src/test/test_187_task035d_variable_p_compiled_kernel.py \
+  src/test/test_188_task035d_variable_p_degree_plan.py \
+  src/test/test_189_task035d_variable_p_reduction.py \
+  src/test/test_190_task035d_variable_p_stage4_smoke.py \
+  src/test/test_192_task035d_mixed_variable_p_stage4.py \
+  src/test/test_196_task035d_dyadic_hexa_local_h.py \
+  src/test/test_197_task035d_hanging_trace.py \
+  src/test/test_198_task035d_broken_dyadic_hexa.py \
+  src/test/test_199_task035d_trace_constraint_graph.py \
+  src/test/test_200_task035d_broken_trace_graph.py \
+  src/test/test_201_task035d_broken_cell_trace.py \
+  src/test/test_203_task035d_stage4_local_h.py \
+  src/test/test_204_task035d_variable_p_adjoint_recovery.py \
+  src/test/test_205_task035d_unit_channel_adjoint_basis.py \
+  src/test/test_206_task035d_variable_p_live_observer.py \
+  src/test/test_207_task035d_nested_p_dwr.py \
+  src/test/test_208_task035d_variable_p_nested_dwr_live.py \
+  src/test/test_210_task035d_nested_p_dwr_checker.py \
+  src/test/test_211_task035d_selective_face_complement.py \
+  src/test/test_212_task035d_selective_face_root_transfer.py \
+  src/test/test_213_task035d_selective_face_snapshot.py \
+  src/test/test_case097_compact_evidence_contract.py
+
+mpiexec -n 8 python -m pytest -q \
+  src/test/test_201_task035d_broken_cell_trace.py \
+  src/test/test_205_task035d_unit_channel_adjoint_basis.py
+
+python -m benchmarks.check_development_model_registry
+python -m ruff check src benchmarks
+python -m compileall -q src benchmarks
+python -m pytest -q
+git diff --check

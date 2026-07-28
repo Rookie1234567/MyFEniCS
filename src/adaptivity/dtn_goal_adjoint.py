@@ -603,6 +603,10 @@ def build_dtn_channel_goal_gradient(
         ],
         "power_weight": weight,
         "gradient_norm": float(gradient.norm()),
+        "gradient_scalar_solver_coordinate": [
+            float(derivative.real),
+            float(derivative.imag),
+        ],
         "gradient_convention": f"dJ=Re(g^H dx), {convention}",
         "auxiliary_coordinate_scale": [
             float(coordinate_scales[mode_index].real),
@@ -614,6 +618,51 @@ def build_dtn_channel_goal_gradient(
             "n": int(mode.n),
             "polarization": mode.polarization,
         },
+    }
+
+
+def build_dtn_unit_channel_gradient(
+    state: PETSc.Vec,
+    goal_context: dict[str, Any],
+    *,
+    channel: DtnChannelGoal,
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Build a unit gradient for one physical auxiliary coordinate."""
+
+    modes = list(goal_context["modes"])
+    n_fe = int(goal_context["num_fem_dofs_after_mpc"])
+    if state.getSize() != n_fe + len(modes):
+        raise ValueError(
+            "DtN channel context does not match the augmented system"
+        )
+    mode_index = _channel_mode_index(modes, channel)
+    global_index = int(n_fe + mode_index)
+    gradient = state.duplicate()
+    gradient.set(PETSc.ScalarType(0.0))
+    row_start, row_end = gradient.getOwnershipRange()
+    if row_start <= global_index < row_end:
+        gradient.setValue(
+            global_index,
+            PETSc.ScalarType(1.0),
+            addv=PETSc.InsertMode.INSERT_VALUES,
+        )
+    gradient.assemble()
+    mode = modes[mode_index]
+    return gradient, {
+        "schema_version": "task035d.dtn-unit-channel-gradient.v1",
+        "status": "dtn_unit_channel_gradient_built",
+        "pass": True,
+        "auxiliary_mode_index": mode_index,
+        "augmented_global_index": global_index,
+        "gradient_norm": float(gradient.norm()),
+        "solver_coordinate_gradient": [1.0, 0.0],
+        "canonical_channel_identity": {
+            "side": mode.side,
+            "m": int(mode.m),
+            "n": int(mode.n),
+            "polarization": mode.polarization,
+        },
+        "ordinary_default_changed": False,
     }
 
 
@@ -1122,6 +1171,339 @@ def evaluate_actual_dtn_channel_adjoints(
     }
 
 
+def _canonical_channel_key(
+    goal: DtnChannelGoal,
+) -> tuple[str, int, int, str]:
+    return (
+        str(goal.side),
+        int(goal.m),
+        int(goal.n),
+        str(goal.polarization),
+    )
+
+
+def _canonical_channel_label(
+    key: tuple[str, int, int, str],
+) -> str:
+    side, m, n, polarization = key
+    prefix = "R" if side == "top" else "T"
+    return f"{prefix}({m},{n})_{polarization}"
+
+
+def evaluate_actual_dtn_unit_channel_adjoint_basis(
+    *,
+    linear_system: dict[str, Any],
+    dtn_result: dict[str, Any],
+    config,
+    communicator: MPI.Intracomm,
+    goals: tuple[DtnChannelGoal, ...],
+    unit_adjoint_observer: (
+        Callable[[dict[str, Any], PETSc.Vec], None] | None
+    ) = None,
+    scaled_goal_adjoint_observer: (
+        Callable[[DtnChannelGoal, PETSc.Vec], None] | None
+    ) = None,
+) -> dict[str, Any]:
+    """Solve one unit adjoint per physical diffraction channel.
+
+    Power, real-amplitude, and imaginary-amplitude gradients for one
+    diffraction channel are complex scalar multiples of the same auxiliary
+    coordinate.  The basis therefore needs one factor backsolve per channel,
+    while every requested real goal still receives an explicit scaled
+    ``A^H z = g`` residual audit.
+    """
+
+    selected_goals = tuple(goals)
+    if not selected_goals:
+        raise ValueError("at least one DtN channel goal is required")
+    if len({goal.label for goal in selected_goals}) != len(selected_goals):
+        raise ValueError("DtN channel adjoint labels must be unique")
+    goal_context = dtn_result.get("goal_context")
+    if not isinstance(goal_context, dict):
+        raise RuntimeError("the solved DtN system did not retain goal context")
+    matrix = linear_system.get("A")
+    state = linear_system.get("x")
+    solver = linear_system.get("ksp")
+    if any(value is None for value in (matrix, state, solver)):
+        raise RuntimeError(
+            "unit channel adjoints require live matrix/state/direct-factor "
+            "objects"
+        )
+    for object_name, petsc_object in (
+        ("matrix", matrix),
+        ("state", state),
+        ("solver", solver),
+    ):
+        object_comm = petsc_object.getComm().tompi4py()
+        relation = MPI.Comm.Compare(communicator, object_comm)
+        if relation not in {MPI.IDENT, MPI.CONGRUENT}:
+            raise ValueError(
+                "unit channel adjoints use a different MPI communicator "
+                f"for the {object_name}"
+            )
+
+    grouped: dict[
+        tuple[str, int, int, str],
+        list[DtnChannelGoal],
+    ] = {}
+    for goal in selected_goals:
+        grouped.setdefault(_canonical_channel_key(goal), []).append(goal)
+    ordered_keys = tuple(grouped)
+    coefficient_matrix = np.zeros(
+        (len(selected_goals), len(ordered_keys)),
+        dtype=np.complex128,
+    )
+    real_functional_coefficient_matrix = np.zeros(
+        (len(selected_goals), 2 * len(ordered_keys)),
+        dtype=np.float64,
+    )
+    goal_row = {
+        goal.label: row for row, goal in enumerate(selected_goals)
+    }
+    channel_reports: dict[str, Any] = {}
+    goal_reports: dict[str, Any] = {}
+    all_pass = True
+
+    for column, key in enumerate(ordered_keys):
+        channel_goals = tuple(grouped[key])
+        representative = channel_goals[0]
+        unit_gradient, gradient_metadata = (
+            build_dtn_unit_channel_gradient(
+                state,
+                goal_context,
+                channel=representative,
+            )
+        )
+        unit_adjoint = None
+        try:
+            unit_adjoint, solve_report = (
+                solve_hermitian_discrete_adjoint(
+                    matrix,
+                    solver,
+                    unit_gradient,
+                    template=state,
+                )
+            )
+            unit_identity = petsc_adjoint_partition_content_identity(
+                unit_adjoint
+            )
+            unit_pass = bool(
+                solve_report["transpose_converged_reason"] > 0
+                and solve_report["adjoint_residual"][
+                    "relative_residual"
+                ]
+                <= 1.0e-9
+            )
+            if unit_adjoint_observer is not None:
+                unit_adjoint_observer(
+                    dict(gradient_metadata["canonical_channel_identity"]),
+                    unit_adjoint,
+                )
+            channel_goal_labels: list[str] = []
+            for goal in channel_goals:
+                gradient, metadata = build_dtn_channel_goal_gradient(
+                    state,
+                    config,
+                    goal_context,
+                    goal=goal,
+                )
+                scaled_adjoint = None
+                scaled_unit_gradient = None
+                gradient_difference = None
+                try:
+                    pair = metadata[
+                        "gradient_scalar_solver_coordinate"
+                    ]
+                    scalar = complex(float(pair[0]), float(pair[1]))
+                    coefficient_matrix[goal_row[goal.label], column] = (
+                        scalar
+                    )
+                    real_functional_coefficient_matrix[
+                        goal_row[goal.label],
+                        2 * column : 2 * column + 2,
+                    ] = (float(scalar.real), float(scalar.imag))
+                    scaled_unit_gradient = unit_gradient.copy()
+                    scaled_unit_gradient.scale(PETSc.ScalarType(scalar))
+                    gradient_difference = gradient.copy()
+                    gradient_difference.axpy(
+                        PETSc.ScalarType(-1.0),
+                        scaled_unit_gradient,
+                    )
+                    gradient_scaling_error = float(
+                        gradient_difference.norm()
+                        / max(float(gradient.norm()), 1.0)
+                    )
+                    scaled_adjoint = unit_adjoint.copy()
+                    scaled_adjoint.scale(PETSc.ScalarType(scalar))
+                    scaled_residual = _linear_residual(
+                        matrix,
+                        gradient,
+                        scaled_adjoint,
+                        hermitian=True,
+                    )
+                    goal_pass = bool(
+                        unit_pass
+                        and gradient_scaling_error <= 5.0e-13
+                        and scaled_residual["relative_residual"]
+                        <= 1.0e-9
+                    )
+                    if scaled_goal_adjoint_observer is not None:
+                        scaled_goal_adjoint_observer(
+                            goal,
+                            scaled_adjoint,
+                        )
+                    goal_reports[goal.label] = {
+                        **metadata,
+                        "pass": goal_pass,
+                        "actual_discrete_system": True,
+                        "unit_channel_label": (
+                            _canonical_channel_label(key)
+                        ),
+                        "unit_adjoint_scalar": [
+                            float(scalar.real),
+                            float(scalar.imag),
+                        ],
+                        "gradient_scaling_relative_error": (
+                            gradient_scaling_error
+                        ),
+                        "scaled_adjoint_residual": scaled_residual,
+                        "independent_factor_backsolve_performed": False,
+                        "recovered_from_unit_channel_adjoint": True,
+                    }
+                    channel_goal_labels.append(goal.label)
+                    all_pass = all_pass and goal_pass
+                finally:
+                    for vector in (
+                        gradient_difference,
+                        scaled_unit_gradient,
+                        scaled_adjoint,
+                        gradient,
+                    ):
+                        if vector is not None:
+                            vector.destroy()
+            channel_reports[_canonical_channel_label(key)] = {
+                **gradient_metadata,
+                **solve_report,
+                "pass": unit_pass,
+                "goal_labels": channel_goal_labels,
+                "goal_count": len(channel_goal_labels),
+                "unit_adjoint_content_identity": unit_identity,
+                "unit_adjoint_content_sha256": unit_identity[
+                    "global_value_sha256"
+                ],
+                "independent_factor_backsolve_performed": True,
+            }
+            all_pass = all_pass and unit_pass
+        finally:
+            if unit_adjoint is not None:
+                unit_adjoint.destroy()
+            unit_gradient.destroy()
+
+    complex_linear_rank = int(
+        np.linalg.matrix_rank(coefficient_matrix)
+    )
+    real_functional_rank = int(
+        np.linalg.matrix_rank(real_functional_coefficient_matrix)
+    )
+    expected_real_functional_rank = sum(
+        min(2, len(grouped[key])) for key in ordered_keys
+    )
+    amplitude_keys = {
+        _canonical_channel_key(goal)
+        for goal in selected_goals
+        if goal.quantity
+        in {"amplitude_real", "amplitude_imag"}
+    }
+    complete_complex_amplitude_keys = {
+        key
+        for key in amplitude_keys
+        if {
+            goal.quantity
+            for goal in grouped[key]
+            if goal.quantity
+            in {"amplitude_real", "amplitude_imag"}
+        }
+        == {"amplitude_real", "amplitude_imag"}
+    }
+    passed = bool(
+        all_pass
+        and complex_linear_rank == len(ordered_keys)
+        and real_functional_rank == expected_real_functional_rank
+    )
+    matrix_rows = int(matrix.getSize()[0])
+    gathered_bytes_per_identity = (
+        matrix_rows * np.dtype(np.complex128).itemsize
+    )
+    return {
+        "schema_version": (
+            "task035d.actual-dtn-unit-channel-adjoint-basis.v2"
+        ),
+        "status": (
+            "actual_dtn_unit_channel_adjoint_basis_pass"
+            if passed
+            else "actual_dtn_unit_channel_adjoint_basis_fail"
+        ),
+        "pass": passed,
+        "actual_discrete_system": True,
+        "canonical": False,
+        "production_qualified": False,
+        "ordinary_default_changed": False,
+        "requested_real_goal_count": len(selected_goals),
+        "independent_power_goal_count": sum(
+            goal.quantity == "power" for goal in selected_goals
+        ),
+        "independent_complex_amplitude_component_goal_count": sum(
+            goal.quantity
+            in {"amplitude_real", "amplitude_imag"}
+            for goal in selected_goals
+        ),
+        "complete_complex_amplitude_channel_count": len(
+            complete_complex_amplitude_keys
+        ),
+        "physical_channel_count": len(ordered_keys),
+        "unit_adjoint_solve_count": len(ordered_keys),
+        "uncompressed_adjoint_solve_count": len(selected_goals),
+        "factor_backsolve_reduction_fraction": (
+            1.0 - len(ordered_keys) / len(selected_goals)
+        ),
+        "complex_linear_backsolve_basis_rank": complex_linear_rank,
+        "expected_complex_linear_backsolve_basis_rank": len(
+            ordered_keys
+        ),
+        "real_functional_gradient_span_rank": real_functional_rank,
+        "expected_real_functional_gradient_span_rank": (
+            expected_real_functional_rank
+        ),
+        "one_unit_gradient_per_auxiliary_coordinate": True,
+        "per_goal_scaled_adjoint_residual_checked": True,
+        "per_goal_finite_difference_verification": False,
+        "finite_difference_qualification_source": (
+            "current_component_test_only_not_runtime_verification"
+        ),
+        "complex_conjugation": "Hermitian A^H, never plain transpose",
+        "normalization": goal_context["normalization"],
+        "selected_goal_set_complete": False,
+        "goal_set_completeness_must_be_asserted_by_caller": True,
+        "fem_field_gather": False,
+        "full_adjoint_vector_gather_to_root_for_content_identity": True,
+        "full_adjoint_vector_gather_bytes_global": (
+            gathered_bytes_per_identity
+        ),
+        "full_adjoint_vector_gather_bytes_all_unit_identities": (
+            gathered_bytes_per_identity * len(ordered_keys)
+        ),
+        "auxiliary_scalar_gather_only": False,
+        "unit_adjoint_observer_vector_lifetime": (
+            "callback_only_borrowed_vector"
+        ),
+        "scaled_goal_adjoint_observer_vector_lifetime": (
+            "callback_only_borrowed_vector"
+        ),
+        "channels": channel_reports,
+        "goals": goal_reports,
+    }
+
+
 def run_target_actual_dtn_adjoint(
     out_dir: Path,
     *,
@@ -1223,10 +1605,12 @@ __all__ = [
     "SUPPORTED_GOALS",
     "SUPPORTED_CHANNEL_QUANTITIES",
     "build_dtn_channel_goal_gradient",
+    "build_dtn_unit_channel_gradient",
     "build_dtn_power_goal_gradient",
     "dtn_channel_goal_value",
     "dtn_power_goal_value",
     "evaluate_actual_dtn_channel_adjoints",
+    "evaluate_actual_dtn_unit_channel_adjoint_basis",
     "evaluate_actual_dtn_power_adjoints",
     "mpi_communicator_content_identity",
     "petsc_adjoint_partition_content_identity",

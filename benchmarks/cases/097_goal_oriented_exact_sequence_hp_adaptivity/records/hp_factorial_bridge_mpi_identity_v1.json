@@ -1,0 +1,85 @@
+{
+  "candidate_id": "h15_top_air_remote_p5_interior_bridge_v1",
+  "checker_identity": {
+    "committed_sha256": "9ffe7a9400fb689d91f700bc604aa9b4bcb6af90c2340c2c19f2ec3a63e8595f",
+    "live_sha256": "9ffe7a9400fb689d91f700bc604aa9b4bcb6af90c2340c2c19f2ec3a63e8595f",
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/check_local_h_production_authority.py",
+    "source_sha": "289ca9a85d407efc8d6382a081ae13d6925e29a6",
+    "status_lines": [],
+    "verified_clean_checker": true
+  },
+  "cross_checks": {
+    "mpi_sizes_are_1_2_8": true,
+    "no_heavy_pde_or_accuracy_credit": true,
+    "rank_local_and_cross_rank_hanging_partitions_qualified": true,
+    "same_numerical_blobs": true,
+    "same_physical_identity": true,
+    "same_source_sha": true
+  },
+  "failures": [],
+  "input_records": [
+    {
+      "mpi_size": 1,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/hp_factorial_bridge_mpi1_v1.json",
+      "sha256": "b3c0bbaa4eaae9506c1b89456c54f69605d5d93f0d31279ee9d052d72025bf9f"
+    },
+    {
+      "mpi_size": 2,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/hp_factorial_bridge_mpi2_v1.json",
+      "sha256": "d5bd3e71f09fb714cff627cc465ca56762e250b27b5debf874e850b7edf74934"
+    },
+    {
+      "mpi_size": 8,
+      "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/hp_factorial_bridge_mpi8_v1.json",
+      "sha256": "0620be15b293c65b3440ef2504bf830cdc63a657910a1c664d0d90a036196cc1"
+    }
+  ],
+  "live_head": "289ca9a85d407efc8d6382a081ae13d6925e29a6",
+  "ordinary_default_changed": false,
+  "pass": true,
+  "pde_accuracy_credit": false,
+  "pde_launch_gate": true,
+  "pde_launch_scope": "one formal MPI8 h15 one-sided local-h plus remote-p5 interior factorial-bridge direct PDE",
+  "plan": {
+    "path": "benchmarks/cases/097_goal_oriented_exact_sequence_hp_adaptivity/records/h15_top_air_remote_p5_interior_bridge_plan_v1.json",
+    "sha256": "6775a173939175af0a84e3941276c2d2fe8116353b8ee609fd1dbfa61f3c1859"
+  },
+  "record_failures": {
+    "hp_factorial_bridge_mpi1_v1.json": [],
+    "hp_factorial_bridge_mpi2_v1.json": [],
+    "hp_factorial_bridge_mpi8_v1.json": []
+  },
+  "schema_version": "case097.hp-factorial-bridge-mpi-identity.v1",
+  "source_sha": "289ca9a85d407efc8d6382a081ae13d6925e29a6",
+  "stable_identity": {
+    "actual_full3d_equivalent_active_fe_dofs": 76205,
+    "base_config_identity_sha256": "a99e7aaf2eb7f100356ae9ef2b5ec83575ddd68095c742d9a91954b37cfd54a7",
+    "canonical_cell_graph_sha256": "8af31327df6760ad3f1ebbe0ecbf21af65ad656f7bcf78dea9c02f96c8995211",
+    "carrier_connectivity_sha256": "b94b6a85a439ce5170e9e628e88e60adb22b91fc43590a8f7f753cbfc20f9aec",
+    "cell_degree_counts": {
+      "p4": 0,
+      "p5": 32,
+      "p6": 102
+    },
+    "cell_degree_plan_sha256": "ab62c9e369125424068d04edc170172064aed5e63da02fdc741b27664bd7adb6",
+    "flattened_graph_sha256": "7677482e10d5b159ce20344b566bc2704bbd5ad4a7cb5ac375d3c51826fa582d",
+    "geometry_canonical_entity_degree_sha256": "d17a503fa0d28bbd91e94087df5a4bfa7309fe65ab49263c295b66fd37af9f8a",
+    "hanging_face_catalog_sha256": "8b70b5c1d679eceb638ff9c3c55ef8c8cf18e007ba939a84b1b39334902d0712",
+    "hanging_patch_count": 6,
+    "hanging_slave_rows": 1250,
+    "independent_trace_rows": 18390,
+    "leaf_catalog_sha256": "1ad308302e1d20bdf14ba2177b8c94d787cba09b722cb02a197b32c646031943",
+    "leaf_cell_count": 134,
+    "material_catalog_sha256": "806a2a9ed3e63a9a5df4d0b981df6a9ef52c5466ed64a48671ab2917389bef6e",
+    "mesh_cell_box_catalog_sha256": "de8f9293edacfdfe30f5972c36347121add8c88203912330b0ab8e9d71d88c20",
+    "periodic_slave_rows": 4235,
+    "physical_authority_sha256": "877f3088424d47ea4debc9ef23cd70abd2c5b3f8e4424ce20718e7a7b4772fac",
+    "physical_facet_catalog_sha256": "41b250c6629025e82a674c2d9a67bd1d0e60857c6b77a9dbfca98f3d138a5f97",
+    "plan_file_sha256": "6775a173939175af0a84e3941276c2d2fe8116353b8ee609fd1dbfa61f3c1859",
+    "predicted_direct_solve_rows": 18470,
+    "raw_broken_active_fe_dofs": 77455,
+    "raw_broken_trace_rows": 23875,
+    "root_cell_count": 120
+  },
+  "status": "hp_factorial_bridge_mpi_identity_pass"
+}

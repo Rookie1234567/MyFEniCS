@@ -96,6 +96,7 @@ cells = 252
 Full3D standard rows = 173,882
 Full3D static rows = 51,272
 Full3D static peak = 14.721756 GiB at MPI8
+Hybrid standard M120 peak = 11.076893 GiB at MPI8
 Hybrid static M120 rows = 17,168
 Hybrid static M120 peak = 7.544262 GiB at MPI8
 ```
