@@ -516,7 +516,7 @@ def _validate_solver_summary(
             summary.get("stage4_assembly_time_cell_static_condensation")
             is True,
             backend.get("status") == "qualified",
-            condensation.get("full_global_matrix_allocated") is False,
+            condensation.get("full_p6_global_matrix_allocated") is False,
             summary.get("linear_solve_method") == "direct_lu",
             summary.get("selected_parallel_lu_solver_type") == "mumps",
             summary.get("actual_ksp_type") == "preonly",

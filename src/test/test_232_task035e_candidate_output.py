@@ -207,7 +207,7 @@ def _write_candidate_run(tmp_path: Path) -> CandidateWatchdogInput:
             "status": "qualified"
         },
         "cell_static_condensation": {
-            "full_global_matrix_allocated": False
+            "full_p6_global_matrix_allocated": False
         },
         "linear_solve_method": "direct_lu",
         "selected_parallel_lu_solver_type": "mumps",
@@ -422,6 +422,23 @@ def _rewrite_record(
     return CandidateWatchdogInput(record_input.path, _sha(record_input.path))
 
 
+def _rewrite_summary(
+    record_input: CandidateWatchdogInput,
+    mutator: object,
+) -> CandidateWatchdogInput:
+    record = json.loads(record_input.path.read_text(encoding="utf-8"))
+    raw = record["raw_evidence"]
+    summary_path = Path(raw["solver_summary"])
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert callable(mutator)
+    mutator(summary)
+    _write_json(summary_path, summary)
+    record["solver_summary"] = summary
+    record["solver_summary_sha256"] = _sha(summary_path)
+    _write_json(record_input.path, record)
+    return CandidateWatchdogInput(record_input.path, _sha(record_input.path))
+
+
 def test_candidate_adapter_emits_closed_full_spectrum_and_fields(
     tmp_path: Path,
 ) -> None:
@@ -530,6 +547,24 @@ def test_candidate_adapter_rejects_artifact_tamper_and_missing_mode(
     missing = _rewrite_record(missing, rebind)
     with pytest.raises(CandidateOutputError, match="lacks p"):
         adapt_candidate_output(missing)
+
+
+def test_candidate_adapter_requires_no_full_p6_global_matrix(
+    tmp_path: Path,
+) -> None:
+    record = _write_candidate_run(tmp_path)
+
+    def allocate_full_p6(summary: dict[str, object]) -> None:
+        summary["cell_static_condensation"][
+            "full_p6_global_matrix_allocated"
+        ] = True
+
+    changed = _rewrite_summary(record, allocate_full_p6)
+    with pytest.raises(
+        CandidateOutputError,
+        match="official variable-p direct-MUMPS MPI8",
+    ):
+        adapt_candidate_output(changed)
 
 
 @pytest.mark.parametrize(
