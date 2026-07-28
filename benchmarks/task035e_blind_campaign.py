@@ -1427,6 +1427,12 @@ class SubprocessCommandRunner:
                     argv,
                     shell=False,
                     cwd=Path(__file__).resolve().parents[1],
+                    # mpi4py/PETSc initialization may update the C-level
+                    # process environment without updating Python's cached
+                    # os.environ mapping.  Passing the qualified activation
+                    # snapshot explicitly prevents a child mpiexec from
+                    # inheriting the singleton parent's mutated MPI state.
+                    env=dict(os.environ),
                     stdin=subprocess.DEVNULL,
                     stdout=stdout_stream,
                     stderr=stderr_stream,

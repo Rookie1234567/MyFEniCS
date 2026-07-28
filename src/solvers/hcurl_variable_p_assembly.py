@@ -1890,13 +1890,10 @@ def condense_variable_p_active_vector_to_trace(
                     )
                 if routed_blocks is not None and (
                     int(block.active_vector_work_owner_rank) != comm.rank
-                    or not (
-                        row_start <= int(full_rows[0]) < row_end
-                    )
                 ):
                     raise RuntimeError(
                         "owner-routed dual-condensation block reached the "
-                        "wrong active-vector work owner"
+                        "wrong trace-work owner"
                     )
                 raw_coverage_local[full_rows] += 1
                 independent_coverage_local[independent_rows] += 1
@@ -2425,15 +2422,10 @@ def extract_variable_p_active_primal_to_reduced(
                     if (
                         int(block.active_vector_work_owner_rank)
                         != comm.rank
-                        or not (
-                            input_start
-                            <= int(full_rows[0])
-                            < input_end
-                        )
                     ):
                         raise RuntimeError(
                             "owner-routed primal trace block reached the "
-                            "wrong active-vector work owner"
+                            "wrong trace-work owner"
                         )
                 block_metadata.append(
                     (block, full_rows, independent_rows, expansion)

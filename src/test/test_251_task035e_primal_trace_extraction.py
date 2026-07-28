@@ -95,6 +95,19 @@ def _owner_of_row(
     )
 
 
+def _balanced_ranges(
+    total: int,
+    size: int,
+) -> tuple[tuple[int, int], ...]:
+    counts = _balanced_counts(total, size)
+    start = 0
+    ranges = []
+    for count in counts:
+        ranges.append((start, start + count))
+        start += count
+    return tuple(ranges)
+
+
 def _constrained_system(
     comm: MPI.Comm,
 ) -> tuple[
@@ -134,11 +147,25 @@ def _constrained_system(
     active_values = np.concatenate(
         (
             full_trace,
-            np.asarray([7.0 + 1.0j, -3.0 + 2.0j]),
+            np.asarray(
+                [
+                    7.0 + 1.0j,
+                    -3.0 + 2.0j,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ],
+                dtype=np.complex128,
+            ),
         )
     )
     active = _distributed_vector(comm, active_values)
-    ranges = tuple(comm.allgather(active.getOwnershipRange()))
+    trace_work_ranges = _balanced_ranges(6, comm.size)
     blocks = []
     for block_index, expansion in enumerate(expansions):
         full_rows = np.arange(
@@ -157,7 +184,7 @@ def _constrained_system(
                 independent_rows=independent_rows,
                 full_from_independent=expansion,
                 active_vector_work_owner_rank=_owner_of_row(
-                    ranges,
+                    trace_work_ranges,
                     int(full_rows[0]),
                 ),
             )
@@ -178,7 +205,7 @@ def _constrained_system(
         matrix=_matrix(comm, 6),
         entity_map=SimpleNamespace(
             mesh=SimpleNamespace(comm=comm),
-            active_rows=8,
+            active_rows=len(active_values),
             active_trace_rows=6,
         ),
         trace_constraints=constraints,
@@ -338,6 +365,12 @@ def test_mpi8_opt_in_owner_routed_primal_trace_fixture() -> None:
     if comm.size != 8:
         pytest.skip("formal owner-routed fixture requires MPI8")
     system, active, independent, auxiliary = _constrained_system(comm)
+    input_ranges = tuple(comm.allgather(active.getOwnershipRange()))
+    assert any(
+        block.active_vector_work_owner_rank
+        != _owner_of_row(input_ranges, int(block.full_rows[0]))
+        for block in system.trace_constraints.entity_blocks.values()
+    )
     reduced, audit = _reduction(system).extract_primal_to_reduced(
         active,
         auxiliary_reduced_values=auxiliary,

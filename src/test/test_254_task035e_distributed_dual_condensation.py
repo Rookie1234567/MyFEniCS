@@ -78,6 +78,19 @@ def _owner_of_row(
     )
 
 
+def _balanced_ranges(
+    total: int,
+    size: int,
+) -> tuple[tuple[int, int], ...]:
+    counts = _balanced_counts(total, size)
+    start = 0
+    ranges = []
+    for count in counts:
+        ranges.append((start, start + count))
+        start += count
+    return tuple(ranges)
+
+
 def _constrained_fixture(
     comm: MPI.Comm,
 ) -> tuple[SimpleNamespace, PETSc.Vec, dict[str, object]]:
@@ -98,6 +111,7 @@ def _constrained_fixture(
     )
     active = _distributed_vector(comm, active_values)
     ranges = tuple(comm.allgather(active.getOwnershipRange()))
+    trace_work_ranges = _balanced_ranges(6, comm.size)
     expansions = (
         np.asarray(
             [
@@ -129,7 +143,7 @@ def _constrained_fixture(
                 independent_rows=np.asarray([0, 1], dtype=np.int64),
                 full_from_independent=expansion,
                 active_vector_work_owner_rank=_owner_of_row(
-                    ranges,
+                    trace_work_ranges,
                     int(full_rows[0]),
                 ),
             )
@@ -541,6 +555,12 @@ def test_mpi8_opt_in_matches_old_dense_reference() -> None:
         pytest.skip("formal distributed dual-condensation fixture requires MPI8")
     for side in ("right", "left"):
         system, active, reference = _constrained_fixture(comm)
+        input_ranges = tuple(comm.allgather(active.getOwnershipRange()))
+        assert any(
+            block.active_vector_work_owner_rank
+            != _owner_of_row(input_ranges, int(block.full_rows[0]))
+            for block in reference["blocks"]
+        )
         with mock.patch.object(
             variable_p_assembly,
             "_global_active_vector_values",

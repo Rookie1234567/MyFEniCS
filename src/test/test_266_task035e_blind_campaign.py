@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import stat
 import sys
 from typing import Callable
+from types import SimpleNamespace
+from unittest import mock
 
 import pytest
 
+from benchmarks import task035e_blind_campaign as blind_campaign
 from benchmarks.task035e_blind_campaign import (
     BlindCampaignError,
     BlindCampaignIdentity,
@@ -16,6 +20,7 @@ from benchmarks.task035e_blind_campaign import (
     CampaignEvidenceError,
     CampaignIdentityDrift,
     CommandExecution,
+    SubprocessCommandRunner,
     HeavyStageBusy,
     PreparedStage,
     SingleHeavyLock,
@@ -33,6 +38,38 @@ from benchmarks.task035e_blind_campaign import (
 
 SOURCE_SHA = "a" * 40
 ABI_SHA = "b" * 64
+
+
+def test_subprocess_runner_passes_explicit_activation_environment(
+    tmp_path: Path,
+) -> None:
+    attempt_dir = tmp_path / "attempt"
+    attempt_dir.mkdir()
+    record = attempt_dir / "watchdog.json"
+    attempt = SimpleNamespace(
+        attempt_dir=attempt_dir,
+        record_process=mock.Mock(),
+    )
+    process = SimpleNamespace(
+        pid=os.getpid(),
+        wait=mock.Mock(return_value=0),
+        kill=mock.Mock(),
+    )
+    with mock.patch.object(
+        blind_campaign.subprocess,
+        "Popen",
+        return_value=process,
+    ) as popen:
+        execution = SubprocessCommandRunner()(
+            ("python", "--record", str(record)),
+            attempt=attempt,
+            invocation_index=0,
+            argv_sha256="c" * 64,
+        )
+    assert execution.exit_code == 0
+    environment = popen.call_args.kwargs["env"]
+    assert environment == dict(os.environ)
+    assert environment is not os.environ
 
 
 def _private_file(path: Path, payload: bytes = b"{}\n") -> Path:
