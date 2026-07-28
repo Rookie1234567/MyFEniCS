@@ -1,5 +1,9 @@
 # Task001 照明 DOE 与局部可辨识性
 
+> M9 V3 状态：独立 Full3D p4/h10 reference 已确认 F2--F5 的 P 配置物理有效，但当前
+> Hybrid P 路径仍未通过原 Gate。下述既有 S-only pilot 结果保持为历史证据，不能据此启动
+> Task002；P 也不能在当前 Hybrid 实现中提升为正式 dataset configuration。
+
 ## 参数角色
 
 `configuration` 是实验人员可选择的波长/角度/偏振；`geometry` 是反演算法要估计的

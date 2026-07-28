@@ -1,0 +1,14 @@
+{
+  "schema_version": "task001.case111-expected.v1",
+  "checkpoint_status": "controlled_stop_incomplete",
+  "f1_trace_coordinate_repair": true,
+  "f1_original_trace_gate_threshold_unchanged": true,
+  "exact_variational_traction_dual_available": true,
+  "propagation_traction_reconstruction_beta_audited": true,
+  "modal_middle_volume_flux_consistency": true,
+  "direct_full3d_f2_f5_energy_gate_pass": true,
+  "hybrid_p_f2_f5_formal_gate_pass": false,
+  "all_five_failures_corrected": false,
+  "task002_allowed": false,
+  "existing_37_pass_records_unchanged": true
+}

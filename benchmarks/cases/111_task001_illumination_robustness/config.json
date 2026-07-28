@@ -1,0 +1,23 @@
+{
+  "schema_version": "task001.case111-config.v1",
+  "task": "Task001 M9 five-configuration failure diagnosis",
+  "status": "controlled_stop_incomplete",
+  "implementation_checkpoint_sha": "13aba78c8ef4645a96871ceaf72eeb751b8eb401",
+  "formal_gates_changed": false,
+  "existing_case110_passes_rerun": false,
+  "failed_configurations": {
+    "F1": {"grazing_deg": 0.5, "azimuth_deg": 0.0, "polarization": "S"},
+    "F2": {"grazing_deg": 0.5, "azimuth_deg": 0.0, "polarization": "P"},
+    "F3": {"grazing_deg": 0.5, "azimuth_deg": 90.0, "polarization": "P"},
+    "F4": {"grazing_deg": 10.0, "azimuth_deg": 0.0, "polarization": "P"},
+    "F5": {"grazing_deg": 10.0, "azimuth_deg": 90.0, "polarization": "P"}
+  },
+  "diagnostic_axes": {
+    "modal_rank": [40, 80, 120, 160, 240, 320, 480, 576],
+    "surface_quadrature": [12, 14, 16, 18],
+    "formulation": ["standard", "static"],
+    "trace_basis": ["discrete", "continuous"],
+    "reference": "independent global Full3D p4/h10"
+  },
+  "forbidden_follow_on": ["Task002", "49-point generation", "surrogate training", "inversion"]
+}

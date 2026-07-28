@@ -1,5 +1,9 @@
 # Task002 多保真数据计划（冻结，未执行）
 
+> 阻塞状态（M9 V3）：本文件仅保存历史计划。F1 trace repair 已完成，但 F2--F5 的 Hybrid
+> P qualification 尚未解决；按用户指令暂停开发。不得据此启动 49 点生成、HF anchors、
+> surrogate fit 或 inversion。解除阻塞需要后续审阅与明确授权。
+
 ## 数据接口
 
 ```text
@@ -12,7 +16,7 @@ geometry:
   width_x_nm in [16,18]
 ```
 
-Task002 首版 configuration bundle 固定为 Task001 经 HF 确认的：
+原计划的 Task002 首版 configuration bundle 为 Task001 经 HF 确认的：
 
 ```text
 (10° grazing, 0° azimuth, S)

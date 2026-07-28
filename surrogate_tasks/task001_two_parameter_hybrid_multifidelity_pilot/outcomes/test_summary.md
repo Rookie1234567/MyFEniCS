@@ -1,5 +1,15 @@
 # Task001 测试汇总
 
+## M9 V3 checkpoint
+
+用户已暂停继续开发。本 checkpoint 的最终非 PDE 回归覆盖 Hybrid internal modes、augmented
+direct、field reconstruction、high-order components、static condensation、Task001
+foundation、Task035c runner gates 和 Case095/096 contracts：`68 passed in 96.21s`。
+Case111 JSON 均可解析，compileall 与 `git diff --check` 通过。
+
+这些测试证明诊断接口和既有合同没有回归，不等同于 F2--F5 正式 PDE Gate 通过。
+Case110 的 37 个 pass 没有重跑；没有启动 Task002 campaign。
+
 最终改动后的验证结果：
 
 | 验证 | 结果 |

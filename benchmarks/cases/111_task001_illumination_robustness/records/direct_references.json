@@ -1,0 +1,12 @@
+{
+  "schema_version": "task001.case111-direct-reference.v1",
+  "method": "independent global Full3D p4/h10, MPI2, static",
+  "zero_swap": true,
+  "configurations": {
+    "F2": {"artifact": "f2_direct_p4_h10_static_8bad51e", "reflection": 0.8584294766, "transmission": 0.0008331531, "absorption": 0.1407373703, "energy_closure_abs": 6.459e-13, "residual": 2.81e-13},
+    "F3": {"artifact": "f3_direct_p4_h10_static_2d21606", "reflection": 0.8609386234, "transmission": 0.00082811775, "absorption": 0.13823325884, "energy_closure_abs": 1.294e-12, "residual": 1.512e-13},
+    "F4": {"artifact": "f4_direct_p4_h10_static_2d21606", "reflection": 0.00183930167, "transmission": 0.59665798208, "absorption": 0.40150271625, "energy_closure_abs": 1.06e-12, "residual": 2.646e-12},
+    "F5": {"artifact": "f5_direct_p4_h10_static_2d21606", "reflection": 0.00181295631, "transmission": 0.60301099377, "absorption": 0.39517604992, "energy_closure_abs": 1.058e-12, "residual": 8.429e-13}
+  },
+  "conclusion": "F2-F5 are physically well posed; the remaining failure is specific to the Hybrid closure/representation path"
+}

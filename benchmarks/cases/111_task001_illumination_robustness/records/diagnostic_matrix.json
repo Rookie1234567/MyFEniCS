@@ -1,0 +1,43 @@
+{
+  "schema_version": "task001.case111-diagnostics.v1",
+  "status": "controlled_stop_incomplete",
+  "f1_quadrature": {
+    "artifact_prefix": "f1_diag_m40_q",
+    "surface_quadrature": [12, 14, 18],
+    "max_interior_trace_residual": [2.7773922910e-13, 2.9096397536e-13, 2.7773922910e-13],
+    "max_slave_trace_residual": 0.0,
+    "raw_reciprocal_consistency_max": 3.4e-16,
+    "original_gate_threshold": 1.0e-8,
+    "conclusion": "trace mapping is stable without relaxing the gate"
+  },
+  "f2_modal_rank": [
+    {"M": 40, "interface_e": 0.8929931, "energy_closure_abs": 0.000993836},
+    {"M": 80, "interface_e": 0.8928926, "energy_closure_abs": 0.00100617},
+    {"M": 120, "interface_e": 0.8928668, "energy_closure_abs": 0.00100994},
+    {"M": 160, "interface_e": 0.8928343, "energy_closure_abs": 0.00101120},
+    {"M": 240, "interface_e": 0.8890696},
+    {"M": 320, "interface_e": 0.8826026},
+    {"M": 480, "interface_e": 0.6036416, "energy_closure_abs": 0.00237386},
+    {"M": 576, "trace_basis": "continuous", "interface_e": 1.38e-8, "energy_closure_abs": 0.0017971, "peak_rss_gib": 6.30}
+  ],
+  "f2_short_middle": {
+    "artifact": "f2_diag_m576_i59_61_static_continuous_187e479",
+    "M": 576,
+    "interface_e": 2.447e-8,
+    "reflection": 0.8584886,
+    "transmission": 0.00083598,
+    "energy_closure_abs": 0.00015491,
+    "peak_rss_gib": 6.725,
+    "zero_swap": true
+  },
+  "middle_loss_audit": {
+    "artifact": "f2_diag_m120_i59_61_flux_static_continuous_d11004b",
+    "volume_loss": 0.0042349041179860734,
+    "poynting_flux_loss": 0.004234904117986632,
+    "difference": -5.59e-16,
+    "conclusion": "postprocessing absorption quadrature is not the energy mismatch root cause"
+  },
+  "standard_static_comparison": "roundoff-equivalent at M120",
+  "beta_identity": "propagation beta drives E reconstruction; selected traction beta drives H reconstruction; exact variational conormal dual is reported separately from the strong-density proxy",
+  "formal_gate_thresholds_changed": false
+}

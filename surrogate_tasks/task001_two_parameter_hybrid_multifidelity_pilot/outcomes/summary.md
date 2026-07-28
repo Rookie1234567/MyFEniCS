@@ -1,5 +1,13 @@
 # Task001 结果总览
 
+## M9 V3 受控停止更新
+
+用户已暂停进一步开发。F1 的 trace-map consistency 根因已修正；F2--F5 的独立 Full3D
+p4/h10 reference 全部通过 residual/energy Gate，确认 P 配置物理有效，但当前 Hybrid P
+路径仍未通过原 interface/energy Gate。因此本文件此前的 Task001“完成”表述只描述 M8/V2
+历史状态，不能解释为 M9 已完成。当前正式状态是 `controlled_stop_incomplete`，Task002
+继续阻塞。详见 `five_configuration_failure_correction.md` 与 `response_v3.md`。
+
 ## 结论
 
 Task001 完成了有限元前向封装、多保真资格化与局部可辨识性确认；没有生成

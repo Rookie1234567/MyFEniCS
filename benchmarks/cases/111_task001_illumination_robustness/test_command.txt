@@ -1,0 +1,7 @@
+XDG_CACHE_HOME=/tmp/myfenics-m9-cache MPLCONFIGDIR=/tmp/myfenics-m9-mpl TMPDIR=/tmp .venv/bin/python -m pytest -q src/test/test_38_task032_hybrid_internal_modes.py src/test/test_39_task032_hybrid_augmented_direct.py src/test/test_40_task032_hybrid_field_reconstruction.py src/test/test_53_task033_high_order_hybrid_components.py src/test/test_179_task035b_hybrid_static_condensation.py src/test/test_surrogate_task001_foundation.py src/test/test_181_task035c_p6_h10_runner_gates.py src/test/test_case095_compact_evidence_contract.py src/test/test_case096_compact_evidence_contract.py
+python -m json.tool benchmarks/cases/111_task001_illumination_robustness/config.json
+python -m json.tool benchmarks/cases/111_task001_illumination_robustness/expected.json
+python -m json.tool benchmarks/cases/111_task001_illumination_robustness/records/diagnostic_matrix.json
+python -m json.tool benchmarks/cases/111_task001_illumination_robustness/records/direct_references.json
+python -m compileall -q src/coupling/hybrid_internal_modes.py src/postprocessing/hybrid_field_reconstruction.py src/solvers/hybrid_fem_modal_augmented_direct.py benchmarks/run_task032_phase6_augmented.py
+git diff --check
