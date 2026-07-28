@@ -397,7 +397,29 @@ def _assemble_volume_p6_gradient(
             mode=PETSc.ScatterMode.FORWARD,
         )
         tangent = float(np.real(gradient.dot(direction)))
-        epsilon = 1.0e-7
+        field_norm = float(field.x.petsc_vec.norm())
+        direction_norm = float(direction.norm())
+        if (
+            not math.isfinite(field_norm)
+            or not math.isfinite(direction_norm)
+            or field_norm <= np.finfo(float).tiny
+            or direction_norm <= np.finfo(float).tiny
+        ):
+            raise RuntimeError(
+                "A_volume finite-difference field/direction norm is invalid"
+            )
+        # The absorption functional is exactly quadratic in the field, so a
+        # central difference has no truncation term.  Scale the perturbation
+        # to the distributed field norm instead of using a fixed 1e-7
+        # coefficient step: the latter makes J(E+h d)-J(E-h d) comparable to
+        # roundoff for the formal p6 field and spuriously destabilizes the
+        # derivative Gate.
+        finite_difference_relative_step = 1.0e-5
+        epsilon = (
+            finite_difference_relative_step
+            * field_norm
+            / direction_norm
+        )
         plus = fem.Function(space)
         minus = fem.Function(space)
         with direction.localForm() as local_direction:
@@ -447,7 +469,11 @@ def _assemble_volume_p6_gradient(
         ):
             raise RuntimeError(
                 "A_volume gradient finite-difference closure failed: "
-                f"relative={relative:.6e}"
+                f"relative={relative:.6e}, "
+                f"absolute={abs(tangent - finite_difference):.6e}, "
+                f"tangent={tangent:.6e}, "
+                f"finite_difference={finite_difference:.6e}, "
+                f"epsilon={epsilon:.6e}"
             )
     except Exception:
         gradient.destroy()
@@ -464,6 +490,12 @@ def _assemble_volume_p6_gradient(
         "finite_difference_tangent": finite_difference,
         "adjoint_convention_tangent": tangent,
         "finite_difference_relative_error": relative,
+        "finite_difference_relative_step": (
+            finite_difference_relative_step
+        ),
+        "finite_difference_absolute_step": epsilon,
+        "field_l2_norm": field_norm,
+        "direction_l2_norm": direction_norm,
         "material_coefficients": [
             {"tag": tag, "normalized_coefficient": coefficient}
             for tag, coefficient in coefficients

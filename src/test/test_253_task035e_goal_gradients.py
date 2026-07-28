@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from types import SimpleNamespace
 
 from mpi4py import MPI
 import numpy as np
@@ -9,6 +10,7 @@ from dolfinx import default_real_type, fem, mesh
 from basix.ufl import element
 
 from src.adaptivity.task035e_goal_gradients import (
+    _assemble_volume_p6_gradient,
     _oriented_physical_basis,
     _point_owners,
 )
@@ -101,6 +103,57 @@ def test_point_owner_catalog_closes_in_mpi() -> None:
     assert np.all(owners < comm.size)
     assert np.all(cells >= 0)
     assert audit["full_vector_python_allgather_used"] is False
+
+
+def test_volume_gradient_uses_field_scaled_quadratic_difference() -> None:
+    comm = MPI.COMM_WORLD
+    domain = mesh.create_unit_cube(
+        comm,
+        2,
+        2,
+        max(2, 2 * comm.size),
+        cell_type=mesh.CellType.hexahedron,
+    )
+    space = _space(domain)
+    field = fem.Function(space)
+    start = int(space.dofmap.index_map.local_range[0])
+    rows = start + np.arange(len(field.x.array), dtype=float)
+    field.x.array[:] = (
+        0.7 * np.cos(0.031 * (rows + 1.0))
+        + 0.4j * np.sin(0.047 * (rows + 1.0))
+    )
+    field.x.scatter_forward()
+    cell_map = domain.topology.index_map(domain.topology.dim)
+    owned_cells = np.arange(cell_map.size_local, dtype=np.int32)
+    cell_tags = mesh.meshtags(
+        domain,
+        domain.topology.dim,
+        owned_cells,
+        np.ones(len(owned_cells), dtype=np.int32),
+    )
+    view = SimpleNamespace(
+        field=field,
+        mesh_data=SimpleNamespace(
+            mesh=domain,
+            cell_tags=cell_tags,
+        ),
+        config=SimpleNamespace(
+            k0=0.35,
+            eps_grating=2.1 + 0.7j,
+            eps_substrate=1.4 + 0.0j,
+            tags=SimpleNamespace(grating=1, substrate=2),
+        ),
+        port_metrics={"incident_power_code_units": 1.3},
+    )
+    gradient, audit = _assemble_volume_p6_gradient(view)
+    try:
+        assert audit["finite_difference_relative_step"] == 1.0e-5
+        assert audit["finite_difference_absolute_step"] > 1.0e-7
+        assert audit["finite_difference_relative_error"] <= 2.0e-7
+        assert audit["field_l2_norm"] > 0.0
+        assert audit["direction_l2_norm"] > 0.0
+    finally:
+        gradient.destroy()
 
 
 def test_formal_builder_has_no_reference_or_endpoint_input() -> None:
