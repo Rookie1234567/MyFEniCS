@@ -911,6 +911,94 @@ def test_solver_gate_accepts_executed_initial_p4_p5_state() -> None:
     assert gate["pass"] is True, gate["failures"]
 
 
+def test_current_snapshot_gate_resolves_only_canonical_relative_shards(
+    tmp_path: Path,
+) -> None:
+    shard_rows = []
+    for rank in range(8):
+        shard = tmp_path / f"rank{rank:04d}.npz"
+        shard.write_bytes(f"rank-{rank}-snapshot".encode("ascii"))
+        shard.chmod(0o600)
+        shard_rows.append(
+            {
+                "rank": rank,
+                "path": shard.name,
+                "bytes": shard.stat().st_size,
+                "file_sha256": _sha(shard),
+            }
+        )
+    unsigned = {
+        "schema_version": "task035e.multigoal-current-live-snapshot.v1",
+        "status": "multigoal_current_live_snapshot_pass",
+        "pass": True,
+        "role": "current_blind_state",
+        "source_sha": SOURCE_SHA,
+        "trial_id": "path-a-cycle-2",
+        "cycle_index": 0,
+        "mpi_size": 8,
+        "formal_mpi8_qualified": True,
+        "plan_identity": {
+            "file_sha256": "8" * 64,
+            "payload_sha256": "1" * 64,
+            "forest_leaf_catalog_sha256": "2" * 64,
+            "cell_degree_plan_sha256": "3" * 64,
+        },
+        "shards": shard_rows,
+        "capability_credit": {
+            "current_primal_snapshot_complete": True,
+            "multi_goal_adjoint_complete": False,
+            "dwr_complete": False,
+            "local_h_transfer_complete": False,
+            "shadow_effectivity_complete": False,
+            "accuracy_credit": False,
+        },
+        "ordinary_default_changed": False,
+    }
+
+    def _manifest(payload: dict[str, object]) -> dict[str, object]:
+        manifest = json.loads(json.dumps(payload))
+        manifest["manifest_payload_sha256"] = (
+            _task035e_namespaced_json_sha256(
+                manifest,
+                namespace="task035e.multigoal-current-manifest.v1",
+            )
+        )
+        return manifest
+
+    evidence = tmp_path / "manifest.json"
+    payload = _manifest(unsigned)
+    evidence.write_text(
+        json.dumps(payload, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    evidence.chmod(0o600)
+    args = _parse_args(_cli(Path("/tmp/plan.json"), "8" * 64))
+    gate = _task035e_blind_live_role_evidence_gate(
+        args,
+        evidence_path=evidence,
+        payload=payload,
+    )
+    assert gate["pass"] is True, gate["failures"]
+
+    for escaped in (
+        str(tmp_path / "rank0000.npz"),
+        f"../{tmp_path.name}/rank0000.npz",
+    ):
+        malformed = json.loads(json.dumps(unsigned))
+        malformed["shards"][0]["path"] = escaped
+        malformed = _manifest(malformed)
+        malformed_gate = _task035e_blind_live_role_evidence_gate(
+            args,
+            evidence_path=evidence,
+            payload=malformed,
+        )
+        assert malformed_gate["pass"] is False
+        assert (
+            "eight_snapshot_shards_hash_bound"
+            in malformed_gate["failures"]
+        )
+
+
 def test_shadow_live_gate_accepts_sorted_json_goal_mapping(
     tmp_path: Path,
 ) -> None:

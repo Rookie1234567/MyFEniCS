@@ -3428,6 +3428,41 @@ def _validate_task035e_h5_factorization_authority(
     return gate
 
 
+def _task035e_snapshot_shard_path(
+    manifest_path: Path,
+    shard_value: Any,
+    *,
+    rank: int,
+) -> Path | None:
+    """Resolve one canonical shard basename beside its manifest.
+
+    Snapshot manifests deliberately store shard basenames instead of absolute
+    paths.  Resolve that contract relative to the manifest while rejecting
+    absolute paths, traversal, nested paths, non-canonical rank names, and
+    symlinks.
+    """
+
+    if not isinstance(shard_value, str):
+        return None
+    relative = Path(shard_value)
+    expected_name = f"rank{rank:04d}.npz"
+    if (
+        not shard_value
+        or relative.is_absolute()
+        or relative.name != shard_value
+        or shard_value != expected_name
+    ):
+        return None
+    directory = manifest_path.expanduser().resolve().parent
+    unresolved = directory / relative
+    if unresolved.is_symlink():
+        return None
+    resolved = unresolved.resolve()
+    if resolved.parent != directory:
+        return None
+    return resolved
+
+
 def _task035e_current_snapshot_launch_binding(
     args: argparse.Namespace,
     *,
@@ -3539,26 +3574,23 @@ def _task035e_current_snapshot_launch_binding(
     shard_rows = shard_rows if isinstance(shard_rows, list) else []
     shard_checks = []
     shard_ranks = []
-    snapshot_directory = resolved.parent
     for row in shard_rows if verify_shards else ():
         if not isinstance(row, Mapping):
             shard_checks.append(False)
             continue
-        shard_value = row.get("path")
-        shard_path = (
-            Path(shard_value).expanduser().resolve()
-            if isinstance(shard_value, str)
-            else None
-        )
         try:
             shard_rank = int(row.get("rank", -1))
         except (TypeError, ValueError):
             shard_rank = -1
+        shard_path = _task035e_snapshot_shard_path(
+            resolved,
+            row.get("path"),
+            rank=shard_rank,
+        )
         shard_ranks.append(shard_rank)
         shard_checks.append(
             bool(
                 shard_path is not None
-                and shard_path.parent == snapshot_directory
                 and shard_path.is_file()
                 and (shard_path.stat().st_mode & 0o777) == 0o600
                 and shard_path.stat().st_size == row.get("bytes")
@@ -5104,21 +5136,19 @@ def _task035e_blind_live_role_evidence_gate(
             if not isinstance(row, Mapping):
                 shard_checks.append(False)
                 continue
-            shard_value = row.get("path")
-            shard_path = (
-                Path(shard_value).expanduser().resolve()
-                if isinstance(shard_value, str)
-                else None
-            )
             try:
                 shard_rank = int(row.get("rank", -1))
             except (TypeError, ValueError):
                 shard_rank = -1
+            shard_path = _task035e_snapshot_shard_path(
+                evidence_path,
+                row.get("path"),
+                rank=shard_rank,
+            )
             shard_ranks.append(shard_rank)
             shard_checks.append(
                 bool(
                     shard_path is not None
-                    and shard_path.parent == evidence_path.parent
                     and shard_path.is_file()
                     and (shard_path.stat().st_mode & 0o777) == 0o600
                     and shard_path.stat().st_size == row.get("bytes")
