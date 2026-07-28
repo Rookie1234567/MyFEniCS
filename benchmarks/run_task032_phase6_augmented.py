@@ -924,8 +924,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 STANDARD_FULL_ASSEMBLY_BACKEND,
                 ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
             )
-            and math.isclose(args.bottom_interface_nm, 10.0)
-            and math.isclose(args.top_interface_nm, 110.0)
+            and (
+                (args.bottom_interface_nm, args.top_interface_nm)
+                in ((10.0, 110.0), (20.0, 100.0), (30.0, 90.0))
+            )
             and args.graded_reference_h is None
             and valid_hex_digest(args.verified_clean_sha, 40)
             and not args.allow_dirty_research
@@ -940,8 +942,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         if args.task001_m9_diagnostic_gate and not diagnostic_scoped:
             parser.error(
                 "Task001 M9 diagnostics require clean LF4/G00, MPI-scoped "
-                "controlled M<=576 with an exact 2M pool, standard/static "
-                "memory-minimal solve and explicit axial model identity."
+                "controlled M<=576 with an exact 2M pool, reviewed symmetric "
+                "interface diagnostics, standard/static memory-minimal solve "
+                "and explicit axial model identity."
             )
     elif any(
         value is not None
