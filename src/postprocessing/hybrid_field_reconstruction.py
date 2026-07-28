@@ -301,8 +301,16 @@ class ModalFieldReconstructor:
         self._magnetic_scratch = fem.Function(
             self._magnetic_space, name="task032_middle_mode_H_A_per_m"
         )
+        self._magnetic_total = fem.Function(
+            self._magnetic_space, name="task001_middle_modal_H_total_A_per_m"
+        )
         self._total = fem.Function(spaces.mixed, name="task032_middle_modal_E_total")
         Et, Ez = ufl.split(self._total)
+        middle_power_density = 0.5 * (
+            Et[0] * ufl.conj(self._magnetic_total[1])
+            - Et[1] * ufl.conj(self._magnetic_total[0])
+        ) / float(cfg.magnetic_field_scale_A_per_m)
+        self._middle_power_form = fem.form(middle_power_density * ufl.dx)
         electric = ufl.as_vector((Et[0], Et[1], Ez))
         density = (
             0.5
@@ -876,12 +884,61 @@ class ModalFieldReconstructor:
         total = float(
             self.cross_section.mesh.comm.allreduce(local_integral, op=MPI.SUM)
         )
+        bottom_flux = self.cross_section_power_code_units(
+            modal_amplitudes, self.bottom_z_nm
+        )
+        top_flux = self.cross_section_power_code_units(
+            modal_amplitudes, self.top_z_nm
+        )
+        flux_loss = float(bottom_flux - top_flux)
         return {
             "absorbed_power_code_units": max(total, 0.0),
             "z_cell_count": int(len(breaks) - 1),
             "gauss_order_per_z_cell": int(gauss_order),
             "z_evaluation_count": int(evaluations),
+            "bottom_positive_z_power_code_units": float(bottom_flux),
+            "top_positive_z_power_code_units": float(top_flux),
+            "poynting_flux_loss_code_units": flux_loss,
+            "volume_minus_poynting_flux_loss_code_units": float(total - flux_loss),
         }
+
+    def cross_section_power_code_units(
+        self,
+        modal_amplitudes: Sequence[complex],
+        z_nm: float,
+    ) -> float:
+        """Assemble the total modal positive-z Poynting flux on one plane."""
+
+        coefficients = self.coefficients_at_z(modal_amplitudes, float(z_nm))
+        positive_beta, negative_beta = self._effective_traction_betas()
+        magnetic_betas = np.concatenate((positive_beta, negative_beta))
+        self._total.x.petsc_vec.set(0.0)
+        self._magnetic_total.x.petsc_vec.set(0.0)
+        for coefficient, mode, beta in zip(
+            coefficients, self._modes, magnetic_betas
+        ):
+            self._total.x.petsc_vec.axpy(
+                PETSc.ScalarType(coefficient), mode.right.right_full
+            )
+            mode.right.right_full.copy(self._sample_source.x.petsc_vec)
+            self._sample_source.x.scatter_forward()
+            try:
+                self._magnetic_beta.value[...] = PETSc.ScalarType(beta)
+            except Exception:
+                self._magnetic_beta.value = PETSc.ScalarType(beta)
+            self._magnetic_scratch.interpolate(self._magnetic_expression)
+            self._magnetic_scratch.x.scatter_forward()
+            self._magnetic_total.x.petsc_vec.axpy(
+                PETSc.ScalarType(coefficient),
+                self._magnetic_scratch.x.petsc_vec,
+            )
+        self._total.x.scatter_forward()
+        self._magnetic_total.x.scatter_forward()
+        local = complex(fem.assemble_scalar(self._middle_power_form))
+        total = complex(
+            self.cross_section.mesh.comm.allreduce(local, op=MPI.SUM)
+        )
+        return float(total.real)
 
 
 def interface_field_continuity(
