@@ -216,6 +216,119 @@ def _constrained_system(
     return system, active, independent, auxiliary
 
 
+def _wide_root_anchor_system(
+    comm: MPI.Comm,
+) -> tuple[
+    SimpleNamespace,
+    PETSc.Vec,
+    np.ndarray,
+    np.ndarray,
+]:
+    independent = np.asarray(
+        [1.0 + 0.2j, -0.3 + 0.4j, 0.8 - 0.1j],
+        dtype=np.complex128,
+    )
+    root_rows = ("root-0", "root-1", "root-2")
+    root_transform = np.asarray(
+        [
+            [0.0 + 0.0j, 1.0j],
+            [1.0 + 0.0j, 0.0 + 0.0j],
+        ],
+        dtype=np.complex128,
+    )
+    root_physical = np.eye(2, dtype=np.complex128)
+    final_root_physical = np.ones((1, 1), dtype=np.complex128)
+    slave_physical = np.asarray(
+        [
+            [0.5 + 0.2j, 0.0 - 0.25j, 0.4 + 0.1j],
+            [-0.2 + 0.1j, 0.75 + 0.0j, -0.1 + 0.3j],
+        ],
+        dtype=np.complex128,
+    )
+    block_data = (
+        (
+            np.arange(0, 2, dtype=np.int64),
+            np.arange(0, 2, dtype=np.int64),
+            root_transform,
+            root_physical,
+            (root_rows[0], root_rows[1]),
+        ),
+        (
+            np.arange(2, 3, dtype=np.int64),
+            np.arange(2, 3, dtype=np.int64),
+            np.eye(1, dtype=np.complex128),
+            final_root_physical,
+            (root_rows[2],),
+        ),
+        (
+            np.arange(3, 5, dtype=np.int64),
+            np.arange(0, 3, dtype=np.int64),
+            np.eye(2, dtype=np.complex128),
+            slave_physical,
+            ("slave-0", "slave-1"),
+        ),
+    )
+    trace_work_ranges = _balanced_ranges(5, comm.size)
+    blocks = []
+    full_values = []
+    for (
+        full_rows,
+        independent_rows,
+        transform,
+        physical_expansion,
+        physical_rows,
+    ) in block_data:
+        expansion = transform @ physical_expansion
+        full_values.append(expansion @ independent[independent_rows])
+        blocks.append(
+            SimpleNamespace(
+                full_rows=full_rows,
+                independent_rows=independent_rows,
+                full_from_independent=expansion,
+                physical_from_independent=physical_expansion,
+                canonical_to_dolfinx=transform,
+                physical_entity=SimpleNamespace(rows=physical_rows),
+                active_vector_work_owner_rank=_owner_of_row(
+                    trace_work_ranges,
+                    int(full_rows[0]),
+                ),
+            )
+        )
+    work_blocks = tuple(
+        block
+        for block in blocks
+        if block.active_vector_work_owner_rank == comm.rank
+    )
+    constraints = SimpleNamespace(
+        independent_trace_rows=3,
+        authority=SimpleNamespace(
+            graph=SimpleNamespace(root_rows=root_rows)
+        ),
+        entity_blocks={
+            index: block for index, block in enumerate(blocks)
+        },
+        work_owned_entity_blocks=work_blocks,
+    )
+    system = SimpleNamespace(
+        matrix=_matrix(comm, 5),
+        entity_map=SimpleNamespace(
+            mesh=SimpleNamespace(comm=comm),
+            active_rows=5,
+            active_trace_rows=5,
+        ),
+        trace_constraints=constraints,
+        active_trace_rows=3,
+        appended_rows=2,
+    )
+    auxiliary = np.asarray([9.0 + 1.0j, 8.0 - 2.0j])
+    return (
+        system,
+        _distributed_vector(comm, np.concatenate(full_values)),
+        independent,
+        auxiliary,
+    )
+
+
 def _reduction(system: SimpleNamespace) -> VariablePAssemblyTimeReduction:
     return VariablePAssemblyTimeReduction(
         system=system,
@@ -301,6 +414,63 @@ def test_constrained_primal_uses_stable_left_inverse_and_roundtrip() -> None:
         assert audit["active_selected_rows"]["full_vector_allgather_used"] is False
     finally:
         reduced.destroy()
+        active.destroy()
+        system.matrix.destroy()
+
+
+def test_physical_root_anchors_support_wide_slave_block() -> None:
+    system, active, independent, auxiliary = _wide_root_anchor_system(
+        MPI.COMM_SELF
+    )
+    reduced, audit = _reduction(system).extract_primal_to_reduced(
+        active,
+        auxiliary_reduced_values=auxiliary,
+    )
+    try:
+        assert np.allclose(
+            _global_values(reduced),
+            np.concatenate((independent, auxiliary)),
+            rtol=2.0e-14,
+            atol=2.0e-14,
+        )
+        assert audit["physical_root_anchor_mode"] is True
+        assert audit["left_inverse_method"] == (
+            "physical_root_anchor_plus_global_constraint_roundtrip"
+        )
+        assert audit["left_inverse_block_count_global"] == 0
+        assert audit["physical_root_anchor_row_count_global"] == 3
+        assert audit["wide_constraint_block_count_global"] == 1
+        assert audit["slave_blocks_validated_by_global_roundtrip"] is True
+        assert audit["independent_rows_exactly_once"] is True
+        assert audit["global_roundtrip_relative_l2"] <= 5.0e-10
+        assert audit["full_vector_allgather_used"] is False
+    finally:
+        reduced.destroy()
+        active.destroy()
+        system.matrix.destroy()
+
+
+def test_physical_root_anchor_roundtrip_rejects_nonconforming_slave() -> None:
+    system, active, _independent, auxiliary = _wide_root_anchor_system(
+        MPI.COMM_SELF
+    )
+    active.setValue(
+        4,
+        active.getValue(4) + PETSc.ScalarType(0.25 - 0.1j),
+        addv=PETSc.InsertMode.INSERT_VALUES,
+    )
+    active.assemble()
+    try:
+        with pytest.raises(
+            RuntimeError,
+            match="physical-root primal trace round trip failed",
+        ):
+            extract_variable_p_active_primal_to_reduced(
+                system,
+                active,
+                auxiliary_reduced_values=auxiliary,
+            )
+    finally:
         active.destroy()
         system.matrix.destroy()
 
@@ -402,3 +572,27 @@ def test_mpi8_opt_in_owner_routed_primal_trace_fixture() -> None:
         reduced.destroy()
         active.destroy()
         system.matrix.destroy()
+
+    wide_system, wide_active, wide_independent, wide_auxiliary = (
+        _wide_root_anchor_system(comm)
+    )
+    wide_reduced, wide_audit = _reduction(
+        wide_system
+    ).extract_primal_to_reduced(
+        wide_active,
+        auxiliary_reduced_values=wide_auxiliary,
+    )
+    try:
+        assert np.allclose(
+            _global_values(wide_reduced),
+            np.concatenate((wide_independent, wide_auxiliary)),
+            rtol=2.0e-14,
+            atol=2.0e-14,
+        )
+        assert wide_audit["physical_root_anchor_mode"] is True
+        assert wide_audit["wide_constraint_block_count_global"] == 1
+        assert wide_audit["independent_rows_exactly_once"] is True
+    finally:
+        wide_reduced.destroy()
+        wide_active.destroy()
+        wide_system.matrix.destroy()

@@ -2217,8 +2217,14 @@ def extract_variable_p_active_primal_to_reduced(
     ``condense_variable_p_active_vector_to_trace`` transforms a dual vector
     and therefore applies conjugate-transpose constraint and interior-Schur
     actions.  A recovered primal field needs the inverse operation on its
-    trace: for each physical entity block solve ``C q = u_full`` and place
-    ``q`` directly in the independent reduced coordinates.
+    trace.  A physical root row is an exact coordinate anchor, so the
+    production broken-hexahedron path first removes the DOLFINx entity
+    orientation, extracts every root exactly once, and then validates every
+    root and slave entity through a global constraint round trip.  This is
+    essential for hanging entities whose local expansion is legitimately
+    wider than its full row block and therefore has no unique blockwise left
+    inverse.  Legacy constraint fixtures without physical root metadata retain
+    the original full-column-rank blockwise inverse.
     """
 
     _validate_vector_communicator(
@@ -2235,6 +2241,8 @@ def extract_variable_p_active_primal_to_reduced(
         raise ValueError("primal trace round-trip tolerance must be positive")
     comm = system.entity_map.mesh.comm
     structural_error = None
+    root_anchor_mode = False
+    root_index: dict[Any, int] = {}
     try:
         constraints = system.trace_constraints
         if (
@@ -2262,27 +2270,63 @@ def extract_variable_p_active_primal_to_reduced(
             raise ValueError(
                 "constraint independent-row count does not match the system"
             )
+        if constraints is not None:
+            authority = getattr(constraints, "authority", None)
+            graph = getattr(authority, "graph", None)
+            graph_root_rows = getattr(graph, "root_rows", None)
+            if graph_root_rows is not None:
+                root_rows = tuple(graph_root_rows)
+                if len(root_rows) != system.active_trace_rows:
+                    raise ValueError(
+                        "physical root-row count does not match the system"
+                    )
+                root_index = {
+                    row: index for index, row in enumerate(root_rows)
+                }
+                if len(root_index) != len(root_rows):
+                    raise ValueError(
+                        "physical root-row authority contains duplicates"
+                    )
+                root_anchor_mode = True
     except (AttributeError, TypeError, ValueError) as exc:
         constraints = None
         structural_error = f"{type(exc).__name__}: {exc}"
     structural_packets = comm.allgather(
-        (structural_error, float(roundtrip_tolerance))
+        (
+            structural_error,
+            float(roundtrip_tolerance),
+            bool(root_anchor_mode),
+        )
     )
     structural_failures = [
         f"rank {rank}: {error}"
-        for rank, (error, _tolerance) in enumerate(structural_packets)
+        for rank, (error, _tolerance, _root_anchor_mode) in enumerate(
+            structural_packets
+        )
         if error is not None
     ]
     tolerances = {
         tolerance
-        for error, tolerance in structural_packets
+        for error, tolerance, _root_anchor_mode in structural_packets
         if error is None
     }
-    if structural_failures or len(tolerances) != 1:
+    root_anchor_modes = {
+        mode
+        for error, _tolerance, mode in structural_packets
+        if error is None
+    }
+    if (
+        structural_failures
+        or len(tolerances) != 1
+        or len(root_anchor_modes) != 1
+    ):
         detail = (
             structural_failures
             if structural_failures
-            else ["MPI ranks supplied different round-trip tolerances"]
+            else [
+                "MPI ranks supplied different round-trip tolerances or "
+                "root-anchor modes"
+            ]
         )
         raise ValueError(
             "collective primal trace system validation failed: "
@@ -2358,7 +2402,16 @@ def extract_variable_p_active_primal_to_reduced(
     block_error = None
     blocks: tuple[Any, ...] = ()
     block_metadata: list[
-        tuple[Any, np.ndarray, np.ndarray, np.ndarray]
+        tuple[
+            Any,
+            np.ndarray,
+            np.ndarray,
+            np.ndarray,
+            np.ndarray,
+            np.ndarray,
+            np.ndarray,
+            np.ndarray,
+        ]
     ] = []
     try:
         if constraints is not None:
@@ -2418,6 +2471,124 @@ def extract_variable_p_active_primal_to_reduced(
                     raise ValueError(
                         "one primal trace block expansion is non-finite"
                     )
+                anchor_positions = np.empty(0, dtype=np.int64)
+                anchor_rows = np.empty(0, dtype=np.int64)
+                physical_expansion = np.empty(
+                    (0, 0),
+                    dtype=np.complex128,
+                )
+                canonical_to_dolfinx = np.empty(
+                    (0, 0),
+                    dtype=np.complex128,
+                )
+                if root_anchor_mode:
+                    physical_rows = tuple(block.physical_entity.rows)
+                    physical_expansion = np.asarray(
+                        block.physical_from_independent,
+                        dtype=np.complex128,
+                    )
+                    canonical_to_dolfinx = np.asarray(
+                        block.canonical_to_dolfinx,
+                        dtype=np.complex128,
+                    )
+                    if (
+                        len(physical_rows) != len(full_rows)
+                        or physical_expansion.shape != expansion.shape
+                        or canonical_to_dolfinx.shape
+                        != (len(full_rows), len(full_rows))
+                        or not np.all(np.isfinite(physical_expansion))
+                        or not np.all(np.isfinite(canonical_to_dolfinx))
+                    ):
+                        raise ValueError(
+                            "one physical primal trace block has invalid "
+                            "root metadata"
+                        )
+                    tolerance = (
+                        256.0
+                        * np.finfo(np.float64).eps
+                        * max(1, len(full_rows), len(independent_rows))
+                    )
+                    identity = np.eye(
+                        len(full_rows),
+                        dtype=np.complex128,
+                    )
+                    orthogonality_error = float(
+                        np.max(
+                            np.abs(
+                                canonical_to_dolfinx.conj().T
+                                @ canonical_to_dolfinx
+                                - identity
+                            ),
+                            initial=0.0,
+                        )
+                    )
+                    binding_error = float(
+                        np.max(
+                            np.abs(
+                                canonical_to_dolfinx
+                                @ physical_expansion
+                                - expansion
+                            ),
+                            initial=0.0,
+                        )
+                    )
+                    if (
+                        orthogonality_error > tolerance
+                        or binding_error > tolerance
+                    ):
+                        raise ValueError(
+                            "one physical primal trace block has an "
+                            "inconsistent orientation binding"
+                        )
+                    selected_positions: list[int] = []
+                    selected_rows: list[int] = []
+                    for physical_position, physical_row in enumerate(
+                        physical_rows
+                    ):
+                        root_row = root_index.get(physical_row)
+                        if root_row is None:
+                            continue
+                        local_columns = np.flatnonzero(
+                            independent_rows == root_row
+                        )
+                        if len(local_columns) != 1:
+                            raise ValueError(
+                                "one physical root anchor does not have one "
+                                "independent block column"
+                            )
+                        expected = np.zeros(
+                            len(independent_rows),
+                            dtype=np.complex128,
+                        )
+                        expected[int(local_columns[0])] = 1.0
+                        if (
+                            float(
+                                np.max(
+                                    np.abs(
+                                        physical_expansion[
+                                            physical_position
+                                        ]
+                                        - expected
+                                    ),
+                                    initial=0.0,
+                                )
+                            )
+                            > tolerance
+                        ):
+                            raise ValueError(
+                                "one physical root anchor is not an exact "
+                                "independent coordinate"
+                            )
+                        selected_positions.append(physical_position)
+                        selected_rows.append(root_row)
+                    anchor_positions = np.asarray(
+                        selected_positions,
+                        dtype=np.int64,
+                    )
+                    anchor_rows = np.asarray(
+                        selected_rows,
+                        dtype=np.int64,
+                    )
                 if routed_blocks is not None:
                     if (
                         int(block.active_vector_work_owner_rank)
@@ -2428,7 +2599,16 @@ def extract_variable_p_active_primal_to_reduced(
                             "wrong trace-work owner"
                         )
                 block_metadata.append(
-                    (block, full_rows, independent_rows, expansion)
+                    (
+                        block,
+                        full_rows,
+                        independent_rows,
+                        expansion,
+                        anchor_positions,
+                        anchor_rows,
+                        physical_expansion,
+                        canonical_to_dolfinx,
+                    )
                 )
     except (AttributeError, TypeError, ValueError, RuntimeError) as exc:
         block_error = f"{type(exc).__name__}: {exc}"
@@ -2459,7 +2639,12 @@ def extract_variable_p_active_primal_to_reduced(
     local_maximum_condition = 0.0
     local_minimum_singular = np.inf
     local_left_inverse_count = 0
+    local_root_anchor_block_count = 0
+    local_root_anchor_row_count = 0
+    local_wide_constraint_block_count = 0
+    retained_full_values: list[np.ndarray] = []
     selected_audit: dict[str, Any]
+    reduced_selected_audit: dict[str, Any] | None = None
     solve_error = None
     if constraints is None:
         start = max(input_start, 0)
@@ -2503,85 +2688,126 @@ def extract_variable_p_active_primal_to_reduced(
                     full_rows,
                     independent_rows,
                     expansion,
+                    anchor_positions,
+                    anchor_rows,
+                    _physical_expansion,
+                    canonical_to_dolfinx,
                 ) in block_metadata:
                     full_values = selected_values[
                         layout.positions(full_rows)
-                    ]
-                    solution, _residuals, rank, singular_values = (
-                        np.linalg.lstsq(
+                    ].copy()
+                    raw_coverage_local[full_rows] += 1
+                    if root_anchor_mode:
+                        canonical_values = (
+                            canonical_to_dolfinx.conj().T @ full_values
+                        )
+                        if not np.all(np.isfinite(canonical_values)):
+                            raise RuntimeError(
+                                "one physical root extraction is non-finite"
+                            )
+                        independent_coverage_local[anchor_rows] += 1
+                        pending_values.append(
+                            (
+                                anchor_rows,
+                                canonical_values[
+                                    anchor_positions
+                                ].copy(),
+                            )
+                        )
+                        retained_full_values.append(full_values)
+                        local_root_anchor_block_count += int(
+                            len(anchor_rows) > 0
+                        )
+                        local_root_anchor_row_count += len(anchor_rows)
+                        local_wide_constraint_block_count += int(
+                            len(independent_rows) > len(full_rows)
+                        )
+                    else:
+                        (
+                            solution,
+                            _residuals,
+                            rank,
+                            singular_values,
+                        ) = np.linalg.lstsq(
                             expansion,
                             full_values,
                             rcond=None,
                         )
-                    )
-                    if int(rank) != len(independent_rows):
-                        raise RuntimeError(
-                            "one primal trace block left inverse is rank "
-                            "deficient"
+                        if int(rank) != len(independent_rows):
+                            raise RuntimeError(
+                                "one primal trace block left inverse is rank "
+                                "deficient"
+                            )
+                        solution = np.asarray(
+                            solution,
+                            dtype=np.complex128,
                         )
-                    solution = np.asarray(
-                        solution,
-                        dtype=np.complex128,
-                    )
-                    if not np.all(np.isfinite(solution)):
-                        raise RuntimeError(
-                            "one primal trace block left inverse is non-finite"
+                        if not np.all(np.isfinite(solution)):
+                            raise RuntimeError(
+                                "one primal trace block left inverse is "
+                                "non-finite"
+                            )
+                        roundtrip = expansion @ solution
+                        error = roundtrip - full_values
+                        error_norm = float(np.linalg.norm(error))
+                        reference_norm = float(
+                            np.linalg.norm(full_values)
                         )
-                    roundtrip = expansion @ solution
-                    error = roundtrip - full_values
-                    error_norm = float(np.linalg.norm(error))
-                    reference_norm = float(np.linalg.norm(full_values))
-                    relative = (
-                        error_norm
-                        / max(reference_norm, np.finfo(np.float64).tiny)
-                    )
-                    maximum_error = float(
-                        np.max(np.abs(error), initial=0.0)
-                    )
-                    if relative > float(roundtrip_tolerance):
-                        raise RuntimeError(
-                            "one primal trace block is not conforming: "
-                            f"relative round-trip={relative:.6e}"
+                        relative = (
+                            error_norm
+                            / max(
+                                reference_norm,
+                                np.finfo(np.float64).tiny,
+                            )
                         )
-                    singular_values = np.asarray(
-                        singular_values,
-                        dtype=np.float64,
-                    )
-                    minimum_singular = float(
-                        np.min(singular_values, initial=np.inf)
-                    )
-                    maximum_singular = float(
-                        np.max(singular_values, initial=0.0)
-                    )
-                    condition = (
-                        maximum_singular / minimum_singular
-                        if minimum_singular > 0.0
-                        else np.inf
-                    )
-                    raw_coverage_local[full_rows] += 1
-                    independent_coverage_local[independent_rows] += 1
-                    pending_values.append(
-                        (independent_rows, solution.copy())
-                    )
-                    local_error_sq += error_norm**2
-                    local_reference_sq += reference_norm**2
-                    local_maximum_error = max(
-                        local_maximum_error,
-                        maximum_error,
-                    )
-                    local_maximum_relative = max(
-                        local_maximum_relative,
-                        relative,
-                    )
-                    local_maximum_condition = max(
-                        local_maximum_condition,
-                        condition,
-                    )
-                    local_minimum_singular = min(
-                        local_minimum_singular,
-                        minimum_singular,
-                    )
-                    local_left_inverse_count += 1
+                        maximum_error = float(
+                            np.max(np.abs(error), initial=0.0)
+                        )
+                        if relative > float(roundtrip_tolerance):
+                            raise RuntimeError(
+                                "one primal trace block is not conforming: "
+                                f"relative round-trip={relative:.6e}"
+                            )
+                        singular_values = np.asarray(
+                            singular_values,
+                            dtype=np.float64,
+                        )
+                        minimum_singular = float(
+                            np.min(singular_values, initial=np.inf)
+                        )
+                        maximum_singular = float(
+                            np.max(singular_values, initial=0.0)
+                        )
+                        condition = (
+                            maximum_singular / minimum_singular
+                            if minimum_singular > 0.0
+                            else np.inf
+                        )
+                        independent_coverage_local[
+                            independent_rows
+                        ] += 1
+                        pending_values.append(
+                            (independent_rows, solution.copy())
+                        )
+                        local_error_sq += error_norm**2
+                        local_reference_sq += reference_norm**2
+                        local_maximum_error = max(
+                            local_maximum_error,
+                            maximum_error,
+                        )
+                        local_maximum_relative = max(
+                            local_maximum_relative,
+                            relative,
+                        )
+                        local_maximum_condition = max(
+                            local_maximum_condition,
+                            condition,
+                        )
+                        local_minimum_singular = min(
+                            local_minimum_singular,
+                            minimum_singular,
+                        )
+                        local_left_inverse_count += 1
             except (ValueError, RuntimeError, np.linalg.LinAlgError) as exc:
                 solve_error = f"{type(exc).__name__}: {exc}"
     solve_errors = comm.allgather(solve_error)
@@ -2632,6 +2858,74 @@ def extract_variable_p_active_primal_to_reduced(
                 np.asarray(values, dtype=PETSc.ScalarType),
                 addv=PETSc.InsertMode.INSERT_VALUES,
             )
+        target.assemble()
+        if constraints is not None and root_anchor_mode:
+            requested_independent_rows = np.concatenate(
+                [metadata[2] for metadata in block_metadata]
+                or [np.empty(0, dtype=np.int64)]
+            )
+            roundtrip_error = None
+            with PETScSelectedRowLayout.create(
+                target,
+                requested_independent_rows,
+            ) as reduced_layout:
+                selected_independent = reduced_layout.gather(target)
+                reduced_selected_audit = dict(reduced_layout.audit)
+                try:
+                    for metadata, full_values in zip(
+                        block_metadata,
+                        retained_full_values,
+                        strict=True,
+                    ):
+                        independent_rows = metadata[2]
+                        expansion = metadata[3]
+                        independent_values = selected_independent[
+                            reduced_layout.positions(independent_rows)
+                        ]
+                        roundtrip = expansion @ independent_values
+                        error = roundtrip - full_values
+                        error_norm = float(np.linalg.norm(error))
+                        reference_norm = float(
+                            np.linalg.norm(full_values)
+                        )
+                        relative = (
+                            error_norm
+                            / max(
+                                reference_norm,
+                                np.finfo(np.float64).tiny,
+                            )
+                        )
+                        maximum_error = float(
+                            np.max(np.abs(error), initial=0.0)
+                        )
+                        if relative > float(roundtrip_tolerance):
+                            raise RuntimeError(
+                                "one primal trace block is not conforming: "
+                                f"relative round-trip={relative:.6e}"
+                            )
+                        local_error_sq += error_norm**2
+                        local_reference_sq += reference_norm**2
+                        local_maximum_error = max(
+                            local_maximum_error,
+                            maximum_error,
+                        )
+                        local_maximum_relative = max(
+                            local_maximum_relative,
+                            relative,
+                        )
+                except (ValueError, RuntimeError) as exc:
+                    roundtrip_error = f"{type(exc).__name__}: {exc}"
+            roundtrip_errors = comm.allgather(roundtrip_error)
+            if any(error is not None for error in roundtrip_errors):
+                raise RuntimeError(
+                    "collective physical-root primal trace round trip "
+                    "failed: "
+                    + "; ".join(
+                        f"rank {rank}: {error}"
+                        for rank, error in enumerate(roundtrip_errors)
+                        if error is not None
+                    )
+                )
         target_start, target_end = map(int, target.getOwnershipRange())
         auxiliary_start = system.active_trace_rows
         local_auxiliary_start = max(target_start, auxiliary_start)
@@ -2677,7 +2971,7 @@ def extract_variable_p_active_primal_to_reduced(
     )
     audit = {
         "schema_version": (
-            "task035e.active-full-primal-to-independent-trace.v1"
+            "task035e.active-full-primal-to-independent-trace.v2"
         ),
         "status": "conforming_primal_trace_extracted",
         "pass": True,
@@ -2705,7 +2999,11 @@ def extract_variable_p_active_primal_to_reduced(
         "left_inverse_method": (
             "not_required"
             if constraints is None
-            else "numpy_lstsq_svd_rank_checked"
+            else (
+                "physical_root_anchor_plus_global_constraint_roundtrip"
+                if root_anchor_mode
+                else "numpy_lstsq_svd_rank_checked"
+            )
         ),
         "left_inverse_block_count_global": int(
             comm.allreduce(local_left_inverse_count, op=MPI.SUM)
@@ -2718,15 +3016,35 @@ def extract_variable_p_active_primal_to_reduced(
             comm.allreduce(local_maximum_error, op=MPI.MAX)
         ),
         "roundtrip_tolerance": float(roundtrip_tolerance),
-        "maximum_left_inverse_condition": float(
-            comm.allreduce(local_maximum_condition, op=MPI.MAX)
+        "maximum_left_inverse_condition": (
+            None
+            if constraints is None or root_anchor_mode
+            else float(
+                comm.allreduce(local_maximum_condition, op=MPI.MAX)
+            )
         ),
         "minimum_left_inverse_singular_value": (
             None
-            if constraints is None
+            if constraints is None or root_anchor_mode
             else float(
                 comm.allreduce(local_minimum_singular, op=MPI.MIN)
             )
+        ),
+        "physical_root_anchor_mode": bool(root_anchor_mode),
+        "physical_root_anchor_block_count_global": int(
+            comm.allreduce(local_root_anchor_block_count, op=MPI.SUM)
+        ),
+        "physical_root_anchor_row_count_global": int(
+            comm.allreduce(local_root_anchor_row_count, op=MPI.SUM)
+        ),
+        "wide_constraint_block_count_global": int(
+            comm.allreduce(
+                local_wide_constraint_block_count,
+                op=MPI.SUM,
+            )
+        ),
+        "slave_blocks_validated_by_global_roundtrip": bool(
+            root_anchor_mode
         ),
         "raw_trace_row_coverage_min": int(raw_coverage.min()),
         "raw_trace_row_coverage_max": int(raw_coverage.max()),
@@ -2740,6 +3058,7 @@ def extract_variable_p_active_primal_to_reduced(
         "independent_rows_exactly_once": independent_exact,
         "independent_row_values_consistent": independent_exact,
         "active_selected_rows": selected_audit,
+        "reduced_selected_rows": reduced_selected_audit,
         "auxiliary_values_explicit": True,
         "auxiliary_value_count": len(auxiliary),
         "auxiliary_values_identical_across_mpi": True,
