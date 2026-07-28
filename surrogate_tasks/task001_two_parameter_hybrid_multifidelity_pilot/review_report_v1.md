@@ -3,42 +3,35 @@
 ## 1. 审阅结论
 
 ```text
-review_status = changes_required
+review_status = targeted_changes_required
 valid_existing_numerical_evidence = retain
-Task002_bulk_generation = not_authorized
+illumination_range = user_authorized_as_implemented
+Task002_bulk_generation = not_yet_authorized
 surrogate_training = not_authorized
 production_inversion = not_authorized
-required_next_action = targeted_Task001_correction_and_response_v2
+required_next_action = complete_observable_schema_and_response_v2
 ```
 
-Task001 已经完成了大部分关键工程工作，尤其是本地 Hybrid 高/低保真资格化、资源保护、固定拓扑、无 swap 正式运行、同源 p6/h10 参考闭合以及高度/宽度的局部二维信息验证。这些结果应保留，不应无理由重跑。
+Task001 已完成本地 Hybrid 高/低保真资格化、p6/h7.5 资源判定、固定拓扑、照明 pilot 和高度/宽度局部可辨识性验证。现有正式数值证据保留，不应无理由重跑。
 
-但是，当前照明 campaign 与任务书的权威角度集合不一致，而且 compact order schema 尚未完整实现任务书规定的母响应字段。因此，当前结果可以证明所实际计算的两个 `80°/S` 配置在中心附近可辨识，却不能声称 Task001 规定的 `70°/80° × 0°/90° × S/P` 首轮候选筛选已经完成，也不能据此正式冻结 Task002 数据集。
+用户已明确澄清：希望使用的是**相对样品表面的掠射角不超过 10°**。因此当前实现的：
 
-本轮不创建或执行 Task002。Codex 应按第 6 节完成定向修正，提交 `response_v2.md` 后再由 ChatGPT Review V2 决定是否放行 Task002。
+```text
+grazing_deg in [0.5, 10.0]
+solver theta = 90° - grazing_deg
+```
 
----
+是用户授权的正式范围，不再要求改成 20° 掠射角，也不要求补算 solver theta=70°。
 
-## 2. 审阅范围
+该澄清覆盖 Task001 原任务书中 `theta=70°/80°` 的旧候选描述。当前 `0.5°/10° grazing × 0°/90° azimuth × S/P` campaign 可作为 Task001 实际权威候选池。
 
-本轮审阅了：
-
-- `surrogate_tasks/task001_two_parameter_hybrid_multifidelity_pilot/README.md`；
-- `task.md`；
-- `response_v1.md`；
-- 全部 Task001 outcomes；
-- Case110 config、expected、compact records 与 checker；
-- `src/forward_data/schema.py`、`task001_config.py`、`orders.py`、`identifiability.py`、resource/watchdog/campaign 模块；
-- Task001 对 Hybrid runner 和 static-condensation roundoff Gate 的改动；
-- Task000/001、Task035b/c、Case095/096 的 targeted tests 与 authority 对照。
-
-远程分支当前相对最新 `master` 为 ahead 20、behind 1。该 behind 状态不是本轮 blocker；按照支线规则，不得因此自动 merge 或 rebase `master`。
+目前只剩一个 blocking 项：fixed-order compact observable schema 尚未完整保存后续代理、实验 observation 和反演所需的母响应字段。Codex 只需完成该项并提交 `response_v2.md`；不得开始 Task002 的 49 点批量生成。
 
 ---
 
-## 3. 已接受并保留的结果
+## 2. 已接受并冻结的结果
 
-### 3.1 本地正式 high fidelity
+### 2.1 High fidelity
 
 接受：
 
@@ -52,7 +45,7 @@ MPI = 2
 numerical source = 68f4f9bc92de6cd7ec2896755ef210fb182280a1
 ```
 
-名义点 `height=120 nm, width=17 nm, solver theta=80°, phi=0°, S`：
+名义点 `height=120 nm, width=17 nm, grazing=10°, azimuth=0°, S`：
 
 - true residual `2.4838e-12`；
 - interface E/H `1.6395e-7 / 3.8958e-5`；
@@ -60,11 +53,11 @@ numerical source = 68f4f9bc92de6cd7ec2896755ef210fb182280a1
 - `R/T/A/Avolume = 0.0007628815 / 0.6027016340 / 0.3965354845 / 0.3965354847`；
 - process-tree peak RSS `3,287,891,968 B`；
 - swap `0 B`；
-- Case095/096 12 个冻结通道最大功率/复振幅绝对差 `2.052e-12 / 2.183e-12`。
+- Case095/096 12 个冻结通道最大功率/边界复振幅绝对差 `2.052e-12 / 2.183e-12`。
 
-这些证据足以把当前本地 HF10 作为 Task001/Task002 的 high-fidelity 候选。它仍是 best-available discrete reference，不是 continuum truth。
+HF10 可作为 Task002 的 high-fidelity 模型。它仍是 best-available discrete reference，不是 continuum truth。
 
-### 3.2 p6/h7.5 受控停止
+### 2.2 p6/h7.5
 
 接受：
 
@@ -73,9 +66,9 @@ HF7P5 = controlled_stop_resource_projection
 PDE launched = false
 ```
 
-central 预测 `11,588,731,106 B` 已超过 launch ceiling，conservative 预测 `15,878,719,347 B` 也超过 hard ceiling。未使用 swap、OOC 或 OOM 冒险。无需在本机再次尝试 p6/h7.5。
+central 预测 `11,588,731,106 B` 超过 launch ceiling，conservative 预测 `15,878,719,347 B` 超过 hard ceiling。未使用 swap、OOC 或 OOM 冒险。本机无需再次尝试 p6/h7.5。
 
-### 3.3 low fidelity
+### 2.3 Low fidelity
 
 接受：
 
@@ -83,7 +76,7 @@ central 预测 `11,588,731,106 B` 已超过 launch ceiling，conservative 预测
 selected_low_fidelity = LF4 global p4/h10/M120/MPI2
 ```
 
-在权威 `80°/0°/S` 五点 stencil 上：
+在 `grazing=10°, azimuth=0°, S` 五点 stencil 上：
 
 - `cosine(dy/dh)=0.999689`；
 - `cosine(dy/dw)=0.999998`；
@@ -91,15 +84,44 @@ selected_low_fidelity = LF4 global p4/h10/M120/MPI2
 - mean wall/HF `0.19155`；
 - mean RSS/HF `0.31765`。
 
-LF4 可以用于多保真低层，但不得冒充 HF；LF-HF bias 必须由 discrepancy model 显式学习。
+LF4 作为多保真低层通过。LF-HF bias 必须由 discrepancy model 显式学习，不得把 LF 冒充 HF。
 
-### 3.4 当前已计算配置的局部可辨识性
+### 2.4 照明范围与候选结果
 
-接受为“当前实际配置下的局部 pilot 结论”，不是完整 Task001 候选集结论：
+用户授权范围为：
 
 ```text
-C1 = solver theta 80°, phi 0°,  S
-C2 = solver theta 80°, phi 90°, S
+wavelength = 13.5 nm fixed
+grazing_deg = 0.5--10.0
+azimuth_deg = 0--90
+incident polarization = S or P
+```
+
+Task001 实际代表点：
+
+```text
+grazing = 0.5°, 10°
+azimuth = 0°, 90°
+polarization = S, P
+```
+
+接受当前实际结果：
+
+- `10°/0°/S`：通过，选为 planar configuration；
+- `10°/90°/S`：通过，选为 conical configuration；
+- `0.5°/90°/S`：能求解，但单独使用时 `rho=-0.9839`，不选；
+- `0.5°/0°/S` 与 P：trace-map consistency failure；
+- 三个 P 候选：当前 Hybrid numerical qualification failure。
+
+P 的失败只表示当前计算路径在这些配置下未通过 interface/energy/trace Gate，不表示真实物理中 P 偏振不存在或不能测量。
+
+### 2.5 局部可辨识性
+
+接受的最小 configuration bundle：
+
+```text
+C1 = grazing 10°, azimuth 0°,  S
+C2 = grazing 10°, azimuth 90°, S
 ```
 
 HF 结果：
@@ -109,84 +131,33 @@ HF 结果：
 | reflection-only | 2 | 1.3217 | 0.000182 |
 | reflection + transmission | 2 | 1.2208 | -0.14793 |
 
-这足以说明在名义点附近，两个 S 配置的功率响应包含两个独立局部方向。2,000 次 1% provisional noise 抽样仍只能称为 DOE sanity，不能解释成真实实验精度或正式反演不确定度。
+这证明名义点附近的功率响应包含两个独立局部参数方向。2,000 次 1% provisional noise 抽样只属于 DOE sanity，不得解释成真实仪器精度或正式 Bayesian posterior。
 
-### 3.5 负结果与工程质量
+### 2.6 负结果、资源与测试
 
 接受：
 
-- 37 个 measured pass 全部同一 numerical source、solver Gate 通过、zero swap、watchdog cleanup 完成；
-- 5 个失败配置及日志 hash 被保留；
-- HF7P5 未启动；
+- 37 个 measured pass 全部同一 numerical source；
+- 全部通过记录 solver Gate 通过、zero swap、watchdog cleanup 完成；
+- 5 个失败记录和日志 hash 保留；
 - targeted suite `68 passed, 4 skipped`；
 - Case110 checker、compileall、`git diff --check` 通过；
 - Ruff 在资格化 `.venv` 中不可用，未虚假宣称通过。
 
 ---
 
-## 4. Blocking Finding R1：照明角度与任务书不一致
+## 3. 唯一 Blocking Finding：compact diffraction 母响应不完整
 
-### 4.1 权威任务书
+Task001 当前 `orders.py` 已正确完成：
 
-Task001 明确规定 solver 角度：
+- 固定 order identity；
+- 不使用动态 top-N；
+- `power_carrying` 与 `dispersion_propagating` 分离；
+- 有损基底中正 outward Poynting flux 正确计入功率；
+- 非功率携带模式写 `power=null`，不与零功率混淆；
+- raw order sum 与端口 R/T 做一致性检查。
 
-```text
-theta = 70°, 80°       # 偏离向下法线
-phi   = 0°, 90°
-polarization = S, P
-```
-
-对应用户表面掠射角应为：
-
-```text
-grazing = 90° - theta
-70° solver theta -> 20° grazing
-80° solver theta -> 10° grazing
-```
-
-若首轮失败，补充 theta=75°，对应 15° grazing。
-
-### 4.2 当前实现
-
-当前 schema/config/expected 使用：
-
-```text
-grazing = 0.5°, 10°
-solver theta = 89.5°, 80°
-fallback grazing = 5.25°
-solver theta = 84.75°
-```
-
-因此实际 campaign 不是任务书规定的 `70°/80°`，而是 `89.5°/80°`。Case110 checker 通过只能证明实现、config 和 expected 彼此一致；由于三者共同采用了错误候选集合，它不能证明与任务书一致。
-
-### 4.3 影响
-
-这是 blocking issue，因为：
-
-1. solver theta=70° 的 4 个候选配置没有被筛选；
-2. M2 规定的 `70°/90°/P` 轻量真实 smoke 没有执行；
-3. theta=70° 下 `phi=90°` 会出现与近掠射条件不同的传播级集合，固定 `+1/-1` order 和交叉偏振输出尚未按任务书被真实验证；
-4. 当前“最小 configuration bundle”没有与完整权威候选池比较；
-5. Task002 的 2-configuration 冻结计划因此仍是 provisional。
-
-### 4.4 必须修正
-
-Codex 必须恢复权威角度合同。允许用户界面继续使用 `grazing_deg`，但候选必须精确映射为：
-
-```text
-primary grazing = [20.0, 10.0]
-primary solver theta = [70.0, 80.0]
-fallback grazing = [15.0]
-fallback solver theta = [75.0]
-```
-
-schema 的允许范围至少必须覆盖 10--20° grazing；不得再把 0.5°当作 Task001 主候选。已有 0.5°记录可保留为 out-of-scope research/negative evidence，但必须从 Task001 completion count、DOE candidate pool 和 Task002 selection 中排除。
-
----
-
-## 5. Blocking Finding R2：compact diffraction 母响应字段不完整
-
-任务书要求每个固定 order 保存足以唯一重建实验 observation 的母响应。当前 `orders.py` 的 compact row 主要保存：
+但是，当前 compact row 主要只有：
 
 ```text
 side, m, n, polarization,
@@ -196,33 +167,49 @@ power,
 outgoing_amplitude_at_boundary
 ```
 
-但没有完整保留：
+尚未完整保存后续代理与真实 observation 所需的母响应：
 
-- `kx, ky, kz` 的 complex identity；
-- 明确的 incident polarization linkage；
-- 复振幅 `re/im` 的稳定 JSON 结构；
-- 同一 `(side,m,n)` 下 S/P component 和 `order_total_power` 的分组关系；
-- `n!=0` reflection 与 transmission 分开的泄漏功率；
-- `n!=0` 最大复振幅。
+1. `kx, ky, kz` 的复数 identity；
+2. 明确的 incident polarization；
+3. 复振幅稳定拆分为 real/imag；
+4. 同一 `(side,m,n)` 下 outgoing S/P 两个分量的分组；
+5. `order_total_power = power_s + power_p`；
+6. `n!=0` reflection 与 transmission 分开的功率泄漏；
+7. `n!=0` 最大复振幅。
 
-当前单一 `n_nonzero_leakage_power` 不满足任务书规定的三个 leakage diagnostics。
+当前单一 `n_nonzero_leakage_power` 不足。
 
-### 5.1 允许的规范化结构
+---
 
-不要求机械复制任务书的扁平字段。推荐升级为一个分组明确的 observable schema，例如：
+## 4. Required Task001 Correction Scope
+
+Codex 下一轮只执行以下定向修正。
+
+### M8.1 升级 observable schema
+
+建议升级为新的版本，例如：
 
 ```text
 sample-level:
   incident_polarization
 
 order-level:
-  side, m, n
-  kx, ky, kz = {re, im}
+  side = reflection / transmission
+  m, n
+  kx = {re, im}
+  ky = {re, im}
+  kz = {re, im}
   dispersion_propagating
   power_carrying
   components:
-    s: {amplitude_re, amplitude_im, power}
-    p: {amplitude_re, amplitude_im, power}
+    s:
+      amplitude_re
+      amplitude_im
+      power
+    p:
+      amplitude_re
+      amplitude_im
+      power
   order_total_power
 
 leakage:
@@ -231,153 +218,134 @@ leakage:
   n_nonzero_max_abs_amplitude
 ```
 
-必须继续保留：
+不要求机械使用上述 JSON 形状，但必须保证同等物理信息和稳定 identity。
 
-- 非传播/不携带功率时 `power=null`，不能与传播但零功率混淆；
-- lossy substrate 中 `dispersion_propagating` 与 positive-outward-power 语义分开；
-- 固定 order identity，不采用动态 top-N。
+必须继续保持：
 
-因为 Task002 尚未生成正式 dataset，现在可以升级 observable schema，而不需要迁移任何生产数据。已有 raw PDE artifact 可重新提取，不需要因此重跑 PDE。
+- 固定 `m=(0,-1,-2,-3,-4,-5,-6,-7,+1), n=0`；
+- 非功率携带模式 `power=null`；
+- `dispersion_propagating` 与 `power_carrying` 分离；
+- 不把 S、P、S+P 三者同时作为独立反演观测；
+- 复振幅保存 real/imag，相位只作为派生量；
+- `n!=0` 不进入训练向量，只作泄漏诊断。
 
----
+### M8.2 既有 PDE 不重跑
 
-## 6. Required Task001 Correction Scope
+该修正属于 compact extraction/schema 层。默认从现有 raw PDE artifacts 重新提取，不重跑 37 个已通过 FEM。
 
-Codex 下一轮只执行以下定向修正，不开始 Task002。
+必须：
 
-### M8.1 权威与 schema 修正
+- 保留 raw artifact hash；
+- 记录旧/new observable schema version；
+- 从 raw order table 独立重算新 compact fields；
+- checker 验证 `power_s + power_p = order_total_power`；
+- checker 验证分侧 leakage；
+- checker 验证 raw R/T 一致性；
+- 不修改已有 raw numerical values。
 
-1. 将 Task001 illumination contract 恢复为 solver theta `70°/80°`，或等价 grazing `20°/10°`；
-2. fallback 恢复 theta `75°` / grazing `15°`；
-3. 同步修正：
-   - `src/forward_data/schema.py`；
-   - `src/forward_data/task001_config.py`；
-   - Case110 `config.json`、`expected.json`；
-   - campaign/checker/tests；
-4. 升级 fixed-order observable schema，完成第 5 节字段；
-5. 更新 README 状态为 `changes_required_after_review_v1` 或等价明确状态。
+只有发现 raw record 本身缺少无法恢复的必要字段时，才允许补跑最小数量的代表点，并在 `response_v2.md` 说明原因。不得重跑整个 campaign。
 
-### M8.2 既有 PDE 复用规则
+### M8.3 文档澄清
 
-不得无理由重跑已经有效的 80°结果、HF10/LF4 fidelity qualification 或 HF7P5 projection。
-
-由于修正后 full Git SHA 会改变，允许复用 `68f4f9b...` raw PDE 结果的前提是：
-
-- 建立可审查的 numerical-core manifest；
-- 证明影响矩阵、RHS、网格、Hybrid coupling、DtN、求解与 raw postprocessing 的文件在旧/新 baseline 间 byte-identical；
-- 现有 raw artifact hash 不变；
-- 只对 compact extraction/schema 重新生成并独立 checker 验证。
-
-若无法证明 numerical-core identity，则只重跑最终 selected bundle 所需的最小 80°集合，不得整轮盲目重跑。
-
-### M8.3 补齐 theta=70° 候选
-
-使用 LF4 执行权威候选：
-
-```text
-70°/0°/S
-70°/0°/P
-70°/90°/S
-70°/90°/P
-```
-
-执行规则：
-
-1. 先在 G00 做完整 numerical Gate；
-2. G00 失败时保留真实 negative evidence，不再运行该配置其余 8 个几何点；
-3. G00 通过时运行完整 9 点；
-4. 每次只运行一个 forward job、zero swap、同一 clean baseline；
-5. 必须包含任务书指定的 `70°/90°/P` order-schema smoke。
-
-### M8.4 重新 DOE
-
-用精确权威候选池重新计算：
-
-```text
-70/0/S, 70/0/P, 70/90/S, 70/90/P,
-80/0/S, 80/0/P, 80/90/S, 80/90/P
-```
-
-已有 80°失败/通过证据按 numerical-core identity 规则复用。重新报告：
-
-- 每个候选的 pass/failed/not-run 状态；
-- reflection-only 与 R+T；
-- 0.5%、1%、2% provisional noise；
-- rank、singular values、cond、rho、logdet、channel contribution；
-- 最小 planar+conical bundle。
-
-若最终 bundle 仍为 `80/0/S + 80/90/S`，无需重复现有 HF 五点，只需证明 theta=70°候选没有改变选择。
-
-若新 bundle 包含任何 theta=70°配置，则仅对新增配置运行 HF10 五点，并重新完成 HF identifiability 与 synthetic local recovery。
-
-### M8.5 P 偏振表述
-
-当前 P 结果应称为：
-
-```text
-current Hybrid numerical qualification failure
-```
-
-而不是“P 偏振在物理上失败”或“不存在”。当前失败值主要是 interface/energy/trace Gate 未通过；它说明当前计算路径尚未对该配置资格化，不说明真实结构不能产生或测量 P 响应。
-
-phi=0 的交叉偏振可作为对称性泄漏 Gate；phi=90 的交叉偏振应作为正式物理响应保存。若 theta=70° P 仍失败，Task002 首版可以继续只使用通过资格化的 S 配置，但必须保留 P 的 negative evidence。
-
-### M8.6 测试与交付
-
-至少生成或更新：
+更新：
 
 ```text
 surrogate_tasks/task001_two_parameter_hybrid_multifidelity_pilot/
+  README.md
   outcomes/summary.md
   outcomes/test_summary.md
-  outcomes/fidelity_qualification.md
   outcomes/illumination_identifiability.md
   outcomes/task002_dataset_plan.md
   response_v2.md
-
-benchmarks/cases/110_surrogate_two_parameter_pilot/records/
 ```
 
-要求：
+明确写明：
 
-- Task000/001、condensation、Task035c、Case095/096 targeted tests；
-- order schema synthetic tests和真实 theta=70° record checks；
-- Case110 checker 从 raw artifact 重算；
-- compileall、`git diff --check`；
-- Ruff 仅在资格化环境可用时执行，不得临时破坏 ABI；
-- 工作树 clean、唯一分支/upstream、完整 HEAD、ahead/behind；
-- 不生成 Task002 49 点数据，不拟合 surrogate，不执行正式 inversion。
+- 用户要求的是掠射角 `0.5--10°`；
+- `solver theta = 90° - grazing`；
+- 本 Review 覆盖旧 task 中 `theta=70°/80°` 的候选表述；
+- selected bundle 为两个 `10° grazing / S` 配置；
+- P 是 numerical qualification failure，不是物理不存在；
+- Task001 的 1% noise 只是 DOE 假设。
 
----
+### M8.4 测试
 
-## 7. Task002 的暂定方法方向
+至少完成：
 
-Task001 Review V2 通过后，Task002 不应进行无边界的“模型大比武”。建议冻结：
+- Task000/001 targeted tests；
+- order schema synthetic tests；
+- 真实 lossy record extraction tests；
+- grouped S/P power与 order total一致性；
+- wavevector/re-im serialization round trip；
+- 分侧 `n!=0` leakage checker；
+- Case110 从 raw artifacts 重建 compact records；
+- Case095/096 contract regression；
+- compileall；
+- `git diff --check`；
+- Ruff 仅在资格化环境已有时运行。
+
+结束后：
 
 ```text
-primary surrogate = multi-fidelity Matérn GP / autoregressive discrepancy
-  y_H(h,w,c) = rho_c y_L(h,w,c) + delta_c(h,w)
-
-low-order Chebyshev/PCE = smoothness and interpretability diagnostic baseline
-not a model zoo
+worktree = clean
+branch/upstream = unchanged
+response = response_v2.md
+Task002 data generation = not started
+surrogate training = not started
+inversion = not started
 ```
-
-如果低阶 PCE 在冻结验证点上已经满足实验噪声归一化误差 Gate，可以采用它作为最终简单模型；否则使用 multi-fidelity GP。PCE 与 GP 同时失败时，应检查数据、网格连续性、传播级切换和参数域，而不是继续堆 SVR/NN 等模型。
-
-Task002 数据预算仍可沿用 `49 LF geometry + 9 initial HF anchors + adaptive HF + frozen validation` 的框架，但 configuration bundle、observable schema 和精确 solve count 必须由修正后的 Task001 重新冻结。
 
 ---
 
-## 8. Review V2 通过条件
+## 5. Task002 暂定方向
+
+完成上述 schema 修正并通过 Review V2 后，可开启 Task002。
+
+暂定 configuration bundle：
+
+```text
+(10° grazing, 0° azimuth,  S)
+(10° grazing, 90° azimuth, S)
+```
+
+暂定模型：
+
+```text
+HF = HF10 global p6/h10/M120/MPI2
+LF = LF4 global p4/h10/M120/MPI2
+```
+
+暂定数据设计：
+
+```text
+LF Chebyshev-Lobatto 7x7 = 49 geometries × 2 configurations = 98 solves
+initial HF anchors = 9 geometries × 2 = 18 solves
+adaptive HF = 6--10 geometries × 2
+frozen validation HF = 6--8 geometries × 2
+```
+
+代理方法不做模型大比武：
+
+```text
+primary = multi-fidelity Matérn GP / autoregressive discrepancy
+          y_H = rho_c y_L + delta_c(h,w)
+
+baseline = low-order Chebyshev/PCE
+```
+
+若低阶 PCE 在冻结验证点上满足噪声归一化误差 Gate，可以采用更简单的 PCE；否则采用 multi-fidelity GP。
+
+---
+
+## 6. Review V2 通过条件
 
 只有以下事项全部满足，才批准 Task002：
 
-1. theta=70°/80° 权威候选集与代码/schema/records 完全一致；
-2. theta=70°候选按 fail-fast 规则完成；
-3. DOE 使用完整权威候选池重算；
-4. selected bundle 经必要 HF 五点确认，rank=2、`|rho|<=0.90`；
-5. fixed-order 母响应 schema 完整，含 wavevector、复振幅分量、S/P功率、order total 和分侧 leakage；
-6. P 失败被正确表述为 numerical qualification failure；
-7. Task002 dataset plan 根据最终 bundle 更新；
-8. 所有 evidence hash-bound、source/core identity 清楚、zero swap；
-9. 没有提前开始 bulk generation、surrogate training 或 inversion。
+1. 用户授权的 `0.5--10° grazing` 与 schema/docs 一致；
+2. fixed-order 母响应包含 wavevector、复振幅 real/imag、S/P功率和 order total；
+3. `n!=0` leakage 按 reflection/transmission 分开，并保存最大复振幅；
+4. lossy propagation/power 语义保持正确；
+5. 既有 raw PDE 结果未被静默改写；
+6. checker 从 raw artifacts 重算新 compact records；
+7. Task002 plan 使用最终 observable schema；
+8. 没有提前开始 bulk generation、surrogate training 或 inversion。
