@@ -19,6 +19,7 @@ from src.adaptivity.task035e_shadow_observer import (
     _current_auxiliary_solver_coordinates,
     _json_sha256,
     _public_affine_complement_audit,
+    _requires_exact_nested_current_projection,
     _validate_observed_shadow_kind,
 )
 from src.common.config_3d import target_stage4_config
@@ -349,6 +350,13 @@ def test_requested_shadow_kind_must_match_executed_transition() -> None:
             },
             expected_shadow_kind="p-shadow",
         )
+
+
+def test_projection_contract_is_exact_only_for_same_forest_p_shadow() -> None:
+    assert _requires_exact_nested_current_projection("p-shadow") is True
+    assert _requires_exact_nested_current_projection("h-shadow") is False
+    with pytest.raises(ValueError, match="shadow kind"):
+        _requires_exact_nested_current_projection("p-keep")
 
 
 def test_atomic_shadow_json_is_mode_0600_and_immutable(

@@ -59,6 +59,16 @@ class Task035eShadowObserverError(RuntimeError):
     """Fail-closed live-shadow pipeline or publication failure."""
 
 
+def _requires_exact_nested_current_projection(
+    shadow_kind: str,
+) -> bool:
+    """Return the projection contract for one qualified shadow kind."""
+
+    if shadow_kind not in {"p-shadow", "h-shadow"}:
+        raise ValueError("shadow kind must be p-shadow or h-shadow")
+    return shadow_kind == "p-shadow"
+
+
 @dataclass(frozen=True, slots=True)
 class Task035eShadowEvaluationReceipt:
     """Immutable authority receipt returned on every MPI rank."""
@@ -727,7 +737,11 @@ def evaluate_and_write_task035e_shadow(
             project_p6_primal_to_active_full(
                 shadow_view.reduction.transfer,
                 transfer.shadow_field.x.petsc_vec,
-                require_exact_nested=True,
+                require_exact_nested=(
+                    _requires_exact_nested_current_projection(
+                        shadow_kind
+                    )
+                ),
             )
         )
         auxiliary, auxiliary_audit = (
@@ -952,7 +966,16 @@ def evaluate_and_write_task035e_shadow(
             "current_field_source": "immutable current MPI snapshot",
             "current_to_shadow_transfer": transfer_audit["interpolation"],
             "current_reduced_injection": (
-                "exact active primal projection plus constraint left inverse"
+                (
+                    "exact nested active primal projection plus "
+                    "constraint left inverse"
+                )
+                if shadow_kind == "p-shadow"
+                else (
+                    "audited nonmatching coefficient-L2 projection into "
+                    "the exact-sequence active space plus constraint "
+                    "left inverse; no exact-transfer credit"
+                )
             ),
             "shadow_residual": "b_shadow-A_shadow*x_current_in_shadow",
             "adjoint": "A_shadow^H*z_J=g_J",
