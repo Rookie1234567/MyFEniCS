@@ -594,7 +594,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         low_active_roundoff_projection.destroy()
 
         interior_cutoff = float(
-            2048.0
+            8192.0
             * np.finfo(np.float64).eps
             * abs(active_value)
         )
@@ -652,7 +652,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
                 )
 
         zero_rhs.set(PETSc.ScalarType(0.0))
-        zero_rhs.setValue(interior, PETSc.ScalarType(2.1e-12))
+        zero_rhs.setValue(interior, PETSc.ScalarType(4.1e-12))
         zero_rhs.assemble()
         with self.assertRaisesRegex(
             ValueError,

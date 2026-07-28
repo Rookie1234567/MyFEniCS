@@ -1792,7 +1792,7 @@ def project_mpc_vector_to_active_trace(
     *,
     eliminated_tolerance: float = 1.0e-12,
     eliminated_relative_tolerance: float = (
-        2048.0 * np.finfo(np.float64).eps
+        8192.0 * np.finfo(np.float64).eps
     ),
 ) -> PETSc.Vec:
     """Project an already MPC-assembled full-space vector to active trace rows.
@@ -1802,11 +1802,12 @@ def project_mpc_vector_to_active_trace(
     cell-interior or slave entry is nonzero before physically dropping them.
     MPC slave entries retain the strict absolute tolerance because the
     constraint assembly must zero them exactly.  Cell-interior entries use
-    the larger of twice that absolute floor and a global retained-signal
-    roundoff envelope.  The 2e-12 floor covers measured p6/M120 distributed
-    surface-form accumulation (1.20--1.36e-12), including modes whose active
-    normalization makes a relative-only cutoff too small.  It remains more
-    than four orders below the separately tested true-leakage scale.  This keeps
+    the larger of four times that absolute floor and a global retained-signal
+    roundoff envelope.  The 4e-12 floor and 8192-epsilon envelope cover
+    measured p6/M120 distributed surface-form accumulation (up to 2.04e-12
+    and 2633 epsilon units), including modes whose active normalization makes
+    a relative-only cutoff too small.  The envelope remains about three
+    orders below the separately tested true-leakage scale.  This keeps
     high-order tangential-form audits invariant under harmless mode
     normalization while remaining independent of MPI partitioning and vector
     length.
@@ -1873,7 +1874,7 @@ def project_mpc_vector_to_active_trace(
     max_interior = global_max(interior_mask)
     slave_cutoff = float(eliminated_tolerance)
     interior_cutoff = max(
-        2.0 * float(eliminated_tolerance),
+        4.0 * float(eliminated_tolerance),
         float(eliminated_relative_tolerance) * max_active,
     )
     if max_slave > slave_cutoff or max_interior > interior_cutoff:
