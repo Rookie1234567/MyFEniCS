@@ -78,7 +78,7 @@ def _memory_for_pid(pid: int) -> tuple[int, int, int, int] | None:
             key, _, tail = line.partition(":")
             if key in {"Rss", "Pss", "Private_Clean", "Private_Dirty", "Private_Hugetlb", "Swap"}:
                 values[key] = int(tail.strip().split()[0]) * 1024
-    except (FileNotFoundError, PermissionError, ValueError):
+    except (OSError, ValueError):
         return None
     uss = sum(values.get(key, 0) for key in ("Private_Clean", "Private_Dirty", "Private_Hugetlb"))
     return values.get("Rss", 0), values.get("Pss", 0), uss, values.get("Swap", 0)

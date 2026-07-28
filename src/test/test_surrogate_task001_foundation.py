@@ -26,6 +26,7 @@ from src.forward_data.watchdog import (
     EXIT_CONTROLLED_TIMEOUT,
     run_with_watchdog,
 )
+from src.forward_data import watchdog
 from benchmarks.run_task032_phase6_augmented import _parse_args
 
 
@@ -166,6 +167,14 @@ def test_watchdog_completed_streaming_and_heartbeat(tmp_path: Path) -> None:
     assert result.status == "completed" and result.return_code == 0 and result.cleanup_complete
     assert "ready" in (tmp_path / "ok" / "stdout.log").read_text()
     assert (tmp_path / "ok" / "resource_timeline.jsonl").is_file()
+
+
+def test_watchdog_tolerates_proc_exit_race(monkeypatch: pytest.MonkeyPatch) -> None:
+    def vanished(_path: Path) -> str:
+        raise ProcessLookupError(3, "process vanished")
+
+    monkeypatch.setattr(Path, "read_text", vanished)
+    assert watchdog._memory_for_pid(123456) is None
 
 
 def test_watchdog_timeout_cleans_owned_process_group(tmp_path: Path) -> None:
