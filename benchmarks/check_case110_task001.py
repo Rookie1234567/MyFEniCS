@@ -20,7 +20,10 @@ from src.forward_data.identifiability import (
 )
 from src.forward_data.orders import extract_task001_orders
 from src.forward_data.resource_policy import GIB, predict_p6_h7p5
-from src.forward_data.schema import Task001ForwardParameters
+from src.forward_data.schema import (
+    TASK001_OBSERVABLE_SCHEMA_VERSION,
+    Task001ForwardParameters,
+)
 
 
 BASELINE_SHA = "68f4f9bc92de6cd7ec2896755ef210fb182280a1"
@@ -104,6 +107,8 @@ def _run_summary(root: Path, run_dir: Path) -> dict[str, Any]:
         "baseline_sha": execution["baseline_sha"],
         "parameter_hash": execution["parameter_hash"],
         "parameters": execution["parameters"],
+        "raw_observable_schema_version": execution["parameters"]["observables"]["order_schema_id"],
+        "compact_observable_schema_version": TASK001_OBSERVABLE_SCHEMA_VERSION,
         "watchdog_status": watchdog["status"],
         "child_return_code": watchdog["child_return_code"],
         "wall_seconds": watchdog["elapsed_seconds"],
@@ -158,12 +163,67 @@ def _order_vectors(root: Path, artifacts: Path, run_name: str) -> tuple[list[str
     )
     if extracted["missing"] or not all(extracted["port_power_consistency"][key] for key in ("r_matches", "t_matches")):
         raise ValueError(f"fixed order extraction failed for {run_name}")
-    labels = [
-        f"{row['side']}:m{row['m']}:{row['polarization']}"
-        for row in extracted["orders"]
-    ]
-    powers = np.asarray([float(row["power"] or 0.0) for row in extracted["orders"]])
+    labels = []
+    powers = []
+    for row in extracted["orders"]:
+        for polarization in ("s", "p"):
+            labels.append(f"{row['port_side']}:m{row['m']}:{polarization}")
+            powers.append(float(row["components"][polarization]["power"] or 0.0))
+    powers = np.asarray(powers)
     return labels, powers
+
+
+def _compact_response(root: Path, artifacts: Path, run_name: str) -> dict[str, Any]:
+    run_dir = artifacts / run_name
+    execution_path = run_dir / "execution.json"
+    solver_path = run_dir / "solver_record.json"
+    execution = _read(execution_path)
+    record = _read(solver_path)
+    extracted = extract_task001_orders(
+        record["validation"]["external_diffraction_orders"],
+        parameters=_parameters(execution), port_power=record["validation"]["port_power"],
+    )
+    if extracted["missing"]:
+        raise ValueError(f"compact response has missing fixed identities: {run_name}")
+    for order in extracted["orders"]:
+        component_powers = [
+            order["components"][polarization]["power"]
+            for polarization in ("s", "p")
+            if order["components"][polarization]["power"] is not None
+        ]
+        expected_total = sum(component_powers) if component_powers else None
+        if expected_total is None:
+            if order["order_total_power"] is not None or order["power_carrying"]:
+                raise ValueError(f"non-power-carrying order has numeric total: {run_name}")
+        elif not math.isclose(
+            float(order["order_total_power"]), expected_total,
+            rel_tol=1.0e-13, abs_tol=1.0e-15,
+        ):
+            raise ValueError(f"S/P power sum mismatch: {run_name}")
+        for key in ("kx", "ky", "kz"):
+            if set(order[key]) != {"re", "im"}:
+                raise ValueError(f"unstable wavevector JSON identity: {run_name}")
+    leakage = extracted["leakage"]
+    if set(leakage) != {
+        "n_nonzero_reflection_power_sum",
+        "n_nonzero_transmission_power_sum",
+        "n_nonzero_max_abs_amplitude",
+    }:
+        raise ValueError(f"incomplete leakage diagnostics: {run_name}")
+    consistency = extracted["port_power_consistency"]
+    if not consistency["r_matches"] or not consistency["t_matches"]:
+        raise ValueError(f"compact/raw R/T mismatch: {run_name}")
+    return {
+        "run_id": run_name,
+        "numerical_source_sha": execution["baseline_sha"],
+        "parameter_hash": execution["parameter_hash"],
+        "raw_execution_sha256": _sha256(execution_path),
+        "raw_solver_record_sha256": _sha256(solver_path),
+        "raw_observable_schema_version": execution["parameters"]["observables"]["order_schema_id"],
+        "compact_observable_schema_version": extracted["schema_version"],
+        "parameters": execution["parameters"],
+        "compact_diffraction_response": extracted,
+    }
 
 
 def _configuration_data(
@@ -477,10 +537,35 @@ def build_records(root: Path) -> dict[str, dict[str, Any]]:
     })
     m5, analyses = _m5_analysis(root, artifacts)
     hf = _hf_analysis(root, artifacts, analyses)
+    compact_responses = [
+        _compact_response(root, artifacts, row["run_id"])
+        for row in successful
+    ]
+    lossy_response = next(
+        row for row in compact_responses
+        if row["run_id"] == "m5_lf4_g00_g0p5_a90_s_68f4f9b"
+    )
+    lossy_order = next(
+        row for row in lossy_response["compact_diffraction_response"]["orders"]
+        if row["port_side"] == "bottom" and row["m"] == 0
+    )
+    if lossy_order["dispersion_propagating"] or not lossy_order["power_carrying"]:
+        raise ValueError("real lossy record lost separated dispersion/power semantics")
+    lossy_audit = {
+        "run_id": lossy_response["run_id"],
+        "identity": {"side": "transmission", "m": 0, "n": 0},
+        "dispersion_propagating": lossy_order["dispersion_propagating"],
+        "power_carrying": lossy_order["power_carrying"],
+        "s_power": lossy_order["components"]["s"]["power"],
+        "p_power": lossy_order["components"]["p"]["power"],
+        "order_total_power": lossy_order["order_total_power"],
+    }
     manifest = {
         "schema_version": "task001.case110-campaign-manifest.v1",
         "numerical_source_sha": BASELINE_SHA,
         "postprocessing_semantics": "positive outward power is power-carrying; raw dispersion flag preserved separately",
+        "raw_observable_schema_version": "task001.fixed-n0-orders.v1",
+        "compact_observable_schema_version": TASK001_OBSERVABLE_SCHEMA_VERSION,
         "artifact_count": len(campaign), "measured_pass_count": len(successful),
         "failed_count": len(failed), "runs": campaign,
         "aggregate_pass_gates": {
@@ -507,6 +592,15 @@ def build_records(root: Path) -> dict[str, dict[str, Any]]:
         "fidelity_qualification.json": fidelity,
         "illumination_identifiability.json": m5,
         "high_fidelity_identifiability.json": hf,
+        "compact_diffraction_responses.json": {
+            "schema_version": "task001.case110-compact-diffraction-responses.v2",
+            "numerical_source_sha": BASELINE_SHA,
+            "raw_observable_schema_version": "task001.fixed-n0-orders.v1",
+            "compact_observable_schema_version": TASK001_OBSERVABLE_SCHEMA_VERSION,
+            "response_count": len(compact_responses),
+            "real_lossy_record_semantics_audit": lossy_audit,
+            "responses": compact_responses,
+        },
     }
 
 
@@ -548,6 +642,7 @@ def main() -> int:
         "hf_rank": records["high_fidelity_identifiability.json"]["observations"]["reflection_and_transmission"]["rank"],
         "hf_rho": records["high_fidelity_identifiability.json"]["observations"]["reflection_and_transmission"]["rho_hw"],
         "hf_condition": records["high_fidelity_identifiability.json"]["observations"]["reflection_and_transmission"]["condition_number"],
+        "compact_response_count": records["compact_diffraction_responses.json"]["response_count"],
     }
     print(json.dumps(summary, indent=2))
     return 0

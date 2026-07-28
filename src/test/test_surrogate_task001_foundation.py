@@ -60,6 +60,7 @@ def test_v3_schema_boundaries_and_v1_compatibility() -> None:
     assert catalog["configuration"]["physics"]["wavelength_nm"]["allowed"] == [13.5]
     assert catalog["configuration"]["role"].startswith("DOE-controlled")
     assert catalog["geometry"]["role"] == "invertible specimen parameters"
+    assert TASK001_OBSERVABLE_SCHEMA_VERSION == "task001.fixed-n0-orders.v2"
     for height in (115.0, 125.0):
         for width in (16.0, 18.0):
             _parameters(height_nm=height, width_x_nm=width).validate()
@@ -224,12 +225,15 @@ def test_fixed_topology_across_nine_geometry_points(model_id: str, counts: list[
 
 
 def _order(side: str, m: int, n: int, pol: str, power: float | None, propagating: bool = True):
+    vertical_sign = 1.0 if side == "top" else -1.0
     return {
         "side": side, "m": m, "n": n, "polarization": pol,
         "power": power, "propagating": propagating,
         "R": power if side == "top" and power is not None else 0.0,
         "T": power if side == "bottom" and power is not None else 0.0,
         "outgoing_amplitude_at_boundary": [float(m), float(n)],
+        "kx": [float(m), 0.125], "ky": [float(n), -0.25],
+        "kz": [vertical_sign * (abs(m) + 1.0), vertical_sign * 0.01],
     }
 
 
@@ -246,12 +250,54 @@ def test_order_extractor_fixed_identity_null_and_leakage() -> None:
     )
     assert result["schema_version"] == TASK001_OBSERVABLE_SCHEMA_VERSION
     assert result["fixed_m_order"] == list(FIXED_M_ORDERS)
-    assert result["n_nonzero_leakage_power"] == pytest.approx(0.007)
+    assert result["leakage"]["n_nonzero_reflection_power_sum"] == pytest.approx(0.003)
+    assert result["leakage"]["n_nonzero_transmission_power_sum"] == pytest.approx(0.004)
+    assert result["leakage"]["n_nonzero_max_abs_amplitude"] == pytest.approx(5**0.5)
     assert result["missing"] == []
-    assert [row["m"] for row in result["orders"][:18:2]] == list(FIXED_M_ORDERS)
-    assert all(row["power"] is None for row in result["orders"] if row["m"] == 1)
+    assert len(result["orders"]) == 18
+    assert [row["m"] for row in result["orders"][:9]] == list(FIXED_M_ORDERS)
+    plus_one = [row for row in result["orders"] if row["m"] == 1]
+    assert all(row["order_total_power"] is None for row in plus_one)
+    assert all(
+        component["power"] is None
+        for row in plus_one for component in row["components"].values()
+    )
+    zero = next(row for row in result["orders"] if row["port_side"] == "bottom" and row["m"] == 0)
+    assert zero["side"] == "transmission"
+    assert zero["components"]["s"]["amplitude_re"] == 0.0
+    assert zero["components"]["s"]["amplitude_im"] == 0.0
+    assert zero["components"]["s"]["power"] == pytest.approx(0.01)
+    assert zero["components"]["p"]["power"] == pytest.approx(0.01)
+    assert zero["order_total_power"] == pytest.approx(0.02)
+    assert zero["kx"] == {"re": 0.0, "im": 0.125}
+    assert zero["ky"] == {"re": 0.0, "im": -0.25}
+    assert zero["kz"] == {"re": -1.0, "im": -0.01}
     assert result["port_power_consistency"]["r_matches"] is True
     assert result["port_power_consistency"]["t_matches"] is True
+
+
+def test_grouped_order_wavevector_and_complex_json_round_trip() -> None:
+    rows = [
+        _order("top", 0, 0, "s", 0.2),
+        _order("top", 0, 0, "p", 0.3),
+    ]
+    result = extract_fixed_orders(
+        rows, incident_polarization="P",
+        port_power={"R_total": 0.5, "T_total": 0.0},
+    )
+    restored = json.loads(json.dumps(result))
+    order = restored["orders"][0]
+    assert restored["incident_polarization"] == "P"
+    assert "transmission/bottom kz=-beta_bottom" in restored["wavevector_convention"]
+    assert order["side"] == "reflection"
+    assert order["kx"] == {"re": 0.0, "im": 0.125}
+    assert order["ky"] == {"re": 0.0, "im": -0.25}
+    assert order["kz"] == {"re": 1.0, "im": 0.01}
+    assert order["components"]["s"]["amplitude_re"] == 0.0
+    assert order["components"]["s"]["amplitude_im"] == 0.0
+    assert order["components"]["s"]["power"] == 0.2
+    assert order["components"]["p"]["power"] == 0.3
+    assert order["order_total_power"] == 0.5
 
 
 def test_order_extractor_accepts_real_runner_power_ratio() -> None:
@@ -259,11 +305,17 @@ def test_order_extractor_accepts_real_runner_power_ratio() -> None:
         "side": "bottom", "m": 0, "n": 0, "polarization": "s",
         "propagating": True, "power_ratio": 0.25, "R": 0.0, "T": 0.25,
         "outgoing_amplitude_at_boundary": [0.5, 0.0],
+        "kx": [0.1, 0.0], "ky": [0.2, 0.0], "kz": [-0.3, -0.01],
     }
+    companion = {**row, "polarization": "p", "power_ratio": 0.0, "T": 0.0,
+                 "outgoing_amplitude_at_boundary": [0.0, 0.0]}
     result = extract_fixed_orders(
-        [row], port_power={"R_total": 0.0, "T_total": 0.25}
+        [row, companion], port_power={"R_total": 0.0, "T_total": 0.25}
     )
-    assert result["orders"][0]["power"] == 0.25
+    extracted = result["orders"][0]
+    assert extracted["components"]["s"]["power"] == 0.25
+    assert extracted["components"]["s"]["amplitude_re"] == 0.5
+    assert extracted["components"]["s"]["amplitude_im"] == 0.0
 
 
 def test_order_extractor_preserves_lossy_dispersion_flag_but_counts_power() -> None:
@@ -271,30 +323,42 @@ def test_order_extractor_preserves_lossy_dispersion_flag_but_counts_power() -> N
         "side": "bottom", "m": 0, "n": 0, "polarization": "s",
         "propagating": False, "power_ratio": 8.24e-4, "R": 0.0, "T": 0.0,
         "outgoing_amplitude_at_boundary": [0.01, -0.01],
+        "kx": [0.1, 0.0], "ky": [0.2, 0.0], "kz": [-0.3, -0.01],
     }
+    companion = {**row, "polarization": "p", "power_ratio": 0.0,
+                 "outgoing_amplitude_at_boundary": [0.0, 0.0]}
     result = extract_fixed_orders(
-        [row], port_power={"R_total": 0.0, "T_total": 8.24e-4}
+        [row, companion], port_power={"R_total": 0.0, "T_total": 8.24e-4}
     )
     extracted = result["orders"][0]
     assert extracted["dispersion_propagating"] is False
     assert extracted["power_carrying"] is True
-    assert extracted["propagating"] is True
-    assert extracted["power"] == pytest.approx(8.24e-4)
+    assert extracted["components"]["s"]["power_carrying"] is True
+    assert extracted["components"]["s"]["power"] == pytest.approx(8.24e-4)
+    assert extracted["order_total_power"] == pytest.approx(8.24e-4)
     assert result["raw_t_total"] == pytest.approx(8.24e-4)
 
 
 def test_order_extractor_keeps_zero_power_for_dispersion_propagating_mode() -> None:
     row = _order("top", 0, 0, "s", 0.0, propagating=True)
-    result = extract_fixed_orders([row], port_power={"R_total": 0.0, "T_total": 0.0})
-    extracted = next(item for item in result["orders"] if item["side"] == "top")
+    companion = _order("top", 0, 0, "p", 0.0, propagating=True)
+    result = extract_fixed_orders(
+        [row, companion], port_power={"R_total": 0.0, "T_total": 0.0}
+    )
+    extracted = next(item for item in result["orders"] if item["port_side"] == "top")
     assert extracted["dispersion_propagating"] is True
     assert extracted["power_carrying"] is True
-    assert extracted["power"] == 0.0
+    assert extracted["components"]["s"]["power"] == 0.0
+    assert extracted["order_total_power"] == 0.0
 
 
 def test_task001_extractor_classifies_omitted_plus_one_as_nonpropagating() -> None:
     rows = [
-        _order(side, m, 0, pol, 0.01)
+        {
+            key: value
+            for key, value in _order(side, m, 0, pol, 0.01).items()
+            if key not in {"kx", "ky", "kz"}
+        }
         for side in ("top", "bottom")
         for m in FIXED_M_ORDERS if m != 1
         for pol in ("s", "p")
@@ -307,8 +371,13 @@ def test_task001_extractor_classifies_omitted_plus_one_as_nonpropagating() -> No
     )
     assert result["missing"] == []
     plus_one = [row for row in result["orders"] if row["m"] == 1]
-    assert len(plus_one) == 4
-    assert all(row["propagating"] is False and row["power"] is None for row in plus_one)
+    assert len(plus_one) == 2
+    assert all(row["power_carrying"] is False for row in plus_one)
+    assert all(row["order_total_power"] is None for row in plus_one)
+    assert all(
+        component["power"] is None
+        for row in plus_one for component in row["components"].values()
+    )
 
 
 def test_order_extractor_reports_missing_and_duplicate() -> None:

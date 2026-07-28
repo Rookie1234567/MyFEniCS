@@ -19,6 +19,8 @@ MPI2、每 rank 1 thread、单任务串行和 10.5 GiB watchdog；未进入 Dock
 `solver theta = 90° - grazing`、`phi = azimuth`。接口合同允许掠射角
 0.5--10°、方位角 0--90°、S/P；但 Task001 的数值证据只资格化了下文列出的
 S 条件，不能据此宣称整个连续角域和 P 已可靠。
+Review V1 与用户确认覆盖旧 task 中 solver `theta=70°/80°` 的候选表述；没有改成
+20° grazing，也没有补算 solver theta=70°。
 
 ## 保真度选择
 
@@ -92,13 +94,25 @@ height 0.0264--0.0267 nm、width 0.0236--0.0237 nm，bias 均小于 0.001 nm。
 10°/90°/S `0.1617`。Task002 应使用 GP/多保真 discrepancy 和额外 HF anchors，
 不能用高阶全局多项式掩盖非线性。
 
-## Observable 与有损模式语义
+## Observable v2 母响应与有损模式语义
 
-每侧、每 S/P 分量固定保存 `m=(0,-1,-2,-3,-4,-5,-6,-7,+1), n=0`；
-`n!=0` 只作泄漏汇总。compact `propagating` 表示正的向外功率携带，原始求解器的
-色散分类另存为 `dispersion_propagating`。因此有损基底中
-`dispersion_propagating=false` 但 Poynting 功率为正的模式仍正确计入 T；真正不携带
-功率的条目为 `power=null`，不与零功率混淆。
+旧 raw execution 的 observable identity 为 `task001.fixed-n0-orders.v1`；不改写 raw 的前提下，
+37 个通过记录已重建为 `task001.fixed-n0-orders.v2`。每侧固定保存 9 个
+`m=(0,-1,-2,-3,-4,-5,-6,-7,+1), n=0` grouped orders，共 18 条/run：
+
+- sample-level `incident_polarization`；
+- `side=reflection/transmission`、`port_side=top/bottom`、m/n；
+- `kx/ky/kz={re,im}`，单位 `1/nm`；
+- `dispersion_propagating` 与 `power_carrying`；
+- `components.s/p = {amplitude_re, amplitude_im, power, power_carrying}`；
+- `order_total_power = S power + P power`；
+- 分开的 `n_nonzero_reflection_power_sum`、`n_nonzero_transmission_power_sum` 与
+  `n_nonzero_max_abs_amplitude`。
+
+有损基底中 `dispersion_propagating=false` 但 Poynting 功率为正的模式仍正确计入 T；
+非功率携带 component/order 的 `power=null`，传播但数值为零的功率仍保留 `0.0`。
+37-run 最大 n!=0 reflection/transmission leakage 为 `1.416e-7 / 1.592e-7`，最大复振幅
+`1.892e-4`；这些值只作数值诊断，不进入训练向量。复振幅只保存 real/imag，phase 为派生量。
 
 ## Task002 冻结计划
 
@@ -116,11 +130,12 @@ Task001 没有执行这些 solves。材料仍固定；未来把材料加入 `con
 ## 证据与变更
 
 - compact records：`benchmarks/cases/110_surrogate_two_parameter_pilot/records/`；
+- v2 mother responses：`records/compact_diffraction_responses.json`（37 runs，raw hash-bound）；
 - raw ignored artifacts：`benchmarks/artifacts/cases/110/`；
 - checker：`benchmarks/check_case110_task001.py`；
 - 参数/拓扑/提取/资源/DOE：`src/forward_data/`；
 - p6 surface-form roundoff Gate 修正及测试：condensation 实现与对应测试；
-- 本目录 outcomes 与 `response_v1.md`。
+- 本目录 outcomes 与 `response_v2.md`。
 
 数值 baseline 与后处理/文档 HEAD 有意分离：前者固定 PDE 身份，后者只修正有损 order
 提取语义、重算证据并写报告，不再启动 PDE。

@@ -58,7 +58,7 @@ fallback low fidelity:
 
 p6/h7.5 只有在预测峰值和运行时 watchdog 都满足本机安全内存上限、无 swap、完整 residual/physics Gate 通过时，才可成为 high fidelity。否则记录受控停止，并采用同源资格化后的 p6/h10 Hybrid static M120。
 
-## Pilot 几何与入射条件
+## Pilot 几何与入射条件（Review V1 后权威范围）
 
 局部/边界 9 点：
 
@@ -69,15 +69,19 @@ width axial:  (120, 16.5), (120, 17.5)
 corners:      (115, 16), (115, 18), (125, 16), (125, 18)
 ```
 
-首轮候选照明：
+用户确认的正式照明范围是相对于样品表面的掠射角：
 
 ```text
-theta = 70°, 80°     # 使用当前代码相对法线的角度约定
-phi   = 0°, 90°
-polarization = S, P
+grazing_deg = 0.5--10.0
+azimuth_deg = 0--90
+polarization = S or P
+solver theta = 90° - grazing_deg
 ```
 
-先由低保真在 9 个几何点上筛选，再由选定高保真在中心差分 5 点上确认。若 70°/80° 两档无法区分高度与宽度，才允许增加 theta=75° 的二级筛选；不得自动扩展到连续角度扫描。
+`review_report_v1.md` 与用户确认覆盖原任务书中 solver `theta=70°/80°` 的旧候选描述。
+Task001 实际代表点保持 `grazing=0.5°/10°`、`azimuth=0°/90°`、S/P；不得改成
+20° grazing，也不得补算 solver theta=70°。选定 bundle 为两个 10° grazing / S 配置。
+P 的失败是当前 Hybrid numerical qualification failure，不表示 P 在真实物理中不存在。
 
 ## 固定衍射输出窗口
 
@@ -87,7 +91,10 @@ polarization = S, P
 m = 0, -1, -2, -3, -4, -5, -6, -7, +1
 ```
 
-这组固定窗口覆盖当前 50 nm 周期、13.5 nm、70°/80°、phi=0°/90° 候选中有物理意义的 n=0 传播级，同时避免保存任意高 `|m|`。每个条目必须包含传播状态、反射/透射、outgoing S/P 分量功率和可用时的复振幅。所有 `n!=0` 模式不进入训练向量，只汇总为数值泄漏诊断。
+这组固定窗口由 `task001.fixed-n0-orders.v2` 保存为每个 `(side,m,n)` 一条母响应：复数
+`kx/ky/kz`、分离的 `dispersion_propagating`/`power_carrying`、grouped outgoing S/P
+边界复振幅 real/imag、S/P 功率与 `order_total_power`。所有 `n!=0` 模式不进入训练向量，
+只分别汇总 reflection/transmission 功率泄漏和最大复振幅。
 
 ## 主要交付
 
@@ -98,7 +105,7 @@ surrogate_tasks/task001_two_parameter_hybrid_multifidelity_pilot/
     outcomes/fidelity_qualification.md
     outcomes/illumination_identifiability.md
     outcomes/task002_dataset_plan.md
-    response_v1.md
+    response_v2.md
 
 benchmarks/cases/110_surrogate_two_parameter_pilot/
     README.md

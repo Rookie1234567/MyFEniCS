@@ -2311,3 +2311,10 @@ rank=2。P 与部分近掠射条件未资格化，不能把接口允许范围冒
 有损基底 order 提取现区分 `power_carrying` 与 `dispersion_propagating`，从 raw 模式功率独立
 重算 R/T。Task002 只冻结 49 geometry x 2 configurations = 98 LF solves，加 18 initial HF、
 12--20 adaptive HF 和 12--16 independent validation；本任务没有生成这些数据、训练模型或反演。
+
+Review V1 接受全部数值证据，并确认用户权威范围为相对样品表面的
+`grazing=0.5--10°`、`solver theta=90°-grazing`。定向修正将 raw observable v1 重建为
+`task001.fixed-n0-orders.v2`：37 个通过 run 各保存 18 个 grouped side/order 母响应，包含
+kx/ky/kz complex identity、S/P amplitude real/imag、S/P power、order total，以及分侧 n!=0
+leakage。所有 response 绑定原 execution/solver hash；没有重跑 PDE。结果和测试见
+Task001 `response_v2.md`。

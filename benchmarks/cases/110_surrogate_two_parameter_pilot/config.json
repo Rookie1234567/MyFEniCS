@@ -18,7 +18,7 @@
     "height_nm": [115.0, 120.0, 125.0],
     "width_x_nm": [16.0, 17.0, 18.0]
   },
-  "order_schema_id": "task001.fixed-n0-orders.v1",
+  "order_schema_id": "task001.fixed-n0-orders.v2",
   "fixed_m_orders": [0, -1, -2, -3, -4, -5, -6, -7, 1],
   "fixed_n": 0,
   "fidelities": {

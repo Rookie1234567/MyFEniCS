@@ -14,7 +14,10 @@
   `0--90 deg`、S/P 离散；求解器换算为 `theta=90-grazing`、`phi=azimuth`；
 - Task001 首轮只取掠射角 `0.5/10 deg`与方位角 `0/90 deg`的代表组合，
   `5.25 deg` 仅在首轮可辨识性失败时 fallback；这不是连续扫描；
-- observable：固定 `m=(0,-1,-2,-3,-4,-5,-6,-7,+1), n=0` order schema；
+- observable：`task001.fixed-n0-orders.v2`，固定
+  `m=(0,-1,-2,-3,-4,-5,-6,-7,+1), n=0`；每个 side/order grouping 保存
+  `kx/ky/kz` complex identity、outgoing S/P amplitude real/imag、S/P power 与
+  `order_total_power`；
 - Hybrid：static local FEM、M120、modal-Schur memory-minimal、discrete axial
   propagation/traction；
 - formal MPI：先资格化 MPI2，最终 dataset version 不混用 ranks；
@@ -61,6 +64,11 @@ raw artifacts 重算；`--check-records` 会逐字检查 compact evidence 是否
 正的向外 Poynting 功率定义为 `power_carrying`，并另存原始色散分类
 `dispersion_propagating`，从而正确处理有损基底中 `dispersion=false` 但仍计入端口 T
 的模式。
+
+`compact_diffraction_responses.json` 包含 37 个通过记录的 v2 母响应，并逐 run 绑定旧 raw
+`task001.fixed-n0-orders.v1` execution/solver SHA-256。每个 run 有 18 个 grouped orders；
+checker 验证 S+P=order total、wavevector real/imag、分侧 `n!=0` leakage、raw R/T 和
+lossy propagation/power 语义。该文件完全由既有 artifacts 生成，没有重跑 FEM。
 
 ## 测试
 

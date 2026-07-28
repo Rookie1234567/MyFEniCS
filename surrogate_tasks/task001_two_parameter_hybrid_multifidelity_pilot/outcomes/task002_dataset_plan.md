@@ -52,7 +52,12 @@ discrepancy uncertainty、PCE/GP disagreement、posterior region、Fisher 信息
 - 每个正式 dataset version 只能绑定一个完整 forward solver SHA 与一个 observable schema；
 - Task001 PDE baseline `68f4f9b...` 是 pilot 证据，不自动成为 Task002 dataset source；Task002
   开始时必须在最终实现 HEAD 上重新冻结 clean dataset baseline；
-- 固定保存 9 个 n=0 x-orders、S/P 独立功率、R/T/A、数值 Gate、资源和 raw hash；
+- 最终 observable schema 为 `task001.fixed-n0-orders.v2`：每 run 18 个 grouped
+  side/order rows，固定 9 个 n=0 x-orders/side；保存 kx/ky/kz complex identity、S/P
+  amplitude real/imag、S/P power、order total、分侧 n!=0 leakage、R/T/A、数值 Gate、资源和
+  raw hash；
+- 训练特征从母响应选择独立 S/P power；不得把 S、P、S+P 三者同时作为独立观测；
+- `dispersion_propagating` 与 `power_carrying` 分离，非功率携带 power 为 null；
 - 任何 Gate failure 不进入训练集；失败记录另存；
 - 材料目前固定。未来增加材料信息必须升级参数/schema 与 dataset version，并重新训练；禁止
   用当前两几何参数模型对未见材料做隐式外推。

@@ -15,12 +15,15 @@ C2: grazing 10°, azimuth 90°, S
 
 这同时包含 planar 与 conical 条件。P 未通过当前 physical Gate；0.5°/90°/S 虽能求解，
 单独使用时 `rho=-0.9839`，几乎沿同一方向混合 height/width，因此不选。
+P 的结论只表示当前 Hybrid 数值路径没有通过 qualification Gate，不表示真实物理中 P
+偏振不存在或实验不能测量。
 
 ## 功率特征与噪声
 
 候选特征只使用实验可能测得的固定 order S/P 分量功率；不把 S、P 和 S+P 三者同时作为
 独立观测。每配置按 Fisher 增益最多选 8 个，active floor `1e-8`。噪声模型为
 `sqrt((r*y)^2 + 1e-8^2)`，同时测试 r=0.5%、1%、2%；它只是 DOE 假设。
+它不是仪器标定结果、真实测量误差或 Bayesian posterior。
 
 R+T 的 LF channel bundle 为 planar 8 个 order 分量加 conical top/bottom m0 S；HF 复用
 这些由 LF 选出的物理 identity，不在 HF 结果上重新挑通道以获得乐观结论。
@@ -66,3 +69,5 @@ HF 点。
 接口域与资格化域必须区分：未来 DOE 可以在 `configuration` 的 0.5--10°、0--90°、S/P
 中提议新实验，但在用于训练或反演前必须先通过同样的 trace、residual、interface、energy 和
 order Gate。当前可以正式进入 Task002 首版的只有上述两个 10°/S 配置。
+这里的 0.5--10° 是相对样品表面的 grazing；`solver theta=90°-grazing`。Review V1 已覆盖
+旧 task 的 theta=70°/80° 候选表述，因此不增加 solver theta=70° 数据。

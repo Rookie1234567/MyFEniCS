@@ -10,7 +10,7 @@ from typing import Any, Mapping
 PARAMETER_SCHEMA_VERSION = "task000.forward-parameters.v1"
 OBSERVABLE_SCHEMA_VERSION = "task000.forward-observables.v1"
 TASK001_PARAMETER_SCHEMA_VERSION = "task001.forward-parameters.v3"
-TASK001_OBSERVABLE_SCHEMA_VERSION = "task001.fixed-n0-orders.v1"
+TASK001_OBSERVABLE_SCHEMA_VERSION = "task001.fixed-n0-orders.v2"
 TASK001_MANIFEST_SCHEMA_VERSION = "task001.forward-manifest.v3"
 
 TASK001_FIDELITIES = {
