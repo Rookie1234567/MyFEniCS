@@ -90,6 +90,10 @@ class SimulationConfig3D:
     stage4_dtn_assembly: str = (
         "auxiliary"  # 3D v1 supports only sparse auxiliary modal unknowns.
     )
+    # Optional deterministic override for the oscillatory DtN surface forms.
+    # ``None`` preserves the reviewed automatic rule.  Task035e uses a larger
+    # value only for an explicitly labelled postprocess/internal-budget probe.
+    stage4_dtn_quadrature_degree: int | None = None
     stage4_pml_outer_bc: str = "natural"  # "natural" or "zero_tangential"
     use_floquet_xy: bool = False
     use_pml: bool = False
@@ -176,6 +180,16 @@ class SimulationConfig3D:
     # condense cell interiors, and apply Floquet constraints before global
     # insertion. The full FE and full-trace matrices are never allocated.
     stage4_assembly_time_cell_static_condensation: bool = False
+    # Explicit resource-diagnostic exception for the assembly-time static
+    # backend.  This permits only an assemble-only matrix authority run; it
+    # never grants physics, residual, or field-recovery credit.  Ordinary and
+    # production Full3D callers keep the fail-closed default.
+    stage4_static_condensed_resource_only_assembly: bool = False
+    # Explicit research/performance opt-in.  When both values are present,
+    # raw compiled cell tensors may be reused from a write-once, hash- and
+    # ABI-bound Linux cache.  None/None is the ordinary default.
+    stage4_raw_tensor_cache_directory: str | None = None
+    stage4_raw_tensor_cache_namespace: str | None = None
     # Task035b lifecycle opt-in. After the recovered field and true residual
     # are available, release KSP/MUMPS factors and the reduced Mat/Vec objects
     # before field and power postprocessing. The ordinary lifecycle remains
@@ -779,6 +793,59 @@ def qualify_stage4_full3d_assembly_backend(
         else audit
     )
     actual = str(resolved["actual"])
+    resource_only_assembly = bool(
+        cfg.stage4_static_condensed_resource_only_assembly
+    )
+    raw_tensor_cache_enabled = (
+        cfg.stage4_raw_tensor_cache_directory is not None
+    )
+    if raw_tensor_cache_enabled != (
+        cfg.stage4_raw_tensor_cache_namespace is not None
+    ):
+        raise ValueError(
+            "stage4_raw_tensor_cache_directory and "
+            "stage4_raw_tensor_cache_namespace must be supplied together"
+        )
+    if raw_tensor_cache_enabled:
+        cache_path = Path(
+            str(cfg.stage4_raw_tensor_cache_directory)
+        ).expanduser()
+        namespace = str(cfg.stage4_raw_tensor_cache_namespace)
+        if not cache_path.is_absolute():
+            raise ValueError(
+                "stage4_raw_tensor_cache_directory must be an absolute "
+                "Linux path"
+            )
+        resolved_cache_path = cache_path.resolve()
+        if (
+            resolved_cache_path.as_posix() == "/mnt"
+            or resolved_cache_path.as_posix().startswith("/mnt/")
+        ):
+            raise ValueError(
+                "stage4 raw tensor cache must use the Linux filesystem"
+            )
+        if not namespace or len(namespace) > 256 or "\x00" in namespace:
+            raise ValueError(
+                "stage4_raw_tensor_cache_namespace must be nonempty and "
+                "at most 256 characters"
+            )
+        if actual not in {
+            ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
+        }:
+            raise ValueError(
+                "stage4 raw tensor cache requires an assembly-time "
+                "condensed backend"
+            )
+    if (
+        resource_only_assembly
+        and actual != ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+    ):
+        raise ValueError(
+            "stage4_static_condensed_resource_only_assembly requires "
+            "stage4_full3d_assembly_backend="
+            "'assembly_time_static_condensed'"
+        )
     if (
         cfg.stage4_local_h_refinement_plan
         and actual != ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
@@ -814,13 +881,24 @@ def qualify_stage4_full3d_assembly_backend(
         failures.append("stage4_dtn_assembly must be sparse 'auxiliary'")
     if cfg.use_pml or cfg.pml_top_thickness or cfg.pml_bottom_thickness:
         failures.append("PML is outside the qualified condensed backend")
-    if (
+    if resource_only_assembly:
+        if (
+            not cfg.matrix_diagnostics_assemble_only
+            or cfg.matrix_diagnostics_assemble_unconstrained
+            or cfg.matrix_diagnostics_factorization_only
+        ):
+            failures.append(
+                "resource-only assembly requires only "
+                "matrix_diagnostics_assemble_only=True"
+            )
+    elif (
         cfg.matrix_diagnostics_assemble_unconstrained
         or cfg.matrix_diagnostics_assemble_only
         or cfg.matrix_diagnostics_factorization_only
     ):
         failures.append(
-            "a complete direct solve with field recovery and explicit residual is required"
+            "a complete direct solve with field recovery and explicit residual "
+            "is required"
         )
     if actual == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND:
         if int(cfg.nedelec_degree) != 6:
@@ -844,8 +922,7 @@ def qualify_stage4_full3d_assembly_backend(
             )
         element_contract = (
             (
-                "exact_sequence_balanced_local_h_fixed_trace_"
-                "variable_cell_interior"
+                "exact_sequence_plan_bound_local_h_variable_p"
             )
             if cfg.stage4_local_h_refinement_plan
             else "exact_sequence_variable_p4_p5_p6_in_p6_container"
@@ -864,10 +941,27 @@ def qualify_stage4_full3d_assembly_backend(
         )
 
     return {
-        "status": "qualified",
+        "status": (
+            "qualified_resource_only"
+            if resource_only_assembly
+            else "qualified"
+        ),
         "qualified_scope": True,
+        **(
+            {
+                "resource_only": True,
+                "physics_credit": False,
+            }
+            if resource_only_assembly
+            else {}
+        ),
         "actual": actual,
         "element_contract": element_contract,
+        "raw_tensor_cache": {
+            "enabled": raw_tensor_cache_enabled,
+            "ordinary_default_changed": False,
+            "numerical_identity_changed": False,
+        },
         "contract": (
             "complex128_hcurl_nedelec",
             "axis_aligned_affine_hexahedron",
@@ -883,7 +977,11 @@ def qualify_stage4_full3d_assembly_backend(
                 else "uniform_or_fixed_trace_active_space"
             ),
             "sparse_auxiliary_dtn",
-            "full_recovery_and_explicit_residual",
+            (
+                "assembly_only_resource_authority_no_physics_credit"
+                if resource_only_assembly
+                else "full_recovery_and_explicit_residual"
+            ),
         ),
     }
 

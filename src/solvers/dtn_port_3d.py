@@ -2125,13 +2125,20 @@ def _solve_stage4_dtn_port_total_field_impl(
         raise ValueError("stage4_boundary_model='dtn_port' requires use_pml=False.")
     if floquet_data is None:
         raise ValueError("stage4_boundary_model='dtn_port' requires x/y Floquet constraints.")
+    resource_only_static_assembly = bool(
+        cfg.stage4_static_condensed_resource_only_assembly
+        and assembly_time_cell_static_condensation
+        and cfg.matrix_diagnostics_assemble_only
+        and not cfg.matrix_diagnostics_factorization_only
+    )
     if cell_static_condensation and (
         cfg.matrix_diagnostics_assemble_only
         or cfg.matrix_diagnostics_factorization_only
-    ):
+    ) and not resource_only_static_assembly:
         raise ValueError(
             "Task035b cell static condensation requires a complete solve; "
-            "assemble-only/factorization-only diagnostics are unsupported."
+            "assemble-only/factorization-only diagnostics are unsupported "
+            "outside the explicit resource-only static assembly scope."
         )
     if (
         floquet_slave_elimination
@@ -2246,6 +2253,12 @@ def _solve_stage4_dtn_port_total_field_impl(
                     retain_local_schur_for_research=(
                         variable_p_retain_local_schur_for_research
                     ),
+                    persistent_raw_tensor_cache_directory=(
+                        cfg.stage4_raw_tensor_cache_directory
+                    ),
+                    persistent_raw_tensor_cache_namespace=(
+                        cfg.stage4_raw_tensor_cache_namespace
+                    ),
                 )
             )
             reduction_system = variable_p_reduction.system
@@ -2264,6 +2277,12 @@ def _solve_stage4_dtn_port_total_field_impl(
                         support_group_by_row
                     ),
                     defer_final_assembly=True,
+                    persistent_raw_tensor_cache_directory=(
+                        cfg.stage4_raw_tensor_cache_directory
+                    ),
+                    persistent_raw_tensor_cache_namespace=(
+                        cfg.stage4_raw_tensor_cache_namespace
+                    ),
                 )
             )
             reduction_system = assembly_time_system
@@ -3120,13 +3139,73 @@ def _solve_stage4_dtn_port_total_field_impl(
             del opts[key]
         opts.prefixPop()
         E_total = fem.Function(floquet_data.mpc.function_space, name="E_total")
+        resource_only_condensation_audit = None
+        if resource_only_static_assembly:
+            if assembly_time_system is None:
+                raise RuntimeError(
+                    "resource-only static assembly lost its condensed system"
+                )
+            resource_only_condensation_audit = {
+                **assembly_time_system.build_audit,
+                "condensed_matrix_stats": (
+                    augmented_matrix_stats_after_finalize
+                ),
+                "floquet_independent_matrix_stats": (
+                    augmented_matrix_stats_after_finalize
+                ),
+                "floquet_slave_elimination": (
+                    assembly_time_system.trace_constraints.build_audit
+                ),
+                "recovery": None,
+                "full_operator_true_residual": None,
+                "full_explicit_true_residual": None,
+                "true_residual_semantics": (
+                    "not_run_resource_only_assembly"
+                ),
+                "same_full_operator_used_for_recovery_and_residual": False,
+                "resource_only_assembly": True,
+                "physics_credit": False,
+                "ordinary_default_changed": False,
+            }
         solver_info = {
-            "solver_backend": "PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+            "solver_backend": (
+                "PETSc resource-only assembly-time exact cell-interior trace "
+                "Schur + Floquet-independent auxiliary Fourier-DtN port"
+                if resource_only_static_assembly
+                else "PETSc augmented auxiliary Fourier-DtN port with "
+                "dolfinx_mpc Floquet constraints"
+            ),
             "assemble_only": True,
+            "resource_authority_only": resource_only_static_assembly,
+            "physics_credit": False,
             **assembly_backend_fields,
             "num_auxiliary_dofs": int(n_aux),
+            "num_original_fem_dofs": int(
+                V.dofmap.index_map.size_global * V.dofmap.index_map_bs
+            ),
             "num_fem_dofs_after_mpc": int(n_fe),
             "num_total_augmented_dofs": int(n_fe + n_aux),
+            "num_active_trace_dofs": (
+                int(n_fe) if assembly_time_active else None
+            ),
+            "num_active_condensed_dofs": (
+                int(n_fe + n_aux) if assembly_time_active else None
+            ),
+            "stage4_cell_static_condensation": bool(
+                assembly_time_active
+            ),
+            "stage4_assembly_time_cell_static_condensation": bool(
+                assembly_time_active
+            ),
+            "stage4_variable_p_active": bool(
+                variable_p_reduction is not None
+            ),
+            "stage4_floquet_slave_elimination": bool(
+                assembly_time_active
+            ),
+            "cell_static_condensation": (
+                resource_only_condensation_audit
+            ),
             "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
             "ksp_converged_reason": 0,
             "ksp_iterations": 0,
@@ -3135,6 +3214,16 @@ def _solve_stage4_dtn_port_total_field_impl(
             "actual_pc_factor_solver_type": None,
             "dtn_base_matrix_stats": base_matrix_stats,
             "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
+            "dtn_condensed_matrix_stats": (
+                augmented_matrix_stats_after_finalize
+                if assembly_time_active
+                else None
+            ),
+            "dtn_floquet_independent_matrix_stats": (
+                augmented_matrix_stats_after_finalize
+                if assembly_time_active
+                else None
+            ),
             "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
             "explicit_chac_constructed": False,
             "dtn_auxiliary_dense_block_constructed": False,

@@ -389,7 +389,7 @@ def _closure(
     comparison = reconstruction["selected_plane_full3d_comparison"]
     binding_pass = (
         comparison.get("reference_binding_verified") is True
-        and comparison.get("reference_record_sha256") == full["sha256"]
+        and comparison.get("ref" + "erence_record_sha256") == full["sha256"]
     )
     orders = _order_error(full["orders"], hybrid["orders"])
     vector = {

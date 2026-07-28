@@ -180,6 +180,49 @@ class Task035dVariablePReductionTests(unittest.TestCase):
                 reduced_solution,
                 recovered,
             )
+            self.assertEqual(
+                residual["replicated_active_vector_bytes_per_rank"],
+                0,
+            )
+            self.assertEqual(
+                residual["replicated_reduced_vector_bytes_per_rank"],
+                0,
+            )
+            self.assertEqual(
+                residual["active_selected_rows"][
+                    "shared_layout_vector_count"
+                ],
+                3,
+            )
+            self.assertFalse(
+                residual["active_selected_rows"][
+                    "full_vector_allgather_used"
+                ]
+            )
+            self.assertEqual(
+                residual["reduced_constraint_norm"][
+                    "global_component_gram_factorizations"
+                ],
+                0,
+            )
+            self.assertEqual(
+                residual["reduced_constraint_norm"][
+                    "selected_row_layout_reused_vector_count"
+                ],
+                3,
+            )
+            self.assertGreaterEqual(
+                residual["reduced_constraint_norm"][
+                    "local_component_factor_cache_hits"
+                ],
+                1,
+            )
+            self.assertEqual(
+                recovered.audit["field_recovery"][
+                    "full_active_vector_replicated_bytes_per_rank"
+                ],
+                0,
+            )
             self.assertLessEqual(
                 residual["linear_system_relative_residual"],
                 2.0e-12,

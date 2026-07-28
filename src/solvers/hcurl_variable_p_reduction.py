@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import hashlib
+import os
+from time import perf_counter
 from typing import Any
 
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 from scipy import sparse
-from scipy.sparse import linalg as sparse_linalg
+from scipy.sparse import csgraph, linalg as sparse_linalg
 
 from src.adaptivity.variable_p_degree_plan import (
     VariablePCellDegreePlan,
@@ -19,6 +22,7 @@ from src.adaptivity.variable_p_periodic_orbits import (
     build_variable_p_periodic_constraint_map,
 )
 from src.adaptivity.variable_p_transfer import (
+    PETScSelectedRowLayout,
     VariablePGlobalTransfer,
     build_variable_p_global_transfer,
     project_p6_dual_to_active_full,
@@ -35,6 +39,7 @@ from .hcurl_variable_p_assembly import (
     audit_variable_p_active_full_adjoint_recovery,
     build_variable_p_condensed_trace_system_from_compiled_form,
     condense_variable_p_active_vector_to_trace,
+    extract_variable_p_active_primal_to_reduced,
     recover_variable_p_active_full_adjoint_vector,
     recover_variable_p_active_full_vector,
     variable_p_cell_interior_schur_bilinear,
@@ -140,8 +145,14 @@ class VariablePAssemblyTimeReduction:
     transfer: VariablePGlobalTransfer
     degree_plan: VariablePCellDegreePlan
     build_audit: dict[str, Any]
+    _trace_dual_factor_cache: dict[str, Any] = field(
+        default_factory=dict,
+        init=False,
+        repr=False,
+    )
 
     def destroy(self) -> None:
+        self._trace_dual_factor_cache.clear()
         self.system.destroy()
 
     def release_retained_local_schur(self) -> dict[str, Any]:
@@ -185,6 +196,22 @@ class VariablePAssemblyTimeReduction:
             self.system,
             active_full_vector,
             side=side,
+        )
+
+    def extract_primal_to_reduced(
+        self,
+        active_full_primal: PETSc.Vec,
+        *,
+        auxiliary_reduced_values: np.ndarray,
+        roundtrip_tolerance: float = 5.0e-10,
+    ) -> tuple[PETSc.Vec, dict[str, Any]]:
+        """Extract one conforming primal into independent trace coordinates."""
+
+        return extract_variable_p_active_primal_to_reduced(
+            self.system,
+            active_full_primal,
+            auxiliary_reduced_values=auxiliary_reduced_values,
+            roundtrip_tolerance=roundtrip_tolerance,
         )
 
     def enforce_trace_only_active_functional(
@@ -532,40 +559,70 @@ class VariablePAssemblyTimeReduction:
         residual = reduced_matrix.createVecLeft()
         reduced_matrix.mult(reduced_solution, residual)
         residual.axpy(PETSc.ScalarType(-1.0), reduced_rhs)
-        reduced_norm = _reduced_trace_auxiliary_norm(
-            self.system,
-            residual,
-            trace_kind="dual",
-        )
-        residual.destroy()
-
-        active_solution = _global_values(
-            recovered.active_full_solution,
-            self.system.entity_map.active_rows,
-            self.system.entity_map.mesh.comm,
-        )
-        active_rhs = _global_values(
-            recovered.active_full_rhs,
-            self.system.entity_map.active_rows,
-            self.system.entity_map.mesh.comm,
-        )
-        auxiliary_action = (
-            np.zeros_like(active_rhs)
-            if recovered.active_auxiliary_interior_action is None
-            else _global_values(
-                recovered.active_auxiliary_interior_action,
-                self.system.entity_map.active_rows,
-                self.system.entity_map.mesh.comm,
+        try:
+            reduced_norms, reduced_norm_audit = (
+                _reduced_trace_auxiliary_norms(
+                    self.system,
+                    (
+                        ("residual", residual, "dual"),
+                        ("rhs", reduced_rhs, "dual"),
+                        ("solution", reduced_solution, "primal"),
+                    ),
+                    factor_cache=self._trace_dual_factor_cache,
+                )
             )
+        finally:
+            residual.destroy()
+        reduced_norm = reduced_norms["residual"]
+        reduced_rhs_norm = reduced_norms["rhs"]
+        reduced_solution_norm = reduced_norms["solution"]
+
+        active_solution_vector = recovered.active_full_solution
+        active_rhs_vector = recovered.active_full_rhs
+        if active_solution_vector is None or active_rhs_vector is None:
+            raise RuntimeError(
+                "recovered active vectors were released before residual audit"
+            )
+        requested_active_rows = np.concatenate(
+            [
+                np.concatenate(
+                    (recovery.cell.trace_rows, recovery.cell.interior_rows)
+                )
+                for recovery in self.system.cell_recovery
+            ]
+            or [np.empty(0, dtype=np.int64)]
         )
+        with PETScSelectedRowLayout.create(
+            active_solution_vector,
+            requested_active_rows,
+        ) as active_layout:
+            active_solution = active_layout.gather(active_solution_vector)
+            active_rhs = active_layout.gather(active_rhs_vector)
+            auxiliary_action = (
+                np.zeros_like(active_rhs)
+                if recovered.active_auxiliary_interior_action is None
+                else active_layout.gather(
+                    recovered.active_auxiliary_interior_action
+                )
+            )
+            active_selected_audit = dict(active_layout.audit)
+
         local_interior_sq = 0.0
         local_interior_max = 0.0
         local_interior_rhs_sq = 0.0
         local_interior_solution_sq = 0.0
         for recovery in self.system.cell_recovery:
             cell = recovery.cell
-            local_trace = active_solution[cell.trace_rows]
-            local_interior = active_solution[cell.interior_rows]
+            trace_positions = np.searchsorted(
+                active_layout.global_rows,
+                cell.trace_rows,
+            )
+            interior_positions = np.searchsorted(
+                active_layout.global_rows,
+                cell.interior_rows,
+            )
+            local_trace = active_solution[trace_positions]
+            local_interior = active_solution[interior_positions]
             homogeneous = (
                 self.system.interior_from_trace_by_class[
                     recovery.class_key
@@ -577,10 +634,10 @@ class VariablePAssemblyTimeReduction:
                 self.system.interior_lu_by_class[recovery.class_key],
                 delta,
             )
-            action -= active_rhs[cell.interior_rows]
-            action -= auxiliary_action[cell.interior_rows]
+            action -= active_rhs[interior_positions]
+            action -= auxiliary_action[interior_positions]
             local_interior_sq += float(np.vdot(action, action).real)
-            local_rhs = active_rhs[cell.interior_rows]
+            local_rhs = active_rhs[interior_positions]
             local_interior_rhs_sq += float(
                 np.vdot(local_rhs, local_rhs).real
             )
@@ -599,11 +656,6 @@ class VariablePAssemblyTimeReduction:
             comm.allreduce(local_interior_max, op=MPI.MAX)
         )
         full_norm = float(np.hypot(reduced_norm, interior_norm))
-        reduced_rhs_norm = _reduced_trace_auxiliary_norm(
-            self.system,
-            reduced_rhs,
-            trace_kind="dual",
-        )
         interior_rhs_norm = float(
             np.sqrt(
                 comm.allreduce(local_interior_rhs_sq, op=MPI.SUM)
@@ -611,11 +663,6 @@ class VariablePAssemblyTimeReduction:
         )
         rhs_norm = float(
             np.hypot(reduced_rhs_norm, interior_rhs_norm)
-        )
-        reduced_solution_norm = _reduced_trace_auxiliary_norm(
-            self.system,
-            reduced_solution,
-            trace_kind="primal",
         )
         interior_solution_norm = float(
             np.sqrt(
@@ -672,26 +719,24 @@ class VariablePAssemblyTimeReduction:
             ),
             "p6_complement_residual_is_error_estimator_not_solver_gate": True,
             "full_p6_global_matrix_allocated_for_residual": False,
+            "active_selected_rows": {
+                **active_selected_audit,
+                "shared_layout_vector_count": 3,
+                "selected_row_layout_reused_for_solution_rhs_auxiliary": True,
+                "selected_values_peak_bytes_local": (
+                    3
+                    * int(
+                        active_selected_audit[
+                            "selected_value_bytes_local"
+                        ]
+                    )
+                ),
+            },
+            "reduced_constraint_norm": reduced_norm_audit,
+            "replicated_active_vector_bytes_per_rank": 0,
+            "replicated_reduced_vector_bytes_per_rank": 0,
             "ordinary_default_changed": False,
         }
-
-
-def _global_values(
-    vector: PETSc.Vec,
-    expected: int,
-    comm: Any,
-) -> np.ndarray:
-    values = np.concatenate(
-        comm.allgather(
-            np.asarray(
-                vector.getArray(readonly=True),
-                dtype=np.complex128,
-            ).copy()
-        )
-    )
-    if values.shape != (expected,):
-        raise RuntimeError("distributed active vector does not close")
-    return values
 
 
 def _trace_constraint_recovery_audit(
@@ -712,59 +757,73 @@ def _trace_constraint_recovery_audit(
             "constraint_kinds": [],
             "maximum_abs_error": 0.0,
             "relative_l2_error": 0.0,
+            "replicated_reduced_vector_bytes_per_rank": 0,
+            "replicated_active_vector_bytes_per_rank": 0,
+            "selected_reduced_rows_local": 0,
+            "selected_active_rows_local": 0,
             "ordinary_default_changed": False,
         }
     comm = system.entity_map.mesh.comm
-    reduced_values = np.concatenate(
-        comm.allgather(
-            np.asarray(
-                reduced_solution.getArray(readonly=True),
-                dtype=np.complex128,
-            ).copy()
-        )
-    )
-    if reduced_values.shape != (system.matrix.getSize()[0],):
-        raise RuntimeError("reduced recovery vector ownership does not close")
-    trace = reduced_values[: system.active_trace_rows]
-    active = _global_values(
-        active_solution,
-        system.entity_map.active_rows,
-        comm,
-    )
     routed_blocks = getattr(
         constraints,
         "work_owned_entity_blocks",
         None,
     )
-    blocks = (
-        routed_blocks
-        if routed_blocks is not None
-        else constraints.entity_blocks.values()
-    )
-    local_error_sq = 0.0
-    local_reference_sq = 0.0
-    local_maximum = 0.0
-    local_rows = 0
     active_start, active_stop = map(
         int,
         active_solution.getOwnershipRange(),
     )
+    blocks = (
+        tuple(routed_blocks)
+        if routed_blocks is not None
+        else tuple(
+            block
+            for block in constraints.entity_blocks.values()
+            if active_start <= int(block.full_rows[0]) < active_stop
+        )
+    )
+    requested_reduced_rows = np.concatenate(
+        [block.independent_rows for block in blocks]
+        or [np.empty(0, dtype=np.int64)]
+    )
+    requested_active_rows = np.concatenate(
+        [block.full_rows for block in blocks]
+        or [np.empty(0, dtype=np.int64)]
+    )
+    with PETScSelectedRowLayout.create(
+        reduced_solution,
+        requested_reduced_rows,
+    ) as reduced_layout:
+        trace = reduced_layout.gather(reduced_solution)
+        reduced_selected_audit = dict(reduced_layout.audit)
+    with PETScSelectedRowLayout.create(
+        active_solution,
+        requested_active_rows,
+    ) as active_layout:
+        active = active_layout.gather(active_solution)
+        active_selected_audit = dict(active_layout.audit)
+    local_error_sq = 0.0
+    local_reference_sq = 0.0
+    local_maximum = 0.0
+    local_rows = 0
     for block in blocks:
-        if routed_blocks is None and not (
-            active_start <= int(block.full_rows[0]) < active_stop
-        ):
-            continue
         expected = (
             np.asarray(
                 block.full_from_independent,
                 dtype=np.complex128,
             )
             @ trace[
-                np.asarray(block.independent_rows, dtype=np.int64)
+                np.searchsorted(
+                    reduced_layout.global_rows,
+                    np.asarray(block.independent_rows, dtype=np.int64),
+                )
             ]
         )
         observed = active[
-            np.asarray(block.full_rows, dtype=np.int64)
+            np.searchsorted(
+                active_layout.global_rows,
+                np.asarray(block.full_rows, dtype=np.int64),
+            )
         ]
         error = observed - expected
         local_error_sq += float(np.vdot(error, error).real)
@@ -804,11 +863,355 @@ def _trace_constraint_recovery_audit(
         "expected_raw_trace_rows": system.entity_map.active_trace_rows,
         "maximum_abs_error": maximum,
         "relative_l2_error": relative,
+        "reduced_selected_rows": reduced_selected_audit,
+        "active_selected_rows": active_selected_audit,
+        "replicated_reduced_vector_bytes_per_rank": 0,
+        "replicated_active_vector_bytes_per_rank": 0,
+        "selected_reduced_rows_local": len(
+            reduced_layout.global_rows
+        ),
+        "selected_active_rows_local": len(active_layout.global_rows),
+        "selected_row_scatter_cache_count": 2,
         "hanging_trace_recovery_explicitly_checked": (
             "hanging"
             in constraints.audit.get("constraint_kinds", ())
         ),
         "ordinary_default_changed": False,
+    }
+
+
+@dataclass(frozen=True)
+class _TraceNormComponent:
+    rows: np.ndarray
+    gram: np.ndarray | sparse.csr_matrix
+    cache_key: str
+
+
+def _trace_norm_components(
+    system: VariablePCondensedTraceSystem,
+    template: PETSc.Vec,
+) -> tuple[_TraceNormComponent, ...]:
+    """Return only Gram components assigned to this PETSc root-row owner."""
+
+    constraints = system.trace_constraints
+    if constraints is None:
+        return ()
+    gram = getattr(constraints, "component_gram", None)
+    if gram is None:
+        blocks_by_root: dict[tuple[int, int], list[Any]] = {}
+        for block in constraints.entity_blocks.values():
+            blocks_by_root.setdefault(
+                (int(block.dimension), int(block.root_entity)),
+                [],
+            ).append(block)
+        row_start, row_end = map(int, template.getOwnershipRange())
+        components = []
+        for blocks in blocks_by_root.values():
+            rows = np.asarray(
+                blocks[0].independent_rows,
+                dtype=np.int64,
+            )
+            if not row_start <= int(rows[0]) < row_end:
+                continue
+            component_gram = np.zeros(
+                (len(rows), len(rows)),
+                dtype=np.complex128,
+            )
+            for block in blocks:
+                if not np.array_equal(rows, block.independent_rows):
+                    raise RuntimeError(
+                        "one periodic orbit has inconsistent row identity"
+                    )
+                expansion = np.asarray(
+                    block.full_from_independent,
+                    dtype=np.complex128,
+                )
+                component_gram += expansion.conj().T @ expansion
+            cache_key = hashlib.sha256(
+                np.ascontiguousarray(rows).view(np.uint8)
+            ).hexdigest()
+            rows.setflags(write=False)
+            components.append(
+                _TraceNormComponent(
+                    rows=rows,
+                    gram=component_gram,
+                    cache_key=cache_key,
+                )
+            )
+        covered = int(
+            system.entity_map.mesh.comm.allreduce(
+                sum(len(component.rows) for component in components),
+                op=MPI.SUM,
+            )
+        )
+        if covered != system.active_trace_rows:
+            raise RuntimeError(
+                "work-owned periodic components do not cover every root row"
+            )
+        return tuple(components)
+    expected_shape = (
+        system.active_trace_rows,
+        system.active_trace_rows,
+    )
+    if gram.shape != expected_shape:
+        raise RuntimeError("physical trace component Gram has the wrong shape")
+    structure = sparse.csr_matrix(gram)
+    structure.data = np.ones_like(structure.data, dtype=np.int8)
+    component_count, labels = csgraph.connected_components(
+        structure,
+        directed=False,
+        return_labels=True,
+    )
+    row_start, row_end = map(int, template.getOwnershipRange())
+    components: list[_TraceNormComponent] = []
+    for component in range(int(component_count)):
+        rows = np.flatnonzero(labels == component).astype(np.int64)
+        if not len(rows):
+            raise RuntimeError("trace Gram contains an empty component")
+        work_owner_row = int(rows[0])
+        if not row_start <= work_owner_row < row_end:
+            continue
+        if sparse.issparse(gram):
+            block = sparse.csr_matrix(gram[rows][:, rows])
+        else:
+            block = np.ascontiguousarray(
+                np.asarray(gram)[np.ix_(rows, rows)]
+            )
+        cache_key = hashlib.sha256(
+            np.ascontiguousarray(rows).view(np.uint8)
+        ).hexdigest()
+        rows.setflags(write=False)
+        components.append(
+            _TraceNormComponent(
+                rows=rows,
+                gram=block,
+                cache_key=cache_key,
+            )
+        )
+    covered = int(
+        system.entity_map.mesh.comm.allreduce(
+            sum(len(component.rows) for component in components),
+            op=MPI.SUM,
+        )
+    )
+    if covered != system.active_trace_rows:
+        raise RuntimeError(
+            "work-owned trace Gram components do not cover every root row"
+        )
+    return tuple(components)
+
+
+def _solve_trace_component(
+    component: _TraceNormComponent,
+    values: np.ndarray,
+    factor_cache: dict[str, Any],
+) -> tuple[np.ndarray, bool]:
+    """Solve one small SPD component, caching exactly one local factor."""
+
+    factor = factor_cache.get(component.cache_key)
+    created = factor is None
+    if factor is None:
+        if sparse.issparse(component.gram):
+            factor = (
+                "sparse_lu",
+                sparse_linalg.splu(
+                    sparse.csc_matrix(component.gram)
+                ),
+            )
+        else:
+            factor = (
+                "dense_cholesky",
+                np.linalg.cholesky(
+                    np.asarray(component.gram, dtype=np.complex128)
+                ),
+            )
+        factor_cache[component.cache_key] = factor
+    kind, payload = factor
+    if kind == "sparse_lu":
+        result = payload.solve(values)
+    elif kind == "dense_cholesky":
+        intermediate = np.linalg.solve(payload, values)
+        result = np.linalg.solve(payload.conj().T, intermediate)
+    else:
+        raise RuntimeError("trace component factor cache is invalid")
+    return np.asarray(result, dtype=np.complex128), created
+
+
+def _reduced_trace_auxiliary_norms(
+    system: VariablePCondensedTraceSystem,
+    vectors: tuple[tuple[str, PETSc.Vec, str], ...],
+    *,
+    factor_cache: dict[str, Any] | None = None,
+) -> tuple[dict[str, float], dict[str, Any]]:
+    """Compute several invariant norms from one selected-row layout."""
+
+    if not vectors or len({name for name, _, _ in vectors}) != len(vectors):
+        raise ValueError("reduced norm vectors require unique names")
+    if any(kind not in {"dual", "primal"} for _, _, kind in vectors):
+        raise ValueError("reduced trace norm must be primal or dual")
+    expected = system.active_trace_rows + system.appended_rows
+    if any(int(vector.getSize()) != expected for _, vector, _ in vectors):
+        raise ValueError("reduced norm vector has the wrong global size")
+    constraints = system.trace_constraints
+    if constraints is None:
+        values = {
+            name: float(vector.norm(PETSc.NormType.NORM_2))
+            for name, vector, _ in vectors
+        }
+        return values, {
+            "schema_version": "task035e.work-owned-trace-norm.v1",
+            "status": "unconstrained_distributed_petsc_norm",
+            "pass": True,
+            "work_owned_component_count_local": 0,
+            "selected_trace_rows_local": 0,
+            "replicated_reduced_vector_bytes_per_rank": 0,
+            "global_component_gram_factorizations": 0,
+            "read_only_component_gram_authority_bytes_per_rank": 0,
+            "additional_replicated_global_gram_numeric_copy_bytes_per_rank": 0,
+            "selected_row_layout_reused_vector_count": 0,
+            "full_vector_allgather_used": False,
+        }
+
+    components = _trace_norm_components(system, vectors[0][1])
+    authority_gram = getattr(constraints, "component_gram", None)
+    if authority_gram is None:
+        authority_gram_bytes = 0
+    elif sparse.issparse(authority_gram):
+        authority_gram_bytes = int(
+            authority_gram.data.nbytes
+            + authority_gram.indices.nbytes
+            + authority_gram.indptr.nbytes
+        )
+    else:
+        authority_gram_bytes = int(
+            np.asarray(authority_gram).nbytes
+        )
+    requested_rows = np.concatenate(
+        [component.rows for component in components]
+        or [np.empty(0, dtype=np.int64)]
+    )
+    local_factor_cache = {} if factor_cache is None else factor_cache
+    factor_count_before = len(local_factor_cache)
+    factor_creations = 0
+    factor_hits = 0
+    maximum_dual_solve_relative_residual = 0.0
+    local_component_bytes = int(
+        sum(
+            (
+                component.gram.data.nbytes
+                + component.gram.indices.nbytes
+                + component.gram.indptr.nbytes
+            )
+            if sparse.issparse(component.gram)
+            else component.gram.nbytes
+            for component in components
+        )
+    )
+    local_results: dict[str, float] = {}
+    with PETScSelectedRowLayout.create(
+        vectors[0][1],
+        requested_rows,
+    ) as layout:
+        layout_audit = dict(layout.audit)
+        for name, vector, trace_kind in vectors:
+            selected = layout.gather(vector)
+            trace_sq = 0.0
+            for component in components:
+                positions = layout.positions(component.rows)
+                block_values = selected[positions]
+                if trace_kind == "primal":
+                    gram_action = component.gram @ block_values
+                else:
+                    gram_action, created = _solve_trace_component(
+                        component,
+                        block_values,
+                        local_factor_cache,
+                    )
+                    factor_creations += int(created)
+                    factor_hits += int(not created)
+                    residual = (
+                        component.gram @ gram_action - block_values
+                    )
+                    maximum_dual_solve_relative_residual = max(
+                        maximum_dual_solve_relative_residual,
+                        float(
+                            np.linalg.norm(residual)
+                            / max(np.linalg.norm(block_values), 1.0)
+                        ),
+                    )
+                contribution = np.vdot(block_values, gram_action)
+                if (
+                    abs(float(contribution.imag))
+                    > 5.0e-11
+                    * max(abs(float(contribution.real)), 1.0)
+                    or float(contribution.real) < -5.0e-11
+                ):
+                    raise RuntimeError(
+                        "physical trace component norm is not positive real"
+                    )
+                trace_sq += max(float(contribution.real), 0.0)
+            row_start, row_end = map(int, vector.getOwnershipRange())
+            auxiliary_start = max(
+                system.active_trace_rows,
+                row_start,
+            )
+            local = np.asarray(
+                vector.getArray(readonly=True),
+                dtype=np.complex128,
+            )
+            offset = auxiliary_start - row_start
+            auxiliary = (
+                local[offset:]
+                if row_end > auxiliary_start
+                else np.empty(0, dtype=np.complex128)
+            )
+            auxiliary_sq = float(np.vdot(auxiliary, auxiliary).real)
+            global_sq = float(
+                system.entity_map.mesh.comm.allreduce(
+                    trace_sq + auxiliary_sq,
+                    op=MPI.SUM,
+                )
+            )
+            local_results[name] = float(np.sqrt(max(global_sq, 0.0)))
+    maximum_dual_solve_relative_residual = float(
+        system.entity_map.mesh.comm.allreduce(
+            maximum_dual_solve_relative_residual,
+            op=MPI.MAX,
+        )
+    )
+    if maximum_dual_solve_relative_residual > 5.0e-11:
+        raise RuntimeError(
+            "physical trace component Gram solve failed: "
+            f"{maximum_dual_solve_relative_residual:.6e}"
+        )
+    return local_results, {
+        "schema_version": "task035e.work-owned-trace-norm.v1",
+        "status": "work_owned_component_norm_pass",
+        "pass": True,
+        "work_owned_component_count_local": len(components),
+        "work_owned_component_rows_local": sum(
+            len(component.rows) for component in components
+        ),
+        "work_owned_component_gram_bytes_local": local_component_bytes,
+        "selected_trace_rows_local": len(layout.global_rows),
+        "selected_rows": layout_audit,
+        "replicated_reduced_vector_bytes_per_rank": 0,
+        "global_component_gram_factorizations": 0,
+        "read_only_component_gram_authority_bytes_per_rank": (
+            authority_gram_bytes
+        ),
+        "additional_replicated_global_gram_numeric_copy_bytes_per_rank": 0,
+        "local_component_factor_cache_size_before": factor_count_before,
+        "local_component_factor_cache_size_after": len(
+            local_factor_cache
+        ),
+        "local_component_factorizations_new": factor_creations,
+        "local_component_factor_cache_hits": factor_hits,
+        "maximum_dual_solve_relative_residual": (
+            maximum_dual_solve_relative_residual
+        ),
+        "selected_row_layout_reused_vector_count": len(vectors),
+        "full_vector_allgather_used": False,
     }
 
 
@@ -818,121 +1221,13 @@ def _reduced_trace_auxiliary_norm(
     *,
     trace_kind: str,
 ) -> float:
-    """Return the full trace-constraint invariant reduced vector norm."""
+    """Return one invariant norm through owner-local selected components."""
 
-    if trace_kind not in {"dual", "primal"}:
-        raise ValueError("reduced trace norm must be primal or dual")
-    expected = system.active_trace_rows + system.appended_rows
-    values = _global_values(
-        vector,
-        expected,
-        system.entity_map.mesh.comm,
+    values, _audit = _reduced_trace_auxiliary_norms(
+        system,
+        (("value", vector, trace_kind),),
     )
-    trace = values[: system.active_trace_rows]
-    auxiliary = values[system.active_trace_rows :]
-    trace_sq = 0.0
-    constraints = system.trace_constraints
-    if constraints is None:
-        trace_sq = float(np.vdot(trace, trace).real)
-    elif hasattr(constraints, "component_gram"):
-        gram = constraints.component_gram
-        expected_shape = (
-            system.active_trace_rows,
-            system.active_trace_rows,
-        )
-        if gram.shape != expected_shape:
-            raise RuntimeError(
-                "physical trace component Gram has the wrong shape"
-            )
-        if trace_kind == "primal":
-            gram_action = gram @ trace
-        elif sparse.issparse(gram):
-            gram_action = sparse_linalg.spsolve(
-                sparse.csc_matrix(gram),
-                trace,
-            )
-        else:
-            gram_action = np.linalg.solve(
-                np.asarray(gram),
-                trace,
-            )
-        if not np.all(np.isfinite(gram_action)):
-            raise RuntimeError(
-                "physical trace component Gram action is non-finite"
-            )
-        if trace_kind == "dual":
-            residual = gram @ gram_action - trace
-            relative = float(
-                np.linalg.norm(residual)
-                / max(np.linalg.norm(trace), 1.0)
-            )
-            if relative > 5.0e-11:
-                raise RuntimeError(
-                    "physical trace component Gram solve failed: "
-                    f"{relative:.6e}"
-                )
-        contribution = np.vdot(trace, gram_action)
-        if (
-            abs(float(contribution.imag))
-            > 5.0e-11 * max(abs(float(contribution.real)), 1.0)
-            or float(contribution.real) < -5.0e-11
-        ):
-            raise RuntimeError(
-                "physical trace component Gram norm is not positive real"
-            )
-        trace_sq = max(float(contribution.real), 0.0)
-    else:
-        seen = np.zeros(system.active_trace_rows, dtype=np.int8)
-        blocks_by_root: dict[
-            tuple[int, int],
-            list[Any],
-        ] = {}
-        for block in constraints.entity_blocks.values():
-            blocks_by_root.setdefault(
-                (int(block.dimension), int(block.root_entity)),
-                [],
-            ).append(block)
-        for blocks in blocks_by_root.values():
-            rows = np.asarray(
-                blocks[0].independent_rows,
-                dtype=np.int64,
-            )
-            gram = np.zeros(
-                (len(rows), len(rows)),
-                dtype=np.complex128,
-            )
-            for block in blocks:
-                if not np.array_equal(
-                    rows,
-                    block.independent_rows,
-                ):
-                    raise RuntimeError(
-                        "one periodic orbit has inconsistent row identity"
-                    )
-                expansion = np.asarray(
-                    block.full_from_independent,
-                    dtype=np.complex128,
-                )
-                gram += expansion.conj().T @ expansion
-            block_values = trace[rows]
-            if trace_kind == "primal":
-                contribution = np.vdot(
-                    block_values,
-                    gram @ block_values,
-                )
-            else:
-                contribution = np.vdot(
-                    block_values,
-                    np.linalg.solve(gram, block_values),
-                )
-            trace_sq += float(contribution.real)
-            seen[rows] += 1
-        if not np.all(seen == 1):
-            raise RuntimeError(
-                "periodic entity blocks do not partition trace coordinates"
-            )
-    auxiliary_sq = float(np.vdot(auxiliary, auxiliary).real)
-    return float(np.sqrt(max(trace_sq + auxiliary_sq, 0.0)))
+    return values["value"]
 
 
 def _active_auxiliary_interior_action(
@@ -987,6 +1282,10 @@ def build_variable_p_assembly_time_reduction(
     appended_support_group_by_row: tuple[int, ...] = (),
     defer_final_assembly: bool = False,
     retain_local_schur_for_research: bool = False,
+    persistent_raw_tensor_cache_directory: (
+        str | os.PathLike[str] | None
+    ) = None,
+    persistent_raw_tensor_cache_namespace: str | None = None,
 ) -> VariablePAssemblyTimeReduction:
     """Build one hash-bound Task035d p4/p5/p6 reduction."""
 
@@ -1031,16 +1330,53 @@ def build_variable_p_assembly_time_reduction(
             ]
         )
         local_h_audit = dict(local_h.audit)
-    if physical_active_fe_dofs > 90_000:
+    task035e_scope = bool(
+        local_h_audit is not None
+        and local_h_audit.get("mesh", {}).get("schema_version")
+        == "task035e.stage4-multilevel-local-h-mesh.v1"
+    )
+    advisory_dof_target = 90_000
+    if (
+        not task035e_scope
+        and physical_active_fe_dofs > advisory_dof_target
+    ):
         raise RuntimeError(
             "Task035d variable-p candidate exceeds the fail-closed "
             "90,000 active FE DoF gate; use the standard/static backend "
             "for a global-p control"
         )
+    global_transfer_started = perf_counter()
     transfer = build_variable_p_global_transfer(
         degree_plan.entity_map,
         p6_space,
     )
+    global_transfer_seconds_local = float(
+        perf_counter() - global_transfer_started
+    )
+    timing_comm = degree_plan.entity_map.mesh.comm
+    global_transfer_seconds_buffer = np.empty(
+        timing_comm.size,
+        dtype=np.float64,
+    )
+    timing_comm.Allgather(
+        np.asarray(
+            [global_transfer_seconds_local],
+            dtype=np.float64,
+        ),
+        global_transfer_seconds_buffer,
+    )
+    global_transfer_seconds_by_rank = tuple(
+        float(value) for value in global_transfer_seconds_buffer
+    )
+    global_transfer_setup_timing = {
+        "semantics": (
+            "perf_counter wall seconds; the rank-local build is measured "
+            "without an added barrier and seconds_max is the collective "
+            "critical-path envelope"
+        ),
+        "seconds_by_rank": global_transfer_seconds_by_rank,
+        "seconds_max": max(global_transfer_seconds_by_rank, default=0.0),
+    }
     system = (
         build_variable_p_condensed_trace_system_from_compiled_form(
             compiled_p6_form,
@@ -1060,6 +1396,12 @@ def build_variable_p_assembly_time_reduction(
             retain_local_schur_for_research=(
                 retain_local_schur_for_research
             ),
+            persistent_raw_tensor_cache_directory=(
+                persistent_raw_tensor_cache_directory
+            ),
+            persistent_raw_tensor_cache_namespace=(
+                persistent_raw_tensor_cache_namespace
+            ),
         )
     )
     audit = {
@@ -1078,6 +1420,29 @@ def build_variable_p_assembly_time_reduction(
         "local_h": local_h_audit,
         "global_transfer": dict(transfer.audit),
         "condensed_system": dict(system.build_audit),
+        "setup_anatomy": {
+            "schema_version": "task035e.variable-p-setup-anatomy.v1",
+            "global_transfer": global_transfer_setup_timing,
+            "local_h_phase_timing_audit_field": (
+                None
+                if local_h_audit is None
+                else "local_h.phase_timings_seconds_by_rank"
+            ),
+            "trace_constraint_phase_timing_audit_field": (
+                None
+                if local_h_audit is None
+                else "local_h.trace_constraint_setup_timing"
+            ),
+            "condensed_system_phase_timing_audit_field": (
+                "condensed_system.phase_timings_seconds_by_rank"
+            ),
+            "compiled_builder_phase_timing_audit_field": (
+                "condensed_system."
+                "compiled_builder_phase_timings_seconds_by_rank"
+            ),
+            "timing_fields_are_diagnostic_only": True,
+            "ordinary_default_changed": False,
+        },
         "actual_conforming_active_fe_dofs": (
             physical_active_fe_dofs
         ),
@@ -1087,9 +1452,18 @@ def build_variable_p_assembly_time_reduction(
         "raw_broken_active_fe_dofs": (
             degree_plan.entity_map.active_rows
         ),
-        "active_fe_dof_gate_limit": 90_000,
+        "active_fe_dof_hard_gate_active": not task035e_scope,
+        "active_fe_dof_gate_limit": (
+            None if task035e_scope else advisory_dof_target
+        ),
         "active_fe_dof_gate_pass": (
-            physical_active_fe_dofs <= 90_000
+            True
+            if task035e_scope
+            else physical_active_fe_dofs <= advisory_dof_target
+        ),
+        "active_fe_dof_advisory_target": advisory_dof_target,
+        "active_fe_dof_advisory_target_met": (
+            physical_active_fe_dofs <= advisory_dof_target
         ),
         "full_p6_global_matrix_allocated": False,
         "inactive_p6_rows_globally_numbered": False,

@@ -1,0 +1,96 @@
+{
+  "schema_version": "task035e.case098-component-diagnostic.v1",
+  "status": "diagnostic_prequalification_numerical_path_pass",
+  "classification": "measured_nonformal_component_diagnostic",
+  "formal_reference_credit": false,
+  "formal_blind_candidate_credit": false,
+  "reason_not_formal": [
+    "the run used MPI1 instead of the Task035e formal MPI8 width",
+    "the source worktree was not committed and clean",
+    "the run preceded the final distributed selected-row memory and periodic-p closure fixes",
+    "the serial factor backend reported PETSc rather than the formal MUMPS MPI8 path"
+  ],
+  "source": {
+    "branch": "codex/20260728-task35e-reference-blind-multilevel-hp-adaptivity",
+    "base_head": "3f334313a55786778de70965585bcaef7c997e89",
+    "source_identity": "dirty_worktree_prequalification",
+    "ordinary_default_changed": false
+  },
+  "run": {
+    "case": "task035e_multilevel_p456_variable_trace_h100_mpi1",
+    "mpi_size": 1,
+    "threads_per_rank": 1,
+    "nominal_h_nm": 100.0,
+    "container_degree": 6,
+    "active_cell_degree_counts": {
+      "p4": 12,
+      "p5": 88,
+      "p6": 64
+    },
+    "active_trace_degree_values": [
+      4,
+      5,
+      6
+    ],
+    "constraint_kinds": [
+      "hanging",
+      "floquet"
+    ],
+    "full_global_p6_matrix_allocated": false,
+    "inactive_p6_rows_globally_numbered": false,
+    "matrix_mallocs": 0.0,
+    "case_status": "completed",
+    "pytest_status": "late_assertion_path_corrected_offline",
+    "pytest_failure_was_numerical": false
+  },
+  "algebra": {
+    "p6_container_dofs": 118398,
+    "raw_broken_active_fe_dofs": 84152,
+    "actual_conforming_active_fe_dofs": 78384,
+    "independent_active_trace_dofs": 22938,
+    "augmented_condensed_rows": 23018,
+    "matrix_nnz_used": 15291778,
+    "matrix_nnz_allocated": 15625570,
+    "matrix_average_nnz_per_row": 664.3399947866886,
+    "matrix_maximum_nnz_per_row": 2460,
+    "factor_nnz": 94398336,
+    "factor_fill_ratio_needed": 6.173143240766378,
+    "factor_solver_type": "petsc_serial_nonformal"
+  },
+  "numerics": {
+    "full_explicit_true_residual": 1.0962951743866551e-10,
+    "residual_gate": 1e-09,
+    "residual_pass": true,
+    "R00_s": 0.6172042754000405,
+    "R00_p": 1.6130402959758061e-24,
+    "R00_total": 0.6172042754000405,
+    "R_total": 0.6179664873189854,
+    "T_total": 6.514466637984117e-05,
+    "A_volume_total": 0.38196836801793393,
+    "A_closure": 0.38196836801463474,
+    "energy_closure_error_port_volume": 3.299138739976115e-12
+  },
+  "resources": {
+    "elapsed_seconds": 1781.52686116501,
+    "peak_rss_mib": 5090.546875,
+    "peak_rss_gib": 4.9712371826171875,
+    "peak_semantics": "single-rank historical peak",
+    "swap_status": "not_recorded_in_run_summary",
+    "raw_tensor_kernel_seconds": 699.9497626000084,
+    "raw_tensor_class_count": 10,
+    "projection_seconds": 208.74351142189698,
+    "condensation_seconds": 62.35619178292109,
+    "insertion_seconds": 28.29251667938661,
+    "preallocation_seconds": 0.5246630709734745,
+    "condensed_and_dtn_build_seconds": 299.9287364589982,
+    "interpretation": "cold high-order tensor and Schur setup, not the linear solve, dominated this diagnostic"
+  },
+  "evidence": {
+    "run_summary_runtime_path": "/tmp/task035e-multilevel-p456-variable-trace-mpi1-6ug8jjvz/solve/run_summary.json",
+    "run_summary_sha256": "30478158c552cf992a10e1fc1c30ef50bb4fe18aeb2dd5b58b9d20b72fce41dc",
+    "runtime_path_is_durable": false,
+    "compact_record_is_durable": true,
+    "offline_corrected_assertion": "cell_static_condensation.local_h.mesh.true_multilevel"
+  },
+  "next_required_gate": "rerun the opt-in component fixture once with MPI8 after the final numerical source is clean and committed"
+}

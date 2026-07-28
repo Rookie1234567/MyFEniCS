@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import os
 from time import perf_counter
 from types import MappingProxyType
 from typing import Any, Mapping, Protocol, Sequence
@@ -17,6 +18,7 @@ from src.adaptivity.exact_sequence_variable_p import (
     VariablePReferenceSpace,
     build_variable_p_reference_space,
 )
+from src.adaptivity.variable_p_transfer import PETScSelectedRowLayout
 from src.adaptivity.variable_p_entity_map import (
     VariablePCellDofMap,
     VariablePGlobalEntityMap,
@@ -406,6 +408,40 @@ def _tensor_sha256(tensor: np.ndarray) -> str:
     return hashlib.sha256(
         np.ascontiguousarray(tensor).view(np.uint8)
     ).hexdigest()
+
+
+def _collective_setup_phase_timings(
+    comm: MPI.Intracomm,
+    local_seconds: Mapping[str, float],
+) -> dict[str, Any]:
+    """Return diagnostic wall-time anatomy without changing math state."""
+
+    normalized = {
+        str(key): float(value) for key, value in local_seconds.items()
+    }
+    if any(
+        not np.isfinite(value) or value < 0.0
+        for value in normalized.values()
+    ):
+        raise RuntimeError("variable-p setup timing contains an invalid value")
+    packets = comm.allgather(normalized)
+    keys = tuple(normalized)
+    if any(tuple(packet) != keys for packet in packets):
+        raise RuntimeError("MPI variable-p timing phase catalogs differ")
+    by_rank = {
+        key: [float(packet[key]) for packet in packets]
+        for key in keys
+    }
+    return {
+        "semantics": (
+            "perf_counter wall seconds; by-rank values plus MPI maximum; "
+            "overlapping envelopes are named explicitly; diagnostic only"
+        ),
+        "seconds_by_rank": by_rank,
+        "seconds_max": {
+            key: max(values) for key, values in by_rank.items()
+        },
+    }
 
 
 def _validate_trace_constraints(
@@ -845,6 +881,8 @@ def build_variable_p_condensed_trace_system(
 ) -> VariablePCondensedTraceSystem:
     """Project p6 cell tensors, condense interiors, and assemble active rows."""
 
+    function_started = perf_counter()
+    input_validation_started = perf_counter()
     comm = entity_map.mesh.comm
     appended_global_rows = int(appended_global_rows)
     if appended_global_rows < 0:
@@ -878,13 +916,21 @@ def build_variable_p_condensed_trace_system(
         if trace_constraints is not None
         else periodic_constraints
     )
+    input_validation_seconds = (
+        perf_counter() - input_validation_started
+    )
+    constraint_validation_started = perf_counter()
     constrained_cells = (
         _validate_trace_constraints(entity_map, constraints)
         if constraints is not None
         else (None,) * len(cells)
     )
+    constraint_validation_seconds = (
+        perf_counter() - constraint_validation_started
+    )
 
     started = perf_counter()
+    graph_setup_started = perf_counter()
     active_rows = (
         constraints.independent_trace_rows
         if constraints is not None
@@ -906,6 +952,7 @@ def build_variable_p_condensed_trace_system(
     )
     active_counts = _balanced_counts(active_rows, comm.size)
     active_start = int(sum(active_counts[: comm.rank]))
+    graph_setup_seconds = perf_counter() - graph_setup_started
     preallocation_started = perf_counter()
     diagonal_nnz, off_diagonal_nnz, preallocation = (
         _distributed_trace_preallocation(
@@ -921,12 +968,16 @@ def build_variable_p_condensed_trace_system(
             ),
         )
     )
+    local_preallocation_seconds = (
+        perf_counter() - preallocation_started
+    )
     preallocation_seconds = float(
         comm.allreduce(
-            perf_counter() - preallocation_started,
+            local_preallocation_seconds,
             op=MPI.MAX,
         )
     )
+    matrix_create_started = perf_counter()
     matrix = PETSc.Mat().createAIJ(
         size=(
             (
@@ -949,6 +1000,7 @@ def build_variable_p_condensed_trace_system(
         matrix.destroy()
         raise RuntimeError("PETSc ownership differs from active row partition")
     matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
+    matrix_create_seconds = perf_counter() - matrix_create_started
 
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     interior_from_trace: dict[tuple[Any, ...], np.ndarray] = {}
@@ -961,8 +1013,13 @@ def build_variable_p_condensed_trace_system(
     projection_seconds = 0.0
     condensation_seconds = 0.0
     insertion_seconds = 0.0
+    reference_space_seconds = 0.0
+    constraint_expansion_seconds = 0.0
+    matsetvalues_seconds = 0.0
+    recovery_catalog_seconds = 0.0
     interior_recovery_operator_residual = 0.0
     interior_adjoint_operator_residual = 0.0
+    cell_loop_started = perf_counter()
     for cell, p6_tensor, raw_key, constrained_cell in zip(
         cells,
         tensors,
@@ -970,7 +1027,11 @@ def build_variable_p_condensed_trace_system(
         constrained_cells,
         strict=True,
     ):
+        reference_space_started = perf_counter()
         space = build_variable_p_reference_space(cell.degree_map)
+        reference_space_seconds += (
+            perf_counter() - reference_space_started
+        )
         class_key = (
             raw_key,
             cell.degree_map.signature,
@@ -1055,18 +1116,25 @@ def build_variable_p_condensed_trace_system(
             rows = cell.trace_rows
             insertion_tensor = schur
         else:
+            constraint_expansion_started = perf_counter()
             expansion = constrained_cell.full_trace_from_independent
             rows = constrained_cell.independent_rows
             insertion_tensor = (
                 expansion.conj().T @ schur @ expansion
             )
+            constraint_expansion_seconds += (
+                perf_counter() - constraint_expansion_started
+            )
+        matsetvalues_started = perf_counter()
         matrix.setValues(
             np.asarray(rows, dtype=PETSc.IntType),
             np.asarray(rows, dtype=PETSc.IntType),
             np.asarray(insertion_tensor, dtype=PETSc.ScalarType),
             addv=PETSc.InsertMode.ADD_VALUES,
         )
+        matsetvalues_seconds += perf_counter() - matsetvalues_started
         insertion_seconds += perf_counter() - insertion_started
+        recovery_catalog_started = perf_counter()
         recoveries.append(
             VariablePCellRecovery(
                 cell=cell,
@@ -1074,19 +1142,26 @@ def build_variable_p_condensed_trace_system(
                 class_key=class_key,
             )
         )
+        recovery_catalog_seconds += (
+            perf_counter() - recovery_catalog_started
+        )
+    cell_loop_seconds = perf_counter() - cell_loop_started
     if defer_final_assembly:
+        local_assembly_seconds = 0.0
         assembly_seconds = 0.0
         info: dict[str, float] = {}
     else:
         assembly_started = perf_counter()
         matrix.assemble()
+        local_assembly_seconds = perf_counter() - assembly_started
         assembly_seconds = float(
             comm.allreduce(
-                perf_counter() - assembly_started,
+                local_assembly_seconds,
                 op=MPI.MAX,
             )
         )
         info = matrix.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
+    post_cell_gate_started = perf_counter()
     matrix_rows, matrix_columns = matrix.getSize()
     expected_nnz = int(preallocation["preallocated_structural_nnz"])
     actual_nnz = (
@@ -1128,6 +1203,8 @@ def build_variable_p_condensed_trace_system(
             f"primal={recovery_operator_residual:.6e}, "
             f"adjoint={adjoint_operator_residual:.6e}"
         )
+    post_cell_gate_seconds = perf_counter() - post_cell_gate_started
+    audit_bookkeeping_started = perf_counter()
     global_cells = int(comm.allreduce(len(cells), op=MPI.SUM))
     constraint_kinds = (
         set()
@@ -1185,6 +1262,55 @@ def build_variable_p_condensed_trace_system(
             else 0,
             op=MPI.SUM,
         )
+    )
+    audit_bookkeeping_seconds = perf_counter() - audit_bookkeeping_started
+    cell_subphase_sum = sum(
+        (
+            projection_seconds,
+            condensation_seconds,
+            insertion_seconds,
+            reference_space_seconds,
+            recovery_catalog_seconds,
+        )
+    )
+    phase_timing = _collective_setup_phase_timings(
+        comm,
+        {
+            "input_tensor_and_mode_validation": input_validation_seconds,
+            "trace_constraint_validation": constraint_validation_seconds,
+            "active_graph_setup": graph_setup_seconds,
+            "exact_preallocation": local_preallocation_seconds,
+            "petsc_matrix_create": matrix_create_seconds,
+            "cell_loop_total": cell_loop_seconds,
+            "reference_space_acquisition": reference_space_seconds,
+            "projection_and_orientation": projection_seconds,
+            "cell_interior_lu_schur_and_recovery": (
+                condensation_seconds
+            ),
+            "constraint_expansion_ckh_sk_ck": (
+                constraint_expansion_seconds
+            ),
+            "petsc_matsetvalues": matsetvalues_seconds,
+            "legacy_insertion_envelope": insertion_seconds,
+            "cell_recovery_catalog": recovery_catalog_seconds,
+            "cell_loop_unattributed": max(
+                0.0,
+                cell_loop_seconds - cell_subphase_sum,
+            ),
+            "final_petsc_assembly": local_assembly_seconds,
+            "post_cell_residual_and_structure_gates": (
+                post_cell_gate_seconds
+            ),
+            "audit_and_retention_bookkeeping": (
+                audit_bookkeeping_seconds
+            ),
+            "condensed_builder_total_including_validation": (
+                perf_counter() - function_started
+            ),
+            "legacy_total_build_envelope_after_constraint_validation": (
+                perf_counter() - started
+            ),
+        },
     )
     audit = {
         "schema_version": "task035d.variable-p-condensed-trace-system.v1",
@@ -1287,6 +1413,11 @@ def build_variable_p_condensed_trace_system(
         "final_assembly_seconds": assembly_seconds,
         "final_assembly_deferred": bool(defer_final_assembly),
         "preallocation_seconds": preallocation_seconds,
+        "phase_timing_semantics": phase_timing["semantics"],
+        "phase_timings_seconds_by_rank": phase_timing[
+            "seconds_by_rank"
+        ],
+        "phase_timings_seconds_max": phase_timing["seconds_max"],
         "total_build_seconds": float(
             comm.allreduce(perf_counter() - started, op=MPI.MAX)
         ),
@@ -1401,9 +1532,15 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
     defer_final_assembly: bool = False,
     geometry_tolerance: float = 1.0e-11,
     retain_local_schur_for_research: bool = False,
+    persistent_raw_tensor_cache_directory: (
+        str | os.PathLike[str] | None
+    ) = None,
+    persistent_raw_tensor_cache_namespace: str | None = None,
 ) -> VariablePCondensedTraceSystem:
     """Evaluate p6 FFCx tensor classes and assemble the true active system."""
 
+    compiled_builder_started = perf_counter()
+    form_validation_started = perf_counter()
     if periodic_constraints is not None and trace_constraints is not None:
         raise ValueError(
             "supply periodic_constraints or trace_constraints, not both"
@@ -1455,6 +1592,7 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
         raise ValueError(
             f"compiled p6 form has no cell integral for tags {unknown_tags}"
         )
+    form_validation_seconds = perf_counter() - form_validation_started
 
     metadata_started = perf_counter()
     coordinates_by_class: dict[tuple[Any, ...], np.ndarray] = {}
@@ -1479,12 +1617,14 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
         coordinates_by_class.setdefault(policy_key, coordinates)
         cell_policy_keys.append(policy_key)
         tensor_keys.append((tag, *widths))
+    local_metadata_seconds = perf_counter() - metadata_started
     metadata_seconds = float(
         comm.allreduce(
-            perf_counter() - metadata_started,
+            local_metadata_seconds,
             op=MPI.MAX,
         )
     )
+    raw_cache_started = perf_counter()
     raw_cache, raw_audit, local_kernel_seconds = (
         _global_raw_tensor_cache(
             comm,
@@ -1496,8 +1636,16 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
                     882,
                 )
             },
+            persistent_cache_directory=(
+                persistent_raw_tensor_cache_directory
+            ),
+            persistent_cache_namespace=(
+                persistent_raw_tensor_cache_namespace
+            ),
         )
     )
+    raw_cache_seconds = perf_counter() - raw_cache_started
+    reduced_builder_started = perf_counter()
     system = build_variable_p_condensed_trace_system(
         entity_map,
         tuple(raw_cache[key] for key in cell_policy_keys),
@@ -1516,6 +1664,23 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
             retain_local_schur_for_research
         ),
     )
+    reduced_builder_seconds = perf_counter() - reduced_builder_started
+    compiled_timing = _collective_setup_phase_timings(
+        comm,
+        {
+            "compiled_form_and_element_validation": (
+                form_validation_seconds
+            ),
+            "raw_tensor_class_metadata": local_metadata_seconds,
+            "raw_tensor_global_cache_outer_envelope": raw_cache_seconds,
+            "condensed_trace_builder_outer_envelope": (
+                reduced_builder_seconds
+            ),
+            "compiled_builder_total_before_audit_publish": (
+                perf_counter() - compiled_builder_started
+            ),
+        },
+    )
     system.build_audit.update(
         {
             "compiled_p6_tensor_builder": True,
@@ -1529,6 +1694,15 @@ def build_variable_p_condensed_trace_system_from_compiled_form(
             "raw_tensor_metadata_seconds": metadata_seconds,
             "raw_tensor_kernel_seconds_max": float(
                 comm.allreduce(local_kernel_seconds, op=MPI.MAX)
+            ),
+            "compiled_builder_phase_timing_semantics": (
+                compiled_timing["semantics"]
+            ),
+            "compiled_builder_phase_timings_seconds_by_rank": (
+                compiled_timing["seconds_by_rank"]
+            ),
+            "compiled_builder_phase_timings_seconds_max": (
+                compiled_timing["seconds_max"]
             ),
             **raw_audit,
         }
@@ -1564,125 +1738,1036 @@ def condense_variable_p_active_vector_to_trace(
     active_full_vector: PETSc.Vec,
     *,
     side: str,
-    relative_tolerance: float = 1.0e-14,
+    relative_tolerance: float = 0.0,
 ) -> PETSc.Vec:
     """Apply local Schur and Floquet reductions to an active full vector."""
 
-    if side not in {"right", "left"}:
-        raise ValueError("vector condensation side must be right or left")
     comm = system.entity_map.mesh.comm
-    values = _global_active_vector_values(system, active_full_vector)
-    cutoff = max(
-        1.0e-30,
-        float(relative_tolerance)
-        * float(np.max(np.abs(values), initial=0.0)),
+    preflight_error = None
+    try:
+        if side not in {"right", "left"}:
+            raise ValueError(
+                "vector condensation side must be right or left"
+            )
+        _validate_vector_communicator(
+            system,
+            active_full_vector,
+            role="active full vector",
+        )
+        if active_full_vector.getSize() != system.entity_map.active_rows:
+            raise ValueError(
+                "active full vector has the wrong global size"
+            )
+        if (
+            not np.isfinite(float(relative_tolerance))
+            or float(relative_tolerance) < 0.0
+        ):
+            raise ValueError(
+                "dual-condensation relative tolerance must be finite "
+                "and nonnegative"
+            )
+    except Exception as exc:
+        preflight_error = f"{type(exc).__name__}: {exc}"
+    preflight_errors = comm.allgather(preflight_error)
+    if any(error is not None for error in preflight_errors):
+        raise ValueError(
+            "collective distributed dual-condensation preflight failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(preflight_errors)
+                if error is not None
+            )
+        )
+    owned_values = np.asarray(
+        active_full_vector.getArray(readonly=True),
+        dtype=np.complex128,
     )
-    target = system.matrix.createVecRight()
+    local_finite = bool(np.all(np.isfinite(owned_values)))
+    if not bool(comm.allreduce(local_finite, op=MPI.LAND)):
+        raise ValueError("active full vector contains non-finite entries")
+    global_maximum = float(
+        comm.allreduce(
+            float(np.max(np.abs(owned_values), initial=0.0)),
+            op=MPI.MAX,
+        )
+    )
+    cutoff = float(relative_tolerance) * global_maximum
     row_start, row_end = map(
         int,
         active_full_vector.getOwnershipRange(),
     )
-    if system.periodic_constraints is None:
-        start = max(row_start, 0)
-        stop = min(row_end, system.entity_map.active_trace_rows)
-        if stop > start:
-            rows = np.arange(start, stop, dtype=PETSc.IntType)
-            retained = np.abs(values[start:stop]) > cutoff
-            target.setValues(
-                rows[retained],
-                np.asarray(
-                    values[start:stop][retained],
-                    dtype=PETSc.ScalarType,
-                ),
-                addv=PETSc.InsertMode.ADD_VALUES,
+    constraints = system.trace_constraints
+    metadata_error = None
+    work_blocks: tuple[Any, ...] = ()
+    periodic_by_cell: dict[int, Any] = {}
+    block_metadata: list[
+        tuple[np.ndarray, np.ndarray, np.ndarray]
+    ] = []
+    recovery_interior_rows: list[np.ndarray] = []
+    raw_coverage_local = np.zeros(
+        system.entity_map.active_trace_rows,
+        dtype=np.int32,
+    )
+    independent_coverage_local = np.zeros(
+        system.active_trace_rows,
+        dtype=np.int32,
+    )
+    interior_coverage_local = np.zeros(
+        (
+            system.entity_map.active_rows
+            - system.entity_map.active_trace_rows
+        ),
+        dtype=np.int32,
+    )
+    try:
+        if constraints is None:
+            if (
+                system.active_trace_rows
+                != system.entity_map.active_trace_rows
+            ):
+                raise ValueError(
+                    "unconstrained active/reduced trace rows disagree"
+                )
+            start = max(row_start, 0)
+            stop = min(row_end, system.entity_map.active_trace_rows)
+            raw_coverage_local[start:stop] += 1
+            independent_coverage_local[start:stop] += 1
+        else:
+            if (
+                int(constraints.independent_trace_rows)
+                != system.active_trace_rows
+            ):
+                raise ValueError(
+                    "constraint independent rows disagree with the system"
+                )
+            routed_blocks = getattr(
+                constraints,
+                "work_owned_entity_blocks",
+                None,
             )
-        periodic_by_cell: dict[int, Any] = {}
-    else:
-        constraints = system.periodic_constraints
-        periodic_by_cell = {
-            cell.global_cell: cell for cell in constraints.owned_cells
-        }
-        routed_blocks = getattr(
-            constraints,
-            "work_owned_entity_blocks",
-            None,
+            work_blocks = (
+                tuple(routed_blocks)
+                if routed_blocks is not None
+                else tuple(
+                    block
+                    for block in constraints.entity_blocks.values()
+                    if row_start <= int(block.full_rows[0]) < row_end
+                )
+            )
+            for block in work_blocks:
+                full_rows = np.asarray(block.full_rows, dtype=np.int64)
+                independent_rows = np.asarray(
+                    block.independent_rows,
+                    dtype=np.int64,
+                )
+                expansion = np.asarray(
+                    block.full_from_independent,
+                    dtype=np.complex128,
+                )
+                if (
+                    full_rows.ndim != 1
+                    or independent_rows.ndim != 1
+                    or len(full_rows) == 0
+                    or len(independent_rows) == 0
+                    or len(np.unique(full_rows)) != len(full_rows)
+                    or len(np.unique(independent_rows))
+                    != len(independent_rows)
+                    or np.any(full_rows < 0)
+                    or np.any(
+                        full_rows
+                        >= system.entity_map.active_trace_rows
+                    )
+                    or np.any(independent_rows < 0)
+                    or np.any(
+                        independent_rows >= system.active_trace_rows
+                    )
+                    or expansion.shape
+                    != (len(full_rows), len(independent_rows))
+                    or not np.all(np.isfinite(expansion))
+                ):
+                    raise ValueError(
+                        "one dual-condensation constraint block is invalid"
+                    )
+                if routed_blocks is not None and (
+                    int(block.active_vector_work_owner_rank) != comm.rank
+                    or not (
+                        row_start <= int(full_rows[0]) < row_end
+                    )
+                ):
+                    raise RuntimeError(
+                        "owner-routed dual-condensation block reached the "
+                        "wrong active-vector work owner"
+                    )
+                raw_coverage_local[full_rows] += 1
+                independent_coverage_local[independent_rows] += 1
+                block_metadata.append(
+                    (full_rows, independent_rows, expansion)
+                )
+            periodic_by_cell = {
+                int(cell.global_cell): cell
+                for cell in constraints.owned_cells
+            }
+        for recovery in system.cell_recovery:
+            interior_rows = np.asarray(
+                recovery.cell.interior_rows,
+                dtype=np.int64,
+            )
+            if (
+                interior_rows.ndim != 1
+                or len(np.unique(interior_rows)) != len(interior_rows)
+                or np.any(
+                    interior_rows < system.entity_map.active_trace_rows
+                )
+                or np.any(
+                    interior_rows >= system.entity_map.active_rows
+                )
+            ):
+                raise ValueError(
+                    "one dual-condensation cell has invalid interior rows"
+                )
+            interior_coverage_local[
+                interior_rows
+                - system.entity_map.active_trace_rows
+            ] += 1
+            if constraints is not None:
+                constrained_cell = periodic_by_cell.get(
+                    int(recovery.cell.global_cell)
+                )
+                if constrained_cell is None:
+                    raise RuntimeError(
+                        "one dual-condensation cell lacks a constraint map"
+                    )
+            recovery_interior_rows.append(interior_rows)
+    except Exception as exc:
+        metadata_error = f"{type(exc).__name__}: {exc}"
+    metadata_errors = comm.allgather(metadata_error)
+    if any(error is not None for error in metadata_errors):
+        raise ValueError(
+            "collective distributed dual-condensation metadata failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(metadata_errors)
+                if error is not None
+            )
         )
-        for block in (
-            routed_blocks
-            if routed_blocks is not None
-            else constraints.entity_blocks.values()
-        ):
-            if routed_blocks is None:
-                if not (
-                    row_start <= int(block.full_rows[0]) < row_end
+
+    raw_coverage = np.empty_like(raw_coverage_local)
+    independent_coverage = np.empty_like(independent_coverage_local)
+    interior_coverage = np.empty_like(interior_coverage_local)
+    comm.Allreduce(raw_coverage_local, raw_coverage, op=MPI.SUM)
+    comm.Allreduce(
+        independent_coverage_local,
+        independent_coverage,
+        op=MPI.SUM,
+    )
+    comm.Allreduce(
+        interior_coverage_local,
+        interior_coverage,
+        op=MPI.SUM,
+    )
+    if (
+        not np.all(raw_coverage == 1)
+        or not np.all(independent_coverage >= 1)
+        or not np.all(interior_coverage == 1)
+    ):
+        raise RuntimeError(
+            "distributed dual-condensation constraint blocks do not cover "
+            "each raw/interior row exactly once and every independent row "
+            "at least once"
+        )
+
+    requested_rows = np.concatenate(
+        [
+            *[metadata[0] for metadata in block_metadata],
+            *recovery_interior_rows,
+        ]
+        or [np.empty(0, dtype=np.int64)]
+    )
+    pending_base: list[tuple[np.ndarray, np.ndarray]] = []
+    pending_corrections: list[tuple[np.ndarray, np.ndarray]] = []
+    computation_error = None
+    with PETScSelectedRowLayout.create(
+        active_full_vector,
+        requested_rows,
+    ) as selected_layout:
+        selected_values = selected_layout.gather(active_full_vector)
+        selected_audit = dict(selected_layout.audit)
+        try:
+            if constraints is None:
+                start = max(row_start, 0)
+                stop = min(row_end, system.entity_map.active_trace_rows)
+                if stop > start:
+                    rows = np.arange(start, stop, dtype=np.int64)
+                    local_start = start - row_start
+                    values = np.asarray(
+                        owned_values[
+                            local_start : local_start + len(rows)
+                        ],
+                        dtype=np.complex128,
+                    )
+                    retained = np.abs(values) > cutoff
+                    pending_base.append(
+                        (rows[retained], values[retained].copy())
+                    )
+            else:
+                for full_rows, independent_rows, expansion in block_metadata:
+                    projected = (
+                        expansion.conj().T
+                        @ selected_values[
+                            selected_layout.positions(full_rows)
+                        ]
+                    )
+                    retained = np.abs(projected) > cutoff
+                    pending_base.append(
+                        (
+                            independent_rows[retained],
+                            projected[retained].copy(),
+                        )
+                    )
+
+            for recovery, interior_rows in zip(
+                system.cell_recovery,
+                recovery_interior_rows,
+                strict=True,
+            ):
+                interior_values = selected_values[
+                    selected_layout.positions(interior_rows)
+                ]
+                if (
+                    float(
+                        np.max(
+                            np.abs(interior_values),
+                            initial=0.0,
+                        )
+                    )
+                    <= cutoff
                 ):
                     continue
-            elif int(block.active_vector_work_owner_rank) != comm.rank:
-                raise RuntimeError(
-                    "routed trace block reached the wrong work owner"
+                if side == "right":
+                    correction = (
+                        system.trace_from_interior_rhs_by_class[
+                            recovery.class_key
+                        ]
+                        @ interior_values
+                    )
+                else:
+                    correction = (
+                        system.interior_from_trace_by_class[
+                            recovery.class_key
+                        ].conj().T
+                        @ interior_values
+                    )
+                if constraints is None:
+                    rows = np.asarray(
+                        recovery.cell.trace_rows,
+                        dtype=np.int64,
+                    )
+                else:
+                    constrained_cell = periodic_by_cell[
+                        int(recovery.cell.global_cell)
+                    ]
+                    correction = (
+                        np.asarray(
+                            constrained_cell.full_trace_from_independent,
+                            dtype=np.complex128,
+                        ).conj().T
+                        @ correction
+                    )
+                    rows = np.asarray(
+                        constrained_cell.independent_rows,
+                        dtype=np.int64,
+                    )
+                retained = np.abs(correction) > cutoff
+                pending_corrections.append(
+                    (
+                        rows[retained],
+                        correction[retained].copy(),
+                    )
                 )
-            projected = (
-                block.full_from_independent.conj().T
-                @ values[block.full_rows]
+        except Exception as exc:
+            computation_error = f"{type(exc).__name__}: {exc}"
+    computation_errors = comm.allgather(computation_error)
+    if any(error is not None for error in computation_errors):
+        raise RuntimeError(
+            "collective distributed dual condensation failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(computation_errors)
+                if error is not None
             )
-            retained = np.abs(projected) > cutoff
+        )
+
+    target = system.matrix.createVecRight()
+    insertion_error = None
+    try:
+        target.set(PETSc.ScalarType(0.0))
+        for rows, values in (*pending_base, *pending_corrections):
+            if not len(rows):
+                continue
+            target.setValues(
+                np.asarray(rows, dtype=PETSc.IntType),
+                np.asarray(values, dtype=PETSc.ScalarType),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+    except Exception as exc:
+        insertion_error = f"{type(exc).__name__}: {exc}"
+    insertion_errors = comm.allgather(insertion_error)
+    if any(error is not None for error in insertion_errors):
+        target.destroy()
+        raise RuntimeError(
+            "collective distributed dual-condensation insertion failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(insertion_errors)
+                if error is not None
+            )
+        )
+    try:
+        target.assemble()
+    except Exception:
+        target.destroy()
+        raise
+
+    audit = {
+        "schema_version": (
+            "task035e.distributed-active-dual-condensation.v1"
+        ),
+        "status": "selected_row_dual_condensation_pass",
+        "pass": True,
+        "side": side,
+        "input_active_rows": system.entity_map.active_rows,
+        "raw_trace_rows": system.entity_map.active_trace_rows,
+        "independent_trace_rows": system.active_trace_rows,
+        "constraint_mode": (
+            "unconstrained_direct_owned_trace"
+            if constraints is None
+            else (
+                "owner_routed_entity_blocks"
+                if getattr(
+                    constraints,
+                    "work_owned_entity_blocks",
+                    None,
+                )
+                is not None
+                else "legacy_replicated_entity_blocks_owner_filtered"
+            )
+        ),
+        "global_input_max_abs": global_maximum,
+        "relative_tolerance": float(relative_tolerance),
+        "absolute_cutoff": cutoff,
+        "constraint_block_count_global": int(
+            comm.allreduce(len(block_metadata), op=MPI.SUM)
+        ),
+        "owned_cell_correction_count_local": len(
+            recovery_interior_rows
+        ),
+        "base_contribution_count_local": len(pending_base),
+        "interior_correction_count_local": len(
+            pending_corrections
+        ),
+        "raw_trace_row_coverage_min": int(raw_coverage.min()),
+        "raw_trace_row_coverage_max": int(raw_coverage.max()),
+        "independent_row_coverage_min": int(
+            independent_coverage.min()
+        ),
+        "independent_row_coverage_max": int(
+            independent_coverage.max()
+        ),
+        "interior_row_coverage_min": int(
+            interior_coverage.min(initial=1)
+        ),
+        "interior_row_coverage_max": int(
+            interior_coverage.max(initial=1)
+        ),
+        "raw_trace_rows_exactly_once": True,
+        "active_interior_rows_exactly_once": True,
+        "constraint_blocks_processed_exactly_once": True,
+        "independent_rows_covered": True,
+        "independent_row_block_multiplicity_preserved": True,
+        "independent_rows_unique_within_each_block": True,
+        "overlapping_independent_rows_accumulated_with_add": True,
+        "base_trace_insert_mode": "ADD_VALUES",
+        "cell_interior_correction_insert_mode": "ADD_VALUES",
+        "active_selected_rows": selected_audit,
+        "replicated_active_full_vector_bytes_per_rank": 0,
+        "python_full_vector_allgather_used": False,
+        "default_exact_zero_only_filter": (
+            float(relative_tolerance) == 0.0
+        ),
+        "python_collectives_contain_metadata_or_scalar_audits_only": True,
+        "ordinary_default_changed": False,
+    }
+    call_count = int(
+        system.build_audit.get(
+            "active_dual_condensation_call_count",
+            0,
+        )
+    ) + 1
+    system.build_audit["active_dual_condensation_call_count"] = call_count
+    system.build_audit["last_active_dual_condensation"] = audit
+    return target
+
+
+def extract_variable_p_active_primal_to_reduced(
+    system: VariablePCondensedTraceSystem,
+    active_full_primal: PETSc.Vec,
+    *,
+    auxiliary_reduced_values: np.ndarray,
+    roundtrip_tolerance: float = 5.0e-10,
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Extract a conforming primal trace without dual/Schur condensation.
+
+    ``condense_variable_p_active_vector_to_trace`` transforms a dual vector
+    and therefore applies conjugate-transpose constraint and interior-Schur
+    actions.  A recovered primal field needs the inverse operation on its
+    trace: for each physical entity block solve ``C q = u_full`` and place
+    ``q`` directly in the independent reduced coordinates.
+    """
+
+    _validate_vector_communicator(
+        system,
+        active_full_primal,
+        role="active full primal vector",
+    )
+    if active_full_primal.getSize() != system.entity_map.active_rows:
+        raise ValueError("active full primal vector has the wrong global size")
+    if (
+        not np.isfinite(float(roundtrip_tolerance))
+        or float(roundtrip_tolerance) <= 0.0
+    ):
+        raise ValueError("primal trace round-trip tolerance must be positive")
+    comm = system.entity_map.mesh.comm
+    structural_error = None
+    try:
+        constraints = system.trace_constraints
+        if (
+            system.entity_map.active_rows
+            < system.entity_map.active_trace_rows
+            or system.entity_map.active_trace_rows <= 0
+            or system.active_trace_rows <= 0
+            or system.appended_rows < 0
+        ):
+            raise ValueError(
+                "primal trace extraction system row counts are invalid"
+            )
+        if constraints is None:
+            if (
+                system.active_trace_rows
+                != system.entity_map.active_trace_rows
+            ):
+                raise ValueError(
+                    "unconstrained primal trace row counts do not match"
+                )
+        elif (
+            int(constraints.independent_trace_rows)
+            != system.active_trace_rows
+        ):
+            raise ValueError(
+                "constraint independent-row count does not match the system"
+            )
+    except (AttributeError, TypeError, ValueError) as exc:
+        constraints = None
+        structural_error = f"{type(exc).__name__}: {exc}"
+    structural_packets = comm.allgather(
+        (structural_error, float(roundtrip_tolerance))
+    )
+    structural_failures = [
+        f"rank {rank}: {error}"
+        for rank, (error, _tolerance) in enumerate(structural_packets)
+        if error is not None
+    ]
+    tolerances = {
+        tolerance
+        for error, tolerance in structural_packets
+        if error is None
+    }
+    if structural_failures or len(tolerances) != 1:
+        detail = (
+            structural_failures
+            if structural_failures
+            else ["MPI ranks supplied different round-trip tolerances"]
+        )
+        raise ValueError(
+            "collective primal trace system validation failed: "
+            + "; ".join(detail)
+        )
+    local_active = np.asarray(
+        active_full_primal.getArray(readonly=True),
+        dtype=np.complex128,
+    )
+    local_finite = bool(np.all(np.isfinite(local_active)))
+    if not bool(comm.allreduce(local_finite, op=MPI.LAND)):
+        raise ValueError("active full primal vector contains non-finite values")
+
+    auxiliary_error = None
+    auxiliary = np.empty(0, dtype=np.complex128)
+    try:
+        supplied_auxiliary = np.asarray(auxiliary_reduced_values)
+        if supplied_auxiliary.ndim != 1:
+            raise ValueError(
+                "auxiliary reduced values must be one-dimensional"
+            )
+        auxiliary = np.asarray(
+            supplied_auxiliary,
+            dtype=np.complex128,
+        )
+        if auxiliary.shape != (system.appended_rows,):
+            raise ValueError(
+                "auxiliary reduced value count must equal appended_rows"
+            )
+        if not np.all(np.isfinite(auxiliary)):
+            raise ValueError(
+                "auxiliary reduced values contain non-finite entries"
+            )
+    except (TypeError, ValueError) as exc:
+        auxiliary_error = f"{type(exc).__name__}: {exc}"
+    auxiliary_packets = comm.allgather(
+        (
+            auxiliary_error,
+            (
+                None
+                if auxiliary_error is not None
+                else hashlib.sha256(
+                    np.ascontiguousarray(auxiliary).view(np.uint8)
+                ).hexdigest()
+            ),
+        )
+    )
+    auxiliary_failures = [
+        f"rank {rank}: {error}"
+        for rank, (error, _sha256) in enumerate(auxiliary_packets)
+        if error is not None
+    ]
+    auxiliary_hashes = {
+        sha256
+        for error, sha256 in auxiliary_packets
+        if error is None
+    }
+    if auxiliary_failures or len(auxiliary_hashes) != 1:
+        detail = (
+            auxiliary_failures
+            if auxiliary_failures
+            else ["MPI ranks supplied different auxiliary reduced values"]
+        )
+        raise ValueError(
+            "collective auxiliary primal-trace validation failed: "
+            + "; ".join(detail)
+        )
+
+    input_start, input_end = map(
+        int,
+        active_full_primal.getOwnershipRange(),
+    )
+    block_error = None
+    blocks: tuple[Any, ...] = ()
+    block_metadata: list[
+        tuple[Any, np.ndarray, np.ndarray, np.ndarray]
+    ] = []
+    try:
+        if constraints is not None:
+            routed_blocks = getattr(
+                constraints,
+                "work_owned_entity_blocks",
+                None,
+            )
+            blocks = (
+                tuple(routed_blocks)
+                if routed_blocks is not None
+                else tuple(
+                    block
+                    for block in constraints.entity_blocks.values()
+                    if input_start <= int(block.full_rows[0]) < input_end
+                )
+            )
+            for block in blocks:
+                full_rows = np.asarray(block.full_rows, dtype=np.int64)
+                independent_rows = np.asarray(
+                    block.independent_rows,
+                    dtype=np.int64,
+                )
+                expansion = np.asarray(
+                    block.full_from_independent,
+                    dtype=np.complex128,
+                )
+                if (
+                    full_rows.ndim != 1
+                    or independent_rows.ndim != 1
+                    or len(full_rows) == 0
+                    or len(independent_rows) == 0
+                    or len(np.unique(full_rows)) != len(full_rows)
+                    or len(np.unique(independent_rows))
+                    != len(independent_rows)
+                    or np.any(full_rows < 0)
+                    or np.any(
+                        full_rows
+                        >= system.entity_map.active_trace_rows
+                    )
+                    or np.any(independent_rows < 0)
+                    or np.any(
+                        independent_rows >= system.active_trace_rows
+                    )
+                ):
+                    raise ValueError(
+                        "one primal trace block has invalid row identities"
+                    )
+                if expansion.shape != (
+                    len(full_rows),
+                    len(independent_rows),
+                ):
+                    raise ValueError(
+                        "one primal trace block expansion has the wrong shape"
+                    )
+                if not np.all(np.isfinite(expansion)):
+                    raise ValueError(
+                        "one primal trace block expansion is non-finite"
+                    )
+                if routed_blocks is not None:
+                    if (
+                        int(block.active_vector_work_owner_rank)
+                        != comm.rank
+                        or not (
+                            input_start
+                            <= int(full_rows[0])
+                            < input_end
+                        )
+                    ):
+                        raise RuntimeError(
+                            "owner-routed primal trace block reached the "
+                            "wrong active-vector work owner"
+                        )
+                block_metadata.append(
+                    (block, full_rows, independent_rows, expansion)
+                )
+    except (AttributeError, TypeError, ValueError, RuntimeError) as exc:
+        block_error = f"{type(exc).__name__}: {exc}"
+    block_errors = comm.allgather(block_error)
+    if any(error is not None for error in block_errors):
+        raise ValueError(
+            "collective primal trace block validation failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(block_errors)
+                if error is not None
+            )
+        )
+
+    raw_coverage_local = np.zeros(
+        system.entity_map.active_trace_rows,
+        dtype=np.int32,
+    )
+    independent_coverage_local = np.zeros(
+        system.active_trace_rows,
+        dtype=np.int32,
+    )
+    pending_values: list[tuple[np.ndarray, np.ndarray]] = []
+    local_error_sq = 0.0
+    local_reference_sq = 0.0
+    local_maximum_error = 0.0
+    local_maximum_relative = 0.0
+    local_maximum_condition = 0.0
+    local_minimum_singular = np.inf
+    local_left_inverse_count = 0
+    selected_audit: dict[str, Any]
+    solve_error = None
+    if constraints is None:
+        start = max(input_start, 0)
+        stop = min(input_end, system.entity_map.active_trace_rows)
+        rows = np.arange(start, stop, dtype=np.int64)
+        offset = start - input_start
+        values = np.asarray(
+            local_active[offset : offset + len(rows)],
+            dtype=np.complex128,
+        ).copy()
+        raw_coverage_local[rows] += 1
+        independent_coverage_local[rows] += 1
+        pending_values.append((rows, values))
+        selected_audit = {
+            "schema_version": "task035e.petsc-selected-row-layout.v1",
+            "status": "direct_owned_trace_slice",
+            "pass": True,
+            "global_vector_rows": system.entity_map.active_rows,
+            "requested_row_count_local": len(rows),
+            "selected_unique_row_count_local": len(rows),
+            "duplicate_request_count_local": 0,
+            "selected_value_bytes_local": int(values.nbytes),
+            "replicated_full_vector_bytes_per_rank": 0,
+            "full_vector_allgather_used": False,
+            "petsc_is_scatter_used": False,
+        }
+    else:
+        requested_rows = np.concatenate(
+            [metadata[1] for metadata in block_metadata]
+            or [np.empty(0, dtype=np.int64)]
+        )
+        with PETScSelectedRowLayout.create(
+            active_full_primal,
+            requested_rows,
+        ) as layout:
+            selected_values = layout.gather(active_full_primal)
+            selected_audit = dict(layout.audit)
+            try:
+                for (
+                    _block,
+                    full_rows,
+                    independent_rows,
+                    expansion,
+                ) in block_metadata:
+                    full_values = selected_values[
+                        layout.positions(full_rows)
+                    ]
+                    solution, _residuals, rank, singular_values = (
+                        np.linalg.lstsq(
+                            expansion,
+                            full_values,
+                            rcond=None,
+                        )
+                    )
+                    if int(rank) != len(independent_rows):
+                        raise RuntimeError(
+                            "one primal trace block left inverse is rank "
+                            "deficient"
+                        )
+                    solution = np.asarray(
+                        solution,
+                        dtype=np.complex128,
+                    )
+                    if not np.all(np.isfinite(solution)):
+                        raise RuntimeError(
+                            "one primal trace block left inverse is non-finite"
+                        )
+                    roundtrip = expansion @ solution
+                    error = roundtrip - full_values
+                    error_norm = float(np.linalg.norm(error))
+                    reference_norm = float(np.linalg.norm(full_values))
+                    relative = (
+                        error_norm
+                        / max(reference_norm, np.finfo(np.float64).tiny)
+                    )
+                    maximum_error = float(
+                        np.max(np.abs(error), initial=0.0)
+                    )
+                    if relative > float(roundtrip_tolerance):
+                        raise RuntimeError(
+                            "one primal trace block is not conforming: "
+                            f"relative round-trip={relative:.6e}"
+                        )
+                    singular_values = np.asarray(
+                        singular_values,
+                        dtype=np.float64,
+                    )
+                    minimum_singular = float(
+                        np.min(singular_values, initial=np.inf)
+                    )
+                    maximum_singular = float(
+                        np.max(singular_values, initial=0.0)
+                    )
+                    condition = (
+                        maximum_singular / minimum_singular
+                        if minimum_singular > 0.0
+                        else np.inf
+                    )
+                    raw_coverage_local[full_rows] += 1
+                    independent_coverage_local[independent_rows] += 1
+                    pending_values.append(
+                        (independent_rows, solution.copy())
+                    )
+                    local_error_sq += error_norm**2
+                    local_reference_sq += reference_norm**2
+                    local_maximum_error = max(
+                        local_maximum_error,
+                        maximum_error,
+                    )
+                    local_maximum_relative = max(
+                        local_maximum_relative,
+                        relative,
+                    )
+                    local_maximum_condition = max(
+                        local_maximum_condition,
+                        condition,
+                    )
+                    local_minimum_singular = min(
+                        local_minimum_singular,
+                        minimum_singular,
+                    )
+                    local_left_inverse_count += 1
+            except (ValueError, RuntimeError, np.linalg.LinAlgError) as exc:
+                solve_error = f"{type(exc).__name__}: {exc}"
+    solve_errors = comm.allgather(solve_error)
+    if any(error is not None for error in solve_errors):
+        raise RuntimeError(
+            "collective conforming primal trace extraction failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(solve_errors)
+                if error is not None
+            )
+        )
+
+    raw_coverage = np.empty_like(raw_coverage_local)
+    independent_coverage = np.empty_like(independent_coverage_local)
+    comm.Allreduce(raw_coverage_local, raw_coverage, op=MPI.SUM)
+    comm.Allreduce(
+        independent_coverage_local,
+        independent_coverage,
+        op=MPI.SUM,
+    )
+    raw_exact = bool(np.all(raw_coverage == 1))
+    independent_exact = bool(np.all(independent_coverage == 1))
+    coverage_packets = comm.allgather((raw_exact, independent_exact))
+    if not all(raw and independent for raw, independent in coverage_packets):
+        raise RuntimeError(
+            "primal trace extraction coverage is not exactly once: "
+            f"raw_minmax=({int(raw_coverage.min())},"
+            f"{int(raw_coverage.max())}), "
+            "independent_minmax="
+            f"({int(independent_coverage.min())},"
+            f"{int(independent_coverage.max())})"
+        )
+
+    target = system.matrix.createVecRight()
+    try:
+        expected_reduced_rows = (
+            system.active_trace_rows + system.appended_rows
+        )
+        if target.getSize() != expected_reduced_rows:
+            raise RuntimeError(
+                "reduced matrix vector size does not match trace+auxiliary rows"
+            )
+        target.set(PETSc.ScalarType(0.0))
+        for rows, values in pending_values:
+            target.setValues(
+                np.asarray(rows, dtype=PETSc.IntType),
+                np.asarray(values, dtype=PETSc.ScalarType),
+                addv=PETSc.InsertMode.INSERT_VALUES,
+            )
+        target_start, target_end = map(int, target.getOwnershipRange())
+        auxiliary_start = system.active_trace_rows
+        local_auxiliary_start = max(target_start, auxiliary_start)
+        local_auxiliary_end = min(
+            target_end,
+            auxiliary_start + system.appended_rows,
+        )
+        if local_auxiliary_end > local_auxiliary_start:
+            auxiliary_positions = np.arange(
+                local_auxiliary_start,
+                local_auxiliary_end,
+                dtype=np.int64,
+            )
             target.setValues(
                 np.asarray(
-                    block.independent_rows[retained],
+                    auxiliary_positions,
                     dtype=PETSc.IntType,
                 ),
                 np.asarray(
-                    projected[retained],
+                    auxiliary[
+                        auxiliary_positions - auxiliary_start
+                    ],
                     dtype=PETSc.ScalarType,
                 ),
-                addv=PETSc.InsertMode.ADD_VALUES,
+                addv=PETSc.InsertMode.INSERT_VALUES,
             )
+        target.assemble()
+    except Exception:
+        target.destroy()
+        raise
 
-    for recovery in system.cell_recovery:
-        interior_values = values[recovery.cell.interior_rows]
-        if (
-            float(
-                np.max(np.abs(interior_values), initial=0.0)
+    global_error_norm = float(
+        np.sqrt(comm.allreduce(local_error_sq, op=MPI.SUM))
+    )
+    global_reference_norm = float(
+        np.sqrt(comm.allreduce(local_reference_sq, op=MPI.SUM))
+    )
+    global_relative = (
+        global_error_norm
+        / max(global_reference_norm, np.finfo(np.float64).tiny)
+        if constraints is not None
+        else 0.0
+    )
+    audit = {
+        "schema_version": (
+            "task035e.active-full-primal-to-independent-trace.v1"
+        ),
+        "status": "conforming_primal_trace_extracted",
+        "pass": True,
+        "input_active_full_rows": system.entity_map.active_rows,
+        "raw_active_trace_rows": (
+            system.entity_map.active_trace_rows
+        ),
+        "independent_trace_rows": system.active_trace_rows,
+        "appended_auxiliary_rows": system.appended_rows,
+        "output_reduced_rows": int(target.getSize()),
+        "constraint_mode": (
+            "direct_owned_trace"
+            if constraints is None
+            else (
+                "owner_routed_entity_blocks"
+                if getattr(
+                    constraints,
+                    "work_owned_entity_blocks",
+                    None,
+                )
+                is not None
+                else "legacy_replicated_entity_blocks_owner_filtered"
             )
-            <= cutoff
-        ):
-            continue
-        if side == "right":
-            correction = (
-                system.trace_from_interior_rhs_by_class[
-                    recovery.class_key
-                ]
-                @ interior_values
+        ),
+        "left_inverse_method": (
+            "not_required"
+            if constraints is None
+            else "numpy_lstsq_svd_rank_checked"
+        ),
+        "left_inverse_block_count_global": int(
+            comm.allreduce(local_left_inverse_count, op=MPI.SUM)
+        ),
+        "maximum_block_roundtrip_relative_l2": float(
+            comm.allreduce(local_maximum_relative, op=MPI.MAX)
+        ),
+        "global_roundtrip_relative_l2": global_relative,
+        "maximum_roundtrip_abs_error": float(
+            comm.allreduce(local_maximum_error, op=MPI.MAX)
+        ),
+        "roundtrip_tolerance": float(roundtrip_tolerance),
+        "maximum_left_inverse_condition": float(
+            comm.allreduce(local_maximum_condition, op=MPI.MAX)
+        ),
+        "minimum_left_inverse_singular_value": (
+            None
+            if constraints is None
+            else float(
+                comm.allreduce(local_minimum_singular, op=MPI.MIN)
             )
-        else:
-            correction = (
-                system.interior_from_trace_by_class[
-                    recovery.class_key
-                ].conj().T
-                @ interior_values
-            )
-        if system.periodic_constraints is None:
-            rows = recovery.cell.trace_rows
-        else:
-            periodic_cell = periodic_by_cell[
-                recovery.cell.global_cell
-            ]
-            correction = (
-                periodic_cell.full_trace_from_independent.conj().T
-                @ correction
-            )
-            rows = periodic_cell.independent_rows
-        retained = np.abs(correction) > cutoff
-        target.setValues(
-            np.asarray(rows[retained], dtype=PETSc.IntType),
-            np.asarray(
-                correction[retained],
-                dtype=PETSc.ScalarType,
-            ),
-            addv=PETSc.InsertMode.ADD_VALUES,
+        ),
+        "raw_trace_row_coverage_min": int(raw_coverage.min()),
+        "raw_trace_row_coverage_max": int(raw_coverage.max()),
+        "independent_row_coverage_min": int(
+            independent_coverage.min()
+        ),
+        "independent_row_coverage_max": int(
+            independent_coverage.max()
+        ),
+        "raw_trace_rows_exactly_once": raw_exact,
+        "independent_rows_exactly_once": independent_exact,
+        "independent_row_values_consistent": independent_exact,
+        "active_selected_rows": selected_audit,
+        "auxiliary_values_explicit": True,
+        "auxiliary_value_count": len(auxiliary),
+        "auxiliary_values_identical_across_mpi": True,
+        "mpi_ownership_fail_closed": True,
+        "replicated_active_full_vector_bytes_per_rank": 0,
+        "full_vector_allgather_used": False,
+        "python_collectives_contain_metadata_or_scalar_audits_only": True,
+        "ordinary_default_changed": False,
+    }
+    if (
+        audit["maximum_block_roundtrip_relative_l2"]
+        > float(roundtrip_tolerance)
+        or audit["global_roundtrip_relative_l2"]
+        > float(roundtrip_tolerance)
+    ):
+        target.destroy()
+        raise RuntimeError(
+            "primal trace extraction global round-trip gate failed"
         )
-    target.assemble()
-    return target
+    return target, audit
 
 
 def variable_p_cell_interior_schur_bilinear(
@@ -2147,6 +3232,7 @@ __all__ = [
     "build_variable_p_condensed_trace_system",
     "build_variable_p_condensed_trace_system_from_compiled_form",
     "condense_variable_p_active_vector_to_trace",
+    "extract_variable_p_active_primal_to_reduced",
     "recover_variable_p_active_full_adjoint_vector",
     "recover_variable_p_active_full_vector",
     "retained_variable_p_owned_cell_schur_actions",

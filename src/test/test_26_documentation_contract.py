@@ -71,6 +71,7 @@ ACTIVE_RESEARCH_CASES = {
     "095_high_order_local_hp_resource_envelope",
     "096_hybrid_channel_memory_closure",
     "097_goal_oriented_exact_sequence_hp_adaptivity",
+    "098_reference_blind_multilevel_hp_adaptivity",
 }
 
 RECORDED_CASES = {
@@ -406,8 +407,7 @@ class DocumentationContractTests(unittest.TestCase):
                     )
                     self.assertFalse(irregular["run"])
                     self.assertFalse(irregular["completion_gate"])
-                else:
-                    self.assertTrue(case.startswith("097_"), case)
+                elif case.startswith("097_"):
                     self.assertEqual(
                         config["schema_version"],
                         "task035d.case097-config.v2",
@@ -542,8 +542,46 @@ class DocumentationContractTests(unittest.TestCase):
                         expected["phase_f_hybrid"],
                         "not_run_full3d_hp_gate_failed",
                     )
+                else:
+                    self.assertTrue(case.startswith("098_"), case)
+                    self.assertEqual(
+                        config["schema_version"],
+                        "task035e.case098-config.v1",
+                    )
+                    self.assertEqual(
+                        config["campaign_status"],
+                        "scaffold_not_run",
+                    )
+                    self.assertIsNone(config["source_commit_sha"])
+                    self.assertEqual(config["formal_mpi_size"], 8)
+                    self.assertFalse(config["numerical_credit_claimed"])
+                    self.assertFalse(
+                        config["reference_campaign"][
+                            "qualification_claimed"
+                        ]
+                    )
+                    self.assertEqual(
+                        config["adaptive_contract"]["production_degrees"],
+                        [4, 5, 6],
+                    )
+                    self.assertEqual(
+                        config["goal_contract"]["power_goal_count"],
+                        16,
+                    )
+                    self.assertEqual(
+                        config["goal_contract"][
+                            "complex_amplitude_goal_count"
+                        ],
+                        16,
+                    )
+                    self.assertFalse(
+                        config["goal_contract"][
+                            "significance_filter_used"
+                        ]
+                    )
                 records = sorted((folder / "records").glob("*.json"))
-                self.assertGreaterEqual(len(records), 2)
+                minimum_records = 1 if case.startswith("098_") else 2
+                self.assertGreaterEqual(len(records), minimum_records)
                 readme = _read(folder / "README.md")
                 if case.startswith("095_"):
                     self.assertIn(

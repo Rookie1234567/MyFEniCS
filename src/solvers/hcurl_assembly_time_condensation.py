@@ -20,13 +20,26 @@ the default elsewhere.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import fcntl
 import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import stat
+import sys
+import tempfile
 from time import perf_counter
-from typing import Any
+from typing import Any, Callable
 
+import basix
+import dolfinx
+import ffcx
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
+import petsc4py
+import scipy
 from scipy import sparse
 from scipy.linalg import lu_factor, lu_solve
 
@@ -903,6 +916,344 @@ def _tabulate_raw_tensor_class(
     return tensor
 
 
+_PERSISTENT_RAW_TENSOR_CACHE_SCHEMA = (
+    "myfenics.persistent-raw-cell-tensor-cache.v1"
+)
+
+
+def _canonical_cache_json_bytes(payload: dict[str, Any]) -> bytes:
+    return json.dumps(
+        payload,
+        ensure_ascii=True,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+
+def _sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _qualified_raw_tensor_runtime_identity() -> dict[str, Any]:
+    """Return the ABI identity used by the opt-in persistent tensor cache."""
+
+    activation = os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION")
+    executable = str(Path(sys.executable).resolve())
+    if activation != "1":
+        raise RuntimeError(
+            "persistent raw tensor caching requires the qualified repository "
+            "activation"
+        )
+    if executable.lower().endswith(".exe") or executable.startswith("/mnt/"):
+        raise RuntimeError(
+            "persistent raw tensor caching requires the qualified Linux "
+            "repository interpreter"
+        )
+    return {
+        "schema_version": "myfenics.qualified-numerical-runtime.v1",
+        "qualified_activation": activation,
+        "python_executable": executable,
+        "python_version": platform.python_version(),
+        "python_cache_tag": str(sys.implementation.cache_tag),
+        "platform_system": platform.system(),
+        "platform_machine": platform.machine(),
+        "numpy_version": str(np.__version__),
+        "scipy_version": str(scipy.__version__),
+        "dolfinx_version": str(dolfinx.__version__),
+        "basix_version": str(basix.__version__),
+        "ffcx_version": str(ffcx.__version__),
+        "petsc4py_version": str(petsc4py.__version__),
+        "petsc_version": [int(value) for value in PETSc.Sys.getVersion()],
+        "petsc_scalar_type": str(np.dtype(PETSc.ScalarType)),
+        "petsc_int_type": str(np.dtype(PETSc.IntType)),
+        "mpi_library_version": MPI.Get_library_version().rstrip("\x00"),
+        "petsc_dir": os.environ.get("PETSC_DIR"),
+        "slepc_dir": os.environ.get("SLEPC_DIR"),
+        "ld_library_path_sha256": _sha256_bytes(
+            os.environ.get("LD_LIBRARY_PATH", "").encode("utf-8")
+        ),
+    }
+
+
+def _persistent_cache_root(
+    directory: str | os.PathLike[str],
+    namespace: str,
+) -> tuple[Path, str]:
+    requested = Path(directory).expanduser()
+    if not requested.is_absolute():
+        raise ValueError(
+            "persistent raw tensor cache directory must be an absolute Linux path"
+        )
+    root = requested.resolve()
+    root_text = root.as_posix()
+    if root_text == "/mnt" or root_text.startswith("/mnt/"):
+        raise ValueError(
+            "persistent raw tensor cache must use the Linux filesystem, not /mnt"
+        )
+    if not namespace or len(namespace) > 256 or "\x00" in namespace:
+        raise ValueError(
+            "persistent raw tensor cache namespace must be a nonempty "
+            "string of at most 256 characters"
+        )
+    root.mkdir(parents=True, exist_ok=True)
+    if not root.is_dir():
+        raise ValueError("persistent raw tensor cache root is not a directory")
+    namespace_sha256 = _sha256_bytes(namespace.encode("utf-8"))
+    namespace_root = root / _PERSISTENT_RAW_TENSOR_CACHE_SCHEMA / namespace_sha256
+    namespace_root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    os.chmod(namespace_root, 0o700)
+    return namespace_root, namespace_sha256
+
+
+def _persistent_raw_tensor_metadata(
+    *,
+    key_payload: dict[str, Any],
+    tensor: np.ndarray,
+) -> dict[str, Any]:
+    canonical_tensor = np.ascontiguousarray(tensor)
+    tensor_bytes = canonical_tensor.tobytes(order="C")
+    metadata: dict[str, Any] = {
+        "schema_version": _PERSISTENT_RAW_TENSOR_CACHE_SCHEMA,
+        "cache_key_sha256": _sha256_bytes(
+            _canonical_cache_json_bytes(key_payload)
+        ),
+        "cache_key": key_payload,
+        "tensor": {
+            "shape": [int(value) for value in canonical_tensor.shape],
+            "dtype": canonical_tensor.dtype.str,
+            "nbytes": int(canonical_tensor.nbytes),
+            "sha256": _sha256_bytes(tensor_bytes),
+            "finite": bool(np.all(np.isfinite(canonical_tensor))),
+        },
+        "storage": {
+            "container": "numpy_npz_uncompressed_allow_pickle_false",
+            "write_policy": "atomic_write_once_no_overwrite",
+            "file_mode": "0600",
+        },
+    }
+    metadata["metadata_self_sha256"] = _sha256_bytes(
+        _canonical_cache_json_bytes(metadata)
+    )
+    return metadata
+
+
+def _validate_persistent_raw_tensor_file(
+    path: Path,
+    *,
+    expected_key_payload: dict[str, Any],
+    expected_shape: tuple[int, int],
+    expected_dtype: np.dtype[Any],
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Load one cache entry only after independent structural/hash checks."""
+
+    file_stat = path.lstat()
+    if not stat.S_ISREG(file_stat.st_mode) or stat.S_ISLNK(file_stat.st_mode):
+        raise RuntimeError("persistent raw tensor cache entry is not a regular file")
+    if stat.S_IMODE(file_stat.st_mode) != 0o600:
+        raise RuntimeError("persistent raw tensor cache entry mode is not 0600")
+    file_bytes_sha256 = _sha256_file(path)
+    with np.load(path, allow_pickle=False) as archive:
+        if set(archive.files) != {"tensor", "metadata_json"}:
+            raise RuntimeError(
+                "persistent raw tensor cache archive has unexpected members"
+            )
+        tensor = np.asarray(archive["tensor"])
+        metadata_bytes = np.asarray(archive["metadata_json"])
+    if metadata_bytes.ndim != 1 or metadata_bytes.dtype != np.dtype(np.uint8):
+        raise RuntimeError(
+            "persistent raw tensor cache metadata payload has the wrong type"
+        )
+    try:
+        metadata = json.loads(metadata_bytes.tobytes().decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError(
+            "persistent raw tensor cache metadata is not canonical JSON"
+        ) from exc
+    if not isinstance(metadata, dict):
+        raise RuntimeError("persistent raw tensor cache metadata is not an object")
+    observed_self_hash = metadata.pop("metadata_self_sha256", None)
+    expected_self_hash = _sha256_bytes(_canonical_cache_json_bytes(metadata))
+    metadata["metadata_self_sha256"] = observed_self_hash
+    if observed_self_hash != expected_self_hash:
+        raise RuntimeError(
+            "persistent raw tensor cache metadata self-hash does not match"
+        )
+    expected_key_sha256 = _sha256_bytes(
+        _canonical_cache_json_bytes(expected_key_payload)
+    )
+    if (
+        metadata.get("schema_version") != _PERSISTENT_RAW_TENSOR_CACHE_SCHEMA
+        or metadata.get("cache_key_sha256") != expected_key_sha256
+        or metadata.get("cache_key") != expected_key_payload
+    ):
+        raise RuntimeError("persistent raw tensor cache key does not match")
+    tensor_metadata = metadata.get("tensor")
+    if not isinstance(tensor_metadata, dict):
+        raise RuntimeError("persistent raw tensor cache tensor metadata is absent")
+    expected_dtype = np.dtype(expected_dtype)
+    if (
+        tensor.shape != expected_shape
+        or tensor.dtype != expected_dtype
+        or tensor_metadata.get("shape") != list(expected_shape)
+        or tensor_metadata.get("dtype") != expected_dtype.str
+        or tensor_metadata.get("nbytes") != int(tensor.nbytes)
+    ):
+        raise RuntimeError(
+            "persistent raw tensor cache tensor shape/dtype does not match"
+        )
+    canonical = np.ascontiguousarray(tensor)
+    observed_tensor_sha256 = _sha256_bytes(canonical.tobytes(order="C"))
+    if (
+        tensor_metadata.get("sha256") != observed_tensor_sha256
+        or tensor_metadata.get("finite") is not True
+        or not np.all(np.isfinite(canonical))
+    ):
+        raise RuntimeError(
+            "persistent raw tensor cache tensor byte hash/finite check failed"
+        )
+    return canonical, {
+        "entry_file_sha256": file_bytes_sha256,
+        "tensor_sha256": observed_tensor_sha256,
+        "tensor_bytes": int(canonical.nbytes),
+        "metadata_self_sha256": observed_self_hash,
+    }
+
+
+def _write_persistent_raw_tensor_file(
+    path: Path,
+    *,
+    key_payload: dict[str, Any],
+    tensor: np.ndarray,
+) -> int:
+    """Atomically create one mode-0600 NPZ entry without replacement."""
+
+    metadata = _persistent_raw_tensor_metadata(
+        key_payload=key_payload,
+        tensor=tensor,
+    )
+    if metadata["tensor"]["finite"] is not True:
+        raise RuntimeError("refusing to cache a non-finite raw tensor")
+    fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.stem}.",
+        suffix=".tmp",
+        dir=path.parent,
+    )
+    temporary = Path(temporary_name)
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "wb", closefd=True) as handle:
+            np.savez(
+                handle,
+                tensor=np.ascontiguousarray(tensor),
+                metadata_json=np.frombuffer(
+                    _canonical_cache_json_bytes(metadata),
+                    dtype=np.uint8,
+                ),
+            )
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary, 0o600)
+        try:
+            os.link(temporary, path)
+        except FileExistsError as exc:
+            raise RuntimeError(
+                "persistent raw tensor cache entry appeared during a "
+                "write-once transaction"
+            ) from exc
+        return int(path.stat().st_size)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _load_or_build_persistent_raw_tensor(
+    *,
+    cache_root: Path,
+    key_payload: dict[str, Any],
+    expected_shape: tuple[int, int],
+    expected_dtype: np.dtype[Any],
+    builder: Callable[[], np.ndarray],
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Serialize concurrent builders and return a fully revalidated entry."""
+
+    key_sha256 = _sha256_bytes(_canonical_cache_json_bytes(key_payload))
+    entry_path = cache_root / f"{key_sha256}.npz"
+    lock_path = cache_root / f"{key_sha256}.lock"
+    lock_started = perf_counter()
+    flags = os.O_CREAT | os.O_RDWR | os.O_CLOEXEC
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    lock_fd = os.open(lock_path, flags, 0o600)
+    try:
+        os.fchmod(lock_fd, 0o600)
+        fcntl.flock(lock_fd, fcntl.LOCK_EX)
+        lock_wait_seconds = perf_counter() - lock_started
+        hit = entry_path.exists()
+        write_seconds = 0.0
+        build_seconds = 0.0
+        written_bytes = 0
+        if not hit:
+            build_started = perf_counter()
+            built = np.ascontiguousarray(builder(), dtype=expected_dtype)
+            build_seconds = perf_counter() - build_started
+            if built.shape != expected_shape or not np.all(np.isfinite(built)):
+                raise RuntimeError(
+                    "fresh raw tensor does not satisfy the cache contract"
+                )
+            write_started = perf_counter()
+            written_bytes = _write_persistent_raw_tensor_file(
+                entry_path,
+                key_payload=key_payload,
+                tensor=built,
+            )
+            write_seconds = perf_counter() - write_started
+        load_started = perf_counter()
+        try:
+            tensor, validation = _validate_persistent_raw_tensor_file(
+                entry_path,
+                expected_key_payload=key_payload,
+                expected_shape=expected_shape,
+                expected_dtype=expected_dtype,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                "persistent raw tensor cache validation failed closed; "
+                "the existing entry was not overwritten"
+            ) from exc
+        load_seconds = perf_counter() - load_started
+        return tensor, {
+            "status": "warm_hit" if hit else "cold_miss_written",
+            "hit": bool(hit),
+            "miss": not hit,
+            "write": not hit,
+            "cache_key_sha256": key_sha256,
+            "entry_name": entry_path.name,
+            "lock_wait_seconds": float(lock_wait_seconds),
+            "build_seconds": float(build_seconds),
+            "load_seconds": float(load_seconds),
+            "write_seconds": float(write_seconds),
+            "loaded_bytes": int(tensor.nbytes),
+            "written_file_bytes": int(written_bytes),
+            **validation,
+        }
+    finally:
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        finally:
+            os.close(lock_fd)
+
+
 def _global_raw_tensor_cache(
     comm,
     local_class_coordinates: dict[tuple[Any, ...], np.ndarray],
@@ -910,6 +1261,9 @@ def _global_raw_tensor_cache(
         str,
         tuple[Any, dict[int, Any], int],
     ],
+    *,
+    persistent_cache_directory: str | os.PathLike[str] | None = None,
+    persistent_cache_namespace: str | None = None,
 ) -> tuple[dict[tuple[Any, ...], np.ndarray], dict[str, Any], float]:
     """Evaluate each raw tensor class once globally, then broadcast it.
 
@@ -917,10 +1271,46 @@ def _global_raw_tensor_cache(
     owning cells in a class retain its tensor after the broadcast.
     """
 
+    persistent_enabled = persistent_cache_directory is not None
+    if persistent_enabled != (persistent_cache_namespace is not None):
+        raise ValueError(
+            "persistent raw tensor cache directory and namespace must be "
+            "supplied together"
+        )
+    persistent_setup_error = None
+    try:
+        runtime_identity = (
+            _qualified_raw_tensor_runtime_identity()
+            if persistent_enabled
+            else None
+        )
+        if persistent_enabled:
+            persistent_root, namespace_sha256 = _persistent_cache_root(
+                persistent_cache_directory,
+                str(persistent_cache_namespace),
+            )
+        else:
+            persistent_root = None
+            namespace_sha256 = None
+    except Exception as error:
+        runtime_identity = None
+        persistent_root = None
+        namespace_sha256 = None
+        persistent_setup_error = f"{type(error).__name__}: {error}"
+    persistent_setup_errors = comm.allgather(persistent_setup_error)
+    if any(error is not None for error in persistent_setup_errors):
+        raise RuntimeError(
+            "persistent raw tensor cache setup failed collectively: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(persistent_setup_errors)
+                if error is not None
+            )
+        )
     local_policy_signature = {
         policy: {
             "dimension": int(dimension),
-            "kernel_ids": tuple(sorted(int(key) for key in kernels)),
+            "kernel_ids": [int(key) for key in sorted(kernels)],
             "dtype": str(np.dtype(compiled_form.dtype)),
             "element_hash": int(
                 compiled_form.function_spaces[0].element.basix_element.hash()
@@ -940,6 +1330,14 @@ def _global_raw_tensor_cache(
     ):
         raise RuntimeError(
             "raw tensor FFCx policy signatures differ across MPI ranks"
+        )
+    runtime_identities = comm.allgather(runtime_identity)
+    if any(
+        identity != runtime_identities[0]
+        for identity in runtime_identities[1:]
+    ):
+        raise RuntimeError(
+            "persistent raw tensor runtime identities differ across MPI ranks"
         )
     packets = comm.allgather(
         tuple(
@@ -996,6 +1394,7 @@ def _global_raw_tensor_cache(
     logical_broadcast_bytes = 0
     local_keys = set(local_class_coordinates)
     locally_evaluated: dict[tuple[Any, ...], np.ndarray] = {}
+    local_persistent_audit: dict[tuple[Any, ...], dict[str, Any]] = {}
     local_kernel_error = None
     try:
         for key in ordered_keys:
@@ -1005,16 +1404,64 @@ def _global_raw_tensor_cache(
             if policy not in policy_forms:
                 raise RuntimeError(f"unknown raw tensor policy {policy!r}")
             compiled_form, kernels, dimension = policy_forms[policy]
-            kernel_started = perf_counter()
-            locally_evaluated[key] = _tabulate_raw_tensor_class(
-                compiled_form,
-                kernels,
+            coordinates = np.ascontiguousarray(
                 global_coordinates[key],
-                tag=int(key[1]),
-                dimension=int(dimension),
+                dtype=np.float64,
             )
-            local_kernel_seconds += perf_counter() - kernel_started
-            local_evaluations += 1
+
+            def build_tensor() -> np.ndarray:
+                return _tabulate_raw_tensor_class(
+                    compiled_form,
+                    kernels,
+                    coordinates,
+                    tag=int(key[1]),
+                    dimension=int(dimension),
+                )
+
+            if persistent_root is None:
+                kernel_started = perf_counter()
+                locally_evaluated[key] = build_tensor()
+                local_kernel_seconds += perf_counter() - kernel_started
+                local_evaluations += 1
+            else:
+                form_signature = local_policy_signature[policy]
+                active_kernel_ids = [
+                    kernel_id
+                    for kernel_id in dict.fromkeys((-1, int(key[1])))
+                    if kernel_id in kernels
+                ]
+                key_payload = {
+                    "schema_version": _PERSISTENT_RAW_TENSOR_CACHE_SCHEMA,
+                    "namespace": str(persistent_cache_namespace),
+                    "namespace_sha256": namespace_sha256,
+                    "policy": policy,
+                    "material_tag": int(key[1]),
+                    "compiled_form": form_signature,
+                    "active_kernel_ids": active_kernel_ids,
+                    "canonical_coordinates": {
+                        "shape": [int(value) for value in coordinates.shape],
+                        "dtype": coordinates.dtype.str,
+                        "nbytes": int(coordinates.nbytes),
+                        "sha256": _sha256_bytes(
+                            coordinates.tobytes(order="C")
+                        ),
+                    },
+                    "runtime_identity": runtime_identity,
+                }
+                tensor, entry_audit = _load_or_build_persistent_raw_tensor(
+                    cache_root=persistent_root,
+                    key_payload=key_payload,
+                    expected_shape=(int(dimension), int(dimension)),
+                    expected_dtype=np.dtype(np.complex128),
+                    builder=build_tensor,
+                )
+                locally_evaluated[key] = tensor
+                local_persistent_audit[key] = entry_audit
+                if entry_audit["miss"]:
+                    local_evaluations += 1
+                    local_kernel_seconds += float(
+                        entry_audit["build_seconds"]
+                    )
     except Exception as error:
         local_kernel_error = f"{type(error).__name__}: {error}"
     owner_sync_started = perf_counter()
@@ -1028,6 +1475,14 @@ def _global_raw_tensor_cache(
                 for rank, error in enumerate(kernel_errors)
                 if error is not None
             )
+        )
+
+    persistent_barrier_seconds = 0.0
+    if persistent_enabled:
+        persistent_barrier_started = perf_counter()
+        comm.Barrier()
+        persistent_barrier_seconds = (
+            perf_counter() - persistent_barrier_started
         )
 
     for key in ordered_keys:
@@ -1057,14 +1512,68 @@ def _global_raw_tensor_cache(
         comm.allreduce(len(local_class_coordinates), op=MPI.SUM)
     )
     unique_count = len(global_coordinates)
-    if evaluation_count != unique_count:
+    persistent_hits = int(
+        comm.allreduce(
+            sum(
+                int(audit["hit"])
+                for audit in local_persistent_audit.values()
+            ),
+            op=MPI.SUM,
+        )
+    )
+    persistent_misses = int(
+        comm.allreduce(
+            sum(
+                int(audit["miss"])
+                for audit in local_persistent_audit.values()
+            ),
+            op=MPI.SUM,
+        )
+    )
+    if (
+        (not persistent_enabled and evaluation_count != unique_count)
+        or (
+            persistent_enabled
+            and persistent_hits + persistent_misses != unique_count
+        )
+    ):
         raise RuntimeError(
-            "global raw tensor evaluation count does not match unique classes"
+            "global raw tensor persistent/evaluation count does not match "
+            "unique classes"
         )
     if set(cache) != local_keys:
         raise RuntimeError("global raw tensor cache is incomplete on this rank")
+    persistent_entry_packets = comm.allgather(
+        {
+            repr(key): {
+                "class": repr(key),
+                **{
+                    field: audit[field]
+                    for field in (
+                        "status",
+                        "cache_key_sha256",
+                        "entry_name",
+                        "tensor_sha256",
+                        "entry_file_sha256",
+                        "metadata_self_sha256",
+                        "tensor_bytes",
+                    )
+                },
+            }
+            for key, audit in local_persistent_audit.items()
+        }
+    )
+    persistent_entries: dict[str, dict[str, Any]] = {}
+    for packet in persistent_entry_packets:
+        overlap = set(persistent_entries).intersection(packet)
+        if overlap:
+            raise RuntimeError(
+                "persistent raw tensor class has multiple MPI cache owners"
+            )
+        persistent_entries.update(packet)
     return cache, {
-        "raw_tensor_class_count_sum": evaluation_count,
+        "raw_tensor_class_count_sum": unique_count,
+        "raw_tensor_kernel_evaluation_count_global": evaluation_count,
         "raw_tensor_class_use_count_sum": use_count,
         "raw_tensor_class_count_global_unique": unique_count,
         "raw_tensor_global_owner_policy": (
@@ -1116,6 +1625,92 @@ def _global_raw_tensor_cache(
         "raw_tensor_broadcast_seconds_max": float(
             comm.allreduce(local_broadcast_seconds, op=MPI.MAX)
         ),
+        "raw_tensor_persistent_cache": {
+            "schema_version": _PERSISTENT_RAW_TENSOR_CACHE_SCHEMA,
+            "enabled": persistent_enabled,
+            "status": (
+                "disabled"
+                if not persistent_enabled
+                else "warm_all_hit"
+                if persistent_hits == unique_count
+                else "cold_all_miss"
+                if persistent_misses == unique_count
+                else "mixed_hit_miss"
+            ),
+            "namespace": persistent_cache_namespace,
+            "namespace_sha256": namespace_sha256,
+            "directory": (
+                None
+                if persistent_cache_directory is None
+                else str(Path(persistent_cache_directory).resolve())
+            ),
+            "unique_class_count": unique_count,
+            "hit_count_global": persistent_hits,
+            "miss_count_global": persistent_misses,
+            "write_count_global": persistent_misses,
+            "loaded_tensor_bytes_global": int(
+                comm.allreduce(
+                    sum(
+                        int(audit["loaded_bytes"])
+                        for audit in local_persistent_audit.values()
+                    ),
+                    op=MPI.SUM,
+                )
+            ),
+            "written_file_bytes_global": int(
+                comm.allreduce(
+                    sum(
+                        int(audit["written_file_bytes"])
+                        for audit in local_persistent_audit.values()
+                    ),
+                    op=MPI.SUM,
+                )
+            ),
+            "load_seconds_max": float(
+                comm.allreduce(
+                    sum(
+                        float(audit["load_seconds"])
+                        for audit in local_persistent_audit.values()
+                    ),
+                    op=MPI.MAX,
+                )
+            ),
+            "write_seconds_max": float(
+                comm.allreduce(
+                    sum(
+                        float(audit["write_seconds"])
+                        for audit in local_persistent_audit.values()
+                    ),
+                    op=MPI.MAX,
+                )
+            ),
+            "lock_wait_seconds_max": float(
+                comm.allreduce(
+                    sum(
+                        float(audit["lock_wait_seconds"])
+                        for audit in local_persistent_audit.values()
+                    ),
+                    op=MPI.MAX,
+                )
+            ),
+            "post_write_barrier_seconds_max": float(
+                comm.allreduce(
+                    persistent_barrier_seconds,
+                    op=MPI.MAX,
+                )
+            ),
+            "entries": [
+                persistent_entries[key]
+                for key in sorted(persistent_entries)
+            ],
+            "single_deterministic_owner_per_class": True,
+            "cross_process_lock": "POSIX_flock_per_entry",
+            "atomic_write_once_no_overwrite": True,
+            "every_hit_independently_validated": True,
+            "corruption_policy": "fail_closed_no_overwrite",
+            "numerical_identity_changed": False,
+            "ordinary_default_changed": False,
+        },
     }, local_kernel_seconds
 
 
@@ -1154,6 +1749,10 @@ def build_unconstrained_assembly_time_condensation(
     appended_support_group_by_row: tuple[int, ...] = (),
     defer_final_assembly: bool = False,
     geometry_tolerance: float = 1.0e-11,
+    persistent_raw_tensor_cache_directory: (
+        str | os.PathLike[str] | None
+    ) = None,
+    persistent_raw_tensor_cache_namespace: str | None = None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -1353,6 +1952,12 @@ def build_unconstrained_assembly_time_condensation(
                 comm,
                 local_class_coordinates,
                 policy_forms,
+                persistent_cache_directory=(
+                    persistent_raw_tensor_cache_directory
+                ),
+                persistent_cache_namespace=(
+                    persistent_raw_tensor_cache_namespace
+                ),
             )
         )
     except Exception:

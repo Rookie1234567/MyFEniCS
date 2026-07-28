@@ -1,0 +1,282 @@
+{
+  "schema_version": "task035e.case098-config.v1",
+  "case_id": "098_reference_blind_multilevel_hp_adaptivity",
+  "campaign_status": "scaffold_not_run",
+  "source_commit_sha": null,
+  "formal_mpi_size": 8,
+  "ordinary_default_changed": false,
+  "numerical_credit_claimed": false,
+  "layer_packages": {
+    "reference_certifier": {
+      "module_path": "src/adaptivity/reference_certifier",
+      "package_manifest": {
+        "status": "not_run",
+        "path": null,
+        "sha256": null,
+        "source_sha": null
+      }
+    },
+    "blind_controller": {
+      "module_path": "src/adaptivity/blind_controller",
+      "package_manifest": {
+        "status": "not_run",
+        "path": null,
+        "sha256": null,
+        "source_sha": null
+      }
+    },
+    "hidden_auditor": {
+      "module_path": "src/adaptivity/hidden_auditor",
+      "package_manifest": {
+        "status": "not_run",
+        "path": null,
+        "sha256": null,
+        "source_sha": null
+      }
+    }
+  },
+  "reference_isolation": {
+    "status": "not_run",
+    "path": null,
+    "sha256": null,
+    "source_sha": null
+  },
+  "reference_campaign": {
+    "runs": [
+      {
+        "run_id": "p6_h10",
+        "degree": 6,
+        "h_nm": 10.0,
+        "status": "not_run",
+        "gate": {
+          "completed_full_solve": null,
+          "full_explicit_true_residual": null,
+          "energy_identity_error": null,
+          "absorption_identity_error": null,
+          "physical_memory_free_fraction_after": null,
+          "swap_gib": null
+        },
+        "evidence": {
+          "status": "not_run",
+          "path": null,
+          "sha256": null,
+          "source_sha": null
+        }
+      },
+      {
+        "run_id": "p6_h7p5",
+        "degree": 6,
+        "h_nm": 7.5,
+        "status": "not_run",
+        "gate": {
+          "completed_full_solve": null,
+          "full_explicit_true_residual": null,
+          "energy_identity_error": null,
+          "absorption_identity_error": null,
+          "physical_memory_free_fraction_after": null,
+          "swap_gib": null
+        },
+        "evidence": {
+          "status": "not_run",
+          "path": null,
+          "sha256": null,
+          "source_sha": null
+        }
+      },
+      {
+        "run_id": "p6_h5",
+        "degree": 6,
+        "h_nm": 5.0,
+        "status": "not_run",
+        "gate": {
+          "completed_full_solve": null,
+          "full_explicit_true_residual": null,
+          "energy_identity_error": null,
+          "absorption_identity_error": null,
+          "physical_memory_free_fraction_after": null,
+          "swap_gib": null
+        },
+        "evidence": {
+          "status": "not_run",
+          "path": null,
+          "sha256": null,
+          "source_sha": null
+        }
+      }
+    ],
+    "convergence_authority": {
+      "status": "not_run",
+      "path": null,
+      "sha256": null,
+      "source_sha": null
+    },
+    "qualification_claimed": false
+  },
+  "goal_contract": {
+    "ports": [
+      "top",
+      "bottom"
+    ],
+    "n": 0,
+    "m": [
+      0,
+      -1,
+      -2,
+      -3,
+      -4,
+      -5,
+      -6,
+      -7
+    ],
+    "orders_per_port": 8,
+    "power_goal_count": 16,
+    "complex_amplitude_goal_count": 16,
+    "amplitude_real_goal_count": 32,
+    "minimum_order_real_goal_count": 48,
+    "significance_filter_used": false
+  },
+  "blind_trials": {
+    "maximum_cycles_per_path": 6,
+    "paths": [
+      {
+        "path_id": "path_a",
+        "nominal_h_nm": [
+          20.0,
+          10.0,
+          5.0
+        ],
+        "status": "not_run",
+        "cycles": [],
+        "final_authority": {
+          "status": "not_run",
+          "path": null,
+          "sha256": null,
+          "source_sha": null
+        }
+      },
+      {
+        "path_id": "path_b",
+        "nominal_h_nm": [
+          15.0,
+          7.5,
+          3.75
+        ],
+        "status": "not_run",
+        "cycles": [],
+        "final_authority": {
+          "status": "not_run",
+          "path": null,
+          "sha256": null,
+          "source_sha": null
+        }
+      }
+    ],
+    "two_start_comparison": {
+      "max_normalized_output_difference": null,
+      "evidence": {
+        "status": "not_run",
+        "path": null,
+        "sha256": null,
+        "source_sha": null
+      }
+    }
+  },
+  "adaptive_contract": {
+    "production_degrees": [
+      4,
+      5,
+      6
+    ],
+    "minimum_local_refinement_levels": 2,
+    "minimum_separated_patches": 2,
+    "maximum_adjacent_level_jump": 1,
+    "periodic_closure_required": true,
+    "material_interface_protection_required": true,
+    "hanging_trace_required": true,
+    "mpi_ownership_required": true,
+    "p_shadow_required": true,
+    "h_shadow_required": true,
+    "maximum_normalized_shadow_delta": 0.5
+  },
+  "freeze": {
+    "status": "not_run",
+    "candidate_immutable": false,
+    "source_commit_sha": null,
+    "mesh_forest_sha256": null,
+    "degree_map_sha256": null,
+    "output_sha256": null,
+    "internal_certificate_sha256": null,
+    "resource_authority_sha256": null
+  },
+  "hidden_audit": {
+    "status": "not_run",
+    "opened_after_freeze": false,
+    "power_pass_count": null,
+    "complex_amplitude_pass_count": null,
+    "full_propagating_spectrum_pass": null,
+    "total_observables_pass": null,
+    "field_observables_pass": null,
+    "residual_and_energy_pass": null,
+    "candidate_retuned_after_open": false,
+    "evidence": {
+      "status": "not_run",
+      "path": null,
+      "sha256": null,
+      "source_sha": null
+    }
+  },
+  "resource_ledger": {
+    "full3d": {
+      "status": "not_run",
+      "active_rows": null,
+      "matrix_nnz": null,
+      "factor_nnz": null,
+      "solver_phase_peak_gib": null,
+      "swap_gib": null,
+      "same_mpi_solver_lifecycle_telemetry": null,
+      "evidence": {
+        "status": "not_run",
+        "path": null,
+        "sha256": null,
+        "source_sha": null
+      }
+    },
+    "hybrid": {
+      "status": "not_run",
+      "active_rows_below_baseline": null,
+      "matrix_nnz_below_baseline": null,
+      "factor_nnz_below_baseline": null,
+      "solver_phase_peak_gib": null,
+      "swap_gib": null,
+      "same_mpi_solver_lifecycle_telemetry": null,
+      "evidence": {
+        "status": "not_run",
+        "path": null,
+        "sha256": null,
+        "source_sha": null
+      }
+    }
+  },
+  "hybrid": {
+    "status": "not_run",
+    "mode_count": 120,
+    "same_frozen_hp_space": null,
+    "power_pass_count": null,
+    "complex_amplitude_pass_count": null,
+    "total_observables_pass": null,
+    "field_observables_pass": null,
+    "residual_pass": null,
+    "evidence": {
+      "status": "not_run",
+      "path": null,
+      "sha256": null,
+      "source_sha": null
+    }
+  },
+  "out_of_scope": {
+    "iterative_solver": "not_researched",
+    "matrix_free": "not_researched",
+    "wavelength_0p7_nm": "not_researched",
+    "irregular_geometry": "not_researched"
+  }
+}

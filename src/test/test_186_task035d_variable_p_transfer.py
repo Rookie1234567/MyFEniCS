@@ -14,6 +14,7 @@ from src.adaptivity.variable_p_entity_map import (
 from src.adaptivity.variable_p_transfer import (
     build_variable_p_global_transfer,
     project_p6_dual_to_active_full,
+    project_p6_primal_to_active_full,
     recover_active_full_to_p6_field,
 )
 
@@ -121,7 +122,52 @@ class Task035dVariablePTransferTests(unittest.TestCase):
         start, end = active_vector.getOwnershipRange()
         active_vector.getArray()[:] = active_values[start:end]
         active_vector.assemble()
+        primal, primal_audit = project_p6_primal_to_active_full(
+            transfer,
+            recovered.x.petsc_vec,
+            require_exact_nested=True,
+        )
+        approximate = None
         try:
+            np.testing.assert_allclose(
+                primal.getArray(readonly=True),
+                active_vector.getArray(readonly=True),
+                rtol=5.0e-11,
+                atol=5.0e-11,
+            )
+            self.assertTrue(
+                primal_audit["exact_nested_round_trip_pass"]
+            )
+            self.assertEqual(
+                primal_audit[
+                    "replicated_full_active_vector_bytes_per_rank"
+                ],
+                0,
+            )
+            approximate, approximate_audit = (
+                project_p6_primal_to_active_full(
+                    transfer,
+                    dual.x.petsc_vec,
+                    require_exact_nested=False,
+                )
+            )
+            self.assertFalse(
+                approximate_audit["exact_nested_round_trip_pass"]
+            )
+            self.assertFalse(
+                approximate_audit[
+                    "nonmatching_projection_receives_exact_transfer_credit"
+                ]
+            )
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "outside the required nested active range",
+            ):
+                project_p6_primal_to_active_full(
+                    transfer,
+                    dual.x.petsc_vec,
+                    require_exact_nested=True,
+                )
             left = complex(
                 dual.x.petsc_vec.dot(recovered.x.petsc_vec)
             )
@@ -129,6 +175,9 @@ class Task035dVariablePTransferTests(unittest.TestCase):
             relative = abs(left - right) / max(abs(left), abs(right), 1.0)
             self.assertLessEqual(relative, 2.0e-11)
         finally:
+            if approximate is not None:
+                approximate.destroy()
+            primal.destroy()
             active_vector.destroy()
             projected.destroy()
 

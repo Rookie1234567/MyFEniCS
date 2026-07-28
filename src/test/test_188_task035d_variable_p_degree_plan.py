@@ -42,6 +42,10 @@ class Task035dVariablePDegreePlanTests(unittest.TestCase):
         )
         self.assertTrue(plan.audit["pass"])
         self.assertEqual(
+            plan.audit["schema_version"],
+            "task035d.variable-p-cell-degree-plan.v1",
+        )
+        self.assertEqual(
             plan.audit["cell_degree_counts"],
             {"p4": 0, "p5": 4, "p6": 4},
         )

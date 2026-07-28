@@ -42,3 +42,23 @@ Task035e 的重点不是把 p6/h10 轻微删改，而是从真正粗网格开始
 ```text
 docs/task035e_reference_blind_multilevel_hp_adaptivity/task.md
 ```
+
+## 当前执行进度
+
+Task035e 的软件层已进入正式 PDE 前资格化阶段。当前实现已经具备：
+
+- 真实 dyadic level-0/1/2 local-h forest、2:1 closure、periodic/hanging trace；
+- production p4/p5/p6 exact-sequence variable-p，inactive 高阶 mode 不进入全局矩阵；
+- 固定 59-goal current snapshot、actual DWR、p-shadow、h-shadow 与双路径状态机；
+- p6→p7 和 level-2→level-3 的 shadow-only saturation authority；
+- crash-resumable Path A/B campaign、单 heavy-job lock、private artifact root；
+- 两路径正式 `compare_frozen_paths`、不可变 candidate freeze receipt/bundle；
+- blind campaign 完全退出后才可调用的独立 evaluator handoff/preflight。
+
+最后一项刻意不放进 blind campaign 的 import graph：控制器只负责冻结候选，
+独立 evaluator 进程随后验证 receipt/bundle，验证通过前不会打开 sealed
+reference。这样不会为了方便 orchestration 而破坏三层隔离。
+
+这些内容当前只获得 software/component qualification，不等于 reference、
+blind candidate、hidden audit 或 Hybrid 数值通过。Case098 ledger 在正式 MPI8
+运行写入前仍保持 `SCAFFOLD_NOT_RUN`。

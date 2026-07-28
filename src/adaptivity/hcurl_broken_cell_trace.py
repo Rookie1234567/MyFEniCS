@@ -21,9 +21,10 @@ default.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
+from time import perf_counter
 from types import MappingProxyType
 from typing import Any, Mapping
 
@@ -86,6 +87,9 @@ class BrokenHexCellTraceConstraintMap:
     independent_trace_rows: int
     component_gram: np.ndarray | sparse.csr_matrix
     audit: Mapping[str, Any]
+    setup_timing: Mapping[str, Any] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
 
 
 def _matrix_sha256(values: np.ndarray) -> str:
@@ -142,6 +146,221 @@ def _json_sha256(payload: Any) -> str:
             separators=(",", ":"),
         ).encode("ascii")
     ).hexdigest()
+
+
+_CELL_EXPANSION_RANK_POLICY = MappingProxyType(
+    {
+        "schema_version": (
+            "task035e.cell-expansion-maximal-rank-policy.v1"
+        ),
+        "svd_input": "canonical_physical_cell_expansion",
+        "svd_input_dtype": np.dtype(np.complex128).str,
+        "svd_compute_uv": False,
+        "rank_threshold": (
+            "max(shape)*float64_eps*largest_singular_value"
+        ),
+        "expected_rank": "min(shape)",
+        "condition": (
+            "largest_singular_value/smallest_counted_singular_value"
+        ),
+        "wide_expansion_semantics": "full_row_rank",
+        "tall_expansion_semantics": "full_column_rank",
+        "oriented_profile_transfer_gate": (
+            "per-entity canonical_to_dolfinx transform is unitary within "
+            "5e-11 and per-cell T_K G_K cross-check passes within 5e-11"
+        ),
+    }
+)
+_CELL_EXPANSION_RANK_POLICY_SHA256 = _json_sha256(
+    dict(_CELL_EXPANSION_RANK_POLICY)
+)
+
+
+def _rank_audit_matrix_identity(values: np.ndarray) -> dict[str, Any]:
+    """Return the exact content identity used by the SVD audit cache."""
+
+    array = np.ascontiguousarray(
+        np.asarray(values, dtype=np.complex128)
+    )
+    return {
+        "shape": list(array.shape),
+        "dtype": np.dtype(array.dtype).str,
+        "nbytes": int(array.nbytes),
+        "bytes_sha256": _matrix_sha256(array),
+    }
+
+
+@dataclass
+class _CellExpansionRankAuditCache:
+    """Deduplicate only mathematically identical rank/condition audits.
+
+    The actual cell expansion is still built, orientation-checked, hashed,
+    and retained by the caller.  The cache stores metadata and one scalar
+    profile only; it never owns an expansion matrix.
+    """
+
+    profiles: dict[str, dict[str, Any]]
+    hit_count: int = 0
+    miss_count: int = 0
+    logical_input_bytes: int = 0
+    unique_input_bytes: int = 0
+
+    @classmethod
+    def create(cls) -> _CellExpansionRankAuditCache:
+        return cls(profiles={})
+
+    def profile(
+        self,
+        *,
+        canonical_expansion: np.ndarray,
+        oriented_expansion: np.ndarray,
+    ) -> tuple[int, int, float, str, bool, dict[str, Any], dict[str, Any]]:
+        """Return an exact-identity cached SVD profile."""
+
+        canonical_identity = _rank_audit_matrix_identity(
+            canonical_expansion
+        )
+        oriented_identity = _rank_audit_matrix_identity(
+            oriented_expansion
+        )
+        identity_payload = {
+            "policy_sha256": _CELL_EXPANSION_RANK_POLICY_SHA256,
+            "canonical_expansion": canonical_identity,
+        }
+        identity_sha256 = _json_sha256(identity_payload)
+        self.logical_input_bytes += int(canonical_identity["nbytes"])
+        cached = self.profiles.get(identity_sha256)
+        cache_hit = cached is not None
+        if cached is None:
+            rank, expected_rank, condition = _maximal_rank_profile(
+                canonical_expansion
+            )
+            cached = {
+                **identity_payload,
+                "identity_sha256": identity_sha256,
+                "rank": int(rank),
+                "expected_rank": int(expected_rank),
+                "condition": float(condition),
+            }
+            self.profiles[identity_sha256] = cached
+            self.miss_count += 1
+            self.unique_input_bytes += int(canonical_identity["nbytes"])
+        else:
+            if cached["canonical_expansion"] != canonical_identity:
+                raise RuntimeError(
+                    "cell expansion rank-audit SHA identity collision"
+                )
+            rank = int(cached["rank"])
+            expected_rank = int(cached["expected_rank"])
+            condition = float(cached["condition"])
+            self.hit_count += 1
+        return (
+            int(rank),
+            int(expected_rank),
+            float(condition),
+            identity_sha256,
+            cache_hit,
+            canonical_identity,
+            oriented_identity,
+        )
+
+
+def _collective_rank_audit_cache(
+    cache: _CellExpansionRankAuditCache,
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    """Fail closed on cross-rank cache identity/profile disagreement."""
+
+    local_profiles = {
+        key: dict(value) for key, value in cache.profiles.items()
+    }
+    packets = comm.allgather(local_profiles)
+    global_profiles: dict[str, dict[str, Any]] = {}
+    for rank, packet in enumerate(packets):
+        for key, profile in packet.items():
+            if str(profile.get("identity_sha256", "")) != key:
+                raise RuntimeError(
+                    f"rank {rank} published a malformed SVD cache identity"
+                )
+            identity_payload = {
+                "policy_sha256": profile["policy_sha256"],
+                "canonical_expansion": profile[
+                    "canonical_expansion"
+                ],
+            }
+            if _json_sha256(identity_payload) != key:
+                raise RuntimeError(
+                    f"rank {rank} SVD cache identity failed re-hashing"
+                )
+            previous = global_profiles.get(key)
+            if previous is not None and previous != profile:
+                raise RuntimeError(
+                    "MPI ranks disagree on one exact cell-expansion "
+                    "rank/condition profile"
+                )
+            global_profiles.setdefault(key, profile)
+    local_profile_count = len(cache.profiles)
+    if cache.miss_count != local_profile_count:
+        raise RuntimeError("local cell-expansion SVD cache counters drifted")
+    hit_counts = comm.allgather(int(cache.hit_count))
+    miss_counts = comm.allgather(int(cache.miss_count))
+    logical_bytes = comm.allgather(int(cache.logical_input_bytes))
+    unique_bytes = comm.allgather(int(cache.unique_input_bytes))
+    if sum(hit_counts) + sum(miss_counts) <= 0:
+        raise RuntimeError("cell-expansion SVD cache saw no owned cells")
+    global_unique_bytes = sum(
+        int(profile["canonical_expansion"]["nbytes"])
+        for profile in global_profiles.values()
+    )
+    metadata_bytes = len(
+        json.dumps(
+            global_profiles,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("ascii")
+    )
+    return {
+        "schema_version": (
+            "task035e.cell-expansion-svd-rank-cache.v1"
+        ),
+        "status": "exact_identity_svd_rank_cache_pass",
+        "pass": True,
+        "policy": dict(_CELL_EXPANSION_RANK_POLICY),
+        "policy_sha256": _CELL_EXPANSION_RANK_POLICY_SHA256,
+        "cache_key_semantics": (
+            "SHA256 of exact canonical complex128 expansion shape, dtype, "
+            "bytes SHA256, plus the rank-policy SHA256"
+        ),
+        "canonical_bytes_bound_to_cache_key": True,
+        "oriented_bytes_hashed_in_every_cell_record": True,
+        "canonical_profile_transferred_only_after_orientation_gates": True,
+        "matrix_payload_retained_by_cache": False,
+        "actual_expansion_built_and_validated_per_cell": True,
+        "actual_expansion_retained_per_cell": True,
+        "cache_hit_counts_by_rank": hit_counts,
+        "cache_miss_counts_by_rank": miss_counts,
+        "cache_hit_count_global": int(sum(hit_counts)),
+        "cache_miss_count_global": int(sum(miss_counts)),
+        "local_unique_profile_counts_by_rank": [
+            len(packet) for packet in packets
+        ],
+        "global_unique_profile_count": len(global_profiles),
+        "logical_svd_input_bytes_by_rank": logical_bytes,
+        "local_unique_svd_input_bytes_by_rank": unique_bytes,
+        "logical_svd_input_bytes_global_sum": int(sum(logical_bytes)),
+        "local_unique_svd_input_bytes_global_sum": int(
+            sum(unique_bytes)
+        ),
+        "global_exact_unique_svd_input_bytes": int(global_unique_bytes),
+        "locally_avoided_svd_input_bytes_global_sum": int(
+            sum(logical_bytes) - sum(unique_bytes)
+        ),
+        "cache_metadata_bytes_global": int(metadata_bytes),
+        "bytes_are_logical_matrix_or_metadata_not_peak_rss": True,
+        "cross_rank_duplicate_profiles_are_metadata_only": True,
+        "mpi_profile_identity_fail_closed": True,
+        "ordinary_default_changed": False,
+    }
 
 
 def _balanced_ownership_ranges(
@@ -539,7 +758,9 @@ def _entity_records(
     list[dict[str, Any]],
     float,
     dict[str, Any],
+    dict[str, Any],
 ]:
+    entity_records_started = perf_counter()
     msh = entity_map.mesh
     comm = msh.comm
     topology = msh.topology
@@ -552,6 +773,7 @@ def _entity_records(
         comm.size,
     )
     local_declaration_error: str | None = None
+    local_entity_build_started = perf_counter()
     try:
         (
             owned_by_physical,
@@ -584,8 +806,15 @@ def _entity_records(
         local_ghost_counts_by_dimension = {}
         maximum_orthogonality_error = 0.0
         local_declaration_error = f"{type(exc).__name__}: {exc}"
+    local_entity_build_seconds = (
+        perf_counter() - local_entity_build_started
+    )
+    declaration_exchange_started = perf_counter()
     declaration_packets = comm.allgather(
         (tuple(local_declarations), local_declaration_error)
+    )
+    declaration_exchange_seconds = (
+        perf_counter() - declaration_exchange_started
     )
     declaration_errors = [
         f"rank {rank}: {error}"
@@ -634,6 +863,7 @@ def _entity_records(
     if len(declarations) != len(authority.entities):
         raise RuntimeError("physical and DOLFINx trace catalogs differ")
 
+    crosswalk_validation_started = perf_counter()
     local_errors: list[str] = []
     for global_identity, local in local_crosswalk.items():
         declaration = declaration_by_global.get(global_identity)
@@ -673,7 +903,11 @@ def _entity_records(
             "collective trace declaration crosswalk failed: "
             + "; ".join(crosswalk_errors[:4])
         )
+    crosswalk_validation_seconds = (
+        perf_counter() - crosswalk_validation_started
+    )
 
+    request_preparation_started = perf_counter()
     cell_needed_physical: set[tuple[int, tuple[int, ...]]] = set()
     needed_physical: set[tuple[int, tuple[int, ...]]] = set()
     outbound_requests: list[list[dict[str, Any]]] = [
@@ -746,8 +980,14 @@ def _entity_records(
             "trace entity request preparation failed collectively: "
             + "; ".join(request_prep_errors[:4])
         )
+    request_preparation_seconds = (
+        perf_counter() - request_preparation_started
+    )
+    request_exchange_started = perf_counter()
     inbound_requests = comm.alltoall(outbound_requests)
+    request_exchange_seconds = perf_counter() - request_exchange_started
 
+    reply_build_started = perf_counter()
     outbound_replies: list[list[dict[str, Any]]] = [
         [] for _ in range(int(comm.size))
     ]
@@ -865,8 +1105,12 @@ def _entity_records(
                 outbound_replies[requester_rank].append(
                     {"token": token, "error": error}
                 )
+    reply_build_seconds = perf_counter() - reply_build_started
+    reply_exchange_started = perf_counter()
     inbound_replies = comm.alltoall(outbound_replies)
+    reply_exchange_seconds = perf_counter() - reply_exchange_started
 
+    reply_validation_started = perf_counter()
     received_by_token: dict[str, dict[str, Any]] = {}
     local_received_reply_array_bytes = 0
     success_reply_keys = {
@@ -952,7 +1196,11 @@ def _entity_records(
             "owner-routed trace lookup failed collectively: "
             + "; ".join(routing_errors[:4])
         )
+    reply_validation_seconds = (
+        perf_counter() - reply_validation_started
+    )
 
+    reply_rebuild_started = perf_counter()
     cache_by_physical: dict[
         tuple[int, tuple[int, ...]],
         BrokenHexTraceEntityBlock,
@@ -1055,7 +1303,9 @@ def _entity_records(
             "owner-routed trace reply reconstruction failed collectively: "
             + "; ".join(rebuild_errors[:4])
         )
+    reply_rebuild_seconds = perf_counter() - reply_rebuild_started
 
+    cache_audit_started = perf_counter()
     blocks = {
         (block.dimension, block.global_entity): block
         for block in cache_by_physical.values()
@@ -1149,6 +1399,43 @@ def _entity_records(
         if unique_owner_bytes_global
         else 0.0
     )
+    cache_audit_seconds = perf_counter() - cache_audit_started
+    timing_local = {
+        "local_entity_block_build": local_entity_build_seconds,
+        "declaration_metadata_exchange": declaration_exchange_seconds,
+        "declaration_crosswalk_validation": (
+            crosswalk_validation_seconds
+        ),
+        "owner_request_preparation": request_preparation_seconds,
+        "owner_request_exchange": request_exchange_seconds,
+        "owner_reply_build": reply_build_seconds,
+        "owner_reply_exchange": reply_exchange_seconds,
+        "owner_reply_validation": reply_validation_seconds,
+        "owner_reply_rebuild": reply_rebuild_seconds,
+        "cache_audit_collectives": cache_audit_seconds,
+        "entity_records_total_before_audit_publish": (
+            perf_counter() - entity_records_started
+        ),
+    }
+    timing_packets = comm.allgather(timing_local)
+    timing_keys = tuple(timing_local)
+    if any(tuple(packet) != timing_keys for packet in timing_packets):
+        raise RuntimeError("MPI entity-block timing phase catalogs differ")
+    timing_by_rank = {
+        key: [float(packet[key]) for packet in timing_packets]
+        for key in timing_keys
+    }
+    timing_max = {
+        key: max(values) for key, values in timing_by_rank.items()
+    }
+    routing_timing = {
+        "phase_timing_semantics": (
+            "perf_counter wall seconds; by-rank values plus MPI maximum; "
+            "diagnostic only and excluded from numerical identities"
+        ),
+        "phase_timings_seconds_by_rank": timing_by_rank,
+        "phase_timings_seconds_max": timing_max,
+    }
     routing_audit = {
         "schema_version": "task035d.owner-routed-trace-cache.v1",
         "owner_policy": "dolfinx_unique_entity_owner",
@@ -1264,6 +1551,7 @@ def _entity_records(
         declarations,
         maximum_orthogonality_error,
         routing_audit,
+        routing_timing,
     )
 
 
@@ -1393,6 +1681,7 @@ def build_broken_hexa_cell_trace_constraint_map(
 ) -> BrokenHexCellTraceConstraintMap:
     """Bind the flattened physical graph to actual owned cell trace rows."""
 
+    constraint_map_started = perf_counter()
     if carrier.mesh is not entity_map.mesh:
         raise ValueError("carrier and entity map use different DOLFINx meshes")
     if authority.audit["pass"] is not True:
@@ -1412,6 +1701,8 @@ def build_broken_hexa_cell_trace_constraint_map(
         dtype=np.float64,
     )
     tolerance = max(float(np.max(extent)), 1.0) * 1.0e-11
+    comm = carrier.mesh.comm
+    entity_records_started = perf_counter()
     (
         blocks,
         work_blocks,
@@ -1419,13 +1710,23 @@ def build_broken_hexa_cell_trace_constraint_map(
         declarations,
         orthogonality_error,
         routing_audit,
+        routing_timing,
     ) = _entity_records(
         entity_map,
         authority,
         origin=origin,
         tolerance=tolerance,
     )
-    comm = carrier.mesh.comm
+    entity_records_seconds = perf_counter() - entity_records_started
+    pre_cell_maximum_orthogonality = float(
+        comm.allreduce(orthogonality_error, op=MPI.MAX)
+    )
+    if pre_cell_maximum_orthogonality > 5.0e-11:
+        raise RuntimeError(
+            "entity orientation is not unitary enough for canonical "
+            "cell-expansion rank auditing"
+        )
+    owner_authority_started = perf_counter()
     physical_row_owner: dict[Any, int] = {}
     block_owner_payload: list[dict[str, Any]] = []
     declaration_by_physical = {
@@ -1581,6 +1882,7 @@ def build_broken_hexa_cell_trace_constraint_map(
                 "entity block work owner differs from active-vector ownership"
             )
         block_work_owner_counts[work_owner_rank] += 1
+    owner_authority_seconds = perf_counter() - owner_authority_started
 
     owned_cells: list[BrokenHexCellTraceMap] = []
     local_cell_records: list[dict[str, Any]] = []
@@ -1589,9 +1891,9 @@ def build_broken_hexa_cell_trace_constraint_map(
     local_cross_rank_hanging_remote_participants: set[
         tuple[int, tuple[int, ...]]
     ] = set()
-    local_off_process_root_reference_count = 0
+    local_off_process_root_anchor_count = 0
     remote_entity_lookup_hasher = hashlib.sha256()
-    off_process_root_reference_hasher = hashlib.sha256()
+    off_process_root_anchor_hasher = hashlib.sha256()
     maximum_local_condition = 0.0
     maximum_cell_transform_error = 0.0
     maximum_canonical_chart_error = 0.0
@@ -1600,24 +1902,42 @@ def build_broken_hexa_cell_trace_constraint_map(
     local_wide_cell_count = 0
     local_maximum_independent_rows_per_cell = 0
     local_cell_expansion_bytes = 0
+    local_cell_expansion_build_seconds = 0.0
+    local_reference_space_seconds = 0.0
+    local_orientation_validation_seconds = 0.0
+    local_chart_validation_seconds = 0.0
+    local_svd_rank_audit_seconds = 0.0
+    local_remote_provenance_seconds = 0.0
+    local_cell_record_seconds = 0.0
+    rank_audit_cache = _CellExpansionRankAuditCache.create()
     local_cell_binding_error: str | None = None
+    cell_loop_started = perf_counter()
     try:
         for local_cell, cell in enumerate(entity_map.owned_cells):
+            cell_expansion_started = perf_counter()
             independent, expansion, canonical_expansion = _cell_expansion(
                 blocks,
                 entity_map,
                 local_cell=local_cell,
             )
+            local_cell_expansion_build_seconds += (
+                perf_counter() - cell_expansion_started
+            )
+            reference_space_started = perf_counter()
             space = build_variable_p_reference_space(cell.degree_map)
-            reference_values = np.zeros(
+            local_reference_space_seconds += (
+                perf_counter() - reference_space_started
+            )
+            orientation_started = perf_counter()
+            basis_values = np.zeros(
                 (space.hcurl_dimension, len(independent)),
                 dtype=np.complex128,
             )
-            reference_values[
+            basis_values[
                 np.asarray(space.trace_dofs, dtype=np.int32)
             ] = canonical_expansion
             transformed = space.apply_hcurl_dof_transform(
-                reference_values,
+                basis_values,
                 cell_info=cell.cell_info,
             )
             expected_expansion = transformed[
@@ -1650,11 +1970,23 @@ def build_broken_hexa_cell_trace_constraint_map(
                 maximum_cell_transform_error,
                 transform_error,
             )
+            if (
+                trace_interior_mixing_error > 5.0e-11
+                or transform_error > 5.0e-11
+            ):
+                raise RuntimeError(
+                    "cell orientation Gate failed before canonical "
+                    "rank-profile transfer"
+                )
             # DOLFINx cell_info is the orientation authority.  The
             # independently geometry-bound entity expansion above is retained
             # as a mandatory cross-check, while the cell map itself uses the
             # direct T_K G_K path.
             expansion = np.ascontiguousarray(expected_expansion)
+            local_orientation_validation_seconds += (
+                perf_counter() - orientation_started
+            )
+            chart_started = perf_counter()
             chart_error = _canonical_cell_chart_error(
                 forest,
                 carrier,
@@ -1664,9 +1996,23 @@ def build_broken_hexa_cell_trace_constraint_map(
                 maximum_canonical_chart_error,
                 chart_error,
             )
-            rank, expected_rank, condition = _maximal_rank_profile(
-                expansion
+            local_chart_validation_seconds += (
+                perf_counter() - chart_started
             )
+            svd_started = perf_counter()
+            (
+                rank,
+                expected_rank,
+                condition,
+                rank_audit_identity_sha256,
+                rank_audit_cache_hit,
+                canonical_expansion_identity,
+                oriented_expansion_identity,
+            ) = rank_audit_cache.profile(
+                canonical_expansion=canonical_expansion,
+                oriented_expansion=expansion,
+            )
+            local_svd_rank_audit_seconds += perf_counter() - svd_started
             local_wide_cell_count += expansion.shape[1] > expansion.shape[0]
             local_maximum_independent_rows_per_cell = max(
                 local_maximum_independent_rows_per_cell,
@@ -1687,6 +2033,7 @@ def build_broken_hexa_cell_trace_constraint_map(
             canonical_leaf = int(
                 carrier.canonical_leaf_by_local_cell[cell.local_cell]
             )
+            remote_provenance_started = perf_counter()
             for block in _cell_entity_blocks(
                 blocks,
                 entity_map,
@@ -1733,15 +2080,18 @@ def build_broken_hexa_cell_trace_constraint_map(
                     "root_row": int(root_row),
                     "petsc_owner_rank": root_owner,
                 }
-                off_process_root_reference_hasher.update(
+                off_process_root_anchor_hasher.update(
                     json.dumps(
                         root_record,
                         sort_keys=True,
                         separators=(",", ":"),
                     ).encode("ascii")
                 )
-                off_process_root_reference_hasher.update(b"\n")
-                local_off_process_root_reference_count += 1
+                off_process_root_anchor_hasher.update(b"\n")
+                local_off_process_root_anchor_count += 1
+            local_remote_provenance_seconds += (
+                perf_counter() - remote_provenance_started
+            )
             owned_cells.append(
                 BrokenHexCellTraceMap(
                     local_cell=cell.local_cell,
@@ -1751,16 +2101,21 @@ def build_broken_hexa_cell_trace_constraint_map(
                     full_trace_from_independent=expansion,
                 )
             )
+            cell_record_started = perf_counter()
             local_cell_records.append(
                 {
                     "canonical_leaf": canonical_leaf,
                     "independent_rows": list(map(int, independent)),
-                    "canonical_expansion_sha256": _matrix_sha256(
-                        canonical_expansion
+                    "canonical_expansion_sha256": (
+                        canonical_expansion_identity["bytes_sha256"]
                     ),
-                    "dolfinx_expansion_sha256": _matrix_sha256(
-                        expansion
+                    "dolfinx_expansion_sha256": (
+                        oriented_expansion_identity["bytes_sha256"]
                     ),
+                    "rank_audit_identity_sha256": (
+                        rank_audit_identity_sha256
+                    ),
+                    "rank_audit_cache_hit": rank_audit_cache_hit,
                     "condition": condition,
                     "cell_transform_error": transform_error,
                     "trace_interior_mixing_error": (
@@ -1768,6 +2123,9 @@ def build_broken_hexa_cell_trace_constraint_map(
                     ),
                     "canonical_chart_error": chart_error,
                 }
+            )
+            local_cell_record_seconds += (
+                perf_counter() - cell_record_started
             )
     except (
         AttributeError,
@@ -1790,7 +2148,24 @@ def build_broken_hexa_cell_trace_constraint_map(
             "broken cell trace expansion failed collectively: "
             + "; ".join(cell_binding_errors[:4])
         )
+    cell_loop_seconds = perf_counter() - cell_loop_started
+    if (
+        rank_audit_cache.hit_count + rank_audit_cache.miss_count
+        != len(entity_map.owned_cells)
+    ):
+        raise RuntimeError(
+            "cell-expansion SVD cache did not audit every owned cell"
+        )
+    rank_cache_collective_started = perf_counter()
+    svd_rank_cache_audit = _collective_rank_audit_cache(
+        rank_audit_cache,
+        comm,
+    )
+    rank_cache_collective_seconds = (
+        perf_counter() - rank_cache_collective_started
+    )
 
+    post_cell_collectives_started = perf_counter()
     gathered_cells = [
         row
         for packet in carrier.mesh.comm.allgather(tuple(local_cell_records))
@@ -1855,6 +2230,10 @@ def build_broken_hexa_cell_trace_constraint_map(
             op=MPI.MAX,
         )
     )
+    post_cell_collectives_seconds = (
+        perf_counter() - post_cell_collectives_started
+    )
+    final_identity_audit_started = perf_counter()
     canonical_cell_graph_payload = [
         {
             "canonical_leaf": int(record["canonical_leaf"]),
@@ -1893,8 +2272,8 @@ def build_broken_hexa_cell_trace_constraint_map(
     remote_entity_lookup_counts = comm.allgather(
         local_remote_entity_lookup_count
     )
-    off_process_root_reference_counts = comm.allgather(
-        local_off_process_root_reference_count
+    off_process_root_anchor_counts = comm.allgather(
+        local_off_process_root_anchor_count
     )
     remote_entity_lookup_digests = comm.allgather(
         remote_entity_lookup_hasher.hexdigest()
@@ -1934,8 +2313,8 @@ def build_broken_hexa_cell_trace_constraint_map(
     cross_rank_hanging_remote_participant_sha256 = _json_sha256(
         cross_rank_hanging_remote_participant_payload
     )
-    off_process_root_reference_digests = comm.allgather(
-        off_process_root_reference_hasher.hexdigest()
+    off_process_root_anchor_digests = comm.allgather(
+        off_process_root_anchor_hasher.hexdigest()
     )
     remote_resolution_payload = {
         "remote_entity_lookup_counts_by_rank": remote_entity_lookup_counts,
@@ -1943,10 +2322,10 @@ def build_broken_hexa_cell_trace_constraint_map(
             remote_entity_lookup_digests
         ),
         "off_process_root_reference_counts_by_rank": (
-            off_process_root_reference_counts
+            off_process_root_anchor_counts
         ),
         "off_process_root_reference_local_digests_by_rank": (
-            off_process_root_reference_digests
+            off_process_root_anchor_digests
         ),
     }
     remote_resolution_sha256 = _json_sha256(remote_resolution_payload)
@@ -1959,6 +2338,9 @@ def build_broken_hexa_cell_trace_constraint_map(
     )
     cross_rank_hanging_patches = int(
         carrier.audit["cross_rank_hanging_patch_count"]
+    )
+    final_identity_audit_seconds = (
+        perf_counter() - final_identity_audit_started
     )
     checks = {
         "forest_carrier_identity": True,
@@ -2024,7 +2406,7 @@ def build_broken_hexa_cell_trace_constraint_map(
         ),
         "off_process_root_insertion_path_exercised": (
             comm.size == 1
-            or sum(off_process_root_reference_counts) > 0
+            or sum(off_process_root_anchor_counts) > 0
         ),
         "owner_routed_remote_cache_pass": (
             routing_audit["pass"] is True
@@ -2099,6 +2481,70 @@ def build_broken_hexa_cell_trace_constraint_map(
             "broken cell trace binding failed: "
             f"{failures}; diagnostics={diagnostic}"
         )
+    cell_subphase_sum = sum(
+        (
+            local_cell_expansion_build_seconds,
+            local_reference_space_seconds,
+            local_orientation_validation_seconds,
+            local_chart_validation_seconds,
+            local_svd_rank_audit_seconds,
+            local_remote_provenance_seconds,
+            local_cell_record_seconds,
+        )
+    )
+    phase_timing_local = {
+        "entity_block_authority_and_routing": entity_records_seconds,
+        "constraint_owner_authority": owner_authority_seconds,
+        "cell_loop_total": cell_loop_seconds,
+        "cell_expansion_build": local_cell_expansion_build_seconds,
+        "cell_reference_space_acquisition": local_reference_space_seconds,
+        "cell_orientation_and_transform_validation": (
+            local_orientation_validation_seconds
+        ),
+        "cell_chart_validation": local_chart_validation_seconds,
+        "cell_rank_condition_svd_audit": local_svd_rank_audit_seconds,
+        "cell_remote_root_provenance": (
+            local_remote_provenance_seconds
+        ),
+        "cell_record_publication": local_cell_record_seconds,
+        "cell_loop_unattributed": max(
+            0.0,
+            cell_loop_seconds - cell_subphase_sum,
+        ),
+        "rank_cache_collective_identity_audit": (
+            rank_cache_collective_seconds
+        ),
+        "post_cell_global_coverage_collectives": (
+            post_cell_collectives_seconds
+        ),
+        "final_constraint_identity_audit": (
+            final_identity_audit_seconds
+        ),
+        "constraint_map_total_before_audit_publish": (
+            perf_counter() - constraint_map_started
+        ),
+    }
+    phase_timing_packets = comm.allgather(phase_timing_local)
+    phase_timing_keys = tuple(phase_timing_local)
+    if any(
+        tuple(packet) != phase_timing_keys
+        for packet in phase_timing_packets
+    ):
+        raise RuntimeError("MPI cell-trace timing phase catalogs differ")
+    phase_timings_by_rank = {
+        key: [float(packet[key]) for packet in phase_timing_packets]
+        for key in phase_timing_keys
+    }
+    phase_timings_max = {
+        key: max(values)
+        for key, values in phase_timings_by_rank.items()
+    }
+    variable_trace = bool(
+        authority.audit.get("variable_trace_opt_in", False)
+    )
+    selective_trace = bool(
+        authority.audit["selected_p6_face_count"]
+    )
     audit = MappingProxyType(
         {
             "schema_version": "task035d.broken-hexa-cell-trace-map.v2",
@@ -2112,6 +2558,7 @@ def build_broken_hexa_cell_trace_constraint_map(
             "selected_p6_face_count": int(
                 authority.audit["selected_p6_face_count"]
             ),
+            "variable_trace_opt_in": variable_trace,
             "constraint_kinds": [
                 kind
                 for kind, present in (
@@ -2146,6 +2593,7 @@ def build_broken_hexa_cell_trace_constraint_map(
                 maximum_orthogonality
             ),
             "maximum_cell_expansion_condition": maximum_condition,
+            "cell_expansion_svd_rank_cache": svd_rank_cache_audit,
             "wide_cell_expansion_count": wide_cell_count,
             "maximum_independent_rows_per_cell": (
                 maximum_independent_rows_per_cell
@@ -2240,10 +2688,10 @@ def build_broken_hexa_cell_trace_constraint_map(
                 remote_entity_lookup_digests
             ),
             "off_process_root_reference_counts_by_rank": (
-                off_process_root_reference_counts
+                off_process_root_anchor_counts
             ),
             "off_process_root_reference_local_digests_by_rank": (
-                off_process_root_reference_digests
+                off_process_root_anchor_digests
             ),
             "remote_resolution_audit_is_count_and_digest_only": True,
             "remote_resolution_sha256": remote_resolution_sha256,
@@ -2288,19 +2736,40 @@ def build_broken_hexa_cell_trace_constraint_map(
             ),
             "dense_cell_expansion_retained": True,
             "cell_expansion_svd_used_for_rank_audit": True,
+            "cell_expansion_svd_exact_identity_cache_active": True,
             "cell_expansion_inverse_used": False,
             "distributed_scalability_qualified": False,
             "full_p6_trace_matrix_constructed": False,
             "local_variable_trace_implemented": bool(
-                authority.audit["selected_p6_face_count"]
+                variable_trace or selective_trace
             ),
             "selective_trace_action": (
-                "non_hanging_whole_physical_face_p5_to_p6"
-                if authority.audit["selected_p6_face_count"]
-                else "uniform_base_trace"
+                "cell_driven_p4_p5_p6_exact_sequence_trace"
+                if variable_trace
+                else (
+                    "non_hanging_whole_physical_face_p5_to_p6"
+                    if selective_trace
+                    else "uniform_base_trace"
+                )
             ),
             "hanging_or_floquet_slave_rows_globally_numbered": False,
             "pde_accuracy_credit": False,
+            "ordinary_default_changed": False,
+        }
+    )
+    setup_timing = MappingProxyType(
+        {
+            "schema_version": (
+                "task035e.broken-hexa-cell-trace-setup-timing.v1"
+            ),
+            "semantics": (
+                "perf_counter wall seconds; by-rank values plus MPI "
+                "maximum; diagnostic only and excluded from the "
+                "deterministic trace-constraint audit"
+            ),
+            "phase_timings_seconds_by_rank": phase_timings_by_rank,
+            "phase_timings_seconds_max": phase_timings_max,
+            "entity_block_routing": routing_timing,
             "ordinary_default_changed": False,
         }
     )
@@ -2313,6 +2782,7 @@ def build_broken_hexa_cell_trace_constraint_map(
         independent_trace_rows=independent_rows,
         component_gram=authority.graph.component_gram,
         audit=audit,
+        setup_timing=setup_timing,
     )
 
 

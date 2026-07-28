@@ -222,6 +222,10 @@ def _config_updates(args) -> dict[str, object]:
         updates["stage4_dtn_order_policy"] = args.stage4_dtn_order_policy
     if args.stage4_dtn_assembly is not None:
         updates["stage4_dtn_assembly"] = args.stage4_dtn_assembly
+    if args.stage4_dtn_quadrature_degree is not None:
+        updates["stage4_dtn_quadrature_degree"] = (
+            args.stage4_dtn_quadrature_degree
+        )
     if args.stage4_full3d_assembly_backend is not None:
         updates["stage4_full3d_assembly_backend"] = (
             args.stage4_full3d_assembly_backend
@@ -614,6 +618,15 @@ def main(argv: list[str] | None = None):
         choices=("auxiliary",),
         default=None,
         help="Stage-4 DtN assembly. 3D v1 supports only sparse auxiliary modal unknowns.",
+    )
+    parser.add_argument(
+        "--stage4-dtn-quadrature-degree",
+        type=int,
+        default=None,
+        help=(
+            "Explicit DtN surface quadrature degree. The ordinary default "
+            "remains the automatic degree selected from p and order content."
+        ),
     )
     parser.add_argument(
         "--stage4-full3d-assembly-backend",

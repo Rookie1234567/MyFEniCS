@@ -1,0 +1,897 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task035e.case098-config.v1",
+  "title": "Task035e Case098 reference-blind campaign ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "case_id",
+    "campaign_status",
+    "source_commit_sha",
+    "formal_mpi_size",
+    "ordinary_default_changed",
+    "numerical_credit_claimed",
+    "layer_packages",
+    "reference_isolation",
+    "reference_campaign",
+    "goal_contract",
+    "blind_trials",
+    "adaptive_contract",
+    "freeze",
+    "hidden_audit",
+    "resource_ledger",
+    "hybrid",
+    "out_of_scope"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "task035e.case098-config.v1"
+    },
+    "case_id": {
+      "const": "098_reference_blind_multilevel_hp_adaptivity"
+    },
+    "campaign_status": {
+      "enum": [
+        "scaffold_not_run",
+        "in_progress",
+        "controlled_stop",
+        "frozen_pending_hidden_audit",
+        "completed"
+      ]
+    },
+    "source_commit_sha": {
+      "$ref": "#/$defs/nullableSourceSha"
+    },
+    "formal_mpi_size": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "ordinary_default_changed": {
+      "type": "boolean"
+    },
+    "numerical_credit_claimed": {
+      "type": "boolean"
+    },
+    "layer_packages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_certifier",
+        "blind_controller",
+        "hidden_auditor"
+      ],
+      "properties": {
+        "reference_certifier": {
+          "$ref": "#/$defs/layerPackage"
+        },
+        "blind_controller": {
+          "$ref": "#/$defs/layerPackage"
+        },
+        "hidden_auditor": {
+          "$ref": "#/$defs/layerPackage"
+        }
+      }
+    },
+    "reference_isolation": {
+      "$ref": "#/$defs/evidencePointer"
+    },
+    "reference_campaign": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runs",
+        "convergence_authority",
+        "qualification_claimed"
+      ],
+      "properties": {
+        "runs": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/referenceRun"
+          }
+        },
+        "convergence_authority": {
+          "$ref": "#/$defs/evidencePointer"
+        },
+        "qualification_claimed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "goal_contract": {
+      "$ref": "#/$defs/goalContract"
+    },
+    "blind_trials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximum_cycles_per_path",
+        "paths",
+        "two_start_comparison"
+      ],
+      "properties": {
+        "maximum_cycles_per_path": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "paths": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/blindPath"
+          }
+        },
+        "two_start_comparison": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "max_normalized_output_difference",
+            "evidence"
+          ],
+          "properties": {
+            "max_normalized_output_difference": {
+              "$ref": "#/$defs/nullableNonnegativeNumber"
+            },
+            "evidence": {
+              "$ref": "#/$defs/evidencePointer"
+            }
+          }
+        }
+      }
+    },
+    "adaptive_contract": {
+      "$ref": "#/$defs/adaptiveContract"
+    },
+    "freeze": {
+      "$ref": "#/$defs/freeze"
+    },
+    "hidden_audit": {
+      "$ref": "#/$defs/hiddenAudit"
+    },
+    "resource_ledger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "full3d",
+        "hybrid"
+      ],
+      "properties": {
+        "full3d": {
+          "$ref": "#/$defs/full3dResource"
+        },
+        "hybrid": {
+          "$ref": "#/$defs/hybridResource"
+        }
+      }
+    },
+    "hybrid": {
+      "$ref": "#/$defs/hybridGate"
+    },
+    "out_of_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "iterative_solver",
+        "matrix_free",
+        "wavelength_0p7_nm",
+        "irregular_geometry"
+      ],
+      "properties": {
+        "iterative_solver": {
+          "const": "not_researched"
+        },
+        "matrix_free": {
+          "const": "not_researched"
+        },
+        "wavelength_0p7_nm": {
+          "const": "not_researched"
+        },
+        "irregular_geometry": {
+          "const": "not_researched"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "nullableSourceSha": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      ]
+    },
+    "nullableSha256": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      ]
+    },
+    "nullableBoolean": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "nullableNonnegativeInteger": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0
+        }
+      ]
+    },
+    "nullableNonnegativeNumber": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "number",
+          "minimum": 0
+        }
+      ]
+    },
+    "evidencePointer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "path",
+        "sha256",
+        "source_sha"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not_run",
+            "completed",
+            "failed_gate",
+            "controlled_resource_stop",
+            "controlled_negative"
+          ]
+        },
+        "path": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1
+            }
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "source_sha": {
+          "$ref": "#/$defs/nullableSourceSha"
+        }
+      }
+    },
+    "layerPackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "module_path",
+        "package_manifest"
+      ],
+      "properties": {
+        "module_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "package_manifest": {
+          "$ref": "#/$defs/evidencePointer"
+        }
+      }
+    },
+    "referenceRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "degree",
+        "h_nm",
+        "status",
+        "gate",
+        "evidence"
+      ],
+      "properties": {
+        "run_id": {
+          "enum": [
+            "p6_h10",
+            "p6_h7p5",
+            "p6_h5"
+          ]
+        },
+        "degree": {
+          "type": "integer"
+        },
+        "h_nm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "status": {
+          "enum": [
+            "not_run",
+            "completed",
+            "failed_gate",
+            "controlled_resource_stop"
+          ]
+        },
+        "gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "completed_full_solve",
+            "full_explicit_true_residual",
+            "energy_identity_error",
+            "absorption_identity_error",
+            "physical_memory_free_fraction_after",
+            "swap_gib"
+          ],
+          "properties": {
+            "completed_full_solve": {
+              "$ref": "#/$defs/nullableBoolean"
+            },
+            "full_explicit_true_residual": {
+              "$ref": "#/$defs/nullableNonnegativeNumber"
+            },
+            "energy_identity_error": {
+              "$ref": "#/$defs/nullableNonnegativeNumber"
+            },
+            "absorption_identity_error": {
+              "$ref": "#/$defs/nullableNonnegativeNumber"
+            },
+            "physical_memory_free_fraction_after": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              ]
+            },
+            "swap_gib": {
+              "$ref": "#/$defs/nullableNonnegativeNumber"
+            }
+          }
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidencePointer"
+        }
+      }
+    },
+    "goalContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ports",
+        "n",
+        "m",
+        "orders_per_port",
+        "power_goal_count",
+        "complex_amplitude_goal_count",
+        "amplitude_real_goal_count",
+        "minimum_order_real_goal_count",
+        "significance_filter_used"
+      ],
+      "properties": {
+        "ports": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true
+        },
+        "n": {
+          "type": "integer"
+        },
+        "m": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 8,
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "orders_per_port": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "power_goal_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "complex_amplitude_goal_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "amplitude_real_goal_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimum_order_real_goal_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "significance_filter_used": {
+          "type": "boolean"
+        }
+      }
+    },
+    "cycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cycle_index",
+        "accepted",
+        "full_explicit_true_residual",
+        "energy_identity_error",
+        "max_normalized_p_shadow_delta",
+        "max_normalized_h_shadow_delta",
+        "level_counts",
+        "separated_patch_count",
+        "maximum_adjacent_level_jump",
+        "periodic_closure_pass",
+        "material_interface_pass",
+        "hanging_trace_pass",
+        "mpi_ownership_pass",
+        "p_shadow_verified",
+        "h_shadow_verified",
+        "outputs_stable_to_previous",
+        "evidence"
+      ],
+      "properties": {
+        "cycle_index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "accepted": {
+          "type": "boolean"
+        },
+        "full_explicit_true_residual": {
+          "type": "number",
+          "minimum": 0
+        },
+        "energy_identity_error": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_normalized_p_shadow_delta": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_normalized_h_shadow_delta": {
+          "type": "number",
+          "minimum": 0
+        },
+        "level_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "0",
+            "1",
+            "2"
+          ],
+          "properties": {
+            "0": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "1": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "2": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "separated_patch_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximum_adjacent_level_jump": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "periodic_closure_pass": {
+          "type": "boolean"
+        },
+        "material_interface_pass": {
+          "type": "boolean"
+        },
+        "hanging_trace_pass": {
+          "type": "boolean"
+        },
+        "mpi_ownership_pass": {
+          "type": "boolean"
+        },
+        "p_shadow_verified": {
+          "type": "boolean"
+        },
+        "h_shadow_verified": {
+          "type": "boolean"
+        },
+        "outputs_stable_to_previous": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidencePointer"
+        }
+      }
+    },
+    "blindPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path_id",
+        "nominal_h_nm",
+        "status",
+        "cycles",
+        "final_authority"
+      ],
+      "properties": {
+        "path_id": {
+          "enum": [
+            "path_a",
+            "path_b"
+          ]
+        },
+        "nominal_h_nm": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "status": {
+          "enum": [
+            "not_run",
+            "in_progress",
+            "frozen",
+            "failed_gate",
+            "controlled_stop"
+          ]
+        },
+        "cycles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cycle"
+          },
+          "maxItems": 6
+        },
+        "final_authority": {
+          "$ref": "#/$defs/evidencePointer"
+        }
+      }
+    },
+    "adaptiveContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "production_degrees",
+        "minimum_local_refinement_levels",
+        "minimum_separated_patches",
+        "maximum_adjacent_level_jump",
+        "periodic_closure_required",
+        "material_interface_protection_required",
+        "hanging_trace_required",
+        "mpi_ownership_required",
+        "p_shadow_required",
+        "h_shadow_required",
+        "maximum_normalized_shadow_delta"
+      ],
+      "properties": {
+        "production_degrees": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true
+        },
+        "minimum_local_refinement_levels": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimum_separated_patches": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maximum_adjacent_level_jump": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "periodic_closure_required": {
+          "type": "boolean"
+        },
+        "material_interface_protection_required": {
+          "type": "boolean"
+        },
+        "hanging_trace_required": {
+          "type": "boolean"
+        },
+        "mpi_ownership_required": {
+          "type": "boolean"
+        },
+        "p_shadow_required": {
+          "type": "boolean"
+        },
+        "h_shadow_required": {
+          "type": "boolean"
+        },
+        "maximum_normalized_shadow_delta": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "freeze": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "candidate_immutable",
+        "source_commit_sha",
+        "mesh_forest_sha256",
+        "degree_map_sha256",
+        "output_sha256",
+        "internal_certificate_sha256",
+        "resource_authority_sha256"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not_run",
+            "frozen"
+          ]
+        },
+        "candidate_immutable": {
+          "type": "boolean"
+        },
+        "source_commit_sha": {
+          "$ref": "#/$defs/nullableSourceSha"
+        },
+        "mesh_forest_sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "degree_map_sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "output_sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "internal_certificate_sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "resource_authority_sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        }
+      }
+    },
+    "hiddenAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "opened_after_freeze",
+        "power_pass_count",
+        "complex_amplitude_pass_count",
+        "full_propagating_spectrum_pass",
+        "total_observables_pass",
+        "field_observables_pass",
+        "residual_and_energy_pass",
+        "candidate_retuned_after_open",
+        "evidence"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not_run",
+            "completed",
+            "failed_gate"
+          ]
+        },
+        "opened_after_freeze": {
+          "type": "boolean"
+        },
+        "power_pass_count": {
+          "$ref": "#/$defs/nullableNonnegativeInteger"
+        },
+        "complex_amplitude_pass_count": {
+          "$ref": "#/$defs/nullableNonnegativeInteger"
+        },
+        "full_propagating_spectrum_pass": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "total_observables_pass": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "field_observables_pass": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "residual_and_energy_pass": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "candidate_retuned_after_open": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidencePointer"
+        }
+      }
+    },
+    "full3dResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "active_rows",
+        "matrix_nnz",
+        "factor_nnz",
+        "solver_phase_peak_gib",
+        "swap_gib",
+        "same_mpi_solver_lifecycle_telemetry",
+        "evidence"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not_run",
+            "completed",
+            "failed_gate",
+            "controlled_resource_stop"
+          ]
+        },
+        "active_rows": {
+          "$ref": "#/$defs/nullableNonnegativeInteger"
+        },
+        "matrix_nnz": {
+          "$ref": "#/$defs/nullableNonnegativeInteger"
+        },
+        "factor_nnz": {
+          "$ref": "#/$defs/nullableNonnegativeInteger"
+        },
+        "solver_phase_peak_gib": {
+          "$ref": "#/$defs/nullableNonnegativeNumber"
+        },
+        "swap_gib": {
+          "$ref": "#/$defs/nullableNonnegativeNumber"
+        },
+        "same_mpi_solver_lifecycle_telemetry": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidencePointer"
+        }
+      }
+    },
+    "hybridResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "active_rows_below_baseline",
+        "matrix_nnz_below_baseline",
+        "factor_nnz_below_baseline",
+        "solver_phase_peak_gib",
+        "swap_gib",
+        "same_mpi_solver_lifecycle_telemetry",
+        "evidence"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not_run",
+            "completed",
+            "failed_gate",
+            "controlled_resource_stop"
+          ]
+        },
+        "active_rows_below_baseline": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "matrix_nnz_below_baseline": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "factor_nnz_below_baseline": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "solver_phase_peak_gib": {
+          "$ref": "#/$defs/nullableNonnegativeNumber"
+        },
+        "swap_gib": {
+          "$ref": "#/$defs/nullableNonnegativeNumber"
+        },
+        "same_mpi_solver_lifecycle_telemetry": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidencePointer"
+        }
+      }
+    },
+    "hybridGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "mode_count",
+        "same_frozen_hp_space",
+        "power_pass_count",
+        "complex_amplitude_pass_count",
+        "total_observables_pass",
+        "field_observables_pass",
+        "residual_pass",
+        "evidence"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not_run",
+            "completed",
+            "failed_gate"
+          ]
+        },
+        "mode_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "same_frozen_hp_space": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "power_pass_count": {
+          "$ref": "#/$defs/nullableNonnegativeInteger"
+        },
+        "complex_amplitude_pass_count": {
+          "$ref": "#/$defs/nullableNonnegativeInteger"
+        },
+        "total_observables_pass": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "field_observables_pass": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "residual_pass": {
+          "$ref": "#/$defs/nullableBoolean"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidencePointer"
+        }
+      }
+    }
+  }
+}

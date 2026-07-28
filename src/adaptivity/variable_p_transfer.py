@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from types import MappingProxyType
 from typing import Any, Mapping
 
@@ -10,8 +11,10 @@ import numpy as np
 from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
+from scipy import linalg as dense_linalg
 
 from .exact_sequence_variable_p import (
+    HexaEntityDegreeMap,
     build_variable_p_reference_space,
 )
 from .variable_p_entity_map import (
@@ -28,6 +31,7 @@ class VariablePCellTransfer:
     p6_local_dofs: np.ndarray
     p6_global_dofs: np.ndarray
     designated_local_positions: np.ndarray
+    designated_active_local_positions: np.ndarray
 
 
 @dataclass(frozen=True)
@@ -41,6 +45,153 @@ class VariablePGlobalTransfer:
     audit: Mapping[str, Any]
 
 
+@dataclass
+class PETScSelectedRowLayout:
+    """Reusable PETSc scatter for one rank-local set of global rows."""
+
+    global_rows: np.ndarray
+    global_size: int
+    local_size: int
+    ownership_range: tuple[int, int]
+    requested_row_count: int
+    source_is: PETSc.IS
+    destination_is: PETSc.IS
+    destination: PETSc.Vec
+    scatter: PETSc.Scatter
+    _destroyed: bool = False
+
+    @classmethod
+    def create(
+        cls,
+        template: PETSc.Vec,
+        global_rows: np.ndarray,
+    ) -> PETScSelectedRowLayout:
+        """Build one duplicate-tolerant selected-row scatter collectively."""
+
+        requested = np.asarray(global_rows)
+        if requested.ndim != 1 or not np.issubdtype(
+            requested.dtype,
+            np.integer,
+        ):
+            raise ValueError("selected PETSc rows must be a one-dimensional integer array")
+        rows = np.unique(requested.astype(np.int64, copy=False))
+        global_size = int(template.getSize())
+        if np.any(rows < 0) or np.any(rows >= global_size):
+            raise ValueError("selected PETSc row is outside the global vector")
+        petsc_rows = np.asarray(rows, dtype=PETSc.IntType)
+        source_is = PETSc.IS().createGeneral(
+            petsc_rows,
+            comm=template.comm,
+        )
+        destination = PETSc.Vec().createSeq(
+            len(rows),
+            comm=PETSc.COMM_SELF,
+        )
+        destination_is = PETSc.IS().createStride(
+            len(rows),
+            first=0,
+            step=1,
+            comm=PETSc.COMM_SELF,
+        )
+        scatter = PETSc.Scatter().create(
+            template,
+            source_is,
+            destination,
+            destination_is,
+        )
+        rows.setflags(write=False)
+        return cls(
+            global_rows=rows,
+            global_size=global_size,
+            local_size=int(template.getLocalSize()),
+            ownership_range=tuple(map(int, template.getOwnershipRange())),
+            requested_row_count=int(len(requested)),
+            source_is=source_is,
+            destination_is=destination_is,
+            destination=destination,
+            scatter=scatter,
+        )
+
+    def gather(self, vector: PETSc.Vec) -> np.ndarray:
+        """Return only selected values, preserving sorted global-row order."""
+
+        if self._destroyed:
+            raise RuntimeError("selected-row layout is already destroyed")
+        if (
+            int(vector.getSize()) != self.global_size
+            or int(vector.getLocalSize()) != self.local_size
+            or tuple(map(int, vector.getOwnershipRange()))
+            != self.ownership_range
+        ):
+            raise ValueError("selected-row vector layout differs from its template")
+        self.scatter.scatter(
+            vector,
+            self.destination,
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        return np.asarray(
+            self.destination.getArray(readonly=True),
+            dtype=np.complex128,
+        ).copy()
+
+    def positions(self, global_rows: np.ndarray) -> np.ndarray:
+        """Map a selected global-row subset to gathered-array positions."""
+
+        requested = np.asarray(global_rows)
+        if requested.ndim != 1 or not np.issubdtype(
+            requested.dtype,
+            np.integer,
+        ):
+            raise ValueError("requested row positions must be an integer array")
+        requested = requested.astype(np.int64, copy=False)
+        positions = np.searchsorted(self.global_rows, requested)
+        if np.any(positions >= len(self.global_rows)) or not np.array_equal(
+            self.global_rows[positions],
+            requested,
+        ):
+            raise ValueError("requested row was not included in the layout")
+        return positions
+
+    @property
+    def audit(self) -> dict[str, Any]:
+        """Describe selected storage without counting full-vector replication."""
+
+        scalar_bytes = int(np.dtype(PETSc.ScalarType).itemsize)
+        return {
+            "schema_version": "task035e.petsc-selected-row-layout.v1",
+            "status": "owner_local_selected_row_scatter_built",
+            "pass": True,
+            "global_vector_rows": self.global_size,
+            "requested_row_count_local": self.requested_row_count,
+            "selected_unique_row_count_local": len(self.global_rows),
+            "duplicate_request_count_local": (
+                self.requested_row_count - len(self.global_rows)
+            ),
+            "selected_value_bytes_local": (
+                len(self.global_rows) * scalar_bytes
+            ),
+            "replicated_full_vector_bytes_per_rank": 0,
+            "full_vector_allgather_used": False,
+            "petsc_is_scatter_used": True,
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.scatter.destroy()
+        self.destination_is.destroy()
+        self.destination.destroy()
+        self.source_is.destroy()
+        self._destroyed = True
+
+    def __enter__(self) -> PETScSelectedRowLayout:
+        return self
+
+    def __exit__(self, *_args: Any) -> None:
+        self.destroy()
+
+
 def _balanced_counts(total: int, size: int) -> tuple[int, ...]:
     quotient, remainder = divmod(int(total), int(size))
     return tuple(
@@ -49,24 +200,46 @@ def _balanced_counts(total: int, size: int) -> tuple[int, ...]:
     )
 
 
-def _global_active_values(
+def _owned_cell_active_values(
     transfer: VariablePGlobalTransfer,
     values: PETSc.Vec | np.ndarray,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    required = np.unique(
+        np.concatenate(
+            [cell.cell.active_rows for cell in transfer.cells]
+            or [np.empty(0, dtype=np.int64)]
+        )
+    ).astype(np.int64, copy=False)
     if isinstance(values, PETSc.Vec):
         if values.getSize() != transfer.entity_map.active_rows:
             raise ValueError("active vector has the wrong global size")
-        owned = np.asarray(
-            values.getArray(readonly=True),
-            dtype=np.complex128,
-        ).copy()
-        packets = transfer.entity_map.mesh.comm.allgather(owned)
-        result = np.concatenate(packets)
+        with PETScSelectedRowLayout.create(values, required) as layout:
+            result = layout.gather(values)
+            audit = dict(layout.audit)
+        input_kind = "distributed_petsc_vec"
     else:
-        result = np.asarray(values, dtype=np.complex128)
-    if result.shape != (transfer.entity_map.active_rows,):
-        raise ValueError("active coefficient array has the wrong global size")
-    return result
+        global_values = np.asarray(values, dtype=np.complex128)
+        if global_values.shape != (transfer.entity_map.active_rows,):
+            raise ValueError("active coefficient array has the wrong global size")
+        result = np.asarray(global_values[required], dtype=np.complex128)
+        audit = {
+            "schema_version": "task035e.petsc-selected-row-layout.v1",
+            "status": "caller_supplied_global_numpy_array",
+            "pass": True,
+            "global_vector_rows": transfer.entity_map.active_rows,
+            "requested_row_count_local": len(required),
+            "selected_unique_row_count_local": len(required),
+            "duplicate_request_count_local": 0,
+            "selected_value_bytes_local": int(result.nbytes),
+            "replicated_full_vector_bytes_per_rank": int(
+                global_values.nbytes
+            ),
+            "full_vector_allgather_used": False,
+            "petsc_is_scatter_used": False,
+        }
+        input_kind = "global_numpy_array"
+    audit["input_kind"] = input_kind
+    return required, result, audit
 
 
 def build_variable_p_global_transfer(
@@ -91,8 +264,18 @@ def build_variable_p_global_transfer(
     cells = entity_map.owned_cells
     local_dofs_by_cell: list[np.ndarray] = []
     global_dofs_by_cell: list[np.ndarray] = []
-    occurrence_dofs: list[np.ndarray] = []
-    occurrence_cells: list[np.ndarray] = []
+    p6_rows = int(dofmap.index_map.size_global)
+    sentinel = np.iinfo(np.int64).max
+    local_designated_cell = np.full(
+        p6_rows,
+        sentinel,
+        dtype=np.int64,
+    )
+    local_active_designated_cell = np.full(
+        entity_map.active_rows,
+        sentinel,
+        dtype=np.int64,
+    )
     for cell in cells:
         local_dofs = np.asarray(
             dofmap.cell_dofs(cell.local_cell),
@@ -106,33 +289,38 @@ def build_variable_p_global_transfer(
         )
         local_dofs_by_cell.append(local_dofs)
         global_dofs_by_cell.append(global_dofs)
-        occurrence_dofs.append(global_dofs)
-        occurrence_cells.append(
-            np.full(882, cell.global_cell, dtype=np.int64)
+        np.minimum.at(
+            local_designated_cell,
+            global_dofs,
+            np.int64(cell.global_cell),
         )
-    local_occurrence_dofs = (
-        np.concatenate(occurrence_dofs)
-        if occurrence_dofs
-        else np.empty(0, dtype=np.int64)
+        np.minimum.at(
+            local_active_designated_cell,
+            cell.active_rows,
+            np.int64(cell.global_cell),
+        )
+    designated_cell = np.empty_like(local_designated_cell)
+    msh.comm.Allreduce(
+        local_designated_cell,
+        designated_cell,
+        op=MPI.MIN,
     )
-    local_occurrence_cells = (
-        np.concatenate(occurrence_cells)
-        if occurrence_cells
-        else np.empty(0, dtype=np.int64)
-    )
-    packets = msh.comm.allgather(
-        (local_occurrence_dofs, local_occurrence_cells)
-    )
-    p6_rows = int(dofmap.index_map.size_global)
-    sentinel = np.iinfo(np.int64).max
-    designated_cell = np.full(p6_rows, sentinel, dtype=np.int64)
-    for packet_dofs, packet_cells in packets:
-        np.minimum.at(designated_cell, packet_dofs, packet_cells)
     if np.any(designated_cell == sentinel):
         raise RuntimeError("one or more global p6 rows have no incident cell")
+    active_designated_cell = np.empty_like(
+        local_active_designated_cell
+    )
+    msh.comm.Allreduce(
+        local_active_designated_cell,
+        active_designated_cell,
+        op=MPI.MIN,
+    )
+    if np.any(active_designated_cell == sentinel):
+        raise RuntimeError("one or more active rows have no incident cell")
 
     transfers: list[VariablePCellTransfer] = []
     local_designated_rows: list[np.ndarray] = []
+    local_designated_active_rows: list[np.ndarray] = []
     block_designation_violations = 0
     entity_positions = [
         np.asarray(entity, dtype=np.int32)
@@ -148,6 +336,9 @@ def build_variable_p_global_transfer(
         selected = np.flatnonzero(
             designated_cell[global_dofs] == cell.global_cell
         ).astype(np.int32)
+        selected_active = np.flatnonzero(
+            active_designated_cell[cell.active_rows] == cell.global_cell
+        ).astype(np.int32)
         selected_mask = np.zeros(882, dtype=bool)
         selected_mask[selected] = True
         for positions in entity_positions:
@@ -155,7 +346,15 @@ def build_variable_p_global_transfer(
             if count not in {0, len(positions)}:
                 block_designation_violations += 1
         local_designated_rows.append(global_dofs[selected])
-        for values in (local_dofs, global_dofs, selected):
+        local_designated_active_rows.append(
+            cell.active_rows[selected_active]
+        )
+        for values in (
+            local_dofs,
+            global_dofs,
+            selected,
+            selected_active,
+        ):
             values.setflags(write=False)
         transfers.append(
             VariablePCellTransfer(
@@ -163,22 +362,54 @@ def build_variable_p_global_transfer(
                 p6_local_dofs=local_dofs,
                 p6_global_dofs=global_dofs,
                 designated_local_positions=selected,
+                designated_active_local_positions=selected_active,
             )
         )
-    selected_packets = msh.comm.allgather(
+    local_selected_global = (
         np.concatenate(local_designated_rows)
         if local_designated_rows
         else np.empty(0, dtype=np.int64)
     )
-    selected_global = np.concatenate(selected_packets)
-    if (
-        len(selected_global) != p6_rows
-        or not np.array_equal(
-            np.sort(selected_global),
-            np.arange(p6_rows, dtype=np.int64),
-        )
+    local_designation_counts = np.zeros(p6_rows, dtype=np.int32)
+    np.add.at(local_designation_counts, local_selected_global, 1)
+    global_designation_counts = np.empty_like(local_designation_counts)
+    msh.comm.Allreduce(
+        local_designation_counts,
+        global_designation_counts,
+        op=MPI.SUM,
+    )
+    selected_row_count = int(
+        msh.comm.allreduce(len(local_selected_global), op=MPI.SUM)
+    )
+    if selected_row_count != p6_rows or not np.all(
+        global_designation_counts == 1
     ):
         raise RuntimeError("global p6 row designation is not one-to-one")
+    local_active_designation_counts = np.zeros(
+        entity_map.active_rows,
+        dtype=np.int32,
+    )
+    np.add.at(
+        local_active_designation_counts,
+        (
+            np.concatenate(local_designated_active_rows)
+            if local_designated_active_rows
+            else np.empty(0, dtype=np.int64)
+        ),
+        1,
+    )
+    global_active_designation_counts = np.empty_like(
+        local_active_designation_counts
+    )
+    msh.comm.Allreduce(
+        local_active_designation_counts,
+        global_active_designation_counts,
+        op=MPI.SUM,
+    )
+    if not np.all(global_active_designation_counts == 1):
+        raise RuntimeError(
+            "global active row designation is not one-to-one"
+        )
     global_block_violations = int(
         msh.comm.allreduce(block_designation_violations)
     )
@@ -198,9 +429,32 @@ def build_variable_p_global_transfer(
             "owned_cell_count_global": int(
                 msh.comm.allreduce(len(cells), op=MPI.SUM)
             ),
-            "designated_p6_row_count": len(selected_global),
+            "designated_p6_row_count": selected_row_count,
             "designation_is_one_to_one": True,
             "entity_blocks_never_split_between_designating_cells": True,
+            "designation_build_collective": (
+                "dense_row_owner_min_and_count_allreduce"
+            ),
+            "designation_occurrence_allgather_used": False,
+            "designation_dense_owner_bytes_per_rank": int(
+                designated_cell.nbytes
+            ),
+            "designation_dense_count_bytes_per_rank": int(
+                global_designation_counts.nbytes
+            ),
+            "active_primal_designation_dense_owner_bytes_per_rank": int(
+                active_designated_cell.nbytes
+            ),
+            "active_primal_designation_is_one_to_one": True,
+            "designation_dense_collective_peak_bytes_per_rank": int(
+                2
+                * (
+                    designated_cell.nbytes
+                    + global_designation_counts.nbytes
+                    + active_designated_cell.nbytes
+                    + global_active_designation_counts.nbytes
+                )
+            ),
             "global_embedding_matrix_allocated": False,
             "full_p6_global_operator_allocated": False,
             "inactive_p6_rows_in_active_operator": False,
@@ -214,6 +468,264 @@ def build_variable_p_global_transfer(
         active_counts=active_counts,
         audit=audit,
     )
+
+
+@lru_cache(maxsize=12)
+def _p6_primal_normal_factor(
+    degree_map: HexaEntityDegreeMap,
+) -> tuple[np.ndarray, float, float]:
+    """Cache one small normal-equation factor per active degree class."""
+
+    space = build_variable_p_reference_space(degree_map)
+    expansion = np.asarray(space.hcurl_to_p6)
+    gram = np.ascontiguousarray(expansion.conj().T @ expansion)
+    cholesky = np.linalg.cholesky(gram)
+    factor_error = float(
+        np.max(
+            np.abs(
+                cholesky @ cholesky.conj().T - gram
+            ),
+            initial=0.0,
+        )
+        / max(float(np.max(np.abs(gram), initial=0.0)), 1.0)
+    )
+    condition = float(np.sqrt(np.linalg.cond(gram)))
+    cholesky = np.ascontiguousarray(cholesky)
+    cholesky.setflags(write=False)
+    return cholesky, factor_error, condition
+
+
+def _project_p6_oriented_primal_local(
+    cell: VariablePCellDofMap,
+    p6_values: np.ndarray,
+) -> tuple[np.ndarray, float, float, int]:
+    space = build_variable_p_reference_space(cell.degree_map)
+    p6_space = build_variable_p_reference_space(
+        HexaEntityDegreeMap.uniform(6)
+    )
+    p6_reference = p6_space.apply_hcurl_dof_transform(
+        np.asarray(p6_values, dtype=np.complex128),
+        cell_info=cell.cell_info,
+        transpose=True,
+    )
+    cholesky, factor_error, condition = _p6_primal_normal_factor(
+        cell.degree_map
+    )
+    expansion = np.asarray(space.hcurl_to_p6)
+    right_hand_side = expansion.conj().T @ p6_reference
+    intermediate = dense_linalg.solve_triangular(
+        cholesky,
+        right_hand_side,
+        lower=True,
+        check_finite=False,
+    )
+    active_reference = dense_linalg.solve_triangular(
+        cholesky.conj().T,
+        intermediate,
+        lower=False,
+        check_finite=False,
+    )
+    active = space.apply_hcurl_dof_transform(
+        active_reference,
+        cell_info=cell.cell_info,
+    )
+    return (
+        np.asarray(active, dtype=np.complex128),
+        factor_error,
+        condition,
+        int(cholesky.nbytes),
+    )
+
+
+def project_p6_primal_to_active_full(
+    transfer: VariablePGlobalTransfer,
+    p6_vector: PETSc.Vec,
+    *,
+    require_exact_nested: bool = False,
+    exact_tolerance: float = 5.0e-10,
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Inject p6 primal coefficients by a local coefficient-L2 projection.
+
+    If the source is contractually nested in the shadow active range,
+    ``require_exact_nested`` makes both the local round trip and shared-row
+    agreement fail closed. A nonmatching source remains an explicitly
+    approximate projection and receives no exact-transfer credit.
+    """
+
+    p6_rows = int(transfer.p6_space.dofmap.index_map.size_global)
+    if p6_vector.getSize() != p6_rows:
+        raise ValueError("p6 primal vector has the wrong global size")
+    tolerance = float(exact_tolerance)
+    if not np.isfinite(tolerance) or tolerance <= 0.0:
+        raise ValueError("exact nested tolerance must be positive and finite")
+    p6_vector.ghostUpdate(
+        addv=PETSc.InsertMode.INSERT_VALUES,
+        mode=PETSc.ScatterMode.FORWARD,
+    )
+    with p6_vector.localForm() as local_form:
+        local_p6_values = np.asarray(
+            local_form.getArray(readonly=True),
+            dtype=np.complex128,
+        ).copy()
+    comm = transfer.entity_map.mesh.comm
+    active = PETSc.Vec().createMPI(
+        (
+            transfer.active_counts[comm.rank],
+            transfer.entity_map.active_rows,
+        ),
+        comm=comm,
+    )
+    active.set(PETSc.ScalarType(0.0))
+    local_factor_error = 0.0
+    local_left_inverse_condition = 0.0
+    local_factor_bytes_max = 0
+    for cell_transfer in transfer.cells:
+        cell = cell_transfer.cell
+        local_active, factor_error, condition, factor_bytes = (
+            _project_p6_oriented_primal_local(
+                cell,
+                local_p6_values[cell_transfer.p6_local_dofs],
+            )
+        )
+        local_factor_error = max(local_factor_error, factor_error)
+        local_left_inverse_condition = max(
+            local_left_inverse_condition,
+            condition,
+        )
+        local_factor_bytes_max = max(
+            local_factor_bytes_max,
+            factor_bytes,
+        )
+        selected = cell_transfer.designated_active_local_positions
+        active.setValues(
+            np.asarray(cell.active_rows[selected], dtype=PETSc.IntType),
+            np.asarray(local_active[selected], dtype=PETSc.ScalarType),
+            addv=PETSc.InsertMode.INSERT_VALUES,
+        )
+    active.assemble()
+
+    requested_active_rows = np.concatenate(
+        [cell.cell.active_rows for cell in transfer.cells]
+        or [np.empty(0, dtype=np.int64)]
+    )
+    with PETScSelectedRowLayout.create(
+        active,
+        requested_active_rows,
+    ) as layout:
+        selected_active = layout.gather(active)
+        selected_row_audit = dict(layout.audit)
+        local_shared_error = 0.0
+        local_shared_scale = 0.0
+        local_projection_error_sq = 0.0
+        local_p6_sq = 0.0
+        for cell_transfer in transfer.cells:
+            cell = cell_transfer.cell
+            local_p6 = local_p6_values[cell_transfer.p6_local_dofs]
+            (
+                predicted_active,
+                _factor_error,
+                _condition,
+                _factor_bytes,
+            ) = (
+                _project_p6_oriented_primal_local(cell, local_p6)
+            )
+            observed_active = selected_active[
+                layout.positions(cell.active_rows)
+            ]
+            local_shared_error = max(
+                local_shared_error,
+                float(
+                    np.max(
+                        np.abs(observed_active - predicted_active),
+                        initial=0.0,
+                    )
+                ),
+            )
+            local_shared_scale = max(
+                local_shared_scale,
+                float(
+                    np.max(np.abs(predicted_active), initial=0.0)
+                ),
+            )
+            space = build_variable_p_reference_space(cell.degree_map)
+            round_trip = space.active_to_p6_oriented(
+                observed_active,
+                cell_info=cell.cell_info,
+            )
+            difference = round_trip - local_p6
+            local_projection_error_sq += float(
+                np.vdot(difference, difference).real
+            )
+            local_p6_sq += float(np.vdot(local_p6, local_p6).real)
+    shared_error = float(
+        comm.allreduce(local_shared_error, op=MPI.MAX)
+    )
+    shared_scale = float(
+        comm.allreduce(local_shared_scale, op=MPI.MAX)
+    )
+    shared_relative_error = shared_error / max(shared_scale, 1.0e-30)
+    projection_error = float(
+        np.sqrt(comm.allreduce(local_projection_error_sq, op=MPI.SUM))
+    )
+    p6_norm = float(np.sqrt(comm.allreduce(local_p6_sq, op=MPI.SUM)))
+    projection_relative_error = projection_error / max(p6_norm, 1.0e-30)
+    factor_error = float(
+        comm.allreduce(local_factor_error, op=MPI.MAX)
+    )
+    left_inverse_condition = float(
+        comm.allreduce(local_left_inverse_condition, op=MPI.MAX)
+    )
+    factor_bytes_max = int(
+        comm.allreduce(local_factor_bytes_max, op=MPI.MAX)
+    )
+    exact_nested_pass = bool(
+        shared_relative_error <= tolerance
+        and projection_relative_error <= tolerance
+        and factor_error <= tolerance
+    )
+    audit = {
+        "schema_version": "task035e.variable-p-p6-primal-projection.v1",
+        "status": (
+            "exact_nested_primal_round_trip_pass"
+            if exact_nested_pass
+            else "nonmatching_coefficient_l2_projection_completed"
+        ),
+        "pass": exact_nested_pass if require_exact_nested else True,
+        "projection_semantics": (
+            "local coefficient-L2 least-squares left inverse"
+        ),
+        "exact_nested_source_required": bool(require_exact_nested),
+        "exact_nested_round_trip_pass": exact_nested_pass,
+        "exact_nested_tolerance": tolerance,
+        "shared_active_prediction_error_max": shared_error,
+        "shared_active_prediction_relative_error_max": (
+            shared_relative_error
+        ),
+        "p6_round_trip_error_l2": projection_error,
+        "p6_round_trip_relative_error_l2": projection_relative_error,
+        "normal_factorization_relative_error_max": factor_error,
+        "left_inverse_condition_max": left_inverse_condition,
+        "normal_factor_cached_by_degree_map": True,
+        "normal_factor_cache_entries": (
+            _p6_primal_normal_factor.cache_info().currsize
+        ),
+        "normal_factor_bytes_per_degree_class_max": factor_bytes_max,
+        "active_selected_rows": selected_row_audit,
+        "replicated_full_active_vector_bytes_per_rank": 0,
+        "replicated_full_p6_vector_bytes_per_rank": 0,
+        "full_vector_allgather_used": False,
+        "nonmatching_projection_receives_exact_transfer_credit": False,
+        "ordinary_default_changed": False,
+    }
+    if require_exact_nested and not exact_nested_pass:
+        active.destroy()
+        raise RuntimeError(
+            "p6 primal source is outside the required nested active range: "
+            f"shared={shared_relative_error:.6e}, "
+            f"round_trip={projection_relative_error:.6e}, "
+            f"normal_factor={factor_error:.6e}"
+        )
+    return active, audit
 
 
 def project_p6_dual_to_active_full(
@@ -275,14 +787,31 @@ def recover_active_full_to_p6_field(
 ) -> tuple[Any, dict[str, Any]]:
     """Recover one conforming p6 storage field from active coefficients."""
 
-    active = _global_active_values(transfer, active_values)
+    selected_rows, active, selected_row_audit = (
+        _owned_cell_active_values(transfer, active_values)
+    )
+
+    def cell_active(cell: VariablePCellDofMap) -> np.ndarray:
+        positions = np.searchsorted(selected_rows, cell.active_rows)
+        if (
+            np.any(positions >= len(selected_rows))
+            or not np.array_equal(
+                selected_rows[positions],
+                cell.active_rows,
+            )
+        ):
+            raise RuntimeError(
+                "owned-cell active rows escaped the selected-row layout"
+            )
+        return active[positions]
+
     field = fem.Function(transfer.p6_space)
     vector = field.x.petsc_vec
     vector.set(PETSc.ScalarType(0.0))
     for cell_transfer in transfer.cells:
         cell = cell_transfer.cell
         space = build_variable_p_reference_space(cell.degree_map)
-        local_active = active[cell.active_rows]
+        local_active = cell_active(cell)
         local_p6 = space.active_to_p6_oriented(
             local_active,
             cell_info=cell.cell_info,
@@ -308,7 +837,7 @@ def recover_active_full_to_p6_field(
         cell = cell_transfer.cell
         space = build_variable_p_reference_space(cell.degree_map)
         predicted = space.active_to_p6_oriented(
-            active[cell.active_rows],
+            cell_active(cell),
             cell_info=cell.cell_info,
         )
         observed = local_values[cell_transfer.p6_local_dofs]
@@ -336,15 +865,30 @@ def recover_active_full_to_p6_field(
         "absolute_shared_coefficient_error_max": error,
         "relative_shared_coefficient_error_max": relative_error,
         "conformity_tolerance": float(conformity_tolerance),
+        "active_selected_rows": selected_row_audit,
+        "active_selected_row_count_local": len(selected_rows),
+        "full_active_vector_replicated_bytes_per_rank": int(
+            selected_row_audit[
+                "replicated_full_vector_bytes_per_rank"
+            ]
+        ),
+        "selected_row_scatter_cache_count": (
+            1
+            if selected_row_audit["petsc_is_scatter_used"]
+            else 0
+        ),
+        "selected_values_reused_for_recovery_and_conformity_audit": True,
         "global_embedding_matrix_allocated": False,
         "ordinary_default_changed": False,
     }
 
 
 __all__ = [
+    "PETScSelectedRowLayout",
     "VariablePCellTransfer",
     "VariablePGlobalTransfer",
     "build_variable_p_global_transfer",
+    "project_p6_primal_to_active_full",
     "project_p6_dual_to_active_full",
     "recover_active_full_to_p6_field",
 ]

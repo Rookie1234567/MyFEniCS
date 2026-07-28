@@ -1,0 +1,31 @@
+cd /home/Projects/MyFEniCS
+source scripts/activate_myfenics_wsl.sh
+
+export TMPDIR=/tmp
+export TMP=/tmp
+export TEMP=/tmp
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+
+python -m benchmarks.task035e_case098_checker
+python -m pytest -q src/test/test_228_task035e_case098_checker.py
+python -m pytest -q \
+  src/test/test_221_task035e_reference_leak_checker.py \
+  src/test/test_223_task035e_blind_controller.py \
+  src/test/test_225_task035e_hidden_auditor.py \
+  src/test/test_266_task035e_blind_campaign.py \
+  src/test/test_269_task035e_campaign_stages.py \
+  src/test/test_272_task035e_campaign_handlers.py \
+  src/test/test_278_task035e_campaign_bootstrap.py \
+  src/test/test_279_task035e_evaluator_handoff.py
+python -m ruff check \
+  benchmarks/task035e_case098_checker.py \
+  benchmarks/task035e_evaluator_handoff.py \
+  src/test/test_228_task035e_case098_checker.py \
+  src/test/test_279_task035e_evaluator_handoff.py
+python -m compileall -q \
+  benchmarks/task035e_case098_checker.py \
+  benchmarks/task035e_evaluator_handoff.py \
+  src/test/test_228_task035e_case098_checker.py \
+  src/test/test_279_task035e_evaluator_handoff.py
