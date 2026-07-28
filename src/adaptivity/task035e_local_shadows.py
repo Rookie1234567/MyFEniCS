@@ -32,6 +32,7 @@ _DISCOVERY_WINDOW_LIMITS = MappingProxyType(
     }
 )
 _DISCOVERY_WINDOW_NAMESPACE = "task035e.local-shadow-window.v1"
+_H_DISCOVERY_NET_LEAF_BUDGET = 56
 
 
 def _json_sha256(payload: Any) -> str:
@@ -241,6 +242,110 @@ def build_h_shadow_geometry(
         added_leaf_keys=added,
         net_added_leaf_count=len(post) - len(pre),
         audit=MappingProxyType(audit_payload),
+    )
+
+
+def close_h_refine_balance_budget_targets(
+    forest: BalancedDyadicHexForest,
+    requested_split_keys: Sequence[DyadicHexKey],
+    *,
+    maximum_level: int = 2,
+    maximum_net_added_leaf_count: int = _H_DISCOVERY_NET_LEAF_BUDGET,
+) -> tuple[tuple[DyadicHexKey, ...], Mapping[str, Any]]:
+    """Keep a deterministic h-shadow prefix inside its real closure budget.
+
+    The budget is evaluated after strong 2:1, periodic, and material-interface
+    closure.  It therefore bounds the mesh that the PDE will actually see,
+    rather than only the number of user marks.
+    """
+
+    requested = tuple(requested_split_keys)
+    if (
+        not requested
+        or len(set(requested)) != len(requested)
+        or any(not isinstance(key, DyadicHexKey) for key in requested)
+    ):
+        raise ValueError(
+            "h-shadow balance budget requires unique dyadic leaf keys"
+        )
+    if (
+        isinstance(maximum_net_added_leaf_count, bool)
+        or not isinstance(maximum_net_added_leaf_count, int)
+        or maximum_net_added_leaf_count <= 0
+    ):
+        raise ValueError("h-shadow net-leaf budget must be a positive integer")
+
+    accepted: list[DyadicHexKey] = []
+    rows: list[dict[str, Any]] = []
+    final_geometry: HShadowGeometry | None = None
+    for key in requested:
+        trial = build_h_shadow_geometry(
+            forest,
+            (*accepted, key),
+            maximum_level=maximum_level,
+        )
+        within_budget = (
+            trial.net_added_leaf_count
+            <= maximum_net_added_leaf_count
+        )
+        rows.append(
+            {
+                "key": key.to_dict(),
+                "accepted": within_budget,
+                "trial_requested_target_count": len(accepted) + 1,
+                "trial_net_added_leaf_count": trial.net_added_leaf_count,
+                "trial_closure_split_count": len(
+                    trial.closure_split_keys
+                ),
+                "trial_post_leaf_count": len(trial.forest.leaves),
+            }
+        )
+        if within_budget:
+            accepted.append(key)
+            final_geometry = trial
+
+    selected = tuple(sorted(accepted))
+    unsigned = {
+        "schema_version": "task035e.h-balance-closure-budget.v1",
+        "status": (
+            "h_balance_closure_budget_pass"
+            if selected
+            else "h_balance_closure_budget_exhausted"
+        ),
+        "pass": bool(selected),
+        "maximum_level": int(maximum_level),
+        "maximum_net_added_leaf_count": maximum_net_added_leaf_count,
+        "considered_target_count": len(requested),
+        "selected_target_count": len(selected),
+        "selected_target_keys": [key.to_dict() for key in selected],
+        "rejected_target_count": len(requested) - len(selected),
+        "final_net_added_leaf_count": (
+            None
+            if final_geometry is None
+            else final_geometry.net_added_leaf_count
+        ),
+        "final_closure_split_count": (
+            None
+            if final_geometry is None
+            else len(final_geometry.closure_split_keys)
+        ),
+        "final_post_leaf_count": (
+            None
+            if final_geometry is None
+            else len(final_geometry.forest.leaves)
+        ),
+        "candidate_trials": rows,
+        "selection_inputs": "closed mesh topology only",
+        "hidden_reference_consumed": False,
+        "solved_field_consumed": False,
+        "accuracy_credit": False,
+        "ordinary_default_changed": False,
+    }
+    return selected, MappingProxyType(
+        {
+            **unsigned,
+            "closure_budget_sha256": _json_sha256(unsigned),
+        }
     )
 
 
@@ -476,5 +581,6 @@ __all__ = [
     "SignedShadowGoal",
     "build_h_shadow_geometry",
     "build_local_shadow_catalog",
+    "close_h_refine_balance_budget_targets",
     "evaluate_nested_shadow_system",
 ]

@@ -531,7 +531,8 @@ def test_discovery_producer_and_shadow_argv_cover_both_lanes(
     assert p_targets["window_selected_target_count"] == 32
     assert 32 <= p_targets["selected_target_count"] <= 56
     assert h_targets["eligible_target_count"] == 160
-    assert h_targets["selected_target_count"] == 4
+    assert h_targets["window_selected_target_count"] == 4
+    assert 1 <= h_targets["selected_target_count"] <= 4
     assert (
         p_targets["selection_audit"]["window"][
             "hidden_reference_consumed"
@@ -546,6 +547,13 @@ def test_discovery_producer_and_shadow_argv_cover_both_lanes(
         h_targets["selection_audit"]["window"]["accuracy_credit"]
         is False
     )
+    h_budget = h_targets["selection_audit"][
+        "h_balance_closure_budget"
+    ]
+    assert h_budget["pass"] is True
+    assert h_budget["final_net_added_leaf_count"] <= 56
+    assert h_budget["hidden_reference_consumed"] is False
+    assert h_budget["solved_field_consumed"] is False
     snapshot = _private_json(
         tmp_path / "current-snapshot.json",
         {"status": "synthetic_prepare_only"},

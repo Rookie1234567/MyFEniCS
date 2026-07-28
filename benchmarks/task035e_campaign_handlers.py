@@ -52,7 +52,7 @@ from benchmarks.task035e_campaign_stages import (
 
 ROOT = Path(__file__).resolve().parents[1]
 HANDLER_SCHEMA = "task035e.repository-formal-campaign-handlers.v1"
-TARGET_CATALOG_SCHEMA = "task035e.shadow-discovery-target-catalog.v2"
+TARGET_CATALOG_SCHEMA = "task035e.shadow-discovery-target-catalog.v3"
 LEGAL_SKIP_SCHEMA = "task035e.formal-stage-legal-skip.v1"
 BLOCKER_SCHEMA = "task035e.formal-stage-blocker.v1"
 TRANSITION_MODE_SCHEMA = "task035e.cross-cycle-transition-mode.v1"
@@ -777,6 +777,7 @@ class RepositoryFormalStageHandlers:
             )
             from src.adaptivity.task035e_local_shadows import (
                 build_local_shadow_catalog,
+                close_h_refine_balance_budget_targets,
             )
             from src.adaptivity.task035e_plan_transition import (
                 rebuild_hp_transition_state_from_solver_plan,
@@ -851,20 +852,15 @@ class RepositoryFormalStageHandlers:
                     path_id=context.stage.path_id,
                     cycle_index=int(context.stage.cycle_index),
                 )
-                selected_set = set(catalog.selected_target_ids)
-                window_ids = tuple(
-                    target_id
-                    for target_id in ids[lane]
-                    if target_id in selected_set
-                )
+                window_ids = tuple(catalog.selected_target_ids)
                 selection_audit: dict[str, Any] = {
                     "window": dict(catalog.audit),
                 }
+                key_by_id = {
+                    canonical_hp_cell_target_id(key): key
+                    for key in state.cell_degree_by_key
+                }
                 if lane == "p":
-                    key_by_id = {
-                        canonical_hp_cell_target_id(key): key
-                        for key in state.cell_degree_by_key
-                    }
                     closed_keys, closure_audit = (
                         close_p_up_degree_jump_targets(
                             state,
@@ -879,7 +875,36 @@ class RepositoryFormalStageHandlers:
                         closure_audit
                     )
                 else:
-                    selected_ids = window_ids
+                    closed_keys, closure_audit = (
+                        close_h_refine_balance_budget_targets(
+                            state.forest,
+                            tuple(key_by_id[value] for value in window_ids),
+                        )
+                    )
+                    selection_audit["h_balance_closure_budget"] = dict(
+                        closure_audit
+                    )
+                    if not closed_keys:
+                        paths.update(
+                            _write_skips(
+                                context,
+                                attempt,
+                                lane=lane,
+                                reason=(
+                                    "h_balance_closure_budget_exhausted"
+                                ),
+                                roles=(
+                                    targets_role,
+                                    action_role,
+                                    plan_role,
+                                ),
+                            )
+                        )
+                        continue
+                    selected_ids = tuple(
+                        canonical_hp_cell_target_id(key)
+                        for key in closed_keys
+                    )
                 action_path = attempt.attempt_dir / f"{lane}-discovery-action.json"
                 next_plan_path = (
                     attempt.attempt_dir / f"{lane}-discovery-plan.json"
@@ -917,7 +942,8 @@ class RepositoryFormalStageHandlers:
                     ),
                     "selection_inputs": (
                         "closed current-plan degree/level bounds plus "
-                        "fixed source-independent rotating window"
+                        "fixed source-independent rotating window plus "
+                        "exact p-jump or h-balance closure"
                     ),
                     "solved_field_inputs_consumed": False,
                     "ordinary_default_changed": False,

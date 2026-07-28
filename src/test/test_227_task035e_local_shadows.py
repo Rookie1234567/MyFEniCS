@@ -10,6 +10,7 @@ from src.adaptivity.dyadic_hexa_refinement import (
 from src.adaptivity.task035e_local_shadows import (
     build_h_shadow_geometry,
     build_local_shadow_catalog,
+    close_h_refine_balance_budget_targets,
     evaluate_nested_shadow_system,
 )
 
@@ -106,6 +107,44 @@ def test_blind_shadow_windows_are_bounded_rotating_and_order_independent() -> No
     )
     assert replay.selected_target_ids == p0.selected_target_ids
     assert replay.audit["catalog_sha256"] == p0.audit["catalog_sha256"]
+
+
+def test_h_shadow_balance_budget_uses_closed_leaf_cost() -> None:
+    forest = build_root_dyadic_hexa_forest(
+        _boxes(3, 3),
+        [1] * 9,
+        periodic_axes=("x", "y"),
+    )
+    requested = tuple(
+        DyadicHexKey(root, 0, 0, 0, 0)
+        for root in (0, 4, 8)
+    )
+    selected, audit = close_h_refine_balance_budget_targets(
+        forest,
+        requested,
+        maximum_level=2,
+        maximum_net_added_leaf_count=28,
+    )
+
+    assert selected
+    assert audit["pass"] is True
+    assert audit["considered_target_count"] == 3
+    assert audit["final_net_added_leaf_count"] <= 28
+    assert audit["selected_target_count"] < len(requested)
+    assert audit["hidden_reference_consumed"] is False
+    assert audit["solved_field_consumed"] is False
+    assert audit["accuracy_credit"] is False
+    replay, replay_audit = close_h_refine_balance_budget_targets(
+        forest,
+        requested,
+        maximum_level=2,
+        maximum_net_added_leaf_count=28,
+    )
+    assert replay == selected
+    assert (
+        replay_audit["closure_budget_sha256"]
+        == audit["closure_budget_sha256"]
+    )
 
 
 @pytest.mark.parametrize(
