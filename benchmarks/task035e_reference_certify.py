@@ -44,6 +44,11 @@ TASK035E_H5_FACTORIZATION_AUTHORITY_SCHEMA = (
     "task035e.h5-factorization-launch-authority.v1"
 )
 STATIC_BACKEND = "assembly_time_static_condensed"
+_STATIC_BACKEND_RESOLVED_CONFIG_FLAGS = (
+    "stage4_cell_static_condensation",
+    "stage4_assembly_time_cell_static_condensation",
+    "stage4_floquet_slave_elimination",
+)
 FIXED_PORTS = ("top", "bottom")
 FIXED_M = (0, -1, -2, -3, -4, -5, -6, -7)
 FIXED_N = 0
@@ -205,6 +210,19 @@ def _canonical(value: Any) -> Any:
     if isinstance(value, (list, tuple)):
         return [_canonical(item) for item in value]
     return value
+
+
+def _expected_runtime_config(
+    authority_config: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Resolve the public backend into its audited legacy runtime flags."""
+
+    resolved = dict(authority_config)
+    if resolved.get("stage4_full3d_assembly_backend") == STATIC_BACKEND:
+        for name in _STATIC_BACKEND_RESOLVED_CONFIG_FLAGS:
+            if resolved.get(name) is False:
+                resolved[name] = True
+    return resolved
 
 
 def _json_sha256(value: Mapping[str, Any]) -> str:
@@ -547,7 +565,9 @@ def _validate_completed_solver(
     summary = _load_json(summary_path, label="run summary")
     if _canonical(record.get("solver_summary")) != _canonical(summary):
         raise ReferenceArtifactError("embedded and on-disk run summaries differ")
-    if _canonical(summary.get("config")) != _canonical(config):
+    if _canonical(summary.get("config")) != _canonical(
+        _expected_runtime_config(config)
+    ):
         raise ReferenceArtifactError("run summary and config authority differ")
 
     petsc = _mapping(

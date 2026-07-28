@@ -142,11 +142,23 @@ def _write_completed(
     missing_order: bool = False,
     incident_phi_deg: float = 0.0,
     include_extra_spectrum_order: bool = False,
+    resolved_public_backend: bool = False,
 ) -> WatchdogRecordInput:
     run_dir = root / f"h{h_nm:g}"
     run_dir.mkdir()
     config = _config(h_nm)
     config["incident_phi_deg"] = incident_phi_deg
+    if resolved_public_backend:
+        config.update(
+            {
+                "stage4_full3d_assembly_backend": (
+                    "assembly_time_static_condensed"
+                ),
+                "stage4_cell_static_condensation": False,
+                "stage4_assembly_time_cell_static_condensation": False,
+                "stage4_floquet_slave_elimination": False,
+            }
+        )
     orders = []
     top_total = 0.0
     bottom_total = 0.0
@@ -276,8 +288,17 @@ def _write_completed(
     metadata_path = run_dir / "full3d_reference_samples.json"
     _write_json(metadata_path, metadata)
 
+    runtime_config = dict(config)
+    if resolved_public_backend:
+        runtime_config.update(
+            {
+                "stage4_cell_static_condensation": True,
+                "stage4_assembly_time_cell_static_condensation": True,
+                "stage4_floquet_slave_elimination": True,
+            }
+        )
     summary = {
-        "config": config,
+        "config": runtime_config,
         "case_status": "completed",
         "official_result": True,
         "diagnostic_only": False,
@@ -563,6 +584,21 @@ def test_adapter_builds_typed_qualified_campaign_and_field_vectors(
     ]
     assert len(interface) == 32
     assert len(volume) == 72
+
+
+def test_adapter_normalizes_public_backend_runtime_flags(
+    tmp_path: Path,
+) -> None:
+    run = adapt_watchdog_reference(
+        _write_completed(
+            tmp_path,
+            10.0,
+            resolved_public_backend=True,
+        ),
+        expected_h_nm=10.0,
+    )
+
+    assert run.result.gate.completed is True
 
 
 def test_adapter_preserves_all_propagating_spectrum_beyond_fixed_n8(
