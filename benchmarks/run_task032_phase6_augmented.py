@@ -768,6 +768,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=int,
         choices=(12, 14, 16, 18),
     )
+    parser.add_argument(
+        "--task001-m9-local-z-subdivisions",
+        type=int,
+        choices=(1, 2, 4),
+        default=1,
+        help=(
+            "M9-only axial endpoint-derivative convergence diagnostic. Each "
+            "existing local-FEM z interval is uniformly subdivided while the "
+            "p4/h10 transverse QEP and physical geometry remain unchanged."
+        ),
+    )
     parser.add_argument("--task001-model-id", choices=tuple(TASK001_FIDELITIES))
     parser.add_argument("--task001-height-nm", type=float)
     parser.add_argument("--task001-width-x-nm", type=float)
@@ -961,6 +972,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task001_m9_diagnostic_gate
     ):
         parser.error("M9 quadrature override requires the Task001 M9 gate.")
+    if (
+        args.task001_m9_local_z_subdivisions != 1
+        and not args.task001_m9_diagnostic_gate
+    ):
+        parser.error("M9 local-z refinement requires the Task001 M9 gate.")
     if args.task035c_p6_h10_gate:
         scoped = bool(
             args.degree == 6
@@ -1266,6 +1282,19 @@ def main() -> None:
     modal_cfg.incident_theta_deg = cfg.incident_theta_deg
     modal_cfg.incident_phi_deg = cfg.incident_phi_deg
     modal_cfg.polarization_kind = cfg.polarization_kind
+    if args.task001_m9_local_z_subdivisions > 1:
+        original_z = np.asarray(cfg.mesh_axis_z_values, dtype=np.float64)
+        subdivisions = int(args.task001_m9_local_z_subdivisions)
+        refined_z = [float(original_z[0])]
+        for left, right in zip(original_z[:-1], original_z[1:]):
+            refined_z.extend(
+                float(left + (right - left) * index / subdivisions)
+                for index in range(1, subdivisions + 1)
+            )
+        cfg.mesh_axis_z_values = tuple(refined_z)
+        cfg.mesh_axis_z_profile = (
+            f"{cfg.mesh_axis_z_profile}-m9-local-z-subdivisions-{subdivisions}"
+        )
     operators = None
     positive = None
     negative = None
@@ -1318,6 +1347,9 @@ def main() -> None:
             "candidate_modes_per_target_branch": candidate_modes,
             "near_degenerate_tolerance": args.near_degenerate_tolerance,
             "block_rotation_tolerance": args.block_rotation_tolerance,
+            "task001_m9_local_z_subdivisions": (
+                args.task001_m9_local_z_subdivisions
+            ),
             "bottom_interface_nm": args.bottom_interface_nm,
             "top_interface_nm": args.top_interface_nm,
             "middle_length_nm": args.top_interface_nm - args.bottom_interface_nm,
@@ -2415,6 +2447,9 @@ def main() -> None:
                 "candidate_modes_per_target_branch": candidate_modes,
                 "near_degenerate_tolerance": args.near_degenerate_tolerance,
                 "block_rotation_tolerance": args.block_rotation_tolerance,
+                "task001_m9_local_z_subdivisions": (
+                    args.task001_m9_local_z_subdivisions
+                ),
                 "bottom_interface_nm": args.bottom_interface_nm,
                 "top_interface_nm": args.top_interface_nm,
                 "middle_length_nm": (
