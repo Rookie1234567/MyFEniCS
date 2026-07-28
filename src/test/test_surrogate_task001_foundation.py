@@ -9,7 +9,9 @@ import subprocess
 
 import pytest
 
-from src.forward_data.orders import FIXED_M_ORDERS, extract_fixed_orders
+from src.forward_data.orders import (
+    FIXED_M_ORDERS, extract_fixed_orders, extract_task001_orders,
+)
 from src.forward_data.schema import (
     TASK001_OBSERVABLE_SCHEMA_VERSION,
     ForwardParameters,
@@ -128,6 +130,8 @@ def _order(side: str, m: int, n: int, pol: str, power: float | None, propagating
     return {
         "side": side, "m": m, "n": n, "polarization": pol,
         "power": power, "propagating": propagating,
+        "R": power if side == "top" and power is not None else 0.0,
+        "T": power if side == "bottom" and power is not None else 0.0,
         "outgoing_amplitude_at_boundary": [float(m), float(n)],
     }
 
@@ -138,13 +142,50 @@ def test_order_extractor_fixed_identity_null_and_leakage() -> None:
         for side in ("bottom", "top") for m in reversed(FIXED_M_ORDERS) for pol in ("p", "s")
     ]
     rows.extend([_order("top", 2, 1, "s", 0.003), _order("bottom", 2, -1, "p", 0.004)])
-    result = extract_fixed_orders(rows)
+    expected_r = sum(float(row["R"]) for row in rows)
+    expected_t = sum(float(row["T"]) for row in rows)
+    result = extract_fixed_orders(
+        rows, port_power={"R_total": expected_r, "T_total": expected_t}
+    )
     assert result["schema_version"] == TASK001_OBSERVABLE_SCHEMA_VERSION
     assert result["fixed_m_order"] == list(FIXED_M_ORDERS)
     assert result["n_nonzero_leakage_power"] == pytest.approx(0.007)
     assert result["missing"] == []
     assert [row["m"] for row in result["orders"][:18:2]] == list(FIXED_M_ORDERS)
     assert all(row["power"] is None for row in result["orders"] if row["m"] == 1)
+    assert result["port_power_consistency"]["r_matches"] is True
+    assert result["port_power_consistency"]["t_matches"] is True
+
+
+def test_order_extractor_accepts_real_runner_power_ratio() -> None:
+    row = {
+        "side": "bottom", "m": 0, "n": 0, "polarization": "s",
+        "propagating": True, "power_ratio": 0.25, "R": 0.0, "T": 0.25,
+        "outgoing_amplitude_at_boundary": [0.5, 0.0],
+    }
+    result = extract_fixed_orders(
+        [row], port_power={"R_total": 0.0, "T_total": 0.25}
+    )
+    assert result["orders"][0]["power"] == 0.25
+
+
+def test_task001_extractor_classifies_omitted_plus_one_as_nonpropagating() -> None:
+    rows = [
+        _order(side, m, 0, pol, 0.01)
+        for side in ("top", "bottom")
+        for m in FIXED_M_ORDERS if m != 1
+        for pol in ("s", "p")
+    ]
+    expected_r = sum(float(row["R"]) for row in rows)
+    expected_t = sum(float(row["T"]) for row in rows)
+    result = extract_task001_orders(
+        rows, parameters=_parameters(),
+        port_power={"R_total": expected_r, "T_total": expected_t},
+    )
+    assert result["missing"] == []
+    plus_one = [row for row in result["orders"] if row["m"] == 1]
+    assert len(plus_one) == 4
+    assert all(row["propagating"] is False and row["power"] is None for row in plus_one)
 
 
 def test_order_extractor_reports_missing_and_duplicate() -> None:
