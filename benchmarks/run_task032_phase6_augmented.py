@@ -904,7 +904,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
         diagnostic_scoped = bool(
             args.task001_m9_diagnostic_gate
-            and args.task001_model_id == "hybrid_lf_p4_h10_m120"
+            and args.task001_model_id == "LF4"
             and math.isclose(args.task001_height_nm, 120.0)
             and math.isclose(args.task001_width_x_nm, 17.0)
             and args.degree == 4
