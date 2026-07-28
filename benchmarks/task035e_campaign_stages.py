@@ -1473,6 +1473,9 @@ class ContractStagePreparer:
         return PreparedStage(
             execute=execute,
             argvs=prepared.command_argvs,
+            allow_controlled_resource_stop=(
+                prepared.allow_controlled_resource_stop
+            ),
         )
 
 

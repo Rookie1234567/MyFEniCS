@@ -87,8 +87,8 @@ def test_blind_shadow_windows_are_bounded_rotating_and_order_independent() -> No
         cycle_index=1,
     )
 
-    assert len(p0.selected_target_ids) == 32
-    assert len(p1.selected_target_ids) == 32
+    assert len(p0.selected_target_ids) == 8
+    assert len(p1.selected_target_ids) == 8
     assert set(p0.selected_target_ids).isdisjoint(p1.selected_target_ids)
     assert len(h0.selected_target_ids) == 4
     assert len(h1.selected_target_ids) == 4

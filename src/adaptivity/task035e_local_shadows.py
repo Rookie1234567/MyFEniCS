@@ -27,7 +27,7 @@ from .dyadic_hexa_refinement import (
 
 _DISCOVERY_WINDOW_LIMITS = MappingProxyType(
     {
-        "p": 32,
+        "p": 8,
         "h": 4,
     }
 )

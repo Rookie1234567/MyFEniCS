@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import math
-from types import SimpleNamespace
+from pathlib import Path
+from types import MappingProxyType, SimpleNamespace
 
 from basix.ufl import element
 from mpi4py import MPI
@@ -10,12 +13,16 @@ import pytest
 
 from dolfinx import default_real_type, fem, mesh
 
+from src.adaptivity.task035e_multigoal_snapshot import (
+    LoadedTask035eSnapshot,
+)
 from src.adaptivity.task035e_shadow_transfer import (
     _interpolate_nonmatching,
     _relative_coefficient_error,
     _relative_form_error,
     _require_world_communicator,
     _shadow_transition_identity,
+    transfer_task035e_snapshot_to_shadow_p6,
 )
 
 
@@ -57,6 +64,131 @@ def test_world_communicator_gate_rejects_true_subcommunicator() -> None:
         pytest.skip("a one-rank COMM_SELF is congruent to COMM_WORLD")
     with pytest.raises(ValueError, match="congruent duplicate"):
         _require_world_communicator(MPI.COMM_SELF)
+
+
+def test_same_forest_p_shadow_reuses_existing_p6_carrier(
+    tmp_path: Path,
+) -> None:
+    comm = MPI.COMM_WORLD
+    domain = mesh.create_unit_cube(
+        comm,
+        1,
+        1,
+        max(1, comm.size),
+        cell_type=mesh.CellType.hexahedron,
+    )
+    space = _space(domain, degree=6)
+    endpoint = fem.Function(space, name="independent_shadow_endpoint")
+    start, end = map(int, endpoint.x.petsc_vec.getOwnershipRange())
+    owned = (
+        np.arange(start, end, dtype=np.float64) + 1.0
+    ).astype(np.complex128)
+    leaf_sha = "1" * 64
+    hanging_sha = "2" * 64
+    current_degree_sha = "3" * 64
+    shadow_degree_sha = "4" * 64
+    current_plan = {
+        "status": "stage4_balanced_multilevel_local_h_plan",
+        "expected_forest": {
+            "leaf_catalog_sha256": leaf_sha,
+            "hanging_face_catalog_sha256": hanging_sha,
+        },
+        "cell_interior_degree_plan_sha256": current_degree_sha,
+        "multilevel_audit": {
+            "strong_2_to_1_balance": True,
+            "material_interface_hanging_face_count": 0,
+            "periodic_boundary_audit": {
+                "x": {"matching": True},
+                "y": {"matching": True},
+            },
+        },
+        "ordinary_default_changed": False,
+    }
+    plan_path = tmp_path / f"current-plan-rank{comm.rank:04d}.json"
+    plan_body = (
+        json.dumps(current_plan, sort_keys=True) + "\n"
+    ).encode("ascii")
+    plan_path.write_bytes(plan_body)
+    plan_sha = hashlib.sha256(plan_body).hexdigest()
+    shard_path = tmp_path / f"rank{comm.rank:04d}.npz"
+    shard_path.write_bytes(f"rank={comm.rank}\n".encode("ascii"))
+    manifest_path = tmp_path / f"manifest-rank{comm.rank:04d}.json"
+    manifest_path.write_text("{}\n", encoding="ascii")
+    snapshot = LoadedTask035eSnapshot(
+        manifest_path=manifest_path,
+        manifest_file_sha256="5" * 64,
+        shard_path=shard_path,
+        manifest=MappingProxyType(
+            {
+                "plan_identity": {
+                    "path": str(plan_path),
+                    "file_sha256": plan_sha,
+                },
+                "partitions": {
+                    "p6_recovered_field": {
+                        "global_size": int(
+                            endpoint.x.petsc_vec.getSize()
+                        ),
+                        "ownership_ranges": comm.allgather(
+                            [start, end]
+                        ),
+                    }
+                },
+            }
+        ),
+        arrays=MappingProxyType(
+            {"p6_recovered_field_owned": owned}
+        ),
+    )
+    local_h_context = SimpleNamespace(
+        forest=SimpleNamespace(
+            audit={
+                "leaf_catalog_sha256": leaf_sha,
+                "hanging_face_catalog_sha256": hanging_sha,
+            }
+        ),
+        audit={"pass": True},
+        plan_file_sha256="6" * 64,
+    )
+    view = SimpleNamespace(
+        mesh_data=SimpleNamespace(
+            mesh=domain,
+            local_h_context=local_h_context,
+        ),
+        field=endpoint,
+        reduction=SimpleNamespace(
+            degree_plan=SimpleNamespace(
+                audit={
+                    "cell_degree_plan_sha256": shadow_degree_sha,
+                }
+            )
+        ),
+    )
+
+    transfer = transfer_task035e_snapshot_to_shadow_p6(snapshot, view)
+
+    assert transfer.audit["pass"] is True
+    assert transfer.audit["same_mesh_p_shadow"] is True
+    assert transfer.audit["true_nonmatching_h_shadow"] is False
+    assert (
+        transfer.audit["reconstruction"][
+            "duplicate_current_mesh_constructed"
+        ]
+        is False
+    )
+    assert (
+        transfer.audit["reconstruction"]["nonmatching_interpolation_used"]
+        is False
+    )
+    assert transfer.current_mesh_data is view.mesh_data
+    np.testing.assert_array_equal(
+        transfer.shadow_field.x.petsc_vec.getArray(readonly=True),
+        owned,
+    )
+    np.testing.assert_array_equal(
+        endpoint.x.petsc_vec.getArray(readonly=True),
+        np.zeros_like(owned),
+    )
 
 
 def test_nonmatching_nedelec_roundtrip_preserves_field_and_curl() -> None:

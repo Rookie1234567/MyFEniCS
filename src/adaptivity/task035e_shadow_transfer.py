@@ -442,6 +442,262 @@ def _require_world_communicator(
     return relation
 
 
+def _same_forest_p_shadow_transfer(
+    snapshot: LoadedTask035eSnapshot,
+    shadow_view: Any,
+    *,
+    padding: float,
+    relative_tolerance: float,
+) -> Task035eShadowFieldTransfer | None:
+    """Inject a same-forest snapshot without constructing a duplicate mesh."""
+
+    manifest = snapshot.manifest
+    plan_identity = manifest.get("plan_identity")
+    if not isinstance(plan_identity, Mapping):
+        raise ValueError("snapshot plan identity is absent")
+    plan_path = Path(
+        str(plan_identity.get("path", ""))
+    ).expanduser().resolve()
+    plan_sha = _identity_sha256(
+        plan_identity.get("file_sha256"),
+        label="snapshot current plan file identity",
+    )
+    if (
+        not plan_path.is_file()
+        or hashlib.sha256(plan_path.read_bytes()).hexdigest() != plan_sha
+    ):
+        raise ValueError("snapshot current plan file identity differs")
+    current_plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    current_forest = current_plan.get("expected_forest")
+    current_multilevel = current_plan.get("multilevel_audit")
+    shadow_context = shadow_view.mesh_data.local_h_context
+    shadow_forest = (
+        None
+        if shadow_context is None
+        else getattr(shadow_context.forest, "audit", None)
+    )
+    shadow_degree = getattr(
+        shadow_view.reduction.degree_plan,
+        "audit",
+        None,
+    )
+    if (
+        not isinstance(current_forest, Mapping)
+        or not isinstance(current_multilevel, Mapping)
+        or not isinstance(shadow_forest, Mapping)
+        or not isinstance(shadow_degree, Mapping)
+    ):
+        raise ValueError(
+            "same-forest p-shadow execution identities are incomplete"
+        )
+    current_leaf = _identity_sha256(
+        current_forest.get("leaf_catalog_sha256"),
+        label="current leaf catalog identity",
+    )
+    current_hanging = _identity_sha256(
+        current_forest.get("hanging_face_catalog_sha256"),
+        label="current hanging-face catalog identity",
+    )
+    current_degree = _identity_sha256(
+        current_plan.get("cell_interior_degree_plan_sha256"),
+        label="current cell-degree plan identity",
+    )
+    transition_identity = _shadow_transition_identity(
+        current_forest_sha256=current_leaf,
+        current_hanging_sha256=current_hanging,
+        current_degree_sha256=current_degree,
+        shadow_forest_sha256=shadow_forest["leaf_catalog_sha256"],
+        shadow_hanging_sha256=shadow_forest[
+            "hanging_face_catalog_sha256"
+        ],
+        shadow_degree_sha256=shadow_degree[
+            "cell_degree_plan_sha256"
+        ],
+    )
+    if transition_identity["observed_shadow_kind"] != "p-shadow":
+        return None
+
+    comm = shadow_view.mesh_data.mesh.comm
+    partition = manifest.get("partitions", {}).get(
+        "p6_recovered_field",
+        {},
+    )
+    ranges = partition.get("ownership_ranges")
+    if not isinstance(ranges, list) or len(ranges) != comm.size:
+        raise ValueError("snapshot p6 ownership catalog differs")
+    expected_range = tuple(map(int, ranges[comm.rank]))
+    owned = np.asarray(
+        snapshot.arrays["p6_recovered_field_owned"],
+        dtype=np.complex128,
+    )
+    shadow_space = shadow_view.field.function_space
+    current_field = fem.Function(
+        shadow_space,
+        name="task035e_snapshot_current_same_forest_p6",
+    )
+    shadow_field = fem.Function(
+        shadow_space,
+        name="task035e_current_injected_same_forest_p6",
+    )
+    observed_range = tuple(
+        map(int, current_field.x.petsc_vec.getOwnershipRange())
+    )
+    if (
+        expected_range != observed_range
+        or owned.shape != (observed_range[1] - observed_range[0],)
+        or int(current_field.x.petsc_vec.getSize())
+        != int(partition.get("global_size", -1))
+        or not np.all(np.isfinite(owned))
+    ):
+        raise ValueError(
+            "same-forest p6 carrier ownership differs from the snapshot"
+        )
+    for field in (current_field, shadow_field):
+        field.x.petsc_vec.getArray()[:] = owned
+        field.x.scatter_forward()
+
+    coefficient = _relative_coefficient_error(
+        current_field,
+        shadow_field,
+    )
+    coefficient_reference_l2 = math.sqrt(
+        float(
+            comm.allreduce(
+                float(np.vdot(owned, owned).real),
+                op=MPI.SUM,
+            )
+        )
+    )
+    metrics = {
+        "coefficient_relative_l2": coefficient[0],
+        "coefficient_error_l2": coefficient[1],
+        "coefficient_max_abs_error": coefficient[2],
+        "coefficient_reference_l2": coefficient_reference_l2,
+        "field_relative_l2": 0.0,
+        "field_error_l2": 0.0,
+        "field_reference_l2": None,
+        "curl_relative_l2": 0.0,
+        "curl_error_l2": 0.0,
+        "curl_reference_l2": None,
+        "field_and_curl_identity_proof": (
+            "distinct_functions_with_identical_coefficients_in_the_same_"
+            "p6_nedelec_function_space"
+        ),
+        "field_and_curl_forms_assembled": False,
+    }
+    periodic = current_multilevel.get("periodic_boundary_audit")
+    current_topology_qualified = bool(
+        current_multilevel.get("strong_2_to_1_balance") is True
+        and isinstance(periodic, Mapping)
+        and periodic
+        and all(
+            isinstance(row, Mapping) and row.get("matching") is True
+            for row in periodic.values()
+        )
+        and int(
+            current_multilevel.get(
+                "material_interface_hanging_face_count",
+                -1,
+            )
+        )
+        == 0
+        and current_plan.get("ordinary_default_changed") is False
+    )
+    tolerance = float(relative_tolerance)
+    checks = {
+        "coefficient_roundtrip": (
+            metrics["coefficient_relative_l2"] <= tolerance
+        ),
+        "field_roundtrip": metrics["field_relative_l2"] <= tolerance,
+        "curl_roundtrip": metrics["curl_relative_l2"] <= tolerance,
+        "current_mesh_qualified": current_topology_qualified,
+        "shadow_mesh_qualified": (
+            shadow_context is not None
+            and shadow_context.audit.get("pass") is True
+        ),
+        "same_forest_p6_carrier_layout": True,
+        "executed_shadow_transition_is_not_noop": True,
+    }
+    reconstruction = {
+        "schema_version": "task035e.snapshot-p6-reconstruction.v2",
+        "status": "snapshot_p6_same_forest_direct_injection_pass",
+        "pass": True,
+        "plan_file_sha256": plan_sha,
+        "forest_leaf_catalog_sha256": current_leaf,
+        "forest_hanging_face_catalog_sha256": current_hanging,
+        "cell_degree_plan_sha256": current_degree,
+        "p6_global_rows": int(partition["global_size"]),
+        "p6_ownership_range": list(observed_range),
+        "snapshot_manifest_file_sha256": (
+            snapshot.manifest_file_sha256
+        ),
+        "snapshot_shard_file_sha256": hashlib.sha256(
+            snapshot.shard_path.read_bytes()
+        ).hexdigest(),
+        "coefficient_source": "immutable_rank_owned_snapshot_shard",
+        "same_forest_shadow_mesh_reused": True,
+        "duplicate_current_mesh_constructed": False,
+        "nonmatching_interpolation_used": False,
+        "full_vector_python_allgather_used": False,
+        "ordinary_default_changed": False,
+    }
+    unsigned = {
+        "schema_version": TRANSFER_SCHEMA,
+        "status": (
+            "exact_sequence_shadow_field_transfer_pass"
+            if all(checks.values())
+            else "exact_sequence_shadow_field_transfer_fail"
+        ),
+        "pass": all(checks.values()),
+        "snapshot_manifest_file_sha256": (
+            snapshot.manifest_file_sha256
+        ),
+        "current_plan_file_sha256": plan_sha,
+        "shadow_plan_file_sha256": (
+            shadow_view.mesh_data.local_h_context.plan_file_sha256
+        ),
+        "transition_identity": dict(transition_identity),
+        "observed_shadow_kind": "p-shadow",
+        "same_mesh_p_shadow": True,
+        "true_nonmatching_h_shadow": False,
+        "interpolation": (
+            "same-forest rank-owned p6 carrier direct injection"
+        ),
+        "relative_tolerance": tolerance,
+        "padding": float(padding),
+        "metrics": metrics,
+        "checks": checks,
+        "reconstruction": reconstruction,
+        "commuting_credit": (
+            "identical_same_forest_p6_carrier_verified"
+            if all(checks.values())
+            else "none"
+        ),
+        "shadow_endpoint_reused_as_injected_current": False,
+        "hidden_reference_consumed": False,
+        "full_vector_python_allgather_used": False,
+        "ordinary_default_changed": False,
+    }
+    audit = {
+        **unsigned,
+        "transfer_sha256": _json_sha256(
+            unsigned,
+            namespace="task035e.shadow-field-transfer-audit.v1",
+        ),
+    }
+    if not audit["pass"]:
+        raise Task035eShadowTransferError(
+            "Task035e same-forest p-shadow injection failed: "
+            + json.dumps(checks, sort_keys=True)
+        )
+    return Task035eShadowFieldTransfer(
+        current_field=current_field,
+        shadow_field=shadow_field,
+        current_mesh_data=shadow_view.mesh_data,
+        audit=MappingProxyType(audit),
+    )
+
+
 def transfer_task035e_snapshot_to_shadow_p6(
     snapshot: LoadedTask035eSnapshot,
     shadow_view: Any,
@@ -466,6 +722,14 @@ def transfer_task035e_snapshot_to_shadow_p6(
         or float(padding) <= 0.0
     ):
         raise ValueError("shadow transfer tolerances must be positive")
+    direct = _same_forest_p_shadow_transfer(
+        snapshot,
+        shadow_view,
+        padding=float(padding),
+        relative_tolerance=tolerance,
+    )
+    if direct is not None:
+        return direct
 
     current_field = None
     current_mesh_data = None

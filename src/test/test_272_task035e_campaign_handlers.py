@@ -528,8 +528,8 @@ def test_discovery_producer_and_shadow_argv_cover_both_lanes(
         discovered["h_discovery_targets"].path.read_text(encoding="ascii")
     )
     assert p_targets["eligible_target_count"] == 160
-    assert p_targets["window_selected_target_count"] == 32
-    assert 32 <= p_targets["selected_target_count"] <= 56
+    assert p_targets["window_selected_target_count"] == 8
+    assert 8 <= p_targets["selected_target_count"] <= 24
     assert h_targets["eligible_target_count"] == 160
     assert h_targets["window_selected_target_count"] == 4
     assert 1 <= h_targets["selected_target_count"] <= 4

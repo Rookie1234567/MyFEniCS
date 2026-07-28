@@ -212,6 +212,70 @@ def test_contract_preparer_checks_inputs_commands_and_outputs(
         preparer(context, attempt)
 
 
+def test_contract_preparer_preserves_controlled_resource_stop_policy(
+    tmp_path: Path,
+) -> None:
+    contracts = formal_stage_contracts()
+
+    def handler(
+        _context: StageExecutionContext,
+        _attempt: AttemptHandle,
+    ) -> PreparedStage:
+        return PreparedStage(
+            execute=lambda _attempt, _receipts: StageResult(
+                status="blocked",
+                classification="fixture",
+                input_plan_sha256="c" * 64,
+            ),
+            argv=("/bin/true",),
+            allow_controlled_resource_stop=True,
+        )
+
+    preparer = ContractStagePreparer(
+        {contract.stage_name: handler for contract in contracts}
+    )
+    stage = next(
+        row
+        for row in _dag(tmp_path)
+        if row.stage_name == "p_shadow_discovery"
+    )
+    contract = next(
+        row
+        for row in contracts
+        if row.stage_name == stage.stage_name
+    )
+    bindings = []
+    for role in contract.required_artifact_roles:
+        path, _sha = _private_file(
+            tmp_path / "inputs" / f"{role}.json",
+            b"{}\n",
+        )
+        bindings.append(StageArtifactBinding.from_file(role, path))
+    attempt_dir = tmp_path / "attempt"
+    attempt_dir.mkdir()
+    context = StageExecutionContext(
+        campaign_root=tmp_path,
+        stage=stage,
+        source_sha="a" * 40,
+        abi_sha256="b" * 64,
+        trial_id="task035e-blind-path-a",
+        nominal_h_nm=20.0,
+        input_plan_sha256="c" * 64,
+        input_artifacts=tuple(bindings),
+    )
+    prepared = preparer(
+        context,
+        AttemptHandle(
+            context=context,
+            attempt_number=1,
+            attempt_dir=attempt_dir,
+        ),
+    )
+
+    assert prepared.allow_controlled_resource_stop is True
+    assert prepared.command_argvs == (("/bin/true",),)
+
+
 def _binding(role: str, path: Path) -> StageArtifactBinding:
     return StageArtifactBinding.from_file(role, path)
 

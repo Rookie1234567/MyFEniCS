@@ -798,9 +798,7 @@ def evaluate_and_write_task035e_shadow(
         ),
         "algebra": {
             "current_field_source": "immutable current MPI snapshot",
-            "current_to_shadow_transfer": (
-                "exact-sequence p6 N1curl nonmatching interpolation"
-            ),
+            "current_to_shadow_transfer": transfer_audit["interpolation"],
             "current_reduced_injection": (
                 "exact active primal projection plus constraint left inverse"
             ),
