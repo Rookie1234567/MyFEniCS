@@ -1,0 +1,21 @@
+{
+  "schema_version": "task002.case113-config.v1",
+  "wavelength_nm": 13.5,
+  "polarization": "S",
+  "geometry": {"height_nm": 120.0, "width_x_nm": 17.0},
+  "center_diagnostic_angle": {"grazing_deg": 0.5, "azimuth_deg": 15.0},
+  "hybrid": {"h_nm": 10.0, "mpi_ranks": 2, "threads_per_rank": 1},
+  "p_m_matrix": [[4, 80], [4, 120], [4, 160], [4, 240], [5, 120], [6, 120]],
+  "lf_stencil": {
+    "grazing_0p5_azimuth_deg": [0, 5, 10, 15, 20, 30, 45, 60, 75, 90],
+    "azimuth_15_grazing_deg": [0.5, 0.75, 1.0, 2.0]
+  },
+  "full3d_reference": {
+    "degree": 4,
+    "h_nm": 10.0,
+    "assembly_backend": "assembly_time_static_condensed",
+    "mpi_ranks": 2
+  },
+  "raw_case112_evidence_disposition": "immutable_reuse"
+}
+

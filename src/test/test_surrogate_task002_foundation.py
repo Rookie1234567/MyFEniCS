@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 from benchmarks.check_case112_task002 import build_scaffold_record
+from benchmarks.check_case113_task002_m2a import build_scaffold_record as build_case113_scaffold
 from benchmarks.run_task032_phase6_augmented import _parse_args
 from src.forward_data.orders import FIXED_M_ORDERS
 from src.forward_data.task002_campaign import (
@@ -14,8 +15,10 @@ from src.forward_data.task002_campaign import (
 )
 from src.forward_data.task002_dataset import verify_compact_dataset, write_compact_dataset
 from src.forward_data.task002_design import (
-    audit_order_window, cutoff_diagnostics, fixed_hf_angle_pilot, lf_angle_pilot,
+    audit_order_window, cutoff_diagnostics, cutoff_diagnostics_v2,
+    fixed_hf_angle_pilot, incident_wave_audit, lf_angle_pilot,
 )
+from src.forward_data.task002_m2a import hybrid_command, validate_hybrid_scope
 from src.forward_data.task002_schema import (
     TASK002_OBSERVABLE_SCHEMA_VERSION, Task002ForwardParameters,
     classify_task002_request, task002_parameter_catalog,
@@ -81,6 +84,40 @@ def test_order_window_and_cutoff_audit() -> None:
     cutoff = cutoff_diagnostics(_parameters(grazing_deg=0.5, azimuth_deg=0.0))
     assert cutoff["cutoff_metric"] >= 0.0
     assert len(cutoff["orders"]) == len(FIXED_M_ORDERS)
+
+
+def test_cutoff_v2_separates_incident_grazing_from_nonzero_orders() -> None:
+    parameters = _parameters(grazing_deg=0.5, azimuth_deg=15.0)
+    cutoff = cutoff_diagnostics_v2(parameters)
+    assert cutoff["schema_version"] == "task002.cutoff-diagnostics.v2"
+    assert cutoff["incident_specular_abs_beta_over_k0"] == pytest.approx(
+        np.sin(np.deg2rad(0.5)), rel=1e-10,
+    )
+    assert cutoff["nearest_order"]["m"] != 0
+    assert isinstance(cutoff["rayleigh_crossing_in_local_angle_neighborhood"], bool)
+    assert all("beta_top" in row and "beta_bottom" in row for row in cutoff["orders"])
+    incident = incident_wave_audit(parameters)
+    assert incident["abs_k_over_k0_abs_n_air"] == pytest.approx(1.0)
+    assert incident["incident_normal_power_density"] > 0.0
+
+
+@pytest.mark.parametrize(
+    "degree,modes", [(4, 80), (4, 120), (4, 160), (4, 240), (5, 120), (6, 120)],
+)
+def test_m2a_matrix_gate_is_exact(tmp_path: Path, degree: int, modes: int) -> None:
+    _, command = hybrid_command(
+        root=tmp_path, baseline_sha="a" * 40, degree=degree, modes=modes,
+        grazing=0.5, azimuth=15.0, output=tmp_path / "record.json",
+        memory_stages=tmp_path / "stages.jsonl",
+    )
+    parsed = _parse_args(command[command.index("benchmarks.run_task032_phase6_augmented") + 1:])
+    assert parsed.task002_m2a_diagnostic_gate is True
+    assert parsed.requested_modes == modes and parsed.candidate_modes == 2 * modes
+
+
+def test_m2a_scope_rejects_campaign_and_polarization_changes() -> None:
+    with pytest.raises(ValueError, match="outside"):
+        validate_hybrid_scope(degree=4, modes=120, grazing=4.0, azimuth=45.0)
 
 
 def test_task002_command_reuses_exact_qualified_s_route(tmp_path: Path) -> None:
@@ -182,3 +219,9 @@ def test_dataset_roundtrip_hash_split_and_structural_null(tmp_path: Path) -> Non
 def test_case112_scaffold_contract() -> None:
     record = build_scaffold_record()
     assert all(record["gates"].values())
+
+
+def test_case113_m2a_scaffold_is_fail_closed() -> None:
+    record = build_case113_scaffold()
+    assert all(record["scope_gates"].values())
+    assert record["raw_evidence_disposition"] == "immutable_reuse"

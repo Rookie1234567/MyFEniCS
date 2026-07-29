@@ -1,0 +1,37 @@
+{
+  "schema_version": "task002.case113-scaffold.v1",
+  "config_sha256": "a2f9519f6061e0e9b1ebd9731ed6aa47b3dd2977340dbf060601b5e0f4fafc5b",
+  "expected_sha256": "7ac0510ee5fb1e24e6e3764021012bd05a1cea765bb2b5490eb0f39f40a38437",
+  "p_m_matrix": [[4, 80], [4, 120], [4, 160], [4, 240], [5, 120], [6, 120]],
+  "lf_stencil": [
+    {"grazing_deg": 0.5, "azimuth_deg": 0.0},
+    {"grazing_deg": 0.5, "azimuth_deg": 5.0},
+    {"grazing_deg": 0.5, "azimuth_deg": 10.0},
+    {"grazing_deg": 0.5, "azimuth_deg": 15.0},
+    {"grazing_deg": 0.5, "azimuth_deg": 20.0},
+    {"grazing_deg": 0.5, "azimuth_deg": 30.0},
+    {"grazing_deg": 0.5, "azimuth_deg": 45.0},
+    {"grazing_deg": 0.5, "azimuth_deg": 60.0},
+    {"grazing_deg": 0.5, "azimuth_deg": 75.0},
+    {"grazing_deg": 0.5, "azimuth_deg": 90.0},
+    {"grazing_deg": 0.75, "azimuth_deg": 15.0},
+    {"grazing_deg": 1.0, "azimuth_deg": 15.0},
+    {"grazing_deg": 2.0, "azimuth_deg": 15.0}
+  ],
+  "unchanged_gates": {
+    "true_relative_residual_max": 1e-09,
+    "assembled_interface_e_t_relative_l2_max": 0.005,
+    "exact_traction_hcurl_dual_relative_max": 0.01,
+    "volume_energy_closure_abs_max": 1e-05,
+    "peak_swap_bytes": 0,
+    "cleanup_complete": true
+  },
+  "raw_evidence_disposition": "immutable_reuse",
+  "scope_gates": {
+    "matrix_exact": true,
+    "lf_stencil_exact": true,
+    "formal_campaign_closed": true,
+    "bulk_closed": true,
+    "surrogate_closed": true
+  }
+}

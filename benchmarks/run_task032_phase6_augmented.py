@@ -764,6 +764,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--task002-m2a-diagnostic-gate", action="store_true",
+        help=(
+            "Clean-source Task002 Review-V1 M2A diagnostic gate. This opens "
+            "only the reviewed center-point p/M matrix and low-grazing S-only "
+            "angle stencil; it does not alter any formal numerical threshold."
+        ),
+    )
+    parser.add_argument(
         "--task001-m9-diagnostic-gate",
         action="store_true",
         help=(
@@ -869,7 +877,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if args.degree == 6 and not (
         args.task035c_p6_h10_gate or args.task001_surrogate_pilot_gate
-        or args.task002_s_continuous_gate
+        or args.task002_s_continuous_gate or args.task002_m2a_diagnostic_gate
     ):
         parser.error(
             "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
@@ -881,6 +889,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             args.task035c_p6_h10_gate,
             args.task001_surrogate_pilot_gate,
             args.task002_s_continuous_gate,
+            args.task002_m2a_diagnostic_gate,
             args.task001_m9_diagnostic_gate,
         )
     )
@@ -889,6 +898,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if (
         args.task001_surrogate_pilot_gate
         or args.task002_s_continuous_gate
+        or args.task002_m2a_diagnostic_gate
         or args.task001_m9_diagnostic_gate
     ):
         required = (
@@ -909,8 +919,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             task001_parameters.validate()
         except ValueError as exc:
             parser.error(str(exc))
-        if args.task002_s_continuous_gate and args.polarization_kind != "s":
-            parser.error("Task002 continuous-angle gate is S-only.")
+        if (
+            args.task002_s_continuous_gate or args.task002_m2a_diagnostic_gate
+        ) and args.polarization_kind != "s":
+            parser.error("Task002 continuous-angle and M2A gates are S-only.")
         fidelity = task001_parameters.fidelity
         formal_scoped = bool(
             args.degree == fidelity["degree"]
@@ -973,6 +985,70 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.full3d_reference is None
             and not args.task035c_p6_h10_gate
         )
+        m2a_matrix_point = bool(
+            math.isclose(args.task001_height_nm, 120.0)
+            and math.isclose(args.task001_width_x_nm, 17.0)
+            and math.isclose(90.0 - args.incident_theta_deg, 0.5)
+            and math.isclose(args.incident_phi_deg, 15.0)
+            and (
+                (
+                    args.task001_model_id == "LF4"
+                    and args.degree == 4
+                    and args.requested_modes in (80, 120, 160, 240)
+                )
+                or (
+                    args.task001_model_id == "LF5"
+                    and args.degree == 5
+                    and args.requested_modes == 120
+                )
+                or (
+                    args.task001_model_id == "HF10"
+                    and args.degree == 6
+                    and args.requested_modes == 120
+                )
+            )
+        )
+        m2a_stencil_angles = {
+            (0.5, 0.0), (0.5, 5.0), (0.5, 10.0), (0.5, 15.0),
+            (0.5, 20.0), (0.5, 30.0), (0.5, 45.0), (0.5, 60.0),
+            (0.5, 75.0), (0.5, 90.0), (0.75, 15.0), (1.0, 15.0),
+            (2.0, 15.0),
+        }
+        m2a_stencil_point = bool(
+            args.task001_model_id in ("LF4", "HF10")
+            and args.degree == (4 if args.task001_model_id == "LF4" else 6)
+            and args.requested_modes == 120
+            and math.isclose(args.task001_height_nm, 120.0)
+            and math.isclose(args.task001_width_x_nm, 17.0)
+            and any(
+                math.isclose(90.0 - args.incident_theta_deg, grazing)
+                and math.isclose(args.incident_phi_deg, azimuth)
+                for grazing, azimuth in m2a_stencil_angles
+            )
+        )
+        m2a_scoped = bool(
+            args.task002_m2a_diagnostic_gate
+            and (m2a_matrix_point or m2a_stencil_point)
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == args.degree
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.allow_dirty_research
+            and args.full3d_reference is None
+            and not args.task035c_p6_h10_gate
+            and args.task001_m9_interface_quadrature_degree is None
+        )
         if (
             args.task001_surrogate_pilot_gate or args.task002_s_continuous_gate
         ) and not formal_scoped:
@@ -986,6 +1062,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "controlled M<=576 with an exact 2M pool, reviewed symmetric "
                 "interface diagnostics, standard/static memory-minimal solve "
                 "and explicit axial model identity."
+            )
+        if args.task002_m2a_diagnostic_gate and not m2a_scoped:
+            parser.error(
+                "Task002 M2A diagnostics are restricted to clean MPI-scoped "
+                "center-point p4 M80/120/160/240, p5 M120, p6 M120 or the "
+                "reviewed p4/p6 M120 low-grazing S-only stencil."
             )
     elif any(
         value is not None
@@ -1243,6 +1325,7 @@ def main() -> None:
     if (
         args.task001_surrogate_pilot_gate
         or args.task002_s_continuous_gate
+        or args.task002_m2a_diagnostic_gate
         or args.task001_m9_diagnostic_gate
     ) and comm.size not in (1, 2):
         raise SystemExit("Task001 Hybrid formal/diagnostic runs require MPI1 or MPI2.")
@@ -1292,6 +1375,7 @@ def main() -> None:
     if (
         args.task001_surrogate_pilot_gate
         or args.task002_s_continuous_gate
+        or args.task002_m2a_diagnostic_gate
         or args.task001_m9_diagnostic_gate
     ):
         task001_parameters = Task001ForwardParameters(
@@ -2274,7 +2358,7 @@ def main() -> None:
                         <= 1.0e-2
                     ),
             }
-            if args.task002_s_continuous_gate:
+            if args.task002_s_continuous_gate or args.task002_m2a_diagnostic_gate:
                 diagnostic_gates.update(sampled_gates)
             else:
                 gates.update(sampled_gates)

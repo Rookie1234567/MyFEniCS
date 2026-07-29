@@ -1,0 +1,22 @@
+{
+  "schema_version": "task002.case113-expected.v1",
+  "unchanged_gates": {
+    "true_relative_residual_max": 1e-9,
+    "assembled_interface_e_t_relative_l2_max": 0.005,
+    "exact_traction_hcurl_dual_relative_max": 0.01,
+    "volume_energy_closure_abs_max": 1e-5,
+    "peak_swap_bytes": 0,
+    "cleanup_complete": true
+  },
+  "required_records": [
+    "direct_reference.json",
+    "p_m_convergence.json",
+    "angle_stencil.json",
+    "energy_ledger.json",
+    "cutoff_diagnostics_v2.json"
+  ],
+  "formal_campaign_allowed": false,
+  "bulk_generation_allowed": false,
+  "surrogate_training_allowed": false
+}
+

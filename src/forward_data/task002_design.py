@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from typing import Any, Iterable
 
+import numpy as np
+
 from src.common.modes_3d import enumerate_diffraction_orders_3d
 
 from .orders import FIXED_M_ORDERS
@@ -79,6 +81,128 @@ def cutoff_diagnostics(
         "near_cutoff_threshold": near_cutoff_threshold,
         "near_cutoff": metric <= near_cutoff_threshold,
         "orders": rows,
+    }
+
+
+def _complex_record(value: complex) -> dict[str, float]:
+    value = complex(value)
+    return {"real": float(value.real), "imag": float(value.imag)}
+
+
+def incident_wave_audit(parameters: Task002ForwardParameters) -> dict[str, Any]:
+    """Record the runtime incident-wave identity used by the Stage-4 authority."""
+
+    parameters.validate()
+    cfg = task001_stage4_config(parameters.to_task001())
+    k = np.asarray(cfg.wavevector, dtype=np.complex128)
+    e = complex(cfg.incident_amplitude) * np.asarray(
+        cfg.polarization_vector, dtype=np.complex128,
+    )
+    h = np.cross(k, e) / (cfg.k0 * complex(cfg.mu_r))
+    poynting = 0.5 * np.real(np.cross(e, np.conj(h)))
+    k_real = np.real(k)
+    k_norm = float(np.linalg.norm(k))
+    s_norm = float(np.linalg.norm(poynting))
+    return {
+        "schema_version": "task002.incident-wave-audit.v1",
+        "wavevector": {
+            "kx": _complex_record(k[0]), "ky": _complex_record(k[1]),
+            "kz": _complex_record(k[2]),
+        },
+        "abs_k_over_k0_abs_n_air": k_norm / abs(cfg.k0 * complex(cfg.n_air)),
+        "mean_poynting": [float(value) for value in poynting],
+        "mean_poynting_norm": s_norm,
+        "k_dot_poynting": float(np.dot(k_real, poynting)),
+        "k_poynting_direction_cosine": (
+            float(np.dot(k_real, poynting) / (np.linalg.norm(k_real) * s_norm))
+            if np.linalg.norm(k_real) > 0.0 and s_norm > 0.0 else None
+        ),
+        "floquet_phase_x": _complex_record(cfg.floquet_phase_x),
+        "floquet_phase_y": _complex_record(cfg.floquet_phase_y),
+        "incident_normal_power_density": float(-poynting[2]),
+        "incident_normal_power_code_units": float(
+            -poynting[2] * (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
+        ),
+        "angle_convention": "theta_from_downward_normal_deg = 90 - grazing_deg",
+    }
+
+
+def cutoff_diagnostics_v2(
+    parameters: Task002ForwardParameters, *, max_abs_m: int = 12,
+    neighborhood_half_width_deg: float = 0.25,
+) -> dict[str, Any]:
+    """Separate incident grazing from genuine nonzero-order Rayleigh proximity."""
+
+    parameters.validate()
+    cfg = task001_stage4_config(parameters.to_task001())
+    k0 = float(cfg.k0)
+    rows: list[dict[str, Any]] = []
+    for order in _orders(parameters, max_abs_m=max_abs_m):
+        rows.append({
+            "side": "both", "m": int(order.m), "n": int(order.n),
+            "kx": _complex_record(order.alpha),
+            "ky": _complex_record(order.gamma),
+            "beta_top": _complex_record(order.beta_top),
+            "beta_bottom": _complex_record(order.beta_bottom),
+            "top_abs_beta_over_k0": abs(complex(order.beta_top)) / k0,
+            "bottom_abs_beta_over_k0": abs(complex(order.beta_bottom)) / k0,
+            "top_dispersion_propagating": bool(order.top_propagating),
+            "bottom_dispersion_propagating": bool(order.bottom_propagating),
+        })
+
+    zero = next(row for row in rows if row["m"] == 0 and row["n"] == 0)
+    nonincident_candidates = [
+        (row[f"{side}_abs_beta_over_k0"], side, row)
+        for row in rows if (row["m"], row["n"]) != (0, 0)
+        for side in ("top", "bottom")
+    ]
+    nearest_metric, nearest_side, nearest_row = min(
+        nonincident_candidates, key=lambda item: item[0],
+    )
+
+    grazing_lo = max(0.5, parameters.grazing_deg - neighborhood_half_width_deg)
+    grazing_hi = min(10.0, parameters.grazing_deg + neighborhood_half_width_deg)
+    azimuth_lo = max(0.0, parameters.azimuth_deg - neighborhood_half_width_deg)
+    azimuth_hi = min(90.0, parameters.azimuth_deg + neighborhood_half_width_deg)
+    crossing_orders: set[tuple[int, int]] = set()
+    propagation_states: dict[tuple[int, int], set[bool]] = {}
+    for grazing in np.linspace(grazing_lo, grazing_hi, 11):
+        for azimuth in np.linspace(azimuth_lo, azimuth_hi, 11):
+            probe = Task002ForwardParameters(
+                parameters.height_nm, parameters.width_x_nm, float(grazing),
+                float(azimuth), parameters.model_id,
+            )
+            for order in _orders(probe, max_abs_m=max_abs_m):
+                if (order.m, order.n) == (0, 0):
+                    continue
+                key = (int(order.m), int(order.n))
+                propagation_states.setdefault(key, set()).add(bool(order.top_propagating))
+    crossing_orders.update(
+        key for key, states in propagation_states.items() if len(states) > 1
+    )
+    return {
+        "schema_version": "task002.cutoff-diagnostics.v2",
+        "incident_specular_abs_beta_over_k0": zero["top_abs_beta_over_k0"],
+        "nearest_nonincident_abs_beta_over_k0": float(nearest_metric),
+        "nearest_order": {
+            "side": nearest_side, "m": nearest_row["m"], "n": nearest_row["n"],
+        },
+        "rayleigh_crossing_in_local_angle_neighborhood": bool(crossing_orders),
+        "crossing_nonzero_orders": [
+            {"side": "top", "m": m, "n": n} for m, n in sorted(crossing_orders)
+        ],
+        "local_angle_neighborhood": {
+            "grazing_deg": [grazing_lo, grazing_hi],
+            "azimuth_deg": [azimuth_lo, azimuth_hi],
+            "grid_shape": [11, 11],
+            "scope": "lossless top-port nonzero diffraction orders",
+        },
+        "interpretation": (
+            "incident m0 grazing is reported separately and is not classified as "
+            "a nonzero-order Rayleigh crossing"
+        ),
+        "orders": rows,
+        "incident_wave_audit": incident_wave_audit(parameters),
     }
 
 
