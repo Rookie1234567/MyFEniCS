@@ -16,6 +16,7 @@ solved shadow endpoint.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import gc
 import hashlib
 import json
 import math
@@ -26,6 +27,7 @@ from typing import Any, Mapping
 from basix.ufl import element
 from mpi4py import MPI
 import numpy as np
+from petsc4py import PETSc
 import ufl
 
 from dolfinx import default_real_type, fem
@@ -43,11 +45,15 @@ class Task035eShadowTransferError(RuntimeError):
 
 @dataclass(frozen=True, slots=True)
 class Task035eShadowFieldTransfer:
-    """Transferred current field and its exact-sequence audit."""
+    """Transferred current field and its exact-sequence audit.
 
-    current_field: fem.Function
+    Reconstructed current-mesh and round-trip objects are transfer
+    temporaries.  Returning them kept an otherwise unused second p6 mesh
+    alive throughout all 59 adjoint solves, so the public result deliberately
+    owns only the injected field on the already-live shadow mesh.
+    """
+
     shadow_field: fem.Function
-    current_mesh_data: Any
     audit: Mapping[str, Any]
 
 
@@ -315,6 +321,31 @@ def _all_cells(space: Any) -> np.ndarray:
     return np.arange(
         index_map.size_local + index_map.num_ghosts,
         dtype=np.int32,
+    )
+
+
+def _release_transfer_temporaries(
+    communicator: MPI.Intracomm,
+) -> Mapping[str, Any]:
+    """Collect Python/PETSc garbage after caller drops transfer temporaries."""
+
+    gc.collect()
+    PETSc.garbage_cleanup(communicator)
+    gc.collect()
+    return MappingProxyType(
+        {
+            "schema_version": (
+                "task035e.shadow-transfer-temporary-lifecycle.v1"
+            ),
+            "pass": True,
+            "current_field_returned": False,
+            "current_mesh_data_returned": False,
+            "round_trip_field_returned": False,
+            "python_gc_called": True,
+            "petsc_garbage_cleanup_called": True,
+            "native_allocator_release_timing_claimed": False,
+            "ordinary_default_changed": False,
+        }
     )
 
 
@@ -678,6 +709,9 @@ def _same_forest_p_shadow_transfer(
         "full_vector_python_allgather_used": False,
         "ordinary_default_changed": False,
     }
+    current_field = None
+    temporary_lifecycle = _release_transfer_temporaries(comm)
+    unsigned["temporary_lifecycle"] = dict(temporary_lifecycle)
     audit = {
         **unsigned,
         "transfer_sha256": _json_sha256(
@@ -691,9 +725,7 @@ def _same_forest_p_shadow_transfer(
             + json.dumps(checks, sort_keys=True)
         )
     return Task035eShadowFieldTransfer(
-        current_field=current_field,
         shadow_field=shadow_field,
-        current_mesh_data=shadow_view.mesh_data,
         audit=MappingProxyType(audit),
     )
 
@@ -905,6 +937,10 @@ def transfer_task035e_snapshot_to_shadow_p6(
     shadow_plan_sha = (
         shadow_view.mesh_data.local_h_context.plan_file_sha256
     )
+    current_field = None
+    current_mesh_data = None
+    round_trip = None
+    temporary_lifecycle = _release_transfer_temporaries(comm)
     unsigned = {
         "schema_version": TRANSFER_SCHEMA,
         "status": (
@@ -945,6 +981,7 @@ def transfer_task035e_snapshot_to_shadow_p6(
         "shadow_endpoint_reused_as_injected_current": False,
         "hidden_reference_consumed": False,
         "full_vector_python_allgather_used": False,
+        "temporary_lifecycle": dict(temporary_lifecycle),
         "ordinary_default_changed": False,
     }
     audit = {
@@ -960,9 +997,7 @@ def transfer_task035e_snapshot_to_shadow_p6(
             + json.dumps(checks, sort_keys=True)
         )
     return Task035eShadowFieldTransfer(
-        current_field=current_field,
         shadow_field=shadow_field,
-        current_mesh_data=current_mesh_data,
         audit=MappingProxyType(audit),
     )
 

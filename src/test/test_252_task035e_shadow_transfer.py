@@ -180,7 +180,21 @@ def test_same_forest_p_shadow_reuses_existing_p6_carrier(
         transfer.audit["reconstruction"]["nonmatching_interpolation_used"]
         is False
     )
-    assert transfer.current_mesh_data is view.mesh_data
+    assert not hasattr(transfer, "current_field")
+    assert not hasattr(transfer, "current_mesh_data")
+    assert transfer.audit["temporary_lifecycle"] == {
+        "schema_version": (
+            "task035e.shadow-transfer-temporary-lifecycle.v1"
+        ),
+        "pass": True,
+        "current_field_returned": False,
+        "current_mesh_data_returned": False,
+        "round_trip_field_returned": False,
+        "python_gc_called": True,
+        "petsc_garbage_cleanup_called": True,
+        "native_allocator_release_timing_claimed": False,
+        "ordinary_default_changed": False,
+    }
     np.testing.assert_array_equal(
         transfer.shadow_field.x.petsc_vec.getArray(readonly=True),
         owned,
