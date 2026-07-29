@@ -1,0 +1,296 @@
+{
+  "action_id": "cycle1.p-up.df91093690c2b7bb",
+  "action_identity_sha256": "18ff3a0fb0d0d14e8d2bb58e78395d5a9eab2537fe1abd1a7ee5d73bfe0384af",
+  "action_sha256": "99f42099b70baf83ad5cd1fa1d364c4277031cf4e2e99970b2afdb06a58ac928",
+  "algorithm_sha256": "5018922eb40ed4f5abe81a8d824ba719f72e1ab54bf5ad3866c88d1458055624",
+  "canonical_target_ids": [
+    "cell:r0:l1:i1:j0:k0",
+    "cell:r0:l1:i1:j1:k0",
+    "cell:r1:l1:i1:j1:k1",
+    "cell:r5:l1:i0:j0:k1",
+    "cell:r5:l1:i1:j0:k0",
+    "cell:r5:l1:i1:j1:k0",
+    "cell:r5:l1:i1:j1:k1",
+    "cell:r8:l1:i1:j0:k1",
+    "cell:r8:l1:i1:j1:k1",
+    "cell:r11:l1:i0:j0:k1",
+    "cell:r11:l1:i1:j0:k1",
+    "cell:r14:l0:i0:j0:k0",
+    "cell:r21:l0:i0:j0:k0",
+    "cell:r26:l0:i0:j0:k0",
+    "cell:r29:l0:i0:j0:k0",
+    "cell:r42:l1:i0:j0:k0",
+    "cell:r42:l1:i1:j0:k0",
+    "cell:r42:l1:i1:j1:k0",
+    "cell:r43:l0:i0:j0:k0",
+    "cell:r44:l1:i0:j0:k0",
+    "cell:r44:l1:i0:j1:k0",
+    "cell:r44:l1:i1:j0:k0",
+    "cell:r45:l1:i0:j0:k0",
+    "cell:r45:l1:i0:j0:k1"
+  ],
+  "cycle_index": 1,
+  "degree_deltas": [
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 0,
+        "k": 0,
+        "level": 1,
+        "root": 0
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 1,
+        "k": 0,
+        "level": 1,
+        "root": 0
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 1,
+        "k": 1,
+        "level": 1,
+        "root": 1
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 1,
+        "level": 1,
+        "root": 5
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 0,
+        "k": 0,
+        "level": 1,
+        "root": 5
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 1,
+        "k": 0,
+        "level": 1,
+        "root": 5
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 1,
+        "k": 1,
+        "level": 1,
+        "root": 5
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 0,
+        "k": 1,
+        "level": 1,
+        "root": 8
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 1,
+        "k": 1,
+        "level": 1,
+        "root": 8
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 1,
+        "level": 1,
+        "root": 11
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 0,
+        "k": 1,
+        "level": 1,
+        "root": 11
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 0,
+        "level": 0,
+        "root": 14
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 0,
+        "level": 0,
+        "root": 21
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 0,
+        "level": 0,
+        "root": 26
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 0,
+        "level": 0,
+        "root": 29
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 0,
+        "level": 1,
+        "root": 42
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 0,
+        "k": 0,
+        "level": 1,
+        "root": 42
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 1,
+        "k": 0,
+        "level": 1,
+        "root": 42
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 0,
+        "level": 0,
+        "root": 43
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 0,
+        "level": 1,
+        "root": 44
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 1,
+        "k": 0,
+        "level": 1,
+        "root": 44
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 1,
+        "j": 0,
+        "k": 0,
+        "level": 1,
+        "root": 44
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 0,
+        "level": 1,
+        "root": 45
+      }
+    },
+    {
+      "delta": 1,
+      "key": {
+        "i": 0,
+        "j": 0,
+        "k": 1,
+        "level": 1,
+        "root": 45
+      }
+    }
+  ],
+  "expected_added_leaf_keys": [],
+  "expected_net_added_leaf_count": 0,
+  "expected_next_cell_degree_plan_sha256": "b671a5ae0258bd6f93e21071caf1b9e240c10dafe2679259e407da1bc5923fa6",
+  "expected_next_degree_plan_sha256": "4feae89dc9c72b375bb3818556866ed2c34225e11d42717a6b48e99ca684e5a3",
+  "expected_next_forest_geometry_sha256": "515e9bc91dec7ae32a9c8b2b0261e0942af890ce0ccc514f1ffae4f2a5bb9daf",
+  "expected_next_leaf_catalog_sha256": "f9b66659f7d71a6b68cc6e410d080d3b9e8d4094fb65dcb8d9feef3c6a177a1f",
+  "expected_removed_leaf_keys": [],
+  "from_cell_degree_plan_sha256": "51ffc8e0f7887d8b2731a0df247fa253535f84d8c2a985d54f00aef03d0b2db8",
+  "from_degree_plan_sha256": "7e8abf99b54aac8dbe2684448c0f143f83e2e9f221fa4c2ad3b8cdf3cf24c1c7",
+  "from_forest_geometry_sha256": "515e9bc91dec7ae32a9c8b2b0261e0942af890ce0ccc514f1ffae4f2a5bb9daf",
+  "from_leaf_catalog_sha256": "f9b66659f7d71a6b68cc6e410d080d3b9e8d4094fb65dcb8d9feef3c6a177a1f",
+  "from_state_sha256": "5a90faa5ef8e3132900d075c06404f4ee3e8c8d311d3493d37e242086a52c15c",
+  "kind": "p-up",
+  "maximum_level": null,
+  "requested_split_keys": [],
+  "root_catalog_sha256": "2fa5f38d3664e724c7c4a796bee57c14f7dbca02af0e2885b9b523b02ffb9fe1",
+  "schema_version": "task035e.hp-transition-action.v2",
+  "source_sha": "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+  "stage_prefix_length": 0,
+  "stage_prefix_sha256": "ebd46fc11c03bd478dbd75b076cc9009e2a8b7a82dbe436875f42f8953667bfb",
+  "status": "hp_transition_action_closed"
+}

@@ -1,0 +1,546 @@
+{
+  "action_id": "cycle3.h-refine.5f66e74fe44a3028",
+  "action_identity_sha256": "c5438c44bf21c3afa3da094f384736819776a4a0880ae467cfda513929fec82b",
+  "action_sha256": "36ba4d71a82728f393cbdc48b9230d1aa9bdbaf88f4d197de915d1de60c3f638",
+  "algorithm_sha256": "5018922eb40ed4f5abe81a8d824ba719f72e1ab54bf5ad3866c88d1458055624",
+  "canonical_target_ids": [
+    "cell:r2:l1:i1:j0:k1"
+  ],
+  "cycle_index": 3,
+  "degree_deltas": [],
+  "expected_added_leaf_keys": [
+    {
+      "i": 0,
+      "j": 0,
+      "k": 2,
+      "level": 2,
+      "root": 0
+    },
+    {
+      "i": 0,
+      "j": 0,
+      "k": 3,
+      "level": 2,
+      "root": 0
+    },
+    {
+      "i": 0,
+      "j": 1,
+      "k": 2,
+      "level": 2,
+      "root": 0
+    },
+    {
+      "i": 0,
+      "j": 1,
+      "k": 3,
+      "level": 2,
+      "root": 0
+    },
+    {
+      "i": 1,
+      "j": 0,
+      "k": 2,
+      "level": 2,
+      "root": 0
+    },
+    {
+      "i": 1,
+      "j": 0,
+      "k": 3,
+      "level": 2,
+      "root": 0
+    },
+    {
+      "i": 1,
+      "j": 1,
+      "k": 2,
+      "level": 2,
+      "root": 0
+    },
+    {
+      "i": 1,
+      "j": 1,
+      "k": 3,
+      "level": 2,
+      "root": 0
+    },
+    {
+      "i": 2,
+      "j": 0,
+      "k": 2,
+      "level": 2,
+      "root": 2
+    },
+    {
+      "i": 2,
+      "j": 0,
+      "k": 3,
+      "level": 2,
+      "root": 2
+    },
+    {
+      "i": 2,
+      "j": 1,
+      "k": 2,
+      "level": 2,
+      "root": 2
+    },
+    {
+      "i": 2,
+      "j": 1,
+      "k": 3,
+      "level": 2,
+      "root": 2
+    },
+    {
+      "i": 3,
+      "j": 0,
+      "k": 2,
+      "level": 2,
+      "root": 2
+    },
+    {
+      "i": 3,
+      "j": 0,
+      "k": 3,
+      "level": 2,
+      "root": 2
+    },
+    {
+      "i": 3,
+      "j": 1,
+      "k": 2,
+      "level": 2,
+      "root": 2
+    },
+    {
+      "i": 3,
+      "j": 1,
+      "k": 3,
+      "level": 2,
+      "root": 2
+    },
+    {
+      "i": 0,
+      "j": 2,
+      "k": 2,
+      "level": 2,
+      "root": 3
+    },
+    {
+      "i": 0,
+      "j": 2,
+      "k": 3,
+      "level": 2,
+      "root": 3
+    },
+    {
+      "i": 0,
+      "j": 3,
+      "k": 2,
+      "level": 2,
+      "root": 3
+    },
+    {
+      "i": 0,
+      "j": 3,
+      "k": 3,
+      "level": 2,
+      "root": 3
+    },
+    {
+      "i": 1,
+      "j": 2,
+      "k": 2,
+      "level": 2,
+      "root": 3
+    },
+    {
+      "i": 1,
+      "j": 2,
+      "k": 3,
+      "level": 2,
+      "root": 3
+    },
+    {
+      "i": 1,
+      "j": 3,
+      "k": 2,
+      "level": 2,
+      "root": 3
+    },
+    {
+      "i": 1,
+      "j": 3,
+      "k": 3,
+      "level": 2,
+      "root": 3
+    },
+    {
+      "i": 2,
+      "j": 2,
+      "k": 2,
+      "level": 2,
+      "root": 5
+    },
+    {
+      "i": 2,
+      "j": 2,
+      "k": 3,
+      "level": 2,
+      "root": 5
+    },
+    {
+      "i": 2,
+      "j": 3,
+      "k": 2,
+      "level": 2,
+      "root": 5
+    },
+    {
+      "i": 2,
+      "j": 3,
+      "k": 3,
+      "level": 2,
+      "root": 5
+    },
+    {
+      "i": 3,
+      "j": 2,
+      "k": 2,
+      "level": 2,
+      "root": 5
+    },
+    {
+      "i": 3,
+      "j": 2,
+      "k": 3,
+      "level": 2,
+      "root": 5
+    },
+    {
+      "i": 3,
+      "j": 3,
+      "k": 2,
+      "level": 2,
+      "root": 5
+    },
+    {
+      "i": 3,
+      "j": 3,
+      "k": 3,
+      "level": 2,
+      "root": 5
+    },
+    {
+      "i": 0,
+      "j": 0,
+      "k": 0,
+      "level": 2,
+      "root": 6
+    },
+    {
+      "i": 0,
+      "j": 0,
+      "k": 1,
+      "level": 2,
+      "root": 6
+    },
+    {
+      "i": 0,
+      "j": 1,
+      "k": 0,
+      "level": 2,
+      "root": 6
+    },
+    {
+      "i": 0,
+      "j": 1,
+      "k": 1,
+      "level": 2,
+      "root": 6
+    },
+    {
+      "i": 1,
+      "j": 0,
+      "k": 0,
+      "level": 2,
+      "root": 6
+    },
+    {
+      "i": 1,
+      "j": 0,
+      "k": 1,
+      "level": 2,
+      "root": 6
+    },
+    {
+      "i": 1,
+      "j": 1,
+      "k": 0,
+      "level": 2,
+      "root": 6
+    },
+    {
+      "i": 1,
+      "j": 1,
+      "k": 1,
+      "level": 2,
+      "root": 6
+    },
+    {
+      "i": 2,
+      "j": 0,
+      "k": 0,
+      "level": 2,
+      "root": 8
+    },
+    {
+      "i": 2,
+      "j": 0,
+      "k": 1,
+      "level": 2,
+      "root": 8
+    },
+    {
+      "i": 2,
+      "j": 1,
+      "k": 0,
+      "level": 2,
+      "root": 8
+    },
+    {
+      "i": 2,
+      "j": 1,
+      "k": 1,
+      "level": 2,
+      "root": 8
+    },
+    {
+      "i": 3,
+      "j": 0,
+      "k": 0,
+      "level": 2,
+      "root": 8
+    },
+    {
+      "i": 3,
+      "j": 0,
+      "k": 1,
+      "level": 2,
+      "root": 8
+    },
+    {
+      "i": 3,
+      "j": 1,
+      "k": 0,
+      "level": 2,
+      "root": 8
+    },
+    {
+      "i": 3,
+      "j": 1,
+      "k": 1,
+      "level": 2,
+      "root": 8
+    },
+    {
+      "i": 0,
+      "j": 2,
+      "k": 0,
+      "level": 2,
+      "root": 9
+    },
+    {
+      "i": 0,
+      "j": 2,
+      "k": 1,
+      "level": 2,
+      "root": 9
+    },
+    {
+      "i": 0,
+      "j": 3,
+      "k": 0,
+      "level": 2,
+      "root": 9
+    },
+    {
+      "i": 0,
+      "j": 3,
+      "k": 1,
+      "level": 2,
+      "root": 9
+    },
+    {
+      "i": 1,
+      "j": 2,
+      "k": 0,
+      "level": 2,
+      "root": 9
+    },
+    {
+      "i": 1,
+      "j": 2,
+      "k": 1,
+      "level": 2,
+      "root": 9
+    },
+    {
+      "i": 1,
+      "j": 3,
+      "k": 0,
+      "level": 2,
+      "root": 9
+    },
+    {
+      "i": 1,
+      "j": 3,
+      "k": 1,
+      "level": 2,
+      "root": 9
+    },
+    {
+      "i": 2,
+      "j": 2,
+      "k": 0,
+      "level": 2,
+      "root": 11
+    },
+    {
+      "i": 2,
+      "j": 2,
+      "k": 1,
+      "level": 2,
+      "root": 11
+    },
+    {
+      "i": 2,
+      "j": 3,
+      "k": 0,
+      "level": 2,
+      "root": 11
+    },
+    {
+      "i": 2,
+      "j": 3,
+      "k": 1,
+      "level": 2,
+      "root": 11
+    },
+    {
+      "i": 3,
+      "j": 2,
+      "k": 0,
+      "level": 2,
+      "root": 11
+    },
+    {
+      "i": 3,
+      "j": 2,
+      "k": 1,
+      "level": 2,
+      "root": 11
+    },
+    {
+      "i": 3,
+      "j": 3,
+      "k": 0,
+      "level": 2,
+      "root": 11
+    },
+    {
+      "i": 3,
+      "j": 3,
+      "k": 1,
+      "level": 2,
+      "root": 11
+    }
+  ],
+  "expected_net_added_leaf_count": 56,
+  "expected_next_cell_degree_plan_sha256": "fd4d9981bc113b9084c005514491e3050ba8c4d03ea2c702f59d15a85cee3c77",
+  "expected_next_degree_plan_sha256": "7dd9955a81f0aa32042db1a9310685c660d2bd6c72d8255eb14982ac4a9c7739",
+  "expected_next_forest_geometry_sha256": "8ee9ef5d7bba60db26f6b90adc6b1ab7cb7057ff6da9a2aae5682901a242d171",
+  "expected_next_leaf_catalog_sha256": "973f36bbb7a8386dadf9e070ce967fda6846628d238027ddd3a0594e8cbcb1a5",
+  "expected_removed_leaf_keys": [
+    {
+      "i": 0,
+      "j": 0,
+      "k": 1,
+      "level": 1,
+      "root": 0
+    },
+    {
+      "i": 1,
+      "j": 0,
+      "k": 1,
+      "level": 1,
+      "root": 2
+    },
+    {
+      "i": 0,
+      "j": 1,
+      "k": 1,
+      "level": 1,
+      "root": 3
+    },
+    {
+      "i": 1,
+      "j": 1,
+      "k": 1,
+      "level": 1,
+      "root": 5
+    },
+    {
+      "i": 0,
+      "j": 0,
+      "k": 0,
+      "level": 1,
+      "root": 6
+    },
+    {
+      "i": 1,
+      "j": 0,
+      "k": 0,
+      "level": 1,
+      "root": 8
+    },
+    {
+      "i": 0,
+      "j": 1,
+      "k": 0,
+      "level": 1,
+      "root": 9
+    },
+    {
+      "i": 1,
+      "j": 1,
+      "k": 0,
+      "level": 1,
+      "root": 11
+    }
+  ],
+  "from_cell_degree_plan_sha256": "a807336a4fe0e1288526fde3d62304c342dd8ae0adf39221454179786043d10b",
+  "from_degree_plan_sha256": "fc6f073af6ffdbd2d2adaffb3531b96c5062a3f2cb2e98c743ecc7732ba9535c",
+  "from_forest_geometry_sha256": "af1215cb4506e7d6c1773e85cda5000850886d48a4ad57932dc40a1c4b360d22",
+  "from_leaf_catalog_sha256": "e905a71fa4e6373527fa75973785ca797cdd3f9f07aa5c0604173deb7cd2f1dd",
+  "from_state_sha256": "82756c68548c6f149429bf7e25b680649ce3e3053d1c1999554d6948d425fcee",
+  "kind": "h-refine",
+  "maximum_level": 2,
+  "requested_split_keys": [
+    {
+      "i": 1,
+      "j": 0,
+      "k": 1,
+      "level": 1,
+      "root": 2
+    }
+  ],
+  "root_catalog_sha256": "2fa5f38d3664e724c7c4a796bee57c14f7dbca02af0e2885b9b523b02ffb9fe1",
+  "schema_version": "task035e.hp-transition-action.v2",
+  "source_sha": "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+  "stage_prefix_length": 2,
+  "stage_prefix_sha256": "792ccf37a7545fae6b0c188e40c4515b878d8165d1004f09f8ffec4668b9e803",
+  "status": "hp_transition_action_closed"
+}
