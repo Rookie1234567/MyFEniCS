@@ -7,8 +7,10 @@ from mpi4py import MPI
 import numpy as np
 from petsc4py import PETSc
 import pytest
+import ufl
 
 from dolfinx import default_real_type, fem, mesh
+from dolfinx.fem import petsc as fem_petsc
 from basix.ufl import element
 
 from src.adaptivity.task035e_goal_gradients import (
@@ -23,13 +25,13 @@ from src.adaptivity.task035e_goal_gradients import (
 from src.adaptivity.blind_controller.contracts import FORMAL_GOAL_IDS
 
 
-def _space(domain: mesh.Mesh):
+def _space(domain: mesh.Mesh, *, degree: int = 2):
     return fem.functionspace(
         domain,
         element(
             "N1curl",
             domain.basix_cell(),
-            2,
+            degree,
             dtype=default_real_type,
         ),
     )
@@ -125,9 +127,8 @@ def test_volume_gradient_uses_field_scaled_quadratic_difference() -> None:
     field = fem.Function(space)
     start = int(space.dofmap.index_map.local_range[0])
     rows = start + np.arange(len(field.x.array), dtype=float)
-    field.x.array[:] = (
-        0.7 * np.cos(0.031 * (rows + 1.0))
-        + 0.4j * np.sin(0.047 * (rows + 1.0))
+    field.x.array[:] = 0.7 * np.cos(0.031 * (rows + 1.0)) + 0.4j * np.sin(
+        0.047 * (rows + 1.0)
     )
     field.x.scatter_forward()
     cell_map = domain.topology.index_map(domain.topology.dim)
@@ -153,12 +154,152 @@ def test_volume_gradient_uses_field_scaled_quadratic_difference() -> None:
         port_metrics={"incident_power_code_units": 1.3},
     )
     gradient, audit = _assemble_volume_p6_gradient(view)
+    test = ufl.TestFunction(space)
+    measure = ufl.Measure(
+        "dx",
+        domain=domain,
+        subdomain_data=cell_tags,
+    )
+    coefficient = 0.5 * 0.35 * 0.7 / 1.3
+    reference_gradient = fem_petsc.assemble_vector(
+        fem.form(
+            PETSc.ScalarType(2.0 * coefficient) * ufl.inner(field, test) * measure(1)
+        )
+    )
+    reference_gradient.ghostUpdate(
+        addv=PETSc.InsertMode.ADD_VALUES,
+        mode=PETSc.ScatterMode.REVERSE,
+    )
+    reference_value = float(
+        np.real(
+            comm.allreduce(
+                fem.assemble_scalar(
+                    fem.form(
+                        PETSc.ScalarType(coefficient)
+                        * ufl.real(ufl.inner(field, field))
+                        * measure(1)
+                    )
+                ),
+                op=MPI.SUM,
+            )
+        )
+    )
+    difference = gradient.copy()
     try:
+        difference.axpy(
+            PETSc.ScalarType(-1.0),
+            reference_gradient,
+        )
+        assert difference.norm() / reference_gradient.norm() <= 2.0e-12
+        assert audit["goal_value"] == pytest.approx(
+            reference_value,
+            rel=2.0e-12,
+            abs=2.0e-13,
+        )
         assert audit["finite_difference_relative_step"] == 1.0e-5
         assert audit["finite_difference_absolute_step"] > 1.0e-7
         assert audit["finite_difference_relative_error"] <= 2.0e-7
         assert audit["field_l2_norm"] > 0.0
         assert audit["direction_l2_norm"] > 0.0
+        assert audit["ffcx_jit_form_loaded"] is False
+        assert audit["affine_geometry_gate_pass"] is True
+        assert audit["quadrature_degree"] == 12
+        assert audit["quadrature_point_count"] == 343
+    finally:
+        difference.destroy()
+        reference_gradient.destroy()
+        gradient.destroy()
+
+
+def test_volume_gradient_rejects_nonaffine_hexahedron_collectively() -> None:
+    comm = MPI.COMM_WORLD
+    domain = mesh.create_unit_cube(
+        comm,
+        2,
+        1,
+        max(2, 2 * comm.size),
+        cell_type=mesh.CellType.hexahedron,
+    )
+    space = _space(domain)
+    field = fem.Function(space)
+    field.x.array[:] = PETSc.ScalarType(1.0 + 0.25j)
+    field.x.scatter_forward()
+    cell_map = domain.topology.index_map(domain.topology.dim)
+    owned_cells = np.arange(cell_map.size_local, dtype=np.int32)
+    cell_tags = mesh.meshtags(
+        domain,
+        domain.topology.dim,
+        owned_cells,
+        np.ones(len(owned_cells), dtype=np.int32),
+    )
+    if comm.rank == 0:
+        geometry_rows = domain.geometry.dofmap[0]
+        domain.geometry.x[int(geometry_rows[-1]), 0] += 0.013
+    view = SimpleNamespace(
+        field=field,
+        mesh_data=SimpleNamespace(
+            mesh=domain,
+            cell_tags=cell_tags,
+        ),
+        config=SimpleNamespace(
+            k0=0.35,
+            eps_grating=2.1 + 0.7j,
+            eps_substrate=1.4 + 0.0j,
+            tags=SimpleNamespace(grating=1, substrate=2),
+        ),
+        port_metrics={"incident_power_code_units": 1.3},
+    )
+    with pytest.raises(
+        RuntimeError,
+        match="collective A_volume affine-hexahedron gate failed",
+    ):
+        _assemble_volume_p6_gradient(view)
+
+
+def test_volume_gradient_p6_affine_workspace_is_bounded() -> None:
+    comm = MPI.COMM_WORLD
+    domain = mesh.create_unit_cube(
+        comm,
+        1,
+        1,
+        max(1, comm.size),
+        cell_type=mesh.CellType.hexahedron,
+    )
+    space = _space(domain, degree=6)
+    field = fem.Function(space)
+    rows = int(space.dofmap.index_map.local_range[0]) + np.arange(
+        len(field.x.array), dtype=float
+    )
+    field.x.array[:] = 0.3 * np.cos(0.019 * (rows + 1.0)) + 0.2j * np.sin(
+        0.029 * (rows + 1.0)
+    )
+    field.x.scatter_forward()
+    cell_map = domain.topology.index_map(domain.topology.dim)
+    owned_cells = np.arange(cell_map.size_local, dtype=np.int32)
+    cell_tags = mesh.meshtags(
+        domain,
+        domain.topology.dim,
+        owned_cells,
+        np.ones(len(owned_cells), dtype=np.int32),
+    )
+    view = SimpleNamespace(
+        field=field,
+        mesh_data=SimpleNamespace(mesh=domain, cell_tags=cell_tags),
+        config=SimpleNamespace(
+            k0=0.35,
+            eps_grating=2.1 + 0.7j,
+            eps_substrate=1.4 + 0.0j,
+            tags=SimpleNamespace(grating=1, substrate=2),
+        ),
+        port_metrics={"incident_power_code_units": 1.3},
+    )
+    gradient, audit = _assemble_volume_p6_gradient(view)
+    try:
+        assert gradient.getSize() == space.dofmap.index_map.size_global
+        assert gradient.norm() > 0.0
+        assert audit["finite_difference_relative_error"] <= 2.0e-7
+        assert audit["quadrature_point_count"] == 343
+        assert audit["maximum_live_basis_workspace_bytes_per_rank"] < 32 * 1024**2
     finally:
         gradient.destroy()
 

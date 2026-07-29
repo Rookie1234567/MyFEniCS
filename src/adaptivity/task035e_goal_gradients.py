@@ -22,13 +22,12 @@ import tempfile
 from types import MappingProxyType
 from typing import Any, BinaryIO, Mapping
 
+import basix
 from mpi4py import MPI
 import numpy as np
 from petsc4py import PETSc
-import ufl
 
-from dolfinx import fem, geometry
-from dolfinx.fem import petsc as fem_petsc
+from dolfinx import geometry
 
 from src.postprocessing.full3d_reference import (
     periodic_plane_sample_grid,
@@ -449,21 +448,24 @@ def _auxiliary_gradients(
 def _assemble_volume_p6_gradient(
     view: Any,
 ) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Assemble the lossy-volume derivative without a giant p6 JIT module.
+
+    Task035e is restricted to the fixed rectangular-block hexahedral geometry.
+    Every leaf, including a locally refined leaf, therefore has an affine
+    coordinate map.  A degree-12 tensor Gauss rule integrates the p6
+    first-family Nedelec mass product exactly on those affine cells.  The
+    explicit affine gate below fails closed before this path could be credited
+    on a curved or otherwise non-affine cell.
+    """
+
     field = view.field
     space = field.function_space
     mesh_data = view.mesh_data
     config = view.config
-    incident_power = float(
-        view.port_metrics["incident_power_code_units"]
-    )
+    comm = mesh_data.mesh.comm
+    incident_power = float(view.port_metrics["incident_power_code_units"])
     if not math.isfinite(incident_power) or incident_power <= 0.0:
         raise ValueError("A_volume gradient requires positive incident power")
-    test = ufl.TestFunction(space)
-    measure = ufl.Measure(
-        "dx",
-        domain=mesh_data.mesh,
-        subdomain_data=mesh_data.cell_tags,
-    )
     coefficients = (
         (
             int(config.tags.grating),
@@ -480,56 +482,146 @@ def _assemble_volume_p6_gradient(
             / incident_power,
         ),
     )
-    linear_form = PETSc.ScalarType(0.0) * ufl.inner(field, test) * measure
-    value_form = PETSc.ScalarType(0.0) * ufl.inner(field, field) * measure
-    for tag, coefficient in coefficients:
-        if coefficient > 0.0:
-            linear_form += (
-                PETSc.ScalarType(2.0 * coefficient)
-                * ufl.inner(field, test)
-                * measure(tag)
-            )
-            value_form += (
-                PETSc.ScalarType(coefficient)
-                * ufl.real(ufl.inner(field, field))
-                * measure(tag)
-            )
-    gradient = fem_petsc.assemble_vector(fem.form(linear_form))
-    gradient.ghostUpdate(
-        addv=PETSc.InsertMode.ADD_VALUES,
-        mode=PETSc.ScatterMode.REVERSE,
+    active_coefficients = {
+        tag: coefficient for tag, coefficient in coefficients if coefficient > 0.0
+    }
+    quadrature_degree = 12
+    quadrature_points, quadrature_weights = basix.make_quadrature(
+        basix.CellType.hexahedron,
+        quadrature_degree,
     )
-    local_value = fem.assemble_scalar(fem.form(value_form))
-    goal_value = float(
-        np.real(
-            mesh_data.mesh.comm.allreduce(local_value, op=MPI.SUM)
-        )
+    quadrature_points = np.asarray(quadrature_points, dtype=np.float64)
+    quadrature_weights = np.asarray(quadrature_weights, dtype=np.float64)
+    reference_basis = np.asarray(
+        space.element.basix_element.tabulate(
+            0,
+            quadrature_points,
+        )[0],
+        dtype=np.float64,
     )
-    if (
-        not np.all(
-            np.isfinite(
-                gradient.getArray(readonly=True)
+    reference_vertices = np.asarray(
+        basix.geometry(basix.CellType.hexahedron),
+        dtype=np.float64,
+    )
+    domain = space.mesh
+    domain.topology.create_entity_permutations()
+    permutation_info = domain.topology.get_cell_permutation_info()
+    cell_map = domain.topology.index_map(domain.topology.dim)
+    owned_cell_count = int(cell_map.size_local)
+    lossy_cells: list[tuple[int, float, int]] = []
+    tag_counts_local: dict[int, int] = {tag: 0 for tag in active_coefficients}
+    for tag, coefficient in active_coefficients.items():
+        for cell_raw in mesh_data.cell_tags.find(tag):
+            cell = int(cell_raw)
+            if cell >= owned_cell_count:
+                continue
+            lossy_cells.append((cell, coefficient, tag))
+            tag_counts_local[tag] += 1
+    tag_counts_global = {
+        tag: int(comm.allreduce(count, op=MPI.SUM))
+        for tag, count in tag_counts_local.items()
+    }
+    missing_tags = [tag for tag, count in tag_counts_global.items() if count <= 0]
+    if missing_tags:
+        raise RuntimeError(
+            f"A_volume lossy material tag has no owned cells: {missing_tags}"
+        )
+    cell_geometry: list[tuple[int, float, int, np.ndarray, float, float, float]] = []
+    geometry_error = None
+    try:
+        for cell, coefficient, tag in lossy_cells:
+            geometry_rows = domain.geometry.dofmap[cell]
+            coordinates = np.asarray(
+                domain.geometry.x[geometry_rows],
+                dtype=np.float64,
+            )
+            physical_vertices = np.asarray(
+                domain.geometry.cmap.push_forward(
+                    reference_vertices,
+                    coordinates,
+                ),
+                dtype=np.float64,
+            )
+            origin = physical_vertices[0]
+            jacobian = np.column_stack(
+                (
+                    physical_vertices[1] - origin,
+                    physical_vertices[2] - origin,
+                    physical_vertices[4] - origin,
+                )
+            )
+            affine_prediction = origin[None, :] + reference_vertices @ jacobian.T
+            affine_error = float(
+                np.max(
+                    np.abs(physical_vertices - affine_prediction),
+                    initial=0.0,
+                )
+            )
+            affine_scale = float(
+                np.max(
+                    np.abs(physical_vertices - origin[None, :]),
+                    initial=0.0,
+                )
+            )
+            affine_relative_error = affine_error / max(
+                affine_scale,
+                np.finfo(np.float64).tiny,
+            )
+            determinant = float(np.linalg.det(jacobian))
+            if (
+                not math.isfinite(determinant)
+                or determinant <= np.finfo(np.float64).tiny
+                or affine_relative_error > 5.0e-12
+            ):
+                raise RuntimeError(
+                    "A_volume explicit quadrature requires an affine, "
+                    "positively oriented hexahedral leaf: "
+                    f"cell={cell}, detJ={determinant:.6e}, "
+                    f"affine_relative_error={affine_relative_error:.6e}"
+                )
+            cell_geometry.append(
+                (
+                    cell,
+                    coefficient,
+                    tag,
+                    jacobian,
+                    determinant,
+                    affine_error,
+                    affine_relative_error,
+                )
+            )
+    except Exception as exc:
+        geometry_error = f"{type(exc).__name__}: {exc}"
+    geometry_errors = comm.allgather(geometry_error)
+    if any(error is not None for error in geometry_errors):
+        raise RuntimeError(
+            "collective A_volume affine-hexahedron gate failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(geometry_errors)
+                if error is not None
             )
         )
-        or not math.isfinite(goal_value)
-        or goal_value < 0.0
-    ):
-        gradient.destroy()
-        raise RuntimeError("A_volume gradient/value is invalid")
 
+    gradient = field.x.petsc_vec.duplicate()
+    gradient.set(PETSc.ScalarType(0.0))
     direction = gradient.duplicate()
+    maximum_affine_error = 0.0
+    maximum_affine_relative_error = 0.0
+    maximum_live_basis_bytes = 0
+    local_value = 0.0
+    local_plus = 0.0
+    local_minus = 0.0
     try:
         start, end = map(int, direction.getOwnershipRange())
         rows = np.arange(start, end, dtype=np.float64)
         direction.getArray()[:] = (
-            np.cos(0.017 * (rows + 1.0))
-            + 1j * np.sin(0.023 * (rows + 1.0))
+            np.cos(0.017 * (rows + 1.0)) + 1j * np.sin(0.023 * (rows + 1.0))
         ) / math.sqrt(max(direction.getSize(), 1))
         direction.ghostUpdate(
             addv=PETSc.InsertMode.INSERT_VALUES,
             mode=PETSc.ScatterMode.FORWARD,
         )
-        tangent = float(np.real(gradient.dot(direction)))
         field_norm = float(field.x.petsc_vec.norm())
         direction_norm = float(direction.norm())
         if (
@@ -548,13 +640,7 @@ def _assemble_volume_p6_gradient(
         # roundoff for the formal p6 field and spuriously destabilizes the
         # derivative Gate.
         finite_difference_relative_step = 1.0e-5
-        epsilon = (
-            finite_difference_relative_step
-            * field_norm
-            / direction_norm
-        )
-        plus = fem.Function(space)
-        minus = fem.Function(space)
+        epsilon = finite_difference_relative_step * field_norm / direction_norm
         with direction.localForm() as local_direction:
             direction_values = np.asarray(
                 local_direction.getArray(readonly=True),
@@ -565,41 +651,157 @@ def _assemble_volume_p6_gradient(
                 "A_volume finite-difference direction does not match the "
                 "ghosted p6 field layout"
             )
-        plus.x.array[:] = field.x.array + epsilon * direction_values
-        minus.x.array[:] = field.x.array - epsilon * direction_values
-        plus.x.scatter_forward()
-        minus.x.scatter_forward()
-
-        def functional(candidate: fem.Function) -> float:
-            form = PETSc.ScalarType(0.0) * ufl.inner(
-                candidate, candidate
-            ) * measure
-            for tag, coefficient in coefficients:
-                if coefficient > 0.0:
-                    form += (
-                        PETSc.ScalarType(coefficient)
-                        * ufl.real(ufl.inner(candidate, candidate))
-                        * measure(tag)
-                    )
-            local = fem.assemble_scalar(fem.form(form))
-            return float(
-                np.real(
-                    mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
+        index_map = space.dofmap.index_map
+        for (
+            cell,
+            coefficient,
+            _tag,
+            jacobian,
+            determinant,
+            affine_error,
+            affine_relative_error,
+        ) in cell_geometry:
+            maximum_affine_error = max(
+                maximum_affine_error,
+                affine_error,
+            )
+            maximum_affine_relative_error = max(
+                maximum_affine_relative_error,
+                affine_relative_error,
+            )
+            jacobians = np.repeat(
+                jacobian[None, :, :],
+                len(quadrature_points),
+                axis=0,
+            )
+            determinants = np.full(
+                len(quadrature_points),
+                determinant,
+                dtype=np.float64,
+            )
+            inverses = np.repeat(
+                np.linalg.inv(jacobian)[None, :, :],
+                len(quadrature_points),
+                axis=0,
+            )
+            physical_basis = np.asarray(
+                space.element.basix_element.push_forward(
+                    reference_basis,
+                    jacobians,
+                    determinants,
+                    inverses,
+                ),
+                dtype=np.float64,
+            )
+            oriented_basis = np.ascontiguousarray(
+                np.transpose(physical_basis, (1, 0, 2))
+            )
+            cell_info = np.asarray(
+                [permutation_info[cell]],
+                dtype=np.uint32,
+            )
+            space.element.T_apply(
+                oriented_basis.reshape(-1),
+                cell_info,
+                int(len(quadrature_points) * 3),
+            )
+            oriented_basis = np.transpose(
+                oriented_basis,
+                (1, 0, 2),
+            )
+            maximum_live_basis_bytes = max(
+                maximum_live_basis_bytes,
+                int(
+                    reference_basis.nbytes
+                    + physical_basis.nbytes
+                    + oriented_basis.nbytes
+                    + jacobians.nbytes
+                    + determinants.nbytes
+                    + inverses.nbytes
+                ),
+            )
+            local_dofs = np.asarray(
+                space.dofmap.cell_dofs(cell),
+                dtype=np.int32,
+            )
+            global_dofs = np.asarray(
+                index_map.local_to_global(local_dofs),
+                dtype=PETSc.IntType,
+            )
+            field_values = np.einsum(
+                "i,pic->pc",
+                field.x.array[local_dofs],
+                oriented_basis,
+                optimize=True,
+            )
+            perturbation_values = np.einsum(
+                "i,pic->pc",
+                direction_values[local_dofs],
+                oriented_basis,
+                optimize=True,
+            )
+            physical_weights = quadrature_weights * determinant
+            local_gradient = (
+                2.0
+                * coefficient
+                * np.einsum(
+                    "p,pc,pic->i",
+                    physical_weights,
+                    field_values,
+                    oriented_basis,
+                    optimize=True,
                 )
             )
-
-        finite_difference = (
-            functional(plus) - functional(minus)
-        ) / (2.0 * epsilon)
+            gradient.setValues(
+                global_dofs,
+                np.asarray(local_gradient, dtype=PETSc.ScalarType),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+            local_value += coefficient * float(
+                np.einsum(
+                    "p,pc,pc->",
+                    physical_weights,
+                    np.conj(field_values),
+                    field_values,
+                    optimize=True,
+                ).real
+            )
+            plus_values = field_values + epsilon * perturbation_values
+            minus_values = field_values - epsilon * perturbation_values
+            local_plus += coefficient * float(
+                np.einsum(
+                    "p,pc,pc->",
+                    physical_weights,
+                    np.conj(plus_values),
+                    plus_values,
+                    optimize=True,
+                ).real
+            )
+            local_minus += coefficient * float(
+                np.einsum(
+                    "p,pc,pc->",
+                    physical_weights,
+                    np.conj(minus_values),
+                    minus_values,
+                    optimize=True,
+                ).real
+            )
+        gradient.assemble()
+        gradient.ghostUpdate(
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        tangent = float(np.real(gradient.dot(direction)))
+        goal_value = float(comm.allreduce(local_value, op=MPI.SUM))
+        plus_value = float(comm.allreduce(local_plus, op=MPI.SUM))
+        minus_value = float(comm.allreduce(local_minus, op=MPI.SUM))
+        finite_difference = (plus_value - minus_value) / (2.0 * epsilon)
         relative = abs(tangent - finite_difference) / max(
             abs(tangent),
             abs(finite_difference),
             1.0e-13,
         )
-        if (
-            relative > 2.0e-7
-            and abs(tangent - finite_difference) > 1.0e-9
-        ):
+        if relative > 2.0e-7 and abs(tangent - finite_difference) > 1.0e-9:
             raise RuntimeError(
                 "A_volume gradient finite-difference closure failed: "
                 f"relative={relative:.6e}, "
@@ -613,19 +815,48 @@ def _assemble_volume_p6_gradient(
         raise
     finally:
         direction.destroy()
+    maximum_affine_error = float(comm.allreduce(maximum_affine_error, op=MPI.MAX))
+    maximum_affine_relative_error = float(
+        comm.allreduce(maximum_affine_relative_error, op=MPI.MAX)
+    )
+    maximum_live_basis_bytes = int(comm.allreduce(maximum_live_basis_bytes, op=MPI.MAX))
+    global_lossy_cell_count = int(comm.allreduce(len(lossy_cells), op=MPI.SUM))
+    if (
+        not np.all(np.isfinite(gradient.getArray(readonly=True)))
+        or not math.isfinite(goal_value)
+        or goal_value < 0.0
+    ):
+        gradient.destroy()
+        raise RuntimeError("A_volume gradient/value is invalid")
     return gradient, {
         "construction": (
             "exact derivative of official material "
             "0.5*k0*Im(epsilon_r)*|E|^2 / incident_power"
         ),
+        "assembly_backend": (
+            "explicit_affine_hexahedron_tensor_gauss_without_ffcx_jit"
+        ),
+        "ffcx_jit_form_loaded": False,
+        "affine_geometry_gate_pass": True,
+        "affine_geometry_relative_tolerance": 5.0e-12,
+        "affine_geometry_max_abs_error": maximum_affine_error,
+        "affine_geometry_max_relative_error": (maximum_affine_relative_error),
+        "quadrature_degree": quadrature_degree,
+        "quadrature_point_count": len(quadrature_points),
+        "quadrature_exactness": (
+            "degree-12 tensor rule for affine p6 N1curl mass products"
+        ),
+        "lossy_owned_cell_count_global": global_lossy_cell_count,
+        "lossy_material_owned_cell_counts_global": {
+            str(tag): count for tag, count in sorted(tag_counts_global.items())
+        },
+        "maximum_live_basis_workspace_bytes_per_rank": (maximum_live_basis_bytes),
         "goal_value": goal_value,
         "gradient_norm": float(gradient.norm()),
         "finite_difference_tangent": finite_difference,
         "adjoint_convention_tangent": tangent,
         "finite_difference_relative_error": relative,
-        "finite_difference_relative_step": (
-            finite_difference_relative_step
-        ),
+        "finite_difference_relative_step": (finite_difference_relative_step),
         "finite_difference_absolute_step": epsilon,
         "field_l2_norm": field_norm,
         "direction_l2_norm": direction_norm,
