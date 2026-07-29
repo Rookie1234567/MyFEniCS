@@ -1,0 +1,283 @@
+{
+  "schema_version": "task002.case114-energy-identity.v1",
+  "rows": [
+    {
+      "degree": 4,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "incident_normalization": "each run's recorded incident normal power",
+      "bottom_local": {
+        "grating_absorbed_power_code_units": 0.0029997728749615506,
+        "substrate_absorbed_power_code_units": 0.005133944421515626,
+        "total_absorbed_power_code_units": 0.008133717296477177,
+        "external_outward_poynting_flux_code_units": 0.007715880802934031,
+        "interface_outward_poynting_flux_code_units": -0.015848878553855673,
+        "discrete_balance_residual_code_units": 7.195455555344954e-07,
+        "discrete_balance_residual_over_incident_power": 1.3192782967189227e-07
+      },
+      "top_local": {
+        "grating_absorbed_power_code_units": 0.3246721673235542,
+        "substrate_absorbed_power_code_units": 0.0,
+        "total_absorbed_power_code_units": 0.3246721673235542,
+        "external_outward_poynting_flux_code_units": -0.9895720989441512,
+        "interface_outward_poynting_flux_code_units": 0.6648854731669338,
+        "discrete_balance_residual_code_units": -1.4458453663213078e-05,
+        "discrete_balance_residual_over_incident_power": -2.6509404408486775e-06
+      },
+      "middle_modal": {
+        "absorbed_power_code_units": 0.6489077069832664,
+        "z_cell_count": 10,
+        "gauss_order_per_z_cell": 4,
+        "z_evaluation_count": 40,
+        "bottom_positive_z_power_code_units": -0.015850186598920433,
+        "top_positive_z_power_code_units": -0.6647600747686254,
+        "poynting_flux_loss_code_units": 0.648909888169705,
+        "volume_minus_poynting_flux_loss_code_units": -2.1811864385767876e-06
+      },
+      "external_dtn": {
+        "raw_auxiliary_modal_power_sum": 0.8199779085827954,
+        "recorded_R_plus_T": 0.8199779085827953,
+        "auxiliary_power_identity_error": 5.724587470723463e-17
+      },
+      "whole_domain": {
+        "A_balance": 0.18002209141720465,
+        "A_volume": 0.17999603013795898,
+        "closure_error": -2.6061279245759295e-05
+      },
+      "failed_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ]
+    },
+    {
+      "degree": 4,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "incident_normalization": "each run's recorded incident normal power",
+      "bottom_local": {
+        "grating_absorbed_power_code_units": 0.011068666728014162,
+        "substrate_absorbed_power_code_units": 0.0193735009279885,
+        "total_absorbed_power_code_units": 0.03044216765600266,
+        "external_outward_poynting_flux_code_units": 0.02915705416238483,
+        "interface_outward_poynting_flux_code_units": -0.05959828627280317,
+        "discrete_balance_residual_code_units": 9.355455843212956e-07,
+        "discrete_balance_residual_over_incident_power": 1.7153118040865138e-07
+      },
+      "top_local": {
+        "grating_absorbed_power_code_units": 0.5138060759281105,
+        "substrate_absorbed_power_code_units": 0.0,
+        "total_absorbed_power_code_units": 0.5138060759281105,
+        "external_outward_poynting_flux_code_units": -1.9136353483795663,
+        "interface_outward_poynting_flux_code_units": 1.3998139354124937,
+        "discrete_balance_residual_code_units": -1.533703896217098e-05,
+        "discrete_balance_residual_over_incident_power": -2.8120280200597615e-06
+      },
+      "middle_modal": {
+        "absorbed_power_code_units": 1.338426706774714,
+        "z_cell_count": 10,
+        "gauss_order_per_z_cell": 4,
+        "z_evaluation_count": 40,
+        "bottom_positive_z_power_code_units": -0.05959813812293703,
+        "top_positive_z_power_code_units": -1.398024442676613,
+        "poynting_flux_loss_code_units": 1.338426304553676,
+        "volume_minus_poynting_flux_loss_code_units": 4.022210380316693e-07
+      },
+      "external_dtn": {
+        "raw_auxiliary_modal_power_sum": 0.6544838414088823,
+        "recorded_R_plus_T": 0.6544838414088822,
+        "auxiliary_power_identity_error": 8.673617379884035e-17
+      },
+      "whole_domain": {
+        "A_balance": 0.34551615859111784,
+        "A_volume": 0.34518623354427797,
+        "closure_error": -0.0003299250468398185
+      },
+      "failed_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ]
+    },
+    {
+      "degree": 5,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "incident_normalization": "each run's recorded incident normal power",
+      "bottom_local": {
+        "grating_absorbed_power_code_units": 0.012088843434210662,
+        "substrate_absorbed_power_code_units": 0.021425791684188497,
+        "total_absorbed_power_code_units": 0.03351463511839916,
+        "external_outward_poynting_flux_code_units": 0.03219905806447783,
+        "interface_outward_poynting_flux_code_units": -0.06571366861559294,
+        "discrete_balance_residual_code_units": 2.4567284047372073e-08,
+        "discrete_balance_residual_over_incident_power": 4.504382579217138e-09
+      },
+      "top_local": {
+        "grating_absorbed_power_code_units": 0.5308222350855177,
+        "substrate_absorbed_power_code_units": 0.0,
+        "total_absorbed_power_code_units": 0.5308222350855177,
+        "external_outward_poynting_flux_code_units": -2.0089952935110573,
+        "interface_outward_poynting_flux_code_units": 1.4781676984626073,
+        "discrete_balance_residual_code_units": -5.359962932272033e-06,
+        "discrete_balance_residual_over_incident_power": -9.827428872813612e-07
+      },
+      "middle_modal": {
+        "absorbed_power_code_units": 1.412441701158745,
+        "z_cell_count": 10,
+        "gauss_order_per_z_cell": 4,
+        "z_evaluation_count": 40,
+        "bottom_positive_z_power_code_units": -0.0657143460480058,
+        "top_positive_z_power_code_units": -1.478155949043052,
+        "poynting_flux_loss_code_units": 1.4124416029950462,
+        "volume_minus_poynting_flux_loss_code_units": 9.816369872517328e-08
+      },
+      "external_dtn": {
+        "raw_auxiliary_modal_power_sum": 0.6375572389408329,
+        "recorded_R_plus_T": 0.637557238940833,
+        "auxiliary_power_identity_error": -6.938893903907228e-17
+      },
+      "whole_domain": {
+        "A_balance": 0.362442761059167,
+        "A_volume": 0.3624400215606325,
+        "closure_error": -2.7394985344653122e-06
+      },
+      "failed_gates": []
+    },
+    {
+      "degree": 5,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "incident_normalization": "each run's recorded incident normal power",
+      "bottom_local": {
+        "grating_absorbed_power_code_units": 0.012861226086523634,
+        "substrate_absorbed_power_code_units": 0.022605291283793336,
+        "total_absorbed_power_code_units": 0.03546651737031697,
+        "external_outward_poynting_flux_code_units": 0.03402792245528234,
+        "interface_outward_poynting_flux_code_units": -0.06949398418240119,
+        "discrete_balance_residual_code_units": 4.556431981231346e-07,
+        "discrete_balance_residual_over_incident_power": 8.354164343144687e-08
+      },
+      "top_local": {
+        "grating_absorbed_power_code_units": 0.5392261538367611,
+        "substrate_absorbed_power_code_units": 0.0,
+        "total_absorbed_power_code_units": 0.5392261538367611,
+        "external_outward_poynting_flux_code_units": -2.0630421645792536,
+        "interface_outward_poynting_flux_code_units": 1.5238119728771637,
+        "discrete_balance_residual_code_units": -4.037865328765378e-06,
+        "discrete_balance_residual_over_incident_power": -7.403378496802622e-07
+      },
+      "middle_modal": {
+        "absorbed_power_code_units": 1.4544226753059601,
+        "z_cell_count": 10,
+        "gauss_order_per_z_cell": 4,
+        "z_evaluation_count": 40,
+        "bottom_positive_z_power_code_units": -0.0695000808365475,
+        "top_positive_z_power_code_units": -1.5239227675667477,
+        "poynting_flux_loss_code_units": 1.4544226867302001,
+        "volume_minus_poynting_flux_loss_code_units": -1.142423999844766e-08
+      },
+      "external_dtn": {
+        "raw_auxiliary_modal_power_sum": 0.62798290777008,
+        "recorded_R_plus_T": 0.62798290777008,
+        "auxiliary_power_identity_error": 1.214306433183765e-17
+      },
+      "whole_domain": {
+        "A_balance": 0.37201709222991997,
+        "A_volume": 0.37203590760913435,
+        "closure_error": 1.8815379214442984e-05
+      },
+      "failed_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ]
+    },
+    {
+      "degree": 6,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "incident_normalization": "each run's recorded incident normal power",
+      "bottom_local": {
+        "grating_absorbed_power_code_units": 0.01275974660608703,
+        "substrate_absorbed_power_code_units": 0.022644114820196327,
+        "total_absorbed_power_code_units": 0.03540386142628336,
+        "external_outward_poynting_flux_code_units": 0.03403460533107768,
+        "interface_outward_poynting_flux_code_units": -0.06943852158934913,
+        "discrete_balance_residual_code_units": -5.483198808886591e-08,
+        "discrete_balance_residual_over_incident_power": -1.0053380400335656e-08
+      },
+      "top_local": {
+        "grating_absorbed_power_code_units": 0.53991208371839,
+        "substrate_absorbed_power_code_units": 0.0,
+        "total_absorbed_power_code_units": 0.53991208371839,
+        "external_outward_poynting_flux_code_units": -2.0643215159492367,
+        "interface_outward_poynting_flux_code_units": 1.5244098822753407,
+        "discrete_balance_residual_code_units": 4.50044493893742e-07,
+        "discrete_balance_residual_over_incident_power": 8.251512760867878e-08
+      },
+      "middle_modal": {
+        "absorbed_power_code_units": 1.454975118181161,
+        "z_cell_count": 10,
+        "gauss_order_per_z_cell": 4,
+        "z_evaluation_count": 40,
+        "bottom_positive_z_power_code_units": -0.0694387273055479,
+        "top_positive_z_power_code_units": -1.5244138467042179,
+        "poynting_flux_loss_code_units": 1.45497511939867,
+        "volume_minus_poynting_flux_loss_code_units": -1.2175089825205987e-09
+      },
+      "external_dtn": {
+        "raw_auxiliary_modal_power_sum": 0.6277492928577704,
+        "recorded_R_plus_T": 0.6277492928577704,
+        "auxiliary_power_identity_error": -2.6020852139652106e-17
+      },
+      "whole_domain": {
+        "A_balance": 0.37225070714222963,
+        "A_volume": 0.37225147390125846,
+        "closure_error": 7.667590287141479e-07
+      },
+      "failed_gates": []
+    },
+    {
+      "degree": 6,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "incident_normalization": "each run's recorded incident normal power",
+      "bottom_local": {
+        "grating_absorbed_power_code_units": 0.012899263382250115,
+        "substrate_absorbed_power_code_units": 0.022674055581066582,
+        "total_absorbed_power_code_units": 0.0355733189633167,
+        "external_outward_poynting_flux_code_units": 0.03413233748573331,
+        "interface_outward_poynting_flux_code_units": -0.06970567198057578,
+        "discrete_balance_residual_code_units": -1.5531525773826438e-08,
+        "discrete_balance_residual_over_incident_power": -2.847686947787348e-09
+      },
+      "top_local": {
+        "grating_absorbed_power_code_units": 0.5397189646212914,
+        "substrate_absorbed_power_code_units": 0.0,
+        "total_absorbed_power_code_units": 0.5397189646212914,
+        "external_outward_poynting_flux_code_units": -2.066206129981844,
+        "interface_outward_poynting_flux_code_units": 1.5264873924537172,
+        "discrete_balance_residual_code_units": 2.2709316449542882e-07,
+        "discrete_balance_residual_over_incident_power": 4.1637264096432394e-08
+      },
+      "middle_modal": {
+        "absorbed_power_code_units": 1.4567863569294426,
+        "z_cell_count": 10,
+        "gauss_order_per_z_cell": 4,
+        "z_evaluation_count": 40,
+        "bottom_positive_z_power_code_units": -0.06970622383882608,
+        "top_positive_z_power_code_units": -1.526492581404645,
+        "poynting_flux_loss_code_units": 1.4567863575658189,
+        "volume_minus_poynting_flux_loss_code_units": -6.363762850014609e-10
+      },
+      "external_dtn": {
+        "raw_auxiliary_modal_power_sum": 0.627421653019299,
+        "recorded_R_plus_T": 0.6274216530192989,
+        "auxiliary_power_identity_error": 5.811323644522304e-17
+      },
+      "whole_domain": {
+        "A_balance": 0.3725783469807011,
+        "A_volume": 0.37257922407218014,
+        "closure_error": 8.770914790012796e-07
+      },
+      "failed_gates": [
+        "biorthogonality_identity_error_le_1e-6"
+      ]
+    }
+  ]
+}

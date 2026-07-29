@@ -1,1 +1,1 @@
-source scripts/activate_myfenics_surrogate_wsl.sh && python -m pytest -q src/test/test_surrogate_task002_foundation.py src/test/test_48_task033_cross_section_exact_constraints.py && python -m benchmarks.check_case114_task002_m2b --check-records
+source scripts/activate_myfenics_surrogate_wsl.sh && python -m pytest -q src/test/test_surrogate_task002_foundation.py src/test/test_48_task033_cross_section_exact_constraints.py && python -m benchmarks.check_case114_task002_m2b --artifact-root benchmarks/artifacts/cases/114/m2b --check-records

@@ -1,0 +1,1788 @@
+{
+  "schema_version": "task002.case114-floquet-probe.v1",
+  "rows": [
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 1,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.8069983309056205e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 1.3147655603055013e-16,
+      "deterministic_full_vector_sha256": "dae2247ca41bcdb521857a7eb978c9ed316747543b3204e68ffb609597260772",
+      "full_global_size": 73,
+      "reduced_global_size": 54,
+      "global_slave_count": 19,
+      "transverse_constraint_count": 9,
+      "longitudinal_constraint_count": 10,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 1,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.806998330905621e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 1.193963893770806e-16,
+      "deterministic_full_vector_sha256": "232b67fca6672c339b5767518e52a527dbb296cdd1243f02a93b02c50298d60a",
+      "full_global_size": 73,
+      "reduced_global_size": 54,
+      "global_slave_count": 19,
+      "transverse_constraint_count": 9,
+      "longitudinal_constraint_count": 10,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 1,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.846596870985577e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 1.1187244087820015e-16,
+      "deterministic_full_vector_sha256": "e10d441b8ce0ba81f44d308d39d751e995d4ac7082523330783fafaaeec34e46",
+      "full_global_size": 73,
+      "reduced_global_size": 54,
+      "global_slave_count": 19,
+      "transverse_constraint_count": 9,
+      "longitudinal_constraint_count": 10,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 1,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.8465968709855774e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 1.1621602716948968e-16,
+      "deterministic_full_vector_sha256": "9f74752df552f7a424c8603a9d1639b1d56e58894a3ef6511ef568e5e298cae5",
+      "full_global_size": 73,
+      "reduced_global_size": 54,
+      "global_slave_count": 19,
+      "transverse_constraint_count": 9,
+      "longitudinal_constraint_count": 10,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 1,
+      "mpi_ranks": 1,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.8842214353090767e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 1.5166958486307118e-16,
+      "deterministic_full_vector_sha256": "57c37f190167cbb8281c9cebbb9fab02f317a68c6fd174f7c0db9a984b5852e2",
+      "full_global_size": 73,
+      "reduced_global_size": 54,
+      "global_slave_count": 19,
+      "transverse_constraint_count": 9,
+      "longitudinal_constraint_count": 10,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 1,
+      "mpi_ranks": 2,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.8842214353090775e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 1.2118615667223184e-16,
+      "deterministic_full_vector_sha256": "075e7261e4f504edbb1cbc590c83990e683933b8384d5444e9a2419eaaecfa5e",
+      "full_global_size": 73,
+      "reduced_global_size": 54,
+      "global_slave_count": 19,
+      "transverse_constraint_count": 9,
+      "longitudinal_constraint_count": 10,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 1,
+      "mpi_ranks": 1,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.83547314682935e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 1.0153777723307537e-16,
+      "deterministic_full_vector_sha256": "000480ef7ef74220de5e33fb4875dfde5cc9f8e43b1c369cd7d4a28c4bcb97be",
+      "full_global_size": 73,
+      "reduced_global_size": 54,
+      "global_slave_count": 19,
+      "transverse_constraint_count": 9,
+      "longitudinal_constraint_count": 10,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 1,
+      "mpi_ranks": 2,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.8354731468293503e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 1.151222191483741e-16,
+      "deterministic_full_vector_sha256": "15a7ddde8f2edbe67ea3a4226777d6e4f14bfd16d8e781f3ebfcac62d6b06542",
+      "full_global_size": 73,
+      "reduced_global_size": 54,
+      "global_slave_count": 19,
+      "transverse_constraint_count": 9,
+      "longitudinal_constraint_count": 10,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 2,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.8765206916633604e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 8.772338531401628e-17,
+      "deterministic_full_vector_sha256": "ddf6c5e9702eba703e11a3048a29257ba37c3cb6b8c08e4958b015eff9c0b021",
+      "full_global_size": 253,
+      "reduced_global_size": 216,
+      "global_slave_count": 37,
+      "transverse_constraint_count": 18,
+      "longitudinal_constraint_count": 19,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 2,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.8765206916633604e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 8.836409752547768e-17,
+      "deterministic_full_vector_sha256": "abc8c9235669d0868b695b4c06b4baa0b85c498c1fd58943c447038d59b0e8bb",
+      "full_global_size": 253,
+      "reduced_global_size": 216,
+      "global_slave_count": 37,
+      "transverse_constraint_count": 18,
+      "longitudinal_constraint_count": 19,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 2,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.897533180934848e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.971130447242033e-17,
+      "deterministic_full_vector_sha256": "bdf41e62875b8697fecb8f477fbc88292265c0bbb9cbd8e484ef5dcc517ba2a4",
+      "full_global_size": 253,
+      "reduced_global_size": 216,
+      "global_slave_count": 37,
+      "transverse_constraint_count": 18,
+      "longitudinal_constraint_count": 19,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 2,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.897533180934849e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 8.65537434183323e-17,
+      "deterministic_full_vector_sha256": "3949d008702f7370d85f7b239db783a73ae05e940e948775e5710c923455afeb",
+      "full_global_size": 253,
+      "reduced_global_size": 216,
+      "global_slave_count": 37,
+      "transverse_constraint_count": 18,
+      "longitudinal_constraint_count": 19,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 2,
+      "mpi_ranks": 1,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.8204369755155543e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 8.090490982707169e-17,
+      "deterministic_full_vector_sha256": "bf4b3675b0ab67df3a14b45f3079c7e0bd676e6cee1f87fc8aac86e8b50060f7",
+      "full_global_size": 253,
+      "reduced_global_size": 216,
+      "global_slave_count": 37,
+      "transverse_constraint_count": 18,
+      "longitudinal_constraint_count": 19,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 2,
+      "mpi_ranks": 2,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.820436975515554e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 7.359968670028114e-17,
+      "deterministic_full_vector_sha256": "c398e3cf6eb1ab9f6b420795c9e62ee09d7d6f68113e68a32dacec6d1dad968d",
+      "full_global_size": 253,
+      "reduced_global_size": 216,
+      "global_slave_count": 37,
+      "transverse_constraint_count": 18,
+      "longitudinal_constraint_count": 19,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 2,
+      "mpi_ranks": 1,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.7953200705330792e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 9.508106903212489e-17,
+      "deterministic_full_vector_sha256": "84526e08fdcf419469cc165acff31998f7657467ba3e2be4dbc73b2249a40dc9",
+      "full_global_size": 253,
+      "reduced_global_size": 216,
+      "global_slave_count": 37,
+      "transverse_constraint_count": 18,
+      "longitudinal_constraint_count": 19,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 2,
+      "mpi_ranks": 2,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.7953200705330784e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 7.840016222908486e-17,
+      "deterministic_full_vector_sha256": "c6edf47e32cd53234cd9d17374ce807a7c01f39b9340ca54b4a31b7409d3fffe",
+      "full_global_size": 253,
+      "reduced_global_size": 216,
+      "global_slave_count": 37,
+      "transverse_constraint_count": 18,
+      "longitudinal_constraint_count": 19,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 3,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.552854332871368e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 7.798463849160914e-17,
+      "deterministic_full_vector_sha256": "f75eb48856b22378f285bbfa05ff85a8f9974d0bab2f14ef3661fe9b80250fec",
+      "full_global_size": 541,
+      "reduced_global_size": 486,
+      "global_slave_count": 55,
+      "transverse_constraint_count": 27,
+      "longitudinal_constraint_count": 28,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 3,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.5529756151428925e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 7.978997041840983e-17,
+      "deterministic_full_vector_sha256": "156bbe7584abdeed95d2264892d64d6610af406c511ffabb4e2cbd806527ad4c",
+      "full_global_size": 541,
+      "reduced_global_size": 486,
+      "global_slave_count": 55,
+      "transverse_constraint_count": 27,
+      "longitudinal_constraint_count": 28,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 3,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.3937289697595081e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.310922135107758e-17,
+      "deterministic_full_vector_sha256": "b2cb7fd81753b8cd4f234c3f20feeaaa10a7449a836fdeb45125c86a67827745",
+      "full_global_size": 541,
+      "reduced_global_size": 486,
+      "global_slave_count": 55,
+      "transverse_constraint_count": 27,
+      "longitudinal_constraint_count": 28,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 3,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.3933760346438694e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 7.050919976896227e-17,
+      "deterministic_full_vector_sha256": "22ec566d6d858e25811e8e85c01d61e7de1e10576eeef29502be1c484216f699",
+      "full_global_size": 541,
+      "reduced_global_size": 486,
+      "global_slave_count": 55,
+      "transverse_constraint_count": 27,
+      "longitudinal_constraint_count": 28,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 3,
+      "mpi_ranks": 1,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.4918405018816613e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 7.006005762922974e-17,
+      "deterministic_full_vector_sha256": "7ef5564b6d969cbd4d2e6011202d3c271d79376e31e2b5395a6416445087a964",
+      "full_global_size": 541,
+      "reduced_global_size": 486,
+      "global_slave_count": 55,
+      "transverse_constraint_count": 27,
+      "longitudinal_constraint_count": 28,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 3,
+      "mpi_ranks": 2,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.4918870634054019e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 7.481489187863763e-17,
+      "deterministic_full_vector_sha256": "b5c40f44b95fcad585d86978d36f0a0482688e97fb54922101c9886e96cd7e4f",
+      "full_global_size": 541,
+      "reduced_global_size": 486,
+      "global_slave_count": 55,
+      "transverse_constraint_count": 27,
+      "longitudinal_constraint_count": 28,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 3,
+      "mpi_ranks": 1,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.556530684418713e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 7.098058289047628e-17,
+      "deterministic_full_vector_sha256": "2b1565c54164b70dfad9ace866ef632e0c35663fc1271bc1766e274a665c6e2a",
+      "full_global_size": 541,
+      "reduced_global_size": 486,
+      "global_slave_count": 55,
+      "transverse_constraint_count": 27,
+      "longitudinal_constraint_count": 28,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 3,
+      "mpi_ranks": 2,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.5564790580204492e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.342064151650873e-17,
+      "deterministic_full_vector_sha256": "f185c9145b2194a6248271dce959f78b12a07a6eaae2c5642272a4634125368e",
+      "full_global_size": 541,
+      "reduced_global_size": 486,
+      "global_slave_count": 55,
+      "transverse_constraint_count": 27,
+      "longitudinal_constraint_count": 28,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 4,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.2799406735588207e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.03241948609401e-17,
+      "deterministic_full_vector_sha256": "f768b3d1d6954be62e43bada76baca7dabd3b969323a1cff4efcd538ae2f6915",
+      "full_global_size": 937,
+      "reduced_global_size": 864,
+      "global_slave_count": 73,
+      "transverse_constraint_count": 36,
+      "longitudinal_constraint_count": 37,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 4,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.278719837298368e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.39831945427833e-17,
+      "deterministic_full_vector_sha256": "377975de3cde5718d454ce39d708f120a39f58c51606ba30f90dbd6b267c581e",
+      "full_global_size": 937,
+      "reduced_global_size": 864,
+      "global_slave_count": 73,
+      "transverse_constraint_count": 36,
+      "longitudinal_constraint_count": 37,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 4,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.3637020843827914e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.596641505433631e-17,
+      "deterministic_full_vector_sha256": "cdc2e1d49b31b6cc31a7e085176381c2ffd7994623673eaa290e9e0c075e2857",
+      "full_global_size": 937,
+      "reduced_global_size": 864,
+      "global_slave_count": 73,
+      "transverse_constraint_count": 36,
+      "longitudinal_constraint_count": 37,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 4,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.3641207867317126e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.407071133423583e-17,
+      "deterministic_full_vector_sha256": "cda0ea59b41e96f74b03615576ea003f78d0adbcfccbd0a59420bbc2f8a041a7",
+      "full_global_size": 937,
+      "reduced_global_size": 864,
+      "global_slave_count": 73,
+      "transverse_constraint_count": 36,
+      "longitudinal_constraint_count": 37,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 4,
+      "mpi_ranks": 1,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.316370756261512e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.1004677783409e-17,
+      "deterministic_full_vector_sha256": "d284bad262c69e43d8a90b5393732c2a2dafc0dfe663346234f4bcd68b53aa5f",
+      "full_global_size": 937,
+      "reduced_global_size": 864,
+      "global_slave_count": 73,
+      "transverse_constraint_count": 36,
+      "longitudinal_constraint_count": 37,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 4,
+      "mpi_ranks": 2,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.3166896234439393e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.67750305772955e-17,
+      "deterministic_full_vector_sha256": "ac877b6ac0ccab85a47a537fcd019f4aa4a1e7f1ffe46ddb1487e782cf6a1374",
+      "full_global_size": 937,
+      "reduced_global_size": 864,
+      "global_slave_count": 73,
+      "transverse_constraint_count": 36,
+      "longitudinal_constraint_count": 37,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 4,
+      "mpi_ranks": 1,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.3035134277807384e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.181582374499998e-17,
+      "deterministic_full_vector_sha256": "61e735cd50eccb79ca59c034dcaac61a14c1be92a1a294025844a29e53ed4642",
+      "full_global_size": 937,
+      "reduced_global_size": 864,
+      "global_slave_count": 73,
+      "transverse_constraint_count": 36,
+      "longitudinal_constraint_count": 37,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 4,
+      "mpi_ranks": 2,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.3068355280306523e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.952385772625996e-17,
+      "deterministic_full_vector_sha256": "3cef07b4e91bfe7319d5cc1d3dcedba6c884b6c1127723b34c5c9aae3e4903e6",
+      "full_global_size": 937,
+      "reduced_global_size": 864,
+      "global_slave_count": 73,
+      "transverse_constraint_count": 36,
+      "longitudinal_constraint_count": 37,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 5,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.2140011714601817e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.359779851965671e-17,
+      "deterministic_full_vector_sha256": "8f8832cc718d82a6f3c91665f1cb182853028b073cb232c67fb34c068ba3330c",
+      "full_global_size": 1441,
+      "reduced_global_size": 1350,
+      "global_slave_count": 91,
+      "transverse_constraint_count": 45,
+      "longitudinal_constraint_count": 46,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 5,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.2102941003811246e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.591806856033233e-17,
+      "deterministic_full_vector_sha256": "5aa14b28a19953b606936d3d0535dea611fe0559066023ed460eaf58627d01e0",
+      "full_global_size": 1441,
+      "reduced_global_size": 1350,
+      "global_slave_count": 91,
+      "transverse_constraint_count": 45,
+      "longitudinal_constraint_count": 46,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 5,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1306212654894132e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.79899086760304e-17,
+      "deterministic_full_vector_sha256": "42430ac810ec33e510738a84b7a0a15bc6be2df2f8c8f04a5875f0e651ef59cf",
+      "full_global_size": 1441,
+      "reduced_global_size": 1350,
+      "global_slave_count": 91,
+      "transverse_constraint_count": 45,
+      "longitudinal_constraint_count": 46,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 5,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.13043584698753e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.046765147051788e-17,
+      "deterministic_full_vector_sha256": "ac9611a908ea075a8ebc1c9e5b383092e1ef4c16d3ebd39c39e113ea4d02aa0b",
+      "full_global_size": 1441,
+      "reduced_global_size": 1350,
+      "global_slave_count": 91,
+      "transverse_constraint_count": 45,
+      "longitudinal_constraint_count": 46,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 5,
+      "mpi_ranks": 1,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1122182689843724e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.549722615896959e-17,
+      "deterministic_full_vector_sha256": "8d653cf6d86686a19cc20188e23eb12942b6932d0091f38f3e9a6919b5132279",
+      "full_global_size": 1441,
+      "reduced_global_size": 1350,
+      "global_slave_count": 91,
+      "transverse_constraint_count": 45,
+      "longitudinal_constraint_count": 46,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 5,
+      "mpi_ranks": 2,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1124103766954966e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.690254018349758e-17,
+      "deterministic_full_vector_sha256": "5ed1545c5ed9252811044bbb5d06b9e421c44af452a0c854e946fdfdeedfdbd4",
+      "full_global_size": 1441,
+      "reduced_global_size": 1350,
+      "global_slave_count": 91,
+      "transverse_constraint_count": 45,
+      "longitudinal_constraint_count": 46,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 5,
+      "mpi_ranks": 1,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1517892091190162e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 6.06170115824251e-17,
+      "deterministic_full_vector_sha256": "fc65790489b0699380e0bfeb918dd0b558fe9c0339530bf7c1c4e1832c3f3445",
+      "full_global_size": 1441,
+      "reduced_global_size": 1350,
+      "global_slave_count": 91,
+      "transverse_constraint_count": 45,
+      "longitudinal_constraint_count": 46,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 5,
+      "mpi_ranks": 2,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1505557943414237e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.744845877212137e-17,
+      "deterministic_full_vector_sha256": "83829725c945295fe9d7ac3f983c6680b1c9cca34415d3524479ab106c2ee805",
+      "full_global_size": 1441,
+      "reduced_global_size": 1350,
+      "global_slave_count": 91,
+      "transverse_constraint_count": 45,
+      "longitudinal_constraint_count": 46,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 6,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1163361544909504e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 4.910193313595299e-17,
+      "deterministic_full_vector_sha256": "0c33a1a97434366b8c6b18a1826477058c5a8b6e247ffe85261828393de60f06",
+      "full_global_size": 2053,
+      "reduced_global_size": 1944,
+      "global_slave_count": 109,
+      "transverse_constraint_count": 54,
+      "longitudinal_constraint_count": 55,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 6,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "phase_x": {
+        "real": -0.8841568231395408,
+        "imag": -0.4671902311647739
+      },
+      "phase_y": {
+        "real": -0.9915345206294588,
+        "imag": 0.12984334561350983
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1183256590752627e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 4.7130881877087353e-17,
+      "deterministic_full_vector_sha256": "a459f5b58f8fa1de3a85494c6c5e5fce72bb1c1e24be8c2431f436da7e8417fd",
+      "full_global_size": 2053,
+      "reduced_global_size": 1944,
+      "global_slave_count": 109,
+      "transverse_constraint_count": 54,
+      "longitudinal_constraint_count": 55,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 6,
+      "mpi_ranks": 1,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1398619057295427e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 4.742416159127005e-17,
+      "deterministic_full_vector_sha256": "b7cb430d46e88c5ad6a6cf86b814682448aa086e416cc366b310de29b51de1ab",
+      "full_global_size": 2053,
+      "reduced_global_size": 1944,
+      "global_slave_count": 109,
+      "transverse_constraint_count": 54,
+      "longitudinal_constraint_count": 55,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 6,
+      "mpi_ranks": 2,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.7340482755562404,
+        "imag": -0.6790972899024923
+      },
+      "phase_y": {
+        "real": -0.36465855566800925,
+        "imag": 0.9311413092426527
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1396713279655658e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 4.844063834907302e-17,
+      "deterministic_full_vector_sha256": "64ac9114065e20d7051914323a4eb5df1999b06168252df6a753e4dc37c85a50",
+      "full_global_size": 2053,
+      "reduced_global_size": 1944,
+      "global_slave_count": 109,
+      "transverse_constraint_count": 54,
+      "longitudinal_constraint_count": 55,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 6,
+      "mpi_ranks": 1,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.0113976323943905e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.3224588845860225e-17,
+      "deterministic_full_vector_sha256": "4596e0343b63ae8f321e519b5391595379094518d3338ee812a0ebc80b97680a",
+      "full_global_size": 2053,
+      "reduced_global_size": 1944,
+      "global_slave_count": 109,
+      "transverse_constraint_count": 54,
+      "longitudinal_constraint_count": 55,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 6,
+      "mpi_ranks": 2,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "phase_x": {
+        "real": -0.8789365604755597,
+        "imag": -0.47693869905826775
+      },
+      "phase_y": {
+        "real": -0.24603194866159014,
+        "imag": 0.9692617191645302
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.0118608150851515e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 4.8188795661956076e-17,
+      "deterministic_full_vector_sha256": "29dfeef2e6a9d62349d017ae9df50e11c7880677ead49db10e551f8411cba282",
+      "full_global_size": 2053,
+      "reduced_global_size": 1944,
+      "global_slave_count": 109,
+      "transverse_constraint_count": 54,
+      "longitudinal_constraint_count": 55,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 6,
+      "mpi_ranks": 1,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1385853729525345e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.024282099482389e-17,
+      "deterministic_full_vector_sha256": "beb215ec8579ab0263fc4bcbc3a85c28e3da9b74832420fa718ce885a7fbaebe",
+      "full_global_size": 2053,
+      "reduced_global_size": 1944,
+      "global_slave_count": 109,
+      "transverse_constraint_count": 54,
+      "longitudinal_constraint_count": 55,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2b-floquet-probe.v1",
+      "source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+      "degree": 6,
+      "mpi_ranks": 2,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "phase_x": {
+        "real": 0.2756855729183209,
+        "imag": 0.9612478685982597
+      },
+      "phase_y": {
+        "real": 0.8920364761965641,
+        "imag": -0.4519634112788521
+      },
+      "analytic_quasiperiodic_reconstruction_relative_residual": 1.1397956140261493e-15,
+      "random_free_vector_max_slave_row_relative_residual": 0.0,
+      "explicit_chac_action_relative_error": 5.715053570528792e-17,
+      "deterministic_full_vector_sha256": "aa4a493ebf3f35ebaef9cabaa2d47d5d8b595982ecf927c056881835035a94da",
+      "full_global_size": 2053,
+      "reduced_global_size": 1944,
+      "global_slave_count": 109,
+      "transverse_constraint_count": 54,
+      "longitudinal_constraint_count": 55,
+      "actual_probe_not_constant": true,
+      "gates": {
+        "analytic_probe_le_5e-12": true,
+        "slave_rows_le_1e-13": true,
+        "explicit_chac_le_1e-13": true
+      }
+    }
+  ],
+  "mpi_pairs": [
+    {
+      "degree": 1,
+      "point": [
+        0.5,
+        15
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 1,
+      "point": [
+        0.5,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 1,
+      "point": [
+        2,
+        30
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 1,
+      "point": [
+        10,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 2,
+      "point": [
+        0.5,
+        15
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 2,
+      "point": [
+        0.5,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 2,
+      "point": [
+        2,
+        30
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 2,
+      "point": [
+        10,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 3,
+      "point": [
+        0.5,
+        15
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 3,
+      "point": [
+        0.5,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 3,
+      "point": [
+        2,
+        30
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 3,
+      "point": [
+        10,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 4,
+      "point": [
+        0.5,
+        15
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 4,
+      "point": [
+        0.5,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 4,
+      "point": [
+        2,
+        30
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 4,
+      "point": [
+        10,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 5,
+      "point": [
+        0.5,
+        15
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 5,
+      "point": [
+        0.5,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 5,
+      "point": [
+        2,
+        30
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 5,
+      "point": [
+        10,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 6,
+      "point": [
+        0.5,
+        15
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 6,
+      "point": [
+        0.5,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 6,
+      "point": [
+        2,
+        30
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    },
+    {
+      "degree": 6,
+      "point": [
+        10,
+        45
+      ],
+      "partition_invariant_counts_equal": true,
+      "phase_x_abs_delta": 0.0,
+      "phase_y_abs_delta": 0.0,
+      "raw_global_numbering_sha_equal": false,
+      "raw_sha_note": "not a gate: DOLFINx global numbering is partition dependent"
+    }
+  ],
+  "all_48_probe_gates_pass": true,
+  "max_analytic_probe_residual": 1.897533180934849e-15,
+  "max_slave_row_residual": 0.0,
+  "max_explicit_chac_error": 1.5166958486307118e-16,
+  "all_partition_invariant_identities_pass": true
+}

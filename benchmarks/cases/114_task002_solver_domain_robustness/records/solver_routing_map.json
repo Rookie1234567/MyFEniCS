@@ -1,0 +1,26 @@
+{
+  "schema_version": "task002.case114-solver-routing-map.v1",
+  "selected_route": "Route 4: Hybrid paused; Full3D static hierarchy required",
+  "m3_authorized": false,
+  "reasons": [
+    "Hybrid p4 passes only 39/80 formal Gates",
+    "Full3D p4/h7.5 follows the Full3D p5/h10 response branch, proving p4/h10 under-resolution",
+    "Hybrid p5 matches same-p Full3D p5, so the p-branch jump is not caused by Hybrid coupling",
+    "Hybrid p6 retains a p6/0.5deg/45deg biorthogonality failure caused by split near-degenerate blocks"
+  ],
+  "qualified_now": {
+    "diagnostic_reference": "Full3D static p5/h10 at tested reference/selected points",
+    "low_order_negative_result": "p4_h10_underresolved; p4_h7p5_and_p5_h10_select_the_p5_branch",
+    "floquet_constraints": "qualified p1-p6 MPI1/2 on 4 double-Floquet probes"
+  },
+  "not_yet_qualified": {
+    "uniform_low_fidelity": "Full3D p4/h7.5 has only A-D anchors, not an 80-angle domain map",
+    "hybrid_high_fidelity": "near_degenerate_block_partition_split"
+  },
+  "resume_condition": "Review V3 must authorize either p4/h7.5 domain qualification or a revised Full3D hierarchy; M3 remains closed",
+  "route_identity_required_per_sample": true,
+  "bulk_generation_allowed": false,
+  "surrogate_training_allowed": false,
+  "angle_doe_allowed": false,
+  "inversion_allowed": false
+}

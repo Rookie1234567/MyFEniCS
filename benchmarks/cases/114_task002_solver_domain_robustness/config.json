@@ -5,13 +5,22 @@
   "azimuth_deg": [0, 5, 10, 15, 20, 30, 45, 60, 75, 90],
   "p_reference_points": [[0.5, 15], [0.5, 45], [2.0, 15], [10.0, 45]],
   "full3d_reference_degrees": [3, 4, 5],
+  "full3d_h_refinement": {"degree": 4, "h_nm": 7.5, "points": "p_reference_points"},
+  "higher_order_selected_points": [
+    [0.5, 0], [0.5, 5], [0.5, 10], [0.5, 15], [0.5, 20],
+    [0.5, 30], [0.5, 45], [0.5, 60], [0.5, 75], [0.5, 90],
+    [1.0, 45], [10.0, 45]
+  ],
   "axial_ab_degrees": [4, 5, 6],
   "axial_ab_points": [[0.5, 15], [0.5, 45]],
   "routes": {
     "continuous": ["continuous_beta", "continuous_qep_beta"],
     "discrete": ["full3d_uniform_cg", "scalar_cg_discrete_derivative"]
   },
-  "execution": {"mpi_ranks": 2, "threads_per_rank": 1, "one_fem_at_a_time": true},
+  "execution": {
+    "formal_source_sha": "673c66ddee116e683a21b7ea8a90dc158cac2069",
+    "mpi_ranks": 2, "threads_per_rank": 1, "one_fem_at_a_time": true,
+    "swap_required_bytes": 0
+  },
   "historical_evidence": "Case112/113 immutable"
 }
-

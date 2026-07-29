@@ -8,6 +8,8 @@ import pytest
 
 from benchmarks.check_case112_task002 import build_scaffold_record
 from benchmarks.check_case113_task002_m2a import build_scaffold_record as build_case113_scaffold
+from benchmarks.check_case114_task002_m2b import SELECTED as M2B_SELECTED
+from benchmarks.check_case114_task002_m2b import _order_delta as m2b_order_delta
 from benchmarks.run_task032_phase6_augmented import _parse_args
 from src.forward_data.orders import FIXED_M_ORDERS
 from src.forward_data.task002_campaign import (
@@ -154,6 +156,24 @@ def test_m2b_angle_matrix_is_exactly_80_points() -> None:
             grazing=3.0, azimuth=45.0, route="discrete",
             output=Path("record.json"), memory_stages=Path("stages.jsonl"),
         )
+
+
+def test_m2b_selected_higher_order_set_and_order_checker() -> None:
+    assert len(M2B_SELECTED) == 12
+    assert (0.5, 15.0) in M2B_SELECTED and (0.5, 45.0) in M2B_SELECTED
+    assert (1.0, 45.0) in M2B_SELECTED and (10.0, 45.0) in M2B_SELECTED
+    left = {"orders": [{
+        "side": "top", "m": 0, "n": 0, "polarization": "s",
+        "outgoing_amplitude_at_boundary": [1.0, 2.0], "power_ratio": 0.5,
+    }]}
+    right = {"orders": [{
+        "side": "top", "m": 0, "n": 0, "polarization": "s",
+        "outgoing_amplitude_at_boundary": [1.0, 1.0], "power_ratio": 0.4,
+    }]}
+    delta = m2b_order_delta(left, right)
+    assert delta["common_order_channels"] == 1
+    assert delta["max_complex_amplitude_abs_error"] == pytest.approx(1.0)
+    assert delta["max_power_ratio_abs_error"] == pytest.approx(0.1)
 
 
 def test_task002_command_reuses_exact_qualified_s_route(tmp_path: Path) -> None:

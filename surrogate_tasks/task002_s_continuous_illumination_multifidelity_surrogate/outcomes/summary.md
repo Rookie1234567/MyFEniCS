@@ -1,4 +1,18 @@
-# Task002 M0--M2A 结果总览
+# Task002 M0--M2B 结果总览
+
+## M2B 更新
+
+Review V2 Required M2B 已完成，详见 `m2_solver_domain_qualification.md` 与
+`solver_routing_map.md`。独立 p/h reference 证明 p4/h10 欠分辨；Hybrid p5 与 same-p Full3D
+p5 一致，axial A/B 与真实双 Floquet probes 排除了 axial mapping 和约束错误作为大分支跳变根因。
+
+中心几何 Hybrid p4 80-angle map 为 39 pass / 41 fail；p6 的 45° near-degenerate mode block
+拆分仍触发 biorthogonality Gate。当前冻结 Route 4（暂停 Hybrid，候选 Full3D static hierarchy），
+但 Full3D p4/h7.5 尚无 80-angle domain qualification，因此 M3 继续关闭并等待 Review V3。
+
+M2B clean PDE baseline 为 `673c66ddee116e683a21b7ea8a90dc158cac2069`。
+
+## M2A 历史结论
 
 Task002 状态仍为 `controlled_stop_at_M2`。Review V1 要求的 Case113、独立 Full3D
 p4/h10、p4 M80/120/160/240、p5 M120、p6 M120、完整 energy ledger、13 点 LF stencil、
