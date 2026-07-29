@@ -1,0 +1,20 @@
+{
+  "schema_version": "task002.case116-config.v1",
+  "scope": "Review V4 M3R only; no M4 PDE bulk",
+  "production_model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+  "production_solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+  "observable_schema": "task002.fixed-n0-orders.v3",
+  "fixed_n0_m_orders": [-7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3],
+  "dataset_schema": "task002.s-p5-single-fidelity-dataset.v2",
+  "training_seed": 20260729,
+  "validation_seed": 20260730,
+  "candidate_seed": 20260731,
+  "candidate_count": 4096,
+  "runtime_smoke_count": 5,
+  "diagnostic_only": [
+    "S_DIAG_FULL3D_STATIC_P4_H10",
+    "P4_H7P5_DISCRETIZATION_AUDIT",
+    "all historical Hybrid identities"
+  ],
+  "prohibited": ["M4_bulk", "surrogate_training", "angle_DOE", "inversion"]
+}

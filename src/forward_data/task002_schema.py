@@ -8,26 +8,39 @@ from typing import Any, Mapping
 
 import numpy as np
 
-from .schema import TASK001_OBSERVABLE_SCHEMA_VERSION, Task001ForwardParameters
+from .schema import Task001ForwardParameters
 
 
-TASK002_PARAMETER_SCHEMA_VERSION = "task002.s-continuous-parameters.v1"
-TASK002_OBSERVABLE_SCHEMA_VERSION = TASK001_OBSERVABLE_SCHEMA_VERSION
-TASK002_DATASET_SCHEMA_VERSION = "task002.s-continuous-dataset.v1"
-TASK002_SAMPLE_SCHEMA_VERSION = "task002.s-continuous-sample.v1"
+TASK002_PARAMETER_SCHEMA_VERSION = "task002.s-p5-production-parameters.v2"
+TASK002_OBSERVABLE_SCHEMA_VERSION = "task002.fixed-n0-orders.v3"
+TASK002_DATASET_SCHEMA_VERSION = "task002.s-p5-single-fidelity-dataset.v2"
+TASK002_SAMPLE_SCHEMA_VERSION = "task002.s-p5-single-fidelity-sample.v2"
+TASK002_FIXED_M_ORDERS = tuple(range(-7, 4))
 
-TASK002_FIDELITIES = {
-    "S_LF_FULL3D_STATIC_P4_H10": {
-        "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
-        "degree": 4, "h_nm": 10.0, "axis_counts": (6, 3, 14),
-        "element_family": "uniform_N1curl",
-    },
-    "S_HF_FULL3D_STATIC_P5_H10": {
+TASK002_PRODUCTION_FIDELITIES = {
+    "S_PROD_FULL3D_STATIC_P5_H10": {
         "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
         "degree": 5, "h_nm": 10.0, "axis_counts": (6, 3, 14),
         "element_family": "uniform_N1curl",
+        "fidelity_semantics": "best_available_operational_high_fidelity",
     },
 }
+
+TASK002_DIAGNOSTIC_FIDELITIES = {
+    "S_DIAG_FULL3D_STATIC_P4_H10": {
+        "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+        "degree": 4, "h_nm": 10.0, "axis_counts": (6, 3, 14),
+        "element_family": "uniform_N1curl", "role": "diagnostic_only",
+    },
+    "P4_H7P5_DISCRETIZATION_AUDIT": {
+        "solver_route_id": "full3d_static_uniform_n1curl_p4_h7p5",
+        "degree": 4, "h_nm": 7.5, "axis_counts": None,
+        "element_family": "uniform_N1curl", "role": "discretization_audit_only",
+    },
+}
+
+# Compatibility name for imports only; it deliberately contains production p5 alone.
+TASK002_FIDELITIES = TASK002_PRODUCTION_FIDELITIES
 
 TASK002_HISTORICAL_HYBRID_FIDELITIES = {
     "S_LF_HYBRID_P4_H10_M120": {
@@ -58,7 +71,8 @@ def task002_parameter_catalog() -> dict[str, Any]:
         },
         "fixed": {"wavelength_nm": 13.5, "incident_polarization": "S"},
         "fidelity": {
-            "allowed": sorted(TASK002_FIDELITIES),
+            "production_allowed": sorted(TASK002_PRODUCTION_FIDELITIES),
+            "diagnostic_only": sorted(TASK002_DIAGNOSTIC_FIDELITIES),
             "hard_quarantined_historical": sorted(TASK002_HISTORICAL_HYBRID_FIDELITIES),
         },
         "zero_grazing_status": "zero_grazing_limit_not_defined",
@@ -132,8 +146,8 @@ class Task002ForwardParameters:
             raise ValueError(request["status"])
         if self.schema_version != TASK002_PARAMETER_SCHEMA_VERSION:
             raise ValueError("unsupported Task002 parameter schema version")
-        if self.model_id not in TASK002_FIDELITIES:
-            raise ValueError(f"unsupported Task002 model_id: {self.model_id}")
+        if self.model_id not in TASK002_PRODUCTION_FIDELITIES:
+            raise ValueError(f"Task002 production accepts p5-only model_id: {self.model_id}")
         if self.mpi_ranks != 2 or self.threads_per_rank != 1:
             raise ValueError("Task002 FEM requires MPI2 and one thread per rank")
         if self.order_schema_id != TASK002_OBSERVABLE_SCHEMA_VERSION:
@@ -142,7 +156,7 @@ class Task002ForwardParameters:
     @property
     def fidelity(self) -> dict[str, Any]:
         self.validate()
-        return dict(TASK002_FIDELITIES[self.model_id])
+        return dict(TASK002_PRODUCTION_FIDELITIES[self.model_id])
 
     @property
     def theta_deg(self) -> float:

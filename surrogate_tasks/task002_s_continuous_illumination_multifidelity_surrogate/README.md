@@ -1,5 +1,15 @@
 # Task002：S 偏振连续照明四维多保真前向代理与角度设计
 
+> **Review V4 / M3R 权威覆盖（2026-07-29）**
+>
+> 当前生产路线已冻结为单保真
+> `Full3D static uniform N1curl p5/h10/MPI2`，observable 使用覆盖
+> `n=0, m=-7..+3` 的 v3。`p4/h10`、`p4/h7.5` 与全部 Hybrid
+> 路线仅保留 diagnostic 身份，不得进入 production campaign 或 dataset。
+> 本文件下方关于 Hybrid LF/HF、多保真训练和旧样本预算的内容是原始任务书历史，
+> 已由 `review_report_v4.md` 覆盖。当前仅授权 M3R；M4、正式 p5 bulk、
+> surrogate training、angle DOE 与 inversion 均未获授权。
+
 ## 当前身份
 
 ```text
@@ -47,11 +57,10 @@ solver incident_phi_deg = azimuth_deg
 ## 数值保真度
 
 ```text
-LF = S_LF_HYBRID_P4_H10_M120
-     Hybrid p4/h10/M120/MPI2
+production = S_PROD_FULL3D_STATIC_P5_H10
+             Full3D static uniform N1curl p5/h10/MPI2
 
-HF = S_HF_HYBRID_P6_H10_M120
-     Hybrid p5-trace/p6-interior, h10, M120, MPI2
+diagnostic only = Full3D p4/h10, Full3D p4/h7.5, all Hybrid routes
 ```
 
 P 偏振不进入 Task002 V1。需要 P 时保留 Full3D assembly-time static-condensed direct route；Hybrid-P 改造延期。

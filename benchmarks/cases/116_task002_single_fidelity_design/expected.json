@@ -1,0 +1,10 @@
+{
+  "schema_version": "task002.case116-expected.v1",
+  "observable_v3_raw_reextraction_pass": true,
+  "runtime_smoke_pass_count": 5,
+  "production_p5_only": true,
+  "frozen_validation_count": 16,
+  "candidate_count": 4096,
+  "training_validation_intersection_count": 0,
+  "M4_authorized": false
+}

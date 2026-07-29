@@ -108,7 +108,9 @@ def _parse_petsc_extra_option(values: list[str] | None) -> dict[str, object]:
     return options
 
 
-def _run_stage_config(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, object]:
+def _run_stage_config(
+    cfg: SimulationConfig3D, out_dir: Path, *, solution_observer=None,
+) -> dict[str, object]:
     """Dispatch one 3D config to the stage-specific solver entry."""
     if cfg.stage_case in STAGE1_CASES:
         return run_stage1_airbox_3d_case(cfg, out_dir)
@@ -121,7 +123,9 @@ def _run_stage_config(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, objec
     if cfg.stage_case in STAGE4A_CASES:
         return run_stage4a_flat_layer_sanity_3d_case(cfg, out_dir)
     if cfg.stage_case in STAGE4B_CASES:
-        return run_stage4b_block_grating_3d_case(cfg, out_dir)
+        return run_stage4b_block_grating_3d_case(
+            cfg, out_dir, solution_observer=solution_observer,
+        )
     raise ValueError(f"Unsupported 3D stage_case={cfg.stage_case!r}.")
 
 

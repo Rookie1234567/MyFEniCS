@@ -19,14 +19,17 @@ from src.common.config_3d import (
 from src.common.modes_3d import enumerate_diffraction_orders_3d
 from src.geometry.mesh_builder_3d import stage4_axis_plan
 
-from .orders import FIXED_M_ORDERS, POLARIZATIONS, extract_fixed_orders
+from .orders import POLARIZATIONS, extract_fixed_orders
 from .provenance import canonical_hash
 from .task002_campaign import formal_preflight
-from .task002_schema import Task002ForwardParameters
+from .task002_schema import (
+    TASK002_FIXED_M_ORDERS, TASK002_OBSERVABLE_SCHEMA_VERSION,
+    Task002ForwardParameters,
+)
 from .watchdog import WatchdogResult, run_with_watchdog
 
 
-TASK002_FULL3D_RECORD_SCHEMA = "task002.full3d-record.v1"
+TASK002_FULL3D_RECORD_SCHEMA = "task002.full3d-record.v2"
 TASK002_FULL3D_TOPOLOGY_SCHEMA = "task002.full3d-topology.v1"
 AXIS_CELL_COUNTS = (6, 3, 14)
 LAYER_CELL_COUNTS = (1, 12, 1)
@@ -219,12 +222,12 @@ def extract_task002_full3d_orders(
     analytic = {
         (order.m, order.n): order
         for order in enumerate_diffraction_orders_3d(
-            cfg, max_m_override=max(abs(v) for v in FIXED_M_ORDERS), max_n_override=0,
+            cfg, max_m_override=max(abs(v) for v in TASK002_FIXED_M_ORDERS), max_n_override=0,
         )
     }
     expected_nonpropagating = set()
     wavevectors = {}
-    for m in FIXED_M_ORDERS:
+    for m in TASK002_FIXED_M_ORDERS:
         order = analytic[(m, 0)]
         for side, propagating in (("top", order.top_propagating),
                                   ("bottom", order.bottom_propagating)):
@@ -237,11 +240,32 @@ def extract_task002_full3d_orders(
                 expected_nonpropagating.update(
                     (side, m, 0, polarization) for polarization in POLARIZATIONS
                 )
-    return extract_fixed_orders(
+    result = extract_fixed_orders(
         rows, port_power=port_power,
         expected_nonpropagating=expected_nonpropagating,
         incident_polarization="S", wavevectors=wavevectors,
+        fixed_m_orders=TASK002_FIXED_M_ORDERS,
+        schema_version=TASK002_OBSERVABLE_SCHEMA_VERSION,
     )
+    allowed = set(TASK002_FIXED_M_ORDERS)
+    uncovered = []
+    for row in rows:
+        if int(row.get("n", row.get("order_n"))) != 0:
+            continue
+        m = int(row.get("m", row.get("order_m")))
+        power = row.get("power", row.get("outgoing_power", row.get("power_ratio")))
+        if m not in allowed and power is not None and float(power) > 0.0:
+            uncovered.append({
+                "side": row.get("side", row.get("port")), "m": m, "n": 0,
+                "polarization": row.get("polarization", row.get("component")),
+                "power": float(power),
+            })
+    result["uncovered_power_carrying_n0"] = uncovered
+    result["complete_angle_domain_contract"] = (
+        "all analytic/raw power-carrying n=0 orders over the production domain "
+        "must belong to fixed_m_order"
+    )
+    return result
 
 
 def task002_full3d_command(
@@ -280,7 +304,7 @@ def run_formal_task002_full3d(
         memory_limit_bytes=preflight["resources"]["hard_ceiling_bytes"],
     )
     execution = {
-        "schema_version": "task002.full3d-execution.v1",
+        "schema_version": "task002.full3d-execution.v2",
         "parameters": parameters.as_dict(), "baseline_sha": baseline_sha,
         "parameter_hash": canonical_hash(parameters.as_dict()),
         "preflight": preflight, "command": command, "watchdog": asdict(result),

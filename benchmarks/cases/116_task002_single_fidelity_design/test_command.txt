@@ -1,0 +1,1 @@
+source scripts/activate_myfenics_surrogate_wsl.sh && python -m benchmarks.check_case116_task002_m3r --write

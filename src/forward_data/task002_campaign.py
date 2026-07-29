@@ -1,7 +1,8 @@
-"""Resume-safe Task002 S-only Full3D campaign.
+"""Resume-safe Task002 p5-only S-polarized Full3D production campaign.
 
-The historical Hybrid route is deliberately unavailable here.  Review V3
-requires it to remain diagnostic evidence only, never a production fallback.
+Review V4 freezes this production path to static uniform N1curl p5/h10.
+p4/h10, p4/h7.5, and every Hybrid route are diagnostic-only and deliberately
+unavailable here.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from .resource_policy import task001_resource_limits
 from .task002_schema import Task002ForwardParameters
 
 
-CAMPAIGN_SCHEMA_VERSION = "task002.s-continuous-campaign.v1"
+CAMPAIGN_SCHEMA_VERSION = "task002.s-p5-single-fidelity-campaign.v2"
 
 
 def sample_key(parameters: Task002ForwardParameters) -> str:

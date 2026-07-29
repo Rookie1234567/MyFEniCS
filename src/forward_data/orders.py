@@ -75,6 +75,8 @@ def extract_fixed_orders(
     expected_nonpropagating: set[tuple[str, int, int, str]] | None = None,
     incident_polarization: str | None = None,
     wavevectors: Mapping[tuple[str, int, int], Mapping[str, complex]] | None = None,
+    fixed_m_orders: tuple[int, ...] = FIXED_M_ORDERS,
+    schema_version: str = TASK001_OBSERVABLE_SCHEMA_VERSION,
 ) -> dict[str, Any]:
     """Extract grouped S/P mother responses without zero-filling absent physics."""
 
@@ -106,7 +108,7 @@ def extract_fixed_orders(
     extracted: list[dict[str, Any]] = []
     missing: list[dict[str, Any]] = []
     for side in SIDES:
-        for m in FIXED_M_ORDERS:
+        for m in fixed_m_orders:
             component_rows: dict[str, dict[str, Any]] = {}
             dispersion_flags: list[bool] = []
             row_wavevector = None
@@ -185,14 +187,14 @@ def extract_fixed_orders(
         if not consistency["r_matches"] or not consistency["t_matches"]:
             raise ValueError(f"raw diffraction totals disagree with port power: {consistency}")
     return {
-        "schema_version": TASK001_OBSERVABLE_SCHEMA_VERSION,
+        "schema_version": schema_version,
         "incident_polarization": None if incident_polarization is None else incident_polarization.upper(),
         "wavevector_unit": "1/nm",
         "wavevector_convention": (
             "outgoing wavevector: reflection/top kz=+beta_top; "
             "transmission/bottom kz=-beta_bottom"
         ),
-        "fixed_m_order": list(FIXED_M_ORDERS),
+        "fixed_m_order": list(fixed_m_orders),
         "orders": extracted, "missing": missing,
         "leakage": {
             "n_nonzero_reflection_power_sum": n_nonzero_reflection,

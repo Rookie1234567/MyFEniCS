@@ -1,5 +1,14 @@
 # Task002 任务书：S 偏振连续照明四维多保真前向代理与角度设计
 
+> **Review V4 / M3R 覆盖声明（2026-07-29）**
+>
+> `review_report_v4.md` 是本轮更高优先级权威。生产 schema、campaign 与
+> dataset 仅允许 `Full3D static uniform N1curl p5/h10/MPI2` 单保真路线；
+> observable v3 固定 `n=0, m=-7..+3`。`p4/h10`、`p4/h7.5` 和 Hybrid
+> 仅供诊断。下文旧的 Hybrid LF/HF、多保真数据预算及模型路线不再构成执行授权。
+> 当前只执行 M3R，不得进入 M4、正式 bulk、surrogate training、angle DOE
+> 或 inversion。
+
 ## 0. 权威、目标与硬边界
 
 本任务由 ChatGPT 编写并审阅，Codex 在唯一执行分支实施。开始前必须完整阅读：

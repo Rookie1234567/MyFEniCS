@@ -18,6 +18,9 @@ from src.forward_data.task002_full3d import (
     task002_full3d_topology_identity,
 )
 from src.forward_data.task002_schema import Task002ForwardParameters
+from src.forward_data.task002_runtime_topology import (
+    actual_runtime_mesh_identity, compare_planned_actual,
+)
 from src.runners.run_3d_cases import _run_stage_config
 
 
@@ -42,7 +45,18 @@ def main() -> int:
         raise ValueError("formal Task002 Full3D source SHA must be full length")
     cfg = build_task002_full3d_config(parameters)
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    summary = _run_stage_config(cfg, args.output_dir)
+    runtime_identity: dict[str, object] = {}
+
+    def observe_runtime(*, field, mesh_data, floquet_data, **_kwargs) -> None:
+        actual = actual_runtime_mesh_identity(
+            function_space=field.function_space, mesh_data=mesh_data,
+            floquet_data=floquet_data,
+        )
+        runtime_identity.update(compare_planned_actual(parameters, actual))
+
+    summary = _run_stage_config(
+        cfg, args.output_dir, solution_observer=observe_runtime,
+    )
     MPI.COMM_WORLD.barrier()
     if MPI.COMM_WORLD.rank == 0:
         port_path = args.output_dir / "dtn_port_power_metrics_3d.json"
@@ -56,6 +70,8 @@ def main() -> int:
             raw_orders, parameters=parameters, port_power=port,
         )
         topology = task002_full3d_topology_identity(parameters, comm_size=2)
+        if not runtime_identity:
+            raise RuntimeError("Task002 production solve did not emit runtime topology identity")
         residual = float(summary["linear_system_relative_residual"])
         closure = float(port["energy_closure_error_dtn_port_modal_volume"])
         record = {
@@ -65,7 +81,9 @@ def main() -> int:
             "parameter_hash": canonical_hash(parameters.as_dict()),
             "solver_route_id": parameters.fidelity["solver_route_id"],
             "config_identity": task002_full3d_config_identity(parameters),
-            "topology_identity": topology,
+            "planned_topology_identity": topology,
+            "actual_runtime_topology_identity": runtime_identity["actual"],
+            "planned_vs_actual": runtime_identity,
             "element_identity": topology["element_identity"],
             "observables": {
                 "R_total": port["R_total"], "T_total": port["T_total"],
@@ -83,8 +101,10 @@ def main() -> int:
                 "true_residual_le_1e-9": residual <= 1.0e-9,
                 "energy_closure_abs_le_1e-7": abs(closure) <= 1.0e-7,
                 "fixed_order_schema_complete": len(mother["missing"]) == 0,
+                "complete_n0_power_window": not mother["uncovered_power_carrying_n0"],
                 "uniform_n1curl_identity": not topology["element_identity"]["nedelec_fixed_trace_enabled"],
                 "fixed_topology_identity_present": bool(topology["topology_element_hash"]),
+                "actual_runtime_topology_matches_plan": bool(runtime_identity["pass"]),
             },
         }
         (args.output_dir / "task002_full3d_record.json").write_text(

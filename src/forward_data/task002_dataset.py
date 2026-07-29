@@ -1,4 +1,4 @@
-"""Canonical portable Task002 dataset writer and independent verifier."""
+"""Canonical p5-only Task002 dataset v2 writer and independent verifier."""
 
 from __future__ import annotations
 
@@ -8,35 +8,28 @@ from typing import Any, Iterable, Mapping
 
 import numpy as np
 
-from .orders import FIXED_M_ORDERS
 from .provenance import canonical_hash, file_hash
 from .task002_schema import (
-    TASK002_DATASET_SCHEMA_VERSION,
-    TASK002_OBSERVABLE_SCHEMA_VERSION,
-    TASK002_PARAMETER_SCHEMA_VERSION,
+    TASK002_DATASET_SCHEMA_VERSION, TASK002_FIXED_M_ORDERS,
+    TASK002_OBSERVABLE_SCHEMA_VERSION, TASK002_PARAMETER_SCHEMA_VERSION,
 )
 
 
+PRODUCTION_ROUTE = "full3d_static_uniform_n1curl_p5_h10"
 ARRAY_FILES = (
     "inputs.npy", "aggregates.npy", "order_amplitudes.npy", "order_powers.npy",
-    "power_carrying_mask.npy", "train_hf_indices.npy", "train_lf_indices.npy",
+    "power_carrying_mask.npy", "train_indices.npy",
     "frozen_validation_indices.npy",
 )
-LF_ROUTE = "full3d_static_uniform_n1curl_p4_h10"
-HF_ROUTE = "full3d_static_uniform_n1curl_p5_h10"
 
 
 def _json_dump(path: Path, value: Any) -> None:
-    path.write_text(
-        json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
+                    encoding="utf-8")
 
 
 def _source_identity(samples: list[Mapping[str, Any]]) -> str:
-    identities = {
-        (sample.get("source_sha"), sample.get("source_dirty")) for sample in samples
-    }
+    identities = {(sample.get("source_sha"), sample.get("source_dirty")) for sample in samples}
     if len(identities) != 1:
         raise ValueError("Task002 dataset samples mix source identities")
     source_sha, dirty = identities.pop()
@@ -48,20 +41,20 @@ def _source_identity(samples: list[Mapping[str, Any]]) -> str:
 def _validate_orders(sample: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     response = sample.get("mother_response", {})
     if response.get("schema_version") != TASK002_OBSERVABLE_SCHEMA_VERSION:
-        raise ValueError("Task002 mother-response schema mismatch")
+        raise ValueError("Task002 mother-response v3 schema mismatch")
     orders = list(response.get("orders", []))
-    expected = [
-        (side, m, 0) for side in ("reflection", "transmission") for m in FIXED_M_ORDERS
-    ]
+    expected = [(side, m, 0) for side in ("reflection", "transmission")
+                for m in TASK002_FIXED_M_ORDERS]
     actual = [(row.get("side"), row.get("m"), row.get("n")) for row in orders]
     if actual != expected:
-        raise ValueError("Task002 mother-response order identity mismatch")
+        raise ValueError("Task002 mother-response v3 order identity mismatch")
+    if response.get("uncovered_power_carrying_n0"):
+        raise ValueError("Task002 mother-response has power outside the frozen v3 window")
     return orders
 
 
-def write_compact_dataset(
-    samples: Iterable[Mapping[str, Any]], *, output_dir: Path, dataset_id: str,
-) -> dict[str, Any]:
+def write_compact_dataset(samples: Iterable[Mapping[str, Any]], *, output_dir: Path,
+                          dataset_id: str) -> dict[str, Any]:
     records = [dict(sample) for sample in samples]
     if not records:
         raise ValueError("Task002 dataset requires at least one sample")
@@ -73,29 +66,26 @@ def write_compact_dataset(
     if len(set(sample_ids)) != len(sample_ids) or any(value in {"", "None"} for value in sample_ids):
         raise ValueError("Task002 sample_id values must be unique and nonempty")
     if any(record.get("status") != "measured_pass" for record in records):
-        raise ValueError("only measured_pass samples enter the compact training dataset")
+        raise ValueError("only measured_pass samples enter the compact production dataset")
+    if any(record.get("solver_route_id") != PRODUCTION_ROUTE for record in records):
+        raise ValueError("Task002 production dataset is Full3D p5/h10 single-fidelity only")
 
-    n_orders = 2 * len(FIXED_M_ORDERS)
+    n_orders = 2 * len(TASK002_FIXED_M_ORDERS)
     inputs = np.empty((len(records), 4), dtype=np.float64)
     aggregates = np.empty((len(records), 4), dtype=np.float64)
     amplitudes = np.full((len(records), n_orders, 2, 2), np.nan, dtype=np.float64)
     powers = np.full((len(records), n_orders, 2), np.nan, dtype=np.float64)
     mask = np.zeros((len(records), n_orders, 2), dtype=np.bool_)
-    split_indices = {"train_lf": [], "train_hf": [], "frozen_validation": []}
-    route_indices = {LF_ROUTE: [], HF_ROUTE: []}
-
+    split_indices = {"train": [], "frozen_validation": []}
     for index, record in enumerate(records):
         inputs[index] = np.asarray(record["inputs"], dtype=np.float64)
-        aggregates[index] = [
-            float(record["aggregates"][name])
-            for name in ("R_total", "T_total", "A_balance", "A_volume")
-        ]
+        aggregates[index] = [float(record["aggregates"][name])
+                             for name in ("R_total", "T_total", "A_balance", "A_volume")]
         for order_index, order in enumerate(_validate_orders(record)):
             for component_index, component_name in enumerate(("s", "p")):
                 component = order["components"][component_name]
-                real = component.get("amplitude_re")
-                imag = component.get("amplitude_im")
-                power = component.get("power")
+                real, imag, power = (component.get(name) for name in
+                                     ("amplitude_re", "amplitude_im", "power"))
                 carrying = bool(component.get("power_carrying"))
                 if carrying and power is None:
                     raise ValueError("power-carrying component is missing power")
@@ -108,27 +98,16 @@ def write_compact_dataset(
                 mask[index, order_index, component_index] = carrying
         split = str(record.get("split"))
         if split not in split_indices:
-            raise ValueError(f"unsupported Task002 split: {split}")
-        route = str(record.get("solver_route_id"))
-        if route not in route_indices:
-            raise ValueError("Task002 dataset rejects unregistered or mixed solver route")
-        expected_route = LF_ROUTE if split == "train_lf" else HF_ROUTE
-        if route != expected_route:
-            raise ValueError("Task002 solver route does not match its explicit fidelity split")
+            raise ValueError(f"unsupported p5-only Task002 split: {split}")
         split_indices[split].append(index)
-        route_indices[route].append(index)
 
     arrays = {
-        "inputs.npy": inputs,
-        "aggregates.npy": aggregates,
-        "order_amplitudes.npy": amplitudes,
-        "order_powers.npy": powers,
+        "inputs.npy": inputs, "aggregates.npy": aggregates,
+        "order_amplitudes.npy": amplitudes, "order_powers.npy": powers,
         "power_carrying_mask.npy": mask,
-        "train_hf_indices.npy": np.asarray(split_indices["train_hf"], dtype=np.int64),
-        "train_lf_indices.npy": np.asarray(split_indices["train_lf"], dtype=np.int64),
+        "train_indices.npy": np.asarray(split_indices["train"], dtype=np.int64),
         "frozen_validation_indices.npy": np.asarray(
-            split_indices["frozen_validation"], dtype=np.int64
-        ),
+            split_indices["frozen_validation"], dtype=np.int64),
     }
     for name, array in arrays.items():
         np.save(output_dir / name, array, allow_pickle=False)
@@ -137,12 +116,10 @@ def write_compact_dataset(
             stream.write(json.dumps(record, ensure_ascii=False, allow_nan=False) + "\n")
     order_identity = {
         "schema_version": TASK002_OBSERVABLE_SCHEMA_VERSION,
-        "axis": [
-            {"side": side, "m": m, "n": 0}
-            for side in ("reflection", "transmission") for m in FIXED_M_ORDERS
-        ],
-        "component_axis": ["s", "p"],
-        "complex_axis": ["real", "imag"],
+        "axis": [{"side": side, "m": m, "n": 0}
+                 for side in ("reflection", "transmission")
+                 for m in TASK002_FIXED_M_ORDERS],
+        "component_axis": ["s", "p"], "complex_axis": ["real", "imag"],
     }
     _json_dump(output_dir / "order_identity.json", order_identity)
     manifest = {
@@ -150,11 +127,11 @@ def write_compact_dataset(
         "dataset_id": dataset_id, "dataset_source_sha": source_sha,
         "parameter_schema_version": TASK002_PARAMETER_SCHEMA_VERSION,
         "observable_schema_version": TASK002_OBSERVABLE_SCHEMA_VERSION,
+        "production_solver_route_id": PRODUCTION_ROUTE,
+        "fidelity_semantics": "p5_single_fidelity_best_available_operational_HF",
         "sample_count": len(records), "sample_ids_hash": canonical_hash(sample_ids),
-        "arrays": {
-            name: {"shape": list(array.shape), "dtype": str(array.dtype)}
-            for name, array in arrays.items()
-        },
+        "arrays": {name: {"shape": list(array.shape), "dtype": str(array.dtype)}
+                   for name, array in arrays.items()},
         "axis_meaning": {
             "inputs": ["height_nm", "width_x_nm", "grazing_deg", "azimuth_deg"],
             "aggregates": ["R_total", "T_total", "A_balance", "A_volume"],
@@ -164,21 +141,21 @@ def write_compact_dataset(
         "units": {"inputs": ["nm", "nm", "degree", "degree"], "powers": "1"},
         "structural_null": "NaN in arrays plus false in power_carrying_mask",
         "split_hash": canonical_hash(split_indices),
-        "solver_routes": {
-            "train_lf": LF_ROUTE, "train_hf": HF_ROUTE,
-            "frozen_validation": HF_ROUTE,
-        },
-        "solver_route_indices_hash": canonical_hash(route_indices),
+        "discretization_audit_disposition": "separate diagnostic table; never production samples",
     }
     _json_dump(output_dir / "dataset_manifest.json", manifest)
     hashed = [*ARRAY_FILES, "sample_records.jsonl", "order_identity.json", "dataset_manifest.json"]
-    hashes = {name: file_hash(output_dir / name) for name in hashed}
-    _json_dump(output_dir / "file_hashes.json", hashes)
+    _json_dump(output_dir / "file_hashes.json",
+               {name: file_hash(output_dir / name) for name in hashed})
     return verify_compact_dataset(output_dir)
 
 
 def verify_compact_dataset(dataset_dir: Path) -> dict[str, Any]:
     manifest = json.loads((dataset_dir / "dataset_manifest.json").read_text())
+    if manifest.get("schema_version") != TASK002_DATASET_SCHEMA_VERSION:
+        raise ValueError("Task002 dataset v2 schema mismatch")
+    if manifest.get("production_solver_route_id") != PRODUCTION_ROUTE:
+        raise ValueError("Task002 dataset manifest is not p5-only")
     hashes = json.loads((dataset_dir / "file_hashes.json").read_text())
     for name, expected in hashes.items():
         if file_hash(dataset_dir / name) != expected:
@@ -188,21 +165,17 @@ def verify_compact_dataset(dataset_dir: Path) -> dict[str, Any]:
         identity = manifest["arrays"][name]
         if list(array.shape) != identity["shape"] or str(array.dtype) != identity["dtype"]:
             raise ValueError(f"Task002 dataset array identity mismatch: {name}")
-    powers = arrays["order_powers.npy"]
-    mask = arrays["power_carrying_mask.npy"]
-    if not np.array_equal(np.isnan(powers), ~mask):
+    if not np.array_equal(np.isnan(arrays["order_powers.npy"]),
+                          ~arrays["power_carrying_mask.npy"]):
         raise ValueError("Task002 structural null mask disagrees with power NaNs")
-    split_arrays = [
-        arrays["train_lf_indices.npy"], arrays["train_hf_indices.npy"],
-        arrays["frozen_validation_indices.npy"],
-    ]
-    combined = np.concatenate(split_arrays)
+    combined = np.concatenate([arrays["train_indices.npy"],
+                               arrays["frozen_validation_indices.npy"]])
     if combined.size != np.unique(combined).size:
         raise ValueError("Task002 dataset splits overlap")
     if np.any(combined < 0) or np.any(combined >= manifest["sample_count"]):
         raise ValueError("Task002 dataset split index out of range")
-    return {
-        "status": "pass", "dataset_id": manifest["dataset_id"],
-        "dataset_source_sha": manifest["dataset_source_sha"],
-        "sample_count": manifest["sample_count"], "file_count": len(hashes),
-    }
+    if set(combined.tolist()) != set(range(manifest["sample_count"])):
+        raise ValueError("Task002 dataset splits do not cover every sample exactly once")
+    return {"status": "pass", "dataset_id": manifest["dataset_id"],
+            "dataset_source_sha": manifest["dataset_source_sha"],
+            "sample_count": manifest["sample_count"], "file_count": len(hashes)}

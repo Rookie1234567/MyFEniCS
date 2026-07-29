@@ -9,9 +9,8 @@ import numpy as np
 
 from src.common.modes_3d import enumerate_diffraction_orders_3d
 
-from .orders import FIXED_M_ORDERS
 from .task002_full3d import build_task002_full3d_config
-from .task002_schema import Task002ForwardParameters
+from .task002_schema import TASK002_FIXED_M_ORDERS, Task002ForwardParameters
 
 
 LF_GRAZING_DEG = (0.5, 1.0, 2.0, 4.0, 6.0, 8.0, 10.0)
@@ -63,7 +62,7 @@ def cutoff_diagnostics(
     k0 = 2.0 * math.pi / float(parameters.wavelength_nm)
     rows = []
     for order in _orders(parameters):
-        if order.m not in FIXED_M_ORDERS:
+        if order.m not in TASK002_FIXED_M_ORDERS:
             continue
         top_metric = abs(complex(order.beta_top)) / k0
         bottom_metric = abs(complex(order.beta_bottom)) / k0
@@ -221,7 +220,7 @@ def audit_order_window(
     for grazing, azimuth in angles:
         angle_count += 1
         parameters = Task002ForwardParameters(
-            120.0, 17.0, grazing, azimuth, "S_LF_FULL3D_STATIC_P4_H10"
+            120.0, 17.0, grazing, azimuth, "S_PROD_FULL3D_STATIC_P5_H10"
         )
         for order in _orders(parameters, max_abs_m=max_abs_m):
             nearest[order.m] = min(
@@ -230,13 +229,13 @@ def audit_order_window(
             )
             if order.top_propagating or order.bottom_propagating:
                 relevant.add(order.m)
-    fixed = set(FIXED_M_ORDERS)
+    fixed = set(TASK002_FIXED_M_ORDERS)
     return {
         "schema_version": "task002.order-window-audit.v1",
         "angle_count": angle_count,
         "searched_m_range": [-max_abs_m, max_abs_m],
         "propagating_m_union": sorted(relevant),
-        "fixed_m_orders": list(FIXED_M_ORDERS),
+        "fixed_m_orders": list(TASK002_FIXED_M_ORDERS),
         "missing_propagating_m": sorted(relevant - fixed),
         "coverage_pass": relevant.issubset(fixed),
         "nearest_abs_beta_over_k0": {str(m): value for m, value in nearest.items()},
