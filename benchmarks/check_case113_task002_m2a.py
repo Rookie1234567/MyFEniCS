@@ -10,7 +10,7 @@ from typing import Any
 
 from src.forward_data.task002_design import cutoff_diagnostics_v2
 from src.forward_data.task002_m2a import MATRIX, STENCIL
-from src.forward_data.task002_schema import Task002ForwardParameters
+from src.forward_data.task002_schema import Task002HistoricalHybridParameters
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -217,7 +217,7 @@ def build_records(
     }
     cutoff_rows = []
     for grazing, azimuth in sorted(STENCIL):
-        parameters = Task002ForwardParameters(120.0, 17.0, grazing, azimuth, LF)
+        parameters = Task002HistoricalHybridParameters(120.0, 17.0, grazing, azimuth, LF)
         cutoff_rows.append({
             "grazing_deg": grazing, "azimuth_deg": azimuth,
             **cutoff_diagnostics_v2(parameters),

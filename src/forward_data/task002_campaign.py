@@ -1,21 +1,21 @@
-"""Resume-safe Task002 S-only campaign and formal Hybrid command construction."""
+"""Resume-safe Task002 S-only Full3D campaign.
+
+The historical Hybrid route is deliberately unavailable here.  Review V3
+requires it to remain diagnostic evidence only, never a production fallback.
+"""
 
 from __future__ import annotations
 
 import argparse
 from dataclasses import asdict
 import json
-import os
 from pathlib import Path
 from typing import Any, Mapping
 
 from .forward_model import _abi_identity
 from .provenance import canonical_hash, source_identity
 from .resource_policy import task001_resource_limits
-from .task001_campaign import task001_hybrid_command
-from .task001_config import task001_config_identity
 from .task002_schema import Task002ForwardParameters
-from .watchdog import WatchdogResult, run_with_watchdog
 
 
 CAMPAIGN_SCHEMA_VERSION = "task002.s-continuous-campaign.v1"
@@ -29,17 +29,12 @@ def task002_hybrid_command(
     parameters: Task002ForwardParameters, *, root: Path, baseline_sha: str,
     output_record: Path, memory_stages: Path,
 ) -> list[str]:
-    """Reuse the qualified numerical runner while enforcing the stricter S-only schema."""
+    """Fail closed: Hybrid is hard-quarantined from Task002 production."""
 
-    parameters.validate()
-    command = task001_hybrid_command(
-        parameters.to_task001(), root=root, baseline_sha=baseline_sha,
-        output_record=output_record, memory_stages=memory_stages,
+    del parameters, root, baseline_sha, output_record, memory_stages
+    raise RuntimeError(
+        "Task002 Hybrid production route is hard quarantined by Review V3 M2C"
     )
-    command[command.index("--task001-surrogate-pilot-gate")] = (
-        "--task002-s-continuous-gate"
-    )
-    return command
 
 
 def formal_preflight(root: Path, baseline_sha: str) -> dict[str, Any]:
@@ -93,51 +88,6 @@ def update_manifest(
     return manifest
 
 
-def run_formal_task002_hybrid(
-    parameters: Task002ForwardParameters, *, root: Path, baseline_sha: str,
-    run_directory: Path, timeout_seconds: float,
-) -> tuple[WatchdogResult, Path]:
-    preflight = formal_preflight(root, baseline_sha)
-    run_directory.mkdir(parents=True, exist_ok=False)
-    output_record = run_directory / "solver_record.json"
-    memory_stages = run_directory / "memory_stages.jsonl"
-    command = task002_hybrid_command(
-        parameters, root=root, baseline_sha=baseline_sha,
-        output_record=output_record, memory_stages=memory_stages,
-    )
-    env = {
-        **os.environ, "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1",
-        "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1",
-    }
-    result = run_with_watchdog(
-        command, cwd=root, env=env, output_dir=run_directory / "watchdog",
-        timeout_seconds=timeout_seconds,
-        memory_limit_bytes=preflight["resources"]["hard_ceiling_bytes"],
-        stage_file=memory_stages,
-    )
-    execution = {
-        "schema_version": "task002.s-continuous-execution.v1",
-        "parameters": parameters.as_dict(), "sample_key": sample_key(parameters),
-        "baseline_sha": baseline_sha, "preflight": preflight, "command": command,
-        "task001_numerical_config": task001_config_identity(parameters.to_task001()),
-        "watchdog": asdict(result), "solver_record_present": output_record.is_file(),
-    }
-    execution_path = run_directory / "execution.json"
-    execution_path.write_text(json.dumps(execution, indent=2, ensure_ascii=False) + "\n")
-    return result, execution_path
-
-
-def classify_run(run_directory: Path, result: WatchdogResult) -> str:
-    solver_path = run_directory / "solver_record.json"
-    if solver_path.is_file():
-        record = json.loads(solver_path.read_text(encoding="utf-8"))
-        gates = record.get("gates", {})
-        return "measured_pass" if gates and all(bool(value) for value in gates.values()) else "failed_numerical_gate"
-    if "memory" in result.status.lower():
-        return "controlled_stop_resource"
-    return "failed_numerical_gate"
-
-
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -174,11 +124,13 @@ def main() -> int:
         args.campaign_manifest, baseline_sha=args.baseline_sha, parameters=parameters,
         status="reserved", run_directory=run_directory,
     )
-    result, execution_path = run_formal_task002_hybrid(
+    from .task002_full3d import formal_record_status, run_formal_task002_full3d
+
+    result, execution_path = run_formal_task002_full3d(
         parameters, root=args.root.resolve(), baseline_sha=args.baseline_sha,
         run_directory=run_directory, timeout_seconds=args.timeout_seconds,
     )
-    status = classify_run(run_directory, result)
+    status = formal_record_status(run_directory, result)
     update_manifest(
         args.campaign_manifest, baseline_sha=args.baseline_sha, parameters=parameters,
         status=status, run_directory=run_directory,

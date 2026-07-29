@@ -10,7 +10,7 @@ import numpy as np
 from src.common.modes_3d import enumerate_diffraction_orders_3d
 
 from .orders import FIXED_M_ORDERS
-from .task001_config import task001_stage4_config
+from .task002_full3d import build_task002_full3d_config
 from .task002_schema import Task002ForwardParameters
 
 
@@ -48,7 +48,7 @@ def fixed_hf_angle_pilot() -> list[dict[str, Any]]:
 
 
 def _orders(parameters: Task002ForwardParameters, max_abs_m: int = 12):
-    cfg = task001_stage4_config(parameters.to_task001())
+    cfg = build_task002_full3d_config(parameters)
     return enumerate_diffraction_orders_3d(
         cfg, max_m_override=max_abs_m, max_n_override=0,
     )
@@ -93,7 +93,7 @@ def incident_wave_audit(parameters: Task002ForwardParameters) -> dict[str, Any]:
     """Record the runtime incident-wave identity used by the Stage-4 authority."""
 
     parameters.validate()
-    cfg = task001_stage4_config(parameters.to_task001())
+    cfg = build_task002_full3d_config(parameters)
     k = np.asarray(cfg.wavevector, dtype=np.complex128)
     e = complex(cfg.incident_amplitude) * np.asarray(
         cfg.polarization_vector, dtype=np.complex128,
@@ -134,7 +134,7 @@ def cutoff_diagnostics_v2(
     """Separate incident grazing from genuine nonzero-order Rayleigh proximity."""
 
     parameters.validate()
-    cfg = task001_stage4_config(parameters.to_task001())
+    cfg = build_task002_full3d_config(parameters)
     k0 = float(cfg.k0)
     rows: list[dict[str, Any]] = []
     for order in _orders(parameters, max_abs_m=max_abs_m):
@@ -221,7 +221,7 @@ def audit_order_window(
     for grazing, azimuth in angles:
         angle_count += 1
         parameters = Task002ForwardParameters(
-            120.0, 17.0, grazing, azimuth, "S_LF_HYBRID_P4_H10_M120"
+            120.0, 17.0, grazing, azimuth, "S_LF_FULL3D_STATIC_P4_H10"
         )
         for order in _orders(parameters, max_abs_m=max_abs_m):
             nearest[order.m] = min(

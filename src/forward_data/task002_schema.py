@@ -17,6 +17,19 @@ TASK002_DATASET_SCHEMA_VERSION = "task002.s-continuous-dataset.v1"
 TASK002_SAMPLE_SCHEMA_VERSION = "task002.s-continuous-sample.v1"
 
 TASK002_FIDELITIES = {
+    "S_LF_FULL3D_STATIC_P4_H10": {
+        "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+        "degree": 4, "h_nm": 10.0, "axis_counts": (6, 3, 14),
+        "element_family": "uniform_N1curl",
+    },
+    "S_HF_FULL3D_STATIC_P5_H10": {
+        "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+        "degree": 5, "h_nm": 10.0, "axis_counts": (6, 3, 14),
+        "element_family": "uniform_N1curl",
+    },
+}
+
+TASK002_HISTORICAL_HYBRID_FIDELITIES = {
     "S_LF_HYBRID_P4_H10_M120": {
         "task001_model_id": "LF4", "degree": 4, "h_nm": 10.0,
         "modes": 120, "axis_counts": (6, 3, 14),
@@ -24,6 +37,12 @@ TASK002_FIDELITIES = {
     "S_HF_HYBRID_P6_H10_M120": {
         "task001_model_id": "HF10", "degree": 6, "h_nm": 10.0,
         "modes": 120, "axis_counts": (6, 3, 14),
+        "element_family": "uniform_N1curl",
+        "actual_element_identity": "uniform N1curl p6",
+        "identity_correction": (
+            "historical labels describing p5-trace/p6-interior were incorrect; "
+            "raw evidence is unchanged"
+        ),
     },
 }
 
@@ -38,7 +57,10 @@ def task002_parameter_catalog() -> dict[str, Any]:
             "azimuth_deg": {"range": [0.0, 90.0], "role": "configuration"},
         },
         "fixed": {"wavelength_nm": 13.5, "incident_polarization": "S"},
-        "fidelity": {"allowed": sorted(TASK002_FIDELITIES)},
+        "fidelity": {
+            "allowed": sorted(TASK002_FIDELITIES),
+            "hard_quarantined_historical": sorted(TASK002_HISTORICAL_HYBRID_FIDELITIES),
+        },
         "zero_grazing_status": "zero_grazing_limit_not_defined",
         "out_of_domain_status": "out_of_training_domain",
         "solver_conversion": (
@@ -142,13 +164,8 @@ class Task002ForwardParameters:
         ], dtype=np.float64)
 
     def to_task001(self) -> Task001ForwardParameters:
-        self.validate()
-        return Task001ForwardParameters(
-            height_nm=self.height_nm, width_x_nm=self.width_x_nm,
-            grazing_deg=self.grazing_deg, azimuth_deg=self.azimuth_deg,
-            incident_polarization="S",
-            model_id=self.fidelity["task001_model_id"],
-            mpi_ranks=2, threads_per_rank=1,
+        raise ValueError(
+            "Task002 production Full3D parameters cannot be routed through Task001 Hybrid"
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -172,3 +189,33 @@ class Task002ForwardParameters:
             "observable_schema_version": self.order_schema_id,
             "execution": {"mpi_ranks": 2, "threads_per_rank": 1},
         }
+
+
+@dataclass(frozen=True)
+class Task002HistoricalHybridParameters(Task002ForwardParameters):
+    """Read-only compatibility identity for immutable Case112/113 evidence."""
+
+    def validate(self) -> None:
+        request = classify_task002_request(self.__dict__)
+        if request["status"] != "in_domain":
+            raise ValueError(request["status"])
+        if self.model_id not in TASK002_HISTORICAL_HYBRID_FIDELITIES:
+            raise ValueError("historical identity accepts only quarantined Hybrid IDs")
+        if self.mpi_ranks != 2 or self.threads_per_rank != 1:
+            raise ValueError("historical Task002 evidence identity is MPI2/thread1")
+        if self.order_schema_id != TASK002_OBSERVABLE_SCHEMA_VERSION:
+            raise ValueError("unsupported Task002 observable schema")
+
+    @property
+    def fidelity(self) -> dict[str, Any]:
+        self.validate()
+        return dict(TASK002_HISTORICAL_HYBRID_FIDELITIES[self.model_id])
+
+    def to_task001(self) -> Task001ForwardParameters:
+        self.validate()
+        return Task001ForwardParameters(
+            height_nm=self.height_nm, width_x_nm=self.width_x_nm,
+            grazing_deg=self.grazing_deg, azimuth_deg=self.azimuth_deg,
+            incident_polarization="S", model_id=self.fidelity["task001_model_id"],
+            mpi_ranks=2, threads_per_rank=1,
+        )

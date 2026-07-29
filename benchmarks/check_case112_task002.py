@@ -13,7 +13,7 @@ from src.forward_data.task002_dataset import verify_compact_dataset
 from src.forward_data.task002_design import (
     audit_order_window, cutoff_diagnostics, fixed_hf_angle_pilot, lf_angle_pilot,
 )
-from src.forward_data.task002_schema import Task002ForwardParameters
+from src.forward_data.task002_schema import Task002HistoricalHybridParameters
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -80,7 +80,7 @@ def build_m2_record(artifact_root: Path, manifest_path: Path) -> dict[str, Any]:
         parameters = execution["parameters"]
         configuration = parameters["configuration"]
         geometry = parameters["geometry"]
-        task_parameters = Task002ForwardParameters(
+        task_parameters = Task002HistoricalHybridParameters(
             height_nm=geometry["height_nm"], width_x_nm=geometry["width_x_nm"],
             grazing_deg=configuration["grazing_deg"],
             azimuth_deg=configuration["azimuth_deg"],

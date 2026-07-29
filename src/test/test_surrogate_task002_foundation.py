@@ -26,14 +26,18 @@ from src.forward_data.task002_m2b import (
     GRAZING_DEG as M2B_GRAZING_DEG,
     hybrid_command as m2b_hybrid_command,
 )
+from src.forward_data.task002_full3d import (
+    AXIS_CELL_COUNTS, build_task002_full3d_config, task002_full3d_command,
+    task002_full3d_config_identity, task002_full3d_topology_identity,
+)
 from src.forward_data.task002_schema import (
     TASK002_OBSERVABLE_SCHEMA_VERSION, Task002ForwardParameters,
     classify_task002_request, task002_parameter_catalog,
 )
 
 
-LF = "S_LF_HYBRID_P4_H10_M120"
-HF = "S_HF_HYBRID_P6_H10_M120"
+LF = "S_LF_FULL3D_STATIC_P4_H10"
+HF = "S_HF_FULL3D_STATIC_P5_H10"
 
 
 def _parameters(**updates) -> Task002ForwardParameters:
@@ -176,21 +180,57 @@ def test_m2b_selected_higher_order_set_and_order_checker() -> None:
     assert delta["max_power_ratio_abs_error"] == pytest.approx(0.1)
 
 
-def test_task002_command_reuses_exact_qualified_s_route(tmp_path: Path) -> None:
-    command = task002_hybrid_command(
-        _parameters(model_id=HF), root=tmp_path, baseline_sha="a" * 40,
-        output_record=tmp_path / "record.json", memory_stages=tmp_path / "stages.jsonl",
+def test_task002_hybrid_production_route_is_hard_quarantined(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError, match="hard quarantined"):
+        task002_hybrid_command(
+            _parameters(model_id=HF), root=tmp_path, baseline_sha="a" * 40,
+            output_record=tmp_path / "record.json",
+            memory_stages=tmp_path / "stages.jsonl",
+        )
+
+
+def test_task002_full3d_command_and_uniform_element_identity(tmp_path: Path) -> None:
+    parameters_path = tmp_path / "parameters.json"
+    command = task002_full3d_command(
+        root=tmp_path, parameters_file=parameters_path, baseline_sha="a" * 40,
+        output_dir=tmp_path / "results",
     )
-    parsed = _parse_args(command[command.index("benchmarks.run_task032_phase6_augmented") + 1:])
-    assert parsed.task001_surrogate_pilot_gate is False
-    assert parsed.task002_s_continuous_gate is True
-    assert parsed.task001_model_id == "HF10"
-    assert parsed.polarization_kind == "s"
-    assert parsed.degree == 6 and parsed.requested_modes == 120
-    p_command = list(command)
-    p_command[p_command.index("--polarization-kind") + 1] = "p"
-    with pytest.raises(SystemExit):
-        _parse_args(p_command[p_command.index("benchmarks.run_task032_phase6_augmented") + 1:])
+    assert command[:3] == ["mpiexec", "-n", "2"]
+    assert command[4:6] == ["-m", "src.runners.run_task002_full3d"]
+    for model_id, degree in ((LF, 4), (HF, 5)):
+        parameters = _parameters(model_id=model_id)
+        cfg = build_task002_full3d_config(parameters)
+        topology = task002_full3d_topology_identity(parameters)
+        assert cfg.mesh_axis_cell_counts == AXIS_CELL_COUNTS
+        assert cfg.nedelec_degree == degree
+        assert cfg.nedelec_trace_degree is None
+        assert cfg.nedelec_interior_degree is None
+        assert topology["element_identity"]["family"] == "N1curl"
+        assert topology["element_identity"]["degree"] == degree
+
+
+def test_task002_fixed_topology_is_geometry_invariant() -> None:
+    rows = []
+    for height in (115.0, 120.0, 125.0):
+        for width in (16.0, 17.0, 18.0):
+            rows.append(task002_full3d_topology_identity(
+                _parameters(height_nm=height, width_x_nm=width),
+            ))
+    for key in (
+        "logical_connectivity_sha256", "material_tag_topology_sha256",
+        "floquet_entity_topology_sha256", "dof_layout_identity_sha256",
+        "topology_element_hash",
+    ):
+        assert len({row[key] for row in rows}) == 1
+    assert len({row["coordinate_sha256"] for row in rows}) == 9
+
+
+def test_task002_config_hash_is_deterministic_and_parameter_bound() -> None:
+    first = task002_full3d_config_identity(_parameters())
+    repeated = task002_full3d_config_identity(_parameters())
+    changed = task002_full3d_config_identity(_parameters(azimuth_deg=60.0))
+    assert first == repeated
+    assert first["config_sha256"] != changed["config_sha256"]
 
 
 def test_campaign_cli_requires_one_explicit_sample(tmp_path: Path) -> None:

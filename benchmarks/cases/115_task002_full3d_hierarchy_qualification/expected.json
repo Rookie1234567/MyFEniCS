@@ -1,0 +1,22 @@
+{
+  "schema_version": "task002.case115-expected.v1",
+  "p5_angle_pass_count": 80,
+  "topology_identity_count": 9,
+  "geometry_pilot_run_count": 40,
+  "hard_gates": {
+    "true_residual_max": 1e-9,
+    "energy_closure_abs_max": 1e-7,
+    "zero_swap": true,
+    "cleanup_complete": true,
+    "fixed_order_schema_complete": true
+  },
+  "multifidelity_advisory_gates": {
+    "primary_channel_spearman_min": 0.9,
+    "angle_gradient_sign_agreement_min": 0.85,
+    "mf_validation_must_beat_raw_lf": true,
+    "mf_validation_must_not_underperform_p5_only": true
+  },
+  "hybrid_production_allowed": false,
+  "p4_h7p5_low_fidelity_allowed": false,
+  "m3_allowed": false
+}

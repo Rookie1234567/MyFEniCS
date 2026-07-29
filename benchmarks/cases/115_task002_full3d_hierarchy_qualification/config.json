@@ -1,0 +1,26 @@
+{
+  "schema_version": "task002.case115-config.v1",
+  "scope": "Review V3 Required M2C only",
+  "production_fidelities": {
+    "LF": "S_LF_FULL3D_STATIC_P4_H10",
+    "HF": "S_HF_FULL3D_STATIC_P5_H10"
+  },
+  "fixed_execution": {"mpi_ranks": 2, "threads_per_rank": 1},
+  "angle_grid": {
+    "grazing_deg": [0.5, 0.75, 1.0, 2.0, 4.0, 6.0, 8.0, 10.0],
+    "azimuth_deg": [0.0, 5.0, 10.0, 15.0, 20.0, 30.0, 45.0, 60.0, 75.0, 90.0]
+  },
+  "topology_geometry_grid": {
+    "height_nm": [115.0, 120.0, 125.0],
+    "width_x_nm": [16.0, 17.0, 18.0]
+  },
+  "geometry_pilot": [
+    [120.0, 17.0], [117.5, 17.0], [122.5, 17.0],
+    [120.0, 16.5], [120.0, 17.5]
+  ],
+  "geometry_pilot_angles": [[0.5, 0.0], [0.5, 45.0], [2.0, 15.0], [10.0, 45.0]],
+  "discrepancy_budgets": [12, 16, 24],
+  "hybrid_route_status": "deferred_known_near_degenerate_bug",
+  "p4_h7p5_role": "discretization_error_audit_only",
+  "prohibited": ["4d_bulk", "surrogate_fit", "angle_doe", "inversion"]
+}
