@@ -117,3 +117,30 @@ orbit、periodic/hanging closure 和 action-consistent quadratic remainder。
 - [post-action global-estimator outcome](outcomes/post_action_global_estimator_audit.md)；
 - [59-goal compact](../../benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_post_action_global_estimator_audit_v1.json)；
 - [更新后的 estimator repair design](outcomes/cellwise_p_estimator_repair_design.md)。
+
+### 2026-07-29：reference-visible development diagnostic
+
+最新授权暂缓 exact selected-action complement Schur/low-rank 数值开发，也没有
+运行新 PDE。一个与 blind controller 隔离的 development evaluator 打开既有
+sealed package，离线比较 cycle 0 current、完整 p/h shadow 和两个已拒绝的
+actual candidates。该结果严格分类为
+`REFERENCE_VISIBLE_DEVELOPMENT_DIAGNOSTIC`，不得获得 reference-blind、
+formal candidate 或 hidden-audit credit。
+
+full p-shadow 的 59-goal normalized L2 true error 相对 current 降低
+`27.120392%`；N=8 power、grouped complex amplitudes、totals 和 fields
+分类 L2 均改善，按显式 development policy 没有系统性分类恶化。因此只提出
+复用**已有** full p-shadow 作为 development cycle 1 current，无需重新求解。
+该提议尚未写入 controller state：cycle 0 current 继续保留，
+`cycle_advanced=false`。
+
+full p-shadow 仍只有 `1/59` 位于 reference tolerance 内、`0/59` 位于
+reference uncertainty 内，所以它不是收敛候选。全部 reference center、
+uncertainty、五组逐目标误差、分类统计、输入 SHA 和冻结标志见：
+
+- [reference-visible outcome](outcomes/reference_visible_development_diagnostic.md)；
+- [59-goal compact](outcomes/reference_visible_development_diagnostic_v1.json)。
+
+compact 刻意位于 development outcome 目录，不是 blind controller input、
+Case098 final ledger 或 reference-blind evidence。既有 blind runs 与
+controlled negatives 原样保留。

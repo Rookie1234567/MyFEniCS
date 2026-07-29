@@ -260,3 +260,32 @@ repair 必须显式包含新增 interior modes 对旧 trace block 的 `Delta A00
 见 [post-action global-estimator compact](records/path_a_cycle0_post_action_global_estimator_audit_v1.json)；
 解释和 algebra 见
 [Task035e outcome](../../../docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/post_action_global_estimator_audit.md)。
+
+## 2026-07-29：reference-visible development diagnostic
+
+本批次没有修改 `config.json`、progress checkpoint、blind controller 或任何
+controller input，也没有运行新 PDE。独立 development evaluator 只读取既有
+sealed package 与五组已存在结果，输出分类为：
+
+```text
+REFERENCE_VISIBLE_DEVELOPMENT_DIAGNOSTIC
+reference_blind_credit = false
+formal_candidate_credit = false
+cycle0_current_retained = true
+cycle_advanced = false
+```
+
+59-goal normalized L2 相对 current 的变化为：full p-shadow 改善
+`27.120392%`，full h-shadow 改善 `0.003046%`，single-cell 恶化
+`0.489958%`，four-cell 恶化 `27.031931%`。full p-shadow 的 N=8 power、
+grouped complex amplitude、totals 和 fields 分类 normalized L2 均未恶化，
+因此仅建议审阅者考虑把既有 p-shadow 提升为 development cycle 1 current，
+不需要重新 solve；本提交没有实施 promotion。
+
+full p-shadow 仍只有 `1/59` 进入 reference tolerance、`0/59` 进入
+reference uncertainty，不能称为 reference pass。reference-visible compact
+刻意不放入本 case 的 blind `records/` 或最终 ledger，避免被误用为 controller
+输入或 reference-blind credit。完整结果见
+[development outcome](../../../docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/reference_visible_development_diagnostic.md)
+与
+[59-goal compact](../../../docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/reference_visible_development_diagnostic_v1.json)。
