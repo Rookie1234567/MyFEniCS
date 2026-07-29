@@ -2318,3 +2318,28 @@ Review V1 接受全部数值证据，并确认用户权威范围为相对样品�
 kx/ky/kz complex identity、S/P amplitude real/imag、S/P power、order total，以及分侧 n!=0
 leakage。所有 response 绑定原 execution/solver hash；没有重跑 PDE。结果和测试见
 Task001 `response_v2.md`。
+
+---
+
+# 49. Surrogate Task002：S 连续角域 M2 受控停止
+
+Task002 首先建立 S-only 四维参数合同、0°/域外 fail-closed、角度波矢特征、49 LF/9 HF
+固定设计、order/cutoff 解析审计、单样本 watchdog campaign、canonical dataset arrays/hash 与
+split immutability。49 点解析网格上的可传播 n=0 union 为 `m=-7..0`，现有 v2 fixed window
+完整覆盖；M1/历史合同合计 84 tests 通过。
+
+首次正式 anchor 暴露 Task001 sampled-H interpolation proxy 仍被旧 runner 当作 hard Gate。
+Review V3 已接受的 exact variational traction dual 在 `0.5°/0°/S` 为 `~1e-11` 且 assembled
+E、energy、residual 全通过，因此 Task002 独立 route 把 exact dual 作为正式 traction Gate，
+sampled 值原样保留为 diagnostic；Task001/Task035c 历史 Gate 不变。新的 clean source 为
+`f6613e4329ba3d52f122cffb8952df93cd83a30d`。
+
+四个 angle corners 的 LF/HF center runs 共 8/8 通过，zero swap 且 cleanup 完成。LF/HF peak
+分别约 1.07--1.16 GB / 3.39--4.78 GB。49 点 LF pilot 的首个新增点
+`0.5°/15°/S` true residual `2.07e-11`、assembled E `1.24e-3`、exact H dual `3.05e-11`
+均通过，但 energy closure `-2.606e-5` 超过 `1e-5`。该点 `|beta|/k0=0.00873`，位于预冻
+0.02 near-cutoff 候选区，尚无可靠 M120 disposition。
+
+任务因此按 M2/Section 13 受控停止：LF angle pilot 实际 5/49 unique，HF fixed pilot 4/9
+（复用 corners），M3--M10 未运行。没有 bulk dataset、surrogate、DOE、P/Hybrid-P 或反演。
+证据见 Task002 `outcomes/summary.md` 与 Case112 `records/m2_controlled_stop.json`。

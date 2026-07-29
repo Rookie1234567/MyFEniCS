@@ -1,5 +1,7 @@
 source scripts/activate_myfenics_surrogate_wsl.sh
 python -m pytest -q src/test/test_surrogate_task002_foundation.py
 python -m benchmarks.check_case112_task002 --check-records
+# Local raw-evidence audit when Case112 artifacts are present:
+python -m benchmarks.check_case112_task002 --check-records --m2-artifacts benchmarks/artifacts/cases/112/m2_v2 --m2-manifest benchmarks/artifacts/cases/112/m2_v2_campaign_manifest.json --check-m2-record
 python -m compileall -q src/forward_data benchmarks/check_case112_task002.py
 git diff --check
