@@ -6,7 +6,15 @@
 >
 > **2026-07-26 历史回填。** 独立 backfill 重新核对 Task000–Task035c 的 outcomes、response、review 和 compact records。方法级成功表补齐 Task034 的 p2/p3/p4 Full3D、Hybrid、M funnel 与 MPI identity；逐 Task 第3章继续保留失败、停止和未运行证据。
 >
-> **2026-07-28 收口。** 在不覆盖上述回填的前提下，三方加入 Task035d 最终总账、Review V1 口径修正和 Task035e `staged/not_run` 入口。Task035e 尚无数值 evidence。
+> **2026-07-28 收口。** 在不覆盖上述回填的前提下，三方加入 Task035d 最终总账、Review V1 口径修正和 Task035e `staged/not_run` 入口。
+>
+> **2026-07-29 Task035e partial checkpoint。** 保留原 `config.json` 最终 ledger
+> 语义，同时登记 source
+> `f1ba5627f163da54fa383b43be58fd38c0da7bc9` 的 Path A cycle 0
+> current/p-shadow/h-shadow、59-goal actual DWR/cellwise replay、v27 Path B
+> controlled resource stop，以及 sealed reference 的身份/Gate 状态。selected
+> action、transition、candidate、cycle 1、Path B v28 与 Hybrid 仍为
+> `not_run`；不得把 partial stage pass 提升为 Task035e completion。
 
 ---
 
@@ -21,7 +29,7 @@
 | `C-COMSOL-P0` | COMSOL 直接/迭代求解器对照 | 周期 `50×25 nm`；空气 `50×25×130 nm`；基底 `50×25×10 nm`；光栅 `16×25×120 nm` | `13.5 nm`；`80°`（相对法线） | P | 两周期端口 + 双 Floquet；仅 `(0,0)` 零级 | `docs/task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md` |
 | `C-COMSOL-HO-S` | COMSOL p2–p6直接法与p2 GMRES+GMG收敛矩阵 | 固定三维高阶benchmark；精确geometry/source hash保存在MPH而非Markdown | 13.5 nm项目主点；入射身份以MPH为准 | 偏振身份以MPH为准（Markdown未冻结） | 双Floquet/周期端口；保存R00与总R/T/A，未逐项冻结12通道复振幅 | `docs/COMSOL_direct_solver_report.md` |
 | `F-STAGE4-S` | FEniCS Stage4 原始完整 FE 矩阵、Hybrid 和迭代主线 | 单元 `50×25×140 nm`；Si 块 `17×25×120 nm` | `13.5 nm`；`theta=80°`、`phi=0°`，即 `10°` 掠入射 | S | 双 Floquet + Fourier-DtN；top/bottom 各 40 个传播模态，共 80 个辅助量 | Task027–Task033 |
-| `F-HO-S` | FEniCS 高阶、h/p、自适应、静态凝聚与Hybrid高阶闭合主线 | Task034 冻结规则矩形光栅；与 `F-STAGE4-S` 同一工程主点族 | `13.5 nm`；`10°` 掠入射 | S | 双 Floquet + DtN；显著衍射级使用 Task035b reference v1 | Task034–Task035d；Task035e 仅 staged/not_run |
+| `F-HO-S` | FEniCS 高阶、h/p、自适应、静态凝聚与Hybrid高阶闭合主线 | Task034 冻结规则矩形光栅；与 `F-STAGE4-S` 同一工程主点族 | `13.5 nm`；`10°` 掠入射 | S | 双 Floquet + DtN；显著衍射级使用 Task035b reference v1 | Task034–Task035e；Task035e 当前为 partial cycle-0 evidence |
 
 ### 0.2 总量、自由度和资源字段
 
@@ -461,14 +469,14 @@ H1-B p2/h3 为 `not_run_by_review_prerequisite`，不是普通待运行项。
 | Task035b structured-hexa directional-h | h15→h14→h13 的 z 向全共形细化，h13 达到 89,740 DoF | 12/12 通道闭合；局部 hanging-node hexa h 路径 | `controlled_negative` |
 | selective p6 trace | fixture 中 active-row 省略、Floquet pullback、MatShell action | actual enriched residual、channel DWR、orbit selection、正式 PDE | `incomplete` |
 | Task035d exact-sequence local-p + true local-h | capability/resource pass；h15 top-air `82,925 DoF / 18,470 rows / 7.50068 GiB / 6/12+6/12`；left-grating `88,915 / 21,650 / 8.06120 GiB / 4/12+6/12` | accuracy fail；automatic cycles 1–4 not completed；未形成 production hp candidate | `PARTIAL_WITH_CONTROLLED_NEGATIVES` |
-| Task035e reference-blind multilevel hp | hidden certifier/controller/auditor 合同已冻结 | p6/h10、h7.5、h5 certification 与 blind cycles 均未运行 | `staged_not_run` |
+| Task035e reference-blind multilevel hp | sealed p6/h10、h7.5、h5 certification 身份/Gate；Path A current+p/h shadow；59-goal endpoint/cellwise DWR；离线 p/h marking | selected action、transition、candidate、cycle 1、Path B v28、hidden final audit 和 Hybrid 均未运行 | `PARTIAL_CYCLE0_SHADOWS_COMPLETE` |
 
 ### 1.6.2 Hybrid
 
 | 状态 | 说明 |
 |---|---|
 | Task035d `not_run_full3d_hp_gate_failed` | Full3D 候选未通过 12/12+12/12，Hybrid 不得提供精度信用。 |
-| Task035e `not_run` | 只有 hidden audit 通过的 Full3D blind candidate 才能进入 static Hybrid M120；当前无结果。 |
+| Task035e `not_run` | 只有 hidden audit 通过的 Full3D blind candidate 才能进入 static Hybrid M120；cycle 0 尚未执行 selected action/candidate，因此无 Hybrid 结果。 |
 
 ---
 
@@ -1230,15 +1238,22 @@ local-h 或 trace-orbit DWR；当前 compact location oracle 不足以授权继�
 
 ## 3.40 Task035e：reference-blind 多层 local-h/p 自适应
 
-Task035e 是选择性合并后的下一研究任务。它先由独立 certifier 对 p6/h10、
-p6/h7.5 和 p6/h5 建立收敛资格，再把数值结果封存在 hidden reference
-package 中；blind controller 只能读取冻结的低阶目标集合、当前解、局部
-indicator、成本和自身历史，不能读取 reference 值、路径、hash、误差图或
-已知最优网格。当前仅登记任务合同，尚无新 PDE、资源或精度结果。
+Task035e 先由独立 certifier 对 p6/h10、p6/h7.5 和 p6/h5 建立收敛资格，再把
+数值结果封存在 hidden reference package 中；blind controller 只能读取冻结的
+低阶目标集合、当前解、局部 indicator、成本和自身历史，不能读取 reference
+值、路径、hash、误差图或已知最优网格。2026-07-29 已完成 Path A cycle 0 的 current、
+p-shadow、h-shadow 与 59-goal/cellwise 离线重放，但尚未执行 selected action、
+transition 或 candidate，所以只能登记 partial progress，不能登记 cycle
+完成或 hidden-reference 精度通过。
 
 | Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
 |---|---|---|---|---|---|---|
-| `task035e_reference_blind_entry` | post-Task035d selective-merge master；执行分支待创建 | `F-HO-S` fixed rectangular grating；两条独立起始网格；p4/p5/p6；真正多层 local-h | hidden certifier + blind controller + hidden auditor；formal MPI8；最多6个 blind cycles | p6/h10、h7.5、h5 certification、DoF/rows/NNZ/factor/peak/timeline 均 `not_run` | `staged_not_run`；不得登记未运行数值或向 controller 泄漏 reference | `docs/task035e_reference_blind_multilevel_hp_adaptivity/task.md` |
+| `task035e_reference_certification_sealed` | certification source `03ddc8319fa9ee9da6a9ee948b539a067e9c3dd0`；sealed package `69b620…12d7`，47,421,013 bytes；package 未提交/未解析 | `F-HO-S`；p6/h10、p6/h7.5、p6/h5；S；Full3D static | direct MUMPS；MPI8；三个 full solve | 三个 run 的 residual/energy/resource 均 pass、zero swap；reference 数值、逐通道、场和 error map 不进入总账 | `SEALED_IDENTITY_ONLY_NO_REFERENCE_VALUES`；reference-leak static/manifest/dynamic 全通过 | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/task035e_sealed_reference_manifest_v1.json` |
+| `task035e_path_a_c0_current_v28` | numerical source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；forest `f9b666…77a1f` | Path A current；160 leaves；level 0/1=`32/128`；p4/p5/p6=`24/136/0` | variable-p static condensed；MPI8；59,264 FE DoF；20,202 rows；10,798,392 matrix NNZ；41,217,460 factor NNZ | residual `1.373246e-12`；R00=`0.0864978439`，R=`0.0949734914`，T=`0.3774035414`，Aclosure=`0.5276229672`；RSS/PSS/USS=`8368.988/6491.735/6234.652 MiB`，swap 0；wall `239.304 s` | current stage pass；不是 adaptive candidate | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_v28_stage_authority_v1.json` |
+| `task035e_path_a_c0_p_shadow_v28` | 同一 numerical source；forest 与 current 相同；degree map `14c4ad…6c8e` | 160 leaves；level 0/1=`32/128`；p4/p5/p6=`15/138/7` | variable-p static condensed；MPI8；62,284 FE DoF；20,564 rows；11,084,868 matrix NNZ；43,034,248 factor NNZ | residual `1.873484e-12`；R00=`0.0623430295`，R=`0.0685259183`，T=`0.4081864213`，Aclosure=`0.5232876605`；RSS/PSS/USS=`8345.027/6955.710/6847.707 MiB`，swap 0；wall `236.323 s` | p-shadow pass；59/59 endpoint DWR pass；不是 selected action/candidate | 同上；`records/path_a_cycle0_v28_59goal_dwr_compact_v1.json` |
+| `task035e_path_a_c0_h_shadow_v28` | 同一 numerical source；forest `d6a7c9…8de7` | 181 leaves；level 0/1/2=`32/125/24`；p4/p5/p6=`24/157/0` | variable-p static condensed；MPI8；66,434 FE DoF；22,189 rows；11,821,621 matrix NNZ；41,744,755 factor NNZ | residual `1.671519e-12`；R00=`0.0864985747`，R=`0.0949741323`，T=`0.3774025559`，Aclosure=`0.5276233119`；RSS/PSS/USS=`10482.977/9541.340/9394.934 MiB`，swap 0；wall `395.487 s` | h-shadow pass；whole-job RSS `10.237282 GiB <= 11 GiB`；59/59 endpoint DWR pass | 同上；`records/path_a_cycle0_v28_59goal_dwr_compact_v1.json` |
+| `task035e_path_a_c0_cellwise_v28` | p/h cellwise authority `dc4674…7933` / `9ff5d9…bb67`；各160 rows | current leaf partition；59 formal goals；global endpoint closure 与 cellwise attribution 分离 | actual residual-adjoint pairing；equal-weight normalized multi-goal；offline replay | 两 lane 均完整覆盖 160 leaves；最大 signed closure error `2.776e-15` / `1.668e-17`；p marked 4 cells；h verification-only 1 target + 1 periodic closure | `offline_compact_replayed`；selected action/transition/candidate 均 `not_run` | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_v28_cellwise_marking_v1.json` |
+| `task035e_path_b_c0_v27_partial` | source `1fa06c93593e3b6a97b05e1138147999a4587074`；仅复用 v27 local evidence | Path B current+p-shadow+h-shadow attempt | MPI8；h-shadow 11 GiB controlled resource Gate | current pass；p-shadow pass；h-shadow 在 `11.055027 GiB` controlled stop，未产生 run_summary/evaluation/bridge | `PARTIAL_CONTROLLED_RESOURCE_STOP`；`cycle_complete=false`；没有 v28 Path B run | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_b_cycle0_v27_partial_authority_v1.json` |
 
 ### 3.40.1 隔离与完成边界
 
@@ -1248,8 +1263,12 @@ indicator、成本和自身历史，不能读取 reference 值、路径、hash�
   `REFERENCE_CERTIFICATION_INCOMPLETE`，不得把 h7.5 冒充最终 reference。
 - automatic blind cycle 必须真实产生多层、多区域 local-h、p-shadow 和
   h-shadow 证据；Task035d 的 manual single-root discriminator 不计作完成。
-- 本节状态保持 `not_run`，直到 Task035e 自己的 clean-source authority、
-  hidden-audit receipt 和正式资源/精度记录产生。
+- 当前 clean-source stage authority 已产生，但 hidden final audit、selected
+  candidate 与 cycle transition 尚未产生；因此 Task 总状态保持 partial，而不是
+  completion。
+- `config.json` 的最终 ledger schema 不能无歧义表达此 partial progress，故保持
+  原 `SCAFFOLD_NOT_RUN` 语义；hash-bound checkpoint 单独位于
+  `records/path_a_cycle0_v28_progress_checkpoint_v1.json`。
 
 
 ---
@@ -1286,7 +1305,7 @@ indicator、成本和自身历史，不能读取 reference 值、路径、hash�
 
 # 5. 当前数据缺口与后续自动化
 
-1. Task000–035d 已逐项回填；Task035e 仅登记 staged/not_run 合同；早期没有保存的 source SHA、geometry hash、12 通道、factor NNZ 或 PSS/cgroup 明确标成“历史未记录”。
+1. Task000–035d 已逐项回填；Task035e 已登记 sealed certification 身份和 Path A cycle-0 partial stage/shadow evidence，但尚无 selected candidate、hidden final audit 或 Hybrid；早期没有保存的 source SHA、geometry hash、12 通道、factor NNZ 或 PSS/cgroup 明确标成“历史未记录”。
 2. Task032–034 的 heavy JSON 包含比总账更细的衍射级、场误差和资源字段；总账保留权威 evidence path，不建立第二份易漂移的逐字段副本。
 3. COMSOL 参考只计算零级；非零衍射级不能写 0。
 4. 不同物理配置、偏振、网格和软件之间的数值只能做标注清楚的横向参考，不能混成单一收敛序列。

@@ -1,0 +1,77 @@
+{
+  "hash_semantics": "sha256(canonical JSON payload with sorted keys, compact separators, ensure_ascii=true, allow_nan=false)",
+  "payload": {
+    "classification": "PARTIAL_PROGRESS_NOT_FINAL_LEDGER",
+    "compact_evidence": {
+      "action_preflight": {
+        "bytes": 13034,
+        "path": "benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_v28_action_preflight_v1.json",
+        "sha256": "51e026a1159d024ac6ce93d27f29a9a2dba062f93e53df68f094e687754d26d5"
+      },
+      "action_preflight_markdown": {
+        "bytes": 1622,
+        "path": "benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_v28_action_preflight_v1.md",
+        "sha256": "09cc685e955724d69ccda7cea06ea3e27178edcf83172dc633f16ac8419467cd"
+      },
+      "cellwise": {
+        "bytes": 2340210,
+        "path": "benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_v28_cellwise_marking_v1.json",
+        "sha256": "fc1fb41e77bf5339f5e8afe39d36a758072545ae5ef0164a4bec8c32e6be38a3"
+      },
+      "goal_dwr": {
+        "bytes": 65317,
+        "path": "benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_v28_59goal_dwr_compact_v1.json",
+        "sha256": "56336031990e9c30aed3fb0a8107db8ffd9aaf9e32b88c6ccdb144fb349442b9"
+      },
+      "path_b_partial": {
+        "bytes": 5807,
+        "path": "benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_b_cycle0_v27_partial_authority_v1.json",
+        "sha256": "166fe22fef7f6cc9365aa4b903ecc4ba712b8eec48b5f617a524e6b035759070"
+      },
+      "sealed_reference": {
+        "bytes": 7186,
+        "path": "benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/task035e_sealed_reference_manifest_v1.json",
+        "sha256": "54f5191ec689dba3b5afe28cf4497661dce607462de12d79abbfad838984ec37"
+      },
+      "stage_authority": {
+        "bytes": 44285,
+        "path": "benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_v28_stage_authority_v1.json",
+        "sha256": "7149eeddb7cc8aca4e3ed733f0052766434602698eed1802171cf5a6a0edc7de"
+      }
+    },
+    "config_json_modified": false,
+    "config_json_semantics": "strict final/scaffold ledger retained unchanged; partial progress is represented only by this hash-bound checkpoint",
+    "documentation_evidence_base_sha": "34445a50c888bd36918929f8bd0353f4a8816075",
+    "forbidden_not_run": [
+      "v29",
+      "Path B v28",
+      "selected action",
+      "cycle 1",
+      "p7 saturation",
+      "level-3 saturation",
+      "reference recomputation",
+      "Hybrid"
+    ],
+    "numerical_source_sha": "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+    "ordinary_default_changed": false,
+    "path_a_cycle_0": {
+      "candidate": "not_run",
+      "cellwise_partition": "offline_compact_replayed",
+      "current": "pass",
+      "cycle_advanced": false,
+      "h-shadow": "pass",
+      "p-shadow": "pass",
+      "selected_action": "not_run",
+      "transition": "not_run"
+    },
+    "path_b": {
+      "cycle_complete": false,
+      "v27_partial_authority": "current_and_p_shadow_pass_h_shadow_controlled_resource_stop",
+      "v28": "no_new_run"
+    },
+    "pde_rerun": false,
+    "status": "task035e_progress_checkpoint_v28"
+  },
+  "payload_sha256": "90ee1b683140959d88d9aaaae469bf7e588f9f8cea8c3bd606a531a7de156d7b",
+  "schema_version": "task035e.progress-checkpoint.v1"
+}

@@ -1,0 +1,273 @@
+{
+  "hash_semantics": "sha256(canonical JSON payload with sorted keys, compact separators, ensure_ascii=true, allow_nan=false)",
+  "payload": {
+    "actions_are_independent": true,
+    "candidate": "not_run",
+    "classification": "OFFLINE_COMPONENT_PREFLIGHT_ONLY",
+    "combined_action": "forbidden_not_constructed",
+    "cycle_advanced": false,
+    "numerical_source_sha": "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+    "pde_rerun": false,
+    "recommendation": {
+      "authorized_now": false,
+      "reason": "The p lane is a positive equal-weight D\u00f6rfler marking with REFERENCE_BLIND_LOCAL_MARKING_PASS. The h lane is only a REFERENCE_BLIND_VERIFICATION_ONLY singleton because its global normalized signal is below the formal threshold, and it also introduces a periodic closure target. This is a future authorization recommendation only.",
+      "validate_first": "selected_p"
+    },
+    "selected_action": "not_run",
+    "selected_h": {
+      "action_kind": "h-refine",
+      "actual_action_target_set": [
+        "cell:r45:l1:i0:j0:k1",
+        "cell:r47:l1:i1:j0:k1"
+      ],
+      "actual_target_set": [
+        "cell:r47:l1:i1:j0:k1"
+      ],
+      "candidate_solve_executed": false,
+      "classification": "REFERENCE_BLIND_VERIFICATION_ONLY",
+      "closure_set": [
+        "cell:r45:l1:i0:j0:k1"
+      ],
+      "predicted_added_structure": {
+        "estimated_added_active_dofs": 14,
+        "estimated_added_factor_nnz": 37025,
+        "estimated_added_matrix_nnz": 19604,
+        "estimated_added_rows": 7,
+        "estimated_added_solver_peak_bytes": 1133084
+      },
+      "predicted_goal_improvement": {
+        "normalized_multi_goal_score": 53.540113890455075,
+        "semantics": "signed cellwise DWR sum; predicts endpoint change, not a hidden-reference error and not a solved result",
+        "signed_delta": {
+          "bottom:m-1:n0:co_amp_imag": -2.9743575329235665e-05,
+          "bottom:m-1:n0:co_amp_real": -5.54865723187137e-05,
+          "bottom:m-1:n0:power": -7.090027104905515e-07,
+          "bottom:m-2:n0:co_amp_imag": 1.7170861817138195e-05,
+          "bottom:m-2:n0:co_amp_real": -9.092992346184352e-05,
+          "bottom:m-2:n0:power": -3.333818514078724e-07,
+          "bottom:m-3:n0:co_amp_imag": 0.0001117734912590996,
+          "bottom:m-3:n0:co_amp_real": 6.992810664466497e-06,
+          "bottom:m-3:n0:power": -1.1529333249833755e-07,
+          "bottom:m-4:n0:co_amp_imag": -0.00010703241984771753,
+          "bottom:m-4:n0:co_amp_real": 7.86545505921609e-06,
+          "bottom:m-4:n0:power": 1.72698464263617e-07,
+          "bottom:m-5:n0:co_amp_imag": 3.5728491345144185e-05,
+          "bottom:m-5:n0:co_amp_real": 9.160976896041425e-05,
+          "bottom:m-5:n0:power": 1.6466692110154348e-07,
+          "bottom:m-6:n0:co_amp_imag": 3.736706082912818e-05,
+          "bottom:m-6:n0:co_amp_real": -6.422448651583645e-05,
+          "bottom:m-6:n0:power": 5.739987311311034e-06,
+          "bottom:m-7:n0:co_amp_imag": -1.839842231734812e-05,
+          "bottom:m-7:n0:co_amp_real": -3.711243694035257e-05,
+          "bottom:m-7:n0:power": -7.99985139409466e-06,
+          "bottom:m0:n0:co_amp_imag": 2.6772122553501954e-05,
+          "bottom:m0:n0:co_amp_real": -4.3221928919720846e-05,
+          "bottom:m0:n0:power": 4.958784559778639e-05,
+          "complex/interface_probe_complex/imag": -3.481281121552709e-06,
+          "complex/interface_probe_complex/real": -5.08788714071468e-06,
+          "complex/volume_probe_complex/imag": -1.7054963780558258e-06,
+          "complex/volume_probe_complex/real": 4.86157717567791e-06,
+          "scalar/A_closure": -3.537874292604546e-05,
+          "scalar/A_volume": 6.877315323043426e-05,
+          "scalar/R00_total": -1.1768573119271686e-05,
+          "scalar/R_total": -1.1129522976053422e-05,
+          "scalar/T_total": 4.650826590209901e-05,
+          "scalar/interface_probe_l2": 0.002946314292025208,
+          "scalar/volume_probe_l2": 0.0034792853421596924,
+          "top:m-1:n0:co_amp_imag": -6.537467276487868e-05,
+          "top:m-1:n0:co_amp_real": -1.6686646574107435e-05,
+          "top:m-1:n0:power": 5.812990463872502e-06,
+          "top:m-2:n0:co_amp_imag": -6.940348864573389e-05,
+          "top:m-2:n0:co_amp_real": -7.27965843074118e-05,
+          "top:m-2:n0:power": -4.2842709672987133e-07,
+          "top:m-3:n0:co_amp_imag": -3.755207755314749e-05,
+          "top:m-3:n0:co_amp_real": -0.0001366015894714722,
+          "top:m-3:n0:power": -3.0619453786639366e-08,
+          "top:m-4:n0:co_amp_imag": -1.6256850763809236e-05,
+          "top:m-4:n0:co_amp_real": 0.0001562077125468155,
+          "top:m-4:n0:power": 7.095068542741541e-07,
+          "top:m-5:n0:co_amp_imag": -7.775324845940566e-05,
+          "top:m-5:n0:co_amp_real": 9.026844235431131e-05,
+          "top:m-5:n0:power": 9.197841236254855e-08,
+          "top:m-6:n0:co_amp_imag": -7.637815763950797e-05,
+          "top:m-6:n0:co_amp_real": 2.3883217719157347e-05,
+          "top:m-6:n0:power": 2.645895508352111e-06,
+          "top:m-7:n0:co_amp_imag": -4.225583370751331e-05,
+          "top:m-7:n0:co_amp_real": 1.1568094605595623e-05,
+          "top:m-7:n0:power": -8.163666479948387e-06,
+          "top:m0:n0:co_amp_imag": 4.552567649550787e-05,
+          "top:m0:n0:co_amp_real": 4.539092253057377e-05,
+          "top:m0:n0:power": -1.1768573119271665e-05
+        }
+      },
+      "ranking_selected_order": [
+        "cell:r47:l1:i1:j0:k1"
+      ],
+      "selected_action_executed": false,
+      "selection_role": "verification_only_marking",
+      "status": "offline_action_preflight_pass",
+      "transition_component_preflight": {
+        "action_identity_sha256": "35c9f2b4a955c635426767513f47e7629af900d77c2dafcc265574fd9cfe0da0",
+        "action_sha256": "95ce42e50b068d2591d8e17a7963d389377d0589a78685aba0f4f343f89f8b01",
+        "actual_action_target_ids": [
+          "cell:r45:l1:i0:j0:k1",
+          "cell:r47:l1:i1:j0:k1"
+        ],
+        "closure_counts": {
+          "balance_2_to_1": 0,
+          "material": 0,
+          "p_degree_jump": 0,
+          "periodic": 1
+        },
+        "closure_target_ids": [
+          "cell:r45:l1:i0:j0:k1"
+        ],
+        "component_preflight_only": true,
+        "expected_added_leaf_count": 16,
+        "expected_net_added_leaf_count": 14,
+        "expected_removed_leaf_count": 2,
+        "from_state_sha256": "5a90faa5ef8e3132900d075c06404f4ee3e8c8d311d3493d37e242086a52c15c",
+        "next_state_sha256": "9116aa0887c93989b22fb7cf407ffe025275ffebffa6a54d044da5e98a4889b9",
+        "pde_executed": false,
+        "requested_target_ids": [
+          "cell:r47:l1:i1:j0:k1"
+        ],
+        "transition_file_written": false
+      }
+    },
+    "selected_p": {
+      "action_kind": "p-up",
+      "actual_action_target_set": [
+        "cell:r13:l0:i0:j0:k0",
+        "cell:r37:l0:i0:j0:k0",
+        "cell:r42:l1:i1:j0:k0",
+        "cell:r42:l1:i1:j1:k0"
+      ],
+      "actual_target_set": [
+        "cell:r13:l0:i0:j0:k0",
+        "cell:r37:l0:i0:j0:k0",
+        "cell:r42:l1:i1:j0:k0",
+        "cell:r42:l1:i1:j1:k0"
+      ],
+      "candidate_solve_executed": false,
+      "classification": "REFERENCE_BLIND_LOCAL_MARKING_PASS",
+      "closure_set": [],
+      "predicted_added_structure": {
+        "estimated_added_active_dofs": 93,
+        "estimated_added_factor_nnz": 73681,
+        "estimated_added_matrix_nnz": 11830,
+        "estimated_added_rows": 14,
+        "estimated_added_solver_peak_bytes": 1711228
+      },
+      "predicted_goal_improvement": {
+        "normalized_multi_goal_score": 2252.286349748242,
+        "semantics": "signed cellwise DWR sum; predicts endpoint change, not a hidden-reference error and not a solved result",
+        "signed_delta": {
+          "bottom:m-1:n0:co_amp_imag": 0.003803918009711793,
+          "bottom:m-1:n0:co_amp_real": 0.0040879415095702275,
+          "bottom:m-1:n0:power": 6.646885469389533e-07,
+          "bottom:m-2:n0:co_amp_imag": -6.438419518300477e-05,
+          "bottom:m-2:n0:co_amp_real": -0.0026001742669820092,
+          "bottom:m-2:n0:power": -1.3166240951716457e-05,
+          "bottom:m-3:n0:co_amp_imag": -0.0006548366159581533,
+          "bottom:m-3:n0:co_amp_real": -0.0006004116844291337,
+          "bottom:m-3:n0:power": 1.4082001555466185e-06,
+          "bottom:m-4:n0:co_amp_imag": -0.0020396747285934226,
+          "bottom:m-4:n0:co_amp_real": 0.000987564194861337,
+          "bottom:m-4:n0:power": 3.8082762436680413e-06,
+          "bottom:m-5:n0:co_amp_imag": 8.096490516443111e-05,
+          "bottom:m-5:n0:co_amp_real": -0.00035639503127050254,
+          "bottom:m-5:n0:power": -4.089739461190558e-07,
+          "bottom:m-6:n0:co_amp_imag": 0.0026832797116164244,
+          "bottom:m-6:n0:co_amp_real": 0.000104349159397517,
+          "bottom:m-6:n0:power": -0.00020746761084850928,
+          "bottom:m-7:n0:co_amp_imag": -0.017487801744638265,
+          "bottom:m-7:n0:co_amp_real": -0.0019267729920643762,
+          "bottom:m-7:n0:power": -0.004119259754339986,
+          "bottom:m0:n0:co_amp_imag": -0.041583417835556184,
+          "bottom:m0:n0:co_amp_real": 0.016444631701063514,
+          "bottom:m0:n0:power": -0.012529544537589763,
+          "complex/interface_probe_complex/imag": 0.0005604246658361027,
+          "complex/interface_probe_complex/real": -0.0002777205434816112,
+          "complex/volume_probe_complex/imag": -0.00010991171886361574,
+          "complex/volume_probe_complex/real": 0.0008194571307672575,
+          "scalar/A_closure": 0.031251923293976434,
+          "scalar/A_volume": -0.02204007589211436,
+          "scalar/R00_total": -0.012085249799856349,
+          "scalar/R_total": -0.014555977237749651,
+          "scalar/T_total": -0.016695946056227363,
+          "scalar/interface_probe_l2": -1.1786720098374845,
+          "scalar/volume_probe_l2": -1.0208181419080469,
+          "top:m-1:n0:co_amp_imag": 0.0015001942344744358,
+          "top:m-1:n0:co_amp_real": -8.802101251211654e-05,
+          "top:m-1:n0:power": -0.00011344732564808803,
+          "top:m-2:n0:co_amp_imag": 0.002620311701419881,
+          "top:m-2:n0:co_amp_real": 0.0009179913179691466,
+          "top:m-2:n0:power": 1.9577654167429846e-05,
+          "top:m-3:n0:co_amp_imag": 0.00014991107147531172,
+          "top:m-3:n0:co_amp_real": -0.0017970021184688344,
+          "top:m-3:n0:power": -1.5905668319828205e-06,
+          "top:m-4:n0:co_amp_imag": 0.00032450190142079254,
+          "top:m-4:n0:co_amp_real": -0.003257434497292175,
+          "top:m-4:n0:power": -1.1424646651309708e-05,
+          "top:m-5:n0:co_amp_imag": -0.003612882150837004,
+          "top:m-5:n0:co_amp_real": 0.0015411865287467028,
+          "top:m-5:n0:power": 6.695529841639795e-06,
+          "top:m-6:n0:co_amp_imag": -0.0010852817809155896,
+          "top:m-6:n0:co_amp_real": -0.0012170728700418951,
+          "top:m-6:n0:power": -4.075536318077664e-06,
+          "top:m-7:n0:co_amp_imag": -0.015814130322285343,
+          "top:m-7:n0:co_amp_real": 0.005238216148915161,
+          "top:m-7:n0:power": -0.0024754545801292404,
+          "top:m0:n0:co_amp_imag": -0.025472701032249287,
+          "top:m0:n0:co_amp_real": 0.012498845794156718,
+          "top:m0:n0:power": -0.012085249799856349
+        }
+      },
+      "ranking_selected_order": [
+        "cell:r42:l1:i1:j0:k0",
+        "cell:r37:l0:i0:j0:k0",
+        "cell:r42:l1:i1:j1:k0",
+        "cell:r13:l0:i0:j0:k0"
+      ],
+      "selected_action_executed": false,
+      "selection_role": "production_dorfler_marking",
+      "status": "offline_action_preflight_pass",
+      "transition_component_preflight": {
+        "action_identity_sha256": "378c2d22e8bca0d7c9fca7829502a6f0c8881550ed483937f081296308136198",
+        "action_sha256": "1d587a9fea64afccfbf53e040e10696fccd19b40fd5ec7194d162a7dee2cf249",
+        "actual_action_target_ids": [
+          "cell:r13:l0:i0:j0:k0",
+          "cell:r37:l0:i0:j0:k0",
+          "cell:r42:l1:i1:j0:k0",
+          "cell:r42:l1:i1:j1:k0"
+        ],
+        "closure_counts": {
+          "balance_2_to_1": 0,
+          "material": 0,
+          "p_degree_jump": 0,
+          "periodic": 0
+        },
+        "closure_target_ids": [],
+        "component_preflight_only": true,
+        "expected_added_leaf_count": 0,
+        "expected_net_added_leaf_count": 0,
+        "expected_removed_leaf_count": 0,
+        "from_state_sha256": "5a90faa5ef8e3132900d075c06404f4ee3e8c8d311d3493d37e242086a52c15c",
+        "next_state_sha256": "994ac6074d269beaf221bd7a0ef5c49470db81059f5fa45fdff786e2623a167c",
+        "pde_executed": false,
+        "requested_target_ids": [
+          "cell:r13:l0:i0:j0:k0",
+          "cell:r37:l0:i0:j0:k0",
+          "cell:r42:l1:i1:j0:k0",
+          "cell:r42:l1:i1:j1:k0"
+        ],
+        "transition_file_written": false
+      }
+    },
+    "status": "path_a_cycle0_v28_action_preflight_frozen",
+    "transition": "not_run"
+  },
+  "payload_sha256": "7f57f2bacaf564268b0bd22a965fe8fc1504792b77fe549eb47d7fbab2b901a6",
+  "schema_version": "task035e.path-a-cycle0-v28-action-preflight.v1"
+}

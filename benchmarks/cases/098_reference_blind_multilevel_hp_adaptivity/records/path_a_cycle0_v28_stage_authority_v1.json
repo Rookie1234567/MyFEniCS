@@ -1,0 +1,997 @@
+{
+  "hash_semantics": "sha256(canonical JSON payload with sorted keys, compact separators, ensure_ascii=true, allow_nan=false)",
+  "payload": {
+    "classification": "OFFLINE_REPLAY_OF_EXISTING_RAW_ARTIFACTS",
+    "documentation_evidence_base_sha": "34445a50c888bd36918929f8bd0353f4a8816075",
+    "numerical_source_sha": "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+    "pde_rerun": false,
+    "raw_artifacts_mutated": false,
+    "stages": {
+      "current": {
+        "abi": {
+          "abi_sha256": "922fea7a7954404255818e12f8856d0cfd437646a54b0e55d1d7a923f74ad9a6",
+          "module_paths": {
+            "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+            "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+            "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py"
+          },
+          "petsc_int_type": "int32",
+          "petsc_scalar_type": "complex128",
+          "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+          "qualified_activation": true
+        },
+        "command": [
+          "mpiexec",
+          "-n",
+          "8",
+          "/home/Projects/MyFEniCS/.venv/bin/python",
+          "-m",
+          "benchmarks.run_task033_full3d_watchdog",
+          "--worker",
+          "--degree",
+          "6",
+          "--h-nm",
+          "20.0",
+          "--polarization-kind",
+          "s",
+          "--run-kind",
+          "full-solve",
+          "--mpi-size",
+          "8",
+          "--profile",
+          "default",
+          "--stage4-full3d-assembly-backend",
+          "assembly_time_variable_p_condensed",
+          "--run-dir",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0001-path-a-cycle-0-current_solve/attempt-000001/run-current",
+          "--stage4-raw-tensor-cache",
+          "--stage4-raw-tensor-cache-directory",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/tensor-cache",
+          "--warning-gib",
+          "8.8",
+          "--terminate-gib",
+          "11.0",
+          "--task035e-blind-candidate-gate",
+          "--task035e-blind-trial-id",
+          "task035e-blind-path-a",
+          "--task035e-blind-cycle-index",
+          "0",
+          "--task035e-blind-output-role",
+          "current",
+          "--stage4-local-h-refinement-plan",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/inputs/path-a/initial-plan.json",
+          "--stage4-local-h-refinement-plan-sha256",
+          "223f57d412e47dff984c92d4da1f6ecf9c282a4707b63972efbb297d1ab83501",
+          "--verified-clean-sha",
+          "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+          "--parent-launch-descriptor",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0001-path-a-cycle-0-current_solve/attempt-000001/run-current/parent_launch_descriptor.json",
+          "--parent-launch-descriptor-sha256",
+          "f52d9485a9f8062c46672e255e88de10bba84909584c8b98b3965defb7be4d47"
+        ],
+        "constraints": {
+          "floquet": {
+            "floquet_constraint_mode_resolved": "topological_trace_p6",
+            "floquet_created_dense_boundary_square": false,
+            "floquet_edge_corner_constraint_phase_mismatch": 0.0,
+            "floquet_edge_corner_mismatch": 0.0,
+            "floquet_max_edge_midpoint_pairing_error": 0.0,
+            "floquet_max_face_midpoint_pairing_error": 0.0,
+            "floquet_max_face_transform_fit_residual": 0.0,
+            "floquet_max_masters_per_slave": 10,
+            "floquet_num_constraints": 6126,
+            "floquet_num_matched_master_edges": 201,
+            "floquet_num_matched_master_faces": 82,
+            "floquet_num_slave_edges": 201,
+            "floquet_num_slave_faces": 82,
+            "floquet_raw_map_nnz": 6587,
+            "floquet_used_full_boundary_gather": false,
+            "floquet_x_face_mismatch": 0.0,
+            "floquet_y_face_mismatch": 0.0
+          },
+          "hanging": {
+            "failures": [],
+            "maximum_chain_depth": 2,
+            "maximum_relation_residual": 1.8525801540752836e-15,
+            "patch_count": 14,
+            "relation_count": 25,
+            "slave_rows": 1896
+          },
+          "ownership": {
+            "cross_rank_hanging_relation_count": 24,
+            "distributed_scalability_qualified": false,
+            "failures": [],
+            "mpi_ghost_expansion_qualified": true,
+            "mpi_size": 8,
+            "pass": true,
+            "pde_launch_ownership_gate": true,
+            "petsc_constraint_row_ownership_qualified": true,
+            "reduced_petsc_root_ownership_ranges": [
+              [
+                0,
+                2516
+              ],
+              [
+                2516,
+                5032
+              ],
+              [
+                5032,
+                7547
+              ],
+              [
+                7547,
+                10062
+              ],
+              [
+                10062,
+                12577
+              ],
+              [
+                12577,
+                15092
+              ],
+              [
+                15092,
+                17607
+              ],
+              [
+                17607,
+                20122
+              ]
+            ]
+          },
+          "pass": true,
+          "periodic": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "boundary_matching": {
+              "x": true,
+              "y": true
+            },
+            "cycle_error": 5.551115123125783e-17,
+            "relation_count": 283,
+            "slave_rows": 3910
+          },
+          "status": "stage4_local_h_reduction_authority_pass",
+          "two_to_one": {
+            "material_interface_protection": true,
+            "maximum_adjacent_level_jump": 1,
+            "strong_balance": true
+          }
+        },
+        "failures": [],
+        "memory": {
+          "authority_semantics": "simultaneous process-tree RSS; simultaneous eight-rank smaps PSS/USS; swap separately measured",
+          "controller_and_postprocess_phase_peak": {
+            "pss_mib": 6491.7353515625,
+            "pss_mib_stage": "final_cleanup",
+            "rss_mib": 8368.98828125,
+            "rss_mib_stage": "final_cleanup",
+            "status": "measured_from_memory_timeline",
+            "swap_mib": 0.0,
+            "swap_mib_stage": "after_official_rta",
+            "uss_mib": 6234.65234375,
+            "uss_mib_stage": "after_field_output"
+          },
+          "process_tree_swap_mib": 0.0,
+          "pss_mib": 6491.7353515625,
+          "pswpin_delta_pages": 0,
+          "pswpout_delta_pages": 0,
+          "rss_mib": 8368.98828125,
+          "smaps_swap_mib": 0.0,
+          "solver_phase_peak": {
+            "pss_mib": 6360.779296875,
+            "pss_mib_stage": "after_ksp_solve",
+            "rss_mib": 7538.484375,
+            "rss_mib_stage": "after_ksp_solve",
+            "status": "measured_from_memory_timeline",
+            "swap_mib": 0.0,
+            "swap_mib_stage": "stage4_full3d_assembly_backend",
+            "uss_mib": 6209.453125,
+            "uss_mib_stage": "after_ksp_solve"
+          },
+          "uss_mib": 6234.65234375,
+          "whole_job_timeline_peak": {
+            "pss_mib": 6491.7353515625,
+            "pss_mib_stage": "final_cleanup",
+            "rss_mib": 8368.98828125,
+            "rss_mib_stage": "final_cleanup",
+            "status": "measured_from_memory_timeline",
+            "swap_mib": 0.0,
+            "swap_mib_stage": "process_start",
+            "uss_mib": 6234.65234375,
+            "uss_mib_stage": "after_field_output"
+          }
+        },
+        "mpi_size": 8,
+        "numerical_source_sha": "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+        "numerics": {
+          "A_closure": 0.5276229671911192,
+          "A_volume": 0.5276229671910377,
+          "R00_p": 4.139351421897324e-27,
+          "R00_s": 0.08649784388771146,
+          "R00_total": 0.08649784388771146,
+          "R_total": 0.0949734913900673,
+          "T_total": 0.3774035414188135,
+          "energy_closure": 0.9999999999999185,
+          "energy_gate_pass": true,
+          "full_explicit_true_residual": 1.3732461925525798e-12,
+          "official_result": true,
+          "residual_gate_le_1e-9": true
+        },
+        "ordinary_default_changed": false,
+        "pass": true,
+        "raw_artifacts": {
+          "candidate_output": {
+            "bytes": 3444836,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0001-path-a-cycle-0-current_solve/attempt-000001/current-candidate.json",
+            "sha256": "631e275188af5e51ec4c238e446a4e93b09903edf699ef4b1eb3d2f88cbcad03"
+          },
+          "controller_resource_timeline": {
+            "bytes": 247109,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0001-path-a-cycle-0-current_solve/attempt-000001/run-current/task035e_blind_candidate_resource_timeline.jsonl",
+            "sha256": "b1cbfc2504eadc693ee394cae1fdc8ce7fa328f01a1d6fc90f3706c48dca115b"
+          },
+          "memory_timeline": {
+            "bytes": 3791492,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0001-path-a-cycle-0-current_solve/attempt-000001/run-current/memory_timeline.csv",
+            "sha256": "410144cd277ff4410c4967cd8d3c1afca434af1d515124bb2720dc174253c5e8"
+          },
+          "run_summary": {
+            "bytes": 1334142,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0001-path-a-cycle-0-current_solve/attempt-000001/run-current/run_summary.json",
+            "sha256": "aff6afcd856e886f19d3abdb94f5491825eb51328c29ca7bfecc4fa1ea0184f2"
+          },
+          "watchdog": {
+            "bytes": 1503780,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0001-path-a-cycle-0-current_solve/attempt-000001/current-watchdog.json",
+            "sha256": "a9c91e19441eb6b23d557a538fc56f8fffc2e0f9ed0aa17448c368f8aa580b7c"
+          }
+        },
+        "status": "task035e_blind_candidate_full_solve_pass",
+        "structure": {
+          "cell_degree_counts": {
+            "p4": 24,
+            "p5": 136,
+            "p6": 0
+          },
+          "condensed_rows": 20202,
+          "degree_map_sha256": "51ffc8e0f7887d8b2731a0df247fa253535f84d8c2a985d54f00aef03d0b2db8",
+          "factor_fill_factor_over_matrix_nnz": 3.816999790339154,
+          "factor_nnz": 41217460,
+          "fe_dofs": 59264,
+          "leaves": 160,
+          "level_histogram": {
+            "0": 32,
+            "1": 128
+          },
+          "matrix_nnz": 10798392,
+          "mesh_forest_sha256": "f9b66659f7d71a6b68cc6e410d080d3b9e8d4094fb65dcb8d9feef3c6a177a1f",
+          "raw_active_fe_dofs": 61160
+        },
+        "timing": {
+          "phase_exclusive": {
+            "assigned_seconds": 238.38822646200424,
+            "coverage_seconds": 238.38822646200424,
+            "sample_count": 751,
+            "sample_interval_seconds": 0.25,
+            "semantics": "Each [sample_i, sample_(i+1)) interval is assigned exactly once to sample_i.stage. Values are sampling-derived wall occupancy, not additive nested solver timers.",
+            "stage_seconds": {
+              "after_base_matrix_assembly": 4.187824895023368,
+              "after_base_matrix_release": 17.949741088959854,
+              "after_dtn_coupling_insert": 0.6602765530114993,
+              "after_field_output": 1.6606785359908827,
+              "after_ksp_solve": 1.6640366300125606,
+              "after_official_rta": 0.3371292829979211,
+              "during_ksp_setup_peak": 14.076447047002148,
+              "final_cleanup": 0.7207740580197424,
+              "floquet_and_boundary_setup": 4.002745644014794,
+              "function_space_setup": 2.086243885976728,
+              "mesh_build": 0.2868668150040321,
+              "process_start": 2.7978559560142457,
+              "solver_objects_retained_for_postprocess": 4.367872410977725,
+              "stage4_dtn_port_assembly_and_solve": 0.3411116430070251,
+              "stage4_full3d_assembly_backend": 183.2486220159917
+            },
+            "status": "sampling_derived_mutually_exclusive",
+            "transition_count": 14
+          },
+          "raw_nested_solver_timers_not_summed": {
+            "boundary_condition_setup": 2.3011001758277416e-05,
+            "config_validation": 6.135960575193167e-06,
+            "diffraction_postprocess": 1.4290846869698726,
+            "field_formulation_setup": 0.0008683199994266033,
+            "floquet_constraint_setup_outer": 4.046756197989453,
+            "floquet_mpc_finalize": 0.0024583920021541417,
+            "floquet_phase_update": 0.04963661200599745,
+            "floquet_topology_build_current": 1.9522065459750593,
+            "floquet_total": 4.046213024004828,
+            "function_space_setup": 1.9898348900023848,
+            "matrix_stats": 0.04367660597199574,
+            "mesh_build": 0.20274722395697609,
+            "postprocess": 4.721477298997343,
+            "stage4_dtn_port_assembly_and_solve": 222.22523917094804,
+            "variable_p_mesh_identity": 0.007384260999970138,
+            "variational_form_setup": 0.012688224029261619,
+            "volume_absorption_postprocess": 0.0755623490549624
+          },
+          "solver_elapsed_seconds": 233.35213526396547,
+          "stage_wall_seconds": 239.304025
+        }
+      },
+      "h-shadow": {
+        "abi": {
+          "abi_sha256": "922fea7a7954404255818e12f8856d0cfd437646a54b0e55d1d7a923f74ad9a6",
+          "module_paths": {
+            "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+            "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+            "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py"
+          },
+          "petsc_int_type": "int32",
+          "petsc_scalar_type": "complex128",
+          "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+          "qualified_activation": true
+        },
+        "command": [
+          "mpiexec",
+          "-n",
+          "8",
+          "/home/Projects/MyFEniCS/.venv/bin/python",
+          "-m",
+          "benchmarks.run_task033_full3d_watchdog",
+          "--worker",
+          "--degree",
+          "6",
+          "--h-nm",
+          "20.0",
+          "--polarization-kind",
+          "s",
+          "--run-kind",
+          "full-solve",
+          "--mpi-size",
+          "8",
+          "--profile",
+          "default",
+          "--stage4-full3d-assembly-backend",
+          "assembly_time_variable_p_condensed",
+          "--run-dir",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0004-path-a-cycle-0-h_shadow_discovery/attempt-000001/run-h-shadow",
+          "--stage4-raw-tensor-cache",
+          "--stage4-raw-tensor-cache-directory",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/tensor-cache",
+          "--warning-gib",
+          "8.8",
+          "--terminate-gib",
+          "11.0",
+          "--task035e-blind-candidate-gate",
+          "--task035e-blind-trial-id",
+          "task035e-blind-path-a",
+          "--task035e-blind-cycle-index",
+          "0",
+          "--task035e-blind-output-role",
+          "h-shadow",
+          "--stage4-local-h-refinement-plan",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0002-path-a-cycle-0-shadow_target_discovery/attempt-000001/h-discovery-plan.json",
+          "--stage4-local-h-refinement-plan-sha256",
+          "00fe5b5d597fbca15338f7b99f478301cf7a5243ae278bd73e0f1bc39f98df33",
+          "--verified-clean-sha",
+          "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+          "--task035e-current-snapshot-manifest",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0001-path-a-cycle-0-current_solve/attempt-000001/run-current/task035e_current_snapshot/manifest.json",
+          "--task035e-current-snapshot-manifest-sha256",
+          "697a6247b65cec661f89fd53696dee8a998fb029f7a3e0d63055d66220494fe7",
+          "--task035e-transition-action",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0002-path-a-cycle-0-shadow_target_discovery/attempt-000001/h-discovery-action.json",
+          "--task035e-transition-action-sha256",
+          "740c04dc6d30826c6f419b43ce28cb2b412087456354c3aaba9a727daafff8bc",
+          "--parent-launch-descriptor",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0004-path-a-cycle-0-h_shadow_discovery/attempt-000001/run-h-shadow/parent_launch_descriptor.json",
+          "--parent-launch-descriptor-sha256",
+          "f6d81614ee2b95c9de61695989e53bd502020d62e2b33a2b32da358b31b38bc1"
+        ],
+        "constraints": {
+          "floquet": {
+            "floquet_constraint_mode_resolved": "topological_trace_p6",
+            "floquet_created_dense_boundary_square": false,
+            "floquet_edge_corner_constraint_phase_mismatch": 0.0,
+            "floquet_edge_corner_mismatch": 0.0,
+            "floquet_max_edge_midpoint_pairing_error": 0.0,
+            "floquet_max_face_midpoint_pairing_error": 0.0,
+            "floquet_max_face_transform_fit_residual": 0.0,
+            "floquet_max_masters_per_slave": 10,
+            "floquet_num_constraints": 6372,
+            "floquet_num_matched_master_edges": 212,
+            "floquet_num_matched_master_faces": 85,
+            "floquet_num_slave_edges": 212,
+            "floquet_num_slave_faces": 85,
+            "floquet_raw_map_nnz": 7461,
+            "floquet_used_full_boundary_gather": false,
+            "floquet_x_face_mismatch": 0.0,
+            "floquet_y_face_mismatch": 0.0
+          },
+          "hanging": {
+            "failures": [],
+            "maximum_chain_depth": 2,
+            "maximum_relation_residual": 3.929734507748659e-15,
+            "patch_count": 27,
+            "relation_count": 48,
+            "slave_rows": 3988
+          },
+          "ownership": {
+            "cross_rank_hanging_relation_count": 41,
+            "distributed_scalability_qualified": false,
+            "failures": [],
+            "mpi_ghost_expansion_qualified": true,
+            "mpi_size": 8,
+            "pass": true,
+            "pde_launch_ownership_gate": true,
+            "petsc_constraint_row_ownership_qualified": true,
+            "reduced_petsc_root_ownership_ranges": [
+              [
+                0,
+                2764
+              ],
+              [
+                2764,
+                5528
+              ],
+              [
+                5528,
+                8292
+              ],
+              [
+                8292,
+                11056
+              ],
+              [
+                11056,
+                13820
+              ],
+              [
+                13820,
+                16583
+              ],
+              [
+                16583,
+                19346
+              ],
+              [
+                19346,
+                22109
+              ]
+            ]
+          },
+          "pass": true,
+          "periodic": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "boundary_matching": {
+              "x": true,
+              "y": true
+            },
+            "cycle_error": 5.551115123125783e-17,
+            "relation_count": 297,
+            "slave_rows": 4053
+          },
+          "status": "stage4_local_h_reduction_authority_pass",
+          "two_to_one": {
+            "material_interface_protection": true,
+            "maximum_adjacent_level_jump": 1,
+            "strong_balance": true
+          }
+        },
+        "failures": [],
+        "memory": {
+          "authority_semantics": "simultaneous process-tree RSS; simultaneous eight-rank smaps PSS/USS; swap separately measured",
+          "controller_and_postprocess_phase_peak": {
+            "pss_mib": 9541.33984375,
+            "pss_mib_stage": "after_official_rta",
+            "rss_mib": 10482.9765625,
+            "rss_mib_stage": "after_official_rta",
+            "status": "measured_from_memory_timeline",
+            "swap_mib": 0.0,
+            "swap_mib_stage": "after_official_rta",
+            "uss_mib": 9394.93359375,
+            "uss_mib_stage": "after_official_rta"
+          },
+          "process_tree_swap_mib": 0.0,
+          "pss_mib": 9541.33984375,
+          "pswpin_delta_pages": 0,
+          "pswpout_delta_pages": 0,
+          "rss_mib": 10482.9765625,
+          "smaps_swap_mib": 0.0,
+          "solver_phase_peak": {
+            "pss_mib": 6827.1513671875,
+            "pss_mib_stage": "after_ksp_solve",
+            "rss_mib": 7766.58203125,
+            "rss_mib_stage": "after_ksp_solve",
+            "status": "measured_from_memory_timeline",
+            "swap_mib": 0.0,
+            "swap_mib_stage": "stage4_full3d_assembly_backend",
+            "uss_mib": 6681.03515625,
+            "uss_mib_stage": "after_ksp_solve"
+          },
+          "uss_mib": 9394.93359375,
+          "whole_job_timeline_peak": {
+            "pss_mib": 9541.33984375,
+            "pss_mib_stage": "after_official_rta",
+            "rss_mib": 10482.9765625,
+            "rss_mib_stage": "after_official_rta",
+            "status": "measured_from_memory_timeline",
+            "swap_mib": 0.0,
+            "swap_mib_stage": "process_start",
+            "uss_mib": 9394.93359375,
+            "uss_mib_stage": "after_official_rta"
+          }
+        },
+        "mpi_size": 8,
+        "numerical_source_sha": "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+        "numerics": {
+          "A_closure": 0.5276233118693536,
+          "A_volume": 0.5276233118693707,
+          "R00_p": 9.353603909763065e-22,
+          "R00_s": 0.0864985746795923,
+          "R00_total": 0.0864985746795923,
+          "R_total": 0.09497413228002391,
+          "T_total": 0.3774025558506225,
+          "energy_closure": 1.000000000000017,
+          "energy_gate_pass": true,
+          "full_explicit_true_residual": 1.6715188293964483e-12,
+          "official_result": true,
+          "residual_gate_le_1e-9": true
+        },
+        "ordinary_default_changed": false,
+        "pass": true,
+        "raw_artifacts": {
+          "candidate_output": {
+            "bytes": 3445628,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0004-path-a-cycle-0-h_shadow_discovery/attempt-000001/h-shadow-candidate.json",
+            "sha256": "aa18aeb663afaf1b4f906aa3b8d99731c6a2f318f27f1f839c524378c39af962"
+          },
+          "controller_resource_timeline": {
+            "bytes": 397447,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0004-path-a-cycle-0-h_shadow_discovery/attempt-000001/run-h-shadow/task035e_blind_candidate_resource_timeline.jsonl",
+            "sha256": "11a424ecf832896753a052851e3bf9ed48169e563fb779085500253af4f592d1"
+          },
+          "live_dwr_bridge": {
+            "bytes": 30533,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0004-path-a-cycle-0-h_shadow_discovery/attempt-000001/h-live-dwr-bridge.json",
+            "sha256": "b85ac6d9108d938c78508c1a0340779deea6f6883b9b4a822dc131a3bfe56e32"
+          },
+          "memory_timeline": {
+            "bytes": 6040851,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0004-path-a-cycle-0-h_shadow_discovery/attempt-000001/run-h-shadow/memory_timeline.csv",
+            "sha256": "f140fa176e13d369cecb513a1149676c5a2da73b32945a61b71eca701902e2d1"
+          },
+          "run_summary": {
+            "bytes": 1654237,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0004-path-a-cycle-0-h_shadow_discovery/attempt-000001/run-h-shadow/run_summary.json",
+            "sha256": "9319bdf443fcd96f7e1c89a8227206cccd8597b67c094b16c3af1bbfe9eae775"
+          },
+          "shadow_evaluation": {
+            "bytes": 1693278,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0004-path-a-cycle-0-h_shadow_discovery/attempt-000001/run-h-shadow/task035e_h_shadow_evaluation.json",
+            "sha256": "1cf6a0d582cef0a1dde119d89d73b4d29ef34af9778bee3d8bf9e1688b74c271"
+          },
+          "watchdog": {
+            "bytes": 1859204,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0004-path-a-cycle-0-h_shadow_discovery/attempt-000001/h-shadow-watchdog.json",
+            "sha256": "09a9f2ba8a65371ed725515f6bab9a9af15d73cf63e6fc6b0b2521ec6b2aed90"
+          }
+        },
+        "status": "task035e_blind_candidate_full_solve_pass",
+        "structure": {
+          "cell_degree_counts": {
+            "p4": 24,
+            "p5": 157,
+            "p6": 0
+          },
+          "condensed_rows": 22189,
+          "degree_map_sha256": "3cf9d5790e84acde5036b0fc0d27a0e4de0acd8687bcd80a65e3d99736a52f80",
+          "factor_fill_factor_over_matrix_nnz": 3.531220887558483,
+          "factor_nnz": 41744755,
+          "fe_dofs": 66434,
+          "leaves": 181,
+          "level_histogram": {
+            "0": 32,
+            "1": 125,
+            "2": 24
+          },
+          "matrix_nnz": 11821621,
+          "mesh_forest_sha256": "d6a7c9d4a00459189ddc7118c40620812344504024dfdc19f5b255ea04848de7",
+          "raw_active_fe_dofs": 70422
+        },
+        "timing": {
+          "phase_exclusive": {
+            "assigned_seconds": 392.38465878897114,
+            "coverage_seconds": 392.38465878897114,
+            "sample_count": 1215,
+            "sample_interval_seconds": 0.25,
+            "semantics": "Each [sample_i, sample_(i+1)) interval is assigned exactly once to sample_i.stage. Values are sampling-derived wall occupancy, not additive nested solver timers.",
+            "stage_seconds": {
+              "after_base_matrix_assembly": 4.203158974007238,
+              "after_base_matrix_release": 20.801828260009643,
+              "after_dtn_coupling_insert": 0.3316158460220322,
+              "after_field_output": 1.673674380988814,
+              "after_ksp_solve": 1.653471603000071,
+              "after_official_rta": 85.71602200501366,
+              "during_ksp_setup_peak": 11.6586450819741,
+              "during_ksp_solve_peak": 0.33009586099069566,
+              "final_cleanup": 0.8955449470086023,
+              "floquet_and_boundary_setup": 3.991707923996728,
+              "function_space_setup": 2.0980708050192334,
+              "mesh_build": 0.5755184469744563,
+              "process_start": 4.7450182139873505,
+              "solver_objects_retained_for_postprocess": 5.067747530003544,
+              "stage4_full3d_assembly_backend": 248.64253890997497
+            },
+            "status": "sampling_derived_mutually_exclusive",
+            "transition_count": 14
+          },
+          "raw_nested_solver_timers_not_summed": {
+            "boundary_condition_setup": 2.4272012524306774e-05,
+            "config_validation": 5.3899711929261684e-06,
+            "diffraction_postprocess": 1.527073108998593,
+            "field_formulation_setup": 0.000848383002448827,
+            "floquet_constraint_setup_outer": 4.02733381401049,
+            "floquet_mpc_finalize": 0.002465978031978011,
+            "floquet_phase_update": 0.0521000680164434,
+            "floquet_topology_build_current": 1.9607943160226569,
+            "floquet_total": 4.026778927014675,
+            "function_space_setup": 1.996852237964049,
+            "matrix_stats": 0.047940003976691514,
+            "mesh_build": 0.4522955780266784,
+            "postprocess": 5.1563473820569925,
+            "stage4_dtn_port_assembly_and_solve": 373.3674297829857,
+            "variable_p_mesh_identity": 0.00813688401831314,
+            "variational_form_setup": 0.013405057019554079,
+            "volume_absorption_postprocess": 0.08209948899457231
+          },
+          "solver_elapsed_seconds": 385.1786072420073,
+          "stage_wall_seconds": 395.487035
+        }
+      },
+      "p-shadow": {
+        "abi": {
+          "abi_sha256": "922fea7a7954404255818e12f8856d0cfd437646a54b0e55d1d7a923f74ad9a6",
+          "module_paths": {
+            "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+            "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+            "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py"
+          },
+          "petsc_int_type": "int32",
+          "petsc_scalar_type": "complex128",
+          "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+          "qualified_activation": true
+        },
+        "command": [
+          "mpiexec",
+          "-n",
+          "8",
+          "/home/Projects/MyFEniCS/.venv/bin/python",
+          "-m",
+          "benchmarks.run_task033_full3d_watchdog",
+          "--worker",
+          "--degree",
+          "6",
+          "--h-nm",
+          "20.0",
+          "--polarization-kind",
+          "s",
+          "--run-kind",
+          "full-solve",
+          "--mpi-size",
+          "8",
+          "--profile",
+          "default",
+          "--stage4-full3d-assembly-backend",
+          "assembly_time_variable_p_condensed",
+          "--run-dir",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0003-path-a-cycle-0-p_shadow_discovery/attempt-000001/run-p-shadow",
+          "--stage4-raw-tensor-cache",
+          "--stage4-raw-tensor-cache-directory",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/tensor-cache",
+          "--warning-gib",
+          "8.8",
+          "--terminate-gib",
+          "11.0",
+          "--task035e-blind-candidate-gate",
+          "--task035e-blind-trial-id",
+          "task035e-blind-path-a",
+          "--task035e-blind-cycle-index",
+          "0",
+          "--task035e-blind-output-role",
+          "p-shadow",
+          "--stage4-local-h-refinement-plan",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0002-path-a-cycle-0-shadow_target_discovery/attempt-000001/p-discovery-plan.json",
+          "--stage4-local-h-refinement-plan-sha256",
+          "fd3f2ba54bbb9e59b153299df9c21f487ed057bef62f652f40cb3f72d62cac3e",
+          "--verified-clean-sha",
+          "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+          "--task035e-current-snapshot-manifest",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0001-path-a-cycle-0-current_solve/attempt-000001/run-current/task035e_current_snapshot/manifest.json",
+          "--task035e-current-snapshot-manifest-sha256",
+          "697a6247b65cec661f89fd53696dee8a998fb029f7a3e0d63055d66220494fe7",
+          "--task035e-transition-action",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0002-path-a-cycle-0-shadow_target_discovery/attempt-000001/p-discovery-action.json",
+          "--task035e-transition-action-sha256",
+          "81bbfefbf9cf5932b610e4e5e67bc5f18ea66f74ea64d851fe6c77174820a2ea",
+          "--parent-launch-descriptor",
+          "/home/Projects/MyFEniCS/benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0003-path-a-cycle-0-p_shadow_discovery/attempt-000001/run-p-shadow/parent_launch_descriptor.json",
+          "--parent-launch-descriptor-sha256",
+          "1470a944b885f6152e3bcec6427fe3f542b380205fdc7dee9ebca3f31516609e"
+        ],
+        "constraints": {
+          "floquet": {
+            "floquet_constraint_mode_resolved": "topological_trace_p6",
+            "floquet_created_dense_boundary_square": false,
+            "floquet_edge_corner_constraint_phase_mismatch": 0.0,
+            "floquet_edge_corner_mismatch": 0.0,
+            "floquet_max_edge_midpoint_pairing_error": 0.0,
+            "floquet_max_face_midpoint_pairing_error": 0.0,
+            "floquet_max_face_transform_fit_residual": 0.0,
+            "floquet_max_masters_per_slave": 10,
+            "floquet_num_constraints": 6126,
+            "floquet_num_matched_master_edges": 201,
+            "floquet_num_matched_master_faces": 82,
+            "floquet_num_slave_edges": 201,
+            "floquet_num_slave_faces": 82,
+            "floquet_raw_map_nnz": 6587,
+            "floquet_used_full_boundary_gather": false,
+            "floquet_x_face_mismatch": 0.0,
+            "floquet_y_face_mismatch": 0.0
+          },
+          "hanging": {
+            "failures": [],
+            "maximum_chain_depth": 2,
+            "maximum_relation_residual": 1.8525801540752836e-15,
+            "patch_count": 14,
+            "relation_count": 25,
+            "slave_rows": 1896
+          },
+          "ownership": {
+            "cross_rank_hanging_relation_count": 24,
+            "distributed_scalability_qualified": false,
+            "failures": [],
+            "mpi_ghost_expansion_qualified": true,
+            "mpi_size": 8,
+            "pass": true,
+            "pde_launch_ownership_gate": true,
+            "petsc_constraint_row_ownership_qualified": true,
+            "reduced_petsc_root_ownership_ranges": [
+              [
+                0,
+                2561
+              ],
+              [
+                2561,
+                5122
+              ],
+              [
+                5122,
+                7683
+              ],
+              [
+                7683,
+                10244
+              ],
+              [
+                10244,
+                12804
+              ],
+              [
+                12804,
+                15364
+              ],
+              [
+                15364,
+                17924
+              ],
+              [
+                17924,
+                20484
+              ]
+            ]
+          },
+          "pass": true,
+          "periodic": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "boundary_matching": {
+              "x": true,
+              "y": true
+            },
+            "cycle_error": 5.551115123125783e-17,
+            "relation_count": 283,
+            "slave_rows": 3910
+          },
+          "status": "stage4_local_h_reduction_authority_pass",
+          "two_to_one": {
+            "material_interface_protection": true,
+            "maximum_adjacent_level_jump": 1,
+            "strong_balance": true
+          }
+        },
+        "failures": [],
+        "memory": {
+          "authority_semantics": "simultaneous process-tree RSS; simultaneous eight-rank smaps PSS/USS; swap separately measured",
+          "controller_and_postprocess_phase_peak": {
+            "pss_mib": 6955.7099609375,
+            "pss_mib_stage": "after_official_rta",
+            "rss_mib": 8345.02734375,
+            "rss_mib_stage": "final_cleanup",
+            "status": "measured_from_memory_timeline",
+            "swap_mib": 0.0,
+            "swap_mib_stage": "after_official_rta",
+            "uss_mib": 6847.70703125,
+            "uss_mib_stage": "after_official_rta"
+          },
+          "process_tree_swap_mib": 0.0,
+          "pss_mib": 6955.7099609375,
+          "pswpin_delta_pages": 0,
+          "pswpout_delta_pages": 0,
+          "rss_mib": 8345.02734375,
+          "smaps_swap_mib": 0.0,
+          "solver_phase_peak": {
+            "pss_mib": 6955.6748046875,
+            "pss_mib_stage": "after_ksp_solve",
+            "rss_mib": 7832.3515625,
+            "rss_mib_stage": "after_ksp_solve",
+            "status": "measured_from_memory_timeline",
+            "swap_mib": 0.0,
+            "swap_mib_stage": "stage4_full3d_assembly_backend",
+            "uss_mib": 6847.65234375,
+            "uss_mib_stage": "after_ksp_solve"
+          },
+          "uss_mib": 6847.70703125,
+          "whole_job_timeline_peak": {
+            "pss_mib": 6955.7099609375,
+            "pss_mib_stage": "after_official_rta",
+            "rss_mib": 8345.02734375,
+            "rss_mib_stage": "final_cleanup",
+            "status": "measured_from_memory_timeline",
+            "swap_mib": 0.0,
+            "swap_mib_stage": "process_start",
+            "uss_mib": 6847.70703125,
+            "uss_mib_stage": "after_official_rta"
+          }
+        },
+        "mpi_size": 8,
+        "numerical_source_sha": "f1ba5627f163da54fa383b43be58fd38c0da7bc9",
+        "numerics": {
+          "A_closure": 0.5232876604507368,
+          "A_volume": 0.5232876604506101,
+          "R00_p": 3.83496086177042e-12,
+          "R00_s": 0.06234302947054395,
+          "R00_total": 0.06234302947437891,
+          "R_total": 0.0685259182796202,
+          "T_total": 0.408186421269643,
+          "energy_closure": 0.9999999999998733,
+          "energy_gate_pass": true,
+          "full_explicit_true_residual": 1.8734836954434767e-12,
+          "official_result": true,
+          "residual_gate_le_1e-9": true
+        },
+        "ordinary_default_changed": false,
+        "pass": true,
+        "raw_artifacts": {
+          "candidate_output": {
+            "bytes": 3439801,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0003-path-a-cycle-0-p_shadow_discovery/attempt-000001/p-shadow-candidate.json",
+            "sha256": "fa84210c1934d380c81e6f46aba549db7dc4b2516bddc58cd28846f8f3b11593"
+          },
+          "controller_resource_timeline": {
+            "bytes": 238019,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0003-path-a-cycle-0-p_shadow_discovery/attempt-000001/run-p-shadow/task035e_blind_candidate_resource_timeline.jsonl",
+            "sha256": "5ff16b77d6fef930e5e456b13db96e5ab04c58801bd5236b331ee82662f81c2e"
+          },
+          "live_dwr_bridge": {
+            "bytes": 30936,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0003-path-a-cycle-0-p_shadow_discovery/attempt-000001/p-live-dwr-bridge.json",
+            "sha256": "eec6c0dcdc85634075a8f7417616b72ebd8096fdfaa089f1b87398eb3c83c310"
+          },
+          "memory_timeline": {
+            "bytes": 3694561,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0003-path-a-cycle-0-p_shadow_discovery/attempt-000001/run-p-shadow/memory_timeline.csv",
+            "sha256": "d4e4a3008fd0eba15353aef49c237dcd337a7ff172589b124cbc4066884cb46a"
+          },
+          "run_summary": {
+            "bytes": 1334459,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0003-path-a-cycle-0-p_shadow_discovery/attempt-000001/run-p-shadow/run_summary.json",
+            "sha256": "5d2e8ea8eaba95b70b20bb31dac73e8b7678fff7f912c039a52d7651f07ac961"
+          },
+          "shadow_evaluation": {
+            "bytes": 1546748,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0003-path-a-cycle-0-p_shadow_discovery/attempt-000001/run-p-shadow/task035e_p_shadow_evaluation.json",
+            "sha256": "176d1ad7bc336add9478ea27577ed266d3299fe90f1433ef4619669ebec63399"
+          },
+          "watchdog": {
+            "bytes": 1507839,
+            "path": "benchmarks/artifacts/task035e/formal_f1ba562_reference_blind_v28/runtime/campaign/attempts/0003-path-a-cycle-0-p_shadow_discovery/attempt-000001/p-shadow-watchdog.json",
+            "sha256": "93644a2b9776f471edca13a66d7ee3893aa5b4aa7a8e3c5a99a9e41a5150ec6e"
+          }
+        },
+        "status": "task035e_blind_candidate_full_solve_pass",
+        "structure": {
+          "cell_degree_counts": {
+            "p4": 15,
+            "p5": 138,
+            "p6": 7
+          },
+          "condensed_rows": 20564,
+          "degree_map_sha256": "14c4ad7d841e35ab3053e846b9b1f38977456831a60347d64f809043ba446c8e",
+          "factor_fill_factor_over_matrix_nnz": 3.8822517327224824,
+          "factor_nnz": 43034248,
+          "fe_dofs": 62284,
+          "leaves": 160,
+          "level_histogram": {
+            "0": 32,
+            "1": 128
+          },
+          "matrix_nnz": 11084868,
+          "mesh_forest_sha256": "f9b66659f7d71a6b68cc6e410d080d3b9e8d4094fb65dcb8d9feef3c6a177a1f",
+          "raw_active_fe_dofs": 64180
+        },
+        "timing": {
+          "phase_exclusive": {
+            "assigned_seconds": 234.56350825802656,
+            "coverage_seconds": 234.56350825802656,
+            "sample_count": 727,
+            "sample_interval_seconds": 0.25,
+            "semantics": "Each [sample_i, sample_(i+1)) interval is assigned exactly once to sample_i.stage. Values are sampling-derived wall occupancy, not additive nested solver timers.",
+            "stage_seconds": {
+              "after_base_matrix_assembly": 4.26402041001711,
+              "after_base_matrix_release": 18.33907733298838,
+              "after_dtn_coupling_insert": 0.6489119050092995,
+              "after_field_output": 1.6802128739655018,
+              "after_ksp_solve": 1.984640448994469,
+              "after_official_rta": 29.101881103008054,
+              "during_ksp_setup_peak": 14.985865650989581,
+              "final_cleanup": 0.7059899330488406,
+              "floquet_and_boundary_setup": 4.042710884998087,
+              "function_space_setup": 2.121338779979851,
+              "mesh_build": 0.28937062399927527,
+              "process_start": 3.6745948150055483,
+              "solver_objects_retained_for_postprocess": 4.436703554994892,
+              "stage4_dtn_port_assembly_and_solve": 0.3449512720108032,
+              "stage4_full3d_assembly_backend": 147.94323866901686
+            },
+            "status": "sampling_derived_mutually_exclusive",
+            "transition_count": 14
+          },
+          "raw_nested_solver_timers_not_summed": {
+            "boundary_condition_setup": 2.3445987608283758e-05,
+            "config_validation": 6.62804814055562e-06,
+            "diffraction_postprocess": 1.4352656619739719,
+            "field_formulation_setup": 0.0008577670087106526,
+            "floquet_constraint_setup_outer": 4.01052053301828,
+            "floquet_mpc_finalize": 0.0022994130267761648,
+            "floquet_phase_update": 0.048604939016513526,
+            "floquet_topology_build_current": 1.9385121749946848,
+            "floquet_total": 4.010041190020274,
+            "function_space_setup": 2.056765869958326,
+            "matrix_stats": 0.04653995600529015,
+            "mesh_build": 0.2073685649666004,
+            "postprocess": 4.732263841025997,
+            "stage4_dtn_port_assembly_and_solve": 217.50586615601787,
+            "variable_p_mesh_identity": 0.007795371988322586,
+            "variational_form_setup": 0.01291768898954615,
+            "volume_absorption_postprocess": 0.07665216497844085
+          },
+          "solver_elapsed_seconds": 228.6831648480147,
+          "stage_wall_seconds": 236.323281
+        }
+      }
+    },
+    "status": "path_a_cycle0_v28_stage_authority_pass"
+  },
+  "payload_sha256": "c10bf4df2fd4efeafb00468563687f9259d891c7af5f230b3683f031f17289d9",
+  "schema_version": "task035e.path-a-cycle0-v28-stage-authority.v1"
+}

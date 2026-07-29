@@ -1,9 +1,12 @@
 # Case098：无参考泄漏的多层 h/p 自适应
 
-Case098 是 Task035e 的可审计入口。它目前只建立数据合同、严格 schema 和
-独立 checker，**没有宣称任何新的 PDE、精度或资源结果**。`config.json` 中所有
-正式运行状态均为 `not_run`，因此当前分类只能是
-`SCAFFOLD_NOT_RUN`，`numerical_credit_claimed=false`。
+Case098 是 Task035e 的可审计入口。`config.json` 仍是严格的最终 campaign
+ledger；其 schema 不能安全表达“current/p-shadow/h-shadow 已完成，但 selected
+action、transition 和 candidate 尚未运行”的 partial progress，因此本批次没有
+修改它的 `SCAFFOLD_NOT_RUN` / `numerical_credit_claimed=false` 语义。实际阶段
+进度由独立、hash-bound 的
+[`path_a_cycle0_v28_progress_checkpoint_v1.json`](records/path_a_cycle0_v28_progress_checkpoint_v1.json)
+记录，不能把该 checkpoint 解释为完整 cycle 或最终精度信用。
 
 “无参考泄漏”用通俗话说，就是负责自动改网格和阶次的程序在做决定时不能偷看
 更精细网格的答案。这样最终候选的成功才来自误差估计本身，而不是事后针对答案
@@ -65,3 +68,83 @@ python -m benchmarks.task035e_case098_checker
 普通求解默认保持不变；Case098 的所有入口均为 opt-in。本 scaffold 不修改
 ordinary default，也不把未运行项、受控资源停止或失败记录提升为 production
 能力。
+
+## 2026-07-29：Path A cycle 0 v28 离线检查点
+
+本检查点只重放既有 v27/v28 raw artifact，没有重新运行 PDE。数值 authority
+固定为
+`f1ba5627f163da54fa383b43be58fd38c0da7bc9`；生成本 compact 前的最新提交
+`34445a50c888bd36918929f8bd0353f4a8816075` 只属于 documentation/evidence，
+不改变 numerical source identity。
+
+```text
+Path A cycle 0:
+    current = pass
+    p-shadow = pass
+    h-shadow = pass
+    cellwise_partition = offline compact replayed
+    selected_action = not_run
+    transition = not_run
+    candidate = not_run
+    cycle_advanced = false
+
+Path B:
+    no new v28 run
+```
+
+Path A 三个 MPI8 stage 的 compact 资源/结构口径如下。峰值均为 simultaneous
+process-tree RSS 与同一时刻八 rank smaps PSS/USS；swap 单列。`solver RSS` 是
+求解阶段峰值，`total RSS` 包含 controller/postprocess 生命周期。
+
+| stage | leaves；p4/p5/p6 | FE DoF | rows | matrix NNZ | factor NNZ | residual | total RSS / PSS / USS (MiB) | solver RSS (MiB) | wall (s) |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| current | 160；24/136/0 | 59,264 | 20,202 | 10,798,392 | 41,217,460 | `1.373246e-12` | 8,368.988 / 6,491.735 / 6,234.652 | 7,538.484 | 239.304 |
+| p-shadow | 160；15/138/7 | 62,284 | 20,564 | 11,084,868 | 43,034,248 | `1.873484e-12` | 8,345.027 / 6,955.710 / 6,847.707 | 7,832.352 | 236.323 |
+| h-shadow | 181；24/157/0 | 66,434 | 22,189 | 11,821,621 | 41,744,755 | `1.671519e-12` | 10,482.977 / 9,541.340 / 9,394.934 | 7,766.582 | 395.487 |
+
+三者均为 zero swap，residual、energy、periodic/Floquet、hanging、ownership 和
+2:1 Gate 通过。h-shadow 的 whole-job RSS 为 `10.237282 GiB`，低于
+`11.0 GiB` 上限约 `781.023 MiB`。完整 R00/R/T/A、phase-exclusive timeline
+和 raw 文件绑定见 stage authority，不在 README 复制第二份易漂移的全量表。
+
+59-goal endpoint DWR 对 p-shadow、h-shadow 均为 `59/59` factor-two-or-neutral，
+无 opposite-sign；两个 cellwise partition 各覆盖 current 的 160 个 leaves，
+并明确把 global endpoint closure 与 actual residual-adjoint cellwise
+attribution 分开。离线 marking 得到：
+
+- p-up：正式 equal-weight Dörfler marked set 为
+  `r13:l0`、`r37:l0`、`r42:l1:j0`、`r42:l1:j1` 四个 canonical cells，
+  无附加 closure；
+- h-refine：仅为 `REFERENCE_BLIND_VERIFICATION_ONLY`，target 是
+  `cell:r47:l1:i1:j0:k1`，并带一个 periodic closure
+  `cell:r45:l1:i0:j0:k1`；
+- preflight 建议未来若获授权先单独验证 selected-p；selected-p 与 selected-h
+  没有合并，二者均未执行，也没有写 transition 或运行 candidate。
+
+Path B 没有 v28 新运行。v27 local evidence 只允许登记为 partial：
+current/p-shadow pass，h-shadow 在 `11.055027 GiB` 触发 controlled resource
+stop，未形成 h evaluation/bridge，`cycle_complete=false`。
+
+### Compact evidence 索引
+
+- [Path A stage authority](records/path_a_cycle0_v28_stage_authority_v1.json)：
+  command、ABI、MPI、raw SHA、结构、数值、资源与 phase-exclusive timing。
+- [59-goal DWR](records/path_a_cycle0_v28_59goal_dwr_compact_v1.json)：
+  完整 inventory、三组目标值、signed DWR、endpoint delta、effectivity 和
+  cellwise/global 分离证明；不含 hidden reference。
+- [cellwise marking](records/path_a_cycle0_v28_cellwise_marking_v1.json)：
+  全部 p/h 候选的 topology、closure、59-goal signed contribution、成本、
+  eligibility、ranking 和 marked set。
+- [action preflight JSON](records/path_a_cycle0_v28_action_preflight_v1.json)
+  与 [Markdown](records/path_a_cycle0_v28_action_preflight_v1.md)：冻结两个互相
+  独立、尚未执行的 selected-p / selected-h component。
+- [sealed reference manifest](records/task035e_sealed_reference_manifest_v1.json)：
+  只提交 p6/h10、h7.5、h5 的运行身份、Gate 状态和 47 MB package 的
+  path/size/SHA；package 本体、reference 数值、逐通道值、场和 error map
+  均未提交。
+- [Path B v27 partial authority](records/path_b_cycle0_v27_partial_authority_v1.json)：
+  保留 h-shadow controlled resource stop，不冒充 cycle 完成。
+
+所有 JSON 使用显式 canonical payload SHA，并继续绑定 ignored raw artifact 的
+相对路径、字节数和 SHA-256。raw 缺失、损坏或 hash 漂移时必须 fail closed，
+不得通过重跑 PDE 或人工复制 summary 数字补齐本检查点。
