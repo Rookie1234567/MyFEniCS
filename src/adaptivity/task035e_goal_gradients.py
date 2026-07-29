@@ -14,11 +14,13 @@ endpoint difference, or finite-difference surrogate enters the construction.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import gc
 import hashlib
 import json
 import math
+import tempfile
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any, BinaryIO, Mapping
 
 from mpi4py import MPI
 import numpy as np
@@ -231,25 +233,6 @@ def _sum_vectors(
     return result
 
 
-def _weighted_sum_into_first(
-    first: PETSc.Vec,
-    second: PETSc.Vec,
-    *,
-    coefficients: tuple[complex, complex],
-) -> PETSc.Vec:
-    """Replace ``first`` by one weighted sum without allocating a third Vec."""
-
-    if (
-        int(first.getSize()) != int(second.getSize())
-        or tuple(map(int, first.getOwnershipRange()))
-        != tuple(map(int, second.getOwnershipRange()))
-    ):
-        raise ValueError("in-place gradient sum layouts differ")
-    first.scale(PETSc.ScalarType(coefficients[0]))
-    first.axpy(PETSc.ScalarType(coefficients[1]), second)
-    return first
-
-
 def _destroy_vectors_once(vectors: tuple[PETSc.Vec, ...]) -> None:
     """Best-effort cleanup without relying on PETSc wrapper hashability."""
 
@@ -263,6 +246,124 @@ def _destroy_vectors_once(vectors: tuple[PETSc.Vec, ...]) -> None:
             vector.destroy()
         except Exception:
             pass
+
+
+def _spool_owned_vectors(
+    stream: BinaryIO,
+    vectors: Mapping[str, PETSc.Vec],
+    goal_ids: tuple[str, ...],
+) -> tuple[dict[str, tuple[int, int]], int]:
+    """Write rank-owned vector entries without a Python full-vector gather."""
+
+    offsets: dict[str, tuple[int, int]] = {}
+    byte_count = 0
+    for goal_id in goal_ids:
+        vector = vectors[goal_id]
+        start, end = map(int, vector.getOwnershipRange())
+        values = np.ascontiguousarray(
+            vector.getArray(readonly=True),
+            dtype=np.dtype("<c16"),
+        )
+        if values.shape != (end - start,) or not np.all(
+            np.isfinite(values)
+        ):
+            raise ValueError(
+                f"spooled endpoint gradient {goal_id} is invalid"
+            )
+        offset = int(stream.tell())
+        written = int(stream.write(memoryview(values).cast("B")))
+        if written != int(values.nbytes):
+            raise OSError(
+                f"short endpoint-gradient spool write for {goal_id}"
+            )
+        offsets[goal_id] = (offset, len(values))
+        byte_count += written
+    return offsets, byte_count
+
+
+def _weighted_sum_from_spool_into_second(
+    stream: BinaryIO,
+    *,
+    offset: int,
+    owned_count: int,
+    second: PETSc.Vec,
+    coefficients: tuple[complex, complex],
+) -> PETSc.Vec:
+    """Replace ``second`` by a spooled-first weighted endpoint sum."""
+
+    start, end = map(int, second.getOwnershipRange())
+    if owned_count != end - start:
+        raise ValueError("spooled endpoint gradient layout differs")
+    stream.seek(offset)
+    first_values = np.fromfile(
+        stream,
+        dtype=np.dtype("<c16"),
+        count=owned_count,
+    )
+    if first_values.shape != (owned_count,) or not np.all(
+        np.isfinite(first_values)
+    ):
+        raise OSError("endpoint-gradient spool read is incomplete")
+    second_values = second.getArray()
+    if second_values.shape != first_values.shape:
+        raise ValueError("spooled endpoint local vector layout differs")
+    second_values *= PETSc.ScalarType(coefficients[1])
+    second_values += PETSc.ScalarType(coefficients[0]) * first_values
+    second.assemble()
+    return second
+
+
+def _release_spooled_endpoint(
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    """Collect and trim one destroyed endpoint inventory before the next."""
+
+    from src.solvers.common_3d_utils import _trim_process_heap
+
+    gc.collect()
+    PETSc.garbage_cleanup(comm)
+    gc.collect()
+    local = _trim_process_heap()
+    rank_rows = comm.allgather(
+        {
+            "rank": int(comm.rank),
+            **local,
+        }
+    )
+    if [int(row["rank"]) for row in rank_rows] != list(range(comm.size)):
+        raise RuntimeError("endpoint heap-trim audit lost an MPI rank")
+    before = [
+        float(row["rss_before_mb"])
+        for row in rank_rows
+        if row["rss_before_mb"] is not None
+    ]
+    after = [
+        float(row["rss_after_mb"])
+        for row in rank_rows
+        if row["rss_after_mb"] is not None
+    ]
+    released = [
+        float(row["rss_released_mb"])
+        for row in rank_rows
+        if row["rss_released_mb"] is not None
+    ]
+    return {
+        "schema_version": (
+            "task035e.endpoint-gradient-spool-release.v1"
+        ),
+        "pass": (
+            len(rank_rows) == comm.size
+            and all(row["supported"] is True for row in rank_rows)
+            and all(row["succeeded"] is True for row in rank_rows)
+        ),
+        "all_rank_return_codes": [
+            row["return_code"] for row in rank_rows
+        ],
+        "sum_rank_rss_before_mb": sum(before),
+        "sum_rank_rss_after_mb": sum(after),
+        "sum_rank_rss_released_mb": sum(released),
+        "rank_local_audits": rank_rows,
+    }
 
 
 def _auxiliary_gradients(
@@ -1165,135 +1266,214 @@ def build_task035e_formal_secant_goal_gradients(
     and the two Euclidean-norm goals use their exact analytic secant weights.
     """
 
-    current_bundle = build_task035e_formal_goal_gradients(current_view)
-    shadow_bundle = build_task035e_formal_goal_gradients(shadow_view)
+    comm = current_view.mesh_data.mesh.comm
+    current_bundle: Task035eFormalGoalGradients | None = None
+    shadow_bundle: Task035eFormalGoalGradients | None = None
     result: Task035eFormalGoalGradients | None = None
     weight_audit: dict[str, Any] = {}
-    try:
-        if (
-            set(current_bundle.gradients) != set(FORMAL_GOAL_IDS)
-            or set(shadow_bundle.gradients) != set(FORMAL_GOAL_IDS)
-            or tuple(current_bundle.active_full_gradients)
-            != INTERIOR_SENSITIVE_GOAL_IDS
-            or tuple(shadow_bundle.active_full_gradients)
-            != INTERIOR_SENSITIVE_GOAL_IDS
-        ):
-            raise RuntimeError(
-                "current/shadow endpoint gradient inventories differ"
+    with tempfile.TemporaryFile(mode="w+b", dir="/tmp") as spool:
+        try:
+            current_bundle = build_task035e_formal_goal_gradients(
+                current_view
             )
-        for goal_id in FORMAL_GOAL_IDS:
-            current_weight, shadow_weight, rule = _secant_weights(
-                goal_id,
-                current_audit=current_bundle.audit,
-                shadow_audit=shadow_bundle.audit,
+            if (
+                set(current_bundle.gradients) != set(FORMAL_GOAL_IDS)
+                or tuple(current_bundle.active_full_gradients)
+                != INTERIOR_SENSITIVE_GOAL_IDS
+            ):
+                raise RuntimeError(
+                    "current endpoint gradient inventory differs"
+                )
+            current_audit = dict(current_bundle.audit)
+            reduced_offsets, reduced_bytes = _spool_owned_vectors(
+                spool,
+                current_bundle.gradients,
+                FORMAL_GOAL_IDS,
             )
-            weights = (
-                complex(current_weight),
-                complex(shadow_weight),
+            active_offsets, active_bytes = _spool_owned_vectors(
+                spool,
+                current_bundle.active_full_gradients,
+                INTERIOR_SENSITIVE_GOAL_IDS,
             )
-            _weighted_sum_into_first(
-                current_bundle.gradients[goal_id],
-                shadow_bundle.gradients[goal_id],
-                coefficients=weights,
+            spool.flush()
+            local_spool_bytes = reduced_bytes + active_bytes
+            total_spool_bytes = int(
+                comm.allreduce(local_spool_bytes, op=MPI.SUM)
             )
-            if goal_id in INTERIOR_SENSITIVE_GOAL_IDS:
-                _weighted_sum_into_first(
-                    current_bundle.active_full_gradients[goal_id],
-                    shadow_bundle.active_full_gradients[goal_id],
+            current_bundle.destroy()
+            current_bundle = None
+            release_audit = _release_spooled_endpoint(comm)
+
+            shadow_bundle = build_task035e_formal_goal_gradients(
+                shadow_view
+            )
+            if (
+                set(shadow_bundle.gradients) != set(FORMAL_GOAL_IDS)
+                or tuple(shadow_bundle.active_full_gradients)
+                != INTERIOR_SENSITIVE_GOAL_IDS
+            ):
+                raise RuntimeError(
+                    "shadow endpoint gradient inventory differs"
+                )
+            shadow_audit = dict(shadow_bundle.audit)
+            maximum_live_spool_read_bytes = 0
+            for goal_id in FORMAL_GOAL_IDS:
+                current_weight, shadow_weight, rule = _secant_weights(
+                    goal_id,
+                    current_audit=current_audit,
+                    shadow_audit=shadow_audit,
+                )
+                weights = (
+                    complex(current_weight),
+                    complex(shadow_weight),
+                )
+                offset, owned_count = reduced_offsets[goal_id]
+                _weighted_sum_from_spool_into_second(
+                    spool,
+                    offset=offset,
+                    owned_count=owned_count,
+                    second=shadow_bundle.gradients[goal_id],
                     coefficients=weights,
                 )
-            weight_audit[goal_id] = {
-                "current_endpoint_weight": current_weight,
-                "shadow_endpoint_weight": shadow_weight,
-                "sum": current_weight + shadow_weight,
-                "rule": rule,
-            }
+                maximum_live_spool_read_bytes = max(
+                    maximum_live_spool_read_bytes,
+                    owned_count * np.dtype("<c16").itemsize,
+                )
+                if goal_id in INTERIOR_SENSITIVE_GOAL_IDS:
+                    active_offset, active_owned_count = active_offsets[
+                        goal_id
+                    ]
+                    _weighted_sum_from_spool_into_second(
+                        spool,
+                        offset=active_offset,
+                        owned_count=active_owned_count,
+                        second=shadow_bundle.active_full_gradients[
+                            goal_id
+                        ],
+                        coefficients=weights,
+                    )
+                    maximum_live_spool_read_bytes = max(
+                        maximum_live_spool_read_bytes,
+                        active_owned_count
+                        * np.dtype("<c16").itemsize,
+                    )
+                weight_audit[goal_id] = {
+                    "current_endpoint_weight": current_weight,
+                    "shadow_endpoint_weight": shadow_weight,
+                    "sum": current_weight + shadow_weight,
+                    "rule": rule,
+                }
 
-        reduced_identities = {
-            goal_id: _vector_identity(
-                current_bundle.gradients[goal_id],
-                namespace=(
-                    "task035e.secant-goal-gradient."
-                    + hashlib.sha256(goal_id.encode("utf-8")).hexdigest()
+            reduced_identities = {
+                goal_id: _vector_identity(
+                    shadow_bundle.gradients[goal_id],
+                    namespace=(
+                        "task035e.secant-goal-gradient."
+                        + hashlib.sha256(
+                            goal_id.encode("utf-8")
+                        ).hexdigest()
+                    ),
+                )
+                for goal_id in FORMAL_GOAL_IDS
+            }
+            active_identities = {
+                goal_id: _vector_identity(
+                    shadow_bundle.active_full_gradients[goal_id],
+                    namespace=(
+                        "task035e.secant-active-full-gradient."
+                        + hashlib.sha256(
+                            goal_id.encode("utf-8")
+                        ).hexdigest()
+                    ),
+                )
+                for goal_id in INTERIOR_SENSITIVE_GOAL_IDS
+            }
+            unsigned = {
+                "schema_version": (
+                    "task035e.formal-59-goal-analytic-secant-gradients.v1"
                 ),
-            )
-            for goal_id in FORMAL_GOAL_IDS
-        }
-        active_identities = {
-            goal_id: _vector_identity(
-                current_bundle.active_full_gradients[goal_id],
-                namespace=(
-                    "task035e.secant-active-full-gradient."
-                    + hashlib.sha256(goal_id.encode("utf-8")).hexdigest()
+                "status": (
+                    "formal_59_goal_analytic_secant_gradients_pass"
                 ),
-            )
-            for goal_id in INTERIOR_SENSITIVE_GOAL_IDS
-        }
-        unsigned = {
-            "schema_version": (
-                "task035e.formal-59-goal-analytic-secant-gradients.v1"
-            ),
-            "status": "formal_59_goal_analytic_secant_gradients_pass",
-            "pass": True,
-            "mpi_size": int(current_view.mesh_data.mesh.comm.size),
-            "formal_goal_count": len(FORMAL_GOAL_IDS),
-            "formal_goal_inventory_sha256": (
-                FORMAL_GOAL_INVENTORY_SHA256
-            ),
-            "gradient_convention": "dJ=Re(g_secant^H dx)",
-            "path_derivative": (
-                "analytic current-to-shadow averaged derivative"
-            ),
-            "current_endpoint_gradient_inventory_sha256": (
-                current_bundle.audit["gradient_inventory_sha256"]
-            ),
-            "shadow_endpoint_gradient_inventory_sha256": (
-                shadow_bundle.audit["gradient_inventory_sha256"]
-            ),
-            "secant_weight_audit": weight_audit,
-            "gradient_identities": reduced_identities,
-            "active_full_gradient_identities": active_identities,
-            "active_full_gradient_goal_ids": list(
-                INTERIOR_SENSITIVE_GOAL_IDS
-            ),
-            "quadratic_goal_rule": (
-                "one-half current gradient plus one-half shadow gradient"
-            ),
-            "l2_goal_rule": (
-                "(norm_current*g_current+norm_shadow*g_shadow)"
-                "/(norm_current+norm_shadow)"
-            ),
-            "linear_goal_rule": (
-                "endpoint gradients are state-independent; their average "
-                "retains the same derivative"
-            ),
-            "secant_vector_allocation_strategy": (
-                "destructive_reuse_of_current_endpoint_vectors"
-            ),
-            "third_full_gradient_inventory_allocated": False,
-            "endpoint_vectors_combined_in_formal_goal_order": True,
-            "hidden_reference_consumed": False,
-            "endpoint_difference_used_as_gradient": False,
-            "endpoint_goal_delta_consumed": False,
-            "full_vector_python_allgather_used": False,
-            "ordinary_default_changed": False,
-        }
-        audit = {
-            **unsigned,
-            "gradient_inventory_sha256": _json_sha256(
-                unsigned,
-                namespace=(
-                    "task035e.formal-secant-gradient-inventory.v1"
+                "pass": True,
+                "mpi_size": int(comm.size),
+                "formal_goal_count": len(FORMAL_GOAL_IDS),
+                "formal_goal_inventory_sha256": (
+                    FORMAL_GOAL_INVENTORY_SHA256
                 ),
-            ),
-        }
-        current_bundle.audit = MappingProxyType(audit)
-        result = current_bundle
-        return result
-    finally:
-        shadow_bundle.destroy()
-        if result is None:
-            current_bundle.destroy()
+                "gradient_convention": "dJ=Re(g_secant^H dx)",
+                "path_derivative": (
+                    "analytic current-to-shadow averaged derivative"
+                ),
+                "current_endpoint_gradient_inventory_sha256": (
+                    current_audit["gradient_inventory_sha256"]
+                ),
+                "shadow_endpoint_gradient_inventory_sha256": (
+                    shadow_audit["gradient_inventory_sha256"]
+                ),
+                "secant_weight_audit": weight_audit,
+                "gradient_identities": reduced_identities,
+                "active_full_gradient_identities": active_identities,
+                "active_full_gradient_goal_ids": list(
+                    INTERIOR_SENSITIVE_GOAL_IDS
+                ),
+                "quadratic_goal_rule": (
+                    "one-half current gradient plus one-half shadow gradient"
+                ),
+                "l2_goal_rule": (
+                    "(norm_current*g_current+norm_shadow*g_shadow)"
+                    "/(norm_current+norm_shadow)"
+                ),
+                "linear_goal_rule": (
+                    "endpoint gradients are state-independent; their average "
+                    "retains the same derivative"
+                ),
+                "secant_vector_allocation_strategy": (
+                    "rank_local_current_endpoint_spool_then_"
+                    "destructive_shadow_reuse"
+                ),
+                "endpoint_spool": {
+                    "storage": "anonymous_linux_tmp_stream",
+                    "rank_local_owned_values_only": True,
+                    "python_full_vector_gather_used": False,
+                    "mpi_full_vector_gather_used": False,
+                    "current_endpoint_vectors_destroyed_before_shadow_build": (
+                        True
+                    ),
+                    "maximum_simultaneous_endpoint_vector_inventories": 1,
+                    "local_spool_bytes": local_spool_bytes,
+                    "total_spool_bytes": total_spool_bytes,
+                    "maximum_live_spool_read_bytes": (
+                        maximum_live_spool_read_bytes
+                    ),
+                    "release_audit": release_audit,
+                    "hidden_reference_content": False,
+                },
+                "third_full_gradient_inventory_allocated": False,
+                "endpoint_vectors_combined_in_formal_goal_order": True,
+                "hidden_reference_consumed": False,
+                "endpoint_difference_used_as_gradient": False,
+                "endpoint_goal_delta_consumed": False,
+                "full_vector_python_allgather_used": False,
+                "ordinary_default_changed": False,
+            }
+            audit = {
+                **unsigned,
+                "gradient_inventory_sha256": _json_sha256(
+                    unsigned,
+                    namespace=(
+                        "task035e.formal-secant-gradient-inventory.v1"
+                    ),
+                ),
+            }
+            shadow_bundle.audit = MappingProxyType(audit)
+            result = shadow_bundle
+            return result
+        finally:
+            if current_bundle is not None:
+                current_bundle.destroy()
+            if shadow_bundle is not None and result is None:
+                shadow_bundle.destroy()
 
 
 __all__ = [

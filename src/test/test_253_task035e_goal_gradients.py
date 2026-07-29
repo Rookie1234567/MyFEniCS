@@ -18,7 +18,6 @@ from src.adaptivity.task035e_goal_gradients import (
     _oriented_physical_basis,
     _point_owners,
     _secant_weights,
-    _weighted_sum_into_first,
     build_task035e_formal_secant_goal_gradients,
 )
 from src.adaptivity.blind_controller.contracts import FORMAL_GOAL_IDS
@@ -175,45 +174,7 @@ def test_formal_builder_has_no_reference_or_endpoint_input() -> None:
     assert tuple(parameters) == ("view",)
 
 
-def test_weighted_secant_sum_reuses_first_petsc_vector() -> None:
-    comm = MPI.COMM_WORLD
-    first = PETSc.Vec().createMPI(17, comm=comm)
-    second = first.duplicate()
-    start, end = map(int, first.getOwnershipRange())
-    rows = np.arange(start, end, dtype=np.float64)
-    first_values = (
-        np.cos(0.13 * (rows + 1.0))
-        + 0.4j * np.sin(0.17 * (rows + 1.0))
-    )
-    second_values = (
-        0.3 * np.cos(0.19 * (rows + 1.0))
-        - 0.2j * np.sin(0.23 * (rows + 1.0))
-    )
-    first.getArray()[:] = first_values
-    second.getArray()[:] = second_values
-    first.assemble()
-    second.assemble()
-    handle = int(first.handle)
-    try:
-        observed = _weighted_sum_into_first(
-            first,
-            second,
-            coefficients=(0.37 + 0.0j, 0.63 + 0.0j),
-        )
-        assert observed is first
-        assert int(observed.handle) == handle
-        np.testing.assert_allclose(
-            observed.getArray(readonly=True),
-            0.37 * first_values + 0.63 * second_values,
-            rtol=2.0e-15,
-            atol=2.0e-15,
-        )
-    finally:
-        second.destroy()
-        first.destroy()
-
-
-def test_secant_builder_reuses_current_inventory_and_destroys_shadow(
+def test_secant_builder_spools_current_and_reuses_shadow_inventory(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from src.adaptivity import task035e_goal_gradients as module
@@ -250,33 +211,55 @@ def test_secant_builder_reuses_current_inventory_and_destroys_shadow(
         bundles.append(bundle)
         return bundle
 
-    endpoints = iter((endpoint_bundle(1.0), endpoint_bundle(2.0)))
+    scales = iter((1.0, 2.0))
     monkeypatch.setattr(
         module,
         "build_task035e_formal_goal_gradients",
-        lambda _view: next(endpoints),
+        lambda _view: endpoint_bundle(next(scales)),
+    )
+    release_called = False
+
+    def release_endpoint(_comm: MPI.Intracomm) -> dict[str, object]:
+        nonlocal release_called
+        assert bundles[0]._destroyed is True
+        release_called = True
+        return {
+            "schema_version": (
+                "task035e.endpoint-gradient-spool-release.v1"
+            ),
+            "pass": True,
+            "sum_rank_rss_released_mb": 12.5,
+        }
+
+    monkeypatch.setattr(
+        module,
+        "_release_spooled_endpoint",
+        release_endpoint,
     )
     view = SimpleNamespace(
         mesh_data=SimpleNamespace(mesh=SimpleNamespace(comm=comm))
     )
-    current_handles = {
-        goal_id: int(vector.handle)
-        for goal_id, vector in bundles[0].gradients.items()
-    }
     result = build_task035e_formal_secant_goal_gradients(view, view)
     try:
-        assert result is bundles[0]
-        assert bundles[1]._destroyed is True
-        assert not bundles[1].gradients
-        assert not bundles[1].active_full_gradients
+        assert release_called is True
+        assert result is bundles[1]
+        assert bundles[0]._destroyed is True
+        assert not bundles[0].gradients
+        assert not bundles[0].active_full_gradients
         assert result.audit["third_full_gradient_inventory_allocated"] is False
         assert result.audit["secant_vector_allocation_strategy"] == (
-            "destructive_reuse_of_current_endpoint_vectors"
+            "rank_local_current_endpoint_spool_then_"
+            "destructive_shadow_reuse"
+        )
+        assert result.audit["endpoint_spool"][
+            "maximum_simultaneous_endpoint_vector_inventories"
+        ] == 1
+        assert result.audit["endpoint_spool"]["total_spool_bytes"] > 0
+        assert (
+            result.audit["endpoint_spool"]["hidden_reference_content"]
+            is False
         )
         for index, goal_id in enumerate(FORMAL_GOAL_IDS):
-            assert int(result.gradients[goal_id].handle) == current_handles[
-                goal_id
-            ]
             current_weight = (
                 1.0 / 3.0
                 if goal_id
