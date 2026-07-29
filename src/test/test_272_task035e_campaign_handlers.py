@@ -53,6 +53,7 @@ from src.test.test_258_task035e_blind_bindings import (
 )
 from src.test.test_261_task035e_cellwise_authority import (
     _fixture as _cellwise_fixture,
+    _fixture_goal_vector,
 )
 from src.test.test_263_task035e_internal_gate_authority import (
     _fixture as _internal_gate_fixture,
@@ -817,13 +818,10 @@ def test_fixture_shadow_evidence_runs_cellwise_marking_and_selected_argv(
             "3" * 64,
         ),
     )
-    zero_goals = GoalVector.from_mapping(
-        {goal_id: 0.0 for goal_id in FORMAL_GOAL_IDS}
-    )
     monkeypatch.setattr(
         cellwise_adapter,
         "goal_vector_from_candidate_output",
-        lambda _payload: zero_goals,
+        _fixture_goal_vector,
     )
     current_record = _private_json(tmp_path / "current-record.json", {})
     current_output = _private_json(tmp_path / "current-output.json", {})

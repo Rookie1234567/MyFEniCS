@@ -26,6 +26,7 @@ from src.adaptivity.blind_controller.contracts import (
 from src.adaptivity.task035e_actual_dwr import ACTUAL_DWR_SCHEMA
 from src.adaptivity.task035e_hp_transition import (
     canonical_hp_cell_target_id,
+    hp_transition_action_payload,
 )
 from src.adaptivity.task035e_initial_space import (
     build_task035e_initial_space_plan,
@@ -346,7 +347,16 @@ def _cellwise_authority(
             "target_id": row["target_id"],
             "eligible": True,
             "ineligibility": None,
-            "topology": {"fixture": True},
+            "topology": {
+                "fixture": True,
+                "assigned_shadow_reduced_row_count": row[
+                    "assigned_reduced_row_count"
+                ],
+                "assigned_shadow_active_interior_row_count": row.get(
+                    "assigned_active_interior_row_count",
+                    0,
+                ),
+            },
             "weights": {
                 "active": 1 + index,
                 "rows": 2 + index,
@@ -654,6 +664,167 @@ def test_cellwise_equal_weight_doerfler_targets_feed_transition_producer(
     action = json.loads(transition.action_path.read_text(encoding="utf-8"))
     assert action["canonical_target_ids"] == [selected_id]
     assert action["kind"] == "p-up"
+
+
+def test_structurally_ineligible_dwr_is_retained_but_not_ranked(
+    tmp_path: Path,
+    initial: tuple[dict[str, object], object],
+) -> None:
+    fixture_ids: dict[str, str] = {}
+
+    def builder(**kwargs):
+        authority = _cellwise_authority(**kwargs)
+        state = kwargs["state"]
+        rejected_ids = []
+        for index, key in enumerate(sorted(state.cell_degree_by_key)):
+            try:
+                hp_transition_action_payload(
+                    state,
+                    action_id=f"fixture.eligibility.{index}",
+                    kind="p-up",
+                    degree_deltas={key: 1},
+                )
+            except ValueError:
+                rejected_ids.append(canonical_hp_cell_target_id(key))
+        assert rejected_ids
+        excluded_id = sorted(rejected_ids)[0]
+        localization = dict(authority["localization"])
+        localization_rows = [
+            {**row, "signed_dwr_contribution": dict(
+                row["signed_dwr_contribution"]
+            )}
+            for row in localization["rows"]
+        ]
+        contributions = {
+            row["target_id"]: abs(
+                row["signed_dwr_contribution"][FORMAL_GOAL_IDS[0]]
+            )
+            for row in localization_rows
+        }
+        ranked = sorted(
+            contributions,
+            key=lambda target_id: (
+                -contributions[target_id],
+                target_id,
+            ),
+        )
+        donor_id, retained_id = ranked[:2]
+        moved = next(
+            row for row in localization_rows
+            if row["target_id"] == donor_id
+        )["signed_dwr_contribution"][FORMAL_GOAL_IDS[0]]
+        for row in localization_rows:
+            if row["target_id"] == donor_id:
+                row["signed_dwr_contribution"][FORMAL_GOAL_IDS[0]] = 0.0
+            elif row["target_id"] == excluded_id:
+                row["signed_dwr_contribution"][FORMAL_GOAL_IDS[0]] = moved
+            else:
+                continue
+            unsigned_row = dict(row)
+            unsigned_row.pop("row_sha256")
+            row["row_sha256"] = _json_sha256(
+                unsigned_row,
+                namespace="task035e.cellwise-signed-dwr-row.v1",
+            )
+        localization["rows"] = localization_rows
+        unsigned_localization = dict(localization)
+        unsigned_localization.pop("partition_sha256")
+        localization["partition_sha256"] = _json_sha256(
+            unsigned_localization,
+            namespace="task035e.cellwise-signed-dwr-partition.v1",
+        )
+        authority["localization"] = localization
+        model = dict(authority["structural_cost_model"])
+        rows = [dict(row) for row in model["rows"]]
+        by_id = {row["target_id"]: row for row in rows}
+        excluded = by_id[excluded_id]
+        retained = by_id[retained_id]
+        excluded_cost = dict(excluded["apportioned_cost"])
+        excluded.update(
+            {
+                "eligible": False,
+                "ineligibility": "fixture transition closure rejection",
+                "topology": None,
+                "weights": {
+                    "active": 0,
+                    "rows": 0,
+                    "matrix_nnz": 0,
+                    "factor_nnz": 0,
+                },
+                "apportioned_cost": {
+                    name: 0 for name in excluded_cost
+                },
+            }
+        )
+        retained["apportioned_cost"] = {
+            name: retained["apportioned_cost"][name]
+            + excluded_cost[name]
+            for name in excluded_cost
+        }
+        dwr_row_sha = {
+            row["target_id"]: row["row_sha256"]
+            for row in localization_rows
+        }
+        for row in rows:
+            row["dwr_row_sha256"] = dwr_row_sha[row["target_id"]]
+            unsigned_row = dict(row)
+            unsigned_row.pop("row_sha256")
+            row["row_sha256"] = _json_sha256(
+                unsigned_row,
+                namespace=STRUCTURAL_COST_ROW_SCHEMA,
+            )
+        model["rows"] = rows
+        model["row_catalog_sha256"] = _json_sha256(
+            [row["row_sha256"] for row in rows],
+            namespace="task035e.structural-cost-row-catalog.v1",
+        )
+        unsigned_model = dict(model)
+        unsigned_model.pop("model_sha256")
+        model["model_sha256"] = _json_sha256(
+            unsigned_model,
+            namespace=STRUCTURAL_COST_MODEL_SCHEMA,
+        )
+        authority["structural_cost_model"] = model
+        unsigned_authority = dict(authority)
+        unsigned_authority.pop("authority_sha256")
+        authority["authority_sha256"] = _json_sha256(
+            unsigned_authority,
+            namespace=CELLWISE_DWR_AUTHORITY_SCHEMA,
+        )
+        fixture_ids.update(
+            excluded=excluded_id,
+            retained=retained_id,
+        )
+        return authority
+
+    plan_path, plan_sha, authority_path, authority_sha, _state = _inputs(
+        tmp_path,
+        initial,
+        authority_builder=builder,
+    )
+    excluded_id = fixture_ids["excluded"]
+    retained_id = fixture_ids["retained"]
+    output = tmp_path / "marking.json"
+    receipt = produce_goal_marking(
+        current_plan_path=plan_path,
+        current_plan_file_sha256=plan_sha,
+        dwr_authority_path=authority_path,
+        dwr_authority_file_sha256=authority_sha,
+        source_sha=_SOURCE_SHA,
+        action_kind="p-up",
+        output_path=output,
+    )
+
+    assert receipt.status == "goal_marking_targets_selected"
+    assert excluded_id not in receipt.canonical_target_ids
+    assert retained_id in receipt.canonical_target_ids
+    authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    contributions = {
+        row["target_id"]: row["signed_dwr_contribution"]
+        for row in authority["localization"]["rows"]
+    }
+    assert contributions
+    assert contributions[excluded_id][FORMAL_GOAL_IDS[0]] != 0.0
 
 
 def test_marking_is_byte_deterministic_and_canonical(

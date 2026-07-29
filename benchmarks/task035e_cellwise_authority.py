@@ -40,6 +40,9 @@ from benchmarks.task035e_candidate_output import (
     adapt_candidate_output,
 )
 from benchmarks.task035e_live_shadow_bridge import (
+    LIVE_SHADOW_BRIDGE_SCHEMA,
+    LIVE_SHADOW_BRIDGE_STATUS,
+    _effectivity_audit,
     _validate_actual_dwr_report,
 )
 from src.adaptivity.blind_controller.contracts import (
@@ -108,6 +111,55 @@ _INVENTORY_TO_COST = {
 _PETSC_SCALAR_BYTES = 16
 _PETSC_INT_BYTES = 4
 _SIMULTANEOUS_ATTRIBUTABLE_VECTOR_COUNT = 4
+_LIVE_BRIDGE_OUTER_FIELDS = frozenset(
+    {"schema_version", "sha256", "payload"}
+)
+_LIVE_BRIDGE_PAYLOAD_FIELDS = frozenset(
+    {
+        "schema_version",
+        "status",
+        "pass",
+        "classification",
+        "source_sha",
+        "mpi_size",
+        "trial_id",
+        "cycle_index",
+        "action_id",
+        "kind",
+        "target_ids",
+        "transition_action_sha256",
+        "transition_action_file_sha256",
+        "transition_action_identity_sha256",
+        "transition_action_representation",
+        "current_watchdog_record_sha256",
+        "shadow_watchdog_record_sha256",
+        "current_output_sha256",
+        "shadow_output_sha256",
+        "current_plan_file_sha256",
+        "shadow_plan_file_sha256",
+        "current_mesh_forest_sha256",
+        "current_degree_map_sha256",
+        "shadow_mesh_forest_sha256",
+        "shadow_degree_map_sha256",
+        "current_goal_sha256",
+        "shadow_goal_sha256",
+        "formal_goal_count",
+        "formal_goal_inventory_sha256",
+        "current_live_role_evidence",
+        "shadow_live_role_evidence",
+        "current_snapshot_payload_sha256",
+        "actual_dwr_report_sha256",
+        "signed_dwr_delta",
+        "actual_endpoint_delta",
+        "effectivity_audit",
+        "dwr_evidence",
+        "capability_credit",
+        "hidden_reference_consumed",
+        "endpoint_delta_used_as_dwr",
+        "ordinary_default_changed",
+        "payload_sha256",
+    }
+)
 
 
 class CellwiseAuthorityError(ValueError):
@@ -416,6 +468,202 @@ def _validate_live_evidence(
         signed,
         payload_sha,
     )
+
+
+def _validate_bound_live_evidence(
+    raw: Mapping[str, Any],
+    *,
+    file_sha256: str,
+    current: AdaptedCandidateOutput,
+    shadow: AdaptedCandidateOutput,
+    action_kind: str,
+    live_path: Path,
+) -> tuple[
+    Mapping[str, Any],
+    Mapping[str, Any],
+    dict[str, float],
+    str,
+]:
+    """Resolve a formal post-PDE bridge, retaining raw-evaluation support."""
+
+    current_goals = goal_vector_from_candidate_output(current.payload)
+    shadow_goals = goal_vector_from_candidate_output(shadow.payload)
+    if raw.get("schema_version") != LIVE_SHADOW_BRIDGE_SCHEMA:
+        report, partition, signed, payload_sha = _validate_live_evidence(
+            raw,
+            file_sha256=file_sha256,
+            current=current,
+            shadow=shadow,
+            action_kind=action_kind,
+            live_path=live_path,
+        )
+        effectivity, _endpoint_delta = _effectivity_audit(
+            signed_eta=signed,
+            current_values=current_goals.by_id,
+            shadow_values=shadow_goals.by_id,
+        )
+        if effectivity.get("pass") is not True:
+            raise CellwiseAuthorityError(
+                "raw live-shadow endpoint effectivity did not pass"
+            )
+        return report, partition, signed, payload_sha
+    if set(raw) != _LIVE_BRIDGE_OUTER_FIELDS:
+        raise CellwiseAuthorityError(
+            "live-shadow bridge outer fields differ"
+        )
+    payload = _mapping(
+        raw.get("payload"),
+        label="live-shadow bridge payload",
+    )
+    if set(payload) != _LIVE_BRIDGE_PAYLOAD_FIELDS:
+        raise CellwiseAuthorityError(
+            "live-shadow bridge payload fields differ"
+        )
+    unsigned = dict(payload)
+    bridge_payload_sha = _sha256(
+        unsigned.pop("payload_sha256", None),
+        label="live-shadow bridge payload SHA-256",
+    )
+    outer_payload_sha = _sha256(
+        raw.get("sha256"),
+        label="live-shadow bridge outer SHA-256",
+    )
+    current_live = current.live_role_evidence
+    shadow_live = shadow.live_role_evidence
+    if not isinstance(current_live, Mapping) or not isinstance(
+        shadow_live,
+        Mapping,
+    ):
+        raise CellwiseAuthorityError(
+            "candidate watchdog lacks live-role evidence"
+        )
+    effectivity = _mapping(
+        payload.get("effectivity_audit"),
+        label="live-shadow bridge effectivity",
+    )
+    capability = _mapping(
+        payload.get("capability_credit"),
+        label="live-shadow bridge capability credit",
+    )
+    if (
+        raw.get("schema_version") != LIVE_SHADOW_BRIDGE_SCHEMA
+        or bridge_payload_sha != outer_payload_sha
+        or bridge_payload_sha != _json_sha256(unsigned)
+        or payload.get("schema_version") != LIVE_SHADOW_BRIDGE_SCHEMA
+        or payload.get("status") != LIVE_SHADOW_BRIDGE_STATUS
+        or payload.get("pass") is not True
+        or payload.get("classification")
+        != "qualified_actual_dwr_effectivity_pass"
+        or payload.get("source_sha") != current.source_sha
+        or payload.get("source_sha") != shadow.source_sha
+        or payload.get("mpi_size") != 8
+        or payload.get("trial_id") != current.trial_id
+        or payload.get("trial_id") != shadow.trial_id
+        or payload.get("cycle_index") != current.cycle_index
+        or payload.get("cycle_index") != shadow.cycle_index
+        or payload.get("kind") != action_kind
+        or payload.get("current_watchdog_record_sha256")
+        != current.record_sha256
+        or payload.get("shadow_watchdog_record_sha256")
+        != shadow.record_sha256
+        or payload.get("current_output_sha256") != current.output_sha256
+        or payload.get("shadow_output_sha256") != shadow.output_sha256
+        or payload.get("current_plan_file_sha256")
+        != current.plan_file_sha256
+        or payload.get("shadow_plan_file_sha256")
+        != shadow.plan_file_sha256
+        or payload.get("current_mesh_forest_sha256")
+        != current.forest_leaf_catalog_sha256
+        or payload.get("current_degree_map_sha256")
+        != current.cell_degree_plan_sha256
+        or payload.get("shadow_mesh_forest_sha256")
+        != shadow.forest_leaf_catalog_sha256
+        or payload.get("shadow_degree_map_sha256")
+        != shadow.cell_degree_plan_sha256
+        or payload.get("current_goal_sha256") != current_goals.sha256
+        or payload.get("shadow_goal_sha256") != shadow_goals.sha256
+        or payload.get("current_live_role_evidence") != current_live
+        or payload.get("shadow_live_role_evidence") != shadow_live
+        or payload.get("formal_goal_count") != len(FORMAL_GOAL_IDS)
+        or payload.get("formal_goal_inventory_sha256")
+        != FORMAL_GOAL_INVENTORY_SHA256
+        or effectivity.get("pass") is not True
+        or effectivity.get("formal_goal_count") != len(FORMAL_GOAL_IDS)
+        or set(capability)
+        != {
+            "hash_bound_live_adjoint_complete",
+            "post_pde_endpoint_binding_complete",
+            "shadow_endpoint_effectivity_complete",
+            "accuracy_credit",
+        }
+        or capability.get("hash_bound_live_adjoint_complete") is not True
+        or capability.get("post_pde_endpoint_binding_complete") is not True
+        or capability.get("shadow_endpoint_effectivity_complete") is not True
+        or capability.get("accuracy_credit") is not False
+        or payload.get("hidden_reference_consumed") is not False
+        or payload.get("endpoint_delta_used_as_dwr") is not False
+        or payload.get("ordinary_default_changed") is not False
+    ):
+        raise CellwiseAuthorityError(
+            "live-shadow bridge identity, effectivity, or self-hash differs"
+        )
+    evaluation_reference = _mapping(
+        payload.get("shadow_live_role_evidence"),
+        label="live-shadow bridge evaluation reference",
+    )
+    evaluation_path = Path(str(evaluation_reference.get("path")))
+    evaluation, resolved_evaluation, evaluation_file_sha = (
+        _load_bound_private_json(
+            evaluation_path,
+            _sha256(
+                evaluation_reference.get("sha256"),
+                label="live-shadow evaluation file SHA-256",
+            ),
+            label="live-shadow evaluation",
+        )
+    )
+    report, partition, signed, evaluation_payload_sha = (
+        _validate_live_evidence(
+            evaluation,
+            file_sha256=evaluation_file_sha,
+            current=current,
+            shadow=shadow,
+            action_kind=action_kind,
+            live_path=resolved_evaluation,
+        )
+    )
+    bridge_signed = _mapping(
+        payload.get("signed_dwr_delta"),
+        label="live-shadow bridge signed DWR",
+    )
+    expected_effectivity, expected_endpoint_delta = _effectivity_audit(
+        signed_eta=signed,
+        current_values=current_goals.by_id,
+        shadow_values=shadow_goals.by_id,
+    )
+    if (
+        payload.get("actual_dwr_report_sha256")
+        != report.get("report_sha256")
+        or evaluation_reference.get("payload_sha256")
+        != evaluation_payload_sha
+        or effectivity != expected_effectivity
+        or payload.get("actual_endpoint_delta")
+        != expected_endpoint_delta
+        or expected_effectivity.get("pass") is not True
+        or set(bridge_signed) != set(FORMAL_GOAL_IDS)
+        or any(
+            _finite(
+                bridge_signed[goal_id],
+                label=f"bridge signed eta {goal_id}",
+            )
+            != signed[goal_id]
+            for goal_id in FORMAL_GOAL_IDS
+        )
+    ):
+        raise CellwiseAuthorityError(
+            "live-shadow bridge differs from its raw evaluation"
+        )
+    return report, partition, signed, bridge_payload_sha
 
 
 def _validate_partition(
@@ -803,7 +1051,14 @@ def _candidate_topology_rows(
             dwr_row.get("assigned_reduced_row_count"),
             label=f"{target_id} assigned reduced rows",
         )
-        if assigned <= 0 or raw_active_delta <= 0:
+        assigned_active_interior = _nonnegative_integer(
+            dwr_row.get("assigned_active_interior_row_count", 0),
+            label=f"{target_id} assigned active-interior rows",
+        )
+        if (
+            assigned <= 0
+            and assigned_active_interior <= 0
+        ) or raw_active_delta <= 0:
             raise CellwiseAuthorityError(
                 f"{target_id} lacks attributable topology/row support"
             )
@@ -841,6 +1096,9 @@ def _candidate_topology_rows(
                     ],
                     "face_or_periodic_neighbor_count": neighbor_count[key],
                     "assigned_shadow_reduced_row_count": assigned,
+                    "assigned_shadow_active_interior_row_count": (
+                        assigned_active_interior
+                    ),
                 },
                 "weights": {
                     "active": raw_active_delta,
@@ -1144,8 +1402,8 @@ def validate_structural_cost_model(
     *,
     action_kind: str,
     dwr_rows: Mapping[str, Mapping[str, Any]],
-) -> dict[str, dict[str, int]]:
-    """Replay a cost model and return the goal-marker cost rows."""
+) -> tuple[dict[str, dict[str, int]], dict[str, bool]]:
+    """Replay a cost model and return goal-marker costs and eligibility."""
 
     unsigned = dict(raw)
     model_sha = _sha256(
@@ -1254,6 +1512,7 @@ def validate_structural_cost_model(
         )
     raw_rows = _sequence(raw.get("rows"), label="structural cost rows")
     rows: dict[str, dict[str, int]] = {}
+    eligibility: dict[str, bool] = {}
     row_hashes = []
     for index, raw_row in enumerate(raw_rows):
         row = _mapping(raw_row, label=f"structural cost row {index}")
@@ -1279,6 +1538,82 @@ def validate_structural_cost_model(
             raise CellwiseAuthorityError(
                 f"structural cost row {index} identity differs"
             )
+        eligible = row.get("eligible")
+        ineligibility = row.get("ineligibility")
+        topology_raw = row.get("topology")
+        raw_weights = _mapping(
+            row.get("weights"),
+            label=f"structural cost row {index} weights",
+        )
+        if set(raw_weights) != {
+            "active",
+            "rows",
+            "matrix_nnz",
+            "factor_nnz",
+        }:
+            raise CellwiseAuthorityError(
+                f"structural cost row {index} weight fields differ"
+            )
+        weights = {
+            name: _nonnegative_integer(
+                raw_weights[name],
+                label=f"structural cost row {index} weight {name}",
+            )
+            for name in raw_weights
+        }
+        if eligible is True:
+            topology = _mapping(
+                topology_raw,
+                label=f"structural cost row {index} topology",
+            )
+            reduced_support = _nonnegative_integer(
+                topology.get("assigned_shadow_reduced_row_count"),
+                label=(
+                    f"structural cost row {index} assigned reduced support"
+                ),
+            )
+            active_interior_support = _nonnegative_integer(
+                topology.get(
+                    "assigned_shadow_active_interior_row_count",
+                ),
+                label=(
+                    "structural cost row "
+                    f"{index} assigned active-interior support"
+                ),
+            )
+            if (
+                reduced_support
+                != dwr_rows[target_id].get("assigned_reduced_row_count")
+                or active_interior_support
+                != dwr_rows[target_id].get(
+                    "assigned_active_interior_row_count",
+                    0,
+                )
+                or (
+                    reduced_support <= 0
+                    and active_interior_support <= 0
+                )
+                or ineligibility is not None
+                or any(weight <= 0 for weight in weights.values())
+            ):
+                raise CellwiseAuthorityError(
+                    f"structural cost row {index} DWR support differs"
+                )
+        elif eligible is False:
+            if (
+                topology_raw is not None
+                or not isinstance(ineligibility, str)
+                or not ineligibility
+                or any(weight != 0 for weight in weights.values())
+            ):
+                raise CellwiseAuthorityError(
+                    f"structural cost row {index} ineligible topology differs"
+                )
+        else:
+            raise CellwiseAuthorityError(
+                f"structural cost row {index} eligibility differs"
+            )
+        eligibility[target_id] = eligible
         costs = _mapping(
             row.get("apportioned_cost"),
             label=f"structural cost row {index} apportioned cost",
@@ -1287,13 +1622,18 @@ def validate_structural_cost_model(
             raise CellwiseAuthorityError(
                 f"structural cost row {index} fields differ"
             )
-        rows[target_id] = {
+        normalized_costs = {
             name: _nonnegative_integer(
                 costs[name],
                 label=f"structural cost row {index} {name}",
             )
             for name in _COST_FIELDS
         }
+        if eligible is False and any(normalized_costs.values()):
+            raise CellwiseAuthorityError(
+                f"structural cost row {index} ineligible cost differs"
+            )
+        rows[target_id] = normalized_costs
         row_hashes.append(row_sha)
     if (
         set(rows) != set(dwr_rows)
@@ -1404,7 +1744,7 @@ def validate_structural_cost_model(
             raise CellwiseAuthorityError(
                 f"structural cost closure failed for {name}"
             )
-    return rows
+    return rows, eligibility
 
 
 def build_cellwise_authority(
@@ -1471,7 +1811,7 @@ def build_cellwise_authority(
         label="live shadow evidence",
     )
     report, partition, global_signed, live_payload_sha = (
-        _validate_live_evidence(
+        _validate_bound_live_evidence(
             live,
             file_sha256=live_file_sha,
             current=current,

@@ -1006,23 +1006,28 @@ def _validate_cellwise_authority(
             f"{closure_failures[:3]}"
         )
     try:
-        structural_cost_rows = validate_structural_cost_model(
-            _mapping(
-                raw.get("structural_cost_model"),
-                label="structural cost model",
-            ),
-            action_kind=action_kind,
-            dwr_rows={
-                str(_mapping(row, label="cellwise row")["target_id"]): (
-                    _mapping(row, label="cellwise row")
-                )
-                for row in raw_rows
-            },
+        structural_cost_rows, structural_eligibility = (
+            validate_structural_cost_model(
+                _mapping(
+                    raw.get("structural_cost_model"),
+                    label="structural cost model",
+                ),
+                action_kind=action_kind,
+                dwr_rows={
+                    str(
+                        _mapping(row, label="cellwise row")["target_id"]
+                    ): _mapping(row, label="cellwise row")
+                    for row in raw_rows
+                },
+            )
         )
     except CellwiseAuthorityError as exc:
         raise GoalMarkingError(str(exc)) from exc
     for target_id in rows:
         rows[target_id]["costs"] = structural_cost_rows[target_id]
+        rows[target_id]["structurally_eligible"] = (
+            structural_eligibility[target_id]
+        )
     return {
         "authority_file_sha256": authority_file_sha256,
         "authority_sha256": observed_authority_sha,
@@ -1153,10 +1158,21 @@ def _positive_payload(
         for goal_id in FORMAL_GOAL_IDS
     }
     global_maximum = max(global_normalized.values(), default=0.0)
+    # The source-bound structural authority owns singleton-action
+    # eligibility; its replay validator enforces the zero-cost ineligible
+    # contract.  Retain an independent p/level bound here, while the selected
+    # set receives a full transition preflight below.
     eligible_rows = {
         target_id: row
         for target_id, row in rows.items()
-        if _eligible(state, action_kind=action_kind, target_id=target_id)
+        if (
+            row["structurally_eligible"]
+            and _eligible(
+                state,
+                action_kind=action_kind,
+                target_id=target_id,
+            )
+        )
     }
     if not eligible_rows:
         return _negative_payload(
