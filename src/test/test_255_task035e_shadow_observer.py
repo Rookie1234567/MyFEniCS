@@ -20,6 +20,7 @@ from src.adaptivity.task035e_shadow_observer import (
     _json_sha256,
     _p6_coefficient_projection_audit,
     _public_affine_complement_audit,
+    _public_trace_conformance_audit,
     _release_h_shadow_projection_temporaries,
     _requires_exact_nested_current_projection,
     _validate_observed_shadow_kind,
@@ -37,6 +38,101 @@ def _balanced_ranges(total: int, size: int) -> list[list[int]]:
         ranges.append([start, end])
         start = end
     return ranges
+
+
+def _h_trace_conformance_fixture(
+    *,
+    local_selected_rows: int,
+) -> dict[str, object]:
+    pipeline = {
+        "schema_version": (
+            "task035e.physical-root-primal-projection-pipeline.v1"
+        ),
+        "status": "physical_root_primal_projection_pipeline_pass",
+        "pass": True,
+        "input_receives_exact_nested_transfer_credit": False,
+        "active_interior_rows_bitwise_unchanged": True,
+        "strict_reextraction_closure_l2_norm": 2.0e-12,
+        "strict_reextraction_closure_linf_norm": 3.0e-13,
+        "strict_reextraction_reference_l2_norm": 376.0,
+        "strict_reextraction_reference_linf_norm": 37.0,
+        "strict_reextraction_relative_l2": 6.0e-15,
+        "strict_reextraction_relative_linf": 8.0e-15,
+        "strict_reextraction_tolerance": 5.0e-10,
+        "full_vector_allgather_used": False,
+        "ordinary_default_changed": False,
+        "input_extraction": {
+            "active_selected_row_count_local": local_selected_rows,
+        },
+        "trace_projection": {
+            "selected_unique_row_count_local": local_selected_rows,
+        },
+        "strict_reextraction": {
+            "requested_row_count_local": local_selected_rows,
+        },
+    }
+    recovery = {
+        "schema_version": "task035d.variable-p-p6-recovery.v1",
+        "status": "conforming_p6_storage_recovery_pass",
+        "pass": True,
+        "absolute_shared_coefficient_error_max": 1.0e-13,
+        "relative_shared_coefficient_error_max": 4.0e-15,
+        "conformity_tolerance": 5.0e-10,
+        "target_field_reused": True,
+        "new_p6_function_allocated": False,
+        "replaced_field_coefficients_audited_before_overwrite": True,
+        "replaced_coefficient_delta_l2_norm": 0.04,
+        "replaced_coefficient_reference_l2_norm": 773.0,
+        "replaced_coefficient_delta_relative_l2": 5.2e-5,
+        "replaced_coefficient_delta_linf_norm": 0.015,
+        "replaced_coefficient_reference_linf_norm": 32.7,
+        "replaced_coefficient_delta_relative_linf": 4.6e-4,
+        "replaced_coefficient_rows_designated_exactly_once": True,
+        "selected_values_reused_for_recovery_and_conformity_audit": True,
+        "full_active_vector_replicated_bytes_per_rank": 0,
+        "global_embedding_matrix_allocated": False,
+        "ordinary_default_changed": False,
+        "active_selected_row_count_local": local_selected_rows,
+        "active_selected_rows": {
+            "selected_unique_row_count_local": local_selected_rows,
+        },
+    }
+    return {
+        "schema_version": "task035e.h-shadow-trace-conformance.v1",
+        "status": "physical_root_conforming_h_shadow_projection_pass",
+        "pass": True,
+        "shadow_kind": "h-shadow",
+        "exact_nested_projection_retained": False,
+        "physical_root_projection_applied": True,
+        "ordinary_default_changed": False,
+        "pre_recovery_temporary_release": {
+            "schema_version": (
+                "task035e.h-shadow-projection-temporary-release.v1"
+            ),
+            "status": "h_shadow_projection_temporaries_released",
+            "pass": True,
+            "phase": "before_in_place_p6_recovery",
+            "sum_rss_before_mb": 7700.0,
+            "sum_rss_after_mb": 7510.0,
+            "sum_rss_released_mb": 190.0,
+            "ordinary_default_changed": False,
+        },
+        "projection_pipeline": pipeline,
+        "conforming_p6_recovery": recovery,
+        "coefficient_projection": {
+            "schema_version": (
+                "task035e.h-shadow-conforming-p6-"
+                "coefficient-projection.v1"
+            ),
+            "status": (
+                "h_shadow_conforming_p6_coefficient_projection_pass"
+            ),
+            "pass": True,
+            "coefficient_delta_relative_l2": 5.2e-5,
+            "exact_nested_transfer_credit": False,
+            "ordinary_default_changed": False,
+        },
+    }
 
 
 def test_h_shadow_conforming_coefficient_audit_is_scale_bound() -> None:
@@ -80,6 +176,79 @@ def test_h_shadow_projection_temporary_release_is_audited() -> None:
             MPI.COMM_SELF,
             phase="after_goal_gradients",
         )
+
+
+def test_trace_conformance_public_audit_omits_rank_local_rows() -> None:
+    public = _public_trace_conformance_audit(
+        MPI.COMM_SELF,
+        _h_trace_conformance_fixture(local_selected_rows=17),
+        rank_pipeline_catalog_sha256="a" * 64,
+    )
+    assert public["pass"] is True
+    assert public["rank_pipeline_catalog_sha256"] == "a" * 64
+    assert (
+        public[
+            "rank_local_selected_row_fields_omitted_from_public_payload"
+        ]
+        is True
+    )
+    assert "input_extraction" not in public["projection_pipeline"]
+    assert (
+        "active_selected_row_count_local"
+        not in public["conforming_p6_recovery"]
+    )
+    assert "active_selected_rows" not in public["conforming_p6_recovery"]
+
+
+def test_p_shadow_trace_public_audit_needs_no_physical_projection() -> None:
+    public = _public_trace_conformance_audit(
+        MPI.COMM_SELF,
+        {
+            "schema_version": "task035e.h-shadow-trace-conformance.v1",
+            "status": "physical_root_trace_projection_not_required",
+            "pass": True,
+            "shadow_kind": "p-shadow",
+            "exact_nested_projection_retained": True,
+            "physical_root_projection_applied": False,
+            "ordinary_default_changed": False,
+        },
+        rank_pipeline_catalog_sha256="b" * 64,
+    )
+    assert public["pass"] is True
+    assert public["physical_root_projection_applied"] is False
+    assert "projection_pipeline" not in public
+
+
+def test_mpi8_trace_conformance_public_audit_replays_identically() -> None:
+    comm = MPI.COMM_WORLD
+    if comm.size != 8:
+        pytest.skip("trace-conformance replay fixture requires MPI8")
+    local_rows = 100 + int(comm.rank)
+    local_audit = _h_trace_conformance_fixture(
+        local_selected_rows=local_rows,
+    )
+    rank_catalog = comm.allgather(
+        {
+            "rank": int(comm.rank),
+            "local_selected_rows": local_rows,
+        }
+    )
+    catalog_sha = _json_sha256(
+        rank_catalog,
+        namespace="task035e.shadow-pipeline-rank-catalog.v1",
+    )
+    public = dict(
+        _public_trace_conformance_audit(
+            comm,
+            local_audit,
+            rank_pipeline_catalog_sha256=catalog_sha,
+        )
+    )
+    packets = comm.allgather(public)
+    assert packets == [packets[0]] * comm.size
+    assert "active_selected_row_count_local" not in public[
+        "conforming_p6_recovery"
+    ]
 
 
 def test_current_auxiliary_tail_is_reconstructed_without_full_gather() -> None:

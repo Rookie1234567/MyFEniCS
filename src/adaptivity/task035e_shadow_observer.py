@@ -523,6 +523,156 @@ def _rank_pipeline_catalog(
     return rows
 
 
+def _public_trace_conformance_audit(
+    communicator: MPI.Intracomm,
+    local_audit: Mapping[str, Any],
+    *,
+    rank_pipeline_catalog_sha256: str,
+) -> Mapping[str, Any]:
+    """Return the collective trace summary used by the replayed payload.
+
+    Extraction and recovery retain owner-local selected-row counts.  Their full
+    audits belong in ``rank_pipeline_audits``; copying one rank's nested audit
+    into the common payload makes a valid MPI execution non-replayable.
+    """
+
+    catalog_sha = _sha256(
+        rank_pipeline_catalog_sha256,
+        label="rank pipeline catalog SHA-256",
+    )
+    root_fields = (
+        "schema_version",
+        "status",
+        "pass",
+        "shadow_kind",
+        "exact_nested_projection_retained",
+        "physical_root_projection_applied",
+        "ordinary_default_changed",
+    )
+    if any(field not in local_audit for field in root_fields):
+        raise Task035eShadowObserverError(
+            "trace-conformance audit lacks its public root fields"
+        )
+    public = {
+        field: _jsonable(local_audit[field])
+        for field in root_fields
+    }
+    if public["pass"] is not True:
+        raise Task035eShadowObserverError(
+            "trace-conformance public audit is not passing"
+        )
+    public.update(
+        {
+            "rank_pipeline_catalog_sha256": catalog_sha,
+            "rank_local_detail_location": "rank_pipeline_audits",
+            "rank_local_selected_row_fields_omitted_from_public_payload": True,
+        }
+    )
+
+    if public["physical_root_projection_applied"] is True:
+        nested = {
+            name: local_audit.get(name)
+            for name in (
+                "pre_recovery_temporary_release",
+                "projection_pipeline",
+                "conforming_p6_recovery",
+                "coefficient_projection",
+            )
+        }
+        if not all(
+            isinstance(value, Mapping) and value.get("pass") is True
+            for value in nested.values()
+        ):
+            raise Task035eShadowObserverError(
+                "physical-root trace audit lacks one passing component"
+            )
+        pipeline_fields = (
+            "schema_version",
+            "status",
+            "pass",
+            "input_receives_exact_nested_transfer_credit",
+            "active_interior_rows_bitwise_unchanged",
+            "strict_reextraction_closure_l2_norm",
+            "strict_reextraction_closure_linf_norm",
+            "strict_reextraction_reference_l2_norm",
+            "strict_reextraction_reference_linf_norm",
+            "strict_reextraction_relative_l2",
+            "strict_reextraction_relative_linf",
+            "strict_reextraction_tolerance",
+            "full_vector_allgather_used",
+            "ordinary_default_changed",
+        )
+        recovery_fields = (
+            "schema_version",
+            "status",
+            "pass",
+            "absolute_shared_coefficient_error_max",
+            "relative_shared_coefficient_error_max",
+            "conformity_tolerance",
+            "target_field_reused",
+            "new_p6_function_allocated",
+            "replaced_field_coefficients_audited_before_overwrite",
+            "replaced_coefficient_delta_l2_norm",
+            "replaced_coefficient_reference_l2_norm",
+            "replaced_coefficient_delta_relative_l2",
+            "replaced_coefficient_delta_linf_norm",
+            "replaced_coefficient_reference_linf_norm",
+            "replaced_coefficient_delta_relative_linf",
+            "replaced_coefficient_rows_designated_exactly_once",
+            "selected_values_reused_for_recovery_and_conformity_audit",
+            "full_active_vector_replicated_bytes_per_rank",
+            "global_embedding_matrix_allocated",
+            "ordinary_default_changed",
+        )
+        pipeline = nested["projection_pipeline"]
+        recovery = nested["conforming_p6_recovery"]
+        if (
+            any(field not in pipeline for field in pipeline_fields)
+            or any(field not in recovery for field in recovery_fields)
+        ):
+            raise Task035eShadowObserverError(
+                "physical-root trace audit lacks one public metric"
+            )
+        public.update(
+            {
+                "pre_recovery_temporary_release": _jsonable(
+                    nested["pre_recovery_temporary_release"]
+                ),
+                "projection_pipeline": {
+                    field: _jsonable(pipeline[field])
+                    for field in pipeline_fields
+                },
+                "conforming_p6_recovery": {
+                    field: _jsonable(recovery[field])
+                    for field in recovery_fields
+                },
+                "coefficient_projection": _jsonable(
+                    nested["coefficient_projection"]
+                ),
+            }
+        )
+    elif public["shadow_kind"] != "p-shadow":
+        raise Task035eShadowObserverError(
+            "non-p-shadow trace audit omitted physical-root projection"
+        )
+
+    public_sha = _json_sha256(
+        public,
+        namespace="task035e.trace-conformance-public-audit.v1",
+    )
+    _require_same_hash(
+        communicator,
+        public_sha,
+        label="trace-conformance public audit",
+    )
+    return MappingProxyType(
+        {
+            **public,
+            "public_audit_sha256": public_sha,
+        }
+    )
+
+
 def _p6_coefficient_projection_audit(
     *,
     delta_l2: float,
@@ -1340,6 +1490,17 @@ def evaluate_and_write_task035e_shadow(
         extraction=extraction_audit,
         trace_conformance=trace_conformance_audit,
     )
+    rank_catalog_sha = _json_sha256(
+        rank_catalog,
+        namespace="task035e.shadow-pipeline-rank-catalog.v1",
+    )
+    trace_conformance_public_audit = (
+        _public_trace_conformance_audit(
+            comm,
+            trace_conformance_audit,
+            rank_pipeline_catalog_sha256=rank_catalog_sha,
+        )
+    )
     unsigned = {
         "schema_version": SHADOW_EVALUATION_SCHEMA,
         "status": "live_shadow_59_goal_actual_dwr_pass",
@@ -1358,7 +1519,7 @@ def evaluate_and_write_task035e_shadow(
         "shadow_kind_closure": dict(shadow_kind_audit),
         "current_auxiliary_reconstruction": dict(auxiliary_audit),
         "physical_root_trace_conformance": dict(
-            trace_conformance_audit
+            trace_conformance_public_audit
         ),
         "active_interior_affine_complement": (
             affine_complement_public_audit
@@ -1367,10 +1528,7 @@ def evaluate_and_write_task035e_shadow(
             heavy_state_release_audit
         ),
         "rank_pipeline_audits": rank_catalog,
-        "rank_pipeline_catalog_sha256": _json_sha256(
-            rank_catalog,
-            namespace="task035e.shadow-pipeline-rank-catalog.v1",
-        ),
+        "rank_pipeline_catalog_sha256": rank_catalog_sha,
         "goal_gradient_inventory": gradient_audit,
         "actual_dwr": dict(dwr.report),
         "cellwise_dwr_partition": dict(dwr.cellwise_partition),
