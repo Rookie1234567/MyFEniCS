@@ -119,7 +119,8 @@ class Task033CrossSectionExactConstraintTests(unittest.TestCase):
                         np.sqrt(numerator / max(denominator, 1.0e-30))
                     )
                     self.assertLess(relative_error, 5.0e-12)
-                    self.assertEqual(constraints.max_probe_residual, 0.0)
+                    self.assertLess(constraints.max_probe_residual, 5.0e-12)
+                    self.assertGreaterEqual(constraints.max_probe_residual, 0.0)
                     self.assertEqual(
                         constraints.orientation_schema,
                         "basix_interval_exact_p1_p6",

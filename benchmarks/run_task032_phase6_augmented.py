@@ -673,6 +673,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         description="Task32 Phase6 real-QEP hybrid augmented direct diagnostic"
     )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--task002-m2b-mode-archive", type=Path,
+        help="M2B-only compressed full-vector archive for cross-angle continuation.",
+    )
     parser.add_argument("--h-nm", type=float, default=5.0)
     parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4, 5, 6), default=2)
     parser.add_argument(
@@ -769,6 +773,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Clean-source Task002 Review-V1 M2A diagnostic gate. This opens "
             "only the reviewed center-point p/M matrix and low-grazing S-only "
             "angle stencil; it does not alter any formal numerical threshold."
+        ),
+    )
+    parser.add_argument(
+        "--task002-m2b-diagnostic-gate", action="store_true",
+        help=(
+            "Clean-source Task002 Review-V2 solver-domain gate, restricted to "
+            "center geometry, frozen 80-angle S grid, p4/p5/p6 M120 and the "
+            "reviewed continuous or discrete axial route."
         ),
     )
     parser.add_argument(
@@ -878,6 +890,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if args.degree == 6 and not (
         args.task035c_p6_h10_gate or args.task001_surrogate_pilot_gate
         or args.task002_s_continuous_gate or args.task002_m2a_diagnostic_gate
+        or args.task002_m2b_diagnostic_gate
     ):
         parser.error(
             "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
@@ -890,6 +903,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             args.task001_surrogate_pilot_gate,
             args.task002_s_continuous_gate,
             args.task002_m2a_diagnostic_gate,
+            args.task002_m2b_diagnostic_gate,
             args.task001_m9_diagnostic_gate,
         )
     )
@@ -899,6 +913,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task001_surrogate_pilot_gate
         or args.task002_s_continuous_gate
         or args.task002_m2a_diagnostic_gate
+        or args.task002_m2b_diagnostic_gate
         or args.task001_m9_diagnostic_gate
     ):
         required = (
@@ -921,6 +936,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(str(exc))
         if (
             args.task002_s_continuous_gate or args.task002_m2a_diagnostic_gate
+            or args.task002_m2b_diagnostic_gate
         ) and args.polarization_kind != "s":
             parser.error("Task002 continuous-angle and M2A gates are S-only.")
         fidelity = task001_parameters.fidelity
@@ -1049,6 +1065,47 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and not args.task035c_p6_h10_gate
             and args.task001_m9_interface_quadrature_degree is None
         )
+        m2b_grazing = (0.5, 0.75, 1.0, 2.0, 4.0, 6.0, 8.0, 10.0)
+        m2b_azimuth = (0.0, 5.0, 10.0, 15.0, 20.0, 30.0, 45.0, 60.0, 75.0, 90.0)
+        m2b_model_degree = {"LF4": 4, "LF5": 5, "HF10": 6}
+        m2b_axial_route = (
+            (
+                args.internal_propagation_model == "continuous_beta"
+                and args.internal_traction_model == "continuous_qep_beta"
+            )
+            or (
+                args.internal_propagation_model == "full3d_uniform_cg"
+                and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            )
+        )
+        m2b_scoped = bool(
+            args.task002_m2b_diagnostic_gate
+            and math.isclose(args.task001_height_nm, 120.0)
+            and math.isclose(args.task001_width_x_nm, 17.0)
+            and args.task001_model_id in m2b_model_degree
+            and args.degree == m2b_model_degree.get(args.task001_model_id)
+            and any(math.isclose(90.0 - args.incident_theta_deg, value) for value in m2b_grazing)
+            and any(math.isclose(args.incident_phi_deg, value) for value in m2b_azimuth)
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == args.degree
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "modal-schur-memory-minimal"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and m2b_axial_route
+            and args.task002_m2b_mode_archive is not None
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.allow_dirty_research
+            and args.full3d_reference is None
+            and not args.task035c_p6_h10_gate
+            and args.task001_m9_interface_quadrature_degree is None
+        )
         if (
             args.task001_surrogate_pilot_gate or args.task002_s_continuous_gate
         ) and not formal_scoped:
@@ -1069,6 +1126,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "center-point p4 M80/120/160/240, p5 M120, p6 M120 or the "
                 "reviewed p4/p6 M120 low-grazing S-only stencil."
             )
+        if args.task002_m2b_diagnostic_gate and not m2b_scoped:
+            parser.error(
+                "Task002 M2B is restricted to clean center-geometry S-only "
+                "p4/p5/p6 M120 on the frozen 80-angle matrix and reviewed "
+                "continuous/continuous or discrete/discrete axial routes."
+            )
     elif any(
         value is not None
         for value in (
@@ -1079,6 +1142,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "Task001 parameter overrides require a Task001/Task002 formal or M9 gate."
         )
+    if args.task002_m2b_mode_archive is not None and not args.task002_m2b_diagnostic_gate:
+        parser.error("Task002 M2B mode archives require the M2B diagnostic gate.")
     if (
         args.task001_m9_interface_quadrature_degree is not None
         and not args.task001_m9_diagnostic_gate
@@ -1326,6 +1391,7 @@ def main() -> None:
         args.task001_surrogate_pilot_gate
         or args.task002_s_continuous_gate
         or args.task002_m2a_diagnostic_gate
+        or args.task002_m2b_diagnostic_gate
         or args.task001_m9_diagnostic_gate
     ) and comm.size not in (1, 2):
         raise SystemExit("Task001 Hybrid formal/diagnostic runs require MPI1 or MPI2.")
@@ -1376,6 +1442,7 @@ def main() -> None:
         args.task001_surrogate_pilot_gate
         or args.task002_s_continuous_gate
         or args.task002_m2a_diagnostic_gate
+        or args.task002_m2b_diagnostic_gate
         or args.task001_m9_diagnostic_gate
     ):
         task001_parameters = Task001ForwardParameters(
@@ -2358,7 +2425,11 @@ def main() -> None:
                         <= 1.0e-2
                     ),
             }
-            if args.task002_s_continuous_gate or args.task002_m2a_diagnostic_gate:
+            if (
+                args.task002_s_continuous_gate
+                or args.task002_m2a_diagnostic_gate
+                or args.task002_m2b_diagnostic_gate
+            ):
                 diagnostic_gates.update(sampled_gates)
             else:
                 gates.update(sampled_gates)
@@ -2479,6 +2550,49 @@ def main() -> None:
             "storage_complexity_contract": "O(N_interface*M)+O(M^2)",
             "dense_interface_square_formed": False,
         }
+        mode_archive_summary = None
+        if args.task002_m2b_mode_archive is not None:
+            def gather_basis_full_vectors(basis):
+                gathered_modes = [] if comm.rank == 0 else None
+                for classified_mode in basis.modes:
+                    vector = classified_mode.right.right_full
+                    ownership = tuple(map(int, vector.getOwnershipRange()))
+                    chunks = comm.gather(
+                        (
+                            ownership,
+                            np.asarray(vector.getArray(readonly=True)).copy(),
+                        ),
+                        root=0,
+                    )
+                    if comm.rank == 0:
+                        assembled = np.empty(vector.getSize(), dtype=np.complex128)
+                        for (start, stop), values in chunks:
+                            assembled[start:stop] = values
+                        gathered_modes.append(assembled)
+                return None if comm.rank != 0 else np.asarray(gathered_modes)
+
+            positive_vectors = gather_basis_full_vectors(positive)
+            negative_vectors = gather_basis_full_vectors(negative)
+            if comm.rank == 0:
+                args.task002_m2b_mode_archive.parent.mkdir(parents=True, exist_ok=True)
+                np.savez_compressed(
+                    args.task002_m2b_mode_archive,
+                    positive_vectors=positive_vectors,
+                    negative_vectors=negative_vectors,
+                    positive_betas=np.asarray(
+                        [mode.beta for mode in positive.modes], dtype=np.complex128,
+                    ),
+                    negative_betas=np.asarray(
+                        [mode.beta for mode in negative.modes], dtype=np.complex128,
+                    ),
+                )
+                mode_archive_summary = {
+                    "path": str(args.task002_m2b_mode_archive),
+                    "positive_shape": list(positive_vectors.shape),
+                    "negative_shape": list(negative_vectors.shape),
+                    "storage": "diagnostic_rank0_npz_after_distributed_solve",
+                }
+            mode_archive_summary = comm.bcast(mode_archive_summary, root=0)
         _verify_source_stable_at_end(
             comm,
             provenance,
@@ -2633,6 +2747,7 @@ def main() -> None:
                 ),
             },
             "qep": {
+                "mode_continuation_archive": mode_archive_summary,
                 "target_beta_per_nm": _complex_json(target),
                 "full_shape": list(operators.full_shape),
                 "reduced_shape": list(operators.reduced_shape),

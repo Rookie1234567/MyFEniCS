@@ -19,6 +19,11 @@ from src.forward_data.task002_design import (
     fixed_hf_angle_pilot, incident_wave_audit, lf_angle_pilot,
 )
 from src.forward_data.task002_m2a import hybrid_command, validate_hybrid_scope
+from src.forward_data.task002_m2b import (
+    AZIMUTH_DEG as M2B_AZIMUTH_DEG,
+    GRAZING_DEG as M2B_GRAZING_DEG,
+    hybrid_command as m2b_hybrid_command,
+)
 from src.forward_data.task002_schema import (
     TASK002_OBSERVABLE_SCHEMA_VERSION, Task002ForwardParameters,
     classify_task002_request, task002_parameter_catalog,
@@ -118,6 +123,37 @@ def test_m2a_matrix_gate_is_exact(tmp_path: Path, degree: int, modes: int) -> No
 def test_m2a_scope_rejects_campaign_and_polarization_changes() -> None:
     with pytest.raises(ValueError, match="outside"):
         validate_hybrid_scope(degree=4, modes=120, grazing=4.0, azimuth=45.0)
+
+
+@pytest.mark.parametrize("degree", [4, 5, 6])
+@pytest.mark.parametrize("route", ["continuous", "discrete"])
+def test_m2b_axial_routes_are_exact_and_fail_closed(
+    tmp_path: Path, degree: int, route: str,
+) -> None:
+    _, command = m2b_hybrid_command(
+        root=tmp_path, baseline_sha="a" * 40, degree=degree,
+        grazing=0.5, azimuth=45.0, route=route,
+        output=tmp_path / "record.json", memory_stages=tmp_path / "stages.jsonl",
+    )
+    parsed = _parse_args(command[command.index("benchmarks.run_task032_phase6_augmented") + 1:])
+    assert parsed.task002_m2b_diagnostic_gate is True
+    assert parsed.requested_modes == 120 and parsed.candidate_modes == 240
+    expected = (
+        ("continuous_beta", "continuous_qep_beta")
+        if route == "continuous"
+        else ("full3d_uniform_cg", "scalar_cg_discrete_derivative")
+    )
+    assert (parsed.internal_propagation_model, parsed.internal_traction_model) == expected
+
+
+def test_m2b_angle_matrix_is_exactly_80_points() -> None:
+    assert len(M2B_GRAZING_DEG) * len(M2B_AZIMUTH_DEG) == 80
+    with pytest.raises(ValueError, match="outside"):
+        m2b_hybrid_command(
+            root=Path("."), baseline_sha="a" * 40, degree=4,
+            grazing=3.0, azimuth=45.0, route="discrete",
+            output=Path("record.json"), memory_stages=Path("stages.jsonl"),
+        )
 
 
 def test_task002_command_reuses_exact_qualified_s_route(tmp_path: Path) -> None:

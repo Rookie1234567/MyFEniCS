@@ -105,7 +105,7 @@ class Task033HighOrderQEPTraceTests(unittest.TestCase):
                         coefficient_degree=0,
                     ),
                 )
-                self.assertEqual(operators.constraints.max_probe_residual, 0.0)
+                self.assertLess(operators.constraints.max_probe_residual, 5.0e-12)
                 self.assertEqual(
                     operators.constraints.communication_scope,
                     "distributed_hash_periodic_boundary_entities_only",

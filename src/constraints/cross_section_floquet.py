@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
-from dolfinx import cpp, mesh
+from dolfinx import cpp, fem, mesh
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -764,7 +764,7 @@ def build_cross_section_floquet_constraints(
     global_sent = int(comm.allreduce(local_sent, op=MPI.SUM))
     global_received = int(comm.allreduce(local_received, op=MPI.SUM))
 
-    return CrossSectionFloquetConstraints(
+    provisional = CrossSectionFloquetConstraints(
         slave_local=np.asarray(slave_local, dtype=np.int32),
         slave_global=np.asarray(slave_global, dtype=np.int64),
         master_global=np.asarray(master_global, dtype=np.int64),
@@ -776,10 +776,14 @@ def build_cross_section_floquet_constraints(
         transverse_constraint_count=len(transverse_x) + len(transverse_y),
         longitudinal_constraint_count=len(longitudinal),
         max_pair_coordinate_error=max(pair_x, pair_y, pair_z),
-        max_probe_residual=0.0,
+        max_probe_residual=float("nan"),
         pairing_bytes_sent=global_sent,
         pairing_bytes_received=global_received,
     )
+    probe_residual = analytic_quasiperiodic_probe_residual(
+        spaces, provisional, kx=complex(kx), ky=complex(ky),
+    )
+    return replace(provisional, max_probe_residual=probe_residual)
 
 
 def build_distributed_constraint_transform(
@@ -874,6 +878,68 @@ def build_distributed_constraint_transform(
             "columns are resolved by owner query; no global slave map"
         ),
     )
+
+
+def analytic_quasiperiodic_probe_residual(
+    spaces: CrossSectionSpaces,
+    constraints: CrossSectionFloquetConstraints,
+    *,
+    kx: complex,
+    ky: complex,
+) -> float:
+    """Measure ``u=Cq`` on an interpolated analytic Bloch vector/scalar field."""
+
+    transform = build_distributed_constraint_transform(spaces, constraints)
+    transverse = fem.Function(spaces.transverse)
+    longitudinal = fem.Function(spaces.longitudinal)
+
+    def transverse_field(x):
+        phase = np.exp(1j * (kx * x[0] + ky * x[1]))
+        return np.vstack((phase, (0.35 - 0.2j) * phase))
+
+    def longitudinal_field(x):
+        return (0.7 + 0.1j) * np.exp(1j * (kx * x[0] + ky * x[1]))
+
+    transverse.interpolate(transverse_field)
+    longitudinal.interpolate(longitudinal_field)
+    transverse.x.scatter_forward()
+    longitudinal.x.scatter_forward()
+    full = fem.Function(spaces.mixed)
+    full.x.array[:] = 0.0
+    full.x.array[spaces.transverse_to_mixed] = transverse.x.array
+    full.x.array[spaces.longitudinal_to_mixed] = longitudinal.x.array
+    full.x.scatter_forward()
+
+    index_map = spaces.mixed.dofmap.index_map
+    full_local = int(index_map.size_local)
+    slave_local = set(int(value) for value in constraints.slave_local)
+    free_local = np.asarray(
+        [row for row in range(full_local) if row not in slave_local], dtype=np.int32,
+    )
+    q = PETSc.Vec().createMPI(
+        (transform.reduced_local_size, transform.reduced_global_size),
+        comm=spaces.mixed.mesh.comm,
+    )
+    reconstructed = transform.matrix.createVecLeft()
+    try:
+        q.getArray()[:] = full.x.array[free_local]
+        q.assemble()
+        transform.matrix.mult(q, reconstructed)
+        difference = (
+            np.asarray(reconstructed.getArray(readonly=True))
+            - full.x.array[:full_local]
+        )
+        local_num = float(np.vdot(difference, difference).real)
+        local_den = float(
+            np.vdot(full.x.array[:full_local], full.x.array[:full_local]).real
+        )
+        numerator = spaces.mixed.mesh.comm.allreduce(local_num, op=MPI.SUM)
+        denominator = spaces.mixed.mesh.comm.allreduce(local_den, op=MPI.SUM)
+        return float(np.sqrt(numerator / max(denominator, 1.0e-30)))
+    finally:
+        reconstructed.destroy()
+        q.destroy()
+        transform.matrix.destroy()
 
 
 def reduce_matrix_hermitian(

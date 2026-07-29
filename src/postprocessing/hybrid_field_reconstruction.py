@@ -1149,6 +1149,21 @@ def hybrid_volume_absorption(
         raise ValueError("Incident power must be positive.")
     local_payload: dict[str, object] = {}
     local_total = 0.0
+
+    def outward_surface_power(system, electric, facet_tag: int) -> float:
+        normal = ufl.FacetNormal(system.local_mesh.mesh)
+        magnetic = ufl.curl(electric) / (1j * cfg.k0 * complex(cfg.mu_r))
+        density = 0.5 * ufl.real(
+            ufl.dot(ufl.cross(electric, ufl.conj(magnetic)), normal)
+        )
+        ds = ufl.Measure(
+            "ds", domain=system.local_mesh.mesh,
+            subdomain_data=system.local_mesh.mesh_data.facet_tags,
+            metadata={"quadrature_degree": 2 * int(system.cfg.nedelec_degree) + 4},
+        )
+        local = complex(fem.assemble_scalar(fem.form(density * ds(facet_tag))))
+        return float(system.local_mesh.mesh.comm.allreduce(local, op=MPI.SUM).real)
+
     for side, system, vector in (
         ("bottom", bottom_system, bottom_solution),
         ("top", top_system, top_solution),
@@ -1169,11 +1184,25 @@ def hybrid_volume_absorption(
             cfg.eps_substrate,
         )
         subtotal = float(grating + substrate)
+        external_flux = outward_surface_power(
+            system, electric, system.local_mesh.external_facet_tag,
+        )
+        interface_flux = outward_surface_power(
+            system, electric, system.local_mesh.interface_facet_tag,
+        )
         local_total += subtotal
         local_payload[side] = {
             "grating_absorbed_power_code_units": float(grating),
             "substrate_absorbed_power_code_units": float(substrate),
             "total_absorbed_power_code_units": subtotal,
+            "external_outward_poynting_flux_code_units": external_flux,
+            "interface_outward_poynting_flux_code_units": interface_flux,
+            "discrete_balance_residual_code_units": float(
+                external_flux + interface_flux + subtotal
+            ),
+            "discrete_balance_residual_over_incident_power": float(
+                (external_flux + interface_flux + subtotal) / incident_power
+            ),
         }
     middle = reconstructor.absorbed_power_code_units(
         modal_amplitudes, gauss_order=gauss_order
