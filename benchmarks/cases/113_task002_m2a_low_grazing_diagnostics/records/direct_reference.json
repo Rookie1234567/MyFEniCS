@@ -1,0 +1,121 @@
+{
+  "schema_version": "task002.case113-direct-reference.v1",
+  "method": "independent_Full3D_static_p4_h10",
+  "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+  "parameters": {
+    "height_nm": 120.0,
+    "width_x_nm": 17.0,
+    "grazing_deg": 0.5,
+    "azimuth_deg": 15.0,
+    "polarization": "S",
+    "degree": 4,
+    "h_nm": 10.0,
+    "assembly_backend": "assembly_time_static_condensed"
+  },
+  "R_total": 0.8186083121880048,
+  "T_total": 0.0014147085673520009,
+  "A_balance": 0.1799769792446432,
+  "A_volume": 0.17997697924513534,
+  "energy_closure_error": 4.920508445138694e-13,
+  "volume_ledger": {
+    "method": "volume_absorption",
+    "role": "absorption_check",
+    "status": "ok",
+    "power_source": "volume_integral_Im_epsilon_E2",
+    "field_model_for_absorption": "total_field",
+    "incident_power_code_units": 5.454084686483684,
+    "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+    "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+    "pml_cells_excluded": true,
+    "air_cells_excluded": true,
+    "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+    "regions": {
+      "grating": {
+        "name": "grating",
+        "tag": 3,
+        "cell_count": 72,
+        "volume_nm3": 51000.00000000016,
+        "n_complex": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "epsilon_r_complex": [
+          0.9980022690345409,
+          0.0036493427323206554
+        ],
+        "Im_epsilon_r": 0.0036493427323206554,
+        "material_label": "Si / silicon",
+        "status": "ok",
+        "reason": null,
+        "absorbed_power_code_units": 0.9764760440873345,
+        "A_volume": 0.1790357319729996
+      },
+      "substrate": {
+        "name": "substrate",
+        "tag": 2,
+        "cell_count": 18,
+        "volume_nm3": 12500.000000000002,
+        "n_complex": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "epsilon_r_complex": [
+          0.9980022690345409,
+          0.0036493427323206554
+        ],
+        "Im_epsilon_r": 0.0036493427323206554,
+        "material_label": "Si / silicon",
+        "status": "ok",
+        "reason": null,
+        "absorbed_power_code_units": 0.005133642333149989,
+        "A_volume": 0.0009412472721357233
+      }
+    },
+    "A_grating": 0.1790357319729996,
+    "A_substrate": 0.0009412472721357233,
+    "A_volume_grating": 0.1790357319729996,
+    "A_volume_substrate": 0.0009412472721357233,
+    "A_volume_total": 0.17997697924513534,
+    "A_port_balance_minus_A_volume_total": -4.921341112407163e-13,
+    "A_probe_balance_minus_A_volume_total": 0.25682019501446285,
+    "A_flux_minus_A_volume_total": -0.026701858180635862,
+    "energy_closure_error_port_volume": 4.920508445138694e-13
+  },
+  "incident_audit": {
+    "mean_poynting_W_per_m2": [
+      3.699097957210933e-05,
+      9.899477158742232e-06,
+      -5.288195748975284e-07
+    ],
+    "poynting_direction_cosine": 0.9999870370779237
+  },
+  "watchdog": {
+    "status": "completed",
+    "return_code": 0,
+    "child_return_code": 0,
+    "elapsed_seconds": 20.126059743997757,
+    "peak_rss_bytes": 1948536832,
+    "peak_pss_bytes": 1782896640,
+    "peak_uss_bytes": 1667055616,
+    "peak_swap_bytes": 0,
+    "samples": 20,
+    "process_group_id": 29,
+    "cleanup_complete": true
+  },
+  "execution_sha256": "3a85a68308d586034410221561708e67f4e55c436cbf381fc93d5dba0917903b",
+  "run_summary_sha256": "d0b94805133a4060b66bd1d926562718118c5a8bb556db36cb4fd283612c7610",
+  "hybrid_deltas": {
+    "p4": {
+      "R_total": -4.518054007296435e-05,
+      "T_total": 6.836752454832465e-08,
+      "A_balance": 4.5112172548433804e-05,
+      "A_volume": 1.9050892823058163e-05
+    },
+    "p6": {
+      "R_total": -0.19709922688021742,
+      "T_total": 0.00482549898257674,
+      "A_balance": 0.19227372789764066,
+      "A_volume": 0.1922744946561254
+    }
+  }
+}

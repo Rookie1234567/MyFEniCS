@@ -60,6 +60,7 @@ def _hybrid_summary(run_directory: Path, *, evidence_role: str) -> dict[str, Any
     execution, solver = _read(execution_path), _read(solver_path)
     parameters = execution["parameters"]
     config = parameters["configuration"]
+    illumination = config.get("illumination", config)
     fidelity = parameters["fidelity"]
     degree = int(fidelity["degree"])
     modes = int(parameters.get("diagnostic_requested_modes", fidelity["modes"]))
@@ -71,8 +72,9 @@ def _hybrid_summary(run_directory: Path, *, evidence_role: str) -> dict[str, Any
     return {
         "evidence_role": evidence_role, "run_directory": str(run_directory),
         "source_sha": execution["baseline_sha"], "degree": degree, "h_nm": 10.0,
-        "requested_modes": modes, "grazing_deg": float(config["grazing_deg"]),
-        "azimuth_deg": float(config["azimuth_deg"]), "polarization": "S",
+        "requested_modes": modes,
+        "grazing_deg": float(illumination["grazing_deg"]),
+        "azimuth_deg": float(illumination["azimuth_deg"]), "polarization": "S",
         "status": solver["status"],
         "formal_gate_pass": all(bool(value) for value in solver["gates"].values()),
         "failed_formal_gates": [name for name, value in solver["gates"].items() if not value],
@@ -195,9 +197,18 @@ def build_records(
     ledger = {
         "schema_version": "task002.case113-energy-ledger.v1",
         "normalization": "all powers use each run's recorded incident normal power",
-        "hybrid_p4_m120": p4["volume_ledger"],
-        "hybrid_p6_m120": p6["volume_ledger"],
-        "full3d_static_p4": direct["volume_ledger"],
+        "hybrid_p4_m120": {
+            "port": {name: p4[name] for name in ("R_total", "T_total", "A_balance")},
+            "volume_and_poynting": p4["volume_ledger"],
+        },
+        "hybrid_p6_m120": {
+            "port": {name: p6[name] for name in ("R_total", "T_total", "A_balance")},
+            "volume_and_poynting": p6["volume_ledger"],
+        },
+        "full3d_static_p4": {
+            "port": {name: direct[name] for name in ("R_total", "T_total", "A_balance")},
+            "volume": direct["volume_ledger"],
+        },
         "required_terms": {
             "hybrid_local_bottom_top": True, "hybrid_middle_volume": True,
             "hybrid_middle_poynting_flux": True, "full3d_material_regions": True,

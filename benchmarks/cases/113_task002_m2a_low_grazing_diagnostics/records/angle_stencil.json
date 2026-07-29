@@ -1,0 +1,1049 @@
+{
+  "schema_version": "task002.case113-angle-stencil.v1",
+  "lf_rows": [
+    {
+      "evidence_role": "immutable_case112_reuse",
+      "run_directory": "benchmarks/artifacts/cases/112/m2_v2/b1fc73c4236cd653",
+      "source_sha": "f6613e4329ba3d52f122cffb8952df93cd83a30d",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 0.0,
+      "polarization": "S",
+      "status": "physical_integration_pass_mode_convergence_pending",
+      "formal_gate_pass": true,
+      "failed_formal_gates": [],
+      "true_relative_residual": 4.219364917992419e-11,
+      "assembled_interface_e_max": 1.2876323028036742e-06,
+      "exact_traction_dual_max": 8.385031172655867e-12,
+      "R_total": 0.8590048643101472,
+      "T_total": 0.0008339091021357831,
+      "A_balance": 0.14016122658771699,
+      "A_volume": 0.14016157198205836,
+      "energy_closure_error": 3.453943413500582e-07,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.001808646520218026,
+            "substrate_absorbed_power_code_units": 0.003030336146946966,
+            "total_absorbed_power_code_units": 0.004838982667164992
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.26929167285387046,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.26929167285387046
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 0.49032242785978963,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.00938719353438565,
+          "top_positive_z_power_code_units": -0.4997077379028573,
+          "poynting_flux_loss_code_units": 0.4903205443684716,
+          "volume_minus_poynting_flux_loss_code_units": 1.8834913180221236e-06
+        },
+        "absorbed_power_code_units": 0.7644530833808251,
+        "A_volume_total": 0.14016157198205836,
+        "R_plus_T_plus_A_volume": 1.0000003453943414,
+        "energy_closure_error": 3.453943413500582e-07,
+        "hybrid_A_balance_minus_A_volume_total": -3.453943413778138e-07
+      },
+      "wall_seconds": 53.249022309013526,
+      "peak_rss_bytes": 1068900352,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "52336306ef045395686a7225df6fc27923ded8ecbb7b86c5e643e7103b89088a",
+      "solver_record_sha256": "850381ed8987575fce4953403e57f9c022c3aab82e5e998baeb474c7f9215601"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/lf_g0p5_a5",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 5.0,
+      "polarization": "S",
+      "status": "physical_integration_pass_mode_convergence_pending",
+      "formal_gate_pass": true,
+      "failed_formal_gates": [],
+      "true_relative_residual": 4.601445955277902e-11,
+      "assembled_interface_e_max": 0.00044017896266333446,
+      "exact_traction_dual_max": 6.352569163795264e-11,
+      "R_total": 0.854616803450564,
+      "T_total": 0.0008899600259221697,
+      "A_balance": 0.1444932365235138,
+      "A_volume": 0.144491666261419,
+      "energy_closure_error": -1.5702620949076262e-06,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483685,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.0019266101820338596,
+            "substrate_absorbed_power_code_units": 0.00323383548802611,
+            "total_absorbed_power_code_units": 0.00516044567005997
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.2755418192794289,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.2755418192794289
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 0.5073675193314277,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.01001439117144725,
+          "top_positive_z_power_code_units": -0.5173795465242543,
+          "poynting_flux_loss_code_units": 0.5073651553528071,
+          "volume_minus_poynting_flux_loss_code_units": 2.363978620523177e-06
+        },
+        "absorbed_power_code_units": 0.7880697842809166,
+        "A_volume_total": 0.144491666261419,
+        "R_plus_T_plus_A_volume": 0.9999984297379051,
+        "energy_closure_error": -1.5702620949076262e-06,
+        "hybrid_A_balance_minus_A_volume_total": 1.5702620948243595e-06
+      },
+      "wall_seconds": 46.22038304200396,
+      "peak_rss_bytes": 1063460864,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "fd10d76921bd95a78e65bb295eed50d2392dc1d9abd570f0e1382ef9d8f65c2e",
+      "solver_record_sha256": "62bc26ebb9e72cad8e99d57c56af70336029daba2365ae9a106cc1ebf10ee900"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/lf_g0p5_a10",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 10.0,
+      "polarization": "S",
+      "status": "physical_integration_pass_mode_convergence_pending",
+      "formal_gate_pass": true,
+      "failed_formal_gates": [],
+      "true_relative_residual": 3.88273806539411e-11,
+      "assembled_interface_e_max": 0.0008625853542495719,
+      "exact_traction_dual_max": 2.0280983389257705e-11,
+      "R_total": 0.841244095025779,
+      "T_total": 0.0010711202599983389,
+      "A_balance": 0.15768478471422265,
+      "A_volume": 0.15767705136503413,
+      "energy_closure_error": -7.73334918857671e-06,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483688,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.002299225632894835,
+            "substrate_absorbed_power_code_units": 0.003891374343129358,
+            "total_absorbed_power_code_units": 0.006190599976024193
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.2942115314246303,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.2942115314246303
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 0.5595818598592801,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.012032683058941528,
+          "top_positive_z_power_code_units": -0.571606359713541,
+          "poynting_flux_loss_code_units": 0.5595736766545995,
+          "volume_minus_poynting_flux_loss_code_units": 8.183204680656253e-06
+        },
+        "absorbed_power_code_units": 0.8599839912599345,
+        "A_volume_total": 0.15767705136503413,
+        "R_plus_T_plus_A_volume": 0.9999922666508114,
+        "energy_closure_error": -7.73334918857671e-06,
+        "hybrid_A_balance_minus_A_volume_total": 7.733349188521199e-06
+      },
+      "wall_seconds": 47.21768257400254,
+      "peak_rss_bytes": 1067905024,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "f6c1829e55713949f8a5d2a7cdcf02439e5d56dc5e48ea197647aeaa7467f550",
+      "solver_record_sha256": "38945f0656ab69d8658584adc9c5a7aeb20f047e2a92f02b8b2d6c8bfe69f52f"
+    },
+    {
+      "evidence_role": "immutable_case112_reuse",
+      "run_directory": "benchmarks/artifacts/cases/112/m2_v2/a0d611b2126a8b4d",
+      "source_sha": "f6613e4329ba3d52f122cffb8952df93cd83a30d",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "polarization": "S",
+      "status": "physical_integration_failed",
+      "formal_gate_pass": false,
+      "failed_formal_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ],
+      "true_relative_residual": 2.0684123892629946e-11,
+      "assembled_interface_e_max": 0.0012399211390114267,
+      "exact_traction_dual_max": 3.051336554079944e-11,
+      "R_total": 0.8185631316479318,
+      "T_total": 0.0014147769348765492,
+      "A_balance": 0.18002209141719164,
+      "A_volume": 0.1799960301379584,
+      "energy_closure_error": -2.6061279233213774e-05,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.0029997728749616105,
+            "substrate_absorbed_power_code_units": 0.005133944421515767,
+            "total_absorbed_power_code_units": 0.008133717296477378
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.32467216732355375,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.32467216732355375
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 0.6489077069832634,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.015850186598920284,
+          "top_positive_z_power_code_units": -0.6647600747686231,
+          "poynting_flux_loss_code_units": 0.6489098881697029,
+          "volume_minus_poynting_flux_loss_code_units": -2.181186439464966e-06
+        },
+        "absorbed_power_code_units": 0.9817135916032945,
+        "A_volume_total": 0.1799960301379584,
+        "R_plus_T_plus_A_volume": 0.9999739387207668,
+        "energy_closure_error": -2.6061279233213774e-05,
+        "hybrid_A_balance_minus_A_volume_total": 2.606127923324153e-05
+      },
+      "wall_seconds": 46.21510492400557,
+      "peak_rss_bytes": 1067454464,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "bed83c7db318d2c1f8139da7ef275338076acadcc02c245856e839c929974502",
+      "solver_record_sha256": "e128ef9fc17e7945cc0c1b42230fa883701bda618a44ed75567f474f33548c63"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/lf_g0p5_a20",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 20.0,
+      "polarization": "S",
+      "status": "physical_integration_failed",
+      "formal_gate_pass": false,
+      "failed_formal_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ],
+      "true_relative_residual": 2.2247494811874994e-11,
+      "assembled_interface_e_max": 0.0015463536103085924,
+      "exact_traction_dual_max": 9.502610439324012e-12,
+      "R_total": 0.7872302870759578,
+      "T_total": 0.001958827013757997,
+      "A_balance": 0.21081088591028424,
+      "A_volume": 0.2107524200679166,
+      "energy_closure_error": -5.846584236757213e-05,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483685,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.004100381388387081,
+            "substrate_absorbed_power_code_units": 0.007114896027512011,
+            "total_absorbed_power_code_units": 0.011215277415899092
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.36457169909413756,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.36457169909413756
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 0.7736745704217642,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.02189870573557916,
+          "top_positive_z_power_code_units": -0.7955741225632769,
+          "poynting_flux_loss_code_units": 0.7736754168276977,
+          "volume_minus_poynting_flux_loss_code_units": -8.4640593345231e-07
+        },
+        "absorbed_power_code_units": 1.1494615469318008,
+        "A_volume_total": 0.2107524200679166,
+        "R_plus_T_plus_A_volume": 0.9999415341576324,
+        "energy_closure_error": -5.846584236757213e-05,
+        "hybrid_A_balance_minus_A_volume_total": 5.846584236762764e-05
+      },
+      "wall_seconds": 50.2566073909984,
+      "peak_rss_bytes": 1151913984,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "0046c1326f812eb15965a77082c34c3a6257ac8db0f6e811288970be9de35ed1",
+      "solver_record_sha256": "206a35fd17e620c59df125080bdb3906b135865e18bf55f0b34e12e352ca61fe"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/lf_g0p5_a30",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 30.0,
+      "polarization": "S",
+      "status": "physical_integration_failed",
+      "formal_gate_pass": false,
+      "failed_formal_gates": [
+        "biorthogonality_identity_error_le_1e-6",
+        "volume_energy_closure_abs_le_1e-5"
+      ],
+      "true_relative_residual": 2.3330575002868395e-11,
+      "assembled_interface_e_max": 0.0018469884066472503,
+      "exact_traction_dual_max": 1.5432495598796076e-11,
+      "R_total": 0.7111192646208779,
+      "T_total": 0.00362187721751648,
+      "A_balance": 0.28525885816160557,
+      "A_volume": 0.2850755009364161,
+      "energy_closure_error": -0.00018335722518947328,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.007361215033295284,
+            "substrate_absorbed_power_code_units": 0.013134954690152256,
+            "total_absorbed_power_code_units": 0.02049616972344754
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.45194824787287463,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.45194824787287463
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 1.0823815065526499,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.040247299094669384,
+          "top_positive_z_power_code_units": -1.1226291147111986,
+          "poynting_flux_loss_code_units": 1.0823818156165292,
+          "volume_minus_poynting_flux_loss_code_units": -3.0906387937790214e-07
+        },
+        "absorbed_power_code_units": 1.5548259241489721,
+        "A_volume_total": 0.2850755009364161,
+        "R_plus_T_plus_A_volume": 0.9998166427748105,
+        "energy_closure_error": -0.00018335722518947328,
+        "hybrid_A_balance_minus_A_volume_total": 0.00018335722518947328
+      },
+      "wall_seconds": 54.2535708709911,
+      "peak_rss_bytes": 1141993472,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "6dedb11644035846ad86511fc45c56a18665509a622e57ada50d3a5da217ca43",
+      "solver_record_sha256": "e053ee8f8117247f0c72ea312035937f308b691af38be49bfcfe83315384354e"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/lf_g0p5_a45",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "polarization": "S",
+      "status": "physical_integration_failed",
+      "formal_gate_pass": false,
+      "failed_formal_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ],
+      "true_relative_residual": 2.178549156282933e-11,
+      "assembled_interface_e_max": 0.0017182342221635386,
+      "exact_traction_dual_max": 1.524940092277645e-11,
+      "R_total": 0.64913753115258,
+      "T_total": 0.0053463102562300805,
+      "A_balance": 0.34551615859118995,
+      "A_volume": 0.3451862335442592,
+      "energy_closure_error": -0.00032992504693063474,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.011068666728010549,
+            "substrate_absorbed_power_code_units": 0.019373500927987862,
+            "total_absorbed_power_code_units": 0.03044216765599841
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.5138060759281178,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.5138060759281178
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 1.3384267067746087,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.05959813812292453,
+          "top_positive_z_power_code_units": -1.3980244426765092,
+          "poynting_flux_loss_code_units": 1.3384263045535847,
+          "volume_minus_poynting_flux_loss_code_units": 4.022210240428592e-07
+        },
+        "absorbed_power_code_units": 1.8826749503587248,
+        "A_volume_total": 0.3451862335442592,
+        "R_plus_T_plus_A_volume": 0.9996700749530694,
+        "energy_closure_error": -0.00032992504693063474,
+        "hybrid_A_balance_minus_A_volume_total": 0.00032992504693074576
+      },
+      "wall_seconds": 49.219950052007334,
+      "peak_rss_bytes": 1069039616,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "5dddc58c20bd639e82bad66e2de2f0988ecf985591283a8821db399235c326ce",
+      "solver_record_sha256": "725b2cb467f90604d9bd7463db0b7260b37d781e04853a925ff3edeab7dbd426"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/lf_g0p5_a60",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 60.0,
+      "polarization": "S",
+      "status": "physical_integration_failed",
+      "formal_gate_pass": false,
+      "failed_formal_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ],
+      "true_relative_residual": 1.7039773484365658e-11,
+      "assembled_interface_e_max": 0.0018478757871726477,
+      "exact_traction_dual_max": 8.962875285846067e-12,
+      "R_total": 0.7103584046141405,
+      "T_total": 0.0036664870135394126,
+      "A_balance": 0.28597510837232015,
+      "A_volume": 0.2857987875822101,
+      "energy_closure_error": -0.00017632079010998503,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.00767327744452069,
+            "substrate_absorbed_power_code_units": 0.013177971474259975,
+            "total_absorbed_power_code_units": 0.020851248918780665
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.45171995415784744,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.45171995415784744
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 1.0861995876911075,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.04085393806926317,
+          "top_positive_z_power_code_units": -1.1270535365231655,
+          "poynting_flux_loss_code_units": 1.0861995984539023,
+          "volume_minus_poynting_flux_loss_code_units": -1.0762794877550164e-08
+        },
+        "absorbed_power_code_units": 1.5587707907677355,
+        "A_volume_total": 0.2857987875822101,
+        "R_plus_T_plus_A_volume": 0.99982367920989,
+        "energy_closure_error": -0.00017632079010998503,
+        "hybrid_A_balance_minus_A_volume_total": 0.00017632079011004054
+      },
+      "wall_seconds": 50.23226046198397,
+      "peak_rss_bytes": 1131974656,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "aa72f512b0d252e39b046bf07a6da529ebaeb8f58da5aa9dead2b8b7c8634f13",
+      "solver_record_sha256": "8fad43f90c47abba928f255d0390a9396eb44ea82ab4e38f51ca08dbebe16810"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/lf_g0p5_a75",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 75.0,
+      "polarization": "S",
+      "status": "physical_integration_failed",
+      "formal_gate_pass": false,
+      "failed_formal_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ],
+      "true_relative_residual": 1.3757182690035291e-11,
+      "assembled_interface_e_max": 0.001328205475251622,
+      "exact_traction_dual_max": 9.485797812742225e-12,
+      "R_total": 0.8182057325798004,
+      "T_total": 0.0015611326603442493,
+      "A_balance": 0.1802331347598553,
+      "A_volume": 0.18020907994470342,
+      "energy_closure_error": -2.405481515177499e-05,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.0026674557746407673,
+            "substrate_absorbed_power_code_units": 0.005214337494953367,
+            "total_absorbed_power_code_units": 0.007881793269594133
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.3226693303111315,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.3226693303111315
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 0.6523244597109952,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.016397757145112164,
+          "top_positive_z_power_code_units": -0.6687222147487821,
+          "poynting_flux_loss_code_units": 0.65232445760367,
+          "volume_minus_poynting_flux_loss_code_units": 2.107325203226651e-09
+        },
+        "absorbed_power_code_units": 0.9828755832917209,
+        "A_volume_total": 0.18020907994470342,
+        "R_plus_T_plus_A_volume": 0.9999759451848482,
+        "energy_closure_error": -2.405481515177499e-05,
+        "hybrid_A_balance_minus_A_volume_total": 2.405481515188601e-05
+      },
+      "wall_seconds": 53.26263601300889,
+      "peak_rss_bytes": 1151889408,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "50fc62967b0c5105dcdf9fc1d98dbbb4a57138967812a2a1c417ae77e228d738",
+      "solver_record_sha256": "6cd11d5b0aaf9bde00fe696bfe82836a6fbc2735b2f2d6a1624e9bae6557641a"
+    },
+    {
+      "evidence_role": "immutable_case112_reuse",
+      "run_directory": "benchmarks/artifacts/cases/112/m2_v2/7326e9ade9f6b438",
+      "source_sha": "f6613e4329ba3d52f122cffb8952df93cd83a30d",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 90.0,
+      "polarization": "S",
+      "status": "physical_integration_pass_mode_convergence_pending",
+      "formal_gate_pass": true,
+      "failed_formal_gates": [],
+      "true_relative_residual": 9.205269233690251e-12,
+      "assembled_interface_e_max": 2.179459283708772e-05,
+      "exact_traction_dual_max": 6.773437179089908e-12,
+      "R_total": 0.8612864765103934,
+      "T_total": 0.0008241792792769574,
+      "A_balance": 0.13788934421032967,
+      "A_volume": 0.1378893373299752,
+      "energy_closure_error": -6.880354508354003e-09,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.0017462382956466545,
+            "substrate_absorbed_power_code_units": 0.0030331701812515203,
+            "total_absorbed_power_code_units": 0.004779408476898174
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.2664315020130015,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.2664315020130015
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 0.4808492126709009,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.009274551911558931,
+          "top_positive_z_power_code_units": -0.4901237647766675,
+          "poynting_flux_loss_code_units": 0.4808492128651086,
+          "volume_minus_poynting_flux_loss_code_units": -1.942077054728486e-10
+        },
+        "absorbed_power_code_units": 0.7520601231608006,
+        "A_volume_total": 0.1378893373299752,
+        "R_plus_T_plus_A_volume": 0.9999999931196455,
+        "energy_closure_error": -6.880354508354003e-09,
+        "hybrid_A_balance_minus_A_volume_total": 6.880354480598427e-09
+      },
+      "wall_seconds": 47.21606533200247,
+      "peak_rss_bytes": 1160327168,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "4848542893c62258ca43d608454964c2889731328776edb384e05786ba34a56a",
+      "solver_record_sha256": "987c8ea751e1b5067b9695067338811eca6ff4c0d529ce9d1d7a5a93c13892d4"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/lf_g0p75_a15",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 15.0,
+      "polarization": "S",
+      "status": "physical_integration_failed",
+      "formal_gate_pass": false,
+      "failed_formal_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ],
+      "true_relative_residual": 3.0356405585186725e-11,
+      "assembled_interface_e_max": 0.0012940996354681772,
+      "exact_traction_dual_max": 3.172824260695484e-11,
+      "R_total": 0.7350162290691712,
+      "T_total": 0.0022605051421914065,
+      "A_balance": 0.2627232657886374,
+      "A_volume": 0.26268565083113793,
+      "energy_closure_error": -3.761495749943222e-05,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 8.18099723209036,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.007046972157984905,
+            "substrate_absorbed_power_code_units": 0.012138085753407711,
+            "total_absorbed_power_code_units": 0.019185057911392616
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.6981412652939736,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.6981412652939736
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 1.4317042591540283,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.037678731850195296,
+          "top_positive_z_power_code_units": -1.4693877114350595,
+          "poynting_flux_loss_code_units": 1.4317089795848643,
+          "volume_minus_poynting_flux_loss_code_units": -4.720430835991607e-06
+        },
+        "absorbed_power_code_units": 2.1490305823593943,
+        "A_volume_total": 0.26268565083113793,
+        "R_plus_T_plus_A_volume": 0.9999623850425006,
+        "energy_closure_error": -3.761495749943222e-05,
+        "hybrid_A_balance_minus_A_volume_total": 3.761495749948773e-05
+      },
+      "wall_seconds": 55.32437200800632,
+      "peak_rss_bytes": 1152057344,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "11d0cc956ee53cc3244111d0723e08545e0c02321340d5a392d4729ba6eb7e97",
+      "solver_record_sha256": "75c558ce50ec85db5e28e4ad914ea36c111b8eb39f933424c9da1cd556f3dfd7"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/lf_g1_a15",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 15.0,
+      "polarization": "S",
+      "status": "physical_integration_failed",
+      "formal_gate_pass": false,
+      "failed_formal_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ],
+      "true_relative_residual": 1.989546212046059e-11,
+      "assembled_interface_e_max": 0.0013449243113468328,
+      "exact_traction_dual_max": 1.3283448646443814e-11,
+      "R_total": 0.6534924508522117,
+      "T_total": 0.0033539182117586015,
+      "A_balance": 0.34315363093602963,
+      "A_volume": 0.34310596220327905,
+      "energy_closure_error": -4.7668732750638654e-05,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 10.907754023302108,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.013550814061118636,
+            "substrate_absorbed_power_code_units": 0.023550069504801825,
+            "total_absorbed_power_code_units": 0.037100883565920464
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 1.184495405468555,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 1.184495405468555
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 2.5209191506072823,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.07368574894019662,
+          "top_positive_z_power_code_units": -2.594612984020835,
+          "poynting_flux_loss_code_units": 2.5209272350806384,
+          "volume_minus_poynting_flux_loss_code_units": -8.084473356095856e-06
+        },
+        "absorbed_power_code_units": 3.7425154396417577,
+        "A_volume_total": 0.34310596220327905,
+        "R_plus_T_plus_A_volume": 0.9999523312672494,
+        "energy_closure_error": -4.7668732750638654e-05,
+        "hybrid_A_balance_minus_A_volume_total": 4.766873275058314e-05
+      },
+      "wall_seconds": 46.219439365988364,
+      "peak_rss_bytes": 1065574400,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "0ab2052f4eddda950a67b6c3a9eb65dbc1d7426005084cf996d428cad5adc059",
+      "solver_record_sha256": "5c4938fb84b2aa5c3f95c8e648cbda61c5c1a4b61203a184a06c1f1007d2c203"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/lf_g2_a15",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 4,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 15.0,
+      "polarization": "S",
+      "status": "physical_integration_failed",
+      "formal_gate_pass": false,
+      "failed_formal_gates": [
+        "volume_energy_closure_abs_le_1e-5"
+      ],
+      "true_relative_residual": 1.1876583904075276e-11,
+      "assembled_interface_e_max": 0.001487689211330307,
+      "exact_traction_dual_max": 2.283370052668394e-11,
+      "R_total": 0.3253377065142434,
+      "T_total": 0.015546095937762315,
+      "A_balance": 0.6591161975479943,
+      "A_volume": 0.65905751726007,
+      "energy_closure_error": -5.868028792432867e-05,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 21.812185439063178,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.10265615512571521,
+            "substrate_absorbed_power_code_units": 0.18930860960257379,
+            "total_absorbed_power_code_units": 0.29196476472828903
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 3.6585654822125453,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 3.6585654822125453
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 10.424954534544394,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.6310727976728623,
+          "top_positive_z_power_code_units": -11.056054717347628,
+          "poynting_flux_loss_code_units": 10.424981919674766,
+          "volume_minus_poynting_flux_loss_code_units": -2.7385130371371247e-05
+        },
+        "absorbed_power_code_units": 14.375484781485229,
+        "A_volume_total": 0.65905751726007,
+        "R_plus_T_plus_A_volume": 0.9999413197120757,
+        "energy_closure_error": -5.868028792432867e-05,
+        "hybrid_A_balance_minus_A_volume_total": 5.868028792432867e-05
+      },
+      "wall_seconds": 43.18872333099716,
+      "peak_rss_bytes": 1065406464,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "7e2bf49909a1ad2ed736d0a58e9df74da2f1d2c1c3f615578fab2cbc1fe7a3f6",
+      "solver_record_sha256": "ef54a47f66d6821e519e4829c893d5ce36df16d000673693321a572a89f6a149"
+    }
+  ],
+  "hf_rows": [
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/p6_m120",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 6,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "polarization": "S",
+      "status": "physical_integration_pass_mode_convergence_pending",
+      "formal_gate_pass": true,
+      "failed_formal_gates": [],
+      "true_relative_residual": 2.267340426299094e-11,
+      "assembled_interface_e_max": 9.94244621598876e-05,
+      "exact_traction_dual_max": 1.6207580335768912e-11,
+      "R_total": 0.6215090853077874,
+      "T_total": 0.006240207549928741,
+      "A_balance": 0.37225070714228387,
+      "A_volume": 0.37225147390126073,
+      "energy_closure_error": 7.667589767557104e-07,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.012759746606085285,
+            "substrate_absorbed_power_code_units": 0.022644114820194565,
+            "total_absorbed_power_code_units": 0.03540386142627985
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.5399120837185137,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.5399120837185137
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 1.454975118181053,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.06943872730553871,
+          "top_positive_z_power_code_units": -1.5244138467041033,
+          "poynting_flux_loss_code_units": 1.4549751193985645,
+          "volume_minus_poynting_flux_loss_code_units": -1.2175114250112529e-09
+        },
+        "absorbed_power_code_units": 2.030291063325847,
+        "A_volume_total": 0.37225147390126073,
+        "R_plus_T_plus_A_volume": 1.0000007667589768,
+        "energy_closure_error": 7.667589767557104e-07,
+        "hybrid_A_balance_minus_A_volume_total": -7.667589768667327e-07
+      },
+      "wall_seconds": 222.4333841780026,
+      "peak_rss_bytes": 3332079616,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "b90edbc5150fcfc372fa3fd43d357c62ce3589f8fa03cf5bff5b6a66635d92f5",
+      "solver_record_sha256": "747e463666ff0007094b03000498f0d8e25c51a2c239259d9692c3265671d389"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/hf_g0p5_a30",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 6,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 30.0,
+      "polarization": "S",
+      "status": "physical_integration_pass_mode_convergence_pending",
+      "formal_gate_pass": true,
+      "failed_formal_gates": [],
+      "true_relative_residual": 2.4919712318485223e-11,
+      "assembled_interface_e_max": 0.0001022307397319454,
+      "exact_traction_dual_max": 2.6596477755386727e-11,
+      "R_total": 0.6212891478914574,
+      "T_total": 0.006253648495893751,
+      "A_balance": 0.37245720361264884,
+      "A_volume": 0.3724587205782901,
+      "energy_closure_error": 1.5169656411018195e-06,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.012590009692441055,
+            "substrate_absorbed_power_code_units": 0.022677185758304803,
+            "total_absorbed_power_code_units": 0.03526719545074586
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.5400240982674405,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.5400240982674405
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 1.456130110535171,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.0693756710844082,
+          "top_positive_z_power_code_units": -1.5255057828110983,
+          "poynting_flux_loss_code_units": 1.45613011172669,
+          "volume_minus_poynting_flux_loss_code_units": -1.1915191056033336e-09
+        },
+        "absorbed_power_code_units": 2.0314214042533574,
+        "A_volume_total": 0.3724587205782901,
+        "R_plus_T_plus_A_volume": 1.000001516965641,
+        "energy_closure_error": 1.5169656411018195e-06,
+        "hybrid_A_balance_minus_A_volume_total": -1.516965641268353e-06
+      },
+      "wall_seconds": 250.7913692620059,
+      "peak_rss_bytes": 3492442112,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "3a943efb9604b51a8b1d1d7315caa16ac87b603ab6e0ce070df57042abe98545",
+      "solver_record_sha256": "697152a5c97a298323abc1b847db695f77ff7d718eb9cbedc9132a9fb1860a52"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/hf_g0p5_a45",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 6,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "polarization": "S",
+      "status": "physical_integration_failed",
+      "formal_gate_pass": false,
+      "failed_formal_gates": [
+        "biorthogonality_identity_error_le_1e-6"
+      ],
+      "true_relative_residual": 4.595783404242518e-11,
+      "assembled_interface_e_max": 5.7648070939100156e-05,
+      "exact_traction_dual_max": 2.4560397759384e-11,
+      "R_total": 0.6211635357151216,
+      "T_total": 0.006258117304195577,
+      "A_balance": 0.3725783469806828,
+      "A_volume": 0.3725792240721926,
+      "energy_closure_error": 8.770915098654797e-07,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.012899263382249745,
+            "substrate_absorbed_power_code_units": 0.0226740555810662,
+            "total_absorbed_power_code_units": 0.03557331896331595
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.539718964621348,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.539718964621348
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 1.4567863569294548,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.06970622383882663,
+          "top_positive_z_power_code_units": -1.526492581404657,
+          "poynting_flux_loss_code_units": 1.4567863575658304,
+          "volume_minus_poynting_flux_loss_code_units": -6.363756188676462e-10
+        },
+        "absorbed_power_code_units": 2.032078640514119,
+        "A_volume_total": 0.3725792240721926,
+        "R_plus_T_plus_A_volume": 1.0000008770915099,
+        "energy_closure_error": 8.770915098654797e-07,
+        "hybrid_A_balance_minus_A_volume_total": -8.770915098099685e-07
+      },
+      "wall_seconds": 241.6989908789983,
+      "peak_rss_bytes": 3361677312,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "142307eb903921bd211ac0f3827a45362b51aa3f275dddd11d9d5162e02b1557",
+      "solver_record_sha256": "d92ddaeb6481351deb11891175d08add9828fe82440f58de73146254f6bdf4af"
+    },
+    {
+      "evidence_role": "case113_diagnostic",
+      "run_directory": "benchmarks/artifacts/cases/113/m2a/hf_g0p5_a60",
+      "source_sha": "a0b9ae0e457b74876eb39346885d53e940ab1584",
+      "degree": 6,
+      "h_nm": 10.0,
+      "requested_modes": 120,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 60.0,
+      "polarization": "S",
+      "status": "physical_integration_pass_mode_convergence_pending",
+      "formal_gate_pass": true,
+      "failed_formal_gates": [],
+      "true_relative_residual": 1.214577822704565e-11,
+      "assembled_interface_e_max": 9.42485649597509e-05,
+      "exact_traction_dual_max": 8.793775208824456e-12,
+      "R_total": 0.6210111754444266,
+      "T_total": 0.006291646721791204,
+      "A_balance": 0.37269717783378215,
+      "A_volume": 0.3726973193862154,
+      "energy_closure_error": 1.4155243333036083e-07,
+      "volume_ledger": {
+        "method": "local_FEM_volume_plus_middle_modal_selected_z_quadrature",
+        "formula_code_units": "integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "incident_power_code_units": 5.454084686483684,
+        "local_regions": {
+          "bottom": {
+            "grating_absorbed_power_code_units": 0.012991368896498275,
+            "substrate_absorbed_power_code_units": 0.022675338541106246,
+            "total_absorbed_power_code_units": 0.03566670743760452
+          },
+          "top": {
+            "grating_absorbed_power_code_units": 0.5389346428208737,
+            "substrate_absorbed_power_code_units": 0.0,
+            "total_absorbed_power_code_units": 0.5389346428208737
+          }
+        },
+        "middle_modal_region": {
+          "absorbed_power_code_units": 1.4581213920993983,
+          "z_cell_count": 10,
+          "gauss_order_per_z_cell": 4,
+          "z_evaluation_count": 40,
+          "bottom_positive_z_power_code_units": -0.06998246817179235,
+          "top_positive_z_power_code_units": -1.5281038606098867,
+          "poynting_flux_loss_code_units": 1.4581213924380942,
+          "volume_minus_poynting_flux_loss_code_units": -3.3869596016700143e-10
+        },
+        "absorbed_power_code_units": 2.032722742357876,
+        "A_volume_total": 0.3726973193862154,
+        "R_plus_T_plus_A_volume": 1.0000001415524333,
+        "energy_closure_error": 1.4155243333036083e-07,
+        "hybrid_A_balance_minus_A_volume_total": -1.4155243327484968e-07
+      },
+      "wall_seconds": 223.46289020599215,
+      "peak_rss_bytes": 3281567744,
+      "peak_swap_bytes": 0,
+      "cleanup_complete": true,
+      "execution_sha256": "75c4d0c2e8f2a39e9df2e7785e78e12bb04c4ccad27f1f61250a64069b6968e3",
+      "solver_record_sha256": "dbd5791cb436fbf137b442cc68ed4c3c0c71dcbeed897e6ddde80b97e3d3ce00"
+    }
+  ],
+  "case112_raw_evidence_mutated": false
+}
