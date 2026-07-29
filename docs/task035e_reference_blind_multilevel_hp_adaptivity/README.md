@@ -80,3 +80,22 @@ hanging、MPI8、11 GiB 和 zero-swap Gate 全部通过，但既有四-cell DWR
 
 selected-h、Path B 新运行、cycle 1 shadow、p7/level-3、hidden audit 和 Hybrid
 均未启动。Task035e 仍为 partial research，而不是最终 blind hp 成功。
+
+随后又按单独授权只验证
+`cell:r42:l1:i1:j0:k0 : p4 -> p5`。这条 single-cell candidate 的全部数值与
+资源 Gate 通过，实际只增加 132 个 cell-interior modes、16 个 face modes、
+148 个 Full3D-equivalent DoF 和 16 个 augmented rows；whole-job memory
+authority 为 7.560097 GiB、swap 为 0。但既有单-cell DWR prediction 为
+`0/59` factor-two-or-neutral、`30/59` opposite-sign，其中 53 个正式逐级与
+总量目标有 24 个符号相反。因此 candidate 同样 rejected，cycle 0 current
+继续保留，当前 cellwise-p quantitative predictor 正式关闭。
+
+新增证据与后续离线设计见：
+
+- [single-cell p-up actual outcome](outcomes/path_a_cycle0_single_cell_p_actual.md)；
+- [single-cell hash-bound checkpoint](../../benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_single_cell_p_actual_checkpoint_v1.json)；
+- [cellwise-p estimator repair design](outcomes/cellwise_p_estimator_repair_design.md)。
+
+cellwise partition 只能保留为无定量 credit 的 ranking signal。在
+entity/mode-orbit 或 exact selected-action DWR 先通过既有 single/grouped raw
+actual candidates 的离线回放前，不再开放其他 selected-p cell 或 selected-h。

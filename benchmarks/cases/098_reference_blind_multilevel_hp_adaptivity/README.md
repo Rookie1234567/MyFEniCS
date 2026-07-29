@@ -189,3 +189,39 @@ candidate 自身的 actual live-adjoint closure 为 59/59，但它只证明 cand
 已有 `.venv` 的 clean-worktree 仓库内路径完成的 attempt 2，是本轮唯一实际
 PDE。selected-h、Path B、cycle 1 shadow、p7/level-3、hidden audit 和 Hybrid
 均未运行。
+
+## 2026-07-29：single-cell p-up actual diagnostic
+
+grouped action 被拒绝后，本轮只新增一条获授权的 single-cell MPI8 candidate：
+
+```text
+cell:r42:l1:i1:j0:k0 p4 -> p5
+```
+
+numerical source 继续固定为
+`f1ba5627f163da54fa383b43be58fd38c0da7bc9`。current、完整 p-shadow、
+完整 h-shadow、reference 和其他 cell 均未重跑；没有 selected-h 或 closure
+cell，leaves 保持 160。
+
+exact transition 与 actual solve 给出的结构变化为 `+132` cell-interior
+modes、`+0` edge modes、`+16` face modes、`+148` Full3D-equivalent
+DoF、`+16` augmented rows、`+12,320` matrix NNZ 和 `-60,008` factor
+NNZ。candidate residual 为 `2.707608e-12`，whole-job memory authority 为
+`7.560097 GiB`，swap 为 0；全部非 effectivity Gate 通过。
+
+但是该 cell 的既有 signed DWR contribution 相对 actual candidate-current
+得到 `0/59` factor-two-or-neutral、`30/59` opposite-sign；53 个正式逐级与
+总量目标中有 24 个符号相反。结论冻结为：
+
+```text
+single-cell candidate = rejected_by_action_level_effectivity
+cycle 0 current = retained
+cycle_advanced = false
+cellwise-p quantitative predictor = closed
+cellwise partition = ranking signal only
+```
+
+完整 compact 为
+[single-cell actual checkpoint](records/path_a_cycle0_single_cell_p_actual_checkpoint_v1.json)。
+后续只允许离线 entity/mode-orbit 或 exact selected-action DWR repair；在历史
+single/grouped action 都通过离线资格化前，不得再尝试其他 cell 或 selected-h。

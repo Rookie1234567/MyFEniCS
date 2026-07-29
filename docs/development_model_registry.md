@@ -22,6 +22,13 @@
 > cellwise DWR action prediction 仅 `19/59` factor-two，且 `25/59`
 > opposite-sign，故 candidate rejected、cycle 0 current 保留、
 > `cycle_advanced=false`。
+>
+> **2026-07-29 Task035e single-cell p-up controlled negative。** 在相同
+> numerical source 上只验证 `cell:r42:l1:i1:j0:k0 p4→p5`。candidate 的
+> 数值/资源 Gate 通过，但既有单-cell DWR prediction 为 `0/59`
+> factor-two、`30/59` opposite-sign，正式逐级与总量中 `24/53`
+> opposite-sign。candidate rejected、cycle 0 current 保留；当前
+> cellwise-p quantitative predictor 关闭，只保留 ranking-only 角色。
 
 ---
 
@@ -476,7 +483,7 @@ H1-B p2/h3 为 `not_run_by_review_prerequisite`，不是普通待运行项。
 | Task035b structured-hexa directional-h | h15→h14→h13 的 z 向全共形细化，h13 达到 89,740 DoF | 12/12 通道闭合；局部 hanging-node hexa h 路径 | `controlled_negative` |
 | selective p6 trace | fixture 中 active-row 省略、Floquet pullback、MatShell action | actual enriched residual、channel DWR、orbit selection、正式 PDE | `incomplete` |
 | Task035d exact-sequence local-p + true local-h | capability/resource pass；h15 top-air `82,925 DoF / 18,470 rows / 7.50068 GiB / 6/12+6/12`；left-grating `88,915 / 21,650 / 8.06120 GiB / 4/12+6/12` | accuracy fail；automatic cycles 1–4 not completed；未形成 production hp candidate | `PARTIAL_WITH_CONTROLLED_NEGATIVES` |
-| Task035e reference-blind multilevel hp | sealed p6/h10、h7.5、h5 certification 身份/Gate；Path A current+p/h shadow；59-goal endpoint/cellwise DWR；离线 p/h marking；一次 exact four-cell selected-p actual candidate | selected-p 的数值/资源通过但 action prediction 仅19/59且25/59符号相反，未晋级；selected-h、cycle 1、Path B v28、hidden final audit 和 Hybrid 均未运行 | `PARTIAL_SELECTED_P_CONTROLLED_NEGATIVE` |
+| Task035e reference-blind multilevel hp | sealed p6/h10、h7.5、h5 certification 身份/Gate；Path A current+p/h shadow；59-goal endpoint/cellwise DWR；离线 p/h marking；一次 four-cell 与一次 single-cell selected-p actual candidate | 两条 candidate 的数值/资源均通过，但 action prediction 分别仅19/59与0/59 factor-two；single-cell 排除 grouped interaction 解释，cellwise-p quantitative predictor 已关闭；selected-h、cycle 1、Path B v28、hidden final audit 和 Hybrid 均未运行 | `PARTIAL_CELLWISE_P_PREDICTOR_CLOSED` |
 
 ### 1.6.2 Hybrid
 
@@ -1249,10 +1256,12 @@ Task035e 先由独立 certifier 对 p6/h10、p6/h7.5 和 p6/h5 建立收敛资�
 数值结果封存在 hidden reference package 中；blind controller 只能读取冻结的
 低阶目标集合、当前解、局部 indicator、成本和自身历史，不能读取 reference
 值、路径、hash、误差图或已知最优网格。2026-07-29 已完成 Path A cycle 0 的
-current、p-shadow、h-shadow 与 59-goal/cellwise 离线重放，并只验证了一次
-固定 four-cell selected-p actual candidate。该 candidate 的数值/资源 Gate
-通过，但 action-level predictor Gate 失败，因此没有晋级 cycle 1；仍只能登记
-partial progress，不能登记 cycle 完成或 hidden-reference 精度通过。
+current、p-shadow、h-shadow 与 59-goal/cellwise 离线重放，并依次验证一次
+固定 four-cell selected-p actual candidate 与一次保守 single-cell p-up
+diagnostic。两条 candidate 的数值/资源 Gate 均通过，但 action-level predictor
+Gate 均失败；single-cell 结果进一步关闭了当前 cellwise-p quantitative
+predictor。因此没有晋级 cycle 1，仍只能登记 partial progress，不能登记 cycle
+完成或 hidden-reference 精度通过。
 
 | Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
 |---|---|---|---|---|---|---|
@@ -1262,6 +1271,7 @@ partial progress，不能登记 cycle 完成或 hidden-reference 精度通过。
 | `task035e_path_a_c0_h_shadow_v28` | 同一 numerical source；forest `d6a7c9…8de7` | 181 leaves；level 0/1/2=`32/125/24`；p4/p5/p6=`24/157/0` | variable-p static condensed；MPI8；66,434 FE DoF；22,189 rows；11,821,621 matrix NNZ；41,744,755 factor NNZ | residual `1.671519e-12`；R00=`0.0864985747`，R=`0.0949741323`，T=`0.3774025559`，Aclosure=`0.5276233119`；RSS/PSS/USS=`10482.977/9541.340/9394.934 MiB`，swap 0；wall `395.487 s` | h-shadow pass；whole-job RSS `10.237282 GiB <= 11 GiB`；59/59 endpoint DWR pass | 同上；`records/path_a_cycle0_v28_59goal_dwr_compact_v1.json` |
 | `task035e_path_a_c0_cellwise_v28` | p/h cellwise authority `dc4674…7933` / `9ff5d9…bb67`；各160 rows | current leaf partition；59 formal goals；global endpoint closure 与 cellwise attribution 分离 | actual residual-adjoint pairing；equal-weight normalized multi-goal；offline replay | 两 lane 均完整覆盖 160 leaves；最大 signed closure error `2.776e-15` / `1.668e-17`；p marked 4 cells；h verification-only 1 target + 1 periodic closure | `offline_compact_replayed`；selected action/transition/candidate 均 `not_run` | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_v28_cellwise_marking_v1.json` |
 | `task035e_path_a_c0_selected_p_actual` | numerical source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；action `c054f3…633c`；forest 与 current 相同 | 160 leaves；level 0/1=`32/128`；p4/p5/p6=`22/136/2`；仅 r42 两个 p4→p5 与 r13/r37 两个 p5→p6 | variable-p static condensed；MPI8；59,997 Full3D-equivalent DoF；20,251 augmented rows；10,834,433 matrix NNZ；41,278,819 factor NNZ | residual `2.421043e-12`；R00=`0.0160886209`，R=`0.0276394999`，T=`0.4322933170`，Aclosure=`0.5400671831`；RSS/PSS/USS=`7887.426/6458.675/6349.059 MiB`，swap 0；worker `207.671 s` | 数值/资源 pass；selected-cellwise prediction 仅 `19/59` factor-two、`25/59` opposite-sign，故 `CONTROLLED_NEGATIVE_ACTION_LEVEL_EFFECTIVITY`；cycle 0 current 保留 | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_selected_p_actual_checkpoint_v1.json` |
+| `task035e_path_a_c0_single_cell_p_actual` | numerical source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；target `cell:r42:l1:i1:j0:k0 p4→p5`；action file `a08161…c89a`；forest 与 current 相同 | 160 leaves；level 0/1=`32/128`；p4/p5/p6=`23/137/0`；+132 interior、+0 edge、+16 face modes | variable-p static condensed；MPI8；59,412 Full3D-equivalent DoF；20,218 augmented rows；10,810,712 matrix NNZ；41,157,452 factor NNZ | residual `2.707608e-12`；R00=`0.0863527953`，R=`0.0948725837`，T=`0.3774527359`，Aclosure=`0.5276746804`；RSS/PSS/USS=`7741.539/6361.860/6249.074 MiB`，whole-job `7.560097 GiB`，swap 0；worker `191.195 s` | 数值/资源 pass；single-cell prediction `0/59` factor-two、`30/59` opposite-sign、formal `24/53` opposite-sign，故 `CONTROLLED_NEGATIVE_SINGLE_CELL_ACTION_LEVEL_EFFECTIVITY`；cellwise-p quantitative predictor 关闭，cycle 0 current 保留 | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_single_cell_p_actual_checkpoint_v1.json` |
 | `task035e_path_b_c0_v27_partial` | source `1fa06c93593e3b6a97b05e1138147999a4587074`；仅复用 v27 local evidence | Path B current+p-shadow+h-shadow attempt | MPI8；h-shadow 11 GiB controlled resource Gate | current pass；p-shadow pass；h-shadow 在 `11.055027 GiB` controlled stop，未产生 run_summary/evaluation/bridge | `PARTIAL_CONTROLLED_RESOURCE_STOP`；`cycle_complete=false`；没有 v28 Path B run | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_b_cycle0_v27_partial_authority_v1.json` |
 
 ### 3.40.1 隔离与完成边界
@@ -1272,10 +1282,12 @@ partial progress，不能登记 cycle 完成或 hidden-reference 精度通过。
   `REFERENCE_CERTIFICATION_INCOMPLETE`，不得把 h7.5 冒充最终 reference。
 - automatic blind cycle 必须真实产生多层、多区域 local-h、p-shadow 和
   h-shadow 证据；Task035d 的 manual single-root discriminator 不计作完成。
-- 当前 clean-source stage authority 与一次 selected-p candidate 已产生，但
-  action-level effectivity Gate 失败，candidate 未晋级。hidden final audit、
-  selected-h 均未产生，cycle-state transition 也未提交；因此 Task 总状态
-  保持 partial，而不是 completion。
+- 当前 clean-source stage authority、一次 grouped selected-p candidate 与一次
+  single-cell p-up diagnostic 已产生；两条 action-level effectivity Gate 均
+  失败，candidate 均未晋级。当前 cellwise-p quantitative predictor 已关闭，
+  只保留 ranking signal。hidden final audit、selected-h 均未产生，
+  cycle-state transition 也未提交；因此 Task 总状态保持 partial，而不是
+  completion。
 - `config.json` 的最终 ledger schema 不能无歧义表达此 partial progress，故保持
   原 `SCAFFOLD_NOT_RUN` 语义；hash-bound checkpoint 单独位于
   `records/path_a_cycle0_v28_progress_checkpoint_v1.json`。
