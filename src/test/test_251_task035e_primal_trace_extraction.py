@@ -475,6 +475,107 @@ def test_physical_root_anchor_roundtrip_rejects_nonconforming_slave() -> None:
         system.matrix.destroy()
 
 
+def test_physical_root_projection_is_explicit_and_restores_slaves() -> None:
+    system, active, independent, auxiliary = _wide_root_anchor_system(
+        MPI.COMM_SELF
+    )
+    original_trace = _global_values(active)
+    interior = np.asarray(
+        [7.0 + 0.3j, -2.0 + 0.5j],
+        dtype=np.complex128,
+    )
+    active.destroy()
+    system.entity_map.active_rows = 7
+    active = _distributed_vector(
+        MPI.COMM_SELF,
+        np.concatenate((original_trace, interior)),
+    )
+    active.setValue(
+        4,
+        active.getValue(4) + PETSc.ScalarType(0.25 - 0.1j),
+        addv=PETSc.InsertMode.INSERT_VALUES,
+    )
+    active.assemble()
+    reduction = _reduction(system)
+    reduced = None
+    conformed = None
+    try:
+        with pytest.raises(
+            RuntimeError,
+            match="global round-trip gate failed",
+        ):
+            reduction.extract_primal_to_reduced(
+                active,
+                auxiliary_reduced_values=auxiliary,
+            )
+        reduced, conformed, audit = (
+            reduction.project_primal_trace_to_reduced(
+                active,
+                auxiliary_reduced_values=auxiliary,
+            )
+        )
+        assert np.allclose(
+            _global_values(reduced),
+            np.concatenate((independent, auxiliary)),
+            rtol=2.0e-14,
+            atol=2.0e-14,
+        )
+        np.testing.assert_allclose(
+            _global_values(conformed)[:5],
+            original_trace,
+            rtol=2.0e-14,
+            atol=2.0e-14,
+        )
+        assert np.array_equal(_global_values(conformed)[5:], interior)
+        assert audit["pass"] is True
+        assert audit["input_extraction"][
+            "physical_root_projection_required"
+        ] is True
+        assert audit["input_extraction"][
+            "input_trace_conforming"
+        ] is False
+        assert audit["trace_projection"][
+            "active_interior_rows_bitwise_unchanged"
+        ] is True
+        assert (
+            audit["strict_reextraction"]["input_trace_conforming"]
+            is True
+        )
+        assert audit["strict_reextraction_relative_l2"] <= 5.0e-10
+        assert audit["strict_reextraction_relative_linf"] <= 5.0e-10
+        assert (
+            audit["input_receives_exact_nested_transfer_credit"]
+            is False
+        )
+    finally:
+        if conformed is not None:
+            conformed.destroy()
+        if reduced is not None:
+            reduced.destroy()
+        active.destroy()
+        system.matrix.destroy()
+
+
+def test_physical_root_projection_rejects_missing_root_authority() -> None:
+    system, active = _unconstrained_system(MPI.COMM_SELF)
+    try:
+        with pytest.raises(
+            ValueError,
+            match="requires physical root metadata",
+        ):
+            extract_variable_p_active_primal_to_reduced(
+                system,
+                active,
+                auxiliary_reduced_values=np.asarray(
+                    [9.0 + 1.0j, 8.0 - 2.0j]
+                ),
+                allow_physical_root_projection=True,
+            )
+    finally:
+        active.destroy()
+        system.matrix.destroy()
+
+
 def test_near_zero_slave_uses_global_scale_roundtrip_gate() -> None:
     system, active, independent, auxiliary = _wide_root_anchor_system(
         MPI.COMM_SELF
@@ -633,3 +734,59 @@ def test_mpi8_opt_in_owner_routed_primal_trace_fixture() -> None:
         wide_reduced.destroy()
         wide_active.destroy()
         wide_system.matrix.destroy()
+
+    (
+        projected_system,
+        projected_active,
+        projected_independent,
+        projected_auxiliary,
+    ) = _wide_root_anchor_system(comm)
+    projected_start, projected_end = map(
+        int,
+        projected_active.getOwnershipRange(),
+    )
+    if projected_start <= 4 < projected_end:
+        projected_active.setValue(
+            4,
+            projected_active.getValue(4) + PETSc.ScalarType(0.25 - 0.1j),
+            addv=PETSc.InsertMode.INSERT_VALUES,
+        )
+    projected_active.assemble()
+    projected_reduced = None
+    conformed_active = None
+    try:
+        (
+            projected_reduced,
+            conformed_active,
+            projection_audit,
+        ) = _reduction(
+            projected_system
+        ).project_primal_trace_to_reduced(
+            projected_active,
+            auxiliary_reduced_values=projected_auxiliary,
+        )
+        assert np.allclose(
+            _global_values(projected_reduced),
+            np.concatenate(
+                (projected_independent, projected_auxiliary)
+            ),
+            rtol=2.0e-14,
+            atol=2.0e-14,
+        )
+        assert projection_audit["pass"] is True
+        assert projection_audit[
+            "strict_reextraction_relative_l2"
+        ] <= 5.0e-10
+        packets = comm.allgather(
+            projection_audit["trace_projection"][
+                "trace_delta_relative_l2"
+            ]
+        )
+        assert packets == [packets[0]] * comm.size
+    finally:
+        if conformed_active is not None:
+            conformed_active.destroy()
+        if projected_reduced is not None:
+            projected_reduced.destroy()
+        projected_active.destroy()
+        projected_system.matrix.destroy()

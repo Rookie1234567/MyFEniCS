@@ -39,6 +39,7 @@ from .hcurl_variable_p_assembly import (
     _lu_factor_matrix_action,
     audit_variable_p_active_full_adjoint_recovery,
     build_variable_p_condensed_trace_system_from_compiled_form,
+    conform_variable_p_active_primal_trace_from_reduced,
     condense_variable_p_active_vector_to_trace,
     extract_variable_p_active_primal_to_reduced,
     recover_variable_p_active_full_adjoint_vector,
@@ -498,6 +499,122 @@ class VariablePAssemblyTimeReduction:
             auxiliary_reduced_values=auxiliary_reduced_values,
             roundtrip_tolerance=roundtrip_tolerance,
         )
+
+    def project_primal_trace_to_reduced(
+        self,
+        active_full_primal: PETSc.Vec,
+        *,
+        auxiliary_reduced_values: np.ndarray,
+        roundtrip_tolerance: float = 5.0e-10,
+    ) -> tuple[PETSc.Vec, PETSc.Vec, dict[str, Any]]:
+        """Extract physical roots and return a constraint-conforming primal.
+
+        This explicit opt-in is reserved for nested local-h carriers.  The
+        strict extraction default remains unchanged.  Physical root
+        coordinates are extracted from the input, all hanging/Floquet slave
+        traces are reconstructed, active cell-interior coefficients are
+        preserved bitwise, and a second strict extraction must close.
+        """
+
+        reduced = None
+        conformed = None
+        strict_reduced = None
+        closure = None
+        try:
+            reduced, extraction = (
+                extract_variable_p_active_primal_to_reduced(
+                    self.system,
+                    active_full_primal,
+                    auxiliary_reduced_values=auxiliary_reduced_values,
+                    roundtrip_tolerance=roundtrip_tolerance,
+                    allow_physical_root_projection=True,
+                )
+            )
+            conformed, projection = (
+                conform_variable_p_active_primal_trace_from_reduced(
+                    self.system,
+                    active_full_primal,
+                    reduced,
+                )
+            )
+            strict_reduced, strict_extraction = (
+                extract_variable_p_active_primal_to_reduced(
+                    self.system,
+                    conformed,
+                    auxiliary_reduced_values=auxiliary_reduced_values,
+                    roundtrip_tolerance=roundtrip_tolerance,
+                )
+            )
+            closure = strict_reduced.copy()
+            closure.axpy(PETSc.ScalarType(-1.0), reduced)
+            closure_norm = float(closure.norm())
+            closure_max = float(
+                closure.norm(PETSc.NormType.NORM_INFINITY)
+            )
+            reference_norm = float(reduced.norm())
+            reference_max = float(
+                reduced.norm(PETSc.NormType.NORM_INFINITY)
+            )
+            relative_l2 = closure_norm / max(
+                reference_norm,
+                np.finfo(np.float64).tiny,
+            )
+            relative_linf = closure_max / max(
+                reference_max,
+                np.finfo(np.float64).tiny,
+            )
+            if (
+                relative_l2 > float(roundtrip_tolerance)
+                or relative_linf > float(roundtrip_tolerance)
+            ):
+                raise RuntimeError(
+                    "physical-root projection strict re-extraction did not "
+                    "close: "
+                    f"relative_l2={relative_l2:.6e}, "
+                    f"relative_linf={relative_linf:.6e}"
+                )
+        except Exception:
+            if conformed is not None:
+                conformed.destroy()
+            if reduced is not None:
+                reduced.destroy()
+            raise
+        finally:
+            if closure is not None:
+                closure.destroy()
+            if strict_reduced is not None:
+                strict_reduced.destroy()
+
+        if reduced is None or conformed is None:
+            raise RuntimeError(
+                "physical-root projection lost an owned PETSc vector"
+            )
+        audit = {
+            "schema_version": (
+                "task035e.physical-root-primal-projection-pipeline.v1"
+            ),
+            "status": "physical_root_primal_projection_pipeline_pass",
+            "pass": True,
+            "input_extraction": extraction,
+            "trace_projection": projection,
+            "strict_reextraction": strict_extraction,
+            "strict_reextraction_closure_l2_norm": closure_norm,
+            "strict_reextraction_closure_linf_norm": closure_max,
+            "strict_reextraction_reference_l2_norm": reference_norm,
+            "strict_reextraction_reference_linf_norm": reference_max,
+            "strict_reextraction_relative_l2": relative_l2,
+            "strict_reextraction_relative_linf": relative_linf,
+            "strict_reextraction_tolerance": float(
+                roundtrip_tolerance
+            ),
+            "active_interior_rows_bitwise_unchanged": projection[
+                "active_interior_rows_bitwise_unchanged"
+            ],
+            "input_receives_exact_nested_transfer_credit": False,
+            "full_vector_allgather_used": False,
+            "ordinary_default_changed": False,
+        }
+        return reduced, conformed, audit
 
     def enforce_trace_only_active_functional(
         self,

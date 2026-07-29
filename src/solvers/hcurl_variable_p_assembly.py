@@ -2211,6 +2211,7 @@ def extract_variable_p_active_primal_to_reduced(
     *,
     auxiliary_reduced_values: np.ndarray,
     roundtrip_tolerance: float = 5.0e-10,
+    allow_physical_root_projection: bool = False,
 ) -> tuple[PETSc.Vec, dict[str, Any]]:
     """Extract a conforming primal trace without dual/Schur condensation.
 
@@ -2225,6 +2226,12 @@ def extract_variable_p_active_primal_to_reduced(
     wider than its full row block and therefore has no unique blockwise left
     inverse.  Legacy constraint fixtures without physical root metadata retain
     the original full-column-rank blockwise inverse.
+
+    A state transferred between distinct nested local-h carriers may
+    explicitly request ``allow_physical_root_projection``.  That opt-in
+    preserves every physical root coordinate and reconstructs all slave
+    traces from the qualified constraint graph.  The default remains strict
+    and rejects every off-manifold input.
     """
 
     _validate_vector_communicator(
@@ -2239,6 +2246,10 @@ def extract_variable_p_active_primal_to_reduced(
         or float(roundtrip_tolerance) <= 0.0
     ):
         raise ValueError("primal trace round-trip tolerance must be positive")
+    if type(allow_physical_root_projection) is not bool:
+        raise ValueError(
+            "physical-root projection request must be exactly boolean"
+        )
     comm = system.entity_map.mesh.comm
     structural_error = None
     root_anchor_mode = False
@@ -2288,6 +2299,10 @@ def extract_variable_p_active_primal_to_reduced(
                         "physical root-row authority contains duplicates"
                     )
                 root_anchor_mode = True
+        if allow_physical_root_projection and not root_anchor_mode:
+            raise ValueError(
+                "physical-root projection requires physical root metadata"
+            )
     except (AttributeError, TypeError, ValueError) as exc:
         constraints = None
         structural_error = f"{type(exc).__name__}: {exc}"
@@ -2296,36 +2311,51 @@ def extract_variable_p_active_primal_to_reduced(
             structural_error,
             float(roundtrip_tolerance),
             bool(root_anchor_mode),
+            bool(allow_physical_root_projection),
         )
     )
     structural_failures = [
         f"rank {rank}: {error}"
-        for rank, (error, _tolerance, _root_anchor_mode) in enumerate(
-            structural_packets
-        )
+        for rank, (
+            error,
+            _tolerance,
+            _root_anchor_mode,
+            _allow_projection,
+        ) in enumerate(structural_packets)
         if error is not None
     ]
     tolerances = {
         tolerance
-        for error, tolerance, _root_anchor_mode in structural_packets
+        for (
+            error,
+            tolerance,
+            _root_anchor_mode,
+            _allow_projection,
+        ) in structural_packets
         if error is None
     }
     root_anchor_modes = {
         mode
-        for error, _tolerance, mode in structural_packets
+        for error, _tolerance, mode, _allow_projection in structural_packets
+        if error is None
+    }
+    projection_modes = {
+        mode
+        for error, _tolerance, _root_anchor_mode, mode in structural_packets
         if error is None
     }
     if (
         structural_failures
         or len(tolerances) != 1
         or len(root_anchor_modes) != 1
+        or len(projection_modes) != 1
     ):
         detail = (
             structural_failures
             if structural_failures
             else [
-                "MPI ranks supplied different round-trip tolerances or "
-                "root-anchor modes"
+                "MPI ranks supplied different round-trip tolerances, "
+                "root-anchor modes, or projection requests"
             ]
         )
         raise ValueError(
@@ -2997,11 +3027,22 @@ def extract_variable_p_active_primal_to_reduced(
         if constraints is not None
         else 0.0
     )
+    input_trace_conforming = bool(
+        global_relative <= float(roundtrip_tolerance)
+        and global_relative_maximum <= float(roundtrip_tolerance)
+    )
+    projection_required = bool(
+        allow_physical_root_projection and not input_trace_conforming
+    )
     audit = {
         "schema_version": (
-            "task035e.active-full-primal-to-independent-trace.v3"
+            "task035e.active-full-primal-to-independent-trace.v4"
         ),
-        "status": "conforming_primal_trace_extracted",
+        "status": (
+            "physical_root_trace_projection_coordinates_extracted"
+            if projection_required
+            else "conforming_primal_trace_extracted"
+        ),
         "pass": True,
         "input_active_full_rows": system.entity_map.active_rows,
         "raw_active_trace_rows": (
@@ -3066,6 +3107,16 @@ def extract_variable_p_active_primal_to_reduced(
             )
         ),
         "physical_root_anchor_mode": bool(root_anchor_mode),
+        "physical_root_projection_requested": bool(
+            allow_physical_root_projection
+        ),
+        "physical_root_projection_required": projection_required,
+        "input_trace_conforming": input_trace_conforming,
+        "input_trace_receives_exact_nested_transfer_credit": bool(
+            input_trace_conforming
+            and not allow_physical_root_projection
+        ),
+        "strict_default_enforced": not allow_physical_root_projection,
         "physical_root_anchor_block_count_global": int(
             comm.allreduce(local_root_anchor_block_count, op=MPI.SUM)
         ),
@@ -3103,18 +3154,292 @@ def extract_variable_p_active_primal_to_reduced(
         "python_collectives_contain_metadata_or_scalar_audits_only": True,
         "ordinary_default_changed": False,
     }
-    if (
-        audit["global_roundtrip_relative_l2"]
-        > float(roundtrip_tolerance)
-        or audit["global_roundtrip_relative_linf"]
-        > float(roundtrip_tolerance)
-    ):
+    if not input_trace_conforming and not allow_physical_root_projection:
         target.destroy()
         raise RuntimeError(
             "primal trace extraction global round-trip gate failed: "
             f"relative_l2={global_relative:.6e}, "
             f"relative_linf={global_relative_maximum:.6e}"
         )
+    return target, audit
+
+
+def conform_variable_p_active_primal_trace_from_reduced(
+    system: VariablePCondensedTraceSystem,
+    active_full_primal: PETSc.Vec,
+    reduced_primal: PETSc.Vec,
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Project one active primal trace onto its physical-root manifold.
+
+    Cell-interior coefficients are copied exactly.  Every raw trace entity is
+    reconstructed once from the independent physical-root coordinates through
+    the qualified hanging/Floquet constraint graph.  The operation is
+    intentionally unavailable for unconstrained or legacy blockwise-left-
+    inverse systems because those systems do not provide canonical physical
+    root coordinates.
+    """
+
+    _validate_vector_communicator(
+        system,
+        active_full_primal,
+        role="active full primal vector",
+    )
+    _validate_vector_communicator(
+        system,
+        reduced_primal,
+        role="reduced primal vector",
+    )
+    if active_full_primal.getSize() != system.entity_map.active_rows:
+        raise ValueError("active full primal vector has the wrong global size")
+    expected_reduced_rows = (
+        system.active_trace_rows + system.appended_rows
+    )
+    if reduced_primal.getSize() != expected_reduced_rows:
+        raise ValueError("reduced primal vector has the wrong global size")
+
+    comm = system.entity_map.mesh.comm
+    constraints = system.trace_constraints
+    authority = (
+        None if constraints is None else getattr(constraints, "authority", None)
+    )
+    graph = None if authority is None else getattr(authority, "graph", None)
+    root_rows = None if graph is None else getattr(graph, "root_rows", None)
+    if (
+        constraints is None
+        or root_rows is None
+        or len(tuple(root_rows)) != system.active_trace_rows
+    ):
+        raise ValueError(
+            "physical-root trace projection requires qualified root metadata"
+        )
+
+    input_start, input_end = map(
+        int,
+        active_full_primal.getOwnershipRange(),
+    )
+    routed_blocks = getattr(
+        constraints,
+        "work_owned_entity_blocks",
+        None,
+    )
+    blocks = (
+        tuple(routed_blocks)
+        if routed_blocks is not None
+        else tuple(
+            block
+            for block in constraints.entity_blocks.values()
+            if input_start <= int(block.full_rows[0]) < input_end
+        )
+    )
+    block_error = None
+    metadata: list[tuple[np.ndarray, np.ndarray, np.ndarray]] = []
+    try:
+        for block in blocks:
+            full_rows = np.asarray(block.full_rows, dtype=np.int64)
+            independent_rows = np.asarray(
+                block.independent_rows,
+                dtype=np.int64,
+            )
+            expansion = np.asarray(
+                block.full_from_independent,
+                dtype=np.complex128,
+            )
+            if (
+                full_rows.ndim != 1
+                or independent_rows.ndim != 1
+                or len(full_rows) == 0
+                or len(independent_rows) == 0
+                or len(np.unique(full_rows)) != len(full_rows)
+                or len(np.unique(independent_rows)) != len(independent_rows)
+                or np.any(full_rows < 0)
+                or np.any(
+                    full_rows >= system.entity_map.active_trace_rows
+                )
+                or np.any(independent_rows < 0)
+                or np.any(independent_rows >= system.active_trace_rows)
+                or expansion.shape
+                != (len(full_rows), len(independent_rows))
+                or not np.all(np.isfinite(expansion))
+            ):
+                raise ValueError(
+                    "one physical-root projection block is invalid"
+                )
+            if routed_blocks is not None and (
+                int(block.active_vector_work_owner_rank) != comm.rank
+            ):
+                raise RuntimeError(
+                    "owner-routed physical-root projection block reached "
+                    "the wrong rank"
+                )
+            metadata.append((full_rows, independent_rows, expansion))
+    except (AttributeError, TypeError, ValueError, RuntimeError) as exc:
+        block_error = f"{type(exc).__name__}: {exc}"
+    block_errors = comm.allgather(block_error)
+    if any(error is not None for error in block_errors):
+        raise ValueError(
+            "collective physical-root projection validation failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(block_errors)
+                if error is not None
+            )
+        )
+
+    full_coverage_local = np.zeros(
+        system.entity_map.active_trace_rows,
+        dtype=np.int32,
+    )
+    requested_full_rows = np.concatenate(
+        [row[0] for row in metadata]
+        or [np.empty(0, dtype=np.int64)]
+    )
+    requested_independent_rows = np.concatenate(
+        [row[1] for row in metadata]
+        or [np.empty(0, dtype=np.int64)]
+    )
+    target = active_full_primal.copy()
+    local_delta_sq = 0.0
+    local_reference_sq = 0.0
+    local_delta_max = 0.0
+    local_reference_max = 0.0
+    reduced_selected_audit: dict[str, Any] | None = None
+    active_selected_audit: dict[str, Any] | None = None
+    try:
+        with PETScSelectedRowLayout.create(
+            reduced_primal,
+            requested_independent_rows,
+        ) as reduced_layout, PETScSelectedRowLayout.create(
+            active_full_primal,
+            requested_full_rows,
+        ) as active_layout:
+            independent_values = reduced_layout.gather(reduced_primal)
+            original_values = active_layout.gather(active_full_primal)
+            reduced_selected_audit = dict(reduced_layout.audit)
+            active_selected_audit = dict(active_layout.audit)
+            for full_rows, independent_rows, expansion in metadata:
+                reconstructed = expansion @ independent_values[
+                    reduced_layout.positions(independent_rows)
+                ]
+                original = original_values[
+                    active_layout.positions(full_rows)
+                ]
+                difference = reconstructed - original
+                if not np.all(np.isfinite(reconstructed)):
+                    raise RuntimeError(
+                        "physical-root trace reconstruction is non-finite"
+                    )
+                target.setValues(
+                    np.asarray(full_rows, dtype=PETSc.IntType),
+                    np.asarray(reconstructed, dtype=PETSc.ScalarType),
+                    addv=PETSc.InsertMode.INSERT_VALUES,
+                )
+                full_coverage_local[full_rows] += 1
+                local_delta_sq += float(
+                    np.vdot(difference, difference).real
+                )
+                local_reference_sq += float(
+                    np.vdot(original, original).real
+                )
+                local_delta_max = max(
+                    local_delta_max,
+                    float(np.max(np.abs(difference), initial=0.0)),
+                )
+                local_reference_max = max(
+                    local_reference_max,
+                    float(np.max(np.abs(original), initial=0.0)),
+                )
+        target.assemble()
+    except Exception:
+        target.destroy()
+        raise
+
+    full_coverage = np.empty_like(full_coverage_local)
+    comm.Allreduce(full_coverage_local, full_coverage, op=MPI.SUM)
+    if not bool(np.all(full_coverage == 1)):
+        target.destroy()
+        raise RuntimeError(
+            "physical-root projection did not reconstruct every raw trace "
+            "row exactly once"
+        )
+
+    target_start, target_end = map(int, target.getOwnershipRange())
+    interior_start = max(
+        target_start,
+        system.entity_map.active_trace_rows,
+    )
+    local_interior_unchanged = True
+    if target_end > interior_start:
+        offset = interior_start - target_start
+        original_owned = np.asarray(
+            active_full_primal.getArray(readonly=True),
+            dtype=np.complex128,
+        )
+        target_owned = np.asarray(
+            target.getArray(readonly=True),
+            dtype=np.complex128,
+        )
+        local_interior_unchanged = bool(
+            np.array_equal(
+                original_owned[offset:],
+                target_owned[offset:],
+            )
+        )
+    interior_unchanged = bool(
+        comm.allreduce(local_interior_unchanged, op=MPI.LAND)
+    )
+    if not interior_unchanged:
+        target.destroy()
+        raise RuntimeError(
+            "physical-root trace projection changed an active interior row"
+        )
+
+    delta_norm = float(
+        np.sqrt(comm.allreduce(local_delta_sq, op=MPI.SUM))
+    )
+    reference_norm = float(
+        np.sqrt(comm.allreduce(local_reference_sq, op=MPI.SUM))
+    )
+    delta_max = float(comm.allreduce(local_delta_max, op=MPI.MAX))
+    reference_max = float(
+        comm.allreduce(local_reference_max, op=MPI.MAX)
+    )
+    audit = {
+        "schema_version": (
+            "task035e.physical-root-conforming-trace-projection.v1"
+        ),
+        "status": "physical_root_trace_projection_completed",
+        "pass": True,
+        "input_active_full_rows": system.entity_map.active_rows,
+        "raw_active_trace_rows": (
+            system.entity_map.active_trace_rows
+        ),
+        "independent_trace_rows": system.active_trace_rows,
+        "appended_auxiliary_rows_ignored": system.appended_rows,
+        "trace_delta_l2_norm": delta_norm,
+        "trace_reference_l2_norm": reference_norm,
+        "trace_delta_relative_l2": (
+            delta_norm
+            / max(reference_norm, np.finfo(np.float64).tiny)
+        ),
+        "trace_delta_max_abs": delta_max,
+        "trace_reference_max_abs": reference_max,
+        "trace_delta_relative_linf": (
+            delta_max
+            / max(reference_max, np.finfo(np.float64).tiny)
+        ),
+        "raw_trace_row_coverage_min": int(full_coverage.min()),
+        "raw_trace_row_coverage_max": int(full_coverage.max()),
+        "raw_trace_rows_reconstructed_exactly_once": True,
+        "active_interior_rows_bitwise_unchanged": interior_unchanged,
+        "physical_root_coordinates_preserved": True,
+        "slave_trace_reconstructed_from_constraint_graph": True,
+        "reduced_selected_rows": reduced_selected_audit,
+        "active_selected_rows": active_selected_audit,
+        "replicated_full_vector_bytes_per_rank": 0,
+        "full_vector_allgather_used": False,
+        "exact_nested_transfer_credit": False,
+        "ordinary_default_changed": False,
+    }
     return target, audit
 
 
@@ -3579,6 +3904,7 @@ __all__ = [
     "audit_variable_p_active_full_adjoint_recovery",
     "build_variable_p_condensed_trace_system",
     "build_variable_p_condensed_trace_system_from_compiled_form",
+    "conform_variable_p_active_primal_trace_from_reduced",
     "condense_variable_p_active_vector_to_trace",
     "extract_variable_p_active_primal_to_reduced",
     "recover_variable_p_active_full_adjoint_vector",

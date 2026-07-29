@@ -26,9 +26,11 @@ from typing import Any, Callable, Mapping
 
 from mpi4py import MPI
 import numpy as np
+from petsc4py import PETSc
 
 from src.adaptivity.variable_p_transfer import (
     project_p6_primal_to_active_full,
+    recover_active_full_to_p6_field,
 )
 
 from .blind_controller.contracts import (
@@ -502,12 +504,14 @@ def _rank_pipeline_catalog(
     transfer: Mapping[str, Any],
     projection: Mapping[str, Any],
     extraction: Mapping[str, Any],
+    trace_conformance: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     local = {
         "rank": int(communicator.rank),
         "transfer": _jsonable(transfer),
         "projection": _jsonable(projection),
         "primal_extraction": _jsonable(extraction),
+        "trace_conformance": _jsonable(trace_conformance),
     }
     rows = communicator.allgather(local)
     if [int(row["rank"]) for row in rows] != list(
@@ -515,6 +519,104 @@ def _rank_pipeline_catalog(
     ):
         raise RuntimeError("shadow pipeline rank audit is incomplete")
     return rows
+
+
+def _p6_coefficient_projection_audit(
+    reference: PETSc.Vec,
+    projected: PETSc.Vec,
+    *,
+    source_projection_relative_scale: float,
+) -> Mapping[str, Any]:
+    """Bound the conforming correction by the preceding local projection."""
+
+    reference_layout = (
+        int(reference.getSize()),
+        int(reference.getLocalSize()),
+        tuple(map(int, reference.getOwnershipRange())),
+    )
+    projected_layout = (
+        int(projected.getSize()),
+        int(projected.getLocalSize()),
+        tuple(map(int, projected.getOwnershipRange())),
+    )
+    scale = float(source_projection_relative_scale)
+    if (
+        projected_layout != reference_layout
+        or not math.isfinite(scale)
+        or scale < 0.0
+    ):
+        raise ValueError(
+            "conforming p6 coefficient audit inputs are inconsistent"
+        )
+    difference = projected.copy()
+    try:
+        difference.axpy(PETSc.ScalarType(-1.0), reference)
+        delta_l2 = float(difference.norm())
+        delta_linf = float(
+            difference.norm(PETSc.NormType.NORM_INFINITY)
+        )
+        reference_l2 = float(reference.norm())
+        reference_linf = float(
+            reference.norm(PETSc.NormType.NORM_INFINITY)
+        )
+    finally:
+        difference.destroy()
+    relative_l2 = delta_l2 / max(
+        reference_l2,
+        np.finfo(np.float64).tiny,
+    )
+    relative_linf = delta_linf / max(
+        reference_linf,
+        np.finfo(np.float64).tiny,
+    )
+    relative_l2_limit = max(5.0e-10, 2.0 * scale)
+    passed = bool(
+        all(
+            math.isfinite(value)
+            for value in (
+                delta_l2,
+                delta_linf,
+                reference_l2,
+                reference_linf,
+                relative_l2,
+                relative_linf,
+            )
+        )
+        and relative_l2 <= relative_l2_limit
+    )
+    audit = {
+        "schema_version": (
+            "task035e.h-shadow-conforming-p6-coefficient-audit.v1"
+        ),
+        "status": (
+            "h_shadow_conforming_p6_coefficient_projection_pass"
+            if passed
+            else "h_shadow_conforming_p6_coefficient_projection_fail"
+        ),
+        "pass": passed,
+        "coefficient_delta_l2_norm": delta_l2,
+        "coefficient_delta_linf_norm": delta_linf,
+        "coefficient_reference_l2_norm": reference_l2,
+        "coefficient_reference_linf_norm": reference_linf,
+        "coefficient_delta_relative_l2": relative_l2,
+        "coefficient_delta_relative_linf": relative_linf,
+        "source_local_projection_relative_scale": scale,
+        "relative_l2_acceptance_limit": relative_l2_limit,
+        "acceptance_rule": (
+            "conforming correction relative L2 <= max(5e-10, "
+            "2*max(local p6 round-trip, shared-active prediction))"
+        ),
+        "exact_nested_transfer_credit": False,
+        "ordinary_default_changed": False,
+    }
+    if not passed:
+        raise RuntimeError(
+            "h-shadow conforming p6 coefficient correction exceeds its "
+            "source projection scale: "
+            f"relative_l2={relative_l2:.6e}, "
+            f"limit={relative_l2_limit:.6e}"
+        )
+    return MappingProxyType(audit)
 
 
 def _atomic_json(path: Path, payload: Mapping[str, Any]) -> None:
@@ -715,6 +817,7 @@ def evaluate_and_write_task035e_shadow(
     reduced_current = None
     affine_complement = None
     heavy_state_release_audit = None
+    trace_conformance_audit: Mapping[str, Any] | None = None
     try:
         transfer = transfer_task035e_snapshot_to_shadow_p6(
             snapshot,
@@ -750,12 +853,82 @@ def evaluate_and_write_task035e_shadow(
                 shadow_view,
             )
         )
-        reduced_current, extraction_audit = (
-            shadow_view.reduction.extract_primal_to_reduced(
+        if shadow_kind == "p-shadow":
+            reduced_current, extraction_audit = (
+                shadow_view.reduction.extract_primal_to_reduced(
+                    active_current,
+                    auxiliary_reduced_values=auxiliary,
+                )
+            )
+            current_endpoint_field = transfer.shadow_field
+            trace_conformance_audit = MappingProxyType(
+                {
+                    "schema_version": (
+                        "task035e.h-shadow-trace-conformance.v1"
+                    ),
+                    "status": (
+                        "physical_root_trace_projection_not_required"
+                    ),
+                    "pass": True,
+                    "shadow_kind": shadow_kind,
+                    "exact_nested_projection_retained": True,
+                    "physical_root_projection_applied": False,
+                    "ordinary_default_changed": False,
+                }
+            )
+        else:
+            (
+                reduced_current,
+                conformed_active,
+                extraction_audit,
+            ) = shadow_view.reduction.project_primal_trace_to_reduced(
                 active_current,
                 auxiliary_reduced_values=auxiliary,
             )
-        )
+            active_current.destroy()
+            active_current = conformed_active
+            current_endpoint_field, recovery_audit = (
+                recover_active_full_to_p6_field(
+                    shadow_view.reduction.transfer,
+                    active_current,
+                )
+            )
+            projection_scale = max(
+                float(
+                    projection_audit[
+                        "p6_round_trip_relative_error_l2"
+                    ]
+                ),
+                float(
+                    projection_audit[
+                        "shared_active_prediction_relative_error_max"
+                    ]
+                ),
+            )
+            coefficient_audit = _p6_coefficient_projection_audit(
+                transfer.shadow_field.x.petsc_vec,
+                current_endpoint_field.x.petsc_vec,
+                source_projection_relative_scale=projection_scale,
+            )
+            trace_conformance_audit = MappingProxyType(
+                {
+                    "schema_version": (
+                        "task035e.h-shadow-trace-conformance.v1"
+                    ),
+                    "status": (
+                        "physical_root_conforming_h_shadow_projection_pass"
+                    ),
+                    "pass": True,
+                    "shadow_kind": shadow_kind,
+                    "exact_nested_projection_retained": False,
+                    "physical_root_projection_applied": True,
+                    "projection_pipeline": extraction_audit,
+                    "conforming_p6_recovery": recovery_audit,
+                    "coefficient_projection": dict(coefficient_audit),
+                    "ordinary_default_changed": False,
+                }
+            )
+        del transfer
         if shadow_view.recovered.active_full_rhs is None:
             raise Task035eShadowObserverError(
                 "shadow recovery lost the active full RHS"
@@ -805,7 +978,7 @@ def evaluate_and_write_task035e_shadow(
             current_physical_auxiliary
         )
         current_endpoint_view = SimpleNamespace(
-            field=transfer.shadow_field,
+            field=current_endpoint_field,
             mesh_data=shadow_view.mesh_data,
             config=shadow_view.config,
             x=reduced_current,
@@ -825,9 +998,15 @@ def evaluate_and_write_task035e_shadow(
             "active_current_vector_destroyed_before_gradients": True,
             "snapshot_python_reference_released_before_gradients": True,
             "current_transferred_p6_field_retained_for_exact_secant_gradient": (
+                shadow_kind == "p-shadow"
+            ),
+            "current_conforming_p6_field_retained_for_secant_gradient": (
                 True
             ),
-            "current_transferred_p6_field_released_after_gradients": True,
+            "original_nonconforming_h_shadow_field_released_before_gradients": (
+                shadow_kind == "h-shadow"
+            ),
+            "current_endpoint_p6_field_released_after_gradients": True,
             "active_affine_complement_retained_through_dwr_only": True,
             "native_allocator_release_timing_claimed": False,
         }
@@ -866,7 +1045,6 @@ def evaluate_and_write_task035e_shadow(
             )
         )
         del current_endpoint_view
-        del transfer
     finally:
         if affine_complement is not None:
             affine_complement.destroy()
@@ -880,6 +1058,8 @@ def evaluate_and_write_task035e_shadow(
         or shadow_kind_audit.get("pass") is not True
         or projection_audit.get("pass") is not True
         or extraction_audit.get("pass") is not True
+        or trace_conformance_audit is None
+        or trace_conformance_audit.get("pass") is not True
         or auxiliary_audit.get("pass") is not True
         or affine_complement_audit.get("pass") is not True
         or gradient_audit.get("pass") is not True
@@ -922,6 +1102,7 @@ def evaluate_and_write_task035e_shadow(
         transfer=transfer_audit,
         projection=projection_audit,
         extraction=extraction_audit,
+        trace_conformance=trace_conformance_audit,
     )
     unsigned = {
         "schema_version": SHADOW_EVALUATION_SCHEMA,
@@ -940,6 +1121,9 @@ def evaluate_and_write_task035e_shadow(
         "shadow_plan_file_sha256": shadow_plan_sha,
         "shadow_kind_closure": dict(shadow_kind_audit),
         "current_auxiliary_reconstruction": dict(auxiliary_audit),
+        "physical_root_trace_conformance": dict(
+            trace_conformance_audit
+        ),
         "active_interior_affine_complement": (
             affine_complement_public_audit
         ),
@@ -973,8 +1157,9 @@ def evaluate_and_write_task035e_shadow(
                 if shadow_kind == "p-shadow"
                 else (
                     "audited nonmatching coefficient-L2 projection into "
-                    "the exact-sequence active space plus constraint "
-                    "left inverse; no exact-transfer credit"
+                    "the exact-sequence active space, physical-root "
+                    "trace reconstruction, and strict constraint "
+                    "re-extraction; no exact-transfer credit"
                 )
             ),
             "shadow_residual": "b_shadow-A_shadow*x_current_in_shadow",
@@ -992,6 +1177,9 @@ def evaluate_and_write_task035e_shadow(
             "current_primal_snapshot_complete": True,
             "current_to_shadow_injection_complete": True,
             "local_h_transfer_complete": shadow_kind == "h-shadow",
+            "physical_root_trace_conformance_complete": (
+                shadow_kind == "h-shadow"
+            ),
             "formal_59_goal_gradient_construction_complete": True,
             "actual_enriched_residual_complete": True,
             "actual_59_goal_adjoint_complete": True,

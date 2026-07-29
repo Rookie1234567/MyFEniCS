@@ -6,6 +6,7 @@ from types import MappingProxyType, SimpleNamespace
 
 from mpi4py import MPI
 import numpy as np
+from petsc4py import PETSc
 import pytest
 
 from src.adaptivity.task035e_multigoal_snapshot import (
@@ -18,6 +19,7 @@ from src.adaptivity.task035e_shadow_observer import (
     _collective_local_call,
     _current_auxiliary_solver_coordinates,
     _json_sha256,
+    _p6_coefficient_projection_audit,
     _public_affine_complement_audit,
     _requires_exact_nested_current_projection,
     _validate_observed_shadow_kind,
@@ -35,6 +37,41 @@ def _balanced_ranges(total: int, size: int) -> list[list[int]]:
         ranges.append([start, end])
         start = end
     return ranges
+
+
+def test_h_shadow_conforming_coefficient_audit_is_scale_bound() -> None:
+    reference = PETSc.Vec().createSeq(4, comm=PETSc.COMM_SELF)
+    reference.setValues(
+        np.arange(4, dtype=PETSc.IntType),
+        np.asarray([1.0, -2.0, 0.5j, 3.0 - 0.2j]),
+    )
+    reference.assemble()
+    projected = reference.copy()
+    projected.setValue(
+        2,
+        projected.getValue(2) + PETSc.ScalarType(1.0e-4),
+    )
+    projected.assemble()
+    try:
+        audit = _p6_coefficient_projection_audit(
+            reference,
+            projected,
+            source_projection_relative_scale=1.0e-3,
+        )
+        assert audit["pass"] is True
+        assert audit["exact_nested_transfer_credit"] is False
+        with pytest.raises(
+            RuntimeError,
+            match="exceeds its source projection scale",
+        ):
+            _p6_coefficient_projection_audit(
+                reference,
+                projected,
+                source_projection_relative_scale=1.0e-8,
+            )
+    finally:
+        projected.destroy()
+        reference.destroy()
 
 
 def test_current_auxiliary_tail_is_reconstructed_without_full_gather() -> None:
