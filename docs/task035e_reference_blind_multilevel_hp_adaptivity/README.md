@@ -45,7 +45,8 @@ docs/task035e_reference_blind_multilevel_hp_adaptivity/task.md
 
 ## 当前执行进度
 
-Task035e 的软件层已进入正式 PDE 前资格化阶段。当前实现已经具备：
+Task035e 的软件预资格已完成，数值研究已进入 partial Path A cycle 0。当前实现
+已经具备：
 
 - 真实 dyadic level-0/1/2 local-h forest、2:1 closure、periodic/hanging trace；
 - production p4/p5/p6 exact-sequence variable-p，inactive 高阶 mode 不进入全局矩阵；
@@ -59,6 +60,23 @@ Task035e 的软件层已进入正式 PDE 前资格化阶段。当前实现已经
 独立 evaluator 进程随后验证 receipt/bundle，验证通过前不会打开 sealed
 reference。这样不会为了方便 orchestration 而破坏三层隔离。
 
-这些内容当前只获得 software/component qualification，不等于 reference、
-blind candidate、hidden audit 或 Hybrid 数值通过。Case098 ledger 在正式 MPI8
-运行写入前仍保持 `SCAFFOLD_NOT_RUN`。
+这些软件能力本身仍只属于 component qualification。数值进度另由 Case098
+的 hash-bound progress checkpoint 记录；严格最终 `config.json` 继续保持
+`SCAFFOLD_NOT_RUN`，因为其 schema 不能安全表达 partial cycle。
+
+截至 2026-07-29，Path A cycle 0 的 current、完整 p-shadow、完整 h-shadow
+和 cellwise partition 均已通过。在 numerical source
+`f1ba5627f163da54fa383b43be58fd38c0da7bc9` 上又只运行了一条获授权的
+selected-p actual candidate。该 candidate 的 residual、energy、Floquet、
+hanging、MPI8、11 GiB 和 zero-swap Gate 全部通过，但既有四-cell DWR
+预测相对 actual candidate-current 只有 `19/59` 落在 factor-two 范围，且
+`25/59` 符号相反。因此 action 被保存为 controlled negative，cycle 0 current
+继续保留，`cycle_advanced=false`。
+
+详细结论见：
+
+- [selected-p actual outcome](outcomes/path_a_cycle0_selected_p_actual.md)；
+- [selected-p hash-bound checkpoint](../../benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_selected_p_actual_checkpoint_v1.json)。
+
+selected-h、Path B 新运行、cycle 1 shadow、p7/level-3、hidden audit 和 Hybrid
+均未启动。Task035e 仍为 partial research，而不是最终 blind hp 成功。

@@ -148,3 +148,44 @@ stop，未形成 h evaluation/bridge，`cycle_complete=false`。
 所有 JSON 使用显式 canonical payload SHA，并继续绑定 ignored raw artifact 的
 相对路径、字节数和 SHA-256。raw 缺失、损坏或 hash 漂移时必须 fail closed，
 不得通过重跑 PDE 或人工复制 summary 数字补齐本检查点。
+
+## 2026-07-29：Path A cycle 0 selected-p actual checkpoint
+
+在上述 v28 离线检查点之后，只新增了一条获授权的 MPI8 selected-p actual
+candidate；current、完整 p-shadow、完整 h-shadow 和 sealed reference 均未
+重跑。numerical source 仍为
+`f1ba5627f163da54fa383b43be58fd38c0da7bc9`，动作严格限于：
+
+```text
+cell:r42:l1:i1:j0:k0 p4 -> p5
+cell:r42:l1:i1:j1:k0 p4 -> p5
+cell:r37:l0:i0:j0:k0 p5 -> p6
+cell:r13:l0:i0:j0:k0 p5 -> p6
+```
+
+没有附加 cell、periodic/material/2:1 closure 或 selected-h；leaves 保持 160。
+candidate 的 residual/energy/Floquet/hanging/MPI8/11 GiB/zero-swap Gate
+全部通过，实测为 59,997 Full3D-equivalent DoF、20,251 augmented rows、
+10,834,433 matrix NNZ、41,278,819 factor NNZ 和 7.702564 GiB whole-job
+RSS，swap 为 0。
+
+但是从既有 cellwise DWR 四个 target 逐目标重建的 action prediction，相对
+actual candidate-current 只有 `19/59` factor-two-or-neutral，`25/59`
+opposite-sign；正式逐级加总量的 53 个目标中有 22 个符号相反。故结论为：
+
+```text
+selected-p candidate = rejected_by_action_level_effectivity
+cycle 0 current = retained
+cycle_advanced = false
+```
+
+完整 59-goal 行、candidate/current、资源、计时、raw 路径和 SHA 位于
+[selected-p actual checkpoint](records/path_a_cycle0_selected_p_actual_checkpoint_v1.json)。
+candidate 自身的 actual live-adjoint closure 为 59/59，但它只证明 candidate
+上的伴随计算闭合，不能替代 pre-action cellwise predictor Gate。
+
+第一次 invocation 因 clean-worktree `.venv` 路径 Gate 在 MPI/PDE 前退出，
+没有 watchdog、run 目录或 candidate；该 failed attempt 已保留。随后使用同一
+已有 `.venv` 的 clean-worktree 仓库内路径完成的 attempt 2，是本轮唯一实际
+PDE。selected-h、Path B、cycle 1 shadow、p7/level-3、hidden audit 和 Hybrid
+均未运行。
