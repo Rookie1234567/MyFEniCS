@@ -17,6 +17,7 @@ from src.adaptivity.task035e_goal_gradients import (
     INTERIOR_SENSITIVE_GOAL_IDS,
     Task035eFormalGoalGradients,
     _assemble_volume_p6_gradient,
+    _field_p6_gradients,
     _oriented_physical_basis,
     _point_owners,
     _secant_weights,
@@ -112,6 +113,141 @@ def test_point_owner_catalog_closes_in_mpi() -> None:
     assert np.all(owners < comm.size)
     assert np.all(cells >= 0)
     assert audit["full_vector_python_allgather_used"] is False
+
+
+def test_field_gradients_stream_one_cell_basis_at_a_time() -> None:
+    comm = MPI.COMM_WORLD
+    domain = mesh.create_box(
+        comm,
+        [
+            np.asarray([-1.0, -1.0, -1.0]),
+            np.asarray([1.0, 1.0, 1.0]),
+        ],
+        [2, 2, max(2, comm.size)],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    space = _space(domain)
+    field = fem.Function(space)
+    start = int(space.dofmap.index_map.local_range[0])
+    rows = start + np.arange(len(field.x.array), dtype=float)
+    field.x.array[:] = (
+        0.6 * np.cos(0.071 * (rows + 1.0))
+        + 0.4j * np.sin(0.053 * (rows + 1.0))
+    )
+    field.x.scatter_forward()
+
+    class IdentityReduction:
+        @staticmethod
+        def project_p6_vector(vector: PETSc.Vec) -> PETSc.Vec:
+            return vector.copy()
+
+        @staticmethod
+        def reduce_active_vector(
+            vector: PETSc.Vec,
+            *,
+            side: str,
+        ) -> PETSc.Vec:
+            assert side == "left"
+            return vector.copy()
+
+    view = SimpleNamespace(
+        field=field,
+        reduction=IdentityReduction(),
+        config=SimpleNamespace(
+            x_min=-1.0,
+            y_min=-1.0,
+            period_x=2.0,
+            period_y=2.0,
+            physical_z_min=-1.0,
+            physical_z_max=1.0,
+            full3d_reference_plane_z=(-1.0, 0.0, 1.0),
+            full3d_reference_sample_count_x=4,
+            full3d_reference_sample_count_y=3,
+            electric_field_scale_V_per_m=1.7,
+        ),
+    )
+    reduced, active, audit = _field_p6_gradients(view)
+    owned_size = int(space.dofmap.index_map.size_local)
+    original_owned = field.x.array[:owned_size].copy()
+    direction = fem.Function(space)
+    direction_rows = start + np.arange(owned_size, dtype=float)
+    direction.x.array[:owned_size] = (
+        0.2 * np.cos(0.037 * (direction_rows + 1.0))
+        - 0.3j * np.sin(0.041 * (direction_rows + 1.0))
+    )
+    direction.x.scatter_forward()
+
+    def perturbed_probe_norms(sign: float) -> tuple[float, float]:
+        field.x.array[:owned_size] = (
+            original_owned
+            + sign * 1.0e-7 * direction.x.array[:owned_size]
+        )
+        field.x.scatter_forward()
+        perturbed_reduced, perturbed_active, perturbed_audit = (
+            _field_p6_gradients(view)
+        )
+        try:
+            return (
+                float(perturbed_audit["interface_probe_l2"]),
+                float(perturbed_audit["volume_probe_l2"]),
+            )
+        finally:
+            for vector in (
+                *perturbed_reduced.values(),
+                *perturbed_active.values(),
+            ):
+                vector.destroy()
+
+    try:
+        assert set(reduced) == {
+            "scalar/interface_probe_l2",
+            "scalar/volume_probe_l2",
+            "complex/interface_probe_complex/real",
+            "complex/interface_probe_complex/imag",
+            "complex/volume_probe_complex/real",
+            "complex/volume_probe_complex/imag",
+        }
+        assert set(active) == set(reduced)
+        assert audit["basis_allocation_strategy"] == (
+            "single_pass_cell_streaming_with_post_assembly_l2_scaling"
+        )
+        assert audit["simultaneous_cached_cell_basis_count"] == 1
+        assert audit["maximum_local_cell_basis_bytes"] > 0
+        assert audit["maximum_local_cell_point_count"] > 0
+        assert audit["interface_probe_l2"] > 0.0
+        assert audit["volume_probe_l2"] > 0.0
+        assert (
+            audit["oriented_basis_vs_dolfinx_eval_max_abs"]
+            <= 5.0e-11
+        )
+        for vector in (*reduced.values(), *active.values()):
+            values = vector.getArray(readonly=True)
+            assert np.all(np.isfinite(values))
+            assert vector.norm(PETSc.NormType.NORM_2) > 0.0
+        plus = perturbed_probe_norms(1.0)
+        minus = perturbed_probe_norms(-1.0)
+        for goal_id, component in (
+            ("scalar/interface_probe_l2", 0),
+            ("scalar/volume_probe_l2", 1),
+        ):
+            finite_difference = (
+                plus[component] - minus[component]
+            ) / (2.0e-7)
+            adjoint_directional_derivative = float(
+                np.real(
+                    active[goal_id].dot(direction.x.petsc_vec)
+                )
+            )
+            assert finite_difference == pytest.approx(
+                adjoint_directional_derivative,
+                rel=2.0e-7,
+                abs=2.0e-9,
+            )
+    finally:
+        field.x.array[:owned_size] = original_owned
+        field.x.scatter_forward()
+        for vector in (*reduced.values(), *active.values()):
+            vector.destroy()
 
 
 def test_volume_gradient_uses_field_scaled_quadratic_difference() -> None:

@@ -20,6 +20,7 @@ from src.adaptivity.task035e_shadow_transfer import (
     _interpolate_nonmatching,
     _relative_coefficient_error,
     _relative_form_error,
+    _release_transfer_heap,
     _require_world_communicator,
     _shadow_transition_identity,
     transfer_task035e_snapshot_to_shadow_p6,
@@ -184,7 +185,7 @@ def test_same_forest_p_shadow_reuses_existing_p6_carrier(
     assert not hasattr(transfer, "current_mesh_data")
     lifecycle = transfer.audit["temporary_lifecycle"]
     assert lifecycle["schema_version"] == (
-        "task035e.shadow-transfer-temporary-lifecycle.v1"
+        "task035e.shadow-transfer-temporary-lifecycle.v2"
     )
     assert lifecycle["pass"] is True
     assert lifecycle["current_field_returned"] is False
@@ -192,6 +193,7 @@ def test_same_forest_p_shadow_reuses_existing_p6_carrier(
     assert lifecycle["round_trip_field_returned"] is False
     assert lifecycle["python_gc_called"] is True
     assert lifecycle["petsc_garbage_cleanup_called"] is True
+    assert lifecycle["early_interpolation_temporary_release"] is None
     assert lifecycle["native_allocator_release_timing_claimed"] is False
     trim = lifecycle["process_heap_trim"]
     assert trim["implementation"] == "glibc_malloc_trim"
@@ -207,6 +209,33 @@ def test_same_forest_p_shadow_reuses_existing_p6_carrier(
         endpoint.x.petsc_vec.getArray(readonly=True),
         np.zeros_like(owned),
     )
+
+
+def test_transfer_heap_release_is_phase_bound_and_collective() -> None:
+    comm = MPI.COMM_WORLD
+    release = _release_transfer_heap(
+        comm,
+        phase=(
+            "after_nonmatching_interpolation_before_roundtrip_forms"
+        ),
+    )
+    assert release["schema_version"] == (
+        "task035e.shadow-transfer-phase-heap-release.v1"
+    )
+    assert release["phase"] == (
+        "after_nonmatching_interpolation_before_roundtrip_forms"
+    )
+    assert release["pass"] is True
+    assert release["python_gc_called"] is True
+    assert release["petsc_garbage_cleanup_called"] is True
+    trim = release["process_heap_trim"]
+    assert isinstance(trim["supported_on_all_ranks"], bool)
+    assert isinstance(trim["succeeded_on_all_ranks"], bool)
+    assert trim["return_code_is_resource_diagnostic_only"] is True
+    assert trim["zero_return_code_does_not_fail_field_transfer"] is True
+    assert len(trim["return_codes_by_rank"]) == comm.size
+    with pytest.raises(ValueError, match="phase is invalid"):
+        _release_transfer_heap(comm, phase="after_unknown_phase")
 
 
 def test_nonmatching_nedelec_roundtrip_preserves_field_and_curl() -> None:
@@ -240,9 +269,40 @@ def test_nonmatching_nedelec_roundtrip_preserves_field_and_curl() -> None:
         name="task035e_test_roundtrip",
         padding=1.0e-10,
     )
-    coefficient = _relative_coefficient_error(coarse, round_trip)
-    field = _relative_form_error(coarse, round_trip, curl=False)
-    curl = _relative_form_error(coarse, round_trip, curl=True)
+    coefficients_before = tuple(
+        function.x.array.copy()
+        for function in (coarse, lifted, round_trip)
+    )
+    metrics_before = (
+        _relative_coefficient_error(coarse, round_trip),
+        _relative_form_error(coarse, round_trip, curl=False),
+        _relative_form_error(coarse, round_trip, curl=True),
+    )
+    release = _release_transfer_heap(
+        comm,
+        phase=(
+            "after_nonmatching_interpolation_before_roundtrip_forms"
+        ),
+    )
+    assert release["pass"] is True
+    metrics_after = (
+        _relative_coefficient_error(coarse, round_trip),
+        _relative_form_error(coarse, round_trip, curl=False),
+        _relative_form_error(coarse, round_trip, curl=True),
+    )
+    for function, before in zip(
+        (coarse, lifted, round_trip),
+        coefficients_before,
+        strict=True,
+    ):
+        np.testing.assert_array_equal(function.x.array, before)
+    np.testing.assert_allclose(
+        np.asarray(metrics_after),
+        np.asarray(metrics_before),
+        rtol=0.0,
+        atol=1.0e-15,
+    )
+    coefficient, field, curl = metrics_after
     assert coefficient[0] <= 5.0e-12
     assert field[0] <= 5.0e-12
     assert curl[0] <= 5.0e-12

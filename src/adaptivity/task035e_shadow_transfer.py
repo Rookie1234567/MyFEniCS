@@ -325,10 +325,18 @@ def _all_cells(space: Any) -> np.ndarray:
     )
 
 
-def _release_transfer_temporaries(
+def _release_transfer_heap(
     communicator: MPI.Intracomm,
+    *,
+    phase: str,
 ) -> Mapping[str, Any]:
-    """Collect Python/PETSc garbage after caller drops transfer temporaries."""
+    """Collect unreferenced transfer storage at one explicit lifecycle phase."""
+
+    if phase not in {
+        "after_nonmatching_interpolation_before_roundtrip_forms",
+        "after_transfer_temporaries_dropped",
+    }:
+        raise ValueError("shadow-transfer heap-release phase is invalid")
 
     gc.collect()
     PETSc.garbage_cleanup(communicator)
@@ -362,12 +370,10 @@ def _release_transfer_temporaries(
     return MappingProxyType(
         {
             "schema_version": (
-                "task035e.shadow-transfer-temporary-lifecycle.v1"
+                "task035e.shadow-transfer-phase-heap-release.v1"
             ),
-            "pass": True,
-            "current_field_returned": False,
-            "current_mesh_data_returned": False,
-            "round_trip_field_returned": False,
+            "phase": phase,
+            "pass": len(heap_trim_by_rank) == communicator.size,
             "python_gc_called": True,
             "petsc_garbage_cleanup_called": True,
             "process_heap_trim": {
@@ -384,6 +390,8 @@ def _release_transfer_temporaries(
                 "return_codes_by_rank": [
                     row["return_code"] for row in heap_trim_by_rank
                 ],
+                "return_code_is_resource_diagnostic_only": True,
+                "zero_return_code_does_not_fail_field_transfer": True,
                 "sum_rss_before_mb": (
                     None
                     if len(before_values) != communicator.size
@@ -401,6 +409,48 @@ def _release_transfer_temporaries(
                 ),
                 "ordinary_default_changed": False,
             },
+            "native_allocator_release_timing_claimed": False,
+            "ordinary_default_changed": False,
+        }
+    )
+
+
+def _release_transfer_temporaries(
+    communicator: MPI.Intracomm,
+    *,
+    early_interpolation_release: Mapping[str, Any] | None = None,
+) -> Mapping[str, Any]:
+    """Close the transfer lifecycle after caller drops retained functions."""
+
+    final_release = _release_transfer_heap(
+        communicator,
+        phase="after_transfer_temporaries_dropped",
+    )
+    return MappingProxyType(
+        {
+            "schema_version": (
+                "task035e.shadow-transfer-temporary-lifecycle.v2"
+            ),
+            "pass": bool(
+                final_release["pass"] is True
+                and (
+                    early_interpolation_release is None
+                    or early_interpolation_release.get("pass") is True
+                )
+            ),
+            "current_field_returned": False,
+            "current_mesh_data_returned": False,
+            "round_trip_field_returned": False,
+            "early_interpolation_temporary_release": (
+                None
+                if early_interpolation_release is None
+                else dict(early_interpolation_release)
+            ),
+            "python_gc_called": True,
+            "petsc_garbage_cleanup_called": True,
+            "process_heap_trim": dict(
+                final_release["process_heap_trim"]
+            ),
             "native_allocator_release_timing_claimed": False,
             "ordinary_default_changed": False,
         }
@@ -876,6 +926,15 @@ def transfer_task035e_snapshot_to_shadow_p6(
         raise Task035eShadowTransferError(
             "collective nonmatching interpolation lost its result"
         )
+    early_interpolation_release = _release_transfer_heap(
+        comm,
+        phase="after_nonmatching_interpolation_before_roundtrip_forms",
+    )
+    if early_interpolation_release["pass"] is not True:
+        raise Task035eShadowTransferError(
+            "collective nonmatching interpolation could not release its "
+            "dead native temporaries before the round-trip form audit"
+        )
 
     metrics = None
     error = None
@@ -998,7 +1057,10 @@ def transfer_task035e_snapshot_to_shadow_p6(
     current_field = None
     current_mesh_data = None
     round_trip = None
-    temporary_lifecycle = _release_transfer_temporaries(comm)
+    temporary_lifecycle = _release_transfer_temporaries(
+        comm,
+        early_interpolation_release=early_interpolation_release,
+    )
     unsigned = {
         "schema_version": TRANSFER_SCHEMA,
         "status": (

@@ -1058,59 +1058,6 @@ def _field_p6_gradients(
     index_map = space.dofmap.index_map
     if int(space.dofmap.index_map_bs) != 1:
         raise NotImplementedError("Task035e N1curl carrier expects bs=1")
-    cell_info: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
-    evaluation_max_error = 0.0
-    for cell, point_indices in rows_by_cell.items():
-        point_rows = np.asarray(point_indices, dtype=np.int64)
-        basis = _oriented_physical_basis(
-            space,
-            cell=cell,
-            points=points[point_rows],
-        )
-        local_dofs = np.asarray(
-            space.dofmap.cell_dofs(cell),
-            dtype=np.int32,
-        )
-        global_dofs = np.asarray(
-            index_map.local_to_global(local_dofs),
-            dtype=np.int64,
-        )
-        coefficients = np.asarray(
-            field.x.array[local_dofs],
-            dtype=np.complex128,
-        )
-        predicted = np.einsum(
-            "i,pic->pc",
-            coefficients,
-            basis,
-            optimize=True,
-        )
-        observed = np.asarray(
-            field.eval(
-                points[point_rows],
-                np.full(len(point_rows), cell, dtype=np.int32),
-            ),
-            dtype=np.complex128,
-        ).reshape((-1, 3))
-        evaluation_max_error = max(
-            evaluation_max_error,
-            float(
-                np.max(
-                    np.abs(predicted - observed),
-                    initial=0.0,
-                )
-            ),
-        )
-        cell_info[cell] = (point_rows, global_dofs, basis)
-    evaluation_max_error = float(
-        comm.allreduce(evaluation_max_error, op=MPI.MAX)
-    )
-    if evaluation_max_error > 5.0e-11:
-        raise RuntimeError(
-            "oriented point basis differs from DOLFINx Function.eval: "
-            f"{evaluation_max_error:.6e}"
-        )
-
     scale = float(view.config.electric_field_scale_V_per_m)
     if not math.isfinite(scale) or scale <= 0.0:
         raise ValueError("electric field export scale must be positive")
@@ -1118,41 +1065,6 @@ def _field_p6_gradients(
     middle_planes = set(range(1, len(z_nm) - 1))
     interface_count = 2 * points_per_plane * 2
     volume_count = len(middle_planes) * points_per_plane * 3
-    local_norms = np.zeros(2, dtype=np.float64)
-    for _cell, (point_rows, global_dofs, basis) in cell_info.items():
-        coefficients = field.x.array[
-            space.dofmap.cell_dofs(_cell)
-        ]
-        values = (
-            scale
-            * np.einsum(
-                "i,pic->pc",
-                coefficients,
-                basis,
-                optimize=True,
-            )
-        )
-        for local_point, point_index in enumerate(point_rows):
-            plane = int(point_index // points_per_plane)
-            if plane in interface_planes:
-                local_norms[0] += float(
-                    np.vdot(
-                        values[local_point, :2],
-                        values[local_point, :2],
-                    ).real
-                )
-            if plane in middle_planes:
-                local_norms[1] += float(
-                    np.vdot(
-                        values[local_point],
-                        values[local_point],
-                    ).real
-                )
-    global_norms = np.zeros(2, dtype=np.float64)
-    comm.Allreduce(local_norms, global_norms, op=MPI.SUM)
-    norms = np.sqrt(global_norms)
-    if np.any(~np.isfinite(norms)) or np.any(norms <= 0.0):
-        raise RuntimeError("Task035e field-probe norm is zero or invalid")
 
     p6_gradients = {
         goal_id: field.x.petsc_vec.duplicate()
@@ -1160,38 +1072,84 @@ def _field_p6_gradients(
     }
     for vector in p6_gradients.values():
         vector.set(PETSc.ScalarType(0.0))
+    local_norms = np.zeros(2, dtype=np.float64)
+    evaluation_max_error = 0.0
+    maximum_local_cell_basis_bytes = 0
+    maximum_local_cell_point_count = 0
     try:
-        for cell, (point_rows, global_dofs, basis) in cell_info.items():
-            coefficients = field.x.array[
-                space.dofmap.cell_dofs(cell)
-            ]
+        for cell, point_indices in rows_by_cell.items():
+            point_rows = np.asarray(point_indices, dtype=np.int64)
+            basis = _oriented_physical_basis(
+                space,
+                cell=cell,
+                points=points[point_rows],
+            )
+            maximum_local_cell_basis_bytes = max(
+                maximum_local_cell_basis_bytes,
+                int(basis.nbytes),
+            )
+            maximum_local_cell_point_count = max(
+                maximum_local_cell_point_count,
+                len(point_rows),
+            )
+            local_dofs = np.asarray(
+                space.dofmap.cell_dofs(cell),
+                dtype=np.int32,
+            )
+            global_dofs = np.asarray(
+                index_map.local_to_global(local_dofs),
+                dtype=PETSc.IntType,
+            )
+            coefficients = np.asarray(
+                field.x.array[local_dofs],
+                dtype=np.complex128,
+            )
+            predicted = np.einsum(
+                "i,pic->pc",
+                coefficients,
+                basis,
+                optimize=True,
+            )
+            observed = np.asarray(
+                field.eval(
+                    points[point_rows],
+                    np.full(len(point_rows), cell, dtype=np.int32),
+                ),
+                dtype=np.complex128,
+            ).reshape((-1, 3))
+            evaluation_max_error = max(
+                evaluation_max_error,
+                float(
+                    np.max(
+                        np.abs(predicted - observed),
+                        initial=0.0,
+                    )
+                ),
+            )
             values = (
                 scale
-                * np.einsum(
-                    "i,pic->pc",
-                    coefficients,
-                    basis,
-                    optimize=True,
-                )
+                * predicted
             )
             for local_point, point_index in enumerate(point_rows):
                 plane = int(point_index // points_per_plane)
                 if plane in interface_planes:
                     for component in range(2):
+                        local_norms[0] += float(
+                            np.vdot(
+                                values[local_point, component],
+                                values[local_point, component],
+                            ).real
+                        )
                         linear = scale * basis[
                             local_point, :, component
                         ]
                         p6_gradients[
                             "scalar/interface_probe_l2"
                         ].setValues(
-                            np.asarray(
-                                global_dofs,
-                                dtype=PETSc.IntType,
-                            ),
+                            global_dofs,
                             np.asarray(
                                 values[local_point, component]
-                                * np.conj(linear)
-                                / norms[0],
+                                * np.conj(linear),
                                 dtype=PETSc.ScalarType,
                             ),
                             addv=PETSc.InsertMode.ADD_VALUES,
@@ -1200,7 +1158,7 @@ def _field_p6_gradients(
                         p6_gradients[
                             "complex/interface_probe_complex/real"
                         ].setValues(
-                            np.asarray(global_dofs, dtype=PETSc.IntType),
+                            global_dofs,
                             np.asarray(
                                 mean_gradient,
                                 dtype=PETSc.ScalarType,
@@ -1210,7 +1168,7 @@ def _field_p6_gradients(
                         p6_gradients[
                             "complex/interface_probe_complex/imag"
                         ].setValues(
-                            np.asarray(global_dofs, dtype=PETSc.IntType),
+                            global_dofs,
                             np.asarray(
                                 1j * mean_gradient,
                                 dtype=PETSc.ScalarType,
@@ -1219,17 +1177,22 @@ def _field_p6_gradients(
                         )
                 if plane in middle_planes:
                     for component in range(3):
+                        local_norms[1] += float(
+                            np.vdot(
+                                values[local_point, component],
+                                values[local_point, component],
+                            ).real
+                        )
                         linear = scale * basis[
                             local_point, :, component
                         ]
                         p6_gradients[
                             "scalar/volume_probe_l2"
                         ].setValues(
-                            np.asarray(global_dofs, dtype=PETSc.IntType),
+                            global_dofs,
                             np.asarray(
                                 values[local_point, component]
-                                * np.conj(linear)
-                                / norms[1],
+                                * np.conj(linear),
                                 dtype=PETSc.ScalarType,
                             ),
                             addv=PETSc.InsertMode.ADD_VALUES,
@@ -1238,7 +1201,7 @@ def _field_p6_gradients(
                         p6_gradients[
                             "complex/volume_probe_complex/real"
                         ].setValues(
-                            np.asarray(global_dofs, dtype=PETSc.IntType),
+                            global_dofs,
                             np.asarray(
                                 mean_gradient,
                                 dtype=PETSc.ScalarType,
@@ -1248,15 +1211,58 @@ def _field_p6_gradients(
                         p6_gradients[
                             "complex/volume_probe_complex/imag"
                         ].setValues(
-                            np.asarray(global_dofs, dtype=PETSc.IntType),
+                            global_dofs,
                             np.asarray(
                                 1j * mean_gradient,
                                 dtype=PETSc.ScalarType,
                             ),
                             addv=PETSc.InsertMode.ADD_VALUES,
                         )
+            del (
+                basis,
+                coefficients,
+                global_dofs,
+                local_dofs,
+                observed,
+                point_rows,
+                predicted,
+                values,
+            )
         for vector in p6_gradients.values():
             vector.assemble()
+        global_norms = np.zeros(2, dtype=np.float64)
+        comm.Allreduce(local_norms, global_norms, op=MPI.SUM)
+        norms = np.sqrt(global_norms)
+        evaluation_max_error = float(
+            comm.allreduce(evaluation_max_error, op=MPI.MAX)
+        )
+        if evaluation_max_error > 5.0e-11:
+            raise RuntimeError(
+                "oriented point basis differs from DOLFINx Function.eval: "
+                f"{evaluation_max_error:.6e}"
+            )
+        if np.any(~np.isfinite(norms)) or np.any(norms <= 0.0):
+            raise RuntimeError(
+                "Task035e field-probe norm is zero or invalid"
+            )
+        p6_gradients["scalar/interface_probe_l2"].scale(
+            PETSc.ScalarType(1.0 / norms[0])
+        )
+        p6_gradients["scalar/volume_probe_l2"].scale(
+            PETSc.ScalarType(1.0 / norms[1])
+        )
+        maximum_cell_basis_bytes = int(
+            comm.allreduce(
+                maximum_local_cell_basis_bytes,
+                op=MPI.MAX,
+            )
+        )
+        maximum_cell_point_count = int(
+            comm.allreduce(
+                maximum_local_cell_point_count,
+                op=MPI.MAX,
+            )
+        )
     except Exception:
         for vector in p6_gradients.values():
             vector.destroy()
@@ -1297,6 +1303,12 @@ def _field_p6_gradients(
         "oriented_basis_vs_dolfinx_eval_max_abs": evaluation_max_error,
         "ownership": ownership_audit,
         "p6_gradient_reduced_through_exact_variable_p_adjoint_map": True,
+        "basis_allocation_strategy": (
+            "single_pass_cell_streaming_with_post_assembly_l2_scaling"
+        ),
+        "simultaneous_cached_cell_basis_count": 1,
+        "maximum_local_cell_basis_bytes": maximum_cell_basis_bytes,
+        "maximum_local_cell_point_count": maximum_cell_point_count,
     }
 
 
