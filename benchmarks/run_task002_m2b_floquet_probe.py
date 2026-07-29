@@ -32,7 +32,7 @@ def _vec_global(vec: PETSc.Vec, comm) -> np.ndarray:
     return result
 
 
-def run_probe(degree: int, grazing: float, azimuth: float) -> dict:
+def run_probe(degree: int, grazing: float, azimuth: float, source_sha: str) -> dict:
     comm = MPI.COMM_WORLD
     cfg = target_stage4_config(degree=degree, h_nm=10.0)
     cfg.incident_theta_deg = 90.0 - grazing
@@ -92,6 +92,7 @@ def run_probe(degree: int, grazing: float, azimuth: float) -> dict:
     digest = hashlib.sha256(global_full.tobytes()).hexdigest()
     result = {
         "schema_version": "task002.m2b-floquet-probe.v1",
+        "source_sha": source_sha,
         "degree": degree, "mpi_ranks": comm.size,
         "grazing_deg": grazing, "azimuth_deg": azimuth,
         "phase_x": {"real": constraints.phase_x.real, "imag": constraints.phase_x.imag},
@@ -113,11 +114,13 @@ def run_probe(degree: int, grazing: float, azimuth: float) -> dict:
         "longitudinal_constraint_count": comm.allreduce(
             constraints.longitudinal_constraint_count, op=MPI.SUM,
         ),
-        "actual_probe_not_constant": constraints.max_probe_residual != 0.0,
+        "actual_probe_not_constant": bool(constraints.max_probe_residual != 0.0),
         "gates": {
-            "analytic_probe_le_5e-12": constraints.max_probe_residual <= 5.0e-12,
-            "slave_rows_le_1e-13": max_row_error / max(max_row_scale, 1.0e-30) <= 1.0e-13,
-            "explicit_chac_le_1e-13": action_error <= 1.0e-13,
+            "analytic_probe_le_5e-12": bool(constraints.max_probe_residual <= 5.0e-12),
+            "slave_rows_le_1e-13": bool(
+                max_row_error / max(max_row_scale, 1.0e-30) <= 1.0e-13
+            ),
+            "explicit_chac_le_1e-13": bool(action_error <= 1.0e-13),
         },
     }
     product.destroy(); explicit.destroy(); transform_h.destroy(); direct_action.destroy()
@@ -131,8 +134,11 @@ def main() -> None:
     parser.add_argument("--grazing-deg", type=float, required=True)
     parser.add_argument("--azimuth-deg", type=float, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--source-sha", required=True)
     args = parser.parse_args()
-    result = run_probe(args.degree, args.grazing_deg, args.azimuth_deg)
+    result = run_probe(
+        args.degree, args.grazing_deg, args.azimuth_deg, args.source_sha,
+    )
     if MPI.COMM_WORLD.rank == 0:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
