@@ -1,0 +1,101 @@
+{
+  "schema_version": "task002.m3r-design.v1",
+  "design_id": "task002_discretization_audit_candidates_v1",
+  "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+  "source_dirty": false,
+  "parameter_schema_version": "task002.s-p5-production-parameters.v2",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "production_model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+  "production_solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+  "sobol_seed": null,
+  "point_count": 8,
+  "point_tuple_sha256": "049b973bbed7de05e46e8045fac11461ac80641f08aa464bb81d7aa72611a2aa",
+  "points": [
+    {
+      "height_nm": 115.0,
+      "width_x_nm": 16.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 90.0,
+      "role": "discretization_audit_only",
+      "design_source": "geometry_corner_low_grazing_R_max_region",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 125.0,
+      "width_x_nm": 18.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 30.0,
+      "role": "discretization_audit_only",
+      "design_source": "geometry_corner_p5_R_min_region",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 115.0,
+      "width_x_nm": 18.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 45.0,
+      "role": "discretization_audit_only",
+      "design_source": "geometry_corner_absorption_max_region",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 125.0,
+      "width_x_nm": 16.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 90.0,
+      "role": "discretization_audit_only",
+      "design_source": "geometry_corner_transmission_max_region",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 117.5,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "role": "discretization_audit_only",
+      "design_source": "height_axis_low_grazing_conical",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 122.5,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 15.0,
+      "role": "discretization_audit_only",
+      "design_source": "height_axis_intermediate_azimuth",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 16.5,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 60.0,
+      "role": "discretization_audit_only",
+      "design_source": "width_axis_conical",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.5,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "role": "discretization_audit_only",
+      "design_source": "width_axis_high_grazing",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    }
+  ],
+  "solver_pair": [
+    "S_PROD_FULL3D_STATIC_P5_H10",
+    "P4_H7P5_DISCRETIZATION_AUDIT"
+  ],
+  "production_dataset_membership": false,
+  "execution_status": "design_only_not_run"
+}

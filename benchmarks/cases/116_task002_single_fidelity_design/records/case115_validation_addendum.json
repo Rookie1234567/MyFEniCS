@@ -1,0 +1,41 @@
+{
+  "schema_version": "task002.case115-validation-addendum.v1",
+  "case115_record": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/cases/115_task002_full3d_hierarchy_qualification/records/full3d_fidelity_screen.json",
+  "case115_record_sha256": "e3290a731b9a4c3acf3e7c43b4c9b2726341704e2d737df2274e1065d7f76825",
+  "original_claim": true,
+  "exact_intersection": [
+    [
+      0.5,
+      0.0
+    ],
+    [
+      0.5,
+      45.0
+    ],
+    [
+      0.5,
+      90.0
+    ],
+    [
+      10.0,
+      0.0
+    ],
+    [
+      10.0,
+      45.0
+    ],
+    [
+      10.0,
+      90.0
+    ]
+  ],
+  "intersection_count": 6,
+  "off_grid_count": 3,
+  "corrected_semantics": "Case115 interpolation was a qualification diagnostic, not strict frozen validation; the p4 rejection remains supported independently",
+  "gates": {
+    "false_disjoint_claim_identified": true,
+    "six_overlapping_angles_recorded": true,
+    "three_off_grid_angles_recorded": true,
+    "case115_raw_not_rewritten": true
+  }
+}

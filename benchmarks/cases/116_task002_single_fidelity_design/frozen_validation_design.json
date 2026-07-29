@@ -1,0 +1,177 @@
+{
+  "schema_version": "task002.m3r-design.v1",
+  "design_id": "task002_p5_frozen_validation_v1",
+  "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+  "source_dirty": false,
+  "parameter_schema_version": "task002.s-p5-production-parameters.v2",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "production_model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+  "production_solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+  "sobol_seed": 20260730,
+  "point_count": 16,
+  "point_tuple_sha256": "e5733173c2c55d4d5ef8e660fc63019bf61e78063a3bd24cb0488dc6c435e50b",
+  "points": [
+    {
+      "height_nm": 116.153350872919,
+      "width_x_nm": 17.129426494241,
+      "grazing_deg": 9.193144465797,
+      "azimuth_deg": 52.025768654421,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 123.831366077065,
+      "width_x_nm": 16.454721892253,
+      "grazing_deg": 1.111936496105,
+      "azimuth_deg": 35.821919878945,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 120.636040307581,
+      "width_x_nm": 17.897606294602,
+      "grazing_deg": 6.595722773578,
+      "azimuth_deg": 77.911808341742,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 119.36950600706,
+      "width_x_nm": 16.689502334222,
+      "grazing_deg": 4.00670345407,
+      "azimuth_deg": 15.299996975809,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 118.112094001845,
+      "width_x_nm": 17.739659380168,
+      "grazing_deg": 2.827430990059,
+      "azimuth_deg": 7.407436771318,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 121.883668508381,
+      "width_x_nm": 16.906508332118,
+      "grazing_deg": 7.793631464243,
+      "azimuth_deg": 79.817506531253,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 122.5936367549,
+      "width_x_nm": 17.475369438529,
+      "grazing_deg": 4.682593800128,
+      "azimuth_deg": 32.146391551942,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 117.420356506482,
+      "width_x_nm": 16.175711685792,
+      "grazing_deg": 5.640978429932,
+      "azimuth_deg": 60.964434631169,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 116.279202140868,
+      "width_x_nm": 17.817298034206,
+      "grazing_deg": 4.136239521671,
+      "azimuth_deg": 85.762530863285,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 123.71776885353,
+      "width_x_nm": 16.517346292734,
+      "grazing_deg": 6.279807027429,
+      "azimuth_deg": 2.08039322868,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 121.775151593611,
+      "width_x_nm": 17.085234602913,
+      "grazing_deg": 2.281079206616,
+      "azimuth_deg": 66.648524450138,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 118.237613514066,
+      "width_x_nm": 16.252369906753,
+      "grazing_deg": 8.432458132971,
+      "azimuth_deg": 26.558432271704,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 119.475490991026,
+      "width_x_nm": 17.30179171823,
+      "grazing_deg": 7.218325397931,
+      "azimuth_deg": 41.176344584674,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 120.507998401299,
+      "width_x_nm": 16.093880172819,
+      "grazing_deg": 3.439484459814,
+      "azimuth_deg": 46.064349152148,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 124.975023763254,
+      "width_x_nm": 17.537744889036,
+      "grazing_deg": 9.815744524356,
+      "azimuth_deg": 20.915335072204,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    },
+    {
+      "height_nm": 115.031731631607,
+      "width_x_nm": 16.862840235233,
+      "grazing_deg": 0.544719501399,
+      "azimuth_deg": 72.211326370016,
+      "role": "frozen_validation",
+      "design_source": "independent_scrambled_sobol_16",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"
+    }
+  ],
+  "usage_contract": "never used for feature map, transform, kernel, hyperparameter, model, or acquisition selection; invalidate only for a dataset/source bug",
+  "training_intersection": []
+}

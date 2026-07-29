@@ -1,0 +1,78 @@
+{
+  "schema_version": "task002.case116-design-and-split.v1",
+  "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+  "files": {
+    "training_design.json": {
+      "sha256": "438eead9c4b7df4c5a7cb56ad9a2f9ae69d7e92ce3496f59eb7bcb5be05fa859",
+      "point_count": 96
+    },
+    "frozen_validation_design.json": {
+      "sha256": "c644b2c1a99eaba172e69816d801cc96ab32c9039c3fbc07745a7b131338b0be",
+      "point_count": 16
+    },
+    "candidate_pool.json": {
+      "sha256": "71e5d92594f0699903a7423230e7c1dbe48c7b5e38c2ed3db3949edac3354ea3",
+      "point_count": 4096
+    },
+    "discretization_audit_design.json": {
+      "sha256": "08a3a03f91308ec18a9f8696cc061cce613c2e1f1f9b3e3d4457ea5d6f86ee56",
+      "point_count": 8
+    },
+    "split_hashes.json": {
+      "sha256": "123ac688b53d1f2d3d1d7d3d38e53824f58189ab31332690da8163ff220475b5",
+      "point_count": null
+    }
+  },
+  "split_hashes": {
+    "schema_version": "task002.m3r-split-hashes.v1",
+    "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+    "training_sha256": "b01f4f3b27b5b5e0466fb1d620ffe504677f6c24468ac9e955ac45fac39570fa",
+    "frozen_validation_sha256": "e5733173c2c55d4d5ef8e660fc63019bf61e78063a3bd24cb0488dc6c435e50b",
+    "candidate_pool_sha256": "a9831ffc1055732660bee859382f623e8558560634d9ac98702cfe355ff09fcd",
+    "discretization_audit_sha256": "049b973bbed7de05e46e8045fac11461ac80641f08aa464bb81d7aa72611a2aa",
+    "intersection_audit": {
+      "training_validation": [],
+      "training_candidate": [],
+      "validation_candidate": [],
+      "audit_training": [
+        [
+          115.0,
+          16.0,
+          0.5,
+          90.0
+        ],
+        [
+          120.0,
+          17.5,
+          10.0,
+          45.0
+        ],
+        [
+          122.5,
+          17.0,
+          2.0,
+          15.0
+        ],
+        [
+          125.0,
+          16.0,
+          10.0,
+          90.0
+        ]
+      ],
+      "audit_validation": []
+    },
+    "combined_design_sha256": "f072c0f3ac03cd97026a85338fd4a79e3cd498c492aea1e79dacbb009e22faa3"
+  },
+  "sampling_design_sha256": "b018340c5253256c81a7b6e12a1da802b96ed49ebefa82b3c4e38c9427ef5ad6",
+  "gates": {
+    "all_designs_one_clean_sha": true,
+    "training_validation_disjoint": true,
+    "training_candidate_disjoint": true,
+    "validation_candidate_disjoint": true,
+    "validation_count_16": true,
+    "candidate_count_4096": true,
+    "audit_count_6_to_10": true,
+    "no_design_has_execution_result": true
+  }
+}

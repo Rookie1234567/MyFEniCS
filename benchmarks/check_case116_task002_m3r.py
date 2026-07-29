@@ -154,8 +154,10 @@ def order_window_v3_audit() -> dict[str, Any]:
             "plus_2_plus_3_frozen": {2, 3}.issubset(fixed),
             "analytic_union_covered": analytic_union.issubset(fixed),
             "all_raw_reextractions_pass": not failures and bool(rows),
+            # Each fixed identity occurs once per port side (reflection and
+            # transmission) in every compact mother response.
             "plus_2_plus_3_present_every_reextraction": all(
-                value == len(rows) for value in plus_identity_count.values()),
+                value == 2 * len(rows) for value in plus_identity_count.values()),
             "no_raw_n0_power_outside_v3": not raw_outside,
             "n_nonzero_remains_diagnostic": True,
         },

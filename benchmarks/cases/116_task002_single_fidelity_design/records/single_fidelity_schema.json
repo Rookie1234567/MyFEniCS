@@ -1,0 +1,142 @@
+{
+  "schema_version": "task002.case116-single-fidelity-schema.v1",
+  "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+  "catalog": {
+    "schema_version": "task002.s-p5-production-parameters.v2",
+    "forward_inputs": {
+      "height_nm": {
+        "range": [
+          115.0,
+          125.0
+        ],
+        "role": "geometry"
+      },
+      "width_x_nm": {
+        "range": [
+          16.0,
+          18.0
+        ],
+        "role": "geometry"
+      },
+      "grazing_deg": {
+        "range": [
+          0.5,
+          10.0
+        ],
+        "role": "configuration"
+      },
+      "azimuth_deg": {
+        "range": [
+          0.0,
+          90.0
+        ],
+        "role": "configuration"
+      }
+    },
+    "fixed": {
+      "wavelength_nm": 13.5,
+      "incident_polarization": "S"
+    },
+    "fidelity": {
+      "production_allowed": [
+        "S_PROD_FULL3D_STATIC_P5_H10"
+      ],
+      "diagnostic_only": [
+        "P4_H7P5_DISCRETIZATION_AUDIT",
+        "S_DIAG_FULL3D_STATIC_P4_H10"
+      ],
+      "hard_quarantined_historical": [
+        "S_HF_HYBRID_P6_H10_M120",
+        "S_LF_HYBRID_P4_H10_M120"
+      ]
+    },
+    "zero_grazing_status": "zero_grazing_limit_not_defined",
+    "out_of_domain_status": "out_of_training_domain",
+    "solver_conversion": "incident_theta_deg = 90 - grazing_deg; incident_phi_deg = azimuth_deg"
+  },
+  "production_fidelities": {
+    "S_PROD_FULL3D_STATIC_P5_H10": {
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+      "degree": 5,
+      "h_nm": 10.0,
+      "axis_counts": [
+        6,
+        3,
+        14
+      ],
+      "element_family": "uniform_N1curl",
+      "fidelity_semantics": "best_available_operational_high_fidelity"
+    }
+  },
+  "diagnostic_fidelities": {
+    "S_DIAG_FULL3D_STATIC_P4_H10": {
+      "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+      "degree": 4,
+      "h_nm": 10.0,
+      "axis_counts": [
+        6,
+        3,
+        14
+      ],
+      "element_family": "uniform_N1curl",
+      "role": "diagnostic_only"
+    },
+    "P4_H7P5_DISCRETIZATION_AUDIT": {
+      "solver_route_id": "full3d_static_uniform_n1curl_p4_h7p5",
+      "degree": 4,
+      "h_nm": 7.5,
+      "axis_counts": null,
+      "element_family": "uniform_N1curl",
+      "role": "discretization_audit_only"
+    }
+  },
+  "parameter_schema": "task002.s-p5-production-parameters.v2",
+  "observable_schema": "task002.fixed-n0-orders.v3",
+  "dataset_schema": "task002.s-p5-single-fidelity-dataset.v2",
+  "dataset_arrays": [
+    "inputs.npy",
+    "aggregates.npy",
+    "order_amplitudes.npy",
+    "order_powers.npy",
+    "power_carrying_mask.npy",
+    "train_indices.npy",
+    "frozen_validation_indices.npy"
+  ],
+  "production_route": "full3d_static_uniform_n1curl_p5_h10",
+  "model_candidates": {
+    "diagnostic": "low-order PCE/Chebyshev",
+    "production": "single-fidelity Matern-5/2 ARD GP",
+    "multifidelity": "removed"
+  },
+  "feature_maps_training_only_cv": {
+    "A": [
+      "h_norm",
+      "w_norm",
+      "kx_over_k0",
+      "ky_over_k0"
+    ],
+    "B": [
+      "h_norm",
+      "w_norm",
+      "kx_over_k0",
+      "ky_over_k0",
+      "kz_over_k0"
+    ],
+    "C": [
+      "h_norm",
+      "w_norm",
+      "sin_grazing",
+      "cos_azimuth",
+      "sin_azimuth"
+    ],
+    "frozen_validation_use": "prohibited for feature/model selection"
+  },
+  "gates": {
+    "one_production_model": true,
+    "production_is_p5": true,
+    "dataset_has_no_lf_split": true,
+    "dataset_has_single_train_split": true,
+    "p4_is_diagnostic": true,
+    "hybrid_not_production": true
+  }
+}

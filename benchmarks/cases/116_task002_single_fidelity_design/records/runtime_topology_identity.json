@@ -1,0 +1,2165 @@
+{
+  "schema_version": "task002.case116-runtime-topology-identity.v1",
+  "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+  "smoke_count": 5,
+  "rows": [
+    {
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/116/m3r/formal/b5c24d335e366a0b",
+      "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+      "parameters": {
+        "schema_version": "task002.s-p5-production-parameters.v2",
+        "configuration": {
+          "wavelength_nm": 13.5,
+          "incident_polarization": "S",
+          "grazing_deg": 0.5,
+          "azimuth_deg": 90.0,
+          "solver_theta_deg": 89.5,
+          "solver_phi_deg": 90.0
+        },
+        "geometry": {
+          "height_nm": 120.0,
+          "width_x_nm": 17.0
+        },
+        "fidelity": {
+          "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "degree": 5,
+          "h_nm": 10.0,
+          "axis_counts": [
+            6,
+            3,
+            14
+          ],
+          "element_family": "uniform_N1curl",
+          "fidelity_semantics": "best_available_operational_high_fidelity"
+        },
+        "normalized_features": [
+          0.0,
+          0.0,
+          6.123000841748846e-17,
+          0.9999619230641713
+        ],
+        "observable_schema_version": "task002.fixed-n0-orders.v3",
+        "execution": {
+          "mpi_ranks": 2,
+          "threads_per_rank": 1
+        }
+      },
+      "planned_topology_identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "d408de76d79fafb3f37e502cfe44db6467e35de9e8732f8b13cfaffb9a378d35",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 120.0,
+            "width_x_nm": 17.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 90.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 90.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "6f9fe22afacbbb7977231a6040e23a1ba656309e2b82e03cc00d16b1134ac139"
+        }
+      },
+      "actual_runtime_topology_identity": {
+        "schema_version": "task002.actual-runtime-topology.v1",
+        "mpi_ranks": 2,
+        "global_cell_count": 252,
+        "canonical_cell_geometry_sha256": "7954ed4414a04d7d9a17a80d7d57f682ad9e00baddc6e3d8697e128d71ff6579",
+        "axis_values_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333,
+            16.666666666667,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "coordinate_axis_sha256": "fa7ad6de268ff9e0c5496f0b420861c85a71ad12749d2506aca618e8b607f8f9",
+        "material_cell_geometry_tag_sha256": "f3f48db77a4cbd64330b74a584a5d3c6a789f044e4ddee925f8f2f562142a35d",
+        "material_cell_tag_counts": {
+          "1": 162,
+          "2": 18,
+          "3": 72
+        },
+        "boundary_facet_geometry_tag_sha256": "b7ba16200fa6175f66ff2b8adbf532058df9d1d4963b918f897bdfbec76b4bac",
+        "boundary_facet_tag_counts": {
+          "11": 42,
+          "12": 42,
+          "13": 84,
+          "14": 84,
+          "15": 18,
+          "16": 18
+        },
+        "element": {
+          "family_raw": "ElementFamily.N1E",
+          "cell_raw": "CellType.hexahedron",
+          "degree": 5,
+          "hash": 16913352432823651555,
+          "map_type": "MapType.covariantPiola",
+          "value_shape": [
+            3
+          ]
+        },
+        "global_dof_count": 101815,
+        "dof_layout_identity_sha256": "3a3eb49dc6acc7eb3645afcd5294ef90828de9efc5299041dda0867c85bdf898",
+        "floquet": {
+          "constraint_mode": "topological_trace_p5",
+          "global_constraint_count": 6415,
+          "x_constraint_count": 2115,
+          "y_constraint_count": 4230,
+          "corner_constraint_count": 70,
+          "physical_block_count": 401,
+          "physical_entity_identity_sha256": "1c84866da9e63f90d529dbe2096f3f4534f6a13a0889242c122b6f9f04291780"
+        }
+      },
+      "planned_vs_actual": {
+        "planned": {
+          "axis_values_nm": {
+            "x": [
+              0.0,
+              8.25,
+              16.5,
+              25.0,
+              33.5,
+              41.75,
+              50.0
+            ],
+            "y": [
+              0.0,
+              8.333333333333,
+              16.666666666667,
+              25.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ]
+          },
+          "axis_cell_counts": [
+            6,
+            3,
+            14
+          ],
+          "global_cell_count": 252,
+          "canonical_cell_geometry_sha256": "7954ed4414a04d7d9a17a80d7d57f682ad9e00baddc6e3d8697e128d71ff6579",
+          "material_cell_geometry_tag_sha256": "f3f48db77a4cbd64330b74a584a5d3c6a789f044e4ddee925f8f2f562142a35d",
+          "boundary_facet_geometry_tag_sha256": "b7ba16200fa6175f66ff2b8adbf532058df9d1d4963b918f897bdfbec76b4bac",
+          "periodic_boundary_facet_counts": {
+            "11": 42,
+            "12": 42,
+            "13": 84,
+            "14": 84
+          },
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5
+          },
+          "expected_global_dof_count": 101815
+        },
+        "actual": {
+          "schema_version": "task002.actual-runtime-topology.v1",
+          "mpi_ranks": 2,
+          "global_cell_count": 252,
+          "canonical_cell_geometry_sha256": "7954ed4414a04d7d9a17a80d7d57f682ad9e00baddc6e3d8697e128d71ff6579",
+          "axis_values_nm": {
+            "x": [
+              0.0,
+              8.25,
+              16.5,
+              25.0,
+              33.5,
+              41.75,
+              50.0
+            ],
+            "y": [
+              0.0,
+              8.333333333333,
+              16.666666666667,
+              25.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ]
+          },
+          "axis_cell_counts": [
+            6,
+            3,
+            14
+          ],
+          "coordinate_axis_sha256": "fa7ad6de268ff9e0c5496f0b420861c85a71ad12749d2506aca618e8b607f8f9",
+          "material_cell_geometry_tag_sha256": "f3f48db77a4cbd64330b74a584a5d3c6a789f044e4ddee925f8f2f562142a35d",
+          "material_cell_tag_counts": {
+            "1": 162,
+            "2": 18,
+            "3": 72
+          },
+          "boundary_facet_geometry_tag_sha256": "b7ba16200fa6175f66ff2b8adbf532058df9d1d4963b918f897bdfbec76b4bac",
+          "boundary_facet_tag_counts": {
+            "11": 42,
+            "12": 42,
+            "13": 84,
+            "14": 84,
+            "15": 18,
+            "16": 18
+          },
+          "element": {
+            "family_raw": "ElementFamily.N1E",
+            "cell_raw": "CellType.hexahedron",
+            "degree": 5,
+            "hash": 16913352432823651555,
+            "map_type": "MapType.covariantPiola",
+            "value_shape": [
+              3
+            ]
+          },
+          "global_dof_count": 101815,
+          "dof_layout_identity_sha256": "3a3eb49dc6acc7eb3645afcd5294ef90828de9efc5299041dda0867c85bdf898",
+          "floquet": {
+            "constraint_mode": "topological_trace_p5",
+            "global_constraint_count": 6415,
+            "x_constraint_count": 2115,
+            "y_constraint_count": 4230,
+            "corner_constraint_count": 70,
+            "physical_block_count": 401,
+            "physical_entity_identity_sha256": "1c84866da9e63f90d529dbe2096f3f4534f6a13a0889242c122b6f9f04291780"
+          }
+        },
+        "gates": {
+          "global_cell_count": true,
+          "axis_cell_counts": true,
+          "axis_values": true,
+          "canonical_cell_geometry": true,
+          "material_cell_tags": true,
+          "boundary_facets": true,
+          "periodic_boundary_counts": true,
+          "element_degree": true,
+          "element_family": true,
+          "element_cell": true,
+          "global_dof_count": true,
+          "floquet_entities_present": true,
+          "floquet_xy_constraints_present": true
+        },
+        "pass": true
+      },
+      "formal_gates": {
+        "completed_direct_solve": true,
+        "true_residual_le_1e-9": true,
+        "energy_closure_abs_le_1e-7": true,
+        "fixed_order_schema_complete": true,
+        "complete_n0_power_window": true,
+        "uniform_n1curl_identity": true,
+        "fixed_topology_identity_present": true,
+        "actual_runtime_topology_matches_plan": true
+      },
+      "watchdog": {
+        "status": "completed",
+        "return_code": 0,
+        "child_return_code": 0,
+        "elapsed_seconds": 64.63745865700184,
+        "peak_rss_bytes": 4254519296,
+        "peak_pss_bytes": 4024693760,
+        "peak_uss_bytes": 3844468736,
+        "peak_swap_bytes": 0,
+        "samples": 64,
+        "process_group_id": 29,
+        "cleanup_complete": true
+      },
+      "execution_sha256": "bd0437fa632a991720414ff3ef3d2d98644f091790c5419754e572fc83e1f5c2",
+      "record_sha256": "aef21e6045a9ed2b55987dd7812be54d56e934da7c3d9c82c30995517d6366b2"
+    },
+    {
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/116/m3r/formal/16d355eede866e58",
+      "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+      "parameters": {
+        "schema_version": "task002.s-p5-production-parameters.v2",
+        "configuration": {
+          "wavelength_nm": 13.5,
+          "incident_polarization": "S",
+          "grazing_deg": 0.5,
+          "azimuth_deg": 0.0,
+          "solver_theta_deg": 89.5,
+          "solver_phi_deg": 0.0
+        },
+        "geometry": {
+          "height_nm": 117.5,
+          "width_x_nm": 17.0
+        },
+        "fidelity": {
+          "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "degree": 5,
+          "h_nm": 10.0,
+          "axis_counts": [
+            6,
+            3,
+            14
+          ],
+          "element_family": "uniform_N1curl",
+          "fidelity_semantics": "best_available_operational_high_fidelity"
+        },
+        "normalized_features": [
+          -0.5,
+          0.0,
+          0.9999619230641713,
+          0.0
+        ],
+        "observable_schema_version": "task002.fixed-n0-orders.v3",
+        "execution": {
+          "mpi_ranks": 2,
+          "threads_per_rank": 1
+        }
+      },
+      "planned_topology_identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            9.791666666666666,
+            19.583333333333332,
+            29.375,
+            39.166666666666664,
+            48.958333333333336,
+            58.75,
+            68.54166666666667,
+            78.33333333333333,
+            88.125,
+            97.91666666666667,
+            107.70833333333333,
+            117.5,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "29e4f647b957e8a9363e114d6939f12b479bddfc1a38500b5058e3d69daa0c9d",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              9.791666666666666,
+              19.583333333333332,
+              29.375,
+              39.166666666666664,
+              48.958333333333336,
+              58.75,
+              68.54166666666667,
+              78.33333333333333,
+              88.125,
+              97.91666666666667,
+              107.70833333333333,
+              117.5,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 117.5,
+            "width_x_nm": 17.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "729859d6b4d8a2ecbc2ae0938740e81bbf161ee564b818c7d12392ab10c77f58"
+        }
+      },
+      "actual_runtime_topology_identity": {
+        "schema_version": "task002.actual-runtime-topology.v1",
+        "mpi_ranks": 2,
+        "global_cell_count": 252,
+        "canonical_cell_geometry_sha256": "d928085b0ead7ccced3e10aa7eb8217a26a1f27e62a53d94f7a2e4e259804383",
+        "axis_values_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333,
+            16.666666666667,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            9.791666666667,
+            19.583333333333,
+            29.375,
+            39.166666666667,
+            48.958333333333,
+            58.75,
+            68.541666666667,
+            78.333333333333,
+            88.125,
+            97.916666666667,
+            107.708333333333,
+            117.5,
+            130.0
+          ]
+        },
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "coordinate_axis_sha256": "30f4425ba02d3a04032096ec4fcdffccc20cc70cd437392c35e03f3274e76443",
+        "material_cell_geometry_tag_sha256": "ae9cad7fc704f7239aa4deccb08524eaa4202a7e79440f6ceb663f552e748a58",
+        "material_cell_tag_counts": {
+          "1": 162,
+          "2": 18,
+          "3": 72
+        },
+        "boundary_facet_geometry_tag_sha256": "0bd0320ec148f6c67f3ab9ecc8575bb16ce9f50be7537a7d0ae63c2ff1ef7452",
+        "boundary_facet_tag_counts": {
+          "11": 42,
+          "12": 42,
+          "13": 84,
+          "14": 84,
+          "15": 18,
+          "16": 18
+        },
+        "element": {
+          "family_raw": "ElementFamily.N1E",
+          "cell_raw": "CellType.hexahedron",
+          "degree": 5,
+          "hash": 16913352432823651555,
+          "map_type": "MapType.covariantPiola",
+          "value_shape": [
+            3
+          ]
+        },
+        "global_dof_count": 101815,
+        "dof_layout_identity_sha256": "2ff8af5412159ffb5f796a664d516ebbbbe7ce61ad22c8caa8efadc9edcd4e80",
+        "floquet": {
+          "constraint_mode": "topological_trace_p5",
+          "global_constraint_count": 6415,
+          "x_constraint_count": 2115,
+          "y_constraint_count": 4230,
+          "corner_constraint_count": 70,
+          "physical_block_count": 401,
+          "physical_entity_identity_sha256": "9f97f09defcbb74b19131e23e27a7c66dea4b34aecd75305e6e195877428b5d9"
+        }
+      },
+      "planned_vs_actual": {
+        "planned": {
+          "axis_values_nm": {
+            "x": [
+              0.0,
+              8.25,
+              16.5,
+              25.0,
+              33.5,
+              41.75,
+              50.0
+            ],
+            "y": [
+              0.0,
+              8.333333333333,
+              16.666666666667,
+              25.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              9.791666666667,
+              19.583333333333,
+              29.375,
+              39.166666666667,
+              48.958333333333,
+              58.75,
+              68.541666666667,
+              78.333333333333,
+              88.125,
+              97.916666666667,
+              107.708333333333,
+              117.5,
+              130.0
+            ]
+          },
+          "axis_cell_counts": [
+            6,
+            3,
+            14
+          ],
+          "global_cell_count": 252,
+          "canonical_cell_geometry_sha256": "d928085b0ead7ccced3e10aa7eb8217a26a1f27e62a53d94f7a2e4e259804383",
+          "material_cell_geometry_tag_sha256": "ae9cad7fc704f7239aa4deccb08524eaa4202a7e79440f6ceb663f552e748a58",
+          "boundary_facet_geometry_tag_sha256": "0bd0320ec148f6c67f3ab9ecc8575bb16ce9f50be7537a7d0ae63c2ff1ef7452",
+          "periodic_boundary_facet_counts": {
+            "11": 42,
+            "12": 42,
+            "13": 84,
+            "14": 84
+          },
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5
+          },
+          "expected_global_dof_count": 101815
+        },
+        "actual": {
+          "schema_version": "task002.actual-runtime-topology.v1",
+          "mpi_ranks": 2,
+          "global_cell_count": 252,
+          "canonical_cell_geometry_sha256": "d928085b0ead7ccced3e10aa7eb8217a26a1f27e62a53d94f7a2e4e259804383",
+          "axis_values_nm": {
+            "x": [
+              0.0,
+              8.25,
+              16.5,
+              25.0,
+              33.5,
+              41.75,
+              50.0
+            ],
+            "y": [
+              0.0,
+              8.333333333333,
+              16.666666666667,
+              25.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              9.791666666667,
+              19.583333333333,
+              29.375,
+              39.166666666667,
+              48.958333333333,
+              58.75,
+              68.541666666667,
+              78.333333333333,
+              88.125,
+              97.916666666667,
+              107.708333333333,
+              117.5,
+              130.0
+            ]
+          },
+          "axis_cell_counts": [
+            6,
+            3,
+            14
+          ],
+          "coordinate_axis_sha256": "30f4425ba02d3a04032096ec4fcdffccc20cc70cd437392c35e03f3274e76443",
+          "material_cell_geometry_tag_sha256": "ae9cad7fc704f7239aa4deccb08524eaa4202a7e79440f6ceb663f552e748a58",
+          "material_cell_tag_counts": {
+            "1": 162,
+            "2": 18,
+            "3": 72
+          },
+          "boundary_facet_geometry_tag_sha256": "0bd0320ec148f6c67f3ab9ecc8575bb16ce9f50be7537a7d0ae63c2ff1ef7452",
+          "boundary_facet_tag_counts": {
+            "11": 42,
+            "12": 42,
+            "13": 84,
+            "14": 84,
+            "15": 18,
+            "16": 18
+          },
+          "element": {
+            "family_raw": "ElementFamily.N1E",
+            "cell_raw": "CellType.hexahedron",
+            "degree": 5,
+            "hash": 16913352432823651555,
+            "map_type": "MapType.covariantPiola",
+            "value_shape": [
+              3
+            ]
+          },
+          "global_dof_count": 101815,
+          "dof_layout_identity_sha256": "2ff8af5412159ffb5f796a664d516ebbbbe7ce61ad22c8caa8efadc9edcd4e80",
+          "floquet": {
+            "constraint_mode": "topological_trace_p5",
+            "global_constraint_count": 6415,
+            "x_constraint_count": 2115,
+            "y_constraint_count": 4230,
+            "corner_constraint_count": 70,
+            "physical_block_count": 401,
+            "physical_entity_identity_sha256": "9f97f09defcbb74b19131e23e27a7c66dea4b34aecd75305e6e195877428b5d9"
+          }
+        },
+        "gates": {
+          "global_cell_count": true,
+          "axis_cell_counts": true,
+          "axis_values": true,
+          "canonical_cell_geometry": true,
+          "material_cell_tags": true,
+          "boundary_facets": true,
+          "periodic_boundary_counts": true,
+          "element_degree": true,
+          "element_family": true,
+          "element_cell": true,
+          "global_dof_count": true,
+          "floquet_entities_present": true,
+          "floquet_xy_constraints_present": true
+        },
+        "pass": true
+      },
+      "formal_gates": {
+        "completed_direct_solve": true,
+        "true_residual_le_1e-9": true,
+        "energy_closure_abs_le_1e-7": true,
+        "fixed_order_schema_complete": true,
+        "complete_n0_power_window": true,
+        "uniform_n1curl_identity": true,
+        "fixed_topology_identity_present": true,
+        "actual_runtime_topology_matches_plan": true
+      },
+      "watchdog": {
+        "status": "completed",
+        "return_code": 0,
+        "child_return_code": 0,
+        "elapsed_seconds": 63.614129135006806,
+        "peak_rss_bytes": 4271955968,
+        "peak_pss_bytes": 4041840640,
+        "peak_uss_bytes": 3861635072,
+        "peak_swap_bytes": 0,
+        "samples": 63,
+        "process_group_id": 29,
+        "cleanup_complete": true
+      },
+      "execution_sha256": "46ce797b9d61cfac19a0a3f0b7889711711c85e17ae88e27193b01be9577dd60",
+      "record_sha256": "cff8cfa5e933ba651633c4f1f081af6faaa0db605028be5dd9ec130048cf1d4a"
+    },
+    {
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/116/m3r/formal/1716bb21285b6058",
+      "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+      "parameters": {
+        "schema_version": "task002.s-p5-production-parameters.v2",
+        "configuration": {
+          "wavelength_nm": 13.5,
+          "incident_polarization": "S",
+          "grazing_deg": 2.0,
+          "azimuth_deg": 15.0,
+          "solver_theta_deg": 88.0,
+          "solver_phi_deg": 15.0
+        },
+        "geometry": {
+          "height_nm": 122.5,
+          "width_x_nm": 17.0
+        },
+        "fidelity": {
+          "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "degree": 5,
+          "h_nm": 10.0,
+          "axis_counts": [
+            6,
+            3,
+            14
+          ],
+          "element_family": "uniform_N1curl",
+          "fidelity_semantics": "best_available_operational_high_fidelity"
+        },
+        "normalized_features": [
+          0.5,
+          0.0,
+          0.9653374103741355,
+          0.2586613795333009
+        ],
+        "observable_schema_version": "task002.fixed-n0-orders.v3",
+        "execution": {
+          "mpi_ranks": 2,
+          "threads_per_rank": 1
+        }
+      },
+      "planned_topology_identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.208333333333334,
+            20.416666666666668,
+            30.625,
+            40.833333333333336,
+            51.041666666666664,
+            61.25,
+            71.45833333333333,
+            81.66666666666667,
+            91.875,
+            102.08333333333333,
+            112.29166666666667,
+            122.5,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "558369a56739ac8f07b9ba0d136c8afaee5a1f834cd35829bd052f09639d2b57",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.208333333333334,
+              20.416666666666668,
+              30.625,
+              40.833333333333336,
+              51.041666666666664,
+              61.25,
+              71.45833333333333,
+              81.66666666666667,
+              91.875,
+              102.08333333333333,
+              112.29166666666667,
+              122.5,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 122.5,
+            "width_x_nm": 17.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 88.0,
+            "phi_deg": 15.0,
+            "grazing_deg": 2.0,
+            "azimuth_deg": 15.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "ed1c34d883c390df15b94910ad9c110ef5d1873a9a770d9cedec0d14d6c10e84"
+        }
+      },
+      "actual_runtime_topology_identity": {
+        "schema_version": "task002.actual-runtime-topology.v1",
+        "mpi_ranks": 2,
+        "global_cell_count": 252,
+        "canonical_cell_geometry_sha256": "91c2bc86a9e8557f6ca09018b360b5c1ff759817d4ce420743bf68db1d60b7d5",
+        "axis_values_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333,
+            16.666666666667,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.208333333333,
+            20.416666666667,
+            30.625,
+            40.833333333333,
+            51.041666666667,
+            61.25,
+            71.458333333333,
+            81.666666666667,
+            91.875,
+            102.083333333333,
+            112.291666666667,
+            122.5,
+            130.0
+          ]
+        },
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "coordinate_axis_sha256": "851df77e87b7e708c6325fcedf5ea9204dcb4a5619a2253f41e4d6c02a300215",
+        "material_cell_geometry_tag_sha256": "c6923b6b8578f11ed8219e03f33559fc001255b24e30e04a42112601584b1d33",
+        "material_cell_tag_counts": {
+          "1": 162,
+          "2": 18,
+          "3": 72
+        },
+        "boundary_facet_geometry_tag_sha256": "e24c82be5c45a5e2f5b1e6de432b477ea5132e9e5c40697988cdd56f48167147",
+        "boundary_facet_tag_counts": {
+          "11": 42,
+          "12": 42,
+          "13": 84,
+          "14": 84,
+          "15": 18,
+          "16": 18
+        },
+        "element": {
+          "family_raw": "ElementFamily.N1E",
+          "cell_raw": "CellType.hexahedron",
+          "degree": 5,
+          "hash": 16913352432823651555,
+          "map_type": "MapType.covariantPiola",
+          "value_shape": [
+            3
+          ]
+        },
+        "global_dof_count": 101815,
+        "dof_layout_identity_sha256": "63a5d01563cebedf4361f7c472da255f062e2e7b510b395ec5f341bc73c69aad",
+        "floquet": {
+          "constraint_mode": "topological_trace_p5",
+          "global_constraint_count": 6415,
+          "x_constraint_count": 2115,
+          "y_constraint_count": 4230,
+          "corner_constraint_count": 70,
+          "physical_block_count": 401,
+          "physical_entity_identity_sha256": "34c7d64ccb86a1a4d1b8783a834229eb0e3e7b68c9d970393b39add45737e7d9"
+        }
+      },
+      "planned_vs_actual": {
+        "planned": {
+          "axis_values_nm": {
+            "x": [
+              0.0,
+              8.25,
+              16.5,
+              25.0,
+              33.5,
+              41.75,
+              50.0
+            ],
+            "y": [
+              0.0,
+              8.333333333333,
+              16.666666666667,
+              25.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              10.208333333333,
+              20.416666666667,
+              30.625,
+              40.833333333333,
+              51.041666666667,
+              61.25,
+              71.458333333333,
+              81.666666666667,
+              91.875,
+              102.083333333333,
+              112.291666666667,
+              122.5,
+              130.0
+            ]
+          },
+          "axis_cell_counts": [
+            6,
+            3,
+            14
+          ],
+          "global_cell_count": 252,
+          "canonical_cell_geometry_sha256": "91c2bc86a9e8557f6ca09018b360b5c1ff759817d4ce420743bf68db1d60b7d5",
+          "material_cell_geometry_tag_sha256": "c6923b6b8578f11ed8219e03f33559fc001255b24e30e04a42112601584b1d33",
+          "boundary_facet_geometry_tag_sha256": "e24c82be5c45a5e2f5b1e6de432b477ea5132e9e5c40697988cdd56f48167147",
+          "periodic_boundary_facet_counts": {
+            "11": 42,
+            "12": 42,
+            "13": 84,
+            "14": 84
+          },
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5
+          },
+          "expected_global_dof_count": 101815
+        },
+        "actual": {
+          "schema_version": "task002.actual-runtime-topology.v1",
+          "mpi_ranks": 2,
+          "global_cell_count": 252,
+          "canonical_cell_geometry_sha256": "91c2bc86a9e8557f6ca09018b360b5c1ff759817d4ce420743bf68db1d60b7d5",
+          "axis_values_nm": {
+            "x": [
+              0.0,
+              8.25,
+              16.5,
+              25.0,
+              33.5,
+              41.75,
+              50.0
+            ],
+            "y": [
+              0.0,
+              8.333333333333,
+              16.666666666667,
+              25.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              10.208333333333,
+              20.416666666667,
+              30.625,
+              40.833333333333,
+              51.041666666667,
+              61.25,
+              71.458333333333,
+              81.666666666667,
+              91.875,
+              102.083333333333,
+              112.291666666667,
+              122.5,
+              130.0
+            ]
+          },
+          "axis_cell_counts": [
+            6,
+            3,
+            14
+          ],
+          "coordinate_axis_sha256": "851df77e87b7e708c6325fcedf5ea9204dcb4a5619a2253f41e4d6c02a300215",
+          "material_cell_geometry_tag_sha256": "c6923b6b8578f11ed8219e03f33559fc001255b24e30e04a42112601584b1d33",
+          "material_cell_tag_counts": {
+            "1": 162,
+            "2": 18,
+            "3": 72
+          },
+          "boundary_facet_geometry_tag_sha256": "e24c82be5c45a5e2f5b1e6de432b477ea5132e9e5c40697988cdd56f48167147",
+          "boundary_facet_tag_counts": {
+            "11": 42,
+            "12": 42,
+            "13": 84,
+            "14": 84,
+            "15": 18,
+            "16": 18
+          },
+          "element": {
+            "family_raw": "ElementFamily.N1E",
+            "cell_raw": "CellType.hexahedron",
+            "degree": 5,
+            "hash": 16913352432823651555,
+            "map_type": "MapType.covariantPiola",
+            "value_shape": [
+              3
+            ]
+          },
+          "global_dof_count": 101815,
+          "dof_layout_identity_sha256": "63a5d01563cebedf4361f7c472da255f062e2e7b510b395ec5f341bc73c69aad",
+          "floquet": {
+            "constraint_mode": "topological_trace_p5",
+            "global_constraint_count": 6415,
+            "x_constraint_count": 2115,
+            "y_constraint_count": 4230,
+            "corner_constraint_count": 70,
+            "physical_block_count": 401,
+            "physical_entity_identity_sha256": "34c7d64ccb86a1a4d1b8783a834229eb0e3e7b68c9d970393b39add45737e7d9"
+          }
+        },
+        "gates": {
+          "global_cell_count": true,
+          "axis_cell_counts": true,
+          "axis_values": true,
+          "canonical_cell_geometry": true,
+          "material_cell_tags": true,
+          "boundary_facets": true,
+          "periodic_boundary_counts": true,
+          "element_degree": true,
+          "element_family": true,
+          "element_cell": true,
+          "global_dof_count": true,
+          "floquet_entities_present": true,
+          "floquet_xy_constraints_present": true
+        },
+        "pass": true
+      },
+      "formal_gates": {
+        "completed_direct_solve": true,
+        "true_residual_le_1e-9": true,
+        "energy_closure_abs_le_1e-7": true,
+        "fixed_order_schema_complete": true,
+        "complete_n0_power_window": true,
+        "uniform_n1curl_identity": true,
+        "fixed_topology_identity_present": true,
+        "actual_runtime_topology_matches_plan": true
+      },
+      "watchdog": {
+        "status": "completed",
+        "return_code": 0,
+        "child_return_code": 0,
+        "elapsed_seconds": 64.6263638669916,
+        "peak_rss_bytes": 4270587904,
+        "peak_pss_bytes": 4040259584,
+        "peak_uss_bytes": 3859857408,
+        "peak_swap_bytes": 0,
+        "samples": 64,
+        "process_group_id": 29,
+        "cleanup_complete": true
+      },
+      "execution_sha256": "1ca99402f6954bf7ed6f6d4ff71c0df75d6185c07987e39e0d0540e66e42a947",
+      "record_sha256": "4a7e4d3539893f7d16c90b9df193d8a263ea873a9ceb3d14b0118e04f2ed4d51"
+    },
+    {
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/116/m3r/formal/b304c147cacb0f33",
+      "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+      "parameters": {
+        "schema_version": "task002.s-p5-production-parameters.v2",
+        "configuration": {
+          "wavelength_nm": 13.5,
+          "incident_polarization": "S",
+          "grazing_deg": 10.0,
+          "azimuth_deg": 45.0,
+          "solver_theta_deg": 80.0,
+          "solver_phi_deg": 45.0
+        },
+        "geometry": {
+          "height_nm": 120.0,
+          "width_x_nm": 16.5
+        },
+        "fidelity": {
+          "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "degree": 5,
+          "h_nm": 10.0,
+          "axis_counts": [
+            6,
+            3,
+            14
+          ],
+          "element_family": "uniform_N1curl",
+          "fidelity_semantics": "best_available_operational_high_fidelity"
+        },
+        "normalized_features": [
+          0.0,
+          -0.5,
+          0.696364240320019,
+          0.6963642403200189
+        ],
+        "observable_schema_version": "task002.fixed-n0-orders.v3",
+        "execution": {
+          "mpi_ranks": 2,
+          "threads_per_rank": 1
+        }
+      },
+      "planned_topology_identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.375,
+            16.75,
+            25.0,
+            33.25,
+            41.625,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "d2c22ad9d9928dd43086d67c562d05c15e5804cb7c2b1071769b3eef3b232805",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 120.0,
+            "width_x_nm": 16.5
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 80.0,
+            "phi_deg": 45.0,
+            "grazing_deg": 10.0,
+            "azimuth_deg": 45.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "ccdec389a5432716124150924e211fdb061c30dd6ebc4e30acffe70b12a31e58"
+        }
+      },
+      "actual_runtime_topology_identity": {
+        "schema_version": "task002.actual-runtime-topology.v1",
+        "mpi_ranks": 2,
+        "global_cell_count": 252,
+        "canonical_cell_geometry_sha256": "7dcf8fe4367020961c3df6215b2b0b0fd83fe6df25c628ffe07eb95f578c7481",
+        "axis_values_nm": {
+          "x": [
+            0.0,
+            8.375,
+            16.75,
+            25.0,
+            33.25,
+            41.625,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333,
+            16.666666666667,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "coordinate_axis_sha256": "e53772c9969c8888c89d7996164f505138bbefabb285aaef07e55c1aa7a3a9ca",
+        "material_cell_geometry_tag_sha256": "c61dd9f590c5fba2b604283e838e37a01859d6fb6460c1062e4aa60b870648db",
+        "material_cell_tag_counts": {
+          "1": 162,
+          "2": 18,
+          "3": 72
+        },
+        "boundary_facet_geometry_tag_sha256": "8241dd08b16e55bd1fa0e2048a51b34e06c87a92877c1e8455101d8a8b7ff6a4",
+        "boundary_facet_tag_counts": {
+          "11": 42,
+          "12": 42,
+          "13": 84,
+          "14": 84,
+          "15": 18,
+          "16": 18
+        },
+        "element": {
+          "family_raw": "ElementFamily.N1E",
+          "cell_raw": "CellType.hexahedron",
+          "degree": 5,
+          "hash": 16913352432823651555,
+          "map_type": "MapType.covariantPiola",
+          "value_shape": [
+            3
+          ]
+        },
+        "global_dof_count": 101815,
+        "dof_layout_identity_sha256": "1116a391d4e316ff57280e373886210fc34fa96a5a40adfb6ac5e6438228b295",
+        "floquet": {
+          "constraint_mode": "topological_trace_p5",
+          "global_constraint_count": 6415,
+          "x_constraint_count": 2115,
+          "y_constraint_count": 4230,
+          "corner_constraint_count": 70,
+          "physical_block_count": 401,
+          "physical_entity_identity_sha256": "f089168f1f075565a82ed639c93ea3c6e99e222e7cbeef6aec98d5dd3af313df"
+        }
+      },
+      "planned_vs_actual": {
+        "planned": {
+          "axis_values_nm": {
+            "x": [
+              0.0,
+              8.375,
+              16.75,
+              25.0,
+              33.25,
+              41.625,
+              50.0
+            ],
+            "y": [
+              0.0,
+              8.333333333333,
+              16.666666666667,
+              25.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ]
+          },
+          "axis_cell_counts": [
+            6,
+            3,
+            14
+          ],
+          "global_cell_count": 252,
+          "canonical_cell_geometry_sha256": "7dcf8fe4367020961c3df6215b2b0b0fd83fe6df25c628ffe07eb95f578c7481",
+          "material_cell_geometry_tag_sha256": "c61dd9f590c5fba2b604283e838e37a01859d6fb6460c1062e4aa60b870648db",
+          "boundary_facet_geometry_tag_sha256": "8241dd08b16e55bd1fa0e2048a51b34e06c87a92877c1e8455101d8a8b7ff6a4",
+          "periodic_boundary_facet_counts": {
+            "11": 42,
+            "12": 42,
+            "13": 84,
+            "14": 84
+          },
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5
+          },
+          "expected_global_dof_count": 101815
+        },
+        "actual": {
+          "schema_version": "task002.actual-runtime-topology.v1",
+          "mpi_ranks": 2,
+          "global_cell_count": 252,
+          "canonical_cell_geometry_sha256": "7dcf8fe4367020961c3df6215b2b0b0fd83fe6df25c628ffe07eb95f578c7481",
+          "axis_values_nm": {
+            "x": [
+              0.0,
+              8.375,
+              16.75,
+              25.0,
+              33.25,
+              41.625,
+              50.0
+            ],
+            "y": [
+              0.0,
+              8.333333333333,
+              16.666666666667,
+              25.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ]
+          },
+          "axis_cell_counts": [
+            6,
+            3,
+            14
+          ],
+          "coordinate_axis_sha256": "e53772c9969c8888c89d7996164f505138bbefabb285aaef07e55c1aa7a3a9ca",
+          "material_cell_geometry_tag_sha256": "c61dd9f590c5fba2b604283e838e37a01859d6fb6460c1062e4aa60b870648db",
+          "material_cell_tag_counts": {
+            "1": 162,
+            "2": 18,
+            "3": 72
+          },
+          "boundary_facet_geometry_tag_sha256": "8241dd08b16e55bd1fa0e2048a51b34e06c87a92877c1e8455101d8a8b7ff6a4",
+          "boundary_facet_tag_counts": {
+            "11": 42,
+            "12": 42,
+            "13": 84,
+            "14": 84,
+            "15": 18,
+            "16": 18
+          },
+          "element": {
+            "family_raw": "ElementFamily.N1E",
+            "cell_raw": "CellType.hexahedron",
+            "degree": 5,
+            "hash": 16913352432823651555,
+            "map_type": "MapType.covariantPiola",
+            "value_shape": [
+              3
+            ]
+          },
+          "global_dof_count": 101815,
+          "dof_layout_identity_sha256": "1116a391d4e316ff57280e373886210fc34fa96a5a40adfb6ac5e6438228b295",
+          "floquet": {
+            "constraint_mode": "topological_trace_p5",
+            "global_constraint_count": 6415,
+            "x_constraint_count": 2115,
+            "y_constraint_count": 4230,
+            "corner_constraint_count": 70,
+            "physical_block_count": 401,
+            "physical_entity_identity_sha256": "f089168f1f075565a82ed639c93ea3c6e99e222e7cbeef6aec98d5dd3af313df"
+          }
+        },
+        "gates": {
+          "global_cell_count": true,
+          "axis_cell_counts": true,
+          "axis_values": true,
+          "canonical_cell_geometry": true,
+          "material_cell_tags": true,
+          "boundary_facets": true,
+          "periodic_boundary_counts": true,
+          "element_degree": true,
+          "element_family": true,
+          "element_cell": true,
+          "global_dof_count": true,
+          "floquet_entities_present": true,
+          "floquet_xy_constraints_present": true
+        },
+        "pass": true
+      },
+      "formal_gates": {
+        "completed_direct_solve": true,
+        "true_residual_le_1e-9": true,
+        "energy_closure_abs_le_1e-7": true,
+        "fixed_order_schema_complete": true,
+        "complete_n0_power_window": true,
+        "uniform_n1curl_identity": true,
+        "fixed_topology_identity_present": true,
+        "actual_runtime_topology_matches_plan": true
+      },
+      "watchdog": {
+        "status": "completed",
+        "return_code": 0,
+        "child_return_code": 0,
+        "elapsed_seconds": 63.606389398977626,
+        "peak_rss_bytes": 4251492352,
+        "peak_pss_bytes": 4021702656,
+        "peak_uss_bytes": 3841900544,
+        "peak_swap_bytes": 0,
+        "samples": 63,
+        "process_group_id": 29,
+        "cleanup_complete": true
+      },
+      "execution_sha256": "a28844c68cbf26f763641dd033881465fde1caca9c66e8c602ef2553ab527456",
+      "record_sha256": "5d89f90616b452ea793583e5b6e2db769461b3d60b92b02cd4a00fa4401e8410"
+    },
+    {
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/116/m3r/formal/2e49e2fcead0458a",
+      "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+      "parameters": {
+        "schema_version": "task002.s-p5-production-parameters.v2",
+        "configuration": {
+          "wavelength_nm": 13.5,
+          "incident_polarization": "S",
+          "grazing_deg": 5.25,
+          "azimuth_deg": 45.0,
+          "solver_theta_deg": 84.75,
+          "solver_phi_deg": 45.0
+        },
+        "geometry": {
+          "height_nm": 120.0,
+          "width_x_nm": 17.5
+        },
+        "fidelity": {
+          "model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "degree": 5,
+          "h_nm": 10.0,
+          "axis_counts": [
+            6,
+            3,
+            14
+          ],
+          "element_family": "uniform_N1curl",
+          "fidelity_semantics": "best_available_operational_high_fidelity"
+        },
+        "normalized_features": [
+          0.0,
+          0.5,
+          0.7041404170270222,
+          0.7041404170270221
+        ],
+        "observable_schema_version": "task002.fixed-n0-orders.v3",
+        "execution": {
+          "mpi_ranks": 2,
+          "threads_per_rank": 1
+        }
+      },
+      "planned_topology_identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.125,
+            16.25,
+            25.0,
+            33.75,
+            41.875,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "61118943696c7ba8ec675f0753aafb0fda76f0bd1568cad0ac52be23ffdc120e",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 120.0,
+            "width_x_nm": 17.5
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 84.75,
+            "phi_deg": 45.0,
+            "grazing_deg": 5.25,
+            "azimuth_deg": 45.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "9c7c93724c426c21150fe17dea7bacb0f7e104c5373d64052e29e84eb836b511"
+        }
+      },
+      "actual_runtime_topology_identity": {
+        "schema_version": "task002.actual-runtime-topology.v1",
+        "mpi_ranks": 2,
+        "global_cell_count": 252,
+        "canonical_cell_geometry_sha256": "2c192db588ea8d56cd46ede8163e3e0549c5cdade4f888d80278bca6e4707850",
+        "axis_values_nm": {
+          "x": [
+            0.0,
+            8.125,
+            16.25,
+            25.0,
+            33.75,
+            41.875,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333,
+            16.666666666667,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "coordinate_axis_sha256": "031c58e66cb49ef7c1b7cca54afe9c274568d1f6f7a1e212b30ac1aa782022e6",
+        "material_cell_geometry_tag_sha256": "df5adf2cdd2ec6aea4c961bf7c8923c0457985b77cd7c212ed9bee7afc75d24c",
+        "material_cell_tag_counts": {
+          "1": 162,
+          "2": 18,
+          "3": 72
+        },
+        "boundary_facet_geometry_tag_sha256": "5241cb10e30c54b467b2bb28808e05326955c34d3e9e86e2544b935a59342889",
+        "boundary_facet_tag_counts": {
+          "11": 42,
+          "12": 42,
+          "13": 84,
+          "14": 84,
+          "15": 18,
+          "16": 18
+        },
+        "element": {
+          "family_raw": "ElementFamily.N1E",
+          "cell_raw": "CellType.hexahedron",
+          "degree": 5,
+          "hash": 16913352432823651555,
+          "map_type": "MapType.covariantPiola",
+          "value_shape": [
+            3
+          ]
+        },
+        "global_dof_count": 101815,
+        "dof_layout_identity_sha256": "95c6e30ed8ec99a32c6fa2603e275f0289bdded025db874fc6edcb95e0fc5ef4",
+        "floquet": {
+          "constraint_mode": "topological_trace_p5",
+          "global_constraint_count": 6415,
+          "x_constraint_count": 2115,
+          "y_constraint_count": 4230,
+          "corner_constraint_count": 70,
+          "physical_block_count": 401,
+          "physical_entity_identity_sha256": "6dad87855bf9ac91ed23aa529c07b46354dab243bbcb95e966b483568d1eadf7"
+        }
+      },
+      "planned_vs_actual": {
+        "planned": {
+          "axis_values_nm": {
+            "x": [
+              0.0,
+              8.125,
+              16.25,
+              25.0,
+              33.75,
+              41.875,
+              50.0
+            ],
+            "y": [
+              0.0,
+              8.333333333333,
+              16.666666666667,
+              25.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ]
+          },
+          "axis_cell_counts": [
+            6,
+            3,
+            14
+          ],
+          "global_cell_count": 252,
+          "canonical_cell_geometry_sha256": "2c192db588ea8d56cd46ede8163e3e0549c5cdade4f888d80278bca6e4707850",
+          "material_cell_geometry_tag_sha256": "df5adf2cdd2ec6aea4c961bf7c8923c0457985b77cd7c212ed9bee7afc75d24c",
+          "boundary_facet_geometry_tag_sha256": "5241cb10e30c54b467b2bb28808e05326955c34d3e9e86e2544b935a59342889",
+          "periodic_boundary_facet_counts": {
+            "11": 42,
+            "12": 42,
+            "13": 84,
+            "14": 84
+          },
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5
+          },
+          "expected_global_dof_count": 101815
+        },
+        "actual": {
+          "schema_version": "task002.actual-runtime-topology.v1",
+          "mpi_ranks": 2,
+          "global_cell_count": 252,
+          "canonical_cell_geometry_sha256": "2c192db588ea8d56cd46ede8163e3e0549c5cdade4f888d80278bca6e4707850",
+          "axis_values_nm": {
+            "x": [
+              0.0,
+              8.125,
+              16.25,
+              25.0,
+              33.75,
+              41.875,
+              50.0
+            ],
+            "y": [
+              0.0,
+              8.333333333333,
+              16.666666666667,
+              25.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ]
+          },
+          "axis_cell_counts": [
+            6,
+            3,
+            14
+          ],
+          "coordinate_axis_sha256": "031c58e66cb49ef7c1b7cca54afe9c274568d1f6f7a1e212b30ac1aa782022e6",
+          "material_cell_geometry_tag_sha256": "df5adf2cdd2ec6aea4c961bf7c8923c0457985b77cd7c212ed9bee7afc75d24c",
+          "material_cell_tag_counts": {
+            "1": 162,
+            "2": 18,
+            "3": 72
+          },
+          "boundary_facet_geometry_tag_sha256": "5241cb10e30c54b467b2bb28808e05326955c34d3e9e86e2544b935a59342889",
+          "boundary_facet_tag_counts": {
+            "11": 42,
+            "12": 42,
+            "13": 84,
+            "14": 84,
+            "15": 18,
+            "16": 18
+          },
+          "element": {
+            "family_raw": "ElementFamily.N1E",
+            "cell_raw": "CellType.hexahedron",
+            "degree": 5,
+            "hash": 16913352432823651555,
+            "map_type": "MapType.covariantPiola",
+            "value_shape": [
+              3
+            ]
+          },
+          "global_dof_count": 101815,
+          "dof_layout_identity_sha256": "95c6e30ed8ec99a32c6fa2603e275f0289bdded025db874fc6edcb95e0fc5ef4",
+          "floquet": {
+            "constraint_mode": "topological_trace_p5",
+            "global_constraint_count": 6415,
+            "x_constraint_count": 2115,
+            "y_constraint_count": 4230,
+            "corner_constraint_count": 70,
+            "physical_block_count": 401,
+            "physical_entity_identity_sha256": "6dad87855bf9ac91ed23aa529c07b46354dab243bbcb95e966b483568d1eadf7"
+          }
+        },
+        "gates": {
+          "global_cell_count": true,
+          "axis_cell_counts": true,
+          "axis_values": true,
+          "canonical_cell_geometry": true,
+          "material_cell_tags": true,
+          "boundary_facets": true,
+          "periodic_boundary_counts": true,
+          "element_degree": true,
+          "element_family": true,
+          "element_cell": true,
+          "global_dof_count": true,
+          "floquet_entities_present": true,
+          "floquet_xy_constraints_present": true
+        },
+        "pass": true
+      },
+      "formal_gates": {
+        "completed_direct_solve": true,
+        "true_residual_le_1e-9": true,
+        "energy_closure_abs_le_1e-7": true,
+        "fixed_order_schema_complete": true,
+        "complete_n0_power_window": true,
+        "uniform_n1curl_identity": true,
+        "fixed_topology_identity_present": true,
+        "actual_runtime_topology_matches_plan": true
+      },
+      "watchdog": {
+        "status": "completed",
+        "return_code": 0,
+        "child_return_code": 0,
+        "elapsed_seconds": 62.5797512170102,
+        "peak_rss_bytes": 4254732288,
+        "peak_pss_bytes": 4025100288,
+        "peak_uss_bytes": 3845152768,
+        "peak_swap_bytes": 0,
+        "samples": 62,
+        "process_group_id": 29,
+        "cleanup_complete": true
+      },
+      "execution_sha256": "4d329582a1b9a580d1c5bf1c26bf2df7853c166b9cbe414f257948d8fd97b0c8",
+      "record_sha256": "38ba78c2bc34457ffc171e4a1fce17849dd415cca681e207a69a086d0b58539c"
+    }
+  ],
+  "gates": {
+    "five_p5_smokes": true,
+    "one_clean_source_sha": true,
+    "all_planned_vs_actual_pass": true,
+    "all_formal_gates_pass": true,
+    "all_zero_swap": true,
+    "all_cleanup_complete": true
+  }
+}

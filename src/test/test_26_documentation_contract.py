@@ -71,6 +71,15 @@ ACTIVE_RESEARCH_CASES = {
     "095_high_order_local_hp_resource_envelope",
     "096_hybrid_channel_memory_closure",
 }
+SURROGATE_TASK_CASES = {
+    "110_surrogate_two_parameter_pilot",
+    "111_task001_illumination_robustness",
+    "112_s_continuous_illumination_multifidelity_surrogate",
+    "113_task002_m2a_low_grazing_diagnostics",
+    "114_task002_solver_domain_robustness",
+    "115_task002_full3d_hierarchy_qualification",
+    "116_task002_single_fidelity_design",
+}
 
 RECORDED_CASES = {
     "002_2d_tm_dtn_equivalence": (
@@ -276,7 +285,8 @@ class DocumentationContractTests(unittest.TestCase):
             observed,
             QUALIFIED_OR_FROZEN_CASES
             | STAGING_OR_IN_PROGRESS_CASES
-            | ACTIVE_RESEARCH_CASES,
+            | ACTIVE_RESEARCH_CASES
+            | SURROGATE_TASK_CASES,
         )
         required_sections = (
             "## 物理问题",
@@ -415,6 +425,18 @@ class DocumentationContractTests(unittest.TestCase):
                         readme,
                     )
                 self.assertIn("MPI8", readme)
+
+        for case in sorted(SURROGATE_TASK_CASES):
+            folder = cases_root / case
+            with self.subTest(case=case):
+                for name in (
+                    "README.md",
+                    "config.json",
+                    "expected.json",
+                    "test_command.txt",
+                    "records",
+                ):
+                    self.assertTrue((folder / name).exists(), name)
 
     def test_recorded_and_test_backed_case_files_are_explicit(self):
         cases_root = ROOT / "benchmarks" / "cases"
