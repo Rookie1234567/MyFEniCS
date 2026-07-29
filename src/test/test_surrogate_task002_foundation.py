@@ -295,6 +295,10 @@ def test_dataset_roundtrip_hash_split_and_structural_null(tmp_path: Path) -> Non
         samples.append({
             "sample_id": f"s{index}", "source_sha": "c" * 40, "source_dirty": False,
             "status": "measured_pass", "split": split,
+            "solver_route_id": (
+                "full3d_static_uniform_n1curl_p4_h10" if split == "train_lf"
+                else "full3d_static_uniform_n1curl_p5_h10"
+            ),
             "inputs": [120.0, 17.0, 5.25, 45.0],
             "aggregates": {"R_total": 0.1, "T_total": 0.6, "A_balance": 0.3, "A_volume": 0.3},
             "mother_response": _mother_response(),
@@ -310,6 +314,23 @@ def test_dataset_roundtrip_hash_split_and_structural_null(tmp_path: Path) -> Non
         stream.write("tamper\n")
     with pytest.raises(ValueError, match="hash mismatch"):
         verify_compact_dataset(dataset_dir)
+
+
+def test_dataset_rejects_failed_and_split_mismatched_solver_routes(tmp_path: Path) -> None:
+    sample = {
+        "sample_id": "failed", "source_sha": "c" * 40, "source_dirty": False,
+        "status": "failed_numerical_gate", "split": "train_hf",
+        "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+        "inputs": [120.0, 17.0, 5.25, 45.0],
+        "aggregates": {"R_total": 0.1, "T_total": 0.6, "A_balance": 0.3, "A_volume": 0.3},
+        "mother_response": _mother_response(),
+    }
+    with pytest.raises(ValueError, match="measured_pass"):
+        write_compact_dataset([sample], output_dir=tmp_path / "failed", dataset_id="failed")
+    sample["status"] = "measured_pass"
+    sample["solver_route_id"] = "full3d_static_uniform_n1curl_p4_h10"
+    with pytest.raises(ValueError, match="fidelity split"):
+        write_compact_dataset([sample], output_dir=tmp_path / "mixed", dataset_id="mixed")
 
 
 def test_case112_scaffold_contract() -> None:

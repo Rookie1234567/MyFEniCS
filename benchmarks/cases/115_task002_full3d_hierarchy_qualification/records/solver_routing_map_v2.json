@@ -1,0 +1,15 @@
+{
+  "schema_version": "task002.case115-solver-routing-map-v2.v1",
+  "LF_candidate": "Full3D static uniform N1curl p4/h10",
+  "HF": "Full3D static uniform N1curl p5/h10",
+  "production_surrogate": "Full3D_p5_single_fidelity",
+  "p4_h7p5": "discretization validation only",
+  "Hybrid": "hard quarantined from Task002 production",
+  "hf_truth_semantics": "Full3D p5/h10 is best available operational HF, not continuum truth",
+  "M3_status": "closed_pending_Review_V4",
+  "gates": {
+    "no_hybrid_production_route": true,
+    "no_p4_h7p5_lf_route": true,
+    "no_m3_bulk_started": true
+  }
+}

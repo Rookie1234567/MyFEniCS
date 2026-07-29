@@ -22,6 +22,8 @@ ARRAY_FILES = (
     "power_carrying_mask.npy", "train_hf_indices.npy", "train_lf_indices.npy",
     "frozen_validation_indices.npy",
 )
+LF_ROUTE = "full3d_static_uniform_n1curl_p4_h10"
+HF_ROUTE = "full3d_static_uniform_n1curl_p5_h10"
 
 
 def _json_dump(path: Path, value: Any) -> None:
@@ -80,6 +82,7 @@ def write_compact_dataset(
     powers = np.full((len(records), n_orders, 2), np.nan, dtype=np.float64)
     mask = np.zeros((len(records), n_orders, 2), dtype=np.bool_)
     split_indices = {"train_lf": [], "train_hf": [], "frozen_validation": []}
+    route_indices = {LF_ROUTE: [], HF_ROUTE: []}
 
     for index, record in enumerate(records):
         inputs[index] = np.asarray(record["inputs"], dtype=np.float64)
@@ -106,7 +109,14 @@ def write_compact_dataset(
         split = str(record.get("split"))
         if split not in split_indices:
             raise ValueError(f"unsupported Task002 split: {split}")
+        route = str(record.get("solver_route_id"))
+        if route not in route_indices:
+            raise ValueError("Task002 dataset rejects unregistered or mixed solver route")
+        expected_route = LF_ROUTE if split == "train_lf" else HF_ROUTE
+        if route != expected_route:
+            raise ValueError("Task002 solver route does not match its explicit fidelity split")
         split_indices[split].append(index)
+        route_indices[route].append(index)
 
     arrays = {
         "inputs.npy": inputs,
@@ -154,6 +164,11 @@ def write_compact_dataset(
         "units": {"inputs": ["nm", "nm", "degree", "degree"], "powers": "1"},
         "structural_null": "NaN in arrays plus false in power_carrying_mask",
         "split_hash": canonical_hash(split_indices),
+        "solver_routes": {
+            "train_lf": LF_ROUTE, "train_hf": HF_ROUTE,
+            "frozen_validation": HF_ROUTE,
+        },
+        "solver_route_indices_hash": canonical_hash(route_indices),
     }
     _json_dump(output_dir / "dataset_manifest.json", manifest)
     hashed = [*ARRAY_FILES, "sample_records.jsonl", "order_identity.json", "dataset_manifest.json"]

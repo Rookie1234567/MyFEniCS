@@ -1,0 +1,2438 @@
+{
+  "schema_version": "task002.case115-mesh-topology-identity.v1",
+  "config_sha256": "8a98d91140466891d03ae83b3b901798024554861f89d29f2eef2b8b6a7fc3aa",
+  "rows": [
+    {
+      "height_nm": 115.0,
+      "width_x_nm": 16.0,
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "c620c6ea0e409454abf08f806de281cd702623c036698710567d876223e962b3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.5,
+            17.0,
+            25.0,
+            33.0,
+            41.5,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            9.583333333333334,
+            19.166666666666668,
+            28.75,
+            38.333333333333336,
+            47.916666666666664,
+            57.5,
+            67.08333333333333,
+            76.66666666666667,
+            86.25,
+            95.83333333333333,
+            105.41666666666667,
+            115.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "2ceab85e9913386b927eebe2526112461e3511858661fe92256138b5e889a8f1",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 4,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 4,
+          "resolved_interior_degree": 4,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+        },
+        "topology_element_hash": "7bf8b67f1c3e5543819c5fd52724eadf321ee5c60715373da440f0c9d60f779e",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 4,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 4,
+            "resolved_interior_degree": 4,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              9.583333333333334,
+              19.166666666666668,
+              28.75,
+              38.333333333333336,
+              47.916666666666664,
+              57.5,
+              67.08333333333333,
+              76.66666666666667,
+              86.25,
+              95.83333333333333,
+              105.41666666666667,
+              115.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 115.0,
+            "width_x_nm": 16.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "dfec32a8bb548611509a612769efc383bbe19343dc00590f72e2964bc561ce8b"
+        }
+      }
+    },
+    {
+      "height_nm": 115.0,
+      "width_x_nm": 17.0,
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "c620c6ea0e409454abf08f806de281cd702623c036698710567d876223e962b3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            9.583333333333334,
+            19.166666666666668,
+            28.75,
+            38.333333333333336,
+            47.916666666666664,
+            57.5,
+            67.08333333333333,
+            76.66666666666667,
+            86.25,
+            95.83333333333333,
+            105.41666666666667,
+            115.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "0e697533a3ad8803788192ce7fb9747438e9b579d2c098004f3112aa983338e5",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 4,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 4,
+          "resolved_interior_degree": 4,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+        },
+        "topology_element_hash": "7bf8b67f1c3e5543819c5fd52724eadf321ee5c60715373da440f0c9d60f779e",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 4,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 4,
+            "resolved_interior_degree": 4,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              9.583333333333334,
+              19.166666666666668,
+              28.75,
+              38.333333333333336,
+              47.916666666666664,
+              57.5,
+              67.08333333333333,
+              76.66666666666667,
+              86.25,
+              95.83333333333333,
+              105.41666666666667,
+              115.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 115.0,
+            "width_x_nm": 17.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "c69cd9951a65442e5a6293db39ee2c8fc4d6bf36f3a70b041cb8fe84f17e25c0"
+        }
+      }
+    },
+    {
+      "height_nm": 115.0,
+      "width_x_nm": 18.0,
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "c620c6ea0e409454abf08f806de281cd702623c036698710567d876223e962b3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.0,
+            16.0,
+            25.0,
+            34.0,
+            42.0,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            9.583333333333334,
+            19.166666666666668,
+            28.75,
+            38.333333333333336,
+            47.916666666666664,
+            57.5,
+            67.08333333333333,
+            76.66666666666667,
+            86.25,
+            95.83333333333333,
+            105.41666666666667,
+            115.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "81299b3b8172c90c962658ac4efca231721916f764df938f0882c11f22e4113a",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 4,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 4,
+          "resolved_interior_degree": 4,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+        },
+        "topology_element_hash": "7bf8b67f1c3e5543819c5fd52724eadf321ee5c60715373da440f0c9d60f779e",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 4,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 4,
+            "resolved_interior_degree": 4,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              9.583333333333334,
+              19.166666666666668,
+              28.75,
+              38.333333333333336,
+              47.916666666666664,
+              57.5,
+              67.08333333333333,
+              76.66666666666667,
+              86.25,
+              95.83333333333333,
+              105.41666666666667,
+              115.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 115.0,
+            "width_x_nm": 18.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "ca8f43173d18df04f932898fb399e9026d54cc8c8aa31110f896d92d6d9b73e7"
+        }
+      }
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 16.0,
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "c620c6ea0e409454abf08f806de281cd702623c036698710567d876223e962b3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.5,
+            17.0,
+            25.0,
+            33.0,
+            41.5,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "c32c7b58879ff06d25c5a8aa89f207da7220b7951ef313549f81c76463dbf461",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 4,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 4,
+          "resolved_interior_degree": 4,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+        },
+        "topology_element_hash": "7bf8b67f1c3e5543819c5fd52724eadf321ee5c60715373da440f0c9d60f779e",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 4,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 4,
+            "resolved_interior_degree": 4,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 120.0,
+            "width_x_nm": 16.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "1eeb01158be952d36b3473e5db0d8af5164d06d0a631516942435da5a7e0e8b3"
+        }
+      }
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "c620c6ea0e409454abf08f806de281cd702623c036698710567d876223e962b3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "d408de76d79fafb3f37e502cfe44db6467e35de9e8732f8b13cfaffb9a378d35",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 4,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 4,
+          "resolved_interior_degree": 4,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+        },
+        "topology_element_hash": "7bf8b67f1c3e5543819c5fd52724eadf321ee5c60715373da440f0c9d60f779e",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 4,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 4,
+            "resolved_interior_degree": 4,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 120.0,
+            "width_x_nm": 17.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "7e216fdf5f3b16e70a735754957eafa52e8685f623c8893675fdbfdfa9a88b51"
+        }
+      }
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 18.0,
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "c620c6ea0e409454abf08f806de281cd702623c036698710567d876223e962b3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.0,
+            16.0,
+            25.0,
+            34.0,
+            42.0,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "bfc8495a4894dfc0321e64384d508befb74a6de0a8dc2f95e11a8dfb9313a363",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 4,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 4,
+          "resolved_interior_degree": 4,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+        },
+        "topology_element_hash": "7bf8b67f1c3e5543819c5fd52724eadf321ee5c60715373da440f0c9d60f779e",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 4,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 4,
+            "resolved_interior_degree": 4,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 120.0,
+            "width_x_nm": 18.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "5f1cb4ec3389806b9b128357a3f50273eff57702723b33d3033d8bfd3a3b550c"
+        }
+      }
+    },
+    {
+      "height_nm": 125.0,
+      "width_x_nm": 16.0,
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "c620c6ea0e409454abf08f806de281cd702623c036698710567d876223e962b3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.5,
+            17.0,
+            25.0,
+            33.0,
+            41.5,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.416666666666666,
+            20.833333333333332,
+            31.25,
+            41.666666666666664,
+            52.083333333333336,
+            62.5,
+            72.91666666666667,
+            83.33333333333333,
+            93.75,
+            104.16666666666667,
+            114.58333333333333,
+            125.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "9f5759b06268437373203b31625ef76fa95e174c141da6510879ff71c19b25b4",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 4,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 4,
+          "resolved_interior_degree": 4,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+        },
+        "topology_element_hash": "7bf8b67f1c3e5543819c5fd52724eadf321ee5c60715373da440f0c9d60f779e",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 4,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 4,
+            "resolved_interior_degree": 4,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.416666666666666,
+              20.833333333333332,
+              31.25,
+              41.666666666666664,
+              52.083333333333336,
+              62.5,
+              72.91666666666667,
+              83.33333333333333,
+              93.75,
+              104.16666666666667,
+              114.58333333333333,
+              125.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 125.0,
+            "width_x_nm": 16.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "ddb07dd5feb8121d4d066f03349d45666bdae6913adf57ba77bed755b0ea2a4e"
+        }
+      }
+    },
+    {
+      "height_nm": 125.0,
+      "width_x_nm": 17.0,
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "c620c6ea0e409454abf08f806de281cd702623c036698710567d876223e962b3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.416666666666666,
+            20.833333333333332,
+            31.25,
+            41.666666666666664,
+            52.083333333333336,
+            62.5,
+            72.91666666666667,
+            83.33333333333333,
+            93.75,
+            104.16666666666667,
+            114.58333333333333,
+            125.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "fb60ca84369380818ecc28a4e490339ce0034403be9b4a12cfd555c80d33e8cd",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 4,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 4,
+          "resolved_interior_degree": 4,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+        },
+        "topology_element_hash": "7bf8b67f1c3e5543819c5fd52724eadf321ee5c60715373da440f0c9d60f779e",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 4,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 4,
+            "resolved_interior_degree": 4,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.416666666666666,
+              20.833333333333332,
+              31.25,
+              41.666666666666664,
+              52.083333333333336,
+              62.5,
+              72.91666666666667,
+              83.33333333333333,
+              93.75,
+              104.16666666666667,
+              114.58333333333333,
+              125.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 125.0,
+            "width_x_nm": 17.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "339f6958b0ea63454d641886b20c065b5ebb4e69d2e82b1eefe021d43c4effe4"
+        }
+      }
+    },
+    {
+      "height_nm": 125.0,
+      "width_x_nm": 18.0,
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "c620c6ea0e409454abf08f806de281cd702623c036698710567d876223e962b3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.0,
+            16.0,
+            25.0,
+            34.0,
+            42.0,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.416666666666666,
+            20.833333333333332,
+            31.25,
+            41.666666666666664,
+            52.083333333333336,
+            62.5,
+            72.91666666666667,
+            83.33333333333333,
+            93.75,
+            104.16666666666667,
+            114.58333333333333,
+            125.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "6975b4a76d44ae7515338bcddc2773a3b94eb8a4f41979492e4213398ecbf1a8",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 4,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 4,
+          "resolved_interior_degree": 4,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+        },
+        "topology_element_hash": "7bf8b67f1c3e5543819c5fd52724eadf321ee5c60715373da440f0c9d60f779e",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 4,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 4,
+            "resolved_interior_degree": 4,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 4, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "76a7f12e8ced09c9a453b38882714071fdf038574a87f7d068d0131a37d6447c"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.416666666666666,
+              20.833333333333332,
+              31.25,
+              41.666666666666664,
+              52.083333333333336,
+              62.5,
+              72.91666666666667,
+              83.33333333333333,
+              93.75,
+              104.16666666666667,
+              114.58333333333333,
+              125.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 125.0,
+            "width_x_nm": 18.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "f22c99c8f810d05aac56dbfdf1c22defb347c3ef7b5dc133434b69db6f8f153d"
+        }
+      }
+    },
+    {
+      "height_nm": 115.0,
+      "width_x_nm": 16.0,
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.5,
+            17.0,
+            25.0,
+            33.0,
+            41.5,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            9.583333333333334,
+            19.166666666666668,
+            28.75,
+            38.333333333333336,
+            47.916666666666664,
+            57.5,
+            67.08333333333333,
+            76.66666666666667,
+            86.25,
+            95.83333333333333,
+            105.41666666666667,
+            115.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "2ceab85e9913386b927eebe2526112461e3511858661fe92256138b5e889a8f1",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              9.583333333333334,
+              19.166666666666668,
+              28.75,
+              38.333333333333336,
+              47.916666666666664,
+              57.5,
+              67.08333333333333,
+              76.66666666666667,
+              86.25,
+              95.83333333333333,
+              105.41666666666667,
+              115.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 115.0,
+            "width_x_nm": 16.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "777aa205e7e5eff04dd589f0817bc56034679955088a32bf045f2d56499b0c39"
+        }
+      }
+    },
+    {
+      "height_nm": 115.0,
+      "width_x_nm": 17.0,
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            9.583333333333334,
+            19.166666666666668,
+            28.75,
+            38.333333333333336,
+            47.916666666666664,
+            57.5,
+            67.08333333333333,
+            76.66666666666667,
+            86.25,
+            95.83333333333333,
+            105.41666666666667,
+            115.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "0e697533a3ad8803788192ce7fb9747438e9b579d2c098004f3112aa983338e5",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              9.583333333333334,
+              19.166666666666668,
+              28.75,
+              38.333333333333336,
+              47.916666666666664,
+              57.5,
+              67.08333333333333,
+              76.66666666666667,
+              86.25,
+              95.83333333333333,
+              105.41666666666667,
+              115.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 115.0,
+            "width_x_nm": 17.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "c3513244eecc1349bb7925f747b4f8c55001007b54748a340009a3ba8ebbb1e5"
+        }
+      }
+    },
+    {
+      "height_nm": 115.0,
+      "width_x_nm": 18.0,
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.0,
+            16.0,
+            25.0,
+            34.0,
+            42.0,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            9.583333333333334,
+            19.166666666666668,
+            28.75,
+            38.333333333333336,
+            47.916666666666664,
+            57.5,
+            67.08333333333333,
+            76.66666666666667,
+            86.25,
+            95.83333333333333,
+            105.41666666666667,
+            115.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "81299b3b8172c90c962658ac4efca231721916f764df938f0882c11f22e4113a",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              9.583333333333334,
+              19.166666666666668,
+              28.75,
+              38.333333333333336,
+              47.916666666666664,
+              57.5,
+              67.08333333333333,
+              76.66666666666667,
+              86.25,
+              95.83333333333333,
+              105.41666666666667,
+              115.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 115.0,
+            "width_x_nm": 18.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "6748bf6378f75d31c18857e80d0febf888fd0b8a2e985ba0ee95eeed6aee0733"
+        }
+      }
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 16.0,
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.5,
+            17.0,
+            25.0,
+            33.0,
+            41.5,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "c32c7b58879ff06d25c5a8aa89f207da7220b7951ef313549f81c76463dbf461",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 120.0,
+            "width_x_nm": 16.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "44ce7bb037aeddf6727b5c50ba75abbdd86d9ed153e5a53fdb279d4ecbdd3198"
+        }
+      }
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "d408de76d79fafb3f37e502cfe44db6467e35de9e8732f8b13cfaffb9a378d35",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 120.0,
+            "width_x_nm": 17.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "f09a361de16e71c78aa3eb362973daf1db91aca954b193afd9d023b5af0ec25a"
+        }
+      }
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 18.0,
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.0,
+            16.0,
+            25.0,
+            34.0,
+            42.0,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.0,
+            20.0,
+            30.0,
+            40.0,
+            50.0,
+            60.0,
+            70.0,
+            80.0,
+            90.0,
+            100.0,
+            110.0,
+            120.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "bfc8495a4894dfc0321e64384d508befb74a6de0a8dc2f95e11a8dfb9313a363",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.0,
+              20.0,
+              30.0,
+              40.0,
+              50.0,
+              60.0,
+              70.0,
+              80.0,
+              90.0,
+              100.0,
+              110.0,
+              120.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 120.0,
+            "width_x_nm": 18.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "467d9c01567693a7b6b3e939579f25c92e329ef233d0874cf0645a48ec7bc2d9"
+        }
+      }
+    },
+    {
+      "height_nm": 125.0,
+      "width_x_nm": 16.0,
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.5,
+            17.0,
+            25.0,
+            33.0,
+            41.5,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.416666666666666,
+            20.833333333333332,
+            31.25,
+            41.666666666666664,
+            52.083333333333336,
+            62.5,
+            72.91666666666667,
+            83.33333333333333,
+            93.75,
+            104.16666666666667,
+            114.58333333333333,
+            125.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "9f5759b06268437373203b31625ef76fa95e174c141da6510879ff71c19b25b4",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.416666666666666,
+              20.833333333333332,
+              31.25,
+              41.666666666666664,
+              52.083333333333336,
+              62.5,
+              72.91666666666667,
+              83.33333333333333,
+              93.75,
+              104.16666666666667,
+              114.58333333333333,
+              125.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 125.0,
+            "width_x_nm": 16.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "e52f6f390b11b481377a4af3f4dd7313930774d4df4ad3c3a7d41b7aacda85bb"
+        }
+      }
+    },
+    {
+      "height_nm": 125.0,
+      "width_x_nm": 17.0,
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.25,
+            16.5,
+            25.0,
+            33.5,
+            41.75,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.416666666666666,
+            20.833333333333332,
+            31.25,
+            41.666666666666664,
+            52.083333333333336,
+            62.5,
+            72.91666666666667,
+            83.33333333333333,
+            93.75,
+            104.16666666666667,
+            114.58333333333333,
+            125.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "fb60ca84369380818ecc28a4e490339ce0034403be9b4a12cfd555c80d33e8cd",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.416666666666666,
+              20.833333333333332,
+              31.25,
+              41.666666666666664,
+              52.083333333333336,
+              62.5,
+              72.91666666666667,
+              83.33333333333333,
+              93.75,
+              104.16666666666667,
+              114.58333333333333,
+              125.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 125.0,
+            "width_x_nm": 17.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "30c2eee74a9b1fdf9f05dd19fd15d9cbc24b71b9a06b957efd360f2cc464b365"
+        }
+      }
+    },
+    {
+      "height_nm": 125.0,
+      "width_x_nm": 18.0,
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "identity": {
+        "schema_version": "task002.full3d-topology.v1",
+        "axis_cell_counts": [
+          6,
+          3,
+          14
+        ],
+        "cell_count": 252,
+        "logical_connectivity_sha256": "816c917c5d313fecbfe553980e7da2fd15ed7573037673244ebf3e040a8ba036",
+        "material_tag_topology_sha256": "87338d5497e8c5f28b0dbca3e4cb30033962a205a02995938af340793250080d",
+        "floquet_entity_topology_sha256": "2a8ee5d1bebfc1ad78b3e998d384a7e0e4f1abcd96191921bff4fd6e148e8b9e",
+        "dof_layout_identity_sha256": "b63bd79ba4db65a6c2902688e111e411d85919195f2fed928d67b04f26f760e3",
+        "resolved_axes_nm": {
+          "x": [
+            0.0,
+            8.0,
+            16.0,
+            25.0,
+            34.0,
+            42.0,
+            50.0
+          ],
+          "y": [
+            0.0,
+            8.333333333333334,
+            16.666666666666668,
+            25.0
+          ],
+          "z": [
+            -10.0,
+            0.0,
+            10.416666666666666,
+            20.833333333333332,
+            31.25,
+            41.666666666666664,
+            52.083333333333336,
+            62.5,
+            72.91666666666667,
+            83.33333333333333,
+            93.75,
+            104.16666666666667,
+            114.58333333333333,
+            125.0,
+            130.0
+          ]
+        },
+        "coordinate_sha256": "6975b4a76d44ae7515338bcddc2773a3b94eb8a4f41979492e4213398ecbf1a8",
+        "material_region_cell_counts": {
+          "air": 162,
+          "substrate": 18,
+          "grating": 72
+        },
+        "material_plane_alignment": true,
+        "positive_axis_widths": true,
+        "element_identity": {
+          "family": "N1curl",
+          "cell": "hexahedron",
+          "degree": 5,
+          "nedelec_fixed_trace_enabled": false,
+          "resolved_trace_degree": 5,
+          "resolved_interior_degree": 5,
+          "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+          "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+        },
+        "topology_element_hash": "2c57aeb94a7030246c2e3e934666f17ae1022e6fa26ad2c388879f11fa30f65d",
+        "config_identity": {
+          "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+          "element": {
+            "family": "N1curl",
+            "cell": "hexahedron",
+            "degree": 5,
+            "nedelec_fixed_trace_enabled": false,
+            "resolved_trace_degree": 5,
+            "resolved_interior_degree": 5,
+            "actual_ufl_basix_element_signature": "Basix element (N1E, hexahedron, 5, legendre, unset, False, float64, [])",
+            "element_signature_sha256": "3e1c01994c665390a576a0b1cc940d75b2d02555f9347545c1a8926ab511d777"
+          },
+          "mesh": {
+            "cell_type": "hexahedron",
+            "spacing_mode": "boundary_fitted",
+            "axis_cell_counts": [
+              6,
+              3,
+              14
+            ],
+            "axis_z_values_nm": [
+              -10.0,
+              0.0,
+              10.416666666666666,
+              20.833333333333332,
+              31.25,
+              41.666666666666664,
+              52.083333333333336,
+              62.5,
+              72.91666666666667,
+              83.33333333333333,
+              93.75,
+              104.16666666666667,
+              114.58333333333333,
+              125.0,
+              130.0
+            ],
+            "axis_z_profile": "task002-full3d-fixed-layers-1-12-1",
+            "target_h_nm": 10.0
+          },
+          "geometry": {
+            "height_nm": 125.0,
+            "width_x_nm": 18.0
+          },
+          "illumination": {
+            "wavelength_nm": 13.5,
+            "polarization": "S",
+            "theta_deg": 89.5,
+            "phi_deg": 0.0,
+            "grazing_deg": 0.5,
+            "azimuth_deg": 0.0
+          },
+          "assembly_backend": "assembly_time_static_condensed",
+          "mpi_ranks": 2,
+          "threads_per_rank": 1,
+          "config_sha256": "576a3297e174a82706387102fa100b3302a766bc6c1b9e91f15cd4731a5a1748"
+        }
+      }
+    }
+  ],
+  "per_fidelity_gates": {
+    "S_LF_FULL3D_STATIC_P4_H10": {
+      "geometry_count": 9,
+      "invariant": {
+        "axis_cell_counts": true,
+        "cell_count": true,
+        "logical_connectivity_sha256": true,
+        "material_tag_topology_sha256": true,
+        "floquet_entity_topology_sha256": true,
+        "dof_layout_identity_sha256": true,
+        "material_region_cell_counts": true,
+        "topology_element_hash": true
+      },
+      "coordinate_hash_count": 9
+    },
+    "S_HF_FULL3D_STATIC_P5_H10": {
+      "geometry_count": 9,
+      "invariant": {
+        "axis_cell_counts": true,
+        "cell_count": true,
+        "logical_connectivity_sha256": true,
+        "material_tag_topology_sha256": true,
+        "floquet_entity_topology_sha256": true,
+        "dof_layout_identity_sha256": true,
+        "material_region_cell_counts": true,
+        "topology_element_hash": true
+      },
+      "coordinate_hash_count": 9
+    }
+  },
+  "real_run_smokes": [
+    {
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "geometry": [
+        120.0,
+        17.0
+      ],
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/6d3244312313f546",
+      "identity_matches_static_audit": true
+    },
+    {
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "geometry": [
+        117.5,
+        17.0
+      ],
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/c79304b5298afb55",
+      "identity_matches_static_audit": true
+    },
+    {
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "geometry": [
+        122.5,
+        17.0
+      ],
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/26a77470f02d3c99",
+      "identity_matches_static_audit": true
+    },
+    {
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "geometry": [
+        120.0,
+        16.5
+      ],
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/030591b4e6639b10",
+      "identity_matches_static_audit": true
+    },
+    {
+      "model_id": "S_LF_FULL3D_STATIC_P4_H10",
+      "geometry": [
+        120.0,
+        17.5
+      ],
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/c43de9b6f9ee47f1",
+      "identity_matches_static_audit": true
+    },
+    {
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "geometry": [
+        120.0,
+        17.0
+      ],
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/6e835157d0fdcf15",
+      "identity_matches_static_audit": true
+    },
+    {
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "geometry": [
+        117.5,
+        17.0
+      ],
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/70ec9dc2c7fee754",
+      "identity_matches_static_audit": true
+    },
+    {
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "geometry": [
+        122.5,
+        17.0
+      ],
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/a55efc120a6b6915",
+      "identity_matches_static_audit": true
+    },
+    {
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "geometry": [
+        120.0,
+        16.5
+      ],
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/36641b1015bea8b7",
+      "identity_matches_static_audit": true
+    },
+    {
+      "model_id": "S_HF_FULL3D_STATIC_P5_H10",
+      "geometry": [
+        120.0,
+        17.5
+      ],
+      "run": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/261af7872f2141e7",
+      "identity_matches_static_audit": true
+    }
+  ],
+  "gates": {
+    "nine_geometries_each_fidelity": true,
+    "all_topology_fields_invariant": true,
+    "coordinates_change_at_all_nine_geometries": true,
+    "ten_real_smokes_match_static_audit": true
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "schema_version": "task002.case115-hybrid-quarantine.v1",
+  "selected_option": "B2_hard_quarantine",
+  "hybrid_route_status": "deferred_known_near_degenerate_bug",
+  "production_registry_disposition": "all Task002 Hybrid IDs rejected",
+  "research_diagnostic_evidence": "Case112--114 retained unchanged",
+  "historical_hybrid_p6_identity_addendum": {
+    "task001_model_id": "HF10",
+    "degree": 6,
+    "h_nm": 10.0,
+    "modes": 120,
+    "axis_counts": [
+      6,
+      3,
+      14
+    ],
+    "element_family": "uniform_N1curl",
+    "actual_element_identity": "uniform N1curl p6",
+    "identity_correction": "historical labels describing p5-trace/p6-interior were incorrect; raw evidence is unchanged"
+  },
+  "dense_floquet_independent_probes": [
+    {
+      "schema_version": "task002.m2c-dense-floquet-probe.v1",
+      "source_sha": "fe0e53571491f21e4774d7576d9285f9a09df705",
+      "mpi_ranks": 1,
+      "matrix_shape": [
+        6,
+        6
+      ],
+      "transform_shape": [
+        6,
+        4
+      ],
+      "off_diagonal_norm_fraction": 0.11842685571008907,
+      "max_abs_error": 5.551115123125783e-17,
+      "relative_frobenius_error": 2.6412695834517807e-17,
+      "independent_reference": "NumPy C.conj().T @ A @ C",
+      "gates": {
+        "genuinely_off_diagonal": true,
+        "max_abs_le_1e-13": true,
+        "relative_le_1e-13": true
+      }
+    },
+    {
+      "schema_version": "task002.m2c-dense-floquet-probe.v1",
+      "source_sha": "fe0e53571491f21e4774d7576d9285f9a09df705",
+      "mpi_ranks": 2,
+      "matrix_shape": [
+        6,
+        6
+      ],
+      "transform_shape": [
+        6,
+        4
+      ],
+      "off_diagonal_norm_fraction": 0.11842685571008907,
+      "max_abs_error": 5.551115123125783e-17,
+      "relative_frobenius_error": 2.6412695834517807e-17,
+      "independent_reference": "NumPy C.conj().T @ A @ C",
+      "gates": {
+        "genuinely_off_diagonal": true,
+        "max_abs_le_1e-13": true,
+        "relative_le_1e-13": true
+      }
+    }
+  ],
+  "gates": {
+    "production_hybrid_unselectable": true,
+    "historical_raw_evidence_unchanged": true,
+    "p6_identity_corrected_to_uniform_n1curl_p6": true,
+    "dense_probe_mpi1_mpi2_pass": true
+  }
+}
