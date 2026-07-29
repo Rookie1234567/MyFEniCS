@@ -259,6 +259,18 @@ def test_secant_builder_spools_current_and_reuses_shadow_inventory(
             result.audit["endpoint_spool"]["hidden_reference_content"]
             is False
         )
+        gradient_hashes = comm.allgather(
+            result.audit["gradient_inventory_sha256"]
+        )
+        assert len(set(gradient_hashes)) == 1
+        assert len(
+            result.audit["endpoint_spool"]["rank_local_spool_bytes"]
+        ) == comm.size
+        assert len(
+            result.audit["endpoint_spool"][
+                "maximum_live_spool_read_bytes_by_rank"
+            ]
+        ) == comm.size
         for index, goal_id in enumerate(FORMAL_GOAL_IDS):
             current_weight = (
                 1.0 / 3.0

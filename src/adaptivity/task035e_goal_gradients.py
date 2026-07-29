@@ -1297,9 +1297,11 @@ def build_task035e_formal_secant_goal_gradients(
             )
             spool.flush()
             local_spool_bytes = reduced_bytes + active_bytes
-            total_spool_bytes = int(
-                comm.allreduce(local_spool_bytes, op=MPI.SUM)
-            )
+            rank_local_spool_bytes = [
+                int(value)
+                for value in comm.allgather(local_spool_bytes)
+            ]
+            total_spool_bytes = sum(rank_local_spool_bytes)
             current_bundle.destroy()
             current_bundle = None
             release_audit = _release_spooled_endpoint(comm)
@@ -1388,6 +1390,12 @@ def build_task035e_formal_secant_goal_gradients(
                 )
                 for goal_id in INTERIOR_SENSITIVE_GOAL_IDS
             }
+            maximum_live_spool_read_bytes_by_rank = [
+                int(value)
+                for value in comm.allgather(
+                    maximum_live_spool_read_bytes
+                )
+            ]
             unsigned = {
                 "schema_version": (
                     "task035e.formal-59-goal-analytic-secant-gradients.v1"
@@ -1441,10 +1449,15 @@ def build_task035e_formal_secant_goal_gradients(
                         True
                     ),
                     "maximum_simultaneous_endpoint_vector_inventories": 1,
-                    "local_spool_bytes": local_spool_bytes,
+                    "rank_local_spool_bytes": (
+                        rank_local_spool_bytes
+                    ),
                     "total_spool_bytes": total_spool_bytes,
                     "maximum_live_spool_read_bytes": (
-                        maximum_live_spool_read_bytes
+                        max(maximum_live_spool_read_bytes_by_rank)
+                    ),
+                    "maximum_live_spool_read_bytes_by_rank": (
+                        maximum_live_spool_read_bytes_by_rank
                     ),
                     "release_audit": release_audit,
                     "hidden_reference_content": False,
