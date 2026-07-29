@@ -1,21 +1,27 @@
 from __future__ import annotations
 
 import inspect
-from types import SimpleNamespace
+from types import MappingProxyType, SimpleNamespace
 
 from mpi4py import MPI
 import numpy as np
+from petsc4py import PETSc
 import pytest
 
 from dolfinx import default_real_type, fem, mesh
 from basix.ufl import element
 
 from src.adaptivity.task035e_goal_gradients import (
+    INTERIOR_SENSITIVE_GOAL_IDS,
+    Task035eFormalGoalGradients,
     _assemble_volume_p6_gradient,
     _oriented_physical_basis,
     _point_owners,
     _secant_weights,
+    _weighted_sum_into_first,
+    build_task035e_formal_secant_goal_gradients,
 )
+from src.adaptivity.blind_controller.contracts import FORMAL_GOAL_IDS
 
 
 def _space(domain: mesh.Mesh):
@@ -167,6 +173,131 @@ def test_formal_builder_has_no_reference_or_endpoint_input() -> None:
         build_task035e_formal_goal_gradients
     ).parameters
     assert tuple(parameters) == ("view",)
+
+
+def test_weighted_secant_sum_reuses_first_petsc_vector() -> None:
+    comm = MPI.COMM_WORLD
+    first = PETSc.Vec().createMPI(17, comm=comm)
+    second = first.duplicate()
+    start, end = map(int, first.getOwnershipRange())
+    rows = np.arange(start, end, dtype=np.float64)
+    first_values = (
+        np.cos(0.13 * (rows + 1.0))
+        + 0.4j * np.sin(0.17 * (rows + 1.0))
+    )
+    second_values = (
+        0.3 * np.cos(0.19 * (rows + 1.0))
+        - 0.2j * np.sin(0.23 * (rows + 1.0))
+    )
+    first.getArray()[:] = first_values
+    second.getArray()[:] = second_values
+    first.assemble()
+    second.assemble()
+    handle = int(first.handle)
+    try:
+        observed = _weighted_sum_into_first(
+            first,
+            second,
+            coefficients=(0.37 + 0.0j, 0.63 + 0.0j),
+        )
+        assert observed is first
+        assert int(observed.handle) == handle
+        np.testing.assert_allclose(
+            observed.getArray(readonly=True),
+            0.37 * first_values + 0.63 * second_values,
+            rtol=2.0e-15,
+            atol=2.0e-15,
+        )
+    finally:
+        second.destroy()
+        first.destroy()
+
+
+def test_secant_builder_reuses_current_inventory_and_destroys_shadow(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.adaptivity import task035e_goal_gradients as module
+
+    comm = MPI.COMM_WORLD
+    bundles: list[Task035eFormalGoalGradients] = []
+
+    def endpoint_bundle(scale: float) -> Task035eFormalGoalGradients:
+        gradients = {}
+        active = {}
+        for index, goal_id in enumerate(FORMAL_GOAL_IDS):
+            vector = PETSc.Vec().createMPI(23, comm=comm)
+            vector.set(PETSc.ScalarType(scale * (index + 1)))
+            gradients[goal_id] = vector
+        for index, goal_id in enumerate(INTERIOR_SENSITIVE_GOAL_IDS):
+            vector = PETSc.Vec().createMPI(29, comm=comm)
+            vector.set(PETSc.ScalarType(scale * (index + 2)))
+            active[goal_id] = vector
+        bundle = Task035eFormalGoalGradients(
+            gradients=MappingProxyType(gradients),
+            active_full_gradients=MappingProxyType(active),
+            audit=MappingProxyType(
+                {
+                    "gradient_inventory_sha256": (
+                        f"{int(scale)}" * 64
+                    ),
+                    "field_goal_metadata": {
+                        "interface_probe_l2": 3.0 * scale,
+                        "volume_probe_l2": 5.0 * scale,
+                    },
+                }
+            ),
+        )
+        bundles.append(bundle)
+        return bundle
+
+    endpoints = iter((endpoint_bundle(1.0), endpoint_bundle(2.0)))
+    monkeypatch.setattr(
+        module,
+        "build_task035e_formal_goal_gradients",
+        lambda _view: next(endpoints),
+    )
+    view = SimpleNamespace(
+        mesh_data=SimpleNamespace(mesh=SimpleNamespace(comm=comm))
+    )
+    current_handles = {
+        goal_id: int(vector.handle)
+        for goal_id, vector in bundles[0].gradients.items()
+    }
+    result = build_task035e_formal_secant_goal_gradients(view, view)
+    try:
+        assert result is bundles[0]
+        assert bundles[1]._destroyed is True
+        assert not bundles[1].gradients
+        assert not bundles[1].active_full_gradients
+        assert result.audit["third_full_gradient_inventory_allocated"] is False
+        assert result.audit["secant_vector_allocation_strategy"] == (
+            "destructive_reuse_of_current_endpoint_vectors"
+        )
+        for index, goal_id in enumerate(FORMAL_GOAL_IDS):
+            assert int(result.gradients[goal_id].handle) == current_handles[
+                goal_id
+            ]
+            current_weight = (
+                1.0 / 3.0
+                if goal_id
+                in {
+                    "scalar/interface_probe_l2",
+                    "scalar/volume_probe_l2",
+                }
+                else 0.5
+            )
+            shadow_weight = 1.0 - current_weight
+            expected = (index + 1) * (
+                current_weight + 2.0 * shadow_weight
+            )
+            np.testing.assert_allclose(
+                result.gradients[goal_id].getArray(readonly=True),
+                expected,
+                rtol=2.0e-15,
+                atol=2.0e-15,
+            )
+    finally:
+        result.destroy()
 
 
 def test_analytic_secant_weights_close_quadratic_and_l2_goals() -> None:

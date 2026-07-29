@@ -231,6 +231,25 @@ def _sum_vectors(
     return result
 
 
+def _weighted_sum_into_first(
+    first: PETSc.Vec,
+    second: PETSc.Vec,
+    *,
+    coefficients: tuple[complex, complex],
+) -> PETSc.Vec:
+    """Replace ``first`` by one weighted sum without allocating a third Vec."""
+
+    if (
+        int(first.getSize()) != int(second.getSize())
+        or tuple(map(int, first.getOwnershipRange()))
+        != tuple(map(int, second.getOwnershipRange()))
+    ):
+        raise ValueError("in-place gradient sum layouts differ")
+    first.scale(PETSc.ScalarType(coefficients[0]))
+    first.axpy(PETSc.ScalarType(coefficients[1]), second)
+    return first
+
+
 def _destroy_vectors_once(vectors: tuple[PETSc.Vec, ...]) -> None:
     """Best-effort cleanup without relying on PETSc wrapper hashability."""
 
@@ -1148,8 +1167,7 @@ def build_task035e_formal_secant_goal_gradients(
 
     current_bundle = build_task035e_formal_goal_gradients(current_view)
     shadow_bundle = build_task035e_formal_goal_gradients(shadow_view)
-    reduced: dict[str, PETSc.Vec] = {}
-    active_full: dict[str, PETSc.Vec] = {}
+    result: Task035eFormalGoalGradients | None = None
     weight_audit: dict[str, Any] = {}
     try:
         if (
@@ -1173,19 +1191,15 @@ def build_task035e_formal_secant_goal_gradients(
                 complex(current_weight),
                 complex(shadow_weight),
             )
-            reduced[goal_id] = _sum_vectors(
-                (
-                    current_bundle.gradients[goal_id],
-                    shadow_bundle.gradients[goal_id],
-                ),
+            _weighted_sum_into_first(
+                current_bundle.gradients[goal_id],
+                shadow_bundle.gradients[goal_id],
                 coefficients=weights,
             )
             if goal_id in INTERIOR_SENSITIVE_GOAL_IDS:
-                active_full[goal_id] = _sum_vectors(
-                    (
-                        current_bundle.active_full_gradients[goal_id],
-                        shadow_bundle.active_full_gradients[goal_id],
-                    ),
+                _weighted_sum_into_first(
+                    current_bundle.active_full_gradients[goal_id],
+                    shadow_bundle.active_full_gradients[goal_id],
                     coefficients=weights,
                 )
             weight_audit[goal_id] = {
@@ -1197,7 +1211,7 @@ def build_task035e_formal_secant_goal_gradients(
 
         reduced_identities = {
             goal_id: _vector_identity(
-                reduced[goal_id],
+                current_bundle.gradients[goal_id],
                 namespace=(
                     "task035e.secant-goal-gradient."
                     + hashlib.sha256(goal_id.encode("utf-8")).hexdigest()
@@ -1207,7 +1221,7 @@ def build_task035e_formal_secant_goal_gradients(
         }
         active_identities = {
             goal_id: _vector_identity(
-                active_full[goal_id],
+                current_bundle.active_full_gradients[goal_id],
                 namespace=(
                     "task035e.secant-active-full-gradient."
                     + hashlib.sha256(goal_id.encode("utf-8")).hexdigest()
@@ -1253,6 +1267,11 @@ def build_task035e_formal_secant_goal_gradients(
                 "endpoint gradients are state-independent; their average "
                 "retains the same derivative"
             ),
+            "secant_vector_allocation_strategy": (
+                "destructive_reuse_of_current_endpoint_vectors"
+            ),
+            "third_full_gradient_inventory_allocated": False,
+            "endpoint_vectors_combined_in_formal_goal_order": True,
             "hidden_reference_consumed": False,
             "endpoint_difference_used_as_gradient": False,
             "endpoint_goal_delta_consumed": False,
@@ -1268,19 +1287,13 @@ def build_task035e_formal_secant_goal_gradients(
                 ),
             ),
         }
-        return Task035eFormalGoalGradients(
-            gradients=MappingProxyType(reduced),
-            active_full_gradients=MappingProxyType(active_full),
-            audit=MappingProxyType(audit),
-        )
-    except Exception:
-        _destroy_vectors_once(
-            (*reduced.values(), *active_full.values())
-        )
-        raise
+        current_bundle.audit = MappingProxyType(audit)
+        result = current_bundle
+        return result
     finally:
         shadow_bundle.destroy()
-        current_bundle.destroy()
+        if result is None:
+            current_bundle.destroy()
 
 
 __all__ = [
