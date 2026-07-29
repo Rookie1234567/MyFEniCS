@@ -1,0 +1,50 @@
+{
+  "schema_version": "task002.case112-scaffold-record.v1",
+  "lf_angle_pilot_count": 49,
+  "fixed_hf_angle_pilot_count": 9,
+  "lf_angle_design_hash": "aa51b52a9b40205d92d663cd88d5ed9114d25615956ace781b339fd4595b25c4",
+  "fixed_hf_angle_design_hash": "21fcffaa5fa7179fb2b717eb347f1e434ebbe7b5455fc0fc01d5e0e570a8ebc9",
+  "order_window_audit": {
+    "schema_version": "task002.order-window-audit.v1",
+    "angle_count": 49,
+    "searched_m_range": [-12, 12],
+    "propagating_m_union": [-7, -6, -5, -4, -3, -2, -1, 0],
+    "fixed_m_orders": [0, -1, -2, -3, -4, -5, -6, -7, 1],
+    "missing_propagating_m": [],
+    "coverage_pass": true,
+    "nearest_abs_beta_over_k0": {
+      "-12": 2.0044377231838273,
+      "-11": 1.697365613112572,
+      "-10": 1.374819792929848,
+      "-9": 1.0222567688630502,
+      "-8": 0.5879526681128135,
+      "-7": 0.22784661759278876,
+      "-6": 0.4087662643101967,
+      "-5": 0.29115738114389694,
+      "-4": 0.2695439428734568,
+      "-3": 0.38986073945143895,
+      "-2": 0.05177351147755177,
+      "-1": 0.20675180868121637,
+      "0": 0.008726535498360668,
+      "1": 0.20675180868121637,
+      "2": 0.5113182085482135,
+      "3": 0.7911676879100628,
+      "4": 1.0659485495993484,
+      "5": 1.3387853862337138,
+      "6": 1.6106664180993389,
+      "7": 1.882005927300165,
+      "8": 2.153008664727793,
+      "9": 2.4237875959730784,
+      "10": 2.69441019712904,
+      "11": 2.9649192755272367,
+      "12": 3.235343306419421
+    },
+    "n_nonzero_disposition": "geometry and materials are y-invariant; n!=0 response is numerical leakage, not a production channel",
+    "power_semantics": "analytic propagation is a dispersion audit; power_carrying remains an independent measured mother-response field"
+  },
+  "gates": {
+    "lf_count_49": true,
+    "hf_count_9": true,
+    "order_window_complete": true
+  }
+}

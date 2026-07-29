@@ -1,0 +1,5 @@
+source scripts/activate_myfenics_surrogate_wsl.sh
+python -m pytest -q src/test/test_surrogate_task002_foundation.py
+python -m benchmarks.check_case112_task002 --check-records
+python -m compileall -q src/forward_data benchmarks/check_case112_task002.py
+git diff --check

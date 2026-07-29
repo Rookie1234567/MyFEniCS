@@ -1,0 +1,38 @@
+{
+  "schema_version": "task002.case112-expected.v1",
+  "ordinary_default_changed": false,
+  "hybrid_p_development_allowed": false,
+  "p_surrogate_allowed": false,
+  "production_inversion_allowed": false,
+  "bulk_generation_allowed_before_m2_gate": false,
+  "zero_grazing_status": "zero_grazing_limit_not_defined",
+  "out_of_domain_status": "out_of_training_domain",
+  "clean_source_required": true,
+  "zero_swap_required": true,
+  "watchdog_cleanup_required": true,
+  "m2": {
+    "center_anchor_count": 4,
+    "lf_angle_pilot_count": 49,
+    "hf_angle_pilot_count_min": 9,
+    "hf_angle_pilot_count_max": 13,
+    "all_samples_must_pass_or_have_disposition": true,
+    "order_window_must_be_complete": true,
+    "fixed_topology_must_hold": true
+  },
+  "active_production_power_floor": 1e-6,
+  "weak_channel_power_range": [1e-8, 1e-6],
+  "near_cutoff_threshold_candidate": 0.02,
+  "provisional_sigma": "sqrt((relative_noise*y)^2 + (1e-6)^2)",
+  "frozen_validation_gates": {
+    "selected_channel_p95_abs_over_sigma_max": 0.5,
+    "selected_channel_max_abs_over_sigma_max": 1.0,
+    "selected_channel_range_nrmse_max": 0.01,
+    "aggregate_rt_p95_absolute_error_max": 0.0005,
+    "aggregate_rt_p95_relative_error_max_when_truth_ge_1e-2": 0.005,
+    "predictive_interval_90_coverage": [0.80, 0.98],
+    "gradient_direction_cosine_min": 0.90
+  },
+  "frozen_validation_is_never_training_or_acquisition": true,
+  "maximum_adaptive_rounds": 4,
+  "adaptive_hf_additions_total": [16, 32]
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": "task002.case112-config.v1",
+  "wavelength_nm": 13.5,
+  "polarization": "S",
+  "domain": {
+    "height_nm": [115.0, 125.0],
+    "width_x_nm": [16.0, 18.0],
+    "grazing_deg": [0.5, 10.0],
+    "azimuth_deg": [0.0, 90.0]
+  },
+  "fidelities": {
+    "LF": "S_LF_HYBRID_P4_H10_M120",
+    "HF": "S_HF_HYBRID_P6_H10_M120",
+    "mpi_ranks": 2,
+    "threads_per_rank": 1
+  },
+  "observable_schema_version": "task001.fixed-n0-orders.v2",
+  "lf_angle_pilot": {
+    "grazing_deg": [0.5, 1.0, 2.0, 4.0, 6.0, 8.0, 10.0],
+    "azimuth_deg": [0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0]
+  },
+  "hf_angle_pilot": {"fixed_count": 9, "optional_count_max": 4},
+  "sampling_seeds": {"lf_sobol": 20260729, "frozen_validation": 20260730}
+}
