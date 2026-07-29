@@ -784,8 +784,16 @@ def recover_active_full_to_p6_field(
     active_values: PETSc.Vec | np.ndarray,
     *,
     conformity_tolerance: float = 5.0e-10,
+    target_field: Any | None = None,
 ) -> tuple[Any, dict[str, Any]]:
-    """Recover one conforming p6 storage field from active coefficients."""
+    """Recover one conforming p6 storage field from active coefficients.
+
+    ``target_field`` is an explicit lifecycle optimization for a caller that
+    no longer needs the field's previous coefficients.  The existing p6
+    storage is overwritten in place, while its replacement delta is measured
+    over the transfer's one-to-one designated global rows before any write.
+    The ordinary allocation path remains the default.
+    """
 
     selected_rows, active, selected_row_audit = (
         _owned_cell_active_values(transfer, active_values)
@@ -805,7 +813,65 @@ def recover_active_full_to_p6_field(
             )
         return active[positions]
 
-    field = fem.Function(transfer.p6_space)
+    storage_reused = target_field is not None
+    field = (
+        fem.Function(transfer.p6_space)
+        if target_field is None
+        else target_field
+    )
+    if storage_reused:
+        function_space = getattr(field, "function_space", None)
+        field_vector = getattr(getattr(field, "x", None), "petsc_vec", None)
+        if (
+            function_space is None
+            or function_space.mesh is not transfer.p6_space.mesh
+            or field_vector is None
+            or int(field_vector.getSize())
+            != int(transfer.p6_space.dofmap.index_map.size_global)
+        ):
+            raise ValueError(
+                "reused p6 target field is outside the transfer space"
+            )
+        field.x.scatter_forward()
+
+    local_replaced_delta_sq = 0.0
+    local_replaced_reference_sq = 0.0
+    local_replaced_delta_max = 0.0
+    local_replaced_reference_max = 0.0
+    if storage_reused:
+        original_local = np.asarray(
+            field.x.array,
+            dtype=np.complex128,
+        )
+        for cell_transfer in transfer.cells:
+            cell = cell_transfer.cell
+            space = build_variable_p_reference_space(cell.degree_map)
+            predicted = space.active_to_p6_oriented(
+                cell_active(cell),
+                cell_info=cell.cell_info,
+            )
+            designated = cell_transfer.designated_local_positions
+            original = original_local[
+                cell_transfer.p6_local_dofs[designated]
+            ]
+            replacement = predicted[designated]
+            difference = replacement - original
+            local_replaced_delta_sq += float(
+                np.vdot(difference, difference).real
+            )
+            local_replaced_reference_sq += float(
+                np.vdot(original, original).real
+            )
+            local_replaced_delta_max = max(
+                local_replaced_delta_max,
+                float(np.max(np.abs(difference), initial=0.0)),
+            )
+            local_replaced_reference_max = max(
+                local_replaced_reference_max,
+                float(np.max(np.abs(original), initial=0.0)),
+            )
+        del original_local
+
     vector = field.x.petsc_vec
     vector.set(PETSc.ScalarType(0.0))
     for cell_transfer in transfer.cells:
@@ -850,6 +916,28 @@ def recover_active_full_to_p6_field(
             float(np.max(np.abs(predicted), initial=0.0)),
         )
     comm = transfer.entity_map.mesh.comm
+    replaced_delta_l2 = float(
+        np.sqrt(
+            comm.allreduce(
+                local_replaced_delta_sq,
+                op=MPI.SUM,
+            )
+        )
+    )
+    replaced_reference_l2 = float(
+        np.sqrt(
+            comm.allreduce(
+                local_replaced_reference_sq,
+                op=MPI.SUM,
+            )
+        )
+    )
+    replaced_delta_linf = float(
+        comm.allreduce(local_replaced_delta_max, op=MPI.MAX)
+    )
+    replaced_reference_linf = float(
+        comm.allreduce(local_replaced_reference_max, op=MPI.MAX)
+    )
     error = float(comm.allreduce(local_error, op=MPI.MAX))
     scale = float(comm.allreduce(local_scale, op=MPI.MAX))
     relative_error = error / max(scale, 1.0e-30)
@@ -865,6 +953,38 @@ def recover_active_full_to_p6_field(
         "absolute_shared_coefficient_error_max": error,
         "relative_shared_coefficient_error_max": relative_error,
         "conformity_tolerance": float(conformity_tolerance),
+        "target_field_reused": storage_reused,
+        "new_p6_function_allocated": not storage_reused,
+        "replaced_field_coefficients_audited_before_overwrite": (
+            storage_reused
+        ),
+        "replaced_coefficient_delta_l2_norm": replaced_delta_l2,
+        "replaced_coefficient_reference_l2_norm": replaced_reference_l2,
+        "replaced_coefficient_delta_relative_l2": (
+            None
+            if not storage_reused
+            else replaced_delta_l2
+            / max(
+                replaced_reference_l2,
+                np.finfo(np.float64).tiny,
+            )
+        ),
+        "replaced_coefficient_delta_linf_norm": replaced_delta_linf,
+        "replaced_coefficient_reference_linf_norm": (
+            replaced_reference_linf
+        ),
+        "replaced_coefficient_delta_relative_linf": (
+            None
+            if not storage_reused
+            else replaced_delta_linf
+            / max(
+                replaced_reference_linf,
+                np.finfo(np.float64).tiny,
+            )
+        ),
+        "replaced_coefficient_rows_designated_exactly_once": (
+            storage_reused
+        ),
         "active_selected_rows": selected_row_audit,
         "active_selected_row_count_local": len(selected_rows),
         "full_active_vector_replicated_bytes_per_rank": int(

@@ -93,6 +93,34 @@ class Task035dVariablePTransferTests(unittest.TestCase):
             recovery_audit["relative_shared_coefficient_error_max"],
             5.0e-10,
         )
+        owned_recovered = int(p6_space.dofmap.index_map.size_local)
+        recovered.x.array[:owned_recovered] += PETSc.ScalarType(
+            1.0e-4 - 2.0e-5j
+        )
+        recovered.x.scatter_forward()
+        reused, reuse_audit = recover_active_full_to_p6_field(
+            transfer,
+            active_values,
+            target_field=recovered,
+        )
+        self.assertIs(reused, recovered)
+        self.assertTrue(reuse_audit["pass"])
+        self.assertTrue(reuse_audit["target_field_reused"])
+        self.assertFalse(reuse_audit["new_p6_function_allocated"])
+        self.assertTrue(
+            reuse_audit[
+                "replaced_field_coefficients_audited_before_overwrite"
+            ]
+        )
+        self.assertGreater(
+            reuse_audit["replaced_coefficient_delta_relative_l2"],
+            0.0,
+        )
+        self.assertTrue(
+            reuse_audit[
+                "replaced_coefficient_rows_designated_exactly_once"
+            ]
+        )
 
         dual = fem.Function(p6_space)
         p6_index_map = p6_space.dofmap.index_map

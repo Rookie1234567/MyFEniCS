@@ -6,7 +6,6 @@ from types import MappingProxyType, SimpleNamespace
 
 from mpi4py import MPI
 import numpy as np
-from petsc4py import PETSc
 import pytest
 
 from src.adaptivity.task035e_multigoal_snapshot import (
@@ -21,6 +20,7 @@ from src.adaptivity.task035e_shadow_observer import (
     _json_sha256,
     _p6_coefficient_projection_audit,
     _public_affine_complement_audit,
+    _release_h_shadow_projection_temporaries,
     _requires_exact_nested_current_projection,
     _validate_observed_shadow_kind,
 )
@@ -40,38 +40,46 @@ def _balanced_ranges(total: int, size: int) -> list[list[int]]:
 
 
 def test_h_shadow_conforming_coefficient_audit_is_scale_bound() -> None:
-    reference = PETSc.Vec().createSeq(4, comm=PETSc.COMM_SELF)
-    reference.setValues(
-        np.arange(4, dtype=PETSc.IntType),
-        np.asarray([1.0, -2.0, 0.5j, 3.0 - 0.2j]),
+    audit = _p6_coefficient_projection_audit(
+        delta_l2=1.0e-4,
+        delta_linf=8.0e-5,
+        reference_l2=4.0,
+        reference_linf=3.0,
+        source_projection_relative_scale=1.0e-3,
     )
-    reference.assemble()
-    projected = reference.copy()
-    projected.setValue(
-        2,
-        projected.getValue(2) + PETSc.ScalarType(1.0e-4),
-    )
-    projected.assemble()
-    try:
-        audit = _p6_coefficient_projection_audit(
-            reference,
-            projected,
-            source_projection_relative_scale=1.0e-3,
+    assert audit["pass"] is True
+    assert audit["exact_nested_transfer_credit"] is False
+    with pytest.raises(
+        RuntimeError,
+        match="exceeds its source projection scale",
+    ):
+        _p6_coefficient_projection_audit(
+            delta_l2=1.0e-4,
+            delta_linf=8.0e-5,
+            reference_l2=4.0,
+            reference_linf=3.0,
+            source_projection_relative_scale=1.0e-8,
         )
-        assert audit["pass"] is True
-        assert audit["exact_nested_transfer_credit"] is False
-        with pytest.raises(
-            RuntimeError,
-            match="exceeds its source projection scale",
-        ):
-            _p6_coefficient_projection_audit(
-                reference,
-                projected,
-                source_projection_relative_scale=1.0e-8,
-            )
-    finally:
-        projected.destroy()
-        reference.destroy()
+
+
+def test_h_shadow_projection_temporary_release_is_audited() -> None:
+    audit = _release_h_shadow_projection_temporaries(
+        MPI.COMM_SELF,
+        phase="before_goal_gradients",
+    )
+    assert audit["pass"] is True
+    assert audit["phase"] == "before_goal_gradients"
+    assert audit["python_gc_called_twice"] is True
+    assert audit["petsc_garbage_cleanup_called"] is True
+    assert audit["glibc_malloc_trim_called"] is True
+    assert audit["release_occurs_before_formal_goal_gradients"] is True
+    assert audit["release_occurs_before_in_place_p6_recovery"] is False
+
+    with pytest.raises(ValueError, match="cleanup phase is invalid"):
+        _release_h_shadow_projection_temporaries(
+            MPI.COMM_SELF,
+            phase="after_goal_gradients",
+        )
 
 
 def test_current_auxiliary_tail_is_reconstructed_without_full_gather() -> None:

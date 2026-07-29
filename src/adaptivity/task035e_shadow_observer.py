@@ -14,6 +14,7 @@ are never gathered into a Python full-vector representation.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, is_dataclass
+import gc
 import hashlib
 import json
 import math
@@ -32,6 +33,7 @@ from src.adaptivity.variable_p_transfer import (
     project_p6_primal_to_active_full,
     recover_active_full_to_p6_field,
 )
+from src.solvers.common_3d_utils import _trim_process_heap
 
 from .blind_controller.contracts import (
     FORMAL_GOAL_IDS,
@@ -522,45 +524,31 @@ def _rank_pipeline_catalog(
 
 
 def _p6_coefficient_projection_audit(
-    reference: PETSc.Vec,
-    projected: PETSc.Vec,
     *,
+    delta_l2: float,
+    delta_linf: float,
+    reference_l2: float,
+    reference_linf: float,
     source_projection_relative_scale: float,
 ) -> Mapping[str, Any]:
     """Bound the conforming correction by the preceding local projection."""
 
-    reference_layout = (
-        int(reference.getSize()),
-        int(reference.getLocalSize()),
-        tuple(map(int, reference.getOwnershipRange())),
-    )
-    projected_layout = (
-        int(projected.getSize()),
-        int(projected.getLocalSize()),
-        tuple(map(int, projected.getOwnershipRange())),
-    )
     scale = float(source_projection_relative_scale)
-    if (
-        projected_layout != reference_layout
-        or not math.isfinite(scale)
-        or scale < 0.0
+    values = tuple(
+        float(value)
+        for value in (
+            delta_l2,
+            delta_linf,
+            reference_l2,
+            reference_linf,
+        )
+    )
+    if not math.isfinite(scale) or scale < 0.0 or not all(
+        math.isfinite(value) and value >= 0.0 for value in values
     ):
         raise ValueError(
             "conforming p6 coefficient audit inputs are inconsistent"
         )
-    difference = projected.copy()
-    try:
-        difference.axpy(PETSc.ScalarType(-1.0), reference)
-        delta_l2 = float(difference.norm())
-        delta_linf = float(
-            difference.norm(PETSc.NormType.NORM_INFINITY)
-        )
-        reference_l2 = float(reference.norm())
-        reference_linf = float(
-            reference.norm(PETSc.NormType.NORM_INFINITY)
-        )
-    finally:
-        difference.destroy()
     relative_l2 = delta_l2 / max(
         reference_l2,
         np.finfo(np.float64).tiny,
@@ -615,6 +603,116 @@ def _p6_coefficient_projection_audit(
             "source projection scale: "
             f"relative_l2={relative_l2:.6e}, "
             f"limit={relative_l2_limit:.6e}"
+        )
+    return MappingProxyType(audit)
+
+
+def _release_h_shadow_projection_temporaries(
+    communicator: MPI.Intracomm,
+    *,
+    phase: str,
+) -> Mapping[str, Any]:
+    """Release one h-shadow projection phase's native temporaries."""
+
+    if phase not in {
+        "before_in_place_p6_recovery",
+        "before_goal_gradients",
+    }:
+        raise ValueError("h-shadow projection cleanup phase is invalid")
+    gc.collect()
+    PETSc.garbage_cleanup(communicator)
+    gc.collect()
+    local = _trim_process_heap()
+    rows = communicator.allgather(
+        {
+            "rank": int(communicator.rank),
+            **local,
+        }
+    )
+    if [int(row["rank"]) for row in rows] != list(
+        range(communicator.size)
+    ):
+        raise RuntimeError(
+            "h-shadow projection cleanup lost one MPI rank"
+        )
+    supported = all(row["supported"] is True for row in rows)
+    succeeded = all(row["succeeded"] is True for row in rows)
+    before = [
+        float(row["rss_before_mb"])
+        for row in rows
+        if row["rss_before_mb"] is not None
+    ]
+    after = [
+        float(row["rss_after_mb"])
+        for row in rows
+        if row["rss_after_mb"] is not None
+    ]
+    released = [
+        float(row["rss_released_mb"])
+        for row in rows
+        if row["rss_released_mb"] is not None
+    ]
+    passed = bool(supported and succeeded)
+    audit = {
+        "schema_version": (
+            "task035e.h-shadow-projection-temporary-release.v1"
+        ),
+        "status": (
+            "h_shadow_projection_temporaries_released"
+            if passed
+            else "h_shadow_projection_temporary_release_failed"
+        ),
+        "pass": passed,
+        "phase": phase,
+        "python_gc_called_twice": True,
+        "petsc_garbage_cleanup_called": True,
+        "glibc_malloc_trim_called": True,
+        "supported_on_all_ranks": supported,
+        "succeeded_on_all_ranks": succeeded,
+        "return_codes_by_rank": [
+            row["return_code"] for row in rows
+        ],
+        "sum_rss_before_mb": (
+            None
+            if len(before) != communicator.size
+            else float(sum(before))
+        ),
+        "sum_rss_after_mb": (
+            None
+            if len(after) != communicator.size
+            else float(sum(after))
+        ),
+        "sum_rss_released_mb": (
+            None
+            if len(released) != communicator.size
+            else float(sum(released))
+        ),
+        "release_occurs_before_in_place_p6_recovery": (
+            phase == "before_in_place_p6_recovery"
+        ),
+        "release_occurs_before_formal_goal_gradients": (
+            phase == "before_goal_gradients"
+        ),
+        "live_reduced_primal_retained": True,
+        "live_p6_storage_retained": True,
+        "live_conforming_p6_field_retained": (
+            phase == "before_goal_gradients"
+        ),
+        "live_preconformance_p6_coefficients_retained": (
+            phase == "before_in_place_p6_recovery"
+        ),
+        "live_conforming_active_primal_retained": (
+            phase == "before_in_place_p6_recovery"
+        ),
+        "live_affine_complement_retained": (
+            phase == "before_goal_gradients"
+        ),
+        "ordinary_default_changed": False,
+    }
+    if not passed:
+        raise RuntimeError(
+            "h-shadow projection temporary release is unavailable on one "
+            "or more ranks"
         )
     return MappingProxyType(audit)
 
@@ -817,7 +915,10 @@ def evaluate_and_write_task035e_shadow(
     reduced_current = None
     affine_complement = None
     heavy_state_release_audit = None
+    recovered_state_release_audit: Mapping[str, Any] | None = None
     trace_conformance_audit: Mapping[str, Any] | None = None
+    pre_recovery_temporary_release_audit: Mapping[str, Any] | None = None
+    pre_gradient_temporary_release_audit: Mapping[str, Any] | None = None
     try:
         transfer = transfer_task035e_snapshot_to_shadow_p6(
             snapshot,
@@ -887,10 +988,17 @@ def evaluate_and_write_task035e_shadow(
             )
             active_current.destroy()
             active_current = conformed_active
+            pre_recovery_temporary_release_audit = (
+                _release_h_shadow_projection_temporaries(
+                    comm,
+                    phase="before_in_place_p6_recovery",
+                )
+            )
             current_endpoint_field, recovery_audit = (
                 recover_active_full_to_p6_field(
                     shadow_view.reduction.transfer,
                     active_current,
+                    target_field=transfer.shadow_field,
                 )
             )
             projection_scale = max(
@@ -906,8 +1014,26 @@ def evaluate_and_write_task035e_shadow(
                 ),
             )
             coefficient_audit = _p6_coefficient_projection_audit(
-                transfer.shadow_field.x.petsc_vec,
-                current_endpoint_field.x.petsc_vec,
+                delta_l2=float(
+                    recovery_audit[
+                        "replaced_coefficient_delta_l2_norm"
+                    ]
+                ),
+                delta_linf=float(
+                    recovery_audit[
+                        "replaced_coefficient_delta_linf_norm"
+                    ]
+                ),
+                reference_l2=float(
+                    recovery_audit[
+                        "replaced_coefficient_reference_l2_norm"
+                    ]
+                ),
+                reference_linf=float(
+                    recovery_audit[
+                        "replaced_coefficient_reference_linf_norm"
+                    ]
+                ),
                 source_projection_relative_scale=projection_scale,
             )
             trace_conformance_audit = MappingProxyType(
@@ -922,9 +1048,30 @@ def evaluate_and_write_task035e_shadow(
                     "shadow_kind": shadow_kind,
                     "exact_nested_projection_retained": False,
                     "physical_root_projection_applied": True,
+                    "pre_recovery_temporary_release": dict(
+                        pre_recovery_temporary_release_audit
+                    ),
                     "projection_pipeline": extraction_audit,
                     "conforming_p6_recovery": recovery_audit,
                     "coefficient_projection": dict(coefficient_audit),
+                    "ordinary_default_changed": False,
+                }
+            )
+        if shadow_kind == "p-shadow":
+            pre_recovery_temporary_release_audit = MappingProxyType(
+                {
+                    "schema_version": (
+                        "task035e.h-shadow-projection-"
+                        "temporary-release.v1"
+                    ),
+                    "status": (
+                        "h_shadow_projection_temporary_release_not_required"
+                    ),
+                    "pass": True,
+                    "phase": "before_in_place_p6_recovery",
+                    "shadow_kind": shadow_kind,
+                    "release_occurs_before_in_place_p6_recovery": False,
+                    "release_occurs_before_formal_goal_gradients": False,
                     "ordinary_default_changed": False,
                 }
             )
@@ -951,6 +1098,52 @@ def evaluate_and_write_task035e_shadow(
             raise Task035eShadowObserverError(
                 "affine-interior complement construction returned no vector"
             )
+        recovered_state_rows = {
+            name: (
+                None
+                if vector is None
+                else int(vector.getSize())
+            )
+            for name, vector in (
+                (
+                    "active_full_solution",
+                    shadow_view.recovered.active_full_solution,
+                ),
+                (
+                    "active_full_rhs",
+                    shadow_view.recovered.active_full_rhs,
+                ),
+                (
+                    "active_auxiliary_interior_action",
+                    shadow_view.recovered.active_auxiliary_interior_action,
+                ),
+            )
+        }
+        shadow_view.recovered.destroy()
+        recovered_state_release_audit = MappingProxyType(
+            {
+                "schema_version": (
+                    "task035e.pre-gradient-recovered-state-release.v1"
+                ),
+                "status": "recovered_active_vectors_released",
+                "pass": True,
+                "released_global_rows": recovered_state_rows,
+                "recovered_p6_field_retained": True,
+                "active_full_solution_released": (
+                    recovered_state_rows["active_full_solution"] is not None
+                ),
+                "active_full_rhs_released": (
+                    recovered_state_rows["active_full_rhs"] is not None
+                ),
+                "active_auxiliary_interior_action_was_absent": (
+                    recovered_state_rows[
+                        "active_auxiliary_interior_action"
+                    ]
+                    is None
+                ),
+                "ordinary_default_changed": False,
+            }
+        )
 
         current_goal_context = dict(shadow_view.goal_context)
         raw_scales = current_goal_context.get(
@@ -990,24 +1183,60 @@ def evaluate_and_write_task035e_shadow(
         active_current = None
         del auxiliary
         del snapshot
+        pre_gradient_temporary_release_audit = (
+            _release_h_shadow_projection_temporaries(
+                comm,
+                phase="before_goal_gradients",
+            )
+            if shadow_kind == "h-shadow"
+            else MappingProxyType(
+                {
+                    "schema_version": (
+                        "task035e.h-shadow-projection-"
+                        "temporary-release.v1"
+                    ),
+                    "status": (
+                        "h_shadow_projection_temporary_release_not_required"
+                    ),
+                    "pass": True,
+                    "phase": "before_goal_gradients",
+                    "shadow_kind": shadow_kind,
+                    "release_occurs_before_in_place_p6_recovery": False,
+                    "release_occurs_before_formal_goal_gradients": False,
+                    "ordinary_default_changed": False,
+                }
+            )
+        )
         heavy_state_release_audit = {
             "schema_version": (
-                "task035e.pre-adjoint-heavy-state-release.v2"
+                "task035e.pre-adjoint-heavy-state-release.v3"
             ),
             "pass": True,
             "active_current_vector_destroyed_before_gradients": True,
             "snapshot_python_reference_released_before_gradients": True,
+            "recovered_active_vector_release": dict(
+                recovered_state_release_audit
+            ),
             "current_transferred_p6_field_retained_for_exact_secant_gradient": (
                 shadow_kind == "p-shadow"
             ),
             "current_conforming_p6_field_retained_for_secant_gradient": (
                 True
             ),
-            "original_nonconforming_h_shadow_field_released_before_gradients": (
+            "original_nonconforming_h_shadow_coefficients_overwritten_before_gradients": (
                 shadow_kind == "h-shadow"
             ),
-            "current_endpoint_p6_field_released_after_gradients": True,
+            "h_shadow_p6_storage_reused_in_place": (
+                shadow_kind == "h-shadow"
+            ),
+            "current_endpoint_p6_field_released_after_gradient_and_dwr": True,
             "active_affine_complement_retained_through_dwr_only": True,
+            "pre_recovery_temporary_release": dict(
+                pre_recovery_temporary_release_audit
+            ),
+            "pre_gradient_temporary_release": dict(
+                pre_gradient_temporary_release_audit
+            ),
             "native_allocator_release_timing_claimed": False,
         }
         with build_task035e_formal_secant_goal_gradients(
@@ -1045,6 +1274,7 @@ def evaluate_and_write_task035e_shadow(
             )
         )
         del current_endpoint_view
+        del current_endpoint_field
     finally:
         if affine_complement is not None:
             affine_complement.destroy()
@@ -1060,6 +1290,12 @@ def evaluate_and_write_task035e_shadow(
         or extraction_audit.get("pass") is not True
         or trace_conformance_audit is None
         or trace_conformance_audit.get("pass") is not True
+        or pre_recovery_temporary_release_audit is None
+        or pre_recovery_temporary_release_audit.get("pass") is not True
+        or pre_gradient_temporary_release_audit is None
+        or pre_gradient_temporary_release_audit.get("pass") is not True
+        or recovered_state_release_audit is None
+        or recovered_state_release_audit.get("pass") is not True
         or auxiliary_audit.get("pass") is not True
         or affine_complement_audit.get("pass") is not True
         or gradient_audit.get("pass") is not True
