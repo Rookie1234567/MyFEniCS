@@ -182,19 +182,23 @@ def test_same_forest_p_shadow_reuses_existing_p6_carrier(
     )
     assert not hasattr(transfer, "current_field")
     assert not hasattr(transfer, "current_mesh_data")
-    assert transfer.audit["temporary_lifecycle"] == {
-        "schema_version": (
-            "task035e.shadow-transfer-temporary-lifecycle.v1"
-        ),
-        "pass": True,
-        "current_field_returned": False,
-        "current_mesh_data_returned": False,
-        "round_trip_field_returned": False,
-        "python_gc_called": True,
-        "petsc_garbage_cleanup_called": True,
-        "native_allocator_release_timing_claimed": False,
-        "ordinary_default_changed": False,
-    }
+    lifecycle = transfer.audit["temporary_lifecycle"]
+    assert lifecycle["schema_version"] == (
+        "task035e.shadow-transfer-temporary-lifecycle.v1"
+    )
+    assert lifecycle["pass"] is True
+    assert lifecycle["current_field_returned"] is False
+    assert lifecycle["current_mesh_data_returned"] is False
+    assert lifecycle["round_trip_field_returned"] is False
+    assert lifecycle["python_gc_called"] is True
+    assert lifecycle["petsc_garbage_cleanup_called"] is True
+    assert lifecycle["native_allocator_release_timing_claimed"] is False
+    trim = lifecycle["process_heap_trim"]
+    assert trim["implementation"] == "glibc_malloc_trim"
+    assert trim["called"] is True
+    assert len(trim["return_codes_by_rank"]) == comm.size
+    assert trim["ordinary_default_changed"] is False
+    assert lifecycle["ordinary_default_changed"] is False
     np.testing.assert_array_equal(
         transfer.shadow_field.x.petsc_vec.getArray(readonly=True),
         owned,

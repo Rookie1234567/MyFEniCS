@@ -34,6 +34,7 @@ from dolfinx import default_real_type, fem
 
 from .stage4_local_h import build_stage4_local_h_mesh_data
 from .task035e_multigoal_snapshot import LoadedTask035eSnapshot
+from src.solvers.common_3d_utils import _trim_process_heap
 
 
 TRANSFER_SCHEMA = "task035e.exact-sequence-shadow-field-transfer.v1"
@@ -332,6 +333,32 @@ def _release_transfer_temporaries(
     gc.collect()
     PETSc.garbage_cleanup(communicator)
     gc.collect()
+    local_heap_trim = _trim_process_heap()
+    heap_trim_by_rank = communicator.allgather(
+        {
+            "rank": int(communicator.rank),
+            **local_heap_trim,
+        }
+    )
+    if [int(row["rank"]) for row in heap_trim_by_rank] != list(
+        range(communicator.size)
+    ):
+        raise RuntimeError("transfer heap-trim audit lost an MPI rank")
+    before_values = [
+        row["rss_before_mb"]
+        for row in heap_trim_by_rank
+        if row["rss_before_mb"] is not None
+    ]
+    after_values = [
+        row["rss_after_mb"]
+        for row in heap_trim_by_rank
+        if row["rss_after_mb"] is not None
+    ]
+    released_values = [
+        row["rss_released_mb"]
+        for row in heap_trim_by_rank
+        if row["rss_released_mb"] is not None
+    ]
     return MappingProxyType(
         {
             "schema_version": (
@@ -343,6 +370,37 @@ def _release_transfer_temporaries(
             "round_trip_field_returned": False,
             "python_gc_called": True,
             "petsc_garbage_cleanup_called": True,
+            "process_heap_trim": {
+                "implementation": "glibc_malloc_trim",
+                "called": True,
+                "supported_on_all_ranks": all(
+                    bool(row["supported"])
+                    for row in heap_trim_by_rank
+                ),
+                "succeeded_on_all_ranks": all(
+                    bool(row["succeeded"])
+                    for row in heap_trim_by_rank
+                ),
+                "return_codes_by_rank": [
+                    row["return_code"] for row in heap_trim_by_rank
+                ],
+                "sum_rss_before_mb": (
+                    None
+                    if len(before_values) != communicator.size
+                    else float(sum(before_values))
+                ),
+                "sum_rss_after_mb": (
+                    None
+                    if len(after_values) != communicator.size
+                    else float(sum(after_values))
+                ),
+                "sum_rss_released_mb": (
+                    None
+                    if len(released_values) != communicator.size
+                    else float(sum(released_values))
+                ),
+                "ordinary_default_changed": False,
+            },
             "native_allocator_release_timing_claimed": False,
             "ordinary_default_changed": False,
         }
