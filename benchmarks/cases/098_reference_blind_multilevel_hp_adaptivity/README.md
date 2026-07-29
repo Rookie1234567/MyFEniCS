@@ -225,3 +225,38 @@ cellwise partition = ranking signal only
 [single-cell actual checkpoint](records/path_a_cycle0_single_cell_p_actual_checkpoint_v1.json)。
 后续只允许离线 entity/mode-orbit 或 exact selected-action DWR repair；在历史
 single/grouped action 都通过离线资格化前，不得再尝试其他 cell 或 selected-h。
+
+## 2026-07-29：post-action global-estimator 离线审计
+
+本轮没有新 PDE、primal `KSPSolve` 或 hidden-reference 读取。MPI8 离线流程
+从既有 raw tensor cache 重装 full p-shadow operator，并使用既有 primal 与
+59 个 full p-shadow adjoint 审计 single/four-cell actual candidate 的
+remaining estimator。
+
+single-cell candidate 可严格嵌入 full p-shadow active space；加入 23 个
+power/L2 目标的 action-consistent secant/quadratic remainder 后，归一化
+aggregate 从 current 的 `3421.5539650198` 增至 `3426.4883968936`，
+恶化 `0.144216%`。逐目标 corrected estimate 与 actual
+candidate-to-full-shadow distance 最大只差 `4.835021e-14`，但有
+`24/59` 改善、`35/59` 恶化，因此没有显著 global reduction。
+
+four-cell candidate 有两个 p6 cell 超出现有 full p-shadow 的 p5 local
+space，不能严格嵌入。诊断性 nonmatching projection 没有获得数值 credit，
+59 个 candidate remaining DWR 均保持 `not_evaluable`；既有
+`5056.9308419007` aggregate 只登记为 actual endpoint distance。
+
+冻结结论为：
+
+```text
+cycle 0 current = retained
+cellwise-p attribution = ranking only
+post-action global estimator standard contract = not_qualified
+next lane = exact selected-action complement Schur/low-rank repair
+```
+
+repair 必须显式包含新增 interior modes 对旧 trace block 的 `Delta A00`、
+完整 edge/face mode orbit、periodic/hanging closure，以及 action-consistent
+目标 secant/quadratic remainder。完整 59-goal 行和 39 项 raw SHA catalog
+见 [post-action global-estimator compact](records/path_a_cycle0_post_action_global_estimator_audit_v1.json)；
+解释和 algebra 见
+[Task035e outcome](../../../docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/post_action_global_estimator_audit.md)。

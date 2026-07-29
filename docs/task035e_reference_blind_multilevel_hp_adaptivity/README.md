@@ -99,3 +99,21 @@ authority 为 7.560097 GiB、swap 为 0。但既有单-cell DWR prediction 为
 cellwise partition 只能保留为无定量 credit 的 ranking signal。在
 entity/mode-orbit 或 exact selected-action DWR 先通过既有 single/grouped raw
 actual candidates 的离线回放前，不再开放其他 selected-p cell 或 selected-h。
+
+随后完成的 post-action global-estimator 审计没有运行新 PDE 或读取 hidden
+reference。single-cell candidate 可以严格嵌入 full p-shadow，但其
+fixed-blind-tolerance aggregate remaining estimator 从
+`3421.5539650198` 增至 `3426.4883968936`，恶化 `0.144216%`；four-cell
+candidate 有两个 p6 cell 超出现有 full p-shadow 的 p5 space，严格 embedding
+失败，不能伪造 remaining DWR。
+
+因此没有资格化新的 post-action acceptance contract，也没有追认 candidate
+成功。cycle 0 current 继续保留，下一 lane 冻结为 exact selected-action
+complement Schur/low-rank repair，且必须包含 `Delta A00`、完整 edge/face
+orbit、periodic/hanging closure 和 action-consistent quadratic remainder。
+
+新增证据：
+
+- [post-action global-estimator outcome](outcomes/post_action_global_estimator_audit.md)；
+- [59-goal compact](../../benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_post_action_global_estimator_audit_v1.json)；
+- [更新后的 estimator repair design](outcomes/cellwise_p_estimator_repair_design.md)。
