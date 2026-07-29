@@ -32,10 +32,14 @@ def task002_hybrid_command(
     """Reuse the qualified numerical runner while enforcing the stricter S-only schema."""
 
     parameters.validate()
-    return task001_hybrid_command(
+    command = task001_hybrid_command(
         parameters.to_task001(), root=root, baseline_sha=baseline_sha,
         output_record=output_record, memory_stages=memory_stages,
     )
+    command[command.index("--task001-surrogate-pilot-gate")] = (
+        "--task002-s-continuous-gate"
+    )
+    return command
 
 
 def formal_preflight(root: Path, baseline_sha: str) -> dict[str, Any]:

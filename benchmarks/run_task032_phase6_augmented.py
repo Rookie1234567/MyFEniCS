@@ -756,6 +756,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Explicit clean-source Task001 two-parameter Hybrid pilot gate.",
     )
     parser.add_argument(
+        "--task002-s-continuous-gate", action="store_true",
+        help=(
+            "Explicit clean-source Task002 S-only continuous-angle gate. "
+            "The exact assembled variational traction dual is formal; sampled "
+            "point interpolation remains a reported diagnostic."
+        ),
+    )
+    parser.add_argument(
         "--task001-m9-diagnostic-gate",
         action="store_true",
         help=(
@@ -861,6 +869,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if args.degree == 6 and not (
         args.task035c_p6_h10_gate or args.task001_surrogate_pilot_gate
+        or args.task002_s_continuous_gate
     ):
         parser.error(
             "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
@@ -871,12 +880,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         for value in (
             args.task035c_p6_h10_gate,
             args.task001_surrogate_pilot_gate,
+            args.task002_s_continuous_gate,
             args.task001_m9_diagnostic_gate,
         )
     )
     if research_gate_count > 1:
-        parser.error("Task035c, Task001 formal and Task001 M9 gates are exclusive.")
-    if args.task001_surrogate_pilot_gate or args.task001_m9_diagnostic_gate:
+        parser.error("Task035c, Task001, Task002 and Task001 M9 gates are exclusive.")
+    if (
+        args.task001_surrogate_pilot_gate
+        or args.task002_s_continuous_gate
+        or args.task001_m9_diagnostic_gate
+    ):
         required = (
             args.task001_model_id, args.task001_height_nm,
             args.task001_width_x_nm, args.incident_theta_deg,
@@ -895,6 +909,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             task001_parameters.validate()
         except ValueError as exc:
             parser.error(str(exc))
+        if args.task002_s_continuous_gate and args.polarization_kind != "s":
+            parser.error("Task002 continuous-angle gate is S-only.")
         fidelity = task001_parameters.fidelity
         formal_scoped = bool(
             args.degree == fidelity["degree"]
@@ -957,9 +973,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.full3d_reference is None
             and not args.task035c_p6_h10_gate
         )
-        if args.task001_surrogate_pilot_gate and not formal_scoped:
+        if (
+            args.task001_surrogate_pilot_gate or args.task002_s_continuous_gate
+        ) and not formal_scoped:
             parser.error(
-                "Task001 gate requires its exact fidelity identity, static memory-minimal "
+                "Task001/Task002 gate requires its exact fidelity identity, static memory-minimal "
                 "M120/2M, 10/110 interfaces, qualified discrete axial models and clean SHA."
             )
         if args.task001_m9_diagnostic_gate and not diagnostic_scoped:
@@ -977,7 +995,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     ) or not math.isclose(args.incident_phi_deg, 0.0):
         parser.error(
-            "Task001 parameter overrides require a Task001 formal or M9 gate."
+            "Task001 parameter overrides require a Task001/Task002 formal or M9 gate."
         )
     if (
         args.task001_m9_interface_quadrature_degree is not None
@@ -1223,7 +1241,9 @@ def main() -> None:
     )
     comm = MPI.COMM_WORLD
     if (
-        args.task001_surrogate_pilot_gate or args.task001_m9_diagnostic_gate
+        args.task001_surrogate_pilot_gate
+        or args.task002_s_continuous_gate
+        or args.task001_m9_diagnostic_gate
     ) and comm.size not in (1, 2):
         raise SystemExit("Task001 Hybrid formal/diagnostic runs require MPI1 or MPI2.")
     provenance = _source_provenance(
@@ -1269,7 +1289,11 @@ def main() -> None:
     total_started = time.perf_counter()
     timings: dict[str, float] = {}
     task001_parameters = None
-    if args.task001_surrogate_pilot_gate or args.task001_m9_diagnostic_gate:
+    if (
+        args.task001_surrogate_pilot_gate
+        or args.task002_s_continuous_gate
+        or args.task001_m9_diagnostic_gate
+    ):
         task001_parameters = Task001ForwardParameters(
             height_nm=args.task001_height_nm,
             width_x_nm=args.task001_width_x_nm,
@@ -2223,14 +2247,14 @@ def main() -> None:
                     ),
                 }
             )
+        diagnostic_gates: dict[str, bool] = {}
         if physical_fields is not None:
             interface_physical = physical_fields["interface_continuity"]
             assembled_interface_physical = physical_fields[
                 "assembled_interface_continuity"
             ]
             absorption_physical = physical_fields["volume_absorption"]
-            gates.update(
-                {
+            sampled_gates = {
                     "sampled_interface_e_t_relative_l2_le_5e-3": (
                         max(
                             interface_physical[side]["electric_tangential"][
@@ -2249,6 +2273,13 @@ def main() -> None:
                         )
                         <= 1.0e-2
                     ),
+            }
+            if args.task002_s_continuous_gate:
+                diagnostic_gates.update(sampled_gates)
+            else:
+                gates.update(sampled_gates)
+            gates.update(
+                {
                     "assembled_interface_e_t_relative_l2_le_5e-3": (
                         max(
                             assembled_interface_physical[side][
@@ -2808,6 +2839,7 @@ def main() -> None:
             "object_payload_ledger": object_payload_ledger,
             "full3d_reference_comparison": reference,
             "gates": gates,
+            "diagnostic_gates": diagnostic_gates,
             "qualification": {
                 "integration_pass": integration_pass,
                 "algebraic_chain_pass": algebraic_chain_pass,

@@ -89,10 +89,15 @@ def test_task002_command_reuses_exact_qualified_s_route(tmp_path: Path) -> None:
         output_record=tmp_path / "record.json", memory_stages=tmp_path / "stages.jsonl",
     )
     parsed = _parse_args(command[command.index("benchmarks.run_task032_phase6_augmented") + 1:])
-    assert parsed.task001_surrogate_pilot_gate is True
+    assert parsed.task001_surrogate_pilot_gate is False
+    assert parsed.task002_s_continuous_gate is True
     assert parsed.task001_model_id == "HF10"
     assert parsed.polarization_kind == "s"
     assert parsed.degree == 6 and parsed.requested_modes == 120
+    p_command = list(command)
+    p_command[p_command.index("--polarization-kind") + 1] = "p"
+    with pytest.raises(SystemExit):
+        _parse_args(p_command[p_command.index("benchmarks.run_task032_phase6_augmented") + 1:])
 
 
 def test_campaign_cli_requires_one_explicit_sample(tmp_path: Path) -> None:
