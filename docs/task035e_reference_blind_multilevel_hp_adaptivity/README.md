@@ -1,146 +1,176 @@
 # Task035e：无参考解、多层局部 h/p 自适应
 
-## 当前身份
+## 最终状态
 
 ```text
 task = Task035e
-status_at_creation = staged_on_Task035d_branch
-execution_branch = codex/20260728-task35e-reference-blind-multilevel-hp-adaptivity
-branch_creation = by Codex after Task035d selective merge
-branch_base = exact post-Task035d master SHA
+branch = codex/20260728-task35e-reference-blind-multilevel-hp-adaptivity
+final_reviewed_head = 27ca26718b9ee60215243bcc98ffafcd46bfd221
+classification = PARTIAL_WITH_CONTROLLED_NEGATIVES_CLOSED
 ordinary_default = unchanged
-geometry = Task034 fixed rectangular block grating
-wavelength = 13.5 nm used as a reference-blind surrogate for future 0.7 nm
-primary_solver = Full3D assembly-time static condensation + MUMPS direct
-hybrid = only after Full3D blind hp candidate passes
-iterative_solver = out of scope
-heavy_PDE_concurrency = one at a time
+reference_certification = pass
+true_local_h_local_p_capability = pass
+automatic_reference_blind_hp_cycle = incomplete
+accepted_adaptive_candidate = none
+hidden_final_audit = not_run
+direct_selective_trace_lane = closed_controlled_negative
+hybrid = not_run
+iterative = not_run
 ```
 
-Task035e 模拟未来 0.7 nm 的真实困难：完整收敛解不可获得，自适应程序不能读取一个“老师答案”来决定哪里细化、哪里升阶、何时停止。
+Task035e 已正式停止继续改变 local face 数量、trace threshold、ranking 公式或 blind campaign 状态机。完整研究分支继续保留，下一项目路线转向 static-condensed Full3D iterative 与 Hybrid iterative。
 
-本任务把工作严格分成三层：
-
-1. **Reference certifier**：独立运行 p6/h10、p6/h7.5、p6/h5，检查高阶序列是否收敛，并生成封存的 hidden authority；
-2. **Blind adaptive controller**：只能使用当前解、残差、伴随、local p-shadow、local h-shadow 和误差预算，不能读取 hidden authority；
-3. **Final hidden auditor**：自适应候选完全冻结后，才读取 hidden authority 检查算法是否真的成功。
-
-当前不再按功率大小筛“显著通道”。对于固定13.5 nm、S偏振、10°掠入射、沿 y 不变化的结构，正式低阶输出集合固定为：
+最终审阅报告：
 
 ```text
-N = 8
-n = 0
-m = 0, -1, -2, -3, -4, -5, -6, -7
+docs/task035e_reference_blind_multilevel_hp_adaptivity/review_report_v1.md
 ```
 
-对 top/bottom 两个端口分别审计每个级的功率和复振幅，并同时保存完整传播谱、R00、Rtotal、Ttotal、Aclosure、Avolume、场与残差。
+---
 
-Task035e 的重点不是把 p6/h10 轻微删改，而是从真正粗网格开始，允许多个 local-h level 与 local-p 同时存在，使最终网格真实包含大、中、小不同单元。
+## 1. 本任务原本要解决什么
 
-正式任务书：
+Task035e 在 13.5 nm 下模拟未来 0.7 nm 的困难：自适应程序看不到完整收敛解，只能依据 current solution、residual、adjoint、p-shadow、h-shadow 和资源预算，自动决定哪里细化 h、哪里提高 p、何时停止。
+
+正式输出固定为 59 个目标：
 
 ```text
-docs/task035e_reference_blind_multilevel_hp_adaptivity/task.md
+16 order powers
+32 complex-amplitude real/imag components
+5 totals
+6 field goals
 ```
 
-## 当前执行进度
+固定级次为 top/bottom、`n=0`、`m=0,-1,...,-7`。不因弱级次功率小而将其删除。
 
-Task035e 的软件预资格已完成，数值研究已进入 partial Path A cycle 0。当前实现
-已经具备：
+---
 
-- 真实 dyadic level-0/1/2 local-h forest、2:1 closure、periodic/hanging trace；
-- production p4/p5/p6 exact-sequence variable-p，inactive 高阶 mode 不进入全局矩阵；
-- 固定 59-goal current snapshot、actual DWR、p-shadow、h-shadow 与双路径状态机；
-- p6→p7 和 level-2→level-3 的 shadow-only saturation authority；
-- crash-resumable Path A/B campaign、单 heavy-job lock、private artifact root；
-- 两路径正式 `compare_frozen_paths`、不可变 candidate freeze receipt/bundle；
-- blind campaign 完全退出后才可调用的独立 evaluator handoff/preflight。
+## 2. 已完成且可信的结果
 
-最后一项刻意不放进 blind campaign 的 import graph：控制器只负责冻结候选，
-独立 evaluator 进程随后验证 receipt/bundle，验证通过前不会打开 sealed
-reference。这样不会为了方便 orchestration 而破坏三层隔离。
+### 2.1 三点 global-p6 reference
 
-这些软件能力本身仍只属于 component qualification。数值进度另由 Case098
-的 hash-bound progress checkpoint 记录；严格最终 `config.json` 继续保持
-`SCAFFOLD_NOT_RUN`，因为其 schema 不能安全表达 partial cycle。
+| 模型 | 网格 | 59-goal | peak | 结论 |
+|---|---:|---:|---:|---|
+| p6/h10 | `(6,3,14)`；252 cells | 59/59 | 14.466988 GiB | 当前容差下通过 |
+| p6/h7.5 | `(9,4,20)`；720 cells | 59/59 | 31.880505 GiB | 与 h5 高度一致 |
+| p6/h5 | `(12,5,28)`；1,680 cells | 59/59 | 77.945587 GiB | best available discrete endpoint |
 
-截至 2026-07-29，Path A cycle 0 的 current、完整 p-shadow、完整 h-shadow
-和 cellwise partition 均已通过。在 numerical source
-`f1ba5627f163da54fa383b43be58fd38c0da7bc9` 上又只运行了一条获授权的
-selected-p actual candidate。该 candidate 的 residual、energy、Floquet、
-hanging、MPI8、11 GiB 和 zero-swap Gate 全部通过，但既有四-cell DWR
-预测相对 actual candidate-current 只有 `19/59` 落在 factor-two 范围，且
-`25/59` 符号相反。因此 action 被保存为 controlled negative，cycle 0 current
-继续保留，`cycle_advanced=false`。
+全部三对模型均为 59/59，h7.5→h5 最大差仅为 `0.00441636 tau`。p6/h5 `factor_nnz` 的 PETSc int32 overflow 已依据同一 MUMPS raw telemetry 离线修正为 `2,277,000,000`；没有重跑 PDE。
 
-详细结论见：
+### 2.2 true local-h / local-p capability
 
-- [selected-p actual outcome](outcomes/path_a_cycle0_selected_p_actual.md)；
-- [selected-p hash-bound checkpoint](../../benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_selected_p_actual_checkpoint_v1.json)。
+已建立并实际运行：
 
-selected-h、Path B 新运行、cycle 1 shadow、p7/level-3、hidden audit 和 Hybrid
-均未启动。Task035e 仍为 partial research，而不是最终 blind hp 成功。
+- level 0/1/2 dyadic local-h forest；
+- 2:1 balance、periodic/material closure、hanging H(curl) trace；
+- p4/p5/p6 active exact-sequence space；
+- inactive high-order modes 不进入 global rows、matrix NNZ 或 factor；
+- assembly-time static condensation 与完整场恢复；
+- MPI8 current、p-shadow、h-shadow；
+- distributed 59-goal adjoint/DWR。
 
-随后又按单独授权只验证
-`cell:r42:l1:i1:j0:k0 : p4 -> p5`。这条 single-cell candidate 的全部数值与
-资源 Gate 通过，实际只增加 132 个 cell-interior modes、16 个 face modes、
-148 个 Full3D-equivalent DoF 和 16 个 augmented rows；whole-job memory
-authority 为 7.560097 GiB、swap 为 0。但既有单-cell DWR prediction 为
-`0/59` factor-two-or-neutral、`30/59` opposite-sign，其中 53 个正式逐级与
-总量目标有 24 个符号相反。因此 candidate 同样 rejected，cycle 0 current
-继续保留，当前 cellwise-p quantitative predictor 正式关闭。
+Path A cycle 0：
 
-新增证据与后续离线设计见：
+| stage | leaves | FE DoF / rows | whole-job peak | status |
+|---|---:|---:|---:|---|
+| current | 160 | 59,264 / 20,202 | 8.17 GiB | pass |
+| p-shadow | 160 | 62,284 / 20,564 | 8.15 GiB | pass |
+| h-shadow | 181 | 66,434 / 22,189 | 10.237 GiB | pass |
 
-- [single-cell p-up actual outcome](outcomes/path_a_cycle0_single_cell_p_actual.md)；
-- [single-cell hash-bound checkpoint](../../benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_single_cell_p_actual_checkpoint_v1.json)；
-- [cellwise-p estimator repair design](outcomes/cellwise_p_estimator_repair_design.md)。
+### 2.3 内存生命周期优化
 
-cellwise partition 只能保留为无定量 credit 的 ranking signal。在
-entity/mode-orbit 或 exact selected-action DWR 先通过既有 single/grouped raw
-actual candidates 的离线回放前，不再开放其他 selected-p cell 或 selected-h。
+- field-goal p6 basis 改为逐 cell 流式；
+- h-transfer 临时对象提前释放；
+- actual candidate 在 field output 前释放 KSP/MUMPS factor、system matrix、RHS 和 solver vector。
 
-随后完成的 post-action global-estimator 审计没有运行新 PDE 或读取 hidden
-reference。single-cell candidate 可以严格嵌入 full p-shadow，但其
-fixed-blind-tolerance aggregate remaining estimator 从
-`3421.5539650198` 增至 `3426.4883968936`，恶化 `0.144216%`；four-cell
-candidate 有两个 p6 cell 超出现有 full p-shadow 的 p5 space，严格 embedding
-失败，不能伪造 remaining DWR。
+最后一次 candidate 的 sum RSS 从 `11,123.977 MiB` 降至 `6,905.078 MiB`，但正式峰值仍由 MUMPS factorization 决定。生命周期释放不计为 h/p structural gain。
 
-因此没有资格化新的 post-action acceptance contract，也没有追认 candidate
-成功。cycle 0 current 继续保留，下一 lane 冻结为 exact selected-action
-complement Schur/low-rank repair，且必须包含 `Delta A00`、完整 edge/face
-orbit、periodic/hanging closure 和 action-consistent quadratic remainder。
+---
 
-新增证据：
+## 3. 未成功的主线
 
-- [post-action global-estimator outcome](outcomes/post_action_global_estimator_audit.md)；
-- [59-goal compact](../../benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_post_action_global_estimator_audit_v1.json)；
-- [更新后的 estimator repair design](outcomes/cellwise_p_estimator_repair_design.md)。
+### 3.1 cellwise action prediction
 
-### 2026-07-29：reference-visible development diagnostic
+- four-cell selected-p：19/59 factor-two，25/59 opposite-sign；
+- single-cell p4→p5：0/59 factor-two-or-neutral，30/59 opposite-sign；
+- post-action global estimator 也未证明 single-cell candidate 改善。
 
-最新授权暂缓 exact selected-action complement Schur/low-rank 数值开发，也没有
-运行新 PDE。一个与 blind controller 隔离的 development evaluator 打开既有
-sealed package，离线比较 cycle 0 current、完整 p/h shadow 和两个已拒绝的
-actual candidates。该结果严格分类为
-`REFERENCE_VISIBLE_DEVELOPMENT_DIAGNOSTIC`，不得获得 reference-blind、
-formal candidate 或 hidden-audit credit。
+结论：cellwise full-shadow attribution 只能保留为 ranking/diagnostic signal，不能当作 selected-action endpoint response predictor。
 
-full p-shadow 的 59-goal normalized L2 true error 相对 current 降低
-`27.120392%`；N=8 power、grouped complex amplitudes、totals 和 fields
-分类 L2 均改善，按显式 development policy 没有系统性分类恶化。因此只提出
-复用**已有** full p-shadow 作为 development cycle 1 current，无需重新求解。
-该提议尚未写入 controller state：cycle 0 current 继续保留，
-`cycle_advanced=false`。
+### 3.2 structured selective trace
 
-full p-shadow 仍只有 `1/59` 位于 reference tolerance 内、`0/59` 位于
-reference uncertainty 内，所以它不是收敛候选。全部 reference center、
-uncertainty、五组逐目标误差、分类统计、输入 SHA 和冻结标志见：
+| 模型 | 59-goal | peak | status |
+|---|---:|---:|---|
+| H10 p5-trace/p6-interior M1 | 52/59 | <9.78 GiB historical upper bound | accuracy fail |
+| projection 200 face orbits | 50/59 | 13.004 GiB | accuracy+resource negative |
+| goal-DWR 16 face orbits | 49/59 | 10.929794 GiB | resource pass，accuracy fail |
 
-- [reference-visible outcome](outcomes/reference_visible_development_diagnostic.md)；
-- [59-goal compact](outcomes/reference_visible_development_diagnostic_v1.json)。
+最终 16-orbit 候选对被显式优化的 6 个独立目标全部恢复为通过，说明 signed DWR 与 face-orbit quotient 本身有效；但 10 个原本通过的旁路目标越界，完整 normalized L2 恶化 `91.342535%`。
 
-compact 刻意位于 development outcome 目录，不是 blind controller input、
-Case098 final ledger 或 reference-blind evidence。既有 blind runs 与
-controlled negatives 原样保留。
+因此：
+
+```text
+direct selective trace = closed
+second batch = not_run
+threshold retune = not_run
+ranking-formula retune = not_run
+```
+
+---
+
+## 4. 为什么 Task035e 不是成功，也不是“h/p 无效”
+
+- h 和 p 都能改善离散结果；
+- true local-h/local-p、静态凝聚和 DWR 组件均有正证据；
+- 失败的是在完整 59-goal 合同下，自动选择一个低内存 local h/p 子空间；
+- 没有 accepted transition、cycle 1、Path A/B frozen consistency 或 hidden final audit；
+- 因此不能声明 `REFERENCE_BLIND_HP_ACCURACY_PASS`。
+
+---
+
+## 5. 代码与 master 的处置
+
+本任务不建议整分支合并 master，也不建议立即合并新增 source code。
+
+```text
+merge now:
+    final review and project documentation only
+
+retain on Task035e branch:
+    blind controller / hidden auditor / campaign orchestration
+    Task035e DWR and shadow modules
+    multilevel local-h research extensions
+    goal-oriented selective-trace research algebra
+    reference certifier package
+    p7 / level-3 saturation
+    Case098 detailed records and intermediate plans
+```
+
+未来需要某一底层模块时，应建立独立、小范围 extraction task，去掉 Task035e contracts、hash orchestration 和未完成状态机后再资格化。
+
+---
+
+## 6. 下一步
+
+下一任务建议为：
+
+```text
+Static-condensed Full3D iterative
+→ Hybrid direct 59-goal qualification
+→ Static-condensed Hybrid iterative
+→ one larger-scale extension point
+```
+
+先固定 p6/h10 Full3D direct 作为迭代法权威参考，开发 FGMRES 与 FEM-trace/DtN block preconditioner；不在同一任务中重启 h/p controller。
+
+---
+
+## 7. 主要证据入口
+
+- `task.md`：原始合同；
+- `review_report_v1.md`：最终审阅与 selective merge 决策；
+- `outcomes/structured_anchor_selective_trace_v1.md`；
+- `outcomes/goal_oriented_selective_trace_v1.md`；
+- `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/structured_anchor_selective_trace_v1.json`；
+- `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/h10_goal_oriented_selective_trace_v1.json`；
+- `docs/development_model_registry.md` §3.40。
