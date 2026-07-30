@@ -68,7 +68,9 @@ def _exact_traction_gate(
     metadata = record.get("metadata")
     metadata = metadata if isinstance(metadata, dict) else {}
     legacy_sha_bound = bool(
-        record.get("schema_version") == 1
+        len(values) == 2
+        and all(value is None for value in values)
+        and record.get("schema_version") == 1
         and metadata.get("commit_sha")
         in _LEGACY_TASK032_MISSING_EXACT_TRACTION_COMMITS
     )

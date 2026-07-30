@@ -48,6 +48,10 @@ class Task036ForwardSolverHardeningTests(unittest.TestCase):
             (False, "missing_exact_variational_conormal_dual"),
         )
         self.assertEqual(
+            _exact_traction_gate(legacy, [1.0e3, None], 1.0e-8),
+            (False, "missing_exact_variational_conormal_dual"),
+        )
+        self.assertEqual(
             _exact_traction_gate(current, [1.0e-9, 2.0e-9], 1.0e-8),
             (True, "exact_variational_conormal_dual"),
         )
