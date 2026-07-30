@@ -196,3 +196,16 @@ continuation 冒充已解决。
 | full repository pytest | `803 passed, 41 skipped, 3 failed`；三个 failure 均为非数值收口项 |
 | post-full targeted closure | `59 passed`，主 checkout 与 clean worktree 均通过 |
 | Task036 最终测试闭合 | complete；无数值 failure，未虚称 full suite 零失败 |
+
+## 6. Review V2 启动检查点
+
+Review V2 只新增扫描范围，没有改变已完成 PDE 的数值源码。Round A/B/C/D 的冻结点表
+和合同测试属于调度/文档改动，因此未触发旧 PDE 或 48:55 full-suite 重跑。
+
+| 检查 | 状态 |
+|---|---|
+| V2 review HEAD | `1eab6393525d25ebbf0e7d5068f446c6d5afde1f` |
+| frozen configurations | `226` |
+| frozen table SHA-256 | `01701c580355b8870c3865a6cb631d4db53f12a1a8fc3a2eaba3da59a26812d4` |
+| new PDE at freeze checkpoint | `not_run` |
+| numerical source changed | `false` |
