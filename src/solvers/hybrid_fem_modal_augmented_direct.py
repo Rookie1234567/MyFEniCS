@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Any, Callable
 
 import numpy as np
 from mpi4py import MPI
@@ -19,6 +19,7 @@ from ..common.config_3d import SimulationConfig3D
 from ..coupling.hybrid_internal_modes import HybridInternalModeCoupling
 from .common_3d_solve import _petsc_matrix_stats
 from .dtn_port_3d import (
+    _auxiliary_direct_tangential_projection_audit,
     _gather_auxiliary_values,
     _mode_boundary_phase,
     _mode_power_at_boundary,
@@ -812,6 +813,123 @@ def _external_diffraction_order_rows(
             )
             auxiliary_index += 1
     return rows
+
+
+def evaluate_hybrid_recovered_direct_projection_audit(
+    cfg: SimulationConfig3D,
+    bottom_system: HybridLocalDtnSystem,
+    top_system: HybridLocalDtnSystem,
+    solution: Any,
+) -> dict[str, Any]:
+    """Audit Hybrid auxiliary amplitudes against recovered local FE traces.
+
+    The audit is opt-in and reuses the independent tangential projection used
+    by Full3D.  It deliberately runs on the recovered physical fields rather
+    than the condensed trace carriers.
+    """
+
+    if not cfg.dtn_auxiliary_direct_projection_audit:
+        return {
+            "requested": False,
+            "status": "not_requested",
+            "scope": "hybrid_candidate",
+            "pass": None,
+            "ordinary_default_changed": False,
+        }
+    if solution.bottom_recovered is None or solution.top_recovered is None:
+        raise ValueError(
+            "Task036 Hybrid direct projection audit requires static-condensation "
+            "recovered bottom and top FE fields; standard/nonrecovered Hybrid "
+            "direct projection audit is not qualified."
+        )
+
+    systems = {
+        "bottom": bottom_system,
+        "top": top_system,
+    }
+    fields = {
+        "bottom": solution.bottom_physical,
+        "top": solution.top_physical,
+    }
+    vectors = {
+        "bottom": solution.bottom,
+        "top": solution.top,
+    }
+    side_audits: dict[str, dict] = {}
+    rows: list[dict] = []
+    side_mode_count: dict[str, int] = {}
+    quadrature_degree_by_side: dict[str, int | None] = {}
+    for side in ("bottom", "top"):
+        system = systems[side]
+        auxiliary = _gather_auxiliary_values(
+            vectors[side],
+            system.n_fe,
+            system.n_external_aux,
+            system.local_mesh.mesh.comm,
+        )
+        audit = _auxiliary_direct_tangential_projection_audit(
+            fields[side],
+            system.external_modes,
+            auxiliary,
+            system.incident_projections,
+            system.local_mesh.mesh_data,
+            cfg,
+            quadrature_degree=system.dtn_quadrature_degree,
+        )
+        side_audits[side] = audit
+        rows.extend(audit["orders"])
+        side_mode_count[side] = len(system.external_modes)
+        quadrature_degree_by_side[side] = system.dtn_quadrature_degree
+
+    expected_mode_count = int(sum(side_mode_count.values()))
+    max_total = max(
+        (
+            float(row["absolute_total_projection_difference"])
+            for row in rows
+        ),
+        default=0.0,
+    )
+    max_outgoing = max(
+        (
+            float(row["absolute_outgoing_projection_difference"])
+            for row in rows
+        ),
+        default=0.0,
+    )
+    tolerance = float(cfg.dtn_auxiliary_direct_projection_tolerance)
+    passed = bool(
+        len(rows) == expected_mode_count
+        and all(audit["pass"] is True for audit in side_audits.values())
+        and max_outgoing <= tolerance
+    )
+    return {
+        "requested": True,
+        "status": "pass" if passed else "failed",
+        "scope": "hybrid_candidate",
+        "method": (
+            "independent recovered-FE tangential trace projection; official "
+            "Hybrid auxiliary amplitudes are unchanged"
+        ),
+        "field_source": (
+            "static_condensation_recovered_full_local_fe_fields"
+        ),
+        "official_auxiliary_amplitudes_unchanged": True,
+        "ordinary_default_changed": False,
+        "absolute_error_only_for_near_zero_channels": True,
+        "tolerance": tolerance,
+        "quadrature_degree_by_side": quadrature_degree_by_side,
+        "expected_mode_count": expected_mode_count,
+        "audited_mode_count": len(rows),
+        "side_mode_count": side_mode_count,
+        "max_absolute_total_projection_difference": max_total,
+        "max_absolute_outgoing_projection_difference": max_outgoing,
+        "side_pass": {
+            side: bool(audit["pass"])
+            for side, audit in side_audits.items()
+        },
+        "pass": passed,
+        "orders": rows,
+    }
 
 
 def evaluate_hybrid_augmented_solution(

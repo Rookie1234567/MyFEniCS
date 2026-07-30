@@ -23,6 +23,7 @@ from src.modes.cross_section_spaces import (
 from src.solvers.hybrid_fem_modal_augmented_direct import (
     build_hybrid_augmented_direct_system,
     evaluate_hybrid_augmented_solution,
+    evaluate_hybrid_recovered_direct_projection_audit,
     solve_hybrid_augmented_direct,
 )
 from src.solvers.hybrid_fem_modal_schur_direct import (
@@ -354,6 +355,35 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
                 ],
                 4,
             )
+
+    def test_recovered_trace_direct_projection_audits_candidate_itself(
+        self,
+    ) -> None:
+        cfg = replace(
+            self.static_cfg,
+            dtn_auxiliary_direct_projection_audit=True,
+            dtn_auxiliary_direct_projection_tolerance=1.0e-10,
+        )
+        audit = evaluate_hybrid_recovered_direct_projection_audit(
+            cfg,
+            *self.static_systems,
+            self.static_solution,
+        )
+        self.assertTrue(audit["requested"])
+        self.assertEqual(audit["scope"], "hybrid_candidate")
+        self.assertEqual(
+            audit["audited_mode_count"],
+            audit["expected_mode_count"],
+        )
+        self.assertEqual(
+            set(audit["side_mode_count"]),
+            {"bottom", "top"},
+        )
+        self.assertTrue(audit["pass"], audit)
+        self.assertLessEqual(
+            audit["max_absolute_outgoing_projection_difference"],
+            1.0e-10,
+        )
 
     def test_static_modal_schur_matches_static_augmented(self) -> None:
         schur = build_hybrid_modal_schur_memory_minimal_system(

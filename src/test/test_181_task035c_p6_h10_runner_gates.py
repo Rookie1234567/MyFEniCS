@@ -3,12 +3,15 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from benchmarks.run_task032_phase6_augmented import (
     _discrete_axial_qualification_scope,
     _hybrid_p_disposition,
     _parse_args as parse_phase6_args,
+    _task036_hybrid_candidate_direct_projection_checks,
 )
 from benchmarks.run_task033_full3d_watchdog import (
     _parse_args as parse_full3d_args,
@@ -22,6 +25,9 @@ from benchmarks.task035c_p6_h10_gates import (
     task036_full3d_reference_gate,
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
+)
+from src.solvers.hybrid_fem_modal_augmented_direct import (
+    evaluate_hybrid_recovered_direct_projection_audit,
 )
 
 
@@ -37,6 +43,31 @@ AUTHORITY = (
 AUTHORITY_SHA256 = hashlib.sha256(AUTHORITY.read_bytes()).hexdigest()
 SOURCE_SHA = "a" * 40
 RECORD_SHA256 = "b" * 64
+
+
+def _hybrid_projection_audit() -> dict:
+    rows = [
+        {
+            "side": side,
+            "m": 0,
+            "n": 0,
+            "polarization": polarization,
+            "absolute_total_projection_difference": 1.0e-12,
+            "absolute_outgoing_projection_difference": 1.0e-12,
+        }
+        for side in ("bottom", "top")
+        for polarization in ("s", "p")
+    ]
+    return {
+        "requested": True,
+        "scope": "hybrid_candidate",
+        "tolerance": 1.0e-10,
+        "expected_mode_count": len(rows),
+        "audited_mode_count": len(rows),
+        "max_absolute_outgoing_projection_difference": 1.0e-12,
+        "pass": True,
+        "orders": rows,
+    }
 
 
 def _full3d_reference(backend: str) -> dict:
@@ -546,6 +577,156 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
                 diagnostic_projection_bug=False,
                 **common,
             )["applicable"]
+        )
+
+    def test_task036_hybrid_candidate_projection_gate_recomputes_record(self) -> None:
+        audit = _hybrid_projection_audit()
+        checks = _task036_hybrid_candidate_direct_projection_checks(audit)
+        self.assertTrue(all(checks.values()), checks)
+
+        mutations = (
+            ("missing_rows", lambda row: row.update(orders=[])),
+            (
+                "wrong_tolerance",
+                lambda row: row.update(tolerance=2.0e-10),
+            ),
+            (
+                "reported_failure",
+                lambda row: row.update(**{"pass": False}),
+            ),
+            (
+                "nonfinite_difference",
+                lambda row: row["orders"][0].update(
+                    absolute_outgoing_projection_difference=float("inf")
+                ),
+            ),
+            (
+                "duplicate_identity",
+                lambda row: row["orders"].__setitem__(
+                    1, dict(row["orders"][0])
+                ),
+            ),
+            (
+                "truncated_count",
+                lambda row: row.update(audited_mode_count=3),
+            ),
+        )
+        for label, mutate in mutations:
+            with self.subTest(label=label):
+                candidate = _hybrid_projection_audit()
+                mutate(candidate)
+                rejected = (
+                    _task036_hybrid_candidate_direct_projection_checks(
+                        candidate
+                    )
+                )
+                self.assertFalse(all(rejected.values()), rejected)
+
+    def test_hybrid_recovered_projection_audit_is_opt_in_and_fail_closed(
+        self,
+    ) -> None:
+        disabled = SimpleNamespace(
+            dtn_auxiliary_direct_projection_audit=False
+        )
+        audit = evaluate_hybrid_recovered_direct_projection_audit(
+            disabled,
+            SimpleNamespace(),
+            SimpleNamespace(),
+            SimpleNamespace(),
+        )
+        self.assertFalse(audit["requested"])
+        self.assertEqual(audit["status"], "not_requested")
+
+        enabled = SimpleNamespace(
+            dtn_auxiliary_direct_projection_audit=True,
+            dtn_auxiliary_direct_projection_tolerance=1.0e-10,
+        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "requires static-condensation recovered",
+        ):
+            evaluate_hybrid_recovered_direct_projection_audit(
+                enabled,
+                SimpleNamespace(),
+                SimpleNamespace(),
+                SimpleNamespace(
+                    bottom_recovered=None,
+                    top_recovered=None,
+                ),
+            )
+
+    def test_hybrid_recovered_projection_audit_merges_both_ports(self) -> None:
+        cfg = SimpleNamespace(
+            dtn_auxiliary_direct_projection_audit=True,
+            dtn_auxiliary_direct_projection_tolerance=1.0e-10,
+        )
+
+        def system(side: str) -> SimpleNamespace:
+            return SimpleNamespace(
+                n_fe=3,
+                n_external_aux=2,
+                external_modes=[
+                    SimpleNamespace(side=side),
+                    SimpleNamespace(side=side),
+                ],
+                incident_projections=[0.0j, 0.0j],
+                local_mesh=SimpleNamespace(
+                    mesh=SimpleNamespace(comm=SimpleNamespace()),
+                    mesh_data=SimpleNamespace(),
+                ),
+                dtn_quadrature_degree=12,
+            )
+
+        bottom = system("bottom")
+        top = system("top")
+        solution = SimpleNamespace(
+            bottom_recovered=SimpleNamespace(),
+            top_recovered=SimpleNamespace(),
+            bottom_physical=SimpleNamespace(),
+            top_physical=SimpleNamespace(),
+            bottom=SimpleNamespace(),
+            top=SimpleNamespace(),
+        )
+
+        def side_audit(_field, modes, *_args, **_kwargs) -> dict:
+            side = modes[0].side
+            rows = [
+                {
+                    "side": side,
+                    "m": index,
+                    "n": 0,
+                    "polarization": polarization,
+                    "absolute_total_projection_difference": 1.0e-12,
+                    "absolute_outgoing_projection_difference": 1.0e-12,
+                }
+                for index, polarization in enumerate(("s", "p"))
+            ]
+            return {"pass": True, "orders": rows}
+
+        module = "src.solvers.hybrid_fem_modal_augmented_direct"
+        with (
+            patch(
+                f"{module}._gather_auxiliary_values",
+                return_value=[0.0j, 0.0j],
+            ),
+            patch(
+                f"{module}._auxiliary_direct_tangential_projection_audit",
+                side_effect=side_audit,
+            ),
+        ):
+            audit = evaluate_hybrid_recovered_direct_projection_audit(
+                cfg,
+                bottom,
+                top,
+                solution,
+            )
+        self.assertTrue(audit["pass"])
+        self.assertEqual(audit["expected_mode_count"], 4)
+        self.assertEqual(audit["audited_mode_count"], 4)
+        self.assertEqual(audit["side_mode_count"], {"bottom": 2, "top": 2})
+        self.assertEqual(
+            {row["side"] for row in audit["orders"]},
+            {"bottom", "top"},
         )
 
     def test_ordinary_defaults_remain_unchanged(self) -> None:

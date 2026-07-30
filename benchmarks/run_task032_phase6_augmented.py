@@ -73,6 +73,7 @@ from src.postprocessing.hybrid_field_reconstruction import (
 from src.solvers.hybrid_fem_modal_augmented_direct import (
     build_hybrid_augmented_direct_system,
     evaluate_hybrid_augmented_solution,
+    evaluate_hybrid_recovered_direct_projection_audit,
     solve_hybrid_augmented_direct,
 )
 from src.solvers.hybrid_fem_modal_schur_direct import (
@@ -473,6 +474,121 @@ _TASK036_DIRECT_PROJECTION_CHECKS = (
     "task036_direct_projection_max_le_1e_10",
     "task036_direct_projection_pass",
 )
+
+
+_TASK036_HYBRID_DIRECT_PROJECTION_CHECKS = (
+    "task036_hybrid_direct_projection_requested",
+    "task036_hybrid_direct_projection_tolerance_frozen",
+    "task036_hybrid_direct_projection_nonempty_complete_finite_orders",
+    "task036_hybrid_direct_projection_exact_mode_count",
+    "task036_hybrid_direct_projection_unique_mode_identities",
+    "task036_hybrid_direct_projection_top_bottom_coverage",
+    "task036_hybrid_direct_projection_s_p_coverage",
+    "task036_hybrid_direct_projection_max_le_1e_10",
+    "task036_hybrid_direct_projection_pass",
+)
+
+
+def _task036_hybrid_candidate_direct_projection_checks(
+    audit: dict[str, Any],
+) -> dict[str, bool]:
+    """Recompute the Task036 Hybrid candidate projection evidence Gate."""
+
+    orders = audit.get("orders")
+    orders = orders if isinstance(orders, list) else []
+    tolerance = audit.get("tolerance")
+    tolerance_valid = bool(
+        isinstance(tolerance, (int, float))
+        and not isinstance(tolerance, bool)
+        and math.isfinite(float(tolerance))
+        and float(tolerance) == 1.0e-10
+    )
+    orders_valid = bool(orders) and all(
+        isinstance(row, dict)
+        and row.get("side") in {"top", "bottom"}
+        and row.get("polarization") in {"s", "p"}
+        and isinstance(row.get("m"), int)
+        and not isinstance(row.get("m"), bool)
+        and isinstance(row.get("n"), int)
+        and not isinstance(row.get("n"), bool)
+        and all(
+            isinstance(row.get(key), (int, float))
+            and not isinstance(row.get(key), bool)
+            and math.isfinite(float(row[key]))
+            and float(row[key]) >= 0.0
+            for key in (
+                "absolute_total_projection_difference",
+                "absolute_outgoing_projection_difference",
+            )
+        )
+        for row in orders
+    )
+    identities = (
+        [
+            (
+                row["side"],
+                int(row["m"]),
+                int(row["n"]),
+                row["polarization"],
+            )
+            for row in orders
+        ]
+        if orders_valid
+        else []
+    )
+    expected = audit.get("expected_mode_count")
+    audited = audit.get("audited_mode_count")
+    exact_count = bool(
+        isinstance(expected, int)
+        and not isinstance(expected, bool)
+        and expected > 0
+        and isinstance(audited, int)
+        and not isinstance(audited, bool)
+        and audited == expected
+        and len(orders) == expected
+    )
+    maximum = audit.get(
+        "max_absolute_outgoing_projection_difference"
+    )
+    maximum_valid = bool(
+        isinstance(maximum, (int, float))
+        and not isinstance(maximum, bool)
+        and math.isfinite(float(maximum))
+        and float(maximum) <= 1.0e-10
+    )
+    checks = {
+        "task036_hybrid_direct_projection_requested": bool(
+            audit.get("requested") is True
+            and audit.get("scope") == "hybrid_candidate"
+        ),
+        "task036_hybrid_direct_projection_tolerance_frozen": (
+            tolerance_valid
+        ),
+        "task036_hybrid_direct_projection_nonempty_complete_finite_orders": (
+            orders_valid
+        ),
+        "task036_hybrid_direct_projection_exact_mode_count": exact_count,
+        "task036_hybrid_direct_projection_unique_mode_identities": bool(
+            identities and len(set(identities)) == len(identities)
+        ),
+        "task036_hybrid_direct_projection_top_bottom_coverage": bool(
+            orders_valid
+            and {row["side"] for row in orders} == {"top", "bottom"}
+        ),
+        "task036_hybrid_direct_projection_s_p_coverage": bool(
+            orders_valid
+            and {row["polarization"] for row in orders} == {"s", "p"}
+        ),
+        "task036_hybrid_direct_projection_max_le_1e_10": maximum_valid,
+        "task036_hybrid_direct_projection_pass": bool(
+            audit.get("pass") is True
+        ),
+    }
+    if set(checks) != set(_TASK036_HYBRID_DIRECT_PROJECTION_CHECKS):
+        raise RuntimeError(
+            "Task036 Hybrid direct projection Gate names drifted."
+        )
+    return checks
 
 
 def _case080_reference_path(
@@ -2496,6 +2612,29 @@ def main() -> None:
             }
             primary_schur_system.destroy()
             primary_schur_system = None
+        if cfg.dtn_auxiliary_direct_projection_audit:
+            mark_stage("hybrid_candidate_direct_projection_audit")
+            started = time.perf_counter()
+        candidate_direct_projection_audit = (
+            evaluate_hybrid_recovered_direct_projection_audit(
+                cfg,
+                bottom,
+                top,
+                solution,
+            )
+        )
+        validation["auxiliary_direct_tangential_projection_audit"] = (
+            candidate_direct_projection_audit
+        )
+        if cfg.dtn_auxiliary_direct_projection_audit:
+            timings["hybrid_candidate_direct_projection_audit"] = (
+                _max_elapsed(comm, started)
+            )
+            progress(
+                "Task36: Hybrid candidate recovered-trace direct projection "
+                "audit complete"
+            )
+            mark_stage("solver_objects_released_before_field_output")
         bottom.destroy()
         top.destroy()
         gc.collect()
@@ -2944,6 +3083,16 @@ def main() -> None:
                         ),
                     }
                 )
+        task036_hybrid_projection_checks: dict[str, bool] = {}
+        if args.task036_domain_robustness_gate:
+            task036_hybrid_projection_checks = (
+                _task036_hybrid_candidate_direct_projection_checks(
+                    validation[
+                        "auxiliary_direct_tangential_projection_audit"
+                    ]
+                )
+            )
+            gates.update(task036_hybrid_projection_checks)
         physical_gate_prefixes = (
             "sampled_interface_",
             "assembled_interface_",
@@ -2998,10 +3147,22 @@ def main() -> None:
             ),
             interface_closure_pass=interface_closure_pass,
             interface_closure_gate_names=interface_closure_gate_names,
-            diagnostic_projection_bug=False,
+            diagnostic_projection_bug=bool(
+                args.task036_domain_robustness_gate
+                and not all(task036_hybrid_projection_checks.values())
+            ),
             diagnostic_projection_evidence=(
-                "task036_tangential_projection_fix_active; "
-                "no separate diagnostic fault injected in this PDE"
+                (
+                    "candidate_recovered_trace_direct_projection_gate="
+                    f"{all(task036_hybrid_projection_checks.values())}; "
+                    "candidate_max_absolute_outgoing_difference="
+                    f"{validation['auxiliary_direct_tangential_projection_audit'].get('max_absolute_outgoing_projection_difference')}"
+                )
+                if args.task036_domain_robustness_gate
+                else (
+                    "task036_tangential_projection_fix_inactive_outside_"
+                    "task036_domain_gate"
+                )
             ),
         )
         projection_stats = {
