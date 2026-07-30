@@ -550,7 +550,9 @@ def _task035b_static_full3d_anchor_gate(
     )
     rows = matrix.get("matrix_rows")
     assembled_nnz = matrix.get("matrix_nnz_used")
-    factor_nnz = factor_matrix.get("matrix_nnz_used")
+    factor_nnz = factor_inventory.get("factor_nnz_corrected")
+    if factor_nnz is None:
+        factor_nnz = factor_matrix.get("matrix_nnz_used")
     peak_memory_gib = resource.get("memory_authority_gib")
     elapsed_seconds = summary.get("elapsed_seconds")
     reference_planes = config.get("full3d_reference_plane_z")

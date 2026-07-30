@@ -176,6 +176,40 @@ def _finite_number_le(value: Any, limit: float) -> bool:
     )
 
 
+def _task036_trace_alias_controlled_negative(
+    args: argparse.Namespace,
+    payload: Any,
+    *,
+    report_sha256: str | None,
+) -> bool:
+    if not (
+        args.task036_forward_robustness_gate
+        and args.task036_y_invariant_n0_alias_preflight
+        and isinstance(payload, dict)
+        and report_sha256 is not None
+    ):
+        return False
+    overlap = payload.get("maximum_normalized_overlap")
+    tolerance = payload.get("overlap_tolerance")
+    return bool(
+        payload.get("enabled") is True
+        and payload.get("pass") is False
+        and payload.get("status") == "dtn_y_trace_alias_detected"
+        and isinstance(overlap, (int, float))
+        and not isinstance(overlap, bool)
+        and math.isfinite(float(overlap))
+        and isinstance(tolerance, (int, float))
+        and not isinstance(tolerance, bool)
+        and math.isfinite(float(tolerance))
+        and float(tolerance) == 1.0e-8
+        and float(overlap) > float(tolerance)
+        and isinstance(payload.get("comparison_count"), int)
+        and int(payload["comparison_count"]) > 0
+        and isinstance(payload.get("worst_target_mode"), dict)
+        and isinstance(payload.get("worst_non_target_mode"), dict)
+    )
+
+
 def _task035d_selective_face_controlled_negative(
     payload: Any,
     *,
@@ -369,6 +403,32 @@ def _full3d_config(args: argparse.Namespace):
         cfg,
         polarization_kind=args.polarization_kind,
         custom_polarization=None,
+        incident_theta_deg=90.0 - float(args.incident_grazing_deg),
+        incident_phi_deg=float(args.incident_phi_deg),
+        grating_height=(
+            cfg.grating_height
+            if args.grating_height_nm is None
+            else float(args.grating_height_nm)
+        ),
+        grating_width_x=(
+            cfg.grating_width_x
+            if args.grating_width_x_nm is None
+            else float(args.grating_width_x_nm)
+        ),
+        mesh_axis_cell_counts=(
+            None
+            if args.task036_mesh_axis_cell_counts is None
+            else tuple(
+                int(value)
+                for value in args.task036_mesh_axis_cell_counts
+            )
+        ),
+        dtn_y_invariant_n0_alias_preflight=bool(
+            args.task036_y_invariant_n0_alias_preflight
+        ),
+        dtn_auxiliary_direct_projection_audit=bool(
+            args.task036_dtn_direct_projection_audit
+        ),
         stage4_full3d_assembly_backend=(args.stage4_full3d_assembly_backend),
         stage4_variable_p_cell_degree_plan=(
             None
@@ -380,8 +440,14 @@ def _full3d_config(args: argparse.Namespace):
             if args.stage4_local_h_refinement_plan is None
             else str(args.stage4_local_h_refinement_plan)
         ),
-        direct_release_base_after_augmentation=bool(args.task035d_case097_gate),
-        direct_release_solver_before_postprocess=bool(args.task035d_case097_gate),
+        direct_release_base_after_augmentation=bool(
+            args.task035d_case097_gate
+            or args.task036_forward_robustness_gate
+        ),
+        direct_release_solver_before_postprocess=bool(
+            args.task035d_case097_gate
+            or args.task036_forward_robustness_gate
+        ),
         petsc_direct_solver_profile=args.profile,
         petsc_extra_options={
             **cfg.petsc_extra_options,
@@ -407,6 +473,27 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "profile": str(args.profile),
         "run_dir": str(Path(args.run_dir).resolve()),
         "stage4_full3d_assembly_backend": str(args.stage4_full3d_assembly_backend),
+        "task036_forward_robustness_gate": bool(
+            args.task036_forward_robustness_gate
+        ),
+        "incident_grazing_deg": float(args.incident_grazing_deg),
+        "incident_phi_deg": float(args.incident_phi_deg),
+        "grating_height_nm": args.grating_height_nm,
+        "grating_width_x_nm": args.grating_width_x_nm,
+        "task036_mesh_axis_cell_counts": (
+            None
+            if args.task036_mesh_axis_cell_counts is None
+            else [
+                int(value)
+                for value in args.task036_mesh_axis_cell_counts
+            ]
+        ),
+        "task036_y_invariant_n0_alias_preflight": bool(
+            args.task036_y_invariant_n0_alias_preflight
+        ),
+        "task036_dtn_direct_projection_audit": bool(
+            args.task036_dtn_direct_projection_audit
+        ),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -510,12 +597,13 @@ def _validate_worker_parent_launch(args: argparse.Namespace) -> None:
         raise SystemExit("worker parent-launch descriptor contract failed.")
 
 
-def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
-    if not args.task035d_case097_gate:
+def _revalidate_formal_worker_inputs(args: argparse.Namespace) -> None:
+    if not (args.task035d_case097_gate or args.task036_forward_robustness_gate):
         return
-    _validate_task035d_case097_plan(args)
-    _validate_task035d_nested_p_inputs(args)
-    _validate_task035d_selective_face_inputs(args)
+    if args.task035d_case097_gate:
+        _validate_task035d_case097_plan(args)
+        _validate_task035d_nested_p_inputs(args)
+        _validate_task035d_selective_face_inputs(args)
     head = subprocess.check_output(
         ["git", "rev-parse", "HEAD"],
         cwd=ROOT,
@@ -528,7 +616,7 @@ def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
     ).strip()
     if head != args.verified_clean_sha or status:
         raise SystemExit(
-            "Task035d worker source identity is not the clean parent-qualified commit."
+            "Formal worker source identity is not the clean parent-qualified commit."
         )
 
 
@@ -616,7 +704,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "controlled direct-reference watchdog."
         )
     )
-    parser.add_argument("--degree", type=int, choices=(2, 3, 4, 6), required=True)
+    parser.add_argument(
+        "--degree",
+        type=int,
+        choices=(2, 3, 4, 5, 6),
+        required=True,
+    )
     parser.add_argument(
         "--h-nm",
         type=float,
@@ -628,6 +721,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=("s", "p"),
         default="s",
     )
+    parser.add_argument(
+        "--incident-grazing-deg",
+        type=float,
+        default=10.0,
+    )
+    parser.add_argument("--incident-phi-deg", type=float, default=0.0)
+    parser.add_argument("--grating-height-nm", type=float)
+    parser.add_argument("--grating-width-x-nm", type=float)
     parser.add_argument(
         "--run-kind",
         choices=("assembly-only", "factorization-only", "full-solve"),
@@ -659,6 +760,28 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Explicitly open only the Task035c fixed-rectangular p6/h10 "
             "Full3D authority path. Ordinary p2/p3/p4 behavior is unchanged."
         ),
+    )
+    parser.add_argument(
+        "--task036-forward-robustness-gate",
+        action="store_true",
+        help=(
+            "Open one clean-source MPI8 Task036 Full3D bug-regression point "
+            "without changing the ordinary Task033/34 candidate matrix."
+        ),
+    )
+    parser.add_argument(
+        "--task036-mesh-axis-cell-counts",
+        type=int,
+        nargs=3,
+        metavar=("NX", "NY", "NZ"),
+    )
+    parser.add_argument(
+        "--task036-y-invariant-n0-alias-preflight",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--task036-dtn-direct-projection-audit",
+        action="store_true",
     )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
@@ -779,10 +902,29 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--parent-launch-descriptor", type=Path)
     parser.add_argument("--parent-launch-descriptor-sha256")
     args = parser.parse_args(argv)
+    if not (
+        math.isfinite(args.incident_grazing_deg)
+        and 0.0 < args.incident_grazing_deg < 90.0
+    ):
+        parser.error("--incident-grazing-deg must be finite and strictly within (0, 90).")
+    if not math.isfinite(args.incident_phi_deg):
+        parser.error("--incident-phi-deg must be finite.")
+    for option, value in (
+        ("--grating-height-nm", args.grating_height_nm),
+        ("--grating-width-x-nm", args.grating_width_x_nm),
+    ):
+        if value is not None and (not math.isfinite(value) or value <= 0.0):
+            parser.error(f"{option} must be finite and positive.")
+    if (
+        args.task036_mesh_axis_cell_counts is not None
+        and any(value <= 0 for value in args.task036_mesh_axis_cell_counts)
+    ):
+        parser.error("--task036-mesh-axis-cell-counts values must be positive.")
     allowed_h_by_degree = {
         2: {5.0, 3.0, 2.0, 1.0},
         3: {10.0, 7.5, 5.0, 3.0, 2.0},
         4: {10.0, 7.5, 5.0, 3.0},
+        5: {10.0},
         6: {15.0, 10.0},
     }
     if args.h_nm not in allowed_h_by_degree[args.degree]:
@@ -798,6 +940,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         (
             bool(args.task035c_p6_h10_gate),
             bool(args.task035d_case097_gate),
+            bool(args.task036_forward_robustness_gate),
         )
     )
     if args.degree == 6 and selected_p6_gate_count != 1:
@@ -805,8 +948,55 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "p6 is fail-closed; select exactly one scoped Task035c or "
             "Task035d p6/h10 gate."
         )
-    if args.degree != 6 and selected_p6_gate_count:
+    if args.degree != 6 and (
+        args.task035c_p6_h10_gate or args.task035d_case097_gate
+    ):
         parser.error("Task035c/Task035d p6 gates require --degree 6.")
+    if args.task036_forward_robustness_gate:
+        task036_scope = bool(
+            args.degree in {2, 4, 5, 6}
+            and args.h_nm in {5.0, 10.0}
+            and args.polarization_kind in {"s", "p"}
+            and args.run_kind == "full-solve"
+            and args.mpi_size == 8
+            and args.profile == "default"
+            and args.stage4_full3d_assembly_backend
+            in {
+                "standard_full",
+                "assembly_time_static_condensed",
+            }
+            and not args.allow_swap
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.task035c_p6_h10_gate
+            and not args.task035d_case097_gate
+            and args.p3_gate_record is None
+            and args.p4_trace_record is None
+            and not args.task034_p4_h3_added_point
+            and args.stage4_variable_p_cell_degree_plan is None
+            and args.stage4_local_h_refinement_plan is None
+            and args.task036_dtn_direct_projection_audit
+        )
+        if not task036_scope:
+            parser.error(
+                "--task036-forward-robustness-gate is restricted to one "
+                "clean-source, no-swap, default-profile p2/p4/p5/p6 h5/h10 "
+                "Full3D solve on MPI8 with standard or static assembly and the "
+                "independent DtN direct-projection audit enabled."
+            )
+    elif (
+        not math.isclose(args.incident_grazing_deg, 10.0)
+        or not math.isclose(args.incident_phi_deg, 0.0)
+        or args.grating_height_nm is not None
+        or args.grating_width_x_nm is not None
+        or args.task036_mesh_axis_cell_counts is not None
+        or args.task036_y_invariant_n0_alias_preflight
+        or args.task036_dtn_direct_projection_audit
+        or args.degree == 5
+    ):
+        parser.error(
+            "Task036 angle/geometry/topology/projection options and p5 "
+            "require --task036-forward-robustness-gate."
+        )
     if args.task035c_p6_h10_gate:
         scoped = bool(
             args.degree == 6
@@ -1825,7 +2015,7 @@ def _validate_task035d_selective_face_inputs(
 
 
 def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
-    if args.degree != 4:
+    if args.degree != 4 or args.task036_forward_robustness_gate:
         return None
     if args.p3_gate_record is None:
         raise SystemExit("p4 is locked: --p3-gate-record is required.")
@@ -2167,6 +2357,111 @@ def _qualify(
             ),
             "swap_policy_satisfied": args.allow_swap or no_swap,
         }
+    if args.task036_forward_robustness_gate:
+        projection_audit = solver_summary.get(
+            "auxiliary_direct_tangential_projection_audit"
+        )
+        projection_audit = (
+            projection_audit if isinstance(projection_audit, dict) else {}
+        )
+        projection_orders = projection_audit.get("orders")
+        projection_orders = (
+            projection_orders if isinstance(projection_orders, list) else []
+        )
+        formal_mode_count = solver_summary.get("dtn_port_mode_count")
+        complete_finite_orders = bool(projection_orders) and all(
+            isinstance(row, dict)
+            and row.get("side") in {"top", "bottom"}
+            and row.get("polarization") in {"s", "p"}
+            and isinstance(row.get("m"), int)
+            and not isinstance(row.get("m"), bool)
+            and isinstance(row.get("n"), int)
+            and not isinstance(row.get("n"), bool)
+            and _finite_number_le(
+                row.get("absolute_total_projection_difference"),
+                1.0e-10,
+            )
+            and _finite_number_le(
+                row.get("absolute_outgoing_projection_difference"),
+                1.0e-10,
+            )
+            for row in projection_orders
+        )
+        projection_identities = (
+            [
+                (
+                    row["side"],
+                    int(row["m"]),
+                    int(row["n"]),
+                    row["polarization"],
+                )
+                for row in projection_orders
+            ]
+            if complete_finite_orders
+            else []
+        )
+        checks.update(
+            {
+                "task036_direct_projection_requested": (
+                    args.task036_dtn_direct_projection_audit
+                    and projection_audit.get("requested") is True
+                ),
+                "task036_direct_projection_tolerance_frozen": (
+                    projection_audit.get("tolerance") == 1.0e-10
+                ),
+                "task036_direct_projection_nonempty_complete_finite_orders": (
+                    complete_finite_orders
+                ),
+                "task036_direct_projection_exact_mode_count": (
+                    isinstance(formal_mode_count, int)
+                    and not isinstance(formal_mode_count, bool)
+                    and formal_mode_count > 0
+                    and len(projection_orders) == formal_mode_count
+                    and solver_summary.get("dtn_port_top_mode_count")
+                    == sum(
+                        row.get("side") == "top"
+                        for row in projection_orders
+                        if isinstance(row, dict)
+                    )
+                    and solver_summary.get("dtn_port_bottom_mode_count")
+                    == sum(
+                        row.get("side") == "bottom"
+                        for row in projection_orders
+                        if isinstance(row, dict)
+                    )
+                ),
+                "task036_direct_projection_unique_mode_identities": (
+                    bool(projection_identities)
+                    and len(set(projection_identities))
+                    == len(projection_identities)
+                ),
+                "task036_direct_projection_top_bottom_coverage": (
+                    {
+                        row.get("side")
+                        for row in projection_orders
+                        if isinstance(row, dict)
+                    }
+                    == {"top", "bottom"}
+                ),
+                "task036_direct_projection_s_p_coverage": (
+                    {
+                        row.get("polarization")
+                        for row in projection_orders
+                        if isinstance(row, dict)
+                    }
+                    == {"s", "p"}
+                ),
+                "task036_direct_projection_max_le_1e_10": _finite_number_le(
+                    projection_audit.get(
+                        "max_absolute_outgoing_projection_difference"
+                    ),
+                    1.0e-10,
+                ),
+                "task036_direct_projection_pass": (
+                    projection_audit.get("pass") is True
+                ),
+            }
+        )
     task035d_solver_gate = None
     if args.task035d_case097_gate:
         if args.task035d_candidate_id == TASK035D_HP_FACTORIAL_BRIDGE_PLAN_NAME:
@@ -2276,9 +2571,45 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         args.profile,
         "--stage4-full3d-assembly-backend",
         args.stage4_full3d_assembly_backend,
+        "--incident-grazing-deg",
+        str(args.incident_grazing_deg),
+        "--incident-phi-deg",
+        str(args.incident_phi_deg),
         "--run-dir",
         str(run_dir),
     ]
+    if args.task036_forward_robustness_gate:
+        command.extend(
+            (
+                "--task036-forward-robustness-gate",
+                "--verified-clean-sha",
+                str(args.verified_clean_sha),
+            )
+        )
+        if args.grating_height_nm is not None:
+            command.extend(
+                ("--grating-height-nm", str(args.grating_height_nm))
+            )
+        if args.grating_width_x_nm is not None:
+            command.extend(
+                ("--grating-width-x-nm", str(args.grating_width_x_nm))
+            )
+        if args.task036_mesh_axis_cell_counts is not None:
+            command.extend(
+                (
+                    "--task036-mesh-axis-cell-counts",
+                    *(
+                        str(value)
+                        for value in args.task036_mesh_axis_cell_counts
+                    ),
+                )
+            )
+        if args.task036_y_invariant_n0_alias_preflight:
+            command.append(
+                "--task036-y-invariant-n0-alias-preflight"
+            )
+        if args.task036_dtn_direct_projection_audit:
+            command.append("--task036-dtn-direct-projection-audit")
     if args.task035c_p6_h10_gate:
         command.extend(
             (
@@ -2406,7 +2737,7 @@ def _run_parent(args: argparse.Namespace) -> int:
     task035d_nested_p_gate = _validate_task035d_nested_p_inputs(args)
     task035d_selective_face_gate = _validate_task035d_selective_face_inputs(args)
     source_before = _source_provenance(args)
-    if args.task035d_case097_gate:
+    if args.task035d_case097_gate or args.task036_forward_robustness_gate:
         task035d_status_before = subprocess.check_output(
             ["git", "status", "--porcelain", "--untracked-files=all"],
             cwd=ROOT,
@@ -2414,7 +2745,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         ).strip()
         if task035d_status_before:
             raise SystemExit(
-                "Task035d formal PDE requires an actually clean source tree; "
+                "Formal PDE requires an actually clean source tree; "
                 "commit the runner/checker and evidence before launch."
             )
     environment_before = _resource_snapshot()
@@ -2545,6 +2876,23 @@ def _run_parent(args: argparse.Namespace) -> int:
         json.loads(solver_path.read_text(encoding="utf-8"))
         if solver_path.is_file()
         else {}
+    )
+    task036_trace_alias_path = run_dir / "dtn_trace_alias_preflight.json"
+    try:
+        task036_trace_alias_payload = (
+            json.loads(task036_trace_alias_path.read_text(encoding="utf-8"))
+            if task036_trace_alias_path.is_file()
+            else None
+        )
+    except (OSError, json.JSONDecodeError):
+        task036_trace_alias_payload = None
+    task036_trace_alias_sha256 = _sha256(task036_trace_alias_path)
+    task036_trace_alias_controlled_negative = (
+        _task036_trace_alias_controlled_negative(
+            args,
+            task036_trace_alias_payload,
+            report_sha256=task036_trace_alias_sha256,
+        )
     )
     dtn_orders_path = run_dir / "dtn_port_diffraction_orders_3d.json"
     field_shard_paths = [
@@ -2955,6 +3303,15 @@ def _run_parent(args: argparse.Namespace) -> int:
     if not source_stable:
         qualification["failures"].append("source_stable_and_clean_after")
         qualification["pass"] = False
+    task036_trace_alias_authority_pass = bool(
+        task036_trace_alias_controlled_negative
+        and return_code != 0
+        and not terminated_for_memory
+        and not terminated_for_timeout
+        and not terminated_for_authority_unreadable
+        and no_swap
+        and source_stable
+    )
     status = (
         "assembly_calibration_pass"
         if qualification["pass"] and args.run_kind == "assembly-only"
@@ -2987,6 +3344,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         )
         else "task035d_candidate_numerical_pass"
         if qualification["pass"] and args.task035d_case097_gate
+        else "task036_dtn_trace_alias_controlled_negative"
+        if task036_trace_alias_authority_pass
         else "full3d_reference_pass"
         if qualification["pass"]
         else "formal_not_pass"
@@ -3042,6 +3401,18 @@ def _run_parent(args: argparse.Namespace) -> int:
         "task035d_nested_p_evidence": task035d_nested_p_evidence,
         "task035d_selective_face_dwr_phase": (args.task035d_selective_face_dwr_phase),
         "task035d_selective_face_evidence": (task035d_selective_face_evidence),
+        "task036_forward_robustness_gate": bool(
+            args.task036_forward_robustness_gate
+        ),
+        "task036_direct_projection_audit": solver_summary.get(
+            "auxiliary_direct_tangential_projection_audit"
+        ),
+        "task036_trace_alias_preflight_evidence": {
+            "path": _path_from_root(task036_trace_alias_path),
+            "sha256": task036_trace_alias_sha256,
+            "payload": task036_trace_alias_payload,
+            "controlled_negative": task036_trace_alias_authority_pass,
+        },
         "resource_policy": {
             "swap_allowed": args.allow_swap,
             "warning_gib": args.warning_gib,
@@ -3105,6 +3476,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         "progress_sha256": _sha256(progress_path),
         "stdout_sha256": _sha256(stdout_path),
         "dtn_orders_sha256": _sha256(dtn_orders_path),
+        "dtn_trace_alias_preflight_sha256": task036_trace_alias_sha256,
         "field_shard_authority": field_shard_authority,
         "raw_evidence": {
             "run_directory": _path_from_root(run_dir),
@@ -3113,6 +3485,9 @@ def _run_parent(args: argparse.Namespace) -> int:
             "progress": _path_from_root(progress_path),
             "stdout": _path_from_root(stdout_path),
             "dtn_orders": _path_from_root(dtn_orders_path),
+            "dtn_trace_alias_preflight": _path_from_root(
+                task036_trace_alias_path
+            ),
             "field_shards": field_shard_authority,
         },
         "solver_summary": solver_summary,
@@ -3154,7 +3529,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.run_dir is None:
             raise SystemExit("--worker requires --run-dir.")
         _validate_worker_parent_launch(args)
-        _revalidate_task035d_worker_inputs(args)
+        _revalidate_formal_worker_inputs(args)
         return _worker(args)
     return _run_parent(args)
 

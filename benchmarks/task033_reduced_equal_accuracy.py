@@ -75,6 +75,22 @@ def _integer(value: object, *, label: str) -> int:
     return int(rounded)
 
 
+def _factor_inventory_nnz(
+    inventory: Mapping[str, Any],
+    *,
+    label: str,
+) -> int:
+    """Read a factor count without reviving MUMPS int32 overflow."""
+
+    corrected = inventory.get("factor_nnz_corrected")
+    if corrected is not None:
+        return _integer(corrected, label=f"{label} corrected NNZ")
+    matrix = inventory.get("matrix_stats")
+    if not isinstance(matrix, Mapping):
+        raise ReducedEqualAccuracyError(f"{label} matrix stats are missing")
+    return _integer(matrix.get("matrix_nnz_used"), label=f"{label} NNZ")
+
+
 def classify_resource_reduction(ratio: float) -> str:
     """Classify baseline/candidate reduction using review-v5 boundaries."""
 
@@ -441,11 +457,9 @@ def _hybrid_metrics(summary_path: Path | str, *, root: Path) -> dict[str, Any]:
         side_record = inventory.get(side)
         if not isinstance(side_record, Mapping):
             raise ReducedEqualAccuracyError(f"Hybrid {side} factor inventory is missing")
-        matrix = side_record.get("matrix_stats")
-        if not isinstance(matrix, Mapping):
-            raise ReducedEqualAccuracyError(f"Hybrid {side} matrix stats are missing")
-        factor_inventory_nnz += _integer(
-            matrix.get("matrix_nnz_used"), label=f"{side} factor-inventory NNZ"
+        factor_inventory_nnz += _factor_inventory_nnz(
+            side_record,
+            label=f"{side} factor-inventory",
         )
     port_power = validation.get("port_power")
     selected = reconstruction.get("selected_plane_full3d_comparison")
@@ -618,7 +632,11 @@ def _load_task032_hybrid_baseline(path: Path | str, *, root: Path) -> dict[str, 
         raise ReducedEqualAccuracyError("Task032 Hybrid factor inventory is missing")
     dimensions = hybrid_dimension_costs(hybrid, validation=validation)
     factor_inventory_nnz = sum(
-        int(inventory[side]["matrix_stats"]["matrix_nnz_used"]) for side in ("bottom", "top")
+        _factor_inventory_nnz(
+            inventory[side],
+            label=f"{side} factor-inventory",
+        )
+        for side in ("bottom", "top")
     )
     return {
         "path": watchdog_repo_path,

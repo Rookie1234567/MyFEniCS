@@ -12,6 +12,7 @@ from benchmarks.run_task033_full3d_watchdog import (
     _parse_args,
     _qualify,
     _solve_stage_seen,
+    _task036_trace_alias_controlled_negative,
     _validate_p4_gate,
 )
 
@@ -113,6 +114,197 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             observed_worker_rank_count=4,
         )
         self.assertFalse(result["pass"])
+
+    def test_task036_full_solve_requires_passing_direct_projection_audit(
+        self,
+    ) -> None:
+        args = _parse_args(
+            [
+                "--degree",
+                "2",
+                "--h-nm",
+                "5",
+                "--run-kind",
+                "full-solve",
+                "--mpi-size",
+                "8",
+                "--task036-forward-robustness-gate",
+                "--task036-dtn-direct-projection-audit",
+                "--verified-clean-sha",
+                "a" * 40,
+            ]
+        )
+        base_summary = {
+            "case_status": "completed",
+            "official_result": True,
+            "matrix_diagnostics_assemble_only": False,
+            "matrix_diagnostics_factorization_only": False,
+            "matrix_stats": {"matrix_rows": 10, "matrix_nnz_used": 20},
+            "ksp_converged": True,
+            "linear_system_relative_residual": 1.0e-12,
+            "full3d_reference_exported": True,
+            "polarization_kind": "s",
+            "dtn_port_mode_count": 4,
+            "dtn_port_top_mode_count": 2,
+            "dtn_port_bottom_mode_count": 2,
+        }
+        orders = [
+            {
+                "side": side,
+                "polarization": polarization,
+                "m": index,
+                "n": 0,
+                "absolute_total_projection_difference": 1.0e-13,
+                "absolute_outgoing_projection_difference": 1.0e-13,
+            }
+            for index, (side, polarization) in enumerate(
+                (
+                    ("top", "s"),
+                    ("top", "p"),
+                    ("bottom", "s"),
+                    ("bottom", "p"),
+                )
+            )
+        ]
+        passing_audit = {
+            "requested": True,
+            "tolerance": 1.0e-10,
+            "max_absolute_outgoing_projection_difference": 1.0e-13,
+            "pass": True,
+            "orders": orders,
+        }
+        passing = _qualify(
+            args=args,
+            solver_summary={
+                **base_summary,
+                "auxiliary_direct_tangential_projection_audit": passing_audit,
+            },
+            events=[{"stage": "after_kspsolve"}],
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            terminated_for_authority_unreadable=False,
+            no_swap=True,
+            observed_worker_rank_count=8,
+        )
+        self.assertTrue(passing["pass"])
+        for label, audit in (
+            ("missing", None),
+            ("reported_fail", {**passing_audit, "pass": False}),
+            ("empty_orders", {**passing_audit, "orders": []}),
+            ("truncated_orders", {**passing_audit, "orders": orders[:-1]}),
+            (
+                "duplicate_identity",
+                {**passing_audit, "orders": [orders[0]] * 4},
+            ),
+            (
+                "missing_m",
+                {
+                    **passing_audit,
+                    "orders": [{k: v for k, v in row.items() if k != "m"} for row in orders],
+                },
+            ),
+            (
+                "nonfinite",
+                {
+                    **passing_audit,
+                    "max_absolute_outgoing_projection_difference": float("nan"),
+                },
+            ),
+        ):
+            with self.subTest(label=label):
+                summary = dict(base_summary)
+                if audit is not None:
+                    summary["auxiliary_direct_tangential_projection_audit"] = audit
+                rejected = _qualify(
+                    args=args,
+                    solver_summary=summary,
+                    events=[{"stage": "after_kspsolve"}],
+                    return_code=0,
+                    terminated_for_memory=False,
+                    terminated_for_timeout=False,
+                    terminated_for_authority_unreadable=False,
+                    no_swap=True,
+                    observed_worker_rank_count=8,
+                )
+                self.assertFalse(rejected["pass"])
+
+    def test_task036_alias_controlled_negative_requires_hash_bound_exact_status(
+        self,
+    ) -> None:
+        args = _parse_args(
+            [
+                "--degree",
+                "5",
+                "--h-nm",
+                "10",
+                "--run-kind",
+                "full-solve",
+                "--mpi-size",
+                "8",
+                "--task036-forward-robustness-gate",
+                "--task036-y-invariant-n0-alias-preflight",
+                "--task036-dtn-direct-projection-audit",
+                "--verified-clean-sha",
+                "a" * 40,
+            ]
+        )
+        payload = {
+            "enabled": True,
+            "pass": False,
+            "status": "dtn_y_trace_alias_detected",
+            "maximum_normalized_overlap": 0.363,
+            "overlap_tolerance": 1.0e-8,
+            "comparison_count": 3,
+            "worst_target_mode": {"n": 0},
+            "worst_non_target_mode": {"n": -3},
+        }
+        self.assertTrue(
+            _task036_trace_alias_controlled_negative(
+                args,
+                payload,
+                report_sha256="b" * 64,
+            )
+        )
+        self.assertFalse(
+            _task036_trace_alias_controlled_negative(
+                args,
+                {**payload, "status": "invalid_nonfinite_trace_functional"},
+                report_sha256="b" * 64,
+            )
+        )
+        self.assertFalse(
+            _task036_trace_alias_controlled_negative(
+                args,
+                payload,
+                report_sha256=None,
+            )
+        )
+
+    def test_task036_parser_rejects_nonfinite_or_nonpositive_inputs(self) -> None:
+        common = [
+            "--degree",
+            "2",
+            "--h-nm",
+            "5",
+            "--run-kind",
+            "full-solve",
+            "--mpi-size",
+            "8",
+            "--task036-forward-robustness-gate",
+            "--task036-dtn-direct-projection-audit",
+            "--verified-clean-sha",
+            "a" * 40,
+        ]
+        for extra in (
+            ("--incident-grazing-deg", "nan"),
+            ("--incident-phi-deg", "nan"),
+            ("--grating-height-nm", "-1"),
+            ("--grating-width-x-nm", "0"),
+            ("--task036-mesh-axis-cell-counts", "6", "0", "14"),
+        ):
+            with self.subTest(extra=extra), self.assertRaises(SystemExit):
+                _parse_args([*common, *extra])
 
     def test_factorization_only_requires_setup_but_no_solve(self) -> None:
         args = self._args("--run-kind", "factorization-only")

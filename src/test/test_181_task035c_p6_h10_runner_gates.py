@@ -7,6 +7,7 @@ import unittest
 
 from benchmarks.run_task032_phase6_augmented import (
     _discrete_axial_qualification_scope,
+    _hybrid_p_disposition,
     _parse_args as parse_phase6_args,
 )
 from benchmarks.run_task033_full3d_watchdog import (
@@ -195,6 +196,129 @@ def _phase6_cli(backend: str = "standard_full") -> list[str]:
 
 
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
+    def test_task036_phi_alias_cli_and_hybrid_p_disposition(self) -> None:
+        defaults = parse_phase6_args([])
+        self.assertEqual(defaults.incident_phi_deg, 0.0)
+        self.assertFalse(defaults.task036_y_invariant_n0_alias_preflight)
+        explicit = parse_phase6_args(
+            [
+                "--incident-phi-deg",
+                "54.420819",
+                "--task036-y-invariant-n0-alias-preflight",
+                "--task036-mesh-axis-cell-counts",
+                "6",
+                "3",
+                "14",
+            ]
+        )
+        self.assertAlmostEqual(explicit.incident_phi_deg, 54.420819)
+        self.assertEqual(
+            explicit.task036_mesh_axis_cell_counts,
+            [6, 3, 14],
+        )
+        full3d = parse_full3d_args(
+            [
+                "--degree",
+                "5",
+                "--h-nm",
+                "10",
+                "--polarization-kind",
+                "s",
+                "--run-kind",
+                "full-solve",
+                "--mpi-size",
+                "8",
+                "--stage4-full3d-assembly-backend",
+                "assembly_time_static_condensed",
+                "--task036-forward-robustness-gate",
+                "--incident-grazing-deg",
+                "4.538499870338",
+                "--incident-phi-deg",
+                "54.420819282532",
+                "--grating-height-nm",
+                "116.446369998157",
+                "--grating-width-x-nm",
+                "17.513626368716",
+                "--task036-mesh-axis-cell-counts",
+                "6",
+                "4",
+                "14",
+                "--task036-y-invariant-n0-alias-preflight",
+                "--task036-dtn-direct-projection-audit",
+                "--verified-clean-sha",
+                SOURCE_SHA,
+            ]
+        )
+        self.assertTrue(full3d.task036_forward_robustness_gate)
+        self.assertEqual(
+            full3d.task036_mesh_axis_cell_counts,
+            [6, 4, 14],
+        )
+        self.assertTrue(
+            full3d.task036_y_invariant_n0_alias_preflight
+        )
+        self.assertTrue(full3d.task036_dtn_direct_projection_audit)
+
+        common = {
+            "full3d_physical_solution_exists": True,
+            "modal_rank_evidence": "unit",
+            "interface_closure_gate_names": ("interface",),
+            "diagnostic_projection_evidence": "unit",
+        }
+        projection = _hybrid_p_disposition(
+            "p",
+            modal_rank_sufficient=True,
+            interface_closure_pass=True,
+            diagnostic_projection_bug=True,
+            **common,
+        )
+        self.assertEqual(
+            projection["primary_status"],
+            "diagnostic_projection_bug",
+        )
+        rank = _hybrid_p_disposition(
+            "p",
+            modal_rank_sufficient=False,
+            interface_closure_pass=True,
+            diagnostic_projection_bug=False,
+            **common,
+        )
+        self.assertEqual(
+            rank["primary_status"],
+            "hybrid_modal_rank_insufficient",
+        )
+        interface = _hybrid_p_disposition(
+            "p",
+            modal_rank_sufficient=True,
+            interface_closure_pass=False,
+            diagnostic_projection_bug=False,
+            **common,
+        )
+        self.assertEqual(
+            interface["primary_status"],
+            "hybrid_interface_closure_failed",
+        )
+        quarantined = _hybrid_p_disposition(
+            "p",
+            modal_rank_sufficient=True,
+            interface_closure_pass=True,
+            diagnostic_projection_bug=False,
+            **common,
+        )
+        self.assertFalse(quarantined["hybrid_p_production_qualified"])
+        self.assertFalse(
+            quarantined["full3d_fallback_is_hybrid_success"]
+        )
+        self.assertFalse(
+            _hybrid_p_disposition(
+                "s",
+                modal_rank_sufficient=True,
+                interface_closure_pass=True,
+                diagnostic_projection_bug=False,
+                **common,
+            )["applicable"]
+        )
+
     def test_ordinary_defaults_remain_unchanged(self) -> None:
         phase6 = parse_phase6_args([])
         self.assertEqual(phase6.degree, 2)

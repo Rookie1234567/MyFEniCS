@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest import mock
 
 from mpi4py import MPI
 import numpy as np
@@ -15,11 +17,16 @@ from src.common.modes_3d import (
 )
 from src.solvers.dtn_port_3d import (
     DTN_PORT_MODAL_POWER_SOURCE,
+    DtnTraceAliasError,
+    _auxiliary_direct_tangential_projection_audit,
+    _dtn_n0_trace_alias_preflight,
     _incident_projection_onto_top_mode,
     _mode_boundary_phase,
     _mode_power_at_boundary,
     _mode_projection_denominator,
+    _outgoing_projection,
     _port_power_metrics,
+    _sampled_tangential_projection,
     _traction_vector,
     _write_port_outputs,
 )
@@ -61,6 +68,105 @@ def _grazing_fixture_b_cfg(**updates):
 
 
 class Stage4DtnModeTests(unittest.TestCase):
+    @staticmethod
+    def _alias_mode(n: int):
+        return SimpleNamespace(
+            side="top",
+            m=0,
+            n=int(n),
+            polarization="s",
+            k_vector=np.asarray([0.0, float(n), 1.0]),
+            e_vector=np.asarray([1.0, 0.0, 0.0]),
+        )
+
+    @staticmethod
+    def _alias_assemblers(vectors):
+        class FakeAssembler:
+            comm = MPI.COMM_SELF
+
+            def __init__(self, component):
+                self.component = component
+
+            def assemble_entries(self, mode, _mpc):
+                if self.component == 1:
+                    return (
+                        np.zeros(0, dtype=np.int32),
+                        np.zeros(0, dtype=np.complex128),
+                    )
+                values = np.asarray(
+                    vectors[int(mode.n)],
+                    dtype=np.complex128,
+                )
+                return np.arange(len(values), dtype=np.int32), values
+
+        return {
+            ("top", 0): FakeAssembler(0),
+            ("top", 1): FakeAssembler(1),
+        }
+
+    def test_opt_in_n0_trace_alias_preflight_fails_closed(self):
+        modes = [self._alias_mode(0), self._alias_mode(-3)]
+        orthogonal = _dtn_n0_trace_alias_preflight(
+            modes,
+            self._alias_assemblers(
+                {0: [1.0, 0.0], -3: [0.0, 1.0]}
+            ),
+            None,
+            enabled=True,
+            overlap_tolerance=1.0e-8,
+        )
+        self.assertTrue(orthogonal["pass"])
+        self.assertEqual(orthogonal["status"], "pass")
+        with self.assertRaises(DtnTraceAliasError) as captured:
+            _dtn_n0_trace_alias_preflight(
+                modes,
+                self._alias_assemblers(
+                    {0: [1.0, 0.0], -3: [1.0, 0.0]}
+                ),
+                None,
+                enabled=True,
+                overlap_tolerance=1.0e-8,
+            )
+        self.assertEqual(
+            captured.exception.audit["status"],
+            "dtn_y_trace_alias_detected",
+        )
+        for bad_modes, vectors, expected in (
+            (
+                [self._alias_mode(-3)],
+                {-3: [1.0, 0.0]},
+                "not_exercised_missing_n0_target",
+            ),
+            (
+                [self._alias_mode(0)],
+                {0: [1.0, 0.0]},
+                "not_exercised_missing_nonzero_n_control",
+            ),
+            (
+                modes,
+                {0: [0.0, 0.0], -3: [0.0, 1.0]},
+                "invalid_zero_norm_trace_functional",
+            ),
+            (
+                modes,
+                {0: [1.0e200, 0.0], -3: [0.0, 1.0]},
+                "invalid_nonfinite_trace_functional",
+            ),
+        ):
+            with self.subTest(expected=expected):
+                with self.assertRaises(DtnTraceAliasError) as captured:
+                    _dtn_n0_trace_alias_preflight(
+                        bad_modes,
+                        self._alias_assemblers(vectors),
+                        None,
+                        enabled=True,
+                        overlap_tolerance=1.0e-8,
+                    )
+                self.assertEqual(
+                    captured.exception.audit["status"],
+                    expected,
+                )
+
     def _single_bottom_s_power(self, cfg):
         modes = outgoing_port_modes_3d(cfg)
         bottom_index = next(
@@ -113,6 +219,117 @@ class Stage4DtnModeTests(unittest.TestCase):
         ]
         self.assertAlmostEqual(float(sum(projections)), abs(complex(cfg.incident_amplitude)) ** 2, places=12)
         self.assertGreater(incident_power_3d(cfg), 0.0)
+
+    def test_sampled_p_mode_projection_uses_only_tangential_components(self):
+        cfg = _dtn_cfg(stage4_dtn_order_policy="auto_propagating")
+        p_mode = next(
+            mode
+            for mode in outgoing_port_modes_3d(cfg)
+            if mode.polarization == "p" and abs(mode.e_vector[2]) > 1.0e-10
+        )
+        sample_phases = np.asarray((1.0 + 0.0j, 0.0 + 1.0j), dtype=np.complex128)
+        mode_samples = sample_phases[:, None] * p_mode.e_vector[None, :]
+        expected = 2.0 - 3.0j
+        electric_samples = expected * mode_samples
+        electric_samples[:, 2] = np.asarray((1.0e6 + 2.0e6j, -3.0e6 + 4.0e6j))
+        weights = np.asarray((0.25, 2.0), dtype=np.float64)
+
+        projection = _sampled_tangential_projection(electric_samples, mode_samples, weights)
+        full_vector_projection = np.sum(
+            weights * np.sum(electric_samples * np.conj(mode_samples), axis=1)
+        ) / np.sum(weights * np.sum(np.abs(mode_samples) ** 2, axis=1))
+
+        self.assertNotEqual(p_mode.e_vector[2], 0.0)
+        self.assertAlmostEqual(projection.real, expected.real, places=12)
+        self.assertAlmostEqual(projection.imag, expected.imag, places=12)
+        self.assertGreater(abs(full_vector_projection - expected), 1.0)
+
+    def test_outgoing_projection_subtracts_incident_only_on_top(self):
+        total = 3.0 + 5.0j
+        incident = 1.0 - 2.0j
+
+        self.assertEqual(_outgoing_projection(total, incident, "top"), 2.0 + 7.0j)
+        self.assertEqual(_outgoing_projection(total, incident, "bottom"), total)
+
+    def test_auxiliary_direct_projection_audit_covers_top_bottom_and_orders(self):
+        cfg = _dtn_cfg(
+            dtn_auxiliary_direct_projection_audit=True,
+            dtn_auxiliary_direct_projection_tolerance=1.0e-10,
+        )
+        available = outgoing_port_modes_3d(cfg)
+        modes = [
+            next(
+                mode
+                for mode in available
+                if mode.side == "top"
+                and mode.polarization == "s"
+                and (mode.m != 0 or mode.n != 0)
+            ),
+            next(
+                mode
+                for mode in available
+                if mode.side == "bottom"
+                and mode.polarization == "p"
+                and abs(mode.e_vector[2]) > 1.0e-10
+            ),
+        ]
+        auxiliary = np.asarray((2.0 + 3.0j, -1.0 + 0.5j))
+        incident = [0.25 - 0.1j, 0.0 + 0.0j]
+        with mock.patch(
+            "src.solvers.dtn_port_3d._mode_projection_from_solution",
+            side_effect=list(auxiliary),
+        ):
+            audit = _auxiliary_direct_tangential_projection_audit(
+                object(),
+                modes,
+                auxiliary,
+                incident,
+                object(),
+                cfg,
+                quadrature_degree=17,
+            )
+        self.assertTrue(audit["pass"])
+        self.assertEqual(audit["quadrature_degree"], 17)
+        self.assertEqual(len(audit["orders"]), 2)
+        self.assertNotEqual(audit["orders"][0]["m"], 0)
+        self.assertEqual(audit["orders"][1]["side"], "bottom")
+        self.assertEqual(
+            audit["orders"][0]["auxiliary_outgoing_projection"],
+            auxiliary[0] - incident[0],
+        )
+        with self.assertRaisesRegex(ValueError, "input lengths must match"):
+            _auxiliary_direct_tangential_projection_audit(
+                object(),
+                modes,
+                auxiliary[:1],
+                incident,
+                object(),
+                cfg,
+                quadrature_degree=17,
+            )
+        with (
+            mock.patch(
+                "src.solvers.dtn_port_3d._mode_projection_from_solution",
+                side_effect=(complex(np.nan), auxiliary[1]),
+            ),
+            self.assertRaisesRegex(ValueError, "non-finite projection"),
+        ):
+            _auxiliary_direct_tangential_projection_audit(
+                object(),
+                modes,
+                auxiliary,
+                incident,
+                object(),
+                cfg,
+                quadrature_degree=17,
+            )
+
+    def test_sampled_projection_rejects_zero_tangential_mode_norm(self):
+        electric_samples = np.asarray(((1.0, 2.0, 3.0),), dtype=np.complex128)
+        normal_only_mode = np.asarray(((0.0, 0.0, 4.0 + 5.0j),), dtype=np.complex128)
+
+        with self.assertRaisesRegex(ValueError, "zero tangential norm"):
+            _sampled_tangential_projection(electric_samples, normal_only_mode)
 
     def test_lossy_bottom_port_power_is_evaluated_at_boundary_plane(self):
         cfg = _dtn_cfg(stage4_dtn_order_policy="zero_order")

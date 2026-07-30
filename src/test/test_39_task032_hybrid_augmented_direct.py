@@ -19,6 +19,7 @@ from src.postprocessing.hybrid_field_reconstruction import (
     interface_field_continuity,
 )
 from src.solvers.hybrid_fem_modal_augmented_direct import (
+    _fe_traction_equilibrium_diagnostics,
     build_hybrid_augmented_direct_system,
     evaluate_hybrid_augmented_solution,
     internal_modal_constraint_matrix,
@@ -196,6 +197,14 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
         self.assertLess(traction["bottom_relative_residual"], 1.0e-10)
         self.assertLess(traction["top_relative_residual"], 1.0e-10)
         self.assertEqual(
+            traction["bottom_dual"]["method"],
+            "exact_variational_conormal_functional_dual",
+        )
+        self.assertGreater(
+            traction["bottom_dual"]["comparison_scale_dual"],
+            0.0,
+        )
+        self.assertEqual(
             traction["interpretation"],
             "variational_FE_rows_with_modal_traction_not_pointwise_H_jump",
         )
@@ -208,6 +217,49 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
         self.assertEqual(
             metrics["external_auxiliary_amplitudes"]["top"].shape,
             (self.top_system.n_external_aux,),
+        )
+
+    def test_exact_traction_dual_detects_modal_load_perturbation(self):
+        if type(self).solution is None:
+            type(self).solution = solve_hybrid_augmented_direct(
+                self.system,
+                self.bottom_system,
+                self.top_system,
+            )
+        count = self.coupling.mode_count_per_direction
+        modal = np.asarray(
+            self.solution.modal_amplitudes,
+            dtype=np.complex128,
+        )
+        positive = modal[:count].copy()
+        negative = (
+            np.asarray(
+                self.coupling.propagation.backward.factors,
+                dtype=np.complex128,
+            )
+            * modal[count:]
+        )
+        balanced = _fe_traction_equilibrium_diagnostics(
+            self.bottom_system,
+            self.solution.bottom,
+            self.coupling.bottom.positive_traction,
+            positive,
+            self.coupling.bottom.negative_traction,
+            negative,
+        )
+        positive[0] += 1.0e-3
+        perturbed = _fe_traction_equilibrium_diagnostics(
+            self.bottom_system,
+            self.solution.bottom,
+            self.coupling.bottom.positive_traction,
+            positive,
+            self.coupling.bottom.negative_traction,
+            negative,
+        )
+        self.assertLess(balanced["relative_dual"], 1.0e-10)
+        self.assertGreater(
+            perturbed["relative_dual"],
+            100.0 * max(balanced["relative_dual"], 1.0e-14),
         )
 
     def test_rhs_pack_and_modal_only_action_match_explicit_blocks(self):
@@ -516,15 +568,132 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
             interfaces,
         )
         for side in ("bottom", "top"):
-            for field in ("electric_tangential", "magnetic_tangential"):
+            for field in (
+                "electric_tangential",
+                "traction_density_l2_proxy",
+            ):
                 self.assertTrue(
                     np.isfinite(continuity[side][field]["relative_l2"])
                 )
+            self.assertFalse(
+                continuity[side]["traction_density_l2_proxy"]["formal_gate"]
+            )
         absorption = reconstructor.absorbed_power_code_units(
             self.solution.modal_amplitudes
         )
         self.assertGreaterEqual(absorption["absorbed_power_code_units"], 0.0)
         self.assertGreater(absorption["z_evaluation_count"], 0)
+
+    def test_selected_traction_beta_changes_h_without_changing_e(self):
+        if type(self).solution is None:
+            type(self).solution = solve_hybrid_augmented_direct(
+                self.system,
+                self.bottom_system,
+                self.top_system,
+            )
+        baseline = ModalFieldReconstructor(
+            self.cfg,
+            self.cross_section,
+            self.spaces,
+            self.positive,
+            self.negative,
+            propagation=self.coupling.propagation,
+            positive_traction_beta_per_nm=(
+                self.coupling.positive_traction_beta_per_nm
+            ),
+            negative_traction_beta_per_nm=(
+                self.coupling.negative_traction_beta_per_nm
+            ),
+        )
+        changed = ModalFieldReconstructor(
+            self.cfg,
+            self.cross_section,
+            self.spaces,
+            self.positive,
+            self.negative,
+            propagation=self.coupling.propagation,
+            positive_traction_beta_per_nm=(
+                1.1
+                * np.asarray(
+                    self.coupling.positive_traction_beta_per_nm,
+                    dtype=np.complex128,
+                )
+            ),
+            negative_traction_beta_per_nm=(
+                1.1
+                * np.asarray(
+                    self.coupling.negative_traction_beta_per_nm,
+                    dtype=np.complex128,
+                )
+            ),
+        )
+        x_values = np.asarray([0.25]) * self.cfg.period_x
+        y_values = np.asarray([0.25]) * self.cfg.period_y
+        first = baseline.selected_planes(
+            self.solution.modal_amplitudes,
+            x_values,
+            y_values,
+            [60.0],
+        )
+        second = changed.selected_planes(
+            self.solution.modal_amplitudes,
+            x_values,
+            y_values,
+            [60.0],
+        )
+        np.testing.assert_allclose(
+            first.electric_V_per_m,
+            second.electric_V_per_m,
+            atol=0.0,
+            rtol=0.0,
+        )
+        self.assertGreater(
+            float(
+                np.linalg.norm(
+                    first.magnetic_A_per_m
+                    - second.magnetic_A_per_m
+                )
+            ),
+            0.0,
+        )
+
+    def test_traction_beta_pair_and_shape_fail_closed(self):
+        count = len(self.positive.modes)
+        valid = np.asarray(
+            self.coupling.positive_traction_beta_per_nm,
+            dtype=np.complex128,
+        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "must be supplied together",
+        ):
+            ModalFieldReconstructor(
+                self.cfg,
+                self.cross_section,
+                self.spaces,
+                self.positive,
+                self.negative,
+                positive_traction_beta_per_nm=valid,
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "must match each directional modal basis",
+        ):
+            ModalFieldReconstructor(
+                self.cfg,
+                self.cross_section,
+                self.spaces,
+                self.positive,
+                self.negative,
+                positive_traction_beta_per_nm=np.zeros(
+                    count + 1,
+                    dtype=np.complex128,
+                ),
+                negative_traction_beta_per_nm=np.zeros(
+                    count,
+                    dtype=np.complex128,
+                ),
+            )
 
 
 if __name__ == "__main__":

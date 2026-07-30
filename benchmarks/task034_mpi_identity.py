@@ -241,12 +241,20 @@ def _hybrid_field_scalars(record: Mapping[str, Any]) -> dict[str, float]:
     for side in ("bottom", "top"):
         side_payload = interface.get(side)
         side_payload = side_payload if isinstance(side_payload, Mapping) else {}
-        for field in ("electric_tangential", "magnetic_tangential"):
-            metric = side_payload.get(field)
-            metric = metric if isinstance(metric, Mapping) else {}
-            value = _finite(metric.get("relative_l2"))
-            if value is not None:
-                rows[f"interface_{side}_{field}"] = value
+        electric = side_payload.get("electric_tangential")
+        electric = electric if isinstance(electric, Mapping) else {}
+        electric_value = _finite(electric.get("relative_l2"))
+        if electric_value is not None:
+            rows[f"interface_{side}_electric_tangential"] = electric_value
+        magnetic = side_payload.get("traction_density_l2_proxy")
+        if not isinstance(magnetic, Mapping):
+            magnetic = side_payload.get("magnetic_tangential")
+        magnetic = magnetic if isinstance(magnetic, Mapping) else {}
+        magnetic_value = _finite(magnetic.get("relative_l2"))
+        if magnetic_value is not None:
+            # Preserve the historical canonical comparison key while reading
+            # the corrected diagnostic-only source name for new records.
+            rows[f"interface_{side}_magnetic_tangential"] = magnetic_value
     return rows
 
 
@@ -508,6 +516,20 @@ def build_mpi_identity(
         "observed_mpi_sizes": sorted(by_size),
         "physical_core_count": physical_core_count,
         "identity": baseline_identity,
+        "identity_semantics": {
+            "physical_identity_is_partition_independent": True,
+            "partition_sensitive_raw_vector_hash_used": False,
+            "physical_identity_components": [
+                "source_and_config",
+                "topology_and_matrix_structure",
+                "floquet_phase_and_constraint_counts",
+                "canonical_diffraction_order_identity",
+                "true_residual_and_observable_vector",
+            ],
+            "raw_global_vector_bytes_or_hash": (
+                "excluded_because_MPI_partition_sensitive"
+            ),
+        },
         "tolerances": {
             "rta_and_a_volume_absolute": RTA_ABSOLUTE_TOLERANCE,
             "significant_order_power": SIGNIFICANT_ORDER_POWER,

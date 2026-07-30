@@ -618,7 +618,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         zero_rhs.assemble()
         with self.assertRaisesRegex(
             ValueError,
-            r"slave_cutoff=1.000e-12",
+            r"slave_cutoff=0.000e\+00",
         ):
             project_mpc_vector_to_active_trace(candidate, zero_rhs)
 
@@ -1134,8 +1134,22 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(heap_trim["implementation"], "glibc_malloc_trim")
         self.assertTrue(heap_trim["supported_on_all_ranks"])
         self.assertTrue(heap_trim["succeeded_on_all_ranks"])
+        self.assertTrue(heap_trim["call_completed_on_all_ranks"])
         self.assertEqual(len(heap_trim["return_codes_by_rank"]), comm.size)
-        self.assertTrue(all(heap_trim["return_codes_by_rank"]))
+        self.assertTrue(
+            all(
+                code in {0, 1}
+                for code in heap_trim["return_codes_by_rank"]
+            )
+        )
+        self.assertEqual(
+            len(
+                heap_trim[
+                    "allocator_reported_pages_released_by_rank"
+                ]
+            ),
+            comm.size,
+        )
         self.assertGreaterEqual(heap_trim["sum_rss_before_mb"], 0.0)
         self.assertGreaterEqual(heap_trim["sum_rss_after_mb"], 0.0)
         self.assertGreaterEqual(heap_trim["sum_rss_released_mb"], 0.0)
@@ -1237,6 +1251,27 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(
             summary["matrix_stats"]["matrix_rows"],
             audit["active_rows"] + audit["appended_rows"],
+        )
+        self.assertEqual(
+            summary["num_storage_carrier_fe_dofs"],
+            summary["num_nedelec_dofs"],
+        )
+        self.assertEqual(
+            summary["num_active_exact_sequence_fe_dofs"],
+            summary["num_nedelec_dofs"],
+        )
+        self.assertEqual(
+            summary["num_independent_trace_rows"],
+            audit["active_rows"],
+        )
+        self.assertEqual(
+            summary["num_augmented_rows"],
+            summary["matrix_stats"]["matrix_rows"],
+        )
+        self.assertEqual(
+            summary["num_augmented_rows"],
+            summary["num_independent_trace_rows"]
+            + audit["appended_rows"],
         )
         self.assertFalse(audit["full_global_matrix_allocated"])
         self.assertFalse(audit["full_trace_matrix_allocated"])

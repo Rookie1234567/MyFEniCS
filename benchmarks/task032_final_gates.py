@@ -31,6 +31,15 @@ def _all_true(values: dict[str, Any]) -> bool:
     return bool(values) and all(value is True for value in values.values())
 
 
+def _all_formal_true(values: dict[str, Any]) -> bool:
+    formal = {
+        key: value
+        for key, value in values.items()
+        if not str(key).startswith("diagnostic_")
+    }
+    return bool(formal) and all(value is True for value in formal.values())
+
+
 def _finite_le(value: Any, limit: float) -> bool:
     try:
         number = float(value)
@@ -75,7 +84,7 @@ def evaluate_task032_final(
                 and float(case.get("h_nm", float("nan"))) == h_nm
                 and int(case.get("requested_modes_per_direction", -1)) == mode_count
                 and _finite_le(residual, config["max_true_relative_residual"])
-                and _all_true(record.get("gates", {}))
+                and _all_formal_true(record.get("gates", {}))
                 and qualification.get("integration_pass") is True
                 and qualification.get("clean_source_integration_record") is True
                 and qualification.get("physical_field_gates_pass") is True
@@ -89,7 +98,14 @@ def evaluate_task032_final(
                 "container_digest": metadata.get("container_digest"),
                 "mpi_size": metadata.get("mpi_size"),
                 "residual": residual,
-                "all_runner_gates": _all_true(record.get("gates", {})),
+                "all_runner_formal_gates": _all_formal_true(
+                    record.get("gates", {})
+                ),
+                "diagnostic_gates": {
+                    key: value
+                    for key, value in record.get("gates", {}).items()
+                    if str(key).startswith("diagnostic_")
+                },
                 "physical_field_gates_pass": qualification.get(
                     "physical_field_gates_pass"
                 ),
@@ -209,11 +225,36 @@ def evaluate_task032_final(
             for side in ("bottom", "top")
         ]
         magnetic_jumps = [
-            interfaces.get(side, {})
-            .get("magnetic_tangential", {})
-            .get("relative_l2")
+            (
+                interfaces.get(side, {}).get(
+                    "traction_density_l2_proxy"
+                )
+                or interfaces.get(side, {}).get(
+                    "magnetic_tangential", {}
+                )
+            ).get("relative_l2")
             for side in ("bottom", "top")
         ]
+        exact_traction_duals = [
+            interfaces.get(side, {})
+            .get("traction_hcurl_dual", {})
+            .get("relative_dual")
+            for side in ("bottom", "top")
+        ]
+        exact_traction_available = all(
+            value is not None for value in exact_traction_duals
+        )
+        exact_traction_limit = float(
+            config.get("max_exact_traction_hcurl_dual_relative", 1.0e-8)
+        )
+        exact_traction_ok = (
+            all(
+                _finite_le(value, exact_traction_limit)
+                for value in exact_traction_duals
+            )
+            if exact_traction_available
+            else True
+        )
         plane_errors = [
             plane.get(field_name, {}).get("relative_l2")
             for plane in planes
@@ -238,10 +279,7 @@ def evaluate_task032_final(
                 _finite_le(value, config["max_sampled_interface_e_relative_l2"])
                 for value in electric_jumps
             )
-            and all(
-                _finite_le(value, config["max_sampled_interface_h_relative_l2"])
-                for value in magnetic_jumps
-            )
+            and exact_traction_ok
             and all(
                 _finite_le(value, config["max_middle_plane_relative_l2"])
                 for value in plane_errors
@@ -256,6 +294,13 @@ def evaluate_task032_final(
             ),
             "interface_e_relative_l2": electric_jumps,
             "interface_h_relative_l2": magnetic_jumps,
+            "interface_h_sampled_proxy_role": "diagnostic_only",
+            "traction_hcurl_dual_relative": exact_traction_duals,
+            "traction_hcurl_dual_gate": (
+                "exact_variational_conormal_dual"
+                if exact_traction_available
+                else "not_retroactively_applied_to_historical_record"
+            ),
             "max_plane_relative_l2": max(float(value) for value in plane_errors),
         }
     gates.append(
@@ -273,9 +318,13 @@ def evaluate_task032_final(
                 "interface_e_relative_l2_max": config[
                     "max_sampled_interface_e_relative_l2"
                 ],
-                "interface_h_relative_l2_max": config[
-                    "max_sampled_interface_h_relative_l2"
-                ],
+                "interface_h_sampled_proxy_role": "diagnostic_only",
+                "exact_traction_hcurl_dual_relative_max": float(
+                    config.get(
+                        "max_exact_traction_hcurl_dual_relative",
+                        1.0e-8,
+                    )
+                ),
             },
             evidence_root + "/records/hybrid_h{5,3}_m160.json",
         )

@@ -140,10 +140,19 @@ class Task034MPIIdentityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory_value:
             directory = Path(directory_value)
             records = [self._full3d(directory, size) for size in (1, 8, 16)]
+            for index, record in enumerate(records):
+                record["raw_global_vector_sha256"] = (
+                    f"{index + 1:064x}"
+                )
             result = build_mpi_identity(
                 records, method="full3d", physical_core_count=48
             )
             self.assertEqual(result["status"], "qualified", result["failures"])
+            self.assertFalse(
+                result["identity_semantics"][
+                    "partition_sensitive_raw_vector_hash_used"
+                ]
+            )
             archive = Path(records[-1]["solver_summary"]["full3d_reference_archive"])
             np.savez(
                 archive,

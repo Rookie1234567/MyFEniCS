@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import gc
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -35,6 +36,10 @@ from src.common.config_3d import (
     STANDARD_FULL_ASSEMBLY_BACKEND,
     target_stage4_config,
 )
+from src.solvers.common_3d_utils import (
+    _current_rss_mb,
+    _trim_process_heap,
+)
 from src.common.distributed_matrix_diagnostics import (
     distributed_active_column_count,
 )
@@ -46,6 +51,7 @@ from src.modes.cross_section_spaces import (
     build_matching_cross_section,
 )
 from src.modes.mode_classification import (
+    NearDegenerateBlockPartitionSplitError,
     PoyntingFluxEvaluator,
     build_biorthogonal_mode_basis,
     pair_reciprocal_mode_bases,
@@ -77,6 +83,7 @@ from src.solvers.common_3d_solve import (
     _petsc_factor_inventory,
     _petsc_matrix_stats,
 )
+from src.solvers.dtn_port_3d import DtnTraceAliasError
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -155,6 +162,59 @@ def _discrete_axial_qualification_scope(
             "unsupported meshes and inconsistent propagation/traction "
             "combinations fail closed; no fallback is permitted"
         ),
+    }
+
+
+def _hybrid_p_disposition(
+    polarization_kind: str,
+    *,
+    full3d_physical_solution_exists: bool,
+    modal_rank_sufficient: bool,
+    modal_rank_evidence: str,
+    interface_closure_pass: bool,
+    interface_closure_gate_names: tuple[str, ...],
+    diagnostic_projection_bug: bool,
+    diagnostic_projection_evidence: str,
+) -> dict[str, Any]:
+    """Classify Hybrid-P failures without calling the physical PDE invalid."""
+
+    if str(polarization_kind).lower() != "p":
+        return {
+            "applicable": False,
+            "primary_status": "not_applicable_s_polarization",
+            "hybrid_p_production_qualified": False,
+        }
+    flags = {
+        "full3d_physical_solution_exists": bool(
+            full3d_physical_solution_exists
+        ),
+        "hybrid_modal_rank_insufficient": not bool(modal_rank_sufficient),
+        "hybrid_interface_closure_failed": not bool(
+            interface_closure_pass
+        ),
+        "diagnostic_projection_bug": bool(diagnostic_projection_bug),
+        "modal_rank_evidence": str(modal_rank_evidence),
+        "interface_closure_gate_names": list(
+            interface_closure_gate_names
+        ),
+        "diagnostic_projection_evidence": str(
+            diagnostic_projection_evidence
+        ),
+    }
+    if flags["diagnostic_projection_bug"]:
+        primary = "diagnostic_projection_bug"
+    elif flags["hybrid_modal_rank_insufficient"]:
+        primary = "hybrid_modal_rank_insufficient"
+    elif flags["hybrid_interface_closure_failed"]:
+        primary = "hybrid_interface_closure_failed"
+    else:
+        primary = "hybrid_p_research_observables_pass_production_quarantined"
+    return {
+        "applicable": True,
+        "primary_status": primary,
+        **flags,
+        "hybrid_p_production_qualified": False,
+        "full3d_fallback_is_hybrid_success": False,
     }
 
 
@@ -332,6 +392,9 @@ def _basis_summary(basis) -> dict[str, Any]:
             }
             for group in basis.groups
         ],
+        "near_degenerate_partition_audit": (
+            basis.near_degenerate_partition_audit
+        ),
         "betas_per_nm": [_complex_json(mode.beta) for mode in basis.modes],
         "directions": [mode.direction for mode in basis.modes],
         "kinds": [mode.kind for mode in basis.modes],
@@ -749,6 +812,32 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
+    parser.add_argument(
+        "--task036-y-invariant-n0-alias-preflight",
+        action="store_true",
+        help=(
+            "Opt-in pre-solve overlap Gate for a declared y-invariant, "
+            "physical n=0 subspace; ordinary defaults remain unchanged."
+        ),
+    )
+    parser.add_argument(
+        "--task036-dtn-direct-projection-audit",
+        action="store_true",
+        help=(
+            "Opt-in independent recovered-field tangential projection audit; "
+            "official auxiliary amplitudes and ordinary defaults are unchanged."
+        ),
+    )
+    parser.add_argument(
+        "--task036-mesh-axis-cell-counts",
+        type=int,
+        nargs=3,
+        metavar=("NX", "NY", "NZ"),
+        help=(
+            "Task036 regression-only explicit tensor topology, forwarded to "
+            "the existing config authority."
+        ),
+    )
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
     parser.add_argument("--top-interface-nm", type=float, default=110.0)
     parser.add_argument("--graded-reference-h", type=float, choices=(5.0, 3.0))
@@ -759,6 +848,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="mechanism",
     )
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
+    parser.add_argument("--incident-phi-deg", type=float, default=0.0)
     parser.add_argument(
         "--polarization-kind",
         choices=("s", "p"),
@@ -1098,7 +1188,18 @@ def main() -> None:
     cfg.matrix_diagnostics_assemble_only = False
     cfg.matrix_diagnostics_factorization_only = False
     cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
+    cfg.incident_phi_deg = float(args.incident_phi_deg)
     cfg.polarization_kind = args.polarization_kind
+    cfg.dtn_y_invariant_n0_alias_preflight = bool(
+        args.task036_y_invariant_n0_alias_preflight
+    )
+    cfg.dtn_auxiliary_direct_projection_audit = bool(
+        args.task036_dtn_direct_projection_audit
+    )
+    if args.task036_mesh_axis_cell_counts is not None:
+        cfg.mesh_axis_cell_counts = tuple(
+            int(value) for value in args.task036_mesh_axis_cell_counts
+        )
     modal_cfg = target_stage4_config(
         degree=modal_degree,
         h_nm=modal_h_nm,
@@ -1106,6 +1207,13 @@ def main() -> None:
     modal_cfg.incident_theta_deg = cfg.incident_theta_deg
     modal_cfg.incident_phi_deg = cfg.incident_phi_deg
     modal_cfg.polarization_kind = cfg.polarization_kind
+    modal_cfg.dtn_y_invariant_n0_alias_preflight = (
+        cfg.dtn_y_invariant_n0_alias_preflight
+    )
+    modal_cfg.dtn_auxiliary_direct_projection_audit = (
+        cfg.dtn_auxiliary_direct_projection_audit
+    )
+    modal_cfg.mesh_axis_cell_counts = cfg.mesh_axis_cell_counts
     operators = None
     positive = None
     negative = None
@@ -1117,6 +1225,10 @@ def main() -> None:
     schur_system = None
     schur_solution = None
     primary_schur_system = None
+    factor_inventory = None
+    primary_release_audit = None
+    primary_system_snapshot = None
+    primary_schur_snapshot = None
     record = None
     graded_plan = None
     graded_bottom_mesh = None
@@ -1284,6 +1396,146 @@ def main() -> None:
                 ),
             },
             "modal_basis_capacity": capacity,
+            "timing_seconds_max_rank": {
+                **timings,
+                "total": _max_elapsed(comm, total_started),
+            },
+            "historical_peak_rss_mb_by_rank": rss,
+            "memory_semantics": (
+                "per-rank ru_maxrss historical peaks; not simultaneous RSS"
+            ),
+        }
+
+    def near_degenerate_partition_record(
+        error: NearDegenerateBlockPartitionSplitError,
+    ) -> dict[str, Any]:
+        """Preserve a deterministic pre-Hybrid fail-closed mode audit."""
+
+        _verify_source_stable_at_end(
+            comm,
+            provenance,
+            args.verified_clean_sha,
+            args.allow_dirty_research,
+        )
+        rss = comm.gather(_historical_peak_rss_mb(), root=0)
+        timestamp = datetime.now(timezone.utc).isoformat()
+        return {
+            "schema_version": 1,
+            "benchmark_id": "task036_hybrid_near_degenerate_partition_guard",
+            "timestamp_utc": timestamp,
+            "status": str(error.audit["status"]),
+            "metadata": {
+                **provenance,
+                "timestamp_utc": timestamp,
+                "command": "python -m benchmarks.run_task032_phase6_augmented "
+                + " ".join(shlex.quote(value) for value in sys.argv[1:]),
+                "mpi_size": comm.size,
+                "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
+            },
+            "case": {
+                "degree": args.degree,
+                "h_nm": args.h_nm,
+                "modal_degree": modal_degree,
+                "modal_h_nm": modal_h_nm,
+                "requested_modes_per_direction": args.requested_modes,
+                "candidate_modes_per_target_branch": candidate_modes,
+                "near_degenerate_tolerance": args.near_degenerate_tolerance,
+                "block_rotation_tolerance": args.block_rotation_tolerance,
+                "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
+                "incident_phi_deg": cfg.incident_phi_deg,
+                "polarization_kind": cfg.polarization_kind,
+            },
+            "mode_partition_audit": error.audit,
+            "solve": {"true_relative_residual": None},
+            "gates": {
+                "cross_block_biorthogonality_within_tolerance": False,
+            },
+            "qualification": {
+                "integration_pass": False,
+                "algebraic_chain_pass": False,
+                "hybrid_p_production_qualified": False,
+                "deferred_architecture_required": True,
+                "official_record": False,
+                "boundary": (
+                    "Hybrid solve was not entered; joint subspace rotation "
+                    "requires a separately reviewed numerical architecture."
+                ),
+            },
+            "timing_seconds_max_rank": {
+                **timings,
+                "total": _max_elapsed(comm, total_started),
+            },
+            "historical_peak_rss_mb_by_rank": rss,
+            "memory_semantics": (
+                "per-rank ru_maxrss historical peaks; not simultaneous RSS"
+            ),
+        }
+
+    def dtn_trace_alias_record(
+        error: DtnTraceAliasError,
+    ) -> dict[str, Any]:
+        """Preserve an opt-in pre-solve alias rejection as a compact record."""
+
+        _verify_source_stable_at_end(
+            comm,
+            provenance,
+            args.verified_clean_sha,
+            args.allow_dirty_research,
+        )
+        rss = comm.gather(_historical_peak_rss_mb(), root=0)
+        timestamp = datetime.now(timezone.utc).isoformat()
+        return {
+            "schema_version": 1,
+            "benchmark_id": "task036_dtn_n0_trace_alias_preflight",
+            "timestamp_utc": timestamp,
+            "status": str(error.audit["status"]),
+            "metadata": {
+                **provenance,
+                "timestamp_utc": timestamp,
+                "command": (
+                    "python -m benchmarks.run_task032_phase6_augmented "
+                    + " ".join(
+                        shlex.quote(value) for value in sys.argv[1:]
+                    )
+                ),
+                "mpi_size": comm.size,
+                "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
+            },
+            "case": {
+                "degree": args.degree,
+                "h_nm": args.h_nm,
+                "modal_degree": modal_degree,
+                "modal_h_nm": modal_h_nm,
+                "mesh_axis_cell_counts_requested": (
+                    None
+                    if cfg.mesh_axis_cell_counts_requested is None
+                    else list(cfg.mesh_axis_cell_counts_requested)
+                ),
+                "incident_grazing_deg": (
+                    90.0 - cfg.incident_theta_deg
+                ),
+                "incident_phi_deg": cfg.incident_phi_deg,
+                "polarization_kind": cfg.polarization_kind,
+            },
+            "dtn_trace_alias_preflight": error.audit,
+            "solve": {
+                "entered": False,
+                "true_relative_residual": None,
+            },
+            "gates": {
+                "dtn_y_invariant_n0_trace_alias_preflight": False,
+            },
+            "qualification": {
+                "integration_pass": False,
+                "algebraic_chain_pass": False,
+                "hybrid_p_production_qualified": False,
+                "controlled_negative": True,
+                "official_record": False,
+                "boundary": (
+                    "The opt-in trace-alias Gate rejected the topology before "
+                    "matrix insertion or linear solve."
+                ),
+            },
             "timing_seconds_max_rank": {
                 **timings,
                 "total": _max_elapsed(comm, total_started),
@@ -1659,6 +1911,126 @@ def main() -> None:
                 "Task32 Phase7: "
                 f"{comparison_solver_path} direct comparison complete"
             )
+            schur_solution.destroy()
+            schur_solution = None
+            schur_system.destroy()
+            schur_system = None
+
+        if system is not None:
+            if solution.ksp is None:
+                raise RuntimeError(
+                    "Augmented Hybrid factor disappeared before inventory."
+                )
+            factor_inventory = {
+                "augmented": _petsc_factor_inventory(solution.ksp)
+            }
+            primary_system_snapshot = {
+                "shape": list(system.A.getSize()),
+                "matrix_stats": dict(system.matrix_stats),
+                "block_shapes": dict(system.block_shapes),
+                "inserted_nnz_by_block": dict(
+                    system.inserted_nnz_by_block
+                ),
+                "dense_interface_square_formed": bool(
+                    system.dense_interface_square_formed
+                ),
+            }
+        else:
+            factor_inventory = dict(primary_schur_system.factor_inventory)
+            primary_system_snapshot = None
+            primary_schur_snapshot = {
+                "shape": list(primary_schur_system.modal_schur.shape),
+                "bytes": int(primary_schur_system.modal_schur.nbytes),
+                "condition": float(
+                    primary_schur_system.modal_schur_condition
+                ),
+                "multi_rhs_count": int(
+                    primary_schur_system.multi_rhs_count
+                ),
+                "transient_dense_rhs_solution_bytes": dict(
+                    primary_schur_system.transient_dense_rhs_solution_bytes
+                ),
+                "factor_setup_seconds": dict(
+                    primary_schur_system.factor_setup_seconds
+                ),
+                "multi_rhs_solve_seconds": dict(
+                    primary_schur_system.multi_rhs_solve_seconds
+                ),
+                "lifecycle_strategy": str(
+                    primary_schur_system.lifecycle_strategy
+                ),
+                "recovery_refactor_required": bool(
+                    primary_schur_system.recovery_refactor_required
+                ),
+                "dense_interface_square_formed": bool(
+                    primary_schur_system.dense_interface_square_formed
+                ),
+            }
+
+        mark_stage("solver_objects_released_before_field_output")
+        release_before_mb = _current_rss_mb()
+        if system is not None:
+            solution_release = solution.release_factorization()
+            system.destroy()
+        else:
+            solution_release = {
+                "released": True,
+                "already_released": False,
+                "retained_physical_fields": True,
+                "released_objects": [
+                    "bottom_local_KSP_MUMPS_factor",
+                    "top_local_KSP_MUMPS_factor",
+                ],
+                "reason": (
+                    "modal Schur solution vectors are independent of the "
+                    "released local factors"
+                ),
+            }
+            primary_schur_system.destroy()
+            primary_schur_system = None
+        bottom.destroy()
+        top.destroy()
+        gc.collect()
+        PETSc.garbage_cleanup(comm)
+        gc.collect()
+        local_trim = _trim_process_heap()
+        release_after_mb = _current_rss_mb()
+        release_before_by_rank = comm.allgather(release_before_mb)
+        release_after_by_rank = comm.allgather(release_after_mb)
+        release_before_sum = (
+            None
+            if any(value is None for value in release_before_by_rank)
+            else float(sum(float(value) for value in release_before_by_rank))
+        )
+        release_after_sum = (
+            None
+            if any(value is None for value in release_after_by_rank)
+            else float(sum(float(value) for value in release_after_by_rank))
+        )
+        primary_release_audit = {
+            "release_before_field_output": True,
+            "solution_release": solution_release,
+            "released_objects": [
+                "primary_direct_factorization",
+                "primary_system_matrix_and_rhs",
+                "bottom_local_matrix_and_rhs",
+                "top_local_matrix_and_rhs",
+            ],
+            "retained_objects": [
+                "recovered_or_split_physical_field_vectors",
+                "modal_amplitudes",
+                "coupling_and_mode_metadata",
+            ],
+            "current_rss_before_mb_by_rank": release_before_by_rank,
+            "current_rss_after_mb_by_rank": release_after_by_rank,
+            "sum_current_rss_before_mb": release_before_sum,
+            "sum_current_rss_after_mb": release_after_sum,
+            "rss_measurement_semantics": (
+                "diagnostic in-process phase-local rank samples; not the "
+                "external synchronized process-tree RSS/PSS/USS authority"
+            ),
+            "heap_trim_by_rank": comm.allgather(local_trim),
+        }
         pinned_reference_case = (
             abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
             and (
@@ -1722,7 +2094,37 @@ def main() -> None:
             bottom_z_nm=args.bottom_interface_nm,
             top_z_nm=args.top_interface_nm,
             propagation=coupling.propagation,
+            positive_traction_beta_per_nm=(
+                coupling.positive_traction_beta_per_nm
+            ),
+            negative_traction_beta_per_nm=(
+                coupling.negative_traction_beta_per_nm
+            ),
         )
+        (
+            reconstruction_positive_traction_beta,
+            reconstruction_negative_traction_beta,
+        ) = reconstructor.traction_beta_per_nm
+        reconstruction_beta_equals_traction_beta = bool(
+            np.array_equal(
+                reconstruction_positive_traction_beta,
+                np.asarray(
+                    coupling.positive_traction_beta_per_nm,
+                    dtype=np.complex128,
+                ),
+            )
+            and np.array_equal(
+                reconstruction_negative_traction_beta,
+                np.asarray(
+                    coupling.negative_traction_beta_per_nm,
+                    dtype=np.complex128,
+                ),
+            )
+        )
+        if not reconstruction_beta_equals_traction_beta:
+            raise RuntimeError(
+                "Hybrid field reconstruction lost the selected traction beta."
+            )
         trace_modal_oracle = None
         if reference_archive is not None:
             mark_stage("full3d_trace_modal_oracle")
@@ -1753,6 +2155,10 @@ def main() -> None:
             solution.top_physical,
             interface_samples,
         )
+        for side in ("bottom", "top"):
+            interface_continuity[side]["traction_hcurl_dual"] = (
+                validation["fe_modal_traction_equilibrium"][f"{side}_dual"]
+            )
         absorption = hybrid_volume_absorption(
             cfg,
             bottom,
@@ -1964,14 +2370,25 @@ def main() -> None:
                         )
                         <= 5.0e-3
                     ),
-                    "sampled_interface_h_t_relative_l2_le_1e-2": (
+                    "diagnostic_sampled_traction_density_l2_proxy_le_1e-2": (
                         max(
-                            interface_physical[side]["magnetic_tangential"][
+                            interface_physical[side][
+                                "traction_density_l2_proxy"
+                            ][
                                 "relative_l2"
                             ]
                             for side in ("bottom", "top")
                         )
                         <= 1.0e-2
+                    ),
+                    "assembled_interface_h_t_exact_dual_le_1e-8": (
+                        max(
+                            interface_physical[side][
+                                "traction_hcurl_dual"
+                            ]["relative_dual"]
+                            for side in ("bottom", "top")
+                        )
+                        <= 1.0e-8
                     ),
                     "volume_energy_closure_abs_le_1e-5": (
                         abs(absorption_physical["energy_closure_error"])
@@ -2007,15 +2424,59 @@ def main() -> None:
                         ),
                     }
                 )
-        physical_gate_prefixes = ("sampled_interface_", "volume_", "middle_plane_")
+        physical_gate_prefixes = (
+            "sampled_interface_",
+            "assembled_interface_",
+            "volume_",
+            "middle_plane_",
+        )
         algebraic_chain_pass = all(
             value
             for key, value in gates.items()
-            if not key.startswith(physical_gate_prefixes)
+            if (
+                not key.startswith(physical_gate_prefixes)
+                and not key.startswith("diagnostic_")
+            )
         )
-        integration_pass = all(gates.values())
+        integration_pass = all(
+            value
+            for key, value in gates.items()
+            if not key.startswith("diagnostic_")
+        )
         task033_physical_truncation_allowed = bool(
             not task33_variant or args.requested_modes >= 80
+        )
+        interface_closure_gate_names = (
+            "interface_e_projection_relative_residual_le_1e-8",
+            "fe_modal_traction_equilibrium_relative_residual_le_1e-8",
+            "sampled_interface_e_t_relative_l2_le_5e-3",
+            "assembled_interface_h_t_exact_dual_le_1e-8",
+            "volume_energy_closure_abs_le_1e-5",
+        )
+        interface_closure_pass = bool(
+            physical_fields is not None
+            and all(
+                gates.get(name, False)
+                for name in interface_closure_gate_names
+            )
+        )
+        hybrid_p_disposition = _hybrid_p_disposition(
+            cfg.polarization_kind,
+            full3d_physical_solution_exists=loaded_reference is not None,
+            # This runner does not perform an M-convergence proof.  A finite
+            # selected basis is therefore never silently promoted to a
+            # rank-qualified Hybrid-P production basis.
+            modal_rank_sufficient=False,
+            modal_rank_evidence=(
+                "not_qualified_no_M_convergence_funnel_in_this_runner"
+            ),
+            interface_closure_pass=interface_closure_pass,
+            interface_closure_gate_names=interface_closure_gate_names,
+            diagnostic_projection_bug=False,
+            diagnostic_projection_evidence=(
+                "task036_tangential_projection_fix_active; "
+                "no separate diagnostic fault injected in this PDE"
+            ),
         )
         projection_stats = {
             "bottom": _petsc_matrix_stats(
@@ -2025,11 +2486,10 @@ def main() -> None:
                 coupling.top.projection, assemble=False
             ),
         }
-        factor_inventory = (
-            {"augmented": _petsc_factor_inventory(solution.ksp)}
-            if system is not None
-            else primary_schur_system.factor_inventory
-        )
+        if factor_inventory is None or primary_release_audit is None:
+            raise RuntimeError(
+                "Hybrid solver lifecycle evidence was not captured."
+            )
         full_vector_size = int(positive.modes[0].right.right_full.getSize())
         reduced_vector_size = int(
             positive.modes[0].right.right_reduced.getSize()
@@ -2063,8 +2523,8 @@ def main() -> None:
             "projection_matrix": projection_stats,
             "modal_schur_bytes": (
                 0
-                if primary_schur_system is None
-                else int(primary_schur_system.modal_schur.nbytes)
+                if primary_schur_snapshot is None
+                else int(primary_schur_snapshot["bytes"])
             ),
             "local_or_augmented_factor_inventory": factor_inventory,
             "storage_complexity_contract": "O(N_interface*M)+O(M^2)",
@@ -2096,6 +2556,9 @@ def main() -> None:
             ),
             "timestamp_utc": timestamp,
             "status": (
+                hybrid_p_disposition["primary_status"]
+                if hybrid_p_disposition["applicable"]
+                else (
                 "algebraic_smoke_pass_physical_truncation_not_qualified"
                 if task33_variant
                 and algebraic_chain_pass
@@ -2104,6 +2567,7 @@ def main() -> None:
                     "physical_integration_pass_mode_convergence_pending"
                     if integration_pass
                     else "physical_integration_failed"
+                )
                 )
             ),
             "metadata": {
@@ -2170,12 +2634,29 @@ def main() -> None:
                 ),
                 "wavelength_nm": cfg.lambda0,
                 "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
+                "incident_phi_deg": cfg.incident_phi_deg,
                 "polarization_kind": cfg.polarization_kind,
                 "mesh_policy": (
                     "task034_periodic_conforming_fixed_p_graded_opt_in"
                     if graded_plan is not None
                     else "reviewed_stage4_axis_plan"
                 ),
+                "mesh_axis_cell_counts_requested": (
+                    None
+                    if cfg.mesh_axis_cell_counts_requested is None
+                    else list(cfg.mesh_axis_cell_counts_requested)
+                ),
+                "mesh_axis_cell_counts_actual_full_plan": list(
+                    cross_section.axis_plan.mesh_cells_resolved
+                ),
+                "mesh_axis_cell_counts_actual_cross_section": [
+                    int(cross_section.mesh_cells[0]),
+                    int(cross_section.mesh_cells[1]),
+                ],
+                "mesh_axis_cell_counts_actual_local_fem": {
+                    "bottom": list(bottom.local_mesh.mesh_cells),
+                    "top": list(top.local_mesh.mesh_cells),
+                },
                 "graded_reference_h_nm": args.graded_reference_h,
                 "graded_profile": (
                     args.graded_profile if graded_plan is not None else None
@@ -2232,16 +2713,24 @@ def main() -> None:
             "hybrid_system": {
                 "primary_solver_path": args.solver_path,
                 "matrix_size": (
-                    list(system.A.getSize()) if system is not None else None
+                    primary_system_snapshot["shape"]
+                    if primary_system_snapshot is not None
+                    else None
                 ),
                 "matrix_stats": (
-                    system.matrix_stats if system is not None else None
+                    primary_system_snapshot["matrix_stats"]
+                    if primary_system_snapshot is not None
+                    else None
                 ),
                 "block_shapes": (
-                    system.block_shapes if system is not None else None
+                    primary_system_snapshot["block_shapes"]
+                    if primary_system_snapshot is not None
+                    else None
                 ),
                 "inserted_nnz_by_block": (
-                    system.inserted_nnz_by_block if system is not None else None
+                    primary_system_snapshot["inserted_nnz_by_block"]
+                    if primary_system_snapshot is not None
+                    else None
                 ),
                 "bottom_global_size": bottom.global_size,
                 "top_global_size": top.global_size,
@@ -2281,6 +2770,14 @@ def main() -> None:
                 ),
                 "bottom_matrix_stats": bottom.augmented_matrix_stats,
                 "top_matrix_stats": top.augmented_matrix_stats,
+                "dtn_trace_alias_preflight": {
+                    "bottom": bottom.coupling_stats[
+                        "dtn_trace_alias_preflight"
+                    ],
+                    "top": top.coupling_stats[
+                        "dtn_trace_alias_preflight"
+                    ],
+                },
                 "internal_unknown_count": coupling.internal_unknown_count,
                 "internal_propagation": {
                     "model": coupling.propagation.propagation_model,
@@ -2291,6 +2788,20 @@ def main() -> None:
                     "modal_magnetic_and_traction_symbol": (
                         coupling.modal_traction_model
                     ),
+                    "field_reconstruction_magnetic_beta_source": (
+                        reconstructor.traction_model
+                    ),
+                    "field_reconstruction_beta_equals_traction_beta": (
+                        reconstruction_beta_equals_traction_beta
+                    ),
+                    "field_reconstruction_positive_traction_beta_per_nm": [
+                        _complex_json(value)
+                        for value in reconstruction_positive_traction_beta
+                    ],
+                    "field_reconstruction_negative_traction_beta_per_nm": [
+                        _complex_json(value)
+                        for value in reconstruction_negative_traction_beta
+                    ],
                     "positive_traction_beta_per_nm": [
                         _complex_json(value)
                         for value in coupling.positive_traction_beta_per_nm
@@ -2343,6 +2854,27 @@ def main() -> None:
                 "qep_to_interface_quadrature_degree": (
                     coupling.interface_quadrature_degree
                 ),
+                "qep_to_interface_coefficient_degree": (
+                    coupling.interface_quadrature_coefficient_degree
+                ),
+                "canonical_trace_raw_consistency_error": {
+                    "bottom": (
+                        coupling.bottom.canonical_trace_raw_consistency_error
+                    ),
+                    "top": coupling.top.canonical_trace_raw_consistency_error,
+                },
+                "canonical_trace_representation_error": {
+                    "bottom": (
+                        coupling.bottom.canonical_trace_representation_error
+                    ),
+                    "top": (
+                        coupling.top.canonical_trace_representation_error
+                    ),
+                },
+                "surface_trace_reduction_audits": {
+                    "bottom": list(coupling.bottom.surface_reduction_audits),
+                    "top": list(coupling.top.surface_reduction_audits),
+                },
                 "cell_interior_modal_correction_norms": {
                     side: {
                         "positive_frobenius": float(
@@ -2387,37 +2919,20 @@ def main() -> None:
                     or coupling.top.full_surface_mode_vectors_retained
                 ),
                 "dense_interface_square_formed": (
-                    system.dense_interface_square_formed
-                    if system is not None
-                    else primary_schur_system.dense_interface_square_formed
+                    primary_system_snapshot[
+                        "dense_interface_square_formed"
+                    ]
+                    if primary_system_snapshot is not None
+                    else primary_schur_snapshot[
+                        "dense_interface_square_formed"
+                    ]
                 ),
                 "full_field_or_mode_gathered": (
                     coupling.full_field_or_mode_gathered
                 ),
                 "modal_schur": (
-                    None
-                    if primary_schur_system is None
-                    else {
-                        "shape": list(primary_schur_system.modal_schur.shape),
-                        "bytes": int(primary_schur_system.modal_schur.nbytes),
-                        "condition": primary_schur_system.modal_schur_condition,
-                        "multi_rhs_count": primary_schur_system.multi_rhs_count,
-                        "transient_dense_rhs_solution_bytes": (
-                            primary_schur_system.transient_dense_rhs_solution_bytes
-                        ),
-                        "factor_setup_seconds": (
-                            primary_schur_system.factor_setup_seconds
-                        ),
-                        "multi_rhs_solve_seconds": (
-                            primary_schur_system.multi_rhs_solve_seconds
-                        ),
-                        "lifecycle_strategy": (
-                            primary_schur_system.lifecycle_strategy
-                        ),
-                        "recovery_refactor_required": (
-                            primary_schur_system.recovery_refactor_required
-                        ),
-                    }
+                    None if primary_schur_snapshot is None
+                    else dict(primary_schur_snapshot)
                 ),
             },
             "solve": {
@@ -2432,6 +2947,9 @@ def main() -> None:
                 "recovery_seconds": getattr(solution, "recovery_seconds", None),
                 "recovery_factor_setup_seconds": getattr(
                     solution, "recovery_factor_setup_seconds", {}
+                ),
+                "solver_release_before_field_output": (
+                    primary_release_audit
                 ),
                 "bottom_static_recovery": (
                     None
@@ -2487,15 +3005,29 @@ def main() -> None:
                     and all(
                         value
                         for key, value in gates.items()
-                        if key.startswith("sampled_interface_")
+                        if (
+                            key.startswith("sampled_interface_")
+                            or key.startswith("assembled_interface_")
+                        )
+                        and not key.startswith("diagnostic_")
                         or key.startswith("volume_")
                         or key.startswith("middle_plane_")
                     )
                 ),
                 "pointwise_h_jump_checked": physical_fields is not None,
+                "pointwise_h_jump_role": "diagnostic_sampled_proxy_only",
+                "exact_variational_conormal_dual_checked": bool(
+                    physical_fields is not None
+                    and all(
+                        "traction_hcurl_dual"
+                        in physical_fields["interface_continuity"][side]
+                        for side in ("bottom", "top")
+                    )
+                ),
                 "volume_absorption_reconstructed": physical_fields is not None,
                 "selected_middle_planes_reconstructed": physical_fields is not None,
                 "official_record": False,
+                "hybrid_p_disposition": hybrid_p_disposition,
                 "boundary": (
                     (
                         "real_QEP_internal_physical_chain; no pinned "
@@ -2521,6 +3053,10 @@ def main() -> None:
         }
     except _ModalBasisCapacityStop:
         pass
+    except DtnTraceAliasError as error:
+        record = dtn_trace_alias_record(error)
+    except NearDegenerateBlockPartitionSplitError as error:
+        record = near_degenerate_partition_record(error)
     finally:
         if schur_solution is not None:
             schur_solution.destroy()

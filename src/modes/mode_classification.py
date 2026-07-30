@@ -56,6 +56,19 @@ class NoAdmissibleLeftPairError(RuntimeError):
         )
 
 
+class NearDegenerateBlockPartitionSplitError(RuntimeError):
+    """Raised when independently normalized blocks still couple above Gate."""
+
+    def __init__(self, audit: dict[str, object]) -> None:
+        self.audit = dict(audit)
+        super().__init__(
+            "near_degenerate_block_partition_split: "
+            f"cross_block_max={audit['max_cross_block_overlap']:.6e}, "
+            f"limit={audit['block_rotation_tolerance']:.6e}, "
+            f"indices={audit['worst_cross_block_indices']}"
+        )
+
+
 @dataclass(frozen=True)
 class NearDegenerateGroup:
     indices: tuple[int, ...]
@@ -101,6 +114,7 @@ class BiorthogonalModeBasis:
     adjoint_solver_report: QuadraticBetaSolveReport
     left_pair_relative_errors: tuple[float, ...]
     full_vector_gathered: bool = False
+    near_degenerate_partition_audit: dict[str, object] | None = None
 
     def destroy(self) -> None:
         for mode in self.modes:
@@ -434,6 +448,100 @@ def _identity_error_metrics(matrix: np.ndarray) -> tuple[float, float]:
         float(np.max(np.abs(difference))) if difference.size else 0.0
     )
     return infinity_norm, max_entry
+
+
+def _near_degenerate_partition_audit(
+    betas: Sequence[complex],
+    groups: Sequence[Sequence[int]],
+    biorthogonality: np.ndarray,
+    *,
+    near_degenerate_tolerance: float,
+    block_rotation_tolerance: float,
+    directions: Sequence[str] | None = None,
+) -> dict[str, object]:
+    """Detect a physically coupled mode pair split across normalized blocks."""
+
+    values = np.asarray(biorthogonality, dtype=np.complex128)
+    if values.shape != (len(betas), len(betas)):
+        raise ValueError("Biorthogonality and beta dimensions disagree.")
+    group_id = np.full(len(betas), -1, dtype=np.int64)
+    for identifier, indices in enumerate(groups):
+        for index in indices:
+            if group_id[int(index)] >= 0:
+                raise ValueError("Near-degenerate groups overlap.")
+            group_id[int(index)] = int(identifier)
+    if np.any(group_id < 0):
+        raise ValueError("Near-degenerate groups do not cover every mode.")
+
+    cross_mask = group_id[:, None] != group_id[None, :]
+    cross_values = np.where(cross_mask, np.abs(values), 0.0)
+    if cross_values.size:
+        flat_index = int(np.argmax(cross_values))
+        row, column = (
+            int(value)
+            for value in np.unravel_index(flat_index, cross_values.shape)
+        )
+        maximum = float(cross_values[row, column])
+    else:
+        row = column = -1
+        maximum = 0.0
+    beta_distance = (
+        _relative_beta_distance(betas[row], betas[column])
+        if row >= 0 and column >= 0
+        else 0.0
+    )
+    passed = maximum <= float(block_rotation_tolerance)
+    near_degenerate_candidate = bool(
+        row >= 0
+        and column >= 0
+        and beta_distance <= 10.0 * float(near_degenerate_tolerance)
+    )
+    failure_status = (
+        "near_degenerate_block_partition_split"
+        if near_degenerate_candidate
+        else "cross_block_biorthogonality_failure"
+    )
+    worst_directions = (
+        [str(directions[row]), str(directions[column])]
+        if directions is not None and row >= 0 and column >= 0
+        else None
+    )
+    return {
+        "status": (
+            "near_degenerate_block_partition_pass"
+            if passed
+            else failure_status
+        ),
+        "pass": passed,
+        "block_rotation_tolerance": float(block_rotation_tolerance),
+        "max_cross_block_overlap": maximum,
+        "worst_cross_block_indices": [row, column],
+        "worst_cross_block_group_ids": (
+            [int(group_id[row]), int(group_id[column])]
+            if row >= 0 and column >= 0
+            else [-1, -1]
+        ),
+        "worst_cross_block_relative_beta_distance": beta_distance,
+        "near_degenerate_tolerance": float(near_degenerate_tolerance),
+        "near_degenerate_candidate_factor": 10.0,
+        "worst_cross_block_is_near_degenerate_candidate": (
+            near_degenerate_candidate
+        ),
+        "worst_cross_block_betas": (
+            [
+                [float(betas[row].real), float(betas[row].imag)],
+                [float(betas[column].real), float(betas[column].imag)],
+            ]
+            if row >= 0 and column >= 0
+            else None
+        ),
+        "worst_cross_block_directions": worst_directions,
+        "remediation": (
+            None
+            if passed
+            else "DEFERRED_ARCHITECTURE_REQUIRED_joint_subspace_rotation"
+        ),
+    }
 
 
 def classify_mode_branch(
@@ -809,6 +917,19 @@ def build_biorthogonal_mode_basis(
             left_reduced,
             [mode.right_reduced for mode in right_modes],
         )
+        partition_audit = _near_degenerate_partition_audit(
+            betas,
+            group_indices,
+            biorthogonality,
+            near_degenerate_tolerance=near_degenerate_tolerance,
+            block_rotation_tolerance=block_rotation_tolerance,
+            directions=[
+                str(classification[1])
+                for classification in classifications
+            ],
+        )
+        if not partition_audit["pass"]:
+            raise NearDegenerateBlockPartitionSplitError(partition_audit)
         groups: list[NearDegenerateGroup] = []
         for indices, center, spread, condition, method in group_payload:
             block = biorthogonality[np.ix_(indices, indices)]
@@ -872,6 +993,7 @@ def build_biorthogonal_mode_basis(
             max_entry_identity_error=max_entry_identity_error,
             adjoint_solver_report=adjoint_report,
             left_pair_relative_errors=left_pair_errors,
+            near_degenerate_partition_audit=partition_audit,
         )
     except Exception:
         for mode in right_modes:

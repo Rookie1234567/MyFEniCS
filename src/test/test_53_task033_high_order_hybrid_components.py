@@ -70,10 +70,10 @@ class Task033HighOrderHybridComponentTests(unittest.TestCase):
                     {(2, 5.0): tampered_path},
                 )
 
-    def test_p3_p4_sparse_matching_interface_blocks(self) -> None:
-        for degree in (3, 4):
+    def test_p1_p6_sparse_matching_interface_blocks(self) -> None:
+        for degree in (1, 2, 3, 4, 5, 6):
             with self.subTest(degree=degree):
-                cfg = target_stage4_config(degree=degree, h_nm=10.0)
+                cfg = target_stage4_config(degree=degree, h_nm=100.0)
                 cross_section = build_matching_cross_section(cfg, "stage4_xy")
                 spaces = build_cross_section_spaces(
                     cross_section, transverse_degree=degree
@@ -144,12 +144,37 @@ class Task033HighOrderHybridComponentTests(unittest.TestCase):
                         coupling.positive_projection_identity_error, 1.0e-9
                     )
                     self.assertEqual(
-                        coupling.interface_quadrature_degree, 2 * degree + 4
+                        coupling.interface_quadrature_degree, 3 * degree + 4
+                    )
+                    self.assertEqual(
+                        coupling.interface_quadrature_coefficient_degree,
+                        degree,
                     )
                     self.assertEqual(
                         coupling.bottom.quadrature_degree,
                         coupling.top.quadrature_degree,
                     )
+                    for block in (coupling.bottom, coupling.top):
+                        self.assertLessEqual(
+                            block.canonical_trace_raw_consistency_error,
+                            1.0e-12,
+                        )
+                        self.assertLessEqual(
+                            block.canonical_trace_representation_error,
+                            1.0e-12,
+                        )
+                        self.assertEqual(
+                            len(block.surface_reduction_audits),
+                            6,
+                        )
+                        self.assertTrue(
+                            all(
+                                audit["pass"]
+                                and audit["status"]
+                                == "not_applicable_no_static_reduction"
+                                for audit in block.surface_reduction_audits
+                            )
+                        )
                     self.assertFalse(coupling.full_field_or_mode_gathered)
                     self.assertFalse(coupling.dense_interface_square_formed)
                     self.assertFalse(

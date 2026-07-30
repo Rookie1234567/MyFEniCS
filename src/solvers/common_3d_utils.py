@@ -76,6 +76,8 @@ def _trim_process_heap() -> dict[str, Any]:
         "implementation": "glibc_malloc_trim",
         "supported": False,
         "succeeded": False,
+        "call_completed": False,
+        "allocator_reported_pages_released": False,
         "return_code": None,
         "rss_before_mb": before_mb,
         "rss_after_mb": before_mb,
@@ -101,7 +103,12 @@ def _trim_process_heap() -> dict[str, Any]:
     after_mb = _current_rss_mb()
     audit.update(
         {
-            "succeeded": return_code != 0,
+            # glibc defines zero as "no pages were returned", not as a call
+            # or numerical failure.  Preserve the raw code and separate both
+            # meanings so resource Gates do not fail spuriously.
+            "succeeded": True,
+            "call_completed": True,
+            "allocator_reported_pages_released": return_code != 0,
             "return_code": return_code,
             "rss_after_mb": after_mb,
             "rss_released_mb": (
@@ -109,7 +116,11 @@ def _trim_process_heap() -> dict[str, Any]:
                 if before_mb is None or after_mb is None
                 else max(float(before_mb) - float(after_mb), 0.0)
             ),
-            "reason": None if return_code != 0 else "malloc_trim_returned_zero",
+            "reason": (
+                None
+                if return_code != 0
+                else "malloc_trim_completed_without_releasing_pages"
+            ),
         }
     )
     return audit
@@ -142,20 +153,48 @@ def _cgroup_memory_fields() -> dict[str, float | str | None]:
     }
 
 
-def _global_max_rss_mb(comm) -> float | None:
-    local = _max_rss_mb()
-    if local is None:
+def _gather_optional_rank_floats(
+    comm,
+    local_value: float | None,
+) -> list[float | None]:
+    """Collect an optional process-local sample without divergent collectives."""
+
+    value = None if local_value is None else float(local_value)
+    return [
+        None if item is None else float(item)
+        for item in comm.allgather(value)
+    ]
+
+
+def _complete_rank_max(values: list[float | None]) -> float | None:
+    if not values or any(value is None for value in values):
         return None
-    return float(comm.allreduce(local, op=MPI.MAX))
+    return float(max(float(value) for value in values if value is not None))
+
+
+def _complete_rank_sum(values: list[float | None]) -> float | None:
+    if not values or any(value is None for value in values):
+        return None
+    return float(sum(float(value) for value in values if value is not None))
+
+
+def _global_max_rss_mb(comm) -> float | None:
+    return _complete_rank_max(
+        _gather_optional_rank_floats(comm, _max_rss_mb())
+    )
 
 
 def _global_total_peak_rss_mb(comm) -> float | None:
-    """Return the sum of per-rank peak RSS values."""
+    """Return a historical upper bound, never simultaneous process-tree RSS.
 
-    local = _max_rss_mb()
-    if local is None:
-        return None
-    return float(comm.allreduce(local, op=MPI.SUM))
+    Each rank contributes its process-lifetime high-water mark, which can
+    occur at a different instant.  The sum is retained only as a conservative
+    backward-compatible upper bound.
+    """
+
+    return _complete_rank_sum(
+        _gather_optional_rank_floats(comm, _max_rss_mb())
+    )
 
 
 def _swap_used_mb() -> float | None:
@@ -222,13 +261,23 @@ def _write_progress_event(
     try:
         local_current_rss = _current_rss_mb()
         local_peak_rss = _max_rss_mb()
-        max_current_rss = None if local_current_rss is None else float(comm.allreduce(local_current_rss, op=MPI.MAX))
-        sum_current_rss = None if local_current_rss is None else float(comm.allreduce(local_current_rss, op=MPI.SUM))
-        max_peak_rss = None if local_peak_rss is None else float(comm.allreduce(local_peak_rss, op=MPI.MAX))
-        sum_rank_peaks = None if local_peak_rss is None else float(comm.allreduce(local_peak_rss, op=MPI.SUM))
+        current_by_rank = _gather_optional_rank_floats(
+            comm,
+            local_current_rss,
+        )
+        peak_by_rank = _gather_optional_rank_floats(
+            comm,
+            local_peak_rss,
+        )
+        max_current_rss = _complete_rank_max(current_by_rank)
+        sum_current_rss = _complete_rank_sum(current_by_rank)
+        max_peak_rss = _complete_rank_max(peak_by_rank)
+        sum_rank_peaks = _complete_rank_sum(peak_by_rank)
     except Exception:
         local_current_rss = _current_rss_mb()
         local_peak_rss = _max_rss_mb()
+        current_by_rank = [local_current_rss]
+        peak_by_rank = [local_peak_rss]
         max_current_rss = local_current_rss
         sum_current_rss = local_current_rss
         max_peak_rss = local_peak_rss
@@ -243,6 +292,8 @@ def _write_progress_event(
         "rank_count": comm.size,
         "rank_current_rss_mb": local_current_rss,
         "rank_peak_rss_mb": local_peak_rss,
+        "rank_current_rss_mb_by_rank": current_by_rank,
+        "rank_historical_peak_rss_mb_by_rank": peak_by_rank,
         "max_current_rss_across_ranks_mb": max_current_rss,
         "sum_current_rss_all_ranks_mb": sum_current_rss,
         "max_rank_historical_peak_rss_mb": max_peak_rss,
@@ -289,14 +340,20 @@ def _log_solver_summary(summary: dict[str, Any], log) -> None:
         log(f"  residual norm        = {residual:.6e}")
     max_rss = summary["max_rss_mb"]
     if max_rss is None:
-        log("  max RSS across ranks = None")
+        log("  max rank historical RSS = None")
     else:
-        log(f"  max RSS across ranks = {max_rss:.1f} MB")
-    total_peak_rss = summary.get("total_peak_rss_mb")
+        log(f"  max rank historical RSS = {max_rss:.1f} MB")
+    total_peak_rss = summary.get(
+        "sum_rank_historical_peaks_mb_upper_bound",
+        summary.get("total_peak_rss_mb"),
+    )
     if total_peak_rss is None:
-        log("  total peak RSS       = None")
+        log("  sum rank historical peaks upper bound = None")
     else:
-        log(f"  total peak RSS       = {total_peak_rss:.1f} MB")
+        log(
+            "  sum rank historical peaks upper bound = "
+            f"{total_peak_rss:.1f} MB"
+        )
     log(f"  official result      = {summary['official_result']}")
     log(f"  diagnostic only      = {summary['diagnostic_only']}")
     log(f"  validation role      = {summary.get('validation_role')}")

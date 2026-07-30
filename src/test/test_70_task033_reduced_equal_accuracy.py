@@ -6,6 +6,7 @@ import pytest
 from benchmarks.task033_reduced_equal_accuracy import (
     ReducedEqualAccuracyError,
     _execution_contract,
+    _factor_inventory_nnz,
     classify_resource_reduction,
     compare_full3d_to_reference,
     hybrid_dimension_costs,
@@ -24,6 +25,21 @@ from benchmarks.task033_reduced_equal_accuracy import (
 )
 def test_review_v5_resource_reduction_boundaries(ratio: float, expected: str) -> None:
     assert classify_resource_reduction(ratio) == expected
+
+
+def test_factor_inventory_prefers_corrected_mumps_count() -> None:
+    assert (
+        _factor_inventory_nnz(
+            {
+                "factor_nnz_corrected": 2_277_000_000,
+                "matrix_stats": {
+                    "matrix_nnz_used": -2_017_967_296.0,
+                },
+            },
+            label="fixture",
+        )
+        == 2_277_000_000
+    )
 
 
 def _full3d(scale: float) -> dict:

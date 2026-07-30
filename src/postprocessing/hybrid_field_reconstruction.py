@@ -180,6 +180,8 @@ class ModalFieldReconstructor:
         bottom_z_nm: float = 10.0,
         top_z_nm: float = 110.0,
         propagation: TwoSidedPropagation | None = None,
+        positive_traction_beta_per_nm: Sequence[complex] | None = None,
+        negative_traction_beta_per_nm: Sequence[complex] | None = None,
     ) -> None:
         if len(positive.modes) != len(negative.modes):
             raise ValueError("Positive and negative modal bases must have equal sizes.")
@@ -221,6 +223,39 @@ class ModalFieldReconstructor:
                 propagation.backward.effective_beta_per_nm,
                 dtype=np.complex128,
             )
+        if (positive_traction_beta_per_nm is None) != (
+            negative_traction_beta_per_nm is None
+        ):
+            raise ValueError(
+                "Positive and negative traction betas must be supplied together."
+            )
+        if positive_traction_beta_per_nm is None:
+            self.traction_model = "continuous_qep_beta"
+            self._positive_traction_beta = np.asarray(
+                [mode.beta for mode in positive.modes],
+                dtype=np.complex128,
+            )
+            self._negative_traction_beta = np.asarray(
+                [mode.beta for mode in negative.modes],
+                dtype=np.complex128,
+            )
+        else:
+            self.traction_model = "selected_coupling_traction_beta"
+            self._positive_traction_beta = np.asarray(
+                positive_traction_beta_per_nm,
+                dtype=np.complex128,
+            )
+            self._negative_traction_beta = np.asarray(
+                negative_traction_beta_per_nm,
+                dtype=np.complex128,
+            )
+            count = len(positive.modes)
+            if self._positive_traction_beta.shape != (count,) or (
+                self._negative_traction_beta.shape != (count,)
+            ):
+                raise ValueError(
+                    "Traction beta arrays must match each directional modal basis."
+                )
         msh = self.cross_section.mesh
         self._magnetic_space = fem.functionspace(
             msh,
@@ -305,7 +340,13 @@ class ModalFieldReconstructor:
     ) -> tuple[np.ndarray, np.ndarray]:
         electric_rows = []
         magnetic_rows = []
-        for mode in self._modes:
+        positive_traction_beta, negative_traction_beta = (
+            self._effective_traction_betas()
+        )
+        magnetic_betas = np.concatenate(
+            (positive_traction_beta, negative_traction_beta)
+        )
+        for mode, magnetic_beta in zip(self._modes, magnetic_betas):
             mode.right.right_full.copy(self._sample_source.x.petsc_vec)
             self._sample_source.x.scatter_forward()
             self._sample_transverse.x.array[:] = self._sample_source.x.array[
@@ -329,9 +370,11 @@ class ModalFieldReconstructor:
                 )
             )
             try:
-                self._magnetic_beta.value[...] = PETSc.ScalarType(mode.beta)
+                self._magnetic_beta.value[...] = PETSc.ScalarType(
+                    magnetic_beta
+                )
             except Exception:
-                self._magnetic_beta.value = PETSc.ScalarType(mode.beta)
+                self._magnetic_beta.value = PETSc.ScalarType(magnetic_beta)
             self._magnetic_scratch.interpolate(self._magnetic_expression)
             self._magnetic_scratch.x.scatter_forward()
             magnetic_rows.append(
@@ -341,6 +384,35 @@ class ModalFieldReconstructor:
             np.asarray(electric_rows, dtype=np.complex128),
             np.asarray(magnetic_rows, dtype=np.complex128),
         )
+
+    def _effective_traction_betas(
+        self,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        positive = getattr(self, "_positive_traction_beta", None)
+        negative = getattr(self, "_negative_traction_beta", None)
+        if positive is None:
+            positive = np.asarray(
+                [mode.beta for mode in self.positive.modes],
+                dtype=np.complex128,
+            )
+        if negative is None:
+            negative = np.asarray(
+                [mode.beta for mode in self.negative.modes],
+                dtype=np.complex128,
+            )
+        return (
+            np.asarray(positive, dtype=np.complex128),
+            np.asarray(negative, dtype=np.complex128),
+        )
+
+    @property
+    def traction_beta_per_nm(
+        self,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Copies of the beta arrays actually used by H reconstruction."""
+
+        positive, negative = self._effective_traction_betas()
+        return positive.copy(), negative.copy()
 
     def coefficients_at_z(
         self,
@@ -867,7 +939,11 @@ def interface_field_continuity(
             "local_trace_side": "negative_z" if z_side < 0 else "positive_z",
             "modal_trace_side": "positive_z" if side == "bottom" else "negative_z",
             "electric_tangential": relative_sample_error(local_e[..., :2], modal_e[..., :2]),
-            "magnetic_tangential": relative_sample_error(local_h[..., :2], modal_h[..., :2]),
+            "traction_density_l2_proxy": {
+                **relative_sample_error(local_h[..., :2], modal_h[..., :2]),
+                "authority": "diagnostic_only_sampled_strong_density_proxy",
+                "formal_gate": False,
+            },
         }
     return reports
 

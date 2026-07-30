@@ -66,7 +66,9 @@ from .common_3d_solve import (
 )
 from .common_3d_utils import (
     _clear_official_field_outputs,
+    _complete_rank_sum,
     _finish_timed_stage,
+    _gather_optional_rank_floats,
     _global_max_rss_mb,
     _global_total_peak_rss_mb,
     _log_solver_summary,
@@ -264,6 +266,12 @@ def _parallel_lu_failure_summary(
         "max_rss_mb": _global_max_rss_mb(comm),
         "total_peak_rss_mb": _global_total_peak_rss_mb(comm),
     }
+    summary["sum_rank_historical_peaks_mb_upper_bound"] = summary[
+        "total_peak_rss_mb"
+    ]
+    summary["total_peak_rss_semantics"] = (
+        "sum_rank_historical_peaks_upper_bound_not_simultaneous"
+    )
     _log_solver_summary(summary, log)
     log(f"elapsed seconds = {elapsed:.3f}")
     _write_case_outputs(out_dir, summary, log_lines, comm)
@@ -429,6 +437,19 @@ def _direct_solve_failure_summary(
             dtn_assembly_backend_audit
         ),
         "stage4_dtn_num_auxiliary_dofs": dtn_solver_info.get("num_auxiliary_dofs"),
+        "num_active_exact_sequence_fe_dofs": dtn_solver_info.get(
+            "num_active_exact_sequence_fe_dofs"
+        ),
+        "num_storage_carrier_fe_dofs": dtn_solver_info.get(
+            "num_storage_carrier_fe_dofs"
+        ),
+        "num_independent_trace_rows": dtn_solver_info.get(
+            "num_independent_trace_rows"
+        ),
+        "num_augmented_rows": dtn_solver_info.get(
+            "num_augmented_rows"
+        ),
+        "dof_row_semantics": dtn_solver_info.get("dof_row_semantics"),
         "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
         "stage4_dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
@@ -495,6 +516,12 @@ def _direct_solve_failure_summary(
         "max_rss_mb": _global_max_rss_mb(comm),
         "total_peak_rss_mb": _global_total_peak_rss_mb(comm),
     }
+    summary["sum_rank_historical_peaks_mb_upper_bound"] = summary[
+        "total_peak_rss_mb"
+    ]
+    summary["total_peak_rss_semantics"] = (
+        "sum_rank_historical_peaks_upper_bound_not_simultaneous"
+    )
     log(f"WARNING: direct LU failed at {failure.failure_stage}: {failure}")
     log(f"PETSc error diagnostics = {error_diagnostics}")
     _log_solver_summary(summary, log)
@@ -1460,6 +1487,18 @@ def run_prepared_3d_case_flow(
         local_before_mb = local_heap_trim.get("rss_before_mb")
         local_after_mb = local_heap_trim.get("rss_after_mb")
         local_released_mb = local_heap_trim.get("rss_released_mb")
+        before_by_rank = _gather_optional_rank_floats(
+            comm,
+            local_before_mb,
+        )
+        after_by_rank = _gather_optional_rank_floats(
+            comm,
+            local_after_mb,
+        )
+        released_by_rank = _gather_optional_rank_floats(
+            comm,
+            local_released_mb,
+        )
         solver_release_audit = {
             "petsc_garbage_cleanup_called": True,
             "process_heap_trim": {
@@ -1476,32 +1515,39 @@ def run_prepared_3d_case_flow(
                         op=MPI.LAND,
                     )
                 ),
+                "call_completed_on_all_ranks": bool(
+                    comm.allreduce(
+                        bool(local_heap_trim["call_completed"]),
+                        op=MPI.LAND,
+                    )
+                ),
+                "allocator_reported_pages_released_by_rank": [
+                    bool(value)
+                    for value in comm.allgather(
+                        bool(
+                            local_heap_trim[
+                                "allocator_reported_pages_released"
+                            ]
+                        )
+                    )
+                ],
                 "return_codes_by_rank": [
                     int(value)
                     for value in comm.allgather(
                         int(local_heap_trim["return_code"] or 0)
                     )
                 ],
-                "sum_rss_before_mb": (
-                    None
-                    if local_before_mb is None
-                    else float(
-                        comm.allreduce(float(local_before_mb), op=MPI.SUM)
-                    )
+                "current_rss_before_mb_by_rank": before_by_rank,
+                "current_rss_after_mb_by_rank": after_by_rank,
+                "current_rss_released_mb_by_rank": released_by_rank,
+                "sum_rss_before_mb": _complete_rank_sum(before_by_rank),
+                "sum_rss_after_mb": _complete_rank_sum(after_by_rank),
+                "sum_rss_released_mb": _complete_rank_sum(
+                    released_by_rank
                 ),
-                "sum_rss_after_mb": (
-                    None
-                    if local_after_mb is None
-                    else float(
-                        comm.allreduce(float(local_after_mb), op=MPI.SUM)
-                    )
-                ),
-                "sum_rss_released_mb": (
-                    None
-                    if local_released_mb is None
-                    else float(
-                        comm.allreduce(float(local_released_mb), op=MPI.SUM)
-                    )
+                "rss_measurement_semantics": (
+                    "diagnostic in-process phase-local rank samples; not "
+                    "external synchronized process-tree RSS/PSS/USS authority"
                 ),
                 "ordinary_default_changed": False,
             },
@@ -1691,6 +1737,23 @@ def run_prepared_3d_case_flow(
         "num_active_condensed_dofs": None
         if dtn_solver_info is None
         else dtn_solver_info.get("num_active_condensed_dofs"),
+        "num_active_exact_sequence_fe_dofs": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get(
+            "num_active_exact_sequence_fe_dofs"
+        ),
+        "num_storage_carrier_fe_dofs": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("num_storage_carrier_fe_dofs"),
+        "num_independent_trace_rows": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("num_independent_trace_rows"),
+        "num_augmented_rows": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("num_augmented_rows"),
+        "dof_row_semantics": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("dof_row_semantics"),
         "stage4_dtn_variable_p_auxiliary_interior_columns_allocated": None
         if dtn_solver_info is None
         else dtn_solver_info.get(
@@ -1902,6 +1965,12 @@ def run_prepared_3d_case_flow(
             **_retain_mumps_ooc_directory_on_failure(ooc_info),
         },
     }
+    summary["sum_rank_historical_peaks_mb_upper_bound"] = summary[
+        "total_peak_rss_mb"
+    ]
+    summary["total_peak_rss_semantics"] = (
+        "sum_rank_historical_peaks_upper_bound_not_simultaneous"
+    )
     if variable_p_live_observer is not None:
         summary.update(
             {

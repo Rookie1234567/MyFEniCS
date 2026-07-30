@@ -66,6 +66,10 @@ class HybridInterfaceModeBlocks:
     interior_modal_pairwise_schur_evaluated: bool = False
     full_surface_mode_vectors_retained: bool = False
     full_field_or_mode_gathered: bool = False
+    canonical_trace_raw_consistency_error: float = 0.0
+    canonical_trace_representation_error: float = 0.0
+    quadrature_coefficient_degree: int = 0
+    surface_reduction_audits: tuple[dict[str, object], ...] = ()
 
     def destroy(self) -> None:
         self.projection.destroy()
@@ -93,6 +97,7 @@ class HybridInternalModeCoupling:
     negative_basis: BiorthogonalModeBasis
     full_field_or_mode_gathered: bool = False
     dense_interface_square_formed: bool = False
+    interface_quadrature_coefficient_degree: int = 0
 
     @property
     def internal_unknown_count(self) -> int:
@@ -489,14 +494,21 @@ class _ReusableInterfaceSurfaceLoad:
 
     def __init__(self, system: HybridLocalDtnSystem) -> None:
         self.system = system
+        self.reduction_audits: list[dict[str, object]] = []
         self.lifter = _ReusableInterfaceLifter(system)
+        lifted_coefficient_degree = _function_space_polynomial_degree(
+            self.lifter.target.function_space
+        )
         self.quadrature_policy: HighOrderQuadraturePolicy = (
             high_order_quadrature_policy(
                 field_degree=_function_space_polynomial_degree(system.V),
                 geometry_degree=int(
                     getattr(system.local_mesh.mesh.geometry.cmap, "degree", 1)
                 ),
-                coefficient_degree=0,
+                # The lifted modal trace is a DG(p) coefficient on the 3D
+                # interface.  Calling it piecewise constant under-integrates
+                # the load precisely where high-order Hybrid-P is sensitive.
+                coefficient_degree=lifted_coefficient_degree,
             )
         )
         v = ufl.TestFunction(system.V)
@@ -527,6 +539,21 @@ class _ReusableInterfaceSurfaceLoad:
             overlap_vector
         )
         if self.system.static_condensation is None:
+            self.reduction_audits.append(
+                {
+                    "side": self.system.side,
+                    "role": role,
+                    "source_name": str(source.name),
+                    "quadrature_degree": (
+                        self.quadrature_policy.selected_degree
+                    ),
+                    "coefficient_degree": (
+                        self.quadrature_policy.coefficient_degree
+                    ),
+                    "status": "not_applicable_no_static_reduction",
+                    "pass": True,
+                }
+            )
             overlap_vector.destroy()
             return _InterfaceSurfaceLoadEntries(
                 matrix_rows=overlap_rows,
@@ -537,16 +564,28 @@ class _ReusableInterfaceSurfaceLoad:
                 queries=queries,
                 tangential_surface_trace_only_verified=False,
             )
+        reduction_audit: dict[str, object] = {
+            "side": self.system.side,
+            "role": role,
+            "source_name": str(source.name),
+            "quadrature_degree": self.quadrature_policy.selected_degree,
+            "coefficient_degree": self.quadrature_policy.coefficient_degree,
+        }
         try:
             reduced = (
                 self.system.static_condensation
-                .reduce_tangential_surface_mpc_vector(overlap_vector)
+                .reduce_tangential_surface_mpc_vector(
+                    overlap_vector,
+                    audit=reduction_audit,
+                )
             )
             matrix_rows, matrix_values = _vec_nonzero_owned_entries(reduced)
             reduced.destroy()
         except Exception:
+            self.reduction_audits.append(reduction_audit)
             overlap_vector.destroy()
             raise
+        self.reduction_audits.append(reduction_audit)
         overlap_vector.destroy()
         return _InterfaceSurfaceLoadEntries(
             matrix_rows=matrix_rows,
@@ -588,6 +627,34 @@ def _surface_load_entries(
     """One-shot wrapper; production mode loops use the reusable assembler."""
 
     return _ReusableInterfaceSurfaceLoad(system).assemble_entries(source)
+
+
+def _canonicalized_negative_traces(
+    projection: ModalTraceProjection,
+    canonical_mapping: np.ndarray,
+) -> list[fem.Function]:
+    """Carry reciprocal traces in the already qualified positive coordinates."""
+
+    mode_count = len(projection.right_traces)
+    if canonical_mapping.shape != (mode_count, mode_count):
+        raise ValueError("Canonical negative trace map has the wrong shape.")
+    traces: list[fem.Function] = []
+    for column in range(mode_count):
+        trace = fem.Function(
+            projection.right_traces[0].function_space,
+            name=f"task032_canonical_negative_trace_{column}",
+        )
+        trace.x.petsc_vec.set(0.0)
+        for row, source in enumerate(projection.right_traces):
+            coefficient = complex(canonical_mapping[row, column])
+            if abs(coefficient) > 0.0:
+                trace.x.petsc_vec.axpy(
+                    PETSc.ScalarType(coefficient),
+                    source.x.petsc_vec,
+                )
+        trace.x.scatter_forward()
+        traces.append(trace)
+    return traces
 
 
 class _ReusableModeTractionEvaluator:
@@ -689,7 +756,9 @@ def _create_rectangular_aij(
 def _build_projection_matrix(
     system: HybridLocalDtnSystem,
     projection: ModalTraceProjection,
-    negative_traces: Sequence[fem.Function],
+    raw_negative_traces: Sequence[fem.Function],
+    canonical_negative_traces: Sequence[fem.Function],
+    canonical_negative_mapping: np.ndarray,
     surface_load: _ReusableInterfaceSurfaceLoad,
     trace_lifter: _ReusableInterfaceLifter,
     log=None,
@@ -702,6 +771,8 @@ def _build_projection_matrix(
     tuple[PETSc.Vec, ...],
     np.ndarray,
     np.ndarray,
+    float,
+    float,
 ]:
     comm = system.local_mesh.mesh.comm
     mode_count = len(projection.left_traces)
@@ -722,7 +793,10 @@ def _build_projection_matrix(
                     f"{index + 1}/{mode_count}"
                 )
             raw_entries.append(
-                surface_load.assemble(left, role="row_functional")
+                surface_load.assemble(
+                    left,
+                    role=f"row_functional_mode_{index}",
+                )
             )
     except Exception:
         for entries in raw_entries:
@@ -767,7 +841,10 @@ def _build_projection_matrix(
         return values
 
     surface_gram = raw_overlap_matrix(projection.right_traces)
-    negative_raw = raw_overlap_matrix(negative_traces)
+    negative_raw = raw_overlap_matrix(raw_negative_traces)
+    canonical_negative_raw = raw_overlap_matrix(
+        canonical_negative_traces
+    )
     gram_condition = float(np.linalg.cond(surface_gram))
     if not np.isfinite(gram_condition) or gram_condition > 1.0e12:
         matrix.destroy()
@@ -778,11 +855,58 @@ def _build_projection_matrix(
             f"{system.side} lifted interface Gram is ill-conditioned: "
             f"{gram_condition:.6e}."
         )
-    inverse_gram = np.linalg.inv(surface_gram)
+    inverse_gram = np.linalg.solve(
+        surface_gram,
+        np.eye(mode_count, dtype=np.complex128),
+    )
     positive_identity_error = float(
         np.linalg.norm(inverse_gram @ surface_gram - np.eye(mode_count), ord=np.inf)
     )
-    negative_mapping = inverse_gram @ negative_raw
+    expected_negative_raw = surface_gram @ canonical_negative_mapping
+    raw_scale = max(
+        float(np.linalg.norm(negative_raw, ord=np.inf)),
+        float(np.linalg.norm(expected_negative_raw, ord=np.inf)),
+        1.0e-30,
+    )
+    canonical_trace_raw_consistency_error = float(
+        np.linalg.norm(
+            negative_raw - expected_negative_raw,
+            ord=np.inf,
+        )
+        / raw_scale
+    )
+    canonical_scale = max(
+        float(np.linalg.norm(canonical_negative_raw, ord=np.inf)),
+        float(np.linalg.norm(expected_negative_raw, ord=np.inf)),
+        1.0e-30,
+    )
+    canonical_trace_representation_error = float(
+        np.linalg.norm(
+            canonical_negative_raw - expected_negative_raw,
+            ord=np.inf,
+        )
+        / canonical_scale
+    )
+    if max(
+        canonical_trace_raw_consistency_error,
+        canonical_trace_representation_error,
+    ) > 1.0e-12:
+        matrix.destroy()
+        for entries in raw_entries:
+            if entries.full_vector is not None:
+                entries.full_vector.destroy()
+        raise RuntimeError(
+            "Canonicalized negative trace surface integrals disagree: "
+            f"raw_relative_error="
+            f"{canonical_trace_raw_consistency_error:.3e}, "
+            f"representation_relative_error="
+            f"{canonical_trace_representation_error:.3e}, "
+            "limit=1.000e-12."
+        )
+    # The 2D biorthogonal projection already supplies these canonical
+    # coordinates.  Re-solving through the lifted Gram is both redundant and
+    # unstable near a cutoff; the raw relation above is the independent Gate.
+    negative_mapping = canonical_negative_mapping.copy()
     for row in range(mode_count):
         for left_index, entries in enumerate(raw_entries):
             columns = entries.matrix_rows
@@ -836,6 +960,8 @@ def _build_projection_matrix(
         full_left_vectors,
         inverse_gram,
         modal_rhs_correction,
+        canonical_trace_raw_consistency_error,
+        canonical_trace_representation_error,
     )
 
 
@@ -873,7 +999,10 @@ def _build_traction_matrix(
                 local_outward_normal_sign=sign,
                 beta_override=traction_beta_per_nm[column],
             )
-            entries = surface_load.assemble(traction, role="load_column")
+            entries = surface_load.assemble(
+                traction,
+                role=f"load_column_{mode.direction}_mode_{column}",
+            )
             query_count += entries.queries
             if entries.full_vector is not None:
                 if system.static_condensation is None:
@@ -928,7 +1057,9 @@ def _build_interface_blocks(
     projection: ModalTraceProjection,
     positive_basis: BiorthogonalModeBasis,
     negative_basis: BiorthogonalModeBasis,
-    negative_traces: Sequence[fem.Function],
+    raw_negative_traces: Sequence[fem.Function],
+    canonical_negative_traces: Sequence[fem.Function],
+    canonical_negative_mapping: np.ndarray,
     traction_evaluator: _ReusableModeTractionEvaluator,
     positive_traction_beta_per_nm: Sequence[complex],
     negative_traction_beta_per_nm: Sequence[complex],
@@ -949,10 +1080,14 @@ def _build_interface_blocks(
         full_left_vectors,
         inverse_gram,
         modal_rhs_correction,
+        canonical_trace_raw_consistency_error,
+        canonical_trace_representation_error,
     ) = _build_projection_matrix(
         system,
         projection,
-        negative_traces,
+        raw_negative_traces,
+        canonical_negative_traces,
+        canonical_negative_mapping,
         surface_load,
         trace_lifter,
         log,
@@ -1025,6 +1160,16 @@ def _build_interface_blocks(
         ),
         interior_modal_pairwise_schur_evaluated=False,
         full_surface_mode_vectors_retained=False,
+        canonical_trace_raw_consistency_error=(
+            canonical_trace_raw_consistency_error
+        ),
+        canonical_trace_representation_error=(
+            canonical_trace_representation_error
+        ),
+        quadrature_coefficient_degree=(
+            surface_load.quadrature_policy.coefficient_degree
+        ),
+        surface_reduction_audits=tuple(surface_load.reduction_audits),
     )
 
 
@@ -1067,14 +1212,14 @@ def build_hybrid_internal_mode_coupling(
         canonical_negative_mapping = np.empty(
             (mode_count, mode_count), dtype=np.complex128
         )
-        negative_traces: list[fem.Function] = []
+        raw_negative_traces: list[fem.Function] = []
         for column, mode in enumerate(negative_basis.modes):
             trace = _trace_from_full_mode_vector(
                 mode.right.right_full,
                 spaces,
                 name=f"task032_negative_trace_{column}",
             )
-            negative_traces.append(trace)
+            raw_negative_traces.append(trace)
             canonical_negative_mapping[:, column] = projection.project(trace)
         positive_mapping = np.column_stack(
             [projection.project(trace) for trace in projection.right_traces]
@@ -1088,7 +1233,6 @@ def build_hybrid_internal_mode_coupling(
             )
         if not np.all(np.isfinite(canonical_negative_mapping)):
             raise RuntimeError("Negative-to-positive interface map is non-finite.")
-
         propagation = build_two_sided_propagation(
             [*positive_basis.modes, *negative_basis.modes],
             length_nm,
@@ -1131,6 +1275,14 @@ def build_hybrid_internal_mode_coupling(
             raise ValueError(
                 f"Unsupported modal_traction_model {modal_traction_model!r}."
             )
+        # Build the formal negative traces only after the propagation/traction
+        # model has been qualified.  The original reciprocal traces remain
+        # separate so the raw surface-integral Gate is independent of this
+        # canonical construction.
+        canonical_negative_traces = _canonicalized_negative_traces(
+            projection,
+            canonical_negative_mapping,
+        )
     except Exception:
         projection.destroy()
         raise
@@ -1146,7 +1298,9 @@ def build_hybrid_internal_mode_coupling(
             projection,
             positive_basis,
             negative_basis,
-            negative_traces,
+            raw_negative_traces,
+            canonical_negative_traces,
+            canonical_negative_mapping,
             traction_evaluator,
             positive_traction_beta,
             negative_traction_beta,
@@ -1158,7 +1312,9 @@ def build_hybrid_internal_mode_coupling(
             projection,
             positive_basis,
             negative_basis,
-            negative_traces,
+            raw_negative_traces,
+            canonical_negative_traces,
+            canonical_negative_mapping,
             traction_evaluator,
             positive_traction_beta,
             negative_traction_beta,
@@ -1228,6 +1384,13 @@ def build_hybrid_internal_mode_coupling(
         )
         if bottom.quadrature_degree != top.quadrature_degree:
             raise RuntimeError("Bottom/top interface quadrature policies disagree.")
+        if (
+            bottom.quadrature_coefficient_degree
+            != top.quadrature_coefficient_degree
+        ):
+            raise RuntimeError(
+                "Bottom/top interface coefficient degrees disagree."
+            )
         return HybridInternalModeCoupling(
             projection=projection,
             bottom=bottom,
@@ -1247,6 +1410,9 @@ def build_hybrid_internal_mode_coupling(
             spaces=spaces,
             positive_basis=positive_basis,
             negative_basis=negative_basis,
+            interface_quadrature_coefficient_degree=(
+                bottom.quadrature_coefficient_degree
+            ),
         )
     except Exception:
         if bottom is not None:

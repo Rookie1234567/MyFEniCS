@@ -234,8 +234,10 @@ class HybridModalSchurDirectSystem:
             return
         if self.bottom_factor is not None:
             self.bottom_factor.destroy()
+            self.bottom_factor = None
         if self.top_factor is not None:
             self.top_factor.destroy()
+            self.top_factor = None
         self._destroyed = True
 
 

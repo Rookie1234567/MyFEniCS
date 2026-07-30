@@ -568,6 +568,67 @@ def _deferred_preallocation_matrix_stats(
     }
 
 
+def _dof_row_semantics(
+    *,
+    active_exact_sequence_fe_dofs: int,
+    storage_carrier_fe_dofs: int,
+    independent_trace_rows: int | None,
+    augmented_rows: int,
+    auxiliary_rows: int,
+) -> dict[str, Any]:
+    """Name physical FE spaces and actual linear-system rows unambiguously."""
+
+    active = int(active_exact_sequence_fe_dofs)
+    storage = int(storage_carrier_fe_dofs)
+    independent = (
+        None
+        if independent_trace_rows is None
+        else int(independent_trace_rows)
+    )
+    augmented = int(augmented_rows)
+    auxiliary = int(auxiliary_rows)
+    if min(active, storage, augmented, auxiliary) < 0:
+        raise ValueError("DoF and row counts must be nonnegative.")
+    if active > storage:
+        raise ValueError(
+            "Active exact-sequence FE DoFs exceed the storage carrier."
+        )
+    if independent is not None:
+        if independent < 0 or independent > active:
+            raise ValueError(
+                "Independent trace rows must not exceed active FE DoFs."
+            )
+        if augmented != independent + auxiliary:
+            raise ValueError(
+                "Augmented rows must equal independent trace plus auxiliary "
+                "rows when independent trace elimination is active."
+            )
+    return {
+        "num_active_exact_sequence_fe_dofs": active,
+        "num_storage_carrier_fe_dofs": storage,
+        "num_independent_trace_rows": independent,
+        "num_augmented_rows": augmented,
+        "dof_row_semantics": {
+            "num_active_exact_sequence_fe_dofs": (
+                "physical conforming exact-sequence FE space before static "
+                "condensation"
+            ),
+            "num_storage_carrier_fe_dofs": (
+                "DOLFINx carrier function-space DoFs; inactive high-order "
+                "rows are storage only in variable-p runs"
+            ),
+            "num_independent_trace_rows": (
+                "FE trace rows after cell-interior and Floquet-slave "
+                "elimination; null when that reduction is not active"
+            ),
+            "num_augmented_rows": (
+                "actual solved matrix rows including DtN auxiliary rows"
+            ),
+            "auxiliary_rows": auxiliary,
+        },
+    }
+
+
 def _as_ufl_vector(values: np.ndarray, phase):
     return ufl.as_vector(tuple(PETSc.ScalarType(value) * phase for value in values))
 
@@ -939,6 +1000,7 @@ class _ReusableSurfaceComponentAssembler:
     ):
         if component not in {0, 1}:
             raise ValueError("Stage-4 DtN port component assembly only supports x/y tangential components.")
+        self.comm = mesh_data.mesh.comm
         self.alpha = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.gamma = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.kz = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
@@ -975,6 +1037,272 @@ class _ReusableSurfaceComponentAssembler:
         _set_scalar_constant(self.gamma, mode.gamma)
         _set_scalar_constant(self.kz, mode.k_vector[2])
         return _assemble_unconstrained_form_vector(self.form)
+
+
+class DtnTraceAliasError(RuntimeError):
+    """Raised before matrix insertion when the declared n=0 trace aliases."""
+
+    def __init__(self, audit: dict[str, Any]) -> None:
+        self.audit = dict(audit)
+        super().__init__(
+            "DTN y-invariant n=0 trace alias preflight failed: "
+            f"status={audit['status']}, "
+            f"overlap={audit['maximum_normalized_overlap']:.6e}, "
+            f"limit={audit['overlap_tolerance']:.6e}, "
+            f"target={audit['worst_target_mode']}, "
+            f"alias={audit['worst_non_target_mode']}. "
+            "Refine the y-axis topology before solving."
+        )
+
+
+def _dtn_n0_trace_alias_preflight(
+    modes: list[PortMode3D],
+    surface_assemblers: Mapping[
+        tuple[str, int], _ReusableSurfaceComponentAssembler
+    ],
+    mpc,
+    *,
+    enabled: bool,
+    overlap_tolerance: float,
+) -> dict[str, Any]:
+    """Audit actual MPC-reduced n=0/nonzero-n tangential trace functionals."""
+
+    if not np.isfinite(overlap_tolerance) or overlap_tolerance < 0.0:
+        raise ValueError(
+            "DTN trace alias overlap tolerance must be finite and nonnegative."
+        )
+    if not enabled:
+        return {
+            "status": "not_requested",
+            "enabled": False,
+            "pass": True,
+            "overlap_tolerance": float(overlap_tolerance),
+        }
+    if not modes:
+        raise ValueError("DTN trace alias preflight requires at least one mode.")
+    comm = next(iter(surface_assemblers.values())).comm
+    traces: list[tuple[PortMode3D, np.ndarray, np.ndarray]] = []
+    component_cache: dict[
+        tuple[str, int, int, complex],
+        tuple[
+            tuple[np.ndarray, np.ndarray],
+            tuple[np.ndarray, np.ndarray],
+        ],
+    ] = {}
+    for mode in modes:
+        key = (
+            mode.side,
+            int(mode.m),
+            int(mode.n),
+            complex(mode.k_vector[2]),
+        )
+        entries = component_cache.get(key)
+        if entries is None:
+            entries = (
+                surface_assemblers[(mode.side, 0)].assemble_entries(mode, mpc),
+                surface_assemblers[(mode.side, 1)].assemble_entries(mode, mpc),
+            )
+            component_cache[key] = entries
+        rows, values = _combine_owned_entries(
+            entries,
+            (mode.e_vector[0], mode.e_vector[1]),
+            comm=comm,
+        )
+        traces.append((mode, rows, values))
+
+    target_indices = [
+        index for index, (mode, _rows, _values) in enumerate(traces)
+        if int(mode.n) == 0
+    ]
+    alias_indices = [
+        index for index, (mode, _rows, _values) in enumerate(traces)
+        if int(mode.n) != 0
+    ]
+    maximum = 0.0
+    worst_target = None
+    worst_alias = None
+    comparisons = 0
+    zero_norm_modes: list[dict[str, Any]] = []
+    nonfinite_entries: list[dict[str, Any]] = []
+    for target_index in target_indices:
+        target_mode, target_rows, target_values = traces[target_index]
+        target_norm_sq = float(
+            comm.allreduce(
+                float(np.vdot(target_values, target_values).real),
+                op=MPI.SUM,
+            )
+        )
+        if not np.isfinite(target_norm_sq):
+            nonfinite_entries.append(
+                {
+                    "role": "target_n0_norm",
+                    "side": target_mode.side,
+                    "m": int(target_mode.m),
+                    "n": int(target_mode.n),
+                    "polarization": target_mode.polarization,
+                }
+            )
+            continue
+        if target_norm_sq <= 1.0e-30:
+            zero_norm_modes.append(
+                {
+                    "role": "target_n0",
+                    "side": target_mode.side,
+                    "m": int(target_mode.m),
+                    "n": int(target_mode.n),
+                    "polarization": target_mode.polarization,
+                }
+            )
+            continue
+        for alias_index in alias_indices:
+            alias_mode, alias_rows, alias_values = traces[alias_index]
+            if alias_mode.side != target_mode.side:
+                continue
+            alias_norm_sq = float(
+                comm.allreduce(
+                    float(np.vdot(alias_values, alias_values).real),
+                    op=MPI.SUM,
+                )
+            )
+            if not np.isfinite(alias_norm_sq):
+                nonfinite_entries.append(
+                    {
+                        "role": "non_target_n_norm",
+                        "side": alias_mode.side,
+                        "m": int(alias_mode.m),
+                        "n": int(alias_mode.n),
+                        "polarization": alias_mode.polarization,
+                    }
+                )
+                continue
+            if alias_norm_sq <= 1.0e-30:
+                identity = {
+                    "role": "non_target_n",
+                    "side": alias_mode.side,
+                    "m": int(alias_mode.m),
+                    "n": int(alias_mode.n),
+                    "polarization": alias_mode.polarization,
+                }
+                if identity not in zero_norm_modes:
+                    zero_norm_modes.append(identity)
+                continue
+            shared, target_positions, alias_positions = np.intersect1d(
+                target_rows,
+                alias_rows,
+                assume_unique=True,
+                return_indices=True,
+            )
+            local_cross = (
+                complex(
+                    np.vdot(
+                        target_values[target_positions],
+                        alias_values[alias_positions],
+                    )
+                )
+                if len(shared)
+                else 0.0 + 0.0j
+            )
+            cross = complex(comm.allreduce(local_cross, op=MPI.SUM))
+            if not np.isfinite(cross.real) or not np.isfinite(cross.imag):
+                nonfinite_entries.append(
+                    {
+                        "role": "cross_overlap",
+                        "target": {
+                            "side": target_mode.side,
+                            "m": int(target_mode.m),
+                            "n": int(target_mode.n),
+                            "polarization": target_mode.polarization,
+                        },
+                        "non_target": {
+                            "side": alias_mode.side,
+                            "m": int(alias_mode.m),
+                            "n": int(alias_mode.n),
+                            "polarization": alias_mode.polarization,
+                        },
+                    }
+                )
+                continue
+            overlap = float(
+                abs(cross)
+                / max(np.sqrt(target_norm_sq * alias_norm_sq), 1.0e-30)
+            )
+            if not np.isfinite(overlap):
+                nonfinite_entries.append(
+                    {
+                        "role": "normalized_overlap",
+                        "target": {
+                            "side": target_mode.side,
+                            "m": int(target_mode.m),
+                            "n": int(target_mode.n),
+                            "polarization": target_mode.polarization,
+                        },
+                        "non_target": {
+                            "side": alias_mode.side,
+                            "m": int(alias_mode.m),
+                            "n": int(alias_mode.n),
+                            "polarization": alias_mode.polarization,
+                        },
+                    }
+                )
+                continue
+            comparisons += 1
+            if overlap > maximum:
+                maximum = overlap
+                worst_target = {
+                    "side": target_mode.side,
+                    "m": int(target_mode.m),
+                    "n": int(target_mode.n),
+                    "polarization": target_mode.polarization,
+                }
+                worst_alias = {
+                    "side": alias_mode.side,
+                    "m": int(alias_mode.m),
+                    "n": int(alias_mode.n),
+                    "polarization": alias_mode.polarization,
+                }
+    exercised = bool(target_indices and alias_indices and comparisons)
+    if not target_indices:
+        status = "not_exercised_missing_n0_target"
+        passed = False
+    elif not alias_indices:
+        status = "not_exercised_missing_nonzero_n_control"
+        passed = False
+    elif nonfinite_entries:
+        status = "invalid_nonfinite_trace_functional"
+        passed = False
+    elif zero_norm_modes:
+        status = "invalid_zero_norm_trace_functional"
+        passed = False
+    elif not exercised:
+        status = "not_exercised_no_same_side_comparisons"
+        passed = False
+    elif maximum > overlap_tolerance:
+        status = "dtn_y_trace_alias_detected"
+        passed = False
+    else:
+        status = "pass"
+        passed = True
+    audit = {
+        "status": status,
+        "enabled": True,
+        "pass": passed,
+        "method": (
+            "normalized_actual_mpc_reduced_tangential_surface_functional_overlap"
+        ),
+        "target_n": 0,
+        "target_mode_count": len(target_indices),
+        "non_target_mode_count": len(alias_indices),
+        "comparison_count": comparisons,
+        "overlap_tolerance": float(overlap_tolerance),
+        "maximum_normalized_overlap": maximum,
+        "worst_target_mode": worst_target,
+        "worst_non_target_mode": worst_alias,
+        "zero_norm_modes": zero_norm_modes,
+        "nonfinite_entries": nonfinite_entries,
+    }
+    if not passed:
+        raise DtnTraceAliasError(audit)
+    return audit
 
 
 def _copy_base_matrix_to_augmented(
@@ -1141,7 +1469,12 @@ def _mode_projection_from_solution(
     *,
     quadrature_degree: int | None,
 ) -> complex:
-    """Project a solved total field onto one port mode on its boundary face."""
+    """Project the solved tangential E trace onto one tangential port mode.
+
+    The auxiliary DtN row and its denominator are tangential-trace contracts.
+    Outgoing P modes can have a nonzero normal component, but neither
+    ``E_total[2]`` nor ``mode.e_vector[2]`` belongs in this numerator.
+    """
 
     tag = cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min
     x = ufl.SpatialCoordinate(mesh_data.mesh)
@@ -1150,15 +1483,193 @@ def _mode_projection_from_solution(
         + PETSc.ScalarType(1j * mode.gamma) * x[1]
         + PETSc.ScalarType(1j * mode.k_vector[2]) * x[2]
     )
-    reference = _as_ufl_vector(mode.e_vector, phase)
+    tangential_field = ufl.as_vector(
+        (E_total[0], E_total[1], PETSc.ScalarType(0.0))
+    )
+    tangential_mode = np.asarray(
+        (mode.e_vector[0], mode.e_vector[1], 0.0),
+        dtype=np.complex128,
+    )
+    reference = _as_ufl_vector(tangential_mode, phase)
     ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
     form_options: dict[str, int] = {}
     if quadrature_degree is not None:
         form_options["quadrature_degree"] = int(quadrature_degree)
-    local = fem.assemble_scalar(fem.form(ufl.inner(E_total, reference) * ds(tag), form_compiler_options=form_options))
+    local = fem.assemble_scalar(
+        fem.form(
+            ufl.inner(tangential_field, reference) * ds(tag),
+            form_compiler_options=form_options,
+        )
+    )
     total = mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
     denominator = _mode_projection_denominator(mode, cfg)
     return complex(total / denominator)
+
+
+def _sampled_tangential_projection(
+    electric_samples: np.ndarray,
+    mode_samples: np.ndarray,
+    weights: np.ndarray | None = None,
+) -> complex:
+    """Return the sampled form of the tangential DtN projection contract."""
+
+    electric = np.asarray(electric_samples, dtype=np.complex128)
+    mode = np.asarray(mode_samples, dtype=np.complex128)
+    if (
+        electric.shape != mode.shape
+        or electric.ndim != 2
+        or electric.shape[1] != 3
+    ):
+        raise ValueError(
+            "sampled tangential projection requires matching (N, 3) arrays"
+        )
+    measure = (
+        np.ones(electric.shape[0], dtype=np.float64)
+        if weights is None
+        else np.asarray(weights, dtype=np.float64)
+    )
+    if measure.shape != (electric.shape[0],) or np.any(measure < 0.0):
+        raise ValueError("sampled tangential projection weights are invalid")
+    numerator = np.sum(
+        measure
+        * np.sum(electric[:, :2] * np.conj(mode[:, :2]), axis=1)
+    )
+    denominator = float(
+        np.sum(measure * np.sum(np.abs(mode[:, :2]) ** 2, axis=1))
+    )
+    if denominator <= 0.0:
+        raise ValueError("sampled tangential mode has zero tangential norm")
+    return complex(numerator / denominator)
+
+
+def _outgoing_projection(
+    total_projection: complex,
+    incident_projection: complex,
+    side: str,
+) -> complex:
+    """Convert a total port coefficient to the outgoing convention."""
+
+    if side == "top":
+        return complex(total_projection - incident_projection)
+    if side == "bottom":
+        return complex(total_projection)
+    raise ValueError("side must be top or bottom")
+
+
+def _auxiliary_direct_tangential_projection_audit(
+    E_total,
+    modes: list[PortMode3D],
+    auxiliary_values: np.ndarray,
+    incident_projections: list[complex],
+    mesh_data,
+    cfg: SimulationConfig3D,
+    *,
+    quadrature_degree: int | None,
+) -> dict[str, Any]:
+    """Compare official auxiliary amplitudes with an independent FE projection."""
+
+    mode_count = len(modes)
+    if mode_count == 0:
+        raise ValueError(
+            "DTN auxiliary/direct projection audit requires at least one mode."
+        )
+    if len(auxiliary_values) != mode_count or len(incident_projections) != mode_count:
+        raise ValueError(
+            "DTN auxiliary/direct projection audit input lengths must match: "
+            f"modes={mode_count}, auxiliary={len(auxiliary_values)}, "
+            f"incident={len(incident_projections)}."
+        )
+    direct_values = [
+        _mode_projection_from_solution(
+            E_total,
+            mode,
+            mesh_data,
+            cfg,
+            quadrature_degree=quadrature_degree,
+        )
+        for mode in modes
+    ]
+    rows: list[dict[str, Any]] = []
+    for mode, auxiliary, direct, incident in zip(
+        modes,
+        auxiliary_values,
+        direct_values,
+        incident_projections,
+    ):
+        complex_values = tuple(
+            complex(value) for value in (auxiliary, direct, incident)
+        )
+        if not all(
+            np.isfinite(value.real) and np.isfinite(value.imag)
+            for value in complex_values
+        ):
+            raise ValueError(
+                "DTN auxiliary/direct projection audit encountered a non-finite "
+                f"projection for {mode.side} ({mode.m}, {mode.n}) "
+                f"{mode.polarization}."
+            )
+        auxiliary_outgoing = _outgoing_projection(
+            complex(auxiliary),
+            complex(incident),
+            mode.side,
+        )
+        direct_outgoing = _outgoing_projection(
+            complex(direct),
+            complex(incident),
+            mode.side,
+        )
+        rows.append(
+            {
+                "side": mode.side,
+                "m": int(mode.m),
+                "n": int(mode.n),
+                "polarization": mode.polarization,
+                "auxiliary_total_projection": complex(auxiliary),
+                "direct_tangential_total_projection": complex(direct),
+                "incident_projection": complex(incident),
+                "auxiliary_outgoing_projection": auxiliary_outgoing,
+                "direct_tangential_outgoing_projection": direct_outgoing,
+                "absolute_total_projection_difference": float(
+                    abs(complex(auxiliary) - complex(direct))
+                ),
+                "absolute_outgoing_projection_difference": float(
+                    abs(auxiliary_outgoing - direct_outgoing)
+                ),
+            }
+        )
+        if not all(
+            np.isfinite(float(rows[-1][key]))
+            for key in (
+                "absolute_total_projection_difference",
+                "absolute_outgoing_projection_difference",
+            )
+        ):
+            raise ValueError(
+                "DTN auxiliary/direct projection audit produced a non-finite "
+                f"difference for {mode.side} ({mode.m}, {mode.n}) "
+                f"{mode.polarization}."
+            )
+    max_difference = max(
+        (
+            float(row["absolute_outgoing_projection_difference"])
+            for row in rows
+        ),
+        default=0.0,
+    )
+    tolerance = float(cfg.dtn_auxiliary_direct_projection_tolerance)
+    return {
+        "requested": True,
+        "method": (
+            "independent recovered-FE tangential trace projection; official "
+            "auxiliary amplitudes are unchanged"
+        ),
+        "quadrature_degree": quadrature_degree,
+        "absolute_error_only_for_near_zero_channels": True,
+        "tolerance": tolerance,
+        "max_absolute_outgoing_projection_difference": max_difference,
+        "pass": bool(max_difference <= tolerance),
+        "orders": rows,
+    }
 
 
 def _surface_scalar(
@@ -1809,7 +2320,11 @@ def _write_port_outputs(
 ) -> None:
     rows: list[dict[str, Any]] = []
     for idx, (mode, aux_value, inc_proj) in enumerate(zip(modes, aux_values, incident_projections)):
-        outgoing_amplitude = complex(aux_value - inc_proj) if mode.side == "top" else complex(aux_value)
+        outgoing_amplitude = _outgoing_projection(
+            complex(aux_value),
+            complex(inc_proj),
+            mode.side,
+        )
         power_carrying = _mode_carries_outward_power(mode)
         modal_power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude)
         power = modal_power / metrics["incident_power_code_units"]
@@ -1922,12 +2437,18 @@ def _write_port_outputs(
             "propagating": mode.propagating,
             "auxiliary_amplitude_total_projection": complex(aux_values[idx]),
             "incident_projection": complex(incident_projections[idx]),
-            "outgoing_amplitude": complex(aux_values[idx] - incident_projections[idx])
-            if mode.side == "top"
-            else complex(aux_values[idx]),
+            "outgoing_amplitude": _outgoing_projection(
+                complex(aux_values[idx]),
+                complex(incident_projections[idx]),
+                mode.side,
+            ),
             "boundary_phase": _mode_boundary_phase(mode, cfg),
             "outgoing_amplitude_at_boundary": (
-                complex(aux_values[idx] - incident_projections[idx]) if mode.side == "top" else complex(aux_values[idx])
+                _outgoing_projection(
+                    complex(aux_values[idx]),
+                    complex(incident_projections[idx]),
+                    mode.side,
+                )
             )
             * _mode_boundary_phase(mode, cfg),
         }
@@ -1952,7 +2473,11 @@ def _port_power_metrics(
     R00_by_polarization: dict[str, float] = {}
     for mode, aux_value, inc_proj in zip(modes, aux_values, incident_projections):
         rows_by_side[mode.side] += 1
-        outgoing_amplitude = complex(aux_value - inc_proj) if mode.side == "top" else complex(aux_value)
+        outgoing_amplitude = _outgoing_projection(
+            complex(aux_value),
+            complex(inc_proj),
+            mode.side,
+        )
         if not _mode_carries_outward_power(mode):
             continue
         power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude) / incident_power
@@ -2657,6 +3182,26 @@ def _solve_stage4_dtn_port_total_field_impl(
             V, mesh_data, cfg.tags.z_min, 1, quadrature_degree=dtn_quadrature_degree
         ),
     }
+    try:
+        trace_alias_preflight = _dtn_n0_trace_alias_preflight(
+            modes,
+            surface_assemblers,
+            floquet_data.mpc,
+            enabled=bool(cfg.dtn_y_invariant_n0_alias_preflight),
+            overlap_tolerance=float(cfg.dtn_trace_alias_overlap_tolerance),
+        )
+    except DtnTraceAliasError as exc:
+        if comm.rank == 0:
+            (out_dir / "dtn_trace_alias_preflight.json").write_text(
+                json.dumps(
+                    exc.audit,
+                    ensure_ascii=False,
+                    indent=2,
+                    default=_json_default,
+                ),
+                encoding="utf-8",
+            )
+        raise
     component_key: tuple[str, int, int, complex] | None = None
     component_right_entries: (
         tuple[
@@ -3083,6 +3628,7 @@ def _solve_stage4_dtn_port_total_field_impl(
         extra={
             "stage4_dtn_num_auxiliary_dofs": int(n_aux),
             "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+            "dtn_trace_alias_preflight": trace_alias_preflight,
         },
     )
 
@@ -3090,6 +3636,27 @@ def _solve_stage4_dtn_port_total_field_impl(
     A_aug.assemble()
     b_aug.assemble()
     augmented_matrix_stats_after_finalize = _petsc_matrix_stats(A_aug)
+    storage_carrier_fe_dofs = int(
+        V.dofmap.index_map.size_global * V.dofmap.index_map_bs
+    )
+    active_exact_sequence_fe_dofs = (
+        int(
+            variable_p_reduction.build_audit[
+                "actual_conforming_active_fe_dofs"
+            ]
+        )
+        if variable_p_reduction is not None
+        else storage_carrier_fe_dofs
+    )
+    assembled_dof_row_fields = _dof_row_semantics(
+        active_exact_sequence_fe_dofs=active_exact_sequence_fe_dofs,
+        storage_carrier_fe_dofs=storage_carrier_fe_dofs,
+        independent_trace_rows=(
+            int(n_fe) if assembly_time_active else None
+        ),
+        augmented_rows=int(A_aug.getSize()[0]),
+        auxiliary_rows=int(n_aux),
+    )
     timing_details["stage4_dtn_augmented_matrix_finalize_seconds"] = float(
         comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
     )
@@ -3127,6 +3694,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             "num_auxiliary_dofs": int(n_aux),
             "num_fem_dofs_after_mpc": int(n_fe),
             "num_total_augmented_dofs": int(n_fe + n_aux),
+            **assembled_dof_row_fields,
             "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
             "ksp_converged_reason": 0,
             "ksp_iterations": 0,
@@ -3136,6 +3704,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             "dtn_base_matrix_stats": base_matrix_stats,
             "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
             "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+            "dtn_trace_alias_preflight": trace_alias_preflight,
             "explicit_chac_constructed": False,
             "dtn_auxiliary_dense_block_constructed": False,
             **timing_details,
@@ -3287,6 +3856,23 @@ def _solve_stage4_dtn_port_total_field_impl(
                 },
             )
 
+    independent_trace_rows = (
+        int(n_fe)
+        if assembly_time_active
+        else (
+            int(independent_trace_system.active_rows) - int(n_aux)
+            if independent_trace_system is not None
+            else None
+        )
+    )
+    solved_dof_row_fields = _dof_row_semantics(
+        active_exact_sequence_fe_dofs=active_exact_sequence_fe_dofs,
+        storage_carrier_fe_dofs=storage_carrier_fe_dofs,
+        independent_trace_rows=independent_trace_rows,
+        augmented_rows=int(solve_A.getSize()[0]),
+        auxiliary_rows=int(n_aux),
+    )
+
     t0 = time.perf_counter()
     try:
         solve_x, ksp, ksp_telemetry = _solve_augmented_system(
@@ -3315,9 +3901,11 @@ def _solve_stage4_dtn_port_total_field_impl(
             {
                 **assembly_backend_fields,
                 "num_auxiliary_dofs": int(n_aux),
+                **solved_dof_row_fields,
                 "dtn_base_matrix_stats": base_matrix_stats,
                 "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
                 "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+                "dtn_trace_alias_preflight": trace_alias_preflight,
                 "cell_static_condensation": (
                     None
                     if condensed_system is None
@@ -3358,6 +3946,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             "num_auxiliary_dofs": int(n_aux),
             "num_fem_dofs_after_mpc": int(n_fe),
             "num_total_augmented_dofs": int(n_fe + n_aux),
+            **solved_dof_row_fields,
             "stage4_dtn_assembly_seconds": float(
                 comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)
             ),
@@ -3369,6 +3958,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             "dtn_base_matrix_stats": base_matrix_stats,
             "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
             "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+            "dtn_trace_alias_preflight": trace_alias_preflight,
             "explicit_chac_constructed": False,
             "dtn_auxiliary_dense_block_constructed": False,
             **ksp_telemetry,
@@ -3598,6 +4188,59 @@ def _solve_stage4_dtn_port_total_field_impl(
     )
     aux_values = _gather_auxiliary_values(x_aug, n_fe, n_aux, comm)
     port_metrics = _port_power_metrics(cfg, modes, aux_values, incident_projections)
+    if cfg.dtn_auxiliary_direct_projection_audit:
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="before_dtn_auxiliary_direct_projection_audit",
+            status="start",
+            started=started,
+            dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+            constraints=floquet_data.num_constraints,
+            petsc_options=petsc_options,
+        )
+        projection_started = time.perf_counter()
+        port_metrics["auxiliary_direct_tangential_projection_audit"] = (
+            _auxiliary_direct_tangential_projection_audit(
+                E_total,
+                modes,
+                aux_values,
+                incident_projections,
+                mesh_data,
+                cfg,
+                quadrature_degree=dtn_quadrature_degree,
+            )
+        )
+        timing_details[
+            "stage4_dtn_auxiliary_direct_projection_audit_seconds"
+        ] = float(
+            comm.allreduce(
+                time.perf_counter() - projection_started,
+                op=MPI.MAX,
+            )
+        )
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="after_dtn_auxiliary_direct_projection_audit",
+            status="end",
+            started=started,
+            dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+            constraints=floquet_data.num_constraints,
+            petsc_options=petsc_options,
+            extra={
+                "maximum_absolute_outgoing_projection_difference": port_metrics[
+                    "auxiliary_direct_tangential_projection_audit"
+                ]["max_absolute_outgoing_projection_difference"],
+            },
+        )
+    else:
+        port_metrics["auxiliary_direct_tangential_projection_audit"] = {
+            "requested": False,
+            "status": "not_requested",
+            "pass": None,
+            "ordinary_default_changed": False,
+        }
     port_metrics.update(timing_details)
     _write_port_outputs(out_dir, cfg, modes, aux_values, incident_projections, port_metrics, comm)
     _write_progress_event(
@@ -3724,6 +4367,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             if condensed_system is None
             else int(condensed_system.trace_rows)
         ),
+        **solved_dof_row_fields,
         "stage4_cell_static_condensation": bool(
             condensed_system is not None
             or assembly_time_active
@@ -3748,7 +4392,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             if variable_p_reduction is None
             else int(
                 variable_p_reduction.build_audit[
-                    "actual_full3d_equivalent_active_fe_dofs"
+                    "actual_conforming_active_fe_dofs"
                 ]
             )
         ),
@@ -3790,6 +4434,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             else independent_trace_matrix_stats
         ),
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+        "dtn_trace_alias_preflight": trace_alias_preflight,
         "explicit_chac_constructed": False,
         "dtn_auxiliary_dense_block_constructed": False,
         **ksp_telemetry,

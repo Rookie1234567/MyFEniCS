@@ -242,6 +242,27 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
             )
             self.assertFalse(block.full_surface_mode_vectors_retained)
             self.assertLess(block.positive_projection_identity_error, 1.0e-9)
+            self.assertLessEqual(
+                block.canonical_trace_raw_consistency_error,
+                1.0e-12,
+            )
+            self.assertLessEqual(
+                block.canonical_trace_representation_error,
+                1.0e-12,
+            )
+            self.assertEqual(len(block.surface_reduction_audits), 6)
+            for audit in block.surface_reduction_audits:
+                self.assertTrue(audit["pass"])
+                self.assertEqual(
+                    audit["coefficient_degree"],
+                    self.static_cfg.nedelec_degree,
+                )
+                self.assertEqual(audit["slave_absolute_cutoff"], 0.0)
+                self.assertEqual(audit["max_slave"], 0.0)
+                self.assertLessEqual(
+                    audit["max_cell_interior"],
+                    audit["cell_interior_cutoff"],
+                )
 
     def test_static_augmented_matches_standard_observables(self) -> None:
         standard = evaluate_hybrid_augmented_solution(

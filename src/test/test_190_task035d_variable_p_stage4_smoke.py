@@ -162,6 +162,23 @@ class Task035dVariablePStage4SmokeTests(unittest.TestCase):
             summary["num_active_condensed_dofs"],
         )
         self.assertEqual(
+            summary["num_active_exact_sequence_fe_dofs"],
+            summary["num_nedelec_dofs"],
+        )
+        self.assertEqual(
+            summary["num_storage_carrier_fe_dofs"],
+            summary["num_nedelec_dofs"],
+        )
+        self.assertEqual(
+            summary["num_augmented_rows"],
+            summary["matrix_stats"]["matrix_rows"],
+        )
+        self.assertEqual(
+            summary["num_independent_trace_rows"]
+            + summary["stage4_dtn_num_auxiliary_dofs"],
+            summary["num_augmented_rows"],
+        )
+        self.assertEqual(
             summary["matrix_stats"]["matrix_mallocs"],
             0.0,
         )

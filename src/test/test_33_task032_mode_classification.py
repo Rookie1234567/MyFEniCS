@@ -15,6 +15,7 @@ from src.modes.mode_classification import (
     NoAdmissibleLeftPairError,
     _batched_left_dots,
     _identity_error_metrics,
+    _near_degenerate_partition_audit,
     _qep_overlap,
     _qep_overlap_matrix,
     _require_admissible_left_pairs,
@@ -113,6 +114,50 @@ class Task032ModeClassificationTests(unittest.TestCase):
         self.assertAlmostEqual(max_entry, 4.0e-7)
         with self.assertRaisesRegex(ValueError, "must be square"):
             _identity_error_metrics(np.ones((2, 3), dtype=np.complex128))
+
+    def test_partition_audit_distinguishes_near_and_generic_cross_block(self):
+        overlap = np.eye(2, dtype=np.complex128)
+        overlap[0, 1] = 1.0381411855660379e-6
+        near = _near_degenerate_partition_audit(
+            (
+                0.00022773153728096115 + 0.5908874967756957j,
+                0.00022742745503172594 + 0.5908881315892522j,
+            ),
+            ((0,), (1,)),
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            directions=("forward", "forward"),
+        )
+        self.assertFalse(near["pass"])
+        self.assertEqual(
+            near["status"],
+            "near_degenerate_block_partition_split",
+        )
+        self.assertTrue(
+            near["worst_cross_block_is_near_degenerate_candidate"]
+        )
+        self.assertEqual(
+            near["worst_cross_block_directions"],
+            ["forward", "forward"],
+        )
+
+        separated = _near_degenerate_partition_audit(
+            (0.0 + 0.1j, 0.0 + 0.9j),
+            ((0,), (1,)),
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            directions=("forward", "forward"),
+        )
+        self.assertFalse(separated["pass"])
+        self.assertEqual(
+            separated["status"],
+            "cross_block_biorthogonality_failure",
+        )
+        self.assertFalse(
+            separated["worst_cross_block_is_near_degenerate_candidate"]
+        )
 
     def test_batched_left_dots_preserve_cancelling_remainder(self):
         comm = MPI.COMM_WORLD
