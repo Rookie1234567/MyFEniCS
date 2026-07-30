@@ -418,8 +418,13 @@ def test_selective_trace_only_plan_preserves_the_root_mesh() -> None:
     assert len(context.forest.leaves) == len(context.forest.root_boxes)
     assert context.audit["maximum_level"] == 0
     assert context.audit["hanging_patch_count"] == 0
+    assert context.audit["zero_h_selective_trace_only"] is True
+    assert context.audit["full3d_equivalent_dof_gate_limit"] is None
     assert authority.degree_plan.audit["selected_p6_face_count"] == 1
     assert authority.degree_plan.audit["trace_degree_values"] == [5, 6]
+    assert authority.audit["active_fe_dof_hard_gate_active"] is False
+    assert authority.audit["active_fe_dof_gate_limit"] is None
+    assert authority.audit["active_fe_dof_gate_pass"] is True
 
 
 def test_empty_local_h_plan_without_selective_trace_remains_rejected() -> None:

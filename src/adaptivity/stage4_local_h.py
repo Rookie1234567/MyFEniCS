@@ -1246,6 +1246,9 @@ def build_stage4_local_h_mesh_data(
                 list(key)
                 for key in selected_p6_face_geometry_keys
             ],
+            "zero_h_selective_trace_only": bool(
+                payload.get("zero_h_selective_trace_only", False)
+            ),
             "root_cell_count": len(forest.root_boxes),
             "leaf_cell_count": len(forest.leaves),
             "hanging_patch_count": len(forest.hanging_faces),
@@ -1276,7 +1279,11 @@ def build_stage4_local_h_mesh_data(
                 "seconds_by_rank"
             ],
             "phase_timings_seconds_max": timing["seconds_max"],
-            "full3d_equivalent_dof_gate_limit": 90_000,
+            "full3d_equivalent_dof_gate_limit": (
+                None
+                if payload.get("zero_h_selective_trace_only", False)
+                else 90_000
+            ),
             "ordinary_default_changed": False,
             "pde_accuracy_credit": False,
         }
@@ -1555,6 +1562,7 @@ def build_stage4_local_h_reduction_authority(
     task035e_scope = (
         context.audit["schema_version"]
         == "task035e.stage4-multilevel-local-h-mesh.v1"
+        or context.audit["zero_h_selective_trace_only"] is True
     )
     advisory_dof_target = 90_000
     reduction_audit_seconds = perf_counter() - reduction_audit_started
