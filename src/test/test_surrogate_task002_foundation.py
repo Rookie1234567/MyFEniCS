@@ -13,7 +13,7 @@ from benchmarks.check_case114_task002_m2b import _order_delta as m2b_order_delta
 from benchmarks.run_task032_phase6_augmented import _parse_args
 from src.forward_data.task002_campaign import (
     _atomic_write, _parser, campaign_status, load_manifest,
-    recover_or_retry_row, register_design, task002_hybrid_command,
+    recover_or_retry_row, register_design, run_design, task002_hybrid_command,
 )
 from src.forward_data.task002_dataset import verify_compact_dataset, write_compact_dataset
 from src.forward_data.task002_dataset_checker import verify_exact_design_dataset
@@ -292,6 +292,38 @@ def test_campaign_registration_stale_retry_recovery_and_immutability(tmp_path: P
     assert campaign_status(manifest)["status_counts"]["measured_pass"] == 1
     with pytest.raises(ValueError, match="baseline"):
         load_manifest(manifest_path, baseline_sha="b" * 40)
+
+
+def test_campaign_preflight_exception_is_persisted_as_retryable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_sha = "a" * 40
+    design = freeze_all_designs(source_sha)["training_design.json"]
+    design_path = tmp_path / "training_design.json"
+    design_path.write_text(json.dumps(design))
+    manifest_path = tmp_path / "campaign.json"
+
+    def refuse_preflight(*args, **kwargs):
+        raise RuntimeError("Task002 resource preflight failed: swap_unused")
+
+    monkeypatch.setattr(
+        "src.forward_data.task002_full3d.run_formal_task002_full3d",
+        refuse_preflight,
+    )
+    args = _parser().parse_args([
+        "run-design", "--root", str(tmp_path), "--baseline-sha", source_sha,
+        "--design", str(design_path), "--split", "train",
+        "--artifact-root", str(tmp_path / "artifacts"),
+        "--campaign-manifest", str(manifest_path),
+        "--start-index", "0", "--stop-index", "1",
+    ])
+    assert run_design(args) == 3
+    manifest = json.loads(manifest_path.read_text())
+    row = manifest["samples"][f"{design['design_id']}:0000"]
+    assert row["status"] == "interrupted_retryable"
+    assert row["attempts"][-1]["status"] == "interrupted_retryable"
+    assert "swap_unused" in row["attempts"][-1]["preflight_error"]
+    assert manifest["stop_reason"].startswith("preflight_interruption:")
 
 
 def _mother_response() -> dict:

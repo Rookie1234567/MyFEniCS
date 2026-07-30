@@ -215,6 +215,20 @@ def run_design(args: argparse.Namespace) -> int:
             row["attempts"][-1]["status"] = "interrupted_retryable"
             _atomic_write(args.campaign_manifest, manifest)
             raise
+        except RuntimeError as exc:
+            # A formal preflight refusal happens before the watchdog can return a
+            # result.  Preserve it as an explained, retryable interruption rather
+            # than stranding the row in ``running`` or fabricating a numerical
+            # failure.  A later resume must repeat the full formal preflight.
+            row["status"] = "interrupted_retryable"
+            row["attempts"][-1].update({
+                "status": "interrupted_retryable",
+                "preflight_error": str(exc),
+            })
+            manifest["stop_reason"] = f"preflight_interruption:{key}"
+            _atomic_write(args.campaign_manifest, manifest)
+            print(json.dumps(campaign_status(manifest), indent=2))
+            return 3
         status = formal_record_status(run_directory, result)
         row["status"] = status
         row["attempts"][-1].update({"status": status, "watchdog": asdict(result)})
