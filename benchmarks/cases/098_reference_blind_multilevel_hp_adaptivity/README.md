@@ -319,3 +319,54 @@ actual plan 与软件 Gate 失败 attempt 的历史 plan 也分别保留在
 [actual plan](records/h10_projection_selective_face_budget80_plan_v1.json)
 和
 [failed-attempt plan](records/h10_projection_selective_face_budget80_preflight_failed_97c9c48_plan_v1.json)。
+
+## 2026-07-30：goal-oriented selective-trace 单次验证
+
+本批次使用 numerical source
+`69cd41c74ba0dfc310d8631cf7bbd8103ec8fc73`，在同一 H10
+`(6,3,14)` 网格上把 M1 的 7 个失败行去重为 6 个物理目标。global-p6
+support 只做一次 factorization，并复用该 factor 求解 6 个 adjoint；没有
+重算 p6/h10 primal 或 reference。
+
+exact B/S/F hierarchy 把 15,480 个 p6 face-complement rows 分成 774 个
+periodic physical face orbits，每个 orbit 20 rows。全部 774 个 orbit 都保存
+了 tolerance-normalized signed multi-goal DWR。冻结资源模型在预计
+`<10.5 GiB` 的约束下选出 16 个 orbit；只运行了这一个 actual MPI8
+candidate。
+
+结果如下：
+
+```text
+optimized six physical goals = 6/6 pass
+deduplicated R00_total        = pass
+complete formal vector        = 49/59 fail
+whole-job peak                = 10.929794 GiB pass
+zero swap                     = pass
+residual/energy/Floquet       = pass
+solver release before fields  = pass
+```
+
+10 个新失败均来自 M1 中原本通过、但没有进入 6-adjoint 目标集的旁路
+衍射级。all-goal normalized L2 从 M1 的 `5.397523` 增至 `10.327757`，
+恶化 `91.342535%`。所以 signed DWR 成功修复了它被要求修复的目标，却没有
+保持完整 59-goal 向量。
+
+按用户冻结规则：
+
+```text
+direct selective-trace lane = closed
+second batch = not_run
+threshold/formula change = not_run
+next route = iterative or Hybrid after review
+```
+
+完整解释见
+[goal-oriented selective-trace outcome](../../../docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/goal_oriented_selective_trace_v1.md)，
+774-orbit/59-goal/raw-SHA 证据见
+[compact](records/h10_goal_oriented_selective_trace_v1.json)，唯一 actual plan
+见 [plan](records/h10_goal_oriented_selective_trace_plan_v1.json)。
+
+p6/h5 的 `factor_nnz` 也仅用既有 raw telemetry 离线修正：
+PETSc int32 overflow 原值 `-2017967296` 与 MUMPS `INFOG(9)=-2277` 均保留，
+正式解释为 `2,277,000,000` factor entries、fill `8.1603473491`；没有重跑
+p6/h5。
