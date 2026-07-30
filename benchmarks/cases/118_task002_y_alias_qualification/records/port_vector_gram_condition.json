@@ -1,0 +1,1613 @@
+{
+  "schema_version": "task002.case118-port-vector-gram-condition.v1",
+  "baseline_sha": "0a53c42397a2e67f64e8f6dae2c680bfe3fe4b95",
+  "y_cell_sets": [
+    {
+      "y_cells": 3,
+      "rows": [
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        }
+      ]
+    },
+    {
+      "y_cells": 4,
+      "rows": [
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            1.5044096981773024e-16,
+            1.415735142796933e-16
+          ],
+          "normalized_overlap_abs": 2.0658060253857753e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 5808.626041706978,
+          "right_norm_sq": 5810.118150791773
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            -1.3592288017542314e-16,
+            3.0332122196494726e-17
+          ],
+          "normalized_overlap_abs": 1.3926617317972633e-16,
+          "gram_singular_values": [
+            1.0,
+            0.9999999999999997
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 43.70479768519483,
+          "right_norm_sq": 60.889005209703775
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            2.6821122183264364e-16,
+            -6.483598679210725e-18
+          ],
+          "normalized_overlap_abs": 2.682895759599926e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 4561.435077818075,
+          "right_norm_sq": 4755.810259741888
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            -2.119477519042503e-16,
+            -1.0960125692183219e-16
+          ],
+          "normalized_overlap_abs": 2.386090632312845e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999996
+          ],
+          "gram_condition_number": 1.0000000000000007,
+          "left_norm_sq": 30.782192417641568,
+          "right_norm_sq": 43.76544925419924
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            1.5044096981773024e-16,
+            1.415735142796933e-16
+          ],
+          "normalized_overlap_abs": 2.0658060253857753e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 5808.626041706978,
+          "right_norm_sq": 5810.118150791773
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -1.3592288017542314e-16,
+            3.0332122196494726e-17
+          ],
+          "normalized_overlap_abs": 1.3926617317972633e-16,
+          "gram_singular_values": [
+            1.0,
+            0.9999999999999997
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 43.70479768519483,
+          "right_norm_sq": 60.889005209703775
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            2.6821122183264364e-16,
+            -6.483598679210725e-18
+          ],
+          "normalized_overlap_abs": 2.682895759599926e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 4561.435077818075,
+          "right_norm_sq": 4755.810259741888
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -2.119477519042503e-16,
+            -1.0960125692183219e-16
+          ],
+          "normalized_overlap_abs": 2.386090632312845e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999996
+          ],
+          "gram_condition_number": 1.0000000000000007,
+          "left_norm_sq": 30.782192417641568,
+          "right_norm_sq": 43.76544925419924
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            1.5044096981773024e-16,
+            1.415735142796933e-16
+          ],
+          "normalized_overlap_abs": 2.0658060253857753e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 5808.626041706978,
+          "right_norm_sq": 5810.118150791773
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -1.3592288017542314e-16,
+            3.0332122196494726e-17
+          ],
+          "normalized_overlap_abs": 1.3926617317972633e-16,
+          "gram_singular_values": [
+            1.0,
+            0.9999999999999997
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 43.70479768519483,
+          "right_norm_sq": 60.889005209703775
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            2.6821122183264364e-16,
+            -6.483598679210725e-18
+          ],
+          "normalized_overlap_abs": 2.682895759599926e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 4561.435077818075,
+          "right_norm_sq": 4755.810259741888
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -2.119477519042503e-16,
+            -1.0960125692183219e-16
+          ],
+          "normalized_overlap_abs": 2.386090632312845e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999996
+          ],
+          "gram_condition_number": 1.0000000000000007,
+          "left_norm_sq": 30.782192417641568,
+          "right_norm_sq": 43.76544925419924
+        }
+      ]
+    },
+    {
+      "y_cells": 5,
+      "rows": [
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            3.901902965199381e-17,
+            -3.098342750584063e-17
+          ],
+          "normalized_overlap_abs": 4.982426572457294e-17,
+          "gram_singular_values": [
+            1.0,
+            1.0
+          ],
+          "gram_condition_number": 1.0,
+          "left_norm_sq": 5745.359381062675,
+          "right_norm_sq": 5749.8043757518835
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            -1.1886556861370705e-17,
+            2.9867236783647203e-18
+          ],
+          "normalized_overlap_abs": 1.2256049622513098e-17,
+          "gram_singular_values": [
+            1.0,
+            0.9999999999999999
+          ],
+          "gram_condition_number": 1.0000000000000002,
+          "left_norm_sq": 48.71655343189465,
+          "right_norm_sq": 67.8678756332621
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            1.4308845776697758e-16,
+            -3.132092862385433e-17
+          ],
+          "normalized_overlap_abs": 1.4647630291618062e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 4511.752629155116,
+          "right_norm_sq": 4706.441062301496
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            -1.4882829058945416e-16,
+            -2.3916409489168553e-16
+          ],
+          "normalized_overlap_abs": 2.8169012117065477e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999997
+          ],
+          "gram_condition_number": 1.0000000000000007,
+          "left_norm_sq": 34.31207558644974,
+          "right_norm_sq": 48.78168163181716
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            3.901902965199381e-17,
+            -3.098342750584063e-17
+          ],
+          "normalized_overlap_abs": 4.982426572457294e-17,
+          "gram_singular_values": [
+            1.0,
+            1.0
+          ],
+          "gram_condition_number": 1.0,
+          "left_norm_sq": 5745.359381062675,
+          "right_norm_sq": 5749.8043757518835
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -1.1886556861370705e-17,
+            2.9867236783647203e-18
+          ],
+          "normalized_overlap_abs": 1.2256049622513098e-17,
+          "gram_singular_values": [
+            1.0,
+            0.9999999999999999
+          ],
+          "gram_condition_number": 1.0000000000000002,
+          "left_norm_sq": 48.71655343189465,
+          "right_norm_sq": 67.8678756332621
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            1.4308845776697758e-16,
+            -3.132092862385433e-17
+          ],
+          "normalized_overlap_abs": 1.4647630291618062e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 4511.752629155116,
+          "right_norm_sq": 4706.441062301496
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -1.4882829058945416e-16,
+            -2.3916409489168553e-16
+          ],
+          "normalized_overlap_abs": 2.8169012117065477e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999997
+          ],
+          "gram_condition_number": 1.0000000000000007,
+          "left_norm_sq": 34.31207558644974,
+          "right_norm_sq": 48.78168163181716
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            3.901902965199381e-17,
+            -3.098342750584063e-17
+          ],
+          "normalized_overlap_abs": 4.982426572457294e-17,
+          "gram_singular_values": [
+            1.0,
+            1.0
+          ],
+          "gram_condition_number": 1.0,
+          "left_norm_sq": 5745.359381062675,
+          "right_norm_sq": 5749.8043757518835
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -1.1886556861370705e-17,
+            2.9867236783647203e-18
+          ],
+          "normalized_overlap_abs": 1.2256049622513098e-17,
+          "gram_singular_values": [
+            1.0,
+            0.9999999999999999
+          ],
+          "gram_condition_number": 1.0000000000000002,
+          "left_norm_sq": 48.71655343189465,
+          "right_norm_sq": 67.8678756332621
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            1.4308845776697758e-16,
+            -3.132092862385433e-17
+          ],
+          "normalized_overlap_abs": 1.4647630291618062e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 4511.752629155116,
+          "right_norm_sq": 4706.441062301496
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -1.4882829058945416e-16,
+            -2.3916409489168553e-16
+          ],
+          "normalized_overlap_abs": 2.8169012117065477e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999997
+          ],
+          "gram_condition_number": 1.0000000000000007,
+          "left_norm_sq": 34.31207558644974,
+          "right_norm_sq": 48.78168163181716
+        }
+      ]
+    },
+    {
+      "y_cells": 6,
+      "rows": [
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            5.786802939800569e-17,
+            -2.1625938821419652e-17
+          ],
+          "normalized_overlap_abs": 6.177693790012772e-17,
+          "gram_singular_values": [
+            1.0,
+            1.0
+          ],
+          "gram_condition_number": 1.0,
+          "left_norm_sq": 5951.696671729124,
+          "right_norm_sq": 5958.620256449883
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            -4.149832248053818e-17,
+            7.233824092519948e-17
+          ],
+          "normalized_overlap_abs": 8.339623414070293e-17,
+          "gram_singular_values": [
+            1.0,
+            1.0
+          ],
+          "gram_condition_number": 1.0,
+          "left_norm_sq": 55.021447180870275,
+          "right_norm_sq": 76.6460777333878
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            3.450778343716863e-17,
+            -1.0752290472605643e-16
+          ],
+          "normalized_overlap_abs": 1.129245861558728e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 4673.786498911945,
+          "right_norm_sq": 4877.365074868297
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            4.6835845494222876e-18,
+            4.088515891239175e-17
+          ],
+          "normalized_overlap_abs": 4.11525477160663e-17,
+          "gram_singular_values": [
+            1.0000000000000002,
+            1.0
+          ],
+          "gram_condition_number": 1.0000000000000002,
+          "left_norm_sq": 38.7527425803047,
+          "right_norm_sq": 55.091227291711355
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            5.786802939800569e-17,
+            -2.1625938821419652e-17
+          ],
+          "normalized_overlap_abs": 6.177693790012772e-17,
+          "gram_singular_values": [
+            1.0,
+            1.0
+          ],
+          "gram_condition_number": 1.0,
+          "left_norm_sq": 5951.696671729124,
+          "right_norm_sq": 5958.620256449883
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -4.149832248053818e-17,
+            7.233824092519948e-17
+          ],
+          "normalized_overlap_abs": 8.339623414070293e-17,
+          "gram_singular_values": [
+            1.0,
+            1.0
+          ],
+          "gram_condition_number": 1.0,
+          "left_norm_sq": 55.021447180870275,
+          "right_norm_sq": 76.6460777333878
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            3.450778343716863e-17,
+            -1.0752290472605643e-16
+          ],
+          "normalized_overlap_abs": 1.129245861558728e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 4673.786498911945,
+          "right_norm_sq": 4877.365074868297
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            4.6835845494222876e-18,
+            4.088515891239175e-17
+          ],
+          "normalized_overlap_abs": 4.11525477160663e-17,
+          "gram_singular_values": [
+            1.0000000000000002,
+            1.0
+          ],
+          "gram_condition_number": 1.0000000000000002,
+          "left_norm_sq": 38.7527425803047,
+          "right_norm_sq": 55.091227291711355
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            5.786802939800569e-17,
+            -2.1625938821419652e-17
+          ],
+          "normalized_overlap_abs": 6.177693790012772e-17,
+          "gram_singular_values": [
+            1.0,
+            1.0
+          ],
+          "gram_condition_number": 1.0,
+          "left_norm_sq": 5951.696671729124,
+          "right_norm_sq": 5958.620256449883
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -4.149832248053818e-17,
+            7.233824092519948e-17
+          ],
+          "normalized_overlap_abs": 8.339623414070293e-17,
+          "gram_singular_values": [
+            1.0,
+            1.0
+          ],
+          "gram_condition_number": 1.0,
+          "left_norm_sq": 55.021447180870275,
+          "right_norm_sq": 76.6460777333878
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            3.450778343716863e-17,
+            -1.0752290472605643e-16
+          ],
+          "normalized_overlap_abs": 1.129245861558728e-16,
+          "gram_singular_values": [
+            1.0000000000000002,
+            0.9999999999999998
+          ],
+          "gram_condition_number": 1.0000000000000004,
+          "left_norm_sq": 4673.786498911945,
+          "right_norm_sq": 4877.365074868297
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            4.6835845494222876e-18,
+            4.088515891239175e-17
+          ],
+          "normalized_overlap_abs": 4.11525477160663e-17,
+          "gram_singular_values": [
+            1.0000000000000002,
+            1.0
+          ],
+          "gram_condition_number": 1.0000000000000002,
+          "left_norm_sq": 38.7527425803047,
+          "right_norm_sq": 55.091227291711355
+        }
+      ]
+    }
+  ],
+  "quadrature_sets": [
+    {
+      "requested_q": null,
+      "rows": [
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 21,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        }
+      ]
+    },
+    {
+      "requested_q": 31,
+      "rows": [
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 31,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 31,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 31,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 31,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        }
+      ]
+    },
+    {
+      "requested_q": 39,
+      "rows": [
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 39,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 39,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 39,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 39,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        }
+      ]
+    },
+    {
+      "requested_q": 47,
+      "rows": [
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 47,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        },
+        {
+          "side": "top",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            0.23529400124504848,
+            0.27644434559090686
+          ],
+          "normalized_overlap_abs": 0.3630216842436408,
+          "gram_singular_values": [
+            1.363021684243641,
+            0.6369783157563591
+          ],
+          "gram_condition_number": 2.1398243088152307,
+          "left_norm_sq": 6422.417718455114,
+          "right_norm_sq": 6420.37806145358
+        },
+        {
+          "side": "top",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -0.42080566750258247,
+            -0.49439997092209814
+          ],
+          "normalized_overlap_abs": 0.6492370453463554,
+          "gram_singular_values": [
+            1.6492370453463554,
+            0.35076295465364465
+          ],
+          "gram_condition_number": 4.701856406058811,
+          "left_norm_sq": 41.53682556189472,
+          "right_norm_sq": 57.86875340737272
+        },
+        {
+          "side": "bottom",
+          "polarization": "s",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            0.3621891011247332,
+            0.02457230672011856
+          ],
+          "normalized_overlap_abs": 0.363021684243641,
+          "gram_singular_values": [
+            1.3630216842436411,
+            0.6369783157563589
+          ],
+          "gram_condition_number": 2.139824308815232,
+          "left_norm_sq": 5043.437338712302,
+          "right_norm_sq": 5255.332002486331
+        },
+        {
+          "side": "bottom",
+          "polarization": "p",
+          "quadrature_degree": 63,
+          "normalized_overlap": [
+            -0.6487717533430637,
+            0.024575457558941294
+          ],
+          "normalized_overlap_abs": 0.6492370453463545,
+          "gram_singular_values": [
+            1.6492370453463545,
+            0.35076295465364543
+          ],
+          "gram_condition_number": 4.701856406058798,
+          "left_norm_sq": 29.255244837739767,
+          "right_norm_sq": 41.59457002017987
+        }
+      ]
+    }
+  ],
+  "finding": "actual-trace n0/n-3 overlap is O(1) at Ny3 and roundoff at Ny>=4, independent of q"
+}

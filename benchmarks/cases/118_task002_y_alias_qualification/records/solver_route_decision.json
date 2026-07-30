@@ -1,0 +1,28 @@
+{
+  "schema_version": "task002.case118-solver-route-decision.v1",
+  "baseline_sha": "0a53c42397a2e67f64e8f6dae2c680bfe3fe4b95",
+  "root_cause": "Ny3_mesh_induced_discrete_Bragg_trace_alias_confirmed",
+  "evidence": {
+    "ny3_total_leakage": 1.2312320314223632e-06,
+    "ny4_total_leakage": 3.278343574994243e-25,
+    "ny3_bottom_s_overlap": 0.363021684243641,
+    "ny4_bottom_s_overlap": 2.682895759599926e-16,
+    "max_S_auxiliary_direct_difference": 7.685758951403622e-14,
+    "max_P_auxiliary_direct_difference": 0.0052526684075662414
+  },
+  "route_a_ny4_supported": true,
+  "production_mesh_change_performed": false,
+  "m4_resume_authorized": false,
+  "decision": "Recommend Route A Ny4 as the next production candidate, but keep M4 stopped. A new production SHA/rebind/canary campaign requires Review V7, and the newly exposed P auxiliary/direct projection inconsistency must be dispositioned before qualification.",
+  "static_condensation_exclusion": {
+    "status": "not_run",
+    "reason": "optional M4D-6 was not needed to identify the alias: Ny-only refinement changes overlap from O(1) to roundoff while the backend is fixed; an unqualified standard-full p5 run was not added after the independent P-projection discrepancy was found"
+  },
+  "forbidden_work_unchanged": {
+    "case117_bulk_resumed": false,
+    "training_indices_41_95_run": false,
+    "frozen_validation_read_or_run": false,
+    "frozen_tuple_table_modified": false,
+    "surrogate_trained": false
+  }
+}

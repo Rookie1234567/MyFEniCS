@@ -2343,3 +2343,11 @@ sampled 值原样保留为 diagnostic；Task001/Task035c 历史 Gate 不变。�
 任务因此按 M2/Section 13 受控停止：LF angle pilot 实际 5/49 unique，HF fixed pilot 4/9
 （复用 corners），M3--M10 未运行。没有 bulk dataset、surrogate、DOE、P/Hybrid-P 或反演。
 证据见 Task002 `outcomes/summary.md` 与 Case112 `records/m2_controlled_stop.json`。
+# Task002 M4D：Ny=3 y-alias 定案（2026-07-30）
+
+Task002 Case117 在第一个未解释泄漏失败处正确停止后，Case118 用两套 50–58°
+精细角度扫描、Ny=3/4/5/6、surface q=21/31/39/47、独立 `E_total` 投影和
+actual-trace Gram audit 完成定向根因分析。Ny=3 的 n=0/n=-3 overlap 为 0.363，
+Ny=4 恢复到 roundoff；泄漏同时从 `1.2312e-6` 降到 `3.2783e-25`，确认网格诱导
+离散 Bragg alias。Route A Ny=4 是下一 production 候选，但 M4 未恢复；新发现的
+outgoing-P auxiliary/direct projection 不一致等待 Review V7。

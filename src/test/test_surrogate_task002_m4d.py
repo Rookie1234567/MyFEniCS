@@ -4,6 +4,7 @@ import math
 
 import pytest
 
+from benchmarks.check_case118_task002_m4d import check_records
 from src.forward_data.task002_m4d import (
     AZIMUTH_STENCIL,
     FAILED_POINT,
@@ -50,3 +51,9 @@ def test_diagnostic_overrides_do_not_change_production_parameters() -> None:
 def test_auto_quadrature_remains_unset() -> None:
     cfg = build_task002_m4d_config(FAILED_POINT, y_cells=3)
     assert cfg.stage4_dtn_quadrature_degree is None
+
+
+def test_case118_tracked_evidence_passes_independent_checker() -> None:
+    result = check_records()
+    assert result["pass"] is True
+    assert result["pass_count"] == result["check_count"] == 13

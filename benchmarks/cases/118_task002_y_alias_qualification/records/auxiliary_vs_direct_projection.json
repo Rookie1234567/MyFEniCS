@@ -1,0 +1,989 @@
+{
+  "schema_version": "task002.case118-auxiliary-vs-direct-projection.v1",
+  "baseline_sha": "0a53c42397a2e67f64e8f6dae2c680bfe3fe4b95",
+  "independent_projection_quadrature_degree": 63,
+  "sets": [
+    {
+      "y_cells": 3,
+      "surface_quadrature_degree": 21,
+      "rows": [
+        {
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03682828845454684,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            -1.0655589114551276,
+            0.12598415513435046
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -0.07687422952426726,
+            -0.02402451033292699
+          ],
+          "direct_total_projection_q63": [
+            -1.0655589114551278,
+            0.12598415513436065
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -0.07687422952426748,
+            -0.024024510332916804
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 1.0188716068200412e-14
+        },
+        {
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03682828845454684,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            -3.000359744693805e-05,
+            1.3969409142902043e-05
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -3.000359744693805e-05,
+            1.3969409142902043e-05
+          ],
+          "direct_total_projection_q63": [
+            -0.004791855354884311,
+            0.002231015470918588
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -0.004791855354884311,
+            0.002231015470918588
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 0.0052526684075662414
+        },
+        {
+          "side": "top",
+          "m": 0,
+          "n": -3,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.043487045152357,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            -0.0002527859287570579,
+            0.0002080286225894964
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -0.0002527859287570579,
+            0.0002080286225894964
+          ],
+          "direct_total_projection_q63": [
+            -0.00025278592874938404,
+            0.00020802862259342524
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -0.00025278592874938404,
+            0.00020802862259342524
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 8.621149407112375e-15
+        },
+        {
+          "side": "top",
+          "m": 0,
+          "n": -3,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.043487045152357,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            1.7580226810212607e-05,
+            -1.6352594567451712e-05
+          ],
+          "auxiliary_outgoing_amplitude": [
+            1.7580226810212607e-05,
+            -1.6352594567451712e-05
+          ],
+          "direct_total_projection_q63": [
+            0.002013711899496657,
+            -0.0018730881633352368
+          ],
+          "direct_outgoing_amplitude_q63": [
+            0.002013711899496657,
+            -0.0018730881633352368
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 0.0027261710560838644
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03270529151727283,
+            0.012085338860020835
+          ],
+          "auxiliary_total_projection": [
+            0.6013786838132277,
+            -0.25053490025605324
+          ],
+          "auxiliary_outgoing_amplitude": [
+            0.6013786838132277,
+            -0.25053490025605324
+          ],
+          "direct_total_projection_q63": [
+            0.6013786838132251,
+            -0.2505349002560473
+          ],
+          "direct_outgoing_amplitude_q63": [
+            0.6013786838132251,
+            -0.2505349002560473
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 6.4653216094004606e-15
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03270529151727283,
+            0.012085338860020835
+          ],
+          "auxiliary_total_projection": [
+            8.470242618242966e-07,
+            1.35283008257711e-05
+          ],
+          "auxiliary_outgoing_amplitude": [
+            8.470242618242966e-07,
+            1.35283008257711e-05
+          ],
+          "direct_total_projection_q63": [
+            0.00015080689012588182,
+            0.0024089659468454986
+          ],
+          "direct_outgoing_amplitude_q63": [
+            0.00015080689012588182,
+            0.0024089659468454986
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 0.0024001269710868423
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": -3,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.039479297149977256,
+            0.010011691165637554
+          ],
+          "auxiliary_total_projection": [
+            -3.146455423681023e-05,
+            -0.0011210586253880609
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -3.146455423681023e-05,
+            -0.0011210586253880609
+          ],
+          "direct_total_projection_q63": [
+            -3.1464554243192644e-05,
+            -0.0011210586253860798
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -3.1464554243192644e-05,
+            -0.0011210586253860798
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 6.682797241311934e-15
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": -3,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.039479297149977256,
+            0.010011691165637554
+          ],
+          "auxiliary_total_projection": [
+            -2.1846733968423887e-06,
+            -1.5001686085344931e-05
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -2.1846733968423887e-06,
+            -1.5001686085344931e-05
+          ],
+          "direct_total_projection_q63": [
+            -0.00028497542120781356,
+            -0.001956857566744146
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -0.00028497542120781356,
+            -0.001956857566744146
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 0.0019623391318262643
+        }
+      ],
+      "demodulated_field_audit": {
+        "demodulation": "E_total * exp(-i*ky*y)",
+        "rows": [
+          {
+            "location": "top_port_inner",
+            "z_nm": 129.999986,
+            "relative_y_variation_l2": 0.0016976023650104061,
+            "fourier_energy_fraction_n0": 0.9999971181462102,
+            "fourier_energy_fraction_n_minus_3": 9.802742783999599e-08,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          },
+          {
+            "location": "bottom_port_inner",
+            "z_nm": -9.999986,
+            "relative_y_variation_l2": 0.002428141545376372,
+            "fourier_energy_fraction_n0": 0.9999941041286358,
+            "fourier_energy_fraction_n_minus_3": 3.1035616089066703e-06,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          },
+          {
+            "location": "air_volume",
+            "z_nm": 123.2231849990785,
+            "relative_y_variation_l2": 0.0017014325171953112,
+            "fourier_energy_fraction_n0": 0.9999971051273895,
+            "fourier_energy_fraction_n_minus_3": 1.1168133676235543e-07,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          },
+          {
+            "location": "grating_volume",
+            "z_nm": 58.2231849990785,
+            "relative_y_variation_l2": 0.0018271387782584823,
+            "fourier_energy_fraction_n0": 0.999996661563885,
+            "fourier_energy_fraction_n_minus_3": 5.56818003868693e-07,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          }
+        ]
+      }
+    },
+    {
+      "y_cells": 4,
+      "surface_quadrature_degree": 21,
+      "rows": [
+        {
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03682828845454684,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            -1.0650979581395963,
+            0.12582240248498375
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -0.07641327620873595,
+            -0.024186262982293705
+          ],
+          "direct_total_projection_q63": [
+            -1.0650979581395787,
+            0.12582240248490892
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -0.0764132762087184,
+            -0.024186262982368534
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 7.685758951403622e-14
+        },
+        {
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03682828845454684,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            1.2951204701989973e-06,
+            1.0935905165898284e-05
+          ],
+          "auxiliary_outgoing_amplitude": [
+            1.2951204701989973e-06,
+            1.0935905165898284e-05
+          ],
+          "direct_total_projection_q63": [
+            0.00020682537220020205,
+            0.0017465406644737494
+          ],
+          "direct_outgoing_amplitude_q63": [
+            0.00020682537220020205,
+            0.0017465406644737494
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 0.0017477318343808532
+        },
+        {
+          "side": "top",
+          "m": 0,
+          "n": -3,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.043487045152357,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            4.016082946485808e-14,
+            2.3187253329411733e-13
+          ],
+          "auxiliary_outgoing_amplitude": [
+            4.016082946485808e-14,
+            2.3187253329411733e-13
+          ],
+          "direct_total_projection_q63": [
+            -1.3796713771441202e-14,
+            2.1860863674838523e-13
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -1.3796713771441202e-14,
+            2.1860863674838523e-13
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 5.556390396357144e-14
+        },
+        {
+          "side": "top",
+          "m": 0,
+          "n": -3,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.043487045152357,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            -4.282013037873728e-14,
+            7.096548960861693e-14
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -4.282013037873728e-14,
+            7.096548960861693e-14
+          ],
+          "direct_total_projection_q63": [
+            -5.1259676445525064e-12,
+            1.0862181034522403e-11
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -5.1259676445525064e-12,
+            1.0862181034522403e-11
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 1.1928483624821719e-11
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03270529151727283,
+            0.012085338860020835
+          ],
+          "auxiliary_total_projection": [
+            0.6020180955561445,
+            -0.24938968700566008
+          ],
+          "auxiliary_outgoing_amplitude": [
+            0.6020180955561445,
+            -0.24938968700566008
+          ],
+          "direct_total_projection_q63": [
+            0.6020180955561495,
+            -0.24938968700565448
+          ],
+          "direct_outgoing_amplitude_q63": [
+            0.6020180955561495,
+            -0.24938968700565448
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 7.509614521369874e-15
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03270529151727283,
+            0.012085338860020835
+          ],
+          "auxiliary_total_projection": [
+            -2.4833135291760345e-06,
+            1.0094755881214234e-05
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -2.4833135291760345e-06,
+            1.0094755881214234e-05
+          ],
+          "direct_total_projection_q63": [
+            -0.0004422216436955695,
+            0.0017975618583542135
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -0.0004422216436955695,
+            0.0017975618583542135
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 0.0018407630052347172
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": -3,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.039479297149977256,
+            0.010011691165637554
+          ],
+          "auxiliary_total_projection": [
+            -1.0859329913486689e-13,
+            3.618077332232785e-14
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -1.0859329913486689e-13,
+            3.618077332232785e-14
+          ],
+          "direct_total_projection_q63": [
+            -1.1582607347550237e-13,
+            3.4163316694211417e-14
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -1.1582607347550237e-13,
+            3.4163316694211417e-14
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 7.508871813320957e-15
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": -3,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.039479297149977256,
+            0.010011691165637554
+          ],
+          "auxiliary_total_projection": [
+            7.439053546939577e-15,
+            2.972233325188338e-14
+          ],
+          "auxiliary_outgoing_amplitude": [
+            7.439053546939577e-15,
+            2.972233325188338e-14
+          ],
+          "direct_total_projection_q63": [
+            9.456770081307625e-13,
+            3.804569042130975e-12
+          ],
+          "direct_outgoing_amplitude_q63": [
+            9.456770081307625e-13,
+            3.804569042130975e-12
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 3.8896989774218965e-12
+        }
+      ],
+      "demodulated_field_audit": {
+        "demodulation": "E_total * exp(-i*ky*y)",
+        "rows": [
+          {
+            "location": "top_port_inner",
+            "z_nm": 129.999986,
+            "relative_y_variation_l2": 0.00039547229204163015,
+            "fourier_energy_fraction_n0": 0.9999998436016665,
+            "fourier_energy_fraction_n_minus_3": 8.861599806440176e-26,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          },
+          {
+            "location": "bottom_port_inner",
+            "z_nm": -9.999986,
+            "relative_y_variation_l2": 0.00039587498130209015,
+            "fourier_energy_fraction_n0": 0.9999998432829995,
+            "fourier_energy_fraction_n_minus_3": 4.8793285098208234e-26,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          },
+          {
+            "location": "air_volume",
+            "z_nm": 123.2231849990785,
+            "relative_y_variation_l2": 0.0003954275767376308,
+            "fourier_energy_fraction_n0": 0.9999998436370314,
+            "fourier_energy_fraction_n_minus_3": 8.224248576933566e-26,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          },
+          {
+            "location": "grating_volume",
+            "z_nm": 58.2231849990785,
+            "relative_y_variation_l2": 0.00039533569916998853,
+            "fourier_energy_fraction_n0": 0.9999998437096849,
+            "fourier_energy_fraction_n_minus_3": 3.9923820944009375e-26,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          }
+        ]
+      }
+    },
+    {
+      "y_cells": 6,
+      "surface_quadrature_degree": 21,
+      "rows": [
+        {
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03682828845454684,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            -1.0650680578712373,
+            0.1258119933145253
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -0.07638337594037692,
+            -0.024196672152752147
+          ],
+          "direct_total_projection_q63": [
+            -1.0650680578712264,
+            0.12581199331452317
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -0.07638337594036604,
+            -0.024196672152754284
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 1.1088100605867394e-14
+        },
+        {
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03682828845454684,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            3.323007530781292e-06,
+            1.0743072544792253e-05
+          ],
+          "auxiliary_outgoing_amplitude": [
+            3.323007530781292e-06,
+            1.0743072544792253e-05
+          ],
+          "direct_total_projection_q63": [
+            0.0005306969417572813,
+            0.0017157437443603488
+          ],
+          "direct_outgoing_amplitude_q63": [
+            0.0005306969417572813,
+            0.0017157437443603488
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 0.0017846990103076305
+        },
+        {
+          "side": "top",
+          "m": 0,
+          "n": -3,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.043487045152357,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            1.240082059468143e-13,
+            -1.1039043185062906e-13
+          ],
+          "auxiliary_outgoing_amplitude": [
+            1.240082059468143e-13,
+            -1.1039043185062906e-13
+          ],
+          "direct_total_projection_q63": [
+            7.75574812705848e-14,
+            -1.1784201670028692e-13
+          ],
+          "direct_outgoing_amplitude_q63": [
+            7.75574812705848e-14,
+            -1.1784201670028692e-13
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 4.7044616479662433e-14
+        },
+        {
+          "side": "top",
+          "m": 0,
+          "n": -3,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.043487045152357,
+            0.0
+          ],
+          "auxiliary_total_projection": [
+            -5.4769820014301497e-14,
+            1.3321016546347131e-14
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -5.4769820014301497e-14,
+            1.3321016546347131e-14
+          ],
+          "direct_total_projection_q63": [
+            -5.396424615016813e-12,
+            1.2528672311013588e-12
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -5.396424615016813e-12,
+            1.2528672311013588e-12
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 5.483589223035491e-12
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03270529151727283,
+            0.012085338860020835
+          ],
+          "auxiliary_total_projection": [
+            0.602059401710139,
+            -0.2493153507408994
+          ],
+          "auxiliary_outgoing_amplitude": [
+            0.602059401710139,
+            -0.2493153507408994
+          ],
+          "direct_total_projection_q63": [
+            0.602059401710146,
+            -0.2493153507408945
+          ],
+          "direct_outgoing_amplitude_q63": [
+            0.602059401710146,
+            -0.2493153507408945
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 8.531397567707323e-15
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            0.37734576887175764,
+            0.0
+          ],
+          "beta": [
+            0.03270529151727283,
+            0.012085338860020835
+          ],
+          "auxiliary_total_projection": [
+            -2.698100055385929e-06,
+            9.87093345297642e-06
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -2.698100055385929e-06,
+            9.87093345297642e-06
+          ],
+          "direct_total_projection_q63": [
+            -0.00048046838765338054,
+            0.0017577062002438225
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -0.00048046838765338054,
+            0.0017577062002438225
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 0.0018119582135218513
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": -3,
+          "polarization": "s",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.039479297149977256,
+            0.010011691165637554
+          ],
+          "auxiliary_total_projection": [
+            -3.1095055388706246e-14,
+            1.473017285388435e-13
+          ],
+          "auxiliary_outgoing_amplitude": [
+            -3.1095055388706246e-14,
+            1.473017285388435e-13
+          ],
+          "direct_total_projection_q63": [
+            -3.725672954111797e-14,
+            1.5151106945574863e-13
+          ],
+          "direct_outgoing_amplitude_q63": [
+            -3.725672954111797e-14,
+            1.5151106945574863e-13
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 7.462223483334604e-15
+        },
+        {
+          "side": "bottom",
+          "m": 0,
+          "n": -3,
+          "polarization": "p",
+          "alpha": [
+            0.2699456977475597,
+            0.0
+          ],
+          "gamma": [
+            -0.37663646798979267,
+            0.0
+          ],
+          "beta": [
+            0.039479297149977256,
+            0.010011691165637554
+          ],
+          "auxiliary_total_projection": [
+            3.404392059577363e-14,
+            -2.0713012964561812e-13
+          ],
+          "auxiliary_outgoing_amplitude": [
+            3.404392059577363e-14,
+            -2.0713012964561812e-13
+          ],
+          "direct_total_projection_q63": [
+            4.573788424187292e-12,
+            -2.7039629637008772e-11
+          ],
+          "direct_outgoing_amplitude_q63": [
+            4.573788424187292e-12,
+            -2.7039629637008772e-11
+          ],
+          "auxiliary_minus_direct_outgoing_abs": 2.7213825713606185e-11
+        }
+      ],
+      "demodulated_field_audit": {
+        "demodulation": "E_total * exp(-i*ky*y)",
+        "rows": [
+          {
+            "location": "top_port_inner",
+            "z_nm": 129.999986,
+            "relative_y_variation_l2": 5.002048192523655e-05,
+            "fourier_energy_fraction_n0": 0.9999999974979514,
+            "fourier_energy_fraction_n_minus_3": 4.2418629313523764e-26,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          },
+          {
+            "location": "bottom_port_inner",
+            "z_nm": -9.999986,
+            "relative_y_variation_l2": 5.0070168836374474e-05,
+            "fourier_energy_fraction_n0": 0.9999999974929781,
+            "fourier_energy_fraction_n_minus_3": 1.8986302601412455e-25,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          },
+          {
+            "location": "air_volume",
+            "z_nm": 123.2231849990785,
+            "relative_y_variation_l2": 5.001535919141847e-05,
+            "fourier_energy_fraction_n0": 0.999999997498464,
+            "fourier_energy_fraction_n_minus_3": 4.8627246389369156e-26,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          },
+          {
+            "location": "grating_volume",
+            "z_nm": 58.2231849990785,
+            "relative_y_variation_l2": 5.000337048264679e-05,
+            "fourier_energy_fraction_n0": 0.999999997499663,
+            "fourier_energy_fraction_n_minus_3": 7.179247606863205e-26,
+            "sample_count_x": 4,
+            "sample_count_y": 96
+          }
+        ]
+      }
+    }
+  ],
+  "finding": "S amplitudes agree near roundoff, confirming the solved FE/DtN field contains the Ny3 alias; P amplitudes show a separate auxiliary/direct inconsistency retained as negative evidence"
+}

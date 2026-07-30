@@ -1,4 +1,16 @@
-# Task002 M0--M2B 结果总览
+# Task002 结果总览
+
+## M4D 更新（Review V6）
+
+Case118 已确认 Case117 index 40 的根因是 Ny=3 导致的 n=0/n=-3 离散
+Bragg/trace alias。Ny=3 总泄漏为 `1.2312e-6`，Ny=4 降至 `3.2783e-25`；
+actual bottom-S trace overlap 从 `0.3630` 降至 `2.68e-16`。q=21/31/39/47
+结果完全不变，排除 surface quadrature 欠积分。35 个 M4D PDE 全部 zero swap、
+cleanup complete，Case118 checker 12/12 通过。
+
+Route A Ny=4 得到支持，但 production mesh 尚未修改，M4 仍停止。独立 q63
+projection 同时发现 outgoing-P auxiliary/direct amplitude 不一致（最大 `5.25e-3`），
+等待 Review V7 disposition。详见 `m4_y_alias_diagnosis.md` 与 `response_v7.md`。
 
 ## M2B 更新
 
