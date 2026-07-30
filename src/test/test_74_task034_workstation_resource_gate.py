@@ -9,6 +9,7 @@ import unittest
 from unittest import mock
 
 from benchmarks.run_task033_memory_watchdog import (
+    TASK036_PROCESS_TREE_RETRY_DELAYS_SECONDS,
     _authority_unreadable_requires_termination,
     _parse_args,
     _resource_readability_sample_is_formal,
@@ -921,6 +922,14 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
                     **(retry | {key: value})
                 )
             )
+        self.assertEqual(
+            TASK036_PROCESS_TREE_RETRY_DELAYS_SECONDS,
+            (0.01, 0.025, 0.05),
+        )
+        self.assertLessEqual(
+            sum(TASK036_PROCESS_TREE_RETRY_DELAYS_SECONDS),
+            0.1,
+        )
 
     def test_only_formal_live_unreadable_authority_terminates(self) -> None:
         required = {

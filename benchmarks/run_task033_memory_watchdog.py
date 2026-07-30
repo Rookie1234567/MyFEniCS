@@ -1094,6 +1094,9 @@ def _task036_process_tree_retry_eligible(
     )
 
 
+TASK036_PROCESS_TREE_RETRY_DELAYS_SECONDS = (0.01, 0.025, 0.05)
+
+
 def _resource_readability_sample_is_formal(
     *,
     task034_workstation_gate: bool,
@@ -2719,6 +2722,7 @@ def run(args: argparse.Namespace) -> int:
     terminal_worker_drain_samples_excluded = 0
     zero_worker_exit_drain_samples_excluded = 0
     task036_process_tree_retry_count = 0
+    task036_process_tree_retry_attempt_count = 0
     task036_process_tree_retry_success_count = 0
     max_live_authority_gib = 0.0
     with stdout_path.open("w", encoding="utf-8") as stdout:
@@ -2806,27 +2810,49 @@ def run(args: argparse.Namespace) -> int:
                     expected_worker_count=args.mpi_size,
                 ):
                     task036_process_tree_retry_count += 1
-                    time.sleep(0.01)
-                    retry_sample = resource_authority_sample(process.pid)
-                    retry_process_tree = retry_sample["process_tree"]
-                    retry_job_cgroup = retry_sample["job_cgroup"]
-                    retry_cgroup_current_mb = (
-                        None
-                        if not retry_job_cgroup["dedicated_job_cgroup"]
-                        or retry_job_cgroup["memory_current_bytes"] is None
-                        else float(
-                            retry_job_cgroup["memory_current_bytes"]
+                    for retry_delay in (
+                        TASK036_PROCESS_TREE_RETRY_DELAYS_SECONDS
+                    ):
+                        task036_process_tree_retry_attempt_count += 1
+                        time.sleep(retry_delay)
+                        retry_sample = resource_authority_sample(process.pid)
+                        retry_process_tree = retry_sample["process_tree"]
+                        retry_job_cgroup = retry_sample["job_cgroup"]
+                        retry_cgroup_current_mb = (
+                            None
+                            if not retry_job_cgroup["dedicated_job_cgroup"]
+                            or retry_job_cgroup["memory_current_bytes"] is None
+                            else float(
+                                retry_job_cgroup["memory_current_bytes"]
+                            )
+                            / 1024**2
                         )
-                        / 1024**2
-                    )
-                    retry_authority_readable = bool(
-                        retry_process_tree["all_status_readable"]
-                        and (
-                            not retry_job_cgroup["dedicated_job_cgroup"]
-                            or retry_cgroup_current_mb is not None
+                        retry_authority_readable = bool(
+                            retry_process_tree["all_status_readable"]
+                            and (
+                                not retry_job_cgroup["dedicated_job_cgroup"]
+                                or retry_cgroup_current_mb is not None
+                            )
                         )
-                    )
-                    if retry_authority_readable:
+                        if not retry_authority_readable:
+                            retry_running = process.poll() is None
+                            _, retry_workers = _live_task033_worker_rss(
+                                process.pid, args.target
+                            )
+                            retry_process_tree_pids = set(
+                                retry_process_tree["pids"]
+                            )
+                            retry_worker_count = sum(
+                                int(worker["pid"])
+                                in retry_process_tree_pids
+                                for worker in retry_workers
+                            )
+                            if (
+                                not retry_running
+                                or retry_worker_count != args.mpi_size
+                            ):
+                                break
+                            continue
                         task036_process_tree_retry_success_count += 1
                         job_sample = retry_sample
                         process_tree = retry_process_tree
@@ -2861,6 +2887,7 @@ def run(args: argparse.Namespace) -> int:
                         )
                         cgroup_current_mb = retry_cgroup_current_mb
                         authority_readable = True
+                        break
             zero_worker_exit_drain = _task036_zero_worker_exit_drain(
                 task036_domain_robustness_gate=(
                     args.task036_domain_robustness_gate
@@ -2987,6 +3014,9 @@ def run(args: argparse.Namespace) -> int:
             ),
             "task036_process_tree_retry_count": (
                 task036_process_tree_retry_count
+            ),
+            "task036_process_tree_retry_attempt_count": (
+                task036_process_tree_retry_attempt_count
             ),
             "task036_process_tree_retry_success_count": (
                 task036_process_tree_retry_success_count
