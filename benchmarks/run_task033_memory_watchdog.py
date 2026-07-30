@@ -1071,6 +1071,29 @@ def _task036_zero_worker_exit_drain(
     )
 
 
+def _task036_process_tree_retry_eligible(
+    *,
+    task036_domain_robustness_gate: bool,
+    process_running: bool,
+    authority_readable: bool,
+    live_worker_count: int | None,
+    expected_worker_count: int,
+) -> bool:
+    """Retry when every formal MPI worker remains independently readable.
+
+    Short-lived compiler/helper children can disappear while ``/proc`` is
+    sampled. That race must not be mistaken for loss of an MPI worker.
+    """
+
+    return bool(
+        task036_domain_robustness_gate
+        and process_running
+        and not authority_readable
+        and live_worker_count == expected_worker_count
+        and expected_worker_count > 0
+    )
+
+
 def _resource_readability_sample_is_formal(
     *,
     task034_workstation_gate: bool,
@@ -2695,6 +2718,8 @@ def run(args: argparse.Namespace) -> int:
     post_exit_readability_samples_excluded = 0
     terminal_worker_drain_samples_excluded = 0
     zero_worker_exit_drain_samples_excluded = 0
+    task036_process_tree_retry_count = 0
+    task036_process_tree_retry_success_count = 0
     max_live_authority_gib = 0.0
     with stdout_path.open("w", encoding="utf-8") as stdout:
         process = subprocess.Popen(
@@ -2768,9 +2793,74 @@ def run(args: argparse.Namespace) -> int:
                 if live_worker_rss is not None:
                     process_tree_pids = set(process_tree["pids"])
                     live_worker_count = sum(
-                    int(worker["pid"]) in process_tree_pids
-                    for worker in discovered_workers
-                )
+                        int(worker["pid"]) in process_tree_pids
+                        for worker in discovered_workers
+                    )
+                if _task036_process_tree_retry_eligible(
+                    task036_domain_robustness_gate=(
+                        args.task036_domain_robustness_gate
+                    ),
+                    process_running=process_running,
+                    authority_readable=authority_readable,
+                    live_worker_count=live_worker_count,
+                    expected_worker_count=args.mpi_size,
+                ):
+                    task036_process_tree_retry_count += 1
+                    time.sleep(0.01)
+                    retry_sample = resource_authority_sample(process.pid)
+                    retry_process_tree = retry_sample["process_tree"]
+                    retry_job_cgroup = retry_sample["job_cgroup"]
+                    retry_cgroup_current_mb = (
+                        None
+                        if not retry_job_cgroup["dedicated_job_cgroup"]
+                        or retry_job_cgroup["memory_current_bytes"] is None
+                        else float(
+                            retry_job_cgroup["memory_current_bytes"]
+                        )
+                        / 1024**2
+                    )
+                    retry_authority_readable = bool(
+                        retry_process_tree["all_status_readable"]
+                        and (
+                            not retry_job_cgroup["dedicated_job_cgroup"]
+                            or retry_cgroup_current_mb is not None
+                        )
+                    )
+                    if retry_authority_readable:
+                        task036_process_tree_retry_success_count += 1
+                        job_sample = retry_sample
+                        process_tree = retry_process_tree
+                        job_cgroup = retry_job_cgroup
+                        live_worker_rss_mb = (
+                            float(process_tree["rss_bytes"]) / 1024**2
+                        )
+                        live_workers = [
+                            {"pid": pid, "scope": "process_tree"}
+                            for pid in process_tree["pids"]
+                        ]
+                        row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
+                        row["worker_rank_rss_mb_json"] = json.dumps(
+                            live_workers, separators=(",", ":")
+                        )
+                        row["mpi_process_tree_swap_mb"] = (
+                            float(process_tree["swap_bytes"]) / 1024**2
+                        )
+                        row["job_cgroup_path"] = job_cgroup["path"]
+                        row["job_cgroup_dedicated"] = job_cgroup[
+                            "dedicated_job_cgroup"
+                        ]
+                        row["container_cgroup_current_mb"] = (
+                            retry_cgroup_current_mb
+                        )
+                        row["container_swap_current_mb"] = (
+                            None
+                            if not job_cgroup["dedicated_job_cgroup"]
+                            or job_cgroup["swap_current_bytes"] is None
+                            else float(job_cgroup["swap_current_bytes"])
+                            / 1024**2
+                        )
+                        cgroup_current_mb = retry_cgroup_current_mb
+                        authority_readable = True
             zero_worker_exit_drain = _task036_zero_worker_exit_drain(
                 task036_domain_robustness_gate=(
                     args.task036_domain_robustness_gate
@@ -2894,6 +2984,12 @@ def run(args: argparse.Namespace) -> int:
             ),
             "zero_worker_exit_drain_samples_excluded": (
                 zero_worker_exit_drain_samples_excluded
+            ),
+            "task036_process_tree_retry_count": (
+                task036_process_tree_retry_count
+            ),
+            "task036_process_tree_retry_success_count": (
+                task036_process_tree_retry_success_count
             ),
         }
     )

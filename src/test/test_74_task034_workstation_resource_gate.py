@@ -15,6 +15,7 @@ from benchmarks.run_task033_memory_watchdog import (
     _task034_terminal_record_is_complete,
     _task034_terminal_worker_drain,
     _task034_authority_source_compatibility,
+    _task036_process_tree_retry_eligible,
     _task036_zero_worker_exit_drain,
     _task035b_static_full3d_anchor_gate,
 )
@@ -894,6 +895,30 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             self.assertFalse(
                 _task036_zero_worker_exit_drain(
                     **(drain | {key: value})
+                )
+            )
+
+    def test_task036_retries_only_complete_live_worker_set(self) -> None:
+        retry = {
+            "task036_domain_robustness_gate": True,
+            "process_running": True,
+            "authority_readable": False,
+            "live_worker_count": 8,
+            "expected_worker_count": 8,
+        }
+        self.assertTrue(_task036_process_tree_retry_eligible(**retry))
+        for key, value in (
+            ("task036_domain_robustness_gate", False),
+            ("process_running", False),
+            ("authority_readable", True),
+            ("live_worker_count", 7),
+            ("live_worker_count", 0),
+            ("live_worker_count", None),
+            ("expected_worker_count", 0),
+        ):
+            self.assertFalse(
+                _task036_process_tree_retry_eligible(
+                    **(retry | {key: value})
                 )
             )
 
