@@ -1,0 +1,11 @@
+{
+  "schema_version": "task002.case117-campaign-preflight.v1",
+  "baseline_sha": "ba50cd36b081637ed5ea97c2dc8e4827d992b940",
+  "campaign_schema": "task002.s-p5-design-campaign.v3",
+  "output_profile": "compact_surrogate_record",
+  "gates": {
+    "leakage_authority": true,
+    "compact_ab": true,
+    "design_rebind": true
+  }
+}

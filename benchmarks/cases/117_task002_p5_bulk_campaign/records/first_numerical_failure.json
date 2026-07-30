@@ -1,0 +1,93 @@
+{
+  "schema_version": "task002.case117-first-numerical-failure.v1",
+  "baseline_sha": "ba50cd36b081637ed5ea97c2dc8e4827d992b940",
+  "manifest_row": {
+    "design_id": "task002_p5_initial_training_v1",
+    "design_index": 40,
+    "split": "train",
+    "point_tuple": [
+      116.446369998157,
+      17.513626368716,
+      4.538499870338,
+      54.420819282532
+    ],
+    "point_hash": "d96952d897078c2a8d1cd0b22c5775499c0e363dd8da86f2470c4f57499963d7",
+    "source_sha": "ba50cd36b081637ed5ea97c2dc8e4827d992b940",
+    "status": "failed_numerical_gate",
+    "attempt_number": 1,
+    "run_directory": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/117/m4/production/task002_p5_initial_training_v1/0040_d96952d89707/attempt_01",
+    "attempts": [
+      {
+        "attempt_number": 1,
+        "run_directory": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/117/m4/production/task002_p5_initial_training_v1/0040_d96952d89707/attempt_01",
+        "status": "failed_numerical_gate",
+        "watchdog": {
+          "status": "completed",
+          "return_code": 0,
+          "child_return_code": 0,
+          "elapsed_seconds": 62.599047169991536,
+          "peak_rss_bytes": 4260724736,
+          "peak_pss_bytes": 4055884800,
+          "peak_uss_bytes": 3910737920,
+          "peak_swap_bytes": 0,
+          "samples": 62,
+          "process_group_id": 726,
+          "cleanup_complete": true
+        }
+      }
+    ]
+  },
+  "formal_record": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/117/m4/production/task002_p5_initial_training_v1/0040_d96952d89707/attempt_01/results/task002_full3d_record.json",
+  "formal_record_sha256": "d88def63963b15aa281c3bde9673511a1756ea62cd1f1b018404306157764765",
+  "execution": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/117/m4/production/task002_p5_initial_training_v1/0040_d96952d89707/attempt_01/execution.json",
+  "execution_sha256": "ed0328510052da9f721b009bd3d5f6434e4d9ecc9fdcecba08b4f5e11befd0c3",
+  "failed_gates": [
+    "n_nonzero_total_power_le_1e-7",
+    "n_nonzero_max_abs_amplitude_le_1e-4"
+  ],
+  "leakage": {
+    "n_nonzero_reflection_power_sum": 1.2727992374361636e-07,
+    "n_nonzero_transmission_power_sum": 1.1039521076787467e-06,
+    "n_nonzero_max_abs_amplitude": 0.0010146566168132453
+  },
+  "dominant_n_nonzero_order": {
+    "identity": {
+      "m": 0,
+      "n": -3,
+      "side": "bottom",
+      "polarization": "s"
+    },
+    "power": 1.103636511972141e-06,
+    "absolute_amplitude": 0.0010146566168132453
+  },
+  "power_ledger": {
+    "fixed_n0_reflection_power_sum": 0.006508871011361489,
+    "fixed_n0_transmission_power_sum": 0.29609495867970925,
+    "n_nonzero_reflection_power_sum": 1.2727992374361636e-07,
+    "n_nonzero_transmission_power_sum": 1.1039521076787467e-06,
+    "raw_R_minus_fixed_n0_R_minus_n_nonzero_R": -6.374452323680644e-19,
+    "raw_T_minus_fixed_n0_T_minus_n_nonzero_T": -5.9679823881169866e-18
+  },
+  "aggregates": {
+    "R_total": 0.006508998291285232,
+    "T_total": 0.2960960626318169,
+    "A_balance": 0.6973949390768979,
+    "A_volume": 0.6973949390755712,
+    "true_relative_residual": 2.0915048266873913e-11,
+    "energy_closure_error": -1.326716514427062e-12
+  },
+  "watchdog": {
+    "status": "completed",
+    "return_code": 0,
+    "child_return_code": 0,
+    "elapsed_seconds": 62.599047169991536,
+    "peak_rss_bytes": 4260724736,
+    "peak_pss_bytes": 4055884800,
+    "peak_uss_bytes": 3910737920,
+    "peak_swap_bytes": 0,
+    "samples": 62,
+    "process_group_id": 726,
+    "cleanup_complete": true
+  },
+  "stop_contract_obeyed": true
+}

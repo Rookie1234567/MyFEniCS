@@ -1,0 +1,8 @@
+{
+  "schema_version": "task002.case117-validation-not-run.v1",
+  "expected_count": 16,
+  "pass_count": 0,
+  "not_run_count": 16,
+  "status": "not_run_by_training_failure_gate",
+  "completion_gate": false
+}

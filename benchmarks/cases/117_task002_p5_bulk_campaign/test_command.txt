@@ -1,1 +1,1 @@
-source scripts/activate_myfenics_surrogate_wsl.sh && python -m benchmarks.check_case117_task002_m4 --verify-final
+source scripts/activate_myfenics_surrogate_wsl.sh && python -m benchmarks.check_case117_task002_m4 --verify-stopped

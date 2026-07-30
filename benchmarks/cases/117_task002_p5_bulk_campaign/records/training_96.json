@@ -1,0 +1,10 @@
+{
+  "schema_version": "task002.case117-training-controlled-stop.v1",
+  "expected_count": 96,
+  "pass_count": 56,
+  "failed_count": 1,
+  "not_run_count": 39,
+  "first_failed_design_index": 40,
+  "completion_gate": false,
+  "status": "controlled_stop_on_first_numerical_failure"
+}

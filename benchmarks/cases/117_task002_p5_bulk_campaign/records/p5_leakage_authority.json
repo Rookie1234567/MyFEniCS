@@ -1,0 +1,1037 @@
+{
+  "schema_version": "task002.case117-p5-leakage-authority.v1",
+  "authority_point_count": 80,
+  "maxima": {
+    "reflection_power_sum": {
+      "value": 2.7950657231249464e-09,
+      "argmax": {
+        "angle": [
+          1.0,
+          60.0
+        ],
+        "order": {
+          "m": 0,
+          "n": -3,
+          "side": "top",
+          "polarization": "s"
+        }
+      }
+    },
+    "transmission_power_sum": {
+      "value": 3.8031409700128e-09,
+      "argmax": {
+        "angle": [
+          10.0,
+          60.0
+        ],
+        "order": {
+          "m": 0,
+          "n": -3,
+          "side": "bottom",
+          "polarization": "s"
+        }
+      }
+    },
+    "total_power": {
+      "value": 4.93664017988878e-09,
+      "argmax": {
+        "angle": [
+          1.0,
+          60.0
+        ],
+        "order": {
+          "m": 0,
+          "n": -3,
+          "side": "top",
+          "polarization": "s"
+        }
+      }
+    },
+    "absolute_amplitude": {
+      "value": 3.971065398159596e-05,
+      "argmax": {
+        "angle": [
+          10.0,
+          60.0
+        ],
+        "order": {
+          "m": 0,
+          "n": -3,
+          "side": "bottom",
+          "polarization": "s"
+        }
+      }
+    }
+  },
+  "rows": [
+    {
+      "angle": [
+        0.5,
+        0.0
+      ],
+      "reflection_power_sum": 6.115953367411301e-26,
+      "transmission_power_sum": 4.1712867636191637e-26,
+      "total_power": 1.0287240131030465e-25,
+      "absolute_amplitude": 1.7838714816769852e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p5_a0/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "f24055db9c3a24ba8f3a84d891d49ac0df8f213574a33302a34f5449a677ab83"
+    },
+    {
+      "angle": [
+        0.5,
+        5.0
+      ],
+      "reflection_power_sum": 1.7795746396353895e-26,
+      "transmission_power_sum": 2.673103495256721e-26,
+      "total_power": 4.4526781348921105e-26,
+      "absolute_amplitude": 2.143970382923418e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p5_a5/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "2999758730a52e93c0187984c9f84732eb22596bbd890c0950975aa1024d2851"
+    },
+    {
+      "angle": [
+        0.5,
+        10.0
+      ],
+      "reflection_power_sum": 3.66880964211725e-26,
+      "transmission_power_sum": 3.969581589261907e-26,
+      "total_power": 7.638391231379157e-26,
+      "absolute_amplitude": 1.605127352022853e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p5_a10/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "0da7b46a68a239cc3bce0ace53765143e0787d32529ad25e94783b3e0c4d980d"
+    },
+    {
+      "angle": [
+        0.5,
+        15.0
+      ],
+      "reflection_power_sum": 3.94587486602711e-26,
+      "transmission_power_sum": 6.207523222535647e-26,
+      "total_power": 1.0153398088562757e-25,
+      "absolute_amplitude": 1.6021122533264643e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p5_a15/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "4e7eb40d11f80e9e93726b6caf580dde21bb8c9ee0d928e1b7d1a727573e9be5"
+    },
+    {
+      "angle": [
+        0.5,
+        20.0
+      ],
+      "reflection_power_sum": 1.7002370488728625e-25,
+      "transmission_power_sum": 1.5442417102954643e-25,
+      "total_power": 3.244478759168327e-25,
+      "absolute_amplitude": 6.471718720492467e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p5_a20/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "23b7280ed9ad94eb1d013fc956947c66704ac66a8de6cc8a0612d19257da7841"
+    },
+    {
+      "angle": [
+        0.5,
+        30.0
+      ],
+      "reflection_power_sum": 3.766983937538418e-26,
+      "transmission_power_sum": 4.1274831487145083e-26,
+      "total_power": 7.894467086252926e-26,
+      "absolute_amplitude": 1.6058052941940453e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p5_a30/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "b6601739e6fe7d1c8ee6916cf2e8120f63bfbaadbff3ad7a85f5f13480294eb3"
+    },
+    {
+      "angle": [
+        0.5,
+        45.0
+      ],
+      "reflection_power_sum": 1.2615445928975277e-15,
+      "transmission_power_sum": 8.713662015912717e-16,
+      "total_power": 2.1329107944887992e-15,
+      "absolute_amplitude": 4.480216778543708e-09,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p5_a45/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "1a598ca22be40a0165ee82d22f167fffe0786fab48977a46ac3fea95ea3a3476"
+    },
+    {
+      "angle": [
+        0.5,
+        60.0
+      ],
+      "reflection_power_sum": 1.8390739681043384e-09,
+      "transmission_power_sum": 1.4434143895489475e-09,
+      "total_power": 3.282488357653286e-09,
+      "absolute_amplitude": 5.889863453126547e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p5_a60/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "e409fdc96c9869fa7a5e8e990d1a766e4e605425e889849ad1f86ae9fabf03df"
+    },
+    {
+      "angle": [
+        0.5,
+        75.0
+      ],
+      "reflection_power_sum": 2.68978904819006e-10,
+      "transmission_power_sum": 2.0449200322551796e-10,
+      "total_power": 4.73470908044524e-10,
+      "absolute_amplitude": 1.7460230413598153e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p5_a75/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "6daede819be7b8a0258465c850a316afc3cf1778739d728b966f1c1e2af595ed"
+    },
+    {
+      "angle": [
+        0.5,
+        90.0
+      ],
+      "reflection_power_sum": 1.4865695772977886e-10,
+      "transmission_power_sum": 1.1402008697314933e-10,
+      "total_power": 2.626770447029282e-10,
+      "absolute_amplitude": 1.2858437144100707e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p5_a90/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "6e383df8d46ba1a15de97e2fc78c54c78b23fd5e48591c70f8a7944fbc447a05"
+    },
+    {
+      "angle": [
+        0.75,
+        0.0
+      ],
+      "reflection_power_sum": 7.122799002535759e-26,
+      "transmission_power_sum": 6.693973284495354e-26,
+      "total_power": 1.3816772287031112e-25,
+      "absolute_amplitude": 1.692647761173866e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/9c134f4ce6b18db9/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "bdb1d5ace560bedea80c8bd5289d6f6e92da4ac26d3adbe1c5eedfbbffa4f5bb"
+    },
+    {
+      "angle": [
+        0.75,
+        5.0
+      ],
+      "reflection_power_sum": 2.9481206887922173e-26,
+      "transmission_power_sum": 1.996995288841547e-26,
+      "total_power": 4.9451159776337645e-26,
+      "absolute_amplitude": 2.7977507675074525e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/cce0d2fbf88cf456/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "851001b215067f5d3efeda82c043fe1605e87baf985597bf26f749bbf4fd33fa"
+    },
+    {
+      "angle": [
+        0.75,
+        10.0
+      ],
+      "reflection_power_sum": 5.555952268140289e-26,
+      "transmission_power_sum": 4.0117430923097577e-26,
+      "total_power": 9.567695360450047e-26,
+      "absolute_amplitude": 2.5703628404824326e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/768d3d746ba90f24/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "bdb18b964290a558081dffbbde39817b65c7702b5434fcbaa3f5faffda07ccb4"
+    },
+    {
+      "angle": [
+        0.75,
+        15.0
+      ],
+      "reflection_power_sum": 4.555979955567335e-26,
+      "transmission_power_sum": 6.548922087142069e-26,
+      "total_power": 1.1104902042709404e-25,
+      "absolute_amplitude": 1.5176484797793288e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/b7c88e81a662f5bd/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "ab27ae613c9e6ed2659a885158b79346cc7f32529e03500a5ecc3295c680b987"
+    },
+    {
+      "angle": [
+        0.75,
+        20.0
+      ],
+      "reflection_power_sum": 1.9231490420163863e-25,
+      "transmission_power_sum": 1.359958026659522e-25,
+      "total_power": 3.2831070686759084e-25,
+      "absolute_amplitude": 7.02122286825905e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/4e2ead318d86a6f8/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "cfd35a51995a80fb28c51fe84643a69744ef710f207420821d5c921a4b5848af"
+    },
+    {
+      "angle": [
+        0.75,
+        30.0
+      ],
+      "reflection_power_sum": 4.355925135856576e-26,
+      "transmission_power_sum": 4.469118582397605e-26,
+      "total_power": 8.825043718254181e-26,
+      "absolute_amplitude": 2.1494852808462258e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/6a58c169c91224b0/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "25411855837ab1a897857918c8e233695be63afc0661981ac2b2269bae339518"
+    },
+    {
+      "angle": [
+        0.75,
+        45.0
+      ],
+      "reflection_power_sum": 1.6822731331909544e-15,
+      "transmission_power_sum": 1.1488799754302308e-15,
+      "total_power": 2.8311531086211852e-15,
+      "absolute_amplitude": 6.342331318672316e-09,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g0p75_a45/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "a79885342fcdc688db88be5c9cb447b4790f936dad85f3d3bccd69d2b9e90cd5"
+    },
+    {
+      "angle": [
+        0.75,
+        60.0
+      ],
+      "reflection_power_sum": 2.4196329331159123e-09,
+      "transmission_power_sum": 1.881402787417822e-09,
+      "total_power": 4.301035720533734e-09,
+      "absolute_amplitude": 8.273864477387297e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/995cc0dce55744d5/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "869d65235d0c7b035dd95912fa78c880e8a482a7f3ce78b940faf52efd69f561"
+    },
+    {
+      "angle": [
+        0.75,
+        75.0
+      ],
+      "reflection_power_sum": 3.5603894590204294e-10,
+      "transmission_power_sum": 2.6664373467841204e-10,
+      "total_power": 6.22682680580455e-10,
+      "absolute_amplitude": 2.4601655553152397e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/799d52c3b17b60f5/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "965d1a04c73e39da507cb707b5db7591208e113afc9120e8bafe99f7abe53c3a"
+    },
+    {
+      "angle": [
+        0.75,
+        90.0
+      ],
+      "reflection_power_sum": 1.9780805255097032e-10,
+      "transmission_power_sum": 1.4991768053349013e-10,
+      "total_power": 3.4772573308446045e-10,
+      "absolute_amplitude": 1.8166433134153943e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/83fce657b6267e90/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "e4e1c123f495f48a038b7907e8d9096d11bb578e071238e5afc89e00403e8180"
+    },
+    {
+      "angle": [
+        1.0,
+        0.0
+      ],
+      "reflection_power_sum": 1.3869795026275855e-25,
+      "transmission_power_sum": 8.559913946307442e-26,
+      "total_power": 2.2429708972583296e-25,
+      "absolute_amplitude": 3.69798140729115e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/83160747ca520573/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "c186c8042db2076bc68923730d95e6e5a1d8f682c4e69321870774829402b52f"
+    },
+    {
+      "angle": [
+        1.0,
+        5.0
+      ],
+      "reflection_power_sum": 6.307329227435487e-26,
+      "transmission_power_sum": 2.865584938777384e-26,
+      "total_power": 9.172914166212872e-26,
+      "absolute_amplitude": 8.057486504279185e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/47e6ca4a8d2440d7/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "cbe53de606b35f61cc35049b961a0c4580c1c2c3ce5ce4a1d54e4de2a2f780cd"
+    },
+    {
+      "angle": [
+        1.0,
+        10.0
+      ],
+      "reflection_power_sum": 5.525284334236126e-26,
+      "transmission_power_sum": 4.583822809577607e-26,
+      "total_power": 1.0109107143813733e-25,
+      "absolute_amplitude": 2.5733089752811893e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/3b5fa746899ff7cd/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "c312b54e554afe19c00284e9edf9c304aded1338ba224d4237c0fa8c2f5a9cac"
+    },
+    {
+      "angle": [
+        1.0,
+        15.0
+      ],
+      "reflection_power_sum": 1.144930331298193e-25,
+      "transmission_power_sum": 7.059247005541172e-26,
+      "total_power": 1.8508550318523104e-25,
+      "absolute_amplitude": 2.7834960795176784e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/20533a2c202c35d7/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "1c40a3c29aeac2ca9640ba345d2e2584e945e7693414e87755f89f4d030c987c"
+    },
+    {
+      "angle": [
+        1.0,
+        20.0
+      ],
+      "reflection_power_sum": 1.6394287563841139e-25,
+      "transmission_power_sum": 1.9268289399854798e-25,
+      "total_power": 3.5662576963695934e-25,
+      "absolute_amplitude": 8.143856960062422e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/98f1d8d984c1ba76/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "12e328d9755844db6f405d8894ddcc9f7861a61f83d54fe610a4942320468168"
+    },
+    {
+      "angle": [
+        1.0,
+        30.0
+      ],
+      "reflection_power_sum": 5.1227445794611707e-26,
+      "transmission_power_sum": 7.397361114621507e-26,
+      "total_power": 1.2520105694082678e-25,
+      "absolute_amplitude": 2.1793927362015742e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g1_a30/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "7320a334b7c69d09cc07d31874aed694cfe28b5f177b3e6ac6e23e23d798879e"
+    },
+    {
+      "angle": [
+        1.0,
+        45.0
+      ],
+      "reflection_power_sum": 1.9840316296755826e-15,
+      "transmission_power_sum": 1.3322373226601792e-15,
+      "total_power": 3.316268952335762e-15,
+      "absolute_amplitude": 7.957860249829144e-09,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g1_a45/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "1fbea8bec3b6b9944f936b696f2a607792e30fc0ba95b9457fb65bf9d705692e"
+    },
+    {
+      "angle": [
+        1.0,
+        60.0
+      ],
+      "reflection_power_sum": 2.7950657231249464e-09,
+      "transmission_power_sum": 2.1415744567638342e-09,
+      "total_power": 4.93664017988878e-09,
+      "absolute_amplitude": 1.0267652518404842e-05,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g1_a60/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "41ffe72acf935424629138876a262af92c7f1daaf45c0800001fc870503b31c1"
+    },
+    {
+      "angle": [
+        1.0,
+        75.0
+      ],
+      "reflection_power_sum": 4.144984006671524e-10,
+      "transmission_power_sum": 3.033082261795837e-10,
+      "total_power": 7.178066268467361e-10,
+      "absolute_amplitude": 3.06489518576737e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/8a7d83ab23962473/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "adf50122ec5716b8e6173e634675be0161700573217c04d4b497cfddb09283a3"
+    },
+    {
+      "angle": [
+        1.0,
+        90.0
+      ],
+      "reflection_power_sum": 2.3194005593636562e-10,
+      "transmission_power_sum": 1.7273074716789983e-10,
+      "total_power": 4.046708031042655e-10,
+      "absolute_amplitude": 2.2715062044342092e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/cd8b291564b1c491/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "195c2d766c12f2a8094a93dde6e99f96c963c0c946b3be3495cb3418c1a99ed9"
+    },
+    {
+      "angle": [
+        2.0,
+        0.0
+      ],
+      "reflection_power_sum": 1.1447324699047756e-25,
+      "transmission_power_sum": 1.3910583802600157e-25,
+      "total_power": 2.5357908501647915e-25,
+      "absolute_amplitude": 5.187894182987714e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/1aa24940b2771742/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "5a39ad937a798815572bbba5b6251feedb4ea77d49258399d0822a10504a372f"
+    },
+    {
+      "angle": [
+        2.0,
+        5.0
+      ],
+      "reflection_power_sum": 1.1973423810295995e-25,
+      "transmission_power_sum": 1.230750225710555e-25,
+      "total_power": 2.4280926067401547e-25,
+      "absolute_amplitude": 1.7415719002448387e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/3dae3b0819e8e076/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "817870f878c20517287e894075ce00abda6495412e5ab5c9ab8b13e1c69feb8e"
+    },
+    {
+      "angle": [
+        2.0,
+        10.0
+      ],
+      "reflection_power_sum": 6.464972973188636e-26,
+      "transmission_power_sum": 7.363337783781447e-26,
+      "total_power": 1.3828310756970082e-25,
+      "absolute_amplitude": 4.1471676365239286e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/eb4841ddd14dc2e9/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "6ccaed54d938b01002fa94147f06afabe2911ab7c96f929cbe28f1cac52203c5"
+    },
+    {
+      "angle": [
+        2.0,
+        15.0
+      ],
+      "reflection_power_sum": 1.036916693522986e-25,
+      "transmission_power_sum": 7.822646089576093e-26,
+      "total_power": 1.8191813024805953e-25,
+      "absolute_amplitude": 4.4815766311367814e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g2_a15/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "5ebe77c49bbd110671de523b892a9ea1088db7d41b1fe8ada2f04df14a34e707"
+    },
+    {
+      "angle": [
+        2.0,
+        20.0
+      ],
+      "reflection_power_sum": 1.7446905717644098e-25,
+      "transmission_power_sum": 1.3311985199288353e-25,
+      "total_power": 3.075889091693245e-25,
+      "absolute_amplitude": 1.0517605423430712e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/d1689665009224d0/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "8c02ecc7ef4568ba02d5e1855d662949276f9954abd5592146fb9a5ec19fbf46"
+    },
+    {
+      "angle": [
+        2.0,
+        30.0
+      ],
+      "reflection_power_sum": 4.147796510924683e-25,
+      "transmission_power_sum": 4.0235648471148494e-25,
+      "total_power": 8.171361358039533e-25,
+      "absolute_amplitude": 6.634060847680494e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g2_a30/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "887ade4ee4c3d22feb2166a1234024999679c88b6eb9fb1a8841caff776fd735"
+    },
+    {
+      "angle": [
+        2.0,
+        45.0
+      ],
+      "reflection_power_sum": 2.2100055508447353e-15,
+      "transmission_power_sum": 1.3026845853257943e-15,
+      "total_power": 3.51269013617053e-15,
+      "absolute_amplitude": 1.1493442462406762e-08,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g2_a45/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "bcf7063eb9f8e4d314e3977b18d8ed6c8423edc37007eb7878b17f833ad7f7aa"
+    },
+    {
+      "angle": [
+        2.0,
+        60.0
+      ],
+      "reflection_power_sum": 2.500129360231727e-09,
+      "transmission_power_sum": 1.620207607291295e-09,
+      "total_power": 4.120336967523022e-09,
+      "absolute_amplitude": 1.3722352167733636e-05,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/665229c5caea3ca8/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "1143ab8ffc4a533d9a36558da2c70549a47878d3f1e22ecfd62cf7e38866d9f8"
+    },
+    {
+      "angle": [
+        2.0,
+        75.0
+      ],
+      "reflection_power_sum": 3.949459344798937e-10,
+      "transmission_power_sum": 2.2752254523894177e-10,
+      "total_power": 6.224684797188355e-10,
+      "absolute_amplitude": 4.2279184644380455e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/375a02d4bb3d2222/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "015fd1754384643534aa358818ab61dcd1913a3146307c106082dad92ea9bf6f"
+    },
+    {
+      "angle": [
+        2.0,
+        90.0
+      ],
+      "reflection_power_sum": 2.452306554720708e-10,
+      "transmission_power_sum": 1.6392352169273714e-10,
+      "total_power": 4.0915417716480793e-10,
+      "absolute_amplitude": 3.303593821897513e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/384e6eddb67815a2/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "fce3dff2a1f0433c0a2657d5be4f3b1066df1f6a055daa9726d862c99d5fa323"
+    },
+    {
+      "angle": [
+        4.0,
+        0.0
+      ],
+      "reflection_power_sum": 1.0761268012815755e-25,
+      "transmission_power_sum": 6.758979038586574e-26,
+      "total_power": 1.7520247051402328e-25,
+      "absolute_amplitude": 6.290168136176839e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/efddfb555afae35e/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "f1fb34f851ee5ca6498e973fcfeed3acafa4b0564d3ee42f051259c3560e7ffb"
+    },
+    {
+      "angle": [
+        4.0,
+        5.0
+      ],
+      "reflection_power_sum": 4.929494648565871e-26,
+      "transmission_power_sum": 3.290556783012791e-26,
+      "total_power": 8.220051431578663e-26,
+      "absolute_amplitude": 1.0298230215937172e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/597134c50db26333/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "f0afcb0803e86f413298bd6d772817bc5473feae506db78accd8032791c979c4"
+    },
+    {
+      "angle": [
+        4.0,
+        10.0
+      ],
+      "reflection_power_sum": 6.845095501749662e-26,
+      "transmission_power_sum": 4.5609864763955987e-26,
+      "total_power": 1.140608197814526e-25,
+      "absolute_amplitude": 5.546611904825023e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/bedfba641aa12354/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "ba9d772bea50486cc2f2bf1b5180b62a99ca07b199fa9d3ab90f7f54b41e66aa"
+    },
+    {
+      "angle": [
+        4.0,
+        15.0
+      ],
+      "reflection_power_sum": 1.6549780939981595e-23,
+      "transmission_power_sum": 1.2478141636028538e-23,
+      "total_power": 2.9027922576010135e-23,
+      "absolute_amplitude": 7.160704689549637e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/d9d38fb43d8be780/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "0ed45a91abf601d2eef33a255298250e31cf3091d425a0e46fd2e1a36087fd39"
+    },
+    {
+      "angle": [
+        4.0,
+        20.0
+      ],
+      "reflection_power_sum": 9.878296588128271e-26,
+      "transmission_power_sum": 1.4279160188600223e-25,
+      "total_power": 2.4157456776728496e-25,
+      "absolute_amplitude": 1.3654847809527286e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/1ce046c805223dd1/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "5fabb369f3fb990d2a8e31ede62c94d9dcc93639736e7085f60ebc9c6991bb9f"
+    },
+    {
+      "angle": [
+        4.0,
+        30.0
+      ],
+      "reflection_power_sum": 9.877033517600646e-24,
+      "transmission_power_sum": 7.242991175516822e-24,
+      "total_power": 1.7120024693117468e-23,
+      "absolute_amplitude": 4.506112199850578e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/1368a5b054b2699c/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "98f948165005881cd194313ef62b4f0f6b1ebc5daa75b94df48c5de3f62387a2"
+    },
+    {
+      "angle": [
+        4.0,
+        45.0
+      ],
+      "reflection_power_sum": 1.2537049901673053e-15,
+      "transmission_power_sum": 1.9702485136169634e-15,
+      "total_power": 3.2239535037842687e-15,
+      "absolute_amplitude": 1.4805279704025485e-08,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g4_a45/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "64e0c2f4171362745fb367ae37cccbd17411eb5736cea6e260458c5f6a83cc08"
+    },
+    {
+      "angle": [
+        4.0,
+        60.0
+      ],
+      "reflection_power_sum": 3.4627120517836183e-10,
+      "transmission_power_sum": 1.9430481807952465e-09,
+      "total_power": 2.2893193859736083e-09,
+      "absolute_amplitude": 1.746443351568136e-05,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/a4d3e80466d80acc/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "decee9281a0c0e6c944a107f1efe4fcb03cd4d9b4fb008c34dde8fd9a957a0ec"
+    },
+    {
+      "angle": [
+        4.0,
+        75.0
+      ],
+      "reflection_power_sum": 4.8692550802488555e-11,
+      "transmission_power_sum": 2.9367931467257577e-10,
+      "total_power": 3.423718654750643e-10,
+      "absolute_amplitude": 5.214698884151708e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/078f1cbf36fd13d4/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "fa39eece3d6c545592e0411eb4d4348af9c625abd78e18e13c4dadb1db19481a"
+    },
+    {
+      "angle": [
+        4.0,
+        90.0
+      ],
+      "reflection_power_sum": 1.0688851074014334e-10,
+      "transmission_power_sum": 2.397270566891072e-10,
+      "total_power": 3.466155674292505e-10,
+      "absolute_amplitude": 4.62435572135376e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/fa3b163ade10da5c/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "3178e72712c16b98edbcb23af223ca8d38ee4ceb006e93f78f6ec1b1de4c96b0"
+    },
+    {
+      "angle": [
+        6.0,
+        0.0
+      ],
+      "reflection_power_sum": 8.301061277832204e-26,
+      "transmission_power_sum": 5.5972724084372e-26,
+      "total_power": 1.3898333686269402e-25,
+      "absolute_amplitude": 6.581656191681943e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/8089a69a9eb40961/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "6d370b70328afb8729659516a03c7db646a3c869aa17b4354341af9c70b78e36"
+    },
+    {
+      "angle": [
+        6.0,
+        5.0
+      ],
+      "reflection_power_sum": 3.246960235612599e-26,
+      "transmission_power_sum": 2.685214767557887e-26,
+      "total_power": 5.932175003170487e-26,
+      "absolute_amplitude": 1.1571102317416708e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/df563452f6978b69/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "fb5ef9062416e7457f7bee4414d9b66fb911b154a804faccc2cf4e9206b8ee71"
+    },
+    {
+      "angle": [
+        6.0,
+        10.0
+      ],
+      "reflection_power_sum": 4.333066199955579e-26,
+      "transmission_power_sum": 3.350125561525702e-26,
+      "total_power": 7.683191761481281e-26,
+      "absolute_amplitude": 6.262444377792396e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/5adb6c3af79f4345/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "0e1d9769f3a9c12eb56821b8e4ede6c5b8da2d685795918d0a90498d38ce2daa"
+    },
+    {
+      "angle": [
+        6.0,
+        15.0
+      ],
+      "reflection_power_sum": 6.398113306033785e-26,
+      "transmission_power_sum": 8.432240679379896e-26,
+      "total_power": 1.4830353985413682e-25,
+      "absolute_amplitude": 4.772446701385932e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/864e4ad2baf2378a/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "c50ce44fcfa285baf2101d3833526ddf23d02dbdd7acf23ac2ec960966b512fd"
+    },
+    {
+      "angle": [
+        6.0,
+        20.0
+      ],
+      "reflection_power_sum": 2.1676289802681761e-26,
+      "transmission_power_sum": 1.0782222236374235e-25,
+      "total_power": 1.294985121664241e-25,
+      "absolute_amplitude": 2.766223496645728e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/d52f7dc9b25cad32/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "1dcaf82cf9a32ba4e7aa008eeaa7a31f544c2f6fa64ace2fc6fdeb5ac019f035"
+    },
+    {
+      "angle": [
+        6.0,
+        30.0
+      ],
+      "reflection_power_sum": 1.0578219765552176e-25,
+      "transmission_power_sum": 9.974087459749185e-26,
+      "total_power": 2.055230722530136e-25,
+      "absolute_amplitude": 6.192116962165876e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/9e797b4e1772c793/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "00388dc0fddea8964faa68d2c92b3b9167aa7d9b348f3e0850d60f9e5eaba99a"
+    },
+    {
+      "angle": [
+        6.0,
+        45.0
+      ],
+      "reflection_power_sum": 4.193274268744262e-16,
+      "transmission_power_sum": 1.2420924485354683e-15,
+      "total_power": 1.6614198754098946e-15,
+      "absolute_amplitude": 1.9635149639845616e-08,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/765b12c28a466f6c/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "288993828171b5ad91f31a0202538856fbd02177f50d3d51844fc7a3b6747784"
+    },
+    {
+      "angle": [
+        6.0,
+        60.0
+      ],
+      "reflection_power_sum": 1.0859915622637125e-09,
+      "transmission_power_sum": 2.0897212271822527e-09,
+      "total_power": 3.1757127894459654e-09,
+      "absolute_amplitude": 2.235157428560449e-05,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/aa0a2f51d68086a7/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "53908421543a000bc6d024aa9c28a6eb33b207a325ffe660b6aa896bbd110978"
+    },
+    {
+      "angle": [
+        6.0,
+        75.0
+      ],
+      "reflection_power_sum": 1.6675660886672688e-10,
+      "transmission_power_sum": 2.1255142792618005e-10,
+      "total_power": 3.7930803679290694e-10,
+      "absolute_amplitude": 5.449292246114732e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/2c9dbb47388dbfb1/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "4451367b92bdb57c60d623b3000191544547fb01027d7b3860db6d518c41d7e5"
+    },
+    {
+      "angle": [
+        6.0,
+        90.0
+      ],
+      "reflection_power_sum": 2.2656934917272507e-11,
+      "transmission_power_sum": 1.0890263006433908e-11,
+      "total_power": 3.354719792370642e-11,
+      "absolute_amplitude": 1.7419182068357036e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/7779e8fa05f377a5/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "9aa1aad682267c75b6fe3aeac29fa2a12d6bb3e5520152f765c2bc98dbcf9b89"
+    },
+    {
+      "angle": [
+        8.0,
+        0.0
+      ],
+      "reflection_power_sum": 5.42270239894623e-26,
+      "transmission_power_sum": 5.177907599713661e-26,
+      "total_power": 1.060060999865989e-25,
+      "absolute_amplitude": 6.949526540226178e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/8279149e2a0199dc/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "95bb8da8a0caaa2cfeb3807f6232a10be7436012c0d59eb4d5dd0ded63759bfd"
+    },
+    {
+      "angle": [
+        8.0,
+        5.0
+      ],
+      "reflection_power_sum": 2.7278874479923264e-26,
+      "transmission_power_sum": 1.9766816385433513e-26,
+      "total_power": 4.704569086535678e-26,
+      "absolute_amplitude": 7.040589286842777e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/8c044f211dd84c84/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "ce09fb885ca985b438a3e2603a70e18f032bd81cc3da301d454406332b2450cb"
+    },
+    {
+      "angle": [
+        8.0,
+        10.0
+      ],
+      "reflection_power_sum": 5.636011233850882e-26,
+      "transmission_power_sum": 9.278089522516813e-26,
+      "total_power": 1.4914100756367695e-25,
+      "absolute_amplitude": 1.0410685982121717e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/d534275ed3adbc72/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "821ae83b0507cfe23a6fbd6b50fb85a5f5a3dda0ae938e32a0636d45bca88774"
+    },
+    {
+      "angle": [
+        8.0,
+        15.0
+      ],
+      "reflection_power_sum": 4.3291032195746905e-26,
+      "transmission_power_sum": 4.596571130583774e-26,
+      "total_power": 8.925674350158465e-26,
+      "absolute_amplitude": 1.457840670647885e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/6ada6f4d2f1cecc3/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "b4d9f0ec1c1b337d3df1fe99766ec7f02d127afcaa17bafdd32ab360610dcb70"
+    },
+    {
+      "angle": [
+        8.0,
+        20.0
+      ],
+      "reflection_power_sum": 1.8270786419319893e-26,
+      "transmission_power_sum": 6.072671301033194e-26,
+      "total_power": 7.899749942965184e-26,
+      "absolute_amplitude": 1.9342302924565462e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/82e327c77dab15b2/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "04a33a024a8bf7009b8e4b9a3d50938228a2102a51f4fa394cf1d035f4c701fb"
+    },
+    {
+      "angle": [
+        8.0,
+        30.0
+      ],
+      "reflection_power_sum": 2.7791230982988396e-26,
+      "transmission_power_sum": 1.78727634832142e-26,
+      "total_power": 4.5663994466202594e-26,
+      "absolute_amplitude": 4.493584119659583e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/438762c1ea9c3e8e/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "e1743903029f1e9143c2fe07fe736b7393e27940080d89372f4d8387b2e64ee8"
+    },
+    {
+      "angle": [
+        8.0,
+        45.0
+      ],
+      "reflection_power_sum": 6.650330002339499e-16,
+      "transmission_power_sum": 2.0971704061215256e-16,
+      "total_power": 8.747500408461025e-16,
+      "absolute_amplitude": 1.415886910594659e-08,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/cb3c26609fa7ae74/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "5f5ded3fb6430adc451652626306f9546f78f046242788f122d63ffe19f53191"
+    },
+    {
+      "angle": [
+        8.0,
+        60.0
+      ],
+      "reflection_power_sum": 5.287657218075162e-10,
+      "transmission_power_sum": 3.398503348932427e-10,
+      "total_power": 8.686160567007589e-10,
+      "absolute_amplitude": 1.245257782425236e-05,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/8a00771cc61415b8/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "523f6adf9e95e7e5abb62cd0fadd679142fd5c96bbfbc0b7f52b9451111d329b"
+    },
+    {
+      "angle": [
+        8.0,
+        75.0
+      ],
+      "reflection_power_sum": 1.0458524879226588e-10,
+      "transmission_power_sum": 5.2877995305260157e-11,
+      "total_power": 1.5746324409752605e-10,
+      "absolute_amplitude": 4.3101668288729735e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/5019d7d1a98b56cf/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "9f5fd4eaa06093d8b5a2956598bd1f459f0a684b2112071b36a8c238c2118daf"
+    },
+    {
+      "angle": [
+        8.0,
+        90.0
+      ],
+      "reflection_power_sum": 8.843156357516952e-11,
+      "transmission_power_sum": 1.5302272479701212e-10,
+      "total_power": 2.4145428837218167e-10,
+      "absolute_amplitude": 5.238756269404489e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/86702903482383c2/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "70543db1b491454a4c25c514ff85e91c93d64618a6b46639c454472581efac0a"
+    },
+    {
+      "angle": [
+        10.0,
+        0.0
+      ],
+      "reflection_power_sum": 3.298419370932049e-26,
+      "transmission_power_sum": 3.83332728730901e-26,
+      "total_power": 7.13174665824106e-26,
+      "absolute_amplitude": 4.802751168250596e-14,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g10_a0/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "f3dffe4ffd6369ebe169255bb264c2fe411090f6ca05200431096dc5a5677712"
+    },
+    {
+      "angle": [
+        10.0,
+        5.0
+      ],
+      "reflection_power_sum": 7.084815608184058e-26,
+      "transmission_power_sum": 4.794278517821513e-26,
+      "total_power": 1.187909412600557e-25,
+      "absolute_amplitude": 2.1061517019498583e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/763fbbf46b91c1ac/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "ebf94b615721258bcafe2a589d8d21594e37f31dbf9408995d42e1740290bf62"
+    },
+    {
+      "angle": [
+        10.0,
+        10.0
+      ],
+      "reflection_power_sum": 2.9255436575125577e-25,
+      "transmission_power_sum": 2.4510759325101644e-25,
+      "total_power": 5.376619590022722e-25,
+      "absolute_amplitude": 4.4961176367346116e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/2116e7a7e6f79aa0/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "9fc3ae840a94b3e2d9078bb7634ddb9063a357c5f937af147c65dabe1b68ef13"
+    },
+    {
+      "angle": [
+        10.0,
+        15.0
+      ],
+      "reflection_power_sum": 1.896865365803605e-24,
+      "transmission_power_sum": 1.0420204108442272e-24,
+      "total_power": 2.9388857766478323e-24,
+      "absolute_amplitude": 6.446885744934895e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/2fccfffb8eb5fb2e/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "bb8dce1d07f56a6ff9ae6819ea0c05a9b458cb63deafc8b78f6f562a0c9049a5"
+    },
+    {
+      "angle": [
+        10.0,
+        20.0
+      ],
+      "reflection_power_sum": 2.1092112876742195e-26,
+      "transmission_power_sum": 3.6126035762880425e-26,
+      "total_power": 5.721814863962262e-26,
+      "absolute_amplitude": 1.4778359818950567e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/46aca5c80b4f0897/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "050722ca5cd43f9e14f7f91313c5a93c1ccc1b11ecceac232e44e7b997f1b851"
+    },
+    {
+      "angle": [
+        10.0,
+        30.0
+      ],
+      "reflection_power_sum": 1.3121397114563504e-25,
+      "transmission_power_sum": 1.6446914877535038e-25,
+      "total_power": 2.956831199209854e-25,
+      "absolute_amplitude": 1.386934738563109e-13,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/293e575975969b36/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "5d9e7ebc97c428731a41c6f55cdf3dd28574be33a2a7111e8662973573a98e4a"
+    },
+    {
+      "angle": [
+        10.0,
+        45.0
+      ],
+      "reflection_power_sum": 2.890656598147977e-16,
+      "transmission_power_sum": 6.822237348657143e-16,
+      "total_power": 9.712893946805119e-16,
+      "absolute_amplitude": 1.6849313564181053e-08,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g10_a45/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "efb490b131653b3a6b4bb3b8cd6611b45f79c463f04dba05dd8bfc16f9ab6743"
+    },
+    {
+      "angle": [
+        10.0,
+        60.0
+      ],
+      "reflection_power_sum": 2.6768337601391597e-11,
+      "transmission_power_sum": 3.8031409700128e-09,
+      "total_power": 3.829909307614191e-09,
+      "absolute_amplitude": 3.971065398159596e-05,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/541e339a8e5148a9/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "48855117dc9012471a66d5018462ec22e7edd4e68c177dee199c9c40d4c460c1"
+    },
+    {
+      "angle": [
+        10.0,
+        75.0
+      ],
+      "reflection_power_sum": 3.369414311472129e-12,
+      "transmission_power_sum": 3.352939620301795e-10,
+      "total_power": 3.3866337634165163e-10,
+      "absolute_amplitude": 8.948155914564208e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/115/m2c/formal/1553d13d3e62fdaf/results/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "29eb86f4a0ad1786e30f946a8949ecb365591887686d0d0157114c9d28942ce5"
+    },
+    {
+      "angle": [
+        10.0,
+        90.0
+      ],
+      "reflection_power_sum": 3.496745465543867e-11,
+      "transmission_power_sum": 8.605144531908543e-11,
+      "total_power": 1.210188999745241e-10,
+      "absolute_amplitude": 4.398783545963668e-06,
+      "raw": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/114/m2b/full3d/p5_g10_a90/results/airbox3d_oblique_stage4_block_grating/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "97e062a002add997b703490c1a7bf9d778e0440dda8c0f2fcbcdb8f993759f5b"
+    }
+  ],
+  "frozen_gates": {
+    "total_power_max": 1e-07,
+    "absolute_amplitude_max": 0.0001
+  },
+  "gates": {
+    "p5_80_angle_authority": true,
+    "total_power_supports_gate": true,
+    "amplitude_supports_gate": true
+  }
+}

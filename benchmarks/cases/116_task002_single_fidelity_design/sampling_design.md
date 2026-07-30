@@ -1,7 +1,9 @@
 # Task002 M3R frozen sampling design
 
 All point tables are design-only and bind clean implementation SHA
-`eaf17cd01f9e69eff4575b83ea94490a453e09bb`. No M4 PDE was run.
+`ba50cd36b081637ed5ea97c2dc8e4827d992b940` after the Review V5 metadata-only
+rebind. The four point-tuple tables and their hashes are unchanged. Case116
+itself ran no M4 PDE.
 
 - training: 96 p5 points, seed 20260729;
 - frozen validation: 16 p5 points, seed 20260730;

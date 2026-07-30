@@ -1,7 +1,7 @@
 {
   "schema_version": "task002.m3r-design.v1",
   "design_id": "task002_discretization_audit_candidates_v1",
-  "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+  "source_sha": "ba50cd36b081637ed5ea97c2dc8e4827d992b940",
   "source_dirty": false,
   "parameter_schema_version": "task002.s-p5-production-parameters.v2",
   "observable_schema_version": "task002.fixed-n0-orders.v3",

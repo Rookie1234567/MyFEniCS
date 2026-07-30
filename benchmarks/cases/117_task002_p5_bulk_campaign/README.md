@@ -1,6 +1,6 @@
 # Case117 — Task002 p5 production campaign
 
-Case117 is the evidence authority for Review V5 M4P and M4. It hardens the
+Case117 is the evidence authority for Review V5 M4P and the controlled M4 stop. It hardens the
 design-bound resume-safe campaign, qualifies compact output, then records the
 frozen 96-point training and 16-point frozen-validation p5 datasets.
 
@@ -12,7 +12,12 @@ design and pass residual, energy, observable-v3, runtime-topology,
 M4 generates and seals data only. PCE/GP fitting, validation evaluation,
 feature selection, active learning, angle DOE and inversion remain forbidden.
 
-Records are generated incrementally after the clean M4 implementation baseline:
+M4 stopped at the first unexplained production Gate failure: training design
+index 40 exceeded both frozen `n!=0` leakage thresholds. No retry, threshold
+change, skipped-point continuation, validation solve or dataset build occurred.
+
+Records were generated incrementally after the clean M4 implementation baseline:
 preflight/leakage/compact-equivalence/design-rebind first, then canary,
-training, validation, dataset and resource summaries. The command in
-`test_command.txt` verifies the final compact evidence without running PDE.
+partial training, the first failure, not-run validation/dataset dispositions and
+resource summaries. The command in `test_command.txt` verifies the controlled-
+stop evidence without running PDE.

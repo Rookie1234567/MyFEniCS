@@ -1,0 +1,7 @@
+{
+  "schema_version": "task002.case117-dataset-not-built.v1",
+  "status": "not_built_by_training_failure_gate",
+  "sample_count": 0,
+  "reason": "first_unexplained_failure:task002_p5_initial_training_v1:0040:failed_numerical_gate",
+  "completion_gate": false
+}

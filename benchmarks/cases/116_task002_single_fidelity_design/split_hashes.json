@@ -1,6 +1,6 @@
 {
   "schema_version": "task002.m3r-split-hashes.v1",
-  "source_sha": "eaf17cd01f9e69eff4575b83ea94490a453e09bb",
+  "source_sha": "ba50cd36b081637ed5ea97c2dc8e4827d992b940",
   "training_sha256": "b01f4f3b27b5b5e0466fb1d620ffe504677f6c24468ac9e955ac45fac39570fa",
   "frozen_validation_sha256": "e5733173c2c55d4d5ef8e660fc63019bf61e78063a3bd24cb0488dc6c435e50b",
   "candidate_pool_sha256": "a9831ffc1055732660bee859382f623e8558560634d9ac98702cfe355ff09fcd",
@@ -37,5 +37,5 @@
     ],
     "audit_validation": []
   },
-  "combined_design_sha256": "f072c0f3ac03cd97026a85338fd4a79e3cd498c492aea1e79dacbb009e22faa3"
+  "combined_design_sha256": "77d12c0acf9a567e22f6daf104a22c61d78398db3e5ce3d7bce1d325126537b8"
 }

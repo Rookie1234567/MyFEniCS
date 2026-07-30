@@ -1,0 +1,25 @@
+{
+  "schema_version": "task002.m4-design-rebind.v1",
+  "old_source_sha": "ba50cd36b081637ed5ea97c2dc8e4827d992b940",
+  "new_source_sha": "ba50cd36b081637ed5ea97c2dc8e4827d992b940",
+  "old_point_tuple_hashes": {
+    "training_design.json": "b01f4f3b27b5b5e0466fb1d620ffe504677f6c24468ac9e955ac45fac39570fa",
+    "frozen_validation_design.json": "e5733173c2c55d4d5ef8e660fc63019bf61e78063a3bd24cb0488dc6c435e50b",
+    "candidate_pool.json": "a9831ffc1055732660bee859382f623e8558560634d9ac98702cfe355ff09fcd",
+    "discretization_audit_design.json": "049b973bbed7de05e46e8045fac11461ac80641f08aa464bb81d7aa72611a2aa"
+  },
+  "new_point_tuple_hashes": {
+    "training_design.json": "b01f4f3b27b5b5e0466fb1d620ffe504677f6c24468ac9e955ac45fac39570fa",
+    "frozen_validation_design.json": "e5733173c2c55d4d5ef8e660fc63019bf61e78063a3bd24cb0488dc6c435e50b",
+    "candidate_pool.json": "a9831ffc1055732660bee859382f623e8558560634d9ac98702cfe355ff09fcd",
+    "discretization_audit_design.json": "049b973bbed7de05e46e8045fac11461ac80641f08aa464bb81d7aa72611a2aa"
+  },
+  "combined_design_sha256": "77d12c0acf9a567e22f6daf104a22c61d78398db3e5ce3d7bce1d325126537b8",
+  "tuple_tables_unchanged": {
+    "training_design.json": true,
+    "frozen_validation_design.json": true,
+    "candidate_pool.json": true,
+    "discretization_audit_design.json": true
+  },
+  "pass": true
+}

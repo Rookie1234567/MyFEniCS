@@ -1,0 +1,8 @@
+{
+  "schema_version": "task002.case117-partial-resource-summary.v1",
+  "completed_pass_count": 56,
+  "failed_record_count": 1,
+  "peak_rss_bytes": 4331548672,
+  "all_completed_attempts_zero_swap": true,
+  "all_completed_attempts_cleanup": true
+}
