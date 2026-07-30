@@ -1741,6 +1741,10 @@ def build_variable_p_assembly_time_reduction(
                 "zero_h_selective_trace_only"
             )
             is True
+            or local_h_audit.get("mesh", {}).get(
+                "zero_h_fixed_trace_anchor"
+            )
+            is True
         )
     )
     advisory_dof_target = 90_000
