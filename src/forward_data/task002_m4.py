@@ -15,8 +15,8 @@ from .task002_schema import (
 )
 
 
-PRODUCTION_MODEL_ID = "S_PROD_FULL3D_STATIC_P5_H10"
-PRODUCTION_ROUTE_ID = "full3d_static_uniform_n1curl_p5_h10"
+PRODUCTION_MODEL_ID = "S_PROD_FULL3D_STATIC_P5_H10_NY4"
+PRODUCTION_ROUTE_ID = "full3d_static_uniform_n1curl_p5_h10_ny4"
 DESIGN_SCHEMA = "task002.m3r-design.v1"
 
 
@@ -88,7 +88,11 @@ def formal_record_to_production_sample(
     if record.get("output_profile") != "compact_surrogate_record":
         raise ValueError("production sample requires compact output profile")
     if record.get("solver_route_id") != PRODUCTION_ROUTE_ID:
-        raise ValueError("formal record is not p5 production")
+        raise ValueError("formal record is not Ny4 p5 production")
+    if record.get("planned_topology_identity", {}).get("axis_cell_counts") != [6, 4, 14]:
+        raise ValueError("formal record planned topology is not Ny4")
+    if record.get("actual_runtime_topology_identity", {}).get("axis_cell_counts") != [6, 4, 14]:
+        raise ValueError("formal record actual topology is not Ny4")
     if record.get("source_sha") != manifest_row.get("source_sha"):
         raise ValueError("formal/manifest source SHA mismatch")
     geometry = record["parameters"]["geometry"]
@@ -106,11 +110,13 @@ def formal_record_to_production_sample(
         "source_sha": record["source_sha"],
     }
     return {
-        "schema_version": "task002.production-sample.v2",
+        "schema_version": "task002.production-ny4-sample.v3",
         "sample_id": canonical_hash(sample_identity), **sample_identity,
         "split": manifest_row["split"], "inputs": inputs,
         "status": "measured_pass", "source_dirty": False,
+        "model_id": record["model_id"],
         "solver_route_id": record["solver_route_id"],
+        "axis_cell_counts": record["actual_runtime_topology_identity"]["axis_cell_counts"],
         "aggregates": {
             name: record["observables"][name]
             for name in ("R_total", "T_total", "A_balance", "A_volume")
@@ -166,16 +172,30 @@ def rebind_frozen_designs(*, source_dir: Path, output_dir: Path,
         value = copy.deepcopy(old[name])
         value["source_sha"] = baseline_sha
         value["source_dirty"] = False
+        value["parameter_schema_version"] = TASK002_PARAMETER_SCHEMA_VERSION
+        value["production_model_id"] = PRODUCTION_MODEL_ID
+        value["production_solver_route_id"] = PRODUCTION_ROUTE_ID
+        for point in value["points"]:
+            point["model_id"] = PRODUCTION_MODEL_ID
+            point["solver_route_id"] = PRODUCTION_ROUTE_ID
         new[name] = value
     old_split = json.loads((source_dir / "split_hashes.json").read_text(encoding="utf-8"))
     split = copy.deepcopy(old_split)
     split["source_sha"] = baseline_sha
+    split["parameter_schema_version"] = TASK002_PARAMETER_SCHEMA_VERSION
+    split["production_model_id"] = PRODUCTION_MODEL_ID
+    split["production_solver_route_id"] = PRODUCTION_ROUTE_ID
+    split["production_axis_cell_counts"] = [6, 4, 14]
     split["combined_design_sha256"] = canonical_hash({
         "training": split["training_sha256"],
         "validation": split["frozen_validation_sha256"],
         "candidates": split["candidate_pool_sha256"],
         "audit": split["discretization_audit_sha256"],
         "source_sha": baseline_sha,
+        "parameter_schema_version": TASK002_PARAMETER_SCHEMA_VERSION,
+        "production_model_id": PRODUCTION_MODEL_ID,
+        "production_solver_route_id": PRODUCTION_ROUTE_ID,
+        "production_axis_cell_counts": [6, 4, 14],
     })
     new["split_hashes.json"] = split
     audit = audit_rebind(old, new)
@@ -187,7 +207,7 @@ def rebind_frozen_designs(*, source_dir: Path, output_dir: Path,
             json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8",
         )
     return {
-        "schema_version": "task002.m4-design-rebind.v1",
+        "schema_version": "task002.m4e-ny4-design-rebind.v2",
         "old_source_sha": old["training_design.json"]["source_sha"],
         "new_source_sha": baseline_sha,
         "old_point_tuple_hashes": {

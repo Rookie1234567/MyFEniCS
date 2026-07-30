@@ -220,7 +220,7 @@ def audit_order_window(
     for grazing, azimuth in angles:
         angle_count += 1
         parameters = Task002ForwardParameters(
-            120.0, 17.0, grazing, azimuth, "S_PROD_FULL3D_STATIC_P5_H10"
+            120.0, 17.0, grazing, azimuth, "S_PROD_FULL3D_STATIC_P5_H10_NY4"
         )
         for order in _orders(parameters, max_abs_m=max_abs_m):
             nearest[order.m] = min(

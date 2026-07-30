@@ -1,0 +1,3 @@
+source scripts/activate_myfenics_surrogate_wsl.sh
+python -m pytest -q src/test/test_surrogate_task002_m4e.py
+python -m benchmarks.check_case119_task002_m4e --verify

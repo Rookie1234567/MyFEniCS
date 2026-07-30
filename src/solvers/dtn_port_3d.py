@@ -683,7 +683,13 @@ def _mode_projection_from_solution(
     *,
     quadrature_degree: int | None,
 ) -> complex:
-    """Project a solved total field onto one port mode on its boundary face."""
+    """Project the solved tangential E trace onto one tangential port mode.
+
+    The auxiliary DtN row and its denominator are both tangential-trace
+    contracts.  In particular, outgoing P modes may have a nonzero normal
+    component; neither ``E_z`` nor ``mode.e_vector[2]`` belongs in this
+    diagnostic numerator.
+    """
 
     tag = cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min
     x = ufl.SpatialCoordinate(mesh_data.mesh)
@@ -692,15 +698,66 @@ def _mode_projection_from_solution(
         + PETSc.ScalarType(1j * mode.gamma) * x[1]
         + PETSc.ScalarType(1j * mode.k_vector[2]) * x[2]
     )
-    reference = _as_ufl_vector(mode.e_vector, phase)
+    e_t = ufl.as_vector((
+        E_total[0], E_total[1], PETSc.ScalarType(0.0),
+    ))
+    reference = _as_ufl_vector(
+        np.asarray((mode.e_vector[0], mode.e_vector[1], 0.0), dtype=np.complex128),
+        phase,
+    )
     ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
     form_options: dict[str, int] = {}
     if quadrature_degree is not None:
         form_options["quadrature_degree"] = int(quadrature_degree)
-    local = fem.assemble_scalar(fem.form(ufl.inner(E_total, reference) * ds(tag), form_compiler_options=form_options))
+    local = fem.assemble_scalar(fem.form(ufl.inner(e_t, reference) * ds(tag), form_compiler_options=form_options))
     total = mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
     denominator = _mode_projection_denominator(mode, cfg)
     return complex(total / denominator)
+
+
+def _sampled_tangential_projection(
+    electric_samples: np.ndarray,
+    mode_samples: np.ndarray,
+    weights: np.ndarray | None = None,
+) -> complex:
+    """Synthetic oracle for the same tangential trace coefficient contract.
+
+    This small NumPy form is used by analytic regression tests, including P
+    vectors with a nonzero normal component.  The third component is
+    deliberately ignored exactly as in ``_mode_projection_from_solution``.
+    """
+
+    electric = np.asarray(electric_samples, dtype=np.complex128)
+    mode = np.asarray(mode_samples, dtype=np.complex128)
+    if electric.shape != mode.shape or electric.ndim != 2 or electric.shape[1] != 3:
+        raise ValueError("sampled tangential projection requires matching (N,3) arrays")
+    measure = (
+        np.ones(electric.shape[0], dtype=np.float64)
+        if weights is None else np.asarray(weights, dtype=np.float64)
+    )
+    if measure.shape != (electric.shape[0],) or np.any(measure < 0.0):
+        raise ValueError("sampled tangential projection weights are invalid")
+    numerator = np.sum(
+        measure * np.sum(electric[:, :2] * np.conj(mode[:, :2]), axis=1)
+    )
+    denominator = float(
+        np.sum(measure * np.sum(np.abs(mode[:, :2]) ** 2, axis=1))
+    )
+    if denominator <= 0.0:
+        raise ValueError("sampled tangential mode has zero tangential norm")
+    return complex(numerator / denominator)
+
+
+def _outgoing_projection(
+    total_projection: complex, incident_projection: complex, side: str,
+) -> complex:
+    """Apply the same top-incident subtraction used by auxiliary amplitudes."""
+
+    if side == "top":
+        return complex(total_projection - incident_projection)
+    if side == "bottom":
+        return complex(total_projection)
+    raise ValueError("side must be top or bottom")
 
 
 def _surface_scalar(

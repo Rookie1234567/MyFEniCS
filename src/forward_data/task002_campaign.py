@@ -1,4 +1,4 @@
-"""Design-bound, resume-safe Task002 p5-only production campaign v3."""
+"""Design-bound, resume-safe Task002 Ny4 p5-only production campaign v4."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from .task002_m4 import (
 from .task002_schema import Task002ForwardParameters
 
 
-CAMPAIGN_SCHEMA_VERSION = "task002.s-p5-design-campaign.v3"
+CAMPAIGN_SCHEMA_VERSION = "task002.s-p5-ny4-design-campaign.v4"
 ALLOWED_STATUSES = {
     "reserved", "running", "measured_pass", "failed_numerical_gate",
     "controlled_stop_resource", "interrupted_retryable",
@@ -61,7 +61,7 @@ def load_manifest(path: Path, *, baseline_sha: str) -> dict[str, Any]:
         }
     manifest = json.loads(path.read_text(encoding="utf-8"))
     if manifest.get("schema_version") != CAMPAIGN_SCHEMA_VERSION:
-        raise ValueError("Task002 campaign v3 schema mismatch")
+        raise ValueError("Task002 Ny4 campaign v4 schema mismatch")
     if manifest.get("baseline_sha") != baseline_sha:
         raise ValueError("Task002 campaign baseline mismatch")
     return manifest
@@ -82,6 +82,10 @@ def register_design(
         "design_file_sha256": file_hash(design_path),
         "point_tuple_sha256": design["point_tuple_sha256"],
         "point_count": design["point_count"], "source_sha": design["source_sha"],
+        "parameter_schema_version": design["parameter_schema_version"],
+        "observable_schema_version": design["observable_schema_version"],
+        "production_model_id": design["production_model_id"],
+        "production_solver_route_id": design["production_solver_route_id"],
     }
     existing = manifest["designs"].get(design_id)
     if existing is not None and existing != identity:
@@ -255,7 +259,7 @@ def _write_batch_summary(*, artifact_root: Path, design_id: str,
         return
     rows = [manifest["samples"][_row_key(design_id, index)] for index in indices]
     payload = {
-        "schema_version": "task002.s-p5-campaign-batch-summary.v1",
+        "schema_version": "task002.s-p5-ny4-campaign-batch-summary.v2",
         "design_id": design_id, "indices": indices,
         "status_counts": {
             status: sum(row["status"] == status for row in rows)

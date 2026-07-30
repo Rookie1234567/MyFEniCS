@@ -11,22 +11,27 @@ import numpy as np
 from .schema import Task001ForwardParameters
 
 
-TASK002_PARAMETER_SCHEMA_VERSION = "task002.s-p5-production-parameters.v2"
+TASK002_PARAMETER_SCHEMA_VERSION = "task002.s-p5-ny4-production-parameters.v3"
 TASK002_OBSERVABLE_SCHEMA_VERSION = "task002.fixed-n0-orders.v3"
-TASK002_DATASET_SCHEMA_VERSION = "task002.s-p5-single-fidelity-dataset.v2"
-TASK002_SAMPLE_SCHEMA_VERSION = "task002.s-p5-single-fidelity-sample.v2"
+TASK002_DATASET_SCHEMA_VERSION = "task002.s-p5-ny4-single-fidelity-dataset.v3"
+TASK002_SAMPLE_SCHEMA_VERSION = "task002.s-p5-ny4-single-fidelity-sample.v3"
 TASK002_FIXED_M_ORDERS = tuple(range(-7, 4))
 
 TASK002_PRODUCTION_FIDELITIES = {
-    "S_PROD_FULL3D_STATIC_P5_H10": {
-        "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
-        "degree": 5, "h_nm": 10.0, "axis_counts": (6, 3, 14),
+    "S_PROD_FULL3D_STATIC_P5_H10_NY4": {
+        "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+        "degree": 5, "h_nm": 10.0, "axis_counts": (6, 4, 14),
         "element_family": "uniform_N1curl",
         "fidelity_semantics": "best_available_operational_high_fidelity",
     },
 }
 
 TASK002_DIAGNOSTIC_FIDELITIES = {
+    "S_DIAG_REJECTED_FULL3D_STATIC_P5_H10_NY3": {
+        "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny3_rejected",
+        "degree": 5, "h_nm": 10.0, "axis_counts": (6, 3, 14),
+        "element_family": "uniform_N1curl", "role": "diagnostic_only_hard_quarantined",
+    },
     "S_DIAG_FULL3D_STATIC_P4_H10": {
         "solver_route_id": "full3d_static_uniform_n1curl_p4_h10",
         "degree": 4, "h_nm": 10.0, "axis_counts": (6, 3, 14),
@@ -147,7 +152,7 @@ class Task002ForwardParameters:
         if self.schema_version != TASK002_PARAMETER_SCHEMA_VERSION:
             raise ValueError("unsupported Task002 parameter schema version")
         if self.model_id not in TASK002_PRODUCTION_FIDELITIES:
-            raise ValueError(f"Task002 production accepts p5-only model_id: {self.model_id}")
+            raise ValueError(f"Task002 production accepts Ny4 p5-only model_id: {self.model_id}")
         if self.mpi_ranks != 2 or self.threads_per_rank != 1:
             raise ValueError("Task002 FEM requires MPI2 and one thread per rank")
         if self.order_schema_id != TASK002_OBSERVABLE_SCHEMA_VERSION:

@@ -1,0 +1,19 @@
+{
+  "schema_version": "task002.case119-expected.v1",
+  "required_records": [
+    "implementation_and_design_rebind.json",
+    "tangential_projection_correction.json",
+    "enhanced_canary.json",
+    "training_96.json",
+    "frozen_validation_16.json",
+    "resource_summary.json",
+    "negative_or_interrupted_inventory.json",
+    "campaign_completion.json",
+    "compact_dataset_verification.json"
+  ],
+  "training_count": 96,
+  "frozen_validation_count": 16,
+  "axis_cell_counts": [6, 4, 14],
+  "zero_swap_required": true,
+  "cleanup_complete_required": true
+}

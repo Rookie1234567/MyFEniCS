@@ -18,6 +18,7 @@ from src.solvers.dtn_port_3d import (
     _dtn_surface_quadrature_degree,
     _incident_projection_onto_top_mode,
     _mode_projection_from_solution,
+    _outgoing_projection,
 )
 
 from .provenance import canonical_hash
@@ -31,7 +32,7 @@ FAILED_POINT = Task002ForwardParameters(
     width_x_nm=17.513626368716,
     grazing_deg=4.538499870338,
     azimuth_deg=54.420819282532,
-    model_id="S_PROD_FULL3D_STATIC_P5_H10",
+    model_id="S_PROD_FULL3D_STATIC_P5_H10_NY4",
 )
 AZIMUTH_STENCIL = (
     50.0, 51.0, 52.0, 53.0, 53.5, 54.0, 54.25, 54.5,
@@ -228,6 +229,7 @@ def build_m4d_solution_diagnostics(
     mode_indices = {id(mode): index for index, mode in enumerate(modes)}
     current_q = _dtn_surface_quadrature_degree(config, modes)
     selected = []
+    power_carrying = []
     for side in ("top", "bottom"):
         for n in (0, -3):
             for polarization in ("s", "p"):
@@ -235,12 +237,12 @@ def build_m4d_solution_diagnostics(
                 if mode is None:
                     continue
                 index = mode_indices[id(mode)]
-                auxiliary_outgoing = aux[index] - incident[index] if side == "top" else aux[index]
+                auxiliary_outgoing = _outgoing_projection(aux[index], incident[index], side)
                 direct_total = _mode_projection_from_solution(
                     field, mode, mesh_data, config,
                     quadrature_degree=INDEPENDENT_PROJECTION_QUADRATURE,
                 )
-                direct_outgoing = direct_total - incident[index] if side == "top" else direct_total
+                direct_outgoing = _outgoing_projection(direct_total, incident[index], side)
                 selected.append({
                     **_mode_identity(mode),
                     "auxiliary_total_projection": _complex_pair(aux[index]),
@@ -249,6 +251,21 @@ def build_m4d_solution_diagnostics(
                     "direct_outgoing_amplitude_q63": _complex_pair(direct_outgoing),
                     "auxiliary_minus_direct_outgoing_abs": float(abs(auxiliary_outgoing - direct_outgoing)),
                 })
+    for index, mode in enumerate(modes):
+        if not bool(mode.power_per_unit_amplitude > 0.0):
+            continue
+        auxiliary_outgoing = _outgoing_projection(aux[index], incident[index], mode.side)
+        direct_total = _mode_projection_from_solution(
+            field, mode, mesh_data, config,
+            quadrature_degree=INDEPENDENT_PROJECTION_QUADRATURE,
+        )
+        direct_outgoing = _outgoing_projection(direct_total, incident[index], mode.side)
+        power_carrying.append({
+            **_mode_identity(mode),
+            "auxiliary_outgoing_amplitude": _complex_pair(auxiliary_outgoing),
+            "direct_outgoing_amplitude_q63": _complex_pair(direct_outgoing),
+            "absolute_difference": float(abs(auxiliary_outgoing - direct_outgoing)),
+        })
     gram = []
     for q in sorted({int(current_q), 47, INDEPENDENT_PROJECTION_QUADRATURE}):
         for side in ("top", "bottom"):
@@ -276,6 +293,14 @@ def build_m4d_solution_diagnostics(
         "current_surface_quadrature_degree": int(current_q),
         "independent_projection_quadrature_degree": INDEPENDENT_PROJECTION_QUADRATURE,
         "selected_mode_projection_comparison": selected,
+        "power_carrying_tangential_projection_comparison": power_carrying,
+        "power_carrying_tangential_projection_gate": {
+            "threshold": 1.0e-10,
+            "maximum_absolute_difference": max(
+                (row["absolute_difference"] for row in power_carrying), default=0.0,
+            ),
+            "pass": all(row["absolute_difference"] <= 1.0e-10 for row in power_carrying),
+        },
         "port_vector_gram_condition": gram,
         "demodulated_field_audit": _demodulated_y_audit(field, config, parameters),
     }

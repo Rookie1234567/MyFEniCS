@@ -29,9 +29,9 @@ from .task002_schema import (
 from .watchdog import WatchdogResult, run_with_watchdog
 
 
-TASK002_FULL3D_RECORD_SCHEMA = "task002.full3d-record.v3"
-TASK002_FULL3D_TOPOLOGY_SCHEMA = "task002.full3d-topology.v1"
-AXIS_CELL_COUNTS = (6, 3, 14)
+TASK002_FULL3D_RECORD_SCHEMA = "task002.full3d-ny4-record.v4"
+TASK002_FULL3D_TOPOLOGY_SCHEMA = "task002.full3d-ny4-topology.v2"
+AXIS_CELL_COUNTS = (6, 4, 14)
 LAYER_CELL_COUNTS = (1, 12, 1)
 
 
@@ -50,7 +50,9 @@ def build_task002_full3d_config(
     cfg.polarization_kind = "s"
     cfg.nedelec_trace_degree = None
     cfg.nedelec_interior_degree = None
-    cfg.mesh_axis_cell_counts = AXIS_CELL_COUNTS
+    cfg.mesh_axis_cell_counts = tuple(int(value) for value in fidelity["axis_counts"])
+    if cfg.mesh_axis_cell_counts != AXIS_CELL_COUNTS:
+        raise RuntimeError("Task002 production registry/config Ny4 identity mismatch")
     cfg.mesh_spacing_mode = "boundary_fitted"
     substrate_cells, grating_cells, air_cells = LAYER_CELL_COUNTS
     substrate = [
@@ -313,7 +315,7 @@ def run_formal_task002_full3d(
         memory_limit_bytes=preflight["resources"]["hard_ceiling_bytes"],
     )
     execution = {
-        "schema_version": "task002.full3d-execution.v3",
+        "schema_version": "task002.full3d-ny4-execution.v4",
         "parameters": parameters.as_dict(), "baseline_sha": baseline_sha,
         "parameter_hash": canonical_hash(parameters.as_dict()),
         "preflight": preflight, "command": command, "watchdog": asdict(result),

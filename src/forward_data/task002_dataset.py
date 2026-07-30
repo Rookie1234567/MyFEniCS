@@ -1,4 +1,4 @@
-"""Canonical p5-only Task002 dataset v2 writer and independent verifier."""
+"""Canonical Ny4 p5-only Task002 dataset v3 writer and verifier."""
 
 from __future__ import annotations
 
@@ -15,7 +15,9 @@ from .task002_schema import (
 )
 
 
-PRODUCTION_ROUTE = "full3d_static_uniform_n1curl_p5_h10"
+PRODUCTION_ROUTE = "full3d_static_uniform_n1curl_p5_h10_ny4"
+PRODUCTION_MODEL = "S_PROD_FULL3D_STATIC_P5_H10_NY4"
+PRODUCTION_AXIS_COUNTS = [6, 4, 14]
 ARRAY_FILES = (
     "inputs.npy", "aggregates.npy", "order_amplitudes.npy", "order_powers.npy",
     "power_carrying_mask.npy", "train_indices.npy",
@@ -68,7 +70,11 @@ def write_compact_dataset(samples: Iterable[Mapping[str, Any]], *, output_dir: P
     if any(record.get("status") != "measured_pass" for record in records):
         raise ValueError("only measured_pass samples enter the compact production dataset")
     if any(record.get("solver_route_id") != PRODUCTION_ROUTE for record in records):
-        raise ValueError("Task002 production dataset is Full3D p5/h10 single-fidelity only")
+        raise ValueError("Task002 production dataset is Full3D p5/h10/Ny4 only")
+    if any(record.get("model_id") != PRODUCTION_MODEL for record in records):
+        raise ValueError("Task002 production dataset rejects non-Ny4 model identity")
+    if any(record.get("axis_cell_counts") != PRODUCTION_AXIS_COUNTS for record in records):
+        raise ValueError("Task002 production dataset rejects non-Ny4 topology")
     for record in records:
         if not all(record.get("numerical_gates", {}).values()):
             raise ValueError("Task002 dataset rejects samples with failed numerical gates")
@@ -149,6 +155,8 @@ def write_compact_dataset(samples: Iterable[Mapping[str, Any]], *, output_dir: P
         "parameter_schema_version": TASK002_PARAMETER_SCHEMA_VERSION,
         "observable_schema_version": TASK002_OBSERVABLE_SCHEMA_VERSION,
         "production_solver_route_id": PRODUCTION_ROUTE,
+        "production_model_id": PRODUCTION_MODEL,
+        "production_axis_cell_counts": PRODUCTION_AXIS_COUNTS,
         "fidelity_semantics": "p5_single_fidelity_best_available_operational_HF",
         "sample_count": len(records), "sample_ids_hash": canonical_hash(sample_ids),
         "arrays": {name: {"shape": list(array.shape), "dtype": str(array.dtype)}
@@ -174,9 +182,13 @@ def write_compact_dataset(samples: Iterable[Mapping[str, Any]], *, output_dir: P
 def verify_compact_dataset(dataset_dir: Path) -> dict[str, Any]:
     manifest = json.loads((dataset_dir / "dataset_manifest.json").read_text())
     if manifest.get("schema_version") != TASK002_DATASET_SCHEMA_VERSION:
-        raise ValueError("Task002 dataset v2 schema mismatch")
+        raise ValueError("Task002 Ny4 dataset v3 schema mismatch")
     if manifest.get("production_solver_route_id") != PRODUCTION_ROUTE:
-        raise ValueError("Task002 dataset manifest is not p5-only")
+        raise ValueError("Task002 dataset manifest is not Ny4 p5-only")
+    if manifest.get("production_model_id") != PRODUCTION_MODEL:
+        raise ValueError("Task002 dataset manifest model is not Ny4 p5-only")
+    if manifest.get("production_axis_cell_counts") != PRODUCTION_AXIS_COUNTS:
+        raise ValueError("Task002 dataset manifest topology is not Ny4")
     hashes = json.loads((dataset_dir / "file_hashes.json").read_text())
     for name, expected in hashes.items():
         if file_hash(dataset_dir / name) != expected:

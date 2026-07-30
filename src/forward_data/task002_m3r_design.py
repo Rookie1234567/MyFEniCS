@@ -14,8 +14,8 @@ from .task002_schema import (
 )
 
 
-PRODUCTION_MODEL_ID = "S_PROD_FULL3D_STATIC_P5_H10"
-PRODUCTION_ROUTE_ID = "full3d_static_uniform_n1curl_p5_h10"
+PRODUCTION_MODEL_ID = "S_PROD_FULL3D_STATIC_P5_H10_NY4"
+PRODUCTION_ROUTE_ID = "full3d_static_uniform_n1curl_p5_h10_ny4"
 TRAINING_SEED = 20260729
 VALIDATION_SEED = 20260730
 CANDIDATE_SEED = 20260731
@@ -158,7 +158,7 @@ def discretization_audit_design(source_sha: str) -> dict[str, Any]:
                        design_id="task002_discretization_audit_candidates_v1",
                        points=points, seed=None)
     result["solver_pair"] = [
-        "S_PROD_FULL3D_STATIC_P5_H10",
+        "S_PROD_FULL3D_STATIC_P5_H10_NY4",
         "P4_H7P5_DISCRETIZATION_AUDIT",
     ]
     result["production_dataset_membership"] = False
@@ -193,12 +193,20 @@ def freeze_all_designs(source_sha: str) -> dict[str, Any]:
         "frozen_validation_sha256": validation["point_tuple_sha256"],
         "candidate_pool_sha256": candidates["point_tuple_sha256"],
         "discretization_audit_sha256": audit["point_tuple_sha256"],
+        "parameter_schema_version": TASK002_PARAMETER_SCHEMA_VERSION,
+        "production_model_id": PRODUCTION_MODEL_ID,
+        "production_solver_route_id": PRODUCTION_ROUTE_ID,
+        "production_axis_cell_counts": [6, 4, 14],
         "intersection_audit": intersections,
         "combined_design_sha256": canonical_hash({
             "training": training["point_tuple_sha256"],
             "validation": validation["point_tuple_sha256"],
             "candidates": candidates["point_tuple_sha256"],
             "audit": audit["point_tuple_sha256"], "source_sha": source_sha,
+            "parameter_schema_version": TASK002_PARAMETER_SCHEMA_VERSION,
+            "production_model_id": PRODUCTION_MODEL_ID,
+            "production_solver_route_id": PRODUCTION_ROUTE_ID,
+            "production_axis_cell_counts": [6, 4, 14],
         }),
     }
     return {"training_design.json": training,

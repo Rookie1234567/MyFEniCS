@@ -8,7 +8,10 @@ from typing import Any
 
 import numpy as np
 
-from .task002_dataset import ARRAY_FILES, PRODUCTION_ROUTE, verify_compact_dataset
+from .task002_dataset import (
+    ARRAY_FILES, PRODUCTION_AXIS_COUNTS, PRODUCTION_MODEL, PRODUCTION_ROUTE,
+    verify_compact_dataset,
+)
 from .task002_m4 import design_point_hash, load_frozen_design
 from .task002_schema import TASK002_OBSERVABLE_SCHEMA_VERSION
 
@@ -62,7 +65,11 @@ def verify_exact_design_dataset(
         if sample.get("status") != "measured_pass":
             raise ValueError(f"non-passing sample entered dataset: {key}")
         if sample.get("solver_route_id") != PRODUCTION_ROUTE:
-            raise ValueError(f"non-p5 sample entered dataset: {key}")
+            raise ValueError(f"non-Ny4 sample entered dataset: {key}")
+        if sample.get("model_id") != PRODUCTION_MODEL:
+            raise ValueError(f"non-Ny4 model entered dataset: {key}")
+        if sample.get("axis_cell_counts") != PRODUCTION_AXIS_COUNTS:
+            raise ValueError(f"non-Ny4 topology entered dataset: {key}")
         mother = sample.get("mother_response", {})
         if mother.get("schema_version") != TASK002_OBSERVABLE_SCHEMA_VERSION:
             raise ValueError(f"observable v3 mismatch: {key}")

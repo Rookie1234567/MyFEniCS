@@ -38,7 +38,7 @@ def main() -> int:
         width_x_nm=args.width_nm,
         grazing_deg=args.grazing_deg,
         azimuth_deg=args.azimuth_deg,
-        model_id="S_PROD_FULL3D_STATIC_P5_H10",
+        model_id="S_PROD_FULL3D_STATIC_P5_H10_NY4",
     )
     parameters.validate()
     run_dir = args.run_directory.resolve()

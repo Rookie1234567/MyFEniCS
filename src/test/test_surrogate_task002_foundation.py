@@ -44,7 +44,7 @@ from src.forward_data.task002_schema import (
 )
 
 
-PROD = "S_PROD_FULL3D_STATIC_P5_H10"
+PROD = "S_PROD_FULL3D_STATIC_P5_H10_NY4"
 
 
 def _parameters(**updates) -> Task002ForwardParameters:
@@ -219,8 +219,8 @@ def test_task002_full3d_command_and_uniform_element_identity(tmp_path: Path) -> 
     )
     assert compact_cfg.task002_output_profile == "compact_surrogate_record"
     runtime_plan = planned_runtime_identity(parameters)
-    assert runtime_plan["axis_cell_counts"] == [6, 3, 14]
-    assert runtime_plan["expected_global_dof_count"] == 101815
+    assert runtime_plan["axis_cell_counts"] == [6, 4, 14]
+    assert runtime_plan["expected_global_dof_count"] == 134320
     for diagnostic in (
         "S_DIAG_FULL3D_STATIC_P4_H10", "S_LF_FULL3D_STATIC_P4_H10",
         "S_HF_FULL3D_STATIC_P5_H10", "S_LF_HYBRID_P4_H10_M120",
@@ -342,7 +342,9 @@ def test_dataset_roundtrip_hash_split_and_structural_null(tmp_path: Path) -> Non
         samples.append({
             "sample_id": f"s{index}", "source_sha": "c" * 40, "source_dirty": False,
             "status": "measured_pass", "split": split,
-            "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+            "model_id": PROD,
+            "axis_cell_counts": [6, 4, 14],
+            "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
             "inputs": [120.0, 17.0, 5.25, 45.0],
             "aggregates": {"R_total": 0.1, "T_total": 0.6, "A_balance": 0.3, "A_volume": 0.3},
             "mother_response": _mother_response(),
@@ -365,7 +367,9 @@ def test_dataset_rejects_failed_and_nonproduction_solver_routes(tmp_path: Path) 
     sample = {
         "sample_id": "failed", "source_sha": "c" * 40, "source_dirty": False,
         "status": "failed_numerical_gate", "split": "train",
-        "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+        "model_id": PROD,
+        "axis_cell_counts": [6, 4, 14],
+        "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
         "inputs": [120.0, 17.0, 5.25, 45.0],
         "aggregates": {"R_total": 0.1, "T_total": 0.6, "A_balance": 0.3, "A_volume": 0.3},
         "mother_response": _mother_response(),
@@ -375,7 +379,7 @@ def test_dataset_rejects_failed_and_nonproduction_solver_routes(tmp_path: Path) 
         write_compact_dataset([sample], output_dir=tmp_path / "failed", dataset_id="failed")
     sample["status"] = "measured_pass"
     sample["solver_route_id"] = "full3d_static_uniform_n1curl_p4_h10"
-    with pytest.raises(ValueError, match="single-fidelity"):
+    with pytest.raises(ValueError, match="Ny4"):
         write_compact_dataset([sample], output_dir=tmp_path / "mixed", dataset_id="mixed")
 
 
@@ -384,7 +388,7 @@ def test_formal_record_adapter_is_design_bound(tmp_path: Path) -> None:
     execution = tmp_path / "execution.json"
     point = {"height_nm": 120.0, "width_x_nm": 17.0, "grazing_deg": 5.25,
              "azimuth_deg": 45.0, "model_id": PROD,
-             "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"}
+             "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"}
     row = {
         "design_id": "task002_p5_initial_training_v1", "design_index": 0,
         "split": "train", "point_tuple": [120.0, 17.0, 5.25, 45.0],
@@ -393,11 +397,12 @@ def test_formal_record_adapter_is_design_bound(tmp_path: Path) -> None:
         ), "source_sha": "e" * 40, "status": "measured_pass",
     }
     formal.write_text(json.dumps({
-        "source_sha": "e" * 40, "solver_route_id": point["solver_route_id"],
+        "source_sha": "e" * 40, "model_id": PROD,
+        "solver_route_id": point["solver_route_id"],
         "output_profile": "compact_surrogate_record", "parameter_hash": "p",
         "config_identity": {"config_sha256": "c"},
-        "planned_topology_identity": {"topology_element_hash": "t"},
-        "actual_runtime_topology_identity": {"actual": True},
+        "planned_topology_identity": {"topology_element_hash": "t", "axis_cell_counts": [6, 4, 14]},
+        "actual_runtime_topology_identity": {"actual": True, "axis_cell_counts": [6, 4, 14]},
         "artifact_hashes": {}, "gates": {"all": True},
         "parameters": {"geometry": {"height_nm": 120.0, "width_x_nm": 17.0},
                        "configuration": {"grazing_deg": 5.25, "azimuth_deg": 45.0}},
@@ -440,7 +445,9 @@ def test_independent_dataset_checker_requires_exact_96_plus_16(tmp_path: Path) -
                     design_id=design["design_id"], design_index=index, point=point,
                 ), "source_sha": source_sha, "source_dirty": False,
                 "status": "measured_pass", "split": split,
-                "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+                "model_id": PROD,
+                "axis_cell_counts": [6, 4, 14],
+                "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
                 "inputs": inputs,
                 "aggregates": {"R_total": 0.1, "T_total": 0.6,
                                "A_balance": 0.3, "A_volume": 0.3},

@@ -83,6 +83,7 @@ def main() -> int:
             "source_sha": args.baseline_sha, "source_dirty": False,
             "parameters": parameters.as_dict(),
             "parameter_hash": canonical_hash(parameters.as_dict()),
+            "model_id": parameters.model_id,
             "solver_route_id": parameters.fidelity["solver_route_id"],
             "config_identity": task002_full3d_config_identity(
                 parameters, output_profile=args.output_profile,
