@@ -15,6 +15,7 @@ from benchmarks.run_task033_memory_watchdog import (
     _task034_terminal_record_is_complete,
     _task034_terminal_worker_drain,
     _task034_authority_source_compatibility,
+    _task036_zero_worker_exit_drain,
     _task035b_static_full3d_anchor_gate,
 )
 from benchmarks.task033_resource_gates import scaled_gate_limits
@@ -874,6 +875,27 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             wrong_schema = complete | {"schema_version": "1"}
             path.write_text(json.dumps(wrong_schema))
             self.assertFalse(_task034_terminal_record_is_complete(path))
+
+    def test_task036_allows_only_zero_worker_launcher_exit_drain(self) -> None:
+        drain = {
+            "task036_domain_robustness_gate": True,
+            "process_running": True,
+            "authority_readable": False,
+            "live_worker_count": 0,
+        }
+        self.assertTrue(_task036_zero_worker_exit_drain(**drain))
+        for key, value in (
+            ("task036_domain_robustness_gate", False),
+            ("process_running", False),
+            ("authority_readable", True),
+            ("live_worker_count", 1),
+            ("live_worker_count", None),
+        ):
+            self.assertFalse(
+                _task036_zero_worker_exit_drain(
+                    **(drain | {key: value})
+                )
+            )
 
     def test_only_formal_live_unreadable_authority_terminates(self) -> None:
         required = {

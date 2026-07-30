@@ -1054,6 +1054,23 @@ def _task034_terminal_worker_drain(
     )
 
 
+def _task036_zero_worker_exit_drain(
+    *,
+    task036_domain_robustness_gate: bool,
+    process_running: bool,
+    authority_readable: bool,
+    live_worker_count: int | None,
+) -> bool:
+    """Allow a bounded launcher-exit window after every MPI worker is gone."""
+
+    return bool(
+        task036_domain_robustness_gate
+        and process_running
+        and not authority_readable
+        and live_worker_count == 0
+    )
+
+
 def _resource_readability_sample_is_formal(
     *,
     task034_workstation_gate: bool,
@@ -2677,6 +2694,7 @@ def run(args: argparse.Namespace) -> int:
     dedicated_job_cgroup_observed = False
     post_exit_readability_samples_excluded = 0
     terminal_worker_drain_samples_excluded = 0
+    zero_worker_exit_drain_samples_excluded = 0
     max_live_authority_gib = 0.0
     with stdout_path.open("w", encoding="utf-8") as stdout:
         process = subprocess.Popen(
@@ -2739,20 +2757,35 @@ def run(args: argparse.Namespace) -> int:
                 )
                 and process_running
                 and not authority_readable
-                and row.get("stage") == "record_and_release"
             ):
-                terminal_record_complete = (
-                    _task034_terminal_record_is_complete(record_path)
-                )
+                if row.get("stage") == "record_and_release":
+                    terminal_record_complete = (
+                        _task034_terminal_record_is_complete(record_path)
+                    )
                 live_worker_rss, discovered_workers = (
                     _live_task033_worker_rss(process.pid, args.target)
                 )
                 if live_worker_rss is not None:
                     process_tree_pids = set(process_tree["pids"])
                     live_worker_count = sum(
-                        int(worker["pid"]) in process_tree_pids
-                        for worker in discovered_workers
-                    )
+                    int(worker["pid"]) in process_tree_pids
+                    for worker in discovered_workers
+                )
+            zero_worker_exit_drain = _task036_zero_worker_exit_drain(
+                task036_domain_robustness_gate=(
+                    args.task036_domain_robustness_gate
+                ),
+                process_running=process_running,
+                authority_readable=authority_readable,
+                live_worker_count=live_worker_count,
+            )
+            if zero_worker_exit_drain:
+                try:
+                    process.wait(timeout=5.0)
+                except subprocess.TimeoutExpired:
+                    terminated_for_authority_unreadable = True
+                    process.terminate()
+                process_running = process.poll() is None
             terminal_worker_drain = _task034_terminal_worker_drain(
                 task034_workstation_gate=(
                     args.task034_workstation_gate
@@ -2772,7 +2805,9 @@ def run(args: argparse.Namespace) -> int:
                     or args.task036_domain_robustness_gate
                 ),
                 process_running=process_running,
-                terminal_worker_drain=terminal_worker_drain,
+                terminal_worker_drain=(
+                    terminal_worker_drain or zero_worker_exit_drain
+                ),
             )
             if readability_sample_is_formal:
                 job_swap_all_samples_readable &= bool(
@@ -2792,6 +2827,8 @@ def run(args: argparse.Namespace) -> int:
                         )
             elif terminal_worker_drain:
                 terminal_worker_drain_samples_excluded += 1
+            elif zero_worker_exit_drain:
+                zero_worker_exit_drain_samples_excluded += 1
             else:
                 post_exit_readability_samples_excluded += 1
             _add_cpu_core_equivalents(row, previous)
@@ -2854,6 +2891,9 @@ def run(args: argparse.Namespace) -> int:
             ),
             "terminal_worker_drain_samples_excluded": (
                 terminal_worker_drain_samples_excluded
+            ),
+            "zero_worker_exit_drain_samples_excluded": (
+                zero_worker_exit_drain_samples_excluded
             ),
         }
     )
