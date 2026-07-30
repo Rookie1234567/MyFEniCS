@@ -17,6 +17,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 from typing import Any, Mapping
 
 from mpi4py import MPI
@@ -26,6 +27,8 @@ from scipy import sparse
 
 
 ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 SIGNIFICANT_AUTHORITY = (
     ROOT
     / "benchmarks/cases/095_high_order_local_hp_resource_envelope/"
@@ -907,7 +910,7 @@ def _adjoint(args: argparse.Namespace) -> None:
                     ],
                     dtype=np.float64,
                 )
-                initial_errors = np.asarray(errors, copy=True)
+                initial_errors = errors.copy()
                 eta = np.vstack(
                     [contributions[goal_id] for goal_id in FAILED_GOALS]
                 )
