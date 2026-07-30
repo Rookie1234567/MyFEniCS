@@ -5,7 +5,10 @@ import unittest
 
 import numpy as np
 
-from benchmarks.task032_final_gates import _all_formal_true
+from benchmarks.task032_final_gates import (
+    _all_formal_true,
+    _exact_traction_gate,
+)
 from src.solvers.common_3d_utils import (
     _complete_rank_max,
     _complete_rank_sum,
@@ -23,6 +26,36 @@ from src.solvers.hybrid_fem_modal_schur_direct import (
 
 
 class Task036ForwardSolverHardeningTests(unittest.TestCase):
+    def test_missing_exact_traction_is_only_allowed_for_frozen_legacy_sha(
+        self,
+    ) -> None:
+        legacy = {
+            "schema_version": 1,
+            "metadata": {
+                "commit_sha": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6"
+            },
+        }
+        self.assertEqual(
+            _exact_traction_gate(legacy, [None, None], 1.0e-8),
+            (True, "legacy_sha_bound_record_predating_exact_dual"),
+        )
+        current = {
+            "schema_version": 1,
+            "metadata": {"commit_sha": "a" * 40},
+        }
+        self.assertEqual(
+            _exact_traction_gate(current, [None, None], 1.0e-8),
+            (False, "missing_exact_variational_conormal_dual"),
+        )
+        self.assertEqual(
+            _exact_traction_gate(current, [1.0e-9, 2.0e-9], 1.0e-8),
+            (True, "exact_variational_conormal_dual"),
+        )
+        self.assertEqual(
+            _exact_traction_gate(current, [1.0e-9, 2.0e-7], 1.0e-8),
+            (False, "exact_variational_conormal_dual"),
+        )
+
     def test_diagnostic_gate_cannot_veto_or_qualify_formal_result(self) -> None:
         self.assertTrue(
             _all_formal_true(

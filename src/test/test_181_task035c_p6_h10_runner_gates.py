@@ -482,6 +482,36 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
             self.assertFalse(stale["pass"])
             self.assertIn("exact_final_source_sha", stale["failures"])
 
+            oblique = _full3d_reference(backend)
+            oblique["solver_summary"]["config"]["incident_phi_deg"] = 45.0
+            accepted_oblique = task035c_p6_h10_full3d_reference_gate(
+                oblique,
+                expected_sha256=RECORD_SHA256,
+                observed_sha256=RECORD_SHA256,
+                current_source_sha=SOURCE_SHA,
+                assembly_backend=backend,
+                mpi_size=8,
+                incident_grazing_deg=10.0,
+                incident_phi_deg=45.0,
+            )
+            self.assertTrue(
+                accepted_oblique["pass"],
+                accepted_oblique["failures"],
+            )
+            rejected_wrong_phi = task035c_p6_h10_full3d_reference_gate(
+                oblique,
+                expected_sha256=RECORD_SHA256,
+                observed_sha256=RECORD_SHA256,
+                current_source_sha=SOURCE_SHA,
+                assembly_backend=backend,
+                mpi_size=8,
+            )
+            self.assertFalse(rejected_wrong_phi["pass"])
+            self.assertIn(
+                "fixed_rectangular_physics",
+                rejected_wrong_phi["failures"],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

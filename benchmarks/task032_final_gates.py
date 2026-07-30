@@ -48,6 +48,40 @@ def _finite_le(value: Any, limit: float) -> bool:
     return math.isfinite(number) and abs(number) <= limit
 
 
+_LEGACY_TASK032_MISSING_EXACT_TRACTION_COMMITS = frozenset(
+    {"735774473e54415ab5393f2d2cbc9c8d7d2a24e6"}
+)
+
+
+def _exact_traction_gate(
+    record: dict[str, Any],
+    values: list[Any],
+    limit: float,
+) -> tuple[bool, str]:
+    """Fail closed on missing exact duals except for frozen Task032 evidence."""
+
+    if all(value is not None for value in values):
+        return (
+            all(_finite_le(value, limit) for value in values),
+            "exact_variational_conormal_dual",
+        )
+    metadata = record.get("metadata")
+    metadata = metadata if isinstance(metadata, dict) else {}
+    legacy_sha_bound = bool(
+        record.get("schema_version") == 1
+        and metadata.get("commit_sha")
+        in _LEGACY_TASK032_MISSING_EXACT_TRACTION_COMMITS
+    )
+    return (
+        legacy_sha_bound,
+        (
+            "legacy_sha_bound_record_predating_exact_dual"
+            if legacy_sha_bound
+            else "missing_exact_variational_conormal_dual"
+        ),
+    )
+
+
 def evaluate_task032_final(
     case_root: Path,
     config: dict[str, Any],
@@ -241,19 +275,13 @@ def evaluate_task032_final(
             .get("relative_dual")
             for side in ("bottom", "top")
         ]
-        exact_traction_available = all(
-            value is not None for value in exact_traction_duals
-        )
         exact_traction_limit = float(
             config.get("max_exact_traction_hcurl_dual_relative", 1.0e-8)
         )
-        exact_traction_ok = (
-            all(
-                _finite_le(value, exact_traction_limit)
-                for value in exact_traction_duals
-            )
-            if exact_traction_available
-            else True
+        exact_traction_ok, exact_traction_gate_role = _exact_traction_gate(
+            record,
+            exact_traction_duals,
+            exact_traction_limit,
         )
         plane_errors = [
             plane.get(field_name, {}).get("relative_l2")
@@ -296,11 +324,7 @@ def evaluate_task032_final(
             "interface_h_relative_l2": magnetic_jumps,
             "interface_h_sampled_proxy_role": "diagnostic_only",
             "traction_hcurl_dual_relative": exact_traction_duals,
-            "traction_hcurl_dual_gate": (
-                "exact_variational_conormal_dual"
-                if exact_traction_available
-                else "not_retroactively_applied_to_historical_record"
-            ),
+            "traction_hcurl_dual_gate": exact_traction_gate_role,
             "max_plane_relative_l2": max(float(value) for value in plane_errors),
         }
     gates.append(

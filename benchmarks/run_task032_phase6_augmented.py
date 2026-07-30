@@ -1224,6 +1224,8 @@ def _task035c_worker_authority_gate(
         current_source_sha=current_source_sha,
         assembly_backend=args.stage4_full3d_assembly_backend,
         mpi_size=mpi_size,
+        incident_grazing_deg=args.incident_grazing_deg,
+        incident_phi_deg=args.incident_phi_deg,
     )
     gate = {
         "schema_version": "task035c.p6-h10-worker-authority-gate.v1",

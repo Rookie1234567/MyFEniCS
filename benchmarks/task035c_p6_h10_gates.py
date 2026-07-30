@@ -143,6 +143,8 @@ def task035c_p6_h10_full3d_reference_gate(
     current_source_sha: str | None,
     assembly_backend: str,
     mpi_size: int,
+    incident_grazing_deg: float = 10.0,
+    incident_phi_deg: float = 0.0,
 ) -> dict[str, Any]:
     """Require a fresh exact-source Full3D reference for Task035c Hybrid."""
 
@@ -213,9 +215,13 @@ def task035c_p6_h10_full3d_reference_gate(
             and summary.get("geometry_kind") == "rectangular_block_grating"
             and math.isclose(float(config.get("lambda0", math.nan)), 13.5)
             and math.isclose(
-                float(config.get("incident_theta_deg", math.nan)), 80.0
+                float(config.get("incident_theta_deg", math.nan)),
+                90.0 - float(incident_grazing_deg),
             )
-            and math.isclose(float(config.get("incident_phi_deg", math.nan)), 0.0)
+            and math.isclose(
+                float(config.get("incident_phi_deg", math.nan)),
+                float(incident_phi_deg),
+            )
             and math.isclose(float(config.get("period_x", math.nan)), 50.0)
             and math.isclose(float(config.get("period_y", math.nan)), 25.0)
             and math.isclose(float(config.get("z_min", math.nan)), -10.0)
@@ -257,6 +263,8 @@ def task035c_p6_h10_full3d_reference_gate(
         "schema_version": "task035c.p6-h10-full3d-reference-gate.v1",
         "pass": not failures,
         "assembly_backend": assembly_backend,
+        "incident_grazing_deg": float(incident_grazing_deg),
+        "incident_phi_deg": float(incident_phi_deg),
         "reference_source_sha": source.get("commit_sha"),
         "current_source_sha": current_source_sha,
         "expected_sha256": expected_sha256,
