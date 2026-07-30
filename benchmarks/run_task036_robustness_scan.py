@@ -405,7 +405,7 @@ def main() -> int:
         rendered = {"full3d_jobs": full3d_jobs}
         if args.stage == "hybrid":
             rendered["note"] = "Hybrid commands require completed Full3D hashes."
-        print(json.dumps(rendered, ensure_ascii=False, indent=2))
+        print(json.dumps(rendered, ensure_ascii=False, indent=2, default=str))
         return 0
 
     if args.stage in {"full3d", "both"}:
