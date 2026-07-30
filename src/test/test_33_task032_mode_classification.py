@@ -478,6 +478,196 @@ class Task032ModeClassificationTests(unittest.TestCase):
         )
         self.assertEqual(a001_component, ((0, 1, 2, 3),))
 
+    def test_task036_partition_repair_plans_same_group_refinement(self):
+        scalar_stage4 = SimpleNamespace(
+            material_kind="stage4_xy",
+            epsilon_r=SimpleNamespace(ufl_shape=()),
+        )
+        groups = ((0, 1, 2, 3), (4, 5))
+        betas = (
+            0.5 + 0.1000000j,
+            0.5 + 0.1000001j,
+            0.5 + 0.1000002j,
+            0.5 + 0.1000003j,
+            0.9 + 0.2j,
+            0.9 + 0.2000001j,
+        )
+        overlap = np.eye(6, dtype=np.complex128)
+        overlap[0, 1] = 2.0e-6
+        overlap[3, 2] = -1.5e-6j
+        audit = _near_degenerate_partition_audit(
+            betas,
+            groups,
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            directions=("forward",) * 6,
+        )
+
+        components, provenance = _task036_scalar_stage4_partition_repair_candidate(
+            scalar_stage4,
+            groups,
+            audit,
+            betas=betas,
+            directions=("forward",) * 6,
+            biorthogonality=overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            maximum_overlap_condition=1.0e12,
+            initial_group_overlap_conditions=(7.25, 1.0),
+        )
+
+        self.assertEqual(components, ((0, 1, 2, 3),))
+        self.assertTrue(provenance["eligible"])
+        self.assertEqual(provenance["maximum_attempts"], 1)
+        self.assertEqual(
+            provenance["same_group_refinement_group_ids"],
+            [0],
+        )
+        self.assertEqual(
+            provenance["same_group_refinement_component_count"],
+            1,
+        )
+        self.assertEqual(
+            provenance["components"][0]["component_kind"],
+            "same_group_refinement",
+        )
+        self.assertEqual(
+            provenance["components"][0]["source_group_initial_raw_overlap_conditions"],
+            [7.25],
+        )
+        diagnostics = provenance["group_condition_diagnostics"]
+        self.assertEqual(diagnostics[0]["group_members"], [0, 1, 2, 3])
+        self.assertEqual(
+            diagnostics[0]["initial_raw_overlap_condition"],
+            7.25,
+        )
+        for row_plan in provenance["row_failure_plans"]:
+            self.assertTrue(row_plan["same_group_refinement_sufficient"])
+            self.assertGreater(
+                row_plan["within_group_row_error"],
+                row_plan["required_reduction"],
+            )
+            self.assertEqual(
+                row_plan["eligible_near_cross_row_error"],
+                0.0,
+            )
+            self.assertEqual(row_plan["far_cross_row_error"], 0.0)
+            self.assertLessEqual(
+                row_plan["row_error_decomposition_closure"],
+                1.0e-20,
+            )
+
+    def test_task036_same_group_refinement_rejects_far_cross_budget(self):
+        scalar_stage4 = SimpleNamespace(
+            material_kind="stage4_xy",
+            epsilon_r=SimpleNamespace(ufl_shape=()),
+        )
+        groups = ((0, 1), (2, 3))
+        betas = (
+            0.5 + 0.1j,
+            0.5 + 0.1000001j,
+            0.9 + 0.2j,
+            0.9 + 0.2000001j,
+        )
+        overlap = np.eye(4, dtype=np.complex128)
+        overlap[0, 1] = 8.0e-7
+        overlap[0, 2] = 1.2e-6
+        audit = _near_degenerate_partition_audit(
+            betas,
+            groups,
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            directions=("forward",) * 4,
+        )
+
+        components, provenance = _task036_scalar_stage4_partition_repair_candidate(
+            scalar_stage4,
+            groups,
+            audit,
+            betas=betas,
+            directions=("forward",) * 4,
+            biorthogonality=overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            maximum_overlap_condition=1.0e12,
+        )
+
+        self.assertIsNone(components)
+        self.assertEqual(
+            provenance["reason"],
+            "row_norm_failure_not_explained_by_near_cross_blocks",
+        )
+        row_plan = provenance["unexplained_row_failures"][0]
+        self.assertAlmostEqual(
+            row_plan["within_group_row_error"],
+            8.0e-7,
+        )
+        self.assertEqual(row_plan["eligible_near_cross_row_error"], 0.0)
+        self.assertAlmostEqual(row_plan["far_cross_row_error"], 1.2e-6)
+        self.assertEqual(
+            row_plan["unexplained_reason"],
+            "far_cross_row_budget_exceeds_tolerance",
+        )
+
+    def test_task036_partition_repair_plans_cross_and_self_once(self):
+        scalar_stage4 = SimpleNamespace(
+            material_kind="stage4_xy",
+            epsilon_r=SimpleNamespace(ufl_shape=()),
+        )
+        groups = ((0, 1), (2, 3), (4, 5, 6, 7))
+        betas = (
+            0.5 + 0.100000j,
+            0.5 + 0.100000j,
+            0.5 + 0.100001j,
+            0.5 + 0.100001j,
+            0.9 + 0.2000000j,
+            0.9 + 0.2000001j,
+            0.9 + 0.2000002j,
+            0.9 + 0.2000003j,
+        )
+        overlap = np.eye(8, dtype=np.complex128)
+        overlap[1, 2] = 2.0e-6
+        overlap[4, 5] = 2.5e-6
+        audit = _near_degenerate_partition_audit(
+            betas,
+            groups,
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            directions=("forward",) * 8,
+        )
+
+        components, provenance = _task036_scalar_stage4_partition_repair_candidate(
+            scalar_stage4,
+            groups,
+            audit,
+            betas=betas,
+            directions=("forward",) * 8,
+            biorthogonality=overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            maximum_overlap_condition=1.0e12,
+        )
+
+        self.assertEqual(
+            components,
+            ((0, 1, 2, 3), (4, 5, 6, 7)),
+        )
+        self.assertEqual(provenance["component_count"], 2)
+        self.assertEqual(
+            [component["component_kind"] for component in provenance["components"]],
+            [
+                "connected_near_beta_groups",
+                "same_group_refinement",
+            ],
+        )
+        self.assertEqual(
+            provenance["same_group_refinement_component_count"],
+            1,
+        )
+
     def test_task036_joint_left_inverse_repairs_selected_block(self):
         overlap = np.eye(4, dtype=np.complex128)
         overlap[0, 2] = 2.0e-6 + 3.0e-7j
@@ -566,6 +756,46 @@ class Task032ModeClassificationTests(unittest.TestCase):
             self.assertLessEqual(
                 _identity_error_metrics(repaired)[0],
                 1.0e-12,
+            )
+        finally:
+            for vector in left_reduced + left_full:
+                vector.destroy()
+
+    def test_task036_joint_left_inverse_solves_admissible_condition(self):
+        overlap = np.asarray(
+            [
+                [1.0, 1.0],
+                [1.0, 1.0 + 1.0e-8],
+            ],
+            dtype=np.complex128,
+        )
+        left_reduced: list[PETSc.Vec] = []
+        left_full: list[PETSc.Vec] = []
+        for row in overlap:
+            reduced = PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
+            reduced.getArray()[:] = np.conj(row)
+            reduced.assemble()
+            full = reduced.duplicate()
+            reduced.copy(full)
+            left_reduced.append(reduced)
+            left_full.append(full)
+        try:
+            condition = _joint_left_basis_inverse(
+                left_reduced,
+                left_full,
+                (0, 1),
+                overlap,
+                maximum_overlap_condition=1.0e9,
+            )
+            self.assertGreater(condition, 1.0e8)
+            self.assertLess(condition, 1.0e9)
+            repaired = np.asarray(
+                [np.conj(vector.getArray(readonly=True)) for vector in left_reduced],
+                dtype=np.complex128,
+            )
+            self.assertLessEqual(
+                _identity_error_metrics(repaired)[0],
+                1.0e-6,
             )
         finally:
             for vector in left_reduced + left_full:

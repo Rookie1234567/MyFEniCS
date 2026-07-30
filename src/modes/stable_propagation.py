@@ -39,6 +39,9 @@ class DirectionalPropagationBlock:
     beta_per_nm: tuple[complex, ...]
     effective_beta_per_nm: tuple[complex, ...]
     propagation_model: AxialPropagationModel
+    axial_fem_degree: int | None
+    axial_h_nm: float | None
+    axial_cell_nodal_factors: tuple[tuple[complex, ...], ...]
     factors: tuple[complex, ...]
     log_magnitudes: tuple[float, ...]
     phase_advances_rad: tuple[float, ...]
@@ -57,6 +60,80 @@ class DirectionalPropagationBlock:
     @property
     def min_log_magnitude(self) -> float:
         return min(self.log_magnitudes, default=0.0)
+
+    @property
+    def axial_cell_count(self) -> int | None:
+        """Number of uniform scalar-CG cells, when that model is active."""
+
+        if self.propagation_model != "full3d_uniform_cg":
+            return None
+        if self.axial_h_nm is None:
+            raise RuntimeError("Scalar-CG propagation lost its axial h.")
+        count = self.length_nm / self.axial_h_nm
+        rounded = int(np.rint(count))
+        if not np.isclose(count, rounded, rtol=0.0, atol=1.0e-12):
+            raise RuntimeError("Scalar-CG propagation lost its uniform cell count.")
+        return rounded
+
+    @property
+    def stored_complex_scalars(self) -> int:
+        """Stored transfer factors plus optional one-cell CG nodal profiles."""
+
+        return len(self.factors) + sum(
+            len(profile) for profile in self.axial_cell_nodal_factors
+        )
+
+    def cell_polynomial_factors(
+        self,
+        cell_index: int,
+        reference_coordinate: float,
+    ) -> np.ndarray:
+        """Evaluate all scalar-CG modal factors in one directed cell.
+
+        ``cell_index`` and ``reference_coordinate`` are measured from the
+        incoming interface in this block's physical travel direction.
+        """
+
+        if self.propagation_model != "full3d_uniform_cg":
+            raise ValueError(
+                "Cell-polynomial factors require full3d_uniform_cg propagation."
+            )
+        if isinstance(cell_index, bool) or int(cell_index) != cell_index:
+            raise ValueError("Scalar-CG cell_index must be an integer.")
+        cell_index = int(cell_index)
+        cell_count = self.axial_cell_count
+        assert cell_count is not None
+        if cell_index < 0 or cell_index >= cell_count:
+            raise ValueError(
+                f"Scalar-CG cell_index must lie in [0, {cell_count - 1}]."
+            )
+        coordinate = float(reference_coordinate)
+        if not np.isfinite(coordinate) or not 0.0 <= coordinate <= 1.0:
+            raise ValueError(
+                "Scalar-CG reference_coordinate must lie in [0, 1]."
+            )
+        if self.axial_fem_degree is None:
+            raise RuntimeError("Scalar-CG propagation lost its axial degree.")
+        nodal = np.asarray(
+            self.axial_cell_nodal_factors,
+            dtype=np.complex128,
+        )
+        expected_shape = (self.mode_count, self.axial_fem_degree + 1)
+        if nodal.shape != expected_shape:
+            raise RuntimeError(
+                "Scalar-CG propagation lost its one-cell nodal profiles."
+            )
+        basis = _scalar_cg_lagrange_values(
+            self.axial_fem_degree,
+            coordinate,
+        )
+        local_factors = nodal @ basis
+        endpoint_multipliers = nodal[:, -1]
+        with np.errstate(over="raise", invalid="raise", under="ignore"):
+            factors = endpoint_multipliers**cell_index * local_factors
+        if not np.all(np.isfinite(factors)):
+            raise FloatingPointError("Non-finite scalar-CG cell factors.")
+        return np.asarray(factors, dtype=np.complex128)
 
     def apply(self, incoming: Sequence[complex] | np.ndarray) -> np.ndarray:
         amplitudes = np.asarray(incoming, dtype=np.complex128)
@@ -92,7 +169,10 @@ class TwoSidedPropagation:
     def stored_complex_scalars(self) -> int:
         """O(mode-count) storage, excluding caller-owned amplitudes."""
 
-        return self.forward.mode_count + self.backward.mode_count
+        return (
+            self.forward.stored_complex_scalars
+            + self.backward.stored_complex_scalars
+        )
 
     @property
     def max_factor_magnitude(self) -> float:
@@ -225,6 +305,29 @@ def _scalar_cg_reference_matrices(
     mass.setflags(write=False)
     stiffness.setflags(write=False)
     return mass, stiffness
+
+
+def _scalar_cg_lagrange_values(
+    degree: int,
+    reference_coordinate: float,
+) -> np.ndarray:
+    """Evaluate the equispaced scalar-CG nodal basis on ``[0, 1]``."""
+
+    degree = int(degree)
+    if degree < 1:
+        raise ValueError("Axial FEM degree must be at least one.")
+    coordinate = float(reference_coordinate)
+    if not np.isfinite(coordinate):
+        raise ValueError("Reference coordinate must be finite.")
+    nodes = np.linspace(0.0, 1.0, degree + 1)
+    values = np.ones(degree + 1, dtype=np.float64)
+    for basis_index, node in enumerate(nodes):
+        for other_index, other_node in enumerate(nodes):
+            if other_index != basis_index:
+                values[basis_index] *= (
+                    coordinate - other_node
+                ) / (node - other_node)
+    return values
 
 
 def _scalar_cg_periodic_cosine(
@@ -378,6 +481,51 @@ def full3d_uniform_cg_discrete_beta(
     return complex(effective_beta)
 
 
+def _scalar_cg_cell_nodal_factors(
+    beta_per_nm: complex,
+    *,
+    degree: int,
+    h_nm: float,
+    direction: PropagationDirection,
+    endpoint_multiplier: complex,
+) -> tuple[complex, ...]:
+    """Recover one scalar-CG cell profile from its passive Bloch endpoints."""
+
+    beta = complex(beta_per_nm)
+    multiplier = complex(endpoint_multiplier)
+    travel_sign = 1.0 if direction == "forward" else -1.0
+    q_direction = travel_sign * beta * float(h_nm)
+    if not (
+        np.isfinite(multiplier.real)
+        and np.isfinite(multiplier.imag)
+        and abs(multiplier) <= 1.0 + 64.0 * np.finfo(np.float64).eps
+    ):
+        raise ValueError("Scalar-CG endpoint multiplier must be finite and passive.")
+    mass, stiffness = _scalar_cg_reference_matrices(int(degree))
+    dynamic = (
+        stiffness.astype(np.complex128)
+        - q_direction * q_direction * mass
+    )
+    nodal = np.empty(int(degree) + 1, dtype=np.complex128)
+    nodal[0] = 1.0 + 0.0j
+    nodal[-1] = multiplier
+    interior = np.arange(1, int(degree), dtype=np.int64)
+    if interior.size:
+        endpoints = np.asarray((0, int(degree)), dtype=np.int64)
+        try:
+            nodal[interior] = -np.linalg.solve(
+                dynamic[np.ix_(interior, interior)],
+                dynamic[np.ix_(interior, endpoints)] @ nodal[endpoints],
+            )
+        except np.linalg.LinAlgError as exc:
+            raise ValueError(
+                "Scalar-CG cell interior block is singular."
+            ) from exc
+    if not np.all(np.isfinite(nodal)):
+        raise FloatingPointError("Non-finite scalar-CG cell nodal profile.")
+    return tuple(complex(value) for value in nodal)
+
+
 def scalar_cg_discrete_traction_beta(
     beta_per_nm: complex,
     *,
@@ -491,6 +639,7 @@ def _build_directional_block(
     phase_corrections: list[float] = []
     log_magnitude_corrections: list[float] = []
     clipped: list[bool] = []
+    axial_cell_nodal_factors: list[tuple[complex, ...]] = []
     for index in indices:
         mode = modes[index]
         if not bool(mode.passive_branch_valid):
@@ -532,6 +681,25 @@ def _build_directional_block(
             log_magnitude - original_log_magnitude
         )
         clipped.append(was_clipped)
+        if propagation_model == "full3d_uniform_cg":
+            assert axial_fem_degree is not None
+            assert axial_h_nm is not None
+            one_cell_factor, _log, _phase, _clipped = _stable_factor(
+                effective_beta,
+                axial_h_nm,
+                direction,
+                branch_imag_tolerance_per_nm=branch_imag_tolerance_per_nm,
+                roundoff_growth_tolerance=roundoff_growth_tolerance,
+            )
+            axial_cell_nodal_factors.append(
+                _scalar_cg_cell_nodal_factors(
+                    beta,
+                    degree=axial_fem_degree,
+                    h_nm=axial_h_nm,
+                    direction=direction,
+                    endpoint_multiplier=one_cell_factor,
+                )
+            )
     return DirectionalPropagationBlock(
         direction=direction,
         length_nm=length_nm,
@@ -539,6 +707,17 @@ def _build_directional_block(
         beta_per_nm=tuple(betas),
         effective_beta_per_nm=tuple(effective_betas),
         propagation_model=propagation_model,
+        axial_fem_degree=(
+            int(axial_fem_degree)
+            if propagation_model == "full3d_uniform_cg"
+            else None
+        ),
+        axial_h_nm=(
+            float(axial_h_nm)
+            if propagation_model == "full3d_uniform_cg"
+            else None
+        ),
+        axial_cell_nodal_factors=tuple(axial_cell_nodal_factors),
         factors=tuple(factors),
         log_magnitudes=tuple(log_magnitudes),
         phase_advances_rad=tuple(phases),
@@ -644,6 +823,18 @@ def _require_compatible_blocks(
         raise ValueError("Cannot compose blocks with different mode ordering.")
     if first.propagation_model != second.propagation_model:
         raise ValueError("Cannot compose blocks with different propagation models.")
+    if (
+        first.axial_fem_degree != second.axial_fem_degree
+        or first.axial_h_nm != second.axial_h_nm
+    ):
+        raise ValueError("Cannot compose blocks with different axial CG meshes.")
+    if not np.allclose(
+        np.asarray(first.axial_cell_nodal_factors, dtype=np.complex128),
+        np.asarray(second.axial_cell_nodal_factors, dtype=np.complex128),
+        rtol=1.0e-13,
+        atol=1.0e-15,
+    ):
+        raise ValueError("Cannot compose blocks with different axial CG profiles.")
     if len(first.beta_per_nm) != len(second.beta_per_nm) or not np.allclose(
         first.beta_per_nm,
         second.beta_per_nm,
@@ -675,6 +866,9 @@ def _compose_directional_blocks(
         beta_per_nm=first.beta_per_nm,
         effective_beta_per_nm=first.effective_beta_per_nm,
         propagation_model=first.propagation_model,
+        axial_fem_degree=first.axial_fem_degree,
+        axial_h_nm=first.axial_h_nm,
+        axial_cell_nodal_factors=first.axial_cell_nodal_factors,
         factors=factors,
         log_magnitudes=tuple(
             first_value + second_value

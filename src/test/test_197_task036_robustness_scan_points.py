@@ -6,9 +6,12 @@ import hashlib
 from pathlib import Path
 
 import numpy as np
+import pytest
 from scipy.stats import qmc
 
+from benchmarks import run_task036_robustness_scan as scan_driver
 from benchmarks.run_task036_robustness_scan import (
+    _exclusive_cpu_sets,
     _full3d_command,
     _hybrid_command,
     _load_points,
@@ -208,3 +211,34 @@ def test_task036_driver_preserves_full3d_before_hybrid_identity(
     assert hybrid[hybrid.index("--full3d-reference") + 1] == str(reference)
     assert hybrid[hybrid.index("--requested-modes") + 1] == "120"
     assert hybrid[hybrid.index("--candidate-modes") + 1] == "240"
+
+
+def test_task036_parallel_dispatch_reserves_five_disjoint_mpi8_cpu_sets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        scan_driver.os,
+        "sched_getaffinity",
+        lambda _pid: set(range(48)),
+    )
+
+    cpu_sets = _exclusive_cpu_sets(5)
+
+    assert cpu_sets == tuple(
+        tuple(range(first, first + 8))
+        for first in (0, 8, 16, 24, 32)
+    )
+    assert len(set().union(*map(set, cpu_sets))) == 40
+
+
+def test_task036_parallel_dispatch_fails_closed_when_cpus_are_insufficient(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        scan_driver.os,
+        "sched_getaffinity",
+        lambda _pid: set(range(39)),
+    )
+
+    with pytest.raises(RuntimeError, match="needs 40 CPUs"):
+        _exclusive_cpu_sets(5)

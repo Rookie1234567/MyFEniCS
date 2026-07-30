@@ -195,6 +195,7 @@ class ModalFieldReconstructor:
         if self.top_z_nm <= self.bottom_z_nm:
             raise ValueError("The modal interval must have positive length.")
         self._modes = tuple([*positive.modes, *negative.modes])
+        self._axial_propagation = propagation
         if propagation is None:
             self.propagation_model = "continuous_beta"
             self._positive_propagation_beta = np.asarray(
@@ -440,6 +441,82 @@ class ModalFieldReconstructor:
                 ),
             )
         )
+
+    def _full3d_uniform_cg_coefficients_in_cell(
+        self,
+        modal_amplitudes: Sequence[complex],
+        cell_index: int,
+        reference_coordinate: float,
+    ) -> np.ndarray:
+        """Evaluate modal coefficients with the actual scalar-CG cell shape."""
+
+        modal = np.asarray(modal_amplitudes, dtype=np.complex128)
+        count = self.mode_count_per_direction
+        if modal.shape != (2 * count,):
+            raise ValueError(f"Modal amplitudes must have shape ({2 * count},).")
+        propagation = getattr(self, "_axial_propagation", None)
+        if (
+            propagation is None
+            or propagation.propagation_model != "full3d_uniform_cg"
+        ):
+            raise ValueError(
+                "CG cell coefficients require full3d_uniform_cg propagation."
+            )
+        forward_cell_count = propagation.forward.axial_cell_count
+        backward_cell_count = propagation.backward.axial_cell_count
+        if (
+            forward_cell_count is None
+            or backward_cell_count is None
+            or forward_cell_count != backward_cell_count
+        ):
+            raise RuntimeError(
+                "Forward/backward scalar-CG cell counts are inconsistent."
+            )
+        if isinstance(cell_index, bool) or int(cell_index) != cell_index:
+            raise ValueError("Scalar-CG cell_index must be an integer.")
+        cell_index = int(cell_index)
+        if cell_index < 0 or cell_index >= forward_cell_count:
+            raise ValueError(
+                "Scalar-CG cell_index lies outside the modal interval."
+            )
+        coordinate = float(reference_coordinate)
+        forward_factors = propagation.forward.cell_polynomial_factors(
+            cell_index,
+            coordinate,
+        )
+        backward_factors = propagation.backward.cell_polynomial_factors(
+            forward_cell_count - 1 - cell_index,
+            1.0 - coordinate,
+        )
+        return np.concatenate(
+            (
+                modal[:count] * forward_factors,
+                modal[count:] * backward_factors,
+            )
+        )
+
+    def _middle_volume_gauss_order(self, requested_order: int) -> int:
+        """Return a z quadrature exact for scalar-CG polynomial energy."""
+
+        if requested_order < 2:
+            raise ValueError(
+                "At least second-order Gauss quadrature is required."
+            )
+        order = int(requested_order)
+        if self.propagation_model != "full3d_uniform_cg":
+            return order
+        propagation = getattr(self, "_axial_propagation", None)
+        if propagation is None:
+            raise RuntimeError("Scalar-CG reconstruction lost its propagation.")
+        degree = propagation.forward.axial_fem_degree
+        if (
+            degree is None
+            or propagation.backward.axial_fem_degree != degree
+        ):
+            raise RuntimeError(
+                "Forward/backward scalar-CG degrees are inconsistent."
+            )
+        return max(order, int(degree) + 1)
 
     def selected_planes(
         self,
@@ -856,26 +933,92 @@ class ModalFieldReconstructor:
         modal_amplitudes: Sequence[complex],
         *,
         gauss_order: int = 4,
-    ) -> dict[str, float | int]:
+    ) -> dict[str, object]:
         """Integrate middle material loss with composite Gauss-Legendre in z."""
 
-        if gauss_order < 2:
-            raise ValueError("At least second-order Gauss quadrature is required.")
-        axis = np.asarray(self.cross_section.axis_plan.z_values, dtype=np.float64)
-        interior = axis[
-            (axis > self.bottom_z_nm + 1.0e-12)
-            & (axis < self.top_z_nm - 1.0e-12)
-        ]
-        breaks = np.concatenate(([self.bottom_z_nm], interior, [self.top_z_nm]))
-        nodes, weights = np.polynomial.legendre.leggauss(int(gauss_order))
+        requested_gauss_order = int(gauss_order)
+        gauss_order = self._middle_volume_gauss_order(gauss_order)
+        use_cg_polynomial = (
+            self.propagation_model == "full3d_uniform_cg"
+        )
+        minimum_polynomial_order: int | None = None
+        axial_fem_degree: int | None = None
+        axial_h_nm: float | None = None
+        if use_cg_polynomial:
+            propagation = getattr(self, "_axial_propagation", None)
+            if propagation is None:
+                raise RuntimeError(
+                    "Scalar-CG reconstruction lost its propagation."
+                )
+            cell_count = propagation.forward.axial_cell_count
+            h_nm = propagation.forward.axial_h_nm
+            degree = propagation.forward.axial_fem_degree
+            if (
+                cell_count is None
+                or h_nm is None
+                or degree is None
+                or propagation.backward.axial_cell_count != cell_count
+                or propagation.backward.axial_h_nm != h_nm
+                or propagation.backward.axial_fem_degree != degree
+            ):
+                raise RuntimeError(
+                    "Scalar-CG reconstruction lost its axial cell data."
+                )
+            interval_length = self.top_z_nm - self.bottom_z_nm
+            if not np.isclose(
+                cell_count * h_nm,
+                interval_length,
+                rtol=0.0,
+                atol=1.0e-12,
+            ):
+                raise RuntimeError(
+                    "Scalar-CG propagation and modal interval lengths differ."
+                )
+            breaks = (
+                self.bottom_z_nm
+                + np.arange(cell_count + 1, dtype=np.float64) * h_nm
+            )
+            breaks[-1] = self.top_z_nm
+            minimum_polynomial_order = int(degree) + 1
+            axial_fem_degree = int(degree)
+            axial_h_nm = float(h_nm)
+            axial_field_model = "scalar_cg_cell_polynomial"
+        else:
+            axis = np.asarray(
+                self.cross_section.axis_plan.z_values,
+                dtype=np.float64,
+            )
+            interior = axis[
+                (axis > self.bottom_z_nm + 1.0e-12)
+                & (axis < self.top_z_nm - 1.0e-12)
+            ]
+            breaks = np.concatenate(
+                ([self.bottom_z_nm], interior, [self.top_z_nm])
+            )
+            axial_field_model = "continuous_exponential"
+        nodes, weights = np.polynomial.legendre.leggauss(gauss_order)
         local_integral = 0.0
         evaluations = 0
-        for start, stop in zip(breaks[:-1], breaks[1:]):
+        for cell_index, (start, stop) in enumerate(
+            zip(breaks[:-1], breaks[1:])
+        ):
             half = 0.5 * (stop - start)
             center = 0.5 * (stop + start)
             for node, weight in zip(nodes, weights):
                 z_value = center + half * node
-                coefficients = self.coefficients_at_z(modal_amplitudes, z_value)
+                if use_cg_polynomial:
+                    coefficients = (
+                        self._full3d_uniform_cg_coefficients_in_cell(
+                            modal_amplitudes,
+                            cell_index,
+                            0.5 * (float(node) + 1.0),
+                        )
+                    )
+                else:
+                    coefficients = self.coefficients_at_z(
+                        modal_amplitudes,
+                        z_value,
+                    )
                 self._total.x.petsc_vec.set(0.0)
                 for coefficient, mode in zip(coefficients, self._modes):
                     self._total.x.petsc_vec.axpy(
@@ -890,8 +1033,15 @@ class ModalFieldReconstructor:
         )
         return {
             "absorbed_power_code_units": max(total, 0.0),
+            "axial_field_model": axial_field_model,
+            "axial_fem_degree": axial_fem_degree,
+            "axial_h_nm": axial_h_nm,
+            "gauss_order_requested": requested_gauss_order,
             "z_cell_count": int(len(breaks) - 1),
             "gauss_order_per_z_cell": int(gauss_order),
+            "minimum_gauss_order_for_polynomial_energy": (
+                minimum_polynomial_order
+            ),
             "z_evaluation_count": int(evaluations),
         }
 

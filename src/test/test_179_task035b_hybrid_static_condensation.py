@@ -33,6 +33,9 @@ from src.solvers.hybrid_fem_modal_schur_direct import (
 from src.solvers.hybrid_local_dtn import (
     assemble_hybrid_local_dtn_system,
 )
+from src.postprocessing.hybrid_field_reconstruction import (
+    assign_local_total_electric_field,
+)
 
 
 def _synthetic_mode(
@@ -73,7 +76,7 @@ def _synthetic_mode(
 class Task035bHybridStaticCondensationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        h_nm = 15.0 if MPI.COMM_WORLD.size >= 8 else 100.0
+        h_nm = 20.0 if MPI.COMM_WORLD.size >= 8 else 100.0
         base = replace(
             target_stage4_config(degree=2, h_nm=h_nm),
             matrix_diagnostics_assemble_only=False,
@@ -138,6 +141,8 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
             cls.positive,
             cls.negative,
             *cls.standard_systems,
+            propagation_model="full3d_uniform_cg",
+            modal_traction_model="scalar_cg_discrete_derivative",
         )
         cls.static_coupling = build_hybrid_internal_mode_coupling(
             cls.static_cfg,
@@ -145,6 +150,8 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
             cls.positive,
             cls.negative,
             *cls.static_systems,
+            propagation_model="full3d_uniform_cg",
+            modal_traction_model="scalar_cg_discrete_derivative",
         )
         cls.standard_augmented = build_hybrid_augmented_direct_system(
             *cls.standard_systems,
@@ -355,6 +362,52 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
                 ],
                 4,
             )
+            self.assertEqual(
+                recovered.streaming_audit["traction_beta_source"],
+                "coupling_selected_traction_beta_per_nm",
+            )
+            self.assertEqual(
+                recovered.streaming_audit["positive_traction_beta_count"],
+                2,
+            )
+            self.assertEqual(
+                recovered.streaming_audit["negative_traction_beta_count"],
+                2,
+            )
+
+        for standard_system, standard_solution, static_solution in (
+            (
+                self.standard_systems[0],
+                self.standard_solution.bottom,
+                self.static_solution.bottom_recovered,
+            ),
+            (
+                self.standard_systems[1],
+                self.standard_solution.top,
+                self.static_solution.top_recovered,
+            ),
+        ):
+            standard_field = assign_local_total_electric_field(
+                standard_system,
+                standard_solution,
+            )
+            self.assertIsNotNone(static_solution)
+            difference = standard_field.x.petsc_vec.duplicate()
+            try:
+                static_solution.electric_field.x.petsc_vec.copy(difference)
+                difference.axpy(
+                    PETSc.ScalarType(-1.0),
+                    standard_field.x.petsc_vec,
+                )
+                self.assertLess(
+                    float(
+                        difference.norm()
+                        / max(standard_field.x.petsc_vec.norm(), 1.0e-30)
+                    ),
+                    1.0e-10,
+                )
+            finally:
+                difference.destroy()
 
     def test_recovered_trace_direct_projection_audits_candidate_itself(
         self,

@@ -245,6 +245,76 @@ class Task032StablePropagationTests(unittest.TestCase):
             corrected.forward.beta_per_nm[0],
         )
 
+    def test_full3d_uniform_cg_retains_dii_cell_polynomial_energy(self):
+        beta = 0.324456 + 0.002j
+        degree = 2
+        h_nm = 5.0
+        propagation = build_two_sided_propagation(
+            _reciprocal_modes(beta),
+            2.0 * h_nm,
+            propagation_model="full3d_uniform_cg",
+            axial_fem_degree=degree,
+            axial_h_nm=h_nm,
+        )
+        block = propagation.forward
+        self.assertEqual(block.axial_cell_count, 2)
+        self.assertEqual(block.axial_fem_degree, degree)
+        self.assertEqual(block.axial_h_nm, h_nm)
+
+        nodal = np.asarray(
+            block.axial_cell_nodal_factors[0],
+            dtype=np.complex128,
+        )
+        mass, stiffness = _scalar_cg_reference_matrices(degree)
+        dynamic = (
+            stiffness.astype(np.complex128)
+            - (beta * h_nm) ** 2 * mass
+        )
+        np.testing.assert_allclose(
+            (dynamic @ nodal)[1:-1],
+            0.0,
+            atol=2.0e-15,
+            rtol=0.0,
+        )
+        np.testing.assert_allclose(
+            block.cell_polynomial_factors(0, 0.0),
+            [1.0 + 0.0j],
+        )
+        np.testing.assert_allclose(
+            block.cell_polynomial_factors(0, 1.0),
+            block.cell_polynomial_factors(1, 0.0),
+        )
+        np.testing.assert_allclose(
+            block.cell_polynomial_factors(1, 1.0),
+            block.factors,
+            rtol=2.0e-14,
+            atol=2.0e-15,
+        )
+
+        nodes, weights = np.polynomial.legendre.leggauss(degree + 1)
+        reference_nodes = 0.5 * (nodes + 1.0)
+        reference_weights = 0.5 * weights
+        polynomial = np.asarray(
+            [
+                block.cell_polynomial_factors(0, coordinate)[0]
+                for coordinate in reference_nodes
+            ]
+        )
+        effective_beta = block.effective_beta_per_nm[0]
+        exponential = np.exp(
+            1j * effective_beta * h_nm * reference_nodes
+        )
+        polynomial_energy = float(
+            np.dot(reference_weights, np.abs(polynomial) ** 2)
+        )
+        exponential_energy = float(
+            np.dot(reference_weights, np.abs(exponential) ** 2)
+        )
+        self.assertGreater(
+            abs(polynomial_energy - exponential_energy),
+            1.0e-3,
+        )
+
     def test_full3d_uniform_cg_requires_explicit_degree_and_h(self):
         modes = _reciprocal_modes(0.08 + 0.0j)
         with self.assertRaisesRegex(ValueError, "axial_fem_degree"):

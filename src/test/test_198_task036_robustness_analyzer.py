@@ -285,7 +285,15 @@ def _hybrid(
         "solve": {"true_relative_residual": 1.0e-11},
         "validation": validation,
         "physical_field_reconstruction": {
-            "volume_absorption": {"A_volume_total": 0.4}
+            "volume_absorption": {"A_volume_total": 0.4},
+            "interface_continuity": {
+                side: {
+                    "electric_tangential": {
+                        "relative_l2": 1.0e-5,
+                    }
+                }
+                for side in ("bottom", "top")
+            },
         },
         "object_payload_ledger": {
             "local_or_augmented_factor_inventory": {
@@ -412,6 +420,46 @@ def test_legacy_hybrid_projection_gap_preserves_numerical_but_not_formal_m(
     assert result["failure_buckets"][
         "candidate_direct_projection_evidence_missing"
     ] == [120, 240]
+
+
+def test_sampled_physical_interface_failure_is_not_hidden_by_algebraic_gate(
+    tmp_path: Path,
+) -> None:
+    point, point_dir = _build_point(tmp_path)
+    solver_path = point_dir / "hybrid_m120" / "solver_record.json"
+    memory_path = point_dir / "hybrid_m120" / "memory_sampler_summary.json"
+    solver = json.loads(solver_path.read_text(encoding="utf-8"))
+    solver["physical_field_reconstruction"]["interface_continuity"]["bottom"][
+        "electric_tangential"
+    ]["relative_l2"] = 8.0e-3
+    _write_json(solver_path, solver)
+    memory = json.loads(memory_path.read_text(encoding="utf-8"))
+    memory["return_code"] = 2
+    memory["status"] = "formal_not_pass"
+    memory["solver_record_sha256"] = _sha256(solver_path)
+    _write_json(memory_path, memory)
+
+    result = analyze_point(point, point_dir, SOURCE_SHA)
+
+    m120 = result["hybrid_by_m"]["120"]
+    assert m120["numerical_individual_gates"]["interface_e_le_1e-8"] is True
+    assert (
+        m120["numerical_individual_gates"][
+            "external_watchdog_completed_without_resource_stop"
+        ]
+        is True
+    )
+    assert (
+        m120["numerical_individual_gates"][
+            "sampled_interface_e_le_5e-3"
+        ]
+        is False
+    )
+    assert m120["metrics"]["sampled_interface_e_max_relative_l2"] == 8.0e-3
+    assert result["classification"]["numerical_minimum_passing_M"] is None
+    assert result["failure_buckets"]["sampled_interface_e_le_5e-3"] == [
+        120
+    ]
 
 
 def test_projection_without_explicit_hybrid_candidate_scope_is_not_formal(

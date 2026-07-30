@@ -581,9 +581,16 @@ def _task036_scalar_stage4_partition_repair_candidate(
     near_degenerate_tolerance: float,
     block_rotation_tolerance: float,
     maximum_overlap_condition: float,
+    initial_group_overlap_conditions: Sequence[float] | None = None,
     maximum_union_size: int = 8,
 ) -> tuple[tuple[tuple[int, ...], ...] | None, dict[str, object]]:
-    """Plan every bounded row-budget component before changing any vector."""
+    """Plan every bounded row-budget component before changing any vector.
+
+    A component may either join distinct near-beta groups or refine one
+    already-formed group whose own post-normalization block alone explains
+    the failed row budget.  Both paths remain one-shot and preserve the right
+    modes, beta values, and the frozen full-matrix acceptance tolerance.
+    """
 
     group_members = [
         tuple(int(index) for index in indices) for indices in groups
@@ -615,6 +622,16 @@ def _task036_scalar_stage4_partition_repair_candidate(
         return rejected("biorthogonality_shape_mismatch")
     if len(directions) != len(betas):
         return rejected("direction_count_mismatch")
+    initial_conditions = (
+        None
+        if initial_group_overlap_conditions is None
+        else tuple(float(value) for value in initial_group_overlap_conditions)
+    )
+    if (
+        initial_conditions is not None
+        and len(initial_conditions) != len(group_members)
+    ):
+        return rejected("initial_group_overlap_condition_count_mismatch")
 
     identity_difference = np.abs(
         values - np.eye(len(betas), dtype=np.complex128)
@@ -634,6 +651,28 @@ def _task036_scalar_stage4_partition_repair_candidate(
     }
     if not failing_group_ids:
         return rejected("no_full_row_norm_failure_seed")
+    group_condition_diagnostics: list[dict[str, object]] = []
+    for identifier in sorted(failing_group_ids):
+        members = group_members[identifier]
+        block = values[np.ix_(members, members)]
+        group_condition_diagnostics.append(
+            {
+                "group_id": identifier,
+                "group_members": list(members),
+                "initial_raw_overlap_condition": (
+                    None
+                    if initial_conditions is None
+                    else initial_conditions[identifier]
+                ),
+                "post_normalization_overlap_condition": float(np.linalg.cond(block)),
+                "post_normalization_identity_error": float(
+                    np.linalg.norm(
+                        block - np.eye(len(members), dtype=np.complex128),
+                        ord=np.inf,
+                    )
+                ),
+            }
+        )
     noise_floor = (
         64.0
         * np.finfo(np.float64).eps
@@ -647,6 +686,11 @@ def _task036_scalar_stage4_partition_repair_candidate(
             "minimum deterministic partner-group prefix whose row "
             "contribution exceeds the full identity-row-norm excess"
         ),
+        row_error_decomposition_semantics=(
+            "full = within current group + eligible same-direction near-beta "
+            "cross groups + every remaining far/noneligible cross group"
+        ),
+        group_condition_diagnostics=group_condition_diagnostics,
     )
 
     parents = list(range(len(group_members)))
@@ -664,11 +708,17 @@ def _task036_scalar_stage4_partition_repair_candidate(
             parents[second_root] = first_root
 
     selected_edges: dict[tuple[int, int], dict[str, object]] = {}
+    same_group_refinement_ids: set[int] = set()
     row_failure_plans: list[dict[str, object]] = []
     unexplained_rows: list[dict[str, object]] = []
     for row in map(int, failing_rows):
         first = int(group_id_by_mode[row])
         first_members = group_members[first]
+        within_group_row_error = float(
+            np.sum(identity_difference[row, list(first_members)])
+        )
+        eligible_near_cross_row_error = 0.0
+        far_cross_row_error = 0.0
         candidates: list[tuple[float, int, float]] = []
         for second, second_members in enumerate(group_members):
             if second == first:
@@ -697,52 +747,77 @@ def _task036_scalar_stage4_partition_repair_candidate(
                 <= 10.0 * float(near_degenerate_tolerance)
             )
             if eligible:
+                eligible_near_cross_row_error += row_contribution
                 candidates.append(
                     (row_contribution, int(second), beta_distance)
                 )
+            else:
+                far_cross_row_error += row_contribution
         candidates.sort(key=lambda item: (-item[0], item[1]))
         required_reduction = float(
             identity_row_errors[row] - float(block_rotation_tolerance)
         )
         cumulative = 0.0
         selected_partner_ids: list[int] = []
-        for row_contribution, second, beta_distance in candidates:
-            selected_partner_ids.append(second)
-            cumulative += row_contribution
-            edge_key = tuple(sorted((first, second)))
-            edge = selected_edges.setdefault(
-                edge_key,
-                {
-                    "source_group_ids": list(edge_key),
-                    "trigger_rows": [],
-                    "maximum_group_row_contribution": 0.0,
-                    "minimum_relative_beta_distance": beta_distance,
-                },
-            )
-            edge["trigger_rows"].append(row)
-            edge["maximum_group_row_contribution"] = max(
-                float(edge["maximum_group_row_contribution"]),
-                row_contribution,
-            )
-            edge["minimum_relative_beta_distance"] = min(
-                float(edge["minimum_relative_beta_distance"]),
-                beta_distance,
-            )
-            if cumulative > required_reduction:
-                break
+        same_group_sufficient = bool(within_group_row_error > required_reduction)
+        if same_group_sufficient:
+            same_group_refinement_ids.add(first)
+        else:
+            for row_contribution, second, beta_distance in candidates:
+                selected_partner_ids.append(second)
+                cumulative += row_contribution
+                edge_key = tuple(sorted((first, second)))
+                edge = selected_edges.setdefault(
+                    edge_key,
+                    {
+                        "source_group_ids": list(edge_key),
+                        "trigger_rows": [],
+                        "maximum_group_row_contribution": 0.0,
+                        "minimum_relative_beta_distance": beta_distance,
+                    },
+                )
+                edge["trigger_rows"].append(row)
+                edge["maximum_group_row_contribution"] = max(
+                    float(edge["maximum_group_row_contribution"]),
+                    row_contribution,
+                )
+                edge["minimum_relative_beta_distance"] = min(
+                    float(edge["minimum_relative_beta_distance"]),
+                    beta_distance,
+                )
+                if cumulative > required_reduction:
+                    break
         row_plan = {
             "trigger_row": row,
             "source_group_id": first,
             "full_identity_row_error": float(identity_row_errors[row]),
             "required_reduction": required_reduction,
+            "within_group_row_error": within_group_row_error,
+            "eligible_near_cross_row_error": eligible_near_cross_row_error,
+            "far_cross_row_error": far_cross_row_error,
+            "row_error_decomposition_closure": float(
+                abs(
+                    identity_row_errors[row]
+                    - within_group_row_error
+                    - eligible_near_cross_row_error
+                    - far_cross_row_error
+                )
+            ),
+            "same_group_refinement_sufficient": same_group_sufficient,
             "selected_partner_group_ids": selected_partner_ids,
             "cumulative_selected_contribution": cumulative,
             "noise_floor": noise_floor,
         }
         row_failure_plans.append(row_plan)
-        if cumulative <= required_reduction:
+        if not same_group_sufficient and cumulative <= required_reduction:
+            row_plan["unexplained_reason"] = (
+                "far_cross_row_budget_exceeds_tolerance"
+                if far_cross_row_error >= float(block_rotation_tolerance)
+                else "insufficient_eligible_near_cross_row_budget"
+            )
             unexplained_rows.append(row_plan)
     provenance["row_failure_plans"] = row_failure_plans
+    provenance["same_group_refinement_group_ids"] = sorted(same_group_refinement_ids)
     if unexplained_rows:
         provenance["unexplained_row_failures"] = unexplained_rows
         return rejected(
@@ -764,7 +839,10 @@ def _task036_scalar_stage4_partition_repair_candidate(
         (
             tuple(sorted(identifiers))
             for identifiers in connected_group_ids.values()
-            if len(identifiers) > 1
+            if (
+                len(identifiers) > 1
+                or bool(same_group_refinement_ids.intersection(identifiers))
+            )
             and failing_group_ids.intersection(identifiers)
         ),
         key=lambda identifiers: min(
@@ -791,13 +869,21 @@ def _task036_scalar_stage4_partition_repair_candidate(
                 for identifier in identifiers
             ],
             "merged_group_members": list(merged),
+            "component_kind": (
+                "same_group_refinement"
+                if len(identifiers) == 1
+                else "connected_near_beta_groups"
+            ),
+            "source_group_initial_raw_overlap_conditions": [
+                (None if initial_conditions is None else initial_conditions[identifier])
+                for identifier in identifiers
+            ],
         }
         if len(merged) > int(maximum_union_size):
             provenance["components"] = [*component_records, record]
             return rejected("connected_component_exceeds_bounded_size")
-        condition = float(
-            np.linalg.cond(values[np.ix_(merged, merged)])
-        )
+        overlap = values[np.ix_(merged, merged)]
+        condition = float(np.linalg.cond(overlap))
         record["joint_overlap_condition"] = condition
         if (
             not np.isfinite(condition)
@@ -805,11 +891,37 @@ def _task036_scalar_stage4_partition_repair_candidate(
         ):
             provenance["components"] = [*component_records, record]
             return rejected("connected_component_overlap_ill_conditioned")
+        try:
+            transform = np.linalg.solve(
+                overlap.conj().T,
+                np.eye(len(merged), dtype=np.complex128),
+            )
+        except np.linalg.LinAlgError:
+            provenance["components"] = [*component_records, record]
+            return rejected("connected_component_overlap_solve_failed")
+        dense_solve_identity_error = float(
+            np.linalg.norm(
+                transform.conj().T @ overlap - np.eye(len(merged), dtype=np.complex128),
+                ord=np.inf,
+            )
+        )
+        record["joint_dense_solve_identity_error"] = dense_solve_identity_error
+        if not np.isfinite(
+            dense_solve_identity_error
+        ) or dense_solve_identity_error > float(block_rotation_tolerance):
+            provenance["components"] = [*component_records, record]
+            return rejected(
+                "connected_component_dense_solve_residual_exceeds_tolerance"
+            )
         component_records.append(record)
         merged_components.append(merged)
 
     provenance["components"] = component_records
     provenance["component_count"] = len(component_records)
+    provenance["same_group_refinement_component_count"] = sum(
+        record["component_kind"] == "same_group_refinement"
+        for record in component_records
+    )
     provenance["edge_count"] = len(edge_records)
     provenance["edges"] = edge_records
     provenance.update(eligible=True, reason="eligible")
@@ -837,10 +949,13 @@ def _joint_left_basis_inverse(
             f"indices={selected}, condition={condition:.6e}."
         )
     try:
-        transform = np.linalg.inv(overlap).conj().T
+        transform = np.linalg.solve(
+            overlap.conj().T,
+            np.eye(len(selected), dtype=np.complex128),
+        )
     except np.linalg.LinAlgError as error:
         raise RuntimeError(
-            "Task036 joint left-basis overlap inversion failed: "
+            "Task036 joint left-basis overlap solve failed: "
             f"indices={selected}, condition={condition:.6e}."
         ) from error
     old = (
@@ -1597,7 +1712,16 @@ def build_biorthogonal_mode_basis(
                 )
 
             if len(indices) > 1:
-                transform = np.linalg.inv(raw_overlap).conj().T
+                try:
+                    transform = np.linalg.solve(
+                        raw_overlap.conj().T,
+                        np.eye(len(indices), dtype=np.complex128),
+                    )
+                except np.linalg.LinAlgError as error:
+                    raise RuntimeError(
+                        "Near-degenerate left/right overlap solve failed: "
+                        f"indices={indices}, condition={condition:.6e}."
+                    ) from error
                 old_reduced = [left_reduced[index] for index in indices]
                 old_full = [left_full[index] for index in indices]
                 new_reduced = [
@@ -1680,6 +1804,9 @@ def build_biorthogonal_mode_basis(
                     near_degenerate_tolerance=near_degenerate_tolerance,
                     block_rotation_tolerance=block_rotation_tolerance,
                     maximum_overlap_condition=maximum_overlap_condition,
+                    initial_group_overlap_conditions=tuple(
+                        payload[3] for payload in group_payload
+                    ),
                 )
             )
             repair_provenance.update(eligibility)
@@ -1735,7 +1862,12 @@ def build_biorthogonal_mode_basis(
                         center,
                         spread,
                         condition,
-                        "task036_connected_component_joint_inverse",
+                        (
+                            "task036_same_group_left_dual_refinement"
+                            if component_record["component_kind"]
+                            == "same_group_refinement"
+                            else "task036_connected_component_joint_inverse"
+                        ),
                     )
                 group_indices = [
                     indices
@@ -1768,6 +1900,10 @@ def build_biorthogonal_mode_basis(
                     applied=True,
                     joint_overlap_conditions=joint_conditions,
                     connected_component_count=len(merged_components),
+                    same_group_refinement_component_count=sum(
+                        record["component_kind"] == "same_group_refinement"
+                        for record in component_records
+                    ),
                     right_modes_changed=False,
                     beta_values_changed=False,
                     left_basis_joint_inverse_only=True,

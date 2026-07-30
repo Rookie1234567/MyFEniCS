@@ -8,6 +8,7 @@ import unittest
 import numpy as np
 from mpi4py import MPI
 
+from src.modes.stable_propagation import build_two_sided_propagation
 from src.postprocessing.hybrid_field_reconstruction import (
     ModalFieldReconstructor,
     ModalPlaneSamples,
@@ -40,6 +41,76 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
         self.assertTrue(np.all(np.abs(middle[:2]) < np.abs(amplitudes[:2])))
         self.assertTrue(np.all(np.abs(middle[2:]) < np.abs(amplitudes[2:])))
         self.assertTrue(np.all(np.isfinite(middle)))
+
+    def test_cg_volume_polynomial_does_not_change_selected_plane_proxy(
+        self,
+    ) -> None:
+        positive_mode = SimpleNamespace(
+            beta=0.324456 + 0.002j,
+            direction="forward",
+            passive_branch_valid=True,
+        )
+        negative_mode = SimpleNamespace(
+            beta=-0.324456 - 0.002j,
+            direction="backward",
+            passive_branch_valid=True,
+        )
+        propagation = build_two_sided_propagation(
+            [positive_mode, negative_mode],
+            10.0,
+            propagation_model="full3d_uniform_cg",
+            axial_fem_degree=2,
+            axial_h_nm=5.0,
+        )
+        reconstructor = ModalFieldReconstructor.__new__(
+            ModalFieldReconstructor
+        )
+        reconstructor.positive = SimpleNamespace(modes=[positive_mode])
+        reconstructor.negative = SimpleNamespace(modes=[negative_mode])
+        reconstructor.bottom_z_nm = 10.0
+        reconstructor.top_z_nm = 20.0
+        reconstructor.propagation_model = "full3d_uniform_cg"
+        reconstructor._positive_propagation_beta = np.asarray(
+            propagation.forward.effective_beta_per_nm
+        )
+        reconstructor._negative_propagation_beta = np.asarray(
+            propagation.backward.effective_beta_per_nm
+        )
+        reconstructor._axial_propagation = propagation
+        amplitudes = np.asarray(
+            [1.0 + 0.25j, -0.4 + 0.1j],
+            dtype=np.complex128,
+        )
+        selected_before = reconstructor.coefficients_at_z(
+            amplitudes,
+            12.5,
+        )
+        volume_coefficients = (
+            reconstructor._full3d_uniform_cg_coefficients_in_cell(
+                amplitudes,
+                0,
+                0.5,
+            )
+        )
+        selected_after = reconstructor.coefficients_at_z(
+            amplitudes,
+            12.5,
+        )
+
+        np.testing.assert_array_equal(selected_after, selected_before)
+        self.assertGreater(
+            float(np.linalg.norm(volume_coefficients - selected_before)),
+            1.0e-4,
+        )
+        self.assertEqual(reconstructor._middle_volume_gauss_order(2), 3)
+        reconstructor._axial_propagation = build_two_sided_propagation(
+            [positive_mode, negative_mode],
+            10.0,
+            propagation_model="full3d_uniform_cg",
+            axial_fem_degree=5,
+            axial_h_nm=10.0,
+        )
+        self.assertEqual(reconstructor._middle_volume_gauss_order(4), 6)
 
     def test_selected_plane_reference_comparison_round_trip(self) -> None:
         x = np.asarray([0.25, 0.75])

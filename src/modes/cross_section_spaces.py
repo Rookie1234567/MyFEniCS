@@ -82,7 +82,7 @@ def _structured_quad_mesh(
     partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
     return mesh.create_mesh(
         comm,
-        np.asarray(cells, dtype=np.int64),
+        np.asarray(cells, dtype=np.int64).reshape((-1, 4)),
         domain,
         points,
         partitioner=partitioner,

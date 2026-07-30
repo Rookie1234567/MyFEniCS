@@ -28,6 +28,7 @@ HYBRID_DIR_RE = re.compile(r"^hybrid_m([1-9][0-9]*)$")
 
 TRUE_RESIDUAL_MAX = 1.0e-9
 INTERFACE_E_MAX = 1.0e-8
+SAMPLED_INTERFACE_E_MAX = 5.0e-3
 EXACT_TRACTION_MAX = 1.0e-8
 BIORTHOGONALITY_ROW_MAX = 1.0e-6
 DIRECT_PROJECTION_MAX = 1.0e-10
@@ -723,6 +724,27 @@ def _verify_hybrid(
     interface = _optional_finite(
         _dig(solver, "validation", "interface_e_projection", "combined_relative_residual")
     )
+    sampled_interface_e_by_side = {
+        side: _optional_finite(
+            _dig(
+                solver,
+                "physical_field_reconstruction",
+                "interface_continuity",
+                side,
+                "electric_tangential",
+                "relative_l2",
+            )
+        )
+        for side in ("bottom", "top")
+    }
+    sampled_interface_e = (
+        max(sampled_interface_e_by_side.values())
+        if all(
+            value is not None
+            for value in sampled_interface_e_by_side.values()
+        )
+        else None
+    )
     traction_values = [
         _optional_finite(
             _dig(
@@ -766,8 +788,14 @@ def _verify_hybrid(
         _dig(memory, "resource_authority", "memory_authority_gib")
     )
     wall_seconds = _optional_finite(_dig(solver, "timing_seconds_max_rank", "total"))
-    external_pass = bool(
-        memory.get("return_code") == 0
+    watchdog_completed = bool(
+        (
+            memory.get("return_code") == 0
+            or (
+                memory.get("return_code") == 2
+                and memory.get("status") == "formal_not_pass"
+            )
+        )
         and memory.get("no_swap") is True
         and memory.get("terminated_for_memory") is False
         and memory.get("terminated_for_timeout") is False
@@ -777,11 +805,17 @@ def _verify_hybrid(
         and peak_gib > 0.0
     )
     numerical_gates = {
-        "external_watchdog_pass": external_pass,
+        "external_watchdog_completed_without_resource_stop": (
+            watchdog_completed
+        ),
         "true_residual_le_1e-9": residual is not None
         and residual <= TRUE_RESIDUAL_MAX,
         "interface_e_le_1e-8": interface is not None
         and interface <= INTERFACE_E_MAX,
+        "sampled_interface_e_le_5e-3": (
+            sampled_interface_e is not None
+            and sampled_interface_e <= SAMPLED_INTERFACE_E_MAX
+        ),
         "exact_traction_le_1e-8": traction is not None
         and traction <= EXACT_TRACTION_MAX,
         "biorthogonality_row_le_1e-6": biorthogonality is not None
@@ -843,6 +877,10 @@ def _verify_hybrid(
             "metrics": {
                 "true_relative_residual": residual,
                 "interface_e_relative_residual": interface,
+                "sampled_interface_e_relative_l2_by_side": (
+                    sampled_interface_e_by_side
+                ),
+                "sampled_interface_e_max_relative_l2": sampled_interface_e,
                 "exact_traction_relative_dual": traction,
                 "biorthogonality_row_norm": biorthogonality,
                 "direct_projection_difference": direct_projection["difference"],
@@ -877,6 +915,8 @@ def _verify_hybrid(
                 ),
                 "peak_memory_gib": peak_gib,
                 "wall_seconds": wall_seconds,
+                "watchdog_return_code": memory.get("return_code"),
+                "watchdog_status": memory.get("status"),
             },
             "candidate_direct_projection": direct_projection,
             "numerical_individual_gates": numerical_gates,
@@ -1382,6 +1422,7 @@ def analyze_scan(
         "thresholds": {
             "true_residual": TRUE_RESIDUAL_MAX,
             "interface_e": INTERFACE_E_MAX,
+            "sampled_physical_interface_e": SAMPLED_INTERFACE_E_MAX,
             "exact_traction": EXACT_TRACTION_MAX,
             "biorthogonality_row": BIORTHOGONALITY_ROW_MAX,
             "candidate_direct_projection": DIRECT_PROJECTION_MAX,

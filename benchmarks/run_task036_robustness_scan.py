@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from queue import Queue
 import subprocess
 import sys
 from typing import Any
@@ -15,6 +16,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_POINTS = ROOT / "benchmarks" / "task036_robustness_scan_points.csv"
+MPI_SIZE = 8
 
 
 def _sha256(path: Path) -> str:
@@ -68,6 +70,29 @@ def _point_values(row: dict[str, str]) -> dict[str, Any]:
         ),
         "initial_m": int(row["initial_m_per_direction"]),
     }
+
+
+def _exclusive_cpu_sets(
+    max_parallel: int,
+    *,
+    mpi_size: int = MPI_SIZE,
+) -> tuple[tuple[int, ...], ...]:
+    if not hasattr(os, "sched_getaffinity"):
+        raise RuntimeError(
+            "Task036 parallel dispatch requires Linux CPU-affinity support."
+        )
+    available = tuple(sorted(os.sched_getaffinity(0)))
+    required = max_parallel * mpi_size
+    if len(available) < required:
+        raise RuntimeError(
+            "Task036 parallel dispatch needs "
+            f"{required} CPUs for {max_parallel} MPI{mpi_size} jobs, "
+            f"but only {len(available)} are available."
+        )
+    return tuple(
+        available[index * mpi_size : (index + 1) * mpi_size]
+        for index in range(max_parallel)
+    )
 
 
 def _full3d_command(
@@ -206,6 +231,7 @@ def _run_command(
     stage: str,
     command: list[str],
     run_dir: Path,
+    cpu_set: tuple[int, ...],
 ) -> dict[str, Any]:
     run_dir.parent.mkdir(parents=True, exist_ok=True)
     if run_dir.exists():
@@ -215,6 +241,7 @@ def _run_command(
             "status": "existing_artifact_not_rerun",
             "return_code": None,
             "run_dir": str(run_dir),
+            "exclusive_cpu_set": list(cpu_set),
         }
     temporary = run_dir.parent / f".{run_dir.name}_tmp"
     temporary.mkdir(parents=True, exist_ok=False)
@@ -230,13 +257,22 @@ def _run_command(
             "OPENBLAS_NUM_THREADS": "1",
             "MKL_NUM_THREADS": "1",
             "NUMEXPR_NUM_THREADS": "1",
+            "OMPI_MCA_hwloc_base_binding_policy": "core",
+            "OMPI_MCA_hwloc_base_report_bindings": "true",
+            "OMPI_MCA_rmaps_base_mapping_policy": "slot",
         }
     )
+    launcher_command = [
+        "taskset",
+        "--cpu-list",
+        ",".join(str(cpu) for cpu in cpu_set),
+        *command,
+    ]
     log_path = run_dir.parent / f"{run_dir.name}.launcher.log"
     started = datetime.now(timezone.utc).isoformat()
     with log_path.open("w", encoding="utf-8") as log:
         process = subprocess.run(
-            command,
+            launcher_command,
             cwd=ROOT,
             env=environment,
             stdout=log,
@@ -254,6 +290,14 @@ def _run_command(
         "run_dir": str(run_dir),
         "launcher_log": str(log_path),
         "command": command,
+        "launcher_command": launcher_command,
+        "exclusive_cpu_set": list(cpu_set),
+        "mpi_binding": {
+            "mpi_size": MPI_SIZE,
+            "binding_policy": "core",
+            "mapping_policy": "slot_with_taskset_cpu_partition",
+            "report_bindings": True,
+        },
     }
 
 
@@ -266,9 +310,20 @@ def _append_ledger(path: Path, records: list[dict[str, Any]]) -> None:
 
 def _run_batch(jobs: list[dict[str, Any]], max_parallel: int) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
+    leases: Queue[tuple[int, ...]] = Queue()
+    for cpu_set in _exclusive_cpu_sets(max_parallel):
+        leases.put(cpu_set)
+
+    def run_with_cpu_lease(job: dict[str, Any]) -> dict[str, Any]:
+        cpu_set = leases.get()
+        try:
+            return _run_command(**job, cpu_set=cpu_set)
+        finally:
+            leases.put(cpu_set)
+
     with ThreadPoolExecutor(max_workers=max_parallel) as executor:
         futures = {
-            executor.submit(_run_command, **job): job["point_id"]
+            executor.submit(run_with_cpu_lease, job): job["point_id"]
             for job in jobs
         }
         for future in as_completed(futures):
