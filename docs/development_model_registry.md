@@ -40,6 +40,13 @@
 > `49/59`：被显式优化的 6 个物理目标全部恢复，但 10 个原本通过的旁路
 > 目标越界。因此 direct selective-trace lane 关闭，不再运行第二批或修改
 > 阈值/排名公式；iterative 与 Hybrid 保持 `not_run`，等待后续授权。
+>
+> **2026-07-30 Task035e final closeout。** 最终 Review V1 将本任务冻结为
+> `PARTIAL_WITH_CONTROLLED_NEGATIVES_CLOSED`：reference certification 与
+> true local-h/local-p component capability 为 `pass`，automatic
+> reference-blind hp cycle 为 `incomplete`，production candidate 为
+> `none`，direct selective-trace 为 `closed_controlled_negative`，
+> Hybrid/iterative 为 `not_run`，ordinary default 未改变。
 
 ---
 
@@ -54,7 +61,7 @@
 | `C-COMSOL-P0` | COMSOL 直接/迭代求解器对照 | 周期 `50×25 nm`；空气 `50×25×130 nm`；基底 `50×25×10 nm`；光栅 `16×25×120 nm` | `13.5 nm`；`80°`（相对法线） | P | 两周期端口 + 双 Floquet；仅 `(0,0)` 零级 | `docs/task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md` |
 | `C-COMSOL-HO-S` | COMSOL p2–p6直接法与p2 GMRES+GMG收敛矩阵 | 固定三维高阶benchmark；精确geometry/source hash保存在MPH而非Markdown | 13.5 nm项目主点；入射身份以MPH为准 | 偏振身份以MPH为准（Markdown未冻结） | 双Floquet/周期端口；保存R00与总R/T/A，未逐项冻结12通道复振幅 | `docs/COMSOL_direct_solver_report.md` |
 | `F-STAGE4-S` | FEniCS Stage4 原始完整 FE 矩阵、Hybrid 和迭代主线 | 单元 `50×25×140 nm`；Si 块 `17×25×120 nm` | `13.5 nm`；`theta=80°`、`phi=0°`，即 `10°` 掠入射 | S | 双 Floquet + Fourier-DtN；top/bottom 各 40 个传播模态，共 80 个辅助量 | Task027–Task033 |
-| `F-HO-S` | FEniCS 高阶、h/p、自适应、静态凝聚与Hybrid高阶闭合主线 | Task034 冻结规则矩形光栅；与 `F-STAGE4-S` 同一工程主点族 | `13.5 nm`；`10°` 掠入射 | S | 双 Floquet + DtN；显著衍射级使用 Task035b reference v1 | Task034–Task035e；Task035e 当前为 partial cycle-0 evidence |
+| `F-HO-S` | FEniCS 高阶、h/p、自适应、静态凝聚与Hybrid高阶闭合主线 | Task034 冻结规则矩形光栅；与 `F-STAGE4-S` 同一工程主点族 | `13.5 nm`；`10°` 掠入射 | S | 双 Floquet + DtN；显著衍射级使用 Task035b reference v1 | Task034–Task035e；Task035e 已按 Review V1 以 partial + closed controlled negatives 收口 |
 
 ### 0.2 总量、自由度和资源字段
 
@@ -1282,12 +1289,19 @@ negative；最后一次 6-adjoint goal-oriented 16-orbit candidate 通过资源�
 关闭 direct selective-trace，而不是把 Task035e 或 blind adaptive cycle 写成
 完成。
 
+本节 evidence 路径属于保留的 Task035e 研究分支，master 的
+documentation-only integration 不复制对应 source、workers、records 或
+outcomes。完整证据固定在
+[`27ca26718b9ee60215243bcc98ffafcd46bfd221`](https://github.com/Rookie1234567/MyFEniCS/tree/27ca26718b9ee60215243bcc98ffafcd46bfd221)
+历史快照；master 中的本表和 Review V1 是其轻量索引。
+
 | Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
 |---|---|---|---|---|---|---|
 | `task035e_reference_certification_sealed` | certification source `03ddc8319fa9ee9da6a9ee948b539a067e9c3dd0`；sealed package `69b620…12d7`，47,421,013 bytes；package 未提交/未解析 | `F-HO-S`；p6/h10、p6/h7.5、p6/h5；S；Full3D static | direct MUMPS；MPI8；三个 full solve | 三个 run 的 residual/energy/resource 均 pass、zero swap；reference 数值、逐通道、场和 error map 不进入总账 | `SEALED_IDENTITY_ONLY_NO_REFERENCE_VALUES`；reference-leak static/manifest/dynamic 全通过 | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/task035e_sealed_reference_manifest_v1.json` |
 | `task035e_structured_p6_h10` | existing certification source `03ddc8319fa9ee9da6a9ee948b539a067e9c3dd0`；same frozen 59-goal inventory | `(6,3,14)`；252 cells；global p6 trace/interior | static condensed direct MUMPS；MPI8；173,802 FE DoF；51,272 rows；41,989,040 matrix NNZ；202,441,352 factor NNZ | residual `1.483287e-11`；R00=`0.0007537612`，R=`0.0007628815`，T=`0.6027016340`，Avolume=`0.3965354845`；59/59；14.466988 GiB；zero swap | structured accuracy anchor；超过11 GiB，不是压缩候选 | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/structured_anchor_selective_trace_v1.json` |
 | `task035e_structured_p6_h7p5` | 同一 certification source 与 inventory | `(9,4,20)`；720 cells；global p6 trace/interior | static condensed direct MUMPS；MPI8；488,070 FE DoF；145,232 rows；119,738,672 matrix NNZ；708,620,576 factor NNZ | residual `2.076296e-11`；R00=`0.0007528960`，R=`0.0007620151`，T=`0.6027074846`，Avolume=`0.3965305003`；59/59；31.880505 GiB；zero swap | 更细 accuracy endpoint；h7.5→h5 max差仅 `0.004416 tau` | 同上 |
 | `task035e_structured_p6_h5` | 同一 certification source；factor telemetry 离线修正绑定 raw run summary `f19e827a…60b49` | `(12,5,28)`；1,680 cells；global p6 trace/interior | static condensed direct MUMPS；MPI8；1,127,502 FE DoF；337,040 rows；279,032,240 matrix NNZ；**2,277,000,000 corrected factor NNZ** | residual `1.039818e-10`；R00=`0.0007528884`，R=`0.0007620075`，T=`0.6027075352`，Avolume=`0.3965304573`；59/59；77.945587 GiB；zero swap | best available discrete endpoint；raw PETSc `-2017967296` overflow 和 MUMPS `INFOG(9)=-2277` 均保留；未重跑 PDE | 同上 |
+| `task035e_fast_hp_mechanism_negatives` | source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；reference-visible development only | 160-leaf C1/C2 与 216/272-leaf H2/P3/H3；另含同拓扑 global-p6 A 与 p5-trace/p6-interior C | MPI8 direct static；broad-p、isotropic full-h 与 trace/interior mechanism discriminators | C2/P3 E2 分别恶化 `9.219512%/9.227268%`；H2/H3 仅改善 `0.021457%/0.022178%` 且显著增资源；A 为4/59、12.335 GiB；C 为0/59、8.999 GiB | broad-p 与 isotropic-h 为 controlled negatives；A/C 只作机制证据；160-leaf topology 不再生成候选 | Task035e branch `27ca267...`；`outcomes/fast_hp_sprint_v2.md`、`outcomes/mechanism_isolation_sprint_v1.md` |
 | `task035e_H10_fixed_p5trace_p6interior_M1` | source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；与 p6/h10 同一 mesh/geometry | `(6,3,14)`；global p5 trace + p6 interior | static condensed direct MUMPS；MPI8；154,735 FE DoF；35,000 rows；20,140,928 matrix NNZ；101,141,150 factor NNZ | residual `1.150501e-11`；52/59；normalized L2 `5.397523`；9,784.469 MiB historical upper bound；zero swap | 低内存 base；7 个正式失败行，不是 accuracy anchor | 同上 |
 | `task035e_H10_projection_200_faces` | source `d9e2c2f8c8edbd91d96a0e642d8f4e1cc0778e6e`；field-energy projection ranking | M1 + 200/774 face orbits；233 geometry keys；无 edge/local-h | static condensed direct MUMPS；MPI8；159,395 FE DoF；39,000 rows；24,696,176 matrix NNZ；116,348,600 factor NNZ | residual `2.478629e-11`；50/59；normalized L2 `5.762190`；13.004326 GiB；zero swap | accuracy+resource controlled negative；普通场投影排序关闭；第二批 `not_run` | 同上；`docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/structured_anchor_selective_trace_v1.md` |
 | `task035e_H10_goal_DWR_support` | numerical source `69cd41c74ba0dfc310d8631cf7bbd8103ec8fc73`；M1 7 fail rows→6 independent physical goals | global-p6 fine factor；B/S/F exact hierarchy；774 physical face orbits；6 transpose adjoints | factorization-only MPI8；51,272 rows；41,989,040 matrix NNZ；184,588,160 factor NNZ；无 primal solve、无 official endpoint | 6 adjoint residual `1.675e-13`–`1.729e-12`；B→S→F error `1.776e-14`；face residual unexplained `6.604e-10`；support historical upper bound 19.107769 GiB | estimator support pass；只用于冻结唯一16-orbit batch，不计 candidate memory或reference credit | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/h10_goal_oriented_selective_trace_v1.json` |
@@ -1299,6 +1313,7 @@ negative；最后一次 6-adjoint goal-oriented 16-orbit candidate 通过资源�
 | `task035e_path_a_c0_selected_p_actual` | numerical source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；action `c054f3…633c`；forest 与 current 相同 | 160 leaves；level 0/1=`32/128`；p4/p5/p6=`22/136/2`；仅 r42 两个 p4→p5 与 r13/r37 两个 p5→p6 | variable-p static condensed；MPI8；59,997 Full3D-equivalent DoF；20,251 augmented rows；10,834,433 matrix NNZ；41,278,819 factor NNZ | residual `2.421043e-12`；R00=`0.0160886209`，R=`0.0276394999`，T=`0.4322933170`，Aclosure=`0.5400671831`；RSS/PSS/USS=`7887.426/6458.675/6349.059 MiB`，swap 0；worker `207.671 s` | 数值/资源 pass；selected-cellwise prediction 仅 `19/59` factor-two、`25/59` opposite-sign，故 `CONTROLLED_NEGATIVE_ACTION_LEVEL_EFFECTIVITY`；cycle 0 current 保留 | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_selected_p_actual_checkpoint_v1.json` |
 | `task035e_path_a_c0_single_cell_p_actual` | numerical source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；target `cell:r42:l1:i1:j0:k0 p4→p5`；action file `a08161…c89a`；forest 与 current 相同 | 160 leaves；level 0/1=`32/128`；p4/p5/p6=`23/137/0`；+132 interior、+0 edge、+16 face modes | variable-p static condensed；MPI8；59,412 Full3D-equivalent DoF；20,218 augmented rows；10,810,712 matrix NNZ；41,157,452 factor NNZ | residual `2.707608e-12`；R00=`0.0863527953`，R=`0.0948725837`，T=`0.3774527359`，Aclosure=`0.5276746804`；RSS/PSS/USS=`7741.539/6361.860/6249.074 MiB`，whole-job `7.560097 GiB`，swap 0；worker `191.195 s` | 数值/资源 pass；single-cell prediction `0/59` factor-two、`30/59` opposite-sign、formal `24/53` opposite-sign，故 `CONTROLLED_NEGATIVE_SINGLE_CELL_ACTION_LEVEL_EFFECTIVITY`；cellwise-p quantitative predictor 关闭，cycle 0 current 保留 | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_single_cell_p_actual_checkpoint_v1.json` |
 | `task035e_path_b_c0_v27_partial` | source `1fa06c93593e3b6a97b05e1138147999a4587074`；仅复用 v27 local evidence | Path B current+p-shadow+h-shadow attempt | MPI8；h-shadow 11 GiB controlled resource Gate | current pass；p-shadow pass；h-shadow 在 `11.055027 GiB` controlled stop，未产生 run_summary/evaluation/bridge | `PARTIAL_CONTROLLED_RESOURCE_STOP`；`cycle_complete=false`；没有 v28 Path B run | `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_b_cycle0_v27_partial_authority_v1.json` |
+| `task035e_final_closure` | Review V1；reviewed head `27ca26718b9ee60215243bcc98ffafcd46bfd221` | 不新增 PDE；汇总 Task035e frozen scope | documentation-only closure；production code merge `none` | reference certification `pass`；component capability `pass`；automatic blind hp `incomplete`；production candidate `none`；Hybrid/iterative `not_run`；ordinary default `unchanged` | `PARTIAL_WITH_CONTROLLED_NEGATIVES_CLOSED`；direct selective-trace `closed_controlled_negative` | `docs/task035e_reference_blind_multilevel_hp_adaptivity/review_report_v1.md` |
 
 ### 3.40.1 隔离与完成边界
 

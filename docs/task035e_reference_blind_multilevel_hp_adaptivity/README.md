@@ -116,6 +116,22 @@ threshold retune = not_run
 ranking-formula retune = not_run
 ```
 
+### 3.3 保留的受控负结果
+
+以下结果均保留在审阅提交
+[`27ca26718b9ee60215243bcc98ffafcd46bfd221`](https://github.com/Rookie1234567/MyFEniCS/tree/27ca26718b9ee60215243bcc98ffafcd46bfd221)
+的 Task035e 历史中，不得因 master 只做文档合并而删除或改写为成功：
+
+| lane | 结论 |
+|---|---|
+| four-cell selected-p | 数值/资源通过，但 action prediction 仅 19/59 factor-two、25/59 opposite-sign |
+| single-cell p-up | 数值/资源通过，但 action prediction 为 0/59 factor-two-or-neutral、30/59 opposite-sign |
+| post-action global estimator | single-cell remaining estimator 恶化 0.144216%；four-cell endpoint distance 恶化 47.7963% |
+| broad-p C2/P3 | 59-goal E2 分别恶化约 9.22% |
+| isotropic-h H2/H3 | E2 只改善约 0.021%/0.022%，却显著增加 rows、factor 和 DoF |
+| projection 200-orbit trace | 50/59，13.004 GiB；精度和资源同时失败 |
+| goal-DWR 16-orbit trace | 49/59，10.929794 GiB；资源通过但完整多目标精度失败 |
+
 ---
 
 ## 4. 为什么 Task035e 不是成功，也不是“h/p 无效”
@@ -167,10 +183,13 @@ Static-condensed Full3D iterative
 
 ## 7. 主要证据入口
 
-- `task.md`：原始合同；
-- `review_report_v1.md`：最终审阅与 selective merge 决策；
-- `outcomes/structured_anchor_selective_trace_v1.md`；
-- `outcomes/goal_oriented_selective_trace_v1.md`；
-- `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/structured_anchor_selective_trace_v1.json`；
-- `benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/h10_goal_oriented_selective_trace_v1.json`；
-- `docs/development_model_registry.md` §3.40。
+master 的 documentation-only integration 不包含 Task035e source、outcomes 或
+Case098 records。可在 master 直接阅读：
+
+- [最终 Review V1](review_report_v1.md)；
+- [项目模型总账 §3.40](../development_model_registry.md#340-task035ereference-blind-多层-local-hp-自适应)；
+- [Case098 closed historical index](../../benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/README.md)。
+
+完整原始合同、outcomes、compact evidence、plans 和受控负结果继续固定在
+[`27ca267...` 历史快照](https://github.com/Rookie1234567/MyFEniCS/tree/27ca26718b9ee60215243bcc98ffafcd46bfd221/docs/task035e_reference_blind_multilevel_hp_adaptivity)
+与其后续纯文档提交所在的 Task035e 研究分支；master 不复制这些文件。

@@ -52,9 +52,9 @@
 | Task035b assembly-time high-p condensation | experimental | `stage4_full3d_assembly_backend="assembly_time_static_condensed"` | fixed rectangular、first-order axis-aligned affine hexa、complex128 H(curl) direct 已资格化；包含cell-interior Schur、Floquet physical elimination、tensor dedup、exact preallocation、full recovery/true residual；ordinary default仍为`standard_full` |
 | Task035b fixed p5-trace/p6-interior | research_only | Case095 MPI8 | h15 74,890 DoF、16,880 rows、5.803 GiB；scalar/vector/field/residual pass，但 12 通道只有 6/12 power、7/12 amplitude |
 | Task035b Review V1 channel recovery | research_only | Case095 MPI8 + pure-postprocess | reference v1 与 16-goal adjoint通过；预算内最佳 z-only h13 为 89,740 DoF、10/12 power、10/12 amplitude，未达 same-error Gate |
-| Task035e multilevel local-h / p4-p6 active-space infrastructure | research_only | Case098 explicit opt-in，MPI8 | level0/1/2、2:1、periodic/hanging、p4/p5/p6 inactive-mode elimination、current/p-shadow/h-shadow 通过；没有 accepted cycle 或 production candidate |
-| selective physical p6 trace restoration | research_only | Task035e Case098，MPI8 | exact B/S/F hierarchy、774 periodic face orbits 和 signed DWR 已实现；16-orbit actual 对指定6目标有效，但完整结果49/59，direct lane已关闭 |
-| Task035e reference-blind automatic hp controller | not_verified | Case098 research campaign | reference certification通过；cellwise action predictor失败；无 accepted transition、cycle1、Path A/B freeze 或 hidden final audit |
+| Task035e multilevel local-h / p4-p6 active-space infrastructure | research_only | Case098 explicit opt-in，MPI8 | component capability pass：level0/1/2、2:1、periodic/hanging、p4/p5/p6 inactive-mode elimination、current/p-shadow/h-shadow 均通过；没有 accepted cycle 或 production candidate |
+| selective physical p6 trace restoration | research_only | Task035e Case098，MPI8 | `controlled_negative`：exact B/S/F hierarchy、774 periodic face orbits 和 signed DWR 已实现；16-orbit actual 对指定6目标有效，但完整结果49/59，direct lane已关闭 |
+| Task035e reference-blind automatic hp controller | not_verified | Case098 closed historical research case | final status `incomplete`：reference certification通过；cellwise action predictor失败；无 accepted transition、cycle1、Path A/B freeze 或 hidden final audit |
 | condensed trace factor-free iterative screen | not_verified | Case095 negative evidence | 三条MPI8 200步 terminal residual ratio=`0.861662/0.999661/0.996265`，均无official输出；不得通过public assembly backend选择，也不得把direct或NNZ proxy冒充迭代成功 |
 | p2/p3/p4 fixed-geometry S sequence | experimental | Case093，MPI8 | 9 个 same-degree closure positive，p3/h10 Hybrid formal negative；不是 continuum/grid-converged 证明 |
 | representative MPI-count identity | experimental | p3/h5 Full3D/Hybrid MPI1/8/16；MPI32 exploratory | identity 在阈值内；只关闭代表案例，不声明所有 p/h/M 对 MPI 数无关 |
@@ -142,9 +142,10 @@
 | 能力 | 已接受范围 | 边界 |
 |---|---|---|
 | reference certification | global p6 h10/h7.5/h5，MPI8，59-goal | 三点全部59/59；h5 peak 77.95 GiB；是离散 reference，不是生产配置 |
-| multilevel local-h / variable-p | Path A current/p-shadow/h-shadow，MPI8 | component and stage pass；没有 accepted action/cycle1 |
-| goal-oriented selective trace | H10 p5-trace/p6-interior + 16 p6 face orbits | 指定6目标预测/actual pass；完整49/59，production fail |
-| reference-blind automatic hp | 无 | hidden final audit、Path A/B freeze、Hybrid 均未运行 |
+| multilevel local-h / variable-p | Path A current/p-shadow/h-shadow，MPI8 | component capability pass；没有 accepted action/cycle1 |
+| goal-oriented selective trace | H10 p5-trace/p6-interior + 16 p6 face orbits | `research_only / controlled_negative`；指定6目标预测/actual pass，完整49/59 |
+| reference-blind automatic hp | 无 | `incomplete`；hidden final audit、Path A/B freeze、Hybrid 均未运行 |
+| Task035e final closure | Review V1 documentation authority | `PARTIAL_WITH_CONTROLLED_NEGATIVES_CLOSED`；production candidate none；ordinary default unchanged |
 
 ## 能力到使用、理论和证据的映射
 

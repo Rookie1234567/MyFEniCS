@@ -9,9 +9,10 @@ current_reference_wavelength = 13.5 nm
 target_service_wavelength = 0.7 nm
 target_grazing_angle_range = 1–10 deg from surface
 target_compute_memory = 1–2 TB
+task035e_closeout = PARTIAL_WITH_CONTROLLED_NEGATIVES_CLOSED
 ```
 
-本文档用于统一项目最终服务需求、参数反演所需观测量、当前 FEniCS 前向模型能力、0.7 nm 波长下的资源瓶颈，以及 Task031–Task035 与后续独立任务的技术路线。
+本文档用于统一项目最终服务需求、参数反演所需观测量、当前 FEniCS 前向模型能力、0.7 nm 波长下的资源瓶颈，以及 Task031–Task035e 与后续独立任务的技术路线。
 
 本文档不是某一个 Task 的任务书。后续任务书必须与本文档保持一致；若实验测量能力、材料数据来源或最终服务接口发生变化，应先更新本文档，再调整算法路线。
 
@@ -63,7 +64,7 @@ target_compute_memory = 1–2 TB
 
 ## 2.1 当前前向模型阶段
 
-Task031–Task035 与后续独立任务的主要目标是构造可靠、高效、参数化的 Maxwell 前向模型。当前阶段优先处理：
+Task031–Task035e 与后续独立任务的主要目标是构造可靠、高效、参数化的 Maxwell 前向模型。当前阶段优先处理：
 
 - 几何参数；
 - 波长；
@@ -185,7 +186,7 @@ $$
 - 周期抖动；
 - 单胞间随机差异。
 
-这些参数通常需要漫散射、峰宽和峰形信息。当前规则周期单胞前向模型暂不把粗糙度反演作为 Task032–Task035 与后续独立任务的硬目标。
+这些参数通常需要漫散射、峰宽和峰形信息。当前规则周期单胞前向模型暂不把粗糙度反演作为 Task032–Task035e 与后续独立任务的硬目标。
 
 ## 3.4 实验校准和 nuisance 参数
 
@@ -294,7 +295,7 @@ alpha_from_surface = 1°, 2°, 3°, 4°, 5°, 6°, 7°, 8°, 9°, 10°
 
 ## 4.4 S/P 偏振
 
-项目当前已经支持 S/P 入射偏振。因此后续 Task032–Task035 与后续独立任务应将：
+项目当前已经支持 S/P 入射偏振。因此后续 Task032–Task035e 与后续独立任务应将：
 
 ```text
 S polarization
@@ -651,19 +652,57 @@ assembly/resource stop。graded-h 只达到 conforming mechanism pass；同误�
 controlled negative，field-driven adaptive 仍未资格化。0.7 nm 只完成 current-layout stress
 test，production DoF/M/peak 保持 unknown。
 
-## Task035：H(curl) field/goal-oriented adaptive mesh 与条件 hp strategy（planning only）
+## Task035–Task035e：goal-oriented h/p 与资源路线（已收口）
 
-Task035 必须等 Task034 final selective merge 后从 clean master 建立独立分支。先完成 residual、
-recovery/two-level 与 DWR estimator 的 manufactured/fixture Gate，再做真实目标几何；不得把
-Task034 一次性 graded mesh 或 research runner 当作 production adaptive。native variable-p
-H(curl) 仍 unavailable；只有 h-only 稳定并给出明确 smoothness/anisotropy 证据后才允许条件 hp。
+Task035–Task035e 建立了 tetra/hexa DWR、assembly-time static condensation、
+p4/p5/p6 exact-sequence active space、true multilevel local-h、periodic/hanging
+约束和 59-goal reference certification。Task035e 的最终状态由 Review V1
+冻结为：
 
-## 后续独立任务：scalable modal core、low-memory Hybrid iterative 与 wavelength continuation
+```text
+reference certification = pass
+true local-h/local-p component capability = pass
+automatic reference-blind hp cycle = incomplete
+direct selective-trace = closed controlled negative
+production candidate = none
+Hybrid / iterative = not_run
+ordinary default = unchanged
+```
 
-任务编号尚未冻结。顺序保持：distributed/streamed generic 2D modal core（无 replicated M²、
-无 all-mode dense multi-RHS）→ matrix-free/low-memory Hybrid flexible Krylov →
-13.5→5→2→1→0.7 nm continuation。任何 1 TiB/2 TiB 可行性声明都必须基于 Task035 后的实测
-adaptive DoF/M 与 whole-solver peak，而不是 cumulative envelope。
+三条 global-p6 reference 全部通过 59/59，但 direct MUMPS 下没有候选同时满足
+完整 59-goal 和 11 GiB。goal-DWR 16-orbit selective trace 虽在 10.929794 GiB
+完成，却只有 49/59；因此不再改变 face 数量、trace threshold、ranking 公式或
+h/p controller。h/p 组件保留为 future optimization，不再作为进入迭代主线的
+前置 Gate。
+
+## 下一独立任务：Full3D iterative → Hybrid direct → Hybrid iterative
+
+任务编号由后续授权决定；固定顺序不得调换。
+
+### Phase A：static-condensed Full3D iterative
+
+固定 `p6/h10`、assembly-time static condensation、auxiliary DtN、MPI8 和
+Task035e 59-goal direct authority。先只研究 primal FGMRES 与
+FEM-trace/DtN block preconditioner；必须保持 true residual、59-goal
+direct equivalence、whole-job peak 和 zero-swap 证据。
+
+### Phase B：Hybrid direct 59-goal qualification
+
+在任何 Hybrid iterative 之前，先比较 static Hybrid p6/h10 M120 direct 与
+Full3D p6/h10 direct。迭代法不能修复 modal truncation 或 interface coupling
+误差，所以 Hybrid direct 必须先通过同一 59-goal、R/T/A、fields、interface
+和 residual Gate。
+
+### Phase C：static-condensed Hybrid iterative
+
+复用 Phase A 的 FEM trace preconditioner，并为 modal/interface block 构造
+block-triangular 或 approximate-Schur preconditioner。实现仍须消除
+replicated M²、all-mode dense multi-RHS 和不可扩展 local LU。
+
+只有上述三阶段通过后，才允许一个 h7.5 或 larger-M 规模扩展点；不得在同一
+阶段重启 Task035e blind controller。后续 wavelength continuation 保持
+`13.5→5→2→1→0.7 nm`，任何 1 TiB/2 TiB 可行性声明必须使用实际
+whole-solver peak，而不是累计对象体积或未经校准的 DoF 外推。
 
 ### 后续独立任务：wavelength continuation to 0.7 nm
 
@@ -755,7 +794,7 @@ $$
 7. 当前材料体系和数据来源继续沿用；改变波长时更新对应材料色散。
 8. S/P 入射偏振已经支持，后续作为正式服务参数。
 9. 逐反射衍射级效率是结构反演核心，R00 是重要辅助约束。
-10. Task031–Task035 与后续独立任务不因实验噪声模型尚未确定而暂停。
+10. Task031–Task035e 与后续独立任务不因实验噪声模型尚未确定而暂停。
 ```
 
 ---
@@ -775,7 +814,7 @@ $$
 9. 单次反演允许的总时间是多少？
 10. 结构参数的合理先验范围和制造约束是什么？
 
-这些问题会影响后续反演接口和优化策略，但不影响当前 Task031–Task035 与后续独立任务的主技术路线。
+这些问题会影响后续反演接口和优化策略，但不影响当前 Task031–Task035e 与后续独立任务的主技术路线。
 
 ---
 
@@ -839,8 +878,11 @@ Task031 full-3D PC 内存收口
 → Task032 hybrid FEM-modal parameterized direct
 → Task033 fixed-p feasibility and high-order infrastructure
 → Task034 WSL + fixed-geometry high-order benchmark + controlled graded-h decision
-→ Task035 H(curl) field/goal-oriented adaptivity (planning package first)
-→ later independent scalable modal core and low-memory Hybrid iterative tasks
+→ Task035–Task035e H(curl) field/goal-oriented adaptivity and component qualification
+→ static-condensed Full3D iterative
+→ Hybrid direct 59-goal qualification
+→ static-condensed Hybrid iterative
+→ one h7.5 or larger-M scale extension
 → later wavelength continuation to 0.7 nm
 → inversion / uncertainty / deployment。
 
