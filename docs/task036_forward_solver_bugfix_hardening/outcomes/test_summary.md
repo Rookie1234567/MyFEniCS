@@ -2,30 +2,34 @@
 
 ## 1. 当前状态
 
-本文件是按用户要求先行推送的测试快照。Task036 的 targeted、MPI、静态检查和正式
-PDE 回归均已完成；最终 full-repository pytest 正在独立的干净 worktree 中继续
-运行，状态为：
+本文件先以 `IN_PROGRESS_PENDING_FINAL_TRACEBACK` 状态推送，现已用同一个未中断
+的 full-repository pytest 最终输出收口。该运行在数值源码 `bb0e5e3...` 上得到：
 
 ```text
-IN_PROGRESS_PENDING_FINAL_TRACEBACK
+803 passed, 41 skipped, 3 failed in 2935.37 s
 ```
 
-因此本文当前不声称 full repository suite 已通过。运行结束后只根据这一个现有
-进程补写最终计数和 traceback；不会为了文档提交重跑 PDE，也不会把尚未结束的
-测试提前改写为成功。
+三个 failure 均不是数值 PDE assertion：一个是 B08 后未更新的旧 telemetry 文案
+断言，一个是临时 clean worktree 未链接项目 `.venv` 造成的路径误判，一个是
+numerical-blob checker 漏登记 Task036 已实测的 QEP helper。前者和后者由最小
+测试/治理合同提交 `5231282...` 修正；中间一项用正确的 checkout-local `.venv`
+链接复核。最终在主 checkout 与 clean worktree 均得到 `59 passed`，Ruff 和
+compileall 通过，临时链接随后删除，两个 worktree 均恢复干净。
 
-`2026-07-30 22:42 CST` 的非侵入式进度快照为：约完成 `72%`（约 `600+`
-nodes），输出中累计 `1` 个 failure 标记、`0` 个 error 标记；当前长测试进程
-存活，单核利用率约 `97.6%`，RSS 约 `1.78 GiB`。由于 `pytest -q` 不显示当前
-node 名称，结束前不猜测 failure 身份或当前长测试名称。
+没有第二次运行耗时 48 分 55 秒的 full suite：收口提交没有改变数值 kernel，
+三个原失败点均由定向测试覆盖，且最慢的 p1–p6 测试在原 full suite 已通过。
+因此本文不把结果写成“最终 full suite 0 failure”，而使用更准确的口径：
+**完整执行为 803/41/3，三项非数值收口在最终提交上定向通过。**
 
 | 项目 | 值 |
 |---|---|
 | 最终数值源码 | `bb0e5e3e385586e137d861cf0a53a142e4fe0fe0` |
+| full-test 收口提交 | `5231282f21e799c62b3a10ac1ccb1a8226935dc6` |
 | 起始 `origin/master` | `007298261681014efbe6508ac91c6c3ae9a6a44a` |
 | 分支 | `codex/20260730-task36-forward-solver-bugfix-hardening` |
 | full-suite worktree | `/tmp/myfenics-task036-p6phi45` |
 | full-suite source identity | `bb0e5e3e385586e137d861cf0a53a142e4fe0fe0` |
+| post-full targeted source | `5231282f21e799c62b3a10ac1ccb1a8226935dc6` |
 | full-suite过滤 | 无 deselect；不是缩减版 suite |
 | ordinary default | unchanged |
 
@@ -55,12 +59,46 @@ node 名称，结束前不猜测 failure 身份或当前长测试名称。
 | `bb0e5e3...` | DtN/Floquet/Task036 组 | `49 passed, 4 skipped` |
 | `bb0e5e3...` | mode/Hybrid/static 组 | `55 passed` |
 | `bb0e5e3...` | 其余 high-order/docs 组 | `63 passed, 1 deselected` |
+| `5231282...` | 三个 full-suite failure 及 B08/Task036 相关回归 | `59 passed`，主 checkout `1.87 s`，clean worktree `1.88 s` |
 
 最后一行的临时 deselect 仅发生在分组审计阶段：旧的 30 分钟边界曾中止一个已知
 长测试。随后已按 Task036 的 90 分钟单项边界启动无 deselect 的 full suite；最终
 结论只以该运行结果为准。
 
-### 3.2 MPI 小型回归
+### 3.2 Full-repository pytest
+
+完整命令为：
+
+```bash
+cd /tmp/myfenics-task036-p6phi45
+source /home/Projects/MyFEniCS/scripts/activate_myfenics_wsl.sh
+TMPDIR=/tmp/myfenics-task036-fullrepo-bb0e5e3 \
+TMP=/tmp/myfenics-task036-fullrepo-bb0e5e3 \
+TEMP=/tmp/myfenics-task036-fullrepo-bb0e5e3 \
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+python -m pytest -q --durations=20
+```
+
+| 项目 | 结果 |
+|---|---|
+| 完整计数 | `803 passed, 41 skipped, 3 failed` |
+| error | `0` |
+| 总时间 | `2935.37 s`（48:55） |
+| 最慢测试 | `test_53` p1–p6，`1738.74 s`，pass |
+| 数值 PDE assertion failure | `0` |
+
+三个 failure 的处置为：
+
+| failure | 根因 | 最终处置 |
+|---|---|---|
+| `test_28_direct_memory_telemetry.py:70` | 旧测试仍要求 `not inferred MUMPS`，与 B08 只对负 `INFOG(9)` 使用文档化 million-entry correction 的新合同冲突 | 改为检查 `factor_nnz_source`、storage source 和 PETSc fallback；B08 专测继续通过 |
+| `test_73_task034_hardening.py:160` | clean worktree 没有 `.venv`，却从主 checkout activation，实际 complex ABI 全通过但 ROOT-relative path Gate 失败 | 不放宽 probe；验证时建立指向同一项目 `.venv` 的临时 checkout-local 链接，测试通过后删除 |
+| `test_73_task034_hardening.py:185` | `src/modes/quadratic_beta_eigenproblem.py` 的显式 residual helper 已用于 Task036 reciprocal 路径，但 checker 漏登记 | 增加 `requires PDE rerun` 分类；已有 QEP/Hybrid/PDE anchors 支撑，checker 定向通过 |
+
+pytest 的 PTY 输出文件在运行期是已删除的临时 FD，结束后没有可绑定的持久日志；
+本文只记录 Codex 捕获的最终计数和 traceback，不伪造日志路径。
+
+### 3.3 MPI 小型回归
 
 | MPI | 结果 |
 |---|---|
@@ -70,7 +108,7 @@ node 名称，结束前不猜测 failure 身份或当前长测试名称。
 
 这些测试用于检查串并行语义和 ABI；正式数值 PDE 证据仍以用户要求的 MPI8 为主。
 
-### 3.3 静态与文档检查
+### 3.4 静态与文档检查
 
 | 检查 | 结果 |
 |---|---|
@@ -85,7 +123,7 @@ node 名称，结束前不猜测 failure 身份或当前长测试名称。
 该测试通过；这属于本地 ignored 历史缓存污染，不是 tracked source failure。
 Task036 没有删除历史 evidence，也没有为迎合测试而放宽目录合同。
 
-### 3.4 并发 pytest 的环境负信号
+### 3.5 并发 pytest 的环境负信号
 
 一次将三个会导入 `mpi4py` 的 pytest collection 进程同时启动时：
 
@@ -155,5 +193,6 @@ continuation 冒充已解决。
 | MPI small regressions | pass |
 | Ruff / compileall / JSON / diff-check | pass |
 | MPI8 PDE evidence | pass 或按合同保存为 controlled negative |
-| full repository pytest | `IN_PROGRESS_PENDING_FINAL_TRACEBACK` |
-| Task036 最终测试闭合 | pending full-suite final result |
+| full repository pytest | `803 passed, 41 skipped, 3 failed`；三个 failure 均为非数值收口项 |
+| post-full targeted closure | `59 passed`，主 checkout 与 clean worktree 均通过 |
+| Task036 最终测试闭合 | complete；无数值 failure，未虚称 full suite 零失败 |
