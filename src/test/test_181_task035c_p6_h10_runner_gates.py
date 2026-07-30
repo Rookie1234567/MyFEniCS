@@ -19,6 +19,7 @@ from benchmarks.run_task033_memory_watchdog import (
     _worker_command,
 )
 from benchmarks.task035c_p6_h10_gates import (
+    task036_full3d_reference_gate,
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
 )
@@ -104,6 +105,63 @@ def _full3d_reference(backend: str) -> dict:
             },
         },
     }
+
+
+def _task036_full3d_reference() -> dict:
+    reference = _full3d_reference("assembly_time_static_condensed")
+    reference.update(
+        {
+            "degree": 5,
+            "polarization_kind": "p",
+            "no_swap": True,
+            "task036_forward_robustness_gate": True,
+            "task036_direct_projection_audit": {
+                "requested": True,
+                "pass": True,
+                "max_absolute_outgoing_projection_difference": 1.0e-12,
+            },
+            "parent_launch_descriptor": {
+                "payload": {
+                    "schema_version": "task033.watchdog-parent-launch.v1",
+                    "worker_contract": {
+                        "degree": 5,
+                        "h_nm": 10.0,
+                        "mpi_size": 8,
+                        "polarization_kind": "p",
+                        "run_kind": "full-solve",
+                        "stage4_full3d_assembly_backend": (
+                            "assembly_time_static_condensed"
+                        ),
+                        "task036_forward_robustness_gate": True,
+                        "incident_grazing_deg": 0.5,
+                        "incident_phi_deg": 90.0,
+                        "grating_height_nm": 115.0,
+                        "grating_width_x_nm": 18.0,
+                        "task036_mesh_axis_cell_counts": [6, 4, 14],
+                        "task036_y_invariant_n0_alias_preflight": True,
+                        "task036_dtn_direct_projection_audit": True,
+                        "verified_clean_sha": SOURCE_SHA,
+                    },
+                },
+            },
+        }
+    )
+    config = reference["solver_summary"]["config"]
+    config.update(
+        {
+            "nedelec_degree": 5,
+            "incident_theta_deg": 89.5,
+            "incident_phi_deg": 90.0,
+            "polarization_kind": "p",
+            "grating_height": 115.0,
+            "grating_width_x": 18.0,
+            "mesh_axis_cell_counts": [6, 4, 14],
+            "mesh_axis_cell_counts_requested": [6, 4, 14],
+            "dtn_y_invariant_n0_alias_preflight": True,
+            "dtn_auxiliary_direct_projection_audit": True,
+        }
+    )
+    return reference
 
 
 def _full3d_cli(backend: str = "standard_full") -> list[str]:
@@ -195,7 +253,166 @@ def _phase6_cli(backend: str = "standard_full") -> list[str]:
     return result
 
 
+def _task036_hybrid_cli() -> list[str]:
+    return [
+        "--target",
+        "hybrid",
+        "--case-label",
+        "task036_p5_h10_dynamic_p_m120",
+        "--degree",
+        "5",
+        "--h-nm",
+        "10",
+        "--modal-degree",
+        "5",
+        "--modal-h-nm",
+        "10",
+        "--mpi-size",
+        "8",
+        "--requested-modes",
+        "120",
+        "--candidate-modes",
+        "240",
+        "--solver-path",
+        "modal-schur-memory-minimal",
+        "--internal-propagation-model",
+        "full3d_uniform_cg",
+        "--internal-traction-model",
+        "scalar_cg_discrete_derivative",
+        "--stage4-full3d-assembly-backend",
+        "assembly_time_static_condensed",
+        "--full3d-reference",
+        "fresh_task036_full3d.json",
+        "--full3d-reference-sha256",
+        RECORD_SHA256,
+        "--incident-grazing-deg",
+        "0.5",
+        "--incident-phi-deg",
+        "90",
+        "--grating-height-nm",
+        "115",
+        "--grating-width-x-nm",
+        "18",
+        "--polarization-kind",
+        "p",
+        "--task036-domain-robustness-gate",
+        "--task036-mesh-axis-cell-counts",
+        "6",
+        "4",
+        "14",
+        "--task036-y-invariant-n0-alias-preflight",
+        "--task036-dtn-direct-projection-audit",
+        "--task036-scalar-stage4-reciprocal-basis",
+        "--verified-clean-sha",
+        SOURCE_SHA,
+        "--host-environment-id",
+        "WSL2-Ubuntu-24.04",
+    ]
+
+
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
+    def test_task036_dynamic_p5_hybrid_port_round_trip(self) -> None:
+        args = parse_memory_args(_task036_hybrid_cli())
+        self.assertTrue(args.task036_domain_robustness_gate)
+        self.assertEqual(args.degree, 5)
+        self.assertEqual(args.modal_degree, 5)
+        self.assertEqual(args.task036_mesh_axis_cell_counts, [6, 4, 14])
+        command = _worker_command(
+            args, Path("record.json"), Path("stages.jsonl")
+        )
+        for option, value in (
+            ("--incident-phi-deg", "90.0"),
+            ("--grating-height-nm", "115.0"),
+            ("--grating-width-x-nm", "18.0"),
+            ("--full3d-reference-sha256", RECORD_SHA256),
+        ):
+            self.assertIn(option, command)
+            self.assertEqual(command[command.index(option) + 1], value)
+        self.assertIn("--task036-domain-robustness-gate", command)
+        self.assertIn("--task036-y-invariant-n0-alias-preflight", command)
+        self.assertIn("--task036-dtn-direct-projection-audit", command)
+        self.assertIn("--task036-scalar-stage4-reciprocal-basis", command)
+        module_index = command.index(
+            "benchmarks.run_task032_phase6_augmented"
+        )
+        worker = parse_phase6_args(command[module_index + 1 :])
+        self.assertTrue(worker.task036_domain_robustness_gate)
+        self.assertEqual(worker.degree, 5)
+        self.assertEqual(worker.modal_degree, 5)
+        self.assertEqual(worker.task036_mesh_axis_cell_counts, [6, 4, 14])
+
+    def test_task036_dynamic_full3d_reference_is_exactly_bound(self) -> None:
+        reference = _task036_full3d_reference()
+        common = {
+            "expected_sha256": RECORD_SHA256,
+            "observed_sha256": RECORD_SHA256,
+            "current_source_sha": SOURCE_SHA,
+            "assembly_backend": "assembly_time_static_condensed",
+            "degree": 5,
+            "h_nm": 10.0,
+            "mpi_size": 8,
+            "polarization_kind": "p",
+            "incident_grazing_deg": 0.5,
+            "incident_phi_deg": 90.0,
+            "grating_height_nm": 115.0,
+            "grating_width_x_nm": 18.0,
+            "mesh_axis_cell_counts": (6, 4, 14),
+        }
+        accepted = task036_full3d_reference_gate(reference, **common)
+        self.assertTrue(accepted["pass"], accepted["failures"])
+
+        mutations = (
+            ("incident_phi_deg", 89.0, "matching_task036_physics_identity"),
+            ("grating_height_nm", 116.0, "matching_task036_physics_identity"),
+            ("grating_width_x_nm", 17.0, "matching_task036_physics_identity"),
+            (
+                "mesh_axis_cell_counts",
+                (6, 3, 14),
+                "same_discretization_and_polarization",
+            ),
+            ("polarization_kind", "s", "same_discretization_and_polarization"),
+            ("current_source_sha", "f" * 40, "exact_final_source_sha"),
+        )
+        for key, value, failure in mutations:
+            with self.subTest(key=key):
+                rejected = task036_full3d_reference_gate(
+                    reference, **{**common, key: value}
+                )
+                self.assertFalse(rejected["pass"])
+                self.assertIn(failure, rejected["failures"])
+
+    def test_task036_gate_rejects_scope_drift_and_p5_stays_opt_in(self) -> None:
+        with self.assertRaises(SystemExit):
+            parse_memory_args(
+                [
+                    "--target",
+                    "hybrid",
+                    "--case-label",
+                    "p5_without_task036",
+                    "--degree",
+                    "5",
+                    "--h-nm",
+                    "10",
+                    "--mpi-size",
+                    "8",
+                    "--verified-clean-sha",
+                    SOURCE_SHA,
+                ]
+            )
+        for option, value in (
+            ("--mpi-size", "4"),
+            ("--incident-grazing-deg", "0.49"),
+            ("--incident-phi-deg", "90.1"),
+            ("--grating-height-nm", "126"),
+            ("--grating-width-x-nm", "15.9"),
+            ("--modal-degree", "6"),
+        ):
+            cli = _task036_hybrid_cli()
+            cli[cli.index(option) + 1] = value
+            with self.subTest(option=option):
+                with self.assertRaises(SystemExit):
+                    parse_memory_args(cli)
+
     def test_task036_phi_alias_cli_and_hybrid_p_disposition(self) -> None:
         defaults = parse_phase6_args([])
         self.assertEqual(defaults.incident_phi_deg, 0.0)
@@ -287,6 +504,18 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
             rank["primary_status"],
             "hybrid_modal_rank_insufficient",
         )
+        pending = _hybrid_p_disposition(
+            "p",
+            modal_rank_sufficient=None,
+            interface_closure_pass=True,
+            diagnostic_projection_bug=False,
+            **common,
+        )
+        self.assertEqual(
+            pending["primary_status"],
+            "hybrid_modal_rank_pending_actual_M_convergence",
+        )
+        self.assertFalse(pending["hybrid_modal_rank_insufficient"])
         interface = _hybrid_p_disposition(
             "p",
             modal_rank_sufficient=True,

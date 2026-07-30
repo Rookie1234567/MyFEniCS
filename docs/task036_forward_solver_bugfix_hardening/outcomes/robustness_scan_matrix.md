@@ -16,6 +16,8 @@
 | polarizations | 每个物理点均有独立 `S` 和 `P` |
 | ordinary default | unchanged |
 | numerical runs at this checkpoint | `not_run` |
+| dispatcher | `benchmarks/run_task036_robustness_scan.py` |
+| dispatcher concurrency | `1–5` independent MPI8 jobs; default `1` |
 
 “配置”包含几何、角度、偏振和 polynomial degree。每个配置首先运行 same-p Full3D
 authority；Full3D 通过后才运行 Hybrid M120。因此无失败和无 M 漏斗时，主表最多对应
@@ -146,10 +148,18 @@ zero swap
 ```text
 full_repository_traceback = closed
 scan_table = frozen
-driver = pending
+hybrid_p5_dynamic_input_port = pass
+same_input_full3d_identity_gate = pass
+connected_component_near_degenerate_repair = implemented_unit_tested
+driver = pass
 analyzer = pending
 Round_A = not_run
 Round_B = not_run
 Round_C = not_run
 Round_D = not_run
 ```
+
+正式运行前必须先提交上述数值端口和 repair；driver 会拒绝 dirty worktree 或与
+`--verified-clean-sha` 不一致的 HEAD。它按 point 使用独立 `run_dir`、TMP/TEMP、
+XDG cache 与 MUMPS scratch，并且 Hybrid 命令只能从该 point 已完成的 Full3D
+watchdog record 取得 hash-bound authority。

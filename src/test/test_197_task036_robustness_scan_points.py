@@ -8,6 +8,13 @@ from pathlib import Path
 import numpy as np
 from scipy.stats import qmc
 
+from benchmarks.run_task036_robustness_scan import (
+    _full3d_command,
+    _hybrid_command,
+    _load_points,
+    _point_values,
+)
+
 
 ROOT = Path(__file__).resolve().parents[2]
 POINTS = ROOT / "benchmarks/task036_robustness_scan_points.csv"
@@ -151,3 +158,53 @@ def test_task036_round_d_is_the_p6_pressure_set() -> None:
             (10.0, 90.0),
         )
     ]
+
+
+def test_task036_driver_preserves_full3d_before_hybrid_identity(
+    tmp_path: Path,
+) -> None:
+    selected = _load_points(
+        POINTS,
+        rounds={"A"},
+        point_ids={"A001-P"},
+        limit=None,
+    )
+    assert len(selected) == 1
+    point = _point_values(selected[0])
+    reference = tmp_path / "watchdog_summary.json"
+    reference.write_text("full3d authority\n", encoding="utf-8")
+    full3d = _full3d_command(
+        point,
+        source_sha="a" * 40,
+        run_dir=tmp_path / "full3d",
+        timeout_seconds=7200.0,
+    )
+    hybrid = _hybrid_command(
+        point,
+        source_sha="a" * 40,
+        full3d_reference=reference,
+        run_dir=tmp_path / "hybrid_m120",
+        mode_count=120,
+        timeout_seconds=7200.0,
+        warning_gib=None,
+        terminate_gib=None,
+    )
+    for command in (full3d, hybrid):
+        rendered = " ".join(command)
+        assert "--degree 5" in rendered
+        assert "--h-nm 10.0" in rendered
+        assert "--polarization-kind p" in rendered
+        assert "--incident-grazing-deg 0.5" in rendered
+        assert "--incident-phi-deg 0.0" in rendered
+        assert "--grating-height-nm 120.0" in rendered
+        assert "--grating-width-x-nm 17.0" in rendered
+        assert "--task036-mesh-axis-cell-counts 6 4 14" in rendered
+        assert "--task036-y-invariant-n0-alias-preflight" in rendered
+        assert "--task036-dtn-direct-projection-audit" in rendered
+        assert "--verified-clean-sha " + "a" * 40 in rendered
+    assert "--task036-forward-robustness-gate" in full3d
+    assert "--task036-domain-robustness-gate" in hybrid
+    assert "--task036-scalar-stage4-reciprocal-basis" in hybrid
+    assert hybrid[hybrid.index("--full3d-reference") + 1] == str(reference)
+    assert hybrid[hybrid.index("--requested-modes") + 1] == "120"
+    assert hybrid[hybrid.index("--candidate-modes") + 1] == "240"

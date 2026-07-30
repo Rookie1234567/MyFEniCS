@@ -575,9 +575,15 @@ def _task036_scalar_stage4_partition_repair_candidate(
     groups: Sequence[Sequence[int]],
     audit: dict[str, object],
     *,
-    maximum_union_size: int = 4,
-) -> tuple[tuple[int, ...] | None, dict[str, object]]:
-    """Select one bounded scalar Stage-4 split block for joint normalization."""
+    betas: Sequence[complex],
+    directions: Sequence[str],
+    biorthogonality: np.ndarray,
+    near_degenerate_tolerance: float,
+    block_rotation_tolerance: float,
+    maximum_overlap_condition: float,
+    maximum_union_size: int = 8,
+) -> tuple[tuple[tuple[int, ...], ...] | None, dict[str, object]]:
+    """Plan every bounded connected split block before changing any vector."""
 
     group_members = [
         tuple(int(index) for index in indices) for indices in groups
@@ -585,16 +591,15 @@ def _task036_scalar_stage4_partition_repair_candidate(
     shape = getattr(cross_section.epsilon_r, "ufl_shape", None)
     scalar_material = shape is not None and tuple(shape) == ()
     provenance: dict[str, object] = {
-        "policy": "task036_scalar_stage4_single_joint_left_inverse",
+        "policy": "task036_scalar_stage4_connected_component_joint_left_inverse",
         "maximum_attempts": 1,
         "maximum_union_size": int(maximum_union_size),
         "material_kind": str(cross_section.material_kind),
         "scalar_material": scalar_material,
         "eligible": False,
         "reason": None,
-        "source_group_ids": None,
-        "source_group_members": None,
-        "merged_group_members": None,
+        "components": [],
+        "component_count": 0,
     }
 
     def rejected(reason: str):
@@ -603,35 +608,137 @@ def _task036_scalar_stage4_partition_repair_candidate(
 
     if cross_section.material_kind != "stage4_xy" or not scalar_material:
         return rejected("not_scalar_stage4_xy")
-    if audit.get("status") != "near_degenerate_block_partition_split":
-        return rejected("not_near_degenerate_partition_split")
-    directions = audit.get("worst_cross_block_directions")
-    if (
-        not isinstance(directions, list)
-        or len(directions) != 2
-        or directions[0] != directions[1]
-        or directions[0] not in {"forward", "backward"}
-    ):
-        return rejected("worst_blocks_do_not_share_one_physical_direction")
-    identifiers = audit.get("worst_cross_block_group_ids")
-    if not isinstance(identifiers, list) or len(identifiers) != 2:
-        return rejected("missing_worst_group_identity")
-    first_id, second_id = map(int, identifiers)
-    if (
-        first_id == second_id
-        or min(first_id, second_id) < 0
-        or max(first_id, second_id) >= len(group_members)
-    ):
-        return rejected("invalid_worst_group_identity")
-    source_members = [group_members[first_id], group_members[second_id]]
-    merged = tuple(sorted(set(source_members[0]) | set(source_members[1])))
-    provenance["source_group_ids"] = [first_id, second_id]
-    provenance["source_group_members"] = list(map(list, source_members))
-    provenance["merged_group_members"] = list(merged)
-    if len(merged) > int(maximum_union_size):
-        return rejected("merged_group_exceeds_bounded_size")
+    if audit.get("pass") is True:
+        return rejected("partition_already_passes")
+    values = np.asarray(biorthogonality, dtype=np.complex128)
+    if values.shape != (len(betas), len(betas)):
+        return rejected("biorthogonality_shape_mismatch")
+    if len(directions) != len(betas):
+        return rejected("direction_count_mismatch")
+
+    parents = list(range(len(group_members)))
+
+    def find(index: int) -> int:
+        while parents[index] != index:
+            parents[index] = parents[parents[index]]
+            index = parents[index]
+        return index
+
+    def union(first: int, second: int) -> None:
+        first_root = find(first)
+        second_root = find(second)
+        if first_root != second_root:
+            parents[second_root] = first_root
+
+    edge_records: list[dict[str, object]] = []
+    for first in range(len(group_members)):
+        for second in range(first + 1, len(group_members)):
+            first_members = group_members[first]
+            second_members = group_members[second]
+            component_directions = {
+                str(directions[index])
+                for index in (*first_members, *second_members)
+            }
+            same_direction = bool(
+                len(component_directions) == 1
+                and next(iter(component_directions))
+                in {"forward", "backward"}
+            )
+            cross_overlap = max(
+                float(
+                    np.max(
+                        np.abs(
+                            values[np.ix_(first_members, second_members)]
+                        )
+                    )
+                ),
+                float(
+                    np.max(
+                        np.abs(
+                            values[np.ix_(second_members, first_members)]
+                        )
+                    )
+                ),
+            )
+            beta_distance = min(
+                _relative_beta_distance(betas[row], betas[column])
+                for row in first_members
+                for column in second_members
+            )
+            connected = bool(
+                same_direction
+                and cross_overlap > float(block_rotation_tolerance)
+                and beta_distance
+                <= 10.0 * float(near_degenerate_tolerance)
+            )
+            if connected:
+                union(first, second)
+                edge_records.append(
+                    {
+                        "source_group_ids": [first, second],
+                        "max_bidirectional_cross_overlap": cross_overlap,
+                        "minimum_relative_beta_distance": beta_distance,
+                    }
+                )
+
+    connected_group_ids: dict[int, list[int]] = {}
+    for identifier in range(len(group_members)):
+        connected_group_ids.setdefault(find(identifier), []).append(
+            identifier
+        )
+    candidate_group_ids = sorted(
+        (
+            tuple(sorted(identifiers))
+            for identifiers in connected_group_ids.values()
+            if len(identifiers) > 1
+        ),
+        key=lambda identifiers: min(
+            min(group_members[identifier]) for identifier in identifiers
+        ),
+    )
+    if not candidate_group_ids:
+        return rejected("no_eligible_connected_components")
+
+    component_records: list[dict[str, object]] = []
+    merged_components: list[tuple[int, ...]] = []
+    for identifiers in candidate_group_ids:
+        merged = tuple(
+            sorted(
+                index
+                for identifier in identifiers
+                for index in group_members[identifier]
+            )
+        )
+        record: dict[str, object] = {
+            "source_group_ids": list(identifiers),
+            "source_group_members": [
+                list(group_members[identifier])
+                for identifier in identifiers
+            ],
+            "merged_group_members": list(merged),
+        }
+        if len(merged) > int(maximum_union_size):
+            provenance["components"] = [*component_records, record]
+            return rejected("connected_component_exceeds_bounded_size")
+        condition = float(
+            np.linalg.cond(values[np.ix_(merged, merged)])
+        )
+        record["joint_overlap_condition"] = condition
+        if (
+            not np.isfinite(condition)
+            or condition > float(maximum_overlap_condition)
+        ):
+            provenance["components"] = [*component_records, record]
+            return rejected("connected_component_overlap_ill_conditioned")
+        component_records.append(record)
+        merged_components.append(merged)
+
+    provenance["components"] = component_records
+    provenance["component_count"] = len(component_records)
+    provenance["edge_count"] = len(edge_records)
+    provenance["edges"] = edge_records
     provenance.update(eligible=True, reason="eligible")
-    return merged, provenance
+    return tuple(merged_components), provenance
 
 
 def _joint_left_basis_inverse(
@@ -1487,41 +1594,59 @@ def build_biorthogonal_mode_basis(
             task036_scalar_stage4_partition_repair
             and not partition_audit["pass"]
         ):
-            merged_indices, eligibility = (
+            merged_components, eligibility = (
                 _task036_scalar_stage4_partition_repair_candidate(
                     cross_section,
                     group_indices,
                     partition_audit,
+                    betas=betas,
+                    directions=directions,
+                    biorthogonality=biorthogonality,
+                    near_degenerate_tolerance=near_degenerate_tolerance,
+                    block_rotation_tolerance=block_rotation_tolerance,
+                    maximum_overlap_condition=maximum_overlap_condition,
                 )
             )
             repair_provenance.update(eligibility)
-            if merged_indices is not None:
-                condition = _joint_left_basis_inverse(
-                    left_reduced,
-                    left_full,
-                    merged_indices,
-                    biorthogonality[np.ix_(merged_indices, merged_indices)],
-                    maximum_overlap_condition=maximum_overlap_condition,
-                )
-                for index in merged_indices:
-                    left_candidates[index].right_reduced = left_reduced[index]
-                    left_candidates[index].right_full = left_full[index]
+            if merged_components is not None:
                 existing_payload = {
                     payload[0]: payload for payload in group_payload
                 }
-                removed = set(map(int, eligibility["source_group_ids"]))
-                group_indices = [
-                    indices
-                    for index, indices in enumerate(group_indices)
-                    if index not in removed
-                ] + [merged_indices]
-                group_indices.sort(key=min)
-                group_payload = []
-                for indices in group_indices:
-                    if indices != merged_indices:
-                        group_payload.append(existing_payload[indices])
-                        continue
-                    group_betas = [betas[index] for index in indices]
+                removed: set[int] = set()
+                merged_payload: dict[
+                    tuple[int, ...],
+                    tuple[tuple[int, ...], complex, float, float, str],
+                ] = {}
+                joint_conditions: list[float] = []
+                component_records = eligibility["components"]
+                for merged_indices, component_record in zip(
+                    merged_components,
+                    component_records,
+                    strict=True,
+                ):
+                    condition = _joint_left_basis_inverse(
+                        left_reduced,
+                        left_full,
+                        merged_indices,
+                        biorthogonality[
+                            np.ix_(merged_indices, merged_indices)
+                        ],
+                        maximum_overlap_condition=(
+                            maximum_overlap_condition
+                        ),
+                    )
+                    joint_conditions.append(condition)
+                    removed.update(
+                        map(int, component_record["source_group_ids"])
+                    )
+                    for index in merged_indices:
+                        left_candidates[index].right_reduced = (
+                            left_reduced[index]
+                        )
+                        left_candidates[index].right_full = left_full[index]
+                    group_betas = [
+                        betas[index] for index in merged_indices
+                    ]
                     center = complex(np.mean(group_betas))
                     spread = max(
                         (
@@ -1530,15 +1655,25 @@ def build_biorthogonal_mode_basis(
                         ),
                         default=0.0,
                     )
-                    group_payload.append(
-                        (
-                            indices,
-                            center,
-                            spread,
-                            condition,
-                            "task036_joint_partition_inverse",
-                        )
+                    merged_payload[merged_indices] = (
+                        merged_indices,
+                        center,
+                        spread,
+                        condition,
+                        "task036_connected_component_joint_inverse",
                     )
+                group_indices = [
+                    indices
+                    for index, indices in enumerate(group_indices)
+                    if index not in removed
+                ] + list(merged_components)
+                group_indices.sort(key=min)
+                group_payload = []
+                for indices in group_indices:
+                    if indices not in merged_payload:
+                        group_payload.append(existing_payload[indices])
+                        continue
+                    group_payload.append(merged_payload[indices])
                 biorthogonality = _qep_overlap_matrix(
                     operators,
                     left_betas,
@@ -1556,7 +1691,8 @@ def build_biorthogonal_mode_basis(
                 )
                 repair_provenance.update(
                     applied=True,
-                    joint_overlap_condition=condition,
+                    joint_overlap_conditions=joint_conditions,
+                    connected_component_count=len(merged_components),
                     right_modes_changed=False,
                     beta_values_changed=False,
                     left_basis_joint_inverse_only=True,

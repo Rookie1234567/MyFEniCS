@@ -38,6 +38,7 @@ from benchmarks.task035c_p6_h10_gates import (
     TASK035C_P6_H10_BACKENDS,
     TASK035C_P6_H10_MODE_COUNTS,
     TASK035C_P6_H10_MPI_SIZES,
+    task036_full3d_reference_gate,
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
     valid_hex_digest,
@@ -895,6 +896,12 @@ def _worker_command(
         str(args.top_interface_nm),
         "--incident-grazing-deg",
         str(args.incident_grazing_deg),
+        "--incident-phi-deg",
+        str(args.incident_phi_deg),
+        "--grating-height-nm",
+        str(args.grating_height_nm),
+        "--grating-width-x-nm",
+        str(args.grating_width_x_nm),
         "--polarization-kind",
         args.polarization_kind,
         "--requested-modes",
@@ -942,16 +949,35 @@ def _worker_command(
         command.extend(
             ("--full3d-reference", str(args.full3d_reference))
         )
-    if args.task035c_p6_h10_gate:
+    if args.full3d_reference_sha256 is not None:
         command.extend(
             (
                 "--full3d-reference-sha256",
                 str(args.full3d_reference_sha256),
+            )
+        )
+    if args.task035c_p6_h10_gate:
+        command.extend(
+            (
                 "--task035c-p6-h10-gate",
                 "--task035c-p6-preflight-authority",
                 str(args.task035c_p6_preflight_authority),
                 "--task035c-p6-preflight-sha256",
                 str(args.task035c_p6_preflight_sha256),
+            )
+        )
+    if args.task036_domain_robustness_gate:
+        command.extend(
+            (
+                "--task036-domain-robustness-gate",
+                "--task036-mesh-axis-cell-counts",
+                *(
+                    str(value)
+                    for value in args.task036_mesh_axis_cell_counts
+                ),
+                "--task036-y-invariant-n0-alias-preflight",
+                "--task036-dtn-direct-projection-audit",
+                "--task036-scalar-stage4-reciprocal-basis",
             )
         )
     if args.compare_modal_schur:
@@ -1337,7 +1363,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--target", choices=("qep", "hybrid"), required=True)
     parser.add_argument("--case-label", required=True)
     parser.add_argument(
-        "--degree", type=int, choices=(1, 2, 3, 4, 6), required=True
+        "--degree", type=int, choices=(1, 2, 3, 4, 5, 6), required=True
     )
     parser.add_argument("--h-nm", type=float, required=True)
     parser.add_argument(
@@ -1351,7 +1377,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--modal-degree",
         type=int,
-        choices=(1, 2, 3, 4, 6),
+        choices=(1, 2, 3, 4, 5, 6),
         help=(
             "Independent Hybrid cross-section QEP degree; local 3D FEM "
             "continues to use --degree."
@@ -1436,6 +1462,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
+    parser.add_argument("--incident-phi-deg", type=float, default=0.0)
+    parser.add_argument("--grating-height-nm", type=float, default=120.0)
+    parser.add_argument("--grating-width-x-nm", type=float, default=17.0)
     parser.add_argument(
         "--polarization-kind", choices=("s", "p"), default="s"
     )
@@ -1467,6 +1496,32 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Explicitly open only the fixed-rectangular Task035c p6/h10 "
             "M120/M160 Hybrid authority path. Ordinary defaults are unchanged."
         ),
+    )
+    parser.add_argument(
+        "--task036-domain-robustness-gate",
+        action="store_true",
+        help=(
+            "Explicitly open one clean-source MPI8 Task036 p5/p6 h10 "
+            "same-input Full3D/Hybrid robustness point."
+        ),
+    )
+    parser.add_argument(
+        "--task036-mesh-axis-cell-counts",
+        type=int,
+        nargs=3,
+        metavar=("NX", "NY", "NZ"),
+    )
+    parser.add_argument(
+        "--task036-y-invariant-n0-alias-preflight",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--task036-dtn-direct-projection-audit",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--task036-scalar-stage4-reciprocal-basis",
+        action="store_true",
     )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
@@ -1513,20 +1568,33 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--host-environment-id", default="windows-docker-desktop")
     args = parser.parse_args(argv)
-    if args.degree == 6 and not args.task035c_p6_h10_gate:
+    if args.degree == 5 and not args.task036_domain_robustness_gate:
         parser.error(
-            "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
-            "Task035c p6/h10 Hybrid authority only."
+            "p5 Hybrid is fail-closed outside the scoped Task036 gate."
         )
-    if args.task035c_p6_h10_gate and args.task034_workstation_gate:
+    if (
+        args.degree == 6
+        and not args.task035c_p6_h10_gate
+        and not args.task036_domain_robustness_gate
+    ):
         parser.error(
-            "--task035c-p6-h10-gate and --task034-workstation-gate are "
-            "mutually exclusive."
+            "p6 is fail-closed; pass a scoped Task035c or Task036 Hybrid gate."
+        )
+    if sum(
+        (
+            bool(args.task035c_p6_h10_gate),
+            bool(args.task034_workstation_gate),
+            bool(args.task036_domain_robustness_gate),
+        )
+    ) > 1:
+        parser.error(
+            "Task034, Task035c, and Task036 Hybrid gates are mutually exclusive."
         )
     if (
         args.mpi_size not in (1, 2, 4)
         and not args.task034_workstation_gate
         and not args.task035c_p6_h10_gate
+        and not args.task036_domain_robustness_gate
     ):
         parser.error(
             "MPI8/16/32 require --task034-workstation-gate or the scoped "
@@ -1588,6 +1656,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     elif (
         args.full3d_reference_sha256 is not None
         and not args.task035c_p6_h10_gate
+        and not args.task036_domain_robustness_gate
     ):
         parser.error(
             "--full3d-reference-sha256 is reserved for the opt-in "
@@ -1615,7 +1684,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "QEP --candidate-modes must satisfy the audited adjoint-pool "
             "oversampling policy."
         )
-    if args.target == "hybrid" and args.requested_modes == 240:
+    if (
+        args.target == "hybrid"
+        and args.requested_modes == 240
+        and not args.task036_domain_robustness_gate
+    ):
         if (
             args.m160_funnel_evidence_file is None
             or args.m160_funnel_evidence_sha256 is None
@@ -1628,6 +1701,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--warning-gib must be lower than --terminate-gib.")
     if args.timeout_seconds <= 0.0:
         parser.error("--timeout-seconds must be positive.")
+    if not math.isfinite(args.incident_phi_deg):
+        parser.error("--incident-phi-deg must be finite.")
+    for option, value in (
+        ("--grating-height-nm", args.grating_height_nm),
+        ("--grating-width-x-nm", args.grating_width_x_nm),
+    ):
+        if not math.isfinite(value) or value <= 0.0:
+            parser.error(f"{option} must be finite and positive.")
     if args.task035c_p6_h10_gate:
         scoped = bool(
             args.target == "hybrid"
@@ -1675,6 +1756,63 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "Task035c p6 preflight authority arguments require "
             "--task035c-p6-h10-gate."
+        )
+    if args.task036_domain_robustness_gate:
+        task036_scope = bool(
+            args.target == "hybrid"
+            and args.degree in {5, 6}
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == args.degree
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.mpi_size == 8
+            and args.requested_modes >= 120
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == "assembly_time_static_condensed"
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and 0.5 <= args.incident_grazing_deg <= 10.0
+            and 0.0 <= args.incident_phi_deg <= 90.0
+            and args.polarization_kind in {"s", "p"}
+            and 115.0 <= args.grating_height_nm <= 125.0
+            and 16.0 <= args.grating_width_x_nm <= 18.0
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model
+            == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task036_mesh_axis_cell_counts == [6, 4, 14]
+            and args.task036_y_invariant_n0_alias_preflight
+            and args.task036_dtn_direct_projection_audit
+            and args.task036_scalar_stage4_reciprocal_basis
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+        )
+        if not task036_scope:
+            parser.error(
+                "--task036-domain-robustness-gate requires a WSL clean-source "
+                "MPI8 p5/p6 h10 same-degree static Hybrid point, topology "
+                "6/4/14, M>=120 with exact 2M pool, discrete propagation/"
+                "traction, alias/direct-projection/reciprocal audits, and an "
+                "explicit same-input Full3D reference."
+            )
+    elif (
+        args.task036_mesh_axis_cell_counts is not None
+        or args.task036_y_invariant_n0_alias_preflight
+        or args.task036_dtn_direct_projection_audit
+        or args.task036_scalar_stage4_reciprocal_basis
+        or not math.isclose(args.incident_phi_deg, 0.0)
+        or not math.isclose(args.grating_height_nm, 120.0)
+        or not math.isclose(args.grating_width_x_nm, 17.0)
+    ):
+        parser.error(
+            "Task036 angle/geometry/topology/audit options require "
+            "--task036-domain-robustness-gate."
         )
     if args.task033_same_sha_anchor_requalification:
         scoped = bool(
@@ -1925,7 +2063,71 @@ def run(args: argparse.Namespace) -> int:
         else None
     )
     if args.target == "hybrid":
-        if args.task035c_p6_h10_gate:
+        if args.task036_domain_robustness_gate:
+            full3d_path = args.full3d_reference
+            if full3d_path is not None and not full3d_path.is_absolute():
+                full3d_path = ROOT / full3d_path
+            full3d_path = (
+                None if full3d_path is None else full3d_path.resolve()
+            )
+            full3d_reference, full3d_reference_read_error = (
+                _read_json_object(full3d_path)
+            )
+            full3d_reference_observed_sha256 = (
+                None if full3d_path is None else _sha256(full3d_path)
+            )
+            full3d_reference_gate = task036_full3d_reference_gate(
+                full3d_reference,
+                expected_sha256=args.full3d_reference_sha256,
+                observed_sha256=full3d_reference_observed_sha256,
+                current_source_sha=source_before.get("commit_sha"),
+                assembly_backend=args.stage4_full3d_assembly_backend,
+                degree=args.degree,
+                h_nm=args.h_nm,
+                mpi_size=args.mpi_size,
+                polarization_kind=args.polarization_kind,
+                incident_grazing_deg=args.incident_grazing_deg,
+                incident_phi_deg=args.incident_phi_deg,
+                grating_height_nm=args.grating_height_nm,
+                grating_width_x_nm=args.grating_width_x_nm,
+                mesh_axis_cell_counts=tuple(
+                    args.task036_mesh_axis_cell_counts
+                ),
+            )
+            checks = {
+                "task036_scope_parser_passed": True,
+                "matching_full3d_reference_readable": (
+                    full3d_reference_read_error is None
+                ),
+                "matching_full3d_reference_gate": (
+                    full3d_reference_gate["pass"]
+                ),
+                "source_clean_and_exact": source_before[
+                    "source_clean_verified"
+                ],
+                "environment_preflight": environment_preflight["pass"],
+                "external_watchdog_active": True,
+            }
+            failures = [
+                name for name, passed in checks.items() if not passed
+            ]
+            launch_gate = {
+                "schema_version": "task036.hybrid-launch-gate.v1",
+                "pass": not failures,
+                "launch_eligible_recomputed": not failures,
+                "scope": "task036_dynamic_rectangular_p5_p6_h10",
+                "checks": checks,
+                "failures": failures,
+                "matching_full3d_reference": {
+                    **full3d_reference_gate,
+                    "path": (
+                        None if full3d_path is None else str(full3d_path)
+                    ),
+                    "read_error": full3d_reference_read_error,
+                },
+                "high_order_core_evidence": {},
+            }
+        elif args.task035c_p6_h10_gate:
             authority_path = args.task035c_p6_preflight_authority
             if authority_path is not None and not authority_path.is_absolute():
                 authority_path = ROOT / authority_path
@@ -2377,6 +2579,7 @@ def run(args: argparse.Namespace) -> int:
     if (
         args.degree >= 3
         and not args.task035c_p6_h10_gate
+        and not args.task036_domain_robustness_gate
         and core_read_error is not None
     ):
         launch_gate["pass"] = False
@@ -2438,7 +2641,11 @@ def run(args: argparse.Namespace) -> int:
         return 2
 
     core_gate = launch_gate.get("high_order_core_evidence", {})
-    if args.degree >= 3 and not args.task035c_p6_h10_gate:
+    if (
+        args.degree >= 3
+        and not args.task035c_p6_h10_gate
+        and not args.task036_domain_robustness_gate
+    ):
         args.high_order_core_evidence_sha256 = core_gate.get("evidence_sha256")
     args._no_swap_verified = True
     record_path = run_dir / "solver_record.json"
@@ -2528,6 +2735,7 @@ def run(args: argparse.Namespace) -> int:
                 (
                     args.task034_workstation_gate
                     or args.task035c_p6_h10_gate
+                    or args.task036_domain_robustness_gate
                 )
                 and process_running
                 and not authority_readable
@@ -2549,6 +2757,7 @@ def run(args: argparse.Namespace) -> int:
                 task034_workstation_gate=(
                     args.task034_workstation_gate
                     or args.task035c_p6_h10_gate
+                    or args.task036_domain_robustness_gate
                 ),
                 process_running=process_running,
                 authority_readable=authority_readable,
@@ -2560,6 +2769,7 @@ def run(args: argparse.Namespace) -> int:
                 task034_workstation_gate=(
                     args.task034_workstation_gate
                     or args.task035c_p6_h10_gate
+                    or args.task036_domain_robustness_gate
                 ),
                 process_running=process_running,
                 terminal_worker_drain=terminal_worker_drain,

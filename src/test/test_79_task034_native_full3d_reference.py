@@ -95,6 +95,11 @@ def _task036_conical_watchdog_fixture() -> dict:
     fixture["solver_summary"].update(
         {
             "incident_phi_deg": 90.0,
+            "config": {
+                "grating_height": 115.0,
+                "grating_width_x": 18.0,
+                "mesh_axis_cell_counts_requested": [6, 4, 14],
+            },
             "dtn_port_mode_count": 4,
             "dtn_port_top_mode_count": 2,
             "dtn_port_bottom_mode_count": 2,
@@ -150,6 +155,9 @@ def test_task036_conical_watchdog_reference_preserves_incidence() -> None:
     assert normalized["physical_model"]["incident_theta_deg"] == 80.0
     assert normalized["physical_model"]["incident_grazing_deg"] == 10.0
     assert normalized["physical_model"]["incident_phi_deg"] == 90.0
+    assert normalized["physical_model"]["grating_height_nm"] == 115.0
+    assert normalized["physical_model"]["grating_width_x_nm"] == 18.0
+    assert normalized["physical_model"]["mesh_axis_cell_counts"] == [6, 4, 14]
     _validate_case080_reference_identity(
         normalized,
         degree=2,
@@ -158,7 +166,23 @@ def test_task036_conical_watchdog_reference_preserves_incidence() -> None:
         polarization_kind="s",
         incident_grazing_deg=10.0,
         incident_phi_deg=90.0,
+        grating_height_nm=115.0,
+        grating_width_x_nm=18.0,
+        mesh_axis_cell_counts=(6, 4, 14),
     )
+    with pytest.raises(RuntimeError):
+        _validate_case080_reference_identity(
+            normalized,
+            degree=2,
+            h_nm=5.0,
+            path=REFERENCE_PATH,
+            polarization_kind="s",
+            incident_grazing_deg=10.0,
+            incident_phi_deg=90.0,
+            grating_height_nm=115.0,
+            grating_width_x_nm=18.0,
+            mesh_axis_cell_counts=(6, 3, 14),
+        )
 
 
 @pytest.mark.parametrize(

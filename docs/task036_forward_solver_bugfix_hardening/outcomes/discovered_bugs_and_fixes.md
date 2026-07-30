@@ -7,9 +7,10 @@
 
 | ID | 现象 | 当前状态 | V2 处置 |
 |---|---|---|---|
-| V2-B01 | Hybrid-P 调用处仍把 `modal_rank_sufficient=False` 写死 | known functional gap | 用同点相邻 M 的真实响应、interface、dual、biorthogonality 和 projection 判定 |
-| V2-B02 | one-shot repair 只联合最坏的一对 blocks，误差会移动到另一组 | repeated controlled negative | 建立 near-degenerate connected components，一次联合归一化并检查完整 row norm |
+| V2-B01 | Hybrid-P 调用处仍把 `modal_rank_sufficient=False` 写死 | raw shard 已改为 `pending_actual_M_convergence`；aggregate analyzer pending | 用同点相邻 M 的真实响应、interface、dual、biorthogonality 和 projection 判定 |
+| V2-B02 | one-shot repair 只联合最坏的一对 blocks，误差会移动到另一组 | code fixed；PDE regression pending | 一次规划全部同方向、近 beta、超 overlap 的 connected components；全部预检 size/condition 后批量 joint inverse，再检查完整 row norm |
 | V2-B03 | P 在 M120 下 interface/modal rank 不足，接近 full rank 时历史 energy 仍失败 | unresolved mechanism | 按失败簇运行 M120→240→480→full-rank，先区分 truncation、coupling 与 ledger |
+| V2-B04 | 正式 Hybrid watchdog 不支持 p5 或动态 phi/height/width/Ny4，可能误绑定中心几何 reference | code fixed；PDE regression pending | 新增显式 Task036 opt-in；outer/worker 双重绑定 raw Full3D source、hash、p/h/MPI/S-P/角度/几何/topology/backend/projection |
 
 ## 2. full-suite 收口
 
@@ -32,7 +33,7 @@ V2 开始前的 full-repository pytest 已经结束：
 ## 3. 新发现项
 
 ```text
-none_at_scan_freeze_checkpoint
+V2-B04_port_gap_fixed_before_first_scan_PDE
 ```
 
 后续每个真实失败必须在本文件记录：

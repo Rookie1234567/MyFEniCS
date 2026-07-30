@@ -27,6 +27,7 @@ from benchmarks.task035c_p6_h10_gates import (
     TASK035C_P6_H10_BACKENDS,
     TASK035C_P6_H10_MODE_COUNTS,
     TASK035C_P6_H10_MPI_SIZES,
+    task036_full3d_reference_gate,
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
     valid_hex_digest,
@@ -170,7 +171,7 @@ def _hybrid_p_disposition(
     polarization_kind: str,
     *,
     full3d_physical_solution_exists: bool,
-    modal_rank_sufficient: bool,
+    modal_rank_sufficient: bool | None,
     modal_rank_evidence: str,
     interface_closure_pass: bool,
     interface_closure_gate_names: tuple[str, ...],
@@ -189,7 +190,10 @@ def _hybrid_p_disposition(
         "full3d_physical_solution_exists": bool(
             full3d_physical_solution_exists
         ),
-        "hybrid_modal_rank_insufficient": not bool(modal_rank_sufficient),
+        "hybrid_modal_rank_insufficient": modal_rank_sufficient is False,
+        "hybrid_modal_rank_pending_actual_M_convergence": (
+            modal_rank_sufficient is None
+        ),
         "hybrid_interface_closure_failed": not bool(
             interface_closure_pass
         ),
@@ -208,6 +212,8 @@ def _hybrid_p_disposition(
         primary = "hybrid_modal_rank_insufficient"
     elif flags["hybrid_interface_closure_failed"]:
         primary = "hybrid_interface_closure_failed"
+    elif flags["hybrid_modal_rank_pending_actual_M_convergence"]:
+        primary = "hybrid_modal_rank_pending_actual_M_convergence"
     else:
         primary = "hybrid_p_research_observables_pass_production_quarantined"
     return {
@@ -506,6 +512,8 @@ def _normalize_full3d_reference_record(
         source = reference["source"]
         qualification = reference["qualification"]
         solver = reference["solver_summary"]
+        config = solver.get("config")
+        config = config if isinstance(config, dict) else {}
         resource_authority = reference["resource_authority"]
         archive = Path(str(solver["full3d_reference_archive"]))
         metadata = Path(str(solver["full3d_reference_metadata"]))
@@ -697,6 +705,12 @@ def _normalize_full3d_reference_record(
             "nedelec_degree": int(reference["degree"]),
             "mesh_h_nm": float(reference["h_nm"]),
             "mpi_size": int(reference["mpi_size"]),
+            "grating_height_nm": config.get("grating_height"),
+            "grating_width_x_nm": config.get("grating_width_x"),
+            "mesh_axis_cell_counts": config.get(
+                "mesh_axis_cell_counts_requested",
+                config.get("mesh_axis_cell_counts"),
+            ),
             "linear_solver": "direct_lu_mumps",
         },
         "results": {
@@ -739,6 +753,9 @@ def _validate_case080_reference_identity(
     polarization_kind: str = "s",
     incident_grazing_deg: float = 10.0,
     incident_phi_deg: float = 0.0,
+    grating_height_nm: float | None = None,
+    grating_width_x_nm: float | None = None,
+    mesh_axis_cell_counts: tuple[int, int, int] | None = None,
 ) -> None:
     try:
         physical_model = reference["physical_model"]
@@ -764,6 +781,25 @@ def _validate_case080_reference_identity(
             )
             <= 1.0e-12
             and physical_model["polarization_kind"] == polarization_kind
+            and (
+                grating_height_nm is None
+                or math.isclose(
+                    float(physical_model["grating_height_nm"]),
+                    float(grating_height_nm),
+                )
+            )
+            and (
+                grating_width_x_nm is None
+                or math.isclose(
+                    float(physical_model["grating_width_x_nm"]),
+                    float(grating_width_x_nm),
+                )
+            )
+            and (
+                mesh_axis_cell_counts is None
+                or physical_model["mesh_axis_cell_counts"]
+                == list(mesh_axis_cell_counts)
+            )
             and abs(float(physical_model["wavelength_nm"]) - 13.5)
             <= 1.0e-12
             and qualification["phase1_reference_pass"] is True
@@ -791,6 +827,9 @@ def _load_case080_reference(
     polarization_kind: str = "s",
     incident_grazing_deg: float = 10.0,
     incident_phi_deg: float = 0.0,
+    grating_height_nm: float | None = None,
+    grating_width_x_nm: float | None = None,
+    mesh_axis_cell_counts: tuple[int, int, int] | None = None,
 ) -> tuple[Path, dict[str, Any]] | None:
     reference_path = _case080_reference_path(
         degree, h_nm, reference_by_degree_and_h
@@ -818,6 +857,9 @@ def _load_case080_reference(
         polarization_kind=polarization_kind,
         incident_grazing_deg=incident_grazing_deg,
         incident_phi_deg=incident_phi_deg,
+        grating_height_nm=grating_height_nm,
+        grating_width_x_nm=grating_width_x_nm,
+        mesh_axis_cell_counts=mesh_axis_cell_counts,
     )
     return reference_path, reference
 
@@ -922,7 +964,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--h-nm", type=float, default=5.0)
-    parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4, 6), default=2)
+    parser.add_argument(
+        "--degree", type=int, choices=(1, 2, 3, 4, 5, 6), default=2
+    )
     parser.add_argument(
         "--modal-h-nm",
         type=float,
@@ -934,7 +978,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--modal-degree",
         type=int,
-        choices=(1, 2, 3, 4, 6),
+        choices=(1, 2, 3, 4, 5, 6),
         help=(
             "Optional independent cross-section QEP polynomial degree. The "
             "local 3D FEM degree remains controlled by --degree."
@@ -1002,6 +1046,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "M120/M160 Hybrid path. Ordinary defaults remain unchanged."
         ),
     )
+    parser.add_argument(
+        "--task036-domain-robustness-gate",
+        action="store_true",
+        help=(
+            "Explicitly open one clean-source Task036 same-p Full3D/Hybrid "
+            "robustness point. Ordinary defaults remain unchanged."
+        ),
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument(
@@ -1050,6 +1102,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
     parser.add_argument("--incident-phi-deg", type=float, default=0.0)
+    parser.add_argument("--grating-height-nm", type=float, default=120.0)
+    parser.add_argument("--grating-width-x-nm", type=float, default=17.0)
     parser.add_argument(
         "--polarization-kind",
         choices=("s", "p"),
@@ -1108,10 +1162,24 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=os.environ.get("TASK032_HOST_ENVIRONMENT_ID", "SK-20260601OSDE"),
     )
     args = parser.parse_args(argv)
-    if args.degree == 6 and not args.task035c_p6_h10_gate:
+    if args.degree == 5 and not args.task036_domain_robustness_gate:
         parser.error(
-            "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
-            "Task035c p6/h10 Hybrid authority only."
+            "p5 Hybrid is fail-closed outside the scoped Task036 gate."
+        )
+    if (
+        args.degree == 6
+        and not args.task035c_p6_h10_gate
+        and not args.task036_domain_robustness_gate
+    ):
+        parser.error(
+            "p6 is fail-closed; pass a scoped Task035c or Task036 Hybrid gate."
+        )
+    if (
+        args.task035c_p6_h10_gate
+        and args.task036_domain_robustness_gate
+    ):
+        parser.error(
+            "Task035c and Task036 Hybrid gates are mutually exclusive."
         )
     if args.task035c_p6_h10_gate:
         scoped = bool(
@@ -1158,6 +1226,56 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Task035c p6 preflight authority arguments require "
             "--task035c-p6-h10-gate."
         )
+    if args.task036_domain_robustness_gate:
+        task036_scope = bool(
+            args.degree in {5, 6}
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == args.degree
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes >= 120
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and 0.5 <= args.incident_grazing_deg <= 10.0
+            and 0.0 <= args.incident_phi_deg <= 90.0
+            and args.polarization_kind in {"s", "p"}
+            and 115.0 <= args.grating_height_nm <= 125.0
+            and 16.0 <= args.grating_width_x_nm <= 18.0
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model
+            == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task036_mesh_axis_cell_counts == [6, 4, 14]
+            and args.task036_y_invariant_n0_alias_preflight
+            and args.task036_dtn_direct_projection_audit
+            and args.task036_scalar_stage4_reciprocal_basis
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.allow_dirty_research
+        )
+        if not task036_scope:
+            parser.error(
+                "--task036-domain-robustness-gate requires a clean-source "
+                "fixed rectangular p5/p6 h10 same-degree Hybrid point, "
+                "MPI worker topology 6/4/14, M>=120 with exact 2M pool, "
+                "static modal-Schur-minimal solve, discrete propagation/"
+                "traction, alias/direct-projection/reciprocal audits, and an "
+                "explicit same-input Full3D reference."
+            )
+    if not math.isfinite(args.incident_phi_deg):
+        parser.error("--incident-phi-deg must be finite.")
+    for option, value in (
+        ("--grating-height-nm", args.grating_height_nm),
+        ("--grating-width-x-nm", args.grating_width_x_nm),
+    ):
+        if not math.isfinite(value) or value <= 0.0:
+            parser.error(f"{option} must be finite and positive.")
     if args.full3d_reference_sha256 is not None and (
         args.full3d_reference is None
         or not valid_hex_digest(args.full3d_reference_sha256, 64)
@@ -1264,6 +1382,58 @@ def _task035c_worker_authority_gate(
     return gate
 
 
+def _task036_worker_authority_gate(
+    args: argparse.Namespace,
+    *,
+    current_source_sha: str | None,
+    mpi_size: int,
+) -> dict[str, Any] | None:
+    if not args.task036_domain_robustness_gate:
+        return None
+    reference_path = args.full3d_reference
+    if reference_path is None:
+        raise SystemExit("Task036 requires a same-input Full3D reference.")
+    reference_path = (
+        reference_path
+        if reference_path.is_absolute()
+        else ROOT / reference_path
+    ).resolve()
+    try:
+        reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            f"Task036 Full3D reference is unreadable: {exc}"
+        ) from exc
+    gate = task036_full3d_reference_gate(
+        reference if isinstance(reference, dict) else None,
+        expected_sha256=args.full3d_reference_sha256,
+        observed_sha256=_sha256(reference_path),
+        current_source_sha=current_source_sha,
+        assembly_backend=args.stage4_full3d_assembly_backend,
+        degree=args.degree,
+        h_nm=args.h_nm,
+        mpi_size=mpi_size,
+        polarization_kind=args.polarization_kind,
+        incident_grazing_deg=args.incident_grazing_deg,
+        incident_phi_deg=args.incident_phi_deg,
+        grating_height_nm=args.grating_height_nm,
+        grating_width_x_nm=args.grating_width_x_nm,
+        mesh_axis_cell_counts=tuple(args.task036_mesh_axis_cell_counts),
+    )
+    gate["path"] = str(reference_path)
+    if mpi_size != 8:
+        gate["checks"]["task036_mpi8_worker"] = False
+        gate["failures"].append("task036_mpi8_worker")
+        gate["pass"] = False
+    else:
+        gate["checks"]["task036_mpi8_worker"] = True
+    if not gate["pass"]:
+        raise SystemExit(
+            f"Task036 worker authority failed: {gate['failures']}"
+        )
+    return gate
+
+
 def main() -> None:
     args = _parse_args()
     if args.full3d_reference is not None:
@@ -1352,7 +1522,11 @@ def main() -> None:
         or args.top_interface_nm != 110.0
         or args.graded_reference_h is not None
         or not np.isclose(args.incident_grazing_deg, 10.0)
+        or not np.isclose(args.incident_phi_deg, 0.0)
         or args.polarization_kind != "s"
+        or not np.isclose(args.grating_height_nm, 120.0)
+        or not np.isclose(args.grating_width_x_nm, 17.0)
+        or args.task036_domain_robustness_gate
         or args.internal_propagation_model != "continuous_beta"
         or args.internal_traction_model != "continuous_qep_beta"
     )
@@ -1368,6 +1542,11 @@ def main() -> None:
             "Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8."
         )
     task035c_p6_gate = _task035c_worker_authority_gate(
+        args,
+        current_source_sha=provenance.get("commit_sha"),
+        mpi_size=comm.size,
+    )
+    task036_authority_gate = _task036_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),
         mpi_size=comm.size,
@@ -1408,6 +1587,8 @@ def main() -> None:
     cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
     cfg.incident_phi_deg = float(args.incident_phi_deg)
     cfg.polarization_kind = args.polarization_kind
+    cfg.grating_height = float(args.grating_height_nm)
+    cfg.grating_width_x = float(args.grating_width_x_nm)
     cfg.dtn_y_invariant_n0_alias_preflight = bool(
         args.task036_y_invariant_n0_alias_preflight
     )
@@ -1425,6 +1606,8 @@ def main() -> None:
     modal_cfg.incident_theta_deg = cfg.incident_theta_deg
     modal_cfg.incident_phi_deg = cfg.incident_phi_deg
     modal_cfg.polarization_kind = cfg.polarization_kind
+    modal_cfg.grating_height = cfg.grating_height
+    modal_cfg.grating_width_x = cfg.grating_width_x
     modal_cfg.dtn_y_invariant_n0_alias_preflight = (
         cfg.dtn_y_invariant_n0_alias_preflight
     )
@@ -2377,6 +2560,13 @@ def main() -> None:
                 polarization_kind=args.polarization_kind,
                 incident_grazing_deg=args.incident_grazing_deg,
                 incident_phi_deg=args.incident_phi_deg,
+                grating_height_nm=args.grating_height_nm,
+                grating_width_x_nm=args.grating_width_x_nm,
+                mesh_axis_cell_counts=(
+                    None
+                    if args.task036_mesh_axis_cell_counts is None
+                    else tuple(args.task036_mesh_axis_cell_counts)
+                ),
             )
             if pinned_reference_case
             else None
@@ -2793,12 +2983,18 @@ def main() -> None:
         hybrid_p_disposition = _hybrid_p_disposition(
             cfg.polarization_kind,
             full3d_physical_solution_exists=loaded_reference is not None,
-            # This runner does not perform an M-convergence proof.  A finite
-            # selected basis is therefore never silently promoted to a
-            # rank-qualified Hybrid-P production basis.
-            modal_rank_sufficient=False,
+            # One PDE cannot prove adjacent-M convergence. Task036 leaves the
+            # raw shard pending for its analyzer; historical paths retain
+            # their explicit rank-insufficient quarantine.
+            modal_rank_sufficient=(
+                None
+                if args.task036_domain_robustness_gate
+                else False
+            ),
             modal_rank_evidence=(
-                "not_qualified_no_M_convergence_funnel_in_this_runner"
+                "pending_adjacent_M_comparison_in_task036_analyzer"
+                if args.task036_domain_robustness_gate
+                else "not_qualified_no_M_convergence_funnel_in_this_runner"
             ),
             interface_closure_pass=interface_closure_pass,
             interface_closure_gate_names=interface_closure_gate_names,
@@ -2925,6 +3121,9 @@ def main() -> None:
                     args.task036_scalar_stage4_reciprocal_basis
                 ),
                 "task035c_p6_h10_authority_gate": task035c_p6_gate,
+                "task036_domain_robustness_authority_gate": (
+                    task036_authority_gate
+                ),
                 "task33_variant": task33_variant,
                 "provenance": (
                     (
@@ -2972,6 +3171,8 @@ def main() -> None:
                 "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
                 "incident_phi_deg": cfg.incident_phi_deg,
                 "polarization_kind": cfg.polarization_kind,
+                "grating_height_nm": cfg.grating_height,
+                "grating_width_x_nm": cfg.grating_width_x,
                 "mesh_policy": (
                     "task034_periodic_conforming_fixed_p_graded_opt_in"
                     if graded_plan is not None

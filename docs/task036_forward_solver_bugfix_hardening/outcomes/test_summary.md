@@ -209,3 +209,26 @@ Review V2 只新增扫描范围，没有改变已完成 PDE 的数值源码。Ro
 | frozen table SHA-256 | `01701c580355b8870c3865a6cb631d4db53f12a1a8fc3a2eaba3da59a26812d4` |
 | new PDE at freeze checkpoint | `not_run` |
 | numerical source changed | `false` |
+
+## 7. Review V2 首次 PDE 前数值端口 Gate
+
+冻结点表后发现，旧 Hybrid CLI 只允许 Task035c 的固定 p6/S/10°路径，不能诚实执行
+V2 的 p5、P、动态方位角和几何。本轮先完成最小 opt-in 接线与 one-shot repair 的
+connected-component 修复，没有运行 PDE。
+
+| 检查 | 结果 |
+|---|---|
+| targeted Python tests | `82 passed`，`22.02 s` |
+| Hybrid p5/p6 dynamic CLI round-trip | pass |
+| raw Full3D exact source/input identity mutation tests | pass |
+| two disjoint + transitive near-degenerate components | pass |
+| bounded size/condition fail-closed | pass |
+| full `||B-I||_inf` synthetic batch repair | pass |
+| Ruff | pass |
+| compileall | pass |
+| `git diff --check` | pass |
+| ordinary default | unchanged |
+| new PDE | `not_run` |
+
+该 Gate 只证明执行端口和算法局部合同正确；connected-component 修复仍需原 p6/45°
+及其邻域 actual PDE 证明，不能因 unit test 提前写成数值闭环。
