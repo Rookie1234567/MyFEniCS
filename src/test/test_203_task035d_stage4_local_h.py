@@ -16,6 +16,10 @@ from src.adaptivity.stage4_local_h import (
     build_stage4_local_h_mesh_data,
     build_stage4_local_h_reduction_authority,
     stage4_local_h_refinement_plan_payload,
+    stage4_local_h_root_forest_catalog,
+)
+from src.adaptivity.hcurl_broken_trace_graph import (
+    _cell_physical_entity_keys,
 )
 from src.common.config_3d import (
     ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
@@ -350,6 +354,92 @@ def test_h100_selective_nonhanging_p6_face_enters_stage4_authority() -> None:
         == 20
     )
     assert enriched.audit["active_fe_dof_gate_pass"] is True
+
+
+def test_selective_trace_only_plan_preserves_the_root_mesh() -> None:
+    cfg = target_stage4_config(degree=6, h_nm=100.0)
+    forest = stage4_local_h_root_forest_catalog(
+        cfg,
+        comm_size=MPI.COMM_WORLD.size,
+    )
+    bounds = forest.domain_bounds
+    origin = np.asarray(bounds[:3], dtype=np.float64)
+    extent = np.asarray(
+        [
+            bounds[axis + 3] - bounds[axis]
+            for axis in range(3)
+        ],
+        dtype=np.float64,
+    )
+    tolerance = max(float(np.max(extent)), 1.0) * 1.0e-11
+    face_incidence: dict[tuple[int, ...], int] = {}
+    for box in forest.root_boxes:
+        for key in _cell_physical_entity_keys(
+            box,
+            origin=origin,
+            tolerance=tolerance,
+        )[2]:
+            face_incidence[key] = face_incidence.get(key, 0) + 1
+    selected = next(
+        key for key, count in sorted(face_incidence.items())
+        if count == 2
+    )
+    payload = stage4_local_h_refinement_plan_payload(
+        cfg,
+        (),
+        comm_size=MPI.COMM_WORLD.size,
+        trace_degree=5,
+        cell_interior_degree=6,
+        provenance={
+            "purpose": "zero-h selective-trace component fixture",
+            "accuracy_credit": False,
+            "ordinary_default_changed": False,
+        },
+        selected_p6_face_geometry_keys=(selected,),
+    )
+    assert payload["zero_h_selective_trace_only"] is True
+    assert payload["marked_root_boxes"] == []
+    path = _shared_plan_path(
+        payload,
+        name=f"h100-zero-h-selective-trace-mpi{MPI.COMM_WORLD.size}",
+    )
+    mesh_data = build_stage4_local_h_mesh_data(
+        cfg,
+        path,
+        comm=MPI.COMM_WORLD,
+    )
+    context = mesh_data.local_h_context
+    assert isinstance(context, Stage4LocalHContext)
+    authority = build_stage4_local_h_reduction_authority(
+        context,
+        phase_x=np.exp(0.2j),
+        phase_y=np.exp(-0.3j),
+    )
+    assert len(context.forest.leaves) == len(context.forest.root_boxes)
+    assert context.audit["maximum_level"] == 0
+    assert context.audit["hanging_patch_count"] == 0
+    assert authority.degree_plan.audit["selected_p6_face_count"] == 1
+    assert authority.degree_plan.audit["trace_degree_values"] == [5, 6]
+
+
+def test_empty_local_h_plan_without_selective_trace_remains_rejected() -> None:
+    cfg = target_stage4_config(degree=6, h_nm=100.0)
+    with pytest.raises(
+        ValueError,
+        match="selective-trace-only plan is active",
+    ):
+        stage4_local_h_refinement_plan_payload(
+            cfg,
+            (),
+            comm_size=MPI.COMM_WORLD.size,
+            trace_degree=5,
+            cell_interior_degree=6,
+            provenance={
+                "purpose": "ordinary-empty-plan negative fixture",
+                "accuracy_credit": False,
+                "ordinary_default_changed": False,
+            },
+        )
 
 
 def test_local_h_variable_interior_plan_fails_closed() -> None:

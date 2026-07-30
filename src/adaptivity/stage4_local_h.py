@@ -398,14 +398,27 @@ def _build_forest(
     comm_size: int,
     marked_root_boxes: Sequence[Sequence[float]],
     maximum_level: int,
+    allow_no_refinement: bool = False,
 ) -> BalancedDyadicHexForest:
     if int(maximum_level) != 1:
         raise ValueError("the qualified Stage-4 local-h plan allows one split")
     roots = _stage4_root_boxes(cfg, comm_size=int(comm_size))
     root_by_box = {box: index for index, box in enumerate(roots)}
     marked = tuple(_normalized_box(box) for box in marked_root_boxes)
-    if not marked or len(set(marked)) != len(marked):
-        raise ValueError("local-h marked root boxes must be nonempty and unique")
+    if len(set(marked)) != len(marked):
+        raise ValueError("local-h marked root boxes must be unique")
+    if not marked:
+        if not allow_no_refinement:
+            raise ValueError(
+                "local-h marked root boxes must be nonempty unless a "
+                "selective-trace-only plan is active"
+            )
+        return build_root_dyadic_hexa_forest(
+            roots,
+            _root_material_tags(cfg, roots),
+            periodic_axes=("x", "y"),
+            protect_material_interfaces=True,
+        )
     missing = sorted(set(marked) - set(root_by_box))
     if missing:
         raise ValueError(
@@ -764,6 +777,7 @@ def stage4_local_h_refinement_plan_payload(
         comm_size=int(comm_size),
         marked_root_boxes=marked,
         maximum_level=1,
+        allow_no_refinement=bool(selected_faces),
     )
     base = _base_config_identity(cfg, comm_size=int(comm_size))
     degree_catalog = _cell_interior_degree_catalog(
@@ -792,6 +806,8 @@ def stage4_local_h_refinement_plan_payload(
         "provenance": dict(provenance),
         "ordinary_default_changed": False,
     }
+    if not marked:
+        payload["zero_h_selective_trace_only"] = True
     if cell_interior_degree_overrides is not None:
         payload["cell_interior_degrees"] = (
             _cell_interior_degree_rows(degree_catalog)
@@ -967,21 +983,50 @@ def build_stage4_local_h_mesh_data(
             raise ValueError(
                 "Stage-4 local-h plan has no marked root boxes"
             )
+        selected_face_rows = payload.get(
+            "selected_p6_face_geometry_keys",
+            [],
+        )
+        if not isinstance(selected_face_rows, list):
+            raise ValueError(
+                "selected p6 physical face catalog is invalid"
+            )
+        zero_h_selective_trace_only = payload.get(
+            "zero_h_selective_trace_only",
+            False,
+        )
+        if not isinstance(zero_h_selective_trace_only, bool):
+            raise ValueError(
+                "zero-h selective-trace opt-in must be a boolean"
+            )
         marked = tuple(
             _normalized_box((*row["lower"], *row["upper"]))
             for row in rows
         )
+        expected_zero_h_selective_trace_only = bool(
+            not marked and selected_face_rows
+        )
+        if (
+            zero_h_selective_trace_only
+            != expected_zero_h_selective_trace_only
+        ):
+            raise ValueError(
+                "zero-h selective-trace identity is inconsistent"
+            )
         forest = _build_forest(
             cfg,
             comm_size=comm.size,
             marked_root_boxes=marked,
             maximum_level=1,
+            allow_no_refinement=zero_h_selective_trace_only,
         )
         refinement_region_payload: dict[str, Any] = {
             "marked_root_boxes": [list(box) for box in marked]
         }
         refinement_stage_count = 1
-        maximum_level = 1
+        maximum_level = max(
+            cell.key.level for cell in forest.leaves
+        )
     else:
         if payload.get("status") != (
             "stage4_balanced_multilevel_local_h_plan"
