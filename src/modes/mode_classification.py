@@ -583,7 +583,7 @@ def _task036_scalar_stage4_partition_repair_candidate(
     maximum_overlap_condition: float,
     maximum_union_size: int = 8,
 ) -> tuple[tuple[tuple[int, ...], ...] | None, dict[str, object]]:
-    """Plan every bounded connected split block before changing any vector."""
+    """Plan every bounded row-budget component before changing any vector."""
 
     group_members = [
         tuple(int(index) for index in indices) for indices in groups
@@ -616,6 +616,39 @@ def _task036_scalar_stage4_partition_repair_candidate(
     if len(directions) != len(betas):
         return rejected("direction_count_mismatch")
 
+    identity_difference = np.abs(
+        values - np.eye(len(betas), dtype=np.complex128)
+    )
+    identity_row_errors = np.sum(identity_difference, axis=1)
+    failing_rows = np.flatnonzero(
+        identity_row_errors > float(block_rotation_tolerance)
+    )
+    group_id_by_mode = np.full(len(betas), -1, dtype=np.int64)
+    for identifier, members in enumerate(group_members):
+        for index in members:
+            group_id_by_mode[index] = identifier
+    if np.any(group_id_by_mode < 0):
+        return rejected("group_members_do_not_cover_modes")
+    failing_group_ids = {
+        int(group_id_by_mode[index]) for index in failing_rows
+    }
+    if not failing_group_ids:
+        return rejected("no_full_row_norm_failure_seed")
+    noise_floor = (
+        64.0
+        * np.finfo(np.float64).eps
+        * max(len(betas), 1)
+        * max(1.0, float(np.linalg.norm(values, ord=np.inf)))
+    )
+    provenance.update(
+        full_row_norm_failure_seed_group_ids=sorted(failing_group_ids),
+        connected_edge_noise_floor=noise_floor,
+        connected_edge_selection_semantics=(
+            "minimum deterministic partner-group prefix whose row "
+            "contribution exceeds the full identity-row-norm excess"
+        ),
+    )
+
     parents = list(range(len(group_members)))
 
     def find(index: int) -> int:
@@ -630,11 +663,16 @@ def _task036_scalar_stage4_partition_repair_candidate(
         if first_root != second_root:
             parents[second_root] = first_root
 
-    edge_records: list[dict[str, object]] = []
-    for first in range(len(group_members)):
-        for second in range(first + 1, len(group_members)):
-            first_members = group_members[first]
-            second_members = group_members[second]
+    selected_edges: dict[tuple[int, int], dict[str, object]] = {}
+    row_failure_plans: list[dict[str, object]] = []
+    unexplained_rows: list[dict[str, object]] = []
+    for row in map(int, failing_rows):
+        first = int(group_id_by_mode[row])
+        first_members = group_members[first]
+        candidates: list[tuple[float, int, float]] = []
+        for second, second_members in enumerate(group_members):
+            if second == first:
+                continue
             component_directions = {
                 str(directions[index])
                 for index in (*first_members, *second_members)
@@ -644,42 +682,78 @@ def _task036_scalar_stage4_partition_repair_candidate(
                 and next(iter(component_directions))
                 in {"forward", "backward"}
             )
-            cross_overlap = max(
-                float(
-                    np.max(
-                        np.abs(
-                            values[np.ix_(first_members, second_members)]
-                        )
-                    )
-                ),
-                float(
-                    np.max(
-                        np.abs(
-                            values[np.ix_(second_members, first_members)]
-                        )
-                    )
-                ),
+            row_contribution = float(
+                np.sum(np.abs(values[row, list(second_members)]))
             )
             beta_distance = min(
-                _relative_beta_distance(betas[row], betas[column])
-                for row in first_members
+                _relative_beta_distance(betas[source], betas[column])
+                for source in first_members
                 for column in second_members
             )
-            connected = bool(
+            eligible = bool(
                 same_direction
-                and cross_overlap > float(block_rotation_tolerance)
+                and row_contribution > noise_floor
                 and beta_distance
                 <= 10.0 * float(near_degenerate_tolerance)
             )
-            if connected:
-                union(first, second)
-                edge_records.append(
-                    {
-                        "source_group_ids": [first, second],
-                        "max_bidirectional_cross_overlap": cross_overlap,
-                        "minimum_relative_beta_distance": beta_distance,
-                    }
+            if eligible:
+                candidates.append(
+                    (row_contribution, int(second), beta_distance)
                 )
+        candidates.sort(key=lambda item: (-item[0], item[1]))
+        required_reduction = float(
+            identity_row_errors[row] - float(block_rotation_tolerance)
+        )
+        cumulative = 0.0
+        selected_partner_ids: list[int] = []
+        for row_contribution, second, beta_distance in candidates:
+            selected_partner_ids.append(second)
+            cumulative += row_contribution
+            edge_key = tuple(sorted((first, second)))
+            edge = selected_edges.setdefault(
+                edge_key,
+                {
+                    "source_group_ids": list(edge_key),
+                    "trigger_rows": [],
+                    "maximum_group_row_contribution": 0.0,
+                    "minimum_relative_beta_distance": beta_distance,
+                },
+            )
+            edge["trigger_rows"].append(row)
+            edge["maximum_group_row_contribution"] = max(
+                float(edge["maximum_group_row_contribution"]),
+                row_contribution,
+            )
+            edge["minimum_relative_beta_distance"] = min(
+                float(edge["minimum_relative_beta_distance"]),
+                beta_distance,
+            )
+            if cumulative > required_reduction:
+                break
+        row_plan = {
+            "trigger_row": row,
+            "source_group_id": first,
+            "full_identity_row_error": float(identity_row_errors[row]),
+            "required_reduction": required_reduction,
+            "selected_partner_group_ids": selected_partner_ids,
+            "cumulative_selected_contribution": cumulative,
+            "noise_floor": noise_floor,
+        }
+        row_failure_plans.append(row_plan)
+        if cumulative <= required_reduction:
+            unexplained_rows.append(row_plan)
+    provenance["row_failure_plans"] = row_failure_plans
+    if unexplained_rows:
+        provenance["unexplained_row_failures"] = unexplained_rows
+        return rejected(
+            "row_norm_failure_not_explained_by_near_cross_blocks"
+        )
+
+    edge_records = [
+        selected_edges[key] for key in sorted(selected_edges)
+    ]
+    for first, second in sorted(selected_edges):
+        union(first, second)
 
     connected_group_ids: dict[int, list[int]] = {}
     for identifier in range(len(group_members)):
@@ -691,6 +765,7 @@ def _task036_scalar_stage4_partition_repair_candidate(
             tuple(sorted(identifiers))
             for identifiers in connected_group_ids.values()
             if len(identifiers) > 1
+            and failing_group_ids.intersection(identifiers)
         ),
         key=lambda identifiers: min(
             min(group_members[identifier]) for identifier in identifiers

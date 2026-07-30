@@ -259,7 +259,7 @@ class Task032ModeClassificationTests(unittest.TestCase):
             (
                 scalar_stage4,
                 ("forward", "forward", "backward", "backward"),
-                "no_eligible_connected_components",
+                "row_norm_failure_not_explained_by_near_cross_blocks",
             ),
         ):
             with self.subTest(reason=expected_reason):
@@ -384,6 +384,99 @@ class Task032ModeClassificationTests(unittest.TestCase):
             maximum_overlap_condition=1.0e12,
         )
         self.assertEqual(transitive, ((0, 1, 2),))
+
+        subthreshold_overlap = np.eye(5, dtype=np.complex128)
+        subthreshold_overlap[0, 1] = 6.0e-7
+        subthreshold_overlap[0, 2] = 6.0e-7
+        subthreshold_overlap[0, 3] = 6.0e-7
+        subthreshold_overlap[4, 3] = 2.0e-7
+        subthreshold_betas = (
+            0.5 + 0.1j,
+            0.5 + 0.100001j,
+            0.5 + 0.100002j,
+            0.5 + 0.100003j,
+            0.7 + 0.2j,
+        )
+        subthreshold_audit = _near_degenerate_partition_audit(
+            subthreshold_betas,
+            ((0,), (1,), (2,), (3,), (4,)),
+            subthreshold_overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            directions=("forward",) * 5,
+        )
+        self.assertTrue(
+            subthreshold_audit[
+                "max_cross_block_overlap_within_tolerance"
+            ]
+        )
+        self.assertFalse(
+            subthreshold_audit[
+                "biorthogonality_identity_row_norm_within_tolerance"
+            ]
+        )
+        subthreshold, provenance = (
+            _task036_scalar_stage4_partition_repair_candidate(
+                scalar_stage4,
+                ((0,), (1,), (2,), (3,), (4,)),
+                subthreshold_audit,
+                betas=subthreshold_betas,
+                directions=("forward",) * 5,
+                biorthogonality=subthreshold_overlap,
+                near_degenerate_tolerance=1.0e-6,
+                block_rotation_tolerance=1.0e-6,
+                maximum_overlap_condition=1.0e12,
+            )
+        )
+        self.assertEqual(subthreshold, ((0, 1, 2),))
+        self.assertEqual(
+            provenance["full_row_norm_failure_seed_group_ids"],
+            [0],
+        )
+        self.assertEqual(
+            provenance["row_failure_plans"][0][
+                "selected_partner_group_ids"
+            ],
+            [1, 2],
+        )
+        self.assertLess(provenance["connected_edge_noise_floor"], 1.0e-10)
+
+        a001_overlap = np.eye(4, dtype=np.complex128)
+        a001_overlap[2, 0] = 9.328995705e-7
+        a001_overlap[2, 1] = 9.328995705e-7
+        a001_betas = (
+            0.5 + 0.1000000j,
+            0.5 + 0.1000000j,
+            0.5 + 0.1000036j,
+            0.5 + 0.1000036j,
+        )
+        a001_audit = _near_degenerate_partition_audit(
+            a001_betas,
+            ((0, 1), (2, 3)),
+            a001_overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            directions=("forward",) * 4,
+        )
+        self.assertLess(a001_audit["max_cross_block_overlap"], 1.0e-6)
+        self.assertGreater(
+            a001_audit["biorthogonality_identity_row_norm"],
+            1.0e-6,
+        )
+        a001_component, _ = (
+            _task036_scalar_stage4_partition_repair_candidate(
+                scalar_stage4,
+                ((0, 1), (2, 3)),
+                a001_audit,
+                betas=a001_betas,
+                directions=("forward",) * 4,
+                biorthogonality=a001_overlap,
+                near_degenerate_tolerance=1.0e-6,
+                block_rotation_tolerance=1.0e-6,
+                maximum_overlap_condition=1.0e12,
+            )
+        )
+        self.assertEqual(a001_component, ((0, 1, 2, 3),))
 
     def test_task036_joint_left_inverse_repairs_selected_block(self):
         overlap = np.eye(4, dtype=np.complex128)
