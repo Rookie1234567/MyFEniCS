@@ -6,7 +6,47 @@
 >
 > **2026-07-26 历史回填。** 独立 backfill 重新核对 Task000–Task035c 的 outcomes、response、review 和 compact records。方法级成功表补齐 Task034 的 p2/p3/p4 Full3D、Hybrid、M funnel 与 MPI identity；逐 Task 第3章继续保留失败、停止和未运行证据。
 >
-> **2026-07-28 收口。** 在不覆盖上述回填的前提下，三方加入 Task035d 最终总账、Review V1 口径修正和 Task035e `staged/not_run` 入口。Task035e 尚无数值 evidence。
+> **2026-07-28 收口。** 在不覆盖上述回填的前提下，三方加入 Task035d 最终总账、Review V1 口径修正和 Task035e `staged/not_run` 入口。
+>
+> **2026-07-29 Task035e partial checkpoint。** 保留原 `config.json` 最终 ledger
+> 语义，同时登记 source
+> `f1ba5627f163da54fa383b43be58fd38c0da7bc9` 的 Path A cycle 0
+> current/p-shadow/h-shadow、59-goal actual DWR/cellwise replay、v27 Path B
+> controlled resource stop，以及 sealed reference 的身份/Gate 状态。selected
+> action、transition、candidate、cycle 1、Path B v28 与 Hybrid 仍为
+> `not_run`；不得把 partial stage pass 提升为 Task035e completion。
+>
+> **2026-07-29 Task035e selected-p controlled negative。** numerical source
+> 仍为 `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；只运行一次 Path A
+> cycle-0 selected-p actual candidate。候选的数值与资源 Gate 通过，但既有
+> cellwise DWR action prediction 仅 `19/59` factor-two，且 `25/59`
+> opposite-sign，故 candidate rejected、cycle 0 current 保留、
+> `cycle_advanced=false`。
+>
+> **2026-07-29 Task035e single-cell p-up controlled negative。** 在相同
+> numerical source 上只验证 `cell:r42:l1:i1:j0:k0 p4→p5`。candidate 的
+> 数值/资源 Gate 通过，但既有单-cell DWR prediction 为 `0/59`
+> factor-two、`30/59` opposite-sign，正式逐级与总量中 `24/53`
+> opposite-sign。candidate rejected、cycle 0 current 保留；当前
+> cellwise-p quantitative predictor 关闭，只保留 ranking-only 角色。
+>
+> **2026-07-30 Task035e structured-anchor 与 goal-oriented trace 收口。**
+> 既有 p6/h10、h7.5、h5 在冻结 tolerance 下均为 `59/59`；p6/h5
+> `factor_nnz` 的 int32 overflow 已用同一 raw MUMPS telemetry 离线修正为
+> `2,277,000,000`，没有重跑 PDE。同网格 M1 fixed p5-trace/p6-interior
+> 为 `52/59`；field-projection 200-orbit candidate 为 `50/59` 且
+> `13.004326 GiB`。最后一次 goal-oriented 16-orbit MPI8 candidate
+> 在 `10.929794 GiB`、zero swap 和全部求解/物理 Gate 通过时仅为
+> `49/59`：被显式优化的 6 个物理目标全部恢复，但 10 个原本通过的旁路
+> 目标越界。因此 direct selective-trace lane 关闭，不再运行第二批或修改
+> 阈值/排名公式；iterative 与 Hybrid 保持 `not_run`，等待后续授权。
+>
+> **2026-07-30 Task035e final closeout。** 最终 Review V1 将本任务冻结为
+> `PARTIAL_WITH_CONTROLLED_NEGATIVES_CLOSED`：reference certification 与
+> true local-h/local-p component capability 为 `pass`，automatic
+> reference-blind hp cycle 为 `incomplete`，production candidate 为
+> `none`，direct selective-trace 为 `closed_controlled_negative`，
+> Hybrid/iterative 为 `not_run`，ordinary default 未改变。
 
 ---
 
@@ -21,7 +61,7 @@
 | `C-COMSOL-P0` | COMSOL 直接/迭代求解器对照 | 周期 `50×25 nm`；空气 `50×25×130 nm`；基底 `50×25×10 nm`；光栅 `16×25×120 nm` | `13.5 nm`；`80°`（相对法线） | P | 两周期端口 + 双 Floquet；仅 `(0,0)` 零级 | `docs/task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md` |
 | `C-COMSOL-HO-S` | COMSOL p2–p6直接法与p2 GMRES+GMG收敛矩阵 | 固定三维高阶benchmark；精确geometry/source hash保存在MPH而非Markdown | 13.5 nm项目主点；入射身份以MPH为准 | 偏振身份以MPH为准（Markdown未冻结） | 双Floquet/周期端口；保存R00与总R/T/A，未逐项冻结12通道复振幅 | `docs/COMSOL_direct_solver_report.md` |
 | `F-STAGE4-S` | FEniCS Stage4 原始完整 FE 矩阵、Hybrid 和迭代主线 | 单元 `50×25×140 nm`；Si 块 `17×25×120 nm` | `13.5 nm`；`theta=80°`、`phi=0°`，即 `10°` 掠入射 | S | 双 Floquet + Fourier-DtN；top/bottom 各 40 个传播模态，共 80 个辅助量 | Task027–Task033 |
-| `F-HO-S` | FEniCS 高阶、h/p、自适应、静态凝聚与Hybrid高阶闭合主线 | Task034 冻结规则矩形光栅；与 `F-STAGE4-S` 同一工程主点族 | `13.5 nm`；`10°` 掠入射 | S | 双 Floquet + DtN；显著衍射级使用 Task035b reference v1 | Task034–Task035d；Task035e 仅 staged/not_run |
+| `F-HO-S` | FEniCS 高阶、h/p、自适应、静态凝聚与Hybrid高阶闭合主线 | Task034 冻结规则矩形光栅；与 `F-STAGE4-S` 同一工程主点族 | `13.5 nm`；`10°` 掠入射 | S | 双 Floquet + DtN；显著衍射级使用 Task035b reference v1 | Task034–Task035e；Task035e 已按 Review V1 以 partial + closed controlled negatives 收口 |
 
 ### 0.2 总量、自由度和资源字段
 
@@ -461,14 +501,14 @@ H1-B p2/h3 为 `not_run_by_review_prerequisite`，不是普通待运行项。
 | Task035b structured-hexa directional-h | h15→h14→h13 的 z 向全共形细化，h13 达到 89,740 DoF | 12/12 通道闭合；局部 hanging-node hexa h 路径 | `controlled_negative` |
 | selective p6 trace | fixture 中 active-row 省略、Floquet pullback、MatShell action | actual enriched residual、channel DWR、orbit selection、正式 PDE | `incomplete` |
 | Task035d exact-sequence local-p + true local-h | capability/resource pass；h15 top-air `82,925 DoF / 18,470 rows / 7.50068 GiB / 6/12+6/12`；left-grating `88,915 / 21,650 / 8.06120 GiB / 4/12+6/12` | accuracy fail；automatic cycles 1–4 not completed；未形成 production hp candidate | `PARTIAL_WITH_CONTROLLED_NEGATIVES` |
-| Task035e reference-blind multilevel hp | hidden certifier/controller/auditor 合同已冻结 | p6/h10、h7.5、h5 certification 与 blind cycles 均未运行 | `staged_not_run` |
+| Task035e reference-blind multilevel hp | sealed p6/h10、h7.5、h5 certification 身份/Gate；Path A current+p/h shadow；59-goal endpoint/cellwise DWR；离线 p/h marking；一次 four-cell 与一次 single-cell selected-p actual candidate | 两条 candidate 的数值/资源均通过，但 action prediction 分别仅19/59与0/59 factor-two；single-cell 排除 grouped interaction 解释，cellwise-p quantitative predictor 已关闭；selected-h、cycle 1、Path B v28、hidden final audit 和 Hybrid 均未运行 | `PARTIAL_CELLWISE_P_PREDICTOR_CLOSED` |
 
 ### 1.6.2 Hybrid
 
 | 状态 | 说明 |
 |---|---|
 | Task035d `not_run_full3d_hp_gate_failed` | Full3D 候选未通过 12/12+12/12，Hybrid 不得提供精度信用。 |
-| Task035e `not_run` | 只有 hidden audit 通过的 Full3D blind candidate 才能进入 static Hybrid M120；当前无结果。 |
+| Task035e `not_run` | 只有 hidden audit 通过的 Full3D blind candidate 才能进入 static Hybrid M120；cycle-0 selected-p candidate 已运行但被 action-level effectivity Gate 拒绝，因此仍无 Hybrid 结果。 |
 
 ---
 
@@ -1230,15 +1270,50 @@ local-h 或 trace-orbit DWR；当前 compact location oracle 不足以授权继�
 
 ## 3.40 Task035e：reference-blind 多层 local-h/p 自适应
 
-Task035e 是选择性合并后的下一研究任务。它先由独立 certifier 对 p6/h10、
-p6/h7.5 和 p6/h5 建立收敛资格，再把数值结果封存在 hidden reference
-package 中；blind controller 只能读取冻结的低阶目标集合、当前解、局部
-indicator、成本和自身历史，不能读取 reference 值、路径、hash、误差图或
-已知最优网格。当前仅登记任务合同，尚无新 PDE、资源或精度结果。
+Task035e 先由独立 certifier 对 p6/h10、p6/h7.5 和 p6/h5 建立收敛资格，再把
+数值结果封存在 hidden reference package 中；blind controller 只能读取冻结的
+低阶目标集合、当前解、局部 indicator、成本和自身历史，不能读取 reference
+值、路径、hash、误差图或已知最优网格。2026-07-29 已完成 Path A cycle 0 的
+current、p-shadow、h-shadow 与 59-goal/cellwise 离线重放，并依次验证一次
+固定 four-cell selected-p actual candidate 与一次保守 single-cell p-up
+diagnostic。两条 candidate 的数值/资源 Gate 均通过，但 action-level predictor
+Gate 均失败；single-cell 结果进一步关闭了当前 cellwise-p quantitative
+predictor。因此没有晋级 cycle 1，仍只能登记 partial progress，不能登记 cycle
+完成或 hidden-reference 精度通过。
+
+2026-07-30 又完成 structured reference-visible 收敛核验和两种
+selective-trace 排名。三条 global-p6 structured endpoint 均为 59/59；M1
+fixed trace 只有 52/59。普通场投影 200-orbit candidate 同时触发精度和资源
+negative；最后一次 6-adjoint goal-oriented 16-orbit candidate 通过资源与
+求解 Gate，却因 10 个未纳入 adjoint 的旁路目标越界而只有 49/59。这个结果
+关闭 direct selective-trace，而不是把 Task035e 或 blind adaptive cycle 写成
+完成。
+
+本节 evidence 路径属于保留的 Task035e 研究分支，master 的
+documentation-only integration 不复制对应 source、workers、records 或
+outcomes。完整证据固定在
+[`27ca26718b9ee60215243bcc98ffafcd46bfd221`](https://github.com/Rookie1234567/MyFEniCS/tree/27ca26718b9ee60215243bcc98ffafcd46bfd221)
+历史快照；master 中的本表和 Review V1 是其轻量索引。
 
 | Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
 |---|---|---|---|---|---|---|
-| `task035e_reference_blind_entry` | post-Task035d selective-merge master；执行分支待创建 | `F-HO-S` fixed rectangular grating；两条独立起始网格；p4/p5/p6；真正多层 local-h | hidden certifier + blind controller + hidden auditor；formal MPI8；最多6个 blind cycles | p6/h10、h7.5、h5 certification、DoF/rows/NNZ/factor/peak/timeline 均 `not_run` | `staged_not_run`；不得登记未运行数值或向 controller 泄漏 reference | `docs/task035e_reference_blind_multilevel_hp_adaptivity/task.md` |
+| `task035e_reference_certification_sealed` | certification source `03ddc8319fa9ee9da6a9ee948b539a067e9c3dd0`；sealed package `69b620…12d7`，47,421,013 bytes；package 未提交/未解析 | `F-HO-S`；p6/h10、p6/h7.5、p6/h5；S；Full3D static | direct MUMPS；MPI8；三个 full solve | 三个 run 的 residual/energy/resource 均 pass、zero swap；reference 数值、逐通道、场和 error map 不进入总账 | `SEALED_IDENTITY_ONLY_NO_REFERENCE_VALUES`；reference-leak static/manifest/dynamic 全通过 | [sealed manifest @ 27ca267](https://github.com/Rookie1234567/MyFEniCS/blob/27ca26718b9ee60215243bcc98ffafcd46bfd221/benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/task035e_sealed_reference_manifest_v1.json) |
+| `task035e_structured_p6_h10` | existing certification source `03ddc8319fa9ee9da6a9ee948b539a067e9c3dd0`；same frozen 59-goal inventory | `(6,3,14)`；252 cells；global p6 trace/interior | static condensed direct MUMPS；MPI8；173,802 FE DoF；51,272 rows；41,989,040 matrix NNZ；202,441,352 factor NNZ | residual `1.483287e-11`；R00=`0.0007537612`，R=`0.0007628815`，T=`0.6027016340`，Avolume=`0.3965354845`；59/59；14.466988 GiB；zero swap | structured accuracy anchor；超过11 GiB，不是压缩候选 | [structured anchor compact @ 27ca267](https://github.com/Rookie1234567/MyFEniCS/blob/27ca26718b9ee60215243bcc98ffafcd46bfd221/benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/structured_anchor_selective_trace_v1.json) |
+| `task035e_structured_p6_h7p5` | 同一 certification source 与 inventory | `(9,4,20)`；720 cells；global p6 trace/interior | static condensed direct MUMPS；MPI8；488,070 FE DoF；145,232 rows；119,738,672 matrix NNZ；708,620,576 factor NNZ | residual `2.076296e-11`；R00=`0.0007528960`，R=`0.0007620151`，T=`0.6027074846`，Avolume=`0.3965305003`；59/59；31.880505 GiB；zero swap | 更细 accuracy endpoint；h7.5→h5 max差仅 `0.004416 tau` | 同上 |
+| `task035e_structured_p6_h5` | 同一 certification source；factor telemetry 离线修正绑定 raw run summary `f19e827a…60b49` | `(12,5,28)`；1,680 cells；global p6 trace/interior | static condensed direct MUMPS；MPI8；1,127,502 FE DoF；337,040 rows；279,032,240 matrix NNZ；**2,277,000,000 corrected factor NNZ** | residual `1.039818e-10`；R00=`0.0007528884`，R=`0.0007620075`，T=`0.6027075352`，Avolume=`0.3965304573`；59/59；77.945587 GiB；zero swap | best available discrete endpoint；raw PETSc `-2017967296` overflow 和 MUMPS `INFOG(9)=-2277` 均保留；未重跑 PDE | 同上 |
+| `task035e_fast_hp_mechanism_negatives` | source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；reference-visible development only | 160-leaf C1/C2 与 216/272-leaf H2/P3/H3；另含同拓扑 global-p6 A 与 p5-trace/p6-interior C | MPI8 direct static；broad-p、isotropic full-h 与 trace/interior mechanism discriminators | C2/P3 E2 分别恶化 `9.219512%/9.227268%`；H2/H3 仅改善 `0.021457%/0.022178%` 且显著增资源；A 为4/59、12.335 GiB；C 为0/59、8.999 GiB | broad-p 与 isotropic-h 为 controlled negatives；A/C 只作机制证据；160-leaf topology 不再生成候选 | Task035e branch `27ca267...`；`outcomes/fast_hp_sprint_v2.md`、`outcomes/mechanism_isolation_sprint_v1.md` |
+| `task035e_H10_fixed_p5trace_p6interior_M1` | source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；与 p6/h10 同一 mesh/geometry | `(6,3,14)`；global p5 trace + p6 interior | static condensed direct MUMPS；MPI8；154,735 FE DoF；35,000 rows；20,140,928 matrix NNZ；101,141,150 factor NNZ | residual `1.150501e-11`；52/59；normalized L2 `5.397523`；9,784.469 MiB historical upper bound；zero swap | 低内存 base；7 个正式失败行，不是 accuracy anchor | 同上 |
+| `task035e_H10_projection_200_faces` | source `d9e2c2f8c8edbd91d96a0e642d8f4e1cc0778e6e`；field-energy projection ranking | M1 + 200/774 face orbits；233 geometry keys；无 edge/local-h | static condensed direct MUMPS；MPI8；159,395 FE DoF；39,000 rows；24,696,176 matrix NNZ；116,348,600 factor NNZ | residual `2.478629e-11`；50/59；normalized L2 `5.762190`；13.004326 GiB；zero swap | accuracy+resource controlled negative；普通场投影排序关闭；第二批 `not_run` | [structured anchor outcome @ 27ca267](https://github.com/Rookie1234567/MyFEniCS/blob/27ca26718b9ee60215243bcc98ffafcd46bfd221/docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/structured_anchor_selective_trace_v1.md) |
+| `task035e_H10_goal_DWR_support` | numerical source `69cd41c74ba0dfc310d8631cf7bbd8103ec8fc73`；M1 7 fail rows→6 independent physical goals | global-p6 fine factor；B/S/F exact hierarchy；774 physical face orbits；6 transpose adjoints | factorization-only MPI8；51,272 rows；41,989,040 matrix NNZ；184,588,160 factor NNZ；无 primal solve、无 official endpoint | 6 adjoint residual `1.675e-13`–`1.729e-12`；B→S→F error `1.776e-14`；face residual unexplained `6.604e-10`；support historical upper bound 19.107769 GiB | estimator support pass；只用于冻结唯一16-orbit batch，不计 candidate memory或reference credit | [goal-DWR compact @ 27ca267](https://github.com/Rookie1234567/MyFEniCS/blob/27ca26718b9ee60215243bcc98ffafcd46bfd221/benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/h10_goal_oriented_selective_trace_v1.json) |
+| `task035e_H10_goal_DWR_16_faces_actual` | 同一 numerical source；plan `dcd41fa…86fa1`；selected orbit `[748,747,605,749,603,674,682,672,681,683,673,751,741,606,752,742]` | M1 +16 p6 physical face orbits；p5 edge；p6 interior；252 cells | static condensed direct MUMPS；MPI8；155,055 active FE DoF；35,320 rows；20,492,976 matrix NNZ；93,656,300 factor NNZ | residual `9.865452e-11`；R=`0.0007629447`，T=`0.6026812190`，Avolume=`0.3965558363`；49/59；power10/16、amplitude28/32、totals5/5、fields6/6；10.929794 GiB；zero swap；286.620 s | optimized 6/6 与 dedup R00 都 pass，但新增10个旁路失败；`CONTROLLED_NEGATIVE_GOAL_ORIENTED_SELECTIVE_TRACE`；direct selective-trace关闭 | [goal-DWR outcome @ 27ca267](https://github.com/Rookie1234567/MyFEniCS/blob/27ca26718b9ee60215243bcc98ffafcd46bfd221/docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/goal_oriented_selective_trace_v1.md) |
+| `task035e_path_a_c0_current_v28` | numerical source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；forest `f9b666…77a1f` | Path A current；160 leaves；level 0/1=`32/128`；p4/p5/p6=`24/136/0` | variable-p static condensed；MPI8；59,264 FE DoF；20,202 rows；10,798,392 matrix NNZ；41,217,460 factor NNZ | residual `1.373246e-12`；R00=`0.0864978439`，R=`0.0949734914`，T=`0.3774035414`，Aclosure=`0.5276229672`；RSS/PSS/USS=`8368.988/6491.735/6234.652 MiB`，swap 0；wall `239.304 s` | current stage pass；不是 adaptive candidate | [Path A stage authority @ 27ca267](https://github.com/Rookie1234567/MyFEniCS/blob/27ca26718b9ee60215243bcc98ffafcd46bfd221/benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_v28_stage_authority_v1.json) |
+| `task035e_path_a_c0_p_shadow_v28` | 同一 numerical source；forest 与 current 相同；degree map `14c4ad…6c8e` | 160 leaves；level 0/1=`32/128`；p4/p5/p6=`15/138/7` | variable-p static condensed；MPI8；62,284 FE DoF；20,564 rows；11,084,868 matrix NNZ；43,034,248 factor NNZ | residual `1.873484e-12`；R00=`0.0623430295`，R=`0.0685259183`，T=`0.4081864213`，Aclosure=`0.5232876605`；RSS/PSS/USS=`8345.027/6955.710/6847.707 MiB`，swap 0；wall `236.323 s` | p-shadow pass；59/59 endpoint DWR pass；不是 selected action/candidate | 同上；`records/path_a_cycle0_v28_59goal_dwr_compact_v1.json` |
+| `task035e_path_a_c0_h_shadow_v28` | 同一 numerical source；forest `d6a7c9…8de7` | 181 leaves；level 0/1/2=`32/125/24`；p4/p5/p6=`24/157/0` | variable-p static condensed；MPI8；66,434 FE DoF；22,189 rows；11,821,621 matrix NNZ；41,744,755 factor NNZ | residual `1.671519e-12`；R00=`0.0864985747`，R=`0.0949741323`，T=`0.3774025559`，Aclosure=`0.5276233119`；RSS/PSS/USS=`10482.977/9541.340/9394.934 MiB`，swap 0；wall `395.487 s` | h-shadow pass；whole-job RSS `10.237282 GiB <= 11 GiB`；59/59 endpoint DWR pass | 同上；`records/path_a_cycle0_v28_59goal_dwr_compact_v1.json` |
+| `task035e_path_a_c0_cellwise_v28` | p/h cellwise authority `dc4674…7933` / `9ff5d9…bb67`；各160 rows | current leaf partition；59 formal goals；global endpoint closure 与 cellwise attribution 分离 | actual residual-adjoint pairing；equal-weight normalized multi-goal；offline replay | 两 lane 均完整覆盖 160 leaves；最大 signed closure error `2.776e-15` / `1.668e-17`；p marked 4 cells；h verification-only 1 target + 1 periodic closure | `offline_compact_replayed`；selected action/transition/candidate 均 `not_run` | [cellwise authority @ 27ca267](https://github.com/Rookie1234567/MyFEniCS/blob/27ca26718b9ee60215243bcc98ffafcd46bfd221/benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_v28_cellwise_marking_v1.json) |
+| `task035e_path_a_c0_selected_p_actual` | numerical source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；action `c054f3…633c`；forest 与 current 相同 | 160 leaves；level 0/1=`32/128`；p4/p5/p6=`22/136/2`；仅 r42 两个 p4→p5 与 r13/r37 两个 p5→p6 | variable-p static condensed；MPI8；59,997 Full3D-equivalent DoF；20,251 augmented rows；10,834,433 matrix NNZ；41,278,819 factor NNZ | residual `2.421043e-12`；R00=`0.0160886209`，R=`0.0276394999`，T=`0.4322933170`，Aclosure=`0.5400671831`；RSS/PSS/USS=`7887.426/6458.675/6349.059 MiB`，swap 0；worker `207.671 s` | 数值/资源 pass；selected-cellwise prediction 仅 `19/59` factor-two、`25/59` opposite-sign，故 `CONTROLLED_NEGATIVE_ACTION_LEVEL_EFFECTIVITY`；cycle 0 current 保留 | [four-cell actual @ 27ca267](https://github.com/Rookie1234567/MyFEniCS/blob/27ca26718b9ee60215243bcc98ffafcd46bfd221/benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_selected_p_actual_checkpoint_v1.json) |
+| `task035e_path_a_c0_single_cell_p_actual` | numerical source `f1ba5627f163da54fa383b43be58fd38c0da7bc9`；target `cell:r42:l1:i1:j0:k0 p4→p5`；action file `a08161…c89a`；forest 与 current 相同 | 160 leaves；level 0/1=`32/128`；p4/p5/p6=`23/137/0`；+132 interior、+0 edge、+16 face modes | variable-p static condensed；MPI8；59,412 Full3D-equivalent DoF；20,218 augmented rows；10,810,712 matrix NNZ；41,157,452 factor NNZ | residual `2.707608e-12`；R00=`0.0863527953`，R=`0.0948725837`，T=`0.3774527359`，Aclosure=`0.5276746804`；RSS/PSS/USS=`7741.539/6361.860/6249.074 MiB`，whole-job `7.560097 GiB`，swap 0；worker `191.195 s` | 数值/资源 pass；single-cell prediction `0/59` factor-two、`30/59` opposite-sign、formal `24/53` opposite-sign，故 `CONTROLLED_NEGATIVE_SINGLE_CELL_ACTION_LEVEL_EFFECTIVITY`；cellwise-p quantitative predictor 关闭，cycle 0 current 保留 | [single-cell actual @ 27ca267](https://github.com/Rookie1234567/MyFEniCS/blob/27ca26718b9ee60215243bcc98ffafcd46bfd221/benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_a_cycle0_single_cell_p_actual_checkpoint_v1.json) |
+| `task035e_path_b_c0_v27_partial` | source `1fa06c93593e3b6a97b05e1138147999a4587074`；仅复用 v27 local evidence | Path B current+p-shadow+h-shadow attempt | MPI8；h-shadow 11 GiB controlled resource Gate | current pass；p-shadow pass；h-shadow 在 `11.055027 GiB` controlled stop，未产生 run_summary/evaluation/bridge | `PARTIAL_CONTROLLED_RESOURCE_STOP`；`cycle_complete=false`；没有 v28 Path B run | [Path B partial @ 27ca267](https://github.com/Rookie1234567/MyFEniCS/blob/27ca26718b9ee60215243bcc98ffafcd46bfd221/benchmarks/cases/098_reference_blind_multilevel_hp_adaptivity/records/path_b_cycle0_v27_partial_authority_v1.json) |
+| `task035e_final_closure` | Review V1；reviewed head `27ca26718b9ee60215243bcc98ffafcd46bfd221` | 不新增 PDE；汇总 Task035e frozen scope | documentation-only closure；production code merge `none` | reference certification `pass`；component capability `pass`；automatic blind hp `incomplete`；production candidate `none`；Hybrid/iterative `not_run`；ordinary default `unchanged` | `PARTIAL_WITH_CONTROLLED_NEGATIVES_CLOSED`；direct selective-trace `closed_controlled_negative` | `docs/task035e_reference_blind_multilevel_hp_adaptivity/review_report_v1.md` |
 
 ### 3.40.1 隔离与完成边界
 
@@ -1248,8 +1323,23 @@ indicator、成本和自身历史，不能读取 reference 值、路径、hash�
   `REFERENCE_CERTIFICATION_INCOMPLETE`，不得把 h7.5 冒充最终 reference。
 - automatic blind cycle 必须真实产生多层、多区域 local-h、p-shadow 和
   h-shadow 证据；Task035d 的 manual single-root discriminator 不计作完成。
-- 本节状态保持 `not_run`，直到 Task035e 自己的 clean-source authority、
-  hidden-audit receipt 和正式资源/精度记录产生。
+- 当前 clean-source stage authority、一次 grouped selected-p candidate 与一次
+  single-cell p-up diagnostic 已产生；两条 action-level effectivity Gate 均
+  失败，candidate 均未晋级。当前 cellwise-p quantitative predictor 已关闭，
+  只保留 ranking signal。hidden final audit、selected-h 均未产生，
+  cycle-state transition 也未提交；因此 Task 总状态保持 partial，而不是
+  completion。
+- structured reference-visible lane 已确认 p6/h10、h7.5、h5 三点 59/59，
+  但 M1 fixed trace、projection 200-orbit 和 goal-DWR 16-orbit 都不是
+  59/59 candidate。最后一条虽满足 `10.929794 GiB <= 11 GiB`，仍因
+  10 个旁路目标越界而被拒绝。direct selective-trace 已关闭，第二批、
+  threshold 扩展和 ranking retune 均 `not_run/not_authorized`。
+- goal-DWR 结果只证明“6 个显式目标的 signed orbit response 可预测”，不能
+  推广成“完整59目标稳定”。iterative/Hybrid 是后续可能路线，但当前均
+  `not_run`，不能写成已有解法。
+- `config.json` 的最终 ledger schema 不能无歧义表达此 partial progress，故保持
+  原 `SCAFFOLD_NOT_RUN` 语义；hash-bound checkpoint 单独位于
+  `records/path_a_cycle0_v28_progress_checkpoint_v1.json`。
 
 
 ---
@@ -1286,7 +1376,12 @@ indicator、成本和自身历史，不能读取 reference 值、路径、hash�
 
 # 5. 当前数据缺口与后续自动化
 
-1. Task000–035d 已逐项回填；Task035e 仅登记 staged/not_run 合同；早期没有保存的 source SHA、geometry hash、12 通道、factor NNZ 或 PSS/cgroup 明确标成“历史未记录”。
+1. Task000–035d 已逐项回填；Task035e 已登记 sealed certification、三条
+   structured global-p6 endpoint、Path A cycle-0 stage/shadow、两条
+   selected-p negative、M1、projection negative 和 goal-oriented trace
+   negative，但尚无 accepted adaptive candidate、hidden final audit、
+   iterative 或 Hybrid。早期没有保存的 source SHA、geometry hash、
+   12 通道、factor NNZ 或 PSS/cgroup 明确标成“历史未记录”。
 2. Task032–034 的 heavy JSON 包含比总账更细的衍射级、场误差和资源字段；总账保留权威 evidence path，不建立第二份易漂移的逐字段副本。
 3. COMSOL 参考只计算零级；非零衍射级不能写 0。
 4. 不同物理配置、偏振、网格和软件之间的数值只能做标注清楚的横向参考，不能混成单一收敛序列。
