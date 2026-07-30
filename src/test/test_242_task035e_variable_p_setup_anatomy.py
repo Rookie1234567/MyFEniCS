@@ -226,3 +226,78 @@ def test_reduction_setup_anatomy_includes_global_transfer_wall_clock(
         system.build_audit["variable_p_reduction"]
         is reduction.build_audit
     )
+
+
+def test_zero_h_selective_anchor_uses_task035e_advisory_dof_scope(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mesh = SimpleNamespace(comm=MPI.COMM_WORLD)
+    entity_map = SimpleNamespace(
+        mesh=mesh,
+        active_rows=100_001,
+        active_trace_rows=10,
+    )
+    degree_plan = SimpleNamespace(
+        entity_map=entity_map,
+        audit={"pass": True},
+    )
+    trace_constraints = SimpleNamespace(audit={"pass": True})
+    local_h = SimpleNamespace(
+        degree_plan=degree_plan,
+        trace_constraints=trace_constraints,
+        audit={
+            "actual_full3d_equivalent_active_fe_dofs": 100_001,
+            "mesh": {
+                "schema_version": "task035d.stage4-local-h-mesh.v1",
+                "zero_h_selective_trace_only": True,
+            },
+        },
+    )
+    local_h_context = SimpleNamespace(
+        carrier=SimpleNamespace(mesh=mesh),
+    )
+    transfer = SimpleNamespace(audit={"pass": True})
+    system = SimpleNamespace(
+        build_audit={
+            "phase_timings_seconds_by_rank": {"cell_loop": [0.1]},
+            "compiled_builder_phase_timings_seconds_by_rank": {
+                "raw_tensor_global_cache_outer_envelope": [0.1]
+            },
+        }
+    )
+    monkeypatch.setattr(
+        hcurl_variable_p_reduction,
+        "build_stage4_local_h_reduction_authority",
+        lambda *_args, **_kwargs: local_h,
+    )
+    monkeypatch.setattr(
+        hcurl_variable_p_reduction,
+        "build_variable_p_global_transfer",
+        lambda *_args, **_kwargs: transfer,
+    )
+    monkeypatch.setattr(
+        hcurl_variable_p_reduction,
+        "build_variable_p_condensed_trace_system_from_compiled_form",
+        lambda *_args, **_kwargs: system,
+    )
+
+    reduction = (
+        hcurl_variable_p_reduction
+        .build_variable_p_assembly_time_reduction(
+            object(),
+            SimpleNamespace(mesh=mesh),
+            object(),
+            degree_plan_path=None,
+            phase_x=1.0 + 0.0j,
+            phase_y=1.0 + 0.0j,
+            local_h_context=local_h_context,
+        )
+    )
+
+    assert reduction.build_audit["active_fe_dof_hard_gate_active"] is False
+    assert reduction.build_audit["active_fe_dof_gate_limit"] is None
+    assert reduction.build_audit["active_fe_dof_gate_pass"] is True
+    assert (
+        reduction.build_audit["active_fe_dof_advisory_target_met"]
+        is False
+    )

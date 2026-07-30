@@ -1734,8 +1734,14 @@ def build_variable_p_assembly_time_reduction(
         local_h_audit = dict(local_h.audit)
     task035e_scope = bool(
         local_h_audit is not None
-        and local_h_audit.get("mesh", {}).get("schema_version")
-        == "task035e.stage4-multilevel-local-h-mesh.v1"
+        and (
+            local_h_audit.get("mesh", {}).get("schema_version")
+            == "task035e.stage4-multilevel-local-h-mesh.v1"
+            or local_h_audit.get("mesh", {}).get(
+                "zero_h_selective_trace_only"
+            )
+            is True
+        )
     )
     advisory_dof_target = 90_000
     if (
