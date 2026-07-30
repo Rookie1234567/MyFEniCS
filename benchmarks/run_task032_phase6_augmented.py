@@ -54,6 +54,7 @@ from src.modes.mode_classification import (
     NearDegenerateBlockPartitionSplitError,
     PoyntingFluxEvaluator,
     build_biorthogonal_mode_basis,
+    build_scalar_stage4_reciprocal_negative_basis,
     pair_reciprocal_mode_bases,
     select_passive_direction_modes,
 )
@@ -366,6 +367,8 @@ def _basis_summary(basis) -> dict[str, Any]:
         )
     )
     return {
+        "basis_origin": basis.basis_origin,
+        "basis_construction_audit": basis.basis_construction_audit,
         "mode_count": len(basis.modes),
         "max_biorthogonality_identity_error": basis.max_identity_error,
         "max_biorthogonality_entry_identity_error": (
@@ -411,6 +414,20 @@ def _basis_summary(basis) -> dict[str, Any]:
     }
 
 
+def _reciprocal_pairing_summary(pairs) -> list[dict[str, Any]]:
+    return [
+        {
+            "positive_index": pair.positive_index,
+            "negative_index": pair.negative_index,
+            "relative_beta_error": pair.relative_beta_error,
+            "electric_mass_overlap": pair.electric_mass_overlap,
+            "opposite_direction": pair.opposite_direction,
+            "passive_branches_valid": pair.passive_branches_valid,
+        }
+        for pair in pairs
+    ]
+
+
 def _directional_selection_summary(report) -> dict[str, Any]:
     return {
         "requested_modes": report.requested_modes,
@@ -439,6 +456,17 @@ class _ModalBasisCapacityStop(RuntimeError):
 
 
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
+_TASK036_DIRECT_PROJECTION_CHECKS = (
+    "task036_direct_projection_requested",
+    "task036_direct_projection_tolerance_frozen",
+    "task036_direct_projection_nonempty_complete_finite_orders",
+    "task036_direct_projection_exact_mode_count",
+    "task036_direct_projection_unique_mode_identities",
+    "task036_direct_projection_top_bottom_coverage",
+    "task036_direct_projection_s_p_coverage",
+    "task036_direct_projection_max_le_1e_10",
+    "task036_direct_projection_pass",
+)
 
 
 def _case080_reference_path(
@@ -490,9 +518,120 @@ def _normalize_full3d_reference_record(
         run_root = archive.parent.relative_to(ROOT)
         commit_sha = str(source["commit_sha"]).lower()
         polarization_kind = str(solver["polarization_kind"]).lower()
+        incident_theta_deg = float(solver["incident_theta_deg"])
+        incident_phi_deg = float(solver["incident_phi_deg"])
         archive_sha256 = str(
             solver["full3d_reference_archive_sha256"]
         ).lower()
+        task036_checks = qualification.get("checks")
+        task036_checks = (
+            task036_checks if isinstance(task036_checks, dict) else {}
+        )
+        task036_audit = reference.get("task036_direct_projection_audit")
+        task036_audit = (
+            task036_audit if isinstance(task036_audit, dict) else {}
+        )
+        solver_audit = solver.get(
+            "auxiliary_direct_tangential_projection_audit"
+        )
+        solver_audit = solver_audit if isinstance(solver_audit, dict) else {}
+        audit_orders = task036_audit.get("orders")
+        audit_orders = audit_orders if isinstance(audit_orders, list) else []
+        audit_tolerance = task036_audit.get("tolerance")
+        audit_tolerance_valid = bool(
+            isinstance(audit_tolerance, (int, float))
+            and not isinstance(audit_tolerance, bool)
+            and math.isfinite(float(audit_tolerance))
+            and float(audit_tolerance) == 1.0e-10
+        )
+        audit_orders_valid = bool(audit_orders) and all(
+            isinstance(row, dict)
+            and row.get("side") in {"top", "bottom"}
+            and row.get("polarization") in {"s", "p"}
+            and isinstance(row.get("m"), int)
+            and not isinstance(row.get("m"), bool)
+            and isinstance(row.get("n"), int)
+            and not isinstance(row.get("n"), bool)
+            and all(
+                isinstance(row.get(key), (int, float))
+                and not isinstance(row.get(key), bool)
+                and math.isfinite(float(row[key]))
+                and 0.0 <= float(row[key]) <= 1.0e-10
+                for key in (
+                    "absolute_total_projection_difference",
+                    "absolute_outgoing_projection_difference",
+                )
+            )
+            for row in audit_orders
+        )
+        audit_identities = (
+            [
+                (
+                    row["side"],
+                    int(row["m"]),
+                    int(row["n"]),
+                    row["polarization"],
+                )
+                for row in audit_orders
+            ]
+            if audit_orders_valid
+            else []
+        )
+        task036_raw_gate_valid = bool(
+            reference.get("task036_forward_robustness_gate") is True
+            and qualification.get("failures") == []
+            and all(
+                task036_checks.get(name) is True
+                for name in _TASK036_DIRECT_PROJECTION_CHECKS
+            )
+            and task036_audit == solver_audit
+            and task036_audit.get("requested") is True
+            and task036_audit.get("pass") is True
+            and audit_tolerance_valid
+            and audit_orders_valid
+            and len(audit_orders) == solver.get("dtn_port_mode_count")
+            and solver.get("dtn_port_top_mode_count")
+            == sum(row["side"] == "top" for row in audit_orders)
+            and solver.get("dtn_port_bottom_mode_count")
+            == sum(row["side"] == "bottom" for row in audit_orders)
+            and len(set(audit_identities)) == len(audit_identities)
+            and {row["side"] for row in audit_orders} == {"top", "bottom"}
+            and {row["polarization"] for row in audit_orders} == {"s", "p"}
+            and isinstance(
+                task036_audit.get(
+                    "max_absolute_outgoing_projection_difference"
+                ),
+                (int, float),
+            )
+            and not isinstance(
+                task036_audit.get(
+                    "max_absolute_outgoing_projection_difference"
+                ),
+                bool,
+            )
+            and math.isfinite(
+                float(
+                    task036_audit[
+                        "max_absolute_outgoing_projection_difference"
+                    ]
+                )
+            )
+            and 0.0
+            <= float(
+                task036_audit["max_absolute_outgoing_projection_difference"]
+            )
+            <= 1.0e-10
+        )
+        legacy_incidence_valid = bool(
+            math.isclose(incident_theta_deg, 80.0)
+            and math.isclose(incident_phi_deg, 0.0)
+        )
+        task036_incidence_valid = bool(
+            task036_raw_gate_valid
+            and math.isfinite(incident_theta_deg)
+            and 0.0 < incident_theta_deg < 90.0
+            and math.isfinite(incident_phi_deg)
+        )
         finite_results = (
             solver["linear_system_relative_residual"],
             solver["R_total"],
@@ -513,8 +652,7 @@ def _normalize_full3d_reference_record(
             and solver["official_result"] is True
             and solver["full3d_reference_exported"] is True
             and polarization_kind in {"s", "p"}
-            and math.isclose(float(solver["incident_theta_deg"]), 80.0)
-            and math.isclose(float(solver["incident_phi_deg"]), 0.0)
+            and (legacy_incidence_valid or task036_incidence_valid)
             and float(solver["linear_system_relative_residual"]) <= 1.0e-9
             and archive.name == "full3d_reference_samples.npz"
             and metadata.name == "full3d_reference_samples.json"
@@ -552,9 +690,9 @@ def _normalize_full3d_reference_record(
         },
         "physical_model": {
             "wavelength_nm": 13.5,
-            "incident_theta_deg": 80.0,
-            "incident_grazing_deg": 10.0,
-            "incident_phi_deg": 0.0,
+            "incident_theta_deg": incident_theta_deg,
+            "incident_grazing_deg": 90.0 - incident_theta_deg,
+            "incident_phi_deg": incident_phi_deg,
             "polarization_kind": polarization_kind,
             "nedelec_degree": int(reference["degree"]),
             "mesh_h_nm": float(reference["h_nm"]),
@@ -599,6 +737,8 @@ def _validate_case080_reference_identity(
     h_nm: float,
     path: Path,
     polarization_kind: str = "s",
+    incident_grazing_deg: float = 10.0,
+    incident_phi_deg: float = 0.0,
 ) -> None:
     try:
         physical_model = reference["physical_model"]
@@ -608,11 +748,21 @@ def _validate_case080_reference_identity(
         identity_valid = (
             physical_model["nedelec_degree"] == degree
             and abs(float(physical_model["mesh_h_nm"]) - h_nm) <= 1.0e-12
-            and abs(float(physical_model["incident_grazing_deg"]) - 10.0)
+            and abs(
+                float(physical_model["incident_grazing_deg"])
+                - incident_grazing_deg
+            )
             <= 1.0e-12
-            and abs(float(physical_model["incident_theta_deg"]) - 80.0)
+            and abs(
+                float(physical_model["incident_theta_deg"])
+                - (90.0 - incident_grazing_deg)
+            )
             <= 1.0e-12
-            and abs(float(physical_model["incident_phi_deg"])) <= 1.0e-12
+            and abs(
+                float(physical_model["incident_phi_deg"])
+                - incident_phi_deg
+            )
+            <= 1.0e-12
             and physical_model["polarization_kind"] == polarization_kind
             and abs(float(physical_model["wavelength_nm"]) - 13.5)
             <= 1.0e-12
@@ -629,7 +779,7 @@ def _validate_case080_reference_identity(
     if not identity_valid:
         raise RuntimeError(
             "Case080 reference identity does not match the requested p/h and "
-            f"pinned 10-degree {polarization_kind}-polarized 13.5-nm model: {path}"
+            f"incident-angle {polarization_kind}-polarized 13.5-nm model: {path}"
         )
 
 
@@ -639,6 +789,8 @@ def _load_case080_reference(
     reference_by_degree_and_h: dict[tuple[int, float], Path] | None = None,
     *,
     polarization_kind: str = "s",
+    incident_grazing_deg: float = 10.0,
+    incident_phi_deg: float = 0.0,
 ) -> tuple[Path, dict[str, Any]] | None:
     reference_path = _case080_reference_path(
         degree, h_nm, reference_by_degree_and_h
@@ -664,6 +816,8 @@ def _load_case080_reference(
         h_nm=h_nm,
         path=reference_path,
         polarization_kind=polarization_kind,
+        incident_grazing_deg=incident_grazing_deg,
+        incident_phi_deg=incident_phi_deg,
     )
     return reference_path, reference
 
@@ -704,6 +858,41 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _verify_explicit_full3d_reference_hash(
+    path: Path,
+    expected_sha256: str | None,
+) -> str | None:
+    if expected_sha256 is None:
+        return None
+    resolved = path if path.is_absolute() else ROOT / path
+    resolved = resolved.resolve()
+    if not resolved.is_file():
+        raise RuntimeError(
+            f"Explicit Full3D reference is missing: {resolved}"
+        )
+    observed_sha256 = _sha256(resolved)
+    if observed_sha256.lower() != expected_sha256.lower():
+        raise RuntimeError(
+            "Explicit Full3D reference SHA-256 mismatch: "
+            f"expected {expected_sha256.lower()}, observed {observed_sha256}."
+        )
+    return observed_sha256
+
+
+def _should_load_full3d_reference(
+    *,
+    incident_grazing_deg: float,
+    polarization_kind: str,
+    explicit_reference: Path | None,
+) -> bool:
+    """Load every explicit reference plus the legacy 10-degree S registry."""
+
+    return explicit_reference is not None or (
+        abs(float(incident_grazing_deg) - 10.0) <= 1.0e-12
+        and polarization_kind == "s"
+    )
 
 
 def _reference_archive(
@@ -801,7 +990,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "reference registry."
         ),
     )
-    parser.add_argument("--full3d-reference-sha256")
+    parser.add_argument(
+        "--full3d-reference-sha256",
+        help="Expected SHA-256 for any explicit --full3d-reference.",
+    )
     parser.add_argument(
         "--task035c-p6-h10-gate",
         action="store_true",
@@ -826,6 +1018,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "Opt-in independent recovered-field tangential projection audit; "
             "official auxiliary amplitudes and ordinary defaults are unchanged."
+        ),
+    )
+    parser.add_argument(
+        "--task036-scalar-stage4-reciprocal-basis",
+        action="store_true",
+        help=(
+            "Opt in to bounded Task036 scalar-stage4 partition repair for "
+            "both independent bases, then use an audited analytic reciprocal "
+            "negative basis for coupling. Ordinary defaults are unchanged."
         ),
     )
     parser.add_argument(
@@ -952,11 +1153,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     elif (
         args.task035c_p6_preflight_authority is not None
         or args.task035c_p6_preflight_sha256 is not None
-        or args.full3d_reference_sha256 is not None
     ):
         parser.error(
-            "Task035c authority SHA arguments require "
+            "Task035c p6 preflight authority arguments require "
             "--task035c-p6-h10-gate."
+        )
+    if args.full3d_reference_sha256 is not None and (
+        args.full3d_reference is None
+        or not valid_hex_digest(args.full3d_reference_sha256, 64)
+    ):
+        parser.error(
+            "--full3d-reference-sha256 requires an explicit "
+            "--full3d-reference and a 64-hex digest."
         )
     return args
 
@@ -1056,6 +1264,14 @@ def _task035c_worker_authority_gate(
 
 def main() -> None:
     args = _parse_args()
+    if args.full3d_reference is not None:
+        try:
+            _verify_explicit_full3d_reference_hash(
+                args.full3d_reference,
+                args.full3d_reference_sha256,
+            )
+        except RuntimeError as error:
+            raise SystemExit(str(error)) from error
     if args.h_nm <= 0.0:
         raise SystemExit("--h-nm must be positive.")
     modal_h_nm = (
@@ -1217,6 +1433,15 @@ def main() -> None:
     operators = None
     positive = None
     negative = None
+    independent_negative = None
+    independent_negative_summary = None
+    independent_reciprocal_pairing = None
+    analytic_reciprocal_gate = {
+        "requested": bool(args.task036_scalar_stage4_reciprocal_basis),
+        "pass": None,
+        "basis_origin_exact": None,
+        "construction_audit_status_pass": None,
+    }
     bottom = None
     top = None
     coupling = None
@@ -1337,6 +1562,9 @@ def main() -> None:
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
                 ),
+                "task036_scalar_stage4_reciprocal_basis_requested": bool(
+                    args.task036_scalar_stage4_reciprocal_basis
+                ),
                 "task035c_p6_h10_authority_gate": task035c_p6_gate,
                 "task33_variant": True,
                 "provenance": (
@@ -1411,6 +1639,13 @@ def main() -> None:
     ) -> dict[str, Any]:
         """Preserve a deterministic pre-Hybrid fail-closed mode audit."""
 
+        repair = error.audit.get("repair")
+        repair = repair if isinstance(repair, dict) else {}
+        bounded_repair_exhausted = bool(
+            args.task036_scalar_stage4_reciprocal_basis
+            and repair.get("requested") is True
+            and repair.get("final_pass") is False
+        )
         _verify_source_stable_at_end(
             comm,
             provenance,
@@ -1444,21 +1679,46 @@ def main() -> None:
                 "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
                 "incident_phi_deg": cfg.incident_phi_deg,
                 "polarization_kind": cfg.polarization_kind,
+                "task036_scalar_stage4_reciprocal_basis_requested": bool(
+                    args.task036_scalar_stage4_reciprocal_basis
+                ),
             },
             "mode_partition_audit": error.audit,
             "solve": {"true_relative_residual": None},
             "gates": {
                 "cross_block_biorthogonality_within_tolerance": False,
+                "bounded_task036_partition_repair_pass": (
+                    False
+                    if args.task036_scalar_stage4_reciprocal_basis
+                    else None
+                ),
             },
             "qualification": {
                 "integration_pass": False,
                 "algebraic_chain_pass": False,
                 "hybrid_p_production_qualified": False,
                 "deferred_architecture_required": True,
+                "bounded_task036_partition_repair_exhausted": (
+                    bounded_repair_exhausted
+                ),
+                "mode_partition_stop_disposition": (
+                    "bounded_repair_exhausted"
+                    if bounded_repair_exhausted
+                    else "deferred_architecture_required"
+                ),
                 "official_record": False,
                 "boundary": (
-                    "Hybrid solve was not entered; joint subspace rotation "
-                    "requires a separately reviewed numerical architecture."
+                    (
+                        "Hybrid solve was not entered; the bounded Task036 "
+                        "scalar-stage4 partition repair was attempted and "
+                        "exhausted, so further work requires a separately "
+                        "reviewed numerical architecture."
+                    )
+                    if bounded_repair_exhausted
+                    else (
+                        "Hybrid solve was not entered; joint subspace rotation "
+                        "requires a separately reviewed numerical architecture."
+                    )
                 ),
             },
             "timing_seconds_max_rank": {
@@ -1638,6 +1898,9 @@ def main() -> None:
             requested_left_modes=candidate_modes,
             near_degenerate_tolerance=args.near_degenerate_tolerance,
             block_rotation_tolerance=args.block_rotation_tolerance,
+            task036_scalar_stage4_partition_repair=(
+                args.task036_scalar_stage4_reciprocal_basis
+            ),
             poynting_evaluator=poynting_evaluator,
             log=progress,
         )
@@ -1671,7 +1934,7 @@ def main() -> None:
                 "Negative finite candidate pool did not deliver enough passive "
                 f"backward modes: {negative_selection.direction_counts}."
             )
-        negative = build_biorthogonal_mode_basis(
+        independent_negative = build_biorthogonal_mode_basis(
             modal_cfg,
             cross_section,
             spaces,
@@ -1681,10 +1944,70 @@ def main() -> None:
             requested_left_modes=candidate_modes,
             near_degenerate_tolerance=args.near_degenerate_tolerance,
             block_rotation_tolerance=args.block_rotation_tolerance,
+            task036_scalar_stage4_partition_repair=(
+                args.task036_scalar_stage4_reciprocal_basis
+            ),
             poynting_evaluator=poynting_evaluator,
             log=progress,
         )
-        progress("Task32 Phase6: negative adjoint basis complete")
+        progress("Task32 Phase6: independent negative adjoint basis complete")
+        independent_negative_summary = _basis_summary(independent_negative)
+        independent_pairs = pair_reciprocal_mode_bases(
+            operators,
+            positive,
+            independent_negative,
+        )
+        independent_reciprocal_pairing = _reciprocal_pairing_summary(
+            independent_pairs
+        )
+        if args.task036_scalar_stage4_reciprocal_basis:
+            negative = build_scalar_stage4_reciprocal_negative_basis(
+                modal_cfg,
+                cross_section,
+                spaces,
+                operators,
+                positive,
+                poynting_evaluator=poynting_evaluator,
+            )
+            construction_audit = negative.basis_construction_audit
+            construction_audit = (
+                construction_audit
+                if isinstance(construction_audit, dict)
+                else {}
+            )
+            analytic_reciprocal_gate.update(
+                {
+                    "basis_origin_exact": (
+                        negative.basis_origin
+                        == "analytic_scalar_stage4_reciprocal"
+                    ),
+                    "construction_audit_status_pass": (
+                        construction_audit.get("status") == "pass"
+                    ),
+                }
+            )
+            analytic_reciprocal_gate["pass"] = bool(
+                analytic_reciprocal_gate["basis_origin_exact"]
+                and analytic_reciprocal_gate[
+                    "construction_audit_status_pass"
+                ]
+            )
+            if not analytic_reciprocal_gate["pass"]:
+                negative.destroy()
+                negative = None
+                raise RuntimeError(
+                    "Task036 analytic reciprocal negative basis failed its "
+                    f"runner Gate: {analytic_reciprocal_gate}."
+                )
+            independent_negative.destroy()
+            independent_negative = None
+            progress(
+                "Task32 Phase6: audited analytic reciprocal negative basis "
+                "selected for coupling"
+            )
+        else:
+            negative = independent_negative
+            independent_negative = None
         progress(
             "Task32 Phase6: delivered basis counts "
             f"positive={len(positive.modes)}/{positive_report.converged_modes}, "
@@ -2031,12 +2354,10 @@ def main() -> None:
             ),
             "heap_trim_by_rank": comm.allgather(local_trim),
         }
-        pinned_reference_case = (
-            abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
-            and (
-                args.polarization_kind == "s"
-                or args.full3d_reference is not None
-            )
+        pinned_reference_case = _should_load_full3d_reference(
+            incident_grazing_deg=args.incident_grazing_deg,
+            polarization_kind=args.polarization_kind,
+            explicit_reference=args.full3d_reference,
         )
         explicit_reference = args.full3d_reference
         if explicit_reference is not None and not explicit_reference.is_absolute():
@@ -2052,6 +2373,8 @@ def main() -> None:
                 args.h_nm,
                 reference_by_degree_and_h=reference_registry,
                 polarization_kind=args.polarization_kind,
+                incident_grazing_deg=args.incident_grazing_deg,
+                incident_phi_deg=args.incident_phi_deg,
             )
             if pinned_reference_case
             else None
@@ -2250,6 +2573,11 @@ def main() -> None:
             for key in ("R_total", "T_total", "A_balance", "R_plus_T")
         )
         gates = {
+            "task036_analytic_reciprocal_basis_gate": (
+                bool(analytic_reciprocal_gate["pass"])
+                if args.task036_scalar_stage4_reciprocal_basis
+                else True
+            ),
             "exact_requested_mode_count_delivered": (
                 len(positive.modes) == args.requested_modes
                 and len(negative.modes) == args.requested_modes
@@ -2591,6 +2919,9 @@ def main() -> None:
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
                 ),
+                "task036_scalar_stage4_reciprocal_basis_requested": bool(
+                    args.task036_scalar_stage4_reciprocal_basis
+                ),
                 "task035c_p6_h10_authority_gate": task035c_p6_gate,
                 "task33_variant": task33_variant,
                 "provenance": (
@@ -2627,6 +2958,9 @@ def main() -> None:
                 "candidate_modes_per_target_branch": candidate_modes,
                 "near_degenerate_tolerance": args.near_degenerate_tolerance,
                 "block_rotation_tolerance": args.block_rotation_tolerance,
+                "task036_scalar_stage4_reciprocal_basis_requested": bool(
+                    args.task036_scalar_stage4_reciprocal_basis
+                ),
                 "bottom_interface_nm": args.bottom_interface_nm,
                 "top_interface_nm": args.top_interface_nm,
                 "middle_length_nm": (
@@ -2696,19 +3030,23 @@ def main() -> None:
                 ),
                 "positive": _basis_summary(positive),
                 "negative": _basis_summary(negative),
-                "reciprocal_pairs": [
-                    {
-                        "positive_index": pair.positive_index,
-                        "negative_index": pair.negative_index,
-                        "relative_beta_error": pair.relative_beta_error,
-                        "electric_mass_overlap": pair.electric_mass_overlap,
-                        "opposite_direction": pair.opposite_direction,
-                        "passive_branches_valid": (
-                            pair.passive_branches_valid
-                        ),
-                    }
-                    for pair in pairs
-                ],
+                "reciprocal_pairs": _reciprocal_pairing_summary(pairs),
+                "task036_scalar_stage4_reciprocal_basis": {
+                    "requested": bool(
+                        args.task036_scalar_stage4_reciprocal_basis
+                    ),
+                    "runner_gate": analytic_reciprocal_gate,
+                    "independent_negative": independent_negative_summary,
+                    "independent_reciprocal_pairs": (
+                        independent_reciprocal_pairing
+                    ),
+                    "coupling_negative_basis_origin": (
+                        negative.basis_origin
+                    ),
+                    "coupling_negative_basis_audit": (
+                        negative.basis_construction_audit
+                    ),
+                },
             },
             "hybrid_system": {
                 "primary_solver_path": args.solver_path,
@@ -3077,6 +3415,8 @@ def main() -> None:
             positive.destroy()
         if negative is not None:
             negative.destroy()
+        if independent_negative is not None:
+            independent_negative.destroy()
         if operators is not None:
             operators.destroy()
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Literal, Sequence
 
 import numpy as np
@@ -17,6 +17,7 @@ from .quadratic_beta_eigenproblem import (
     QuadraticBetaMode,
     QuadraticBetaOperators,
     QuadraticBetaSolveReport,
+    quadratic_beta_polynomial_relative_residual,
     solve_quadratic_beta_modes,
 )
 
@@ -115,6 +116,8 @@ class BiorthogonalModeBasis:
     left_pair_relative_errors: tuple[float, ...]
     full_vector_gathered: bool = False
     near_degenerate_partition_audit: dict[str, object] | None = None
+    basis_origin: str = "independent_qep"
+    basis_construction_audit: dict[str, object] | None = None
 
     def destroy(self) -> None:
         for mode in self.modes:
@@ -464,6 +467,10 @@ def _near_degenerate_partition_audit(
     values = np.asarray(biorthogonality, dtype=np.complex128)
     if values.shape != (len(betas), len(betas)):
         raise ValueError("Biorthogonality and beta dimensions disagree.")
+    identity_row_norm, identity_max_entry = _identity_error_metrics(values)
+    group_members = [
+        [int(index) for index in indices] for indices in groups
+    ]
     group_id = np.full(len(betas), -1, dtype=np.int64)
     for identifier, indices in enumerate(groups):
         for index in indices:
@@ -490,7 +497,11 @@ def _near_degenerate_partition_audit(
         if row >= 0 and column >= 0
         else 0.0
     )
-    passed = maximum <= float(block_rotation_tolerance)
+    cross_overlap_pass = maximum <= float(block_rotation_tolerance)
+    identity_row_norm_pass = (
+        identity_row_norm <= float(block_rotation_tolerance)
+    )
+    passed = cross_overlap_pass and identity_row_norm_pass
     near_degenerate_candidate = bool(
         row >= 0
         and column >= 0
@@ -514,12 +525,27 @@ def _near_degenerate_partition_audit(
         ),
         "pass": passed,
         "block_rotation_tolerance": float(block_rotation_tolerance),
+        "biorthogonality_identity_row_norm": identity_row_norm,
+        "biorthogonality_identity_max_entry": identity_max_entry,
+        "biorthogonality_identity_row_norm_within_tolerance": (
+            identity_row_norm_pass
+        ),
         "max_cross_block_overlap": maximum,
+        "max_cross_block_overlap_within_tolerance": cross_overlap_pass,
+        "group_members": group_members,
         "worst_cross_block_indices": [row, column],
         "worst_cross_block_group_ids": (
             [int(group_id[row]), int(group_id[column])]
             if row >= 0 and column >= 0
             else [-1, -1]
+        ),
+        "worst_cross_block_group_members": (
+            [
+                group_members[int(group_id[row])],
+                group_members[int(group_id[column])],
+            ]
+            if row >= 0 and column >= 0
+            else [[], []]
         ),
         "worst_cross_block_relative_beta_distance": beta_distance,
         "near_degenerate_tolerance": float(near_degenerate_tolerance),
@@ -542,6 +568,516 @@ def _near_degenerate_partition_audit(
             else "DEFERRED_ARCHITECTURE_REQUIRED_joint_subspace_rotation"
         ),
     }
+
+
+def _task036_scalar_stage4_partition_repair_candidate(
+    cross_section: CrossSectionMesh,
+    groups: Sequence[Sequence[int]],
+    audit: dict[str, object],
+    *,
+    maximum_union_size: int = 4,
+) -> tuple[tuple[int, ...] | None, dict[str, object]]:
+    """Select one bounded scalar Stage-4 split block for joint normalization."""
+
+    group_members = [
+        tuple(int(index) for index in indices) for indices in groups
+    ]
+    shape = getattr(cross_section.epsilon_r, "ufl_shape", None)
+    scalar_material = shape is not None and tuple(shape) == ()
+    provenance: dict[str, object] = {
+        "policy": "task036_scalar_stage4_single_joint_left_inverse",
+        "maximum_attempts": 1,
+        "maximum_union_size": int(maximum_union_size),
+        "material_kind": str(cross_section.material_kind),
+        "scalar_material": scalar_material,
+        "eligible": False,
+        "reason": None,
+        "source_group_ids": None,
+        "source_group_members": None,
+        "merged_group_members": None,
+    }
+
+    def rejected(reason: str):
+        provenance["reason"] = reason
+        return None, provenance
+
+    if cross_section.material_kind != "stage4_xy" or not scalar_material:
+        return rejected("not_scalar_stage4_xy")
+    if audit.get("status") != "near_degenerate_block_partition_split":
+        return rejected("not_near_degenerate_partition_split")
+    directions = audit.get("worst_cross_block_directions")
+    if (
+        not isinstance(directions, list)
+        or len(directions) != 2
+        or directions[0] != directions[1]
+        or directions[0] not in {"forward", "backward"}
+    ):
+        return rejected("worst_blocks_do_not_share_one_physical_direction")
+    identifiers = audit.get("worst_cross_block_group_ids")
+    if not isinstance(identifiers, list) or len(identifiers) != 2:
+        return rejected("missing_worst_group_identity")
+    first_id, second_id = map(int, identifiers)
+    if (
+        first_id == second_id
+        or min(first_id, second_id) < 0
+        or max(first_id, second_id) >= len(group_members)
+    ):
+        return rejected("invalid_worst_group_identity")
+    source_members = [group_members[first_id], group_members[second_id]]
+    merged = tuple(sorted(set(source_members[0]) | set(source_members[1])))
+    provenance["source_group_ids"] = [first_id, second_id]
+    provenance["source_group_members"] = list(map(list, source_members))
+    provenance["merged_group_members"] = list(merged)
+    if len(merged) > int(maximum_union_size):
+        return rejected("merged_group_exceeds_bounded_size")
+    provenance.update(eligible=True, reason="eligible")
+    return merged, provenance
+
+
+def _joint_left_basis_inverse(
+    left_reduced: list[PETSc.Vec],
+    left_full: list[PETSc.Vec],
+    indices: Sequence[int],
+    raw_overlap: np.ndarray,
+    *,
+    maximum_overlap_condition: float,
+) -> float:
+    """Jointly normalize one bounded left block against fixed right modes."""
+
+    selected = tuple(int(index) for index in indices)
+    overlap = np.asarray(raw_overlap, dtype=np.complex128)
+    if overlap.shape != (len(selected), len(selected)):
+        raise ValueError("Joint left-basis overlap shape disagrees with its block.")
+    condition = float(np.linalg.cond(overlap))
+    if not np.isfinite(condition) or condition > maximum_overlap_condition:
+        raise RuntimeError(
+            "Task036 joint left-basis overlap is singular or ill-conditioned: "
+            f"indices={selected}, condition={condition:.6e}."
+        )
+    try:
+        transform = np.linalg.inv(overlap).conj().T
+    except np.linalg.LinAlgError as error:
+        raise RuntimeError(
+            "Task036 joint left-basis overlap inversion failed: "
+            f"indices={selected}, condition={condition:.6e}."
+        ) from error
+    old = (
+        [left_reduced[index] for index in selected],
+        [left_full[index] for index in selected],
+    )
+    new_reduced: list[PETSc.Vec] = []
+    new_full: list[PETSc.Vec] = []
+    try:
+        new_reduced = [
+            _linear_combination(old[0], transform[:, column])
+            for column in range(len(selected))
+        ]
+        new_full = [
+            _linear_combination(old[1], transform[:, column])
+            for column in range(len(selected))
+        ]
+    except Exception:
+        for vector in new_reduced + new_full:
+            vector.destroy()
+        raise
+    for vector in old[0] + old[1]:
+        vector.destroy()
+    for local_index, global_index in enumerate(selected):
+        left_reduced[global_index] = new_reduced[local_index]
+        left_full[global_index] = new_full[local_index]
+    return condition
+
+
+def _scalar_stage4_reciprocal_full_transform(
+    vector: PETSc.Vec,
+    spaces: CrossSectionSpaces,
+    *,
+    left: bool,
+) -> PETSc.Vec:
+    """Apply ``S(Et, Ez)=(Et, -Ez)`` and the left-basis minus sign."""
+
+    field = fem.Function(spaces.mixed)
+    if int(vector.getSize()) != int(field.x.petsc_vec.getSize()):
+        raise ValueError("Reciprocal source vector has the wrong full-space size.")
+    vector.copy(field.x.petsc_vec)
+    field.x.scatter_forward()
+    field.x.array[spaces.longitudinal_to_mixed] *= -1.0
+    if left:
+        field.x.array[:] *= -1.0
+    field.x.scatter_forward()
+    transformed = field.x.petsc_vec.duplicate()
+    field.x.petsc_vec.copy(transformed)
+    return transformed
+
+
+def _project_scalar_stage4_reciprocal(
+    source: PETSc.Vec,
+    spaces: CrossSectionSpaces,
+    transform: PETSc.Mat,
+    transform_h: PETSc.Mat,
+    gram_diagonal: PETSc.Vec,
+    *,
+    left: bool,
+    reconstruction_tolerance: float,
+) -> tuple[PETSc.Vec, PETSc.Vec, float]:
+    """Apply S/-S, project through ``C^H C``, and verify ``Cq``."""
+
+    full = _scalar_stage4_reciprocal_full_transform(
+        source, spaces, left=left
+    )
+    rhs = transform_h.createVecLeft()
+    reduced = transform.createVecRight()
+    reconstructed = transform.createVecLeft()
+    difference = transform.createVecLeft()
+    try:
+        transform_h.mult(full, rhs)
+        reduced.pointwiseDivide(rhs, gram_diagonal)
+        transform.mult(reduced, reconstructed)
+        full.copy(difference)
+        difference.axpy(-1.0, reconstructed)
+        relative_error = float(
+            difference.norm(PETSc.NormType.NORM_2)
+            / max(float(full.norm(PETSc.NormType.NORM_2)), 1.0e-30)
+        )
+        if (
+            not np.isfinite(relative_error)
+            or relative_error > float(reconstruction_tolerance)
+        ):
+            raise RuntimeError(
+                "Scalar Stage-4 reciprocal vector is outside the Floquet "
+                "constraint image: "
+                f"relative_reconstruction={relative_error:.6e}, "
+                f"limit={float(reconstruction_tolerance):.6e}."
+            )
+        return reduced, reconstructed, relative_error
+    except Exception:
+        reduced.destroy()
+        reconstructed.destroy()
+        raise
+    finally:
+        full.destroy()
+        rhs.destroy()
+        difference.destroy()
+
+
+def build_scalar_stage4_reciprocal_negative_basis(
+    cfg: SimulationConfig3D,
+    cross_section: CrossSectionMesh,
+    spaces: CrossSectionSpaces,
+    operators: QuadraticBetaOperators,
+    positive: BiorthogonalModeBasis,
+    *,
+    reconstruction_tolerance: float = 1.0e-12,
+    maximum_right_polynomial_relative_residual: float = 1.0e-8,
+    maximum_left_polynomial_relative_residual: float = 1.0e-8,
+    near_degenerate_tolerance: float = 1.0e-6,
+    identity_tolerance: float = 1.0e-6,
+    maximum_left_pair_relative_error: float = 1.0e-7,
+    relative_flux_tolerance: float = 1.0e-8,
+    absolute_flux_tolerance: float = 1.0e-12,
+    beta_imag_tolerance: float = 1.0e-10,
+    poynting_evaluator: PoyntingFluxEvaluator | None = None,
+) -> BiorthogonalModeBasis:
+    """Build the opt-in reciprocal ``-beta`` basis for scalar ``stage4_xy``.
+
+    Every physical and algebraic Gate is recomputed.  An independently solved
+    negative QEP remains a separate audit and is not represented by this
+    analytic construction.
+    """
+
+    scalar_material = tuple(
+        getattr(cross_section.epsilon_r, "ufl_shape", (None,))
+    ) == ()
+    if cross_section.material_kind != "stage4_xy" or not scalar_material:
+        raise ValueError(
+            "Analytic reciprocal construction is restricted to scalar stage4_xy."
+        )
+    if not positive.modes:
+        raise ValueError("A nonempty positive basis is required.")
+    if any(
+        mode.direction != "forward" or not mode.passive_branch_valid
+        for mode in positive.modes
+    ):
+        raise RuntimeError(
+            "Analytic reciprocal construction requires a passive forward basis."
+        )
+    limits = (
+        reconstruction_tolerance,
+        maximum_right_polynomial_relative_residual,
+        maximum_left_polynomial_relative_residual,
+        near_degenerate_tolerance,
+        identity_tolerance,
+        maximum_left_pair_relative_error,
+    )
+    if any(not np.isfinite(value) or value <= 0.0 for value in limits):
+        raise ValueError("Analytic reciprocal Gate limits must be positive.")
+    if identity_tolerance < near_degenerate_tolerance:
+        raise ValueError(
+            "identity_tolerance cannot be smaller than near_degenerate_tolerance."
+        )
+
+    transform = operators.transform.matrix
+    transform_h = PETSc.Mat()
+    transform.hermitianTranspose(transform_h)
+    gram = transform_h.matMult(transform)
+    gram_diagonal = gram.getDiagonal()
+    adjoints = (
+        _adjoint_matrix(operators.K0),
+        _adjoint_matrix(operators.K1),
+        _adjoint_matrix(operators.K2),
+    )
+    right_modes: list[QuadraticBetaMode] = []
+    left_reduced: list[PETSc.Vec] = []
+    left_full: list[PETSc.Vec] = []
+    right_reconstruction: list[float] = []
+    left_reconstruction: list[float] = []
+    left_residuals: list[float] = []
+    try:
+        for source in positive.modes:
+            reduced = full = left_q = left_cq = None
+            try:
+                reduced, full, right_error = (
+                    _project_scalar_stage4_reciprocal(
+                        source.right.right_full,
+                        spaces,
+                        transform,
+                        transform_h,
+                        gram_diagonal,
+                        left=False,
+                        reconstruction_tolerance=reconstruction_tolerance,
+                    )
+                )
+                left_q, left_cq, left_error = (
+                    _project_scalar_stage4_reciprocal(
+                        source.left_full,
+                        spaces,
+                        transform,
+                        transform_h,
+                        gram_diagonal,
+                        left=True,
+                        reconstruction_tolerance=reconstruction_tolerance,
+                    )
+                )
+                beta = -complex(source.beta)
+                right_residual = quadratic_beta_polynomial_relative_residual(
+                    operators, beta, reduced
+                )
+                left_residual = _left_relative_residual(
+                    adjoints, beta, left_q
+                )
+                if (
+                    not np.isfinite(right_residual)
+                    or right_residual
+                    > maximum_right_polynomial_relative_residual
+                ):
+                    raise RuntimeError(
+                        "Analytic reciprocal right polynomial residual failed: "
+                        f"{right_residual:.6e}."
+                    )
+                if (
+                    not np.isfinite(left_residual)
+                    or left_residual
+                    > maximum_left_polynomial_relative_residual
+                ):
+                    raise RuntimeError(
+                        "Analytic reciprocal left polynomial residual failed: "
+                        f"{left_residual:.6e}."
+                    )
+                mass_norm = _electric_mass_overlap(
+                    operators.electric_mass, reduced, reduced
+                ).real
+                right_modes.append(
+                    QuadraticBetaMode(
+                        beta=beta,
+                        right_reduced=reduced,
+                        right_full=full,
+                        polynomial_relative_residual=right_residual,
+                        slepc_relative_error=source.right.slepc_relative_error,
+                        normalization_kind=(
+                            "analytic_scalar_stage4_reciprocal"
+                        ),
+                        normalization_factor=(
+                            source.right.normalization_factor
+                        ),
+                        electric_l2_norm_after=float(
+                            np.sqrt(max(mass_norm, 0.0))
+                        ),
+                        ownership=source.right.ownership,
+                    )
+                )
+                left_reduced.append(left_q)
+                left_full.append(left_cq)
+                right_reconstruction.append(right_error)
+                left_reconstruction.append(left_error)
+                left_residuals.append(left_residual)
+                reduced = full = left_q = left_cq = None
+            finally:
+                for vector in (reduced, full, left_q, left_cq):
+                    if vector is not None:
+                        vector.destroy()
+
+        betas = [mode.beta for mode in right_modes]
+        left_betas = [
+            np.conj(-complex(source.left_adjoint_beta))
+            for source in positive.modes
+        ]
+        biorthogonality = _qep_overlap_matrix(
+            operators,
+            left_betas,
+            betas,
+            left_reduced,
+            [mode.right_reduced for mode in right_modes],
+        )
+        max_identity_error, max_entry_identity_error = (
+            _identity_error_metrics(biorthogonality)
+        )
+        flux_evaluator = poynting_evaluator or PoyntingFluxEvaluator(
+            cfg, cross_section, spaces
+        )
+        fluxes = [
+            flux_evaluator.evaluate(mode.right_full, mode.beta)
+            for mode in right_modes
+        ]
+        flux_tolerance = max(
+            float(absolute_flux_tolerance),
+            float(relative_flux_tolerance)
+            * max((abs(value) for value in fluxes), default=0.0),
+        )
+        classifications = [
+            classify_mode_branch(
+                mode.beta, flux, flux_tolerance, beta_imag_tolerance
+            )
+            for mode, flux in zip(right_modes, fluxes)
+        ]
+        if any(
+            direction != "backward" or not passive
+            for _kind, direction, _basis, passive in classifications
+        ):
+            raise RuntimeError(
+                "Analytic reciprocal Poynting/passivity classification failed."
+            )
+        group_indices = [group.indices for group in positive.groups]
+        partition_audit = _near_degenerate_partition_audit(
+            betas,
+            group_indices,
+            biorthogonality,
+            near_degenerate_tolerance=near_degenerate_tolerance,
+            block_rotation_tolerance=identity_tolerance,
+            directions=[classification[1] for classification in classifications],
+        )
+        if (
+            max_identity_error > identity_tolerance
+            or not partition_audit["pass"]
+        ):
+            raise NearDegenerateBlockPartitionSplitError(partition_audit)
+        left_pair_errors = tuple(
+            _relative_beta_distance(
+                np.conj(-complex(source.left_adjoint_beta)), beta
+            )
+            for source, beta in zip(positive.modes, betas)
+        )
+        _require_admissible_left_pairs(
+            left_pair_errors,
+            maximum_relative_error=maximum_left_pair_relative_error,
+        )
+        groups = tuple(
+            replace(
+                source_group,
+                beta_center=-complex(source_group.beta_center),
+                overlap_condition=float(
+                    np.linalg.cond(biorthogonality[np.ix_(indices, indices)])
+                ),
+                normalization_method="analytic_scalar_stage4_reciprocal",
+                post_normalization_identity_error=float(
+                    np.linalg.norm(
+                        biorthogonality[np.ix_(indices, indices)]
+                        - np.eye(len(indices)),
+                        ord=np.inf,
+                    )
+                ),
+            )
+            for source_group, indices in zip(positive.groups, group_indices)
+        )
+        classified = [
+            ClassifiedBiorthogonalMode(
+                beta=right.beta,
+                right=right,
+                left_reduced=left_reduced[index],
+                left_full=left_full[index],
+                left_adjoint_beta=-complex(source.left_adjoint_beta),
+                left_polynomial_relative_residual=left_residuals[index],
+                poynting_z_before_normalization=fluxes[index],
+                poynting_z_after_normalization=fluxes[index],
+                flux_tolerance=flux_tolerance,
+                kind=classifications[index][0],
+                direction=classifications[index][1],
+                classification_basis=classifications[index][2],
+                passive_branch_valid=classifications[index][3],
+                right_scale=1.0,
+                qprime_overlap_after=complex(biorthogonality[index, index]),
+                left_ownership=source.left_ownership,
+            )
+            for index, (source, right) in enumerate(
+                zip(positive.modes, right_modes)
+            )
+        ]
+        audit = {
+            "status": "pass",
+            "source_basis_origin": positive.basis_origin,
+            "source_mode_count": len(positive.modes),
+            "right_transform": "S(Et,Ez)=(Et,-Ez)",
+            "left_transform": "-S(Et,Ez)=(-Et,+Ez)",
+            "constraint_projection": "diagonal_normal_equations",
+            "constraint_reconstruction_tolerance": reconstruction_tolerance,
+            "right_constraint_reconstruction_relative_errors": (
+                right_reconstruction
+            ),
+            "left_constraint_reconstruction_relative_errors": left_reconstruction,
+            "right_polynomial_relative_residuals": [
+                mode.polynomial_relative_residual for mode in right_modes
+            ],
+            "left_polynomial_relative_residuals": left_residuals,
+            "qprime_identity_row_norm": max_identity_error,
+            "qprime_identity_max_entry": max_entry_identity_error,
+            "poynting_z": fluxes,
+            "directions": [classification[1] for classification in classifications],
+            "passive_branches_valid": all(
+                classification[3] for classification in classifications
+            ),
+            "all_residual_flux_qprime_recomputed": True,
+            "negative_independent_qep_solve_performed": False,
+            "adjoint_solver_report_provenance": (
+                "source_positive_basis_only; independent negative QEP audit "
+                "remains external"
+            ),
+        }
+        return BiorthogonalModeBasis(
+            modes=classified,
+            groups=groups,
+            biorthogonality_matrix=biorthogonality,
+            max_identity_error=max_identity_error,
+            max_entry_identity_error=max_entry_identity_error,
+            adjoint_solver_report=replace(
+                positive.adjoint_solver_report,
+                target=-complex(positive.adjoint_solver_report.target),
+            ),
+            left_pair_relative_errors=left_pair_errors,
+            near_degenerate_partition_audit=partition_audit,
+            basis_origin="analytic_scalar_stage4_reciprocal",
+            basis_construction_audit=audit,
+        )
+    except Exception:
+        for mode in right_modes:
+            mode.destroy()
+        for vector in left_reduced + left_full:
+            vector.destroy()
+        raise
+    finally:
+        for matrix in adjoints:
+            matrix.destroy()
+        gram_diagonal.destroy()
+        gram.destroy()
+        transform_h.destroy()
 
 
 def classify_mode_branch(
@@ -691,6 +1227,7 @@ def build_biorthogonal_mode_basis(
     block_rotation_tolerance: float = 1.0e-6,
     maximum_overlap_condition: float = 1.0e12,
     maximum_left_pair_relative_error: float = 1.0e-7,
+    task036_scalar_stage4_partition_repair: bool = False,
     poynting_evaluator: PoyntingFluxEvaluator | None = None,
     log=None,
 ) -> BiorthogonalModeBasis:
@@ -894,6 +1431,12 @@ def build_biorthogonal_mode_basis(
                 for local_index, global_index in enumerate(indices):
                     left_reduced[global_index] = new_reduced[local_index]
                     left_full[global_index] = new_full[local_index]
+                    left_candidates[global_index].right_reduced = (
+                        new_reduced[local_index]
+                    )
+                    left_candidates[global_index].right_full = (
+                        new_full[local_index]
+                    )
                 method = "near_degenerate_block_inverse"
             else:
                 for local_index, global_index in enumerate(indices):
@@ -917,17 +1460,119 @@ def build_biorthogonal_mode_basis(
             left_reduced,
             [mode.right_reduced for mode in right_modes],
         )
+        directions = [
+            str(classification[1]) for classification in classifications
+        ]
         partition_audit = _near_degenerate_partition_audit(
             betas,
             group_indices,
             biorthogonality,
             near_degenerate_tolerance=near_degenerate_tolerance,
             block_rotation_tolerance=block_rotation_tolerance,
-            directions=[
-                str(classification[1])
-                for classification in classifications
-            ],
+            directions=directions,
         )
+        initial_partition_audit = dict(partition_audit)
+        repair_provenance: dict[str, object] = {
+            "requested": bool(task036_scalar_stage4_partition_repair),
+            "applied": False,
+            "initial_status": str(partition_audit["status"]),
+            "initial_biorthogonality_identity_row_norm": float(
+                partition_audit["biorthogonality_identity_row_norm"]
+            ),
+            "initial_max_cross_block_overlap": float(
+                partition_audit["max_cross_block_overlap"]
+            ),
+        }
+        if (
+            task036_scalar_stage4_partition_repair
+            and not partition_audit["pass"]
+        ):
+            merged_indices, eligibility = (
+                _task036_scalar_stage4_partition_repair_candidate(
+                    cross_section,
+                    group_indices,
+                    partition_audit,
+                )
+            )
+            repair_provenance.update(eligibility)
+            if merged_indices is not None:
+                condition = _joint_left_basis_inverse(
+                    left_reduced,
+                    left_full,
+                    merged_indices,
+                    biorthogonality[np.ix_(merged_indices, merged_indices)],
+                    maximum_overlap_condition=maximum_overlap_condition,
+                )
+                for index in merged_indices:
+                    left_candidates[index].right_reduced = left_reduced[index]
+                    left_candidates[index].right_full = left_full[index]
+                existing_payload = {
+                    payload[0]: payload for payload in group_payload
+                }
+                removed = set(map(int, eligibility["source_group_ids"]))
+                group_indices = [
+                    indices
+                    for index, indices in enumerate(group_indices)
+                    if index not in removed
+                ] + [merged_indices]
+                group_indices.sort(key=min)
+                group_payload = []
+                for indices in group_indices:
+                    if indices != merged_indices:
+                        group_payload.append(existing_payload[indices])
+                        continue
+                    group_betas = [betas[index] for index in indices]
+                    center = complex(np.mean(group_betas))
+                    spread = max(
+                        (
+                            _relative_beta_distance(beta, center)
+                            for beta in group_betas
+                        ),
+                        default=0.0,
+                    )
+                    group_payload.append(
+                        (
+                            indices,
+                            center,
+                            spread,
+                            condition,
+                            "task036_joint_partition_inverse",
+                        )
+                    )
+                biorthogonality = _qep_overlap_matrix(
+                    operators,
+                    left_betas,
+                    betas,
+                    left_reduced,
+                    [mode.right_reduced for mode in right_modes],
+                )
+                partition_audit = _near_degenerate_partition_audit(
+                    betas,
+                    group_indices,
+                    biorthogonality,
+                    near_degenerate_tolerance=near_degenerate_tolerance,
+                    block_rotation_tolerance=block_rotation_tolerance,
+                    directions=directions,
+                )
+                repair_provenance.update(
+                    applied=True,
+                    joint_overlap_condition=condition,
+                    right_modes_changed=False,
+                    beta_values_changed=False,
+                    left_basis_joint_inverse_only=True,
+                )
+        repair_provenance.update(
+            final_status=str(partition_audit["status"]),
+            final_pass=bool(partition_audit["pass"]),
+            final_biorthogonality_identity_row_norm=float(
+                partition_audit["biorthogonality_identity_row_norm"]
+            ),
+            final_max_cross_block_overlap=float(
+                partition_audit["max_cross_block_overlap"]
+            ),
+        )
+        partition_audit["repair"] = repair_provenance
+        partition_audit["initial_audit"] = initial_partition_audit
         if not partition_audit["pass"]:
             raise NearDegenerateBlockPartitionSplitError(partition_audit)
         groups: list[NearDegenerateGroup] = []

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+from types import SimpleNamespace
 import unittest
 
 import numpy as np
@@ -15,11 +17,14 @@ from src.modes.mode_classification import (
     NoAdmissibleLeftPairError,
     _batched_left_dots,
     _identity_error_metrics,
+    _joint_left_basis_inverse,
     _near_degenerate_partition_audit,
     _qep_overlap,
     _qep_overlap_matrix,
     _require_admissible_left_pairs,
+    _task036_scalar_stage4_partition_repair_candidate,
     build_biorthogonal_mode_basis,
+    build_scalar_stage4_reciprocal_negative_basis,
     classify_mode_branch,
     pair_reciprocal_mode_bases,
     select_passive_direction_modes,
@@ -141,6 +146,15 @@ class Task032ModeClassificationTests(unittest.TestCase):
             near["worst_cross_block_directions"],
             ["forward", "forward"],
         )
+        self.assertEqual(near["group_members"], [[0], [1]])
+        self.assertEqual(
+            near["worst_cross_block_group_members"],
+            [[0], [1]],
+        )
+        self.assertGreater(
+            near["biorthogonality_identity_row_norm"],
+            1.0e-6,
+        )
 
         separated = _near_degenerate_partition_audit(
             (0.0 + 0.1j, 0.0 + 0.9j),
@@ -158,6 +172,201 @@ class Task032ModeClassificationTests(unittest.TestCase):
         self.assertFalse(
             separated["worst_cross_block_is_near_degenerate_candidate"]
         )
+
+    def test_partition_audit_enforces_full_identity_row_norm_gate(self):
+        overlap = np.eye(3, dtype=np.complex128)
+        overlap[0, 1:] = 6.0e-7
+        audit = _near_degenerate_partition_audit(
+            (0.1 + 0.2j, 0.1 + 0.200001j, 0.1 + 0.200002j),
+            ((0,), (1,), (2,)),
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            directions=("forward",) * 3,
+        )
+        self.assertLess(audit["max_cross_block_overlap"], 1.0e-6)
+        self.assertTrue(
+            audit["max_cross_block_overlap_within_tolerance"]
+        )
+        self.assertGreater(
+            audit["biorthogonality_identity_row_norm"],
+            1.0e-6,
+        )
+        self.assertFalse(
+            audit["biorthogonality_identity_row_norm_within_tolerance"]
+        )
+        self.assertFalse(audit["pass"])
+
+    def test_task036_partition_repair_policy_is_bounded_and_opt_in(self):
+        parameter = inspect.signature(
+            build_biorthogonal_mode_basis
+        ).parameters["task036_scalar_stage4_partition_repair"]
+        self.assertIs(parameter.default, False)
+
+        scalar_stage4 = SimpleNamespace(
+            material_kind="stage4_xy",
+            epsilon_r=SimpleNamespace(ufl_shape=()),
+        )
+        groups = ((0, 1), (2, 3))
+        overlap = np.eye(4, dtype=np.complex128)
+        overlap[1, 2] = 2.0e-6
+        audit = _near_degenerate_partition_audit(
+            (
+                0.5 + 0.1j,
+                0.5 + 0.1j,
+                0.5 + 0.100001j,
+                0.5 + 0.100001j,
+            ),
+            groups,
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            directions=("forward",) * 4,
+        )
+        merged, provenance = (
+            _task036_scalar_stage4_partition_repair_candidate(
+                scalar_stage4,
+                groups,
+                audit,
+            )
+        )
+        self.assertEqual(merged, (0, 1, 2, 3))
+        self.assertTrue(provenance["eligible"])
+        self.assertEqual(provenance["maximum_attempts"], 1)
+        self.assertEqual(provenance["maximum_union_size"], 4)
+
+        for cross_section, changed_audit, expected_reason in (
+            (
+                SimpleNamespace(
+                    material_kind="air",
+                    epsilon_r=SimpleNamespace(ufl_shape=()),
+                ),
+                audit,
+                "not_scalar_stage4_xy",
+            ),
+            (
+                scalar_stage4,
+                {
+                    **audit,
+                    "worst_cross_block_directions": [
+                        "forward",
+                        "backward",
+                    ],
+                },
+                "worst_blocks_do_not_share_one_physical_direction",
+            ),
+            (
+                scalar_stage4,
+                {**audit, "status": "cross_block_biorthogonality_failure"},
+                "not_near_degenerate_partition_split",
+            ),
+        ):
+            with self.subTest(reason=expected_reason):
+                rejected, rejected_provenance = (
+                    _task036_scalar_stage4_partition_repair_candidate(
+                        cross_section,
+                        groups,
+                        changed_audit,
+                    )
+                )
+                self.assertIsNone(rejected)
+                self.assertEqual(
+                    rejected_provenance["reason"],
+                    expected_reason,
+                )
+
+        oversized, oversized_provenance = (
+            _task036_scalar_stage4_partition_repair_candidate(
+                scalar_stage4,
+                ((0, 1, 2), (3, 4)),
+                {
+                    **audit,
+                    "worst_cross_block_group_ids": [0, 1],
+                    "worst_cross_block_directions": [
+                        "forward",
+                        "forward",
+                    ],
+                },
+            )
+        )
+        self.assertIsNone(oversized)
+        self.assertEqual(
+            oversized_provenance["reason"],
+            "merged_group_exceeds_bounded_size",
+        )
+
+    def test_task036_joint_left_inverse_repairs_selected_block(self):
+        overlap = np.eye(4, dtype=np.complex128)
+        overlap[0, 2] = 2.0e-6 + 3.0e-7j
+        overlap[3, 1] = -3.0e-6j
+        left_reduced: list[PETSc.Vec] = []
+        left_full: list[PETSc.Vec] = []
+        for row in overlap:
+            reduced = PETSc.Vec().createSeq(4, comm=PETSc.COMM_SELF)
+            reduced.getArray()[:] = np.conj(row)
+            reduced.assemble()
+            full = reduced.duplicate()
+            reduced.copy(full)
+            left_reduced.append(reduced)
+            left_full.append(full)
+        try:
+            condition = _joint_left_basis_inverse(
+                left_reduced,
+                left_full,
+                (0, 1, 2, 3),
+                overlap,
+                maximum_overlap_condition=1.0e12,
+            )
+            self.assertTrue(np.isfinite(condition))
+            repaired = np.asarray(
+                [
+                    np.conj(vector.getArray(readonly=True))
+                    for vector in left_reduced
+                ],
+                dtype=np.complex128,
+            )
+            np.testing.assert_allclose(
+                repaired,
+                np.eye(4, dtype=np.complex128),
+                rtol=1.0e-13,
+                atol=1.0e-13,
+            )
+            for reduced, full in zip(left_reduced, left_full):
+                np.testing.assert_allclose(
+                    full.getArray(readonly=True),
+                    reduced.getArray(readonly=True),
+                    rtol=0.0,
+                    atol=0.0,
+                )
+        finally:
+            for vector in left_reduced + left_full:
+                vector.destroy()
+
+    def test_task036_joint_left_inverse_rejects_bad_condition(self):
+        singular = np.asarray(
+            [[1.0, 1.0], [1.0, 1.0]],
+            dtype=np.complex128,
+        )
+        left_reduced = [
+            PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
+            for _ in range(2)
+        ]
+        left_full = [vector.duplicate() for vector in left_reduced]
+        try:
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "singular or ill-conditioned",
+            ):
+                _joint_left_basis_inverse(
+                    left_reduced,
+                    left_full,
+                    (0, 1),
+                    singular,
+                    maximum_overlap_condition=1.0e12,
+                )
+        finally:
+            for vector in left_reduced + left_full:
+                vector.destroy()
 
     def test_batched_left_dots_preserve_cancelling_remainder(self):
         comm = MPI.COMM_WORLD
@@ -403,6 +612,91 @@ class Task032ModeClassificationTests(unittest.TestCase):
             positive.destroy()
             if negative is not None:
                 negative.destroy()
+            operators.destroy()
+
+    @unittest.skipIf(
+        MPI.COMM_WORLD.size > 1,
+        "analytic reciprocal construction uses a serial small-space contract",
+    )
+    def test_scalar_stage4_reciprocal_basis_recomputes_all_gates(self):
+        cfg = target_stage4_config(degree=1, h_nm=100.0)
+        cross_section = build_matching_cross_section(cfg, "stage4_xy")
+        spaces = build_cross_section_spaces(
+            cross_section, transverse_degree=1
+        )
+        operators = assemble_quadratic_beta_operators(
+            cfg, cross_section, spaces
+        )
+        target = analytic_homogeneous_beta(cfg, cfg.n_air)
+        right_modes, _ = solve_quadratic_beta_modes(
+            operators, target=target, requested_modes=2
+        )
+        positive = build_biorthogonal_mode_basis(
+            cfg,
+            cross_section,
+            spaces,
+            operators,
+            right_modes,
+            adjoint_target=np.conj(target),
+            requested_left_modes=2,
+            task036_scalar_stage4_partition_repair=True,
+        )
+        negative = None
+        try:
+            negative = build_scalar_stage4_reciprocal_negative_basis(
+                cfg, cross_section, spaces, operators, positive
+            )
+            self.assertEqual(
+                negative.basis_origin,
+                "analytic_scalar_stage4_reciprocal",
+            )
+            self.assertEqual(
+                negative.adjoint_solver_report.target,
+                -positive.adjoint_solver_report.target,
+            )
+            self.assertFalse(
+                negative.basis_construction_audit[
+                    "negative_independent_qep_solve_performed"
+                ]
+            )
+            self.assertTrue(
+                negative.basis_construction_audit[
+                    "all_residual_flux_qprime_recomputed"
+                ]
+            )
+            self.assertLessEqual(negative.max_identity_error, 1.0e-6)
+            self.assertTrue(negative.near_degenerate_partition_audit["pass"])
+            self.assertLessEqual(
+                max(
+                    negative.basis_construction_audit[
+                        "right_constraint_reconstruction_relative_errors"
+                    ]
+                ),
+                1.0e-12,
+            )
+            self.assertLessEqual(
+                max(
+                    negative.basis_construction_audit[
+                        "left_constraint_reconstruction_relative_errors"
+                    ]
+                ),
+                1.0e-12,
+            )
+            for plus, minus in zip(positive.modes, negative.modes):
+                self.assertEqual(minus.beta, -plus.beta)
+                self.assertEqual(minus.direction, "backward")
+                self.assertTrue(minus.passive_branch_valid)
+                self.assertLess(
+                    minus.right.polynomial_relative_residual, 1.0e-8
+                )
+                self.assertLess(
+                    minus.left_polynomial_relative_residual, 1.0e-8
+                )
+                self.assertLess(abs(minus.qprime_overlap_after - 1.0), 1.0e-6)
+        finally:
+            if negative is not None:
+                negative.destroy()
+            positive.destroy()
             operators.destroy()
 
     @unittest.skipIf(

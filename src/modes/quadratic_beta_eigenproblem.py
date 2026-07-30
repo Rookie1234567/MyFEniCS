@@ -294,11 +294,13 @@ def assemble_quadratic_beta_operators(
     )
 
 
-def _polynomial_relative_residual(
+def quadratic_beta_polynomial_relative_residual(
     operators: QuadraticBetaOperators,
     beta: complex,
     vector: PETSc.Vec,
 ) -> float:
+    """Return the explicit relative residual of ``Q(beta) vector = 0``."""
+
     residual = operators.K0.createVecLeft()
     work = operators.K0.createVecLeft()
     operators.K0.mult(vector, residual)
@@ -385,7 +387,7 @@ def solve_quadratic_beta_modes(
                 beta=beta,
                 right_reduced=reduced,
                 right_full=full,
-                polynomial_relative_residual=_polynomial_relative_residual(
+                polynomial_relative_residual=quadratic_beta_polynomial_relative_residual(
                     operators, beta, reduced
                 ),
                 slepc_relative_error=float(
