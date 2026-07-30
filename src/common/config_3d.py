@@ -139,6 +139,11 @@ class SimulationConfig3D:
     diffraction_probe_fraction: float = 0.75
     diffraction_compute_modal_diagnostic: bool = False
     diffraction_rayleigh_tol: float = 1.0e-6
+    # Explicit research/qualification override for the Fourier-DtN surface
+    # forms.  ``None`` preserves the deterministic automatic policy.  The
+    # production Task002 route leaves this unset; M4D uses it only to measure
+    # quadrature convergence of an already identified alias-sensitive point.
+    stage4_dtn_quadrature_degree: int | None = None
     # Explicit opt-in export used by Hybrid FEM-modal validation.  The default
     # remains off so ordinary Stage-4 runs do not gather or persist sampled
     # volume fields.

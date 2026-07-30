@@ -1,0 +1,17 @@
+{
+  "schema_version": "task002.case118-expected.v1",
+  "required_records": [
+    "failed_point_reproduction.json",
+    "azimuth_resonance_map.json",
+    "y_cell_convergence.json",
+    "surface_quadrature_convergence.json",
+    "auxiliary_vs_direct_projection.json",
+    "port_vector_gram_condition.json",
+    "solver_route_decision.json"
+  ],
+  "minimum_completed_y_cell_counts": [3, 4],
+  "leakage_total_power_max": 1e-7,
+  "leakage_max_abs_amplitude": 1e-4,
+  "zero_swap_required": true,
+  "cleanup_complete_required": true
+}

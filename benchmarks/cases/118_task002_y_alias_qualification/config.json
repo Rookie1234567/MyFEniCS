@@ -1,0 +1,12 @@
+{
+  "schema_version": "task002.case118-config.v1",
+  "failed_point": [116.446369998157, 17.513626368716, 4.538499870338, 54.420819282532],
+  "azimuth_stencil_deg": [50, 51, 52, 53, 53.5, 54, 54.25, 54.5, 54.75, 55, 55.5, 56, 57, 58],
+  "center_geometry": [120, 17],
+  "y_cell_counts": [3, 4, 5, 6],
+  "surface_quadrature_degrees": ["auto", 31, 39, 47],
+  "independent_projection_quadrature_degree": 63,
+  "mpi_ranks": 2,
+  "threads_per_rank": 1,
+  "production_leakage_gates_unchanged": {"total_power_max": 1e-7, "max_abs_amplitude": 1e-4}
+}
