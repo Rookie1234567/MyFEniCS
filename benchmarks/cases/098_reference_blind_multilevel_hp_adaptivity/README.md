@@ -289,3 +289,33 @@ reference uncertainty，不能称为 reference pass。reference-visible compact
 [development outcome](../../../docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/reference_visible_development_diagnostic.md)
 与
 [59-goal compact](../../../docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/reference_visible_development_diagnostic_v1.json)。
+
+## 2026-07-30：structured H10 anchor 与 selective-trace 收口
+
+本批次先从三个既有 MPI8 official raw artifact 重新提取相同的 59-goal
+inventory，没有重跑 p6/h10、h7.5 或 h5。三者分别为 59/59、59/59、
+59/59，三个 pair 的全部 59 项也都在冻结 tolerance 内；h7.5→h5 的增量
+对全部目标均不大于 h10→h7.5，故用户指定的一致性 Gate 通过。
+
+同一 `(6,3,14)`、252-cell H10 网格上的
+`fixed p5-trace + p6-interior` 为 52/59。p6→p5 physical trace projection
+显示 edge missing-energy fraction 仅 `3.748638e-25`，因此没有增加
+selected-edge API；按 face projection score/cost 选择一次 200 periodic
+orbits（233 geometry keys、+4,000 rows、捕获 `79.191773%` projection
+loss）。
+
+唯一 actual MPI8 selective candidate 为 50/59，normalized L2 相对 fixed
+anchor 恶化 `6.756208%`，whole-job process-tree peak 为
+`13.004326 GiB`，zero swap。它同时触发 accuracy 与 11 GiB resource
+negative，所以没有运行第二个阈值扩展。projection 排序没有被冒充 actual
+59-goal DWR；fine p6 artifact 未保留 59 个 adjoint，actual PDE endpoint
+才是 accept/reject authority。
+
+完整报告见
+[structured anchor outcome](../../../docs/task035e_reference_blind_multilevel_hp_adaptivity/outcomes/structured_anchor_selective_trace_v1.md)，
+完整 59-goal、ranking、资源和 raw SHA compact 见
+[structured anchor compact](records/structured_anchor_selective_trace_v1.json)。
+actual plan 与软件 Gate 失败 attempt 的历史 plan 也分别保留在
+[actual plan](records/h10_projection_selective_face_budget80_plan_v1.json)
+和
+[failed-attempt plan](records/h10_projection_selective_face_budget80_preflight_failed_97c9c48_plan_v1.json)。
