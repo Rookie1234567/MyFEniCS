@@ -69,6 +69,27 @@ def write_compact_dataset(samples: Iterable[Mapping[str, Any]], *, output_dir: P
         raise ValueError("only measured_pass samples enter the compact production dataset")
     if any(record.get("solver_route_id") != PRODUCTION_ROUTE for record in records):
         raise ValueError("Task002 production dataset is Full3D p5/h10 single-fidelity only")
+    for record in records:
+        if not all(record.get("numerical_gates", {}).values()):
+            raise ValueError("Task002 dataset rejects samples with failed numerical gates")
+        if not all(record.get("resource_gates", {}).values()):
+            raise ValueError("Task002 dataset rejects samples with failed resource gates")
+        mother = record.get("mother_response", {})
+        leakage = mother.get("leakage", {})
+        leakage_power = (
+            float(leakage.get("n_nonzero_reflection_power_sum", 1.0))
+            + float(leakage.get("n_nonzero_transmission_power_sum", 1.0))
+        )
+        if leakage_power > 1.0e-7 or float(
+            leakage.get("n_nonzero_max_abs_amplitude", 1.0)
+        ) > 1.0e-4:
+            raise ValueError("Task002 dataset rejects n!=0 leakage Gate failure")
+        ledger = mother.get("power_ledger", {})
+        if max(
+            abs(float(ledger.get("raw_R_minus_fixed_n0_R_minus_n_nonzero_R", 1.0))),
+            abs(float(ledger.get("raw_T_minus_fixed_n0_T_minus_n_nonzero_T", 1.0))),
+        ) > 1.0e-12:
+            raise ValueError("Task002 dataset rejects fixed/raw power-ledger failure")
 
     n_orders = 2 * len(TASK002_FIXED_M_ORDERS)
     inputs = np.empty((len(records), 4), dtype=np.float64)

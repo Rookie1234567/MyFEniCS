@@ -701,6 +701,8 @@ def run_prepared_3d_case_flow(
 
     if cfg.stage_case != expected_stage_case:
         raise ValueError(f"This solver accepts only stage_case={expected_stage_case!r}.")
+    if cfg.task002_output_profile not in {"ordinary", "compact_surrogate_record"}:
+        raise ValueError(f"unsupported Task002 output profile: {cfg.task002_output_profile!r}")
     if not np.issubdtype(default_scalar_type, np.complexfloating):
         raise RuntimeError("The 3D Maxwell solver requires complex-mode DOLFINx/PETSc.")
 
@@ -1695,16 +1697,31 @@ def run_prepared_3d_case_flow(
         _write_case_outputs(out_dir, summary, log_lines, comm)
         return summary
 
+    compact_output = cfg.task002_output_profile == "compact_surrogate_record"
     stage_start = _start_timed_stage(comm)
-    field_metrics = save_airbox_3d_fields(
-        mesh_data,
-        cfg,
-        E_total,
-        out_dir,
-        E_scattered=E_sca if solve_layered_scattered else None,
-        E_background=E_background_solution if solve_layered_scattered else None,
-        E_incident_port=E_incident_solution if solve_stage4_dtn_port else None,
-    )
+    if compact_output:
+        field_metrics = {
+            "paraview_file": None,
+            "exact_reference_available": False,
+            "relative_max_abs_E_error": None,
+            "task002_output_profile": cfg.task002_output_profile,
+            "field_visualization_written": False,
+            "field_visualization_skip_reason": "compact_surrogate_record",
+        }
+    else:
+        field_metrics = save_airbox_3d_fields(
+            mesh_data,
+            cfg,
+            E_total,
+            out_dir,
+            E_scattered=E_sca if solve_layered_scattered else None,
+            E_background=E_background_solution if solve_layered_scattered else None,
+            E_incident_port=E_incident_solution if solve_stage4_dtn_port else None,
+        )
+        field_metrics.update({
+            "task002_output_profile": cfg.task002_output_profile,
+            "field_visualization_written": True,
+        })
     _finish_timed_stage(comm, timings, "postprocess", stage_start, log)
     summary["timings_seconds"] = timings
     summary["elapsed_seconds"] = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
@@ -1760,57 +1777,54 @@ def run_prepared_3d_case_flow(
         port_power_metrics = dtn_result["port_metrics"]
         summary.update(port_power_metrics)
         stage_start = _start_timed_stage(comm)
-        probe_power_metrics = compute_diffraction_orders_3d(
-            mesh_data,
-            cfg,
-            E_total,
-            out_dir,
+        probe_power_metrics = None if compact_output else compute_diffraction_orders_3d(
+            mesh_data, cfg, E_total, out_dir,
             E_scattered=E_sca if solve_layered_scattered else None,
         )
         _finish_timed_stage(comm, timings, "diffraction_postprocess", stage_start, log)
-        probe_R = probe_power_metrics.get("R_total")
-        probe_T = probe_power_metrics.get("T_total")
-        flux_R = probe_power_metrics.get("R_total_from_net_flux")
-        flux_T = probe_power_metrics.get("T_total_from_net_flux")
+        probe_R = None if probe_power_metrics is None else probe_power_metrics.get("R_total")
+        probe_T = None if probe_power_metrics is None else probe_power_metrics.get("T_total")
+        flux_R = None if probe_power_metrics is None else probe_power_metrics.get("R_total_from_net_flux")
+        flux_T = None if probe_power_metrics is None else probe_power_metrics.get("T_total_from_net_flux")
         summary.update(
             {
                 "probe_R_total": probe_R,
                 "probe_T_total": probe_T,
-                "probe_A_balance": probe_power_metrics.get("A_balance"),
-                "probe_power_file": probe_power_metrics.get("probe_power_file"),
-                "R_total_diagnostic_eh_fourier": probe_power_metrics.get("R_total_diagnostic_eh_fourier", probe_R),
-                "T_total_diagnostic_eh_fourier": probe_power_metrics.get("T_total_diagnostic_eh_fourier", probe_T),
-                "A_balance_diagnostic_eh_fourier": probe_power_metrics.get(
+                "probe_A_balance": None if probe_power_metrics is None else probe_power_metrics.get("A_balance"),
+                "probe_power_file": None if probe_power_metrics is None else probe_power_metrics.get("probe_power_file"),
+                "R_total_diagnostic_eh_fourier": None if probe_power_metrics is None else probe_power_metrics.get("R_total_diagnostic_eh_fourier", probe_R),
+                "T_total_diagnostic_eh_fourier": None if probe_power_metrics is None else probe_power_metrics.get("T_total_diagnostic_eh_fourier", probe_T),
+                "A_balance_diagnostic_eh_fourier": None if probe_power_metrics is None else probe_power_metrics.get(
                     "A_balance_diagnostic_eh_fourier",
-                    probe_power_metrics.get("A_balance"),
+                    None if probe_power_metrics is None else probe_power_metrics.get("A_balance"),
                 ),
-                "R_plus_T_diagnostic_eh_fourier": probe_power_metrics.get(
+                "R_plus_T_diagnostic_eh_fourier": None if probe_power_metrics is None else probe_power_metrics.get(
                     "R_plus_T_diagnostic_eh_fourier",
-                    probe_power_metrics.get("R_plus_T"),
+                    None if probe_power_metrics is None else probe_power_metrics.get("R_plus_T"),
                 ),
-                "diagnostic_eh_fourier_probe_power_source": probe_power_metrics.get("power_source"),
-                "probe_top_z": probe_power_metrics.get("diffraction_top_probe_z"),
-                "probe_bottom_z": probe_power_metrics.get("diffraction_bottom_probe_z"),
+                "diagnostic_eh_fourier_probe_power_source": None if probe_power_metrics is None else probe_power_metrics.get("power_source"),
+                "probe_top_z": None if probe_power_metrics is None else probe_power_metrics.get("diffraction_top_probe_z"),
+                "probe_bottom_z": None if probe_power_metrics is None else probe_power_metrics.get("diffraction_bottom_probe_z"),
                 "diagnostic_eh_minus_dtn_R": None if probe_R is None else float(probe_R - summary["R_total"]),
                 "diagnostic_eh_minus_dtn_T": None if probe_T is None else float(probe_T - summary["T_total"]),
                 "diff_vs_dtn_R": None if probe_R is None else float(probe_R - summary["R_total"]),
                 "diff_vs_dtn_T": None if probe_T is None else float(probe_T - summary["T_total"]),
                 "flux_R_total": flux_R,
                 "flux_T_total": flux_T,
-                "flux_A_balance": probe_power_metrics.get("A_balance_from_net_flux"),
-                "R_total_diagnostic_sampled_net_flux": probe_power_metrics.get(
+                "flux_A_balance": None if probe_power_metrics is None else probe_power_metrics.get("A_balance_from_net_flux"),
+                "R_total_diagnostic_sampled_net_flux": None if probe_power_metrics is None else probe_power_metrics.get(
                     "R_total_diagnostic_sampled_net_flux",
                     flux_R,
                 ),
-                "T_total_diagnostic_sampled_net_flux": probe_power_metrics.get(
+                "T_total_diagnostic_sampled_net_flux": None if probe_power_metrics is None else probe_power_metrics.get(
                     "T_total_diagnostic_sampled_net_flux",
                     flux_T,
                 ),
-                "A_balance_diagnostic_sampled_net_flux": probe_power_metrics.get(
+                "A_balance_diagnostic_sampled_net_flux": None if probe_power_metrics is None else probe_power_metrics.get(
                     "A_balance_diagnostic_sampled_net_flux",
-                    probe_power_metrics.get("A_balance_from_net_flux"),
+                    None if probe_power_metrics is None else probe_power_metrics.get("A_balance_from_net_flux"),
                 ),
-                "flux_power_file": probe_power_metrics.get("flux_power_file"),
+                "flux_power_file": None if probe_power_metrics is None else probe_power_metrics.get("flux_power_file"),
             }
         )
         summary.update(_stage4_lossless_energy_balance_check(cfg, summary))
@@ -1994,18 +2008,21 @@ def run_prepared_3d_case_flow(
             encoding="utf-8",
         )
 
-    log(f"max |E| = {field_metrics['max_abs_E']:.6e}")
-    log(
-        "max component |Ex|/|Ey|/|Ez| = "
-        f"{field_metrics['max_abs_Ex']:.6e} / {field_metrics['max_abs_Ey']:.6e} / {field_metrics['max_abs_Ez']:.6e}"
-    )
-    if field_metrics.get("exact_reference_available"):
-        log(f"plane-wave relative max error = {field_metrics['relative_max_abs_E_error']:.6e}")
-        log(f"H relative max error = {field_metrics['relative_max_abs_H_error']:.6e}")
+    if compact_output:
+        log("Task002 compact surrogate profile: field visualization/probe arrays were not written.")
     else:
-        log("exact reference unavailable for this case; E_exact/H_exact error fields are not written.")
-    log(f"max |H| = {field_metrics['max_abs_H']:.6e}")
-    log(f"Poynting direction cosine = {field_metrics['poynting_direction_cosine']:.6e}")
+        log(f"max |E| = {field_metrics['max_abs_E']:.6e}")
+        log(
+            "max component |Ex|/|Ey|/|Ez| = "
+            f"{field_metrics['max_abs_Ex']:.6e} / {field_metrics['max_abs_Ey']:.6e} / {field_metrics['max_abs_Ez']:.6e}"
+        )
+        if field_metrics.get("exact_reference_available"):
+            log(f"plane-wave relative max error = {field_metrics['relative_max_abs_E_error']:.6e}")
+            log(f"H relative max error = {field_metrics['relative_max_abs_H_error']:.6e}")
+        else:
+            log("exact reference unavailable for this case; E_exact/H_exact error fields are not written.")
+        log(f"max |H| = {field_metrics['max_abs_H']:.6e}")
+        log(f"Poynting direction cosine = {field_metrics['poynting_direction_cosine']:.6e}")
     if floquet_data is not None:
         log(f"Floquet x-face mismatch = {summary['floquet_x_face_mismatch']:.6e}")
         log(f"Floquet y-face mismatch = {summary['floquet_y_face_mismatch']:.6e}")

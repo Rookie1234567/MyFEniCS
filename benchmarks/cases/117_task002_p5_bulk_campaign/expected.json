@@ -1,0 +1,9 @@
+{
+  "schema_version": "task002.case117-expected.v1",
+  "canary_pass_count": 16,
+  "training_pass_count": 96,
+  "frozen_validation_pass_count": 16,
+  "dataset_sample_count": 112,
+  "compact_dataset_pass": true,
+  "surrogate_training_started": false
+}

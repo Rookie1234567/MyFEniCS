@@ -29,13 +29,15 @@ from .task002_schema import (
 from .watchdog import WatchdogResult, run_with_watchdog
 
 
-TASK002_FULL3D_RECORD_SCHEMA = "task002.full3d-record.v2"
+TASK002_FULL3D_RECORD_SCHEMA = "task002.full3d-record.v3"
 TASK002_FULL3D_TOPOLOGY_SCHEMA = "task002.full3d-topology.v1"
 AXIS_CELL_COUNTS = (6, 3, 14)
 LAYER_CELL_COUNTS = (1, 12, 1)
 
 
-def build_task002_full3d_config(parameters: Task002ForwardParameters) -> SimulationConfig3D:
+def build_task002_full3d_config(
+    parameters: Task002ForwardParameters, *, output_profile: str = "ordinary",
+) -> SimulationConfig3D:
     """Build the formal Full3D config with fixed logical topology."""
 
     parameters.validate()
@@ -69,6 +71,9 @@ def build_task002_full3d_config(parameters: Task002ForwardParameters) -> Simulat
     cfg.stage4_full3d_assembly_backend = ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
     cfg.matrix_diagnostics_assemble_only = False
     cfg.unique_output = False
+    if output_profile not in {"ordinary", "compact_surrogate_record"}:
+        raise ValueError(f"unsupported Task002 output profile: {output_profile}")
+    cfg.task002_output_profile = output_profile
     cfg.case_name = (
         f"task002_full3d_p{fidelity['degree']}_h10_hgt{parameters.height_nm:g}_"
         f"wid{parameters.width_x_nm:g}_theta{parameters.theta_deg:g}_"
@@ -78,11 +83,11 @@ def build_task002_full3d_config(parameters: Task002ForwardParameters) -> Simulat
 
 
 def task002_full3d_config_identity(
-    parameters: Task002ForwardParameters,
+    parameters: Task002ForwardParameters, *, output_profile: str = "ordinary",
 ) -> dict[str, Any]:
     """Return the deterministic, JSON-safe numerical configuration authority."""
 
-    cfg = build_task002_full3d_config(parameters)
+    cfg = build_task002_full3d_config(parameters, output_profile=output_profile)
     identity = {
         "solver_route_id": parameters.fidelity["solver_route_id"],
         "element": _element_identity(int(cfg.nedelec_degree)),
@@ -106,6 +111,7 @@ def task002_full3d_config_identity(
             "azimuth_deg": float(parameters.azimuth_deg),
         },
         "assembly_backend": ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+        "task002_output_profile": output_profile,
         "mpi_ranks": 2, "threads_per_rank": 1,
     }
     return {**identity, "config_sha256": canonical_hash(identity)}
@@ -270,18 +276,21 @@ def extract_task002_full3d_orders(
 
 def task002_full3d_command(
     *, root: Path, parameters_file: Path, baseline_sha: str, output_dir: Path,
+    output_profile: str = "compact_surrogate_record",
 ) -> list[str]:
     return [
         "mpiexec", "-n", "2", str(root / ".venv/bin/python"),
         "-m", "src.runners.run_task002_full3d",
         "--parameters-json", str(parameters_file),
         "--baseline-sha", baseline_sha, "--output-dir", str(output_dir),
+        "--output-profile", output_profile,
     ]
 
 
 def run_formal_task002_full3d(
     parameters: Task002ForwardParameters, *, root: Path, baseline_sha: str,
     run_directory: Path, timeout_seconds: float,
+    output_profile: str = "compact_surrogate_record",
 ) -> tuple[WatchdogResult, Path]:
     parameters.validate()
     preflight = formal_preflight(root, baseline_sha)
@@ -294,7 +303,7 @@ def run_formal_task002_full3d(
     result_dir = run_directory / "results"
     command = task002_full3d_command(
         root=root, parameters_file=parameters_path, baseline_sha=baseline_sha,
-        output_dir=result_dir,
+        output_dir=result_dir, output_profile=output_profile,
     )
     env = {**os.environ, "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1",
            "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"}
@@ -304,10 +313,11 @@ def run_formal_task002_full3d(
         memory_limit_bytes=preflight["resources"]["hard_ceiling_bytes"],
     )
     execution = {
-        "schema_version": "task002.full3d-execution.v2",
+        "schema_version": "task002.full3d-execution.v3",
         "parameters": parameters.as_dict(), "baseline_sha": baseline_sha,
         "parameter_hash": canonical_hash(parameters.as_dict()),
         "preflight": preflight, "command": command, "watchdog": asdict(result),
+        "output_profile": output_profile,
         "formal_record_present": (result_dir / "task002_full3d_record.json").is_file(),
     }
     execution_path = run_directory / "execution.json"

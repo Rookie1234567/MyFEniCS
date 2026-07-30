@@ -146,6 +146,10 @@ class SimulationConfig3D:
     full3d_reference_plane_z: tuple[float, ...] = ()
     full3d_reference_sample_count_x: int = 40
     full3d_reference_sample_count_y: int = 20
+    # Explicit Task002 bulk-data profile.  The ordinary solver default remains
+    # unchanged; compact_surrogate_record skips only visualization/probe output
+    # while retaining the solve, DtN orders, volume absorption and provenance.
+    task002_output_profile: str = "ordinary"
     # Direct-factorization profiles. BLR is still a direct MUMPS factorization,
     # not an iterative solver or a replacement for the qualified MPI4 runtime.
     petsc_direct_solver_profile: str = "default"  # default / mumps_ooc / mumps_blr

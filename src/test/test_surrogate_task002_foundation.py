@@ -12,9 +12,11 @@ from benchmarks.check_case114_task002_m2b import SELECTED as M2B_SELECTED
 from benchmarks.check_case114_task002_m2b import _order_delta as m2b_order_delta
 from benchmarks.run_task032_phase6_augmented import _parse_args
 from src.forward_data.task002_campaign import (
-    _parser, load_manifest, sample_key, task002_hybrid_command, update_manifest,
+    _atomic_write, _parser, campaign_status, load_manifest,
+    recover_or_retry_row, register_design, task002_hybrid_command,
 )
 from src.forward_data.task002_dataset import verify_compact_dataset, write_compact_dataset
+from src.forward_data.task002_dataset_checker import verify_exact_design_dataset
 from src.forward_data.task002_design import (
     audit_order_window, cutoff_diagnostics, cutoff_diagnostics_v2,
     fixed_hf_angle_pilot, incident_wave_audit, lf_angle_pilot,
@@ -26,6 +28,10 @@ from src.forward_data.task002_m2b import (
     hybrid_command as m2b_hybrid_command,
 )
 from src.forward_data.task002_m3r_design import freeze_all_designs
+from src.forward_data.task002_m4 import (
+    audit_rebind, design_point_hash, formal_record_to_production_sample,
+    rebind_frozen_designs,
+)
 from src.forward_data.task002_runtime_topology import planned_runtime_identity
 from src.forward_data.task002_full3d import (
     AXIS_CELL_COUNTS, build_task002_full3d_config, task002_full3d_command,
@@ -198,6 +204,7 @@ def test_task002_full3d_command_and_uniform_element_identity(tmp_path: Path) -> 
     )
     assert command[:3] == ["mpiexec", "-n", "2"]
     assert command[4:6] == ["-m", "src.runners.run_task002_full3d"]
+    assert command[-2:] == ["--output-profile", "compact_surrogate_record"]
     parameters = _parameters()
     cfg = build_task002_full3d_config(parameters)
     topology = task002_full3d_topology_identity(parameters)
@@ -207,6 +214,10 @@ def test_task002_full3d_command_and_uniform_element_identity(tmp_path: Path) -> 
     assert cfg.nedelec_interior_degree is None
     assert topology["element_identity"]["family"] == "N1curl"
     assert topology["element_identity"]["degree"] == 5
+    compact_cfg = build_task002_full3d_config(
+        parameters, output_profile="compact_surrogate_record",
+    )
+    assert compact_cfg.task002_output_profile == "compact_surrogate_record"
     runtime_plan = planned_runtime_identity(parameters)
     assert runtime_plan["axis_cell_counts"] == [6, 3, 14]
     assert runtime_plan["expected_global_dof_count"] == 101815
@@ -242,35 +253,43 @@ def test_task002_config_hash_is_deterministic_and_parameter_bound() -> None:
     assert first["config_sha256"] != changed["config_sha256"]
 
 
-def test_campaign_cli_requires_one_explicit_sample(tmp_path: Path) -> None:
+def test_campaign_cli_is_design_bound_and_has_no_manual_run_one(tmp_path: Path) -> None:
     args = _parser().parse_args([
-        "run-one", "--root", str(tmp_path), "--baseline-sha", "a" * 40,
+        "run-design", "--root", str(tmp_path), "--baseline-sha", "a" * 40,
+        "--design", str(tmp_path / "training.json"), "--split", "train",
         "--artifact-root", str(tmp_path / "artifacts"),
         "--campaign-manifest", str(tmp_path / "campaign.json"),
-        "--model-id", PROD, "--height-nm", "120", "--width-x-nm", "17",
-        "--grazing-deg", "0.5", "--azimuth-deg", "90",
+        "--role", "domain_corner",
     ])
-    assert args.command == "run-one" and args.grazing_deg == 0.5
+    assert args.command == "run-design" and args.role == "domain_corner"
+    with pytest.raises(SystemExit):
+        _parser().parse_args(["run-one"])
 
 
-def test_campaign_dedup_resume_and_completed_immutability(tmp_path: Path) -> None:
+def test_campaign_registration_stale_retry_recovery_and_immutability(tmp_path: Path) -> None:
+    source_sha = "a" * 40
+    design = freeze_all_designs(source_sha)["training_design.json"]
+    design_path = tmp_path / "training_design.json"
+    design_path.write_text(json.dumps(design))
     manifest_path = tmp_path / "campaign.json"
-    parameters = _parameters()
-    update_manifest(
-        manifest_path, baseline_sha="a" * 40, parameters=parameters,
-        status="reserved", run_directory=tmp_path / "run",
-    )
-    update_manifest(
-        manifest_path, baseline_sha="a" * 40, parameters=parameters,
-        status="measured_pass", run_directory=tmp_path / "run",
-    )
-    manifest = load_manifest(manifest_path, baseline_sha="a" * 40)
-    assert list(manifest["samples"]) == [sample_key(parameters)]
-    with pytest.raises(ValueError, match="immutable"):
-        update_manifest(
-            manifest_path, baseline_sha="a" * 40, parameters=parameters,
-            status="reserved",
-        )
+    manifest = load_manifest(manifest_path, baseline_sha=source_sha)
+    register_design(manifest, design=design, design_path=design_path, split="train")
+    _atomic_write(manifest_path, manifest)
+    assert len(manifest["samples"]) == 96
+    row = manifest["samples"][f"{design['design_id']}:0000"]
+    assert recover_or_retry_row(row) == "interrupted_retryable"
+    run = tmp_path / "attempt"
+    (run / "results").mkdir(parents=True)
+    (run / "results/task002_full3d_record.json").write_text(json.dumps({"gates": {"x": True}}))
+    (run / "execution.json").write_text(json.dumps({"watchdog": {
+        "status": "completed", "return_code": 0, "peak_swap_bytes": 0,
+        "cleanup_complete": True,
+    }}))
+    row.update({"run_directory": str(run), "status": "running",
+                "attempts": [{"status": "running"}]})
+    assert recover_or_retry_row(row) == "measured_pass"
+    assert recover_or_retry_row(row) == "measured_pass"
+    assert campaign_status(manifest)["status_counts"]["measured_pass"] == 1
     with pytest.raises(ValueError, match="baseline"):
         load_manifest(manifest_path, baseline_sha="b" * 40)
 
@@ -295,8 +314,26 @@ def _mother_response() -> dict:
                 },
                 "order_total_power": 0.02 if carrying else None,
             })
-    return {"schema_version": TASK002_OBSERVABLE_SCHEMA_VERSION, "orders": orders,
-            "uncovered_power_carrying_n0": []}
+    return {
+        "schema_version": TASK002_OBSERVABLE_SCHEMA_VERSION, "orders": orders,
+        "uncovered_power_carrying_n0": [],
+        "leakage": {
+            "n_nonzero_reflection_power_sum": 0.0,
+            "n_nonzero_transmission_power_sum": 0.0,
+            "n_nonzero_max_abs_amplitude": 0.0,
+        },
+        "power_ledger": {
+            "raw_R_minus_fixed_n0_R_minus_n_nonzero_R": 0.0,
+            "raw_T_minus_fixed_n0_T_minus_n_nonzero_T": 0.0,
+        },
+    }
+
+
+def _passing_sample_gates() -> dict:
+    return {
+        "numerical_gates": {"all": True},
+        "resource_gates": {"all": True},
+    }
 
 
 def test_dataset_roundtrip_hash_split_and_structural_null(tmp_path: Path) -> None:
@@ -309,6 +346,7 @@ def test_dataset_roundtrip_hash_split_and_structural_null(tmp_path: Path) -> Non
             "inputs": [120.0, 17.0, 5.25, 45.0],
             "aggregates": {"R_total": 0.1, "T_total": 0.6, "A_balance": 0.3, "A_volume": 0.3},
             "mother_response": _mother_response(),
+            **_passing_sample_gates(),
         })
     dataset_dir = tmp_path / "dataset"
     result = write_compact_dataset(samples, output_dir=dataset_dir, dataset_id="synthetic")
@@ -331,6 +369,7 @@ def test_dataset_rejects_failed_and_nonproduction_solver_routes(tmp_path: Path) 
         "inputs": [120.0, 17.0, 5.25, 45.0],
         "aggregates": {"R_total": 0.1, "T_total": 0.6, "A_balance": 0.3, "A_volume": 0.3},
         "mother_response": _mother_response(),
+        **_passing_sample_gates(),
     }
     with pytest.raises(ValueError, match="measured_pass"):
         write_compact_dataset([sample], output_dir=tmp_path / "failed", dataset_id="failed")
@@ -338,6 +377,83 @@ def test_dataset_rejects_failed_and_nonproduction_solver_routes(tmp_path: Path) 
     sample["solver_route_id"] = "full3d_static_uniform_n1curl_p4_h10"
     with pytest.raises(ValueError, match="single-fidelity"):
         write_compact_dataset([sample], output_dir=tmp_path / "mixed", dataset_id="mixed")
+
+
+def test_formal_record_adapter_is_design_bound(tmp_path: Path) -> None:
+    formal = tmp_path / "task002_full3d_record.json"
+    execution = tmp_path / "execution.json"
+    point = {"height_nm": 120.0, "width_x_nm": 17.0, "grazing_deg": 5.25,
+             "azimuth_deg": 45.0, "model_id": PROD,
+             "solver_route_id": "full3d_static_uniform_n1curl_p5_h10"}
+    row = {
+        "design_id": "task002_p5_initial_training_v1", "design_index": 0,
+        "split": "train", "point_tuple": [120.0, 17.0, 5.25, 45.0],
+        "point_hash": design_point_hash(
+            design_id="task002_p5_initial_training_v1", design_index=0, point=point,
+        ), "source_sha": "e" * 40, "status": "measured_pass",
+    }
+    formal.write_text(json.dumps({
+        "source_sha": "e" * 40, "solver_route_id": point["solver_route_id"],
+        "output_profile": "compact_surrogate_record", "parameter_hash": "p",
+        "config_identity": {"config_sha256": "c"},
+        "planned_topology_identity": {"topology_element_hash": "t"},
+        "actual_runtime_topology_identity": {"actual": True},
+        "artifact_hashes": {}, "gates": {"all": True},
+        "parameters": {"geometry": {"height_nm": 120.0, "width_x_nm": 17.0},
+                       "configuration": {"grazing_deg": 5.25, "azimuth_deg": 45.0}},
+        "observables": {"R_total": 0.1, "T_total": 0.6, "A_balance": 0.3,
+                        "A_volume": 0.3, "mother_response": _mother_response()},
+    }))
+    execution.write_text(json.dumps({"watchdog": {
+        "status": "completed", "return_code": 0, "peak_swap_bytes": 0,
+        "cleanup_complete": True,
+    }}))
+    sample = formal_record_to_production_sample(
+        manifest_row=row, formal_record_path=formal, execution_path=execution,
+    )
+    assert sample["design_index"] == 0 and sample["source_sha"] == "e" * 40
+    row["point_tuple"][0] = 119.0
+    with pytest.raises(ValueError, match="tuple"):
+        formal_record_to_production_sample(
+            manifest_row=row, formal_record_path=formal, execution_path=execution,
+        )
+
+
+def test_independent_dataset_checker_requires_exact_96_plus_16(tmp_path: Path) -> None:
+    source_sha = "f" * 40
+    designs = freeze_all_designs(source_sha)
+    train_path = tmp_path / "training.json"
+    validation_path = tmp_path / "validation.json"
+    train_path.write_text(json.dumps(designs["training_design.json"]))
+    validation_path.write_text(json.dumps(designs["frozen_validation_design.json"]))
+    samples = []
+    for name, split in (("training_design.json", "train"),
+                        ("frozen_validation_design.json", "frozen_validation")):
+        design = designs[name]
+        for index, point in enumerate(design["points"]):
+            inputs = [float(point[key]) for key in (
+                "height_nm", "width_x_nm", "grazing_deg", "azimuth_deg",
+            )]
+            samples.append({
+                "sample_id": f"{split}-{index}", "design_id": design["design_id"],
+                "design_index": index, "point_hash": design_point_hash(
+                    design_id=design["design_id"], design_index=index, point=point,
+                ), "source_sha": source_sha, "source_dirty": False,
+                "status": "measured_pass", "split": split,
+                "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+                "inputs": inputs,
+                "aggregates": {"R_total": 0.1, "T_total": 0.6,
+                               "A_balance": 0.3, "A_volume": 0.3},
+                "mother_response": _mother_response(), **_passing_sample_gates(),
+            })
+    dataset = tmp_path / "dataset"
+    write_compact_dataset(samples, output_dir=dataset, dataset_id="exact-synthetic")
+    result = verify_exact_design_dataset(
+        dataset, training_design_path=train_path,
+        validation_design_path=validation_path, baseline_sha=source_sha,
+    )
+    assert result["training_count"] == 96
+    assert result["frozen_validation_count"] == 16
 
 
 def test_m3r_designs_are_deterministic_hash_bound_and_production_disjoint() -> None:
@@ -355,6 +471,23 @@ def test_m3r_designs_are_deterministic_hash_bound_and_production_disjoint() -> N
     assert intersections["validation_candidate"] == []
     for value in first.values():
         assert value["source_sha"] == source_sha
+
+
+def test_m4_design_rebind_changes_metadata_not_tuples(tmp_path: Path) -> None:
+    old_sha, new_sha = "1" * 40, "2" * 40
+    old = freeze_all_designs(old_sha)
+    source = tmp_path / "old"
+    rebound = tmp_path / "new"
+    source.mkdir()
+    for name, value in old.items():
+        (source / name).write_text(json.dumps(value))
+    record = rebind_frozen_designs(
+        source_dir=source, output_dir=rebound, baseline_sha=new_sha,
+    )
+    new = {name: json.loads((rebound / name).read_text()) for name in old}
+    assert record["pass"] and audit_rebind(old, new)["pass"]
+    assert new["training_design.json"]["source_sha"] == new_sha
+    assert old["training_design.json"]["points"] == new["training_design.json"]["points"]
 
 
 def test_case112_scaffold_contract() -> None:

@@ -1,0 +1,14 @@
+{
+  "schema_version": "task002.case117-config.v1",
+  "scope": "Review V5 M4P and M4 only",
+  "production_model_id": "S_PROD_FULL3D_STATIC_P5_H10",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10",
+  "output_profile": "compact_surrogate_record",
+  "training_count": 96,
+  "frozen_validation_count": 16,
+  "batch_size": 16,
+  "canary_role": "domain_corner",
+  "leakage_power_max": 1e-7,
+  "leakage_amplitude_max": 1e-4,
+  "prohibited": ["PCE", "GP", "validation_evaluation", "active_learning", "angle_DOE", "inversion"]
+}

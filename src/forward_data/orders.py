@@ -186,6 +186,26 @@ def extract_fixed_orders(
         }
         if not consistency["r_matches"] or not consistency["t_matches"]:
             raise ValueError(f"raw diffraction totals disagree with port power: {consistency}")
+    fixed_reflection = sum(
+        row["order_total_power"] for row in extracted
+        if row["port_side"] == "top" and row["order_total_power"] is not None
+    )
+    fixed_transmission = sum(
+        row["order_total_power"] for row in extracted
+        if row["port_side"] == "bottom" and row["order_total_power"] is not None
+    )
+    power_ledger = {
+        "fixed_n0_reflection_power_sum": fixed_reflection,
+        "fixed_n0_transmission_power_sum": fixed_transmission,
+        "n_nonzero_reflection_power_sum": n_nonzero_reflection,
+        "n_nonzero_transmission_power_sum": n_nonzero_transmission,
+        "raw_R_minus_fixed_n0_R_minus_n_nonzero_R": (
+            raw_r_total - fixed_reflection - n_nonzero_reflection
+        ),
+        "raw_T_minus_fixed_n0_T_minus_n_nonzero_T": (
+            raw_t_total - fixed_transmission - n_nonzero_transmission
+        ),
+    }
     return {
         "schema_version": schema_version,
         "incident_polarization": None if incident_polarization is None else incident_polarization.upper(),
@@ -204,10 +224,8 @@ def extract_fixed_orders(
         "raw_r_total": raw_r_total,
         "raw_t_total": raw_t_total,
         "port_power_consistency": consistency,
-        "fixed_window_power_sum": sum(
-            row["order_total_power"] for row in extracted
-            if row["order_total_power"] is not None
-        ),
+        "power_ledger": power_ledger,
+        "fixed_window_power_sum": fixed_reflection + fixed_transmission,
         "semantics": (
             "fixed grouped S/P mother-response window; not R/T total; wavevectors and "
             "boundary amplitudes use explicit real/imaginary JSON; power_carrying is "

@@ -79,6 +79,7 @@ SURROGATE_TASK_CASES = {
     "114_task002_solver_domain_robustness",
     "115_task002_full3d_hierarchy_qualification",
     "116_task002_single_fidelity_design",
+    "117_task002_p5_bulk_campaign",
 }
 
 RECORDED_CASES = {
