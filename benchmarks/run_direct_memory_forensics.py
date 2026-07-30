@@ -678,7 +678,7 @@ def _enrich_factor_inventory(
     factor_inventory: dict[str, Any] | None,
     augmented_matrix_stats: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
-    """Add transparent algebraic ratios without assigning MUMPS index semantics."""
+    """Add algebraic ratios from explicitly sourced factor telemetry."""
 
     if factor_inventory is None:
         return None

@@ -72,6 +72,11 @@ INTENTIONAL_CLASSIFICATIONS = {
         "reason": "Task035c replaces the p1-p4 cross-section shortcut with exact Basix quadrilateral entity DoFs and interval transforms for p1-p6; serial/MPI2/MPI8 constraints and the p6/h10 six-path PDE authorities were rerun",
         "requires_corresponding_pde_rerun": True,
     },
+    "src/modes/quadratic_beta_eigenproblem.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Task036 exposes the existing explicit Q(beta) residual calculation so the opt-in reciprocal construction can be checked with the same operator identity; the ordinary QEP solve remains algebraically unchanged and the Task036 Hybrid PDE anchors were rerun",
+        "requires_corresponding_pde_rerun": True,
+    },
     "src/modes/mode_classification.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
         "reason": "batched QEP overlap evaluation reuses MatMult actions and performs the final cancellation in extended precision; Hybrid QEP/PDE anchors must be rerun",
@@ -94,7 +99,7 @@ INTENTIONAL_CLASSIFICATIONS = {
     },
     "src/solvers/common_3d_solve.py": {
         "classification": "diagnostic only",
-        "reason": "PETSc CSR row-width telemetry is read-only and does not alter assembly, factorization, solve, or postprocess",
+        "reason": "PETSc CSR row-width telemetry and the documented negative MUMPS INFOG(9) million-entry correction are read-only and do not alter assembly, factorization, solve, or postprocess",
         "requires_corresponding_pde_rerun": False,
     },
     "src/solvers/dtn_port_3d.py": {

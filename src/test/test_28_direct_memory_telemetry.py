@@ -67,7 +67,15 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         ratios = enriched["derived_ratios"]
         self.assertEqual(ratios["factor_to_augmented_nnz_ratio"], 6.0)
         self.assertEqual(ratios["factor_to_augmented_estimated_storage_ratio"], 6.0)
-        self.assertIn("not inferred MUMPS", ratios["semantics"])
+        self.assertEqual(
+            ratios["factor_nnz_source"],
+            "petsc_factor_matrix_nnz_used_raw",
+        )
+        self.assertEqual(
+            ratios["factor_estimated_storage_source"],
+            "petsc_factor_matrix_estimate_raw",
+        )
+        self.assertIn("otherwise PETSc-reported nnz", ratios["semantics"])
 
     def test_worker_forces_full_solve_not_assemble_only(self) -> None:
         args = _parse_args(["--h-nm", "5", "--profile", "default"])
