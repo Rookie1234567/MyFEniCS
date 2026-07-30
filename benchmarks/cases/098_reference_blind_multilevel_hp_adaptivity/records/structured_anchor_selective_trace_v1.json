@@ -30913,8 +30913,16 @@
             "full3d_equivalent_active_fe_dofs": 1127502,
             "independent_trace_rows": 336960,
             "matrix": {
-              "factor_fill_over_matrix_used": -7.232021991437262,
-              "factor_nnz": -2017967296,
+              "factor_fill_over_matrix_used": 8.160347349109193,
+              "factor_nnz": 2277000000,
+              "factor_nnz_telemetry_correction": {
+                "corrected_offline_without_pde_rerun": true,
+                "corrected_value_resolution_entries": 1000000,
+                "mumps_infog_9_raw": -2277,
+                "mumps_negative_value_semantics": "absolute value in millions of factor entries",
+                "petsc_mat_info_factor_nnz_raw_int32_overflow": -2017967296,
+                "source_run_summary_sha256": "f19e827a9b75056f22c6b412b39535e7ddc7da3e5f77ad6a1429d51a19a60b49"
+              },
               "matrix_average_nnz_per_row": 827.8905767861381,
               "matrix_maximum_nnz_per_row": 4321,
               "matrix_nnz_allocated": 281158640,
@@ -33177,5 +33185,5 @@
       }
     }
   },
-  "payload_sha256": "caae589088be54e0f4d7cd6790c6c3567ae1c87d94df939bb11dbf519e14ffec"
+  "payload_sha256": "1e336fbd2990348c681a0b1a4b350ac227e11d0ca7264231d00b63920e641c7d"
 }

@@ -746,11 +746,16 @@ def stage4_local_h_refinement_plan_payload(
         Mapping[CellBoxKey, int] | None
     ) = None,
     selected_p6_face_geometry_keys: Sequence[Sequence[int]] = (),
+    zero_h_fixed_trace_anchor: bool = False,
 ) -> dict[str, Any]:
     """Return a JSON-ready, geometry-bound one-cycle local h/p plan."""
 
     trace_degree = int(trace_degree)
     cell_interior_degree = int(cell_interior_degree)
+    if not isinstance(zero_h_fixed_trace_anchor, bool):
+        raise ValueError(
+            "zero-h fixed-trace anchor opt-in must be a boolean"
+        )
     if trace_degree not in {4, 5, 6}:
         raise ValueError("local-h trace degree must be p4, p5, or p6")
     if cell_interior_degree != 6 or trace_degree > cell_interior_degree:
@@ -772,12 +777,32 @@ def stage4_local_h_refinement_plan_payload(
         raise ValueError(
             "selective p6 physical faces require a p5 trace base"
         )
+    if zero_h_fixed_trace_anchor:
+        if marked:
+            raise ValueError(
+                "zero-h fixed-trace anchor cannot mark h-refinement boxes"
+            )
+        if selected_faces:
+            raise ValueError(
+                "zero-h fixed-trace anchor and selective p6 faces are "
+                "mutually exclusive"
+            )
+        if trace_degree not in {5, 6}:
+            raise ValueError(
+                "zero-h fixed-trace anchor requires a p5 or p6 trace"
+            )
+        if cell_interior_degree_overrides is not None:
+            raise ValueError(
+                "zero-h fixed-trace anchor requires uniform p6 interiors"
+            )
     forest = _build_forest(
         cfg,
         comm_size=int(comm_size),
         marked_root_boxes=marked,
         maximum_level=1,
-        allow_no_refinement=bool(selected_faces),
+        allow_no_refinement=bool(
+            selected_faces or zero_h_fixed_trace_anchor
+        ),
     )
     base = _base_config_identity(cfg, comm_size=int(comm_size))
     degree_catalog = _cell_interior_degree_catalog(
@@ -806,8 +831,10 @@ def stage4_local_h_refinement_plan_payload(
         "provenance": dict(provenance),
         "ordinary_default_changed": False,
     }
-    if not marked:
+    if not marked and selected_faces:
         payload["zero_h_selective_trace_only"] = True
+    if zero_h_fixed_trace_anchor:
+        payload["zero_h_fixed_trace_anchor"] = True
     if cell_interior_degree_overrides is not None:
         payload["cell_interior_degrees"] = (
             _cell_interior_degree_rows(degree_catalog)
@@ -999,6 +1026,14 @@ def build_stage4_local_h_mesh_data(
             raise ValueError(
                 "zero-h selective-trace opt-in must be a boolean"
             )
+        zero_h_fixed_trace_anchor = payload.get(
+            "zero_h_fixed_trace_anchor",
+            False,
+        )
+        if not isinstance(zero_h_fixed_trace_anchor, bool):
+            raise ValueError(
+                "zero-h fixed-trace anchor opt-in must be a boolean"
+            )
         marked = tuple(
             _normalized_box((*row["lower"], *row["upper"]))
             for row in rows
@@ -1013,12 +1048,40 @@ def build_stage4_local_h_mesh_data(
             raise ValueError(
                 "zero-h selective-trace identity is inconsistent"
             )
+        if (
+            zero_h_fixed_trace_anchor
+            and (
+                marked
+                or selected_face_rows
+                or zero_h_selective_trace_only
+            )
+        ):
+            raise ValueError(
+                "zero-h fixed-trace anchor identity is inconsistent"
+            )
+        if (
+            zero_h_fixed_trace_anchor
+            and int(payload.get("trace_degree", -1)) not in {5, 6}
+        ):
+            raise ValueError(
+                "zero-h fixed-trace anchor requires a p5 or p6 trace"
+            )
+        if (
+            zero_h_fixed_trace_anchor
+            and "cell_interior_degrees" in payload
+        ):
+            raise ValueError(
+                "zero-h fixed-trace anchor requires uniform p6 interiors"
+            )
         forest = _build_forest(
             cfg,
             comm_size=comm.size,
             marked_root_boxes=marked,
             maximum_level=1,
-            allow_no_refinement=zero_h_selective_trace_only,
+            allow_no_refinement=bool(
+                zero_h_selective_trace_only
+                or zero_h_fixed_trace_anchor
+            ),
         )
         refinement_region_payload: dict[str, Any] = {
             "marked_root_boxes": [list(box) for box in marked]
@@ -1249,6 +1312,12 @@ def build_stage4_local_h_mesh_data(
             "zero_h_selective_trace_only": bool(
                 payload.get("zero_h_selective_trace_only", False)
             ),
+            "zero_h_fixed_trace_anchor": bool(
+                payload.get("zero_h_fixed_trace_anchor", False)
+            ),
+            "task035e_research_anchor": bool(
+                payload.get("zero_h_fixed_trace_anchor", False)
+            ),
             "root_cell_count": len(forest.root_boxes),
             "leaf_cell_count": len(forest.leaves),
             "hanging_patch_count": len(forest.hanging_faces),
@@ -1281,7 +1350,10 @@ def build_stage4_local_h_mesh_data(
             "phase_timings_seconds_max": timing["seconds_max"],
             "full3d_equivalent_dof_gate_limit": (
                 None
-                if payload.get("zero_h_selective_trace_only", False)
+                if (
+                    payload.get("zero_h_selective_trace_only", False)
+                    or payload.get("zero_h_fixed_trace_anchor", False)
+                )
                 else 90_000
             ),
             "ordinary_default_changed": False,
@@ -1521,6 +1593,8 @@ def build_stage4_local_h_reduction_authority(
             "adaptation_cycle_scope": (
                 "Task035e bidirectional p4/p5/p6 local-hp cycle"
                 if variable_trace
+                else "Task035e zero-h fixed-trace research anchor"
+                if context.audit["zero_h_fixed_trace_anchor"]
                 else "first p6-to-p5 cell-interior-only cycle"
             ),
             "local_variable_trace_implemented": bool(
@@ -1563,6 +1637,7 @@ def build_stage4_local_h_reduction_authority(
         context.audit["schema_version"]
         == "task035e.stage4-multilevel-local-h-mesh.v1"
         or context.audit["zero_h_selective_trace_only"] is True
+        or context.audit["zero_h_fixed_trace_anchor"] is True
     )
     advisory_dof_target = 90_000
     reduction_audit_seconds = perf_counter() - reduction_audit_started
@@ -1626,6 +1701,12 @@ def build_stage4_local_h_reduction_authority(
                 full3d_equivalent <= advisory_dof_target
             ),
             "variable_trace_from_cell_degrees": variable_trace,
+            "zero_h_fixed_trace_anchor": bool(
+                context.audit["zero_h_fixed_trace_anchor"]
+            ),
+            "task035e_research_anchor": bool(
+                context.audit["zero_h_fixed_trace_anchor"]
+            ),
             "hanging_or_floquet_slave_rows_globally_numbered": False,
             "ordinary_default_changed": False,
         }

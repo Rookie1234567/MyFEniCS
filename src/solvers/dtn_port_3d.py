@@ -72,6 +72,10 @@ class Stage4VariablePLiveObserverError(RuntimeError):
     """Collective failure from a controlled live variable-p observer."""
 
 
+class Stage4VariablePFactorizationObserverError(RuntimeError):
+    """Collective failure from a factorization-only variable-p observer."""
+
+
 @dataclass(frozen=True)
 class Stage4VariablePLiveView:
     """Callback-only borrowed view of one solved variable-p Stage-4 system.
@@ -99,6 +103,33 @@ class Stage4VariablePLiveView:
     port_operator_audit: Mapping[str, Any]
     full_active_residual: Mapping[str, Any]
     primal_solver_telemetry: Mapping[str, Any]
+
+
+@dataclass(frozen=True)
+class Stage4VariablePFactorizationView:
+    """Callback-only borrowed view after variable-p direct-factor setup.
+
+    This default-off research view exists only in
+    ``matrix_diagnostics_factorization_only`` mode.  A callback may allocate
+    its own vectors and use ``ksp.solveTranspose`` for matched collective
+    adjoint backsolves.  It must not modify, destroy, or retain ``A``, ``b``,
+    ``x_template``, ``ksp``, ``reduction``, or any other borrowed object.
+    No primal solve has run, so ``x_template`` is storage/layout authority
+    only and contains no physical solution.  The callback must execute the
+    same PETSc collectives in the same order on every rank; a rank-divergent
+    callback cannot be recovered by the collective error audit after return.
+    """
+
+    mesh: Any
+    mesh_data: Any
+    config: SimulationConfig3D
+    floquet_data: DoubleFloquet3DData
+    A: PETSc.Mat
+    b: PETSc.Vec
+    x_template: PETSc.Vec
+    ksp: PETSc.KSP
+    reduction: VariablePAssemblyTimeReduction
+    goal_context: Mapping[str, Any]
 
 
 def _readonly_goal_context(
@@ -487,6 +518,140 @@ def _invoke_collective_variable_p_live_observer(
         raise Stage4VariablePLiveObserverError(
             "variable-p live observer failed collectively after all ranks "
             "left the callback: "
+            + json.dumps(observer_errors, sort_keys=True)
+        )
+
+
+def _invoke_collective_variable_p_factorization_observer(
+    observer: Callable[[Stage4VariablePFactorizationView], None],
+    view: Stage4VariablePFactorizationView,
+    communicator: MPI.Intracomm,
+) -> None:
+    """Invoke a factor-only callback while protecting all PETSc borrows."""
+
+    protected_objects: dict[str, Any] = {}
+    protected_states: dict[str, int] = {}
+    ksp_configuration: tuple[Any, ...] | None = None
+    preflight_errors: list[dict[str, Any]] = []
+    try:
+        protected_objects = {
+            "matrix": view.A,
+            "rhs": view.b,
+            "solution_template": view.x_template,
+        }
+        protected_states = {
+            name: int(petsc_object.stateGet())
+            for name, petsc_object in protected_objects.items()
+        }
+        ksp_configuration = _ksp_configuration_signature(view.ksp)
+        rows, columns = view.A.getSize()
+        if int(rows) != int(view.b.getSize()):
+            raise ValueError("factor observer matrix/RHS sizes do not match")
+        if int(columns) != int(view.x_template.getSize()):
+            raise ValueError(
+                "factor observer matrix/solution-template sizes do not match"
+            )
+        if (
+            view.goal_context.get("num_fem_dofs_after_mpc") is None
+            or view.goal_context.get("modes") is None
+            or view.goal_context.get("incident_projections") is None
+        ):
+            raise ValueError(
+                "factor observer goal context is missing n_fe, modes, "
+                "or incident projections"
+            )
+    except Exception as exc:
+        preflight_errors.append(
+            {
+                "rank": int(communicator.rank),
+                "phase": "factor_callback_preflight",
+                "exception_type": type(exc).__name__,
+                "message": str(exc),
+            }
+        )
+    collective_preflight_errors = [
+        error
+        for rank_errors in communicator.allgather(preflight_errors)
+        for error in rank_errors
+    ]
+    if collective_preflight_errors:
+        raise Stage4VariablePFactorizationObserverError(
+            "variable-p factorization observer preflight failed "
+            "collectively: "
+            + json.dumps(collective_preflight_errors, sort_keys=True)
+        )
+    if ksp_configuration is None:
+        raise AssertionError(
+            "collective factor callback preflight lost KSP identity"
+        )
+
+    local_errors: list[dict[str, Any]] = []
+    try:
+        observer(view)
+    except Exception as exc:
+        local_errors.append(
+            {
+                "rank": int(communicator.rank),
+                "phase": "factor_callback",
+                "exception_type": type(exc).__name__,
+                "message": str(exc),
+            }
+        )
+    for name, petsc_object in protected_objects.items():
+        try:
+            observed_state = int(petsc_object.stateGet())
+        except Exception as exc:
+            local_errors.append(
+                {
+                    "rank": int(communicator.rank),
+                    "phase": f"borrowed_{name}_state_audit",
+                    "exception_type": type(exc).__name__,
+                    "message": str(exc),
+                }
+            )
+            continue
+        if observed_state != protected_states[name]:
+            local_errors.append(
+                {
+                    "rank": int(communicator.rank),
+                    "phase": f"borrowed_{name}_state_audit",
+                    "exception_type": "BorrowedObjectMutation",
+                    "message": (
+                        f"PETSc state changed from "
+                        f"{protected_states[name]} to {observed_state}"
+                    ),
+                }
+            )
+    try:
+        observed_ksp_configuration = _ksp_configuration_signature(view.ksp)
+    except Exception as exc:
+        local_errors.append(
+            {
+                "rank": int(communicator.rank),
+                "phase": "borrowed_ksp_configuration_audit",
+                "exception_type": type(exc).__name__,
+                "message": str(exc),
+            }
+        )
+    else:
+        if observed_ksp_configuration != ksp_configuration:
+            local_errors.append(
+                {
+                    "rank": int(communicator.rank),
+                    "phase": "borrowed_ksp_configuration_audit",
+                    "exception_type": "BorrowedObjectMutation",
+                    "message": "KSP operator/options configuration changed",
+                }
+            )
+    observer_errors = [
+        error
+        for rank_errors in communicator.allgather(local_errors)
+        for error in rank_errors
+    ]
+    if observer_errors:
+        raise Stage4VariablePFactorizationObserverError(
+            "variable-p factorization observer failed collectively after "
+            "all ranks left the callback: "
             + json.dumps(observer_errors, sort_keys=True)
         )
 
@@ -2044,6 +2209,9 @@ def _solve_stage4_dtn_port_total_field_impl(
     variable_p_live_observer: (
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
+    variable_p_factorization_observer: (
+        Callable[[Stage4VariablePFactorizationView], None] | None
+    ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
@@ -2052,6 +2220,9 @@ def _solve_stage4_dtn_port_total_field_impl(
     ``variable_p_live_observer`` is a default-off controlled research hook.
     It runs after primal telemetry and residuals are frozen but before the
     matrix, factor, and recovered active vectors leave this solver.
+    ``variable_p_factorization_observer`` is a separate default-off hook that
+    may run matched transpose backsolves after KSPSetUp in factorization-only
+    mode; no primal solve or physical field is produced in that path.
     Local Schur matrices are retained only under the separate explicit
     ``variable_p_retain_local_schur_for_research`` opt-in.
     """
@@ -2064,6 +2235,9 @@ def _solve_stage4_dtn_port_total_field_impl(
         qualify_stage4_full3d_assembly_backend(
             cfg,
             assembly_backend_audit,
+            allow_variable_p_factorization_only_research=bool(
+                variable_p_factorization_observer is not None
+            ),
         )
     )
     assembly_backend_fields = _assembly_backend_summary_fields(
@@ -2092,10 +2266,26 @@ def _solve_stage4_dtn_port_total_field_impl(
         assembly_backend_audit["actual"]
         == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
     )
+    if (
+        variable_p_live_observer is not None
+        and variable_p_factorization_observer is not None
+    ):
+        raise ValueError(
+            "the complete-solve and factorization-only variable-p "
+            "observers cannot be enabled together"
+        )
     if variable_p_live_observer is not None and not variable_p_backend:
         raise ValueError(
             "the variable-p live observer requires the exact-sequence "
             "assembly-time variable-p backend"
+        )
+    if (
+        variable_p_factorization_observer is not None
+        and not variable_p_backend
+    ):
+        raise ValueError(
+            "the variable-p factorization observer requires the exact-"
+            "sequence assembly-time variable-p backend"
         )
     if variable_p_live_observer is not None and (
         cfg.matrix_diagnostics_assemble_only
@@ -2103,6 +2293,14 @@ def _solve_stage4_dtn_port_total_field_impl(
     ):
         raise ValueError(
             "the variable-p live observer requires a complete solve"
+        )
+    if variable_p_factorization_observer is not None and (
+        cfg.matrix_diagnostics_assemble_only
+        or not cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError(
+            "the variable-p factorization observer requires "
+            "matrix_diagnostics_factorization_only=True"
         )
     if (
         variable_p_retain_local_schur_for_research
@@ -2134,7 +2332,10 @@ def _solve_stage4_dtn_port_total_field_impl(
     if cell_static_condensation and (
         cfg.matrix_diagnostics_assemble_only
         or cfg.matrix_diagnostics_factorization_only
-    ) and not resource_only_static_assembly:
+    ) and not (
+        resource_only_static_assembly
+        or variable_p_factorization_observer is not None
+    ):
         raise ValueError(
             "Task035b cell static condensation requires a complete solve; "
             "assemble-only/factorization-only diagnostics are unsupported "
@@ -3439,6 +3640,14 @@ def _solve_stage4_dtn_port_total_field_impl(
     if cfg.matrix_diagnostics_factorization_only:
         timing_details["stage4_dtn_factorization_seconds"] = setup_and_solve_seconds
         E_total = fem.Function(floquet_data.mpc.function_space, name="E_total")
+        factor_goal_context = {
+            "num_fem_dofs_after_mpc": int(n_fe),
+            "modes": modes,
+            "incident_projections": incident_projections,
+            "normalization": (
+                "finite-port outgoing modal power / incident power"
+            ),
+        }
         solver_info = {
             "solver_backend": "PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
             "assemble_only": False,
@@ -3455,6 +3664,10 @@ def _solve_stage4_dtn_port_total_field_impl(
             "actual_ksp_type": ksp.getType(),
             "actual_pc_type": ksp.getPC().getType(),
             "actual_pc_factor_solver_type": None,
+            "variable_p_factorization_observer_requested": bool(
+                variable_p_factorization_observer is not None
+            ),
+            "variable_p_factorization_observer_invoked": False,
             "dtn_base_matrix_stats": base_matrix_stats,
             "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
             "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
@@ -3469,6 +3682,104 @@ def _solve_stage4_dtn_port_total_field_impl(
             )
         except Exception:
             solver_info["actual_pc_factor_solver_type"] = None
+        if variable_p_factorization_observer is not None:
+            factor_view = None
+            local_view_errors: list[dict[str, Any]] = []
+            try:
+                if variable_p_reduction is None:
+                    raise RuntimeError(
+                        "requested variable-p factorization observer lost "
+                        "its exact-sequence reduction"
+                    )
+                factor_view = Stage4VariablePFactorizationView(
+                    mesh=mesh_data.mesh,
+                    mesh_data=mesh_data,
+                    config=cfg,
+                    floquet_data=floquet_data,
+                    A=solve_A,
+                    b=solve_b,
+                    x_template=solve_x,
+                    ksp=ksp,
+                    reduction=variable_p_reduction,
+                    goal_context=_readonly_goal_context(
+                        factor_goal_context
+                    ),
+                )
+            except Exception as exc:
+                local_view_errors.append(
+                    {
+                        "rank": int(comm.rank),
+                        "phase": "factor_live_view_preflight",
+                        "exception_type": type(exc).__name__,
+                        "message": str(exc),
+                    }
+                )
+            collective_view_errors = [
+                error
+                for rank_errors in comm.allgather(local_view_errors)
+                for error in rank_errors
+            ]
+            try:
+                if collective_view_errors:
+                    raise Stage4VariablePFactorizationObserverError(
+                        "variable-p factorization live-view preflight "
+                        "failed collectively: "
+                        + json.dumps(
+                            collective_view_errors,
+                            sort_keys=True,
+                        )
+                    )
+                if factor_view is None:
+                    raise AssertionError(
+                        "collective factor live-view preflight lost its view"
+                    )
+                _invoke_collective_variable_p_factorization_observer(
+                    variable_p_factorization_observer,
+                    factor_view,
+                    comm,
+                )
+            except Exception as exc:
+                try:
+                    _write_progress_event(
+                        out_dir,
+                        comm,
+                        stage="variable_p_factorization_observer",
+                        status="failed",
+                        started=started,
+                        dofs=int(
+                            V.dofmap.index_map.size_global
+                            * V.dofmap.index_map_bs
+                        ),
+                        constraints=floquet_data.num_constraints,
+                        matrix_stats=(
+                            augmented_matrix_stats_after_finalize
+                        ),
+                        petsc_options=petsc_options,
+                        extra={
+                            "exception_type": type(exc).__name__,
+                            "message": str(exc),
+                            "primal_solve_executed": False,
+                            "ordinary_default_changed": False,
+                        },
+                    )
+                except Exception:
+                    pass
+                for petsc_object in (
+                    ksp,
+                    solve_x,
+                    solve_b,
+                    solve_A,
+                ):
+                    try:
+                        petsc_object.destroy()
+                    except Exception:
+                        pass
+                raise
+            finally:
+                factor_view = None
+            solver_info[
+                "variable_p_factorization_observer_invoked"
+            ] = True
         return {
             "E_total": E_total,
             "A": A_aug,
@@ -4096,6 +4407,9 @@ def solve_stage4_dtn_port_total_field(
     variable_p_live_observer: (
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
+    variable_p_factorization_observer: (
+        Callable[[Stage4VariablePFactorizationView], None] | None
+    ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
@@ -4110,13 +4424,14 @@ def solve_stage4_dtn_port_total_field(
     observer_flags = comm.allgather(
         (
             variable_p_live_observer is not None,
+            variable_p_factorization_observer is not None,
             bool(variable_p_retain_local_schur_for_research),
         )
     )
     if len(set(observer_flags)) != 1:
         raise ValueError(
-            "the variable-p live observer must be enabled on every MPI rank "
-            "and research Schur retention flags must match"
+            "variable-p live/factorization observers must be enabled on "
+            "every MPI rank and research Schur retention flags must match"
         )
     recovered_cleanup: list[VariablePRecoveredSolution] = []
     implementation_failed = False
@@ -4133,6 +4448,9 @@ def solve_stage4_dtn_port_total_field(
             log=log,
             started=started,
             variable_p_live_observer=variable_p_live_observer,
+            variable_p_factorization_observer=(
+                variable_p_factorization_observer
+            ),
             variable_p_retain_local_schur_for_research=(
                 variable_p_retain_local_schur_for_research
             ),

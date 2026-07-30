@@ -427,6 +427,73 @@ def test_selective_trace_only_plan_preserves_the_root_mesh() -> None:
     assert authority.audit["active_fe_dof_gate_pass"] is True
 
 
+@pytest.mark.parametrize("trace_degree", [5, 6])
+def test_zero_h_fixed_trace_anchor_preserves_root_mesh_and_p6_interior(
+    trace_degree: int,
+) -> None:
+    cfg = target_stage4_config(degree=6, h_nm=100.0)
+    payload = stage4_local_h_refinement_plan_payload(
+        cfg,
+        (),
+        comm_size=MPI.COMM_WORLD.size,
+        trace_degree=trace_degree,
+        cell_interior_degree=6,
+        provenance={
+            "purpose": "Task035e zero-h fixed-trace research anchor",
+            "accuracy_credit": False,
+            "ordinary_default_changed": False,
+        },
+        zero_h_fixed_trace_anchor=True,
+    )
+    assert payload["zero_h_fixed_trace_anchor"] is True
+    assert "zero_h_selective_trace_only" not in payload
+    assert payload["marked_root_boxes"] == []
+    assert "selected_p6_face_geometry_keys" not in payload
+    path = _shared_plan_path(
+        payload,
+        name=(
+            f"h100-zero-h-fixed-p{trace_degree}-trace-"
+            f"mpi{MPI.COMM_WORLD.size}"
+        ),
+    )
+    mesh_data = build_stage4_local_h_mesh_data(
+        cfg,
+        path,
+        comm=MPI.COMM_WORLD,
+    )
+    context = mesh_data.local_h_context
+    assert isinstance(context, Stage4LocalHContext)
+    authority = build_stage4_local_h_reduction_authority(
+        context,
+        phase_x=np.exp(0.2j),
+        phase_y=np.exp(-0.3j),
+    )
+
+    assert len(context.forest.leaves) == len(context.forest.root_boxes)
+    assert context.audit["maximum_level"] == 0
+    assert context.audit["hanging_patch_count"] == 0
+    assert context.audit["zero_h_fixed_trace_anchor"] is True
+    assert context.audit["zero_h_selective_trace_only"] is False
+    assert context.audit["task035e_research_anchor"] is True
+    assert context.audit["full3d_equivalent_dof_gate_limit"] is None
+    assert context.audit["cell_interior_degree_counts"] == {
+        "p4": 0,
+        "p5": 0,
+        "p6": len(context.forest.leaves),
+    }
+    assert authority.degree_plan.audit["trace_degree_values"] == [
+        trace_degree
+    ]
+    assert authority.degree_plan.audit["adaptation_cycle_scope"] == (
+        "Task035e zero-h fixed-trace research anchor"
+    )
+    assert authority.audit["zero_h_fixed_trace_anchor"] is True
+    assert authority.audit["task035e_research_anchor"] is True
+    assert authority.audit["active_fe_dof_hard_gate_active"] is False
+    assert authority.audit["active_fe_dof_gate_limit"] is None
+    assert authority.audit["active_fe_dof_gate_pass"] is True
+
+
 def test_empty_local_h_plan_without_selective_trace_remains_rejected() -> None:
     cfg = target_stage4_config(degree=6, h_nm=100.0)
     with pytest.raises(
@@ -444,6 +511,89 @@ def test_empty_local_h_plan_without_selective_trace_remains_rejected() -> None:
                 "accuracy_credit": False,
                 "ordinary_default_changed": False,
             },
+        )
+
+
+def test_zero_h_fixed_trace_anchor_fails_closed_on_inconsistent_scope() -> None:
+    cfg = target_stage4_config(degree=6, h_nm=100.0)
+    provenance = {
+        "purpose": "Task035e zero-h anchor negative fixture",
+        "accuracy_credit": False,
+        "ordinary_default_changed": False,
+    }
+    marked = ((0.0, 0.0, 120.0, 16.5, 12.5, 130.0),)
+
+    with pytest.raises(
+        ValueError,
+        match="cannot mark h-refinement boxes",
+    ):
+        stage4_local_h_refinement_plan_payload(
+            cfg,
+            marked,
+            comm_size=MPI.COMM_WORLD.size,
+            trace_degree=5,
+            cell_interior_degree=6,
+            provenance=provenance,
+            zero_h_fixed_trace_anchor=True,
+        )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        stage4_local_h_refinement_plan_payload(
+            cfg,
+            (),
+            comm_size=MPI.COMM_WORLD.size,
+            trace_degree=5,
+            cell_interior_degree=6,
+            provenance=provenance,
+            selected_p6_face_geometry_keys=((0, 0, 0, 0, 0, 0),),
+            zero_h_fixed_trace_anchor=True,
+        )
+    with pytest.raises(ValueError, match="requires a p5 or p6 trace"):
+        stage4_local_h_refinement_plan_payload(
+            cfg,
+            (),
+            comm_size=MPI.COMM_WORLD.size,
+            trace_degree=4,
+            cell_interior_degree=6,
+            provenance=provenance,
+            zero_h_fixed_trace_anchor=True,
+        )
+    with pytest.raises(ValueError, match="uniform p6 interiors"):
+        stage4_local_h_refinement_plan_payload(
+            cfg,
+            (),
+            comm_size=MPI.COMM_WORLD.size,
+            trace_degree=5,
+            cell_interior_degree=6,
+            provenance=provenance,
+            cell_interior_degree_overrides={},
+            zero_h_fixed_trace_anchor=True,
+        )
+
+    payload = stage4_local_h_refinement_plan_payload(
+        cfg,
+        (),
+        comm_size=MPI.COMM_WORLD.size,
+        trace_degree=5,
+        cell_interior_degree=6,
+        provenance=provenance,
+        zero_h_fixed_trace_anchor=True,
+    )
+    payload["zero_h_selective_trace_only"] = True
+    path = _shared_plan_path(
+        payload,
+        name=(
+            "h100-zero-h-fixed-trace-inconsistent-"
+            f"mpi{MPI.COMM_WORLD.size}"
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match="selective-trace identity is inconsistent",
+    ):
+        build_stage4_local_h_mesh_data(
+            cfg,
+            path,
+            comm=MPI.COMM_WORLD,
         )
 
 

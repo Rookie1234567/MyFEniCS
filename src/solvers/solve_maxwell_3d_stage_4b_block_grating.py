@@ -15,6 +15,7 @@ def run_stage4b_block_grating_3d_case(
     *,
     solution_observer=None,
     variable_p_live_observer=None,
+    variable_p_factorization_observer=None,
     variable_p_retain_local_schur_for_research: bool = False,
     mesh_data_override=None,
 ) -> dict[str, object]:
@@ -43,6 +44,9 @@ def run_stage4b_block_grating_3d_case(
         apply_strong_boundary_bc=False,
         solution_observer=solution_observer,
         variable_p_live_observer=variable_p_live_observer,
+        variable_p_factorization_observer=(
+            variable_p_factorization_observer
+        ),
         variable_p_retain_local_schur_for_research=(
             variable_p_retain_local_schur_for_research
         ),

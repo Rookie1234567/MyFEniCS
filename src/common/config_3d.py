@@ -784,6 +784,8 @@ def resolve_stage4_full3d_assembly_backend(
 def qualify_stage4_full3d_assembly_backend(
     cfg: SimulationConfig3D,
     audit: dict[str, object] | None = None,
+    *,
+    allow_variable_p_factorization_only_research: bool = False,
 ) -> dict[str, object]:
     """Fail closed when the assembly-time backend leaves its reviewed scope."""
 
@@ -894,7 +896,14 @@ def qualify_stage4_full3d_assembly_backend(
     elif (
         cfg.matrix_diagnostics_assemble_unconstrained
         or cfg.matrix_diagnostics_assemble_only
-        or cfg.matrix_diagnostics_factorization_only
+        or (
+            cfg.matrix_diagnostics_factorization_only
+            and not (
+                allow_variable_p_factorization_only_research
+                and actual
+                == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+            )
+        )
     ):
         failures.append(
             "a complete direct solve with field recovery and explicit residual "
@@ -944,6 +953,11 @@ def qualify_stage4_full3d_assembly_backend(
         "status": (
             "qualified_resource_only"
             if resource_only_assembly
+            else "qualified_factorization_only_research"
+            if (
+                allow_variable_p_factorization_only_research
+                and cfg.matrix_diagnostics_factorization_only
+            )
             else "qualified"
         ),
         "qualified_scope": True,
@@ -957,6 +971,10 @@ def qualify_stage4_full3d_assembly_backend(
         ),
         "actual": actual,
         "element_contract": element_contract,
+        "factorization_only_research": bool(
+            allow_variable_p_factorization_only_research
+            and cfg.matrix_diagnostics_factorization_only
+        ),
         "raw_tensor_cache": {
             "enabled": raw_tensor_cache_enabled,
             "ordinary_default_changed": False,
@@ -980,6 +998,11 @@ def qualify_stage4_full3d_assembly_backend(
             (
                 "assembly_only_resource_authority_no_physics_credit"
                 if resource_only_assembly
+                else "factorization_only_research_adjoint_support_no_primal"
+                if (
+                    allow_variable_p_factorization_only_research
+                    and cfg.matrix_diagnostics_factorization_only
+                )
                 else "full_recovery_and_explicit_residual"
             ),
         ),

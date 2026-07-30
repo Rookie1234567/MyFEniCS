@@ -78,6 +78,7 @@ from .common_3d_utils import (
     _write_progress_event,
 )
 from .dtn_port_3d import (
+    Stage4VariablePFactorizationView,
     Stage4VariablePLiveView,
     solve_stage4_dtn_port_total_field,
 )
@@ -696,6 +697,9 @@ def run_prepared_3d_case_flow(
     variable_p_live_observer: (
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
+    variable_p_factorization_observer: (
+        Callable[[Stage4VariablePFactorizationView], None] | None
+    ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
@@ -710,6 +714,9 @@ def run_prepared_3d_case_flow(
     hook invoked after primal solver telemetry is frozen but before the direct
     factor and recovered active vectors are released.  Its PETSc objects are
     borrowed for the callback lifetime only.
+    ``variable_p_factorization_observer`` is a mutually exclusive default-off
+    hook for transpose backsolves after factorization-only KSPSetUp.  It never
+    turns the diagnostic path into a primal solve.
     ``variable_p_retain_local_schur_for_research`` is an independent opt-in
     lease for pre-constraint cell Schur matrices during that callback only.
     ``mesh_data_override`` is a default-off research hook for solving on an
@@ -724,18 +731,27 @@ def run_prepared_3d_case_flow(
     live_observer_flags = comm.allgather(
         (
             variable_p_live_observer is not None,
+            variable_p_factorization_observer is not None,
             bool(variable_p_retain_local_schur_for_research),
         )
     )
     if len(set(live_observer_flags)) != 1:
         raise ValueError(
-            "the variable-p live observer must be enabled on every MPI rank "
-            "and research Schur retention flags must match"
+            "variable-p live/factorization observers must be enabled on "
+            "every MPI rank and research Schur retention flags must match"
         )
     if cfg.stage_case != expected_stage_case:
         raise ValueError(f"This solver accepts only stage_case={expected_stage_case!r}.")
     if not np.issubdtype(default_scalar_type, np.complexfloating):
         raise RuntimeError("The 3D Maxwell solver requires complex-mode DOLFINx/PETSc.")
+    if (
+        variable_p_live_observer is not None
+        and variable_p_factorization_observer is not None
+    ):
+        raise ValueError(
+            "the complete-solve and factorization-only variable-p "
+            "observers cannot be enabled together"
+        )
     if variable_p_live_observer is not None:
         local_validation_errors: list[str] = []
         try:
@@ -783,6 +799,50 @@ def run_prepared_3d_case_flow(
         raise ValueError(
             "research Schur retention requires a variable-p live observer"
         )
+    if variable_p_factorization_observer is not None:
+        local_validation_errors = []
+        try:
+            if solution_observer is not None:
+                raise ValueError(
+                    "the late solution observer and variable-p "
+                    "factorization observer cannot be enabled together"
+                )
+            if not solve_stage4_dtn_port:
+                raise ValueError(
+                    "the variable-p factorization observer requires the "
+                    "Stage-4 DtN flow"
+                )
+            backend = resolve_stage4_full3d_assembly_backend(cfg)
+            if (
+                backend["actual"]
+                != ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+            ):
+                raise ValueError(
+                    "the variable-p factorization observer requires the "
+                    "exact-sequence assembly-time variable-p backend"
+                )
+            if (
+                cfg.matrix_diagnostics_assemble_only
+                or not cfg.matrix_diagnostics_factorization_only
+            ):
+                raise ValueError(
+                    "the variable-p factorization observer requires "
+                    "matrix_diagnostics_factorization_only=True"
+                )
+        except Exception as exc:
+            local_validation_errors.append(
+                f"rank {comm.rank}: {type(exc).__name__}: {exc}"
+            )
+        collective_validation_errors = [
+            error
+            for rank_errors in comm.allgather(local_validation_errors)
+            for error in rank_errors
+        ]
+        if collective_validation_errors:
+            raise ValueError(
+                "variable-p factorization observer validation failed: "
+                + "; ".join(collective_validation_errors)
+            )
 
     out_dir.mkdir(parents=True, exist_ok=True)
     log_lines: list[str] = []
@@ -1150,6 +1210,9 @@ def run_prepared_3d_case_flow(
                 log=log,
                 started=started,
                 variable_p_live_observer=variable_p_live_observer,
+                variable_p_factorization_observer=(
+                    variable_p_factorization_observer
+                ),
                 variable_p_retain_local_schur_for_research=(
                     variable_p_retain_local_schur_for_research
                 ),
@@ -1415,6 +1478,12 @@ def run_prepared_3d_case_flow(
         dtn_solver_info is not None
         and dtn_solver_info.get("variable_p_live_observer_invoked")
     )
+    variable_p_factorization_observer_invoked = bool(
+        dtn_solver_info is not None
+        and dtn_solver_info.get(
+            "variable_p_factorization_observer_invoked"
+        )
+    )
     if variable_p_live_observer_invoked:
         _write_progress_event(
             out_dir,
@@ -1429,6 +1498,24 @@ def run_prepared_3d_case_flow(
             extra={
                 "callback_lifetime": "borrowed_live_objects_only",
                 "recovered_active_vectors_released_after_callback": True,
+                "ordinary_default_changed": False,
+            },
+        )
+    if variable_p_factorization_observer_invoked:
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="variable_p_factorization_observer",
+            status="end",
+            started=started,
+            dofs=num_dofs,
+            constraints=floquet_data.num_constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={
+                "callback_lifetime": "borrowed_live_objects_only",
+                "primal_solve_executed": False,
+                "transpose_backsolves_allowed": True,
                 "ordinary_default_changed": False,
             },
         )
@@ -1921,6 +2008,19 @@ def run_prepared_3d_case_flow(
                     else dtn_solver_info.get(
                         "variable_p_local_schur_release"
                     )
+                ),
+            }
+        )
+    if variable_p_factorization_observer is not None:
+        summary.update(
+            {
+                "variable_p_factorization_observer_requested": True,
+                "variable_p_factorization_observer_invoked": (
+                    variable_p_factorization_observer_invoked
+                ),
+                "variable_p_factorization_observer_contract": (
+                    "controlled_collective_factorization_callback_"
+                    "borrowed_objects_no_primal"
                 ),
             }
         )

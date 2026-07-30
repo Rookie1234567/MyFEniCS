@@ -10,6 +10,8 @@ import pytest
 
 from src.common.config_3d import (
     ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
+    qualify_stage4_full3d_assembly_backend,
+    resolve_stage4_full3d_assembly_backend,
     target_stage4_config,
 )
 from src.solvers import dtn_port_3d
@@ -17,8 +19,11 @@ from src.solvers.hcurl_variable_p_reduction import (
     VariablePRecoveredSolution,
 )
 from src.solvers.dtn_port_3d import (
+    Stage4VariablePFactorizationObserverError,
+    Stage4VariablePFactorizationView,
     Stage4VariablePLiveObserverError,
     _deep_readonly_copy,
+    _invoke_collective_variable_p_factorization_observer,
     _invoke_collective_variable_p_live_observer,
     _readonly_goal_context,
     _variable_p_port_operator_audit,
@@ -27,6 +32,7 @@ from src.common.modes_3d import outgoing_port_modes_3d
 from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
     run_stage4b_block_grating_3d_case,
 )
+from src.solvers import solve_maxwell_3d_stage_4b_block_grating
 
 
 def _vector() -> PETSc.Vec:
@@ -64,6 +70,53 @@ def _borrowed_view(recovered: VariablePRecoveredSolution):
         recovered=recovered,
     )
     return view, (solver, field_vector, solution, rhs, matrix)
+
+
+def _factorization_view():
+    matrix = PETSc.Mat().createAIJ(
+        size=(3, 3),
+        nnz=1,
+        comm=MPI.COMM_WORLD,
+    )
+    start, stop = matrix.getOwnershipRange()
+    for row in range(start, stop):
+        matrix.setValue(row, row, PETSc.ScalarType(2.0))
+    matrix.assemble()
+    rhs = _vector()
+    rhs.set(PETSc.ScalarType(1.0))
+    rhs.assemble()
+    solution_template = _vector()
+    solver = PETSc.KSP().create(MPI.COMM_WORLD)
+    solver.setType(PETSc.KSP.Type.PREONLY)
+    solver.getPC().setType(PETSc.PC.Type.LU)
+    solver.getPC().setFactorSolverType("mumps")
+    solver.setOperators(matrix)
+    solver.setUp()
+    config = target_stage4_config(degree=2, h_nm=50.0)
+    modes = outgoing_port_modes_3d(config)
+    view = Stage4VariablePFactorizationView(
+        mesh=object(),
+        mesh_data=object(),
+        config=config,
+        floquet_data=object(),
+        A=matrix,
+        b=rhs,
+        x_template=solution_template,
+        ksp=solver,
+        reduction=object(),
+        goal_context=_readonly_goal_context(
+            {
+                "num_fem_dofs_after_mpc": 3,
+                "modes": modes,
+                "incident_projections": np.zeros(
+                    len(modes),
+                    dtype=np.complex128,
+                ),
+                "normalization": "fixture",
+            }
+        ),
+    )
+    return view, (solver, solution_template, rhs, matrix)
 
 
 def test_recovered_solution_owns_idempotent_vector_lifecycle() -> None:
@@ -272,6 +325,71 @@ def test_collective_callback_rejects_borrowed_solution_mutation() -> None:
             petsc_object.destroy()
 
 
+def test_factorization_observer_allows_owned_transpose_backsolve() -> None:
+    view, petsc_objects = _factorization_view()
+    matrix_state = int(view.A.stateGet())
+    rhs_state = int(view.b.stateGet())
+    template_state = int(view.x_template.stateGet())
+
+    def transpose_backsolve(borrowed_view) -> None:
+        transpose_rhs = borrowed_view.b.copy()
+        transpose_solution = borrowed_view.x_template.duplicate()
+        transpose_residual = borrowed_view.b.duplicate()
+        try:
+            borrowed_view.ksp.solveTranspose(
+                transpose_rhs,
+                transpose_solution,
+            )
+            assert borrowed_view.ksp.getConvergedReason() > 0
+            borrowed_view.A.multTranspose(
+                transpose_solution,
+                transpose_residual,
+            )
+            transpose_residual.axpy(
+                PETSc.ScalarType(-1.0),
+                transpose_rhs,
+            )
+            assert transpose_residual.norm() <= 1.0e-13
+        finally:
+            transpose_residual.destroy()
+            transpose_solution.destroy()
+            transpose_rhs.destroy()
+
+    try:
+        _invoke_collective_variable_p_factorization_observer(
+            transpose_backsolve,
+            view,
+            MPI.COMM_WORLD,
+        )
+        assert int(view.A.stateGet()) == matrix_state
+        assert int(view.b.stateGet()) == rhs_state
+        assert int(view.x_template.stateGet()) == template_state
+    finally:
+        for petsc_object in petsc_objects:
+            petsc_object.destroy()
+
+
+def test_factorization_observer_rejects_borrowed_template_mutation() -> None:
+    view, petsc_objects = _factorization_view()
+
+    def mutate_template(borrowed_view) -> None:
+        borrowed_view.x_template.set(PETSc.ScalarType(2.0))
+
+    try:
+        with pytest.raises(
+            Stage4VariablePFactorizationObserverError,
+            match="BorrowedObjectMutation",
+        ):
+            _invoke_collective_variable_p_factorization_observer(
+                mutate_template,
+                view,
+                MPI.COMM_WORLD,
+            )
+    finally:
+        for petsc_object in petsc_objects:
+            petsc_object.destroy()
+
+
 @pytest.mark.parametrize("implementation_raises", (False, True))
 def test_dtn_wrapper_closes_recovery_on_every_exit(
     monkeypatch,
@@ -323,6 +441,41 @@ def test_dtn_wrapper_closes_recovery_on_every_exit(
     assert recovered.active_full_rhs is None
 
 
+def test_dtn_wrapper_propagates_factorization_observer(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    captured = {}
+
+    def observer(_view) -> None:
+        return None
+
+    def fake_impl(**kwargs):
+        captured.update(kwargs)
+        return {"status": "fixture"}
+
+    monkeypatch.setattr(
+        dtn_port_3d,
+        "_solve_stage4_dtn_port_total_field_impl",
+        fake_impl,
+    )
+    result = dtn_port_3d.solve_stage4_dtn_port_total_field(
+        a=None,
+        L=None,
+        V=None,
+        mesh_data=None,
+        cfg=None,
+        floquet_data=None,
+        petsc_options={},
+        out_dir=tmp_path,
+        log=lambda _message: None,
+        variable_p_factorization_observer=observer,
+    )
+    assert result == {"status": "fixture"}
+    assert captured["variable_p_factorization_observer"] is observer
+    assert captured["variable_p_live_observer"] is None
+
+
 def test_live_observer_rejects_non_variable_backend_before_mesh(
     tmp_path,
 ) -> None:
@@ -337,6 +490,105 @@ def test_live_observer_rejects_non_variable_backend_before_mesh(
             variable_p_live_observer=lambda _view: None,
         )
     assert not (tmp_path / "must_not_build").exists()
+
+
+def test_factorization_observer_rejects_non_variable_backend_before_mesh(
+    tmp_path,
+) -> None:
+    config = replace(
+        target_stage4_config(degree=2, h_nm=50.0),
+        matrix_diagnostics_factorization_only=True,
+    )
+    with pytest.raises(
+        ValueError,
+        match="requires the exact-sequence assembly-time variable-p backend",
+    ):
+        run_stage4b_block_grating_3d_case(
+            config,
+            tmp_path / "must_not_build",
+            variable_p_factorization_observer=lambda _view: None,
+        )
+    assert not (tmp_path / "must_not_build").exists()
+
+
+def test_factorization_observer_requires_factorization_only_before_mesh(
+    tmp_path,
+) -> None:
+    config = replace(
+        target_stage4_config(degree=2, h_nm=50.0),
+        stage4_full3d_assembly_backend=(
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match="requires matrix_diagnostics_factorization_only=True",
+    ):
+        run_stage4b_block_grating_3d_case(
+            config,
+            tmp_path / "must_not_build",
+            variable_p_factorization_observer=lambda _view: None,
+        )
+    assert not (tmp_path / "must_not_build").exists()
+
+
+def test_variable_p_factorization_observer_has_explicit_qualification() -> None:
+    config = replace(
+        target_stage4_config(degree=6, h_nm=50.0),
+        stage4_full3d_assembly_backend=(
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+        ),
+        stage4_local_h_refinement_plan="/tmp/factor-observer-plan.json",
+        matrix_diagnostics_assemble_only=False,
+        matrix_diagnostics_factorization_only=True,
+    )
+    resolved = resolve_stage4_full3d_assembly_backend(config)
+    with pytest.raises(ValueError, match="complete direct solve"):
+        qualify_stage4_full3d_assembly_backend(config, resolved)
+    qualified = qualify_stage4_full3d_assembly_backend(
+        config,
+        resolved,
+        allow_variable_p_factorization_only_research=True,
+    )
+    assert qualified["status"] == (
+        "qualified_factorization_only_research"
+    )
+    assert qualified["factorization_only_research"] is True
+    assert (
+        qualified["contract"][-1]
+        == "factorization_only_research_adjoint_support_no_primal"
+    )
+
+
+def test_stage4b_propagates_factorization_observer(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    captured = {}
+
+    def observer(_view) -> None:
+        return None
+
+    def fake_case_flow(*args, **kwargs):
+        captured.update(kwargs)
+        return {"status": "fixture"}
+
+    monkeypatch.setattr(
+        solve_maxwell_3d_stage_4b_block_grating,
+        "run_prepared_3d_case_flow",
+        fake_case_flow,
+    )
+    result = (
+        solve_maxwell_3d_stage_4b_block_grating
+        .run_stage4b_block_grating_3d_case(
+            target_stage4_config(degree=2, h_nm=50.0),
+            tmp_path,
+            variable_p_factorization_observer=observer,
+        )
+    )
+    assert result == {"status": "fixture"}
+    assert captured["variable_p_factorization_observer"] is observer
+    assert captured["variable_p_live_observer"] is None
 
 
 def test_schur_retention_rejects_missing_live_observer_before_mesh(
@@ -374,6 +626,33 @@ def test_rank_inconsistent_live_observer_fails_before_validation(
             config,
             tmp_path / "must_not_build",
             variable_p_live_observer=observer,
+        )
+    assert not (tmp_path / "must_not_build").exists()
+
+
+def test_rank_inconsistent_factorization_observer_fails_before_mesh(
+    tmp_path,
+) -> None:
+    if MPI.COMM_WORLD.size != 2:
+        pytest.skip("rank-inconsistent callback gate requires MPI2")
+    config = replace(
+        target_stage4_config(degree=2, h_nm=50.0),
+        stage4_full3d_assembly_backend=(
+            ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+        ),
+        matrix_diagnostics_factorization_only=True,
+    )
+    observer = (
+        (lambda _view: None) if MPI.COMM_WORLD.rank == 0 else None
+    )
+    with pytest.raises(
+        ValueError,
+        match="must be enabled on every MPI rank",
+    ):
+        run_stage4b_block_grating_3d_case(
+            config,
+            tmp_path / "must_not_build",
+            variable_p_factorization_observer=observer,
         )
     assert not (tmp_path / "must_not_build").exists()
 
