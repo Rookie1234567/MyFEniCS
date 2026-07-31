@@ -1,0 +1,23 @@
+{
+  "schema_version": "task003.round2-completion-status.v1",
+  "status": "complete_training_only_stopped_for_review",
+  "baseline_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "round2_points": 8,
+  "round2_campaign": "all_8_measured_pass_zero_numerical_failures_zero_controlled_stops",
+  "diversity_constraints_checked": true,
+  "dataset_id": "task003_m3t_round2_p5_ny4_112_v1",
+  "training_count": 112,
+  "frozen_validation_count": 16,
+  "exact_design_checker": "pass",
+  "fixed_reference_learning_curve": "96_104_112_same_original96_test_rows",
+  "training_cv_status": "hard_gate_failure",
+  "selected_candidate": "G1_constant_gp:features=B:jitter=1e-08",
+  "aggregate_hard_gate": false,
+  "model_selection_lock": "not_created",
+  "validation_target_accessed": false,
+  "round3_authorized": false,
+  "angle_doe_started": false,
+  "inversion_started": false
+}

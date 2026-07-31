@@ -1,0 +1,882 @@
+{
+  "schema_version": "task002.production-ny4-sample.v3",
+  "sample_id": "60f0aa2889ccf14f6c6b782dd10ddad43ce1316821a353118b01502906d560e7",
+  "design_id": "task003_active_learning_round2_training",
+  "design_index": 3,
+  "point_hash": "c9ae980b47984d3a1ff8fcd43957a7ea00e689522f6e0de2c2983f0904f65298",
+  "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+  "split": "train",
+  "inputs": [
+    120.122817298397,
+    17.599610958248,
+    2.369924865197,
+    72.544597294182
+  ],
+  "status": "measured_pass",
+  "source_dirty": false,
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "axis_cell_counts": [
+    6,
+    4,
+    14
+  ],
+  "aggregates": {
+    "R_total": 0.03714940815864567,
+    "T_total": 0.06422482165180701,
+    "A_balance": 0.8986257701895474,
+    "A_volume": 0.8986257701926662
+  },
+  "mother_response": {
+    "schema_version": "task002.fixed-n0-orders.v3",
+    "incident_polarization": "S",
+    "wavevector_unit": "1/nm",
+    "wavevector_convention": "outgoing wavevector: reflection/top kz=+beta_top; transmission/bottom kz=-beta_bottom",
+    "fixed_m_order": [
+      -7,
+      -6,
+      -5,
+      -4,
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3
+    ],
+    "orders": [
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": -7,
+        "n": 0,
+        "kx": {
+          "re": -0.7401560654655479,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.0,
+          "im": 0.7266382714319736
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": -6,
+        "n": 0,
+        "kx": {
+          "re": -0.6144923593219561,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.0,
+          "im": 0.5981413176911207
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": -5,
+        "n": 0,
+        "kx": {
+          "re": -0.48882865317836444,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.0,
+          "im": 0.4681085647928051
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": -4,
+        "n": 0,
+        "kx": {
+          "re": -0.36316494703477276,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.0,
+          "im": 0.3347550672043299
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": -3,
+        "n": 0,
+        "kx": {
+          "re": -0.23750124089118094,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.0,
+          "im": 0.1912564134586259
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": -2,
+        "n": 0,
+        "kx": {
+          "re": -0.11183753474758926,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.0855581063218188,
+          "im": 0.0
+        },
+        "dispersion_propagating": true,
+        "power_carrying": true,
+        "components": {
+          "s": {
+            "amplitude_re": -0.00419207586977258,
+            "amplitude_im": -0.002359016133130603,
+            "power": 0.00010286351553529369,
+            "power_carrying": true
+          },
+          "p": {
+            "amplitude_re": 0.00047388055590768657,
+            "amplitude_im": 0.0002984528215388378,
+            "power": 1.3942930827328362e-06,
+            "power_carrying": true
+          }
+        },
+        "order_total_power": 0.00010425780861802653
+      },
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": -1,
+        "n": 0,
+        "kx": {
+          "re": 0.013826171396002479,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.14013086997632693,
+          "im": 0.0
+        },
+        "dispersion_propagating": true,
+        "power_carrying": true,
+        "components": {
+          "s": {
+            "amplitude_re": 0.0022404997842458167,
+            "amplitude_im": 0.0037575842859618913,
+            "power": 0.00013935584573394148,
+            "power_carrying": true
+          },
+          "p": {
+            "amplitude_re": -0.00017961400080235637,
+            "amplitude_im": -0.000317007214777332,
+            "power": 9.666065473238653e-07,
+            "power_carrying": true
+          }
+        },
+        "order_total_power": 0.00014032245228126535
+      },
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": 0,
+        "n": 0,
+        "kx": {
+          "re": 0.13948987753959421,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.01924572159683552,
+          "im": 0.0
+        },
+        "dispersion_propagating": true,
+        "power_carrying": true,
+        "components": {
+          "s": {
+            "amplitude_re": -0.16695180700963413,
+            "amplitude_im": 0.09503640481653204,
+            "power": 0.036904824104235616,
+            "power_carrying": true
+          },
+          "p": {
+            "amplitude_re": -1.4626885078567828e-05,
+            "amplitude_im": 5.98294659499329e-05,
+            "power": 3.7935107629559904e-09,
+            "power_carrying": true
+          }
+        },
+        "order_total_power": 0.03690482789774638
+      },
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": 1,
+        "n": 0,
+        "kx": {
+          "re": 0.265153583683186,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.0,
+          "im": 0.22467442935109996
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": 2,
+        "n": 0,
+        "kx": {
+          "re": 0.39081728982677766,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.0,
+          "im": 0.3645686907727454
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "reflection",
+        "port_side": "top",
+        "m": 3,
+        "n": 0,
+        "kx": {
+          "re": 0.5164809959703693,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": 0.0,
+          "im": 0.4969152799650568
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": -7,
+        "n": 0,
+        "kx": {
+          "re": -0.7401560654655479,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.0005437265874456029,
+          "im": -0.72693618378842
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": -6,
+        "n": 0,
+        "kx": {
+          "re": -0.6144923593219561,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.0006604049179339902,
+          "im": -0.598503311784111
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": -5,
+        "n": 0,
+        "kx": {
+          "re": -0.48882865317836444,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.0008435312052794132,
+          "im": -0.46857132021699444
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": -4,
+        "n": 0,
+        "kx": {
+          "re": -0.36316494703477276,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.001178447069530859,
+          "im": -0.3354028710507621
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": -3,
+        "n": 0,
+        "kx": {
+          "re": -0.23750124089118094,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.00205438691570279,
+          "im": -0.1923953698696497
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": -2,
+        "n": 0,
+        "kx": {
+          "re": -0.11183753474758926,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.0831267461510571,
+          "im": -0.004754841838555241
+        },
+        "dispersion_propagating": true,
+        "power_carrying": true,
+        "components": {
+          "s": {
+            "amplitude_re": -0.0009364397583291788,
+            "amplitude_im": -0.008356724726982987,
+            "power": 0.0003054205644737664,
+            "power_carrying": true
+          },
+          "p": {
+            "amplitude_re": -6.904121725334405e-05,
+            "amplitude_im": -0.0009320640875826805,
+            "power": 3.77289343955625e-06,
+            "power_carrying": true
+          }
+        },
+        "order_total_power": 0.00030919345791332264
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": -1,
+        "n": 0,
+        "kx": {
+          "re": 0.013826171396002479,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.13860754035207024,
+          "im": -0.0028516091512629143
+        },
+        "dispersion_propagating": true,
+        "power_carrying": true,
+        "components": {
+          "s": {
+            "amplitude_re": -0.005053216725648824,
+            "amplitude_im": 0.006388192320538648,
+            "power": 0.00047780898556444156,
+            "power_carrying": true
+          },
+          "p": {
+            "amplitude_re": -0.0004374763343371412,
+            "amplitude_im": 0.0005214768957939251,
+            "power": 3.336853729261569e-06,
+            "power_carrying": true
+          }
+        },
+        "order_total_power": 0.0004811458392937031
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": 0,
+        "n": 0,
+        "kx": {
+          "re": 0.13948987753959421,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.019113075690170456,
+          "im": -0.020679797271209475
+        },
+        "dispersion_propagating": false,
+        "power_carrying": true,
+        "components": {
+          "s": {
+            "amplitude_re": 0.21800792244007705,
+            "amplitude_im": -0.1278564260497463,
+            "power": 0.06343448077776409,
+            "power_carrying": true
+          },
+          "p": {
+            "amplitude_re": 2.282942040602185e-05,
+            "amplitude_im": -3.2658793684449595e-05,
+            "power": 1.5768359040106764e-09,
+            "power_carrying": true
+          }
+        },
+        "order_total_power": 0.06343448235459999
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": 1,
+        "n": 0,
+        "kx": {
+          "re": 0.265153583683186,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.0017516869716687076,
+          "im": -0.22564221627193828
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": 2,
+        "n": 0,
+        "kx": {
+          "re": 0.39081728982677766,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.0010824048256918707,
+          "im": -0.36516331147115993
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      },
+      {
+        "side": "transmission",
+        "port_side": "bottom",
+        "m": 3,
+        "n": 0,
+        "kx": {
+          "re": 0.5164809959703693,
+          "im": 0.0
+        },
+        "ky": {
+          "re": 0.44360907126943677,
+          "im": 0.0
+        },
+        "kz": {
+          "re": -0.0007947192406708035,
+          "im": -0.49735115280257
+        },
+        "dispersion_propagating": false,
+        "power_carrying": false,
+        "components": {
+          "s": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          },
+          "p": {
+            "amplitude_re": null,
+            "amplitude_im": null,
+            "power": null,
+            "power_carrying": false
+          }
+        },
+        "order_total_power": null
+      }
+    ],
+    "missing": [],
+    "leakage": {
+      "n_nonzero_reflection_power_sum": 1.4099242491244984e-23,
+      "n_nonzero_transmission_power_sum": 7.506051877844276e-24,
+      "n_nonzero_max_abs_amplitude": 4.745754952181711e-13
+    },
+    "raw_r_total": 0.03714940815864567,
+    "raw_t_total": 0.06422482165180701,
+    "port_power_consistency": {
+      "raw_r_total": 0.03714940815864567,
+      "raw_t_total": 0.06422482165180701,
+      "reported_r_total": 0.03714940815864567,
+      "reported_t_total": 0.06422482165180701,
+      "r_matches": true,
+      "t_matches": true
+    },
+    "power_ledger": {
+      "fixed_n0_reflection_power_sum": 0.03714940815864567,
+      "fixed_n0_transmission_power_sum": 0.06422482165180701,
+      "n_nonzero_reflection_power_sum": 1.4099242491244984e-23,
+      "n_nonzero_transmission_power_sum": 7.506051877844276e-24,
+      "raw_R_minus_fixed_n0_R_minus_n_nonzero_R": -1.4099242491244984e-23,
+      "raw_T_minus_fixed_n0_T_minus_n_nonzero_T": -7.506051877844276e-24
+    },
+    "fixed_window_power_sum": 0.10137422981045269,
+    "semantics": "fixed grouped S/P mother-response window; not R/T total; wavevectors and boundary amplitudes use explicit real/imaginary JSON; power_carrying is separate from dispersion_propagating; non-power-carrying component and order powers are null; n!=0 is leakage-only",
+    "uncovered_power_carrying_n0": [],
+    "complete_angle_domain_contract": "all analytic/raw power-carrying n=0 orders over the production domain must belong to fixed_m_order"
+  },
+  "parameter_hash": "e65972793eacf8eaa2a8b355c3b40b6b9bd22e76a2e3ee61c651e9deffedbb41",
+  "config_hash": "f662eee7a1121588384a2d0ebb08053f747ce2b91855b8bcaa6e2a02db974d99",
+  "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+  "actual_runtime_topology_hash": "2682eb257b0306b6a41aecdacfc65b496d1750039a4f31b471abf59557c3f3c9",
+  "artifact_hashes": {
+    "run_summary.json": "14c994734d9b07f1670bcdd0391f7f531734f21ab72406e3865eab48d94b0ed3",
+    "dtn_port_power_metrics_3d.json": "74494607b5ae5bb51269c07f6c0e2b5e9b7a4272b69677f4fc621d8234d675ae",
+    "volume_absorption.json": "855c5f5e073b7d8bb9fba8c3047e7adb895cf7b8deabba99217f858c45a76a9a",
+    "dtn_port_diffraction_orders_3d.json": "ecd85614d1e527554c5a8b48ebb7c1f1abdd35d6356c50089f43c87eeefc1067"
+  },
+  "formal_record_sha256": "4bd142cc21ff583f641115f6749c165c70fa47f83728868d275c6c6ef6aba41b",
+  "execution_sha256": "9a7b22a75b3ee78ded285786c01944eddb38bbac016e153a44a2d830f40e4368",
+  "numerical_gates": {
+    "completed_direct_solve": true,
+    "true_residual_le_1e-9": true,
+    "energy_closure_abs_le_1e-7": true,
+    "fixed_order_schema_complete": true,
+    "complete_n0_power_window": true,
+    "uniform_n1curl_identity": true,
+    "fixed_topology_identity_present": true,
+    "actual_runtime_topology_matches_plan": true,
+    "n_nonzero_total_power_le_1e-7": true,
+    "n_nonzero_max_abs_amplitude_le_1e-4": true,
+    "fixed_raw_reflection_ledger_abs_le_1e-12": true,
+    "fixed_raw_transmission_ledger_abs_le_1e-12": true,
+    "compact_output_identity": true
+  },
+  "resource_gates": {
+    "completed": true,
+    "return_code_zero": true,
+    "zero_swap": true,
+    "cleanup_complete": true
+  }
+}

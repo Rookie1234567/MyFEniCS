@@ -1,0 +1,9 @@
+{
+  "schema_version": "task003.round1-dataset-verification.v1",
+  "dataset_id": "task003_m3s_round1_p5_ny4_104_v1",
+  "training_count": 104,
+  "frozen_validation_count": 16,
+  "original96_unchanged": true,
+  "round1_count": 8,
+  "validation_target_accessed": false
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "task003.round1-completion-status.v2",
+  "training_count": 104,
+  "frozen_validation_count": 16,
+  "active_learning_round1_points": 8,
+  "active_learning_total_points_used": 8,
+  "selected_104_candidate": "G2_degree2_trend_residual_gp:features=B:jitter=1e-10",
+  "validation_target_accessed": false,
+  "round2_status": "authorized_pending_plan",
+  "round2_gate": {
+    "reference_folds_frozen": true,
+    "R_total_nrmse_improvement_ge_10pct": true,
+    "A_balance_nrmse_improvement_ge_10pct": true,
+    "T_total_nrmse_not_worse_than_10pct": true,
+    "at_least_two_paired_p95_abs_improved": true,
+    "prospective_audit_present": true,
+    "validation_target_accessed": false
+  },
+  "round2_authorized": true
+}

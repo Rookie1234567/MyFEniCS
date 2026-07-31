@@ -1,0 +1,17 @@
+{
+  "schema_version": "task003.round2-dataset-verification.v1",
+  "status": "pass",
+  "checker": "benchmarks/cases/122_task003_round1_fixed_reference_and_optional_round2/checker.py",
+  "dataset_id": "task003_m3t_round2_p5_ny4_112_v1",
+  "sample_count": 128,
+  "training_count": 112,
+  "frozen_validation_count": 16,
+  "original96_unchanged": true,
+  "round1_count": 8,
+  "round2_count": 8,
+  "round2_campaign_measured_pass": 8,
+  "frozen_validation_tuple_unchanged": true,
+  "validation_target_accessed": false,
+  "all_exact_design_checks": true,
+  "all_hash_checks": true
+}

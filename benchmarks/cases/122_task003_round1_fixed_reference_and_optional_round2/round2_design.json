@@ -1,0 +1,94 @@
+{
+  "schema_version": "task002.m3r-design.v1",
+  "design_id": "task003_active_learning_round2_training",
+  "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+  "source_dirty": false,
+  "parameter_schema_version": "task002.s-p5-ny4-production-parameters.v3",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "production_model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "production_solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "point_count": 8,
+  "point_tuple_sha256": "d39c7013dd1a3e55f5717a67893efd1179f7b49693887a565e720968c73b9349",
+  "points": [
+    {
+      "height_nm": 123.809354379773,
+      "width_x_nm": 17.919280685484,
+      "grazing_deg": 0.724982327782,
+      "azimuth_deg": 27.366064013913,
+      "role": "active_learning_round2",
+      "design_source": "candidate_pool_index_2750",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 116.550837084651,
+      "width_x_nm": 17.938992641866,
+      "grazing_deg": 0.641841693781,
+      "azimuth_deg": 59.532040972263,
+      "role": "active_learning_round2",
+      "design_source": "candidate_pool_index_2872",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 116.587200202048,
+      "width_x_nm": 17.425973873585,
+      "grazing_deg": 1.018743613269,
+      "azimuth_deg": 81.488449154422,
+      "role": "active_learning_round2",
+      "design_source": "candidate_pool_index_2456",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.122817298397,
+      "width_x_nm": 17.599610958248,
+      "grazing_deg": 2.369924865197,
+      "azimuth_deg": 72.544597294182,
+      "role": "active_learning_round2",
+      "design_source": "candidate_pool_index_474",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 117.301799459383,
+      "width_x_nm": 17.849338561296,
+      "grazing_deg": 3.931403460912,
+      "azimuth_deg": 20.012358594686,
+      "role": "active_learning_round2",
+      "design_source": "candidate_pool_index_3336",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 115.245030811056,
+      "width_x_nm": 17.962837021798,
+      "grazing_deg": 4.372072900645,
+      "azimuth_deg": 21.145676225424,
+      "role": "active_learning_round2",
+      "design_source": "candidate_pool_index_2720",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 123.529384434223,
+      "width_x_nm": 17.114388257265,
+      "grazing_deg": 4.063561610412,
+      "azimuth_deg": 77.953057866544,
+      "role": "active_learning_round2",
+      "design_source": "candidate_pool_index_598",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 124.504848942161,
+      "width_x_nm": 16.360317222774,
+      "grazing_deg": 3.144950038753,
+      "azimuth_deg": 0.894840247929,
+      "role": "active_learning_round2",
+      "design_source": "candidate_pool_index_3025",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    }
+  ]
+}
