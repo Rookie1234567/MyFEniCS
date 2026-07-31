@@ -1,5 +1,6 @@
 {
   "status": "hard_gate_failure",
+  "implementation_sha": "6986bc5804183b22cbc2f02a819a74b7e049f948",
   "dataset_id": "task003_m3s_round1_p5_ny4_104_v1",
   "training_count": 104,
   "folds": {

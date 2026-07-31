@@ -13,6 +13,7 @@
     "sha256": "2e48e2013e4e8c009e61c4b526b3fb27ac875c7240d332c01502eca1bbe983fc"
   },
   "baseline_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+  "implementation_sha": "6986bc5804183b22cbc2f02a819a74b7e049f948",
   "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
   "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
   "mesh": {
