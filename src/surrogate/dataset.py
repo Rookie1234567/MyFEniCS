@@ -197,11 +197,12 @@ def load_training_dataset(dataset_dir: Path = CASE119_ROOT) -> TrainingDataset:
 
     dataset_dir = Path(dataset_dir)
     manifest = json.loads((dataset_dir / "dataset_manifest.json").read_text())
-    if manifest.get("dataset_id") != CASE119_DATASET_ID:
-        raise ValueError("unexpected dataset id")
+    if not manifest.get("dataset_id"):
+        raise ValueError("dataset manifest is missing dataset id")
     train_indices = np.load(dataset_dir / "train_indices.npy", allow_pickle=False)
-    if train_indices.shape != (96,):
-        raise ValueError("training split must contain exactly 96 rows")
+    expected_training = int(manifest.get("training_count", len(train_indices)))
+    if train_indices.shape != (expected_training,):
+        raise ValueError("training split count does not match dataset manifest")
     # mmap keeps the sealed file on disk and only copies the explicitly selected
     # rows.  The frozen-validation index file is deliberately not opened.
     arrays = {
@@ -222,5 +223,5 @@ def load_training_dataset(dataset_dir: Path = CASE119_ROOT) -> TrainingDataset:
         order_powers=arrays["order_powers.npy"],
         power_carrying_mask=arrays["power_carrying_mask.npy"],
         source_indices=train_indices.copy(),
+        dataset_id=str(manifest["dataset_id"]),
     )
-

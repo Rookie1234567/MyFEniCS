@@ -1,0 +1,253 @@
+{
+  "schema_version": "task003.active-learning-round1-plan.v1",
+  "status": "checker_pass",
+  "training_dataset_id": "task002_m4e_p5_ny4_112_v3",
+  "training_count": 96,
+  "candidate_pool_sha256": "a9831ffc1055732660bee859382f623e8558560634d9ac98702cfe355ff09fcd",
+  "candidate_pool_count": 4096,
+  "excluded_existing_training_validation_audit": true,
+  "frozen_validation_target_accessed": false,
+  "feature_contract": {
+    "path": "surrogate_tasks/task003_p5_ny4_single_fidelity_surrogate_training/outcomes/FEATURE_CONTRACT_v2.json",
+    "candidate": "B",
+    "sha256": "2e48e2013e4e8c009e61c4b526b3fb27ac875c7240d332c01502eca1bbe983fc"
+  },
+  "baseline_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "mesh": {
+    "axis_cell_counts": [
+      6,
+      4,
+      14
+    ],
+    "degree": 5,
+    "h_nm": 10.0,
+    "mpi_ranks": 2,
+    "threads_per_rank": 1
+  },
+  "acquisition_formula": "0.30 calibrated aggregate uncertainty + 0.25 OOF abs-error surrogate + 0.10 feature-B distance + 0.20 cutoff proximity + 0.15 primary-power contribution",
+  "selection": {
+    "maximin_diversity": true,
+    "required_regimes": [
+      "low_grazing",
+      "cutoff",
+      "high_azimuth",
+      "interior"
+    ]
+  },
+  "points": [
+    {
+      "candidate_index": 3263,
+      "point": [
+        115.566166415811,
+        16.285287326202,
+        0.635342432186,
+        26.776588987559
+      ],
+      "role": "active_learning_round1",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+      "source_dirty": false,
+      "region_labels": [
+        "low_grazing",
+        "cutoff"
+      ],
+      "acquisition_score": 0.9004007695890129,
+      "score_components": {
+        "aggregate_calibrated_uncertainty": 0.27413625994424046,
+        "oof_abs_error_surrogate": 0.09795971455697816,
+        "feature_B_nearest_distance": 0.6701414143899036,
+        "cutoff_proximity": 0.9878536645154969,
+        "primary_power_error_contribution": 0.007147024663369841
+      }
+    },
+    {
+      "candidate_index": 3139,
+      "point": [
+        118.032331643626,
+        16.011284705251,
+        0.700520112645,
+        8.157370174304
+      ],
+      "role": "active_learning_round1",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+      "source_dirty": false,
+      "region_labels": [
+        "low_grazing",
+        "cutoff"
+      ],
+      "acquisition_score": 0.8958245343510699,
+      "score_components": {
+        "aggregate_calibrated_uncertainty": 0.27413625994424046,
+        "oof_abs_error_surrogate": 0.09795971455697816,
+        "feature_B_nearest_distance": 0.6344851654726703,
+        "cutoff_proximity": 0.9852724451177842,
+        "primary_power_error_contribution": 0.007147024663369841
+      }
+    },
+    {
+      "candidate_index": 647,
+      "point": [
+        116.318685375154,
+        16.3787597958,
+        0.592363122851,
+        14.48862397112
+      ],
+      "role": "active_learning_round1",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+      "source_dirty": false,
+      "region_labels": [
+        "low_grazing",
+        "cutoff"
+      ],
+      "acquisition_score": 0.8891653305508663,
+      "score_components": {
+        "aggregate_calibrated_uncertainty": 0.27413625994424046,
+        "oof_abs_error_surrogate": 0.09795971455697816,
+        "feature_B_nearest_distance": 0.563079602705891,
+        "cutoff_proximity": 0.9894245713175951,
+        "primary_power_error_contribution": 0.007147024663369841
+      }
+    },
+    {
+      "candidate_index": 3919,
+      "point": [
+        115.860011894256,
+        16.066032908857,
+        0.854178197682,
+        18.431991320103
+      ],
+      "role": "active_learning_round1",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+      "source_dirty": false,
+      "region_labels": [
+        "low_grazing",
+        "cutoff"
+      ],
+      "acquisition_score": 0.8744262037974296,
+      "score_components": {
+        "aggregate_calibrated_uncertainty": 0.27413625994424046,
+        "oof_abs_error_surrogate": 0.09795971455697816,
+        "feature_B_nearest_distance": 0.455276762285187,
+        "cutoff_proximity": 0.9782593006567116,
+        "primary_power_error_contribution": 0.007147024663369841
+      }
+    },
+    {
+      "candidate_index": 272,
+      "point": [
+        115.960917742923,
+        17.98122305423,
+        0.984615646303,
+        12.595919324085
+      ],
+      "role": "active_learning_round1",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+      "source_dirty": false,
+      "region_labels": [
+        "low_grazing",
+        "cutoff"
+      ],
+      "acquisition_score": 0.8710791490594086,
+      "score_components": {
+        "aggregate_calibrated_uncertainty": 0.2741159549852459,
+        "oof_abs_error_surrogate": 0.10084624632670436,
+        "feature_B_nearest_distance": 0.3550285676035172,
+        "cutoff_proximity": 0.9713181633035416,
+        "primary_power_error_contribution": 0.007328214994647829
+      }
+    },
+    {
+      "candidate_index": 3072,
+      "point": [
+        115.355538874865,
+        17.672578062862,
+        1.408747483976,
+        1.787742013112
+      ],
+      "role": "active_learning_round1",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+      "source_dirty": false,
+      "region_labels": [
+        "low_grazing",
+        "cutoff"
+      ],
+      "acquisition_score": 0.8670450315976234,
+      "score_components": {
+        "aggregate_calibrated_uncertainty": 0.2741159549852459,
+        "oof_abs_error_surrogate": 0.10084624632670436,
+        "feature_B_nearest_distance": 0.38786756945135586,
+        "cutoff_proximity": 0.943003668077031,
+        "primary_power_error_contribution": 0.007328214994647829
+      }
+    },
+    {
+      "candidate_index": 199,
+      "point": [
+        116.559495767578,
+        16.044788243249,
+        2.438929382712,
+        1.187141351402
+      ],
+      "role": "active_learning_round1",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+      "source_dirty": false,
+      "region_labels": [
+        "interior"
+      ],
+      "acquisition_score": 0.8457107515613386,
+      "score_components": {
+        "aggregate_calibrated_uncertainty": 0.27413625994424046,
+        "oof_abs_error_surrogate": 0.09795971455697816,
+        "feature_B_nearest_distance": 0.5163397312136051,
+        "cutoff_proximity": 0.8466766071775392,
+        "primary_power_error_contribution": 0.007147024663369841
+      }
+    },
+    {
+      "candidate_index": 1548,
+      "point": [
+        118.268320234492,
+        17.795336127281,
+        1.05301258387,
+        84.046087581664
+      ],
+      "role": "active_learning_round1",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+      "source_dirty": false,
+      "region_labels": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff"
+      ],
+      "acquisition_score": 0.5445888278789976,
+      "score_components": {
+        "aggregate_calibrated_uncertainty": 0.14386016044309669,
+        "oof_abs_error_surrogate": 0.010039151172258442,
+        "feature_B_nearest_distance": 0.7072652829485152,
+        "cutoff_proximity": 0.9673301104561602,
+        "primary_power_error_contribution": 0.007662417129347187
+      }
+    }
+  ],
+  "point_tuple_sha256": "fcff72fff049cf686da19893af8208bd8f99719f60ffbadf78783fe357e078f0",
+  "round": 1,
+  "budget": 8,
+  "next_round_authorized": false
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": "task003.power-mask-authority.v2",
+  "authority": "src.common.modes_3d outgoing port mode Poynting identity",
+  "sides": {
+    "reflection": "top/air",
+    "transmission": "bottom/complex_substrate"
+  },
+  "m_values": [
+    -7,
+    -6,
+    -5,
+    -4,
+    -3,
+    -2,
+    -1,
+    0,
+    1,
+    2,
+    3
+  ],
+  "components": [
+    "s",
+    "p"
+  ],
+  "dispersion_propagating_and_power_carrying_are_distinct": true,
+  "validation_target_accessed": false,
+  "arrays_file": "surrogate_tasks/task003_p5_ny4_single_fidelity_surrogate_training/outcomes/power_mask_authority.npz",
+  "splits": {
+    "training": {
+      "shape": [
+        96,
+        22,
+        2
+      ],
+      "power_sha256": "2554b0bd55a34d73432e8c98bca868f6e9a5d738fba4d7e4160bc19501488ba1",
+      "dispersion_sha256": "e29122d4ee33292fac07f0758765dbb23229562bfa23f4fbce4e08be4b752e56",
+      "power_active_count": 1952,
+      "dispersion_active_count": 1894
+    },
+    "frozen_validation_inputs_only": {
+      "shape": [
+        16,
+        22,
+        2
+      ],
+      "power_sha256": "8d0ae99ab4c3df6381a83713d1cb40634a7829ca2c477457aeeda64d27826260",
+      "dispersion_sha256": "0a1f264374306e5cbfe7543b3e40a8f921e5220c3a6b4d6d8ba67086a36a78e6",
+      "power_active_count": 336,
+      "dispersion_active_count": 330
+    },
+    "candidate_pool": {
+      "shape": [
+        4096,
+        22,
+        2
+      ],
+      "power_sha256": "0cfdb3133e13c63177567dc0b2d534b51dcb45b3d0e9dcc8f929e33f4f3d6624",
+      "dispersion_sha256": "7965d3c8a3b52e3f74b4e273835adbf9e442ddb53ee36e25416dbcc66834e60f",
+      "power_active_count": 86240,
+      "dispersion_active_count": 84462
+    }
+  }
+}

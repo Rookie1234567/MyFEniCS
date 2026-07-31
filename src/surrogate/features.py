@@ -12,6 +12,11 @@ DOMAIN = {
     "azimuth_deg": (0.0, 90.0),
 }
 
+# M3S freezes the public production representation.  A/C remain available only
+# to the explicitly training-only historical comparison in ``cv.py``.
+FROZEN_FEATURE_CANDIDATE = "B"
+FEATURE_CONTRACT_VERSION = "task003.feature-contract.v2"
+
 
 def _as_points(points: np.ndarray) -> np.ndarray:
     values = np.asarray(points, dtype=np.float64)
@@ -72,9 +77,13 @@ def transform_feature_candidate(points: np.ndarray, candidate: str = "A") -> np.
 
 
 def transform_features(points: np.ndarray) -> np.ndarray:
-    """Return the frozen production candidate A: ``[h,w,kx/k0,ky/k0]``."""
+    """Return the frozen production candidate B.
 
-    return transform_feature_candidate(points, "A")
+    Production callers cannot silently fall back to the historical wavevector
+    candidate; comparison code must opt into ``transform_feature_candidate``.
+    """
+
+    return transform_feature_candidate(points, FROZEN_FEATURE_CANDIDATE)
 
 
 def feature_contracts() -> dict[str, dict[str, object]]:

@@ -160,6 +160,48 @@ class ExactARDGP:
         }
 
 
+@dataclass
+class TrendResidualGP:
+    """Finite G2 candidate: degree-2 orthogonal trend plus exact-GP residual."""
+
+    jitter: float = 1.0e-10
+    optimizer_restarts: int = 8
+    random_state: int = 0
+    trend_kind: str = "legendre"
+    trend_degree: int = 2
+    _trend: OrthogonalPCE | None = None
+    _residual: ExactARDGP | None = None
+
+    def fit(self, x: np.ndarray, y: np.ndarray) -> "TrendResidualGP":
+        self._trend = OrthogonalPCE(degree=self.trend_degree,
+                                    kind=self.trend_kind).fit(x, y)
+        residual = np.asarray(y, dtype=np.float64) - self._trend.predict(x)
+        self._residual = ExactARDGP(
+            jitter=self.jitter, optimizer_restarts=self.optimizer_restarts,
+            random_state=self.random_state,
+        ).fit(x, residual)
+        return self
+
+    def predict(self, x: np.ndarray, *, return_std: bool = False) -> np.ndarray:
+        if self._trend is None or self._residual is None:
+            raise RuntimeError("trend-residual GP is not fitted")
+        trend = self._trend.predict(x)
+        if return_std:
+            residual, std = self._residual.predict(x, return_std=True)
+            return trend + residual, std
+        return trend + self._residual.predict(x)
+
+    def metadata(self) -> dict[str, Any]:
+        if self._trend is None or self._residual is None:
+            raise RuntimeError("trend-residual GP is not fitted")
+        return {
+            "family": "degree2_orthogonal_trend_plus_exact_gp_residual",
+            "trend": self._trend.metadata(),
+            "residual_gp": self._residual.metadata(),
+            "jitter": self.jitter,
+        }
+
+
 def _multi_indices(dimension: int, degree: int) -> list[tuple[int, ...]]:
     return [powers for powers in itertools.product(range(degree + 1), repeat=dimension)
             if sum(powers) <= degree]

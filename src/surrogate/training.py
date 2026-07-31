@@ -15,8 +15,9 @@ import numpy as np
 
 from .cv import run_training_cv
 from .dataset import CASE119_ROOT, load_training_dataset, verify_case119_dataset
-from .features import DOMAIN, feature_contracts, transform_features
-from .physics import analytic_power_mask
+from .features import (DOMAIN, FEATURE_CONTRACT_VERSION, FROZEN_FEATURE_CANDIDATE,
+                       feature_contracts, transform_features)
+from .physics import power_mask_authority
 from .targets import aggregate_contract, channel_table, power_contract
 
 
@@ -36,18 +37,73 @@ def _head() -> str:
 
 def _feature_contract() -> dict[str, Any]:
     return {
-        "schema_version": "task003.feature-contract.v1",
+        "schema_version": FEATURE_CONTRACT_VERSION,
         "public_inputs": ["height_nm", "width_x_nm", "grazing_deg", "azimuth_deg"],
-        "internal_features": ["height_scaled", "width_scaled", "kx_over_k0", "ky_over_k0"],
+        "frozen_candidate": FROZEN_FEATURE_CANDIDATE,
+        "internal_features": ["height_scaled", "width_scaled", "grazing_scaled", "azimuth_scaled"],
         "height_scaling": {"center_nm": 120.0, "half_range_nm": 5.0, "output": "[-1,1]"},
         "width_scaling": {"center_nm": 17.0, "half_range_nm": 1.0, "output": "[-1,1]"},
         "wavevector": {"kx_over_k0": "cos(grazing)*cos(azimuth)",
                         "ky_over_k0": "cos(grazing)*sin(azimuth)"},
         "candidate_sets": feature_contracts(),
+        "comparison_only_candidates": ["A", "C"],
         "domain": DOMAIN,
         "zero_grazing": "fail_closed",
         "statistics_source": "training rows only; no validation access",
     }
+
+
+def _load_design_points(path: Path) -> np.ndarray:
+    design = json.loads(path.read_text(encoding="utf-8"))
+    return np.asarray([[float(row[k]) for k in
+                        ("height_nm", "width_x_nm", "grazing_deg", "azimuth_deg")]
+                       for row in design["points"]], dtype=np.float64)
+
+
+def _mask_authority(dataset: Any) -> dict[str, Any]:
+    """Write independent side masks using inputs/design metadata only."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    train = np.asarray(dataset.inputs, dtype=np.float64)
+    validation = _load_design_points(
+        Path("benchmarks/cases/116_task002_single_fidelity_design/frozen_validation_design.json"))
+    candidate = _load_design_points(
+        Path("benchmarks/cases/116_task002_single_fidelity_design/candidate_pool.json"))
+    result = {
+        "training": power_mask_authority(train),
+        "frozen_validation_inputs_only": power_mask_authority(validation),
+        "candidate_pool": power_mask_authority(candidate),
+    }
+    arrays_path = OUT / "power_mask_authority.npz"
+    np.savez_compressed(arrays_path, **{
+        f"{split}_power": value["power_carrying"]
+        for split, value in result.items()
+    }, **{
+        f"{split}_dispersion": value["dispersion_propagating"]
+        for split, value in result.items()
+    })
+    def digest(array: np.ndarray) -> str:
+        import hashlib
+        return hashlib.sha256(np.ascontiguousarray(array).astype(np.uint8).tobytes()).hexdigest()
+    summary = {
+        "schema_version": "task003.power-mask-authority.v2",
+        "authority": "src.common.modes_3d outgoing port mode Poynting identity",
+        "sides": {"reflection": "top/air", "transmission": "bottom/complex_substrate"},
+        "m_values": list(range(-7, 4)), "components": ["s", "p"],
+        "dispersion_propagating_and_power_carrying_are_distinct": True,
+        "validation_target_accessed": False,
+        "arrays_file": str(arrays_path),
+        "splits": {
+            split: {
+                "shape": list(value["power_carrying"].shape),
+                "power_sha256": digest(value["power_carrying"]),
+                "dispersion_sha256": digest(value["dispersion_propagating"]),
+                "power_active_count": int(value["power_carrying"].sum()),
+                "dispersion_active_count": int(value["dispersion_propagating"].sum()),
+            } for split, value in result.items()
+        },
+    }
+    _dump(OUT / "POWER_MASK_AUTHORITY.json", summary)
+    return summary
 
 
 def _audit_markdown(dataset: Any, channels: list[Any]) -> str:
@@ -91,7 +147,8 @@ def run_training_stage() -> dict[str, Any]:
     target_contract = {"aggregate": aggregate_contract(), "power": power_contract()}
     identity = json.loads((CASE119_ROOT / "order_identity.json").read_text())
     channels = channel_table(identity, dataset.order_powers, dataset.power_carrying_mask)
-    analytic = analytic_power_mask(dataset.inputs)
+    authority = _mask_authority(dataset)
+    analytic = power_mask_authority(dataset.inputs)["power_carrying"]
     analytic_match = bool(np.array_equal(analytic, dataset.power_carrying_mask))
     if not analytic_match:
         raise RuntimeError("analytic propagation mask disagrees with training data")
@@ -99,6 +156,7 @@ def run_training_stage() -> dict[str, Any]:
     oof_records = cv.pop("oof_records", [])
     cv["oof_record_count"] = len(oof_records)
     _dump(OUT / "FEATURE_CONTRACT.json", feature_contract)
+    _dump(OUT / "FEATURE_CONTRACT_v2.json", feature_contract)
     _dump(OUT / "TARGET_CONTRACT.json", target_contract)
     _dump(OUT / "CHANNEL_IDENTITY.json", {
         "schema_version": "task003.channel-identity.v1",

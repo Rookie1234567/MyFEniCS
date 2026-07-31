@@ -97,15 +97,22 @@ def aggregate_contract() -> dict[str, Any]:
 
 def power_contract() -> dict[str, Any]:
     return {
-        "schema_version": "task003.fixed-order-power-target.v1",
-        "representation": "independent_log_power_plus_training_frozen_floor_then_sidewise_renormalization",
+        "schema_version": "task003.fixed-order-power-target.v2",
+        "representation": {
+            "P1": "independent_log_power_plus_training_frozen_floor_diagnostic",
+            "P2": "side_total_plus_masked_active_channel_fractions",
+        },
         "primary_threshold_training_max": 1.0e-6,
         "inactive_semantics": "null_not_zero",
         "analytic_mask": {
-            "wavelength_nm": 13.5,
-            "period_x_nm": 50.0,
-            "period_y_nm": 25.0,
-            "medium_index": 1.0,
-            "criterion": "(kx+m*lambda/period_x)^2+(ky+n*lambda/period_y)^2<=n^2",
+            "authority": "runtime outgoing_port_modes_3d positive finite Poynting power",
+            "top_medium": "air",
+            "bottom_medium": "complex substrate",
+            "dispersion_propagating_separate": True,
+        },
+        "reconstruction": {
+            "active_fraction_axis": "all active S/P channels on each side",
+            "normalization": "masked softmax-equivalent nonnegative fractions summing to one",
+            "inactive": "null",
         },
     }

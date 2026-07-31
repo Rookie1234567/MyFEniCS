@@ -5,33 +5,78 @@ from __future__ import annotations
 import numpy as np
 
 
+def power_mask_authority(points: np.ndarray, *, m_values=range(-7, 4),
+                         wavelength_nm: float = 13.5) -> dict[str, np.ndarray]:
+    """Extract independent top/bottom masks from the runtime Floquet policy.
+
+    This intentionally delegates propagation and Poynting evaluation to the
+    same production configuration/mode implementation used by Full3D.  It is
+    not an algebraic duplicate of the old single-side helper.  The returned
+    dispersion and power identities are kept separate: a lossy substrate can
+    have a complex beta while its selected outgoing m=0 port still carries
+    finite positive power.
+    """
+    values = np.asarray(points, dtype=np.float64)
+    if values.ndim == 1:
+        values = values[None, :]
+    if values.ndim != 2 or values.shape[1] != 4:
+        raise ValueError("points must have shape (n,4)")
+    # mpi4py/OpenMPI in the FEM environment uses /mnt/c by default, which is
+    # read-only in the CPU sandbox.  The import remains lazy so surrogate-only
+    # code does not initialize MPI until mask authority is requested.
+    import os
+    os.environ.setdefault("TMPDIR", "/tmp")
+    from src.common.modes_3d import (enumerate_diffraction_orders_3d,
+                                     mode_eh_vectors, mode_power,
+                                     polarization_basis_3d)
+    from src.forward_data.task002_full3d import build_task002_full3d_config
+    from src.forward_data.task002_schema import Task002ForwardParameters
+
+    orders_m = tuple(int(m) for m in m_values)
+    power = np.zeros((len(values), 2 * len(orders_m), 2), dtype=bool)
+    dispersion = np.zeros_like(power)
+    for row, point in enumerate(values):
+        parameters = Task002ForwardParameters(
+            height_nm=float(point[0]), width_x_nm=float(point[1]),
+            grazing_deg=float(point[2]), azimuth_deg=float(point[3]),
+            model_id="S_PROD_FULL3D_STATIC_P5_H10_NY4",
+        )
+        cfg = build_task002_full3d_config(parameters)
+        order_map = {item.m: item for item in enumerate_diffraction_orders_3d(
+            cfg, max_m_override=max(abs(m) for m in orders_m), max_n_override=0,
+        )}
+        sides = (
+            ("top", cfg.n_air, np.asarray((0.0, 0.0, 1.0)), 1),
+            ("bottom", cfg.substrate_index, np.asarray((0.0, 0.0, -1.0)), -1),
+        )
+        for side_index, (_side, medium, normal, sign) in enumerate(sides):
+            for order_index, m in enumerate(orders_m):
+                order = order_map[m]
+                beta = order.beta_top if side_index == 0 else order.beta_bottom
+                propagating = (order.top_propagating if side_index == 0
+                               else order.bottom_propagating)
+                # outgoing_port_modes_3d deliberately retains incident m=0
+                # even when a lossy-medium beta is complex.
+                selected = bool(m == 0 or propagating)
+                dispersion[row, side_index * len(orders_m) + order_index, :] = bool(propagating)
+                for component, (_name, e_vec) in enumerate(polarization_basis_3d(
+                        order.alpha, order.gamma, beta, medium, sign, cfg)):
+                    k_vec, e_vec, _h_vec = mode_eh_vectors(
+                        order.alpha, order.gamma, beta, e_vec, sign, cfg)
+                    carried = (selected and np.isfinite(mode_power(
+                        k_vec, e_vec, cfg, normal))
+                        and mode_power(k_vec, e_vec, cfg, normal) > 1.0e-12)
+                    power[row, side_index * len(orders_m) + order_index, component] = bool(carried)
+    return {"power_carrying": power, "dispersion_propagating": dispersion}
+
+
 def analytic_power_mask(points: np.ndarray, *, m_values=range(-7, 4),
                         wavelength_nm: float = 13.5,
                         period_x_nm: float = 50.0,
                         period_y_nm: float = 25.0) -> np.ndarray:
-    """Return an analytic ``(sample, 22, 2)`` power-carrying mask.
-
-    The same air-side propagation test was independently checked against every
-    Case119 training mask row.  The two sides and S/P components share the
-    propagation identity; structural nulls remain null rather than zero.
-    """
-
-    points = np.asarray(points, dtype=np.float64)
-    if points.ndim == 1:
-        points = points[None, :]
-    if points.ndim != 2 or points.shape[1] != 4:
-        raise ValueError("points must have shape (n,4)")
-    grazing = np.deg2rad(points[:, 2])
-    azimuth = np.deg2rad(points[:, 3])
-    kx = np.cos(grazing) * np.cos(azimuth)
-    ky = np.cos(grazing) * np.sin(azimuth)
-    result = np.zeros((len(points), 2 * len(tuple(m_values)), 2), dtype=bool)
-    for i, m in enumerate(m_values):
-        propagating = ((kx + float(m) * wavelength_nm / period_x_nm) ** 2
-                       + (ky + 0.0 * wavelength_nm / period_y_nm) ** 2 <= 1.0 + 1.0e-12)
-        result[:, i, :] = propagating[:, None]
-        result[:, i + len(tuple(m_values)), :] = propagating[:, None]
-    return result
+    """Compatibility wrapper returning the runtime power-carrying identity."""
+    del wavelength_nm, period_x_nm, period_y_nm
+    return power_mask_authority(points, m_values=m_values)["power_carrying"]
 
 
 def reconstruct_aggregates(latent: np.ndarray) -> np.ndarray:
