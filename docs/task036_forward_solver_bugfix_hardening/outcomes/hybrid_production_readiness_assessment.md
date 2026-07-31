@@ -5,14 +5,18 @@
 ```text
 document_status = architecture_and_production_readiness_assessment
 task_branch = codex/20260730-task36-forward-solver-bugfix-hardening
-reviewed_branch_head = e7f8bd1526b9434ff35b9c823a136fb7f6e4395d
+original_reviewed_branch_head = e7f8bd1526b9434ff35b9c823a136fb7f6e4395d
+rectified_against_evidence_head = 7ea6c043dd32732f675a60da36fba31862639e15
+latest_numerical_source = c8725e9eedc8a558719008f8762bc79eca48fbb7
 new_PDE = not_run
 numerical_source_modified = no
 ordinary_default = unchanged
 master_merge = not_authorized
 ```
 
-本报告是 Task036 Review V4 结束后的架构审阅，不改写其正式数值结论。报告复核了
+本报告最初是 Task036 Review V4 结束后的架构审阅；现已根据 Review V5 的接口内移结果和
+后续 exact Cauchy / port-operator / 16-channel sensitivity audit 完成必要整改。它不改写任何
+正式数值结果，也不把离线审计写成 actual Hybrid candidate。报告复核了
 Task032、Task033、Task035c、Task035e 和 Task036 的主要结果链，以及 Hybrid 相关的
 QEP、mode classification、传播、接口投影、strong trace、局部静态凝聚、直接
 Modal-Schur 和场恢复实现。审阅覆盖约 1.1 万行 Hybrid 核心模块的结构、关键数据流和
@@ -29,7 +33,11 @@ current direct Hybrid = research/reference implementation
 Hybrid production candidate today = none
 strong trace algebra = retain
 scalar-CG diagonal propagation = retain
-fixed 10/110 nm interface placement = reopen
+selected M120 core operator = qualified_inside_selected_space
+interface inward-movement lane = closed_controlled_negative
+10/110 nm interface = target_to_restore_with_local_port_enrichment
+endpoint joint Cauchy = incomplete
+frozen next enrichment = transfer_optimal_port_modes
 replicated M^2 / all-mode RHS / local LU = must_remove
 2.5D production assumption = forbidden
 ```
@@ -38,16 +46,17 @@ replicated M^2 / all-mode RHS / local LU = must_remove
 但不能靠继续优化当前 direct runner 或把 `M120` 固定到所有波长来完成。当前证据把问题
 清楚地分成两层：
 
-1. **当前尺度的物理闭合问题**：M120 physical QEP space 在固定 `z=10/110 nm`
-   接口处不能完整表示 Full3D 端点近场；这不是 strong-trace 消元错误，也没有证据证明
-   是显著模式之间的轴向 mixing。
+1. **当前尺度的物理闭合问题**：M120 selected core 的 40/60/100 nm exact FE port action
+   与当前 scalar-CG modal operator 一致到约 `2e-11`，但固定 `z=10/110 nm` 端部的
+   joint electric/traction Cauchy space 不完整。把接口内移到 `30/90` 或 `40/80 nm` 虽改善
+   energy 和中心场，仍只有 `79/96` fixed channels，因此继续移动接口已经关闭。
 2. **目标尺度的复杂度问题**：当前 all-mode MUMPS QEP、复制的 modal square、全量
    `N_local x M` multi-RHS 和 local MUMPS LU 在 `0.7 nm` 必然失控。
 
 因此 production 路线应为：
 
 ```text
-asymptotic interface placement / certified port space
+exact joint-Cauchy fixture / transfer-optimal local port modes
 → strong-trace Hybrid direct physical closure at 13.5 nm
 → distributed and streamed generic modal core
 → matrix-free strong-trace Hybrid FGMRES
@@ -70,8 +79,11 @@ asymptotic interface placement / certified port space
 | 已资格化主点的通道闭合 | Task035c p6/h10 M120/M160 均为 12/12 power + 12/12 complex amplitude | measured | 证明方法不是概念性降维 | [Task035c summary](../../task035c_hybrid_channel_memory_closure/outcomes/summary.md) |
 | strong trace 方程 | `D R-I`、trace identity、Petrov traction 和 reduced residual 均通过；接口跳跃降至 `4.588e-15` | measured | 保留为 production 离散基础 | [strong-trace result](strong_trace_hybrid_anchor_results.md) |
 | strong trace 的物理闭合 | A004-S 仍只有 77/96 fixed channels，energy closure 为 `1.531666e-5` | measured negative | 不能单独提升为 production | [strong-trace result](strong_trace_hybrid_anchor_results.md) |
-| scalar-CG 逐模态传播 | significant `rho=6.40e-11/6.51e-11`，projected offdiag 约 `3.3e-12` | measured audit | 保留；不得无证据改成 dense matrix propagation | [Response V4](../response_v4.md) |
-| M120 endpoint trace space | bottom/top projection residual 为 `3.51e-6/5.22e-6`，高于 `1e-8` | measured negative | 当前固定接口不合格 | [Response V4](../response_v4.md) |
+| 接口内移 | 30/90 与 40/80 均为 79/96；energy 和中心场改善，但 16 个通道持续失败；40/80 峰值已达 Full3D 的 94.79% | measured controlled negative | 关闭继续移动接口 | [Response V5](../response_v5.md) |
+| scalar-CG 逐模态传播 | 40/60/100 nm exact FE selected port operator 与当前 modal operator 相差 `1.59e-11–1.95e-11` | measured audit | 保留；selected M120 core 已资格化 | [exact Cauchy audit](exact_cauchy_port_operator_audit.md) |
+| M120 endpoint joint-Cauchy space | electric aggregate residual `1.10e-6`，traction `2.36e-5`，joint `1.68e-5` | measured negative | E-only trace qualification 不足，需局部 port enrichment | [exact Cauchy audit](exact_cauchy_port_operator_audit.md) |
+| right/left port pairing | whitened condition `1.00001975`，inf-sup 最小奇异值 `0.99998025` | measured pass | 不是 pairing 退化 | [exact Cauchy audit](exact_cauchy_port_operator_audit.md) |
+| 16-channel sensitivity | 达到 95% 方向能量需要 16/16 个方向 | measured negative for low-rank hypothesis | 不选逐通道 adjoint-mode enrichment | [exact Cauchy audit](exact_cauchy_port_operator_audit.md) |
 | 扩大 M 的 direct 路线 | A049-P M492 峰值 19.405 GiB，高于 Full3D 10.161 GiB，且接口误差形成平台 | measured controlled negative | 关闭 M240/M480/M492 direct 扩张 | [Hybrid validity map](hybrid_validity_map.md) |
 | static Hybrid 内存 | p6/h10 M120 为 7.544 GiB，Full3D static 为 14.722 GiB | measured, same MPI8 campaign | 已有约 48.8% Full3D→Hybrid 降幅，但还不是 0.7 nm 架构 | [Task035c summary](../../task035c_hybrid_channel_memory_closure/outcomes/summary.md) |
 | direct 实现的 0.7 nm 可扩展性 | current layout 最大单对象机械外推约 1,595.60 TiB | predicted stress projection, not RSS | 明确不可行 | [0.7 nm assessment](../../task032_hybrid_fem_modal_direct_baseline/outcomes/task032_0p7nm_scalability_assessment.md) |
@@ -81,25 +93,15 @@ Task035c 的结果尤其重要：矩阵 rows 和 NNZ 已显著下降，说明 Hy
 价值。峰值没有同步按 NNZ 比例下降，是因为 local factors、QEP modes、field recovery、
 middle reconstruction 和序列化对象仍在生命周期上重叠，不是因为降维没有意义。
 
-## 3. Task036 exact trace 数据揭示的新优先级
+## 3. Task036 trace、接口内移与 exact Cauchy 的完整证据链
 
-Task036 raw authority：
+### 3.1 E-trace 预选只是一项诊断
 
-```text
-numerical_source_sha =
-    c70ad32e3cb741f382e2cc901e056ae1ea0ba284
-raw_artifact =
-    benchmarks/artifacts/task036/
-    c70ad32e3cb741f382e2cc901e056ae1ea0ba284/
-    review_v4_one_cell/mpi8_m120_exact_oracle.json
-raw_sha256 =
-    021bc075adcc4acaa0f9202fe70fad1d9755113091dd8e74e0f141ed2bd89d09
-```
+原 one-cell oracle source 为
+`c70ad32e3cb741f382e2cc901e056ae1ea0ba284`。同一 A004-S Full3D exact tangential E
+trace 在 11 个 z 平面投影进同一 M120 physical QEP space 后，质量范数相对残差为：
 
-同一 A004-S Full3D exact trace 在 11 个 z 平面投影进同一 M120 physical QEP space 后，
-质量范数相对残差为：
-
-| z 平面，nm | exact M120 trace projection residual | `1e-8` Gate | 数据身份 |
+| z 平面，nm | exact M120 E-trace projection residual | `1e-8` diagnostic | 数据身份 |
 |---:|---:|---|---|
 | 10 | `3.514657e-6` | fail | measured raw artifact |
 | 20 | `9.780687e-8` | fail | measured raw artifact |
@@ -113,30 +115,60 @@ raw_sha256 =
 | 100 | `2.089942e-7` | fail | measured raw artifact |
 | 110 | `5.224931e-6` | fail | measured raw artifact |
 
-这是当前最有判别力的机制信号。误差不是贯穿整个 modal middle，而是集中在离上下端部
-最近的平面，向内部快速衰减。它支持以下解释：
+这些值正确说明 electric near-field content 向中间快速衰减，但它们不能单独证明 actual
+Maxwell port closure，因为完整接口状态还包含与 `n x H` 成比例的离散 weak conormal。
 
-> `z=10/110 nm` 接口离端部散射或边界层太近，M120 physical modes 被迫表示仍含明显
-> evanescent boundary-layer content 的场。进入真正渐近的 z-invariant interior 后，同一
-> M120 space 已满足 `1e-8` trace Gate。
+### 3.2 接口内移 actual 已关闭该路线
 
-因此，下一步最优先的不是：
+Review V5 随后实际运行了 `30/90` 和 `40/80 nm` 两个接口点：
 
-- 增大 M；
-- 修改 strong-trace 约束；
-- 增加 penalty；
-- 实现 dense projected propagation；
-- 继续大范围参数扫描。
+| model | modal middle | fixed channels | energy closure | peak / Full3D | 判定 |
+|---|---:|---:|---:|---:|---|
+| old 10/110 | 100 nm | 77/96 | `1.531666e-5` | 74.82% | physics fail |
+| I1 30/90 | 60 nm | 79/96 | `7.539015e-6` | 78.59% | physics fail, resource pass |
+| I2 40/80 | 40 nm | 79/96 | `4.845332e-6` | 94.79% | physics and resource fail |
 
-最优先的是**把接口位置和 local 3D buffer 厚度提升为数值选择量**。现有
-[`hybrid_local_mesh.py`](../../../src/geometry/hybrid_local_mesh.py) 已接受显式
-`bottom_interface_z_nm` 和 `top_interface_z_nm`；主要限制来自历史 runner Gate 把正式
-Task035c/036 点冻结在 `10/110 nm`，不是 mesh core 完全无法表示其他接口。
+接口内移改善了 energy、R/T/A 总量和中心场，却没有消除 16 个持续失败通道；I2 的资源又
+已经接近 Full3D。因此“继续移动接口直到通过”以及普通 E-trace evanescent buffer 均已作为
+controlled negative 关闭。10/110 nm 仍是希望恢复的高压缩接口，而不是已资格化接口。
 
-`z=30/90 nm` 是已有 raw trace 支持的第一个对称、双侧都通过 `1e-8` 的候选，但这只是
-**接口预选正信号**，不是 actual Hybrid pass。扩大 local endcaps 会增加局部 3D rows，
-所以 production selector 应寻找“满足 trace margin 的最靠外接口”，而不是无边界地把
-modal middle 缩短。
+### 3.3 Exact Cauchy 把根因收窄到端部 joint port space
+
+后续审计 numerical source 为
+`c8725e9eedc8a558719008f8762bc79eca48fbb7`。它没有运行新的 forward PDE，而是用 frozen
+Full3D traces 和 exact one-cell Schur action 分别拟合 electric、traction 和 joint Cauchy：
+
+| best approximation | aggregate relative | max cell relative | 结论 |
+|---|---:|---:|---|
+| tangential electric | `1.099844e-6` | `2.072564e-6` | E-only 缺口存在但较小 |
+| magnetic/traction | `2.364065e-5` | `4.609620e-5` | 主要端部缺口 |
+| joint Cauchy | `1.677328e-5` | `3.214277e-5` | 当前 M120 port space 不完整 |
+
+traction aggregate residual 是 electric 的约 21.5 倍。right/left port pair 白化后的 condition
+为 `1.00001975`，inf-sup 最小奇异值为 `0.99998025`，所以根因不是 port pairing 退化。
+
+### 3.4 M120 core propagation 已被 exact FE operator 对照保留
+
+| middle length | exact FE selected port operator vs current modal operator |
+|---:|---:|
+| 40 nm | `1.593747e-11` |
+| 60 nm | `1.749079e-11` |
+| 100 nm | `1.951491e-11` |
+
+这组对照推翻了“剩余误差可能主要来自 selected core propagation 累积”的暂定解释。当前
+scalar-CG modal core 在 selected M120 space 内是正确的，不应改成 dense propagation。
+
+16 个持续失败通道的 sensitivity 达到 95% 方向能量需要 16/16 个方向，因此也不应选择
+逐通道 adjoint modes。下一步只冻结：
+
+```text
+transfer_optimal_port_modes
+```
+
+它应从两端短 buffer 的 exact discrete transfer operator 中提取最重要的 joint
+trace/traction directions，corrector 只在端部局部存在并随后 Schur 凝聚；不得改变跨越完整
+100 nm 的 M120 core，也不得同时实现其他 enrichment family。完整证据见
+[`exact_cauchy_port_operator_audit.md`](exact_cauchy_port_operator_audit.md)。
 
 ## 4. production 几何边界：统一按真正 3D 处理
 
@@ -223,9 +255,9 @@ $$
 | 组件 | 决定 | 原因 |
 |---|---|---|
 | stable two-sided scattering propagation | 保留 | 避免 growing inverse，已有方向和被动性 Gate |
-| scalar-CG discrete axial correction | 保留 | exact one-cell significant residual 与 offdiag 均通过 |
+| scalar-CG discrete axial correction | 保留 | 40/60/100 nm selected port action 与 exact FE 相差约 `2e-11` |
 | strong trace relation `g_s = R_s L_s a` | 保留 | 真正删除自由 trace complement，代数和资源已通过 |
-| Petrov left trace / flux rows | 保留 | traction residual 已通过 |
+| Petrov left trace / flux rows | 保留离散形式 | 代数 residual 已通过；port basis 仍须补足 physical joint Cauchy，不得把两者混为一谈 |
 | assembly-time cell static condensation | 保留 | 高 p 时显著减少 active rows、matrix NNZ 和 factor inventory |
 | full explicit true residual 与 official R/T/A | 保留 | production 最终可信度合同 |
 
@@ -266,33 +298,36 @@ Task031 的 Full3D iterative 基础可以作为 local block 起点，但必须�
 
 ## 7. 接口与 port-space 的 production 选择规则
 
-固定几何距离不是可靠 production 规则。接口选择至少需要以下四类证据：
+固定几何距离和 E-only projection 都不是可靠 production 规则。port 选择至少需要以下四类
+证据：
 
 | 指标 | 用途 | 建议 Gate | 失败动作 |
 |---|---|---:|---|
-| exact或可计算的 trace projection residual | 判断 physical modal space 能否表示接口场 | `<=1e-8`，并保留安全 margin | 扩大 local 3D buffer |
-| evanescent tail / transfer singular-value tail | 判断被省略近场是否已衰减 | 与 59-goal tolerance 绑定 | 增加少量 evanescent modes或移动接口 |
+| exact或可计算的 joint E/traction Cauchy residual | 判断 port space 能否表示完整 Maxwell 接口状态 | 与冻结 channel/59-goal tolerance 绑定 | 增加 transfer-optimal local port modes |
+| transfer singular-value tail 与结构成本 | 判断遗漏方向的重要性和压缩代价 | tail 与 memory budget 同时通过 | 停止或减小 local enrichment，不改 global M |
 | strong trace identity与Petrov flux residual | 判断离散耦合正确 | `<=1e-10 / <=1e-8` | 实现失败，停止 |
 | actual 59-goal/channel closure | 判断误差是否影响服务输出 | 全部通过 | 不得用接口诊断替代物理 Gate |
 
-在可运行 Full3D 的 13.5 nm qualification 阶段，接口可以由 exact Full3D trace 预选。进入
-更短波长后，不能依赖 unavailable Full3D truth，必须由 transfer-eigenvalue tail、
-双接口 buffer 加厚差和 goal-weighted port residual 提供在线/离线证书。
+在可运行 Full3D 的 13.5 nm qualification 阶段，可以用 exact Full3D joint Cauchy data
+资格化 transfer-optimal basis。进入更短波长后，不能依赖 unavailable Full3D truth，必须由
+transfer singular-value tail、双 buffer enrichment 差和 goal-weighted port residual 提供
+在线/离线证书。
 
-如果 `z=30/90 nm` actual Hybrid 仍失败，下一种且唯一值得进入的新 port 架构是：
+`z=30/90 nm` 和 `z=40/80 nm` actual 已经失败。最新审计只冻结一种 port 架构：
 
 ```text
-full-interface discrete Bloch modes
-or
-transfer-eigenmode optimal port basis
+transfer_optimal_port_modes
 ```
 
-其作用是让 port basis 与实际 3D 离散 trace operator 一致。不得退回：
+其作用是用短端部 buffer 的 exact discrete transfer operator 补足 joint trace/traction
+directions，同时保留 10/110 nm 接口和完整 100 nm M120 core。不得退回：
 
 - 单 cell 或手选 face enrichment；
 - projection-energy 排名；
 - penalty；
 - dense `R D` projector；
+- failing-channel 专用 adjoint modes；
+- 继续移动接口或普通 E-trace buffer；
 - 无证据增加 M。
 
 ## 8. local 3D endcap 与 h/p 的角色
@@ -328,24 +363,25 @@ effective memory           <= 3 kB per active local DoF hard exploratory ceiling
 
 | 阶段 | 最小工作 | 进入条件 | 退出 Gate | 失败决策 |
 |---|---|---|---|---|
-| P0 接口闭合 | 复用 A004-S exact trace，预选 `z=30/90 nm`；运行一个 p5/h10 M120 strong-trace actual | 现有 Review V4 evidence | 96/96 channels、energy、residual、trace、zero swap；仍有资源优势 | 若失败，进入一种 optimal-port architecture，不扫阈值 |
-| P1 参数锚点 | A004-S 通过后运行 A049-P、A001-P；再做 p6/h10 59-goal authority | P0 pass | S/P、低/高掠角、方位角 anchor 全通过 | 停止 broad scan，修同一根因 |
-| P2 scalable modal core | distributed mode ownership、streaming、no replicated M²、no all-mode RHS | P1 direct physics pass | MPI identity、mode convergence、内存近似随 M/rank 分摊 | 不进入短波长 |
-| P3 Hybrid iterative | matrix-free strong-trace operator + local trace-aware FGMRES | P2 pass | direct equivalence、59/59、全通道、true residual、warm/cold资源 | 迭代不收敛则修PC，不用 direct 冒充 |
-| P4 h/p endcap | local exact-sequence h/p 与最小 buffer | P3 pass | same-error rows、NNZ proxy、whole-job memory符合预算 | 保留 controlled negative，重新选local space |
-| P5 波长 continuation | `13.5→5→2→1→0.7 nm` | 前一波长全部 Gate pass | 每步材料、M、buffer、h/p、资源和59-goal更新 | 在当前波长 fail closed |
+| P0 optimal-port fixture | 从现有 exact short-buffer operator 提取一批 transfer-optimal joint-Cauchy modes；不运行 forward PDE | exact Cauchy audit complete | joint residual 显著下降、orientation/row-map正确、无 dense interface square、资源预估通过 | 停止该 direct enrichment，不扫模式数或公式 |
+| P1 A004-S actual | 在 10/110 nm、完整 100 nm M120 core 上只运行一个 p5/h10 MPI8 candidate | P0 pass | 96/96 channels、energy、residual、trace、zero swap及资源 Gate全部通过 | 保留 raw negative并停止，不调阈值 |
+| P2 参数锚点 | A004-S 通过后运行 A049-P、A001-P；再做 p6/h10 59-goal authority | P1 pass | S/P、低/高掠角、方位角 anchor 全通过 | 停止 broad scan，修同一根因 |
+| P3 scalable modal core | distributed mode ownership、streaming、no replicated M²、no all-mode RHS | P2 direct physics pass | MPI identity、mode convergence、内存近似随 M/rank 分摊 | 不进入短波长 |
+| P4 Hybrid iterative | matrix-free strong-trace operator + local trace-aware FGMRES | P3 pass | direct equivalence、59/59、全通道、true residual、warm/cold资源 | 迭代不收敛则修PC，不用 direct 冒充 |
+| P5 h/p endcap | local exact-sequence h/p 与最小 buffer | P4 pass | same-error rows、NNZ proxy、whole-job memory符合预算 | 保留 controlled negative，重新选local space |
+| P6 波长 continuation | `13.5→5→2→1→0.7 nm` | 前一波长全部 Gate pass | 每步材料、M、buffer、h/p、资源和59-goal更新 | 在当前波长 fail closed |
 
-### 9.1 P0 的资源口径
+### 9.1 P1 actual 的资源口径
 
-移动接口会扩大 local 3D blocks，所以 P0 的第一目标是证明物理闭合，不应提前承诺 50%
-内存下降。最低资源 Gate 可继续使用：
+local transfer-optimal correctors 会增加少量端部状态，所以 P1 的第一目标是同时证明物理闭合
+和仍有明确降维收益，不应在 fixture 前承诺 50% 内存下降。最低资源 Gate 可继续使用：
 
 ```text
 whole-job Hybrid peak <= 0.85 * same-input Full3D peak
 zero swap
 ```
 
-P2/P3 完成 distributed/modal streaming 和 local iterative 后，再把 13.5 nm engineering
+P3/P4 完成 distributed/modal streaming 和 local iterative 后，再把 13.5 nm engineering
 目标收紧为：
 
 ```text
@@ -373,7 +409,7 @@ Hybrid 只有同时通过以下合同，才能从 `experimental` 提升为 produ
 - weak channel 使用冻结 absolute Gate，不得删除；
 - periodic、Floquet、orientation、tag、ownership 和 hanging closure 通过；
 - strong trace identity、Petrov traction、external DtN residual 分项通过；
-- M、interface buffer 和 local h/p 均有独立收敛证据。
+- M、transfer-optimal port basis、local buffer 和 local h/p 均有独立收敛证据。
 
 ### 10.2 参数域
 
@@ -401,8 +437,11 @@ Hybrid 只有同时通过以下合同，才能从 `experimental` 提升为 produ
 |---|---|---|
 | 2.5D / y-invariant production budget | forbidden | 未来按真正 3D 结构处理，不能依赖当前视觉对称 |
 | M240/M480/M492 direct 漏斗 | closed controlled negative | 精度平台且内存超过 Full3D |
+| 继续把接口从30/90向内移动 | closed controlled negative | 40/80仍为79/96且峰值已达Full3D的94.79% |
+| 普通 E-trace evanescent buffer | closed controlled negative | E-only诊断不能闭合joint Cauchy和16个通道 |
 | dense projected/block propagation | not justified | exact one-cell audit没有证明 significant cross-mode mixing |
 | 继续修改 strong-trace方程 | closed | 代数、trace和Petrov residual已通过 |
+| failing-channel adjoint modes | not selected | 95% sensitivity energy需要16/16方向，缺少低秩收益 |
 | penalty或全维Lagrange multiplier | forbidden | 掩盖trial/test space错误并破坏降维 |
 | direct MUMPS微调作为0.7路线 | closed | 复杂度错误，不能靠生命周期小修复 |
 | Task035e现有blind cellwise predictor | not production | single/four-cell actual与post-action audit均为负 |
@@ -414,24 +453,26 @@ Hybrid 只有同时通过以下合同，才能从 `experimental` 提升为 produ
 下一批次应只做一个明确主线：
 
 ```text
-generic-3D Hybrid asymptotic-interface closure
+generic-3D Hybrid transfer-optimal joint-Cauchy port closure
 ```
 
 建议顺序：
 
-1. 不重跑 Full3D，离线消费现有 11-plane exact trace；
-2. 冻结 `z=30/90 nm` 作为第一个 actual interface candidate；
-3. 只做使 Task036 explicit gate 接受该接口的最小改动，ordinary default 保持
-   `10/110 nm` 或现有默认不变；
-4. 运行一个 p5/h10、M120、MPI8、strong-trace A004-S actual；
+1. 不重跑 Full3D，复用现有 exact Cauchy traces、one-cell Schur blocks 和 16-channel
+   sensitivity；
+2. 从两端短 buffer 的 exact discrete transfer operator 提取一批
+   `transfer_optimal_port_modes`，score 同时包含 joint trace/traction 误差和结构成本；
+3. 先通过纯 fixture：joint-Cauchy residual 显著下降、right/left orientation 与 Floquet
+   row-map一致、无 dense interface square、correctors 可在短 buffer 内局部 Schur 凝聚；
+4. 只有 fixture 全部通过，才在 `10/110 nm` 接口和完整 100 nm M120 core 上运行一个
+   p5/h10、MPI8、strong-trace A004-S actual；
 5. 若 96/96、energy、residual、trace 和资源全部通过，再运行 A049-P 和 A001-P；
-6. 三个 anchor 通过后，用 p6/h10 59-goal direct authority关闭高阶资格；
+6. 三个 anchor 通过后，用 p6/h10 59-goal authority关闭高阶资格；
 7. 然后停止 direct 扫描，开始 distributed/streamed modal core 和 matrix-free Hybrid
    FGMRES。
 
-如果 `z=30/90 nm` actual 仍不能闭合，禁止继续尝试多个接口、M或penalty组合；下一步只
-能立项 full-interface discrete Bloch / transfer-eigenmode optimal port basis，并先以
-exact trace fixture 证明它确实降低 endpoint projection residual。
+如果第 3 步 fixture 或第 4 步唯一 actual candidate 失败，保存 controlled negative 并停止
+该 direct enrichment；不得继续改变模式数、阈值、接口位置、global M 或 ranking 公式。
 
 ## 13. 最终判断
 
@@ -442,6 +483,9 @@ domain-decomposition concept = validated
 strong-trace algebra = validated
 current significant-mode propagation = validated
 fixed endpoint port-space placement = failed
+interface inward-movement = closed controlled negative
+endpoint joint Cauchy = incomplete
+next frozen family = transfer_optimal_port_modes
 current direct implementation scalability = failed
 production architecture = incomplete
 ```
@@ -451,7 +495,7 @@ production architecture = incomplete
 
 - 3D FEM 只覆盖不可模态化的端部和必要 evanescent buffer；
 - generic modal middle 承担长 z 区域；
-- port basis 在渐近接口上取得资格；
+- port basis 通过 joint-Cauchy/transfer 证书，并用局部 correctors 恢复大 middle；
 - modal core 与 M 近似线性扩展；
 - local 3D blocks 使用 exact-sequence h/p、static condensation 和低存储迭代；
 - 每个波长都由完整物理、数值和资源 Gate fail closed。
