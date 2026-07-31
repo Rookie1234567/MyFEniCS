@@ -88,8 +88,10 @@ def _full3d_reference(backend: str) -> dict:
         "timeline_sha256": "e" * 64,
         "source": {
             "commit_sha": SOURCE_SHA,
+            "verified_clean_sha": SOURCE_SHA,
             "head_after_sha": SOURCE_SHA,
             "tracked_source_dirty": False,
+            "status_after": "",
             "stable_and_clean_after": True,
         },
         "qualification": {
@@ -341,6 +343,32 @@ def _task036_hybrid_cli() -> list[str]:
     ]
 
 
+def _task036_strong_hybrid_cli(
+    *,
+    modes: int = 120,
+    point_id: str = "A001-P",
+) -> list[str]:
+    cli = _task036_hybrid_cli()
+    cli[cli.index("--solver-path") + 1] = "strong-trace-direct"
+    cli[cli.index("--requested-modes") + 1] = str(modes)
+    cli[cli.index("--candidate-modes") + 1] = str(2 * modes)
+    points = {
+        "A004-S": ("0.5", "45", "120", "17", "s"),
+        "A049-P": ("10", "90", "120", "17", "p"),
+        "A001-P": ("0.5", "0", "120", "17", "p"),
+    }
+    grazing, azimuth, height, width, polarization = points[point_id]
+    for option, value in (
+        ("--incident-grazing-deg", grazing),
+        ("--incident-phi-deg", azimuth),
+        ("--grating-height-nm", height),
+        ("--grating-width-x-nm", width),
+        ("--polarization-kind", polarization),
+    ):
+        cli[cli.index(option) + 1] = value
+    return cli
+
+
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
     def test_task036_dynamic_p5_hybrid_port_round_trip(self) -> None:
         args = parse_memory_args(_task036_hybrid_cli())
@@ -372,6 +400,68 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
         self.assertEqual(worker.modal_degree, 5)
         self.assertEqual(worker.task036_mesh_axis_cell_counts, [6, 4, 14])
 
+    def test_task036_strong_trace_port_is_narrow_and_round_trips(self) -> None:
+        for point_id, modes in (
+            ("A004-S", 120),
+            ("A049-P", 120),
+            ("A001-P", 120),
+            ("A001-P", 160),
+        ):
+            with self.subTest(point_id=point_id, modes=modes):
+                args = parse_memory_args(
+                    _task036_strong_hybrid_cli(
+                        modes=modes,
+                        point_id=point_id,
+                    )
+                )
+                self.assertEqual(args.solver_path, "strong-trace-direct")
+                command = _worker_command(
+                    args, Path("record.json"), Path("stages.jsonl")
+                )
+                self.assertEqual(
+                    command[command.index("--solver-path") + 1],
+                    "strong-trace-direct",
+                )
+                module_index = command.index(
+                    "benchmarks.run_task032_phase6_augmented"
+                )
+                worker = parse_phase6_args(command[module_index + 1 :])
+                self.assertEqual(
+                    worker.solver_path, "strong-trace-direct"
+                )
+                self.assertEqual(worker.requested_modes, modes)
+
+        defaults = parse_phase6_args([])
+        self.assertEqual(defaults.solver_path, "augmented")
+        for option, value in (
+            ("--degree", "6"),
+            ("--requested-modes", "240"),
+        ):
+            cli = _task036_strong_hybrid_cli()
+            cli[cli.index(option) + 1] = value
+            if option == "--degree":
+                cli[cli.index("--modal-degree") + 1] = value
+            if option == "--requested-modes":
+                cli[cli.index("--candidate-modes") + 1] = "480"
+            with self.subTest(option=option):
+                with self.assertRaises(SystemExit):
+                    parse_memory_args(cli)
+        for point_id in ("A004-S", "A049-P"):
+            with self.subTest(point_id=point_id, modes=160):
+                with self.assertRaises(SystemExit):
+                    parse_memory_args(
+                        _task036_strong_hybrid_cli(
+                            modes=160,
+                            point_id=point_id,
+                        )
+                    )
+        off_contract = _task036_strong_hybrid_cli()
+        off_contract[
+            off_contract.index("--grating-width-x-nm") + 1
+        ] = "18"
+        with self.assertRaises(SystemExit):
+            parse_memory_args(off_contract)
+
     def test_task036_dynamic_full3d_reference_is_exactly_bound(self) -> None:
         reference = _task036_full3d_reference()
         common = {
@@ -402,7 +492,11 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
                 "same_discretization_and_polarization",
             ),
             ("polarization_kind", "s", "same_discretization_and_polarization"),
-            ("current_source_sha", "f" * 40, "exact_final_source_sha"),
+            (
+                "current_source_sha",
+                "f" * 40,
+                "reference_source_exact_or_component_disjoint",
+            ),
         )
         for key, value, failure in mutations:
             with self.subTest(key=key):
@@ -411,6 +505,91 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
                 )
                 self.assertFalse(rejected["pass"])
                 self.assertIn(failure, rejected["failures"])
+
+    def test_task036_reference_source_compatibility_is_fail_closed(self) -> None:
+        reference = _task036_full3d_reference()
+        common = {
+            "expected_sha256": RECORD_SHA256,
+            "observed_sha256": RECORD_SHA256,
+            "assembly_backend": "assembly_time_static_condensed",
+            "degree": 5,
+            "h_nm": 10.0,
+            "mpi_size": 8,
+            "polarization_kind": "p",
+            "incident_grazing_deg": 0.5,
+            "incident_phi_deg": 90.0,
+            "grating_height_nm": 115.0,
+            "grating_width_x_nm": 18.0,
+            "mesh_axis_cell_counts": (6, 4, 14),
+        }
+        with patch(
+            "benchmarks.task035c_p6_h10_gates._git",
+            side_effect=AssertionError("exact source must not query Git"),
+        ):
+            exact = task036_full3d_reference_gate(
+                reference,
+                current_source_sha=SOURCE_SHA,
+                **common,
+            )
+        self.assertTrue(exact["pass"], exact["failures"])
+        self.assertTrue(
+            exact["source_compatibility"]["exact_source_sha"]
+        )
+
+        current = "f" * 40
+
+        def compatible_git(*arguments: str) -> str | None:
+            if arguments[0] == "merge-base":
+                return SOURCE_SHA
+            if arguments[0] == "diff":
+                return "\n".join(
+                    (
+                        "src/solvers/hybrid_strong_trace_direct.py",
+                        "src/test/test_199_task036_strong_trace_hybrid.py",
+                        "src/test/test_59_task033_memory_watchdog_contract.py",
+                    )
+                )
+            self.fail(f"Unexpected Git query: {arguments}")
+
+        with patch(
+            "benchmarks.task035c_p6_h10_gates._git",
+            side_effect=compatible_git,
+        ):
+            compatible = task036_full3d_reference_gate(
+                reference,
+                current_source_sha=current,
+                **common,
+            )
+        self.assertTrue(compatible["pass"], compatible["failures"])
+        self.assertFalse(
+            compatible["source_compatibility"]["exact_source_sha"]
+        )
+
+        def full3d_drift_git(*arguments: str) -> str | None:
+            if arguments[0] == "merge-base":
+                return SOURCE_SHA
+            if arguments[0] == "diff":
+                return "src/solvers/dtn_port_3d.py"
+            return None
+
+        with patch(
+            "benchmarks.task035c_p6_h10_gates._git",
+            side_effect=full3d_drift_git,
+        ):
+            rejected = task036_full3d_reference_gate(
+                reference,
+                current_source_sha=current,
+                **common,
+            )
+        self.assertFalse(rejected["pass"])
+        self.assertEqual(
+            rejected["source_compatibility"]["disallowed_changed_paths"],
+            ["src/solvers/dtn_port_3d.py"],
+        )
+        self.assertIn(
+            "reference_source_exact_or_component_disjoint",
+            rejected["failures"],
+        )
 
     def test_task036_gate_rejects_scope_drift_and_p5_stays_opt_in(self) -> None:
         with self.assertRaises(SystemExit):

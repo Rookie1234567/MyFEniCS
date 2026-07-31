@@ -39,6 +39,7 @@ from benchmarks.task035c_p6_h10_gates import (
     TASK035C_P6_H10_MODE_COUNTS,
     TASK035C_P6_H10_MPI_SIZES,
     task036_full3d_reference_gate,
+    task036_strong_trace_anchor_scope,
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
     valid_hex_digest,
@@ -1208,8 +1209,17 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
             key: record.get("hybrid_system", {}).get(key)
             for key in (
                 "primary_solver_path",
+                "formulation",
+                "strong_trace",
                 "matrix_size",
                 "matrix_stats",
+                "block_shapes",
+                "inserted_nnz_by_block",
+                "assembly_backend_requested",
+                "bottom_assembly_backend_actual",
+                "top_assembly_backend_actual",
+                "bottom_static_condensation",
+                "top_static_condensation",
                 "bottom_matrix_stats",
                 "top_matrix_stats",
                 "bottom_global_size",
@@ -1234,6 +1244,16 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
             "external_diffraction_orders": validation.get(
                 "external_diffraction_orders"
             ),
+            "interface_e_projection": validation.get(
+                "interface_e_projection"
+            ),
+            "fe_modal_traction_equilibrium": validation.get(
+                "fe_modal_traction_equilibrium"
+            ),
+            "projection_only_full_interface_flux_diagnostic": validation.get(
+                "projection_only_full_interface_flux_diagnostic"
+            ),
+            "strong_trace": validation.get("strong_trace"),
         },
         "physical_field_reconstruction": {
             "interface_continuity": physical.get("interface_continuity"),
@@ -1275,6 +1295,147 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         "gates": record.get("gates"),
         "qualification": record.get("qualification"),
         "timing_seconds_max_rank": record.get("timing_seconds_max_rank"),
+    }
+
+
+def _complete_rank_smaps_summary(
+    rows: list[dict[str, Any]],
+    *,
+    mpi_size: int,
+) -> dict[str, Any]:
+    """Summarize only simultaneous smaps samples containing every MPI rank."""
+
+    expected_ranks = set(range(mpi_size))
+    complete: list[dict[str, Any]] = []
+    partial_count = 0
+    no_smaps_count = 0
+    failures: list[str] = []
+    for index, row in enumerate(rows):
+        try:
+            payload = json.loads(
+                str(row.get("worker_rank_smaps_rollup_json") or "[]")
+            )
+        except json.JSONDecodeError:
+            failures.append(f"sample_{index}_smaps_json_invalid")
+            continue
+        if not isinstance(payload, list):
+            failures.append(f"sample_{index}_smaps_payload_not_list")
+            continue
+        readable_count = int(
+            float(row.get("worker_rank_smaps_readable_count") or 0)
+        )
+        ranks = {
+            int(item["rank"])
+            for item in payload
+            if isinstance(item, Mapping)
+            and isinstance(item.get("rank"), int)
+        }
+        if readable_count == 0:
+            no_smaps_count += 1
+            continue
+        if readable_count != mpi_size or ranks != expected_ranks:
+            partial_count += 1
+            continue
+        ordered = sorted(payload, key=lambda item: int(item["rank"]))
+        if len(ordered) != mpi_size:
+            failures.append(f"sample_{index}_duplicate_rank_payload")
+            continue
+        try:
+            sums = {
+                name: float(sum(float(item[name]) for item in ordered))
+                for name in (
+                    "rss_mb",
+                    "pss_mb",
+                    "uss_mb",
+                    "shared_mb",
+                    "swap_mb",
+                )
+            }
+        except (KeyError, TypeError, ValueError):
+            failures.append(f"sample_{index}_smaps_metric_invalid")
+            continue
+        for row_name, sum_name in (
+            ("worker_rank_pss_sum_mb", "pss_mb"),
+            ("worker_rank_uss_sum_mb", "uss_mb"),
+            ("worker_rank_shared_sum_mb", "shared_mb"),
+            ("worker_rank_smaps_swap_sum_mb", "swap_mb"),
+        ):
+            try:
+                recorded = float(row[row_name])
+            except (KeyError, TypeError, ValueError):
+                failures.append(f"sample_{index}_{row_name}_missing")
+                continue
+            if not math.isclose(
+                recorded,
+                sums[sum_name],
+                rel_tol=0.0,
+                abs_tol=1.0e-8,
+            ):
+                failures.append(f"sample_{index}_{row_name}_mismatch")
+        if not sums["uss_mb"] <= sums["pss_mb"] <= sums["rss_mb"]:
+            failures.append(f"sample_{index}_uss_pss_rss_order_invalid")
+        if sums["swap_mb"] != 0.0:
+            failures.append(f"sample_{index}_smaps_swap_nonzero")
+        complete.append(
+            {
+                "timestamp_utc": row.get("timestamp_utc"),
+                "elapsed_seconds": float(row.get("elapsed_seconds") or 0.0),
+                "stage": row.get("stage"),
+                "sums_mb": sums,
+                "per_rank": [
+                    {
+                        "rank": int(item["rank"]),
+                        "pid": int(item["pid"]),
+                        "rss_mb": float(item["rss_mb"]),
+                        "pss_mb": float(item["pss_mb"]),
+                        "uss_mb": float(item["uss_mb"]),
+                        "shared_mb": float(item["shared_mb"]),
+                        "swap_mb": float(item["swap_mb"]),
+                    }
+                    for item in ordered
+                ],
+            }
+        )
+
+    def peak(metric: str) -> dict[str, Any] | None:
+        if not complete:
+            return None
+        sample = max(complete, key=lambda item: item["sums_mb"][metric])
+        value = float(sample["sums_mb"][metric])
+        return {
+            "simultaneous_sum_mb": value,
+            "simultaneous_sum_gib": value / 1024.0,
+            "timestamp_utc": sample["timestamp_utc"],
+            "elapsed_seconds": sample["elapsed_seconds"],
+            "stage": sample["stage"],
+            "rank_count": mpi_size,
+            "per_rank": sample["per_rank"],
+        }
+
+    if not complete:
+        failures.append("no_complete_rank_smaps_sample")
+    failures = sorted(set(failures))
+    return {
+        "schema_version": "task036.complete-rank-smaps.v1",
+        "pass": not failures,
+        "mpi_size": mpi_size,
+        "sample_count": len(rows),
+        "complete_rank_sample_count": len(complete),
+        "partial_rank_sample_count": partial_count,
+        "no_live_rank_smaps_sample_count": no_smaps_count,
+        "all_complete_samples_zero_swap": bool(
+            complete
+            and all(item["sums_mb"]["swap_mb"] == 0.0 for item in complete)
+        ),
+        "worker_rank_rss_peak": peak("rss_mb"),
+        "worker_rank_pss_peak": peak("pss_mb"),
+        "worker_rank_uss_peak": peak("uss_mb"),
+        "failures": failures,
+        "semantics": (
+            "PSS/USS attribution uses only simultaneous /proc/<pid>/"
+            "smaps_rollup samples containing every MPI rank. Formal RSS and "
+            "termination authority remain the process-tree/cgroup ledger."
+        ),
     }
 
 
@@ -1464,7 +1625,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--material-kind", choices=("air", "lossy_homogeneous", "stage4_xy"))
     parser.add_argument(
         "--solver-path",
-        choices=("augmented", "modal-schur-fast", "modal-schur-memory-minimal"),
+        choices=(
+            "augmented",
+            "modal-schur-fast",
+            "modal-schur-memory-minimal",
+            "strong-trace-direct",
+        ),
         default="modal-schur-memory-minimal",
     )
     parser.add_argument(
@@ -1801,17 +1967,32 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "--task035c-p6-h10-gate."
         )
     if args.task036_domain_robustness_gate:
+        strong_trace_scope = bool(
+            args.solver_path == "strong-trace-direct"
+            and args.degree == 5
+            and task036_strong_trace_anchor_scope(
+                requested_modes=args.requested_modes,
+                incident_grazing_deg=args.incident_grazing_deg,
+                incident_phi_deg=args.incident_phi_deg,
+                polarization_kind=args.polarization_kind,
+                grating_height_nm=args.grating_height_nm,
+                grating_width_x_nm=args.grating_width_x_nm,
+            )
+        )
+        projection_only_scope = bool(
+            args.solver_path == "modal-schur-memory-minimal"
+            and args.degree in {5, 6}
+            and args.requested_modes >= 120
+        )
         task036_scope = bool(
             args.target == "hybrid"
-            and args.degree in {5, 6}
+            and (strong_trace_scope or projection_only_scope)
             and math.isclose(args.h_nm, 10.0)
             and args.modal_degree == args.degree
             and args.modal_h_nm is not None
             and math.isclose(args.modal_h_nm, 10.0)
             and args.mpi_size == 8
-            and args.requested_modes >= 120
             and args.candidate_modes == 2 * args.requested_modes
-            and args.solver_path == "modal-schur-memory-minimal"
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
             and args.stage4_full3d_assembly_backend
@@ -1841,7 +2022,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "--task036-domain-robustness-gate requires a WSL clean-source "
                 "MPI8 p5/p6 h10 same-degree static Hybrid point, topology "
                 "6/4/14, M>=120 with exact 2M pool, discrete propagation/"
-                "traction, alias/direct-projection/reciprocal audits, and an "
+                "traction, scoped strong-trace or modal-Schur lifecycle, "
+                "alias/direct-projection/reciprocal audits, and an "
                 "explicit same-input Full3D reference."
             )
     elif (
@@ -1855,6 +2037,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ):
         parser.error(
             "Task036 angle/geometry/topology/audit options require "
+            "--task036-domain-robustness-gate."
+        )
+    if (
+        args.solver_path == "strong-trace-direct"
+        and not args.task036_domain_robustness_gate
+    ):
+        parser.error(
+            "strong-trace-direct is fail-closed outside "
             "--task036-domain-robustness-gate."
         )
     if args.task033_same_sha_anchor_requalification:
@@ -2997,8 +3187,13 @@ def run(args: argparse.Namespace) -> int:
         else {}
     )
     memory = _sampler_summary(rows, poll_interval=args.poll_interval)
+    complete_rank_smaps = _complete_rank_smaps_summary(
+        rows,
+        mpi_size=args.mpi_size,
+    )
     memory.update(
         {
+            "complete_rank_smaps": complete_rank_smaps,
             "job_swap_all_samples_readable": job_swap_all_samples_readable,
             "max_process_tree_swap_bytes": max_process_tree_swap_bytes,
             "max_dedicated_cgroup_swap_bytes": max_dedicated_cgroup_swap_bytes,
@@ -3068,6 +3263,8 @@ def run(args: argparse.Namespace) -> int:
             terminated_for_authority_unreadable
         ),
     )
+    if args.solver_path == "strong-trace-direct":
+        formal_pass = bool(formal_pass and complete_rank_smaps["pass"])
     summary = {
         "schema_version": "task033.memory-watchdog.v2",
         "benchmark_id": "task033_external_memory_watchdog",
@@ -3082,7 +3279,11 @@ def run(args: argparse.Namespace) -> int:
         "memory_authority_pass": resource_gate["pass"],
         "physical_qualified": False,
         "qualification_identity": (
-            "measured_shard_pass_requires_funnel_aggregate_for_physical_qualification"
+            (
+                "strong_trace_anchor_requires_review_v3_full3d_channel_comparator"
+                if args.solver_path == "strong-trace-direct"
+                else "measured_shard_pass_requires_funnel_aggregate_for_physical_qualification"
+            )
         ),
         "requested_modes": args.requested_modes,
         "candidate_modes": args.candidate_modes,
@@ -3107,6 +3308,7 @@ def run(args: argparse.Namespace) -> int:
         "worker_source": solver_record.get("metadata")
         or solver_record.get("provenance"),
         "solver_record_sha256": _sha256(record_path),
+        "timeline_sha256": _sha256(timeline_path),
         "solver_record_ignored_path": str(record_path.relative_to(ROOT)),
         "timeline_ignored_path": str(timeline_path.relative_to(ROOT)),
         "stdout_ignored_path": str(stdout_path.relative_to(ROOT)),

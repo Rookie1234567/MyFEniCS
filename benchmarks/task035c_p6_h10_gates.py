@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import math
+from pathlib import Path
+import subprocess
 from typing import Any
 
 
+ROOT = Path(__file__).resolve().parents[1]
 TASK035C_P6_H10_DEGREE = 6
 TASK035C_P6_H10_MESH_NM = 10.0
 TASK035C_P6_H10_INTERFACES_NM = (10.0, 110.0)
@@ -13,6 +16,83 @@ TASK035C_P6_H10_MPI_SIZES = frozenset({1, 2, 4, 8})
 TASK035C_P6_H10_BACKENDS = frozenset(
     {"standard_full", "assembly_time_static_condensed"}
 )
+_TASK036_REFERENCE_COMPATIBLE_EXACT_PATHS = frozenset(
+    {
+        "benchmarks/analyze_task036_robustness_scan.py",
+        "benchmarks/run_task032_phase6_augmented.py",
+        "benchmarks/run_task033_memory_watchdog.py",
+        "benchmarks/run_task036_robustness_scan.py",
+        "benchmarks/task035c_p6_h10_gates.py",
+        "src/coupling/hybrid_internal_modes.py",
+        "src/solvers/hybrid_strong_trace_direct.py",
+        "src/test/test_181_task035c_p6_h10_runner_gates.py",
+        "src/test/test_59_task033_memory_watchdog_contract.py",
+        "src/test/test_197_task036_robustness_scan_points.py",
+        "src/test/test_198_task036_robustness_analyzer.py",
+        "src/test/test_199_task036_strong_trace_hybrid.py",
+    }
+)
+_TASK036_REFERENCE_COMPATIBLE_PREFIXES = (
+    "docs/task036_forward_solver_bugfix_hardening/",
+)
+
+
+def task036_strong_trace_anchor_id(
+    *,
+    incident_grazing_deg: float,
+    incident_phi_deg: float,
+    polarization_kind: str,
+    grating_height_nm: float,
+    grating_width_x_nm: float,
+) -> str | None:
+    """Identify one of the three Review V3 strong-trace anchors."""
+
+    common_geometry = bool(
+        math.isclose(grating_height_nm, 120.0)
+        and math.isclose(grating_width_x_nm, 17.0)
+    )
+    if not common_geometry:
+        return None
+    candidates = (
+        ("A004-S", 0.5, 45.0, "s"),
+        ("A049-P", 10.0, 90.0, "p"),
+        ("A001-P", 0.5, 0.0, "p"),
+    )
+    for point_id, grazing, azimuth, polarization in candidates:
+        if (
+            math.isclose(incident_grazing_deg, grazing)
+            and math.isclose(incident_phi_deg, azimuth)
+            and polarization_kind == polarization
+        ):
+            return point_id
+    return None
+
+
+def task036_strong_trace_anchor_scope(
+    *,
+    requested_modes: int,
+    incident_grazing_deg: float,
+    incident_phi_deg: float,
+    polarization_kind: str,
+    grating_height_nm: float,
+    grating_width_x_nm: float,
+) -> bool:
+    """Restrict M120/M160 to the exact Review V3 execution contract."""
+
+    point_id = task036_strong_trace_anchor_id(
+        incident_grazing_deg=incident_grazing_deg,
+        incident_phi_deg=incident_phi_deg,
+        polarization_kind=polarization_kind,
+        grating_height_nm=grating_height_nm,
+        grating_width_x_nm=grating_width_x_nm,
+    )
+    return bool(
+        point_id is not None
+        and (
+            requested_modes == 120
+            or (requested_modes == 160 and point_id == "A001-P")
+        )
+    )
 
 
 def valid_hex_digest(value: object, length: int) -> bool:
@@ -21,6 +101,104 @@ def valid_hex_digest(value: object, length: int) -> bool:
         and len(value) == length
         and all(character in "0123456789abcdef" for character in value.lower())
     )
+
+
+def _git(*arguments: str) -> str | None:
+    """Run one read-only Git query, returning ``None`` on any failure."""
+
+    try:
+        completed = subprocess.run(
+            ["git", *arguments],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return None
+    if completed.returncode != 0:
+        return None
+    return completed.stdout.strip()
+
+
+def _task036_full3d_reference_source_compatibility(
+    reference_source_sha: object,
+    current_source_sha: object,
+) -> dict[str, Any]:
+    """Fail closed unless source drift is exact or Hybrid-component-disjoint."""
+
+    valid = bool(
+        valid_hex_digest(reference_source_sha, 40)
+        and valid_hex_digest(current_source_sha, 40)
+    )
+    reference_sha = (
+        str(reference_source_sha).lower() if valid else None
+    )
+    current_sha = str(current_source_sha).lower() if valid else None
+    exact = bool(valid and reference_sha == current_sha)
+    if exact:
+        merge_base = reference_sha
+        rendered_diff: str | None = ""
+    elif valid:
+        merge_base = _git("merge-base", reference_sha, current_sha)
+        rendered_diff = _git(
+            "diff",
+            "--name-only",
+            "--no-renames",
+            f"{reference_sha}..{current_sha}",
+            "--",
+        )
+    else:
+        merge_base = None
+        rendered_diff = None
+
+    changed_paths = (
+        []
+        if rendered_diff is None
+        else sorted(
+            {
+                line.strip()
+                for line in rendered_diff.splitlines()
+                if line.strip()
+            }
+        )
+    )
+
+    def allowed(path: str) -> bool:
+        return bool(
+            path in _TASK036_REFERENCE_COMPATIBLE_EXACT_PATHS
+            or any(
+                path.startswith(prefix)
+                for prefix in _TASK036_REFERENCE_COMPATIBLE_PREFIXES
+            )
+        )
+
+    allowed_paths = [path for path in changed_paths if allowed(path)]
+    disallowed_paths = [path for path in changed_paths if not allowed(path)]
+    checks = {
+        "source_shas_valid": valid,
+        "reference_source_is_ancestor": bool(
+            valid and merge_base == reference_sha
+        ),
+        "source_diff_readable": rendered_diff is not None,
+        "only_component_disjoint_or_nonnumerical_changes": (
+            not disallowed_paths
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {
+        "schema_version": "task036.full3d-source-compatibility.v1",
+        "pass": not failures,
+        "exact_source_sha": exact,
+        "reference_source_sha": reference_sha,
+        "current_source_sha": current_sha,
+        "merge_base": merge_base,
+        "changed_paths": changed_paths,
+        "allowed_changed_paths": allowed_paths,
+        "disallowed_changed_paths": disallowed_paths,
+        "checks": checks,
+        "failures": failures,
+    }
 
 
 def task035c_p6_h10_preflight_authority_gate(
@@ -330,6 +508,13 @@ def task036_full3d_reference_gate(
     worker_contract = (
         worker_contract if isinstance(worker_contract, Mapping) else {}
     )
+    reference_source_sha = source.get("commit_sha")
+    source_compatibility = (
+        _task036_full3d_reference_source_compatibility(
+            reference_source_sha,
+            current_source_sha,
+        )
+    )
 
     checks = {
         "object_present": bool(payload),
@@ -343,12 +528,16 @@ def task036_full3d_reference_gate(
         "record_hash_matches_expected": bool(
             expected_sha256 == observed_sha256
         ),
-        "exact_final_source_sha": bool(
-            valid_hex_digest(current_source_sha, 40)
-            and source.get("commit_sha") == current_source_sha
-            and source.get("head_after_sha") == current_source_sha
+        "reference_source_clean_and_self_consistent": bool(
+            valid_hex_digest(reference_source_sha, 40)
+            and source.get("verified_clean_sha") == reference_source_sha
+            and source.get("head_after_sha") == reference_source_sha
             and source.get("tracked_source_dirty") is False
             and source.get("stable_and_clean_after") is True
+            and source.get("status_after") == ""
+        ),
+        "reference_source_exact_or_component_disjoint": (
+            source_compatibility["pass"]
         ),
         "same_discretization_and_polarization": bool(
             payload.get("degree") == degree
@@ -422,7 +611,7 @@ def task036_full3d_reference_gate(
             )
             is True
             and worker_contract.get("verified_clean_sha")
-            == current_source_sha
+            == reference_source_sha
         ),
         "matching_static_backend": bool(
             assembly_backend == "assembly_time_static_condensed"
@@ -525,8 +714,9 @@ def task036_full3d_reference_gate(
     return {
         "schema_version": "task036.full3d-reference-gate.v1",
         "pass": not failures,
-        "reference_source_sha": source.get("commit_sha"),
+        "reference_source_sha": reference_source_sha,
         "current_source_sha": current_source_sha,
+        "source_compatibility": source_compatibility,
         "expected_sha256": expected_sha256,
         "observed_sha256": observed_sha256,
         "inputs": {

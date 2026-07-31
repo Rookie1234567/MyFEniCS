@@ -28,6 +28,7 @@ from benchmarks.task035c_p6_h10_gates import (
     TASK035C_P6_H10_MODE_COUNTS,
     TASK035C_P6_H10_MPI_SIZES,
     task036_full3d_reference_gate,
+    task036_strong_trace_anchor_scope,
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
     valid_hex_digest,
@@ -82,6 +83,12 @@ from src.solvers.hybrid_fem_modal_schur_direct import (
     solve_hybrid_modal_schur_direct,
 )
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
+from src.solvers.hybrid_strong_trace_direct import (
+    build_hybrid_strong_trace_direct_system,
+    evaluate_hybrid_strong_trace_solution,
+    recover_hybrid_strong_trace_static_fields,
+    solve_hybrid_strong_trace_direct,
+)
 from src.solvers.common_3d_solve import (
     _petsc_factor_inventory,
     _petsc_matrix_stats,
@@ -1259,11 +1266,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--solver-path",
-        choices=("augmented", "modal-schur-fast", "modal-schur-memory-minimal"),
+        choices=(
+            "augmented",
+            "modal-schur-fast",
+            "modal-schur-memory-minimal",
+            "strong-trace-direct",
+        ),
         default="augmented",
         help=(
             "Primary direct solve lifecycle. Non-augmented choices are standalone "
-            "Phase10 memory paths and never retain the monolithic augmented factor."
+            "Phase10 memory paths and never retain the monolithic augmented factor. "
+            "strong-trace-direct is a Task036-only Petrov--Galerkin research path."
         ),
     )
     parser.add_argument("--container-image", default="myfenics-stage4:task28")
@@ -1343,15 +1356,30 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "--task035c-p6-h10-gate."
         )
     if args.task036_domain_robustness_gate:
+        strong_trace_scope = bool(
+            args.solver_path == "strong-trace-direct"
+            and args.degree == 5
+            and task036_strong_trace_anchor_scope(
+                requested_modes=args.requested_modes,
+                incident_grazing_deg=args.incident_grazing_deg,
+                incident_phi_deg=args.incident_phi_deg,
+                polarization_kind=args.polarization_kind,
+                grating_height_nm=args.grating_height_nm,
+                grating_width_x_nm=args.grating_width_x_nm,
+            )
+        )
+        projection_only_scope = bool(
+            args.solver_path == "modal-schur-memory-minimal"
+            and args.degree in {5, 6}
+            and args.requested_modes >= 120
+        )
         task036_scope = bool(
-            args.degree in {5, 6}
+            (strong_trace_scope or projection_only_scope)
             and math.isclose(args.h_nm, 10.0)
             and args.modal_degree == args.degree
             and args.modal_h_nm is not None
             and math.isclose(args.modal_h_nm, 10.0)
-            and args.requested_modes >= 120
             and args.candidate_modes == 2 * args.requested_modes
-            and args.solver_path == "modal-schur-memory-minimal"
             and not args.compare_modal_schur
             and args.stage4_full3d_assembly_backend
             == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
@@ -1380,10 +1408,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "--task036-domain-robustness-gate requires a clean-source "
                 "fixed rectangular p5/p6 h10 same-degree Hybrid point, "
                 "MPI worker topology 6/4/14, M>=120 with exact 2M pool, "
-                "static modal-Schur-minimal solve, discrete propagation/"
+                "static modal-Schur-minimal or scoped p5 strong-trace solve, "
+                "discrete propagation/"
                 "traction, alias/direct-projection/reciprocal audits, and an "
                 "explicit same-input Full3D reference."
             )
+    elif args.solver_path == "strong-trace-direct":
+        parser.error(
+            "strong-trace-direct is fail-closed outside "
+            "--task036-domain-robustness-gate."
+        )
     if not math.isfinite(args.incident_phi_deg):
         parser.error("--incident-phi-deg must be finite.")
     for option, value in (
@@ -2381,6 +2415,24 @@ def main() -> None:
                 top,
                 coupling,
             )
+        elif args.solver_path == "strong-trace-direct":
+            mark_stage("strong_trace_petrov_galerkin_assembly")
+            system = build_hybrid_strong_trace_direct_system(
+                bottom, top, coupling
+            )
+            timings["primary_system_build"] = _max_elapsed(comm, started)
+            timings["monolithic_assembly"] = timings["primary_system_build"]
+            progress(
+                "Task036: square strong-trace Petrov--Galerkin AIJ complete"
+            )
+            mark_stage("strong_trace_mumps_factor_and_solve")
+            solution = solve_hybrid_strong_trace_direct(
+                system,
+                bottom,
+                top,
+                coupling,
+                recover_static=False,
+            )
         else:
             builder = (
                 build_hybrid_modal_schur_direct_system
@@ -2403,8 +2455,14 @@ def main() -> None:
                 stage_callback=mark_stage,
             )
         mark_stage("official_rta")
-        validation = evaluate_hybrid_augmented_solution(
-            cfg, bottom, top, coupling, solution
+        validation = (
+            evaluate_hybrid_strong_trace_solution(
+                cfg, bottom, top, coupling, solution
+            )
+            if args.solver_path == "strong-trace-direct"
+            else evaluate_hybrid_augmented_solution(
+                cfg, bottom, top, coupling, solution
+            )
         )
         port_power = validation["port_power"]
         modal_schur_comparison = None
@@ -2543,10 +2601,14 @@ def main() -> None:
         if system is not None:
             if solution.ksp is None:
                 raise RuntimeError(
-                    "Augmented Hybrid factor disappeared before inventory."
+                    "Monolithic Hybrid factor disappeared before inventory."
                 )
             factor_inventory = {
-                "augmented": _petsc_factor_inventory(solution.ksp)
+                (
+                    "strong_trace_monolithic"
+                    if args.solver_path == "strong-trace-direct"
+                    else "augmented"
+                ): _petsc_factor_inventory(solution.ksp)
             }
             primary_system_snapshot = {
                 "shape": list(system.A.getSize()),
@@ -2559,6 +2621,68 @@ def main() -> None:
                     system.dense_interface_square_formed
                 ),
             }
+            if args.solver_path == "strong-trace-direct":
+                primary_system_snapshot["strong_trace"] = {
+                    "formulation": (
+                        "strong_trace_subspace_petrov_galerkin"
+                    ),
+                    "bottom_interface_trace_rows": int(
+                        len(system.bottom_interface.interface_rows)
+                    ),
+                    "top_interface_trace_rows": int(
+                        len(system.top_interface.interface_rows)
+                    ),
+                    "bottom_original_interface_rows": int(
+                        system.bottom_interface.original_interface_rows
+                    ),
+                    "top_original_interface_rows": int(
+                        system.top_interface.original_interface_rows
+                    ),
+                    "bottom_retained_rows": int(
+                        sum(
+                            map(
+                                len,
+                                system.bottom_interface.retained_rows_by_rank,
+                            )
+                        )
+                    ),
+                    "top_retained_rows": int(
+                        sum(
+                            map(
+                                len,
+                                system.top_interface.retained_rows_by_rank,
+                            )
+                        )
+                    ),
+                    "bottom_removed_floquet_slave_rows": int(
+                        len(system.bottom_interface.removed_slave_rows)
+                    ),
+                    "top_removed_floquet_slave_rows": int(
+                        len(system.top_interface.removed_slave_rows)
+                    ),
+                    "bottom_D_R_identity_error": float(
+                        system.bottom_interface.projection_identity_error
+                    ),
+                    "top_D_R_identity_error": float(
+                        system.top_interface.projection_identity_error
+                    ),
+                    "bottom_geometry_projection_support_match": bool(
+                        system.bottom_interface.geometry_projection_support_match
+                    ),
+                    "top_geometry_projection_support_match": bool(
+                        system.top_interface.geometry_projection_support_match
+                    ),
+                    "trace_complement_unknown_count": int(
+                        system.bottom_interface.trace_complement_unknown_count
+                        + system.top_interface.trace_complement_unknown_count
+                    ),
+                    "old_modal_constraint_retained": bool(
+                        system.old_modal_constraint_retained
+                    ),
+                    "dense_interface_square_formed": bool(
+                        system.dense_interface_square_formed
+                    ),
+                }
         else:
             factor_inventory = dict(primary_schur_system.factor_inventory)
             primary_system_snapshot = None
@@ -2596,6 +2720,18 @@ def main() -> None:
         if system is not None:
             solution_release = solution.release_factorization()
             system.destroy()
+            if args.solver_path == "strong-trace-direct":
+                mark_stage("strong_trace_static_field_recovery")
+                started = time.perf_counter()
+                recover_hybrid_strong_trace_static_fields(
+                    solution,
+                    bottom,
+                    top,
+                    coupling,
+                )
+                timings["strong_trace_static_field_recovery"] = (
+                    _max_elapsed(comm, started)
+                )
         else:
             solution_release = {
                 "released": True,
@@ -2656,6 +2792,11 @@ def main() -> None:
         )
         primary_release_audit = {
             "release_before_field_output": True,
+            "global_factor_released_before_static_recovery": bool(
+                args.solver_path != "strong-trace-direct"
+                or solution_release.get("released", False)
+                or solution_release.get("already_released", False)
+            ),
             "solution_release": solution_release,
             "released_objects": [
                 "primary_direct_factorization",
@@ -2953,25 +3094,102 @@ def main() -> None:
             "primary_direct_true_relative_residual_le_1e-9": (
                 solution.relative_residual <= 1.0e-9
             ),
-            "interface_e_projection_relative_residual_le_1e-8": (
-                validation["interface_e_projection"][
-                    "combined_relative_residual"
-                ]
-                <= 1.0e-8
-            ),
-            "fe_modal_traction_equilibrium_relative_residual_le_1e-8": (
-                max(
-                    validation["fe_modal_traction_equilibrium"][
-                        "bottom_relative_residual"
-                    ],
-                    validation["fe_modal_traction_equilibrium"][
-                        "top_relative_residual"
-                    ],
-                )
-                <= 1.0e-8
-            ),
             "external_port_rta_finite": finite_rta,
         }
+        if args.solver_path == "strong-trace-direct":
+            strong_sides = tuple(
+                solution.strong_residuals[side]
+                for side in ("bottom", "top")
+            )
+            strong_snapshot = primary_system_snapshot["strong_trace"]
+            gates.update(
+                {
+                    "strong_noninterface_fe_relative_residual_le_1e-9": (
+                        max(
+                            side["noninterface_fe"]["formal_relative"]
+                            for side in strong_sides
+                        )
+                        <= 1.0e-9
+                    ),
+                    "strong_modal_petrov_flux_relative_residual_le_1e-8": (
+                        max(
+                            side["modal_petrov_flux"]["relative"]
+                            for side in strong_sides
+                        )
+                        <= 1.0e-8
+                    ),
+                    "strong_trace_identity_relative_residual_le_1e-10": (
+                        max(
+                            side["strong_trace_identity"]["relative"]
+                            for side in strong_sides
+                        )
+                        <= 1.0e-10
+                    ),
+                    "strong_external_dtn_relative_residual_le_1e-9": (
+                        max(
+                            side["external_dtn"]["formal_relative"]
+                            for side in strong_sides
+                        )
+                        <= 1.0e-9
+                    ),
+                    "strong_D_R_identity_error_le_1e-10": (
+                        max(
+                            strong_snapshot[
+                                "bottom_D_R_identity_error"
+                            ],
+                            strong_snapshot["top_D_R_identity_error"],
+                        )
+                        <= 1.0e-10
+                    ),
+                    "strong_geometry_projection_support_complete": (
+                        strong_snapshot[
+                            "bottom_geometry_projection_support_match"
+                        ]
+                        and strong_snapshot[
+                            "top_geometry_projection_support_match"
+                        ]
+                    ),
+                    "strong_trace_complement_unknown_count_zero": (
+                        strong_snapshot["trace_complement_unknown_count"] == 0
+                    ),
+                    "strong_old_modal_constraint_absent": (
+                        strong_snapshot["old_modal_constraint_retained"]
+                        is False
+                    ),
+                    "strong_dense_interface_square_absent": (
+                        strong_snapshot["dense_interface_square_formed"]
+                        is False
+                    ),
+                    "diagnostic_interface_e_projection_relative_residual_le_1e-8": (
+                        validation["interface_e_projection"][
+                            "combined_relative_residual"
+                        ]
+                        <= 1.0e-8
+                    ),
+                }
+            )
+        else:
+            gates.update(
+                {
+                    "interface_e_projection_relative_residual_le_1e-8": (
+                        validation["interface_e_projection"][
+                            "combined_relative_residual"
+                        ]
+                        <= 1.0e-8
+                    ),
+                    "fe_modal_traction_equilibrium_relative_residual_le_1e-8": (
+                        max(
+                            validation["fe_modal_traction_equilibrium"][
+                                "bottom_relative_residual"
+                            ],
+                            validation["fe_modal_traction_equilibrium"][
+                                "top_relative_residual"
+                            ],
+                        )
+                        <= 1.0e-8
+                    ),
+                }
+            )
         if solution.bottom_recovered is not None:
             if solution.top_recovered is None:
                 raise RuntimeError(
@@ -3015,12 +3233,40 @@ def main() -> None:
                     ),
                 }
             )
+            if args.solver_path == "strong-trace-direct":
+                gates.pop(
+                    "condensed_full_operator_relative_residual_le_1e-9"
+                )
+                gates[
+                    "diagnostic_historical_all_interface_fe_residual_le_1e-9"
+                ] = bool(
+                    max(
+                        float(
+                            item.full_operator_residual.get(
+                                "historical_all_interface_fe_linear_system_relative_residual",
+                                math.inf,
+                            )
+                        )
+                        for item in recovered_sides
+                    )
+                    <= 1.0e-9
+                )
         if physical_fields is not None:
             interface_physical = physical_fields["interface_continuity"]
             absorption_physical = physical_fields["volume_absorption"]
+            sampled_e_gate = (
+                "diagnostic_sampled_interface_e_t_relative_l2_le_5e-3"
+                if args.solver_path == "strong-trace-direct"
+                else "sampled_interface_e_t_relative_l2_le_5e-3"
+            )
+            assembled_h_gate = (
+                "diagnostic_assembled_interface_h_t_exact_dual_le_1e-8"
+                if args.solver_path == "strong-trace-direct"
+                else "assembled_interface_h_t_exact_dual_le_1e-8"
+            )
             gates.update(
                 {
-                    "sampled_interface_e_t_relative_l2_le_5e-3": (
+                    sampled_e_gate: (
                         max(
                             interface_physical[side]["electric_tangential"][
                                 "relative_l2"
@@ -3040,7 +3286,7 @@ def main() -> None:
                         )
                         <= 1.0e-2
                     ),
-                    "assembled_interface_h_t_exact_dual_le_1e-8": (
+                    assembled_h_gate: (
                         max(
                             interface_physical[side][
                                 "traction_hcurl_dual"
@@ -3116,11 +3362,20 @@ def main() -> None:
             not task33_variant or args.requested_modes >= 80
         )
         interface_closure_gate_names = (
-            "interface_e_projection_relative_residual_le_1e-8",
-            "fe_modal_traction_equilibrium_relative_residual_le_1e-8",
-            "sampled_interface_e_t_relative_l2_le_5e-3",
-            "assembled_interface_h_t_exact_dual_le_1e-8",
-            "volume_energy_closure_abs_le_1e-5",
+            (
+                "strong_trace_identity_relative_residual_le_1e-10",
+                "strong_modal_petrov_flux_relative_residual_le_1e-8",
+                "strong_external_dtn_relative_residual_le_1e-9",
+                "volume_energy_closure_abs_le_1e-5",
+            )
+            if args.solver_path == "strong-trace-direct"
+            else (
+                "interface_e_projection_relative_residual_le_1e-8",
+                "fe_modal_traction_equilibrium_relative_residual_le_1e-8",
+                "sampled_interface_e_t_relative_l2_le_5e-3",
+                "assembled_interface_h_t_exact_dual_le_1e-8",
+                "volume_energy_closure_abs_le_1e-5",
+            )
         )
         interface_closure_pass = bool(
             physical_fields is not None
@@ -3141,7 +3396,11 @@ def main() -> None:
                 else False
             ),
             modal_rank_evidence=(
-                "pending_adjacent_M_comparison_in_task036_analyzer"
+                (
+                    "pending_review_v3_absolute_full3d_channel_comparison"
+                    if args.solver_path == "strong-trace-direct"
+                    else "pending_adjacent_M_comparison_in_task036_analyzer"
+                )
                 if args.task036_domain_robustness_gate
                 else "not_qualified_no_M_convergence_funnel_in_this_runner"
             ),
@@ -3414,6 +3673,16 @@ def main() -> None:
             },
             "hybrid_system": {
                 "primary_solver_path": args.solver_path,
+                "formulation": (
+                    "strong_trace_subspace_petrov_galerkin"
+                    if args.solver_path == "strong-trace-direct"
+                    else "projection_only_hybrid"
+                ),
+                "strong_trace": (
+                    primary_system_snapshot.get("strong_trace")
+                    if primary_system_snapshot is not None
+                    else None
+                ),
                 "matrix_size": (
                     primary_system_snapshot["shape"]
                     if primary_system_snapshot is not None
@@ -3649,6 +3918,9 @@ def main() -> None:
                 "recovery_seconds": getattr(solution, "recovery_seconds", None),
                 "recovery_factor_setup_seconds": getattr(
                     solution, "recovery_factor_setup_seconds", {}
+                ),
+                "strong_residuals": getattr(
+                    solution, "strong_residuals", None
                 ),
                 "solver_release_before_field_output": (
                     primary_release_audit

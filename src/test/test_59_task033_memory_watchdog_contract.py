@@ -10,6 +10,8 @@ from unittest import mock
 
 from benchmarks.run_task033_memory_watchdog import (
     _case090_source_compatibility,
+    _complete_rank_smaps_summary,
+    _hybrid_measurements,
     _parse_args,
     _watchdog_source_after,
     _watchdog_source_before,
@@ -127,6 +129,74 @@ def _m160_nonconvergence_evidence() -> dict:
 
 
 class Task033MemoryWatchdogContractTests(unittest.TestCase):
+    def test_strong_trace_measurements_promote_structural_metadata(self) -> None:
+        hybrid_system = {
+            "primary_solver_path": "strong-trace-direct",
+            "block_shapes": {"bottom_noninterface": [10, 10]},
+            "inserted_nnz_by_block": {"bottom_noninterface": 42},
+            "assembly_backend_requested": "assembly_time_static_condensed",
+            "bottom_assembly_backend_actual": "assembly_time_static_condensed",
+            "top_assembly_backend_actual": "assembly_time_static_condensed",
+            "bottom_static_condensation": {"retained_rows": 10},
+            "top_static_condensation": {"retained_rows": 11},
+        }
+        measurements = _hybrid_measurements(
+            {"hybrid_system": hybrid_system}
+        )
+        promoted = measurements["hybrid_system"]
+        for key, value in hybrid_system.items():
+            self.assertEqual(promoted[key], value)
+
+    def test_complete_rank_smaps_summary_excludes_partial_samples(self) -> None:
+        full_payload = [
+            {
+                "rank": rank,
+                "pid": 1000 + rank,
+                "rss_mb": 100.0 + rank,
+                "pss_mb": 80.0 + rank,
+                "uss_mb": 60.0 + rank,
+                "shared_mb": 20.0,
+                "swap_mb": 0.0,
+            }
+            for rank in range(8)
+        ]
+        full = {
+            "timestamp_utc": "2026-07-31T00:00:00+00:00",
+            "elapsed_seconds": 1.0,
+            "stage": "strong_trace_mumps_factor_and_solve",
+            "worker_rank_smaps_readable_count": 8,
+            "worker_rank_smaps_rollup_json": json.dumps(full_payload),
+            "worker_rank_pss_sum_mb": sum(
+                item["pss_mb"] for item in full_payload
+            ),
+            "worker_rank_uss_sum_mb": sum(
+                item["uss_mb"] for item in full_payload
+            ),
+            "worker_rank_shared_sum_mb": sum(
+                item["shared_mb"] for item in full_payload
+            ),
+            "worker_rank_smaps_swap_sum_mb": 0.0,
+        }
+        partial = {
+            **full,
+            "worker_rank_smaps_readable_count": 7,
+            "worker_rank_smaps_rollup_json": json.dumps(full_payload[:-1]),
+        }
+        summary = _complete_rank_smaps_summary(
+            [partial, full], mpi_size=8
+        )
+        self.assertTrue(summary["pass"], summary["failures"])
+        self.assertEqual(summary["complete_rank_sample_count"], 1)
+        self.assertEqual(summary["partial_rank_sample_count"], 1)
+        self.assertEqual(
+            summary["worker_rank_pss_peak"]["stage"],
+            "strong_trace_mumps_factor_and_solve",
+        )
+        self.assertLessEqual(
+            summary["worker_rank_uss_peak"]["simultaneous_sum_mb"],
+            summary["worker_rank_pss_peak"]["simultaneous_sum_mb"],
+        )
+
     def test_high_order_core_uses_canonical_evidence_not_file_sha(self) -> None:
         evidence = attach_evidence_sha256(
             {
