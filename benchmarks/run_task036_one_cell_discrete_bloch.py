@@ -30,6 +30,9 @@ from src.common.config_3d import (
     target_stage4_config,
 )
 from src.constraints.floquet_3d import build_double_floquet_mpc
+from src.constraints.floquet_3d_high_order import (
+    build_high_order_constraint_data,
+)
 from src.coupling.modal_trace_projection import (
     ModalTraceProjection,
     _mass_norm,
@@ -1640,6 +1643,11 @@ def main() -> None:
         one_cell,
         lambda message: _progress(comm, message),
     )
+    floquet_closure_data = build_high_order_constraint_data(
+        V,
+        mesh_data,
+        one_cell,
+    )
     a, _L = _build_variational_forms(
         mesh_data.mesh,
         mesh_data,
@@ -1823,6 +1831,7 @@ def main() -> None:
         condensed,
         rows,
         mpc=floquet.mpc,
+        constraint_data=floquet_closure_data,
         constraint_residuals=right_constraint_residuals,
     )
     raw_left, raw_right = lifted_endpoint_columns(
@@ -1831,6 +1840,7 @@ def main() -> None:
         condensed,
         rows,
         mpc=floquet.mpc,
+        constraint_data=floquet_closure_data,
         constraint_residuals=left_constraint_residuals,
     )
     inverse_gram = np.linalg.inv(projection.gram)

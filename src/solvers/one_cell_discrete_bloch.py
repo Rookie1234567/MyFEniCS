@@ -312,6 +312,7 @@ def lifted_endpoint_columns(
     rows: EndpointActiveRows,
     *,
     mpc: Any,
+    constraint_data: Any | None = None,
     constraint_residuals: list[dict[str, float]] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return rectangular left/right endpoint columns for canonical traces."""
@@ -324,8 +325,12 @@ def lifted_endpoint_columns(
     for column, source in enumerate(sources):
         field = lifter.lift(source)
         if constraint_residuals is not None:
+            if constraint_data is None:
+                raise ValueError(
+                    "Constraint residual collection requires raw Floquet data."
+                )
             constraint_residuals.append(
-                _mpc_constraint_relative_residual(field, mpc)
+                _mpc_constraint_relative_residual(field, constraint_data)
             )
         mpc.homogenize(field)
         field.x.scatter_forward()
@@ -344,31 +349,69 @@ def lifted_endpoint_columns(
 
 def _mpc_constraint_relative_residual(
     field: fem.Function,
-    mpc: Any,
+    constraint_data: Any,
 ) -> dict[str, float]:
-    """Compare a physical lift with exact oriented MPC slave recovery."""
+    """Check a physical lift directly against sparse oriented MPC rows."""
 
     field.x.scatter_forward()
-    slaves = np.asarray(mpc.slaves, dtype=np.int64)
-    slaves = slaves[
-        (slaves >= 0) & (slaves < len(field.x.array))
-    ]
+    slaves = np.asarray(
+        constraint_data.slave_local_dofs,
+        dtype=np.int64,
+    )
     original = np.asarray(
         field.x.array[slaves],
         dtype=np.complex128,
     ).copy()
-    owned = int(
-        field.function_space.dofmap.index_map.size_local
-        * field.function_space.dofmap.index_map_bs
-    )
+    index_map = field.function_space.dofmap.index_map
+    block_size = int(field.function_space.dofmap.index_map_bs)
+    if block_size != 1:
+        raise NotImplementedError(
+            "Task036 direct Floquet-row audit requires scalar DoF numbering."
+        )
+    owned = int(index_map.size_local)
     local_field_norm_squared = float(
         np.vdot(field.x.array[:owned], field.x.array[:owned]).real
     )
-    mpc.homogenize(field)
-    mpc.backsubstitution(field)
-    field.x.scatter_forward()
+    ownership_start, ownership_stop = map(int, index_map.local_range)
+    packets = field.function_space.mesh.comm.allgather(
+        (
+            ownership_start,
+            ownership_stop,
+            np.asarray(
+                field.x.array[:owned],
+                dtype=np.complex128,
+            ).copy(),
+        )
+    )
+    global_values = np.empty(
+        int(index_map.size_global),
+        dtype=np.complex128,
+    )
+    filled = np.zeros(len(global_values), dtype=bool)
+    for start, stop, values in packets:
+        global_values[int(start) : int(stop)] = values
+        filled[int(start) : int(stop)] = True
+    if not np.all(filled):
+        raise RuntimeError("Direct Floquet closure global values do not close.")
+    masters = np.asarray(
+        constraint_data.master_global_dofs,
+        dtype=np.int64,
+    )
+    coefficients = np.asarray(
+        constraint_data.coefficients,
+        dtype=np.complex128,
+    )
+    offsets = np.asarray(constraint_data.offsets, dtype=np.int64)
+    if len(offsets) != len(slaves) + 1:
+        raise RuntimeError("Direct Floquet closure offset count differs.")
     reconstructed = np.asarray(
-        field.x.array[slaves],
+        [
+            np.dot(
+                coefficients[offsets[row] : offsets[row + 1]],
+                global_values[masters[offsets[row] : offsets[row + 1]]],
+            )
+            for row in range(len(slaves))
+        ],
         dtype=np.complex128,
     )
     local_numerator = float(
