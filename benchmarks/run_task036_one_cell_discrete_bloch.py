@@ -904,6 +904,80 @@ def _sha256_path(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _load_standard_static_authority(
+    path: Path,
+    *,
+    current_source_sha: str,
+) -> dict[str, Any]:
+    """Reuse the existing MPI1 exact-matrix comparison in an MPI audit."""
+
+    resolved = path.resolve()
+    record = json.loads(resolved.read_text(encoding="utf-8"))
+    expected_case = {
+        "identity": "A004-S",
+        "degree": 5,
+        "h_z_nm": 10.0,
+        "mesh_axis_cell_counts": [6, 4, 1],
+        "material": "stage4_xy",
+        "incident_grazing_deg": 0.5,
+        "incident_phi_deg": 45.0,
+        "polarization": "S",
+    }
+    equivalence = record.get("standard_static_equivalence")
+    authority_sha = str(record.get("metadata", {}).get("source_sha", ""))
+    ancestry = subprocess.run(
+        [
+            "git",
+            "merge-base",
+            "--is-ancestor",
+            authority_sha,
+            current_source_sha,
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    failures: list[str] = []
+    if record.get("schema_version") != (
+        "task036.one-cell-discrete-bloch-audit.v1"
+    ):
+        failures.append("schema_version")
+    if record.get("case") != expected_case:
+        failures.append("case_identity")
+    if not isinstance(equivalence, dict):
+        failures.append("standard_static_equivalence")
+    elif (
+        equivalence.get("status") != "pass"
+        or float(equivalence.get("relative_frobenius", float("inf")))
+        > 1.0e-11
+    ):
+        failures.append("equivalence_gate")
+    if record.get("metadata", {}).get("mpi_size") != 1:
+        failures.append("mpi1_authority")
+    if not authority_sha or ancestry.returncode != 0:
+        failures.append("source_ancestry")
+    if failures:
+        raise RuntimeError(
+            "Existing standard/static authority failed: "
+            + ", ".join(failures)
+        )
+    return {
+        **equivalence,
+        "authority_kind": "existing_mpi1_exact_matrix_equivalence",
+        "authority_relative_path": str(resolved.relative_to(ROOT)),
+        "authority_sha256": _sha256_path(resolved),
+        "authority_source_sha": authority_sha,
+        "current_source_sha": current_source_sha,
+        "source_ancestry_verified": True,
+        "reuse_reason": (
+            "The post-assembly comparison is serial-only; the MPI8 formal "
+            "audit reuses this exact-matrix authority instead of repeating "
+            "the 21-minute MPI1 comparison."
+        ),
+    }
+
+
 def _run_exact_full3d_oracle(
     authority,
     cross_section,
@@ -1586,6 +1660,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--candidate-modes", type=int, default=240)
     parser.add_argument("--row-audit-only", action="store_true")
     parser.add_argument("--standard-static-crosscheck", action="store_true")
+    parser.add_argument("--standard-static-authority-json", type=Path)
     parser.add_argument("--full3d-exact-oracle", action="store_true")
     parser.add_argument("--sample-reference", type=Path, default=A004_SAMPLE)
     parser.add_argument("--allow-dirty-research", action="store_true")
@@ -1599,9 +1674,22 @@ def main() -> None:
         raise SystemExit("The Review V4 audit permits only MPI1, MPI2, or MPI8.")
     if np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
         raise SystemExit("The one-cell audit requires PETSc complex128.")
-    if args.full3d_exact_oracle and not args.standard_static_crosscheck:
+    if (
+        args.standard_static_crosscheck
+        and args.standard_static_authority_json is not None
+    ):
         raise SystemExit(
-            "The formal exact oracle requires --standard-static-crosscheck."
+            "Choose either a live standard/static crosscheck or an existing "
+            "authority JSON, not both."
+        )
+    if (
+        args.full3d_exact_oracle
+        and not args.standard_static_crosscheck
+        and args.standard_static_authority_json is None
+    ):
+        raise SystemExit(
+            "The formal exact oracle requires a live standard/static "
+            "crosscheck or --standard-static-authority-json."
         )
     if args.full3d_exact_oracle and not args.sample_reference.is_file():
         raise SystemExit(
@@ -1685,6 +1773,11 @@ def main() -> None:
             condensed,
         )
         timings["standard_static_crosscheck"] = _max_elapsed(comm, stage)
+    elif args.standard_static_authority_json is not None:
+        standard_crosscheck = _load_standard_static_authority(
+            args.standard_static_authority_json,
+            current_source_sha=source_sha,
+        )
 
     payload: dict[str, Any] = {
         "schema_version": "task036.one-cell-discrete-bloch-audit.v1",
