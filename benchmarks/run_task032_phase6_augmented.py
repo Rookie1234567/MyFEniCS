@@ -724,7 +724,10 @@ def _normalize_full3d_reference_record(
             metadata = ROOT / metadata
         archive = archive.resolve()
         metadata = metadata.resolve()
-        run_root = archive.parent.relative_to(ROOT)
+        try:
+            run_root = archive.parent.relative_to(ROOT)
+        except ValueError:
+            run_root = archive.parent
         commit_sha = str(source["commit_sha"]).lower()
         polarization_kind = str(solver["polarization_kind"]).lower()
         incident_theta_deg = float(solver["incident_theta_deg"])
