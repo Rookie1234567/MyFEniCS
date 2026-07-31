@@ -33,8 +33,8 @@ def _coefficient_relative_error(actual: fem.Function, expected: fem.Function) ->
 
 
 class Task033HighOrderMatchedTraceTests(unittest.TestCase):
-    def test_p1_p4_bottom_top_trace_and_normal_contract(self) -> None:
-        for degree in (1, 2, 3, 4):
+    def test_p1_p5_bottom_top_trace_and_normal_contract(self) -> None:
+        for degree in (1, 2, 3, 4, 5):
             with self.subTest(degree=degree):
                 cfg = target_stage4_config(degree=degree, h_nm=10.0)
                 plan = stage4_axis_plan(cfg, MPI.COMM_WORLD.size)
