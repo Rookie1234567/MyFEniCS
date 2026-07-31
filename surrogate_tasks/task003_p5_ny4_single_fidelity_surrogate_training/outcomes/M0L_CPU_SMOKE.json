@@ -12,9 +12,9 @@
   "repeats": [
     {
       "repeat": 1,
-      "fit_predict_wall_seconds": 0.06837486400036141,
-      "rss_before_bytes": 116047872,
-      "peak_rss_bytes": 116047872,
+      "fit_predict_wall_seconds": 0.08101017196895555,
+      "rss_before_bytes": 115613696,
+      "peak_rss_bytes": 115613696,
       "swap_before": {
         "total_bytes": 42949672960,
         "used_bytes": 0,
@@ -33,9 +33,9 @@
     },
     {
       "repeat": 2,
-      "fit_predict_wall_seconds": 0.06438098096987233,
-      "rss_before_bytes": 116047872,
-      "peak_rss_bytes": 116047872,
+      "fit_predict_wall_seconds": 0.052673459984362125,
+      "rss_before_bytes": 115613696,
+      "peak_rss_bytes": 115613696,
       "swap_before": {
         "total_bytes": 42949672960,
         "used_bytes": 0,

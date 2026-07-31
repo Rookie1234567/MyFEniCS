@@ -1,7 +1,7 @@
 {
   "task": "Task003",
   "status": "controlled_stop_before_model_lock",
-  "source_sha": "4bbe5401a93c1b1d8431797d8939d9615cc1e99f",
+  "source_sha": "0629c6c2dd9200c11a130d8e9b91d7fb771b20e9",
   "dataset_verification": {
     "status": "pass",
     "dataset_id": "task002_m4e_p5_ny4_112_v3",
