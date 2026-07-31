@@ -925,6 +925,16 @@ def _load_standard_static_authority(
     }
     equivalence = record.get("standard_static_equivalence")
     authority_sha = str(record.get("metadata", {}).get("source_sha", ""))
+    authority_digest = _sha256_path(resolved)
+    expected_digest = (
+        "95deeb8d6f0e133b328ab59f4e2de08b40aae0f4b44363bea178d6ddf9598c44"
+    )
+    command = str(record.get("metadata", {}).get("command", ""))
+    relative = (
+        float(equivalence.get("relative_frobenius", float("nan")))
+        if isinstance(equivalence, dict)
+        else float("nan")
+    )
     ancestry = subprocess.run(
         [
             "git",
@@ -938,25 +948,87 @@ def _load_standard_static_authority(
         capture_output=True,
         text=True,
     )
+    kernel_paths = [
+        "src/common/config_3d.py",
+        "src/constraints/floquet_3d.py",
+        "src/geometry/mesh_builder_3d.py",
+        "src/solvers/common_3d_forms.py",
+        "src/solvers/common_3d_solve.py",
+        "src/solvers/hcurl_assembly_time_condensation.py",
+        "src/solvers/hcurl_cell_static_condensation.py",
+    ]
+    kernel_diff = subprocess.run(
+        [
+            "git",
+            "diff",
+            "--name-only",
+            authority_sha,
+            current_source_sha,
+            "--",
+            *kernel_paths,
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
     failures: list[str] = []
+    if authority_digest != expected_digest:
+        failures.append("frozen_sha256")
     if record.get("schema_version") != (
         "task036.one-cell-discrete-bloch-audit.v1"
     ):
         failures.append("schema_version")
+    if record.get("status") != "row_audit_complete":
+        failures.append("top_level_status")
     if record.get("case") != expected_case:
         failures.append("case_identity")
     if not isinstance(equivalence, dict):
         failures.append("standard_static_equivalence")
     elif (
         equivalence.get("status") != "pass"
-        or float(equivalence.get("relative_frobenius", float("inf")))
-        > 1.0e-11
+        or not np.isfinite(relative)
+        or not 0.0 <= relative <= 1.0e-11
     ):
         failures.append("equivalence_gate")
+    elif (
+        equivalence.get("standard_full_rows") != 10755
+        or equivalence.get("post_assembly_trace_rows") != 4995
+        or equivalence.get("independent_rows") != 4440
+    ):
+        failures.append("equivalence_row_identity")
     if record.get("metadata", {}).get("mpi_size") != 1:
         failures.append("mpi1_authority")
+    if (
+        record.get("metadata", {}).get("scalar_type") != "complex128"
+        or record.get("metadata", {}).get("int_type") != "int32"
+    ):
+        failures.append("abi")
+    if (
+        "benchmarks.run_task036_one_cell_discrete_bloch" not in command
+        or "--row-audit-only" not in command
+        or "--standard-static-crosscheck" not in command
+        or "--allow-dirty-research" in command
+    ):
+        failures.append("command_identity")
+    rows = record.get("row_identity", {})
+    assembly = record.get("assembly", {})
+    if (
+        rows.get("full_rows") != 10755
+        or rows.get("cell_interior_rows") != 5760
+        or rows.get("trace_rows_before_floquet") != 4995
+        or rows.get("floquet_independent_active_rows") != 4440
+        or rows.get("left_active_rows") != 1200
+        or rows.get("right_active_rows") != 1200
+        or rows.get("left_right_disjoint") is not True
+        or assembly.get("matrix_rows") != 4440
+        or assembly.get("matrix_nnz") != 1987800
+    ):
+        failures.append("matrix_identity")
     if not authority_sha or ancestry.returncode != 0:
         failures.append("source_ancestry")
+    if kernel_diff.returncode != 0 or kernel_diff.stdout.strip():
+        failures.append("matrix_kernel_identity")
     if failures:
         raise RuntimeError(
             "Existing standard/static authority failed: "
@@ -966,10 +1038,16 @@ def _load_standard_static_authority(
         **equivalence,
         "authority_kind": "existing_mpi1_exact_matrix_equivalence",
         "authority_relative_path": str(resolved.relative_to(ROOT)),
-        "authority_sha256": _sha256_path(resolved),
+        "authority_sha256": authority_digest,
         "authority_source_sha": authority_sha,
         "current_source_sha": current_source_sha,
         "source_ancestry_verified": True,
+        "matrix_kernel_identity_verified": True,
+        "measurement_mpi_size": 1,
+        "mpi8_live_standard_static_crosscheck": (
+            "not_run_distributed_slave_ownership_limitation"
+        ),
+        "reused_as_phase_a_foundation": True,
         "reuse_reason": (
             "The post-assembly comparison is serial-only; the MPI8 formal "
             "audit reuses this exact-matrix authority instead of repeating "
