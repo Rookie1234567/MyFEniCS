@@ -27,6 +27,7 @@ from src.modes.cross_section_spaces import (
 )
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 from src.solvers.hybrid_strong_trace_direct import (
+    _partition_residual_metrics,
     build_hybrid_strong_trace_direct_system,
     evaluate_hybrid_strong_trace_solution,
     exact_trace_dense_fixture,
@@ -36,6 +37,45 @@ from src.solvers.hybrid_strong_trace_direct import (
 
 
 class Task036ExactTraceDenseFixtureTests(unittest.TestCase):
+    def test_homogeneous_partition_uses_global_equation_scale(self) -> None:
+        metrics = _partition_residual_metrics(
+            absolute=1.7e-12,
+            operator_scale=1.7e-12,
+            forcing_scale=0.0,
+            global_scale=1.4e-1,
+            roundoff_scale=3.2e-14,
+        )
+        self.assertEqual(
+            metrics["formal_scale_kind"],
+            "global_homogeneous_partition_fallback",
+        )
+        self.assertFalse(
+            metrics["partition_has_resolved_forcing_scale"]
+        )
+        self.assertLess(metrics["formal_relative"], 1.0e-9)
+        self.assertAlmostEqual(
+            metrics["relative_to_partition_scale"],
+            1.0,
+        )
+
+    def test_forced_partition_keeps_strict_local_scale(self) -> None:
+        metrics = _partition_residual_metrics(
+            absolute=1.5e-11,
+            operator_scale=6.5e-1,
+            forcing_scale=6.4e-1,
+            global_scale=8.2e-1,
+            roundoff_scale=1.9e-13,
+        )
+        self.assertEqual(
+            metrics["formal_scale_kind"],
+            "resolved_partition_forcing",
+        )
+        self.assertTrue(
+            metrics["partition_has_resolved_forcing_scale"]
+        )
+        self.assertAlmostEqual(metrics["scale"], 6.5e-1)
+        self.assertLess(metrics["formal_relative"], 1.0e-9)
+
     def test_lossy_petrov_system_excludes_trace_complement(self) -> None:
         rng = np.random.default_rng(36001)
         mode_count = 2

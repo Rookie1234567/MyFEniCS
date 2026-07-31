@@ -1096,6 +1096,52 @@ def _subset_norm(vector: PETSc.Vec, rows: np.ndarray) -> float:
     )
 
 
+def _partition_residual_metrics(
+    *,
+    absolute: float,
+    operator_scale: float,
+    forcing_scale: float,
+    global_scale: float,
+    roundoff_scale: float,
+) -> dict[str, Any]:
+    """Normalize one residual partition without dividing by solve noise.
+
+    A homogeneous row partition has no local right-hand-side or traction
+    scale.  In that case ``A @ x`` is itself the residual, so using its norm
+    as the denominator would turn every nonzero roundoff residual into one.
+    Such partitions use the full equation scale while retaining the raw
+    partition-relative value as a diagnostic.
+    """
+
+    raw_partition_scale = max(operator_scale, forcing_scale)
+    forcing_resolved = bool(forcing_scale > roundoff_scale)
+    formal_scale = (
+        raw_partition_scale if forcing_resolved else global_scale
+    )
+    raw_scale_for_ratio = max(raw_partition_scale, 1.0e-30)
+    return {
+        "absolute": absolute,
+        "relative": float(absolute / formal_scale),
+        "formal_relative": float(absolute / formal_scale),
+        "formal_scale_kind": (
+            "resolved_partition_forcing"
+            if forcing_resolved
+            else "global_homogeneous_partition_fallback"
+        ),
+        "scale": formal_scale,
+        "relative_to_global_scale": float(absolute / global_scale),
+        "relative_to_partition_scale": float(
+            absolute / raw_scale_for_ratio
+        ),
+        "raw_partition_scale": raw_partition_scale,
+        "operator_action_scale": operator_scale,
+        "forcing_scale": forcing_scale,
+        "roundoff_scale": roundoff_scale,
+        "partition_has_resolved_nonzero_scale": forcing_resolved,
+        "partition_has_resolved_forcing_scale": forcing_resolved,
+    }
+
+
 def _side_strong_residual(
     system: HybridLocalDtnSystem,
     interface: HybridStrongTraceInterfaceMap,
@@ -1177,35 +1223,19 @@ def _side_strong_residual(
 
         def partition(rows: np.ndarray) -> dict[str, Any]:
             absolute = _subset_norm(residual, rows)
-            raw_partition_scale = max(
-                _subset_norm(operator, rows),
+            operator_scale = _subset_norm(operator, rows)
+            forcing_scale = max(
                 _subset_norm(system.b, rows),
                 _subset_norm(positive, rows),
                 _subset_norm(negative, rows),
             )
-            resolved = bool(raw_partition_scale > roundoff_scale)
-            partition_scale = (
-                raw_partition_scale if resolved else global_scale
+            return _partition_residual_metrics(
+                absolute=absolute,
+                operator_scale=operator_scale,
+                forcing_scale=forcing_scale,
+                global_scale=global_scale,
+                roundoff_scale=roundoff_scale,
             )
-            return {
-                "absolute": absolute,
-                "relative": float(absolute / partition_scale),
-                "formal_relative": float(absolute / partition_scale),
-                "formal_scale_kind": (
-                    "resolved_partition"
-                    if resolved
-                    else "global_roundoff_fallback"
-                ),
-                "scale": partition_scale,
-                "relative_to_global_scale": float(
-                    absolute / global_scale
-                ),
-                "relative_to_partition_scale": float(
-                    absolute / partition_scale
-                ),
-                "raw_partition_scale": raw_partition_scale,
-                "partition_has_resolved_nonzero_scale": resolved,
-            }
 
         trace_absolute = _subset_norm(trace_difference, interface_rows)
         trace_scale = max(
