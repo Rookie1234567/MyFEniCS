@@ -232,3 +232,88 @@ connected-component 修复，没有运行 PDE。
 
 该 Gate 只证明执行端口和算法局部合同正确；connected-component 修复仍需原 p6/45°
 及其邻域 actual PDE 证明，不能因 unit test 提前写成数值闭环。
+
+## 8. Review V2 首批同源 PDE 与停止判定
+
+### 8.1 最终数值源码前的 focused Gate
+
+V2-B05 static-recovery beta、V2-B06 scalar-CG energy 和 connected-component left-basis
+修复在提交 `de60ce3695eefd4fa7c808856fdea0b708d395a1` 上完成；driver dry-run 串行化
+提交后，正式 PDE 源码为：
+
+```text
+6d5e9781bcb1458ecac7a77af22fa2d420f0cd55
+```
+
+运行前回归：
+
+| suite | 结果 |
+|---|---:|
+| Task036 / Hybrid / propagation targeted serial | `68 passed` |
+| cross-section/static focused | `11 passed` |
+| MPI8 test179 micro-fixture | 每个 rank `6 passed` |
+| Ruff / compileall / diff-check | pass |
+
+MPI8 micro-fixture 同时发现并修复了“rank 数多于 quad cell 时空 partition 仍为一维数组”
+的问题；空分区现在保持 `(0,4)` cell shape，不改变非空分区数值。
+
+### 8.2 五个 configuration pair
+
+| point | Full3D | Hybrid M120 | zero swap | Hybrid peak GiB | 最终判定 |
+|---|---|---|---|---:|---|
+| A001-P p5 | pass | complete return 2 | pass | 7.212 | numerical Gate negative |
+| A004-P p5 | pass | complete return 2 | pass | 7.450 | numerical Gate negative |
+| A004-S p5 | pass | complete return 2 | pass | 7.464 | numerical Gate negative |
+| A049-P p5 | pass | complete return 2 | pass | 7.131 | fixed-channel negative |
+| D001-P p6 | pass | complete return 2 | pass | 11.222 | numerical Gate negative |
+
+`return 2` 是正式 fail-closed 状态，不是 crash、timeout 或 memory termination。五个
+Hybrid 均通过 true residual、algebraic interface E、exact traction 和完整
+biorthogonality row norm，但固定衍射通道没有闭合。详细数字见
+`robustness_scan_matrix.md` 和 `hybrid_validity_map.md`。
+
+这五个结果足以识别重复的 trace-complement 架构根因，因此按照 Review V2 停止其余
+221 个配置，并没有运行 M240/M480/M492。旧 A049-P M492 controlled negative 继续保留，
+不重复 PDE。
+
+### 8.3 并发时间口径
+
+首批 Full3D 五路并发的 outer CPU lease 被 OpenMPI `core/slot` 内层映射覆盖，导致五组
+rank 初期共同绑定 CPU0–7。Hybrid 启动后约 15 秒即发现并实时重绑。由此：
+
+- 数值、residual、observable 和同步 process-tree memory 仍有效；
+- Full3D wall time 不是正式 authority；
+- Hybrid wall time只作参考，不用于宣称速度优势；
+- driver 已改为 explicit `hwloc_base_cpu_list` +
+  `cpu-list:ordered`；
+- 独立 MPI8 probe 已验证 rank 0–7 分别绑定租约中的八个 CPU；
+- 数值 kernel 未变，不因调度文档修复重跑 PDE。
+
+### 8.4 full-suite 口径不变
+
+V2 的正式 PDE、driver 和文档收口没有重跑此前 48:55 的 full repository suite。当前
+仍诚实保留：
+
+```text
+803 passed, 41 skipped, 3 failed
+post-full targeted closure = 59 passed
+```
+
+三个旧 failure 的非数值性质和最终定向闭合见第 3.2 节。最终收口只重跑本轮 changed
+files 的 focused tests、MPI binding probe、Ruff、compileall、文档/JSON 与 diff-check。
+
+### 8.5 最终收口回归
+
+| 检查 | 结果 |
+|---|---:|
+| mode/QEP/propagation/reconstruction/static/driver/analyzer focused | `74 passed` |
+| Task036 docs/B08/hardening/driver/analyzer 组合 | `50 passed, 1 failed` |
+| 失败项 | checkout-local ignored Case098 目录；与第 3.4 节已记录的同一非源码污染 |
+| 单独 documentation local-link / required-layer tests | `2 passed` |
+| MPI8 static-condensation micro-fixture | 每个 rank `6 passed` |
+| explicit MPI8 CPU lease probe | rank 0–7 分别绑定 CPU 8–15 |
+| Ruff | pass |
+| compileall | pass |
+| `git diff --check` | pass |
+
+本轮没有删除 Case098 历史目录来换取测试通过，也没有因此修改 documentation contract。

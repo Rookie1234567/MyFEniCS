@@ -15,6 +15,7 @@ from benchmarks.run_task036_robustness_scan import (
     _full3d_command,
     _hybrid_command,
     _load_points,
+    _mpi_binding_environment,
     _point_values,
 )
 
@@ -229,6 +230,14 @@ def test_task036_parallel_dispatch_reserves_five_disjoint_mpi8_cpu_sets(
         for first in (0, 8, 16, 24, 32)
     )
     assert len(set().union(*map(set, cpu_sets))) == 40
+
+
+def test_task036_mpi_binding_keeps_each_rank_inside_the_cpu_lease() -> None:
+    assert _mpi_binding_environment(tuple(range(8, 16))) == {
+        "OMPI_MCA_hwloc_base_cpu_list": "8,9,10,11,12,13,14,15",
+        "OMPI_MCA_hwloc_base_binding_policy": "cpu-list:ordered",
+        "OMPI_MCA_hwloc_base_report_bindings": "true",
+    }
 
 
 def test_task036_parallel_dispatch_fails_closed_when_cpus_are_insufficient(

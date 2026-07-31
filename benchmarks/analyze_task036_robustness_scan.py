@@ -28,7 +28,7 @@ HYBRID_DIR_RE = re.compile(r"^hybrid_m([1-9][0-9]*)$")
 
 TRUE_RESIDUAL_MAX = 1.0e-9
 INTERFACE_E_MAX = 1.0e-8
-SAMPLED_INTERFACE_E_MAX = 5.0e-3
+SAMPLED_INTERFACE_E_DIAGNOSTIC_MAX = 5.0e-3
 EXACT_TRACTION_MAX = 1.0e-8
 BIORTHOGONALITY_ROW_MAX = 1.0e-6
 DIRECT_PROJECTION_MAX = 1.0e-10
@@ -812,10 +812,6 @@ def _verify_hybrid(
         and residual <= TRUE_RESIDUAL_MAX,
         "interface_e_le_1e-8": interface is not None
         and interface <= INTERFACE_E_MAX,
-        "sampled_interface_e_le_5e-3": (
-            sampled_interface_e is not None
-            and sampled_interface_e <= SAMPLED_INTERFACE_E_MAX
-        ),
         "exact_traction_le_1e-8": traction is not None
         and traction <= EXACT_TRACTION_MAX,
         "biorthogonality_row_le_1e-6": biorthogonality is not None
@@ -832,6 +828,24 @@ def _verify_hybrid(
     formal_gates["pass"] = bool(
         numerical_gates["pass"] and direct_projection["pass"]
     )
+    physical_interface_diagnostic = {
+        "metric": "sampled_recovered_field_interface_e_max_relative_l2",
+        "value": sampled_interface_e,
+        "screening_threshold": SAMPLED_INTERFACE_E_DIAGNOSTIC_MAX,
+        "screening_pass": (
+            sampled_interface_e is not None
+            and sampled_interface_e <= SAMPLED_INTERFACE_E_DIAGNOSTIC_MAX
+        ),
+        "review_v2_formal_gate": False,
+        "production_hold": (
+            sampled_interface_e is None
+            or sampled_interface_e > SAMPLED_INTERFACE_E_DIAGNOSTIC_MAX
+        ),
+        "semantics": (
+            "root-locator for recovered physical trace complement; "
+            "does not replace the formal algebraic interface residual"
+        ),
+    }
 
     factor_inventory = _mapping(
         _dig(solver, "object_payload_ledger", "local_or_augmented_factor_inventory")
@@ -919,6 +933,7 @@ def _verify_hybrid(
                 "watchdog_status": memory.get("status"),
             },
             "candidate_direct_projection": direct_projection,
+            "physical_interface_diagnostic": physical_interface_diagnostic,
             "numerical_individual_gates": numerical_gates,
             "formal_individual_gates": formal_gates,
             "formal_evidence_complete": direct_projection["available"],
@@ -1171,6 +1186,14 @@ def _point_failure_buckets(
         for name, passed in gates.items():
             if name != "pass" and passed is False:
                 result[name].append(mode_count)
+        if _dig(
+            hybrid,
+            "physical_interface_diagnostic",
+            "production_hold",
+        ) is True:
+            result["sampled_physical_interface_root_diagnostic"].append(
+                mode_count
+            )
         if hybrid.get("formal_evidence_complete") is False:
             result["candidate_direct_projection_evidence_missing"].append(mode_count)
     return {key: result[key] for key in sorted(result)}
@@ -1225,6 +1248,18 @@ def _classify_point(
         _dig(hybrids[mode], "numerical_individual_gates", "pass") is True
         for mode in complete_modes
     )
+    physical_interface_hold = any(
+        _dig(
+            hybrids[mode],
+            "physical_interface_diagnostic",
+            "production_hold",
+        )
+        is True
+        for mode in complete_modes
+    )
+    if physical_interface_hold:
+        numerical_minimum = None
+        formal_minimum = None
     plateau = any(
         pair["adjacent_numerical_pass"]
         and not pair["numerical_qualification_pass"]
@@ -1234,6 +1269,8 @@ def _classify_point(
         status = "full3d_failed"
     elif not complete_modes:
         status = "hybrid_not_run"
+    elif physical_interface_hold:
+        status = "trace_complement_diagnostic_hold"
     elif not individual_numerical_pass:
         status = "basis_or_physical_gate_failed"
     elif plateau:
@@ -1257,6 +1294,7 @@ def _classify_point(
         "numerical_minimum_passing_M": numerical_minimum,
         "formal_evidence_complete": evidence_complete,
         "formal_minimum_passing_M": formal_minimum,
+        "physical_interface_diagnostic_hold": physical_interface_hold,
         "finite_candidate_count_used_as_capacity": False,
     }
 
@@ -1422,7 +1460,9 @@ def analyze_scan(
         "thresholds": {
             "true_residual": TRUE_RESIDUAL_MAX,
             "interface_e": INTERFACE_E_MAX,
-            "sampled_physical_interface_e": SAMPLED_INTERFACE_E_MAX,
+            "sampled_physical_interface_e_diagnostic_only": (
+                SAMPLED_INTERFACE_E_DIAGNOSTIC_MAX
+            ),
             "exact_traction": EXACT_TRACTION_MAX,
             "biorthogonality_row": BIORTHOGONALITY_ROW_MAX,
             "candidate_direct_projection": DIRECT_PROJECTION_MAX,
@@ -1491,6 +1531,11 @@ def _csv_rows(analysis: Mapping[str, Any]) -> list[dict[str, Any]]:
                     ),
                     "formal_individual_pass": _dig(
                         hybrid, "formal_individual_gates", "pass"
+                    ),
+                    "physical_interface_diagnostic_hold": _dig(
+                        hybrid,
+                        "physical_interface_diagnostic",
+                        "production_hold",
                     ),
                     "same_p_full3d_numerical_pass": comparison.get("numerical_pass"),
                     "same_p_full3d_formal_pass": comparison.get("formal_pass"),

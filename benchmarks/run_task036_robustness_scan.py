@@ -95,6 +95,15 @@ def _exclusive_cpu_sets(
     )
 
 
+def _mpi_binding_environment(cpu_set: tuple[int, ...]) -> dict[str, str]:
+    cpu_list = ",".join(str(cpu) for cpu in cpu_set)
+    return {
+        "OMPI_MCA_hwloc_base_cpu_list": cpu_list,
+        "OMPI_MCA_hwloc_base_binding_policy": "cpu-list:ordered",
+        "OMPI_MCA_hwloc_base_report_bindings": "true",
+    }
+
+
 def _full3d_command(
     point: dict[str, Any],
     *,
@@ -257,9 +266,7 @@ def _run_command(
             "OPENBLAS_NUM_THREADS": "1",
             "MKL_NUM_THREADS": "1",
             "NUMEXPR_NUM_THREADS": "1",
-            "OMPI_MCA_hwloc_base_binding_policy": "core",
-            "OMPI_MCA_hwloc_base_report_bindings": "true",
-            "OMPI_MCA_rmaps_base_mapping_policy": "slot",
+            **_mpi_binding_environment(cpu_set),
         }
     )
     launcher_command = [
@@ -294,8 +301,8 @@ def _run_command(
         "exclusive_cpu_set": list(cpu_set),
         "mpi_binding": {
             "mpi_size": MPI_SIZE,
-            "binding_policy": "core",
-            "mapping_policy": "slot_with_taskset_cpu_partition",
+            "binding_policy": "cpu-list:ordered",
+            "mapping_policy": "explicit_ordered_cpu_lease",
             "report_bindings": True,
         },
     }

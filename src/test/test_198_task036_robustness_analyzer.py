@@ -443,23 +443,24 @@ def test_sampled_physical_interface_failure_is_not_hidden_by_algebraic_gate(
 
     m120 = result["hybrid_by_m"]["120"]
     assert m120["numerical_individual_gates"]["interface_e_le_1e-8"] is True
+    assert m120["numerical_individual_gates"]["pass"] is True
     assert (
         m120["numerical_individual_gates"][
             "external_watchdog_completed_without_resource_stop"
         ]
         is True
     )
-    assert (
-        m120["numerical_individual_gates"][
-            "sampled_interface_e_le_5e-3"
-        ]
-        is False
-    )
+    diagnostic = m120["physical_interface_diagnostic"]
+    assert diagnostic["review_v2_formal_gate"] is False
+    assert diagnostic["screening_pass"] is False
+    assert diagnostic["production_hold"] is True
     assert m120["metrics"]["sampled_interface_e_max_relative_l2"] == 8.0e-3
+    assert result["status"] == "trace_complement_diagnostic_hold"
     assert result["classification"]["numerical_minimum_passing_M"] is None
-    assert result["failure_buckets"]["sampled_interface_e_le_5e-3"] == [
-        120
-    ]
+    assert result["classification"]["physical_interface_diagnostic_hold"] is True
+    assert result["failure_buckets"][
+        "sampled_physical_interface_root_diagnostic"
+    ] == [120]
 
 
 def test_projection_without_explicit_hybrid_candidate_scope_is_not_formal(

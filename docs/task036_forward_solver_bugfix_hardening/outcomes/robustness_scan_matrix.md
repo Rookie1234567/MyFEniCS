@@ -10,12 +10,13 @@
 |---|---|
 | review authority | `review_report_v2.md` |
 | branch baseline | `1eab6393525d25ebbf0e7d5068f446c6d5afde1f` |
+| V2 numerical source | `6d5e9781bcb1458ecac7a77af22fa2d420f0cd55` |
 | frozen table | `benchmarks/task036_robustness_scan_points.csv` |
 | table SHA-256 | `01701c580355b8870c3865a6cb631d4db53f12a1a8fc3a2eaba3da59a26812d4` |
 | configurations | `226` |
 | polarizations | 每个物理点均有独立 `S` 和 `P` |
 | ordinary default | unchanged |
-| numerical runs at this checkpoint | `not_run` |
+| numerical runs at this checkpoint | `10`（5 个 Full3D authority + 5 个 Hybrid M120） |
 | dispatcher | `benchmarks/run_task036_robustness_scan.py` |
 | dispatcher concurrency | `1–5` independent MPI8 jobs; default `1` |
 
@@ -152,14 +153,91 @@ hybrid_p5_dynamic_input_port = pass
 same_input_full3d_identity_gate = pass
 connected_component_near_degenerate_repair = implemented_unit_tested
 driver = pass
-analyzer = pending
-Round_A = not_run
+analyzer = pass
+Round_A = controlled_stop_after_repeated_common_root
 Round_B = not_run
 Round_C = not_run
-Round_D = not_run
+Round_D = one_p6_pressure_pair_completed
+M240_M480_M492 = not_run_by_root_evidence
+next_architecture = DEFERRED_ARCHITECTURE_REQUIRED
 ```
 
-正式运行前必须先提交上述数值端口和 repair；driver 会拒绝 dirty worktree 或与
-`--verified-clean-sha` 不一致的 HEAD。它按 point 使用独立 `run_dir`、TMP/TEMP、
-XDG cache 与 MUMPS scratch，并且 Hybrid 命令只能从该 point 已完成的 Full3D
-watchdog record 取得 hash-bound authority。
+driver 会拒绝 dirty worktree 或与 `--verified-clean-sha` 不一致的 HEAD。它按 point
+使用独立 `run_dir`、TMP/TEMP、XDG cache 与 MUMPS scratch，并且 Hybrid 命令只能从
+该 point 已完成的 Full3D watchdog record 取得 hash-bound authority。
+
+## 6. V2 首批同源结果
+
+首批点不是完整域的统计抽样，而是为了尽快覆盖低掠射、方位角、S/P control、角域远端
+和 p6 压力。每一行均先运行同输入 Full3D，再运行 Hybrid M120。所有 Full3D 均通过；
+五个 Hybrid 均完整结束且 zero swap，但没有一个通过完整 observable Gate。
+
+| point | p / pol. | grazing / azimuth | Full3D peak GiB | Hybrid peak GiB | memory reduction | Hybrid true residual | algebraic interface E | recovered physical E jump | energy closure | max totals delta | fixed channels pass |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A001-P | p5 / P | 0.5° / 0° | 10.092 | 7.212 | 28.5% | `1.837e-12` | `1.936e-11` | `1.709e-1` | `7.606e-5` | `1.642e-4` | 66/80 |
+| A004-P | p5 / P | 0.5° / 45° | 10.516 | 7.450 | 29.2% | `1.109e-12` | `8.184e-12` | `4.375e-2` | `1.491e-5` | `9.668e-6` | 48/96 |
+| A004-S | p5 / S | 0.5° / 45° | 10.549 | 7.464 | 29.2% | `2.856e-11` | `4.345e-12` | `9.272e-5` | `1.533e-5` | `1.211e-5` | 77/96 |
+| A049-P | p5 / P | 10° / 90° | 10.228 | 7.131 | 30.3% | `1.841e-12` | `3.709e-13` | `8.284e-3` | `1.092e-6` | `4.740e-7` | 32/80 |
+| D001-P | p6 / P | 0.5° / 0° | 18.572 | 11.222 | 39.6% | `3.103e-13` | `1.417e-11` | `1.822e-1` | `1.307e-5` | `8.483e-5` | 66/80 |
+
+Hybrid 的 exact traction dual 为 `4.565e-13–2.169e-11`，完整 biorthogonality row norm
+为 `1.034e-7–4.376e-7`，也全部通过相应 Gate。换言之，线性系统、模态投影约束、
+traction 和左右模态归一化都不是首要失败点；失败集中在恢复后的物理界面、能量及固定
+衍射通道。
+
+artifact 根目录为：
+
+```text
+benchmarks/artifacts/task036/
+  6d5e9781bcb1458ecac7a77af22fa2d420f0cd55/v2_robustness/
+```
+
+其中 `scan_results.jsonl` 有 10 条调度记录；每个 point 的 `full3d/` 与
+`hybrid_m120/` 分别保存 authority 和 candidate。大型 raw artifact 按仓库规则 ignored，
+本文件不把它们复制进 Git。
+
+## 7. 为什么停止其余 221 个配置
+
+五个 Hybrid 在不同偏振、角度和 degree 上重复出现同一结构性特征，因此按照 Review V2
+“遇到重复根因先修通用算法”的规则停止继续投放。当前耦合只满足：
+
+```text
+D_bottom u_bottom = L_bottom a
+D_top    u_top    = L_top    a
+```
+
+这里 `D` 只把有限元界面场投影成 M 个模态坐标。界面场仍可包含 `D` 看不见的补空间
+分量，所以“120 个坐标相等”并不等于“整个物理切向场相等”。历史 A049-P 漏斗又证明
+M120、M240、M480 到 M492 的物理跳跃几乎不变，而峰值从约 7.263 GiB 增至
+19.405 GiB；对应 Full3D 仅约 10.161 GiB。M492 因而是
+`HYBRID_FUNCTIONAL_NO_REDUCTION_ADVANTAGE`，不能作为修复路线。
+
+本批次后续合同固定为：
+
+```text
+formal Hybrid M hard cap = 120
+M240/M480/M492 = closed for this repeated root
+remaining frozen scan points = not_run
+reason = repeated trace-complement architecture blocker
+disposition = DEFERRED_ARCHITECTURE_REQUIRED
+```
+
+这不是宣称 M120 已经通过，而是保证实现不靠提高 M 消耗掉 Hybrid 的内存优势；新架构
+若在 M120 下不能通过，必须 fail closed。
+
+## 8. 并发绑定修正
+
+本批次首次使用五个 MPI8 job 时，外层 `taskset` 虽给了互斥 CPU lease，但 OpenMPI 的
+`core/slot` 默认映射又把五组 rank 绑定回同一组 CPU0–7。进程存活且数值与内存记录
+有效，但 Full3D wall time 受调度污染，不能作为正式速度 authority；Hybrid 在发现后约
+15 秒内被实时重绑，时间仅作参考。
+
+driver 现改为同时向 OpenMPI 传入每个 lease 的显式 CPU list，并使用：
+
+```text
+OMPI_MCA_hwloc_base_cpu_list=<the eight leased CPUs>
+OMPI_MCA_hwloc_base_binding_policy=cpu-list:ordered
+```
+
+独立 MPI8 probe 已确认一个 lease 中 rank 0–7 各自只绑定一个不同 CPU。此修正只影响
+调度，不改变已经完成 PDE 的数值 kernel，因此没有重跑上述十条 PDE。

@@ -12,6 +12,7 @@ Task036 是 `BUGFIX_ONLY`：只修正已有失败证据支持的前向求解器�
 | 第一批核心修复 | `393b7c583c40bea17d4ceca6440c140317e0b60c` |
 | reciprocal / reference-binding 加固 | `9de46581fa47ea02295d73688d30a55a38c01a91` |
 | incidence / exact-traction Gate 加固 | `bb0e5e3e385586e137d861cf0a53a142e4fe0fe0` |
+| Review V2 M120 数值源码 | `6d5e9781bcb1458ecac7a77af22fa2d420f0cd55` |
 | 工作分支 | `codex/20260730-task36-forward-solver-bugfix-hardening` |
 | ordinary default | **unchanged** |
 | Hybrid-P production | **仍未资格化，继续 quarantine** |
@@ -26,6 +27,8 @@ benchmarks/artifacts/task036/
         20260730T122723Z_reciprocal_basis_batch_v1/
     bb0e5e3e385586e137d861cf0a53a142e4fe0fe0/
         b06_p6phi45_final_source_v1/
+    6d5e9781bcb1458ecac7a77af22fa2d420f0cd55/
+        v2_robustness/
 ```
 
 这些是本地、SHA-bound 的回归证据，不作为新的 tracked evidence schema。最终测试
@@ -55,7 +58,7 @@ benchmarks/artifacts/task036/
 | B01 DtN tangential projection | `FIXED` | S/P、top/bottom、零级/非零级的直接切向投影均通过 `1e-10` Gate |
 | B02 high-order reciprocal trace | `FIXED` | degree、quadrature、canonical/raw 坐标闭合；F1 standard/static 通过 |
 | B03 exact traction dual | `FIXED` | formal exact dual 与 sampled proxy 已彻底分开 |
-| B04 beta semantics | `FIXED` | propagation/traction/reconstruction 来源和值显式记录 |
+| B04 beta semantics | `FIXED` | propagation/traction/reconstruction 及 static local reassembly 来源和值显式一致 |
 | B05 Hybrid-P disposition | `FAIL_CLOSED` | Full3D-P 存在；Hybrid-P 仍不允许成为 production |
 | B06 near-degenerate blocks | `FAIL_CLOSED` | 检测和一次有界修复已实现；M40 仍是 controlled negative，通用解法 deferred |
 | B07 Ny trace alias | `FIXED` | Ny3 在 solve 前确定性拒绝；Ny4 正式通过 |
@@ -300,6 +303,7 @@ E propagation 已使用选定的 propagation beta，但 H reconstruction 仍可�
 
 ```text
 src/postprocessing/hybrid_field_reconstruction.py
+src/solvers/hybrid_static_field_recovery.py
 benchmarks/run_task032_phase6_augmented.py
 src/test/test_39_task032_hybrid_augmented_direct.py
 ```
@@ -309,7 +313,9 @@ src/test/test_39_task032_hybrid_augmented_direct.py
 `ModalFieldReconstructor` 显式接收成对的 positive/negative traction beta；E 继续用
 propagation beta，H/traction 使用选定 traction beta；缺一侧、长度不匹配或非有限
 输入均 fail closed。记录同时保存 requested/selected 模型、数值数组和 reconstruction
-来源。
+来源。Review V2 又发现 static-condensed field recovery 在重新装配局部 traction 时
+没有沿用该 selected beta；现已通过 `beta_override` 把 coupling 的 discrete traction
+beta 传给 local reassembly，避免 solve 与 recovery 再次分叉。
 
 ### after
 
@@ -323,6 +329,11 @@ field_reconstruction_beta_equals_traction_beta = true
 
 单元回归还证明：只改变 traction beta 会改变 H，但 E 位完全不变。
 
+源码 `6d5e978...` 的五个 M120 actual 点均得到 exact traction
+`4.565e-13–2.169e-11`。不过 recovered physical interface E jump 仍为
+`9.272e-5–1.822e-1`，说明 beta 身份修复是必要修复，但不是 remaining M120
+channel failure 的完整根因。
+
 ### regression scope
 
 beta 数组配对/shape/finite 检查、E/H 分离，以及 F1/F2/F5/conical actual PDE。
@@ -330,6 +341,8 @@ beta 数组配对/shape/finite 检查、E/H 分离，以及 F1/F2/F5/conical act
 ### remaining limitation
 
 Task036 没有重新设计 axial modal method；未资格化的传播/traction 组合继续拒绝。
+M120 的 trace-complement 强消元需要改变 trial/test space，按
+`DEFERRED_ARCHITECTURE_REQUIRED` 留给后续独立任务。
 
 ### status
 
@@ -911,3 +924,7 @@ benchmarks/artifacts/task036/393b7c583c40bea17d4ceca6440c140317e0b60c/20260730T1
 7. 下列内容继续是后续技术债，不在 Task036 展开：
    Hybrid-P 新模态架构、通用 near-degenerate continuation、replicated `M^2`、
    all-mode multi-RHS、global allgather、迭代求解器、h/p controller 和 surrogate。
+8. **增加 M 已关闭。** A049-P 的 M120→M492 平台没有修复物理界面跳跃，M492
+   约 19.405 GiB 反而高于约 10.161 GiB 的 Full3D。后续 Hybrid 架构必须把 M120
+   作为硬上限，并通过强 trace-subspace elimination 消除未约束补空间；若 M120
+   仍不能通过则 fail closed。
