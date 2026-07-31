@@ -1,0 +1,59 @@
+{
+  "status": "pass",
+  "model": {
+    "family": "exact_gp",
+    "kernel": "Matern-5/2-ARD",
+    "jitter": 1e-10,
+    "optimizer_restarts": 0,
+    "random_state": 0,
+    "normalize_y": true,
+    "fitted_kernel": null
+  },
+  "repeats": [
+    {
+      "repeat": 1,
+      "fit_predict_wall_seconds": 0.06837486400036141,
+      "rss_before_bytes": 116047872,
+      "peak_rss_bytes": 116047872,
+      "swap_before": {
+        "total_bytes": 42949672960,
+        "used_bytes": 0,
+        "free_bytes": 42949672960
+      },
+      "swap_after": {
+        "total_bytes": 42949672960,
+        "used_bytes": 0,
+        "free_bytes": 42949672960
+      },
+      "swap_delta_bytes": 0,
+      "prediction_sha256": "5e5c5111128240b1e1af99d75140f1348e04e5889b0adee03092ec3fd2b6b79b",
+      "fitted_kernel": "2.15**2 * Matern(length_scale=[0.063, 0.0633, 0.01, 0.01], nu=2.5)",
+      "n_samples": 96,
+      "target": "aggregates.R_total"
+    },
+    {
+      "repeat": 2,
+      "fit_predict_wall_seconds": 0.06438098096987233,
+      "rss_before_bytes": 116047872,
+      "peak_rss_bytes": 116047872,
+      "swap_before": {
+        "total_bytes": 42949672960,
+        "used_bytes": 0,
+        "free_bytes": 42949672960
+      },
+      "swap_after": {
+        "total_bytes": 42949672960,
+        "used_bytes": 0,
+        "free_bytes": 42949672960
+      },
+      "swap_delta_bytes": 0,
+      "prediction_sha256": "5e5c5111128240b1e1af99d75140f1348e04e5889b0adee03092ec3fd2b6b79b",
+      "fitted_kernel": "2.15**2 * Matern(length_scale=[0.063, 0.0633, 0.01, 0.01], nu=2.5)",
+      "n_samples": 96,
+      "target": "aggregates.R_total"
+    }
+  ],
+  "reproducible": true,
+  "swap_clean": true,
+  "validation_target_accessed": false
+}

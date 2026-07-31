@@ -1,0 +1,76 @@
+{
+  "status": "pass",
+  "dataset_id": "task002_m4e_p5_ny4_112_v3",
+  "schema_version": "task002.s-p5-ny4-single-fidelity-dataset.v3",
+  "sample_count": 112,
+  "training_count": 96,
+  "frozen_validation_count": 16,
+  "arrays": {
+    "inputs.npy": {
+      "shape": [
+        112,
+        4
+      ],
+      "dtype": "float64"
+    },
+    "aggregates.npy": {
+      "shape": [
+        112,
+        4
+      ],
+      "dtype": "float64"
+    },
+    "order_amplitudes.npy": {
+      "shape": [
+        112,
+        22,
+        2,
+        2
+      ],
+      "dtype": "float64"
+    },
+    "order_powers.npy": {
+      "shape": [
+        112,
+        22,
+        2
+      ],
+      "dtype": "float64"
+    },
+    "power_carrying_mask.npy": {
+      "shape": [
+        112,
+        22,
+        2
+      ],
+      "dtype": "bool"
+    },
+    "train_indices.npy": {
+      "shape": [
+        96
+      ],
+      "dtype": "int64"
+    },
+    "frozen_validation_indices.npy": {
+      "shape": [
+        16
+      ],
+      "dtype": "int64"
+    }
+  },
+  "file_hashes": {
+    "inputs.npy": "b77e948f3fec0e23af15ba0d0d4314272c00c78dd158431fabcc162037f62d6f",
+    "aggregates.npy": "f841fca2acbe88b9be6e68c636bb48c885ad3881ddb354de81ae7db14ee244fe",
+    "order_amplitudes.npy": "5f785108054da24e6f4f8ebd26d738e4cd5ca5a58e68269d14e0ecf103bddea9",
+    "order_powers.npy": "65c53d8ed152fc66b74fe38e6a1f85797d628bde914476708aafd54e78d3f18e",
+    "power_carrying_mask.npy": "b283fc85c9a53a0058355dfef0e802fd30723cb2e181057871b1bef8ede0e253",
+    "train_indices.npy": "210ae4f4ce43141497c89980c375a9db19b173faf035d351723bae7491bdaa18",
+    "frozen_validation_indices.npy": "6bc454056281f44e59a7768410aa0de800a4ad441257f897e1bc7af3868aa3b1",
+    "sample_records.jsonl": "ae4156cf7430cc71352134bf072294bc84d850a16f44e70796609d8114f7cdca",
+    "order_identity.json": "1cc823cda2c856f7e3ca91a4b6c1f8670a6d4cecd642d9bf20ad22b014d30d56",
+    "dataset_manifest.json": "d6b923c966ea81b8d563e2a515abbe376f7fdbf7972f4454bbb7aaa712042a38"
+  },
+  "train_tuple_sha256": "b01f4f3b27b5b5e0466fb1d620ffe504677f6c24468ac9e955ac45fac39570fa",
+  "frozen_validation_tuple_sha256": "e5733173c2c55d4d5ef8e660fc63019bf61e78063a3bd24cb0488dc6c435e50b",
+  "validation_target_accessed": false
+}
