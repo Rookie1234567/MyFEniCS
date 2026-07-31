@@ -643,6 +643,162 @@ class ProjectedTwoPortSchur:
         return None
 
 
+@dataclass
+class OneCellTwoPortSchurAction:
+    """Resource-bounded action of the exact full endpoint Schur operator.
+
+    The endpoint Schur matrix itself is never formed.  The object retains the
+    sparse ``P/I`` blocks and one factor of ``A_ii`` and applies
+
+    ``(A_pp - A_pi A_ii^-1 A_ip) X``
+
+    to a small set of replicated endpoint columns.  This is an audit helper;
+    it does not replace the production Hybrid propagation operator.
+    """
+
+    A_pp: PETSc.Mat
+    A_pi: PETSc.Mat
+    A_ip: PETSc.Mat
+    A_ii: PETSc.Mat
+    factor: PETSc.KSP
+    left_rows: int
+    right_rows: int
+    interior_rows: int
+    interior_matrix_nnz: int
+    dense_interface_square_formed: bool = False
+    _destroyed: bool = False
+
+    @property
+    def port_rows(self) -> int:
+        return int(self.left_rows + self.right_rows)
+
+    @staticmethod
+    def _replicated_values(vector: PETSc.Vec) -> np.ndarray:
+        comm = vector.getComm().tompi4py()
+        first, last = map(int, vector.getOwnershipRange())
+        packets = comm.allgather(
+            (
+                first,
+                last,
+                np.asarray(
+                    vector.getArray(readonly=True),
+                    dtype=np.complex128,
+                ).copy(),
+            )
+        )
+        result = np.empty(int(vector.getSize()), dtype=np.complex128)
+        filled = np.zeros(len(result), dtype=bool)
+        for start, stop, values in packets:
+            result[int(start) : int(stop)] = values
+            filled[int(start) : int(stop)] = True
+        if not np.all(filled):
+            raise RuntimeError("Two-port Schur action ownership did not close.")
+        return result
+
+    def apply_columns(self, values: np.ndarray) -> np.ndarray:
+        """Apply the exact endpoint Schur to replicated endpoint columns."""
+
+        columns = np.asarray(values, dtype=np.complex128)
+        if columns.ndim == 1:
+            columns = columns.reshape(-1, 1)
+        if columns.ndim != 2 or columns.shape[0] != self.port_rows:
+            raise ValueError(
+                "Two-port Schur columns must have shape "
+                f"({self.port_rows}, n), got {columns.shape}."
+            )
+        if self._destroyed:
+            raise RuntimeError("The two-port Schur action has been destroyed.")
+
+        port_vector = self.A_pp.createVecRight()
+        interior_rhs = self.A_ip.createVecLeft()
+        interior_solution = self.A_ii.createVecRight()
+        port_action = self.A_pp.createVecLeft()
+        port_correction = self.A_pi.createVecLeft()
+        result = np.empty_like(columns)
+        try:
+            first, last = map(int, port_vector.getOwnershipRange())
+            for column in range(columns.shape[1]):
+                port_vector.getArray()[:] = np.asarray(
+                    columns[first:last, column],
+                    dtype=PETSc.ScalarType,
+                )
+                port_vector.assemble()
+                self.A_ip.mult(port_vector, interior_rhs)
+                self.factor.solve(interior_rhs, interior_solution)
+                if int(self.factor.getConvergedReason()) < 0:
+                    raise RuntimeError(
+                        "The one-cell interior Schur solve did not converge."
+                    )
+                self.A_pp.mult(port_vector, port_action)
+                self.A_pi.mult(interior_solution, port_correction)
+                port_action.axpy(
+                    PETSc.ScalarType(-1.0),
+                    port_correction,
+                )
+                result[:, column] = self._replicated_values(port_action)
+        finally:
+            for obj in (
+                port_correction,
+                port_action,
+                interior_solution,
+                interior_rhs,
+                port_vector,
+            ):
+                obj.destroy()
+        return result
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        for obj in (
+            self.factor,
+            self.A_ii,
+            self.A_ip,
+            self.A_pi,
+            self.A_pp,
+        ):
+            obj.destroy()
+        self._destroyed = True
+
+
+def build_one_cell_two_port_schur_action(
+    matrix: PETSc.Mat,
+    rows: EndpointActiveRows,
+) -> OneCellTwoPortSchurAction:
+    """Factor the axial-interior block without forming a dense port square."""
+
+    A_pp, A_pi, A_ip, A_ii = _partition_sparse_matrix(
+        matrix,
+        rows.port_active,
+        rows.interior_active,
+    )
+    factor = None
+    try:
+        factor = _factor(A_ii)
+        nnz = int(
+            A_ii.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM).get(
+                "nz_used",
+                0.0,
+            )
+        )
+        return OneCellTwoPortSchurAction(
+            A_pp=A_pp,
+            A_pi=A_pi,
+            A_ip=A_ip,
+            A_ii=A_ii,
+            factor=factor,
+            left_rows=len(rows.left_active),
+            right_rows=len(rows.right_active),
+            interior_rows=len(rows.interior_active),
+            interior_matrix_nnz=nnz,
+        )
+    except Exception:
+        for obj in (factor, A_ii, A_ip, A_pi, A_pp):
+            if obj is not None:
+                obj.destroy()
+        raise
+
+
 def build_projected_two_port_schur(
     matrix: PETSc.Mat,
     rows: EndpointActiveRows,
@@ -675,22 +831,10 @@ def build_projected_two_port_schur(
     ):
         raise ValueError("All endpoint bases must use the same mode count.")
 
-    port = rows.port_active
-    interior = rows.interior_active
-    A_pp, A_pi, A_ip, A_ii = _partition_sparse_matrix(
-        matrix,
-        port,
-        interior,
-    )
-    factor = None
-    port_vector = None
-    interior_rhs = None
-    interior_solution = None
-    port_action = None
-    port_correction = None
+    action = build_one_cell_two_port_schur_action(matrix, rows)
     try:
         R_values = np.zeros(
-            (len(port), 2 * mode_count),
+            (action.port_rows, 2 * mode_count),
             dtype=np.complex128,
         )
         R_values[: len(rows.left_active), :mode_count] = right_left
@@ -698,79 +842,84 @@ def build_projected_two_port_schur(
         W_values = np.zeros_like(R_values)
         W_values[: len(rows.left_active), :mode_count] = petrov_left
         W_values[len(rows.left_active) :, mode_count:] = petrov_right
-        factor = _factor(A_ii)
-        port_vector = A_pp.createVecRight()
-        interior_rhs = A_ip.createVecLeft()
-        interior_solution = A_ii.createVecRight()
-        port_action = A_pp.createVecLeft()
-        port_correction = A_pi.createVecLeft()
-        projected = np.empty(
-            (2 * mode_count, 2 * mode_count),
-            dtype=np.complex128,
-        )
-        first, last = port_vector.getOwnershipRange()
-        for column in range(2 * mode_count):
-            port_vector.getArray()[:] = np.asarray(
-                R_values[first:last, column],
-                dtype=PETSc.ScalarType,
-            )
-            port_vector.assemble()
-            A_ip.mult(port_vector, interior_rhs)
-            factor.solve(interior_rhs, interior_solution)
-            A_pp.mult(port_vector, port_action)
-            A_pi.mult(interior_solution, port_correction)
-            port_action.axpy(
-                PETSc.ScalarType(-1.0),
-                port_correction,
-            )
-            local = (
-                np.asarray(W_values[first:last, :]).conj().T
-                @ np.asarray(
-                    port_action.getArray(readonly=True),
-                    dtype=np.complex128,
-                )
-            )
-            global_value = np.empty_like(local)
-            matrix.getComm().tompi4py().Allreduce(
-                local,
-                global_value,
-                op=MPI.SUM,
-            )
-            projected[:, column] = global_value
+        projected = W_values.conj().T @ action.apply_columns(R_values)
         S_LL = projected[:mode_count, :mode_count].copy()
         S_LR = projected[:mode_count, mode_count:].copy()
         S_RL = projected[mode_count:, :mode_count].copy()
         S_RR = projected[mode_count:, mode_count:].copy()
-        nnz = int(
-            A_ii.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM).get(
-                "nz_used",
-                0.0,
-            )
-        )
         return ProjectedTwoPortSchur(
             S_LL=S_LL,
             S_LR=S_LR,
             S_RL=S_RL,
             S_RR=S_RR,
-            port_rows=len(port),
-            interior_rows=len(interior),
-            interior_matrix_nnz=nnz,
+            port_rows=action.port_rows,
+            interior_rows=action.interior_rows,
+            interior_matrix_nnz=action.interior_matrix_nnz,
         )
     finally:
-        for obj in (
-            port_correction,
-            port_action,
-            interior_solution,
-            interior_rhs,
-            port_vector,
-            factor,
-            A_ii,
-            A_ip,
-            A_pi,
-            A_pp,
-        ):
-            if obj is not None:
-                obj.destroy()
+        action.destroy()
+
+
+def compose_projected_two_port_schur(
+    left: ProjectedTwoPortSchur,
+    right: ProjectedTwoPortSchur,
+) -> tuple[ProjectedTwoPortSchur, dict[str, float]]:
+    """Compose adjacent projected ports by a stable internal Schur solve."""
+
+    shapes = {
+        left.S_LL.shape,
+        left.S_LR.shape,
+        left.S_RL.shape,
+        left.S_RR.shape,
+        right.S_LL.shape,
+        right.S_LR.shape,
+        right.S_RL.shape,
+        right.S_RR.shape,
+    }
+    if len(shapes) != 1:
+        raise ValueError("Projected two-port block shapes differ.")
+    shape = next(iter(shapes))
+    if len(shape) != 2 or shape[0] != shape[1]:
+        raise ValueError("Projected two-port blocks must be square.")
+    pivot = left.S_RR + right.S_LL
+    condition = float(np.linalg.cond(pivot))
+    if not np.isfinite(condition) or condition > 1.0e12:
+        raise RuntimeError(
+            "Projected port composition pivot is ill-conditioned: "
+            f"cond={condition:.6e}."
+        )
+    solved_left = np.linalg.solve(pivot, left.S_RL)
+    solved_right = np.linalg.solve(pivot, right.S_LR)
+    residual = max(
+        float(
+            np.linalg.norm(pivot @ solved_left - left.S_RL, ord="fro")
+            / max(np.linalg.norm(left.S_RL, ord="fro"), 1.0e-30)
+        ),
+        float(
+            np.linalg.norm(pivot @ solved_right - right.S_LR, ord="fro")
+            / max(np.linalg.norm(right.S_LR, ord="fro"), 1.0e-30)
+        ),
+    )
+    result = ProjectedTwoPortSchur(
+        S_LL=left.S_LL - left.S_LR @ solved_left,
+        S_LR=-left.S_LR @ solved_right,
+        S_RL=-right.S_RL @ solved_left,
+        S_RR=right.S_RR - right.S_RL @ solved_right,
+        port_rows=left.port_rows,
+        interior_rows=(
+            left.interior_rows + right.interior_rows + shape[0]
+        ),
+        interior_matrix_nnz=(
+            left.interior_matrix_nnz + right.interior_matrix_nnz
+        ),
+    )
+    return result, {
+        "pivot_condition": condition,
+        "pivot_solve_relative_residual": residual,
+        "pivot_smallest_singular_value": float(
+            np.linalg.svd(pivot, compute_uv=False)[-1]
+        ),
+    }
 
 
 def scalar_cg_sign_fixture(q: complex) -> dict[str, float]:
@@ -1137,9 +1286,12 @@ def bloch_residual_metrics(
 __all__ = [
     "EndpointActiveRows",
     "EndpointModeLifter",
+    "OneCellTwoPortSchurAction",
     "ProjectedTwoPortSchur",
     "bloch_residual_metrics",
+    "build_one_cell_two_port_schur_action",
     "build_projected_two_port_schur",
+    "compose_projected_two_port_schur",
     "identify_endpoint_active_rows",
     "lifted_endpoint_columns",
     "scalar_cg_sign_fixture",

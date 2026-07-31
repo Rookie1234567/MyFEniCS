@@ -7,14 +7,120 @@ import numpy as np
 from benchmarks.run_task036_one_cell_discrete_bloch import (
     _local_two_way_multiplane_diagnostic,
 )
+from benchmarks.run_task036_exact_cauchy_port_audit import (
+    _modal_port_matrix,
+)
 from src.solvers.one_cell_discrete_bloch import (
     ProjectedTwoPortSchur,
     bloch_residual_metrics,
+    compose_projected_two_port_schur,
     scalar_cg_sign_fixture,
 )
 
 
 class Task036OneCellDiscreteBlochAlgebraTests(unittest.TestCase):
+    def test_one_cell_modal_port_reconstructs_same_projected_schur(self) -> None:
+        count = 3
+        diagonal = np.diag(
+            np.asarray((2.0 + 0.1j, 2.5 - 0.2j, 3.0 + 0.3j))
+        )
+        coupling = np.diag(
+            np.asarray((-0.4 + 0.05j, -0.3j, -0.2 - 0.1j))
+        )
+        port = ProjectedTwoPortSchur(
+            S_LL=diagonal,
+            S_LR=coupling,
+            S_RL=coupling,
+            S_RR=diagonal,
+            port_rows=2 * count,
+            interior_rows=0,
+            interior_matrix_nnz=0,
+        )
+        forward = np.asarray((0.8 + 0.1j, 0.7 - 0.2j, 0.6 + 0.05j))
+        backward = np.asarray((0.75 - 0.1j, 0.65 + 0.2j, 0.55 - 0.05j))
+        negative = np.asarray(
+            [
+                [1.0, 0.1j, 0.0],
+                [0.0, 1.0, -0.05j],
+                [0.02, 0.0, 1.0],
+            ],
+            dtype=np.complex128,
+        )
+        actual, audit = _modal_port_matrix(
+            port,
+            negative,
+            forward,
+            backward,
+            1,
+        )
+        expected = np.block(
+            [[port.S_LL, port.S_LR], [port.S_RL, port.S_RR]]
+        )
+        self.assertLess(
+            np.linalg.norm(actual - expected, ord="fro")
+            / np.linalg.norm(expected, ord="fro"),
+            1.0e-13,
+        )
+        self.assertLess(audit["boundary_resolver_relative_residual"], 1.0e-13)
+
+    def test_projected_port_star_product_matches_explicit_schur(self) -> None:
+        rng = np.random.default_rng(3604)
+        count = 4
+
+        def block() -> np.ndarray:
+            return (
+                rng.standard_normal((count, count))
+                + 1j * rng.standard_normal((count, count))
+            ) / 20.0
+
+        left = ProjectedTwoPortSchur(
+            S_LL=2.0 * np.eye(count) + block(),
+            S_LR=block(),
+            S_RL=block(),
+            S_RR=2.5 * np.eye(count) + block(),
+            port_rows=2 * count,
+            interior_rows=3,
+            interior_matrix_nnz=10,
+        )
+        right = ProjectedTwoPortSchur(
+            S_LL=3.0 * np.eye(count) + block(),
+            S_LR=block(),
+            S_RL=block(),
+            S_RR=3.5 * np.eye(count) + block(),
+            port_rows=2 * count,
+            interior_rows=5,
+            interior_matrix_nnz=12,
+        )
+        combined, audit = compose_projected_two_port_schur(left, right)
+
+        full = np.block(
+            [
+                [left.S_LL, left.S_LR, np.zeros((count, count))],
+                [left.S_RL, left.S_RR + right.S_LL, right.S_LR],
+                [np.zeros((count, count)), right.S_RL, right.S_RR],
+            ]
+        )
+        endpoint = np.r_[np.arange(count), np.arange(2 * count, 3 * count)]
+        interior = np.arange(count, 2 * count)
+        expected = full[np.ix_(endpoint, endpoint)] - full[
+            np.ix_(endpoint, interior)
+        ] @ np.linalg.solve(
+            full[np.ix_(interior, interior)],
+            full[np.ix_(interior, endpoint)],
+        )
+        actual = np.block(
+            [
+                [combined.S_LL, combined.S_LR],
+                [combined.S_RL, combined.S_RR],
+            ]
+        )
+        self.assertLess(
+            np.linalg.norm(actual - expected, ord="fro")
+            / np.linalg.norm(expected, ord="fro"),
+            1.0e-13,
+        )
+        self.assertLess(audit["pivot_solve_relative_residual"], 1.0e-13)
+
     def test_outward_flux_sign_fixture_rejects_wrong_sign(self) -> None:
         audit = scalar_cg_sign_fixture(0.8 + 0.02j)
         self.assertLess(audit["polynomial_relative_residual"], 1.0e-13)
