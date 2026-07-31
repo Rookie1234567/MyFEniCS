@@ -64,6 +64,10 @@ from benchmarks.task035d_nested_p_snapshot_gate import (
 from benchmarks.task035d_nested_p_dwr_checker import (
     task035d_nested_p_dwr_report_gate,
 )
+from benchmarks.watchdog_process_control import (
+    terminate_process_tree,
+    worker_process_group_popen_kwargs,
+)
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
     _add_cpu_core_equivalents,
@@ -2540,14 +2544,6 @@ def _qualify(
     }
 
 
-def _terminate(process: subprocess.Popen[str]) -> None:
-    process.terminate()
-    try:
-        process.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        process.kill()
-
-
 def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
     command = [
         "mpiexec",
@@ -2813,59 +2809,71 @@ def _run_parent(args: argparse.Namespace) -> int:
             stderr=subprocess.STDOUT,
             text=True,
             env=environment,
+            **worker_process_group_popen_kwargs(),
         )
-        previous: dict[str, Any] | None = None
-        while True:
-            elapsed = time.perf_counter() - started
-            row = _sample(process.pid, progress_path, elapsed)
-            _add_cpu_core_equivalents(row, previous)
-            previous = row
-            rows.append(row)
-            process_tree_mb = row.get("mpi_process_tree_rss_mb")
-            process_tree_swap_mb = row.get("mpi_process_tree_swap_mb")
-            cgroup_mb = (
-                row.get("container_cgroup_current_mb")
-                if row.get("job_cgroup_dedicated") is True
-                else 0.0
-            )
-            cgroup_swap_mb = (
-                row.get("container_swap_current_mb")
-                if row.get("job_cgroup_dedicated") is True
-                else 0.0
-            )
-            authority_readable = all(
-                isinstance(value, (int, float))
-                for value in (
-                    process_tree_mb,
-                    process_tree_swap_mb,
-                    cgroup_mb,
-                    cgroup_swap_mb,
+        try:
+            previous: dict[str, Any] | None = None
+            while True:
+                elapsed = time.perf_counter() - started
+                row = _sample(process.pid, progress_path, elapsed)
+                _add_cpu_core_equivalents(row, previous)
+                previous = row
+                rows.append(row)
+                process_tree_mb = row.get("mpi_process_tree_rss_mb")
+                process_tree_swap_mb = row.get("mpi_process_tree_swap_mb")
+                cgroup_mb = (
+                    row.get("container_cgroup_current_mb")
+                    if row.get("job_cgroup_dedicated") is True
+                    else 0.0
                 )
-            )
-            authority_gib = (
-                None
-                if not authority_readable
-                else max(float(process_tree_mb), float(cgroup_mb)) / 1024.0
-            )
-            if authority_gib is not None:
-                warning_triggered |= authority_gib >= args.warning_gib
-            if process.poll() is None and not authority_readable:
-                terminated_for_authority_unreadable = True
-                _terminate(process)
-            elif (
-                process.poll() is None
-                and authority_gib is not None
-                and authority_gib >= args.terminate_gib
-            ):
-                terminated_for_memory = True
-                _terminate(process)
-            elif process.poll() is None and elapsed >= args.timeout_seconds:
-                terminated_for_timeout = True
-                _terminate(process)
-            if process.poll() is not None:
-                break
-            time.sleep(args.poll_interval)
-        return_code = int(process.returncode or 0)
+                cgroup_swap_mb = (
+                    row.get("container_swap_current_mb")
+                    if row.get("job_cgroup_dedicated") is True
+                    else 0.0
+                )
+                authority_readable = all(
+                    isinstance(value, (int, float))
+                    for value in (
+                        process_tree_mb,
+                        process_tree_swap_mb,
+                        cgroup_mb,
+                        cgroup_swap_mb,
+                    )
+                )
+                authority_gib = (
+                    None
+                    if not authority_readable
+                    else max(float(process_tree_mb), float(cgroup_mb)) / 1024.0
+                )
+                if authority_gib is not None:
+                    warning_triggered |= authority_gib >= args.warning_gib
+                if process.poll() is None and not authority_readable:
+                    terminated_for_authority_unreadable = True
+                    terminate_process_tree(process)
+                elif (
+                    process.poll() is None
+                    and authority_gib is not None
+                    and authority_gib >= args.terminate_gib
+                ):
+                    terminated_for_memory = True
+                    terminate_process_tree(process)
+                elif process.poll() is None and elapsed >= args.timeout_seconds:
+                    terminated_for_timeout = True
+                    terminate_process_tree(process)
+                if process.poll() is not None:
+                    break
+                time.sleep(args.poll_interval)
+            return_code = int(process.returncode or 0)
+        except BaseException as primary_error:
+            if process.poll() is None:
+                try:
+                    terminate_process_tree(process)
+                except Exception as cleanup_error:
+                    primary_error.add_note(
+                        "worker process-group cleanup also failed: "
+                        f"{type(cleanup_error).__name__}: {cleanup_error}"
+                    )
+            raise
 
     with timeline_path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=TIMELINE_FIELDS)

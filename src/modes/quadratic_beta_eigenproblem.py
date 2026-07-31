@@ -95,6 +95,95 @@ class QuadraticBetaSolveReport:
     converged_modes: int
     iteration_count: int
     convergence_reason: int
+    requested_configuration: dict[str, object]
+    actual_configuration: dict[str, object]
+    requested_actual_match: bool
+    requested_actual_mismatches: tuple[str, ...]
+
+    def profile_provenance(self) -> dict[str, object]:
+        return {
+            "requested": dict(self.requested_configuration),
+            "actual": dict(self.actual_configuration),
+            "profile_match": self.requested_actual_match,
+            "mismatches": list(self.requested_actual_mismatches),
+        }
+
+
+QEP_REQUESTED_PROFILE: dict[str, object] = {
+    "pep_type": str(SLEPc.PEP.Type.TOAR),
+    "problem_type": int(SLEPc.PEP.ProblemType.GENERAL),
+    "st_type": str(SLEPc.ST.Type.SINVERT),
+    "ksp_type": str(PETSc.KSP.Type.PREONLY),
+    "pc_type": str(PETSc.PC.Type.LU),
+    "factor_solver_type": "mumps",
+}
+
+
+def _qep_actual_profile(pep: SLEPc.PEP) -> dict[str, object]:
+    spectral_transform = pep.getST()
+    ksp = spectral_transform.getKSP()
+    pc = ksp.getPC()
+    pc_type = str(pc.getType())
+    return {
+        "pep_type": str(pep.getType()),
+        "problem_type": int(pep.getProblemType()),
+        "st_type": str(spectral_transform.getType()),
+        "ksp_type": str(ksp.getType()),
+        "pc_type": pc_type,
+        "factor_solver_type": (
+            pc.getFactorSolverType()
+            if pc_type in {str(PETSc.PC.Type.LU), str(PETSc.PC.Type.CHOLESKY)}
+            else None
+        ),
+    }
+
+
+def _qep_profile_mismatches(
+    requested: dict[str, object], actual: dict[str, object]
+) -> list[str]:
+    return [name for name, value in requested.items() if actual.get(name) != value]
+
+
+def _qep_profile_after_options(
+    pep: SLEPc.PEP, *, strict_profile: bool
+) -> tuple[dict[str, object], tuple[str, ...]]:
+    pep.setFromOptions()
+    actual = _qep_actual_profile(pep)
+    mismatches = tuple(_qep_profile_mismatches(QEP_REQUESTED_PROFILE, actual))
+    if strict_profile and mismatches:
+        raise RuntimeError(
+            "QEP requested solver profile was overridden after setFromOptions: "
+            + ", ".join(
+                f"{name}={actual.get(name)!r} "
+                f"(requested {QEP_REQUESTED_PROFILE[name]!r})"
+                for name in mismatches
+            )
+        )
+    return actual, mismatches
+
+
+def _qep_legacy_identity_from_actual(
+    actual: dict[str, object],
+) -> tuple[str, str, str]:
+    solver = f"SLEPc.PEP/{str(actual['pep_type']).upper()}"
+    problem_type = (
+        "general_quadratic_polynomial"
+        if actual.get("problem_type") == int(SLEPc.PEP.ProblemType.GENERAL)
+        else f"slepc_problem_type_{actual.get('problem_type')}"
+    )
+    if (
+        actual.get("st_type") == str(SLEPc.ST.Type.SINVERT)
+        and actual.get("ksp_type") == str(PETSc.KSP.Type.PREONLY)
+        and actual.get("pc_type") == str(PETSc.PC.Type.LU)
+        and actual.get("factor_solver_type") == "mumps"
+    ):
+        spectral_transform = "sinvert_with_MUMPS_LU"
+    else:
+        spectral_transform = "_with_".join(
+            str(actual.get(name))
+            for name in ("st_type", "ksp_type", "pc_type")
+        )
+    return solver, problem_type, spectral_transform
 
 
 def analytic_homogeneous_beta(
@@ -155,8 +244,12 @@ def _assemble_unconstrained_matrix(form, *, quadrature_degree: int) -> PETSc.Mat
         ),
         bcs=[],
     )
-    matrix.assemble()
-    return matrix
+    try:
+        matrix.assemble()
+        return matrix
+    except Exception:
+        matrix.destroy()
+        raise
 
 
 def assemble_quadratic_beta_operators(
@@ -236,25 +329,25 @@ def assemble_quadratic_beta_operators(
     if log is not None:
         log("QEP distributed constraint transform built")
 
-    full_matrices = []
-    for name, form in (
-        ("K0", a0),
-        ("K1", a1),
-        ("K2", a2),
-        ("electric_mass", electric_mass),
-    ):
-        full_matrices.append(
-            _assemble_unconstrained_matrix(
-                form, quadrature_degree=selected_quadrature
-            )
-        )
-        if log is not None:
-            log(f"QEP full {name} assembled")
+    full_matrices: list[PETSc.Mat] = []
+    reduced_matrices: list[PETSc.Mat] = []
     try:
-        reduced_matrices = []
+        for name, form in (
+            ("K0", a0),
+            ("K1", a1),
+            ("K2", a2),
+            ("electric_mass", electric_mass),
+        ):
+            full_matrices.append(
+                _assemble_unconstrained_matrix(
+                    form, quadrature_degree=selected_quadrature
+                )
+            )
+            if log is not None:
+                log(f"QEP full {name} assembled")
         transform_h = PETSc.Mat()
-        transform.matrix.hermitianTranspose(transform_h)
         try:
+            transform.matrix.hermitianTranspose(transform_h)
             for name, matrix in zip(
                 ("K0", "K1", "K2", "electric_mass"), full_matrices
             ):
@@ -267,31 +360,47 @@ def assemble_quadratic_beta_operators(
                     log(f"QEP reduced {name} assembled")
         finally:
             transform_h.destroy()
+
+        reduced_shape = tuple(map(int, reduced_matrices[0].getSize()))
+        if reduced_shape[0] != reduced_shape[1]:
+            raise RuntimeError(
+                f"Reduced QEP matrices must be square, got {reduced_shape}."
+            )
+        if any(
+            tuple(map(int, matrix.getSize())) != reduced_shape
+            for matrix in reduced_matrices
+        ):
+            raise RuntimeError(
+                "QEP coefficient and normalization matrix shapes differ."
+            )
+
+        operators = QuadraticBetaOperators(
+            K0=reduced_matrices[0],
+            K1=reduced_matrices[1],
+            K2=reduced_matrices[2],
+            electric_mass=reduced_matrices[3],
+            transform=transform,
+            constraints=constraints,
+            full_shape=(transform.full_global_size, transform.full_global_size),
+            reduced_shape=reduced_shape,
+            scalar_dtype=str(np.dtype(PETSc.ScalarType)),
+            field_degree=field_degree,
+            geometry_degree=geometry_degree,
+            coefficient_degree=coefficient_degree,
+            quadrature_degree=selected_quadrature,
+        )
+        reduced_matrices = []
+        transform = None
+        return operators
+    except Exception:
+        for matrix in reduced_matrices:
+            matrix.destroy()
+        if transform is not None:
+            transform.matrix.destroy()
+        raise
     finally:
         for matrix in full_matrices:
             matrix.destroy()
-
-    reduced_shape = tuple(map(int, reduced_matrices[0].getSize()))
-    if reduced_shape[0] != reduced_shape[1]:
-        raise RuntimeError(f"Reduced QEP matrices must be square, got {reduced_shape}.")
-    if any(tuple(map(int, matrix.getSize())) != reduced_shape for matrix in reduced_matrices):
-        raise RuntimeError("QEP coefficient and normalization matrix shapes differ.")
-
-    return QuadraticBetaOperators(
-        K0=reduced_matrices[0],
-        K1=reduced_matrices[1],
-        K2=reduced_matrices[2],
-        electric_mass=reduced_matrices[3],
-        transform=transform,
-        constraints=constraints,
-        full_shape=(transform.full_global_size, transform.full_global_size),
-        reduced_shape=reduced_shape,
-        scalar_dtype=str(np.dtype(PETSc.ScalarType)),
-        field_degree=field_degree,
-        geometry_degree=geometry_degree,
-        coefficient_degree=coefficient_degree,
-        quadrature_degree=selected_quadrature,
-    )
 
 
 def quadratic_beta_polynomial_relative_residual(
@@ -301,23 +410,30 @@ def quadratic_beta_polynomial_relative_residual(
 ) -> float:
     """Return the explicit relative residual of ``Q(beta) vector = 0``."""
 
-    residual = operators.K0.createVecLeft()
-    work = operators.K0.createVecLeft()
-    operators.K0.mult(vector, residual)
-    operators.K1.mult(vector, work)
-    residual.axpy(beta, work)
-    operators.K2.mult(vector, work)
-    residual.axpy(beta * beta, work)
-    numerator = float(residual.norm(PETSc.NormType.NORM_2))
-    vector_norm = float(vector.norm(PETSc.NormType.NORM_2))
-    denominator = vector_norm * (
-        float(operators.K0.norm(PETSc.NormType.FROBENIUS))
-        + abs(beta) * float(operators.K1.norm(PETSc.NormType.FROBENIUS))
-        + abs(beta) ** 2 * float(operators.K2.norm(PETSc.NormType.FROBENIUS))
-    )
-    residual.destroy()
-    work.destroy()
-    return numerator / max(denominator, 1.0e-30)
+    residual = None
+    work = None
+    try:
+        residual = operators.K0.createVecLeft()
+        work = operators.K0.createVecLeft()
+        operators.K0.mult(vector, residual)
+        operators.K1.mult(vector, work)
+        residual.axpy(beta, work)
+        operators.K2.mult(vector, work)
+        residual.axpy(beta * beta, work)
+        numerator = float(residual.norm(PETSc.NormType.NORM_2))
+        vector_norm = float(vector.norm(PETSc.NormType.NORM_2))
+        denominator = vector_norm * (
+            float(operators.K0.norm(PETSc.NormType.FROBENIUS))
+            + abs(beta) * float(operators.K1.norm(PETSc.NormType.FROBENIUS))
+            + abs(beta) ** 2
+            * float(operators.K2.norm(PETSc.NormType.FROBENIUS))
+        )
+        return numerator / max(denominator, 1.0e-30)
+    finally:
+        if residual is not None:
+            residual.destroy()
+        if work is not None:
+            work.destroy()
 
 
 def solve_quadratic_beta_modes(
@@ -327,94 +443,136 @@ def solve_quadratic_beta_modes(
     requested_modes: int = 8,
     tolerance: float = 1.0e-10,
     max_iterations: int = 500,
+    strict_profile: bool = False,
 ) -> tuple[list[QuadraticBetaMode], QuadraticBetaSolveReport]:
     """Solve a target slice with native distributed SLEPc PEP/TOAR."""
 
     if requested_modes < 1:
         raise ValueError("requested_modes must be positive.")
     comm = operators.K0.comm
-    pep = SLEPc.PEP().create(comm=comm)
-    pep.setOperators([operators.K0, operators.K1, operators.K2])
-    pep.setProblemType(SLEPc.PEP.ProblemType.GENERAL)
-    pep.setType(SLEPc.PEP.Type.TOAR)
-    pep.setDimensions(nev=int(requested_modes))
-    pep.setTarget(complex(target))
-    pep.setWhichEigenpairs(SLEPc.PEP.Which.TARGET_MAGNITUDE)
-    pep.setTolerances(tol=float(tolerance), max_it=int(max_iterations))
-
-    spectral_transform = pep.getST()
-    spectral_transform.setType(SLEPc.ST.Type.SINVERT)
-    ksp = spectral_transform.getKSP()
-    ksp.setType(PETSc.KSP.Type.PREONLY)
-    pc = ksp.getPC()
-    pc.setType(PETSc.PC.Type.LU)
-    pc.setFactorSolverType("mumps")
-    pep.setFromOptions()
-    pep.solve()
-
-    converged = int(pep.getConverged())
+    pep = SLEPc.PEP()
     modes: list[QuadraticBetaMode] = []
-    for index in range(converged):
-        reduced = operators.K0.createVecRight()
-        beta = complex(pep.getEigenpair(index, reduced))
-        mass_action = operators.electric_mass.createVecLeft()
-        operators.electric_mass.mult(reduced, mass_action)
-        norm_squared = complex(reduced.dot(mass_action))
-        if norm_squared.real <= 0.0 or abs(norm_squared.imag) > 1.0e-9 * max(
-            abs(norm_squared.real), 1.0e-30
-        ):
-            mass_action.destroy()
-            reduced.destroy()
-            raise RuntimeError(
-                f"Electric L2 normalization is not positive-real: {norm_squared!r}."
-            )
-        norm_before = float(np.sqrt(norm_squared.real))
-        reduced.scale(1.0 / norm_before)
-        operators.electric_mass.mult(reduced, mass_action)
-        norm_after = float(np.sqrt(max(complex(reduced.dot(mass_action)).real, 0.0)))
-        mass_action.destroy()
-        full = operators.transform.matrix.createVecLeft()
-        operators.transform.matrix.mult(reduced, full)
-        ownership = EigenvectorOwnership(
-            comm_size=comm.size,
-            reduced_local_size=int(reduced.getLocalSize()),
-            reduced_ownership_range=tuple(map(int, reduced.getOwnershipRange())),
-            full_local_size=int(full.getLocalSize()),
-            full_ownership_range=tuple(map(int, full.getOwnershipRange())),
-        )
-        modes.append(
-            QuadraticBetaMode(
-                beta=beta,
-                right_reduced=reduced,
-                right_full=full,
-                polynomial_relative_residual=quadratic_beta_polynomial_relative_residual(
-                    operators, beta, reduced
-                ),
-                slepc_relative_error=float(
-                    pep.computeError(index, SLEPc.PEP.ErrorType.RELATIVE)
-                ),
-                normalization_kind="cross_section_electric_L2",
-                normalization_factor=norm_before,
-                electric_l2_norm_after=norm_after,
-                ownership=ownership,
-            )
-        )
+    primary_exception: Exception | None = None
+    try:
+        pep.create(comm=comm)
+        pep.setOperators([operators.K0, operators.K1, operators.K2])
+        pep.setProblemType(SLEPc.PEP.ProblemType.GENERAL)
+        pep.setType(SLEPc.PEP.Type.TOAR)
+        pep.setDimensions(nev=int(requested_modes))
+        pep.setTarget(complex(target))
+        pep.setWhichEigenpairs(SLEPc.PEP.Which.TARGET_MAGNITUDE)
+        pep.setTolerances(tol=float(tolerance), max_it=int(max_iterations))
 
-    modes.sort(key=lambda mode: abs(mode.beta - target))
-    if len(modes) > requested_modes:
-        extras = modes[requested_modes:]
-        modes = modes[:requested_modes]
-        for mode in extras:
+        spectral_transform = pep.getST()
+        spectral_transform.setType(SLEPc.ST.Type.SINVERT)
+        ksp = spectral_transform.getKSP()
+        ksp.setType(PETSc.KSP.Type.PREONLY)
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.LU)
+        pc.setFactorSolverType("mumps")
+        actual_profile, profile_mismatches = _qep_profile_after_options(
+            pep, strict_profile=strict_profile
+        )
+        pep.solve()
+
+        converged = int(pep.getConverged())
+        for index in range(converged):
+            reduced = operators.K0.createVecRight()
+            mass_action = None
+            full = None
+            try:
+                beta = complex(pep.getEigenpair(index, reduced))
+                mass_action = operators.electric_mass.createVecLeft()
+                operators.electric_mass.mult(reduced, mass_action)
+                norm_squared = complex(reduced.dot(mass_action))
+                invalid_imaginary = abs(norm_squared.imag) > 1.0e-9 * max(
+                    abs(norm_squared.real), 1.0e-30
+                )
+                if norm_squared.real <= 0.0 or invalid_imaginary:
+                    raise RuntimeError(
+                        "Electric L2 normalization is not positive-real: "
+                        f"{norm_squared!r}."
+                    )
+                norm_before = float(np.sqrt(norm_squared.real))
+                reduced.scale(1.0 / norm_before)
+                operators.electric_mass.mult(reduced, mass_action)
+                norm_after = float(
+                    np.sqrt(max(complex(reduced.dot(mass_action)).real, 0.0))
+                )
+                full = operators.transform.matrix.createVecLeft()
+                operators.transform.matrix.mult(reduced, full)
+                ownership = EigenvectorOwnership(
+                    comm_size=comm.size,
+                    reduced_local_size=int(reduced.getLocalSize()),
+                    reduced_ownership_range=tuple(
+                        map(int, reduced.getOwnershipRange())
+                    ),
+                    full_local_size=int(full.getLocalSize()),
+                    full_ownership_range=tuple(map(int, full.getOwnershipRange())),
+                )
+                mode = QuadraticBetaMode(
+                    beta=beta,
+                    right_reduced=reduced,
+                    right_full=full,
+                    polynomial_relative_residual=(
+                        quadratic_beta_polynomial_relative_residual(
+                            operators, beta, reduced
+                        )
+                    ),
+                    slepc_relative_error=float(
+                        pep.computeError(index, SLEPc.PEP.ErrorType.RELATIVE)
+                    ),
+                    normalization_kind="cross_section_electric_L2",
+                    normalization_factor=norm_before,
+                    electric_l2_norm_after=norm_after,
+                    ownership=ownership,
+                )
+                modes.append(mode)
+                reduced = None
+                full = None
+            finally:
+                if mass_action is not None:
+                    mass_action.destroy()
+                if reduced is not None:
+                    reduced.destroy()
+                if full is not None:
+                    full.destroy()
+
+        modes.sort(key=lambda mode: abs(mode.beta - target))
+        if len(modes) > requested_modes:
+            extras = modes[requested_modes:]
+            modes = modes[:requested_modes]
+            for mode in extras:
+                mode.destroy()
+        solver_identity = _qep_legacy_identity_from_actual(actual_profile)
+        report = QuadraticBetaSolveReport(
+            solver=solver_identity[0],
+            problem_type=solver_identity[1],
+            spectral_transform=solver_identity[2],
+            target=complex(target),
+            requested_modes=int(requested_modes),
+            converged_modes=converged,
+            iteration_count=int(pep.getIterationNumber()),
+            convergence_reason=int(pep.getConvergedReason()),
+            requested_configuration=dict(QEP_REQUESTED_PROFILE),
+            actual_configuration=actual_profile,
+            requested_actual_match=not profile_mismatches,
+            requested_actual_mismatches=tuple(profile_mismatches),
+        )
+        return modes, report
+    except Exception as exc:
+        primary_exception = exc
+        for mode in modes:
             mode.destroy()
-    report = QuadraticBetaSolveReport(
-        solver="SLEPc.PEP/TOAR",
-        problem_type="general_quadratic_polynomial",
-        spectral_transform="sinvert_with_MUMPS_LU",
-        target=complex(target),
-        requested_modes=int(requested_modes),
-        converged_modes=converged,
-        iteration_count=int(pep.getIterationNumber()),
-        convergence_reason=int(pep.getConvergedReason()),
-    )
-    pep.destroy()
-    return modes, report
+        raise
+    finally:
+        try:
+            pep.destroy()
+        except Exception as cleanup_exc:
+            if primary_exception is None:
+                raise
+            primary_exception.add_note(
+                "SLEPc PEP cleanup failed after the primary QEP failure: "
+                f"{type(cleanup_exc).__module__}."
+                f"{type(cleanup_exc).__qualname__}: {cleanup_exc}"
+            )

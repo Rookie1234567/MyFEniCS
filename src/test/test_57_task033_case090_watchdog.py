@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
 import time
@@ -12,6 +13,11 @@ from unittest.mock import Mock, patch
 from benchmarks import run_task033_case090_watchdog as watchdog
 from benchmarks import task033_case090_pde_core as core
 from benchmarks import task034_wsl_resources as wsl_resources
+from benchmarks import watchdog_process_control as process_control
+from benchmarks.watchdog_process_control import (
+    terminate_process_tree,
+    worker_process_group_popen_kwargs,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -118,6 +124,137 @@ def _summary() -> dict:
 
 
 class Task033Case090WatchdogTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "posix", "POSIX process-group contract")
+    def test_process_group_termination_reaches_stubborn_descendant(self) -> None:
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import subprocess,sys,time; "
+                    "child=subprocess.Popen([sys.executable,'-c','import signal,time; "
+                    "signal.signal(signal.SIGTERM,signal.SIG_IGN); "
+                    "print(\"ready\",flush=True); time.sleep(60)'],"
+                    "stdout=subprocess.PIPE,text=True); child.stdout.readline(); "
+                    "print(child.pid,flush=True); time.sleep(60)"
+                ),
+            ],
+            stdout=subprocess.PIPE,
+            text=True,
+            **worker_process_group_popen_kwargs(),
+        )
+        assert process.stdout is not None
+        child_pid = int(process.stdout.readline().strip())
+        cleanup = terminate_process_tree(process, grace_seconds=0.5)
+        self.assertTrue(cleanup["worker_exited"])
+        self.assertTrue(cleanup["process_group_exited"])
+        self.assertTrue(cleanup["sigkill_required"])
+        deadline = time.monotonic() + 1.0
+        while Path(f"/proc/{child_pid}").exists() and time.monotonic() < deadline:
+            time.sleep(0.02)
+        self.assertFalse(Path(f"/proc/{child_pid}").exists())
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process-group contract")
+    def test_process_group_termination_survives_leader_exit(self) -> None:
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import subprocess,sys,time; "
+                    "child=subprocess.Popen([sys.executable,'-c','import signal,time; "
+                    "signal.signal(signal.SIGTERM,signal.SIG_IGN); "
+                    "time.sleep(60)']); time.sleep(0.2); "
+                    "print(child.pid,flush=True)"
+                ),
+            ],
+            stdout=subprocess.PIPE,
+            text=True,
+            **worker_process_group_popen_kwargs(),
+        )
+        assert process.stdout is not None
+        child_pid = int(process.stdout.readline().strip())
+        process.wait(timeout=2.0)
+        self.assertTrue(Path(f"/proc/{child_pid}").exists())
+        try:
+            cleanup = terminate_process_tree(process, grace_seconds=0.5)
+            self.assertTrue(cleanup["worker_exited"])
+            self.assertTrue(cleanup["process_group_exited"])
+            self.assertTrue(cleanup["sigkill_required"])
+            deadline = time.monotonic() + 1.0
+            while (
+                Path(f"/proc/{child_pid}").exists()
+                and time.monotonic() < deadline
+            ):
+                time.sleep(0.02)
+            self.assertFalse(Path(f"/proc/{child_pid}").exists())
+        finally:
+            if Path(f"/proc/{child_pid}").exists():
+                os.kill(child_pid, signal.SIGKILL)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process-group contract")
+    def test_sigterm_delivery_race_treats_missing_group_as_exited(self) -> None:
+        process = Mock()
+        process.pid = 43210
+        process.poll.return_value = 0
+        exists = [True, False, False, False, False]
+        with (
+            patch.object(
+                process_control,
+                "_posix_process_group_exists",
+                side_effect=exists,
+            ),
+            patch.object(
+                process_control.os,
+                "killpg",
+                side_effect=ProcessLookupError,
+            ) as killpg,
+        ):
+            cleanup = terminate_process_tree(process, grace_seconds=0.05)
+        killpg.assert_called_once_with(process.pid, signal.SIGTERM)
+        self.assertTrue(cleanup["worker_exited"])
+        self.assertTrue(cleanup["process_group_exited"])
+        self.assertFalse(cleanup["sigkill_required"])
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process-group contract")
+    def test_sigkill_delivery_race_treats_missing_group_as_exited(self) -> None:
+        process = Mock()
+        process.pid = 43211
+        process.poll.return_value = 0
+
+        def signal_group(_process_group_id: int, sent_signal: int) -> None:
+            if sent_signal == signal.SIGKILL:
+                raise ProcessLookupError
+
+        with (
+            patch.object(
+                process_control,
+                "_posix_process_group_exists",
+                side_effect=[True, True, False, False],
+            ),
+            patch.object(
+                process_control.time,
+                "monotonic",
+                side_effect=[0.0, 1.0, 2.0],
+            ),
+            patch.object(
+                process_control.os,
+                "killpg",
+                side_effect=signal_group,
+            ) as killpg,
+        ):
+            cleanup = terminate_process_tree(process, grace_seconds=0.05)
+        self.assertEqual(
+            killpg.call_args_list,
+            [
+                ((process.pid, signal.SIGTERM),),
+                ((process.pid, signal.SIGKILL),),
+            ],
+        )
+        self.assertTrue(cleanup["worker_exited"])
+        self.assertTrue(cleanup["process_group_exited"])
+        self.assertTrue(cleanup["sigkill_required"])
+
     def test_summary_validator_recomputes_memory_qualification(self) -> None:
         summary = _summary()
         self.assertEqual(

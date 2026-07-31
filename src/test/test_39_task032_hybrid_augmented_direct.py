@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 from types import SimpleNamespace
+from unittest import mock
 
 import numpy as np
 from dolfinx import fem
@@ -694,6 +695,262 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
                     dtype=np.complex128,
                 ),
             )
+
+
+class Task032HybridDirectOwnershipTests(unittest.TestCase):
+    def test_modal_residual_includes_original_rhs_correction(self):
+        from src.solvers import hybrid_fem_modal_schur_direct as schur
+
+        modal_constraint = np.asarray(
+            [[1.0, 0.2j], [-0.1j, 0.8]],
+            dtype=np.complex128,
+        )
+        modal = np.asarray([0.4 - 0.2j, -0.3 + 0.1j])
+        constraint_action = modal_constraint @ modal
+        base_bottom = np.asarray([0.7 + 0.3j])
+        base_top = np.asarray([-0.2 + 0.5j])
+        balanced_rhs = np.concatenate((base_bottom, base_top)) + (
+            constraint_action
+        )
+        perturbation = 1.0e-6 * (1.0 + 2.0j)
+        cases = (
+            (
+                "nonzero_exact_balance",
+                base_bottom,
+                base_top,
+                balanced_rhs,
+                np.zeros(2, dtype=np.complex128),
+            ),
+            (
+                "nonzero_small_perturbation",
+                base_bottom,
+                base_top + perturbation,
+                balanced_rhs,
+                np.asarray([0.0, perturbation], dtype=np.complex128),
+            ),
+            (
+                "zero_correction_matches_old_formula",
+                base_bottom,
+                base_top,
+                np.zeros(2, dtype=np.complex128),
+                np.concatenate((base_bottom, base_top))
+                + constraint_action,
+            ),
+        )
+        for name, bottom_values, top_values, rhs, expected in cases:
+            bottom_projection = mock.Mock()
+            top_projection = mock.Mock()
+            coupling = SimpleNamespace(
+                bottom=SimpleNamespace(
+                    projection=mock.Mock(
+                        createVecLeft=mock.Mock(
+                            return_value=bottom_projection
+                        )
+                    ),
+                    modal_rhs_correction=rhs[:1],
+                ),
+                top=SimpleNamespace(
+                    projection=mock.Mock(
+                        createVecLeft=mock.Mock(return_value=top_projection)
+                    ),
+                    modal_rhs_correction=rhs[1:],
+                ),
+                internal_equation_count=2,
+            )
+            left_hand_side = np.concatenate(
+                (bottom_values, top_values)
+            ) + constraint_action
+            expected_absolute = float(np.linalg.norm(expected))
+            expected_scale = max(
+                float(np.linalg.norm(left_hand_side)),
+                float(np.linalg.norm(rhs)),
+                float(np.linalg.norm(constraint_action)),
+                1.0e-30,
+            )
+            with (
+                self.subTest(case=name),
+                mock.patch.object(
+                    schur,
+                    "_replicated_modal_vector",
+                    side_effect=(bottom_values, top_values),
+                ),
+            ):
+                absolute, relative = schur._modal_residual(
+                    SimpleNamespace(modal_constraint=modal_constraint),
+                    coupling,
+                    mock.Mock(),
+                    mock.Mock(),
+                    modal,
+                )
+                self.assertAlmostEqual(absolute, expected_absolute, places=14)
+                self.assertAlmostEqual(
+                    relative,
+                    expected_absolute / expected_scale,
+                    places=14,
+                )
+                if name == "nonzero_small_perturbation":
+                    self.assertLess(relative, 1.0e-5)
+                bottom_projection.destroy.assert_called_once_with()
+                top_projection.destroy.assert_called_once_with()
+
+    def test_augmented_setup_and_solve_failures_release_owned_objects(self):
+        from src.solvers import hybrid_fem_modal_augmented_direct as augmented
+
+        for stage in ("setup", "solve"):
+            ksp = mock.Mock()
+            ksp.create.return_value = ksp
+            ksp.getPC.return_value = mock.Mock()
+            candidate = mock.Mock()
+            if stage == "setup":
+                ksp.setUp.side_effect = RuntimeError("controlled setup failure")
+                rhs = None
+            else:
+                ksp.solve.side_effect = RuntimeError("controlled solve failure")
+                rhs = SimpleNamespace(
+                    duplicate=mock.Mock(return_value=candidate)
+                )
+
+            class FakeKspFactory:
+                Type = SimpleNamespace(PREONLY="preonly")
+
+                def __call__(self):
+                    return ksp
+
+            fake_petsc = SimpleNamespace(
+                KSP=FakeKspFactory(),
+                PC=SimpleNamespace(Type=SimpleNamespace(LU="lu")),
+            )
+            comm = SimpleNamespace(allreduce=lambda value, op=None: value)
+            system = SimpleNamespace(
+                layout=SimpleNamespace(comm=comm),
+                A=object(),
+                b=rhs,
+            )
+            with (
+                self.subTest(stage=stage),
+                mock.patch.object(augmented, "PETSc", fake_petsc),
+                self.assertRaisesRegex(RuntimeError, f"controlled {stage}"),
+            ):
+                augmented.solve_hybrid_augmented_direct(
+                    system,
+                    SimpleNamespace(),
+                    SimpleNamespace(),
+                )
+            ksp.destroy.assert_called_once_with()
+            if stage == "solve":
+                candidate.destroy.assert_called_once_with()
+
+    def test_schur_factor_and_postsolve_failures_release_owned_objects(self):
+        from src.solvers import hybrid_fem_modal_schur_direct as schur
+
+        ksp = mock.Mock()
+        pc = ksp.getPC.return_value
+        factor = pc.getFactorMatrix.return_value
+        ksp.setUp.side_effect = RuntimeError("controlled factor setup failure")
+
+        class FakeKspFactory:
+            Type = SimpleNamespace(PREONLY="preonly")
+
+            def __call__(self):
+                return ksp
+
+        fake_petsc = SimpleNamespace(
+            KSP=FakeKspFactory(),
+            PC=SimpleNamespace(Type=SimpleNamespace(LU="lu")),
+        )
+        matrix = mock.Mock()
+        matrix.getComm.return_value.tompi4py.return_value = SimpleNamespace()
+        with (
+            mock.patch.object(schur, "PETSc", fake_petsc),
+            self.assertRaisesRegex(RuntimeError, "factor setup failure"),
+        ):
+            schur._factor_local(matrix)
+        factor.setMumpsIcntl.assert_called_once_with(
+            14, schur.MUMPS_WORKSPACE_RELAXATION_PERCENT
+        )
+        ksp.destroy.assert_called_once_with()
+
+        right_hand_sides = mock.Mock()
+        solved = mock.Mock()
+        right_hand_sides.duplicate.return_value = solved
+        solve_factor = mock.Mock()
+        solve_factor.matSolve.side_effect = RuntimeError(
+            "controlled multi-RHS matSolve failure"
+        )
+        local_system = SimpleNamespace(
+            local_mesh=SimpleNamespace(
+                mesh=SimpleNamespace(comm=SimpleNamespace())
+            )
+        )
+        with (
+            mock.patch.object(
+                schur,
+                "_multi_rhs_matrix",
+                return_value=right_hand_sides,
+            ),
+            self.assertRaisesRegex(RuntimeError, "matSolve failure"),
+        ):
+            schur._local_schur_response(
+                local_system,
+                SimpleNamespace(),
+                solve_factor,
+            )
+        solved.destroy.assert_called_once_with()
+        right_hand_sides.destroy.assert_called_once_with()
+
+        comm = SimpleNamespace(allreduce=lambda value, op=None: value)
+        bottom_system = SimpleNamespace(
+            local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+            b=mock.Mock(),
+            static_condensation=None,
+        )
+        top_system = SimpleNamespace(
+            local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+            b=mock.Mock(),
+            static_condensation=None,
+        )
+        system = SimpleNamespace(
+            modal_schur=[[1.0]],
+            modal_rhs=[1.0],
+            bottom_factor=mock.Mock(),
+            top_factor=mock.Mock(),
+        )
+        for stage in ("top_recovery", "residual"):
+            bottom = mock.Mock()
+            top = mock.Mock()
+            recover_effect = (
+                [bottom, RuntimeError("controlled top recovery failure")]
+                if stage == "top_recovery"
+                else [bottom, top]
+            )
+            residual_effect = (
+                RuntimeError("controlled residual failure")
+                if stage == "residual"
+                else None
+            )
+            with (
+                self.subTest(stage=stage),
+                mock.patch.object(
+                    schur,
+                    "_recover_local_field",
+                    side_effect=recover_effect,
+                ),
+                mock.patch.object(
+                    schur,
+                    "_local_relative_residual",
+                    side_effect=residual_effect,
+                ),
+                self.assertRaisesRegex(RuntimeError, "controlled"),
+            ):
+                schur.solve_hybrid_modal_schur_direct(
+                    system,
+                    bottom_system,
+                    top_system,
+                    SimpleNamespace(),
+                )
+            bottom.destroy.assert_called_once_with()
+            if stage == "residual":
+                top.destroy.assert_called_once_with()
 
 
 if __name__ == "__main__":

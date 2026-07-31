@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 from unittest.mock import patch
 
 from mpi4py import MPI
@@ -40,6 +41,49 @@ from src.solvers.dtn_port_3d import _solve_augmented_system
 
 
 class DirectMemoryTelemetryTests(unittest.TestCase):
+    def test_common_full_size_diagnostic_vectors_are_released(self) -> None:
+        from src.solvers import common_3d_solve
+
+        assembled = mock.Mock()
+        assembled.norm.return_value = 2.0
+        with (
+            mock.patch.object(
+                common_3d_solve.fem, "form", return_value=object()
+            ),
+            mock.patch.object(
+                common_3d_solve.fem_petsc,
+                "assemble_vector",
+                return_value=assembled,
+            ),
+        ):
+            self.assertEqual(
+                common_3d_solve._assembled_rhs_norm(object()), 2.0
+            )
+        assembled.destroy.assert_called_once_with()
+
+        for stage in ("success", "operator_failure"):
+            residual = mock.Mock()
+            residual.norm.return_value = 0.25
+            rhs = mock.Mock()
+            rhs.duplicate.return_value = residual
+            rhs.norm.return_value = 1.0
+            solution = mock.Mock()
+            solution.norm.return_value = 0.5
+            operator = mock.Mock()
+            if stage == "operator_failure":
+                operator.mult.side_effect = RuntimeError(
+                    "controlled diagnostic multiplication failure"
+                )
+            with self.subTest(stage=stage):
+                result = common_3d_solve._linear_system_diagnostics(
+                    operator, rhs, solution
+                )
+                self.assertEqual(
+                    result["linear_system_residual_norm"],
+                    0.25 if stage == "success" else None,
+                )
+                residual.destroy.assert_called_once_with()
+
     def test_historical_peak_upper_bound_uses_all_complete_checkpoints(self) -> None:
         events = [
             {"sum_rank_historical_peaks_mb_upper_bound": 10.0},

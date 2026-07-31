@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 import ufl
 
-from dolfinx import fem, geometry
+from dolfinx import fem, geometry, mesh
 
 from ..common.config_3d import SimulationConfig3D
 from ..common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values
@@ -404,20 +404,38 @@ def _plane_points(cfg: SimulationConfig3D, z: float) -> np.ndarray:
     return np.asarray([[x, y, z] for y in ys for x in xs], dtype=np.float64)
 
 
-def _sample_field_at_points(function, points: np.ndarray) -> np.ndarray:
+def _sample_field_at_points(
+    function,
+    points: np.ndarray,
+    *,
+    z_side: int,
+) -> np.ndarray:
+    if z_side not in {-1, 1}:
+        raise ValueError("z_side must be -1 or +1.")
     msh = function.function_space.mesh
     comm = msh.comm
     points = np.asarray(points, dtype=np.float64).reshape((-1, 3))
     tree = geometry.bb_tree(msh, msh.topology.dim)
     candidates = geometry.compute_collisions_points(tree, points)
     collisions = geometry.compute_colliding_cells(msh, candidates, points)
+    cell_map = msh.topology.index_map(msh.topology.dim)
+    local_cells_with_ghosts = cell_map.size_local + cell_map.num_ghosts
+    cell_midpoints = mesh.compute_midpoints(
+        msh,
+        msh.topology.dim,
+        np.arange(local_cells_with_ghosts, dtype=np.int32),
+    )
     local_indices: list[int] = []
     local_cells: list[int] = []
+    local_scores: list[float] = []
     for i in range(len(points)):
         links = collisions.links(i)
         if len(links) >= 1:
+            scores = z_side * (cell_midpoints[links, 2] - points[i, 2])
+            selected = int(np.argmax(scores))
             local_indices.append(i)
-            local_cells.append(int(links[0]))
+            local_cells.append(int(links[selected]))
+            local_scores.append(float(scores[selected]))
 
     if local_indices:
         local_points = points[np.asarray(local_indices, dtype=np.int32)]
@@ -428,22 +446,26 @@ def _sample_field_at_points(function, points: np.ndarray) -> np.ndarray:
     else:
         local_values = np.zeros((0, 0), dtype=np.complex128)
 
-    packets = comm.allgather((local_indices, local_values))
+    packets = comm.allgather((local_indices, local_scores, local_values))
     width = 0
-    for _, values in packets:
-        if values.size:
-            width = int(values.shape[1])
+    for _, _, packet_values in packets:
+        if packet_values.size:
+            width = int(packet_values.shape[1])
             break
     if width == 0:
         raise RuntimeError("No rank could evaluate the requested 3D diffraction probe points.")
 
     values = np.zeros((len(points), width), dtype=np.complex128)
     filled = np.zeros(len(points), dtype=bool)
-    for indices, packet_values in packets:
+    best_scores = np.full(len(points), -np.inf, dtype=np.float64)
+    for indices, scores, packet_values in packets:
         for row, point_index in enumerate(indices):
-            if not filled[point_index]:
-                values[int(point_index)] = packet_values[row]
-                filled[int(point_index)] = True
+            point_index = int(point_index)
+            score = float(scores[row])
+            if score > best_scores[point_index]:
+                values[point_index] = packet_values[row]
+                filled[point_index] = True
+                best_scores[point_index] = score
     if not np.all(filled):
         missing = np.flatnonzero(~filled)[:5]
         examples = ", ".join(str(points[i].tolist()) for i in missing)
@@ -582,6 +604,12 @@ def _calibrated_amplitudes(
     *,
     side: str,
 ) -> tuple[dict[tuple[int, int, str, str], complex], float | None]:
+    if side == "top":
+        z_side = -1
+    elif side == "bottom":
+        z_side = 1
+    else:
+        raise ValueError("side must be 'top' or 'bottom'.")
     keys = [key for key, _ in _modal_columns(cfg, orders, points, side=side)]
     if not keys:
         return raw, None
@@ -591,8 +619,8 @@ def _calibrated_amplitudes(
         kvec, e_vec = vectors[key]
         mode_field = _mode_field(E_total.function_space, kvec, e_vec)
         mode_h = _h_from_curl_function(mode_field, cfg)
-        mode_e_values = _sample_field_at_points(mode_field, points)
-        mode_h_values = _sample_field_at_points(mode_h, points)
+        mode_e_values = _sample_field_at_points(mode_field, points, z_side=z_side)
+        mode_h_values = _sample_field_at_points(mode_h, points, z_side=z_side)
         apparent, _ = fit_diffraction_amplitudes_from_samples(
             cfg,
             orders,
@@ -646,16 +674,24 @@ def compute_diffraction_orders_3d(
         # numerical scattered field and adds the exact layered background on the
         # probe planes.
         H_scattered = _h_from_curl_function(E_scattered, cfg)
-        top_e = _sample_field_at_points(E_scattered, top_points) + electric_field_code_values(cfg, top_points)
-        top_h = _sample_field_at_points(H_scattered, top_points) + magnetic_field_code_values(cfg, top_points)
-        bottom_e = _sample_field_at_points(E_scattered, bottom_points) + electric_field_code_values(cfg, bottom_points)
-        bottom_h = _sample_field_at_points(H_scattered, bottom_points) + magnetic_field_code_values(cfg, bottom_points)
+        top_e = _sample_field_at_points(E_scattered, top_points, z_side=-1) + electric_field_code_values(
+            cfg, top_points
+        )
+        top_h = _sample_field_at_points(H_scattered, top_points, z_side=-1) + magnetic_field_code_values(
+            cfg, top_points
+        )
+        bottom_e = _sample_field_at_points(E_scattered, bottom_points, z_side=1) + electric_field_code_values(
+            cfg, bottom_points
+        )
+        bottom_h = _sample_field_at_points(H_scattered, bottom_points, z_side=1) + magnetic_field_code_values(
+            cfg, bottom_points
+        )
     else:
         H_total = _h_from_curl_function(E_total, cfg)
-        top_e = _sample_field_at_points(E_total, top_points)
-        top_h = _sample_field_at_points(H_total, top_points)
-        bottom_e = _sample_field_at_points(E_total, bottom_points)
-        bottom_h = _sample_field_at_points(H_total, bottom_points)
+        top_e = _sample_field_at_points(E_total, top_points, z_side=-1)
+        top_h = _sample_field_at_points(H_total, top_points, z_side=-1)
+        bottom_e = _sample_field_at_points(E_total, bottom_points, z_side=1)
+        bottom_h = _sample_field_at_points(H_total, bottom_points, z_side=1)
     incident_power = _incident_power(cfg)
     e_fourier_rows, e_fourier_metrics = _e_fourier_order_powers(
         cfg,

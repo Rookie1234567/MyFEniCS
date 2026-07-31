@@ -50,6 +50,10 @@ from benchmarks.task033_watchdog_launch import (
     high_order_core_evidence_gate,
     hybrid_launch_gate,
 )
+from benchmarks.watchdog_process_control import (
+    terminate_process_tree,
+    worker_process_group_popen_kwargs,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -2941,259 +2945,271 @@ def run(args: argparse.Namespace) -> int:
             stderr=subprocess.STDOUT,
             text=True,
             env=environment,
+            **worker_process_group_popen_kwargs(),
         )
-        previous: dict[str, Any] | None = None
-        while True:
-            elapsed = time.perf_counter() - started
-            row = _sample(process.pid, stage_path, elapsed)
-            job_sample = resource_authority_sample(process.pid)
-            process_tree = job_sample["process_tree"]
-            job_cgroup = job_sample["job_cgroup"]
-            live_worker_rss_mb = float(process_tree["rss_bytes"]) / 1024**2
-            live_workers = [
-                {"pid": pid, "scope": "process_tree"}
-                for pid in process_tree["pids"]
-            ]
-            row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
-            row["worker_rank_rss_mb_json"] = json.dumps(
-                live_workers, separators=(",", ":")
-            )
-            row["mpi_process_tree_swap_mb"] = (
-                float(process_tree["swap_bytes"]) / 1024**2
-            )
-            row["job_cgroup_path"] = job_cgroup["path"]
-            row["job_cgroup_dedicated"] = job_cgroup["dedicated_job_cgroup"]
-            if job_cgroup["dedicated_job_cgroup"]:
-                row["container_cgroup_current_mb"] = (
-                    None if job_cgroup["memory_current_bytes"] is None
-                    else float(job_cgroup["memory_current_bytes"]) / 1024**2
+        try:
+            previous: dict[str, Any] | None = None
+            while True:
+                elapsed = time.perf_counter() - started
+                row = _sample(process.pid, stage_path, elapsed)
+                job_sample = resource_authority_sample(process.pid)
+                process_tree = job_sample["process_tree"]
+                job_cgroup = job_sample["job_cgroup"]
+                live_worker_rss_mb = float(process_tree["rss_bytes"]) / 1024**2
+                live_workers = [
+                    {"pid": pid, "scope": "process_tree"}
+                    for pid in process_tree["pids"]
+                ]
+                row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
+                row["worker_rank_rss_mb_json"] = json.dumps(
+                    live_workers, separators=(",", ":")
                 )
-                row["container_swap_current_mb"] = (
-                    None if job_cgroup["swap_current_bytes"] is None
-                    else float(job_cgroup["swap_current_bytes"]) / 1024**2
+                row["mpi_process_tree_swap_mb"] = (
+                    float(process_tree["swap_bytes"]) / 1024**2
                 )
-            else:
-                row["container_cgroup_current_mb"] = None
-                row["container_swap_current_mb"] = None
-            process_running = process.poll() is None
-            cgroup_current_mb = row.get("container_cgroup_current_mb")
-            authority_readable = bool(
-                process_tree["all_status_readable"]
-                and (
-                    not job_cgroup["dedicated_job_cgroup"]
-                    or cgroup_current_mb is not None
-                )
-            )
-            live_worker_count: int | None = None
-            terminal_record_complete = False
-            if (
-                (
-                    args.task034_workstation_gate
-                    or args.task035c_p6_h10_gate
-                    or args.task036_domain_robustness_gate
-                )
-                and process_running
-                and not authority_readable
-            ):
-                if row.get("stage") == "record_and_release":
-                    terminal_record_complete = (
-                        _task034_terminal_record_is_complete(record_path)
+                row["job_cgroup_path"] = job_cgroup["path"]
+                row["job_cgroup_dedicated"] = job_cgroup["dedicated_job_cgroup"]
+                if job_cgroup["dedicated_job_cgroup"]:
+                    row["container_cgroup_current_mb"] = (
+                        None if job_cgroup["memory_current_bytes"] is None
+                        else float(job_cgroup["memory_current_bytes"]) / 1024**2
                     )
-                live_worker_rss, discovered_workers = (
-                    _live_task033_worker_rss(process.pid, args.target)
-                )
-                if live_worker_rss is not None:
-                    process_tree_pids = set(process_tree["pids"])
-                    live_worker_count = sum(
-                        int(worker["pid"]) in process_tree_pids
-                        for worker in discovered_workers
+                    row["container_swap_current_mb"] = (
+                        None if job_cgroup["swap_current_bytes"] is None
+                        else float(job_cgroup["swap_current_bytes"]) / 1024**2
                     )
-                if _task036_process_tree_retry_eligible(
+                else:
+                    row["container_cgroup_current_mb"] = None
+                    row["container_swap_current_mb"] = None
+                process_running = process.poll() is None
+                cgroup_current_mb = row.get("container_cgroup_current_mb")
+                authority_readable = bool(
+                    process_tree["all_status_readable"]
+                    and (
+                        not job_cgroup["dedicated_job_cgroup"]
+                        or cgroup_current_mb is not None
+                    )
+                )
+                live_worker_count: int | None = None
+                terminal_record_complete = False
+                if (
+                    (
+                        args.task034_workstation_gate
+                        or args.task035c_p6_h10_gate
+                        or args.task036_domain_robustness_gate
+                    )
+                    and process_running
+                    and not authority_readable
+                ):
+                    if row.get("stage") == "record_and_release":
+                        terminal_record_complete = (
+                            _task034_terminal_record_is_complete(record_path)
+                        )
+                    live_worker_rss, discovered_workers = (
+                        _live_task033_worker_rss(process.pid, args.target)
+                    )
+                    if live_worker_rss is not None:
+                        process_tree_pids = set(process_tree["pids"])
+                        live_worker_count = sum(
+                            int(worker["pid"]) in process_tree_pids
+                            for worker in discovered_workers
+                        )
+                    if _task036_process_tree_retry_eligible(
+                        task036_domain_robustness_gate=(
+                            args.task036_domain_robustness_gate
+                        ),
+                        process_running=process_running,
+                        authority_readable=authority_readable,
+                        live_worker_count=live_worker_count,
+                        expected_worker_count=args.mpi_size,
+                    ):
+                        task036_process_tree_retry_count += 1
+                        for retry_delay in (
+                            TASK036_PROCESS_TREE_RETRY_DELAYS_SECONDS
+                        ):
+                            task036_process_tree_retry_attempt_count += 1
+                            time.sleep(retry_delay)
+                            retry_sample = resource_authority_sample(process.pid)
+                            retry_process_tree = retry_sample["process_tree"]
+                            retry_job_cgroup = retry_sample["job_cgroup"]
+                            retry_cgroup_current_mb = (
+                                None
+                                if not retry_job_cgroup["dedicated_job_cgroup"]
+                                or retry_job_cgroup["memory_current_bytes"] is None
+                                else float(
+                                    retry_job_cgroup["memory_current_bytes"]
+                                )
+                                / 1024**2
+                            )
+                            retry_authority_readable = bool(
+                                retry_process_tree["all_status_readable"]
+                                and (
+                                    not retry_job_cgroup["dedicated_job_cgroup"]
+                                    or retry_cgroup_current_mb is not None
+                                )
+                            )
+                            if not retry_authority_readable:
+                                retry_running = process.poll() is None
+                                _, retry_workers = _live_task033_worker_rss(
+                                    process.pid, args.target
+                                )
+                                retry_process_tree_pids = set(
+                                    retry_process_tree["pids"]
+                                )
+                                retry_worker_count = sum(
+                                    int(worker["pid"])
+                                    in retry_process_tree_pids
+                                    for worker in retry_workers
+                                )
+                                if (
+                                    not retry_running
+                                    or retry_worker_count != args.mpi_size
+                                ):
+                                    break
+                                continue
+                            task036_process_tree_retry_success_count += 1
+                            job_sample = retry_sample
+                            process_tree = retry_process_tree
+                            job_cgroup = retry_job_cgroup
+                            live_worker_rss_mb = (
+                                float(process_tree["rss_bytes"]) / 1024**2
+                            )
+                            live_workers = [
+                                {"pid": pid, "scope": "process_tree"}
+                                for pid in process_tree["pids"]
+                            ]
+                            row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
+                            row["worker_rank_rss_mb_json"] = json.dumps(
+                                live_workers, separators=(",", ":")
+                            )
+                            row["mpi_process_tree_swap_mb"] = (
+                                float(process_tree["swap_bytes"]) / 1024**2
+                            )
+                            row["job_cgroup_path"] = job_cgroup["path"]
+                            row["job_cgroup_dedicated"] = job_cgroup[
+                                "dedicated_job_cgroup"
+                            ]
+                            row["container_cgroup_current_mb"] = (
+                                retry_cgroup_current_mb
+                            )
+                            row["container_swap_current_mb"] = (
+                                None
+                                if not job_cgroup["dedicated_job_cgroup"]
+                                or job_cgroup["swap_current_bytes"] is None
+                                else float(job_cgroup["swap_current_bytes"])
+                                / 1024**2
+                            )
+                            cgroup_current_mb = retry_cgroup_current_mb
+                            authority_readable = True
+                            break
+                zero_worker_exit_drain = _task036_zero_worker_exit_drain(
                     task036_domain_robustness_gate=(
                         args.task036_domain_robustness_gate
                     ),
                     process_running=process_running,
                     authority_readable=authority_readable,
                     live_worker_count=live_worker_count,
-                    expected_worker_count=args.mpi_size,
+                )
+                if zero_worker_exit_drain:
+                    try:
+                        process.wait(timeout=5.0)
+                    except subprocess.TimeoutExpired:
+                        terminated_for_authority_unreadable = True
+                        terminate_process_tree(process)
+                    process_running = process.poll() is None
+                terminal_worker_drain = _task034_terminal_worker_drain(
+                    task034_workstation_gate=(
+                        args.task034_workstation_gate
+                        or args.task035c_p6_h10_gate
+                        or args.task036_domain_robustness_gate
+                    ),
+                    process_running=process_running,
+                    authority_readable=authority_readable,
+                    stage=row.get("stage"),
+                    terminal_record_complete=terminal_record_complete,
+                    live_worker_count=live_worker_count,
+                )
+                readability_sample_is_formal = _resource_readability_sample_is_formal(
+                    task034_workstation_gate=(
+                        args.task034_workstation_gate
+                        or args.task035c_p6_h10_gate
+                        or args.task036_domain_robustness_gate
+                    ),
+                    process_running=process_running,
+                    terminal_worker_drain=(
+                        terminal_worker_drain or zero_worker_exit_drain
+                    ),
+                )
+                if readability_sample_is_formal:
+                    job_swap_all_samples_readable &= bool(
+                        process_tree["all_status_readable"]
+                    )
+                    max_process_tree_swap_bytes = max(
+                        max_process_tree_swap_bytes, int(process_tree["swap_bytes"])
+                    )
+                    if job_cgroup["dedicated_job_cgroup"]:
+                        dedicated_job_cgroup_observed = True
+                        if job_cgroup["swap_current_bytes"] is None:
+                            job_swap_all_samples_readable = False
+                        else:
+                            max_dedicated_cgroup_swap_bytes = max(
+                                max_dedicated_cgroup_swap_bytes,
+                                int(job_cgroup["swap_current_bytes"]),
+                            )
+                elif terminal_worker_drain:
+                    terminal_worker_drain_samples_excluded += 1
+                elif zero_worker_exit_drain:
+                    zero_worker_exit_drain_samples_excluded += 1
+                else:
+                    post_exit_readability_samples_excluded += 1
+                _add_cpu_core_equivalents(row, previous)
+                previous = row
+                rows.append(row)
+                if readability_sample_is_formal:
+                    live_authority_all_readable &= authority_readable
+                live_authority_gib = (
+                    None
+                    if not readability_sample_is_formal or not authority_readable
+                    else max(
+                        float(live_worker_rss_mb), float(cgroup_current_mb or 0.0)
+                    ) / 1024.0
+                )
+                if live_authority_gib is not None:
+                    max_live_authority_gib = max(
+                        max_live_authority_gib, live_authority_gib
+                    )
+                    warning_triggered |= live_authority_gib >= args.warning_gib
+                if _authority_unreadable_requires_termination(
+                    process_running=process_running,
+                    readability_sample_is_formal=readability_sample_is_formal,
+                    authority_readable=authority_readable,
                 ):
-                    task036_process_tree_retry_count += 1
-                    for retry_delay in (
-                        TASK036_PROCESS_TREE_RETRY_DELAYS_SECONDS
-                    ):
-                        task036_process_tree_retry_attempt_count += 1
-                        time.sleep(retry_delay)
-                        retry_sample = resource_authority_sample(process.pid)
-                        retry_process_tree = retry_sample["process_tree"]
-                        retry_job_cgroup = retry_sample["job_cgroup"]
-                        retry_cgroup_current_mb = (
-                            None
-                            if not retry_job_cgroup["dedicated_job_cgroup"]
-                            or retry_job_cgroup["memory_current_bytes"] is None
-                            else float(
-                                retry_job_cgroup["memory_current_bytes"]
-                            )
-                            / 1024**2
-                        )
-                        retry_authority_readable = bool(
-                            retry_process_tree["all_status_readable"]
-                            and (
-                                not retry_job_cgroup["dedicated_job_cgroup"]
-                                or retry_cgroup_current_mb is not None
-                            )
-                        )
-                        if not retry_authority_readable:
-                            retry_running = process.poll() is None
-                            _, retry_workers = _live_task033_worker_rss(
-                                process.pid, args.target
-                            )
-                            retry_process_tree_pids = set(
-                                retry_process_tree["pids"]
-                            )
-                            retry_worker_count = sum(
-                                int(worker["pid"])
-                                in retry_process_tree_pids
-                                for worker in retry_workers
-                            )
-                            if (
-                                not retry_running
-                                or retry_worker_count != args.mpi_size
-                            ):
-                                break
-                            continue
-                        task036_process_tree_retry_success_count += 1
-                        job_sample = retry_sample
-                        process_tree = retry_process_tree
-                        job_cgroup = retry_job_cgroup
-                        live_worker_rss_mb = (
-                            float(process_tree["rss_bytes"]) / 1024**2
-                        )
-                        live_workers = [
-                            {"pid": pid, "scope": "process_tree"}
-                            for pid in process_tree["pids"]
-                        ]
-                        row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
-                        row["worker_rank_rss_mb_json"] = json.dumps(
-                            live_workers, separators=(",", ":")
-                        )
-                        row["mpi_process_tree_swap_mb"] = (
-                            float(process_tree["swap_bytes"]) / 1024**2
-                        )
-                        row["job_cgroup_path"] = job_cgroup["path"]
-                        row["job_cgroup_dedicated"] = job_cgroup[
-                            "dedicated_job_cgroup"
-                        ]
-                        row["container_cgroup_current_mb"] = (
-                            retry_cgroup_current_mb
-                        )
-                        row["container_swap_current_mb"] = (
-                            None
-                            if not job_cgroup["dedicated_job_cgroup"]
-                            or job_cgroup["swap_current_bytes"] is None
-                            else float(job_cgroup["swap_current_bytes"])
-                            / 1024**2
-                        )
-                        cgroup_current_mb = retry_cgroup_current_mb
-                        authority_readable = True
-                        break
-            zero_worker_exit_drain = _task036_zero_worker_exit_drain(
-                task036_domain_robustness_gate=(
-                    args.task036_domain_robustness_gate
-                ),
-                process_running=process_running,
-                authority_readable=authority_readable,
-                live_worker_count=live_worker_count,
-            )
-            if zero_worker_exit_drain:
-                try:
-                    process.wait(timeout=5.0)
-                except subprocess.TimeoutExpired:
                     terminated_for_authority_unreadable = True
-                    process.terminate()
-                process_running = process.poll() is None
-            terminal_worker_drain = _task034_terminal_worker_drain(
-                task034_workstation_gate=(
-                    args.task034_workstation_gate
-                    or args.task035c_p6_h10_gate
-                    or args.task036_domain_robustness_gate
-                ),
-                process_running=process_running,
-                authority_readable=authority_readable,
-                stage=row.get("stage"),
-                terminal_record_complete=terminal_record_complete,
-                live_worker_count=live_worker_count,
-            )
-            readability_sample_is_formal = _resource_readability_sample_is_formal(
-                task034_workstation_gate=(
-                    args.task034_workstation_gate
-                    or args.task035c_p6_h10_gate
-                    or args.task036_domain_robustness_gate
-                ),
-                process_running=process_running,
-                terminal_worker_drain=(
-                    terminal_worker_drain or zero_worker_exit_drain
-                ),
-            )
-            if readability_sample_is_formal:
-                job_swap_all_samples_readable &= bool(
-                    process_tree["all_status_readable"]
-                )
-                max_process_tree_swap_bytes = max(
-                    max_process_tree_swap_bytes, int(process_tree["swap_bytes"])
-                )
-                if job_cgroup["dedicated_job_cgroup"]:
-                    dedicated_job_cgroup_observed = True
-                    if job_cgroup["swap_current_bytes"] is None:
-                        job_swap_all_samples_readable = False
-                    else:
-                        max_dedicated_cgroup_swap_bytes = max(
-                            max_dedicated_cgroup_swap_bytes,
-                            int(job_cgroup["swap_current_bytes"]),
-                        )
-            elif terminal_worker_drain:
-                terminal_worker_drain_samples_excluded += 1
-            elif zero_worker_exit_drain:
-                zero_worker_exit_drain_samples_excluded += 1
-            else:
-                post_exit_readability_samples_excluded += 1
-            _add_cpu_core_equivalents(row, previous)
-            previous = row
-            rows.append(row)
-            if readability_sample_is_formal:
-                live_authority_all_readable &= authority_readable
-            live_authority_gib = (
-                None
-                if not readability_sample_is_formal or not authority_readable
-                else max(
-                    float(live_worker_rss_mb), float(cgroup_current_mb or 0.0)
-                ) / 1024.0
-            )
-            if live_authority_gib is not None:
-                max_live_authority_gib = max(
-                    max_live_authority_gib, live_authority_gib
-                )
-                warning_triggered |= live_authority_gib >= args.warning_gib
-            if _authority_unreadable_requires_termination(
-                process_running=process_running,
-                readability_sample_is_formal=readability_sample_is_formal,
-                authority_readable=authority_readable,
-            ):
-                terminated_for_authority_unreadable = True
-                process.terminate()
-            if (
-                process_running
-                and live_authority_gib is not None
-                and live_authority_gib >= args.terminate_gib
-            ):
-                terminated_for_memory = True
-                process.terminate()
-            if process_running and elapsed >= args.timeout_seconds:
-                terminated_for_timeout = True
-                process.terminate()
-            if not process_running:
-                break
-            time.sleep(max(args.poll_interval, 0.05))
-        return_code = int(process.returncode or 0)
+                    terminate_process_tree(process)
+                if (
+                    process_running
+                    and live_authority_gib is not None
+                    and live_authority_gib >= args.terminate_gib
+                ):
+                    terminated_for_memory = True
+                    terminate_process_tree(process)
+                if process_running and elapsed >= args.timeout_seconds:
+                    terminated_for_timeout = True
+                    terminate_process_tree(process)
+                if not process_running:
+                    break
+                time.sleep(max(args.poll_interval, 0.05))
+            return_code = int(process.returncode or 0)
+        except BaseException as primary_error:
+            if process.poll() is None:
+                try:
+                    terminate_process_tree(process)
+                except Exception as cleanup_error:
+                    primary_error.add_note(
+                        "worker process-group cleanup also failed: "
+                        f"{type(cleanup_error).__name__}: {cleanup_error}"
+                    )
+            raise
 
     with timeline_path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=TIMELINE_FIELDS)

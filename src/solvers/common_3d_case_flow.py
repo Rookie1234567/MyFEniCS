@@ -16,6 +16,7 @@ from dolfinx.fem import petsc as fem_petsc
 from ..common.config_3d import (
     ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
     SimulationConfig3D,
+    require_material_wavelength_consistency,
     resolve_stage4_full3d_assembly_backend,
 )
 from ..constraints.floquet_3d import DoubleFloquet3DData, build_double_floquet_mpc
@@ -155,13 +156,20 @@ def _merge_volume_closure_into_dtn_port_outputs(
 ) -> dict[str, Any]:
     """Attach material-volume closure fields to the official DtN port metrics."""
 
-    if port_metrics is None or volume_metrics is None:
+    if (
+        port_metrics is None
+        or volume_metrics is None
+        or volume_metrics.get("status") != "ok"
+        or volume_metrics.get("official_result") is not True
+    ):
         return {}
     try:
         R_total = float(port_metrics["R_total"])
         T_total = float(port_metrics["T_total"])
         A_volume_total = float(volume_metrics["A_volume_total"])
     except (KeyError, TypeError, ValueError):
+        return {}
+    if not all(np.isfinite(value) for value in (R_total, T_total, A_volume_total)):
         return {}
     closure = float(R_total + T_total + A_volume_total - 1.0)
     fields = {
@@ -193,6 +201,31 @@ def _merge_volume_closure_into_dtn_port_outputs(
             )
     comm.barrier()
     return fields
+
+
+def _apply_volume_absorption_contract_to_summary(
+    summary: dict[str, Any], volume_metrics: dict[str, Any] | None
+) -> bool:
+    """Apply the one Stage-4 volume-absorption authority decision."""
+
+    contract_pass = bool(
+        volume_metrics is not None
+        and volume_metrics.get("status") == "ok"
+        and volume_metrics.get("official_result") is True
+    )
+    summary["volume_absorption_contract_pass"] = contract_pass
+    if volume_metrics is None:
+        summary["volume_absorption_status"] = "invalid"
+        summary["volume_absorption_failures"] = [
+            "volume_absorption_payload_missing"
+        ]
+    if not contract_pass:
+        summary["official_result"] = False
+        summary["diagnostic_only"] = True
+        summary["case_status"] = "failed_volume_absorption_contract"
+        summary["postprocess_skipped"] = False
+        summary["postprocess_skip_reason"] = None
+    return contract_pass
 
 
 def _assemble_unconstrained_matrix_stats(a, bcs, comm: MPI.Intracomm, log) -> dict[str, Any] | None:
@@ -761,6 +794,7 @@ def run_prepared_3d_case_flow(
         )
     if cfg.stage_case != expected_stage_case:
         raise ValueError(f"This solver accepts only stage_case={expected_stage_case!r}.")
+    material_wavelength_audit = require_material_wavelength_consistency(cfg)
     if not np.issubdtype(default_scalar_type, np.complexfloating):
         raise RuntimeError("The 3D Maxwell solver requires complex-mode DOLFINx/PETSc.")
     if variable_p_live_observer is not None:
@@ -856,6 +890,10 @@ def run_prepared_3d_case_flow(
 
     petsc_options, selected_parallel_lu, disabled_reason = _prepare_direct_lu_options_for_comm(comm, cfg)
     dot_k_p = _log_case_header(cfg, log, petsc_options, selected_parallel_lu, disabled_reason)
+    log(
+        "material/wavelength consistency = "
+        f"{material_wavelength_audit['status']}"
+    )
     _write_progress_event(
         out_dir,
         comm,
@@ -2152,17 +2190,14 @@ def run_prepared_3d_case_flow(
     )
     if incident_power_for_absorption is None and probe_power_metrics is not None:
         incident_power_for_absorption = probe_power_metrics.get("incident_power_code_units")
-    if (
-        cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}
-        and incident_power_for_absorption is not None
-    ):
+    if cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}:
         stage_start = _start_timed_stage(comm)
         volume_absorption_metrics = compute_volume_absorption_3d(
             mesh_data,
             cfg,
             E_total,
             out_dir,
-            incident_power=float(incident_power_for_absorption),
+            incident_power=incident_power_for_absorption,
             port_metrics=port_power_metrics,
             probe_metrics=probe_power_metrics,
         )
@@ -2181,6 +2216,8 @@ def run_prepared_3d_case_flow(
                 ),
                 "A_flux_minus_A_volume_total": volume_absorption_metrics.get("A_flux_minus_A_volume_total"),
                 "energy_closure_error_port_volume": volume_absorption_metrics.get("energy_closure_error_port_volume"),
+                "volume_absorption_status": volume_absorption_metrics.get("status"),
+                "volume_absorption_failures": volume_absorption_metrics.get("failures"),
             }
         )
         closure_fields = _merge_volume_closure_into_dtn_port_outputs(
@@ -2190,6 +2227,11 @@ def run_prepared_3d_case_flow(
             volume_metrics=volume_absorption_metrics,
         )
         summary.update(closure_fields)
+
+    if cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}:
+        _apply_volume_absorption_contract_to_summary(
+            summary, volume_absorption_metrics
+        )
 
     if cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}:
         power_summary_rows = write_power_summary_csv(

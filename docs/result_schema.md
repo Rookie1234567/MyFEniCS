@@ -96,11 +96,13 @@ fresh coarse 直接由当前真实 action 构造，不存在独立 cache mismatc
 
 ## 自动 Gate report
 
-`python -m benchmarks.check_benchmarks` 写：
+`python -m benchmarks.check_benchmarks --write` 写：
 
 | 文件 | 内容 |
 |---|---|
 | `benchmarks/benchmark_summary.csv` | 从 manifest/records 重新汇总 |
 | `benchmarks/records/benchmark_gate_report.json` | 每个 Gate 的 observed、expected、evidence 和总状态 |
 
-checker 非零退出表示至少一个 canonical Gate 失败，不能只根据旧 CSV 宣称通过。
+不带 `--write` 的默认命令只读取、验证和打印，不修改这两份 tracked 文件；兼容入口
+`--no-write` 具有相同只读行为。checker 非零退出表示至少一个 canonical Gate 失败，不能只
+根据旧 CSV 宣称通过。

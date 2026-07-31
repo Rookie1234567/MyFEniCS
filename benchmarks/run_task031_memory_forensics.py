@@ -17,10 +17,107 @@ from benchmarks.run_direct_memory_forensics import (
     _sample,
     _stage_peaks,
 )
+from benchmarks.watchdog_process_control import (
+    terminate_process_tree,
+    worker_process_group_popen_kwargs,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARTIFACT_ROOT = ROOT / "benchmarks" / "artifacts" / "cases" / "070"
+
+
+def _memory_authority_gib(row: dict[str, Any]) -> float:
+    process_tree_mb = float(row.get("mpi_process_tree_rss_mb") or 0.0)
+    dedicated_cgroup_mb = (
+        float(row.get("container_cgroup_current_mb") or 0.0)
+        if row.get("job_cgroup_dedicated") is True
+        else 0.0
+    )
+    return max(process_tree_mb, dedicated_cgroup_mb) / 1024.0
+
+
+def _task031_solver_disposition(
+    *,
+    screen_only: bool,
+    return_code: int,
+    terminated_for_memory: bool,
+    solver_record: dict[str, Any],
+) -> dict[str, Any]:
+    history = solver_record.get("history") or []
+    screen_trend_positive = bool(
+        screen_only
+        and len(history) >= 2
+        and float(history[-1].get("true_relative_residual", float("inf")))
+        < float(history[0].get("true_relative_residual", float("inf")))
+    )
+    worker_formal_pass = bool(
+        not screen_only
+        and return_code == 0
+        and solver_record.get("status") == "formal_pass"
+        and solver_record.get("formal_pass") is True
+    )
+    worker_numeric_pass = bool(
+        solver_record.get("numeric_solver_pass", worker_formal_pass)
+    )
+    worker_physics_pass = bool(
+        solver_record.get("physics_pass", worker_formal_pass)
+    )
+    if terminated_for_memory:
+        status = "resource_controlled_stop"
+    elif screen_only:
+        status = (
+            "screen_trend_positive"
+            if screen_trend_positive
+            else "screen_no_positive_trend"
+        )
+    elif worker_formal_pass:
+        status = "formal_pass"
+    elif solver_record.get("status") == "formal_pass":
+        status = "worker_formal_not_pass"
+    elif solver_record.get("status") in {
+        "numeric_not_pass",
+        "physics_not_pass",
+        "source_identity_not_pass",
+        "controlled_negative_source_identity",
+        "experimental_unqualified",
+    }:
+        status = str(solver_record["status"])
+    elif return_code != 0:
+        status = "worker_process_failed"
+    else:
+        status = str(solver_record.get("status") or "worker_record_missing")
+    preserve_worker_numeric = bool(
+        not screen_only
+        and not terminated_for_memory
+        and solver_record.get("status")
+        in {
+            "formal_pass",
+            "numeric_not_pass",
+            "physics_not_pass",
+            "source_identity_not_pass",
+            "controlled_negative_source_identity",
+            "experimental_unqualified",
+        }
+    )
+    return {
+        "status": status,
+        "worker_status": solver_record.get("status"),
+        "screen_trend_positive": screen_trend_positive,
+        "numeric_pass": worker_numeric_pass if preserve_worker_numeric else False,
+        "physics_pass": worker_physics_pass if preserve_worker_numeric else False,
+        "formal_pass": worker_formal_pass and status == "formal_pass",
+    }
+
+
+def _apply_task031_source_identity(
+    disposition: dict[str, Any], *, source_identity_stable: bool
+) -> dict[str, Any]:
+    result = dict(disposition)
+    if result.get("formal_pass") and not source_identity_stable:
+        result["status"] = "controlled_negative_source_identity"
+        result["formal_pass"] = False
+    return result
 
 
 def _git(*args: str) -> str | None:
@@ -32,28 +129,36 @@ def _git(*args: str) -> str | None:
         return None
 
 
+def _source_state() -> dict[str, Any]:
+    head = _git("rev-parse", "HEAD")
+    source_status = _git("status", "--porcelain", "--untracked-files=all")
+    return {
+        "commit_sha": head,
+        "capture_ok": head is not None and source_status is not None,
+        "tracked_source_dirty": (
+            None if source_status is None else bool(source_status)
+        ),
+    }
+
+
 def _source_provenance(
     verified_clean_sha: str | None, *, allow_dirty_research: bool
 ) -> dict[str, Any]:
-    head = _git("rev-parse", "HEAD")
-    tracked_status = _git("status", "--porcelain", "--untracked-files=all")
-    if head is None or tracked_status is None:
+    state = _source_state()
+    if state["capture_ok"] is not True:
         raise SystemExit("Cannot verify Task31 source identity and cleanliness.")
+    head = str(state["commit_sha"])
+    dirty = bool(state["tracked_source_dirty"])
     if verified_clean_sha is not None:
         verified = verified_clean_sha.strip().lower()
-        if len(verified) != 40 or any(char not in "0123456789abcdef" for char in verified):
+        if len(verified) != 40 or any(
+            char not in "0123456789abcdef" for char in verified
+        ):
             raise SystemExit("--verified-clean-sha must be a full hexadecimal Git SHA.")
         if head.lower() != verified:
             raise SystemExit(
                 f"Clean-source attestation {verified} does not match mounted HEAD {head}."
             )
-        return {
-            "commit_sha": head,
-            "tracked_source_dirty": False,
-            "verification": "host_git_clean_attestation",
-            "verified_clean_sha": verified,
-        }
-    dirty = bool(tracked_status)
     if dirty and not allow_dirty_research:
         raise SystemExit(
             "Tracked source is dirty. Commit Task31 code before a qualified memory run, "
@@ -61,10 +166,31 @@ def _source_provenance(
         )
     return {
         "commit_sha": head,
+        "capture_ok": True,
         "tracked_source_dirty": dirty,
-        "verification": "local_git_status",
-        "verified_clean_sha": None,
+        "verification": (
+            "local_git_status_plus_host_attestation"
+            if verified_clean_sha is not None
+            else "local_git_status"
+        ),
+        "verified_clean_sha": (
+            verified_clean_sha.strip().lower()
+            if verified_clean_sha is not None
+            else None
+        ),
     }
+
+
+def _task031_source_identity_stable(
+    source_at_start: dict[str, Any], source_at_end: dict[str, Any]
+) -> bool:
+    return bool(
+        source_at_start.get("capture_ok") is True
+        and source_at_end.get("capture_ok") is True
+        and source_at_start.get("commit_sha") == source_at_end.get("commit_sha")
+        and source_at_start.get("tracked_source_dirty") is False
+        and source_at_end.get("tracked_source_dirty") is False
+    )
 
 
 def _worker_command(args: argparse.Namespace, record_path: Path, heavy_dir: Path) -> list[str]:
@@ -165,7 +291,12 @@ def _sampler_summary(rows: list[dict[str, Any]], *, poll_interval: float) -> dic
         "stage_peaks": _stage_peaks(rows),
         "semantics": (
             "Worker RSS is the simultaneous sum sampled from live MPI ranks; cgroup "
-            "current/peak is reported separately. Per-rank historical peaks are not summed."
+            "current/peak is reported separately and is formal only for a dedicated job "
+            "cgroup. Per-rank historical peaks are not summed."
+        ),
+        "memory_authority_semantics": (
+            "max(process-tree RSS, dedicated job cgroup memory.current when present); "
+            "WSL /init.scope is diagnostic only"
         ),
     }
 
@@ -199,8 +330,7 @@ def run(args: argparse.Namespace) -> int:
             "MKL_NUM_THREADS": "1",
             "NUMEXPR_NUM_THREADS": "1",
             "BENCHMARK_EXACT_COMMAND": " ".join(command),
-            "BENCHMARK_COMMIT_SHA": provenance["commit_sha"],
-            "BENCHMARK_BRANCH": _git("branch", "--show-current") or "unknown",
+            "BENCHMARK_COMMIT_SHA": provenance["commit_sha"] or "unknown",
             "BENCHMARK_CONTAINER_IMAGE": os.environ.get(
                 "BENCHMARK_CONTAINER_IMAGE", "unknown"
             ),
@@ -226,23 +356,35 @@ def run(args: argparse.Namespace) -> int:
             stderr=subprocess.STDOUT,
             text=True,
             env=environment,
+            **worker_process_group_popen_kwargs(),
         )
-        previous: dict[str, Any] | None = None
-        while True:
-            row = _sample(process.pid, stage_path, time.perf_counter() - started)
-            _add_cpu_core_equivalents(row, previous)
-            previous = row
-            rows.append(row)
-            current_gib = float(row["container_cgroup_current_mb"] or 0.0) / 1024.0
-            if current_gib >= args.warning_gib:
-                warning_triggered = True
-            if current_gib >= args.terminate_gib and process.poll() is None:
-                terminated_for_memory = True
-                process.terminate()
-            if process.poll() is not None:
-                break
-            time.sleep(max(args.poll_interval, 0.05))
-        return_code = int(process.returncode or 0)
+        try:
+            previous: dict[str, Any] | None = None
+            while True:
+                row = _sample(process.pid, stage_path, time.perf_counter() - started)
+                _add_cpu_core_equivalents(row, previous)
+                previous = row
+                rows.append(row)
+                authority_gib = _memory_authority_gib(row)
+                if authority_gib >= args.warning_gib:
+                    warning_triggered = True
+                if authority_gib >= args.terminate_gib and process.poll() is None:
+                    terminated_for_memory = True
+                    terminate_process_tree(process)
+                if process.poll() is not None:
+                    break
+                time.sleep(max(args.poll_interval, 0.05))
+            return_code = int(process.returncode or 0)
+        except BaseException as primary_error:
+            if process.poll() is None:
+                try:
+                    terminate_process_tree(process)
+                except Exception as cleanup_error:
+                    primary_error.add_note(
+                        "worker process-group cleanup also failed: "
+                        f"{type(cleanup_error).__name__}: {cleanup_error}"
+                    )
+            raise
 
     with timeline_path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=TIMELINE_FIELDS)
@@ -254,35 +396,35 @@ def run(args: argparse.Namespace) -> int:
         else {}
     )
     memory = _sampler_summary(rows, poll_interval=args.poll_interval)
-    history = solver_record.get("history") or []
-    screen_pass = bool(
-        args.screen_only
-        and return_code == 0
-        and solver_record
-        and history
-        and float(history[-1].get("true_relative_residual", float("inf")))
-        < float(history[0].get("true_relative_residual", float("inf")))
+    source_at_end = _source_state()
+    source_identity_stable = _task031_source_identity_stable(
+        provenance, source_at_end
     )
-    numeric_pass = bool(
-        screen_pass
-        or (
-            return_code == 0
-            and int(solver_record.get("ksp_reason", 0)) > 0
-            and float(solver_record.get("full_augmented_true_residual", float("inf")))
-            <= args.rta_threshold
-            and solver_record.get("official_rta")
-        )
+    disposition = _task031_solver_disposition(
+        screen_only=args.screen_only,
+        return_code=return_code,
+        terminated_for_memory=terminated_for_memory,
+        solver_record=solver_record,
+    )
+    disposition = _apply_task031_source_identity(
+        disposition,
+        source_identity_stable=source_identity_stable,
     )
     summary = {
         "task": "Task031",
         "case": args.case_label,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "source": provenance,
+        "source_at_end": source_at_end,
+        "source_identity_stable": source_identity_stable,
         "command": command,
         "return_code": return_code,
-        "numeric_pass": numeric_pass,
+        "status": disposition["status"],
+        "numeric_pass": disposition["numeric_pass"],
+        "physics_pass": disposition["physics_pass"],
+        "formal_pass": disposition["formal_pass"],
         "screen_only": args.screen_only,
-        "screen_pass": screen_pass,
+        "screen_trend_positive": disposition["screen_trend_positive"],
         "warning_threshold_gib": args.warning_gib,
         "terminate_threshold_gib": args.terminate_gib,
         "warning_triggered": warning_triggered,
@@ -295,7 +437,7 @@ def run(args: argparse.Namespace) -> int:
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
-    return 0 if numeric_pass else (return_code or 2)
+    return 0 if disposition["formal_pass"] else (return_code or 2)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

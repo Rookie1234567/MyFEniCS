@@ -67,7 +67,7 @@ def _region_absorption(
     eps_r: complex,
     n_value: complex,
     material_label: str | None,
-    incident_power: float,
+    incident_power: float | None,
 ) -> dict[str, Any]:
     cell_count = _global_cell_count(mesh_data, tag)
     eps_imag = float(complex(eps_r).imag)
@@ -81,6 +81,7 @@ def _region_absorption(
         "Im_epsilon_r": eps_imag,
         "material_label": material_label,
     }
+    normalized_incident_power = _maybe_float(incident_power)
     if cell_count <= 0:
         region.update(
             {
@@ -97,7 +98,12 @@ def _region_absorption(
                 "status": "lossless",
                 "reason": "Im(epsilon_r) <= 0",
                 "absorbed_power_code_units": 0.0,
-                "A_volume": 0.0 if incident_power > 0.0 else None,
+                "A_volume": (
+                    0.0
+                    if normalized_incident_power is not None
+                    and normalized_incident_power > 0.0
+                    else None
+                ),
             }
         )
         return region
@@ -107,7 +113,12 @@ def _region_absorption(
             "status": "ok",
             "reason": None,
             "absorbed_power_code_units": absorbed_power,
-            "A_volume": absorbed_power / incident_power if incident_power > 0.0 else None,
+            "A_volume": (
+                absorbed_power / normalized_incident_power
+                if normalized_incident_power is not None
+                and normalized_incident_power > 0.0
+                else None
+            ),
         }
     )
     return region
@@ -117,9 +128,54 @@ def _maybe_float(value: Any) -> float | None:
     if value is None:
         return None
     try:
-        return float(value)
+        number = float(value)
     except (TypeError, ValueError):
         return None
+    return number if np.isfinite(number) else None
+
+
+def _volume_absorption_contract(
+    regions: dict[str, dict[str, Any]],
+    *,
+    incident_power: float | None,
+    required_regions: tuple[str, ...] = ("grating", "substrate"),
+) -> dict[str, Any]:
+    failures: list[str] = []
+    incident = _maybe_float(incident_power)
+    if incident is None or incident <= 0.0:
+        failures.append("incident_power_missing_nonfinite_or_nonpositive")
+    valid_values: list[float] = []
+    for name in ("grating", "substrate"):
+        region = regions.get(name)
+        if not isinstance(region, dict):
+            if name in required_regions:
+                failures.append(f"{name}_region_missing")
+            continue
+        status = region.get("status")
+        if status == "missing":
+            if name in required_regions:
+                failures.append(f"{name}_region_missing")
+            continue
+        if status not in {"ok", "lossless"}:
+            failures.append(f"{name}_region_status_{status}")
+            continue
+        value = _maybe_float(region.get("A_volume"))
+        if value is None:
+            if incident is not None and incident > 0.0:
+                failures.append(f"{name}_absorption_missing_or_nonfinite")
+        else:
+            valid_values.append(value)
+    official = not failures
+    return {
+        "status": "ok" if official else "invalid",
+        "official_result": official,
+        "required_regions": list(required_regions),
+        "failures": failures,
+        "A_volume_total": float(sum(valid_values)) if official else None,
+        "A_volume_partial_sum": (
+            None if official or not valid_values else float(sum(valid_values))
+        ),
+    }
 
 
 def compute_volume_absorption_3d(
@@ -128,7 +184,7 @@ def compute_volume_absorption_3d(
     E_total,
     out_dir: Path,
     *,
-    incident_power: float,
+    incident_power: float | None,
     port_metrics: dict[str, Any] | None = None,
     probe_metrics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -163,9 +219,26 @@ def compute_volume_absorption_3d(
             incident_power=incident_power,
         ),
     }
+    required_regions = tuple(
+        name
+        for name, required in (
+            ("grating", cfg.has_grating_block),
+            (
+                "substrate",
+                cfg.n_substrate is not None
+                and cfg.physical_z_min < cfg.interface_z,
+            ),
+        )
+        if required
+    )
+    contract = _volume_absorption_contract(
+        regions,
+        incident_power=incident_power,
+        required_regions=required_regions,
+    )
     A_grating = _maybe_float(regions["grating"]["A_volume"])
     A_substrate = _maybe_float(regions["substrate"]["A_volume"])
-    A_volume_total = float(sum(value for value in (A_grating, A_substrate) if value is not None))
+    A_volume_total = contract["A_volume_total"]
 
     port_R = _maybe_float(None if port_metrics is None else port_metrics.get("R_total"))
     port_T = _maybe_float(None if port_metrics is None else port_metrics.get("T_total"))
@@ -175,10 +248,13 @@ def compute_volume_absorption_3d(
     payload: dict[str, Any] = {
         "method": "volume_absorption",
         "role": "absorption_check",
-        "status": "ok",
+        "status": contract["status"],
+        "official_result": contract["official_result"],
+        "failures": contract["failures"],
+        "required_regions": contract["required_regions"],
         "power_source": VOLUME_ABSORPTION_POWER_SOURCE,
         "field_model_for_absorption": "total_field",
-        "incident_power_code_units": float(incident_power),
+        "incident_power_code_units": _maybe_float(incident_power),
         "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
         "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
         "pml_cells_excluded": True,
@@ -190,11 +266,18 @@ def compute_volume_absorption_3d(
         "A_volume_grating": A_grating,
         "A_volume_substrate": A_substrate,
         "A_volume_total": A_volume_total,
-        "A_port_balance_minus_A_volume_total": None if port_A is None else float(port_A - A_volume_total),
-        "A_probe_balance_minus_A_volume_total": None if probe_A is None else float(probe_A - A_volume_total),
-        "A_flux_minus_A_volume_total": None if flux_A is None else float(flux_A - A_volume_total),
+        "A_volume_partial_sum": contract["A_volume_partial_sum"],
+        "A_port_balance_minus_A_volume_total": None
+        if port_A is None or A_volume_total is None
+        else float(port_A - A_volume_total),
+        "A_probe_balance_minus_A_volume_total": None
+        if probe_A is None or A_volume_total is None
+        else float(probe_A - A_volume_total),
+        "A_flux_minus_A_volume_total": None
+        if flux_A is None or A_volume_total is None
+        else float(flux_A - A_volume_total),
         "energy_closure_error_port_volume": None
-        if port_R is None or port_T is None
+        if port_R is None or port_T is None or A_volume_total is None
         else float(port_R + port_T + A_volume_total - 1.0),
     }
 

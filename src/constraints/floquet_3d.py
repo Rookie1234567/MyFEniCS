@@ -95,6 +95,8 @@ def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
     requested = cfg.floquet_constraint_mode_requested
     degree = cfg.nedelec_trace_degree_resolved
     tetrahedral = V is not None and _mesh_is_tetrahedron(V.mesh)
+    # This is a topology/geometry capability gate, not complete physical-target
+    # qualification; material and run identity belong to their formal callers.
     fixed_target_high_order = (
         cfg.stage_case == "stage4_block_grating"
         and cfg.geometry_kind == "rectangular_block_grating"

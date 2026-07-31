@@ -129,6 +129,7 @@ def _peak_rss_mb() -> float:
 def _basis_record(
     basis: BiorthogonalModeBasis,
     *,
+    right_solver_report,
     comm: MPI.Intracomm,
 ) -> dict[str, Any]:
     mode_records: list[dict[str, Any]] = []
@@ -203,6 +204,16 @@ def _basis_record(
             basis.biorthogonality_matrix
         ),
         "max_biorthogonality_identity_error": basis.max_identity_error,
+        "right_solver": {
+            "solver": right_solver_report.solver,
+            "problem_type": right_solver_report.problem_type,
+            "spectral_transform": right_solver_report.spectral_transform,
+            "requested_modes": right_solver_report.requested_modes,
+            "converged_modes": right_solver_report.converged_modes,
+            "iteration_count": right_solver_report.iteration_count,
+            "convergence_reason": right_solver_report.convergence_reason,
+            "profile": right_solver_report.profile_provenance(),
+        },
         "adjoint_solver": {
             "solver": basis.adjoint_solver_report.solver,
             "problem_type": basis.adjoint_solver_report.problem_type,
@@ -211,6 +222,7 @@ def _basis_record(
             "converged_modes": basis.adjoint_solver_report.converged_modes,
             "iteration_count": basis.adjoint_solver_report.iteration_count,
             "convergence_reason": basis.adjoint_solver_report.convergence_reason,
+            "profile": basis.adjoint_solver_report.profile_provenance(),
         },
         "full_vector_gathered": basis.full_vector_gathered,
     }
@@ -233,8 +245,11 @@ def _run_material_case(
     )
     target = analytic_homogeneous_beta(cfg, reference_index)
     started = time.perf_counter()
-    positive_right, _ = solve_quadratic_beta_modes(
-        operators, target=target, requested_modes=requested_modes
+    positive_right, positive_right_report = solve_quadratic_beta_modes(
+        operators,
+        target=target,
+        requested_modes=requested_modes,
+        strict_profile=True,
     )
     positive = build_biorthogonal_mode_basis(
         cfg,
@@ -244,6 +259,7 @@ def _run_material_case(
         positive_right,
         adjoint_target=np.conj(target),
         requested_left_modes=requested_modes,
+        strict_qep_profile=True,
     )
     positive_seconds = _max_elapsed(comm, started)
 
@@ -252,8 +268,11 @@ def _run_material_case(
     pairs = ()
     if include_negative:
         started = time.perf_counter()
-        negative_right, _ = solve_quadratic_beta_modes(
-            operators, target=-target, requested_modes=requested_modes
+        negative_right, negative_right_report = solve_quadratic_beta_modes(
+            operators,
+            target=-target,
+            requested_modes=requested_modes,
+            strict_profile=True,
         )
         negative = build_biorthogonal_mode_basis(
             cfg,
@@ -263,6 +282,7 @@ def _run_material_case(
             negative_right,
             adjoint_target=-np.conj(target),
             requested_left_modes=requested_modes,
+            strict_qep_profile=True,
         )
         negative_seconds = _max_elapsed(comm, started)
         pairs = pair_reciprocal_mode_bases(operators, positive, negative)
@@ -276,9 +296,19 @@ def _run_material_case(
             "full_shape": list(operators.full_shape),
             "reduced_shape": list(operators.reduced_shape),
             "target_beta_per_nm": _complex_json(target),
-            "positive": _basis_record(positive, comm=comm),
+            "positive": _basis_record(
+                positive,
+                right_solver_report=positive_right_report,
+                comm=comm,
+            ),
             "negative": (
-                None if negative is None else _basis_record(negative, comm=comm)
+                None
+                if negative is None
+                else _basis_record(
+                    negative,
+                    right_solver_report=negative_right_report,
+                    comm=comm,
+                )
             ),
             "reciprocal_pairs": [
                 {
@@ -318,8 +348,11 @@ def _run_angle_tracking(*, h_nm: float, requested_modes: int) -> dict[str, Any]:
             cfg, cross_section, spaces
         )
         target = analytic_homogeneous_beta(cfg, cfg.n_air)
-        right_modes, _ = solve_quadratic_beta_modes(
-            operators, target=target, requested_modes=requested_modes
+        right_modes, right_solver_report = solve_quadratic_beta_modes(
+            operators,
+            target=target,
+            requested_modes=requested_modes,
+            strict_profile=True,
         )
         basis = build_biorthogonal_mode_basis(
             cfg,
@@ -329,10 +362,11 @@ def _run_angle_tracking(*, h_nm: float, requested_modes: int) -> dict[str, Any]:
             right_modes,
             adjoint_target=np.conj(target),
             requested_left_modes=requested_modes,
+            strict_qep_profile=True,
         )
-        bases.append((theta, operators, basis))
-    theta_previous, operators_previous, previous = bases[0]
-    theta_current, operators_current, current = bases[1]
+        bases.append((theta, operators, basis, right_solver_report))
+    theta_previous, operators_previous, previous, previous_right_report = bases[0]
+    theta_current, operators_current, current, current_right_report = bases[1]
     try:
         tracking = track_mode_bases(operators_current, previous, current)
         return {
@@ -341,6 +375,18 @@ def _run_angle_tracking(*, h_nm: float, requested_modes: int) -> dict[str, Any]:
             "theta_current_deg": theta_current,
             "previous_mode_count": len(previous.modes),
             "current_mode_count": len(current.modes),
+            "qep_profiles": {
+                "previous": {
+                    "right": previous_right_report.profile_provenance(),
+                    "adjoint": (
+                        previous.adjoint_solver_report.profile_provenance()
+                    ),
+                },
+                "current": {
+                    "right": current_right_report.profile_provenance(),
+                    "adjoint": current.adjoint_solver_report.profile_provenance(),
+                },
+            },
             "matches": [
                 {
                     "previous_index": match.previous_index,

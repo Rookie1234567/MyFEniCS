@@ -39,6 +39,19 @@ def periodic_plane_sample_grid(
             "Full-3D reference z planes must lie inside the physical domain "
             f"[{cfg.physical_z_min}, {cfg.physical_z_max}] nm."
         )
+    replicated_bytes = (
+        int(plane_z.size)
+        * ny
+        * nx
+        * 3
+        * int(np.dtype(np.complex128).itemsize)
+        * 2
+    )
+    if replicated_bytes > MAX_REPLICATED_SAMPLE_BYTES:
+        raise ValueError(
+            "Full-3D reference sample request exceeds the 64 MiB replicated-data guard: "
+            f"requested {replicated_bytes} bytes."
+        )
 
     x_nm = cfg.x_min + (np.arange(nx, dtype=np.float64) + 0.5) * cfg.period_x / nx
     y_nm = cfg.y_min + (np.arange(ny, dtype=np.float64) + 0.5) * cfg.period_y / ny
@@ -161,11 +174,6 @@ def export_full3d_reference_samples(
     z_sides = reference_plane_sides(len(plane_z_nm), points_per_plane)
     shape = (len(plane_z_nm), len(y_nm), len(x_nm), 3)
     replicated_bytes = int(np.prod(shape)) * np.dtype(np.complex128).itemsize * 2
-    if replicated_bytes > MAX_REPLICATED_SAMPLE_BYTES:
-        raise ValueError(
-            "Full-3D reference sample request exceeds the 64 MiB replicated-data guard: "
-            f"requested {replicated_bytes} bytes."
-        )
 
     electric = _sample_distributed_function(electric_field, points_nm, z_sides).reshape(shape)
     electric *= cfg.electric_field_scale_V_per_m

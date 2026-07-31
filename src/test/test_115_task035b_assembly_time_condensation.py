@@ -11,6 +11,7 @@ import ufl
 from basix.ufl import element
 from mpi4py import MPI
 from petsc4py import PETSc
+from scipy.linalg import LinAlgWarning
 
 from dolfinx import default_real_type, fem, mesh
 from dolfinx.fem import petsc as fem_petsc
@@ -85,7 +86,181 @@ def _two_cell_problem(*, distinct_materials: bool):
     return msh, cell_tags, V, fem.form(a)
 
 
+def _capturing_mat_factory(created: list[PETSc.Mat]):
+    original_mat = PETSc.Mat
+
+    class _Builder:
+        def __init__(self) -> None:
+            self._matrix = original_mat()
+
+        def createAIJ(self, *args, **kwargs):
+            matrix = self._matrix.createAIJ(*args, **kwargs)
+            created.append(matrix)
+            return matrix
+
+    class _Factory:
+        Option = original_mat.Option
+        InfoType = original_mat.InfoType
+        Structure = original_mat.Structure
+
+        def __call__(self):
+            return _Builder()
+
+    return _Factory()
+
+
 class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
+    def test_checked_local_condensation_matches_direct_complex_schur(
+        self,
+    ) -> None:
+        rng = np.random.default_rng(36115)
+        A_ii = np.asarray(
+            [[3.0 + 0.2j, 0.3 - 0.1j], [-0.2 + 0.4j, 2.0 - 0.3j]]
+        )
+        A_it = rng.standard_normal((2, 3)) + 1j * rng.standard_normal((2, 3))
+        A_ti = rng.standard_normal((3, 2)) + 1j * rng.standard_normal((3, 2))
+        A_tt = rng.standard_normal((3, 3)) + 1j * rng.standard_normal((3, 3))
+        factor, primal_map, adjoint_map, schur, audit = (
+            assembly_time._checked_local_static_condensation(
+                A_ii,
+                A_it,
+                A_ti,
+                A_tt,
+            )
+        )
+        np.testing.assert_allclose(
+            schur,
+            A_tt - A_ti @ np.linalg.solve(A_ii, A_it),
+            rtol=2.0e-14,
+            atol=2.0e-14,
+        )
+        np.testing.assert_allclose(
+            primal_map,
+            -np.linalg.solve(A_ii, A_it),
+            rtol=2.0e-14,
+            atol=2.0e-14,
+        )
+        np.testing.assert_allclose(
+            adjoint_map,
+            -np.linalg.solve(A_ii.conj().T, A_ti.conj().T).conj().T,
+            rtol=2.0e-14,
+            atol=2.0e-14,
+        )
+        self.assertEqual(factor[0].shape, A_ii.shape)
+        self.assertLessEqual(audit["primal_backward_residual"], 5.0e-11)
+        self.assertLessEqual(audit["adjoint_backward_residual"], 5.0e-11)
+
+        well_conditioned = assembly_time._checked_local_static_condensation(
+            np.diag([1.0, 1.0]).astype(np.complex128),
+            np.ones((2, 1), dtype=np.complex128),
+            np.ones((1, 2), dtype=np.complex128),
+            np.ones((1, 1), dtype=np.complex128),
+        )[-1]
+        poorly_conditioned = (
+            assembly_time._checked_local_static_condensation(
+                np.diag([1.0, 1.0e-14]).astype(np.complex128),
+                np.ones((2, 1), dtype=np.complex128),
+                np.ones((1, 2), dtype=np.complex128),
+                np.ones((1, 1), dtype=np.complex128),
+            )[-1]
+        )
+        self.assertLess(
+            poorly_conditioned["pivot_ratio"],
+            well_conditioned["pivot_ratio"],
+        )
+
+    def test_checked_local_condensation_rejects_singular_and_nonfinite(
+        self,
+    ) -> None:
+        A_ii = np.asarray([[2.0 + 0.1j, 0.2], [0.1j, 3.0 - 0.2j]])
+        A_it = np.ones((2, 1), dtype=np.complex128)
+        A_ti = np.ones((1, 2), dtype=np.complex128)
+        A_tt = np.ones((1, 1), dtype=np.complex128)
+        with self.assertRaises(LinAlgWarning):
+            assembly_time._checked_local_static_condensation(
+                np.asarray([[1.0, 2.0], [2.0, 4.0]], dtype=np.complex128),
+                A_it,
+                A_ti,
+                A_tt,
+            )
+        invalid_input = A_ii.copy()
+        invalid_input[0, 0] = np.nan
+        with self.assertRaisesRegex(RuntimeError, "non-finite input"):
+            assembly_time._checked_local_static_condensation(
+                invalid_input,
+                A_it,
+                A_ti,
+                A_tt,
+            )
+
+        original_solve = assembly_time.lu_solve
+        for invalid in (np.nan, np.inf):
+            with self.subTest(output=invalid):
+                call_count = 0
+
+                def invalid_solve(*args, **kwargs):
+                    nonlocal call_count
+                    result = np.asarray(
+                        original_solve(*args, **kwargs),
+                        dtype=np.complex128,
+                    )
+                    if call_count == 0:
+                        result.flat[0] = invalid
+                    call_count += 1
+                    return result
+
+                with mock.patch.object(
+                    assembly_time,
+                    "lu_solve",
+                    invalid_solve,
+                ):
+                    with self.assertRaisesRegex(
+                        RuntimeError,
+                        "non-finite solve map",
+                    ):
+                        assembly_time._checked_local_static_condensation(
+                            A_ii,
+                            A_it,
+                            A_ti,
+                            A_tt,
+                        )
+
+    def test_checked_local_condensation_uses_one_gate_for_both_maps(
+        self,
+    ) -> None:
+        A_ii = np.asarray([[2.0 + 0.1j, 0.2], [0.1j, 3.0 - 0.2j]])
+        A_it = np.ones((2, 1), dtype=np.complex128)
+        A_ti = np.ones((1, 2), dtype=np.complex128)
+        A_tt = np.ones((1, 1), dtype=np.complex128)
+        original_solve = assembly_time.lu_solve
+        for bad_call in (0, 1):
+            with self.subTest(bad_map=("primal", "adjoint")[bad_call]):
+                call_count = 0
+
+                def inaccurate_solve(*args, **kwargs):
+                    nonlocal call_count
+                    result = original_solve(*args, **kwargs)
+                    if call_count == bad_call:
+                        result = np.zeros_like(result)
+                    call_count += 1
+                    return result
+
+                with mock.patch.object(
+                    assembly_time,
+                    "lu_solve",
+                    inaccurate_solve,
+                ):
+                    with self.assertRaisesRegex(
+                        RuntimeError,
+                        "5e-11 backward-residual Gate",
+                    ):
+                        assembly_time._checked_local_static_condensation(
+                            A_ii,
+                            A_it,
+                            A_ti,
+                            A_tt,
+                        )
+
     def test_fixed_p5_trace_p6_interior_kernel_condenses_exactly(
         self,
     ) -> None:
@@ -150,6 +325,22 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         )
         self.assertFalse(
             candidate.build_audit["full_global_matrix_allocated"]
+        )
+        self.assertLessEqual(
+            candidate.build_audit[
+                "interior_recovery_operator_residual_max"
+            ],
+            5.0e-11,
+        )
+        self.assertLessEqual(
+            candidate.build_audit[
+                "interior_adjoint_operator_residual_max"
+            ],
+            5.0e-11,
+        )
+        self.assertGreaterEqual(
+            candidate.build_audit["interior_lu_pivot_ratio_min"],
+            0.0,
         )
 
         difference.destroy()
@@ -989,6 +1180,71 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
                     V,
                     cell_tags,
                 )
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 2,
+        "MPI2 collective local-condensation failure check",
+    )
+    def test_mpi2_local_condensation_failure_releases_matrix(self) -> None:
+        comm = MPI.COMM_WORLD
+        msh = mesh.create_unit_cube(
+            comm,
+            2,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        tdim = msh.topology.dim
+        owned_cells = msh.topology.index_map(tdim).size_local
+        cell_tags = mesh.meshtags(
+            msh,
+            tdim,
+            np.arange(owned_cells, dtype=np.int32),
+            np.ones(owned_cells, dtype=np.int32),
+        )
+        V = fem.functionspace(
+            msh,
+            element(
+                "N1curl",
+                msh.basix_cell(),
+                2,
+                dtype=default_real_type,
+            ),
+        )
+        u = ufl.TrialFunction(V)
+        v = ufl.TestFunction(V)
+        dx = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)
+        compiled = fem.form(ufl.inner(u, v) * dx(1))
+        original = assembly_time._checked_local_static_condensation
+
+        def injected_failure(*args, **kwargs):
+            raise RuntimeError("injected local condensation failure")
+
+        replacement = injected_failure if comm.rank == 0 else original
+        created: list[PETSc.Mat] = []
+        factory = _capturing_mat_factory(created)
+        with mock.patch.object(assembly_time.PETSc, "Mat", factory):
+            with mock.patch.object(
+                assembly_time,
+                "_checked_local_static_condensation",
+                replacement,
+            ):
+                with self.assertRaises(RuntimeError) as caught:
+                    build_unconstrained_assembly_time_condensation(
+                        compiled,
+                        V,
+                        cell_tags,
+                    )
+        messages = comm.allgather(str(caught.exception))
+        self.assertEqual(len(set(messages)), 1)
+        self.assertIn(
+            "rank 0: RuntimeError: injected local condensation failure",
+            messages[0],
+        )
+        self.assertEqual(len(created), 1)
+        self.assertEqual(int(created[0].handle), 0)
+        self.assertTrue(all(comm.allgather(int(created[0].handle) == 0)))
+        comm.Barrier()
 
     @unittest.skipUnless(
         MPI.COMM_WORLD.size == 2,

@@ -21,7 +21,11 @@ from src.solvers.hybrid_fem_modal_augmented_direct import (
     HybridAugmentedDirectSolution,
 )
 from src.solvers.hybrid_fem_modal_schur_direct import (
+    HybridModalSchurDirectSolution,
     HybridModalSchurDirectSystem,
+)
+from src.solvers.hybrid_strong_trace_direct import (
+    HybridStrongTraceDirectSolution,
 )
 
 
@@ -177,6 +181,8 @@ class Task036ForwardSolverHardeningTests(unittest.TestCase):
         ksp = mock.Mock()
         bottom = mock.Mock()
         top = mock.Mock()
+        bottom_recovered = mock.Mock()
+        top_recovered = mock.Mock()
         solution = HybridAugmentedDirectSolution(
             x=x,
             ksp=ksp,
@@ -187,6 +193,8 @@ class Task036ForwardSolverHardeningTests(unittest.TestCase):
             setup_seconds=0.0,
             solve_seconds=0.0,
             converged_reason=1,
+            bottom_recovered=bottom_recovered,
+            top_recovered=top_recovered,
         )
         first = solution.release_factorization()
         second = solution.release_factorization()
@@ -206,6 +214,55 @@ class Task036ForwardSolverHardeningTests(unittest.TestCase):
         solution.destroy()
         bottom.destroy.assert_called_once()
         top.destroy.assert_called_once()
+        self.assertIsNone(solution.bottom_recovered)
+        self.assertIsNone(solution.top_recovered)
+        bottom_recovered.electric_field.x.petsc_vec.destroy.assert_not_called()
+        top_recovered.electric_field.x.petsc_vec.destroy.assert_not_called()
+
+    def test_schur_and_strong_solution_destroy_clear_recovered_owners(self) -> None:
+        for kind in ("schur", "strong"):
+            bottom = mock.Mock()
+            top = mock.Mock()
+            bottom_recovered = mock.Mock()
+            top_recovered = mock.Mock()
+            if kind == "schur":
+                solution = HybridModalSchurDirectSolution(
+                    bottom=bottom,
+                    top=top,
+                    modal_amplitudes=np.zeros(2, dtype=np.complex128),
+                    relative_residual=0.0,
+                    bottom_relative_residual=0.0,
+                    top_relative_residual=0.0,
+                    modal_relative_residual=0.0,
+                    modal_solve_seconds=0.0,
+                    recovery_seconds=0.0,
+                    bottom_recovered=bottom_recovered,
+                    top_recovered=top_recovered,
+                )
+            else:
+                solution = HybridStrongTraceDirectSolution(
+                    x=None,
+                    ksp=None,
+                    bottom=bottom,
+                    top=top,
+                    modal_amplitudes=np.zeros(2, dtype=np.complex128),
+                    relative_residual=0.0,
+                    setup_seconds=0.0,
+                    solve_seconds=0.0,
+                    converged_reason=1,
+                    strong_residuals={},
+                    bottom_recovered=bottom_recovered,
+                    top_recovered=top_recovered,
+                )
+            with self.subTest(kind=kind):
+                solution.destroy()
+                solution.destroy()
+                bottom.destroy.assert_called_once_with()
+                top.destroy.assert_called_once_with()
+                self.assertIsNone(solution.bottom_recovered)
+                self.assertIsNone(solution.top_recovered)
+                bottom_recovered.electric_field.x.petsc_vec.destroy.assert_not_called()
+                top_recovered.electric_field.x.petsc_vec.destroy.assert_not_called()
 
     def test_modal_schur_destroy_clears_factor_handles(self) -> None:
         bottom_factor = mock.Mock()

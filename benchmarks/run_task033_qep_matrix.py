@@ -494,6 +494,14 @@ def _numerical_results(
         "requested_eigenpairs": int(report.requested_modes),
         "iteration_count": int(report.iteration_count),
         "convergence_reason": int(report.convergence_reason),
+        "qep_solver_profiles": {
+            "right": report.profile_provenance(),
+            "adjoint": (
+                None
+                if basis is None
+                else basis.adjoint_solver_report.profile_provenance()
+            ),
+        },
         "assembly_seconds_max_rank": assembly_seconds,
         "solve_seconds_max_rank": solve_seconds,
         "classification_seconds_max_rank": classification_seconds,
@@ -826,6 +834,7 @@ def _run_shard(
             operators,
             target=target,
             requested_modes=args.requested_modes,
+            strict_profile=True,
         )
         solve_seconds = _max_elapsed(comm, started)
         started = time.perf_counter()
@@ -837,6 +846,7 @@ def _run_shard(
             modes,
             adjoint_target=np.conj(target),
             requested_left_modes=left_candidate_modes,
+            strict_qep_profile=True,
             poynting_evaluator=PoyntingFluxEvaluator(
                 cfg, cross_section, spaces
             ),

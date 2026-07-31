@@ -5,7 +5,7 @@ from typing import Literal, Sequence
 
 import numpy as np
 import ufl
-from dolfinx import fem, geometry, mesh
+from dolfinx import cpp, fem, geometry, mesh
 from dolfinx.fem import petsc as fem_petsc
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -270,12 +270,33 @@ class _DistributedTangentialEvaluator:
         self.local_tangential_value_bytes_sent = 0
         self.local_tangential_value_bytes_received = 0
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
-        xy = np.asarray(x[:2, :].T, dtype=np.float64)
-        points = np.empty((len(xy), 3), dtype=np.float64)
-        points[:, :2] = xy
-        points[:, 2] = self._interface.convention.z_nm
-        self.local_query_points += len(points)
+    def evaluate_points(self, x: np.ndarray) -> np.ndarray:
+        """Collectively evaluate one rank-local interpolation point set."""
+
+        comm = self._interface.source_mesh.comm
+        local_error = None
+        try:
+            coordinates = np.asarray(x, dtype=np.float64)
+            if coordinates.ndim != 2:
+                raise ValueError("Interpolation coordinates must be a rank-2 array.")
+            if coordinates.shape[0] == 3:
+                points = np.asarray(coordinates.T, dtype=np.float64)
+            elif coordinates.shape[1] == 3:
+                points = np.asarray(coordinates, dtype=np.float64)
+            else:
+                raise ValueError("Interpolation coordinates must have three columns.")
+            xy = points[:, :2]
+            points = np.empty((len(xy), 3), dtype=np.float64)
+            points[:, :2] = xy
+            points[:, 2] = self._interface.convention.z_nm
+            self.local_query_points += len(points)
+        except Exception as exc:
+            local_error = (type(exc).__name__, str(exc))
+        _raise_collective_local_error(
+            comm,
+            local_error,
+            stage="coordinate normalization",
+        )
 
         ownership = geometry.determine_point_ownership(
             self._interface.source_mesh,
@@ -283,62 +304,108 @@ class _DistributedTangentialEvaluator:
             self._padding,
             cells=self._interface.source_middle_adjacent_cells,
         )
-        src_owner = np.asarray(ownership.src_owner, dtype=np.int32)
-        dest_owner = np.asarray(ownership.dest_owner, dtype=np.int32)
-        dest_points = np.asarray(ownership.dest_points, dtype=np.float64).reshape(-1, 3)
-        dest_cells = np.asarray(ownership.dest_cells, dtype=np.int32)
-        self.unresolved_points += int(np.count_nonzero(src_owner < 0))
-        if np.any(src_owner < 0):
-            raise RuntimeError("At least one interface interpolation point is unresolved.")
+        local_error = None
+        try:
+            src_owner = np.asarray(ownership.src_owner, dtype=np.int32)
+            dest_owner = np.asarray(ownership.dest_owner, dtype=np.int32)
+            dest_points = np.asarray(ownership.dest_points, dtype=np.float64).reshape(
+                -1, 3
+            )
+            dest_cells = np.asarray(ownership.dest_cells, dtype=np.int32)
+            self.unresolved_points += int(np.count_nonzero(src_owner < 0))
+            if np.any(src_owner < 0):
+                raise RuntimeError(
+                    "At least one interface interpolation point is unresolved."
+                )
 
-        evaluated = (
-            np.asarray(
-                self._source.eval(dest_points, dest_cells), dtype=PETSc.ScalarType
-            ).reshape(len(dest_points), -1)
-            if len(dest_points)
-            else np.empty((0, 3), dtype=PETSc.ScalarType)
+            evaluated = (
+                np.asarray(
+                    self._source.eval(dest_points, dest_cells),
+                    dtype=PETSc.ScalarType,
+                ).reshape(len(dest_points), -1)
+                if len(dest_points)
+                else np.empty((0, 3), dtype=PETSc.ScalarType)
+            )
+            if evaluated.shape[1] != 3:
+                raise ValueError(
+                    "The 3D source function must have three value components."
+                )
+            tangential = evaluated[:, :2]
+            self.local_source_evaluations += len(tangential)
+
+            send: list[list[tuple[complex, complex]]] = [
+                [] for _ in range(comm.size)
+            ]
+            for owner, value in zip(dest_owner, tangential):
+                send[int(owner)].append((complex(value[0]), complex(value[1])))
+        except Exception as exc:
+            local_error = (type(exc).__name__, str(exc))
+        _raise_collective_local_error(
+            comm,
+            local_error,
+            stage="source evaluation and send preparation",
         )
-        if evaluated.shape[1] != 3:
-            raise ValueError("The 3D source function must have three value components.")
-        tangential = evaluated[:, :2]
-        self.local_source_evaluations += len(tangential)
 
-        comm = self._interface.source_mesh.comm
-        send: list[list[tuple[complex, complex]]] = [
-            [] for _ in range(comm.size)
-        ]
-        for owner, value in zip(dest_owner, tangential):
-            send[int(owner)].append((complex(value[0]), complex(value[1])))
         received = comm.alltoall(send)
-        value_bytes = 2 * np.dtype(PETSc.ScalarType).itemsize
-        self.local_tangential_value_bytes_sent += int(
-            sum(
-                len(values) * value_bytes
-                for rank, values in enumerate(send)
-                if rank != comm.rank
+        local_error = None
+        try:
+            value_bytes = 2 * np.dtype(PETSc.ScalarType).itemsize
+            self.local_tangential_value_bytes_sent += int(
+                sum(
+                    len(values) * value_bytes
+                    for rank, values in enumerate(send)
+                    if rank != comm.rank
+                )
             )
-        )
-        self.local_tangential_value_bytes_received += int(
-            sum(
-                len(values) * value_bytes
-                for rank, values in enumerate(received)
-                if rank != comm.rank
+            self.local_tangential_value_bytes_received += int(
+                sum(
+                    len(values) * value_bytes
+                    for rank, values in enumerate(received)
+                    if rank != comm.rank
+                )
             )
-        )
 
-        result = np.empty((len(points), 2), dtype=PETSc.ScalarType)
-        offsets = np.zeros(comm.size, dtype=np.int32)
-        for index, owner in enumerate(src_owner):
-            owner_index = int(owner)
-            offset = int(offsets[owner_index])
-            if offset >= len(received[owner_index]):
-                raise RuntimeError("Returned interface values do not match point ownership.")
-            result[index, :] = received[owner_index][offset]
-            offsets[owner_index] += 1
-        for rank, values in enumerate(received):
-            if int(offsets[rank]) != len(values):
-                raise RuntimeError("Unused returned interface values indicate an ordering error.")
-        return result.T
+            result = np.empty((len(points), 2), dtype=PETSc.ScalarType)
+            offsets = np.zeros(comm.size, dtype=np.int32)
+            for index, owner in enumerate(src_owner):
+                owner_index = int(owner)
+                offset = int(offsets[owner_index])
+                if offset >= len(received[owner_index]):
+                    raise RuntimeError(
+                        "Returned interface values do not match point ownership."
+                    )
+                result[index, :] = received[owner_index][offset]
+                offsets[owner_index] += 1
+            for rank, values in enumerate(received):
+                if int(offsets[rank]) != len(values):
+                    raise RuntimeError(
+                        "Unused returned interface values indicate an ordering error."
+                    )
+            returned_values = result.T
+        except Exception as exc:
+            local_error = (type(exc).__name__, str(exc))
+        _raise_collective_local_error(
+            comm,
+            local_error,
+            stage="returned-value reconstruction",
+        )
+        return returned_values
+
+
+def _raise_collective_local_error(
+    comm: MPI.Intracomm,
+    local_error: tuple[str, str] | None,
+    *,
+    stage: str,
+) -> None:
+    failures = comm.allgather(local_error)
+    for rank, failure in enumerate(failures):
+        if failure is not None:
+            error_type, message = failure
+            raise RuntimeError(
+                "Distributed tangential trace failed during "
+                f"{stage} on rank {rank}: {error_type}: {message}"
+            )
 
 
 def extract_tangential_trace(
@@ -378,7 +445,41 @@ def extract_tangential_trace(
         interface.cross_section.mesh.topology.index_map(2).size_local,
         dtype=np.int32,
     )
-    trace.interpolate(evaluator, trace_cells)
+    interpolation_points = np.asarray(
+        cpp.fem.interpolation_coords(
+            interface.spaces.transverse.element._cpp_object,
+            interface.cross_section.mesh.geometry._cpp_object,
+            trace_cells,
+        ),
+        dtype=np.float64,
+    )
+    values = evaluator.evaluate_points(interpolation_points)
+
+    def cached_values(x: np.ndarray) -> np.ndarray:
+        coordinates = np.asarray(x, dtype=np.float64)
+        if coordinates.shape != interpolation_points.shape or not np.allclose(
+            coordinates,
+            interpolation_points,
+            rtol=0.0,
+            atol=1.0e-13,
+        ):
+            raise RuntimeError(
+                "DOLFINx trace interpolation points changed after collective evaluation."
+            )
+        return values
+
+    # Every rank has already completed the collective point exchange above.
+    # DOLFINx may skip this local-only callback on ranks with no trace cells.
+    local_error = None
+    try:
+        trace.interpolate(cached_values, trace_cells)
+    except Exception as exc:
+        local_error = (type(exc).__name__, str(exc))
+    _raise_collective_local_error(
+        comm,
+        local_error,
+        stage="local trace interpolation",
+    )
     trace.x.scatter_forward()
     report = TraceExtractionReport(
         side=interface.convention.side,

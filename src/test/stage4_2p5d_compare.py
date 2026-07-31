@@ -8,7 +8,7 @@ from mpi4py import MPI
 
 from ..common.config import SimulationConfig
 from ..common.config_3d import NUMERICAL_SANITY_ONLY, SimulationConfig3D, project_root
-from ..common.output_paths import unique_run_dir
+from ..common.output_paths import shared_unique_run_dir
 from ..solvers.solve_maxwell_3d_stage_4b_block_grating import run_stage4b_block_grating_3d_case
 from ..solvers.solve_vector_maxwell import _json_default, run_case as run_2d_tm_case
 
@@ -18,12 +18,12 @@ from ..solvers.solve_vector_maxwell import _json_default, run_case as run_2d_tm_
 
 
 def _shared_run_dir(base_name: str, unique_output: bool) -> Path:
-    comm = MPI.COMM_WORLD
-    if comm.rank == 0:
-        chosen = unique_run_dir(project_root() / "results", base_name, enabled=unique_output)
-    else:
-        chosen = None
-    return Path(comm.bcast(str(chosen), root=0))
+    return shared_unique_run_dir(
+        MPI.COMM_WORLD,
+        project_root() / "results",
+        base_name,
+        enabled=unique_output,
+    )
 
 
 def build_2d_reference_config(mesh_target_size: float, nedelec_degree: int) -> SimulationConfig:

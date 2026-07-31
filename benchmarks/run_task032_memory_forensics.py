@@ -16,7 +16,14 @@ from benchmarks.run_direct_memory_forensics import (
     _add_cpu_core_equivalents,
     _sample,
 )
-from benchmarks.run_task031_memory_forensics import _sampler_summary
+from benchmarks.run_task031_memory_forensics import (
+    _memory_authority_gib,
+    _sampler_summary,
+)
+from benchmarks.watchdog_process_control import (
+    terminate_process_tree,
+    worker_process_group_popen_kwargs,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,23 +113,35 @@ def run(args: argparse.Namespace) -> int:
             stderr=subprocess.STDOUT,
             text=True,
             env=environment,
+            **worker_process_group_popen_kwargs(),
         )
-        previous: dict[str, Any] | None = None
-        while True:
-            row = _sample(process.pid, stage_path, time.perf_counter() - started)
-            _add_cpu_core_equivalents(row, previous)
-            previous = row
-            rows.append(row)
-            current_gib = float(row["container_cgroup_current_mb"] or 0.0) / 1024.0
-            if current_gib >= args.warning_gib:
-                warning_triggered = True
-            if current_gib >= args.terminate_gib and process.poll() is None:
-                terminated_for_memory = True
-                process.terminate()
-            if process.poll() is not None:
-                break
-            time.sleep(max(args.poll_interval, 0.05))
-        return_code = int(process.returncode or 0)
+        try:
+            previous: dict[str, Any] | None = None
+            while True:
+                row = _sample(process.pid, stage_path, time.perf_counter() - started)
+                _add_cpu_core_equivalents(row, previous)
+                previous = row
+                rows.append(row)
+                authority_gib = _memory_authority_gib(row)
+                if authority_gib >= args.warning_gib:
+                    warning_triggered = True
+                if authority_gib >= args.terminate_gib and process.poll() is None:
+                    terminated_for_memory = True
+                    terminate_process_tree(process)
+                if process.poll() is not None:
+                    break
+                time.sleep(max(args.poll_interval, 0.05))
+            return_code = int(process.returncode or 0)
+        except BaseException as primary_error:
+            if process.poll() is None:
+                try:
+                    terminate_process_tree(process)
+                except Exception as cleanup_error:
+                    primary_error.add_note(
+                        "worker process-group cleanup also failed: "
+                        f"{type(cleanup_error).__name__}: {cleanup_error}"
+                    )
+            raise
 
     with timeline_path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=TIMELINE_FIELDS)

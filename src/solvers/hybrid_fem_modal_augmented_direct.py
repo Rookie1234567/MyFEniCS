@@ -231,19 +231,26 @@ class HybridAugmentedLayout:
             raise ValueError("Monolithic vector size does not match hybrid layout.")
         local = np.asarray(vector.getArray(readonly=True))
         bottom = bottom_template.duplicate()
-        top = top_template.duplicate()
-        bottom.getArray()[:] = local[self.local_bottom_slice]
-        top.getArray()[:] = local[self.local_top_slice]
-        modal_local = (
-            np.asarray(local[self.local_modal_slice], dtype=np.complex128).copy()
-            if self.comm.rank == self.modal_owner
-            else None
-        )
-        modal = np.asarray(
-            self.comm.bcast(modal_local, root=self.modal_owner),
-            dtype=np.complex128,
-        )
-        return bottom, top, modal
+        top = None
+        try:
+            top = top_template.duplicate()
+            bottom.getArray()[:] = local[self.local_bottom_slice]
+            top.getArray()[:] = local[self.local_top_slice]
+            modal_local = (
+                np.asarray(local[self.local_modal_slice], dtype=np.complex128).copy()
+                if self.comm.rank == self.modal_owner
+                else None
+            )
+            modal = np.asarray(
+                self.comm.bcast(modal_local, root=self.modal_owner),
+                dtype=np.complex128,
+            )
+            return bottom, top, modal
+        except Exception:
+            bottom.destroy()
+            if top is not None:
+                top.destroy()
+            raise
 
 
 def internal_modal_constraint_matrix(
@@ -439,6 +446,8 @@ class HybridAugmentedDirectSolution:
             return
         self.bottom.destroy()
         self.top.destroy()
+        self.bottom_recovered = None
+        self.top_recovered = None
         self.release_factorization()
         self._destroyed = True
 
@@ -570,86 +579,99 @@ def solve_hybrid_augmented_direct(
 
     comm = system.layout.comm
     ksp = PETSc.KSP().create(comm)
-    ksp.setType(PETSc.KSP.Type.PREONLY)
-    ksp.setErrorIfNotConverged(True)
-    pc = ksp.getPC()
-    pc.setType(PETSc.PC.Type.LU)
-    pc.setFactorSolverType("mumps")
-    ksp.setOperators(system.A)
-    setup_started = time.perf_counter()
-    ksp.setUp()
-    setup_seconds = float(
-        comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX)
-    )
-    x = system.b.duplicate()
-    solve_started = time.perf_counter()
-    ksp.solve(system.b, x)
-    solve_seconds = float(
-        comm.allreduce(time.perf_counter() - solve_started, op=MPI.MAX)
-    )
-    residual = system.b.duplicate()
-    try:
-        system.A.mult(x, residual)
-        residual.axpy(PETSc.ScalarType(-1.0), system.b)
-        relative_residual = float(
-            residual.norm() / max(system.b.norm(), 1.0e-30)
-        )
-    finally:
-        residual.destroy()
-    bottom, top, modal = system.layout.split(
-        x, bottom_system.b, top_system.b
-    )
+    x = None
+    bottom = None
+    top = None
     bottom_recovered = None
     top_recovered = None
-    static_requested = (
-        bottom_system.static_condensation is not None
-        or top_system.static_condensation is not None
-    )
-    if static_requested:
-        if (
-            bottom_system.static_condensation is None
-            or top_system.static_condensation is None
-        ):
-            bottom.destroy()
-            top.destroy()
-            x.destroy()
-            ksp.destroy()
-            raise ValueError(
-                "Hybrid bottom/top local assembly backends must match."
-            )
-        if coupling is None:
-            bottom.destroy()
-            top.destroy()
-            x.destroy()
-            ksp.destroy()
-            raise ValueError(
-                "Condensed Hybrid augmented recovery requires its coupling."
-            )
-        bottom_recovered = recover_hybrid_static_local_field(
-            bottom_system,
-            coupling,
-            bottom,
-            modal,
+    try:
+        ksp.setType(PETSc.KSP.Type.PREONLY)
+        ksp.setErrorIfNotConverged(True)
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.LU)
+        pc.setFactorSolverType("mumps")
+        ksp.setOperators(system.A)
+        setup_started = time.perf_counter()
+        ksp.setUp()
+        setup_seconds = float(
+            comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX)
         )
-        top_recovered = recover_hybrid_static_local_field(
-            top_system,
-            coupling,
-            top,
-            modal,
+        x = system.b.duplicate()
+        solve_started = time.perf_counter()
+        ksp.solve(system.b, x)
+        solve_seconds = float(
+            comm.allreduce(time.perf_counter() - solve_started, op=MPI.MAX)
         )
-    return HybridAugmentedDirectSolution(
-        x=x,
-        ksp=ksp,
-        bottom=bottom,
-        top=top,
-        modal_amplitudes=modal,
-        relative_residual=relative_residual,
-        setup_seconds=setup_seconds,
-        solve_seconds=solve_seconds,
-        converged_reason=int(ksp.getConvergedReason()),
-        bottom_recovered=bottom_recovered,
-        top_recovered=top_recovered,
-    )
+        residual = system.b.duplicate()
+        try:
+            system.A.mult(x, residual)
+            residual.axpy(PETSc.ScalarType(-1.0), system.b)
+            relative_residual = float(
+                residual.norm() / max(system.b.norm(), 1.0e-30)
+            )
+        finally:
+            residual.destroy()
+        bottom, top, modal = system.layout.split(
+            x, bottom_system.b, top_system.b
+        )
+        static_requested = (
+            bottom_system.static_condensation is not None
+            or top_system.static_condensation is not None
+        )
+        if static_requested:
+            if (
+                bottom_system.static_condensation is None
+                or top_system.static_condensation is None
+            ):
+                raise ValueError(
+                    "Hybrid bottom/top local assembly backends must match."
+                )
+            if coupling is None:
+                raise ValueError(
+                    "Condensed Hybrid augmented recovery requires its coupling."
+                )
+            bottom_recovered = recover_hybrid_static_local_field(
+                bottom_system,
+                coupling,
+                bottom,
+                modal,
+            )
+            top_recovered = recover_hybrid_static_local_field(
+                top_system,
+                coupling,
+                top,
+                modal,
+            )
+        result = HybridAugmentedDirectSolution(
+            x=x,
+            ksp=ksp,
+            bottom=bottom,
+            top=top,
+            modal_amplitudes=modal,
+            relative_residual=relative_residual,
+            setup_seconds=setup_seconds,
+            solve_seconds=solve_seconds,
+            converged_reason=int(ksp.getConvergedReason()),
+            bottom_recovered=bottom_recovered,
+            top_recovered=top_recovered,
+        )
+        x = None
+        ksp = None
+        bottom = None
+        top = None
+        return result
+    except Exception:
+        bottom_recovered = None
+        top_recovered = None
+        if bottom is not None:
+            bottom.destroy()
+        if top is not None:
+            top.destroy()
+        if x is not None:
+            x.destroy()
+        if ksp is not None:
+            ksp.destroy()
+        raise
 
 
 def _replicated_small_vector(vector: PETSc.Vec) -> np.ndarray:

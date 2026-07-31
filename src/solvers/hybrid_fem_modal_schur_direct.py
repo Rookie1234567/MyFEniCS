@@ -37,15 +37,19 @@ def _max_elapsed(comm: MPI.Intracomm, started: float) -> float:
 
 def _modal_vector(matrix: PETSc.Mat, values: np.ndarray) -> PETSc.Vec:
     vector = matrix.createVecRight()
-    vector.set(0.0)
-    first, last = vector.getOwnershipRange()
-    if last > first:
-        vector.setValues(
-            np.arange(first, last, dtype=PETSc.IntType),
-            np.asarray(values[first:last], dtype=PETSc.ScalarType),
-        )
-    vector.assemble()
-    return vector
+    try:
+        vector.set(0.0)
+        first, last = vector.getOwnershipRange()
+        if last > first:
+            vector.setValues(
+                np.arange(first, last, dtype=PETSc.IntType),
+                np.asarray(values[first:last], dtype=PETSc.ScalarType),
+            )
+        vector.assemble()
+        return vector
+    except Exception:
+        vector.destroy()
+        raise
 
 
 def _replicated_modal_vector(vector: PETSc.Vec) -> np.ndarray:
@@ -62,19 +66,24 @@ def _replicated_modal_vector(vector: PETSc.Vec) -> np.ndarray:
 
 def _factor_local(matrix: PETSc.Mat) -> tuple[PETSc.KSP, float]:
     comm = matrix.getComm().tompi4py()
-    ksp = PETSc.KSP().create(comm)
-    ksp.setType(PETSc.KSP.Type.PREONLY)
-    ksp.setErrorIfNotConverged(True)
-    pc = ksp.getPC()
-    pc.setType(PETSc.PC.Type.LU)
-    pc.setFactorSolverType("mumps")
-    ksp.setOperators(matrix)
-    pc.setFactorSetUpSolverType()
-    factor = pc.getFactorMatrix()
-    factor.setMumpsIcntl(14, MUMPS_WORKSPACE_RELAXATION_PERCENT)
-    started = time.perf_counter()
-    ksp.setUp()
-    return ksp, _max_elapsed(comm, started)
+    ksp = PETSc.KSP()
+    try:
+        ksp.create(comm)
+        ksp.setType(PETSc.KSP.Type.PREONLY)
+        ksp.setErrorIfNotConverged(True)
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.LU)
+        pc.setFactorSolverType("mumps")
+        ksp.setOperators(matrix)
+        pc.setFactorSetUpSolverType()
+        factor = pc.getFactorMatrix()
+        factor.setMumpsIcntl(14, MUMPS_WORKSPACE_RELAXATION_PERCENT)
+        started = time.perf_counter()
+        ksp.setUp()
+        return ksp, _max_elapsed(comm, started)
+    except Exception:
+        ksp.destroy()
+        raise
 
 
 def _local_factor_inventory(ksp: PETSc.KSP) -> dict:
@@ -188,13 +197,19 @@ def _local_schur_response(
 ) -> tuple[np.ndarray, float, int]:
     """Return D A^-1 [f,C] using one MatMatSolve call."""
 
-    right_hand_sides = _multi_rhs_matrix(system, coupling)
-    solved = right_hand_sides.duplicate(copy=False)
-    started = time.perf_counter()
-    factor.matSolve(right_hand_sides, solved)
-    elapsed = _max_elapsed(system.local_mesh.mesh.comm, started)
-    projection = coupling.bottom.projection if system.side == "bottom" else coupling.top.projection
+    right_hand_sides = None
+    solved = None
     try:
+        right_hand_sides = _multi_rhs_matrix(system, coupling)
+        solved = right_hand_sides.duplicate(copy=False)
+        started = time.perf_counter()
+        factor.matSolve(right_hand_sides, solved)
+        elapsed = _max_elapsed(system.local_mesh.mesh.comm, started)
+        projection = (
+            coupling.bottom.projection
+            if system.side == "bottom"
+            else coupling.top.projection
+        )
         response = _project_multi_rhs(projection, solved)
         payload_bytes = int(
             2
@@ -203,8 +218,10 @@ def _local_schur_response(
             * np.dtype(np.complex128).itemsize
         )
     finally:
-        solved.destroy()
-        right_hand_sides.destroy()
+        if solved is not None:
+            solved.destroy()
+        if right_hand_sides is not None:
+            right_hand_sides.destroy()
     return response, elapsed, payload_bytes
 
 
@@ -280,6 +297,8 @@ class HybridModalSchurDirectSolution:
             return
         self.bottom.destroy()
         self.top.destroy()
+        self.bottom_recovered = None
+        self.top_recovered = None
         self._destroyed = True
 
 
@@ -479,19 +498,34 @@ def _coupling_action(
             np.asarray(coupling.propagation.forward.factors) * modal[:count]
         )
         negative_values = modal[count:]
-    positive_source = _modal_vector(block.positive_traction, positive_values)
-    negative_source = _modal_vector(block.negative_traction, negative_values)
-    result = block.positive_traction.createVecLeft()
-    temporary = block.negative_traction.createVecLeft()
+    positive_source = None
+    negative_source = None
+    result = None
+    temporary = None
+    success = False
     try:
+        positive_source = _modal_vector(
+            block.positive_traction, positive_values
+        )
+        negative_source = _modal_vector(
+            block.negative_traction, negative_values
+        )
+        result = block.positive_traction.createVecLeft()
+        temporary = block.negative_traction.createVecLeft()
         block.positive_traction.mult(positive_source, result)
         block.negative_traction.mult(negative_source, temporary)
         result.axpy(PETSc.ScalarType(1.0), temporary)
+        success = True
+        return result
     finally:
-        positive_source.destroy()
-        negative_source.destroy()
-        temporary.destroy()
-    return result
+        if positive_source is not None:
+            positive_source.destroy()
+        if negative_source is not None:
+            negative_source.destroy()
+        if temporary is not None:
+            temporary.destroy()
+        if result is not None and not success:
+            result.destroy()
 
 
 def _recover_local_field(
@@ -500,17 +534,26 @@ def _recover_local_field(
     coupling: HybridInternalModeCoupling,
     modal: np.ndarray,
 ) -> PETSc.Vec:
-    coupling_value = _coupling_action(system, coupling, modal)
-    rhs = system.b.duplicate()
-    solution = system.b.duplicate()
+    coupling_value = None
+    rhs = None
+    solution = None
+    success = False
     try:
+        coupling_value = _coupling_action(system, coupling, modal)
+        rhs = system.b.duplicate()
+        solution = system.b.duplicate()
         system.b.copy(rhs)
         rhs.axpy(PETSc.ScalarType(-1.0), coupling_value)
         factor.solve(rhs, solution)
+        success = True
+        return solution
     finally:
-        coupling_value.destroy()
-        rhs.destroy()
-    return solution
+        if coupling_value is not None:
+            coupling_value.destroy()
+        if rhs is not None:
+            rhs.destroy()
+        if solution is not None and not success:
+            solution.destroy()
 
 
 def _local_relative_residual(
@@ -519,9 +562,11 @@ def _local_relative_residual(
     field: PETSc.Vec,
     modal: np.ndarray,
 ) -> tuple[float, float]:
-    residual = system.A.createVecLeft()
-    coupling_value = _coupling_action(system, coupling, modal)
+    residual = None
+    coupling_value = None
     try:
+        residual = system.A.createVecLeft()
+        coupling_value = _coupling_action(system, coupling, modal)
         system.A.mult(field, residual)
         operator_norm = float(residual.norm())
         residual.axpy(PETSc.ScalarType(1.0), coupling_value)
@@ -535,8 +580,10 @@ def _local_relative_residual(
         )
         return absolute, float(absolute / scale)
     finally:
-        coupling_value.destroy()
-        residual.destroy()
+        if coupling_value is not None:
+            coupling_value.destroy()
+        if residual is not None:
+            residual.destroy()
 
 
 def _modal_residual(
@@ -546,24 +593,32 @@ def _modal_residual(
     top: PETSc.Vec,
     modal: np.ndarray,
 ) -> tuple[float, float]:
-    bottom_projection = coupling.bottom.projection.createVecLeft()
-    top_projection = coupling.top.projection.createVecLeft()
+    bottom_projection = None
+    top_projection = None
     try:
+        bottom_projection = coupling.bottom.projection.createVecLeft()
+        top_projection = coupling.top.projection.createVecLeft()
         coupling.bottom.projection.mult(bottom, bottom_projection)
         coupling.top.projection.mult(top, top_projection)
-        actual = np.concatenate(
+        modal_constraint_action = system.modal_constraint @ modal
+        left_hand_side = np.concatenate(
             (
                 _replicated_modal_vector(bottom_projection),
                 _replicated_modal_vector(top_projection),
             )
-        ) + system.modal_constraint @ modal
+        ) + modal_constraint_action
     finally:
-        bottom_projection.destroy()
-        top_projection.destroy()
-    absolute = float(np.linalg.norm(actual))
+        if bottom_projection is not None:
+            bottom_projection.destroy()
+        if top_projection is not None:
+            top_projection.destroy()
+    rhs_correction = internal_modal_rhs_correction(coupling)
+    residual = left_hand_side - rhs_correction
+    absolute = float(np.linalg.norm(residual))
     scale = max(
-        float(np.linalg.norm(system.modal_constraint @ modal)),
-        float(np.linalg.norm(actual)),
+        float(np.linalg.norm(left_hand_side)),
+        float(np.linalg.norm(rhs_correction)),
+        float(np.linalg.norm(modal_constraint_action)),
         1.0e-30,
     )
     return absolute, float(absolute / scale)
@@ -593,80 +648,98 @@ def solve_hybrid_modal_schur_direct(
     recovery_factor_setup: dict[str, float] = {}
     bottom_recovery_factor = system.bottom_factor
     top_recovery_factor = system.top_factor
-    if bottom_recovery_factor is None:
-        bottom_recovery_factor, elapsed = _factor_local(bottom_system.A)
-        recovery_factor_setup["bottom"] = elapsed
+    bottom = None
+    top = None
+    bottom_recovered = None
+    top_recovered = None
     try:
-        bottom = _recover_local_field(
-            bottom_system, bottom_recovery_factor, coupling, modal
+        if bottom_recovery_factor is None:
+            bottom_recovery_factor, elapsed = _factor_local(bottom_system.A)
+            recovery_factor_setup["bottom"] = elapsed
+        try:
+            bottom = _recover_local_field(
+                bottom_system, bottom_recovery_factor, coupling, modal
+            )
+        finally:
+            if system.bottom_factor is None:
+                bottom_recovery_factor.destroy()
+        if top_recovery_factor is None:
+            top_recovery_factor, elapsed = _factor_local(top_system.A)
+            recovery_factor_setup["top"] = elapsed
+        try:
+            top = _recover_local_field(
+                top_system, top_recovery_factor, coupling, modal
+            )
+        finally:
+            if system.top_factor is None:
+                top_recovery_factor.destroy()
+        recovery_seconds = _max_elapsed(comm, started)
+        bottom_absolute, bottom_relative = _local_relative_residual(
+            bottom_system, coupling, bottom, modal
         )
-    finally:
-        if system.bottom_factor is None:
-            bottom_recovery_factor.destroy()
-    if top_recovery_factor is None:
-        top_recovery_factor, elapsed = _factor_local(top_system.A)
-        recovery_factor_setup["top"] = elapsed
-    try:
-        top = _recover_local_field(
-            top_system, top_recovery_factor, coupling, modal
+        top_absolute, top_relative = _local_relative_residual(
+            top_system, coupling, top, modal
         )
-    finally:
-        if system.top_factor is None:
-            top_recovery_factor.destroy()
-    recovery_seconds = _max_elapsed(comm, started)
-    bottom_absolute, bottom_relative = _local_relative_residual(
-        bottom_system, coupling, bottom, modal
-    )
-    top_absolute, top_relative = _local_relative_residual(
-        top_system, coupling, top, modal
-    )
-    modal_absolute, modal_relative = _modal_residual(
-        system, coupling, bottom, top, modal
-    )
-    combined_absolute = float(
-        np.sqrt(bottom_absolute**2 + top_absolute**2 + modal_absolute**2)
-    )
-    combined_scale = max(
-        float(bottom_system.b.norm()),
-        float(top_system.b.norm()),
-        1.0e-30,
-    )
-    bottom_recovered = (
-        recover_hybrid_static_local_field(
-            bottom_system,
-            coupling,
-            bottom,
-            modal,
+        modal_absolute, modal_relative = _modal_residual(
+            system, coupling, bottom, top, modal
         )
-        if bottom_system.static_condensation is not None
-        else None
-    )
-    top_recovered = (
-        recover_hybrid_static_local_field(
-            top_system,
-            coupling,
-            top,
-            modal,
+        combined_absolute = float(
+            np.sqrt(bottom_absolute**2 + top_absolute**2 + modal_absolute**2)
         )
-        if top_system.static_condensation is not None
-        else None
-    )
-    if (bottom_recovered is None) != (top_recovered is None):
-        bottom.destroy()
-        top.destroy()
-        raise ValueError("Hybrid bottom/top local assembly backends must match.")
-    recovery_seconds = _max_elapsed(comm, started)
-    return HybridModalSchurDirectSolution(
-        bottom=bottom,
-        top=top,
-        modal_amplitudes=modal,
-        relative_residual=float(combined_absolute / combined_scale),
-        bottom_relative_residual=bottom_relative,
-        top_relative_residual=top_relative,
-        modal_relative_residual=modal_relative,
-        modal_solve_seconds=modal_seconds,
-        recovery_seconds=recovery_seconds,
-        recovery_factor_setup_seconds=recovery_factor_setup,
-        bottom_recovered=bottom_recovered,
-        top_recovered=top_recovered,
-    )
+        combined_scale = max(
+            float(bottom_system.b.norm()),
+            float(top_system.b.norm()),
+            1.0e-30,
+        )
+        bottom_recovered = (
+            recover_hybrid_static_local_field(
+                bottom_system,
+                coupling,
+                bottom,
+                modal,
+            )
+            if bottom_system.static_condensation is not None
+            else None
+        )
+        top_recovered = (
+            recover_hybrid_static_local_field(
+                top_system,
+                coupling,
+                top,
+                modal,
+            )
+            if top_system.static_condensation is not None
+            else None
+        )
+        if (bottom_recovered is None) != (top_recovered is None):
+            raise ValueError(
+                "Hybrid bottom/top local assembly backends must match."
+            )
+        recovery_seconds = _max_elapsed(comm, started)
+        result = HybridModalSchurDirectSolution(
+            bottom=bottom,
+            top=top,
+            modal_amplitudes=modal,
+            relative_residual=float(combined_absolute / combined_scale),
+            bottom_relative_residual=bottom_relative,
+            top_relative_residual=top_relative,
+            modal_relative_residual=modal_relative,
+            modal_solve_seconds=modal_seconds,
+            recovery_seconds=recovery_seconds,
+            recovery_factor_setup_seconds=recovery_factor_setup,
+            bottom_recovered=bottom_recovered,
+            top_recovered=top_recovered,
+        )
+        bottom = None
+        top = None
+        bottom_recovered = None
+        top_recovered = None
+        return result
+    except Exception:
+        bottom_recovered = None
+        top_recovered = None
+        if bottom is not None:
+            bottom.destroy()
+        if top is not None:
+            top.destroy()
+        raise

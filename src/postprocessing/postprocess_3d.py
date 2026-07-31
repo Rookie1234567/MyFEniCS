@@ -90,6 +90,16 @@ def _exact_h_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
     return cfg.magnetic_field_scale_A_per_m * magnetic_field_code_values(cfg, coords)
 
 
+def _has_analytic_exact_reference(cfg: SimulationConfig3D) -> bool:
+    """Return whether this configured geometry has an analytic field."""
+
+    if cfg.geometry_kind in {"airbox", "fresnel_interface"}:
+        return True
+    if cfg.geometry_kind == "rectangular_block_grating":
+        return not cfg.has_grating_block
+    return False
+
+
 def _write_parallel_vtu_collection(out_dir: Path, size: int):
     """Write a small PVD collection that points ParaView to rank-local VTUs."""
     lines = [
@@ -182,7 +192,7 @@ def save_airbox_3d_fields(
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = mesh_data.mesh.comm
     V_dg = fem.functionspace(mesh_data.mesh, ("DG", cfg.visualization_degree, (3,)))
-    has_exact_reference = not cfg.stage_case.startswith("stage4_")
+    has_exact_reference = _has_analytic_exact_reference(cfg)
 
     E_code_dg = fem.Function(V_dg, name="E_code")
     E_code_dg.interpolate(E_numerical)
@@ -390,7 +400,10 @@ def save_airbox_3d_fields(
         "exact_reference_available": has_exact_reference,
         "exact_reference_note": None
         if has_exact_reference
-        else "Stage 4 grating has no analytic exact solution; E_b is the layered background field, so E_exact is not written.",
+        else (
+            "No analytic exact field is available for the configured physical "
+            "geometry; exact-field arrays and errors are not written."
+        ),
         "paraview_e_field_arrays": [
             "E_tot_V_per_m_real",
             "E_tot_V_per_m_imag",

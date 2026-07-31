@@ -78,7 +78,14 @@ docker run --rm -v "${Repo}:/work" -w /work myfenics-stage4:task28 mpiexec -n 4 
 docker run --rm -v "${Repo}:/work" -w /work myfenics-stage4:task28 python -m benchmarks.check_benchmarks
 ```
 
-checker 从 manifest 和 canonical records 重新计算三残差一致性、三网格迭代比、direct/iterative R/T/A 差、h=2 RSS、benchmark ID、KSP/coarse、physical model、actual/canonical artifact provenance、case-contained files、Case002 双解和 Case003 lossy regression。Task28 Response V3 为 `143/143`；任何 Gate 失败都会返回非零退出码。
+该默认命令只读取 manifest/records、重新验证并打印 Gate，不修改 tracked 文件。如需有意
+刷新 `benchmark_summary.csv` 和 `benchmark_gate_report.json`，显式运行：
+
+```powershell
+docker run --rm -v "${Repo}:/work" -w /work myfenics-stage4:task28 python -m benchmarks.check_benchmarks --write
+```
+
+checker 重新计算三残差一致性、三网格迭代比、direct/iterative R/T/A 差、h=2 RSS、benchmark ID、KSP/coarse、physical model、actual/canonical artifact provenance、case-contained files、Case002 双解和 Case003 lossy regression。Task28 Response V3 为 `143/143`；任何 Gate 失败都会返回非零退出码。
 
 ## 8. 在哪里看结果
 

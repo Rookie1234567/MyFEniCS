@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 import unittest
+from unittest import mock
 
+from benchmarks import check_benchmarks
 from benchmarks.check_benchmarks import evaluate
 
 
@@ -11,6 +14,40 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class BenchmarkContractTests(unittest.TestCase):
+    def test_checker_writes_only_with_explicit_opt_in(self) -> None:
+        gates = [
+            check_benchmarks.Gate(
+                "fixture_gate",
+                True,
+                "observed",
+                "expected",
+                "fixture",
+            )
+        ]
+        summaries = [{"benchmark_id": "fixture"}]
+        cases = (
+            ("default", ["check_benchmarks"], False),
+            ("compatibility_no_write", ["check_benchmarks", "--no-write"], False),
+            ("explicit_write", ["check_benchmarks", "--write"], True),
+        )
+        for name, argv, should_write in cases:
+            with (
+                self.subTest(case=name),
+                mock.patch.object(
+                    check_benchmarks,
+                    "evaluate",
+                    return_value=(gates, summaries),
+                ),
+                mock.patch.object(check_benchmarks, "_write_outputs") as writer,
+                mock.patch.object(sys, "argv", argv),
+                mock.patch("builtins.print"),
+            ):
+                self.assertEqual(check_benchmarks.main(), 0)
+                if should_write:
+                    writer.assert_called_once_with(gates, summaries)
+                else:
+                    writer.assert_not_called()
+
     def test_canonical_records_pass_automatic_gates(self) -> None:
         gates, summaries = evaluate()
         failed = [gate.name for gate in gates if not gate.passed]

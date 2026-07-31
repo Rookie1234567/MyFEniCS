@@ -3089,14 +3089,23 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate canonical Task28 benchmark records"
     )
-    parser.add_argument(
-        "--no-write",
+    write_group = parser.add_mutually_exclusive_group()
+    write_group.add_argument(
+        "--write",
+        dest="write",
         action="store_true",
+        help="Refresh summary/report files after checking",
+    )
+    write_group.add_argument(
+        "--no-write",
+        dest="write",
+        action="store_false",
         help="Check without refreshing summary/report files",
     )
+    parser.set_defaults(write=False)
     args = parser.parse_args()
     gates, summaries = evaluate()
-    if not args.no_write:
+    if args.write:
         _write_outputs(gates, summaries)
     failed = [gate for gate in gates if not gate.passed]
     for gate in gates:

@@ -588,7 +588,7 @@ def _compute_power_metrics_from_lines(
         metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey"
     )
 
-    if MPI.COMM_WORLD.rank == 0:
+    if mesh_data.mesh.comm.rank == 0:
         (out_dir / metrics_filename).write_text(
             json.dumps(metrics, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
@@ -775,7 +775,7 @@ def _compute_te_power_metrics_from_lines(
         metrics, mesh_data, cfg, E_total, incident_power, "TE scalar Ez"
     )
 
-    if MPI.COMM_WORLD.rank == 0:
+    if mesh_data.mesh.comm.rank == 0:
         (out_dir / metrics_filename).write_text(
             json.dumps(metrics, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
@@ -1060,7 +1060,7 @@ def _compute_tm_dtn_power_from_coefficients(
         metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey"
     )
 
-    if MPI.COMM_WORLD.rank == 0:
+    if mesh_data.mesh.comm.rank == 0:
         (out_dir / metrics_filename).write_text(
             json.dumps(metrics, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
@@ -1099,7 +1099,7 @@ def compute_dtn_port_power_metrics(
             "skipped": True,
             "reason": "dtn_port_power_metrics is defined for the no-PML DtN port boundary placement.",
         }
-    if MPI.COMM_WORLD.size != 1:
+    if mesh_data.mesh.comm.size != 1:
         return {
             "skipped": True,
             "reason": "dtn_port_power_metrics currently reuses serial manual DtN trace vectors.",
@@ -1161,7 +1161,7 @@ def compute_dtn_auxiliary_power_metrics(
             "skipped": True,
             "reason": "dtn_auxiliary_power_metrics is defined for the no-PML DtN port boundary placement.",
         }
-    if MPI.COMM_WORLD.size != 1:
+    if mesh_data.mesh.comm.size != 1:
         return {
             "skipped": True,
             "reason": "dtn_auxiliary_power_metrics currently uses serial manual DtN auxiliary values.",
@@ -1219,7 +1219,7 @@ def compute_te_dtn_port_power_metrics(
             "skipped": True,
             "reason": "TE dtn_port_power_metrics is defined for the no-PML DtN port boundary placement.",
         }
-    if MPI.COMM_WORLD.size != 1:
+    if mesh_data.mesh.comm.size != 1:
         return {
             "skipped": True,
             "reason": "TE DtN port metrics currently reuse serial manual DtN trace vectors.",
@@ -1362,7 +1362,7 @@ def compute_te_dtn_port_power_metrics(
         metrics, mesh_data, cfg, E_total, incident_power, "TE scalar Ez"
     )
 
-    if MPI.COMM_WORLD.rank == 0:
+    if mesh_data.mesh.comm.rank == 0:
         (out_dir / "dtn_port_power_metrics.json").write_text(
             json.dumps(metrics, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",

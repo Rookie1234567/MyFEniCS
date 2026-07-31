@@ -35,15 +35,19 @@ class HybridStaticRecoveredLocalField:
 
 def _modal_vector(matrix: PETSc.Mat, values: np.ndarray) -> PETSc.Vec:
     vector = matrix.createVecRight()
-    vector.set(PETSc.ScalarType(0.0))
-    first, last = vector.getOwnershipRange()
-    if last > first:
-        vector.setValues(
-            np.arange(first, last, dtype=PETSc.IntType),
-            np.asarray(values[first:last], dtype=PETSc.ScalarType),
-        )
-    vector.assemble()
-    return vector
+    try:
+        vector.set(PETSc.ScalarType(0.0))
+        first, last = vector.getOwnershipRange()
+        if last > first:
+            vector.setValues(
+                np.arange(first, last, dtype=PETSc.IntType),
+                np.asarray(values[first:last], dtype=PETSc.ScalarType),
+            )
+        vector.assemble()
+        return vector
+    except Exception:
+        vector.destroy()
+        raise
 
 
 def _reduced_internal_action(
@@ -65,25 +69,36 @@ def _reduced_internal_action(
             * modal[:count]
         )
         negative_values = modal[count:]
-    positive_source = _modal_vector(
-        block.positive_traction,
-        positive_values,
-    )
-    negative_source = _modal_vector(
-        block.negative_traction,
-        negative_values,
-    )
-    result = block.positive_traction.createVecLeft()
-    temporary = block.negative_traction.createVecLeft()
+    positive_source = None
+    negative_source = None
+    result = None
+    temporary = None
+    success = False
     try:
+        positive_source = _modal_vector(
+            block.positive_traction,
+            positive_values,
+        )
+        negative_source = _modal_vector(
+            block.negative_traction,
+            negative_values,
+        )
+        result = block.positive_traction.createVecLeft()
+        temporary = block.negative_traction.createVecLeft()
         block.positive_traction.mult(positive_source, result)
         block.negative_traction.mult(negative_source, temporary)
         result.axpy(PETSc.ScalarType(1.0), temporary)
+        success = True
+        return result
     finally:
-        positive_source.destroy()
-        negative_source.destroy()
-        temporary.destroy()
-    return result
+        if positive_source is not None:
+            positive_source.destroy()
+        if negative_source is not None:
+            negative_source.destroy()
+        if temporary is not None:
+            temporary.destroy()
+        if result is not None and not success:
+            result.destroy()
 
 
 def _add_external_tractions(
@@ -114,7 +129,7 @@ def _add_external_tractions(
         ),
     )
     key = None
-    component_vectors: tuple[PETSc.Vec, PETSc.Vec] | None = None
+    component_vectors: list[PETSc.Vec] | None = None
     assembled_orders = 0
     try:
         for amplitude, mode in zip(
@@ -131,10 +146,17 @@ def _add_external_tractions(
                 if component_vectors is not None:
                     for vector in component_vectors:
                         vector.destroy()
-                component_vectors = tuple(
-                    assembler.assemble_unconstrained_vector(mode)
-                    for assembler in assemblers
-                )
+                component_vectors = []
+                try:
+                    for assembler in assemblers:
+                        component_vectors.append(
+                            assembler.assemble_unconstrained_vector(mode)
+                        )
+                except Exception:
+                    for vector in component_vectors:
+                        vector.destroy()
+                    component_vectors = None
+                    raise
                 key = mode_key
                 assembled_orders += 1
             traction = _traction_vector(mode, system.cfg)
@@ -243,16 +265,19 @@ def recover_hybrid_static_local_field(
 
     comm = system.local_mesh.mesh.comm
     started = perf_counter()
-    full_effective_rhs = system.full_fe_rhs.duplicate()
-    system.full_fe_rhs.copy(full_effective_rhs)
-    reduced_effective_rhs = system.b.duplicate()
-    system.b.copy(reduced_effective_rhs)
-    internal_action = _reduced_internal_action(
-        system,
-        coupling,
-        modal,
-    )
+    full_effective_rhs = None
+    reduced_effective_rhs = None
+    internal_action = None
     try:
+        full_effective_rhs = system.full_fe_rhs.duplicate()
+        system.full_fe_rhs.copy(full_effective_rhs)
+        reduced_effective_rhs = system.b.duplicate()
+        system.b.copy(reduced_effective_rhs)
+        internal_action = _reduced_internal_action(
+            system,
+            coupling,
+            modal,
+        )
         reduced_effective_rhs.axpy(
             PETSc.ScalarType(-1.0),
             internal_action,
@@ -274,9 +299,12 @@ def recover_hybrid_static_local_field(
             full_effective_rhs,
         )
     finally:
-        internal_action.destroy()
-        reduced_effective_rhs.destroy()
-        full_effective_rhs.destroy()
+        if internal_action is not None:
+            internal_action.destroy()
+        if reduced_effective_rhs is not None:
+            reduced_effective_rhs.destroy()
+        if full_effective_rhs is not None:
+            full_effective_rhs.destroy()
     return HybridStaticRecoveredLocalField(
         electric_field=recovered.electric_field,
         recovery_audit=recovered.recovery_audit,

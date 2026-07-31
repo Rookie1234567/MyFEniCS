@@ -21,7 +21,7 @@ from ..common.config_3d import (
     oblique_incidence_airbox_config,
     project_root,
 )
-from ..common.output_paths import unique_run_dir
+from ..common.output_paths import shared_unique_run_dir
 from ..solvers.solve_maxwell_3d_stage_1_airbox import (
     STAGE1_CASES,
     run_stage1_airbox_3d_case,
@@ -128,12 +128,12 @@ def _run_stage_config(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, objec
 
 def _shared_run_dir(results_root: Path, base_name: str, unique_output: bool) -> Path:
     """Choose one output directory on rank0 and broadcast it to all MPI ranks."""
-    comm = MPI.COMM_WORLD
-    if comm.rank == 0:
-        chosen = unique_run_dir(results_root, base_name, enabled=unique_output)
-    else:
-        chosen = None
-    return Path(comm.bcast(str(chosen), root=0))
+    return shared_unique_run_dir(
+        MPI.COMM_WORLD,
+        results_root,
+        base_name,
+        enabled=unique_output,
+    )
 
 
 def _config_updates(args) -> dict[str, object]:

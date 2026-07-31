@@ -8,7 +8,7 @@ from pathlib import Path
 from mpi4py import MPI
 
 from ..common.config import SimulationConfig, project_root
-from ..common.output_paths import unique_run_dir
+from ..common.output_paths import shared_unique_run_dir
 from ..solvers.solve_port_maxwell import run_port_case
 from ..solvers.solve_te_maxwell import run_te_case, run_te_port_case
 from ..solvers.solve_vector_maxwell import _json_default, run_case
@@ -180,13 +180,12 @@ def _number_tag(prefix: str, value: object) -> str:
 
 
 def _shared_run_dir(results_root, base_name: str, unique_output: bool):
-    comm = MPI.COMM_WORLD
-    if comm.rank == 0:
-        chosen = unique_run_dir(results_root, base_name, enabled=unique_output)
-    else:
-        chosen = None
-    chosen_text = comm.bcast(str(chosen), root=0)
-    return Path(chosen_text)
+    return shared_unique_run_dir(
+        MPI.COMM_WORLD,
+        results_root,
+        base_name,
+        enabled=unique_output,
+    )
 
 
 def main(argv: list[str] | None = None):

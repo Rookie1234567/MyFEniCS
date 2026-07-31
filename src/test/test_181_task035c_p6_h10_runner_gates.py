@@ -3,12 +3,15 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
+from mpi4py import MPI
 import numpy as np
 
+from benchmarks import run_task032_phase6_augmented as phase6_runner
 from benchmarks.run_task032_phase6_augmented import (
     _discrete_axial_qualification_scope,
     _hybrid_p_disposition,
@@ -382,6 +385,89 @@ def _task036_strong_hybrid_cli(
 
 
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
+    def test_phase6_memory_stage_claim_is_exclusive_and_preserves_existing(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output_dir = root / "artifacts"
+            owner = output_dir / "result.json"
+            stage = output_dir / "memory_stages.jsonl"
+            phase6_runner._claim_memory_stage_file(
+                MPI.COMM_SELF,
+                stage,
+                owner_path=owner,
+            )
+            self.assertEqual(stage.read_bytes(), b"")
+
+            sentinel = b'{"stage":"preserved"}\n'
+            with stage.open("ab") as stream:
+                stream.write(sentinel)
+            with self.assertRaisesRegex(RuntimeError, "FileExistsError"):
+                phase6_runner._claim_memory_stage_file(
+                    MPI.COMM_SELF,
+                    stage,
+                    owner_path=owner,
+                )
+            self.assertEqual(stage.read_bytes(), sentinel)
+
+            with self.assertRaisesRegex(RuntimeError, "must differ"):
+                phase6_runner._claim_memory_stage_file(
+                    MPI.COMM_SELF,
+                    owner,
+                    owner_path=owner,
+                )
+            external_stage = root / "other" / "memory_stages.jsonl"
+            phase6_runner._claim_memory_stage_file(
+                MPI.COMM_SELF,
+                external_stage,
+                owner_path=owner,
+            )
+            self.assertEqual(external_stage.read_bytes(), b"")
+            phase6_runner._claim_memory_stage_file(
+                MPI.COMM_SELF,
+                None,
+                owner_path=owner,
+            )
+
+    def test_phase6_memory_stage_existing_claim_is_collective_mpi2(self) -> None:
+        comm = MPI.COMM_WORLD
+        if comm.size != 2:
+            self.skipTest("This cooperative claim regression requires MPI2.")
+        temporary = tempfile.TemporaryDirectory() if comm.rank == 0 else None
+        directory = comm.bcast(
+            temporary.name if temporary is not None else None,
+            root=0,
+        )
+        root = Path(directory)
+        owner = root / "result.json"
+        stage = root / "memory_stages.jsonl"
+        sentinel = b'{"stage":"preserved-by-mpi2"}\n'
+        if comm.rank == 0:
+            stage.write_bytes(sentinel)
+        comm.barrier()
+
+        try:
+            phase6_runner._claim_memory_stage_file(
+                comm,
+                stage,
+                owner_path=owner,
+            )
+        except RuntimeError as exc:
+            error = str(exc)
+        else:
+            error = None
+        errors = comm.allgather(error)
+        observed = stage.read_bytes() if comm.rank == 0 else None
+        observed = comm.bcast(observed, root=0)
+        if temporary is not None:
+            temporary.cleanup()
+
+        self.assertIsNotNone(errors[0])
+        self.assertEqual(errors, [errors[0], errors[0]])
+        self.assertIn("FileExistsError", errors[0])
+        self.assertEqual(observed, sentinel)
+
     def test_task036_review_v5_middle_material_audit(self) -> None:
         cfg = SimpleNamespace(
             period_x=50.0,

@@ -11,7 +11,7 @@ from typing import Any, Mapping, Protocol, Sequence
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
-from scipy.linalg import lu_factor, lu_solve
+from scipy.linalg import lu_solve
 
 from src.adaptivity.exact_sequence_variable_p import (
     VariablePReferenceSpace,
@@ -29,6 +29,7 @@ from .hcurl_assembly_time_condensation import (
     _canonical_axis_aligned_coordinates,
     _cell_integral_kernels,
     _cell_tag_array,
+    _checked_local_static_condensation,
     _distributed_trace_preallocation,
     _global_raw_tensor_cache,
 )
@@ -963,6 +964,8 @@ def build_variable_p_condensed_trace_system(
     insertion_seconds = 0.0
     interior_recovery_operator_residual = 0.0
     interior_adjoint_operator_residual = 0.0
+    interior_lu_pivot_ratio_min = np.inf
+    local_condensation_error: str | None = None
     for cell, p6_tensor, raw_key, constrained_cell in zip(
         cells,
         tensors,
@@ -1003,48 +1006,36 @@ def build_variable_p_condensed_trace_system(
             A_ii = oriented[
                 np.ix_(interior_positions, interior_positions)
             ]
-            factor = lu_factor(A_ii)
-            recovery = -lu_solve(factor, A_it)
-            adjoint_solution = lu_solve(
-                factor,
-                A_ti.conj().T,
-                trans=2,
-            )
-            trace_rhs = -adjoint_solution.conj().T
-            recovery_residual = A_ii @ recovery + A_it
-            recovery_scale = max(
-                float(np.max(np.abs(A_it), initial=0.0)),
-                1.0,
-            )
+            try:
+                (
+                    factor,
+                    recovery,
+                    trace_rhs,
+                    schur,
+                    condensation_audit,
+                ) = _checked_local_static_condensation(
+                    A_ii,
+                    A_it,
+                    A_ti,
+                    A_tt,
+                )
+            except Exception as error:
+                local_condensation_error = (
+                    f"{type(error).__name__}: {error}"
+                )
+                break
             interior_recovery_operator_residual = max(
                 interior_recovery_operator_residual,
-                float(
-                    np.max(
-                        np.abs(recovery_residual),
-                        initial=0.0,
-                    )
-                    / recovery_scale
-                ),
-            )
-            adjoint_residual = (
-                A_ii.conj().T @ adjoint_solution
-                - A_ti.conj().T
-            )
-            adjoint_scale = max(
-                float(np.max(np.abs(A_ti), initial=0.0)),
-                1.0,
+                condensation_audit["primal_backward_residual"],
             )
             interior_adjoint_operator_residual = max(
                 interior_adjoint_operator_residual,
-                float(
-                    np.max(
-                        np.abs(adjoint_residual),
-                        initial=0.0,
-                    )
-                    / adjoint_scale
-                ),
+                condensation_audit["adjoint_backward_residual"],
             )
-            schur = np.ascontiguousarray(A_tt + A_ti @ recovery)
+            interior_lu_pivot_ratio_min = min(
+                interior_lu_pivot_ratio_min,
+                condensation_audit["pivot_ratio"],
+            )
             condensation_seconds += perf_counter() - condensation_started
             schur_cache[class_key] = schur
             interior_from_trace[class_key] = recovery
@@ -1072,6 +1063,17 @@ def build_variable_p_condensed_trace_system(
                 cell=cell,
                 space=space,
                 class_key=class_key,
+            )
+        )
+    condensation_errors = comm.allgather(local_condensation_error)
+    if any(error is not None for error in condensation_errors):
+        matrix.destroy()
+        raise RuntimeError(
+            "local variable-p static condensation failed collectively: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(condensation_errors)
+                if error is not None
             )
         )
     if defer_final_assembly:
@@ -1118,16 +1120,9 @@ def build_variable_p_condensed_trace_system(
             op=MPI.MAX,
         )
     )
-    if (
-        recovery_operator_residual > 5.0e-11
-        or adjoint_operator_residual > 5.0e-11
-    ):
-        matrix.destroy()
-        raise RuntimeError(
-            "cell-interior recovery operator failed residual Gate: "
-            f"primal={recovery_operator_residual:.6e}, "
-            f"adjoint={adjoint_operator_residual:.6e}"
-        )
+    pivot_ratio_min = float(
+        comm.allreduce(interior_lu_pivot_ratio_min, op=MPI.MIN)
+    )
     global_cells = int(comm.allreduce(len(cells), op=MPI.SUM))
     constraint_kinds = (
         set()
@@ -1282,6 +1277,7 @@ def build_variable_p_condensed_trace_system(
         "interior_adjoint_operator_residual_max": float(
             adjoint_operator_residual
         ),
+        "interior_lu_pivot_ratio_min": pivot_ratio_min,
         "interior_rhs_recovery_iterative_refinement_max_steps": 2,
         "interior_rhs_recovery_refinement_uses_retained_lu_only": True,
         "final_assembly_seconds": assembly_seconds,

@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from pathlib import Path
+from types import SimpleNamespace
 import unittest
+from unittest import mock
 
 import numpy as np
+from dolfinx import fem, mesh
+from mpi4py import MPI
 
 from src.postprocessing.diffraction_3d import (
     E_FOURIER_DIAGNOSTIC_NOTE,
@@ -12,6 +17,7 @@ from src.postprocessing.diffraction_3d import (
     _eh_fourier_order_powers,
     _e_fourier_order_powers,
     _incident_power,
+    _sample_field_at_points,
     enumerate_diffraction_orders_3d,
     fit_diffraction_amplitudes_from_samples,
     mode_eh_vectors,
@@ -22,6 +28,13 @@ from src.postprocessing.diffraction_3d import (
 from src.postprocessing.flat_layer_reference_3d import (
     analytic_volume_absorption_between_z,
     compute_flat_layer_reference_3d,
+)
+from src.postprocessing.postprocess_3d import (
+    _has_analytic_exact_reference,
+)
+from src.postprocessing import rta_3d
+from src.solvers.common_3d_case_flow import (
+    _apply_volume_absorption_contract_to_summary,
 )
 from src.common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values, fresnel_reference
 from src.test.stage2_test_utils import stage4_block_config
@@ -39,6 +52,217 @@ def _mode_samples(points, kvec, e_vec, h_vec, amplitude: complex) -> tuple[np.nd
 
 
 class Stage4DiffractionModeTests(unittest.TestCase):
+    @staticmethod
+    def _volume_mesh_data():
+        class Comm:
+            rank = 1
+
+            @staticmethod
+            def barrier():
+                return None
+
+        return SimpleNamespace(mesh=SimpleNamespace(comm=Comm()))
+
+    def test_analytic_reference_identity_uses_actual_geometry(self):
+        cases = (
+            (
+                "airbox",
+                stage4_block_config(
+                    stage_case="stage1_airbox",
+                    geometry_kind="airbox",
+                ),
+                True,
+            ),
+            (
+                "fresnel_interface",
+                stage4_block_config(
+                    stage_case="fresnel_interface",
+                    geometry_kind="fresnel_interface",
+                ),
+                True,
+            ),
+            (
+                "stage4_named_flat_layer",
+                stage4_block_config(
+                    stage_case="stage4_flat_layer_sanity",
+                    grating_width_x=0.0,
+                    grating_width_y=0.0,
+                    grating_height=0.0,
+                ),
+                True,
+            ),
+            (
+                "custom_named_actual_block",
+                stage4_block_config(stage_case="custom_block_case"),
+                False,
+            ),
+            (
+                "unknown_geometry",
+                stage4_block_config(
+                    stage_case="stage4_unknown",
+                    geometry_kind="unknown_geometry",
+                ),
+                False,
+            ),
+        )
+        for name, cfg, expected in cases:
+            with self.subTest(case=name):
+                self.assertEqual(
+                    _has_analytic_exact_reference(cfg),
+                    expected,
+                )
+
+    def test_internal_facet_sampling_selects_requested_z_side(self):
+        msh = mesh.create_unit_cube(
+            MPI.COMM_WORLD,
+            1,
+            1,
+            2,
+            cell_type=mesh.CellType.hexahedron,
+            ghost_mode=mesh.GhostMode.shared_facet,
+        )
+        function_space = fem.functionspace(msh, ("DG", 0, (3,)))
+        field = fem.Function(function_space)
+        lower_value = np.asarray((1.0 + 2.0j, 3.0 - 1.0j, -0.5 + 0.25j))
+        upper_value = np.asarray((-2.0 + 0.5j, 4.0 + 3.0j, 2.5 - 1.5j))
+
+        def piecewise_constant(x):
+            values = np.repeat(upper_value[:, None], x.shape[1], axis=1)
+            values[:, x[2] < 0.5] = lower_value[:, None]
+            return values
+
+        field.interpolate(piecewise_constant)
+        field.x.scatter_forward()
+        points = np.asarray(((0.5, 0.5, 0.5),), dtype=np.float64)
+
+        np.testing.assert_allclose(
+            _sample_field_at_points(field, points, z_side=-1)[0],
+            lower_value,
+        )
+        np.testing.assert_allclose(
+            _sample_field_at_points(field, points, z_side=+1)[0],
+            upper_value,
+        )
+        with self.assertRaisesRegex(ValueError, "z_side"):
+            _sample_field_at_points(field, points, z_side=0)
+
+    def test_public_volume_absorption_fails_closed_without_incident_power(self):
+        cfg = stage4_block_config()
+        with (
+            mock.patch.object(rta_3d, "_global_cell_count", return_value=1),
+            mock.patch.object(rta_3d, "_region_volume", return_value=1.0),
+            mock.patch.object(rta_3d, "_region_absorbed_power", return_value=0.2),
+        ):
+            payload = rta_3d.compute_volume_absorption_3d(
+                self._volume_mesh_data(),
+                cfg,
+                None,
+                Path("unused"),
+                incident_power=None,
+            )
+        self.assertEqual(payload["status"], "invalid")
+        self.assertFalse(payload["official_result"])
+        self.assertIsNone(payload["incident_power_code_units"])
+        self.assertIsNone(payload["A_volume_total"])
+        self.assertEqual(
+            payload["failures"],
+            ["incident_power_missing_nonfinite_or_nonpositive"],
+        )
+        self.assertEqual(payload["required_regions"], ["grating", "substrate"])
+
+    def test_public_volume_absorption_maps_flat_layer_required_regions(self):
+        cfg = stage4_block_config(
+            stage_case="stage4_flat_layer_sanity",
+            grating_width_x=0.0,
+            grating_width_y=0.0,
+            grating_height=0.0,
+            n_grating=1.0 + 0.0j,
+        )
+
+        def region(*_args, name, **_kwargs):
+            if name == "grating":
+                return {"status": "missing", "A_volume": None, "name": name}
+            return {"status": "lossless", "A_volume": 0.0, "name": name}
+
+        with mock.patch.object(rta_3d, "_region_absorption", side_effect=region):
+            payload = rta_3d.compute_volume_absorption_3d(
+                self._volume_mesh_data(),
+                cfg,
+                None,
+                Path("unused"),
+                incident_power=1.0,
+            )
+        self.assertEqual(payload["status"], "ok")
+        self.assertEqual(payload["required_regions"], ["substrate"])
+        self.assertEqual(payload["A_volume_total"], 0.0)
+
+    def test_required_missing_region_has_one_reason_and_downgrades_summary(self):
+        contract = rta_3d._volume_absorption_contract(
+            {
+                "grating": {"status": "missing", "A_volume": None},
+                "substrate": {"status": "ok", "A_volume": 0.3},
+            },
+            incident_power=1.0,
+        )
+        self.assertEqual(contract["failures"], ["grating_region_missing"])
+        summary = {"official_result": True, "case_status": "completed"}
+        passed = _apply_volume_absorption_contract_to_summary(summary, contract)
+        self.assertFalse(passed)
+        self.assertFalse(summary["official_result"])
+        self.assertEqual(
+            summary["case_status"], "failed_volume_absorption_contract"
+        )
+
+    def test_volume_contract_rejects_both_missing_and_nan_absorption(self):
+        both_missing = rta_3d._volume_absorption_contract(
+            {
+                "grating": {"status": "missing", "A_volume": None},
+                "substrate": {"status": "missing", "A_volume": None},
+            },
+            incident_power=1.0,
+        )
+        self.assertEqual(
+            both_missing["failures"],
+            ["grating_region_missing", "substrate_region_missing"],
+        )
+        self.assertIsNone(both_missing["A_volume_total"])
+
+        nonfinite = rta_3d._volume_absorption_contract(
+            {
+                "grating": {"status": "ok", "A_volume": float("nan")},
+                "substrate": {"status": "ok", "A_volume": 0.3},
+            },
+            incident_power=1.0,
+        )
+        self.assertEqual(
+            nonfinite["failures"],
+            ["grating_absorption_missing_or_nonfinite"],
+        )
+        self.assertIsNone(nonfinite["A_volume_total"])
+        self.assertEqual(nonfinite["A_volume_partial_sum"], 0.3)
+
+    def test_public_volume_absorption_rejects_nonpositive_or_nan_incident(self):
+        cfg = stage4_block_config()
+        with (
+            mock.patch.object(rta_3d, "_global_cell_count", return_value=1),
+            mock.patch.object(rta_3d, "_region_volume", return_value=1.0),
+            mock.patch.object(rta_3d, "_region_absorbed_power", return_value=0.2),
+        ):
+            for incident_power in (float("nan"), 0.0, -1.0):
+                with self.subTest(incident_power=incident_power):
+                    payload = rta_3d.compute_volume_absorption_3d(
+                        self._volume_mesh_data(),
+                        cfg,
+                        None,
+                        Path("unused"),
+                        incident_power=incident_power,
+                    )
+                    self.assertEqual(payload["status"], "invalid")
+                    self.assertEqual(
+                        payload["failures"],
+                        ["incident_power_missing_nonfinite_or_nonpositive"],
+                    )
+
     def test_stage4_probe_power_source_is_diagnostic_eh_fourier(self):
         self.assertEqual(OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE, "diagnostic_eh_fourier_probe")
         self.assertIn("Diagnostic only", OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE)

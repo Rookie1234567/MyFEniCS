@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import gc
 from types import SimpleNamespace
 import unittest
+from unittest import mock
+import weakref
 
 import numpy as np
 from dolfinx import fem
@@ -479,6 +482,181 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
         finally:
             solution.destroy()
             schur.destroy()
+
+
+class Task035bHybridStaticOwnershipTests(unittest.TestCase):
+    def test_augmented_and_schur_top_static_failures_release_bottom_owner(self):
+        from src.solvers import hybrid_fem_modal_augmented_direct as augmented
+        from src.solvers import hybrid_fem_modal_schur_direct as schur
+
+        class Recovered:
+            pass
+
+        for solver_kind in ("augmented", "schur"):
+            recovered_ref = None
+            recovery_calls = 0
+
+            def recover(*_args, **_kwargs):
+                nonlocal recovered_ref, recovery_calls
+                recovery_calls += 1
+                if recovery_calls == 1:
+                    recovered = Recovered()
+                    recovered_ref = weakref.ref(recovered)
+                    return recovered
+                raise RuntimeError("controlled top static recovery failure")
+
+            comm = SimpleNamespace(allreduce=lambda value, op=None: value)
+            bottom = mock.Mock()
+            top = mock.Mock()
+            bottom_system = SimpleNamespace(
+                local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+                b=mock.Mock(),
+                static_condensation=object(),
+            )
+            top_system = SimpleNamespace(
+                local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+                b=mock.Mock(),
+                static_condensation=object(),
+            )
+            bottom_system.b.norm.return_value = 1.0
+            top_system.b.norm.return_value = 1.0
+            coupling = SimpleNamespace()
+            with self.subTest(solver=solver_kind):
+                if solver_kind == "augmented":
+                    ksp = mock.Mock()
+                    ksp.create.return_value = ksp
+                    ksp.getPC.return_value = mock.Mock()
+                    candidate = mock.Mock()
+                    residual = mock.Mock()
+                    residual.norm.return_value = 0.0
+                    rhs = mock.Mock()
+                    rhs.duplicate.side_effect = [candidate, residual]
+                    rhs.norm.return_value = 1.0
+                    layout = SimpleNamespace(
+                        comm=comm,
+                        split=mock.Mock(
+                            return_value=(bottom, top, np.asarray([1.0]))
+                        ),
+                    )
+
+                    class FakeKspFactory:
+                        Type = SimpleNamespace(PREONLY="preonly")
+
+                        def __call__(self):
+                            return ksp
+
+                    fake_petsc = SimpleNamespace(
+                        KSP=FakeKspFactory(),
+                        PC=SimpleNamespace(Type=SimpleNamespace(LU="lu")),
+                        ScalarType=complex,
+                    )
+                    system = SimpleNamespace(
+                        layout=layout,
+                        A=mock.Mock(),
+                        b=rhs,
+                    )
+                    with (
+                        mock.patch.object(augmented, "PETSc", fake_petsc),
+                        mock.patch.object(
+                            augmented,
+                            "recover_hybrid_static_local_field",
+                            side_effect=recover,
+                        ),
+                        self.assertRaisesRegex(
+                            RuntimeError, "top static recovery failure"
+                        ),
+                    ):
+                        augmented.solve_hybrid_augmented_direct(
+                            system,
+                            bottom_system,
+                            top_system,
+                            coupling,
+                        )
+                    candidate.destroy.assert_called_once_with()
+                    residual.destroy.assert_called_once_with()
+                    ksp.destroy.assert_called_once_with()
+                else:
+                    system = SimpleNamespace(
+                        modal_schur=[[1.0]],
+                        modal_rhs=[1.0],
+                        bottom_factor=mock.Mock(),
+                        top_factor=mock.Mock(),
+                    )
+                    with (
+                        mock.patch.object(
+                            schur,
+                            "_recover_local_field",
+                            side_effect=[bottom, top],
+                        ),
+                        mock.patch.object(
+                            schur,
+                            "_local_relative_residual",
+                            return_value=(0.0, 0.0),
+                        ),
+                        mock.patch.object(
+                            schur,
+                            "_modal_residual",
+                            return_value=(0.0, 0.0),
+                        ),
+                        mock.patch.object(
+                            schur,
+                            "recover_hybrid_static_local_field",
+                            side_effect=recover,
+                        ),
+                        self.assertRaisesRegex(
+                            RuntimeError, "top static recovery failure"
+                        ),
+                    ):
+                        schur.solve_hybrid_modal_schur_direct(
+                            system,
+                            bottom_system,
+                            top_system,
+                            coupling,
+                        )
+                bottom.destroy.assert_called_once_with()
+                top.destroy.assert_called_once_with()
+                gc.collect()
+                self.assertIsNotNone(recovered_ref)
+                self.assertIsNone(recovered_ref())
+
+    def test_static_reduction_partial_creation_releases_first_vector(self):
+        from src.solvers import hybrid_static_field_recovery as recovery
+
+        positive_source = mock.Mock()
+        positive = mock.Mock()
+        negative = mock.Mock()
+        coupling = SimpleNamespace(
+            mode_count_per_direction=1,
+            bottom=SimpleNamespace(
+                positive_traction=positive,
+                negative_traction=negative,
+            ),
+            top=SimpleNamespace(
+                positive_traction=positive,
+                negative_traction=negative,
+            ),
+            propagation=SimpleNamespace(
+                forward=SimpleNamespace(factors=np.ones(1)),
+                backward=SimpleNamespace(factors=np.ones(1)),
+            ),
+        )
+        with (
+            mock.patch.object(
+                recovery,
+                "_modal_vector",
+                side_effect=[
+                    positive_source,
+                    RuntimeError("controlled second modal vector failure"),
+                ],
+            ),
+            self.assertRaisesRegex(RuntimeError, "second modal vector failure"),
+        ):
+            recovery._reduced_internal_action(
+                SimpleNamespace(side="bottom"),
+                coupling,
+                np.ones(2),
+            )
+        positive_source.destroy.assert_called_once_with()
 
 
 if __name__ == "__main__":

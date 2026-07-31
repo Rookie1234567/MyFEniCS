@@ -2,9 +2,22 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from pathlib import Path
 import re
+import signal
+import sys
+import tempfile
+import time
 import unittest
+
+from benchmarks.run_task031_memory_forensics import (
+    _apply_task031_source_identity,
+    _memory_authority_gib,
+    _source_provenance,
+    _task031_source_identity_stable,
+    _task031_solver_disposition,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -15,6 +28,286 @@ CASE = ROOT / "benchmarks" / "cases" / "070_compact_physical_slab_memory_optimiz
 
 
 class Task031ContractTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "posix", "POSIX process-group contract")
+    def test_sampler_error_and_keyboard_interrupt_clean_worker_group(self) -> None:
+        from unittest import mock
+        from benchmarks import run_task031_memory_forensics as watchdog
+
+        worker_code = (
+            "import os,pathlib,subprocess,sys,time; "
+            "child=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)']); "
+            "pathlib.Path(sys.argv[1]).write_text("
+            "f'{os.getpid()} {child.pid}',encoding='utf-8'); time.sleep(60)"
+        )
+        source = {
+            "commit_sha": "a" * 40,
+            "capture_ok": True,
+            "tracked_source_dirty": False,
+            "verified_clean_sha": None,
+        }
+        cases = (
+            ("sampler_error", RuntimeError("sampler failed")),
+            ("keyboard_interrupt", KeyboardInterrupt()),
+        )
+        with tempfile.TemporaryDirectory(prefix="task031-f01-") as temp_dir:
+            root = Path(temp_dir)
+            for label, injected in cases:
+                with self.subTest(label=label):
+                    pid_path = root / f"{label}.pids"
+                    args = watchdog.parse_args(
+                        ["--run-dir", str(root / label), "--mpi-size", "1"]
+                    )
+                    command = [sys.executable, "-c", worker_code, str(pid_path)]
+
+                    def fail_sample(*_args: object) -> dict[str, object]:
+                        deadline = time.monotonic() + 2.0
+                        while not pid_path.is_file() and time.monotonic() < deadline:
+                            time.sleep(0.01)
+                        if not pid_path.is_file():
+                            raise AssertionError("worker did not publish its process IDs")
+                        raise injected
+
+                    leader_pid: int | None = None
+                    child_pid: int | None = None
+                    try:
+                        with (
+                            mock.patch.object(
+                                watchdog,
+                                "_source_provenance",
+                                return_value=source,
+                            ),
+                            mock.patch.object(
+                                watchdog,
+                                "_worker_command",
+                                return_value=command,
+                            ),
+                            mock.patch.object(
+                                watchdog,
+                                "_sample",
+                                side_effect=fail_sample,
+                            ),
+                            self.assertRaises(type(injected)),
+                        ):
+                            watchdog.run(args)
+                        leader_pid, child_pid = (
+                            int(value)
+                            for value in pid_path.read_text(
+                                encoding="utf-8"
+                            ).split()
+                        )
+                        deadline = time.monotonic() + 1.0
+                        while (
+                            any(
+                                Path(f"/proc/{pid}").exists()
+                                for pid in (leader_pid, child_pid)
+                            )
+                            and time.monotonic() < deadline
+                        ):
+                            time.sleep(0.02)
+                        self.assertFalse(Path(f"/proc/{leader_pid}").exists())
+                        self.assertFalse(Path(f"/proc/{child_pid}").exists())
+                    finally:
+                        if (
+                            (leader_pid is None or child_pid is None)
+                            and pid_path.is_file()
+                        ):
+                            leader_pid, child_pid = (
+                                int(value)
+                                for value in pid_path.read_text(
+                                    encoding="utf-8"
+                                ).split()
+                            )
+                        if leader_pid is not None and child_pid is not None and any(
+                            Path(f"/proc/{pid}").exists()
+                            for pid in (leader_pid, child_pid)
+                        ):
+                            try:
+                                os.killpg(leader_pid, signal.SIGKILL)
+                            except ProcessLookupError:
+                                pass
+
+    def test_dirty_source_requires_explicit_research_override(self) -> None:
+        from unittest import mock
+        from benchmarks import run_task031_memory_forensics as watchdog
+
+        sha = "a" * 40
+
+        def git_output(*args: str) -> str:
+            if args == ("rev-parse", "HEAD"):
+                return sha
+            if args == ("status", "--porcelain", "--untracked-files=all"):
+                return " M src/changed.py"
+            raise AssertionError(args)
+
+        with mock.patch.object(watchdog, "_git", side_effect=git_output):
+            with self.assertRaisesRegex(SystemExit, "dirty"):
+                _source_provenance(sha, allow_dirty_research=False)
+            source = _source_provenance(sha, allow_dirty_research=True)
+        self.assertTrue(source["tracked_source_dirty"])
+
+    def test_task031_invalid_or_mismatched_sha_stops_preflight(self) -> None:
+        from unittest import mock
+        from benchmarks import run_task031_memory_forensics as watchdog
+
+        mounted = "a" * 40
+
+        def git_output(*args: str) -> str:
+            if args == ("rev-parse", "HEAD"):
+                return mounted
+            if args == ("status", "--porcelain", "--untracked-files=all"):
+                return ""
+            raise AssertionError(args)
+
+        with mock.patch.object(watchdog, "_git", side_effect=git_output):
+            with self.assertRaisesRegex(SystemExit, "full hexadecimal"):
+                _source_provenance("short", allow_dirty_research=False)
+            with self.assertRaisesRegex(SystemExit, "does not match"):
+                _source_provenance("b" * 40, allow_dirty_research=False)
+        with (
+            mock.patch.object(watchdog, "_git", return_value=None),
+            self.assertRaisesRegex(SystemExit, "Cannot verify"),
+        ):
+            _source_provenance(None, allow_dirty_research=False)
+
+        with mock.patch.object(watchdog, "_git", return_value=None):
+            end_snapshot = watchdog._source_state()
+        self.assertFalse(end_snapshot["capture_ok"])
+        self.assertIsNone(end_snapshot["tracked_source_dirty"])
+        self.assertFalse(
+            _task031_source_identity_stable(
+                {
+                    "commit_sha": mounted,
+                    "capture_ok": True,
+                    "tracked_source_dirty": False,
+                },
+                end_snapshot,
+            )
+        )
+
+    def test_source_drift_preserves_numeric_but_blocks_formal(self) -> None:
+        worker = _task031_solver_disposition(
+            screen_only=False,
+            return_code=0,
+            terminated_for_memory=False,
+            solver_record={
+                "status": "formal_pass",
+                "formal_pass": True,
+                "numeric_solver_pass": True,
+                "physics_pass": True,
+            },
+        )
+        disposition = _apply_task031_source_identity(
+            worker,
+            source_identity_stable=False,
+        )
+        self.assertEqual(
+            disposition["status"], "controlled_negative_source_identity"
+        )
+        self.assertTrue(disposition["numeric_pass"])
+        self.assertFalse(disposition["formal_pass"])
+
+    def test_worker_source_negative_preserves_numeric_and_physics(self) -> None:
+        disposition = _task031_solver_disposition(
+            screen_only=False,
+            return_code=2,
+            terminated_for_memory=False,
+            solver_record={
+                "status": "controlled_negative_source_identity",
+                "formal_pass": False,
+                "numeric_solver_pass": True,
+                "physics_pass": True,
+            },
+        )
+        self.assertEqual(
+            disposition["status"], "controlled_negative_source_identity"
+        )
+        self.assertTrue(disposition["numeric_pass"])
+        self.assertTrue(disposition["physics_pass"])
+        self.assertFalse(disposition["formal_pass"])
+    def test_global_init_scope_is_diagnostic_only(self) -> None:
+        global_scope = {
+            "mpi_process_tree_rss_mb": 1024.0,
+            "container_cgroup_current_mb": 48.0 * 1024.0,
+            "job_cgroup_dedicated": False,
+            "job_cgroup_path": "/init.scope",
+        }
+        self.assertEqual(_memory_authority_gib(global_scope), 1.0)
+        dedicated_scope = {
+            **global_scope,
+            "container_cgroup_current_mb": 12.0 * 1024.0,
+            "job_cgroup_dedicated": True,
+            "job_cgroup_path": "/task031-job.scope",
+        }
+        self.assertEqual(_memory_authority_gib(dedicated_scope), 12.0)
+
+    def test_screen_rc2_preserves_trend_without_formal_pass(self) -> None:
+        disposition = _task031_solver_disposition(
+            screen_only=True,
+            return_code=2,
+            terminated_for_memory=False,
+            solver_record={
+                "status": "experimental_unqualified",
+                "formal_pass": False,
+                "history": [
+                    {"true_relative_residual": 1.0},
+                    {"true_relative_residual": 0.9},
+                ],
+            },
+        )
+        self.assertEqual(disposition["status"], "screen_trend_positive")
+        self.assertTrue(disposition["screen_trend_positive"])
+        self.assertFalse(disposition["formal_pass"])
+
+    def test_resource_stop_overrides_stale_worker_pass(self) -> None:
+        disposition = _task031_solver_disposition(
+            screen_only=False,
+            return_code=0,
+            terminated_for_memory=True,
+            solver_record={"status": "formal_pass", "formal_pass": True},
+        )
+        self.assertEqual(disposition["status"], "resource_controlled_stop")
+        self.assertFalse(disposition["formal_pass"])
+
+    def test_non_screen_forwards_worker_formal_result(self) -> None:
+        disposition = _task031_solver_disposition(
+            screen_only=False,
+            return_code=0,
+            terminated_for_memory=False,
+            solver_record={"status": "formal_pass", "formal_pass": True},
+        )
+        self.assertEqual(disposition["status"], "formal_pass")
+        self.assertTrue(disposition["formal_pass"])
+
+    def test_formal_status_without_worker_boolean_fails_closed(self) -> None:
+        disposition = _task031_solver_disposition(
+            screen_only=False,
+            return_code=0,
+            terminated_for_memory=False,
+            solver_record={"status": "formal_pass", "formal_pass": False},
+        )
+        self.assertEqual(disposition["status"], "worker_formal_not_pass")
+        self.assertFalse(disposition["numeric_pass"])
+        self.assertFalse(disposition["formal_pass"])
+
+    def test_worker_nonpass_classifications_survive_rc2(self) -> None:
+        for worker_status in (
+            "numeric_not_pass",
+            "physics_not_pass",
+            "source_identity_not_pass",
+        ):
+            with self.subTest(worker_status=worker_status):
+                disposition = _task031_solver_disposition(
+                    screen_only=False,
+                    return_code=2,
+                    terminated_for_memory=False,
+                    solver_record={
+                        "status": worker_status,
+                        "formal_pass": False,
+                    },
+                )
+                self.assertEqual(disposition["status"], worker_status)
+                self.assertFalse(disposition["formal_pass"])
+
     def test_task_book_is_present_and_outcomes_are_complete(self) -> None:
         self.assertTrue((TASK / "task.md").is_file())
         self.assertTrue((TASK / "review_report_v1.md").is_file())

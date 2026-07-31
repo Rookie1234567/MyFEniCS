@@ -4,7 +4,6 @@ import argparse
 import json
 import os
 from pathlib import Path
-import signal
 import subprocess
 import sys
 import time
@@ -22,6 +21,10 @@ from benchmarks.task033_case090_pde_core import (
 from benchmarks.task034_wsl_resources import (
     effective_memory_limit,
     resource_authority_sample,
+)
+from benchmarks.watchdog_process_control import (
+    terminate_process_tree,
+    worker_process_group_popen_kwargs,
 )
 
 
@@ -456,57 +459,6 @@ def _natural_exit_after_process_tree_sample(
     return process.poll()
 
 
-def terminate_process_tree(
-    process: subprocess.Popen[Any], *, grace_seconds: float = 5.0
-) -> dict[str, Any]:
-    """Terminate the complete worker process group and escalate if necessary."""
-
-    result = {
-        "requested": True,
-        "method": None,
-        "grace_seconds": float(grace_seconds),
-        "sigkill_required": False,
-        "worker_exited": False,
-    }
-    if process.poll() is not None:
-        result.update({"method": "already_exited", "worker_exited": True})
-        return result
-    try:
-        if os.name == "posix":
-            result["method"] = "POSIX process group SIGTERM then SIGKILL"
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-        else:
-            result["method"] = "psutil recursive terminate then kill"
-            import psutil
-
-            root = psutil.Process(process.pid)
-            descendants = root.children(recursive=True)
-            for child in descendants:
-                child.terminate()
-            root.terminate()
-        try:
-            process.wait(timeout=grace_seconds)
-        except subprocess.TimeoutExpired:
-            result["sigkill_required"] = True
-            if os.name == "posix":
-                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-            else:
-                import psutil
-
-                try:
-                    root = psutil.Process(process.pid)
-                    for child in root.children(recursive=True):
-                        child.kill()
-                    root.kill()
-                except psutil.Error:
-                    pass
-            process.wait(timeout=grace_seconds)
-    except (OSError, subprocess.SubprocessError) as exc:
-        result["error"] = f"{type(exc).__name__}: {exc}"
-    result["worker_exited"] = process.poll() is not None
-    return result
-
-
 def _git_ignored(path: Path) -> bool:
     try:
         completed = subprocess.run(
@@ -745,11 +697,10 @@ def run_watchdog(args: argparse.Namespace) -> int:
             termination_trigger = "preflight_failed"
             termination_detail = "; ".join(preflight_failures)
         else:
-            popen_options: dict[str, Any] = {"cwd": ROOT}
-            if os.name == "posix":
-                popen_options["start_new_session"] = True
-            elif os.name == "nt":
-                popen_options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+            popen_options: dict[str, Any] = {
+                "cwd": ROOT,
+                **worker_process_group_popen_kwargs(),
+            }
             try:
                 process = subprocess.Popen(command, **popen_options)
             except OSError as exc:
@@ -815,6 +766,19 @@ def run_watchdog(args: argparse.Namespace) -> int:
                 cleanup = terminate_process_tree(
                     process, grace_seconds=float(args.termination_grace_seconds)
                 )
+        except BaseException as primary_error:
+            if process is not None and process.poll() is None:
+                try:
+                    terminate_process_tree(
+                        process,
+                        grace_seconds=float(args.termination_grace_seconds),
+                    )
+                except Exception as cleanup_error:
+                    primary_error.add_note(
+                        "worker process-group cleanup also failed: "
+                        f"{type(cleanup_error).__name__}: {cleanup_error}"
+                    )
+            raise
         final_sample = sample_memory(
             process.pid if process is not None else -1,
             worker_alive=False,

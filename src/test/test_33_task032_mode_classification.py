@@ -8,6 +8,7 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from benchmarks.run_task032_phase3_modes import _basis_record
 from src.common.config_3d import target_stage4_config
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
@@ -31,6 +32,7 @@ from src.modes.mode_classification import (
     track_mode_bases,
 )
 from src.modes.quadratic_beta_eigenproblem import (
+    QuadraticBetaSolveReport,
     analytic_homogeneous_beta,
     assemble_quadratic_beta_operators,
     solve_quadratic_beta_modes,
@@ -42,6 +44,47 @@ from src.modes.stable_propagation import (
 
 
 class Task032ModeClassificationTests(unittest.TestCase):
+    def test_phase3_basis_record_preserves_right_and_adjoint_qep_provenance(self):
+        def report(target: complex) -> QuadraticBetaSolveReport:
+            return QuadraticBetaSolveReport(
+                solver="SLEPc.PEP/TOAR",
+                problem_type="general_quadratic_polynomial",
+                spectral_transform="sinvert_with_MUMPS_LU",
+                target=target,
+                requested_modes=2,
+                converged_modes=2,
+                iteration_count=3,
+                convergence_reason=1,
+                requested_configuration={"pep_type": "toar"},
+                actual_configuration={"pep_type": "toar"},
+                requested_actual_match=True,
+                requested_actual_mismatches=(),
+            )
+
+        right = report(1.0 + 0.0j)
+        adjoint = report(1.0 - 0.0j)
+        basis = SimpleNamespace(
+            modes=[],
+            groups=(),
+            biorthogonality_matrix=np.empty((0, 0), dtype=np.complex128),
+            max_identity_error=0.0,
+            adjoint_solver_report=adjoint,
+            full_vector_gathered=False,
+        )
+        record = _basis_record(
+            basis,
+            right_solver_report=right,
+            comm=MPI.COMM_SELF,
+        )
+        self.assertEqual(
+            record["right_solver"]["profile"]["actual"],
+            {"pep_type": "toar"},
+        )
+        self.assertEqual(
+            record["adjoint_solver"]["profile"]["actual"],
+            {"pep_type": "toar"},
+        )
+
     @staticmethod
     def _build_air_basis(*, theta_deg: float, requested_modes: int):
         cfg = target_stage4_config(degree=2, h_nm=10.0)

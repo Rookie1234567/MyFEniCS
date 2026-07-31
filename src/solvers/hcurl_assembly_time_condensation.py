@@ -23,18 +23,131 @@ from dataclasses import dataclass
 import hashlib
 from time import perf_counter
 from typing import Any
+import warnings
 
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 from scipy import sparse
-from scipy.linalg import lu_factor, lu_solve
+from scipy.linalg import LinAlgWarning, lu_factor, lu_solve
 
 
 def _idx(values) -> np.ndarray:
     if isinstance(values, np.ndarray):
         return np.asarray(values, dtype=PETSc.IntType)
     return np.fromiter(values, dtype=PETSc.IntType)
+
+
+_LOCAL_STATIC_CONDENSATION_RESIDUAL_LIMIT = 5.0e-11
+
+
+def _checked_local_static_condensation(
+    A_ii: np.ndarray,
+    A_it: np.ndarray,
+    A_ti: np.ndarray,
+    A_tt: np.ndarray,
+) -> tuple[
+    tuple[np.ndarray, np.ndarray],
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    dict[str, float],
+]:
+    """Factor and condense one finite local block, or fail closed."""
+
+    blocks = tuple(np.asarray(block) for block in (A_ii, A_it, A_ti, A_tt))
+    if any(not np.all(np.isfinite(block)) for block in blocks):
+        raise RuntimeError(
+            "local static condensation received a non-finite input block"
+        )
+    A_ii, A_it, A_ti, A_tt = blocks
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", LinAlgWarning)
+        factor = lu_factor(A_ii)
+        lu_data, pivots = factor
+        if not (
+            np.all(np.isfinite(lu_data))
+            and np.all(np.isfinite(pivots))
+        ):
+            raise RuntimeError(
+                "local static condensation produced a non-finite factor"
+            )
+        interior_from_trace = -lu_solve(factor, A_it)
+        adjoint_solution = lu_solve(
+            factor,
+            A_ti.conj().T,
+            trans=2,
+        )
+    if not (
+        np.all(np.isfinite(interior_from_trace))
+        and np.all(np.isfinite(adjoint_solution))
+    ):
+        raise RuntimeError(
+            "local static condensation produced a non-finite solve map"
+        )
+    trace_from_interior_rhs = -adjoint_solution.conj().T
+    if not np.all(np.isfinite(trace_from_interior_rhs)):
+        raise RuntimeError(
+            "local static condensation produced a non-finite trace map"
+        )
+    schur = np.ascontiguousarray(A_tt + A_ti @ interior_from_trace)
+    if not np.all(np.isfinite(schur)):
+        raise RuntimeError(
+            "local static condensation produced a non-finite Schur block"
+        )
+
+    tiny = np.finfo(np.float64).tiny
+    primal_residual = float(
+        np.linalg.norm(A_ii @ interior_from_trace + A_it)
+        / max(
+            np.linalg.norm(A_ii) * np.linalg.norm(interior_from_trace)
+            + np.linalg.norm(A_it),
+            tiny,
+        )
+    )
+    adjoint_residual = float(
+        np.linalg.norm(
+            A_ii.conj().T @ adjoint_solution - A_ti.conj().T
+        )
+        / max(
+            np.linalg.norm(A_ii) * np.linalg.norm(adjoint_solution)
+            + np.linalg.norm(A_ti),
+            tiny,
+        )
+    )
+    diagonal = np.abs(np.diag(lu_data))
+    largest_pivot = float(np.max(diagonal, initial=0.0))
+    pivot_ratio = (
+        0.0
+        if largest_pivot == 0.0
+        else float(np.min(diagonal, initial=largest_pivot) / largest_pivot)
+    )
+    if not np.all(
+        np.isfinite((primal_residual, adjoint_residual, pivot_ratio))
+    ):
+        raise RuntimeError(
+            "local static condensation produced non-finite audit telemetry"
+        )
+    if (
+        primal_residual > _LOCAL_STATIC_CONDENSATION_RESIDUAL_LIMIT
+        or adjoint_residual > _LOCAL_STATIC_CONDENSATION_RESIDUAL_LIMIT
+    ):
+        raise RuntimeError(
+            "local static condensation failed the 5e-11 backward-residual "
+            f"Gate: primal={primal_residual:.6e}, "
+            f"adjoint={adjoint_residual:.6e}"
+        )
+    return (
+        factor,
+        np.ascontiguousarray(interior_from_trace),
+        np.ascontiguousarray(trace_from_interior_rhs),
+        schur,
+        {
+            "primal_backward_residual": primal_residual,
+            "adjoint_backward_residual": adjoint_residual,
+            "pivot_ratio": pivot_ratio,
+        },
+    )
 
 
 @dataclass(frozen=True)
@@ -1368,6 +1481,10 @@ def build_unconstrained_assembly_time_condensation(
     recovery_maps: list[CellRecoveryMap] = []
     local_schur_seconds = 0.0
     local_insert_seconds = 0.0
+    local_recovery_operator_residual = 0.0
+    local_adjoint_operator_residual = 0.0
+    local_pivot_ratio_min = np.inf
+    local_condensation_error: str | None = None
     for cell, (original_dofs, metadata) in enumerate(
         zip(local_cell_dofs, cell_raw_metadata, strict=True)
     ):
@@ -1399,19 +1516,37 @@ def build_unconstrained_assembly_time_condensation(
                 np.ix_(trace_positions, interior_positions)
             ]
             A_tt = oriented[np.ix_(trace_positions, trace_positions)]
-            interior_lu = lu_factor(A_ii)
-            interior_from_trace = -lu_solve(
-                interior_lu,
-                A_it,
-            )
-            adjoint_trace_solution = lu_solve(
-                interior_lu,
-                A_ti.conj().T,
-                trans=2,
-            )
-            trace_from_interior_rhs = -adjoint_trace_solution.conj().T
-            schur = A_tt + A_ti @ interior_from_trace
+            try:
+                (
+                    interior_lu,
+                    interior_from_trace,
+                    trace_from_interior_rhs,
+                    schur,
+                    condensation_audit,
+                ) = _checked_local_static_condensation(
+                    A_ii,
+                    A_it,
+                    A_ti,
+                    A_tt,
+                )
+            except Exception as error:
+                local_condensation_error = (
+                    f"{type(error).__name__}: {error}"
+                )
+                break
             local_schur_seconds += perf_counter() - schur_started
+            local_recovery_operator_residual = max(
+                local_recovery_operator_residual,
+                condensation_audit["primal_backward_residual"],
+            )
+            local_adjoint_operator_residual = max(
+                local_adjoint_operator_residual,
+                condensation_audit["adjoint_backward_residual"],
+            )
+            local_pivot_ratio_min = min(
+                local_pivot_ratio_min,
+                condensation_audit["pivot_ratio"],
+            )
             schur_cache[class_key] = schur
             recovery_cache[class_key] = interior_from_trace
             lu_cache[class_key] = interior_lu
@@ -1445,6 +1580,17 @@ def build_unconstrained_assembly_time_condensation(
                 class_key=class_key,
             )
         )
+    condensation_errors = comm.allgather(local_condensation_error)
+    if any(error is not None for error in condensation_errors):
+        condensed.destroy()
+        raise RuntimeError(
+            "local static condensation failed collectively: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(condensation_errors)
+                if error is not None
+            )
+        )
     preassembly_sync_started = perf_counter()
     comm.Barrier()
     preassembly_sync_seconds = float(
@@ -1469,6 +1615,15 @@ def build_unconstrained_assembly_time_condensation(
     active_interior_rows = interior_rows
     raw_class_count = int(raw_cache_audit["raw_tensor_class_count_sum"])
     oriented_class_count = int(comm.allreduce(len(schur_cache), op=MPI.SUM))
+    recovery_operator_residual = float(
+        comm.allreduce(local_recovery_operator_residual, op=MPI.MAX)
+    )
+    adjoint_operator_residual = float(
+        comm.allreduce(local_adjoint_operator_residual, op=MPI.MAX)
+    )
+    pivot_ratio_min = float(
+        comm.allreduce(local_pivot_ratio_min, op=MPI.MIN)
+    )
     return AssemblyTimeCondensedSystem(
         matrix=condensed,
         owned_trace_original_dofs=owned_trace,
@@ -1516,6 +1671,13 @@ def build_unconstrained_assembly_time_condensation(
             "axis_aligned_affine_geometry_verified": True,
             **raw_cache_audit,
             "oriented_schur_class_count_sum": oriented_class_count,
+            "interior_recovery_operator_residual_max": (
+                recovery_operator_residual
+            ),
+            "interior_adjoint_operator_residual_max": (
+                adjoint_operator_residual
+            ),
+            "interior_lu_pivot_ratio_min": pivot_ratio_min,
             "cell_kernel_evaluation_fraction": float(
                 raw_class_count / max(global_cells, 1)
             ),

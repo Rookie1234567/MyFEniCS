@@ -411,6 +411,7 @@ def _modal_projection_validation(
         operators,
         target=target,
         requested_modes=qep_requested_modes,
+        strict_profile=True,
     )
     basis = None
     base = None
@@ -424,6 +425,7 @@ def _modal_projection_validation(
             right_modes,
             adjoint_target=np.conj(target),
             requested_left_modes=qep_requested_modes,
+            strict_qep_profile=True,
         )
         base = ModalTraceProjection(
             spaces,
@@ -565,6 +567,12 @@ def _modal_projection_validation(
             "mode_count": len(base.right_traces),
             "qep_requested_modes": qep_requested_modes,
             "qep_converged_modes": int(solve_report.converged_modes),
+            "qep_solver_profiles": {
+                "right": solve_report.profile_provenance(),
+                "adjoint": (
+                    basis.adjoint_solver_report.profile_provenance()
+                ),
+            },
             "reconstruction_shape": list(base.reconstruction_shape),
             "projection_shape": list(base.projection_shape),
             "small_dense_gram_shape": list(base.small_dense_shape),

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -52,9 +54,185 @@ class TestTask030CleanSourceMetadata(unittest.TestCase):
             return cls.SHA
         if args == ("branch", "--show-current"):
             return "codex/task030"
+        if args in (
+            ("status", "--short"),
+            ("status", "--short", "--untracked-files=all"),
+        ):
+            return ""
         raise AssertionError(args)
 
-    def test_full_sha_attestation_marks_both_dirty_flags_false(self) -> None:
+    def test_start_capture_uses_complete_git_status_without_exclusions(self) -> None:
+        calls: list[tuple[str, ...]] = []
+
+        def git_output(*args: str) -> str:
+            calls.append(args)
+            return self._git_output(*args)
+
+        with mock.patch.object(
+            run_workstation_iterative,
+            "_git_output",
+            side_effect=git_output,
+        ):
+            metadata = run_workstation_iterative._runtime_metadata_rank0("command")
+        self.assertTrue(metadata["source_capture_ok"])
+        self.assertEqual(metadata["git_status_scope"], "full_repository")
+        self.assertEqual(metadata["git_status_excluded_runner_owned_paths"], [])
+        self.assertTrue(metadata["runner_owned_path_capture_ok"])
+        self.assertEqual(
+            metadata["tracked_source_verification"],
+            "local_git_status",
+        )
+        self.assertIn(("status", "--short"), calls)
+        self.assertIn(
+            ("status", "--short", "--untracked-files=all"),
+            calls,
+        )
+        self.assertFalse(
+            any(
+                argument.startswith(":(top,literal,exclude)")
+                for call in calls
+                for argument in call
+            )
+        )
+
+    def test_end_capture_excludes_only_exact_runner_owned_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+
+            def git(*args: str) -> None:
+                subprocess.run(
+                    ["git", *args],
+                    cwd=root,
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+
+            git("init", "-q")
+            git("config", "user.name", "Task036 Test")
+            git("config", "user.email", "task036@example.invalid")
+            records = root / "benchmarks" / "records"
+            records.mkdir(parents=True)
+            (root / "src").mkdir()
+            record = records / "run [owned] #1.json"
+            parameters = records / "run [owned] #1_parameters?.json"
+            progress = records / "run [owned] #1_progress*.json"
+            memory_stage = records / "run [owned] #1_memory stages!.jsonl"
+            record.write_text("baseline record\n", encoding="utf-8")
+            parameters.write_text("baseline parameters\n", encoding="utf-8")
+            git("add", "--", ".")
+            git("commit", "-q", "-m", "baseline")
+            owned_paths = (record, parameters, progress, memory_stage)
+
+            with (
+                mock.patch.object(
+                    run_workstation_iterative,
+                    "REPOSITORY_ROOT",
+                    root,
+                ),
+                mock.patch.dict(os.environ, {}, clear=False),
+            ):
+                for name in (
+                    "BENCHMARK_GIT_DIRTY",
+                    "BENCHMARK_COMMIT_SHA",
+                    "BENCHMARK_VERIFIED_CLEAN_SHA",
+                ):
+                    os.environ.pop(name, None)
+                start = run_workstation_iterative._runtime_metadata_rank0(
+                    "command"
+                )
+                self.assertFalse(start["git_dirty"])
+                self.assertFalse(start["tracked_source_dirty"])
+
+                record.write_text("runner record\n", encoding="utf-8")
+                parameters.write_text("runner parameters\n", encoding="utf-8")
+                progress.write_text("runner progress\n", encoding="utf-8")
+                memory_stage.write_text("runner stage\n", encoding="utf-8")
+
+                dirty_start = run_workstation_iterative._runtime_metadata_rank0(
+                    "command"
+                )
+                self.assertTrue(dirty_start["git_dirty"])
+                self.assertTrue(dirty_start["tracked_source_dirty"])
+
+                owned_only_end = (
+                    run_workstation_iterative._runtime_metadata_rank0(
+                        "command",
+                        runner_owned_paths=owned_paths,
+                    )
+                )
+                self.assertFalse(owned_only_end["git_dirty"])
+                self.assertFalse(owned_only_end["tracked_source_dirty"])
+                self.assertEqual(
+                    owned_only_end["git_status_scope"],
+                    "repository_except_exact_runner_outputs",
+                )
+                self.assertEqual(
+                    owned_only_end["git_status_excluded_runner_owned_paths"],
+                    [
+                        path.relative_to(root).as_posix()
+                        for path in owned_paths
+                    ],
+                )
+                self.assertTrue(
+                    run_workstation_iterative._source_identity_stable(
+                        start,
+                        owned_only_end,
+                    )
+                )
+                self.assertFalse(
+                    run_workstation_iterative._source_identity_stable(
+                        dirty_start,
+                        owned_only_end,
+                    )
+                )
+
+                (root / "src" / "other.py").write_text(
+                    "unrelated = True\n",
+                    encoding="utf-8",
+                )
+                unrelated_end = (
+                    run_workstation_iterative._runtime_metadata_rank0(
+                        "command",
+                        runner_owned_paths=owned_paths,
+                    )
+                )
+                self.assertTrue(unrelated_end["git_dirty"])
+                self.assertTrue(unrelated_end["tracked_source_dirty"])
+                self.assertFalse(
+                    run_workstation_iterative._source_identity_stable(
+                        start,
+                        unrelated_end,
+                    )
+                )
+
+    def test_owned_path_resolution_failure_is_recorded_fail_closed(self) -> None:
+        with (
+            mock.patch.object(
+                run_workstation_iterative,
+                "_git_output",
+                side_effect=self._git_output,
+            ),
+            mock.patch.object(
+                Path,
+                "resolve",
+                side_effect=OSError("owned path unavailable"),
+            ),
+        ):
+            metadata = run_workstation_iterative._runtime_metadata_rank0(
+                "command",
+                runner_owned_paths=(Path("owned output.json"),),
+            )
+        self.assertFalse(metadata["source_capture_ok"])
+        self.assertFalse(metadata["runner_owned_path_capture_ok"])
+        self.assertEqual(metadata["git_status_scope"], "full_repository")
+        self.assertEqual(metadata["git_status_excluded_runner_owned_paths"], [])
+        self.assertEqual(
+            metadata["provenance"],
+            "runtime_git_capture_unqualified",
+        )
+
+    def test_full_sha_attestation_records_measured_clean_source(self) -> None:
         with (
             mock.patch.dict(
                 run_workstation_iterative.os.environ,
@@ -68,14 +246,23 @@ class TestTask030CleanSourceMetadata(unittest.TestCase):
             ),
         ):
             metadata = run_workstation_iterative._runtime_metadata("command")
+        self.assertTrue(metadata["source_capture_ok"])
         self.assertFalse(metadata["git_dirty"])
         self.assertFalse(metadata["tracked_source_dirty"])
         self.assertEqual(
-            metadata["tracked_source_verification"], "host_git_clean_attestation"
+            metadata["tracked_source_verification"],
+            "host_git_clean_attestation",
         )
         self.assertEqual(metadata["verified_clean_sha"], self.SHA)
+        self.assertTrue(metadata["verified_clean_sha_match"])
+        self.assertEqual(metadata["provenance"], "clean_rerun")
+        self.assertEqual(metadata["environment_identity"]["petsc_scalar_type"], "complex128")
+        self.assertEqual(
+            metadata["container_image"],
+            metadata["environment_identity"]["container_image"],
+        )
 
-    def test_sha_attestation_must_match_mounted_head(self) -> None:
+    def test_sha_attestation_mismatch_is_recorded_without_losing_evidence(self) -> None:
         with (
             mock.patch.dict(
                 run_workstation_iterative.os.environ,
@@ -87,9 +274,256 @@ class TestTask030CleanSourceMetadata(unittest.TestCase):
                 "_git_output",
                 side_effect=self._git_output,
             ),
+        ):
+            metadata = run_workstation_iterative._runtime_metadata("command")
+        self.assertFalse(metadata["verified_clean_sha_match"])
+        self.assertEqual(metadata["provenance"], "runtime_git_capture_unqualified")
+        self.assertFalse(
+            run_workstation_iterative._source_identity_stable(
+                metadata, metadata
+            )
+        )
+
+    def test_dirty_source_and_head_drift_fail_stability(self) -> None:
+        start = {
+            "commit_sha": self.SHA,
+            "source_capture_ok": True,
+            "git_dirty": False,
+            "tracked_source_dirty": False,
+            "claimed_commit_match": True,
+            "verified_clean_sha_match": True,
+            "environment_identity": {"environment": "A"},
+        }
+        self.assertTrue(
+            run_workstation_iterative._source_identity_stable(start, dict(start))
+        )
+        self.assertFalse(
+            run_workstation_iterative._source_identity_stable(
+                start, {**start, "commit_sha": "b" * 40}
+            )
+        )
+        self.assertFalse(
+            run_workstation_iterative._source_identity_stable(
+                start, {**start, "tracked_source_dirty": True}
+            )
+        )
+        self.assertFalse(
+            run_workstation_iterative._source_identity_stable(
+                start,
+                {**start, "environment_identity": {"environment": "B"}},
+            )
+        )
+
+    def test_input_hash_is_canonical_and_sensitive(self) -> None:
+        first = run_workstation_iterative._input_config_sha256({"b": 2, "a": 1})
+        second = run_workstation_iterative._input_config_sha256({"a": 1, "b": 2})
+        changed = run_workstation_iterative._input_config_sha256({"a": 1, "b": 3})
+        self.assertEqual(first, second)
+        self.assertNotEqual(first, changed)
+
+    def test_end_state_rewrites_provenance_and_binds_input(self) -> None:
+        start = {
+            "commit_sha": self.SHA,
+            "source_capture_ok": True,
+            "git_dirty": False,
+            "tracked_source_dirty": False,
+            "claimed_commit_match": True,
+            "verified_clean_sha_match": True,
+            "environment_identity": {"environment": "A"},
+        }
+        clean = run_workstation_iterative._final_runtime_identity_metadata(
+            source_at_start=start,
+            source_at_end=dict(start),
+            input_config_sha256_at_start="input-a",
+            input_config_sha256_at_end="input-a",
+        )
+        self.assertEqual(clean["provenance"], "clean_rerun")
+        self.assertTrue(clean["source_qualified_for_formal"])
+
+        dirty_end = run_workstation_iterative._final_runtime_identity_metadata(
+            source_at_start=start,
+            source_at_end={**start, "tracked_source_dirty": True},
+            input_config_sha256_at_start="input-a",
+            input_config_sha256_at_end="input-a",
+        )
+        self.assertEqual(
+            dirty_end["provenance"], "runtime_git_capture_unqualified"
+        )
+        self.assertFalse(dirty_end["source_qualified_for_formal"])
+
+        input_drift = run_workstation_iterative._final_runtime_identity_metadata(
+            source_at_start=start,
+            source_at_end=dict(start),
+            input_config_sha256_at_start="input-a",
+            input_config_sha256_at_end="input-b",
+        )
+        self.assertTrue(input_drift["source_identity_stable"])
+        self.assertFalse(input_drift["input_config_stable"])
+        self.assertFalse(input_drift["source_qualified_for_formal"])
+
+    def test_start_attestation_mismatch_stops_before_assembly(self) -> None:
+        from argparse import Namespace
+
+        mismatch = {
+            "source_capture_ok": True,
+            "verified_clean_sha_valid": True,
+            "verified_clean_sha_match": False,
+            "claimed_commit_match": True,
+            "tracked_source_dirty": False,
+        }
+        with (
+            mock.patch.object(
+                run_workstation_iterative,
+                "_runtime_metadata",
+                return_value=mismatch,
+            ),
+            mock.patch.object(
+                run_workstation_iterative,
+                "assemble_target_stage4_system",
+            ) as assemble,
             self.assertRaisesRegex(RuntimeError, "does not match mounted HEAD"),
         ):
-            run_workstation_iterative._runtime_metadata("command")
+            run_workstation_iterative.run(Namespace(exact_command="worker"))
+        assemble.assert_not_called()
+
+        dirty = {
+            **mismatch,
+            "verified_clean_sha_match": True,
+            "tracked_source_dirty": True,
+        }
+        run_workstation_iterative._workstation_source_preflight(dirty)
+
+    def test_nonroot_receives_source_snapshot_without_git_capture(self) -> None:
+        expected = {"commit_sha": self.SHA, "tracked_source_dirty": False}
+
+        class NonRootComm:
+            rank = 1
+
+            @staticmethod
+            def bcast(payload, root=0):
+                assert root == 0
+                assert payload is None
+                return expected
+
+        with mock.patch.object(
+            run_workstation_iterative,
+            "_runtime_metadata_rank0",
+            side_effect=AssertionError("non-root must not query Git"),
+        ):
+            received = run_workstation_iterative._runtime_metadata(
+                "command", comm=NonRootComm()
+            )
+        self.assertEqual(received, expected)
+
+
+class TestWorkstationMemoryStageClaim(unittest.TestCase):
+    def test_claim_is_exclusive_and_preserves_existing(self) -> None:
+        from mpi4py import MPI
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output_dir = root / "records"
+            owner = output_dir / "record.json"
+            stage = output_dir / "record_memory_stages.jsonl"
+            run_workstation_iterative._claim_memory_stage_file(
+                MPI.COMM_SELF,
+                stage,
+                owner_path=owner,
+            )
+            self.assertEqual(stage.read_bytes(), b"")
+
+            sentinel = b'{"stage":"preserved"}\n'
+            with stage.open("ab") as stream:
+                stream.write(sentinel)
+            with self.assertRaisesRegex(RuntimeError, "FileExistsError"):
+                run_workstation_iterative._claim_memory_stage_file(
+                    MPI.COMM_SELF,
+                    stage,
+                    owner_path=owner,
+                )
+            self.assertEqual(stage.read_bytes(), sentinel)
+
+            with self.assertRaisesRegex(RuntimeError, "must differ"):
+                run_workstation_iterative._claim_memory_stage_file(
+                    MPI.COMM_SELF,
+                    owner,
+                    owner_path=owner,
+                )
+            external_stage = root / "other" / "memory_stages.jsonl"
+            run_workstation_iterative._claim_memory_stage_file(
+                MPI.COMM_SELF,
+                external_stage,
+                owner_path=owner,
+            )
+            self.assertEqual(external_stage.read_bytes(), b"")
+            run_workstation_iterative._claim_memory_stage_file(
+                MPI.COMM_SELF,
+                None,
+                owner_path=owner,
+            )
+
+
+class TestTask030WorkstationFormalQualification(unittest.TestCase):
+    GOOD_RTA = {
+        "R_total": 0.1,
+        "T_total": 0.6,
+        "A_volume_total": 0.3,
+        "energy_closure_error": 0.0,
+    }
+
+    def _qualify(self, **changes):
+        inputs = {
+            "qualified_profile": True,
+            "ksp_reason": 2,
+            "condensed_true_residual": 1.0e-8,
+            "full_augmented_true_residual": 1.0e-8,
+            "rta_candidate": self.GOOD_RTA,
+            "source_clean": True,
+        }
+        inputs.update(changes)
+        return run_workstation_iterative._workstation_formal_qualification(**inputs)
+
+    def test_each_solver_and_rta_gate_fails_closed(self) -> None:
+        failures = {
+            "ksp_reason": {"ksp_reason": -3},
+            "condensed_residual": {"condensed_true_residual": 1.05e-6},
+            "full_residual": {"full_augmented_true_residual": 1.05e-6},
+            "rta_missing": {"rta_candidate": None},
+            "energy_closure": {
+                "rta_candidate": {
+                    **self.GOOD_RTA,
+                    "energy_closure_error": 1.05e-6,
+                }
+            },
+        }
+        for name, changes in failures.items():
+            with self.subTest(name=name):
+                result = self._qualify(**changes)
+                self.assertFalse(result["formal_pass"])
+                self.assertEqual(
+                    run_workstation_iterative._workstation_exit_code(result), 2
+                )
+
+    def test_positive_case_is_formal_and_uses_frozen_energy_limit(self) -> None:
+        result = self._qualify()
+        self.assertEqual(result["status"], "formal_pass")
+        self.assertTrue(result["formal_pass"])
+        self.assertEqual(run_workstation_iterative._workstation_exit_code(result), 0)
+        self.assertEqual(
+            run_workstation_iterative.FORMAL_ENERGY_CLOSURE_LIMIT,
+            1.0e-6,
+        )
+        self.assertEqual(
+            run_workstation_iterative.FORMAL_TRUE_RESIDUAL_LIMIT,
+            1.0e-6,
+        )
+
+    def test_source_failure_preserves_numeric_and_physics_results(self) -> None:
+        result = self._qualify(source_clean=False)
+        self.assertEqual(result["status"], "controlled_negative_source_identity")
+        self.assertTrue(result["numeric_solver_pass"])
+        self.assertTrue(result["physics_pass"])
+        self.assertFalse(result["formal_pass"])
 
 
 class _FakeComm:

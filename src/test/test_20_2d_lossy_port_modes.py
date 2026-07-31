@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 import unittest
 
 import numpy as np
@@ -11,6 +12,9 @@ from src.postprocessing.power_metrics import (
     _modal_power_on_plane,
     _modal_power_factor,
     _positive_sqrt,
+    compute_dtn_auxiliary_power_metrics,
+    compute_dtn_port_power_metrics,
+    compute_te_dtn_port_power_metrics,
 )
 from src.solvers.solve_port_maxwell import _select_dtn_port_modes
 
@@ -73,6 +77,46 @@ class LossyPortModeTests(unittest.TestCase):
         self.assertEqual(
             _modal_power_on_plane(100.0, 0.5, boundary_coefficient, False), 0.0
         )
+
+    def test_serial_power_capability_uses_mesh_communicator(self):
+        mesh_data = SimpleNamespace(
+            mesh=SimpleNamespace(comm=SimpleNamespace(size=2))
+        )
+        cfg = SimpleNamespace(
+            compute_power_metrics=True,
+            port_boundary_model="dtn",
+            port_dtn_assembly="auxiliary",
+            use_pml=False,
+        )
+        field_sentinel = object()
+        calls = (
+            (
+                "tm_trace",
+                compute_dtn_port_power_metrics,
+                {},
+            ),
+            (
+                "tm_auxiliary",
+                compute_dtn_auxiliary_power_metrics,
+                {},
+            ),
+            (
+                "te_trace",
+                compute_te_dtn_port_power_metrics,
+                {},
+            ),
+        )
+        for name, function, modal_data in calls:
+            with self.subTest(path=name):
+                result = function(
+                    mesh_data,
+                    cfg,
+                    field_sentinel,
+                    object(),
+                    modal_data,
+                )
+                self.assertTrue(result["skipped"])
+                self.assertIn("serial", result["reason"])
 
 
 if __name__ == "__main__":

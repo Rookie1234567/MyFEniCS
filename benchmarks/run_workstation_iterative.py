@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 import platform
@@ -63,67 +64,222 @@ def _git_output(*args: str) -> str | None:
         return None
 
 
-def _runtime_metadata(command: str) -> dict[str, Any]:
+def _runtime_metadata_rank0(
+    command: str,
+    *,
+    runner_owned_paths: tuple[Path, ...] = (),
+) -> dict[str, Any]:
     dirty_override = os.environ.get("BENCHMARK_GIT_DIRTY")
     verified_clean_sha = os.environ.get("BENCHMARK_VERIFIED_CLEAN_SHA")
-    commit_sha = os.environ.get("BENCHMARK_COMMIT_SHA") or _git_output(
-        "rev-parse", "HEAD"
+    commit_sha = _git_output("rev-parse", "HEAD")
+    branch = _git_output("branch", "--show-current")
+    excluded_runner_owned_paths: list[str] = []
+    excluded_pathspecs: list[str] = []
+    runner_owned_path_capture_ok = True
+    for owned_path in runner_owned_paths:
+        try:
+            relative_path = owned_path.resolve(strict=False).relative_to(
+                REPOSITORY_ROOT
+            )
+        except (OSError, RuntimeError):
+            runner_owned_path_capture_ok = False
+            continue
+        except ValueError:
+            continue
+        relative_path_text = relative_path.as_posix()
+        excluded_runner_owned_paths.append(relative_path_text)
+        excluded_pathspecs.append(
+            f":(top,literal,exclude){relative_path_text}"
+        )
+    status_pathspecs = (
+        ("--", *excluded_pathspecs) if excluded_pathspecs else ()
     )
-    branch = os.environ.get("BENCHMARK_BRANCH") or _git_output(
-        "branch", "--show-current"
+    full_status = _git_output("status", "--short", *status_pathspecs)
+    tracked_status = _git_output(
+        "status",
+        "--short",
+        "--untracked-files=all",
+        *status_pathspecs,
     )
-    if commit_sha is None or branch is None:
-        raise RuntimeError("cannot verify benchmark source identity and cleanliness")
+    capture_ok = runner_owned_path_capture_ok and all(
+        value is not None
+        for value in (commit_sha, branch, full_status, tracked_status)
+    )
+    claimed_commit_sha = os.environ.get("BENCHMARK_COMMIT_SHA")
+    claimed_commit_match = (
+        None
+        if claimed_commit_sha is None or commit_sha is None
+        else claimed_commit_sha.lower() == commit_sha.lower()
+    )
+    verified_clean_sha_valid = None
+    verified_clean_sha_match = None
     if verified_clean_sha is not None:
         verified_clean_sha = verified_clean_sha.strip().lower()
-        if len(verified_clean_sha) != 40 or any(
+        verified_clean_sha_valid = len(verified_clean_sha) == 40 and not any(
             character not in "0123456789abcdef" for character in verified_clean_sha
-        ):
-            raise RuntimeError("clean-source attestation must be a full Git SHA")
-        if commit_sha.lower() != verified_clean_sha:
-            raise RuntimeError(
-                "clean-source attestation does not match mounted HEAD: "
-                f"expected {verified_clean_sha}, mounted {commit_sha}"
-            )
-        full_dirty = False
-        tracked_source_dirty = False
-        tracked_source_verification = "host_git_clean_attestation"
-    else:
-        full_status = _git_output("status", "--short")
-        tracked_status = _git_output("status", "--short", "--untracked-files=all")
-        if full_status is None or tracked_status is None:
-            raise RuntimeError(
-                "cannot verify benchmark source identity and cleanliness"
-            )
-        full_dirty = bool(full_status)
-        tracked_source_dirty = bool(tracked_status)
-        tracked_source_verification = "git_status_untracked_files_no"
-    return {
-        "commit_sha": commit_sha,
-        "branch": branch,
-        "git_dirty": (
-            dirty_override.lower() in {"1", "true", "yes"}
-            if dirty_override is not None
-            else full_dirty
-        ),
-        "tracked_source_dirty": tracked_source_dirty,
-        "tracked_source_verification": tracked_source_verification,
-        "verified_clean_sha": verified_clean_sha,
-        "command": command,
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "container_image": os.environ.get(
-            "BENCHMARK_CONTAINER_IMAGE",
-            os.environ.get("TASK031_CONTAINER_IMAGE", "unknown"),
-        ),
-        "container_digest": os.environ.get(
-            "BENCHMARK_CONTAINER_DIGEST",
-            os.environ.get("TASK031_IMAGE_DIGEST", "unknown"),
-        ),
-        "host_environment_id": os.environ.get("BENCHMARK_HOST_ID", platform.node()),
-        "provenance": "clean_rerun",
+        )
+        verified_clean_sha_match = bool(
+            verified_clean_sha_valid
+            and commit_sha is not None
+            and commit_sha.lower() == verified_clean_sha
+        )
+    dirty_attestation = bool(
+        dirty_override is not None
+        and dirty_override.lower() in {"1", "true", "yes"}
+    )
+    git_dirty = None if full_status is None else bool(full_status) or dirty_attestation
+    tracked_source_dirty = (
+        None if tracked_status is None else bool(tracked_status)
+    )
+    container_image = os.environ.get(
+        "BENCHMARK_CONTAINER_IMAGE",
+        os.environ.get("TASK031_CONTAINER_IMAGE", "unknown"),
+    )
+    container_digest = os.environ.get(
+        "BENCHMARK_CONTAINER_DIGEST",
+        os.environ.get("TASK031_IMAGE_DIGEST", "unknown"),
+    )
+    host_environment_id = os.environ.get("BENCHMARK_HOST_ID", platform.node())
+    environment_identity = {
+        "host_environment_id": host_environment_id,
+        "container_image": container_image,
+        "container_digest": container_digest,
         "kernel": platform.release(),
         "python": platform.python_version(),
         "numpy": np.__version__,
+        "petsc_scalar_type": np.dtype(PETSc.ScalarType).name,
+        "petsc_int_type": np.dtype(PETSc.IntType).name,
+    }
+    return {
+        "commit_sha": commit_sha,
+        "branch": branch,
+        "source_capture_ok": capture_ok,
+        "git_dirty": git_dirty,
+        "tracked_source_dirty": tracked_source_dirty,
+        "git_status_scope": (
+            "repository_except_exact_runner_outputs"
+            if excluded_runner_owned_paths
+            else "full_repository"
+        ),
+        "git_status_excluded_runner_owned_paths": excluded_runner_owned_paths,
+        "runner_owned_path_capture_ok": runner_owned_path_capture_ok,
+        "tracked_source_verification": (
+            "host_git_clean_attestation"
+            if verified_clean_sha is not None
+            else "local_git_status"
+        ),
+        "claimed_commit_sha": claimed_commit_sha,
+        "claimed_commit_match": claimed_commit_match,
+        "verified_clean_sha": verified_clean_sha,
+        "verified_clean_sha_valid": verified_clean_sha_valid,
+        "verified_clean_sha_match": verified_clean_sha_match,
+        "command": command,
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "container_image": container_image,
+        "container_digest": container_digest,
+        "host_environment_id": host_environment_id,
+        "kernel": environment_identity["kernel"],
+        "python": environment_identity["python"],
+        "numpy": environment_identity["numpy"],
+        "environment_identity": environment_identity,
+        "provenance": (
+            "clean_rerun"
+            if capture_ok
+            and git_dirty is False
+            and tracked_source_dirty is False
+            and claimed_commit_match is not False
+            and verified_clean_sha_match is not False
+            else "runtime_git_capture_unqualified"
+        ),
+    }
+
+
+def _runtime_metadata(
+    command: str,
+    *,
+    comm: MPI.Intracomm = MPI.COMM_WORLD,
+    runner_owned_paths: tuple[Path, ...] = (),
+) -> dict[str, Any]:
+    payload = (
+        _runtime_metadata_rank0(
+            command,
+            runner_owned_paths=runner_owned_paths,
+        )
+        if comm.rank == 0
+        else None
+    )
+    return comm.bcast(payload, root=0)
+
+
+def _workstation_source_preflight(source_at_start: dict[str, Any]) -> None:
+    if source_at_start.get("source_capture_ok") is not True:
+        raise RuntimeError("cannot verify benchmark source identity")
+    if source_at_start.get("verified_clean_sha_valid") is False:
+        raise RuntimeError("clean-source attestation must be a full Git SHA")
+    if source_at_start.get("verified_clean_sha_match") is False:
+        raise RuntimeError(
+            "clean-source attestation does not match mounted HEAD"
+        )
+    if source_at_start.get("claimed_commit_match") is False:
+        raise RuntimeError("claimed benchmark commit does not match mounted HEAD")
+
+
+def _source_identity_stable(
+    source_at_start: dict[str, Any], source_at_end: dict[str, Any]
+) -> bool:
+    return bool(
+        source_at_start.get("commit_sha") == source_at_end.get("commit_sha")
+        and source_at_start.get("source_capture_ok") is True
+        and source_at_end.get("source_capture_ok") is True
+        and source_at_start.get("git_dirty") is False
+        and source_at_end.get("git_dirty") is False
+        and source_at_start.get("tracked_source_dirty") is False
+        and source_at_end.get("tracked_source_dirty") is False
+        and source_at_start.get("claimed_commit_match") is not False
+        and source_at_end.get("claimed_commit_match") is not False
+        and source_at_start.get("verified_clean_sha_match") is not False
+        and source_at_end.get("verified_clean_sha_match") is not False
+        and source_at_start.get("environment_identity")
+        == source_at_end.get("environment_identity")
+    )
+
+
+def _input_config_sha256(config: dict[str, Any]) -> str:
+    encoded = json.dumps(
+        config,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=_json_default,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _final_runtime_identity_metadata(
+    *,
+    source_at_start: dict[str, Any],
+    source_at_end: dict[str, Any],
+    input_config_sha256_at_start: str,
+    input_config_sha256_at_end: str,
+) -> dict[str, Any]:
+    source_identity_stable = _source_identity_stable(
+        source_at_start, source_at_end
+    )
+    input_config_stable = (
+        input_config_sha256_at_start == input_config_sha256_at_end
+    )
+    runtime_identity_stable = source_identity_stable and input_config_stable
+    return {
+        "source_at_end": source_at_end,
+        "source_identity_stable": source_identity_stable,
+        "input_config_sha256_at_end": input_config_sha256_at_end,
+        "input_config_stable": input_config_stable,
+        "runtime_identity_stable": runtime_identity_stable,
+        "source_qualified_for_formal": runtime_identity_stable,
+        "provenance": (
+            "clean_rerun"
+            if runtime_identity_stable
+            else "runtime_git_capture_unqualified"
+        ),
     }
 
 
@@ -186,6 +342,31 @@ def _append_jsonl(path: Path, payload: Any) -> None:
     with path.open("a", encoding="utf-8") as stream:
         stream.write(json.dumps(payload, ensure_ascii=False, default=_json_default))
         stream.write("\n")
+
+
+def _claim_memory_stage_file(
+    comm: MPI.Intracomm,
+    stage_path: Path | None,
+    *,
+    owner_path: Path,
+) -> None:
+    error = None
+    if comm.rank == 0 and stage_path is not None:
+        try:
+            stage = Path(stage_path)
+            owner = Path(owner_path)
+            resolved_stage = stage.resolve(strict=False)
+            resolved_owner = owner.resolve(strict=False)
+            if resolved_stage == resolved_owner:
+                raise ValueError("memory-stage path must differ from owner path")
+            stage.parent.mkdir(parents=True, exist_ok=True)
+            with stage.open("x", encoding="utf-8"):
+                pass
+        except Exception as exc:
+            error = f"{type(exc).__name__}: {exc}"
+    error = comm.bcast(error, root=0)
+    if error is not None:
+        raise RuntimeError(f"Memory-stage claim failed: {error}")
 
 
 def _rss_mb(*, peak: bool) -> float:
@@ -586,28 +767,127 @@ def _official_rta(
         port_metrics=port,
         probe_metrics=None,
     )
+    R_total = port.get("R_total")
+    T_total = port.get("T_total")
+    A_volume_total = volume.get("A_volume_total")
+    closure_total = (
+        None
+        if not all(
+            isinstance(value, (int, float, np.number)) and np.isfinite(value)
+            for value in (R_total, T_total, A_volume_total)
+        )
+        else float(R_total + T_total + A_volume_total)
+    )
     return {
-        "R_total": port.get("R_total"),
-        "T_total": port.get("T_total"),
-        "A_volume_total": volume.get("A_volume_total"),
-        "R_plus_T_plus_A_volume": float(
-            port.get("R_plus_T", 0.0) + volume.get("A_volume_total", 0.0)
-        ),
+        "R_total": R_total,
+        "T_total": T_total,
+        "A_volume_total": A_volume_total,
+        "R_plus_T_plus_A_volume": closure_total,
         "energy_closure_error": volume.get("energy_closure_error_port_volume"),
+        "volume_absorption_status": volume.get("status"),
+        "volume_absorption_failures": volume.get("failures"),
         **_memory_fields("rta"),
     }
+
+
+FORMAL_ENERGY_CLOSURE_LIMIT = 1.0e-6
+FORMAL_TRUE_RESIDUAL_LIMIT = 1.0e-6
+
+
+def _workstation_formal_qualification(
+    *,
+    qualified_profile: bool,
+    ksp_reason: int,
+    condensed_true_residual: float,
+    full_augmented_true_residual: float,
+    rta_candidate: dict[str, Any] | None,
+    source_clean: bool,
+) -> dict[str, Any]:
+    numeric_checks = {
+        "ksp_converged": int(ksp_reason) > 0,
+        "condensed_true_residual": bool(
+            np.isfinite(condensed_true_residual)
+            and float(condensed_true_residual) <= FORMAL_TRUE_RESIDUAL_LIMIT
+        ),
+        "full_augmented_true_residual": bool(
+            np.isfinite(full_augmented_true_residual)
+            and float(full_augmented_true_residual) <= FORMAL_TRUE_RESIDUAL_LIMIT
+        ),
+    }
+    rta = rta_candidate if isinstance(rta_candidate, dict) else {}
+    physical_values = {
+        name: rta.get(name)
+        for name in ("R_total", "T_total", "A_volume_total")
+    }
+    physical_checks = {
+        "official_rta_complete_and_finite": bool(
+            len(rta) > 0
+            and all(
+                isinstance(value, (int, float, np.number))
+                and np.isfinite(value)
+                for value in physical_values.values()
+            )
+        ),
+        "energy_closure": bool(
+            isinstance(rta.get("energy_closure_error"), (int, float, np.number))
+            and np.isfinite(rta["energy_closure_error"])
+            and abs(float(rta["energy_closure_error"]))
+            <= FORMAL_ENERGY_CLOSURE_LIMIT
+        ),
+    }
+    numeric_solver_pass = all(numeric_checks.values())
+    physics_pass = all(physical_checks.values())
+    if not qualified_profile:
+        status = "experimental_unqualified"
+    elif not source_clean:
+        status = "controlled_negative_source_identity"
+    elif not numeric_solver_pass:
+        status = "numeric_not_pass"
+    elif not physics_pass:
+        status = "physics_not_pass"
+    else:
+        status = "formal_pass"
+    checks = {
+        "qualified_profile": bool(qualified_profile),
+        "source_clean": bool(source_clean),
+        **numeric_checks,
+        **physical_checks,
+    }
+    return {
+        "status": status,
+        "formal_pass": status == "formal_pass",
+        "numeric_solver_pass": numeric_solver_pass,
+        "physics_pass": physics_pass,
+        "checks": checks,
+        "failures": [name for name, passed in checks.items() if not passed],
+    }
+
+
+def _workstation_exit_code(qualification: dict[str, Any]) -> int:
+    return 0 if qualification.get("status") == "formal_pass" else 2
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
+    source_at_start = _runtime_metadata(args.exact_command)
+    _workstation_source_preflight(source_at_start)
+    input_config_sha256 = _input_config_sha256(args.resolved_config)
     case = args.case_label or f"workstation_p2_h{args.h_nm:g}".replace(".", "p")
     heavy_dir = Path(args.results_dir) / case
     record_path = Path(args.record)
     memory_stage_path = record_path.with_name(record_path.stem + "_memory_stages.jsonl")
-    if comm.rank == 0:
-        memory_stage_path.unlink(missing_ok=True)
-    comm.barrier()
+    runner_owned_paths = (
+        record_path,
+        record_path.with_name(record_path.stem + "_parameters.json"),
+        record_path.with_name(record_path.stem + "_progress.json"),
+        memory_stage_path,
+    )
+    _claim_memory_stage_file(
+        comm,
+        memory_stage_path,
+        owner_path=record_path,
+    )
     deviations = _qualification_deviations(args, comm.size)
     qualified_profile = not deviations
     if deviations:
@@ -907,11 +1187,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     pc_apply_count = coarse_context.apply_count - pc_apply_count_before_solve
     operator_apply_count = operator_context.apply_count - operator_apply_count_before_solve
     smoother_apply_count = smoother.apply_count - smoother_apply_count_before_solve
+    runtime_metadata = {
+        **source_at_start,
+        "input_config_sha256": input_config_sha256,
+    }
     result = {
         "benchmark_id": f"l3_iterative_h{args.h_nm:g}".replace(".", "p"),
         "case": case,
         "profile": args.profile,
-        "status": "pass" if qualified_profile else "experimental_unqualified",
+        "status": "numeric_pending",
         "qualified_profile": qualified_profile,
         "qualification_deviations": deviations,
         "resolved_config": args.resolved_config,
@@ -919,7 +1203,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "artifact_root": str(Path(args.results_dir)),
         "artifact_directory": str(heavy_dir),
         "record_path": str(record_path),
-        "metadata": _runtime_metadata(args.exact_command),
+        "metadata": runtime_metadata,
         "ordinary_default_changed": False,
         "h_nm": args.h_nm,
         "mpi_size": comm.size,
@@ -1014,15 +1298,49 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             retained_objects=["augmented_solution", "mesh", "space", "MPC", "modes"],
         )
         result.update(_memory_fields("after_solver_release"))
+    rta_candidate = None
     if full_residual <= args.rta_threshold:
-        result["official_rta"] = _official_rta(
+        rta_candidate = _official_rta(
             system, augmented, output_dir=heavy_dir / "rta"
         )
         result["peak_total_rss_including_rta_gb"] = max(
             result["final_peak_total_gb"],
-            result["official_rta"]["rta_peak_total_gb"],
+            rta_candidate["rta_peak_total_gb"],
         )
-        checkpoint("official_rta_complete", official_rta=result["official_rta"])
+        checkpoint("rta_candidate_complete", rta_candidate=rta_candidate)
+    source_at_end = _runtime_metadata(
+        args.exact_command,
+        runner_owned_paths=runner_owned_paths,
+    )
+    input_config_sha256_at_end = _input_config_sha256(args.resolved_config)
+    runtime_metadata.update(
+        _final_runtime_identity_metadata(
+            source_at_start=source_at_start,
+            source_at_end=source_at_end,
+            input_config_sha256_at_start=input_config_sha256,
+            input_config_sha256_at_end=input_config_sha256_at_end,
+        )
+    )
+    qualification = _workstation_formal_qualification(
+        qualified_profile=qualified_profile,
+        ksp_reason=ksp_reason,
+        condensed_true_residual=condensed_residual,
+        full_augmented_true_residual=full_residual,
+        rta_candidate=rta_candidate,
+        source_clean=runtime_metadata["runtime_identity_stable"],
+    )
+    result["status"] = qualification["status"]
+    result["formal_pass"] = qualification["formal_pass"]
+    result["numeric_solver_pass"] = qualification["numeric_solver_pass"]
+    result["physics_pass"] = qualification["physics_pass"]
+    result["formal_qualification"] = qualification
+    if qualification["formal_pass"]:
+        result["official_rta"] = rta_candidate
+    elif rta_candidate is not None:
+        result["diagnostic_rta"] = {
+            **rta_candidate,
+            "formal_gate": False,
+        }
     result["memory_checkpoints"] = memory_checkpoints
     _write_json(record_path, result)
     PETSc.Sys.Print(json.dumps(result, indent=2, default=_json_default))
@@ -1136,8 +1454,8 @@ def main() -> int:
         "BENCHMARK_EXACT_COMMAND",
         f"mpiexec -n {MPI.COMM_WORLD.size} " + shlex.join([sys.executable, *sys.argv]),
     )
-    run(args)
-    return 0
+    result = run(args)
+    return _workstation_exit_code(result)
 
 
 if __name__ == "__main__":

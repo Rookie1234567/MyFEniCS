@@ -128,6 +128,7 @@ def _solve_target(operators, target: complex, requested_modes: int) -> tuple[dic
         operators,
         target=target,
         requested_modes=requested_modes,
+        strict_profile=True,
     )
     elapsed = _max_elapsed(operators.K0.comm.tompi4py(), started)
     if not modes:
@@ -155,6 +156,7 @@ def _solve_target(operators, target: complex, requested_modes: int) -> tuple[dic
             "converged_modes": report.converged_modes,
             "iteration_count": report.iteration_count,
             "convergence_reason": report.convergence_reason,
+            "profile": report.profile_provenance(),
         },
         "elapsed_seconds_max_rank": elapsed,
         "ownership_by_rank": ownership_by_rank,

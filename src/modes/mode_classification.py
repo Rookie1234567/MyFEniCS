@@ -1525,6 +1525,7 @@ def build_biorthogonal_mode_basis(
     maximum_overlap_condition: float = 1.0e12,
     maximum_left_pair_relative_error: float = 1.0e-7,
     task036_scalar_stage4_partition_repair: bool = False,
+    strict_qep_profile: bool = False,
     poynting_evaluator: PoyntingFluxEvaluator | None = None,
     log=None,
 ) -> BiorthogonalModeBasis:
@@ -1581,6 +1582,7 @@ def build_biorthogonal_mode_basis(
             adjoint_operators,
             target=complex(adjoint_target),
             requested_modes=requested,
+            strict_profile=strict_qep_profile,
         )
         if log is not None:
             log("Task32 mode basis: adjoint QEP solve returned")

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 
 import numpy as np
 from dolfinx import mesh
@@ -27,6 +28,7 @@ from src.solvers.hcurl_variable_p_assembly import (
     retained_variable_p_owned_cell_schur_actions,
     variable_p_cell_interior_schur_bilinear,
 )
+from src.solvers import hcurl_variable_p_assembly as variable_p_assembly
 from src.solvers.hcurl_variable_p_local import project_p6_local_tensor
 
 
@@ -52,6 +54,29 @@ def _entity_map(msh, edge: int, face: int, cell: int):
 def _dense_p6_tensor() -> np.ndarray:
     values = np.linspace(0.1, 1.0, 882)
     return np.diag(2.0 + values) + 0.01 * np.outer(values, values)
+
+
+def _capturing_mat_factory(created: list[PETSc.Mat]):
+    original_mat = PETSc.Mat
+
+    class _Builder:
+        def __init__(self) -> None:
+            self._matrix = original_mat()
+
+        def createAIJ(self, *args, **kwargs):
+            matrix = self._matrix.createAIJ(*args, **kwargs)
+            created.append(matrix)
+            return matrix
+
+    class _Factory:
+        Option = original_mat.Option
+        InfoType = original_mat.InfoType
+        Structure = original_mat.Structure
+
+        def __call__(self):
+            return _Builder()
+
+    return _Factory()
 
 
 def _periodic_structural_nnz(constraints) -> int:
@@ -162,6 +187,22 @@ class Task035dVariablePPETScAssemblyTests(unittest.TestCase):
             self.assertEqual(system.build_audit["matrix_rows"], 432)
             self.assertEqual(system.build_audit["matrix_nnz"], 432**2)
             self.assertEqual(system.build_audit["matrix_mallocs"], 0)
+            self.assertLessEqual(
+                system.build_audit[
+                    "interior_recovery_operator_residual_max"
+                ],
+                5.0e-11,
+            )
+            self.assertLessEqual(
+                system.build_audit[
+                    "interior_adjoint_operator_residual_max"
+                ],
+                5.0e-11,
+            )
+            self.assertGreaterEqual(
+                system.build_audit["interior_lu_pivot_ratio_min"],
+                0.0,
+            )
             self.assertIsNone(
                 system.retained_local_schur_by_class
             )
@@ -437,6 +478,54 @@ class Task035dVariablePPETScAssemblyTests(unittest.TestCase):
                 )
         finally:
             periodic_system.destroy()
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 2,
+        "MPI2 collective variable-p local-condensation failure check",
+    )
+    def test_mpi2_local_condensation_failure_releases_matrix(self) -> None:
+        comm = MPI.COMM_WORLD
+        msh = mesh.create_unit_cube(
+            comm,
+            2,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+            ghost_mode=mesh.GhostMode.shared_facet,
+        )
+        entity_map = _entity_map(msh, 4, 4, 4)
+        tensor = _dense_p6_tensor().astype(np.complex128)
+        tensors = [tensor] * len(entity_map.owned_cells)
+        original = variable_p_assembly._checked_local_static_condensation
+
+        def injected_failure(*args, **kwargs):
+            raise RuntimeError("injected variable-p condensation failure")
+
+        replacement = injected_failure if comm.rank == 0 else original
+        created: list[PETSc.Mat] = []
+        factory = _capturing_mat_factory(created)
+        with mock.patch.object(variable_p_assembly.PETSc, "Mat", factory):
+            with mock.patch.object(
+                variable_p_assembly,
+                "_checked_local_static_condensation",
+                replacement,
+            ):
+                with self.assertRaises(RuntimeError) as caught:
+                    build_variable_p_condensed_trace_system(
+                        entity_map,
+                        tensors,
+                        tensor_class_keys=("shared",) * len(tensors),
+                    )
+        messages = comm.allgather(str(caught.exception))
+        self.assertEqual(len(set(messages)), 1)
+        self.assertIn(
+            "rank 0: RuntimeError: injected variable-p condensation failure",
+            messages[0],
+        )
+        self.assertEqual(len(created), 1)
+        self.assertEqual(int(created[0].handle), 0)
+        self.assertTrue(all(comm.allgather(int(created[0].handle) == 0)))
+        comm.Barrier()
 
     def test_periodic_rhs_schur_bilinear_and_full_recovery_are_exact(
         self,

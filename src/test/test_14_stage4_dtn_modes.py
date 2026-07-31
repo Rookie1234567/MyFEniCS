@@ -21,6 +21,7 @@ from src.solvers.dtn_port_3d import (
     _auxiliary_direct_tangential_projection_audit,
     _dtn_n0_trace_alias_preflight,
     _incident_projection_onto_top_mode,
+    _linear_residual,
     _mode_boundary_phase,
     _mode_power_at_boundary,
     _mode_projection_denominator,
@@ -68,6 +69,18 @@ def _grazing_fixture_b_cfg(**updates):
 
 
 class Stage4DtnModeTests(unittest.TestCase):
+    def test_linear_residual_releases_full_size_diagnostic_vector(self) -> None:
+        residual = mock.Mock()
+        residual.norm.return_value = 0.25
+        rhs = mock.Mock()
+        rhs.duplicate.return_value = residual
+        rhs.norm.return_value = 1.0
+        solution = mock.Mock()
+        solution.norm.return_value = 0.5
+        result = _linear_residual(mock.Mock(), rhs, solution)
+        self.assertEqual(result["linear_system_residual_norm"], 0.25)
+        residual.destroy.assert_called_once_with()
+
     @staticmethod
     def _alias_mode(n: int):
         return SimpleNamespace(

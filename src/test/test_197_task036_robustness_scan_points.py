@@ -17,6 +17,8 @@ from benchmarks.run_task036_robustness_scan import (
     _load_points,
     _mpi_binding_environment,
     _point_values,
+    _run_command,
+    _validate_parallel_policy,
 )
 
 
@@ -232,12 +234,40 @@ def test_task036_parallel_dispatch_reserves_five_disjoint_mpi8_cpu_sets(
     assert len(set().union(*map(set, cpu_sets))) == 40
 
 
+def test_task036_non_dry_parallel_heavy_dispatch_is_rejected() -> None:
+    with pytest.raises(SystemExit, match="aggregate cgroup/job-group"):
+        _validate_parallel_policy(2, dry_run=False)
+
+
+def test_task036_non_dry_single_heavy_dispatch_is_allowed() -> None:
+    _validate_parallel_policy(1, dry_run=False)
+
+
+def test_task036_dry_run_allows_five_planned_jobs() -> None:
+    _validate_parallel_policy(5, dry_run=True)
+
+
 def test_task036_mpi_binding_keeps_each_rank_inside_the_cpu_lease() -> None:
     assert _mpi_binding_environment(tuple(range(8, 16))) == {
         "OMPI_MCA_hwloc_base_cpu_list": "8,9,10,11,12,13,14,15",
         "OMPI_MCA_hwloc_base_binding_policy": "cpu-list:ordered",
         "OMPI_MCA_hwloc_base_report_bindings": "true",
     }
+
+
+def test_task036_existing_artifact_fails_closed(tmp_path: Path) -> None:
+    run_dir = tmp_path / "existing"
+    run_dir.mkdir()
+    result = _run_command(
+        point_id="fixture",
+        stage="full3d",
+        command=["false"],
+        run_dir=run_dir,
+        cpu_set=(0,),
+    )
+    assert result["status"] == "failed"
+    assert result["failure_kind"] == "existing_artifact_requires_validation"
+    assert result["return_code"] is None
 
 
 def test_task036_parallel_dispatch_fails_closed_when_cpus_are_insufficient(

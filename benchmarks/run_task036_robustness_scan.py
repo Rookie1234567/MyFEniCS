@@ -247,7 +247,12 @@ def _run_command(
         return {
             "point_id": point_id,
             "stage": stage,
-            "status": "existing_artifact_not_rerun",
+            "status": "failed",
+            "failure_kind": "existing_artifact_requires_validation",
+            "failure_detail": (
+                "Task036 does not reuse an existing run directory without an "
+                "independent schema/source/input/status/hash validator."
+            ),
             "return_code": None,
             "run_dir": str(run_dir),
             "exclusive_cpu_set": list(cpu_set),
@@ -340,6 +345,16 @@ def _run_batch(jobs: list[dict[str, Any]], max_parallel: int) -> list[dict[str, 
     return sorted(results, key=lambda result: result["point_id"])
 
 
+def _validate_parallel_policy(max_parallel: int, *, dry_run: bool) -> None:
+    if not 1 <= max_parallel <= 5:
+        raise SystemExit("--max-parallel must lie in [1, 5].")
+    if not dry_run and max_parallel != 1:
+        raise SystemExit(
+            "Task036 heavy dispatch requires --max-parallel=1 until an "
+            "aggregate cgroup/job-group memory coordinator is qualified."
+        )
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Task036 V2 frozen-point Full3D-before-Hybrid dispatcher."
@@ -365,8 +380,7 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
-    if not 1 <= args.max_parallel <= 5:
-        raise SystemExit("--max-parallel must lie in [1, 5].")
+    _validate_parallel_policy(args.max_parallel, dry_run=args.dry_run)
     if args.limit is not None and args.limit <= 0:
         raise SystemExit("--limit must be positive.")
     if args.timeout_seconds <= 0.0:

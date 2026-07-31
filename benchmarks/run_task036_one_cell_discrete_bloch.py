@@ -380,6 +380,7 @@ def _mode_basis(
         operators,
         target=target,
         requested_modes=candidate_modes,
+        strict_profile=True,
     )
     right, selection = select_passive_direction_modes(
         right,
@@ -404,6 +405,7 @@ def _mode_basis(
         near_degenerate_tolerance=1.0e-6,
         block_rotation_tolerance=1.0e-6,
         task036_scalar_stage4_partition_repair=True,
+        strict_qep_profile=True,
         poynting_evaluator=poynting,
         log=lambda message: _progress(comm, message),
     )
@@ -426,6 +428,10 @@ def _mode_basis(
             "solver_converged": int(solve_report.converged_modes),
             "requested_modes": requested_modes,
             "candidate_modes": candidate_modes,
+            "right": solve_report.profile_provenance(),
+            "adjoint": (
+                positive.adjoint_solver_report.profile_provenance()
+            ),
             "selected_indices": list(selection.selected_candidate_indices),
             "positive_groups": [
                 list(group.indices) for group in positive.groups

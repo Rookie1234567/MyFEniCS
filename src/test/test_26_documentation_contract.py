@@ -72,6 +72,9 @@ ACTIVE_RESEARCH_CASES = {
     "096_hybrid_channel_memory_closure",
     "097_goal_oriented_exact_sequence_hp_adaptivity",
 }
+EVIDENCE_ONLY_FIXTURE_CASES = {
+    "099_strong_trace_hybrid_fixture",
+}
 
 RECORDED_CASES = {
     "002_2d_tm_dtn_equivalence": (
@@ -272,12 +275,18 @@ class DocumentationContractTests(unittest.TestCase):
 
     def test_numbered_benchmark_cases_use_case_contained_contracts(self):
         cases_root = ROOT / "benchmarks" / "cases"
-        observed = {path.name for path in cases_root.iterdir() if path.is_dir()}
+        observed = {
+            path.name
+            for path in cases_root.iterdir()
+            if path.is_dir()
+            and any(entry.name != "__pycache__" for entry in path.iterdir())
+        }
         self.assertEqual(
             observed,
             QUALIFIED_OR_FROZEN_CASES
             | STAGING_OR_IN_PROGRESS_CASES
-            | ACTIVE_RESEARCH_CASES,
+            | ACTIVE_RESEARCH_CASES
+            | EVIDENCE_ONLY_FIXTURE_CASES,
         )
         required_sections = (
             "## 物理问题",
@@ -551,6 +560,12 @@ class DocumentationContractTests(unittest.TestCase):
                         readme,
                     )
                 self.assertIn("MPI8", readme)
+
+        for case in sorted(EVIDENCE_ONLY_FIXTURE_CASES):
+            folder = cases_root / case
+            with self.subTest(case=case):
+                self.assertTrue((folder / "README.md").is_file())
+                self.assertTrue((folder / "records").is_dir())
 
     def test_recorded_and_test_backed_case_files_are_explicit(self):
         cases_root = ROOT / "benchmarks" / "cases"

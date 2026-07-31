@@ -5,14 +5,18 @@ import json
 from mpi4py import MPI
 
 from ..common.config import SimulationConfig, project_root
-from ..common.output_paths import unique_run_dir
+from ..common.output_paths import shared_unique_run_dir
 from ..solvers.solve_vector_maxwell import _json_default, run_case
 
 
 def main() -> None:
     root = project_root()
     cfg = SimulationConfig(case_name="air_substrate_grating_mpc_official")
-    out_dir = unique_run_dir(root / "results", cfg.case_name)
+    out_dir = shared_unique_run_dir(
+        MPI.COMM_WORLD,
+        root / "results",
+        cfg.case_name,
+    )
     summary = run_case(
         cfg,
         out_dir,

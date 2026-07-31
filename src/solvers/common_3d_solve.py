@@ -599,12 +599,16 @@ def _petsc_object_norm(obj, names: tuple[str, ...]) -> float | None:
 def _assembled_rhs_norm(L) -> float | None:
     """Assemble the original, unconstrained RHS for serial/MPI comparison."""
 
+    vec = None
     try:
         vec = fem_petsc.assemble_vector(fem.form(L))
         vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
         return _petsc_object_norm(vec, ("NORM_2",))
     except Exception:
         return None
+    finally:
+        if vec is not None:
+            vec.destroy()
 
 
 def _linear_system_diagnostics(A, b, x) -> dict[str, float | None]:
@@ -614,6 +618,7 @@ def _linear_system_diagnostics(A, b, x) -> dict[str, float | None]:
     solution_norm = _petsc_object_norm(x, ("NORM_2",))
     residual_norm = None
     relative_residual = None
+    residual = None
     try:
         residual = b.duplicate()
         A.mult(x, residual)
@@ -624,6 +629,9 @@ def _linear_system_diagnostics(A, b, x) -> dict[str, float | None]:
     except Exception:
         residual_norm = None
         relative_residual = None
+    finally:
+        if residual is not None:
+            residual.destroy()
     return {
         "linear_system_rhs_norm": rhs_norm,
         "linear_system_solution_norm": solution_norm,

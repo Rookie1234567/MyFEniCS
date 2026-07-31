@@ -28,7 +28,9 @@
 | [`094`](094_hcurl_goal_oriented_adaptivity/README.md) | Task035 H(curl) goal-oriented adaptivity | research baseline | periodic tetra、DWR/R5、one-local-h 和 fixed-mesh p-up |
 | [`095`](095_high_order_local_hp_resource_envelope/README.md) | Task035b 高阶 local-hp 与资源包络 | closed with controlled negatives | p6 static、setup/cache、directional-z、selective capability、iterative negatives 与 H1-A |
 | [`096`](096_hybrid_channel_memory_closure/README.md) | Task035c Hybrid 逐通道与静态凝聚内存闭合 | 12/12+12/12；mandatory memory success；50% gap | p2/h5 离散 phase/traction 根因；p6/h10 MPI8 六路径；M120 static peak -31.89% |
+| [`097`](097_goal_oriented_exact_sequence_hp_adaptivity/README.md) | Task035d goal-oriented exact-sequence local-h/p | research partial with controlled negatives | local-p/local-h capability、自动循环受控负结果与最终 lane closure |
+| [`099`](099_strong_trace_hybrid_fixture/README.md) | Task036 strong-trace Hybrid 轻量夹具 | evidence-only fixture；not production benchmark | exact trace、接口行映射、Floquet 方向及 standard/static 代数证据 |
 
-每个 README 使用相同 22 项契约，并在表后展开物理问题、参数、PyCharm、CLI、代码路径、结果、解释和限制。Recorded case 至少包含 `config.json`、`expected.json`、可执行 `run.sh` 与 `records/`；纯代数 case 用 `fixture.json` 和 `test_command.txt` 代替几何配置。缺少 record 的 case 仍有价值：它明确告诉维护者还差什么证据，防止能力矩阵把“代码存在”写成“工程已验证”。
+Qualified、recorded 和 active-research case 的 README 使用相同 22 项契约，并在表后展开物理问题、参数、PyCharm、CLI、代码路径、结果、解释和限制；evidence-only fixture 只使用与其轻量证据范围相符的窄合同，不因此获得 production benchmark 身份。Recorded case 至少包含 `config.json`、`expected.json`、可执行 `run.sh` 与 `records/`；纯代数 case 用 `fixture.json` 和 `test_command.txt` 代替几何配置。缺少 record 的 case 仍有价值：它明确告诉维护者还差什么证据，防止能力矩阵把“代码存在”写成“工程已验证”。
 
 canonical lightweight record 可以提交 Git；完整 mesh、field、VTU 和长日志必须写到 gitignored `benchmarks/artifacts/`。Case021/031 的 case-local reference 通过 SHA-256 指向顶层既有 records，避免复制两份数值产生漂移。

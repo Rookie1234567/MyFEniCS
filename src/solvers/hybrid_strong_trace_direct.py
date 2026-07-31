@@ -1000,15 +1000,19 @@ def build_hybrid_strong_trace_direct_system(
 
 def _modal_vector(matrix: PETSc.Mat, values: np.ndarray) -> PETSc.Vec:
     vector = matrix.createVecRight()
-    vector.set(PETSc.ScalarType(0.0))
-    first, last = vector.getOwnershipRange()
-    if last > first:
-        vector.setValues(
-            np.arange(first, last, dtype=PETSc.IntType),
-            np.asarray(values[first:last], dtype=PETSc.ScalarType),
-        )
-    vector.assemble()
-    return vector
+    try:
+        vector.set(PETSc.ScalarType(0.0))
+        first, last = vector.getOwnershipRange()
+        if last > first:
+            vector.setValues(
+                np.arange(first, last, dtype=PETSc.IntType),
+                np.asarray(values[first:last], dtype=PETSc.ScalarType),
+            )
+        vector.assemble()
+        return vector
+    except Exception:
+        vector.destroy()
+        raise
 
 
 def _reconstruct_local_carrier(
@@ -1022,61 +1026,74 @@ def _reconstruct_local_carrier(
     coupling: HybridInternalModeCoupling,
 ) -> tuple[PETSc.Vec, np.ndarray]:
     carrier = system.b.duplicate()
-    carrier.set(PETSc.ScalarType(0.0))
-    rank = layout.comm.rank
-    retained = interface.retained_rows_by_rank[rank]
-    source_rows = (
-        layout.map_bottom(retained)
-        if side == "bottom"
-        else layout.map_top(retained)
-    )
-    if len(retained):
-        carrier.setValues(
-            retained,
-            monolithic.getValues(source_rows),
-            addv=PETSc.InsertMode.INSERT_VALUES,
-        )
-    carrier.assemble()
-    count = coupling.mode_count_per_direction
-    negative_map = np.asarray(
-        coupling.negative_trace_to_positive, dtype=np.complex128
-    )
-    if side == "bottom":
-        trace_coefficients = (
-            modal[:count]
-            + negative_map
-            @ (
-                np.asarray(coupling.propagation.backward.factors)
-                * modal[count:]
-            )
-        )
-    else:
-        trace_coefficients = (
-            np.asarray(coupling.propagation.forward.factors)
-            * modal[:count]
-            + negative_map @ modal[count:]
-        )
-    modal_vector = _modal_vector(
-        interface.right_prolongation, trace_coefficients
-    )
-    trace_vector = interface.right_prolongation.createVecLeft()
+    modal_vector = None
+    trace_vector = None
+    success = False
     try:
+        carrier.set(PETSc.ScalarType(0.0))
+        rank = layout.comm.rank
+        retained = interface.retained_rows_by_rank[rank]
+        source_rows = (
+            layout.map_bottom(retained)
+            if side == "bottom"
+            else layout.map_top(retained)
+        )
+        if len(retained):
+            carrier.setValues(
+                retained,
+                monolithic.getValues(source_rows),
+                addv=PETSc.InsertMode.INSERT_VALUES,
+            )
+        carrier.assemble()
+        count = coupling.mode_count_per_direction
+        negative_map = np.asarray(
+            coupling.negative_trace_to_positive, dtype=np.complex128
+        )
+        if side == "bottom":
+            trace_coefficients = (
+                modal[:count]
+                + negative_map
+                @ (
+                    np.asarray(coupling.propagation.backward.factors)
+                    * modal[count:]
+                )
+            )
+        else:
+            trace_coefficients = (
+                np.asarray(coupling.propagation.forward.factors)
+                * modal[:count]
+                + negative_map @ modal[count:]
+            )
+        modal_vector = _modal_vector(
+            interface.right_prolongation, trace_coefficients
+        )
+        trace_vector = interface.right_prolongation.createVecLeft()
         interface.right_prolongation.mult(modal_vector, trace_vector)
         carrier.axpy(PETSc.ScalarType(1.0), trace_vector)
+        success = True
+        return carrier, np.asarray(trace_coefficients, dtype=np.complex128)
     finally:
-        trace_vector.destroy()
-        modal_vector.destroy()
-    return carrier, np.asarray(trace_coefficients, dtype=np.complex128)
+        if trace_vector is not None:
+            trace_vector.destroy()
+        if modal_vector is not None:
+            modal_vector.destroy()
+        if not success:
+            carrier.destroy()
 
 
 def _modal_action(matrix: PETSc.Mat, values: np.ndarray) -> PETSc.Vec:
     source = _modal_vector(matrix, values)
-    result = matrix.createVecLeft()
+    result = None
+    success = False
     try:
+        result = matrix.createVecLeft()
         matrix.mult(source, result)
+        success = True
+        return result
     finally:
         source.destroy()
-    return result
+        if result is not None and not success:
+            result.destroy()
 
 
 def _subset_norm(vector: PETSc.Vec, rows: np.ndarray) -> float:
@@ -1151,16 +1168,29 @@ def _side_strong_residual(
     positive_values: np.ndarray,
     negative_values: np.ndarray,
 ) -> dict[str, Any]:
-    operator = system.A.createVecLeft()
-    residual = system.A.createVecLeft()
-    positive = _modal_action(block.positive_traction, positive_values)
-    negative = _modal_action(block.negative_traction, negative_values)
-    expected_trace_source = _modal_vector(
-        interface.right_prolongation, trace_coefficients
-    )
-    expected_trace = interface.right_prolongation.createVecLeft()
-    trace_difference = carrier.duplicate()
+    operator = None
+    residual = None
+    positive = None
+    negative = None
+    expected_trace_source = None
+    expected_trace = None
+    trace_difference = None
+    petrov_h = None
+    petrov = None
+    petrov_operator = None
+    petrov_rhs = None
+    petrov_positive = None
+    petrov_negative = None
     try:
+        operator = system.A.createVecLeft()
+        residual = system.A.createVecLeft()
+        positive = _modal_action(block.positive_traction, positive_values)
+        negative = _modal_action(block.negative_traction, negative_values)
+        expected_trace_source = _modal_vector(
+            interface.right_prolongation, trace_coefficients
+        )
+        expected_trace = interface.right_prolongation.createVecLeft()
+        trace_difference = carrier.duplicate()
         system.A.mult(carrier, operator)
         operator.copy(residual)
         residual.axpy(PETSc.ScalarType(-1.0), system.b)
@@ -1187,27 +1217,19 @@ def _side_strong_residual(
         petrov_rhs = petrov_h.createVecLeft()
         petrov_positive = petrov_h.createVecLeft()
         petrov_negative = petrov_h.createVecLeft()
-        try:
-            petrov_h.mult(residual, petrov)
-            petrov_h.mult(operator, petrov_operator)
-            petrov_h.mult(system.b, petrov_rhs)
-            petrov_h.mult(positive, petrov_positive)
-            petrov_h.mult(negative, petrov_negative)
-            petrov_absolute = float(petrov.norm())
-            petrov_scale = max(
-                float(petrov_operator.norm()),
-                float(petrov_rhs.norm()),
-                float(petrov_positive.norm()),
-                float(petrov_negative.norm()),
-                1.0e-30,
-            )
-        finally:
-            petrov_negative.destroy()
-            petrov_positive.destroy()
-            petrov_rhs.destroy()
-            petrov_operator.destroy()
-            petrov.destroy()
-            petrov_h.destroy()
+        petrov_h.mult(residual, petrov)
+        petrov_h.mult(operator, petrov_operator)
+        petrov_h.mult(system.b, petrov_rhs)
+        petrov_h.mult(positive, petrov_positive)
+        petrov_h.mult(negative, petrov_negative)
+        petrov_absolute = float(petrov.norm())
+        petrov_scale = max(
+            float(petrov_operator.norm()),
+            float(petrov_rhs.norm()),
+            float(petrov_positive.norm()),
+            float(petrov_negative.norm()),
+            1.0e-30,
+        )
 
         global_scale = max(
             float(operator.norm()),
@@ -1269,13 +1291,23 @@ def _side_strong_residual(
         )
         return result
     finally:
-        trace_difference.destroy()
-        expected_trace.destroy()
-        expected_trace_source.destroy()
-        negative.destroy()
-        positive.destroy()
-        residual.destroy()
-        operator.destroy()
+        for owned in (
+            petrov_negative,
+            petrov_positive,
+            petrov_rhs,
+            petrov_operator,
+            petrov,
+            petrov_h,
+            trace_difference,
+            expected_trace,
+            expected_trace_source,
+            negative,
+            positive,
+            residual,
+            operator,
+        ):
+            if owned is not None:
+                owned.destroy()
 
 
 @dataclass
@@ -1341,6 +1373,8 @@ class HybridStrongTraceDirectSolution:
             return
         self.bottom.destroy()
         self.top.destroy()
+        self.bottom_recovered = None
+        self.top_recovered = None
         self.release_factorization()
         self._destroyed = True
 
@@ -1426,24 +1460,29 @@ def recover_hybrid_strong_trace_static_fields(
                 "Strong-trace static recovery completed on only one side."
             )
         return
-    bottom_recovered = _replace_recovered_residual(
-        recover_hybrid_static_local_field(
-            bottom_system,
-            coupling,
-            solution.bottom,
-            solution.modal_amplitudes,
-        ),
-        solution.strong_residuals["bottom"],
-    )
-    top_recovered = _replace_recovered_residual(
-        recover_hybrid_static_local_field(
-            top_system,
-            coupling,
-            solution.top,
-            solution.modal_amplitudes,
-        ),
-        solution.strong_residuals["top"],
-    )
+    bottom_recovered = None
+    try:
+        bottom_recovered = _replace_recovered_residual(
+            recover_hybrid_static_local_field(
+                bottom_system,
+                coupling,
+                solution.bottom,
+                solution.modal_amplitudes,
+            ),
+            solution.strong_residuals["bottom"],
+        )
+        top_recovered = _replace_recovered_residual(
+            recover_hybrid_static_local_field(
+                top_system,
+                coupling,
+                solution.top,
+                solution.modal_amplitudes,
+            ),
+            solution.strong_residuals["top"],
+        )
+    except Exception:
+        bottom_recovered = None
+        raise
     solution.bottom_recovered = bottom_recovered
     solution.top_recovered = top_recovered
 
@@ -1460,94 +1499,112 @@ def solve_hybrid_strong_trace_direct(
 
     comm = strong_system.layout.comm
     ksp = PETSc.KSP().create(comm)
-    ksp.setType(PETSc.KSP.Type.PREONLY)
-    ksp.setErrorIfNotConverged(True)
-    pc = ksp.getPC()
-    pc.setType(PETSc.PC.Type.LU)
-    pc.setFactorSolverType("mumps")
-    ksp.setOperators(strong_system.A)
-    setup_started = time.perf_counter()
-    ksp.setUp()
-    setup_seconds = float(
-        comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX)
-    )
-    x = strong_system.b.duplicate()
-    solve_started = time.perf_counter()
-    ksp.solve(strong_system.b, x)
-    solve_seconds = float(
-        comm.allreduce(time.perf_counter() - solve_started, op=MPI.MAX)
-    )
-    residual = strong_system.b.duplicate()
+    x = None
+    bottom = None
+    top = None
     try:
-        strong_system.A.mult(x, residual)
-        residual.axpy(PETSc.ScalarType(-1.0), strong_system.b)
-        relative = float(
-            residual.norm() / max(strong_system.b.norm(), 1.0e-30)
+        ksp.setType(PETSc.KSP.Type.PREONLY)
+        ksp.setErrorIfNotConverged(True)
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.LU)
+        pc.setFactorSolverType("mumps")
+        ksp.setOperators(strong_system.A)
+        setup_started = time.perf_counter()
+        ksp.setUp()
+        setup_seconds = float(
+            comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX)
         )
-    finally:
-        residual.destroy()
-    modal = _modal_from_monolithic(strong_system.layout, x)
-    bottom, bottom_trace = _reconstruct_local_carrier(
-        bottom_system,
-        strong_system.bottom_interface,
-        strong_system.layout,
-        x,
-        modal,
-        side="bottom",
-        coupling=coupling,
-    )
-    top, top_trace = _reconstruct_local_carrier(
-        top_system,
-        strong_system.top_interface,
-        strong_system.layout,
-        x,
-        modal,
-        side="top",
-        coupling=coupling,
-    )
-    count = coupling.mode_count_per_direction
-    forward = np.asarray(coupling.propagation.forward.factors)
-    backward = np.asarray(coupling.propagation.backward.factors)
-    strong_residuals = {
-        "bottom": _side_strong_residual(
+        x = strong_system.b.duplicate()
+        solve_started = time.perf_counter()
+        ksp.solve(strong_system.b, x)
+        solve_seconds = float(
+            comm.allreduce(time.perf_counter() - solve_started, op=MPI.MAX)
+        )
+        residual = strong_system.b.duplicate()
+        try:
+            strong_system.A.mult(x, residual)
+            residual.axpy(PETSc.ScalarType(-1.0), strong_system.b)
+            relative = float(
+                residual.norm() / max(strong_system.b.norm(), 1.0e-30)
+            )
+        finally:
+            residual.destroy()
+        modal = _modal_from_monolithic(strong_system.layout, x)
+        bottom, bottom_trace = _reconstruct_local_carrier(
             bottom_system,
             strong_system.bottom_interface,
-            coupling.bottom,
-            bottom,
-            bottom_trace,
-            modal[:count],
-            backward * modal[count:],
-        ),
-        "top": _side_strong_residual(
+            strong_system.layout,
+            x,
+            modal,
+            side="bottom",
+            coupling=coupling,
+        )
+        top, top_trace = _reconstruct_local_carrier(
             top_system,
             strong_system.top_interface,
-            coupling.top,
-            top,
-            top_trace,
-            forward * modal[:count],
-            modal[count:],
-        ),
-    }
-    result = HybridStrongTraceDirectSolution(
-        x=x,
-        ksp=ksp,
-        bottom=bottom,
-        top=top,
-        modal_amplitudes=modal,
-        relative_residual=relative,
-        setup_seconds=setup_seconds,
-        solve_seconds=solve_seconds,
-        converged_reason=int(ksp.getConvergedReason()),
-        strong_residuals=strong_residuals,
-    )
-    if recover_static:
-        recover_hybrid_strong_trace_static_fields(
-            result,
-            bottom_system,
-            top_system,
-            coupling,
+            strong_system.layout,
+            x,
+            modal,
+            side="top",
+            coupling=coupling,
         )
-    return result
+        count = coupling.mode_count_per_direction
+        forward = np.asarray(coupling.propagation.forward.factors)
+        backward = np.asarray(coupling.propagation.backward.factors)
+        strong_residuals = {
+            "bottom": _side_strong_residual(
+                bottom_system,
+                strong_system.bottom_interface,
+                coupling.bottom,
+                bottom,
+                bottom_trace,
+                modal[:count],
+                backward * modal[count:],
+            ),
+            "top": _side_strong_residual(
+                top_system,
+                strong_system.top_interface,
+                coupling.top,
+                top,
+                top_trace,
+                forward * modal[:count],
+                modal[count:],
+            ),
+        }
+        result = HybridStrongTraceDirectSolution(
+            x=x,
+            ksp=ksp,
+            bottom=bottom,
+            top=top,
+            modal_amplitudes=modal,
+            relative_residual=relative,
+            setup_seconds=setup_seconds,
+            solve_seconds=solve_seconds,
+            converged_reason=int(ksp.getConvergedReason()),
+            strong_residuals=strong_residuals,
+        )
+        if recover_static:
+            recover_hybrid_strong_trace_static_fields(
+                result,
+                bottom_system,
+                top_system,
+                coupling,
+            )
+        x = None
+        ksp = None
+        bottom = None
+        top = None
+        return result
+    except Exception:
+        if bottom is not None:
+            bottom.destroy()
+        if top is not None:
+            top.destroy()
+        if x is not None:
+            x.destroy()
+        if ksp is not None:
+            ksp.destroy()
+        raise
 
 
 def evaluate_hybrid_strong_trace_solution(

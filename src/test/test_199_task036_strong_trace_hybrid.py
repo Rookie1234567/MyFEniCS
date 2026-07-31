@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import gc
 from time import perf_counter
 from types import SimpleNamespace
 import unittest
+from unittest import mock
+import weakref
 
 import numpy as np
 from dolfinx import fem
@@ -561,6 +564,135 @@ class Task036StrongTraceBackendFixtureTests(unittest.TestCase):
                 static["port_power"][key],
                 places=9,
             )
+
+
+class Task036StrongTraceOwnershipTests(unittest.TestCase):
+    def test_strong_helper_partial_failures_release_owned_objects(self):
+        from src.solvers import hybrid_strong_trace_direct as strong
+
+        carrier = mock.Mock()
+        modal_vector = mock.Mock()
+        interface = SimpleNamespace(
+            retained_rows_by_rank=(np.zeros(0, dtype=np.int32),),
+            right_prolongation=mock.Mock(),
+        )
+        interface.right_prolongation.createVecLeft.side_effect = RuntimeError(
+            "controlled trace vector creation failure"
+        )
+        layout = SimpleNamespace(
+            comm=SimpleNamespace(rank=0),
+            map_bottom=lambda rows: rows,
+            map_top=lambda rows: rows,
+        )
+        coupling = SimpleNamespace(
+            mode_count_per_direction=1,
+            negative_trace_to_positive=np.eye(1),
+            propagation=SimpleNamespace(
+                forward=SimpleNamespace(factors=np.ones(1)),
+                backward=SimpleNamespace(factors=np.ones(1)),
+            ),
+        )
+        with (
+            mock.patch.object(
+                strong, "_modal_vector", return_value=modal_vector
+            ),
+            self.assertRaisesRegex(RuntimeError, "trace vector creation"),
+        ):
+            strong._reconstruct_local_carrier(
+                SimpleNamespace(b=SimpleNamespace(duplicate=lambda: carrier)),
+                interface,
+                layout,
+                mock.Mock(),
+                np.ones(2),
+                side="bottom",
+                coupling=coupling,
+            )
+        modal_vector.destroy.assert_called_once_with()
+        carrier.destroy.assert_called_once_with()
+
+        source = mock.Mock()
+        result = mock.Mock()
+        matrix = mock.Mock()
+        matrix.createVecLeft.return_value = result
+        matrix.mult.side_effect = RuntimeError("controlled modal mult failure")
+        with (
+            mock.patch.object(strong, "_modal_vector", return_value=source),
+            self.assertRaisesRegex(RuntimeError, "modal mult failure"),
+        ):
+            strong._modal_action(matrix, np.ones(1))
+        source.destroy.assert_called_once_with()
+        result.destroy.assert_called_once_with()
+
+        operator = mock.Mock()
+        system = SimpleNamespace(A=mock.Mock())
+        system.A.createVecLeft.side_effect = [
+            operator,
+            RuntimeError("controlled residual vector creation failure"),
+        ]
+        with self.assertRaisesRegex(RuntimeError, "residual vector creation"):
+            strong._side_strong_residual(
+                system,
+                SimpleNamespace(),
+                SimpleNamespace(),
+                mock.Mock(),
+                np.ones(1),
+                np.ones(1),
+                np.ones(1),
+            )
+        operator.destroy.assert_called_once_with()
+
+    def test_strong_static_top_failure_releases_bottom_recovered_owner(self):
+        from src.solvers import hybrid_strong_trace_direct as strong
+
+        class Recovered:
+            pass
+
+        recovered_ref = None
+        calls = 0
+
+        def recover(*_args, **_kwargs):
+            nonlocal recovered_ref, calls
+            calls += 1
+            if calls == 1:
+                recovered = Recovered()
+                recovered_ref = weakref.ref(recovered)
+                return recovered
+            raise RuntimeError("controlled strong top recovery failure")
+
+        solution = SimpleNamespace(
+            bottom_recovered=None,
+            top_recovered=None,
+            bottom=mock.Mock(),
+            top=mock.Mock(),
+            modal_amplitudes=np.ones(2),
+            strong_residuals={"bottom": {}, "top": {}},
+        )
+        bottom_system = SimpleNamespace(static_condensation=object())
+        top_system = SimpleNamespace(static_condensation=object())
+        with (
+            mock.patch.object(
+                strong,
+                "recover_hybrid_static_local_field",
+                side_effect=recover,
+            ),
+            mock.patch.object(
+                strong,
+                "_replace_recovered_residual",
+                side_effect=lambda recovered, _residual: recovered,
+            ),
+            self.assertRaisesRegex(RuntimeError, "strong top recovery failure"),
+        ):
+            strong.recover_hybrid_strong_trace_static_fields(
+                solution,
+                bottom_system,
+                top_system,
+                SimpleNamespace(),
+            )
+        gc.collect()
+        self.assertIsNotNone(recovered_ref)
+        self.assertIsNone(recovered_ref())
+        self.assertIsNone(solution.bottom_recovered)
+        self.assertIsNone(solution.top_recovered)
 
 
 if __name__ == "__main__":

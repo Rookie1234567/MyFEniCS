@@ -689,6 +689,87 @@ class SimulationConfig3D:
         return data
 
 
+def require_material_wavelength_consistency(
+    cfg: SimulationConfig3D,
+) -> dict[str, object]:
+    """Reject mismatched use of the repository's named 13.5 nm Si constants."""
+
+    def close(actual: complex | float, expected: complex | float) -> bool:
+        return bool(np.isclose(actual, expected, rtol=0.0, atol=1.0e-12))
+
+    wavelength_is_euv_reference = close(
+        cfg.lambda0, EUV_REFERENCE_WAVELENGTH_NM
+    )
+    failures: list[str] = []
+    known_regions: list[str] = []
+    active_regions = []
+    substrate_is_active = (
+        cfg.geometry_kind in {"fresnel_interface", "rectangular_block_grating"}
+        and cfg.physical_z_min < cfg.interface_z
+    )
+    if substrate_is_active:
+        active_regions.append(
+            (
+                "substrate",
+                cfg.substrate_material_label,
+                cfg.n_substrate,
+                SI_SUBSTRATE_MATERIAL_LABEL,
+                SI_SUBSTRATE_INDEX_EUV_13P5_NM,
+            )
+        )
+    if cfg.has_grating_block:
+        active_regions.append(
+            (
+                "grating",
+                cfg.grating_material_label,
+                cfg.n_grating,
+                SI_GRATING_MATERIAL_LABEL,
+                SI_GRATING_INDEX_EUV_13P5_NM,
+            )
+        )
+    for region, label, index, expected_label, expected_index in active_regions:
+        label_is_known = label == expected_label
+        index_is_known = index is not None and close(index, expected_index)
+        if label_is_known or index_is_known:
+            known_regions.append(region)
+        if label_is_known != index_is_known:
+            failures.append(
+                f"{region} must pair the frozen 13.5 nm Si label and "
+                "complex refractive index"
+            )
+        if (label_is_known or index_is_known) and not wavelength_is_euv_reference:
+            failures.append(
+                f"{region} uses the repository 13.5 nm Si material identity "
+                f"at lambda={cfg.lambda0:g} nm"
+            )
+    if failures:
+        raise ValueError(
+            "material/wavelength consistency failed: "
+            + "; ".join(dict.fromkeys(failures))
+        )
+    active_region_names = [region for region, *_rest in active_regions]
+    status = (
+        "not_applicable"
+        if not active_region_names
+        else "known_material_consistent"
+        if known_regions == active_region_names
+        else "custom_material_unverified"
+    )
+    if status == "custom_material_unverified" and (
+        cfg.validation_role != NUMERICAL_SANITY_ONLY
+    ):
+        raise ValueError(
+            "active custom or unverified material data is limited to "
+            f"validation_role={NUMERICAL_SANITY_ONLY!r}"
+        )
+    return {
+        "status": status,
+        "wavelength_nm": float(cfg.lambda0),
+        "active_regions": active_region_names,
+        "known_material_regions": known_regions,
+    }
+
+
 def resolve_stage4_full3d_assembly_backend(
     cfg: SimulationConfig3D,
     *,

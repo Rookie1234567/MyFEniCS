@@ -348,6 +348,31 @@ def _json_default(value):
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
+def _claim_memory_stage_file(
+    comm: MPI.Intracomm,
+    stage_path: Path | None,
+    *,
+    owner_path: Path,
+) -> None:
+    error = None
+    if comm.rank == 0 and stage_path is not None:
+        try:
+            stage = Path(stage_path)
+            owner = Path(owner_path)
+            resolved_stage = stage.resolve(strict=False)
+            resolved_owner = owner.resolve(strict=False)
+            if resolved_stage == resolved_owner:
+                raise ValueError("memory-stage path must differ from owner path")
+            stage.parent.mkdir(parents=True, exist_ok=True)
+            with stage.open("x", encoding="utf-8"):
+                pass
+        except Exception as exc:
+            error = f"{type(exc).__name__}: {exc}"
+    error = comm.bcast(error, root=0)
+    if error is not None:
+        raise RuntimeError(f"Memory-stage claim failed: {error}")
+
+
 def _relative_vector_error(actual: PETSc.Vec, expected: PETSc.Vec) -> float:
     difference = actual.duplicate()
     try:
@@ -1825,10 +1850,11 @@ def main() -> None:
         mpi_size=comm.size,
     )
 
-    if comm.rank == 0 and args.memory_stages is not None:
-        args.memory_stages.parent.mkdir(parents=True, exist_ok=True)
-        args.memory_stages.unlink(missing_ok=True)
-    comm.barrier()
+    _claim_memory_stage_file(
+        comm,
+        args.memory_stages,
+        owner_path=args.output,
+    )
 
     def mark_stage(stage: str) -> None:
         if comm.rank == 0 and args.memory_stages is not None:
@@ -1894,6 +1920,8 @@ def main() -> None:
     independent_negative = None
     independent_negative_summary = None
     independent_reciprocal_pairing = None
+    positive_qep_profiles = None
+    negative_qep_profiles = None
     analytic_reciprocal_gate = {
         "requested": bool(args.task036_scalar_stage4_reciprocal_basis),
         "pass": None,
@@ -1994,6 +2022,14 @@ def main() -> None:
             "pair_tolerance_relaxed": False,
             "left_pair_relative_error_tolerance": 1.0e-7,
         }
+        solver_profiles = {}
+        if positive_qep_profiles is not None:
+            solver_profiles["positive"] = positive_qep_profiles
+        if negative_qep_profiles is not None:
+            solver_profiles["negative"] = negative_qep_profiles
+        direction_profiles = dict(solver_profiles.get(direction) or {})
+        direction_profiles["right"] = solver_report.profile_provenance()
+        solver_profiles[direction] = direction_profiles
         return {
             "schema_version": 1,
             "benchmark_id": "task033_hybrid_modal_basis_capacity",
@@ -2044,6 +2080,7 @@ def main() -> None:
                 f"{direction}_solver_converged_modes": (
                     solver_report.converged_modes
                 ),
+                "solver_profiles": solver_profiles,
                 f"{direction}_directional_selection": selection_record,
             },
             "hybrid_system": {
@@ -2320,6 +2357,7 @@ def main() -> None:
             operators,
             target=target,
             requested_modes=candidate_modes,
+            strict_profile=True,
         )
         progress("Task32 Phase6: positive right QEP modes complete")
         positive_right, positive_selection = select_passive_direction_modes(
@@ -2361,12 +2399,18 @@ def main() -> None:
             ),
             poynting_evaluator=poynting_evaluator,
             log=progress,
+            strict_qep_profile=True,
         )
+        positive_qep_profiles = {
+            "right": positive_report.profile_provenance(),
+            "adjoint": positive.adjoint_solver_report.profile_provenance(),
+        }
         progress("Task32 Phase6: positive adjoint basis complete")
         negative_right, negative_report = solve_quadratic_beta_modes(
             operators,
             target=-target,
             requested_modes=candidate_modes,
+            strict_profile=True,
         )
         progress("Task32 Phase6: negative right QEP modes complete")
         negative_right, negative_selection = select_passive_direction_modes(
@@ -2407,7 +2451,14 @@ def main() -> None:
             ),
             poynting_evaluator=poynting_evaluator,
             log=progress,
+            strict_qep_profile=True,
         )
+        negative_qep_profiles = {
+            "right": negative_report.profile_provenance(),
+            "adjoint": (
+                independent_negative.adjoint_solver_report.profile_provenance()
+            ),
+        }
         progress("Task32 Phase6: independent negative adjoint basis complete")
         independent_negative_summary = _basis_summary(independent_negative)
         independent_pairs = pair_reciprocal_mode_bases(
@@ -3989,6 +4040,10 @@ def main() -> None:
                 "negative_solver_converged_modes": (
                     negative_report.converged_modes
                 ),
+                "solver_profiles": {
+                    "positive": positive_qep_profiles,
+                    "negative": negative_qep_profiles,
+                },
                 "positive_directional_selection": (
                     _directional_selection_summary(positive_selection)
                 ),

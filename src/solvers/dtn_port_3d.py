@@ -2288,6 +2288,7 @@ def _gather_auxiliary_values(x_aug: PETSc.Vec, n_fe: int, n_aux: int, comm: MPI.
 
 
 def _linear_residual(A: PETSc.Mat, b: PETSc.Vec, x: PETSc.Vec) -> dict[str, float | None]:
+    residual = None
     try:
         residual = b.duplicate()
         A.mult(x, residual)
@@ -2307,6 +2308,9 @@ def _linear_residual(A: PETSc.Mat, b: PETSc.Vec, x: PETSc.Vec) -> dict[str, floa
             "linear_system_residual_norm": None,
             "linear_system_relative_residual": None,
         }
+    finally:
+        if residual is not None:
+            residual.destroy()
 
 
 def _write_port_outputs(

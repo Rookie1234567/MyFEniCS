@@ -139,8 +139,8 @@ def _build_basis(cfg, material_kind: str):
     operators = assemble_quadratic_beta_operators(cfg, cross_section, spaces)
     reference_index = cfg.n_air
     target = analytic_homogeneous_beta(cfg, reference_index)
-    right_modes, _ = solve_quadratic_beta_modes(
-        operators, target=target, requested_modes=2
+    right_modes, right_report = solve_quadratic_beta_modes(
+        operators, target=target, requested_modes=2, strict_profile=True
     )
     basis = build_biorthogonal_mode_basis(
         cfg,
@@ -150,8 +150,9 @@ def _build_basis(cfg, material_kind: str):
         right_modes,
         adjoint_target=np.conj(target),
         requested_left_modes=2,
+        strict_qep_profile=True,
     )
-    return cross_section, spaces, operators, basis
+    return cross_section, spaces, operators, basis, right_report
 
 
 def _affine_trace_validation(cfg, cross_section, spaces) -> dict[str, Any]:
@@ -250,7 +251,9 @@ def _affine_trace_validation(cfg, cross_section, spaces) -> dict[str, Any]:
     }
 
 
-def _projection_validation(cfg, cross_section, spaces, operators, basis):
+def _projection_validation(
+    cfg, cross_section, spaces, operators, basis, right_solver_report
+):
     projection = ModalTraceProjection(spaces, basis)
     try:
         coefficients = np.asarray([0.7 + 0.2j, -0.3 + 0.4j])
@@ -259,6 +262,10 @@ def _projection_validation(cfg, cross_section, spaces, operators, basis):
         constraints = operators.constraints
         return {
             "material_kind": cross_section.material_kind,
+            "right_qep_profile": right_solver_report.profile_provenance(),
+            "adjoint_qep_profile": (
+                basis.adjoint_solver_report.profile_provenance()
+            ),
             "mode_count": len(projection.right_traces),
             "reconstruction_shape": list(projection.reconstruction_shape),
             "projection_shape": list(projection.projection_shape),
@@ -309,7 +316,9 @@ def _projection_validation(cfg, cross_section, spaces, operators, basis):
 
 
 def _near_degenerate_subspace_validation(cfg) -> dict[str, Any]:
-    cross_section, spaces, operators, basis = _build_basis(cfg, "air")
+    cross_section, spaces, operators, basis, right_solver_report = _build_basis(
+        cfg, "air"
+    )
     projection = None
     try:
         projection = ModalTraceProjection(spaces, basis)
@@ -329,6 +338,10 @@ def _near_degenerate_subspace_validation(cfg) -> dict[str, Any]:
         )
         return {
             "material_kind": "air",
+            "right_qep_profile": right_solver_report.profile_provenance(),
+            "adjoint_qep_profile": (
+                basis.adjoint_solver_report.profile_provenance()
+            ),
             "phase3_group_indices": [list(group.indices) for group in basis.groups],
             "comparison": "mass_weighted_trace_subspace",
             "singular_values": list(report.singular_values),
@@ -374,11 +387,22 @@ def main() -> None:
     )
     started = time.perf_counter()
     cfg = target_stage4_config(degree=2, h_nm=args.h_nm)
-    cross_section, spaces, operators, stage4_basis = _build_basis(cfg, "stage4_xy")
+    (
+        cross_section,
+        spaces,
+        operators,
+        stage4_basis,
+        stage4_right_solver_report,
+    ) = _build_basis(cfg, "stage4_xy")
     try:
         affine_trace = _affine_trace_validation(cfg, cross_section, spaces)
         projection = _projection_validation(
-            cfg, cross_section, spaces, operators, stage4_basis
+            cfg,
+            cross_section,
+            spaces,
+            operators,
+            stage4_basis,
+            stage4_right_solver_report,
         )
     finally:
         stage4_basis.destroy()

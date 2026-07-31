@@ -886,11 +886,12 @@ def reduce_matrix_hermitian(
 
     product = matrix.matMult(transform)
     owns_transpose = transform_h is None
-    if transform_h is None:
-        transform_h = PETSc.Mat()
-        transform.hermitianTranspose(transform_h)
-    reduced = transform_h.matMult(product)
-    product.destroy()
-    if owns_transpose:
-        transform_h.destroy()
-    return reduced
+    try:
+        if transform_h is None:
+            transform_h = PETSc.Mat()
+            transform.hermitianTranspose(transform_h)
+        return transform_h.matMult(product)
+    finally:
+        product.destroy()
+        if owns_transpose and transform_h is not None:
+            transform_h.destroy()
