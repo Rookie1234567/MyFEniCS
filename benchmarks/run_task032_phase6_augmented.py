@@ -28,6 +28,7 @@ from benchmarks.task035c_p6_h10_gates import (
     TASK035C_P6_H10_MODE_COUNTS,
     TASK035C_P6_H10_MPI_SIZES,
     task036_full3d_reference_gate,
+    task036_strong_trace_interface_scope,
     task036_strong_trace_anchor_scope,
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
@@ -467,6 +468,83 @@ def _directional_selection_summary(report) -> dict[str, Any]:
 
 class _ModalBasisCapacityStop(RuntimeError):
     """Internal control flow after writing a structured finite-spectrum negative."""
+
+
+class _InterfacePreflightStop(RuntimeError):
+    """Internal control flow after the Review V5 strong-matrix preflight."""
+
+
+def _task036_middle_material_audit(
+    cfg,
+    cross_section,
+    *,
+    bottom_interface_nm: float,
+    top_interface_nm: float,
+) -> dict[str, Any]:
+    """Check the frozen rectangular middle one structured z layer at a time."""
+
+    plan = cross_section.axis_plan
+    tolerance = 1.0e-10 * max(cfg.period_x, cfg.period_y, 1.0)
+    z_values = np.asarray(plan.z_values, dtype=np.float64)
+    bottom_matches = np.flatnonzero(
+        np.isclose(z_values, bottom_interface_nm, rtol=0.0, atol=tolerance)
+    )
+    top_matches = np.flatnonzero(
+        np.isclose(z_values, top_interface_nm, rtol=0.0, atol=tolerance)
+    )
+    if len(bottom_matches) != 1 or len(top_matches) != 1:
+        middle_indices = np.asarray([], dtype=np.int64)
+    else:
+        middle_indices = np.arange(
+            int(bottom_matches[0]), int(top_matches[0]), dtype=np.int64
+        )
+
+    x_mid = 0.5 * (plan.x_values[:-1] + plan.x_values[1:])
+    y_mid = 0.5 * (plan.y_values[:-1] + plan.y_values[1:])
+    xx, yy = np.meshgrid(x_mid, y_mid, indexing="xy")
+    inside_xy = (
+        (xx >= cfg.grating_x_min - tolerance)
+        & (xx <= cfg.grating_x_max + tolerance)
+        & (yy >= cfg.grating_y_min - tolerance)
+        & (yy <= cfg.grating_y_max + tolerance)
+    )
+    cross_section_labels = np.where(inside_xy, 2, 0).astype(np.uint8)
+    layer_hashes: list[str] = []
+    layer_records: list[dict[str, Any]] = []
+    for index in middle_indices:
+        z_mid = 0.5 * (z_values[index] + z_values[index + 1])
+        if z_mid < cfg.interface_z - tolerance:
+            labels = np.full_like(cross_section_labels, 1)
+        elif cfg.grating_z_min - tolerance <= z_mid <= cfg.grating_z_max + tolerance:
+            labels = cross_section_labels
+        else:
+            labels = np.zeros_like(cross_section_labels)
+        digest = hashlib.sha256(np.ascontiguousarray(labels).tobytes()).hexdigest()
+        layer_hashes.append(digest)
+        layer_records.append(
+            {
+                "z_min_nm": float(z_values[index]),
+                "z_max_nm": float(z_values[index + 1]),
+                "material_pattern_sha256": digest,
+            }
+        )
+    cross_section_hash = hashlib.sha256(
+        np.ascontiguousarray(cross_section_labels).tobytes()
+    ).hexdigest()
+    return {
+        "geometry_kind": cfg.geometry_kind,
+        "bottom_interface_on_actual_plan": len(bottom_matches) == 1,
+        "top_interface_on_actual_plan": len(top_matches) == 1,
+        "middle_z_cell_count": int(len(middle_indices)),
+        "layer_records": layer_records,
+        "unique_material_layer_hashes": sorted(set(layer_hashes)),
+        "cross_section_material_pattern_sha256": cross_section_hash,
+        "epsilon_x_y_z_equals_epsilon_x_y": bool(
+            layer_hashes
+            and len(set(layer_hashes)) == 1
+            and layer_hashes[0] == cross_section_hash
+        ),
+    }
 
 
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
@@ -1177,6 +1255,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "robustness point. Ordinary defaults remain unchanged."
         ),
     )
+    parser.add_argument(
+        "--task036-interface-preflight-only",
+        action="store_true",
+        help=(
+            "Stop the frozen Review V5 A004-S shifted-interface diagnostic "
+            "after strong-matrix assembly and before MUMPS."
+        ),
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument(
@@ -1383,8 +1469,25 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and not args.compare_modal_schur
             and args.stage4_full3d_assembly_backend
             == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
-            and math.isclose(args.bottom_interface_nm, 10.0)
-            and math.isclose(args.top_interface_nm, 110.0)
+            and (
+                (
+                    strong_trace_scope
+                    and task036_strong_trace_interface_scope(
+                        bottom_interface_nm=args.bottom_interface_nm,
+                        top_interface_nm=args.top_interface_nm,
+                        incident_grazing_deg=args.incident_grazing_deg,
+                        incident_phi_deg=args.incident_phi_deg,
+                        polarization_kind=args.polarization_kind,
+                        grating_height_nm=args.grating_height_nm,
+                        grating_width_x_nm=args.grating_width_x_nm,
+                    )
+                )
+                or (
+                    projection_only_scope
+                    and math.isclose(args.bottom_interface_nm, 10.0)
+                    and math.isclose(args.top_interface_nm, 110.0)
+                )
+            )
             and args.graded_reference_h is None
             and 0.5 <= args.incident_grazing_deg <= 10.0
             and 0.0 <= args.incident_phi_deg <= 90.0
@@ -1413,9 +1516,26 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "traction, alias/direct-projection/reciprocal audits, and an "
                 "explicit same-input Full3D reference."
             )
+        if args.task036_interface_preflight_only and not (
+            strong_trace_scope
+            and math.isclose(args.bottom_interface_nm, 30.0)
+            and math.isclose(args.top_interface_nm, 90.0)
+            or strong_trace_scope
+            and math.isclose(args.bottom_interface_nm, 40.0)
+            and math.isclose(args.top_interface_nm, 80.0)
+        ):
+            parser.error(
+                "--task036-interface-preflight-only is restricted to the "
+                "Review V5 A004-S M120 30/90 or 40/80 strong-trace points."
+            )
     elif args.solver_path == "strong-trace-direct":
         parser.error(
             "strong-trace-direct is fail-closed outside "
+            "--task036-domain-robustness-gate."
+        )
+    elif args.task036_interface_preflight_only:
+        parser.error(
+            "--task036-interface-preflight-only requires "
             "--task036-domain-robustness-gate."
         )
     if not math.isfinite(args.incident_phi_deg):
@@ -2425,6 +2545,180 @@ def main() -> None:
             progress(
                 "Task036: square strong-trace Petrov--Galerkin AIJ complete"
             )
+            if args.task036_interface_preflight_only:
+                material_audit = _task036_middle_material_audit(
+                    cfg,
+                    cross_section,
+                    bottom_interface_nm=args.bottom_interface_nm,
+                    top_interface_nm=args.top_interface_nm,
+                )
+                expected_length = float(
+                    args.top_interface_nm - args.bottom_interface_nm
+                )
+                expected_cells = int(round(expected_length / args.h_nm))
+                xy_match = (
+                    np.array_equal(
+                        cross_section.x_values,
+                        cross_section.axis_plan.x_values,
+                    )
+                    and np.array_equal(
+                        cross_section.y_values,
+                        cross_section.axis_plan.y_values,
+                    )
+                    and tuple(bottom.local_mesh.mesh_cells[:2])
+                    == tuple(cross_section.mesh_cells)
+                    and tuple(top.local_mesh.mesh_cells[:2])
+                    == tuple(cross_section.mesh_cells)
+                )
+                bottom_retained = int(
+                    sum(map(len, system.bottom_interface.retained_rows_by_rank))
+                )
+                top_retained = int(
+                    sum(map(len, system.top_interface.retained_rows_by_rank))
+                )
+                strong_trace = {
+                    "interface_trace_rows": [
+                        len(system.bottom_interface.interface_rows),
+                        len(system.top_interface.interface_rows),
+                    ],
+                    "retained_rows": [bottom_retained, top_retained],
+                    "D_R_identity_error": [
+                        system.bottom_interface.projection_identity_error,
+                        system.top_interface.projection_identity_error,
+                    ],
+                    "trace_complement_unknown_count": int(
+                        system.bottom_interface.trace_complement_unknown_count
+                        + system.top_interface.trace_complement_unknown_count
+                    ),
+                    "dense_interface_square_formed": bool(
+                        system.dense_interface_square_formed
+                    ),
+                }
+                matrix_stats = dict(system.matrix_stats)
+                matrix_rows = int(matrix_stats["matrix_rows"])
+                matrix_nnz = int(matrix_stats["matrix_nnz_used"])
+                binding_checks = {
+                    "source_and_full3d_authority": task036_authority_gate["pass"],
+                    "middle_material_z_invariant": material_audit[
+                        "epsilon_x_y_z_equals_epsilon_x_y"
+                    ],
+                    "interfaces_are_actual_mesh_planes": (
+                        material_audit["bottom_interface_on_actual_plan"]
+                        and material_audit["top_interface_on_actual_plan"]
+                    ),
+                    "cross_section_xy_matches_local_trace_grid": xy_match,
+                    "modal_length_bound_to_interfaces": math.isclose(
+                        coupling.propagation.length_nm, expected_length
+                    ),
+                    "forward_scalar_cg_cell_count_bound": (
+                        coupling.propagation.forward.axial_cell_count
+                        == expected_cells
+                    ),
+                    "backward_scalar_cg_cell_count_bound": (
+                        coupling.propagation.backward.axial_cell_count
+                        == expected_cells
+                    ),
+                    "traction_beta_bound_to_selected_model": (
+                        coupling.modal_traction_model
+                        == "scalar_cg_discrete_derivative"
+                    ),
+                    "strong_D_R_identity_le_1e_10": (
+                        max(strong_trace["D_R_identity_error"])
+                        <= 1.0e-10
+                    ),
+                    "no_trace_complement_unknown": (
+                        strong_trace["trace_complement_unknown_count"] == 0
+                    ),
+                    "no_dense_interface_square": (
+                        not strong_trace["dense_interface_square_formed"]
+                    ),
+                }
+                _verify_source_stable_at_end(
+                    comm,
+                    provenance,
+                    args.verified_clean_sha,
+                    args.allow_dirty_research,
+                )
+                rss = comm.gather(_historical_peak_rss_mb(), root=0)
+                preflight_pass = all(binding_checks.values())
+                record = {
+                    "schema_version": "task036.review-v5-interface-preflight.v1",
+                    "status": (
+                        "assemble_only_preflight_pass"
+                        if preflight_pass
+                        else "assemble_only_preflight_failed"
+                    ),
+                    "metadata": {
+                        **provenance,
+                        "command": (
+                            "python -m benchmarks.run_task032_phase6_augmented "
+                            + " ".join(
+                                shlex.quote(value) for value in sys.argv[1:]
+                            )
+                        ),
+                        "mpi_size": comm.size,
+                        "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
+                        "full3d_authority_gate": task036_authority_gate,
+                    },
+                    "case": {
+                        "point": "A004-S",
+                        "degree": args.degree,
+                        "h_nm": args.h_nm,
+                        "requested_modes_per_direction": args.requested_modes,
+                        "bottom_interface_nm": args.bottom_interface_nm,
+                        "top_interface_nm": args.top_interface_nm,
+                        "middle_length_nm": expected_length,
+                        "middle_scalar_cg_cells": expected_cells,
+                        "local_z_cells": [
+                            bottom.local_mesh.mesh_cells[2],
+                            top.local_mesh.mesh_cells[2],
+                        ],
+                        "total_endcap_thickness_nm": (
+                            bottom.local_mesh.interface_z_nm
+                            - bottom.local_mesh.external_z_nm
+                            + top.local_mesh.external_z_nm
+                            - top.local_mesh.interface_z_nm
+                        ),
+                    },
+                    "material_and_mesh_identity": material_audit,
+                    "binding_checks": binding_checks,
+                    "hybrid_system": {
+                        "matrix_stats": matrix_stats,
+                        "strong_trace": strong_trace,
+                        "structural_comparison": {
+                            "rows_vs_old_ratio": matrix_rows / 13_296,
+                            "matrix_nnz_vs_old_ratio": matrix_nnz / 8_901_696,
+                            "rows_vs_full3d_ratio": matrix_rows / 46_656,
+                            "matrix_nnz_vs_full3d_ratio": matrix_nnz / 26_952_096,
+                            "endcap_thickness_vs_old_ratio": (
+                                2.0 * (args.bottom_interface_nm + 10.0) / 40.0
+                            ),
+                            "factor_risk": (
+                                "below_full3d_assembly_factor_unknown"
+                                if matrix_rows < 46_656
+                                and matrix_nnz < 26_952_096
+                                else "full3d_or_higher_structural_risk"
+                            ),
+                        },
+                    },
+                    "timing_seconds_max_rank": {
+                        **timings,
+                        "total": _max_elapsed(comm, total_started),
+                    },
+                    "historical_peak_rss_mb_by_rank": rss,
+                    "memory_semantics": (
+                        "per-rank ru_maxrss historical peaks; preflight only, "
+                        "not simultaneous whole-job authority"
+                    ),
+                    "qualification": {
+                        "integration_pass": False,
+                        "assemble_only_preflight_pass": preflight_pass,
+                        "factorization_entered": False,
+                        "solve_entered": False,
+                        "ordinary_default_changed": False,
+                    },
+                }
+                raise _InterfacePreflightStop
             mark_stage("strong_trace_mumps_factor_and_solve")
             solution = solve_hybrid_strong_trace_direct(
                 system,
@@ -2859,12 +3153,45 @@ def main() -> None:
         reference_archive = (
             _reference_archive(loaded_reference) if pinned_reference_case else None
         )
+        reference_interface_planes_available = False
+        reference_available_z_nm: list[float] = []
         if reference_archive is not None:
             archive_path, reference_record_path, reference_record = reference_archive
             with np.load(archive_path) as archive:
                 sample_x = np.asarray(archive["x_nm"], dtype=np.float64)
                 sample_y = np.asarray(archive["y_nm"], dtype=np.float64)
-                sample_z = np.asarray(archive["z_nm"], dtype=np.float64)
+                reference_z = np.asarray(archive["z_nm"], dtype=np.float64)
+            reference_available_z_nm = [float(value) for value in reference_z]
+            in_middle = (
+                (reference_z >= args.bottom_interface_nm - 1.0e-10)
+                & (reference_z <= args.top_interface_nm + 1.0e-10)
+            )
+            sample_z = reference_z[in_middle]
+            if len(sample_z) == 0:
+                raise RuntimeError(
+                    "The Full3D archive has no selected plane inside the "
+                    "requested modal middle."
+                )
+            reference_interface_planes_available = bool(
+                np.count_nonzero(
+                    np.isclose(
+                        reference_z,
+                        args.bottom_interface_nm,
+                        rtol=0.0,
+                        atol=1.0e-10,
+                    )
+                )
+                == 1
+                and np.count_nonzero(
+                    np.isclose(
+                        reference_z,
+                        args.top_interface_nm,
+                        rtol=0.0,
+                        atol=1.0e-10,
+                    )
+                )
+                == 1
+            )
         else:
             sample_x = cfg.x_min + (
                 np.arange(40, dtype=np.float64) + 0.5
@@ -2922,11 +3249,25 @@ def main() -> None:
             )
         trace_modal_oracle = None
         if reference_archive is not None:
-            mark_stage("full3d_trace_modal_oracle")
-            trace_modal_oracle = reconstructor.full3d_trace_modal_oracle(
-                archive_path
-            )
-            mark_stage("middle_plane_reconstruction")
+            if reference_interface_planes_available:
+                mark_stage("full3d_trace_modal_oracle")
+                trace_modal_oracle = reconstructor.full3d_trace_modal_oracle(
+                    archive_path
+                )
+                mark_stage("middle_plane_reconstruction")
+            else:
+                trace_modal_oracle = {
+                    "status": "not_available_missing_interface_planes",
+                    "requested_interface_z_nm": [
+                        float(args.bottom_interface_nm),
+                        float(args.top_interface_nm),
+                    ],
+                    "available_z_nm": reference_available_z_nm,
+                    "authority": (
+                        "Review V4 exact 11-plane trace artifact remains the "
+                        "interface-projection authority."
+                    ),
+                }
         selected_planes = reconstructor.selected_planes(
             solution.modal_amplitudes,
             sample_x,
@@ -4027,6 +4368,8 @@ def main() -> None:
         }
     except _ModalBasisCapacityStop:
         pass
+    except _InterfacePreflightStop:
+        pass
     except DtnTraceAliasError as error:
         record = dtn_trace_alias_record(error)
     except NearDegenerateBlockPartitionSplitError as error:
@@ -4066,6 +4409,10 @@ def main() -> None:
         print(f"Task32 Phase6 record: {args.output}", flush=True)
         print(f"Task32 Phase6 status: {record['status']}", flush=True)
     comm.barrier()
+    if args.task036_interface_preflight_only:
+        if not record["qualification"]["assemble_only_preflight_pass"]:
+            raise SystemExit(2)
+        return
     if not record["qualification"]["integration_pass"]:
         raise SystemExit(2)
 

@@ -19,17 +19,26 @@ TASK035C_P6_H10_BACKENDS = frozenset(
 _TASK036_REFERENCE_COMPATIBLE_EXACT_PATHS = frozenset(
     {
         "benchmarks/analyze_task036_robustness_scan.py",
+        "benchmarks/cases/099_strong_trace_hybrid_fixture/README.md",
+        "benchmarks/cases/099_strong_trace_hybrid_fixture/records/a004_strong_trace_fixed_channels_v1.csv",
+        "benchmarks/cases/099_strong_trace_hybrid_fixture/records/strong_trace_exact_fixture_v1.json",
         "benchmarks/run_task032_phase6_augmented.py",
         "benchmarks/run_task033_memory_watchdog.py",
+        "benchmarks/run_task036_one_cell_discrete_bloch.py",
         "benchmarks/run_task036_robustness_scan.py",
         "benchmarks/task035c_p6_h10_gates.py",
         "src/coupling/hybrid_internal_modes.py",
+        "src/postprocessing/hybrid_field_reconstruction.py",
         "src/solvers/hybrid_strong_trace_direct.py",
+        "src/solvers/one_cell_discrete_bloch.py",
         "src/test/test_181_task035c_p6_h10_runner_gates.py",
         "src/test/test_59_task033_memory_watchdog_contract.py",
         "src/test/test_197_task036_robustness_scan_points.py",
         "src/test/test_198_task036_robustness_analyzer.py",
         "src/test/test_199_task036_strong_trace_hybrid.py",
+        "src/test/test_214_task036_one_cell_discrete_bloch.py",
+        "src/test/test_40_task032_hybrid_field_reconstruction.py",
+        "src/test/test_52_task033_high_order_matched_trace.py",
     }
 )
 _TASK036_REFERENCE_COMPATIBLE_PREFIXES = (
@@ -92,6 +101,34 @@ def task036_strong_trace_anchor_scope(
             requested_modes == 120
             or (requested_modes == 160 and point_id == "A001-P")
         )
+    )
+
+
+def task036_strong_trace_interface_scope(
+    *,
+    bottom_interface_nm: float,
+    top_interface_nm: float,
+    incident_grazing_deg: float,
+    incident_phi_deg: float,
+    polarization_kind: str,
+    grating_height_nm: float,
+    grating_width_x_nm: float,
+) -> bool:
+    """Open only the frozen Review V5 A004-S interface diagnostics."""
+
+    pair = (float(bottom_interface_nm), float(top_interface_nm))
+    if pair == (10.0, 110.0):
+        return True
+    return bool(
+        pair in {(30.0, 90.0), (40.0, 80.0)}
+        and task036_strong_trace_anchor_id(
+            incident_grazing_deg=incident_grazing_deg,
+            incident_phi_deg=incident_phi_deg,
+            polarization_kind=polarization_kind,
+            grating_height_nm=grating_height_nm,
+            grating_width_x_nm=grating_width_x_nm,
+        )
+        == "A004-S"
     )
 
 

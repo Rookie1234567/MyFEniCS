@@ -1162,7 +1162,7 @@ def compare_selected_planes_to_reference(
     modal_samples: ModalPlaneSamples,
     reference_npz: Path,
 ) -> dict[str, object]:
-    """Compare a bounded modal reconstruction with the pinned full-3D archive."""
+    """Compare a bounded modal reconstruction with matching pinned planes."""
 
     with np.load(reference_npz) as archive:
         x_ref = np.asarray(archive["x_nm"], dtype=np.float64)
@@ -1173,9 +1173,21 @@ def compare_selected_planes_to_reference(
     if not (
         np.allclose(modal_samples.x_nm, x_ref)
         and np.allclose(modal_samples.y_nm, y_ref)
-        and np.allclose(modal_samples.z_nm, z_ref)
     ):
         raise ValueError("Modal and full-3D selected-plane grids differ.")
+    matched_indices: list[int] = []
+    for z_value in modal_samples.z_nm:
+        matches = np.flatnonzero(
+            np.isclose(z_ref, z_value, rtol=0.0, atol=1.0e-10)
+        )
+        if len(matches) != 1:
+            raise ValueError(
+                "Each modal sample plane must match exactly one full-3D plane."
+            )
+        matched_indices.append(int(matches[0]))
+    z_ref = z_ref[matched_indices]
+    electric_ref = electric_ref[matched_indices]
+    magnetic_ref = magnetic_ref[matched_indices]
     planes = []
     for index, z_value in enumerate(z_ref):
         planes.append(
@@ -1197,14 +1209,15 @@ def compare_selected_planes_to_reference(
                 ),
             }
         )
+    diagnostic_planes = planes[1:-1] if len(planes) >= 3 else planes
     return {
         "reference_npz": str(reference_npz),
         "sample_shape_z_y_x_component": list(electric_ref.shape),
         "planes": planes,
         "max_middle_plane_electric_relative_l2": max(
-            plane["electric"]["relative_l2"] for plane in planes[1:-1]
+            plane["electric"]["relative_l2"] for plane in diagnostic_planes
         ),
         "max_middle_plane_magnetic_relative_l2": max(
-            plane["magnetic"]["relative_l2"] for plane in planes[1:-1]
+            plane["magnetic"]["relative_l2"] for plane in diagnostic_planes
         ),
     }

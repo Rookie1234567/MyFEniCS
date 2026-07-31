@@ -134,6 +134,36 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
         self.assertEqual(report["max_middle_plane_electric_relative_l2"], 0.0)
         self.assertEqual(report["max_middle_plane_magnetic_relative_l2"], 0.0)
 
+    def test_selected_plane_reference_comparison_accepts_middle_subset(self) -> None:
+        x = np.asarray([0.25, 0.75])
+        y = np.asarray([0.5])
+        z = np.asarray([10.0, 30.0, 60.0, 90.0, 110.0])
+        electric = np.arange(30, dtype=np.float64).reshape((5, 1, 2, 3)).astype(
+            np.complex128
+        )
+        magnetic = (0.1j * electric).astype(np.complex128)
+        samples = ModalPlaneSamples(
+            x,
+            y,
+            z[1:4],
+            electric[1:4],
+            magnetic[1:4],
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "reference.npz"
+            np.savez_compressed(
+                path,
+                x_nm=x,
+                y_nm=y,
+                z_nm=z,
+                E_V_per_m=electric,
+                H_A_per_m=magnetic,
+            )
+            report = compare_selected_planes_to_reference(samples, path)
+        self.assertEqual(report["sample_shape_z_y_x_component"], [3, 1, 2, 3])
+        self.assertEqual(report["max_middle_plane_electric_relative_l2"], 0.0)
+        self.assertEqual(report["max_middle_plane_magnetic_relative_l2"], 0.0)
+
     def test_full3d_trace_oracle_separates_fit_from_propagation(self) -> None:
         reconstructor = ModalFieldReconstructor.__new__(ModalFieldReconstructor)
         reconstructor.cfg = SimpleNamespace(

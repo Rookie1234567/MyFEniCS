@@ -39,6 +39,7 @@ from benchmarks.task035c_p6_h10_gates import (
     TASK035C_P6_H10_MODE_COUNTS,
     TASK035C_P6_H10_MPI_SIZES,
     task036_full3d_reference_gate,
+    task036_strong_trace_interface_scope,
     task036_strong_trace_anchor_scope,
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
@@ -1997,8 +1998,25 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and not args.compare_modal_schur
             and args.stage4_full3d_assembly_backend
             == "assembly_time_static_condensed"
-            and math.isclose(args.bottom_interface_nm, 10.0)
-            and math.isclose(args.top_interface_nm, 110.0)
+            and (
+                (
+                    strong_trace_scope
+                    and task036_strong_trace_interface_scope(
+                        bottom_interface_nm=args.bottom_interface_nm,
+                        top_interface_nm=args.top_interface_nm,
+                        incident_grazing_deg=args.incident_grazing_deg,
+                        incident_phi_deg=args.incident_phi_deg,
+                        polarization_kind=args.polarization_kind,
+                        grating_height_nm=args.grating_height_nm,
+                        grating_width_x_nm=args.grating_width_x_nm,
+                    )
+                )
+                or (
+                    projection_only_scope
+                    and math.isclose(args.bottom_interface_nm, 10.0)
+                    and math.isclose(args.top_interface_nm, 110.0)
+                )
+            )
             and args.graded_reference_h is None
             and 0.5 <= args.incident_grazing_deg <= 10.0
             and 0.0 <= args.incident_phi_deg <= 90.0

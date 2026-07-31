@@ -7,10 +7,13 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
+import numpy as np
+
 from benchmarks.run_task032_phase6_augmented import (
     _discrete_axial_qualification_scope,
     _hybrid_p_disposition,
     _parse_args as parse_phase6_args,
+    _task036_middle_material_audit,
     _task036_hybrid_candidate_direct_projection_checks,
 )
 from benchmarks.run_task033_full3d_watchdog import (
@@ -347,6 +350,7 @@ def _task036_strong_hybrid_cli(
     *,
     modes: int = 120,
     point_id: str = "A001-P",
+    interfaces: tuple[float, float] = (10.0, 110.0),
 ) -> list[str]:
     cli = _task036_hybrid_cli()
     cli[cli.index("--solver-path") + 1] = "strong-trace-direct"
@@ -366,10 +370,48 @@ def _task036_strong_hybrid_cli(
         ("--polarization-kind", polarization),
     ):
         cli[cli.index(option) + 1] = value
+    cli.extend(
+        [
+            "--bottom-interface-nm",
+            str(interfaces[0]),
+            "--top-interface-nm",
+            str(interfaces[1]),
+        ]
+    )
     return cli
 
 
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
+    def test_task036_review_v5_middle_material_audit(self) -> None:
+        cfg = SimpleNamespace(
+            period_x=50.0,
+            period_y=40.0,
+            geometry_kind="rectangular_block_grating",
+            grating_x_min=-8.5,
+            grating_x_max=8.5,
+            grating_y_min=-20.0,
+            grating_y_max=20.0,
+            interface_z=0.0,
+            grating_z_min=0.0,
+            grating_z_max=120.0,
+        )
+        cross_section = SimpleNamespace(
+            axis_plan=SimpleNamespace(
+                x_values=np.asarray([-25.0, -8.5, 8.5, 25.0]),
+                y_values=np.asarray([-20.0, 20.0]),
+                z_values=np.arange(-10.0, 131.0, 10.0),
+            )
+        )
+        audit = _task036_middle_material_audit(
+            cfg,
+            cross_section,
+            bottom_interface_nm=30.0,
+            top_interface_nm=90.0,
+        )
+        self.assertTrue(audit["epsilon_x_y_z_equals_epsilon_x_y"])
+        self.assertEqual(audit["middle_z_cell_count"], 6)
+        self.assertEqual(len(audit["unique_material_layer_hashes"]), 1)
+
     def test_task036_dynamic_p5_hybrid_port_round_trip(self) -> None:
         args = parse_memory_args(_task036_hybrid_cli())
         self.assertTrue(args.task036_domain_robustness_gate)
@@ -430,6 +472,65 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
                     worker.solver_path, "strong-trace-direct"
                 )
                 self.assertEqual(worker.requested_modes, modes)
+
+        for interfaces in ((30.0, 90.0), (40.0, 80.0)):
+            with self.subTest(interfaces=interfaces):
+                cli = _task036_strong_hybrid_cli(
+                    point_id="A004-S",
+                    interfaces=interfaces,
+                )
+                watchdog = parse_memory_args(cli)
+                command = _worker_command(
+                    watchdog, Path("record.json"), Path("stages.jsonl")
+                )
+                module_index = command.index(
+                    "benchmarks.run_task032_phase6_augmented"
+                )
+                worker = parse_phase6_args(command[module_index + 1 :])
+                self.assertEqual(
+                    (worker.bottom_interface_nm, worker.top_interface_nm),
+                    interfaces,
+                )
+
+        for point_id, interfaces in (
+            ("A049-P", (30.0, 90.0)),
+            ("A001-P", (40.0, 80.0)),
+            ("A004-S", (20.0, 100.0)),
+        ):
+            with self.subTest(point_id=point_id, interfaces=interfaces):
+                with self.assertRaises(SystemExit):
+                    parse_memory_args(
+                        _task036_strong_hybrid_cli(
+                            point_id=point_id,
+                            interfaces=interfaces,
+                        )
+                    )
+
+        preflight = _task036_strong_hybrid_cli(
+            point_id="A004-S",
+            interfaces=(30.0, 90.0),
+        )
+        module_args = _worker_command(
+            parse_memory_args(preflight),
+            Path("record.json"),
+            Path("stages.jsonl"),
+        )
+        module_index = module_args.index(
+            "benchmarks.run_task032_phase6_augmented"
+        )
+        worker_cli = module_args[module_index + 1 :]
+        worker_cli.append("--task036-interface-preflight-only")
+        self.assertTrue(
+            parse_phase6_args(worker_cli).task036_interface_preflight_only
+        )
+        with self.assertRaises(SystemExit):
+            parse_phase6_args(
+                [
+                    *worker_cli[: worker_cli.index("--bottom-interface-nm") + 1],
+                    "20",
+                    *worker_cli[worker_cli.index("--bottom-interface-nm") + 2 :],
+                ]
+            )
 
         defaults = parse_phase6_args([])
         self.assertEqual(defaults.solver_path, "augmented")
