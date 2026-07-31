@@ -34,13 +34,13 @@ def analytic_power_mask(points: np.ndarray, *, m_values=range(-7, 4),
     return result
 
 
-def reconstruct_aggregates(raw: np.ndarray, *, epsilon: float = 1.0e-8) -> np.ndarray:
-    """Project raw R/T/A predictions to a conservation-respecting composition."""
+def reconstruct_aggregates(latent: np.ndarray) -> np.ndarray:
+    """Recover R/T/A from ``(zR,zT)`` via softmax ``(zR,zT,0)``."""
 
-    values = np.asarray(raw, dtype=np.float64)
-    if values.ndim != 2 or values.shape[1] < 3:
-        raise ValueError("raw aggregate predictions require three columns")
-    logits = np.log(np.maximum(values[:, :3], epsilon))
+    values = np.asarray(latent, dtype=np.float64)
+    if values.ndim != 2 or values.shape[1] not in (2, 3):
+        raise ValueError("aggregate reconstruction expects two log-ratio latents")
+    logits = np.column_stack((values[:, :2], np.zeros(len(values), dtype=np.float64)))
     logits -= np.max(logits, axis=1, keepdims=True)
     weights = np.exp(logits)
     weights /= np.sum(weights, axis=1, keepdims=True)
@@ -85,4 +85,3 @@ def physics_audit(aggregates: np.ndarray, powers: np.ndarray,
         "max_reflection_ledger_error": float(np.max(np.abs(r_ledger - aggregates[:, 0]))),
         "max_transmission_ledger_error": float(np.max(np.abs(t_ledger - aggregates[:, 1]))),
     }
-

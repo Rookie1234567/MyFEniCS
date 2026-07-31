@@ -15,7 +15,7 @@ import numpy as np
 
 from .cv import run_training_cv
 from .dataset import CASE119_ROOT, load_training_dataset, verify_case119_dataset
-from .features import DOMAIN, transform_features
+from .features import DOMAIN, feature_contracts, transform_features
 from .physics import analytic_power_mask
 from .targets import aggregate_contract, channel_table, power_contract
 
@@ -43,6 +43,7 @@ def _feature_contract() -> dict[str, Any]:
         "width_scaling": {"center_nm": 17.0, "half_range_nm": 1.0, "output": "[-1,1]"},
         "wavevector": {"kx_over_k0": "cos(grazing)*cos(azimuth)",
                         "ky_over_k0": "cos(grazing)*sin(azimuth)"},
+        "candidate_sets": feature_contracts(),
         "domain": DOMAIN,
         "zero_grazing": "fail_closed",
         "statistics_source": "training rows only; no validation access",
@@ -95,6 +96,8 @@ def run_training_stage() -> dict[str, Any]:
     if not analytic_match:
         raise RuntimeError("analytic propagation mask disagrees with training data")
     cv = run_training_cv()
+    oof_records = cv.pop("oof_records", [])
+    cv["oof_record_count"] = len(oof_records)
     _dump(OUT / "FEATURE_CONTRACT.json", feature_contract)
     _dump(OUT / "TARGET_CONTRACT.json", target_contract)
     _dump(OUT / "CHANNEL_IDENTITY.json", {
@@ -107,6 +110,13 @@ def run_training_stage() -> dict[str, Any]:
     })
     (OUT / "TRAINING_ONLY_DATA_AUDIT.md").write_text(_audit_markdown(dataset, channels))
     _dump(OUT / "training_cv.json", cv)
+    _dump(OUT / "training_cv_oof.json", {
+        "schema_version": "task003.training-oof.v2",
+        "dataset_id": dataset.dataset_id,
+        "training_count": dataset.n_samples,
+        "selected_candidate": cv["selected_candidate"],
+        "records": oof_records,
+    })
     status = {
         "task": "Task003",
         "status": "controlled_stop_before_model_lock" if cv["status"] != "pass" else "cv_gate_pass",
@@ -114,6 +124,10 @@ def run_training_stage() -> dict[str, Any]:
         "dataset_verification": verification.as_dict(),
         "analytic_mask_match": analytic_match,
         "training_cv_hard_gate": cv["status"] == "pass",
+        "selected_candidate": cv["selected_candidate"],
+        "selected_feature_candidate": cv["selected_feature_candidate"],
+        "uncertainty_diagnostics": cv["uncertainty_diagnostics"],
+        "oof_record_count": cv["oof_record_count"],
         "model_selection_lock": "not_created_hard_cv_gate_failed",
         "frozen_validation": "sealed_not_accessed",
         "active_learning": cv["active_learning"],

@@ -94,7 +94,7 @@ def run_smoke(*, repeats: int = 2) -> dict[str, Any]:
         before_swap = _swap()
         before_rss = _max_rss_bytes()
         start = time.perf_counter()
-        model = ExactARDGP(jitter=1.0e-10, optimizer_restarts=0,
+        model = ExactARDGP(jitter=1.0e-10, optimizer_restarts=8,
                            random_state=0).fit(x, y)
         prediction, std = model.predict(x, return_std=True)
         elapsed = time.perf_counter() - start
@@ -119,7 +119,7 @@ def run_smoke(*, repeats: int = 2) -> dict[str, Any]:
         })
     return {
         "status": "pass" if len(set(prediction_hashes)) == 1 else "fail",
-        "model": ExactARDGP(jitter=1.0e-10).metadata(),
+        "model": ExactARDGP(jitter=1.0e-10, optimizer_restarts=8).metadata(),
         "repeats": runs,
         "reproducible": len(set(prediction_hashes)) == 1,
         "swap_clean": all(row["swap_delta_bytes"] == 0 for row in runs),
