@@ -223,6 +223,41 @@ def _relative(left: np.ndarray, right: np.ndarray) -> float:
     )
 
 
+def _stable_unit_and_log10_norm(values: np.ndarray) -> tuple[np.ndarray, float]:
+    array = np.asarray(values, dtype=np.complex128)
+    scale = float(np.max(np.abs(array), initial=0.0))
+    if not np.isfinite(scale) or scale <= 0.0:
+        raise RuntimeError("A sensitivity row is zero or non-finite.")
+    scaled = array / scale
+    scaled_norm = float(np.linalg.norm(scaled))
+    if not np.isfinite(scaled_norm) or scaled_norm <= 0.0:
+        raise RuntimeError("A scaled sensitivity norm is not finite-positive.")
+    return scaled / scaled_norm, float(
+        np.log10(scale) + np.log10(scaled_norm)
+    )
+
+
+def _stable_vdot(left: np.ndarray, right: np.ndarray) -> complex:
+    x = np.asarray(left, dtype=np.complex128)
+    y = np.asarray(right, dtype=np.complex128)
+    if x.shape != y.shape:
+        raise ValueError("Stable dual pairing shapes differ.")
+    x_scale = float(np.max(np.abs(x), initial=0.0))
+    y_scale = float(np.max(np.abs(y), initial=0.0))
+    if x_scale == 0.0 or y_scale == 0.0:
+        return 0.0 + 0.0j
+    normalized = np.sum(
+        np.conj((x / x_scale).astype(np.clongdouble))
+        * (y / y_scale).astype(np.clongdouble),
+        dtype=np.clongdouble,
+    )
+    value = normalized * np.longdouble(x_scale) * np.longdouble(y_scale)
+    result = complex(value)
+    if not np.isfinite(result.real) or not np.isfinite(result.imag):
+        raise RuntimeError("A channel-adjoint dual pairing overflowed.")
+    return result
+
+
 def _trace_function_from_global(space, values: np.ndarray) -> fem.Function:
     field = fem.Function(space)
     index_map = space.dofmap.index_map
@@ -547,10 +582,12 @@ def _adjoint_port_trace(
         constraint_data=one_cell_constraint_data,
     )
     values = left[:, 0] if endpoint == "left" else right[:, 0]
+    _unit, log10_norm = _stable_unit_and_log10_norm(values)
     return values, {
         "endpoint": endpoint,
         "extraction": extraction.__dict__,
-        "port_trace_norm": float(np.linalg.norm(values)),
+        "port_trace_log10_norm": log10_norm,
+        "norm_evaluation": "max-scaled Euclidean norm",
     }
 
 
@@ -627,8 +664,8 @@ def _channel_adjoint_audit(
                     one_cell_constraint_data=one_cell_constraint_data,
                 )
                 adjoint_values = _replicated_vector(adjoint)
-                current_pair = np.vdot(adjoint_values, current_load)
-                exact_pair = np.vdot(port, exact_flux)
+                current_pair = _stable_vdot(adjoint_values, current_load)
+                exact_pair = _stable_vdot(port, exact_flux)
                 residual_pair = current_pair - exact_pair
                 prediction = -residual_pair
                 actual = old_orders[(side, m, n, polarization)] - full_orders[
@@ -678,8 +715,13 @@ def _channel_adjoint_audit(
 
 def _svd_summary(rows: np.ndarray) -> dict[str, Any]:
     values = np.asarray(rows, dtype=np.complex128)
-    norms = np.linalg.norm(values, axis=1)
-    normalized = values / np.maximum(norms[:, np.newaxis], 1.0e-300)
+    normalized_rows = [
+        _stable_unit_and_log10_norm(row) for row in values
+    ]
+    normalized = np.stack([item[0] for item in normalized_rows])
+    log10_norms = np.asarray(
+        [item[1] for item in normalized_rows], dtype=np.float64
+    )
     singular = np.linalg.svd(normalized, compute_uv=False)
     energy = singular**2
     cumulative = np.cumsum(energy) / max(float(np.sum(energy)), 1.0e-300)
@@ -694,8 +736,9 @@ def _svd_summary(rows: np.ndarray) -> dict[str, Any]:
         "rank_for_90_percent": rank_for(0.90),
         "rank_for_95_percent": rank_for(0.95),
         "rank_for_99_percent": rank_for(0.99),
-        "row_norm_min": float(np.min(norms)) if len(norms) else 0.0,
-        "row_norm_max": float(np.max(norms, initial=0.0)),
+        "row_log10_norm_min": float(np.min(log10_norms)),
+        "row_log10_norm_max": float(np.max(log10_norms)),
+        "normalization": "each row max-scaled before Euclidean normalization",
     }
 
 
@@ -1126,7 +1169,7 @@ def main() -> None:
         bottom_interface_z_nm=10.0,
         top_interface_z_nm=110.0,
         comm=comm,
-        log=lambda msg: _progress(comm, msg),
+        log=None,
     )
     top = assemble_hybrid_local_dtn_system(
         authority,
@@ -1134,7 +1177,7 @@ def main() -> None:
         bottom_interface_z_nm=10.0,
         top_interface_z_nm=110.0,
         comm=comm,
-        log=lambda msg: _progress(comm, msg),
+        log=None,
     )
     coupling = build_hybrid_internal_mode_coupling(
         authority,
@@ -1146,7 +1189,7 @@ def main() -> None:
         length_nm=100.0,
         propagation_model="full3d_uniform_cg",
         modal_traction_model="scalar_cg_discrete_derivative",
-        log=lambda msg: _progress(comm, msg),
+        log=None,
     )
     timings["local_operator_and_coupling_reassembly"] = time.perf_counter() - stage
     lam_100 = np.asarray(coupling.propagation.forward.factors)
@@ -1230,6 +1273,7 @@ def main() -> None:
     timings["top_eight_channel_adjoints"] = time.perf_counter() - stage
     top.destroy()
     channel_results = bottom_results + top_results
+    sensitivity_vectors = np.stack(bottom_vectors + top_vectors)
     predictions = np.asarray(
         [
             item["local_fixed_trace_prediction_old_minus_full3d"]
@@ -1244,11 +1288,19 @@ def main() -> None:
         ],
         dtype=np.complex128,
     )
-    sensitivity_svd = _svd_summary(
-        np.stack(bottom_vectors + top_vectors)
+    sensitivity_archive = _write_npz(
+        args.work_dir / "persistent_channel_interface_adjoints.npz",
+        {
+            "interface_adjoint_trace_rows": sensitivity_vectors,
+            "local_fixed_trace_predictions": predictions,
+            "actual_old_minus_full3d": actual,
+        },
+        comm,
     )
+    sensitivity_svd = _svd_summary(sensitivity_vectors)
     sensitivity_summary = {
         "channels": channel_results,
+        "raw_archive": sensitivity_archive,
         "adjoint_trace_svd": sensitivity_svd,
         "prediction_vector_relative_error": _relative(predictions, actual),
         "prediction_actual_absolute_cosine": float(

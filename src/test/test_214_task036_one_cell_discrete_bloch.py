@@ -9,6 +9,8 @@ from benchmarks.run_task036_one_cell_discrete_bloch import (
 )
 from benchmarks.run_task036_exact_cauchy_port_audit import (
     _modal_port_matrix,
+    _stable_unit_and_log10_norm,
+    _stable_vdot,
 )
 from src.solvers.one_cell_discrete_bloch import (
     ProjectedTwoPortSchur,
@@ -19,6 +21,22 @@ from src.solvers.one_cell_discrete_bloch import (
 
 
 class Task036OneCellDiscreteBlochAlgebraTests(unittest.TestCase):
+    def test_cauchy_audit_scaled_norm_and_pairing_avoid_overflow(self) -> None:
+        values = np.asarray((1.0e200 + 2.0e200j, -3.0e200j))
+        unit, log10_norm = _stable_unit_and_log10_norm(values)
+        self.assertAlmostEqual(np.linalg.norm(unit), 1.0)
+        self.assertTrue(np.isfinite(log10_norm))
+        paired = _stable_vdot(
+            values,
+            np.asarray((2.0e-200 - 1.0e-200j, 4.0e-200j)),
+        )
+        expected = np.vdot(
+            values / 1.0e200,
+            np.asarray((2.0 - 1.0j, 4.0j)),
+        )
+        self.assertAlmostEqual(paired.real, expected.real)
+        self.assertAlmostEqual(paired.imag, expected.imag)
+
     def test_one_cell_modal_port_reconstructs_same_projected_schur(self) -> None:
         count = 3
         diagonal = np.diag(
