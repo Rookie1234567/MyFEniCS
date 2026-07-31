@@ -45,8 +45,6 @@ from src.coupling.hybrid_internal_modes import (
 from src.coupling.modal_trace_projection import (
     ModalTraceProjection,
     _overlap_matrix,
-    build_matched_interface_trace,
-    extract_tangential_trace,
 )
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.modes.stable_propagation import build_two_sided_propagation
@@ -210,6 +208,28 @@ def _matrix_action(matrix: PETSc.Mat, values: Sequence[complex]) -> np.ndarray:
         )
         source.assemble()
         matrix.mult(source, target)
+        return _replicated_vector(target)
+    finally:
+        target.destroy()
+        source.destroy()
+
+
+def _matrix_hermitian_action(
+    matrix: PETSc.Mat,
+    values: Sequence[complex],
+) -> np.ndarray:
+    source = matrix.createVecLeft()
+    target = matrix.createVecRight()
+    try:
+        first, last = map(int, source.getOwnershipRange())
+        array = np.asarray(values, dtype=np.complex128)
+        if array.shape != (int(source.getSize()),):
+            raise ValueError("Small Petrov dual vector has the wrong size.")
+        source.getArray()[:] = np.asarray(
+            array[first:last], dtype=PETSc.ScalarType
+        )
+        source.assemble()
+        matrix.multHermitian(source, target)
         return _replicated_vector(target)
     finally:
         target.destroy()
@@ -508,94 +528,6 @@ def _port_actual_report(
     }
 
 
-def _active_trace_test_field(
-    system: HybridLocalDtnSystem,
-    adjoint: PETSc.Vec,
-) -> fem.Function:
-    if system.static_condensation is None:
-        raise RuntimeError("The adjoint audit requires static condensation.")
-    active = _replicated_vector(adjoint)[: system.n_fe]
-    condensed = system.static_condensation.condensed
-    if active.shape != (condensed.active_rows,):
-        raise RuntimeError("Local adjoint active-trace size differs.")
-    field = fem.Function(system.V, name=f"{system.side}_interface_adjoint")
-    vector = field.x.petsc_vec
-    vector.set(PETSc.ScalarType(0.0))
-    originals = condensed.trace_constraints.owned_active_original_dofs
-    if len(originals):
-        active_ids = np.asarray(
-            [
-                condensed.trace_constraints.original_to_active[int(row)]
-                for row in originals
-            ],
-            dtype=PETSc.IntType,
-        )
-        vector.setValues(
-            originals,
-            np.asarray(active[active_ids], dtype=PETSc.ScalarType),
-        )
-    vector.assemble()
-    field.x.scatter_forward()
-    system.floquet_data.mpc.homogenize(field)
-    system.floquet_data.mpc.backsubstitution(field)
-    field.x.scatter_forward()
-    return field
-
-
-def _adjoint_port_trace(
-    system: HybridLocalDtnSystem,
-    adjoint: PETSc.Vec,
-    *,
-    authority,
-    cross_section,
-    spaces,
-    lifter: EndpointModeLifter,
-    condensed,
-    endpoint_rows,
-    one_cell_mpc,
-    one_cell_constraint_data,
-) -> tuple[np.ndarray, dict[str, Any]]:
-    field = _active_trace_test_field(system, adjoint)
-    if system.side == "bottom":
-        interface = build_matched_interface_trace(
-            authority,
-            cross_section,
-            spaces,
-            system.local_mesh.mesh,
-            "top",
-            top_z_nm=10.0,
-        )
-        endpoint = "left"
-    else:
-        interface = build_matched_interface_trace(
-            authority,
-            cross_section,
-            spaces,
-            system.local_mesh.mesh,
-            "bottom",
-            bottom_z_nm=110.0,
-        )
-        endpoint = "right"
-    trace, extraction = extract_tangential_trace(field, interface)
-    left, right = lifted_endpoint_columns(
-        [trace],
-        lifter,
-        condensed,
-        endpoint_rows,
-        mpc=one_cell_mpc,
-        constraint_data=one_cell_constraint_data,
-    )
-    values = left[:, 0] if endpoint == "left" else right[:, 0]
-    _unit, log10_norm = _stable_unit_and_log10_norm(values)
-    return values, {
-        "endpoint": endpoint,
-        "extraction": extraction.__dict__,
-        "port_trace_log10_norm": log10_norm,
-        "port_trace_is_exact_zero": log10_norm is None,
-        "norm_evaluation": "max-scaled Euclidean norm",
-    }
-
-
 def _orders(path: Path) -> dict[tuple[str, int, int, str], complex]:
     record = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(record, dict) and "validation" in record:
@@ -620,17 +552,10 @@ def _channel_adjoint_audit(
     channels: Sequence[tuple[str, int, int, str]],
     *,
     current_load: np.ndarray,
-    exact_flux: np.ndarray,
+    exact_selected_load: np.ndarray,
+    interface_projection: PETSc.Mat,
     old_orders: dict[tuple[str, int, int, str], complex],
     full_orders: dict[tuple[str, int, int, str], complex],
-    authority,
-    cross_section,
-    spaces,
-    lifter: EndpointModeLifter,
-    condensed,
-    endpoint_rows,
-    one_cell_mpc,
-    one_cell_constraint_data,
 ) -> tuple[list[dict[str, Any]], list[np.ndarray]]:
     solver = _factor(system.A)
     results: list[dict[str, Any]] = []
@@ -656,21 +581,13 @@ def _channel_adjoint_audit(
                     gradient,
                     template=system.b,
                 )
-                port, trace_report = _adjoint_port_trace(
-                    system,
-                    adjoint,
-                    authority=authority,
-                    cross_section=cross_section,
-                    spaces=spaces,
-                    lifter=lifter,
-                    condensed=condensed,
-                    endpoint_rows=endpoint_rows,
-                    one_cell_mpc=one_cell_mpc,
-                    one_cell_constraint_data=one_cell_constraint_data,
-                )
                 adjoint_values = _replicated_vector(adjoint)
+                port = _matrix_action(interface_projection, adjoint_values)
+                _unit, log10_norm = _stable_unit_and_log10_norm(port)
                 current_pair = _stable_vdot(adjoint_values, current_load)
-                exact_pair = _stable_vdot(port, exact_flux)
+                exact_pair = _stable_vdot(
+                    adjoint_values, exact_selected_load
+                )
                 residual_pair = current_pair - exact_pair
                 prediction = -residual_pair
                 actual = old_orders[(side, m, n, polarization)] - full_orders[
@@ -686,7 +603,12 @@ def _channel_adjoint_audit(
                         },
                         "gradient": gradient_report,
                         "adjoint": solve_report,
-                        "interface_trace": trace_report,
+                        "interface_adjoint": {
+                            "coordinate": "D_times_z_in_M120_Petrov_space",
+                            "log10_norm": log10_norm,
+                            "is_exact_zero": log10_norm is None,
+                            "primal_field_recovery_attempted": False,
+                        },
                         "current_modal_load_pair": current_pair,
                         "exact_fe_load_pair": exact_pair,
                         "current_minus_exact_load_pair": residual_pair,
@@ -1230,6 +1152,14 @@ def main() -> None:
     ) + _matrix_action(
         coupling.top.negative_traction, backward_amplitude
     )
+    bottom_exact_coordinates = petrov_left.conj().T @ left_flux[:, 0]
+    top_exact_coordinates = petrov_right.conj().T @ right_flux[:, -1]
+    bottom_exact_load = _matrix_hermitian_action(
+        coupling.bottom.projection, bottom_exact_coordinates
+    )
+    top_exact_load = _matrix_hermitian_action(
+        coupling.top.projection, top_exact_coordinates
+    )
     coupling_record = {
         "endpoint_directional_resolver_condition": float(
             np.linalg.cond(resolver)
@@ -1238,8 +1168,10 @@ def main() -> None:
         "top_current_modal_load_norm": float(np.linalg.norm(top_load)),
         "dense_interface_square_formed": coupling.dense_interface_square_formed,
         "ordinary_hybrid_forward_solve_run": False,
+        "exact_load_reconstruction": (
+            "D^H times exact one-cell weak-conormal Petrov coordinates"
+        ),
     }
-    coupling.destroy()
 
     old_orders = _orders(args.old_hybrid_record)
     full_orders = _orders(args.full3d_orders)
@@ -1252,21 +1184,14 @@ def main() -> None:
         bottom,
         bottom_channels,
         current_load=bottom_load,
-        exact_flux=left_flux[:, 0],
+        exact_selected_load=bottom_exact_load,
+        interface_projection=coupling.bottom.projection,
         old_orders=old_orders,
         full_orders=full_orders,
-        authority=authority,
-        cross_section=cross_section,
-        spaces=spaces,
-        lifter=lifter,
-        condensed=condensed,
-        endpoint_rows=endpoint_rows,
-        one_cell_mpc=floquet.mpc,
-        one_cell_constraint_data=constraint_data,
     )
     bottom_checkpoint = _write_npz(
         args.work_dir / "bottom_persistent_channel_interface_adjoints.npz",
-        {"interface_adjoint_trace_rows": np.stack(bottom_vectors)},
+        {"modal_interface_adjoint_rows": np.stack(bottom_vectors)},
         comm,
     )
     timings["bottom_eight_channel_adjoints"] = time.perf_counter() - stage
@@ -1276,25 +1201,19 @@ def main() -> None:
         top,
         top_channels,
         current_load=top_load,
-        exact_flux=right_flux[:, -1],
+        exact_selected_load=top_exact_load,
+        interface_projection=coupling.top.projection,
         old_orders=old_orders,
         full_orders=full_orders,
-        authority=authority,
-        cross_section=cross_section,
-        spaces=spaces,
-        lifter=lifter,
-        condensed=condensed,
-        endpoint_rows=endpoint_rows,
-        one_cell_mpc=floquet.mpc,
-        one_cell_constraint_data=constraint_data,
     )
     top_checkpoint = _write_npz(
         args.work_dir / "top_persistent_channel_interface_adjoints.npz",
-        {"interface_adjoint_trace_rows": np.stack(top_vectors)},
+        {"modal_interface_adjoint_rows": np.stack(top_vectors)},
         comm,
     )
     timings["top_eight_channel_adjoints"] = time.perf_counter() - stage
     top.destroy()
+    coupling.destroy()
     channel_results = bottom_results + top_results
     sensitivity_vectors = np.stack(bottom_vectors + top_vectors)
     predictions = np.asarray(
@@ -1314,7 +1233,7 @@ def main() -> None:
     sensitivity_archive = _write_npz(
         args.work_dir / "persistent_channel_interface_adjoints.npz",
         {
-            "interface_adjoint_trace_rows": sensitivity_vectors,
+            "modal_interface_adjoint_rows": sensitivity_vectors,
             "local_fixed_trace_predictions": predictions,
             "actual_old_minus_full3d": actual,
         },
@@ -1339,8 +1258,10 @@ def main() -> None:
         ),
         "interpretation_limit": (
             "Each adjoint is the exact static local-endcap Hermitian adjoint "
-            "with the Full3D interface trace frozen.  It is an interface "
-            "sensitivity diagnostic, not a coupled monolithic Hybrid adjoint."
+            "reduced to D z in the selected M120 Petrov port space.  It is "
+            "an interface sensitivity diagnostic, not a coupled monolithic "
+            "Hybrid adjoint; the independently reported test-space "
+            "complement is not assigned a fabricated primal adjoint field."
         ),
     }
 
