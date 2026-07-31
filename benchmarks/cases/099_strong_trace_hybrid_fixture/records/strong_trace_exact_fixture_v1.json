@@ -1,0 +1,172 @@
+{
+  "record_type": "task036_review_v3_strong_trace_exact_fixture",
+  "record_version": 1,
+  "status": "fixture_pass_formal_anchor_fail_closed",
+  "date": "2026-07-31",
+  "source_identity": {
+    "strong_trace_implementation_sha": "5b04a4398fe752083024487ca95eb00a09e646cc",
+    "residual_normalization_fix_sha": "a5b86a319af3cfc88d5de5801f2e8131f89a9be4",
+    "solver_file": "src/solvers/hybrid_strong_trace_direct.py",
+    "solver_file_sha256": "c13951ae36185b5c4109ed6b72e5d852a5a4b6f93acf37fa3837c1c82cedfff5",
+    "test_file": "src/test/test_199_task036_strong_trace_hybrid.py",
+    "test_file_sha256": "471f4fb449aeaa222431453bc930318e837b9b074dfd37a2d4ef79a34bc62202",
+    "ordinary_default_changed": false
+  },
+  "environment": {
+    "activation": "scripts/activate_myfenics_wsl.sh",
+    "qualified_activation_marker": "1",
+    "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "python_version": "3.12.3",
+    "dolfinx_version": "0.10.0.post2",
+    "petsc4py_version": "3.19.6",
+    "mpi4py_version": "3.1.5",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32"
+  },
+  "dense_lossy_petrov_fixture": {
+    "status": "pass",
+    "seed": 36001,
+    "complex_lossy_nonhermitian": true,
+    "shapes": {
+      "A": [
+        6,
+        6
+      ],
+      "D": [
+        2,
+        6
+      ],
+      "R": [
+        6,
+        2
+      ],
+      "W": [
+        6,
+        2
+      ],
+      "C": [
+        6,
+        2
+      ],
+      "L": [
+        2,
+        2
+      ],
+      "reduced_square": [
+        5,
+        5
+      ]
+    },
+    "D_R_identity_error": 1.1076503886017827e-14,
+    "noninterface_residual": 1.3861124458429433e-15,
+    "modal_petrov_residual": 8.968369378123981e-16,
+    "strong_trace_identity_residual": 2.0862889719104477e-16,
+    "trace_complement_probe_norm": 3.2707364617012336,
+    "D_trace_complement_probe_norm": 2.7041395697799065e-15,
+    "trace_complement_unknown_count": 0,
+    "dense_interface_square_formed": false,
+    "penalty_used": false,
+    "full_dimensional_multiplier_used": false
+  },
+  "physical_standard_static_micro_fixture": {
+    "status": "pass",
+    "degree": 2,
+    "h_nm": 100.0,
+    "mode_count_per_direction": 2,
+    "polarization_coverage": [
+      "S",
+      "P"
+    ],
+    "p_mode_nonzero_longitudinal_norm": 2.188949519746857,
+    "trace_uses_tangential_hcurl_components_only": true,
+    "local_fem_outward_normal_sign": {
+      "bottom": 1,
+      "top": -1
+    },
+    "floquet": {
+      "phase_x": [
+        -0.6007411348979813,
+        -0.7994436120462065
+      ],
+      "nontrivial_phase": true,
+      "slave_edges": 27,
+      "matched_master_edges": 27,
+      "slave_faces": 10,
+      "matched_master_faces": 10,
+      "edge_corner_phase_mismatch": 0.0,
+      "face_transform_fit_residual": 0.0,
+      "field_constraint_residual": 0.0
+    },
+    "standard": {
+      "local_global_rows_per_side": 470,
+      "original_interface_rows_per_side": 58,
+      "independent_interface_rows_per_side": 48,
+      "retained_rows_per_side": 328,
+      "removed_slave_rows_per_side": 94,
+      "strong_matrix_shape": [
+        660,
+        660
+      ],
+      "reduced_true_relative_residual": 7.437033811202937e-14,
+      "max_D_R_identity_error": 4.577566798522238e-16,
+      "max_formal_component_residual": 7.430204095958811e-14,
+      "trace_complement_unknown_count": 0
+    },
+    "assembly_time_static_condensed": {
+      "local_global_rows_per_side": 304,
+      "original_interface_rows_per_side": 58,
+      "independent_interface_rows_per_side": 48,
+      "retained_rows_per_side": 256,
+      "removed_slave_rows_per_side": 0,
+      "strong_matrix_shape": [
+        516,
+        516
+      ],
+      "reduced_true_relative_residual": 2.999142056217875e-14,
+      "max_D_R_identity_error": 4.577566798522238e-16,
+      "max_formal_component_residual": 3.0215178268578e-14,
+      "trace_complement_unknown_count": 0,
+      "factor_released_before_static_recovery": true,
+      "full_global_matrix_allocated_for_recovery": false
+    },
+    "standard_static_equivalence": {
+      "modal_amplitude_relative_difference": 1.758644107528944e-14,
+      "R_total_absolute_difference": 2.220446049250313e-16,
+      "T_total_absolute_difference": 2.2768245622195593e-18,
+      "A_balance_absolute_difference": 2.1976778036281175e-16
+    },
+    "dense_interface_square_formed": false,
+    "geometry_projection_support_note": "The synthetic two-mode field intentionally has sparse physical support, so the production geometry-support equality is not a micro-fixture Gate. The formal A004-S run measured bottom/top support equality as true."
+  },
+  "mpi_qualification": [
+    {
+      "mpi_size": 1,
+      "command": "python -m pytest -q src/test/test_199_task036_strong_trace_hybrid.py",
+      "result": "6 passed",
+      "status": "pass"
+    },
+    {
+      "mpi_size": 2,
+      "command": "mpiexec -n 2 python -m pytest -q src/test/test_199_task036_strong_trace_hybrid.py",
+      "result": "6 passed on each of 2 ranks",
+      "status": "pass"
+    },
+    {
+      "mpi_size": 8,
+      "command": "mpiexec -n 8 python -m pytest -q src/test/test_199_task036_strong_trace_hybrid.py",
+      "result": "6 passed on each of 8 ranks",
+      "status": "pass"
+    }
+  ],
+  "formal_anchor_boundary": {
+    "A004_S_status": "HYBRID_STRONG_TRACE_IMPLEMENTATION_FAIL",
+    "reason": [
+      "abs(R+T+A_volume-1)=1.5316661055475578e-5 exceeds 1e-5",
+      "fixed diffraction channels pass 77/96"
+    ],
+    "A049_P_status": "not_run_due_to_A004_gate",
+    "A001_P_status": "not_run_due_to_A004_gate",
+    "M160_status": "not_authorized",
+    "production_candidate": "none"
+  }
+}

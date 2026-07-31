@@ -317,3 +317,44 @@ files 的 focused tests、MPI binding probe、Ruff、compileall、文档/JSON �
 | `git diff --check` | pass |
 
 本轮没有删除 Case098 历史目录来换取测试通过，也没有因此修改 documentation contract。
+
+## 9. Review V3 strong trace-subspace 回归
+
+Review V3 数值实现提交为：
+
+```text
+5b04a4398fe752083024487ca95eb00a09e646cc
+```
+
+实现提交完成：
+
+| 检查 | 结果 |
+|---|---:|
+| affected serial fixture/gate tests | `40 passed` |
+| broad related suite | `159 passed` |
+| MPI2 strong-trace micro-fixture | 每个 rank `4 passed` |
+| MPI8 strong-trace micro-fixture | 每个 rank `4 passed` |
+| Ruff / compileall / diff-check | pass |
+
+A004-S actual PDE 随后暴露齐次 residual partition 的报告分母缺陷。该缺陷只影响
+telemetry，不改变矩阵、解、场或物理量；修复提交为：
+
+```text
+a5b86a319af3cfc88d5de5801f2e8131f89a9be4
+```
+
+最终 targeted 回归：
+
+| 检查 | 结果 |
+|---|---:|
+| serial `test_199_task036_strong_trace_hybrid.py` | `6 passed` |
+| MPI2 | 每个 rank `6 passed` |
+| MPI8 | 每个 rank `6 passed` |
+| Ruff | pass |
+| compileall | pass |
+| `git diff --check` | pass |
+
+没有因纯 telemetry 修复重复运行 35 分钟的 broad suite，也没有重跑 A004-S PDE。原始
+A004 artifact 仍绑定 `5b04a43...`；离线 residual 修正与新的 fixture 绑定
+`a5b86a3...`。A004 最终仍因 energy `1.531666e-5 > 1e-5` 和固定通道 `77/96`
+失败，不会因测试通过被写成 production pass。
