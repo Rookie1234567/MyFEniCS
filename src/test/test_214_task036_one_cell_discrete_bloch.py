@@ -25,6 +25,7 @@ class Task036OneCellDiscreteBlochAlgebraTests(unittest.TestCase):
         values = np.asarray((1.0e200 + 2.0e200j, -3.0e200j))
         unit, log10_norm = _stable_unit_and_log10_norm(values)
         self.assertAlmostEqual(np.linalg.norm(unit), 1.0)
+        self.assertIsNotNone(log10_norm)
         self.assertTrue(np.isfinite(log10_norm))
         paired = _stable_vdot(
             values,
@@ -36,6 +37,11 @@ class Task036OneCellDiscreteBlochAlgebraTests(unittest.TestCase):
         )
         self.assertAlmostEqual(paired.real, expected.real)
         self.assertAlmostEqual(paired.imag, expected.imag)
+        zero_unit, zero_log = _stable_unit_and_log10_norm(
+            np.zeros(4, dtype=np.complex128)
+        )
+        self.assertFalse(np.any(zero_unit))
+        self.assertIsNone(zero_log)
 
     def test_one_cell_modal_port_reconstructs_same_projected_schur(self) -> None:
         count = 3

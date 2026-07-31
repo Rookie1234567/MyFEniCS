@@ -223,11 +223,15 @@ def _relative(left: np.ndarray, right: np.ndarray) -> float:
     )
 
 
-def _stable_unit_and_log10_norm(values: np.ndarray) -> tuple[np.ndarray, float]:
+def _stable_unit_and_log10_norm(
+    values: np.ndarray,
+) -> tuple[np.ndarray, float | None]:
     array = np.asarray(values, dtype=np.complex128)
+    if not np.all(np.isfinite(array)):
+        raise RuntimeError("A sensitivity row contains non-finite values.")
     scale = float(np.max(np.abs(array), initial=0.0))
-    if not np.isfinite(scale) or scale <= 0.0:
-        raise RuntimeError("A sensitivity row is zero or non-finite.")
+    if scale == 0.0:
+        return np.zeros_like(array), None
     scaled = array / scale
     scaled_norm = float(np.linalg.norm(scaled))
     if not np.isfinite(scaled_norm) or scaled_norm <= 0.0:
@@ -587,6 +591,7 @@ def _adjoint_port_trace(
         "endpoint": endpoint,
         "extraction": extraction.__dict__,
         "port_trace_log10_norm": log10_norm,
+        "port_trace_is_exact_zero": log10_norm is None,
         "norm_evaluation": "max-scaled Euclidean norm",
     }
 
@@ -718,9 +723,12 @@ def _svd_summary(rows: np.ndarray) -> dict[str, Any]:
     normalized_rows = [
         _stable_unit_and_log10_norm(row) for row in values
     ]
-    normalized = np.stack([item[0] for item in normalized_rows])
+    nonzero = [index for index, item in enumerate(normalized_rows) if item[1] is not None]
+    if not nonzero:
+        raise RuntimeError("Every channel has zero interface sensitivity.")
+    normalized = np.stack([normalized_rows[index][0] for index in nonzero])
     log10_norms = np.asarray(
-        [item[1] for item in normalized_rows], dtype=np.float64
+        [normalized_rows[index][1] for index in nonzero], dtype=np.float64
     )
     singular = np.linalg.svd(normalized, compute_uv=False)
     energy = singular**2
@@ -738,6 +746,11 @@ def _svd_summary(rows: np.ndarray) -> dict[str, Any]:
         "rank_for_99_percent": rank_for(0.99),
         "row_log10_norm_min": float(np.min(log10_norms)),
         "row_log10_norm_max": float(np.max(log10_norms)),
+        "nonzero_row_indices": nonzero,
+        "zero_row_indices": [
+            index for index in range(len(values)) if index not in nonzero
+        ],
+        "zero_row_count": int(len(values) - len(nonzero)),
         "normalization": "each row max-scaled before Euclidean normalization",
     }
 
@@ -1251,6 +1264,11 @@ def main() -> None:
         one_cell_mpc=floquet.mpc,
         one_cell_constraint_data=constraint_data,
     )
+    bottom_checkpoint = _write_npz(
+        args.work_dir / "bottom_persistent_channel_interface_adjoints.npz",
+        {"interface_adjoint_trace_rows": np.stack(bottom_vectors)},
+        comm,
+    )
     timings["bottom_eight_channel_adjoints"] = time.perf_counter() - stage
     bottom.destroy()
     stage = time.perf_counter()
@@ -1269,6 +1287,11 @@ def main() -> None:
         endpoint_rows=endpoint_rows,
         one_cell_mpc=floquet.mpc,
         one_cell_constraint_data=constraint_data,
+    )
+    top_checkpoint = _write_npz(
+        args.work_dir / "top_persistent_channel_interface_adjoints.npz",
+        {"interface_adjoint_trace_rows": np.stack(top_vectors)},
+        comm,
     )
     timings["top_eight_channel_adjoints"] = time.perf_counter() - stage
     top.destroy()
@@ -1301,6 +1324,10 @@ def main() -> None:
     sensitivity_summary = {
         "channels": channel_results,
         "raw_archive": sensitivity_archive,
+        "side_checkpoints": {
+            "bottom": bottom_checkpoint,
+            "top": top_checkpoint,
+        },
         "adjoint_trace_svd": sensitivity_svd,
         "prediction_vector_relative_error": _relative(predictions, actual),
         "prediction_actual_absolute_cosine": float(
