@@ -1,0 +1,14 @@
+{
+  "case_id": "Case120",
+  "task": "Task003",
+  "backend": "local_wsl2_cpu",
+  "dataset_id": "task002_m4e_p5_ny4_112_v3",
+  "dataset_source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "training_count": 96,
+  "frozen_validation_count": 16,
+  "thread_policy": "OMP/OPENBLAS/MKL/NUMEXPR=1; sequential model fits",
+  "validation_unlock": "requires MODEL_SELECTION_LOCK.json and --unlock-frozen-validation",
+  "discretization_uncertainty_status": "pending_8_point_audit"
+}

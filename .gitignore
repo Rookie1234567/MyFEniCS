@@ -9,6 +9,7 @@ __pycache__/
 
 # Virtual environments
 .venv/
+.venv-surrogate-cpu/
 venv/
 env/
 *.egg-info/

@@ -1,0 +1,13 @@
+{
+  "case_id": "Case120",
+  "m0_dataset_verification": "pass",
+  "m0_cpu_smoke": "pass",
+  "training_only": true,
+  "frozen_validation_accessed": false,
+  "training_cv_gate": "failed",
+  "model_selection_lock": "not_created",
+  "frozen_validation": "sealed",
+  "formal_fem_rerun": false,
+  "angle_doe": false,
+  "inversion": false
+}

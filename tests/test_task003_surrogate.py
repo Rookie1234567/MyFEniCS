@@ -1,0 +1,78 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from surrogate.dataset import CASE119_ROOT, load_training_dataset, verify_case119_dataset
+from surrogate.features import transform_features
+from surrogate.folds import FOLD_SEED, fold_identity, folds
+from surrogate.models import ExactARDGP, PolynomialPCE
+from surrogate.physics import analytic_power_mask, reconstruct_aggregates
+
+
+def test_case119_hash_and_array_identity():
+    result = verify_case119_dataset(CASE119_ROOT)
+    assert result.dataset_id == "task002_m4e_p5_ny4_112_v3"
+    assert result.sample_count == 112
+    assert result.training_count == 96
+    assert result.frozen_validation_count == 16
+    assert result.validation_target_accessed is False
+    assert result.arrays["order_powers.npy"] == {"shape": [112, 22, 2], "dtype": "float64"}
+
+
+def test_default_loader_does_not_open_frozen_index(monkeypatch):
+    original = np.load
+    opened: list[str] = []
+
+    def guarded_load(path, *args, **kwargs):
+        opened.append(str(path))
+        assert "frozen_validation" not in str(path)
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(np, "load", guarded_load)
+    dataset = load_training_dataset(CASE119_ROOT)
+    assert dataset.n_samples == 96
+    assert all("frozen_validation" not in path for path in opened)
+
+
+def test_analytic_mask_matches_training_rows():
+    dataset = load_training_dataset(CASE119_ROOT)
+    assert np.array_equal(analytic_power_mask(dataset.inputs), dataset.power_carrying_mask)
+
+
+def test_domain_and_zero_grazing_fail_closed():
+    with pytest.raises(ValueError):
+        transform_features(np.array([[120.0, 17.0, 0.0, 45.0]]))
+    with pytest.raises(ValueError):
+        transform_features(np.array([[120.0, 17.0, 11.0, 45.0]]))
+
+
+def test_folds_are_deterministic_and_cover_training_only():
+    dataset = load_training_dataset(CASE119_ROOT)
+    x = transform_features(dataset.inputs)
+    first = folds(x, seed=FOLD_SEED)
+    second = folds(x, seed=FOLD_SEED)
+    assert fold_identity(x, first) == fold_identity(x, second)
+    assert sorted(np.concatenate([test for _, test in first]).tolist()) == list(range(96))
+
+
+def test_cpu_models_repeat_exactly():
+    dataset = load_training_dataset(CASE119_ROOT)
+    x = transform_features(dataset.inputs)
+    y = dataset.aggregates[:, 0]
+    a = ExactARDGP(optimizer_restarts=0, random_state=0).fit(x, y).predict(x)
+    b = ExactARDGP(optimizer_restarts=0, random_state=0).fit(x, y).predict(x)
+    assert np.array_equal(a, b)
+    pce = PolynomialPCE(2).fit(x, y)
+    assert np.all(np.isfinite(pce.predict(x)))
+
+
+def test_composition_reconstruction_conserves_power():
+    raw = np.array([[0.2, 0.3, 0.4], [2.0, 1.0, 0.5]])
+    result = reconstruct_aggregates(raw)
+    assert np.all(result >= 0.0)
+    assert np.allclose(result[:, :3].sum(axis=1), 1.0, atol=1e-12)
+    assert np.array_equal(result[:, 2], result[:, 3])
+

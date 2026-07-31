@@ -1,0 +1,49 @@
+{
+  "schema_version": "task003.feature-contract.v1",
+  "public_inputs": [
+    "height_nm",
+    "width_x_nm",
+    "grazing_deg",
+    "azimuth_deg"
+  ],
+  "internal_features": [
+    "height_scaled",
+    "width_scaled",
+    "kx_over_k0",
+    "ky_over_k0"
+  ],
+  "height_scaling": {
+    "center_nm": 120.0,
+    "half_range_nm": 5.0,
+    "output": "[-1,1]"
+  },
+  "width_scaling": {
+    "center_nm": 17.0,
+    "half_range_nm": 1.0,
+    "output": "[-1,1]"
+  },
+  "wavevector": {
+    "kx_over_k0": "cos(grazing)*cos(azimuth)",
+    "ky_over_k0": "cos(grazing)*sin(azimuth)"
+  },
+  "domain": {
+    "height_nm": [
+      115.0,
+      125.0
+    ],
+    "width_x_nm": [
+      16.0,
+      18.0
+    ],
+    "grazing_deg": [
+      0.5,
+      10.0
+    ],
+    "azimuth_deg": [
+      0.0,
+      90.0
+    ]
+  },
+  "zero_grazing": "fail_closed",
+  "statistics_source": "training rows only; no validation access"
+}
