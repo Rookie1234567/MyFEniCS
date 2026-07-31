@@ -1,0 +1,55 @@
+{
+  "schema_version": "task002.case119-check.v1",
+  "checks": [
+    {
+      "name": "required_records",
+      "pass": true,
+      "observed": null
+    },
+    {
+      "name": "design_tuple_hashes",
+      "pass": true,
+      "observed": null
+    },
+    {
+      "name": "tangential",
+      "pass": true,
+      "observed": {
+        "ny3_ny4_all_selected_sp_le_1e_minus_10": true,
+        "three_required_ny4_power_carrying_le_1e_minus_10": true,
+        "all_zero_swap_cleanup": true
+      }
+    },
+    {
+      "name": "enhanced_canary",
+      "pass": true,
+      "observed": {
+        "corners_16_measured_pass": true,
+        "index40_measured_pass": true,
+        "alias_three_pass_original_gates": true,
+        "tangential_all_pass": true,
+        "one_clean_sha": true
+      }
+    },
+    {
+      "name": "campaign_complete",
+      "pass": true,
+      "observed": {
+        "training_96": true,
+        "validation_16": true,
+        "one_source": true,
+        "no_failure": true,
+        "zero_swap_cleanup": true,
+        "case117_not_reused": true
+      }
+    },
+    {
+      "name": "dataset_exact_96_16",
+      "pass": true,
+      "observed": null
+    }
+  ],
+  "pass_count": 6,
+  "check_count": 6,
+  "pass": true
+}

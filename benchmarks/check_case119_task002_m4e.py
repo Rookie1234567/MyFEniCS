@@ -260,7 +260,21 @@ def write_final(baseline_sha: str) -> dict[str, Any]:
     rows = _campaign_rows()
     train = [row for row in rows if row["split"] == "train"]
     validation = [row for row in rows if row["split"] == "frozen_validation"]
-    attempts = [row["attempts"][-1]["watchdog"] for row in rows if row["attempts"]]
+    attempt_rows = [
+        {
+            "design_id": row["design_id"],
+            "design_index": row["design_index"],
+            **attempt,
+        }
+        for row in rows for attempt in row["attempts"]
+    ]
+    watchdog_attempts = [
+        attempt for attempt in attempt_rows if "watchdog" in attempt
+    ]
+    interrupted_attempts = [
+        attempt for attempt in attempt_rows
+        if attempt["status"] == "interrupted_retryable"
+    ]
     payload = {
         "schema_version": "task002.case119-campaign-completion.v1",
         "baseline_sha": baseline_sha,
@@ -272,18 +286,36 @@ def write_final(baseline_sha: str) -> dict[str, Any]:
             for status in sorted({row["status"] for row in rows})
         },
         "resource": {
-            "attempt_count": len(attempts),
-            "peak_rss_bytes": max(item["peak_rss_bytes"] for item in attempts),
-            "peak_pss_bytes": max(item["peak_pss_bytes"] for item in attempts),
-            "all_zero_swap": all(item["peak_swap_bytes"] == 0 for item in attempts),
-            "all_cleanup": all(item["cleanup_complete"] for item in attempts),
+            "attempt_count": len(attempt_rows),
+            "watchdog_attempt_count": len(watchdog_attempts),
+            "measured_pass_attempt_count": sum(
+                item["status"] == "measured_pass" for item in attempt_rows
+            ),
+            "interrupted_retryable_attempt_count": len(interrupted_attempts),
+            "peak_rss_bytes": max(
+                item["watchdog"]["peak_rss_bytes"] for item in watchdog_attempts
+            ),
+            "peak_pss_bytes": max(
+                item["watchdog"]["peak_pss_bytes"] for item in watchdog_attempts
+            ),
+            "all_zero_swap": all(
+                item["watchdog"]["peak_swap_bytes"] == 0
+                for item in watchdog_attempts
+            ),
+            "all_cleanup": all(
+                item["watchdog"]["cleanup_complete"] for item in watchdog_attempts
+            ),
         },
         "gates": {
             "training_96": len(train) == 96 and all(row["status"] == "measured_pass" for row in train),
             "validation_16": len(validation) == 16 and all(row["status"] == "measured_pass" for row in validation),
             "one_source": {row["source_sha"] for row in rows} == {baseline_sha},
             "no_failure": all(row["status"] == "measured_pass" for row in rows),
-            "zero_swap_cleanup": all(item["peak_swap_bytes"] == 0 and item["cleanup_complete"] for item in attempts),
+            "zero_swap_cleanup": all(
+                item["watchdog"]["peak_swap_bytes"] == 0
+                and item["watchdog"]["cleanup_complete"]
+                for item in watchdog_attempts
+            ),
             "case117_not_reused": all("cases/119" in row["run_directory"] for row in rows),
         },
     }
@@ -294,6 +326,7 @@ def write_final(baseline_sha: str) -> dict[str, Any]:
         "status_inventory": payload["status_inventory"],
         "first_failure": None,
         "skipped_failure": False,
+        "interrupted_retryable_attempts": interrupted_attempts,
     })
     _write(RECORDS / "campaign_completion.json", payload)
     return payload

@@ -1,0 +1,47 @@
+{
+  "schema_version": "task002.case119-preflight.v1",
+  "baseline_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "axis_cell_counts": [
+    6,
+    4,
+    14
+  ],
+  "parameter_schema": "task002.s-p5-ny4-production-parameters.v3",
+  "dataset_schema": "task002.s-p5-ny4-single-fidelity-dataset.v3",
+  "campaign_schema": "task002.s-p5-ny4-design-campaign.v4",
+  "observable_schema": "task002.fixed-n0-orders.v3",
+  "design_rebind": {
+    "schema_version": "task002.m4e-ny4-design-rebind.v2",
+    "old_source_sha": "ba50cd36b081637ed5ea97c2dc8e4827d992b940",
+    "new_source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+    "old_point_tuple_hashes": {
+      "training_design.json": "b01f4f3b27b5b5e0466fb1d620ffe504677f6c24468ac9e955ac45fac39570fa",
+      "frozen_validation_design.json": "e5733173c2c55d4d5ef8e660fc63019bf61e78063a3bd24cb0488dc6c435e50b",
+      "candidate_pool.json": "a9831ffc1055732660bee859382f623e8558560634d9ac98702cfe355ff09fcd",
+      "discretization_audit_design.json": "049b973bbed7de05e46e8045fac11461ac80641f08aa464bb81d7aa72611a2aa"
+    },
+    "new_point_tuple_hashes": {
+      "training_design.json": "b01f4f3b27b5b5e0466fb1d620ffe504677f6c24468ac9e955ac45fac39570fa",
+      "frozen_validation_design.json": "e5733173c2c55d4d5ef8e660fc63019bf61e78063a3bd24cb0488dc6c435e50b",
+      "candidate_pool.json": "a9831ffc1055732660bee859382f623e8558560634d9ac98702cfe355ff09fcd",
+      "discretization_audit_design.json": "049b973bbed7de05e46e8045fac11461ac80641f08aa464bb81d7aa72611a2aa"
+    },
+    "combined_design_sha256": "815cc12aa2fe8a79c87f72fb548e516f45ae0ff7640454075dd13b1c32344105",
+    "tuple_tables_unchanged": {
+      "training_design.json": true,
+      "frozen_validation_design.json": true,
+      "candidate_pool.json": true,
+      "discretization_audit_design.json": true
+    },
+    "pass": true
+  },
+  "case117_immutable": true,
+  "ny3_56_pass_reuse_forbidden": true,
+  "gates": {
+    "tuple_hashes_unchanged": true,
+    "new_model_route": true,
+    "ny4_only": true
+  }
+}

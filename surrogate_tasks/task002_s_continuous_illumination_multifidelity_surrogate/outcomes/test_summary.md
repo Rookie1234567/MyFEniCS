@@ -1,5 +1,27 @@
 # Task002 测试与执行汇总
 
+## M4E（Review V7）
+
+| 检查 | 结果 |
+|---|---|
+| clean implementation SHA | `10e3356ba8364286a452077f71d7e3b92ea24cd5` |
+| tangential auxiliary/direct | 全 power-carrying S/P 最大 `1.094e-12`，Gate `1e-10` |
+| enhanced canary | 16 corners + index 40 + 3 alias points + required tangential points 全 pass |
+| training | 96/96 Ny4 measured-pass |
+| frozen validation | 16/16 Ny4 measured-pass；未评分 |
+| resource | 正式样本全部 zero swap、cleanup；peak RSS `6,209,052,672` bytes |
+| compact dataset checker | 96/16 exact-design，missing=0，extra=0，pass |
+| Case119 checker | 6/6 pass |
+| Task002 focused tests | 41 passed |
+| Task000/001/002 scope regression | 80 passed |
+| Case117 immutable-stop checker | 8/8 pass |
+| Case118 checker | 13/13 pass |
+| compileall / `git diff --check` | pass / pass |
+
+Case118 checker 首次调用误用了不存在的 `--verify` 参数；该命令以 usage error 退出，
+随后使用正式 `--check` 入口重跑并 13/13 通过。用户暂停造成的 index 4 attempt 1
+作为 retryable interruption 保存；attempt 2 从头通过，不是 numerical failure。
+
 ## M4D（Review V6）
 
 | 检查 | 结果 |

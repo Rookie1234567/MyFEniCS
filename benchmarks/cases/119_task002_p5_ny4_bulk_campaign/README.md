@@ -8,3 +8,12 @@ Ny4 dataset.
 
 Case117 remains immutable controlled-stop evidence. No Ny3 sample is eligible
 for this campaign or dataset.
+
+Final status: the enhanced canary passed, all 96 training and 16 frozen
+validation samples are measured-pass, and the independent exact-design dataset
+checker passes. The frozen validation responses remain sealed from model
+selection. Run the tracked evidence checker with:
+
+```bash
+python -m benchmarks.check_case119_task002_m4e --verify
+```

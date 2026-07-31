@@ -1,0 +1,29 @@
+{
+  "status_inventory": {
+    "measured_pass": 112
+  },
+  "first_failure": null,
+  "skipped_failure": false,
+  "interrupted_retryable_attempts": [
+    {
+      "design_id": "task002_p5_initial_training_v1",
+      "design_index": 4,
+      "attempt_number": 1,
+      "run_directory": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/119/m4e/production/task002_p5_initial_training_v1/0004_65effca98ddf/attempt_01",
+      "status": "interrupted_retryable",
+      "watchdog": {
+        "status": "controlled_stop_signal",
+        "return_code": 143,
+        "child_return_code": 1,
+        "elapsed_seconds": 72.87914824197651,
+        "peak_rss_bytes": 4422934528,
+        "peak_pss_bytes": 4242833408,
+        "peak_uss_bytes": 4122710016,
+        "peak_swap_bytes": 0,
+        "samples": 68,
+        "process_group_id": 259264,
+        "cleanup_complete": true
+      }
+    }
+  ]
+}

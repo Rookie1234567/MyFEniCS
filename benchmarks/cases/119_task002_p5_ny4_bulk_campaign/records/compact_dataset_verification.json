@@ -1,0 +1,22 @@
+{
+  "writer": {
+    "status": "pass",
+    "dataset_id": "task002_m4e_p5_ny4_112_v3",
+    "dataset_source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+    "sample_count": 112,
+    "file_count": 10
+  },
+  "independent_exact_design_checker": {
+    "status": "pass",
+    "dataset_id": "task002_m4e_p5_ny4_112_v3",
+    "dataset_source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5",
+    "sample_count": 112,
+    "file_count": 10,
+    "exact_design_coverage": true,
+    "training_count": 96,
+    "frozen_validation_count": 16,
+    "extra_count": 0,
+    "missing_count": 0,
+    "source_sha": "10e3356ba8364286a452077f71d7e3b92ea24cd5"
+  }
+}

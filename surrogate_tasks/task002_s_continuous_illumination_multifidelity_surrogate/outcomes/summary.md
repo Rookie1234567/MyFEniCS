@@ -1,5 +1,19 @@
 # Task002 结果总览
 
+## M4E 更新（Review V7）
+
+Case119 已完成 Ny4 production rebaseline。切向 projection 合同修复后，全体实际
+power-carrying S/P auxiliary/direct 最大差异为 `9.11e-14–1.09e-12`，通过
+`1e-10` Gate。唯一 production route 为 Full3D static uniform N1curl p5/h10/MPI2，
+axis counts `(6,4,14)`，clean baseline 为
+`10e3356ba8364286a452077f71d7e3b92ea24cd5`。
+
+增强 canary 全部通过；新 campaign 完成 96/96 training 与 16/16 frozen validation，
+112 条正式样本全部 measured-pass、zero swap、cleanup complete。Ny4-only compact
+dataset 与 exact-design checker 通过，Case119 checker 6/6 pass。Case117 保持不可变，
+Ny3 56 个 pass 未复用。未开始 surrogate training、validation scoring、angle DOE 或
+inversion。详见 `m4e_ny4_production.md`、`m4e_dataset_report.md` 与 `response_v8.md`。
+
 ## M4D 更新（Review V6）
 
 Case118 已确认 Case117 index 40 的根因是 Ny=3 导致的 n=0/n=-3 离散

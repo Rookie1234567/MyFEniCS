@@ -1,0 +1,10 @@
+{
+  "attempt_count": 113,
+  "watchdog_attempt_count": 113,
+  "measured_pass_attempt_count": 112,
+  "interrupted_retryable_attempt_count": 1,
+  "peak_rss_bytes": 6209052672,
+  "peak_pss_bytes": 6004024320,
+  "all_zero_swap": true,
+  "all_cleanup": true
+}
