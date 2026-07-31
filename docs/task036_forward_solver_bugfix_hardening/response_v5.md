@@ -271,3 +271,94 @@ RCWA development or RCWA run
 
 master 未修改、未合并；ordinary default 未改变。最终 execution-branch HEAD、远程同步和工作
 树状态在提交并推送本 response 后由最终聊天报告给出。
+
+## 13. 后续补充：exact Cauchy / port-operator / 16-channel audit
+
+在没有新增 review 文件的情况下，本节按用户要求继续追加到原 `response_v5.md`。完整表格、
+方法和 evidence index 见：
+
+[`outcomes/exact_cauchy_port_operator_audit.md`](outcomes/exact_cauchy_port_operator_audit.md)
+
+本补充使用 numerical source
+`c8725e9eedc8a558719008f8762bc79eca48fbb7`，在 MPI8/complex128/int32 环境中复用 frozen
+Full3D traces、one-cell Schur blocks 和 old/I1/I2 records。总审计时间为 `134.992 s`；没有
+运行新的 Full3D 或 Hybrid forward PDE，也没有运行 actual enrichment candidate。
+
+### 13.1 对第 9 节根因推断的实证修正
+
+第 9 节在当时证据下把剩余误差暂时指向“M120 core propagation/coupling 累积误差”。新的
+exact port-operator audit 已把这个推断进一步收窄并**实证修正**：
+
+| middle length | exact FE selected port operator vs current scalar-CG modal operator |
+|---:|---:|
+| 40 nm | `1.593747e-11` |
+| 60 nm | `1.749079e-11` |
+| 100 nm | `1.951491e-11` |
+
+因此在当前 selected M120 R/W space 内，中间 scalar-CG propagation/operator 是正确的；
+不应继续修改 core propagation。真正仍未闭合的是端部 selected space 对完整 Maxwell Cauchy
+数据的表示：
+
+| best approximation | aggregate relative | max cell relative |
+|---|---:|---:|
+| electric trace | `1.099844e-6` | `2.072564e-6` |
+| magnetic/traction | `2.364065e-5` | `4.609620e-5` |
+| joint Cauchy | `1.677328e-5` | `3.214277e-5` |
+
+这里的 traction 是 Maxwell 弱式中与 `n x H` 成比例的离散 conormal，不是 sampled H。
+只看 electric trace 会把 aggregate 缺口低估约 21.5 倍。中心 selected-Petrov 通量连续性可到
+`5.72e-9`，但靠近 20/100 nm 两端分别回升到 `5.73e-5`和`2.00e-4`，支持“健康的
+M120 core + 不完整的端部 joint-Cauchy port space”。
+
+### 13.2 Port pair 与 16 个失败通道
+
+right/left raw Gram conditions 分别为 `3.12e4 / 4.23e4`，但白化后的 pair condition 为
+`1.00001975`、inf-sup 最小奇异值为 `0.99998025`。所以这不是物理 port pairing 退化，raw
+condition 主要是坐标尺度。
+
+16/16 个持续失败通道的代数 adjoint residual 均不高于 `1.776730e-12`。归一化接口灵敏度
+的第一方向只占 `6.3915%`，前两方向只占 `12.7827%`；达到 90%/95%/99% 分别需要
+15/16/16 个方向。因此失败通道不是由少量共同 output-adjoint directions 主导，不能靠两三
+个通道专用模式解决。局部 fixed-trace predictor 的向量相对误差仍为 `0.999467`，不授予
+逐通道定量预测 credit。
+
+### 13.3 Raw diagnostic 纠正
+
+正式 raw `audit.json` 中原字段
+`exact_cauchy.all_internal_conormal_cancellation_relative` 将左右端面不同编号/orientation 的
+1,200 维 active-row 向量直接相加，其约 `1.37` 的值没有物理意义，现标记为 withdrawn。
+
+替代结果由原 coordinate-matched `projected_one_cell_blocks.npz` 和
+`exact_petrov_plane_coefficients.npz` 在共同 Petrov 坐标离线重放得到；没有重跑 PDE。runner
+也已修正为只计算 side-specific Petrov 映射后的连续性。tracked compact 为：
+
+[`../../benchmarks/cases/099_strong_trace_hybrid_fixture/records/a004_exact_cauchy_port_audit_v1.json`](../../benchmarks/cases/099_strong_trace_hybrid_fixture/records/a004_exact_cauchy_port_audit_v1.json)
+
+### 13.4 唯一冻结的下一路线与 PDE 决策
+
+只冻结一个 enrichment family：
+
+```text
+transfer_optimal_port_modes
+```
+
+它应从两端短 buffer 的 exact discrete transfer/port operator 中提取 joint trace/traction 最
+重要的共同方向，corrector 只在端部局部存在并随后 Schur 凝聚；目标仍是恢复 10/110 nm
+接口，让原 M120 core 跨完整 100 nm。`Cauchy-complete discrete Bloch correctors` 和
+`failing-channel adjoint modes` 本轮均不同时实施。
+
+本补充只修正 diagnostic 并完成根因审计，**没有形成会改变 forward solution 的数值修复**。
+因此即使用户允许“修正成功后最终跑一次 PDE”，当前也不满足该条件；现在重跑只会复现旧
+Hybrid negative。只有后续 transfer-optimal 实现先通过 exact fixture、joint-Cauchy
+projection、orientation/row-map 和资源 preflight，才有理由只运行一次 A004-S actual PDE。
+
+```text
+exact_Cauchy_audit = complete
+selected_M120_core_operator = qualified_inside_selected_space
+endpoint_joint_Cauchy = incomplete
+few_common_failing_channel_directions = false
+frozen_next_family = transfer_optimal_port_modes
+actual_candidate = not_implemented / not_run
+Hybrid production = fail
+ordinary default = unchanged
+```

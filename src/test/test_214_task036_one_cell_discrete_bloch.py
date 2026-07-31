@@ -9,6 +9,7 @@ from benchmarks.run_task036_one_cell_discrete_bloch import (
 )
 from benchmarks.run_task036_exact_cauchy_port_audit import (
     _modal_port_matrix,
+    _selected_conormal_continuity,
     _stable_unit_and_log10_norm,
     _stable_vdot,
 )
@@ -21,6 +22,22 @@ from src.solvers.one_cell_discrete_bloch import (
 
 
 class Task036OneCellDiscreteBlochAlgebraTests(unittest.TestCase):
+    def test_selected_conormal_continuity_uses_side_specific_petrov_maps(self) -> None:
+        left_petrov = np.asarray([[2.0], [0.0]], dtype=np.complex128)
+        right_petrov = np.asarray([[0.0], [3.0]], dtype=np.complex128)
+        left_flux = np.asarray(
+            [[1.0, -1.5], [4.0, 2.0]], dtype=np.complex128
+        )
+        right_flux = np.asarray(
+            [[7.0, 8.0], [1.0, 9.0]], dtype=np.complex128
+        )
+        # At the internal plane, right Petrov sees 3*1 and left Petrov sees
+        # 2*(-1.5), even though the raw vectors cannot be added by row index.
+        residuals = _selected_conormal_continuity(
+            left_flux, right_flux, left_petrov, right_petrov
+        )
+        self.assertEqual(residuals, [0.0])
+
     def test_cauchy_audit_scaled_norm_and_pairing_avoid_overflow(self) -> None:
         values = np.asarray((1.0e200 + 2.0e200j, -3.0e200j))
         unit, log10_norm = _stable_unit_and_log10_norm(values)

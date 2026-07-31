@@ -1,0 +1,542 @@
+{
+  "schema_version": "task036.exact-cauchy-port-audit-compact.v1",
+  "status": "complete_no_actual_candidate_run",
+  "numerical_source_sha": "c8725e9eedc8a558719008f8762bc79eca48fbb7",
+  "mpi_size": 8,
+  "abi": {
+    "scalar_type": "complex128",
+    "int_type": "int32"
+  },
+  "command": "python -m benchmarks.run_task036_exact_cauchy_port_audit --verified-clean-sha c8725e9eedc8a558719008f8762bc79eca48fbb7 --output /home/Projects/MyFEniCS/benchmarks/artifacts/task036/c8725e9eedc8a558719008f8762bc79eca48fbb7/review_v5_cauchy_port_audit/audit.json --work-dir /home/Projects/MyFEniCS/benchmarks/artifacts/task036/c8725e9eedc8a558719008f8762bc79eca48fbb7/review_v5_cauchy_port_audit/work --oracle-json /home/Projects/MyFEniCS/benchmarks/artifacts/task036/c70ad32e3cb741f382e2cc901e056ae1ea0ba284/review_v4_one_cell/mpi8_m120_exact_oracle.json --exact-traces /home/Projects/MyFEniCS/benchmarks/artifacts/task036/c70ad32e3cb741f382e2cc901e056ae1ea0ba284/review_v4_one_cell/mpi8_m120_exact_oracle_work/full3d_exact_trace/exact_interface_traces.npz --exact-coefficients /home/Projects/MyFEniCS/benchmarks/artifacts/task036/c70ad32e3cb741f382e2cc901e056ae1ea0ba284/review_v4_one_cell/mpi8_m120_exact_oracle_work/full3d_exact_trace/exact_petrov_plane_coefficients.npz --projected-blocks /home/Projects/MyFEniCS/benchmarks/artifacts/task036/c70ad32e3cb741f382e2cc901e056ae1ea0ba284/review_v4_one_cell/mpi8_m120_exact_oracle_work/projected_one_cell_blocks.npz --old-hybrid-record /home/Projects/MyFEniCS/benchmarks/artifacts/task036/5b04a4398fe752083024487ca95eb00a09e646cc/review_v3_strong_trace/A004-S/hybrid_strong_m120/solver_record.json --i1-hybrid-record /home/Projects/MyFEniCS/benchmarks/artifacts/task036_v5_local/3259bcb6ed2b6d71a9c51a701c4cf51410d7b353/review_v5_interface/I1_30_90_retry2_lexical_paths/solver_record.json --i2-hybrid-record /home/Projects/MyFEniCS/benchmarks/artifacts/task036_v5_local/3259bcb6ed2b6d71a9c51a701c4cf51410d7b353/review_v5_interface/I2_40_80/solver_record.json --full3d-orders /home/Projects/MyFEniCS/benchmarks/artifacts/task036/c70ad32e3cb741f382e2cc901e056ae1ea0ba284/review_v4_one_cell/mpi8_m120_exact_oracle_work/full3d_exact_trace/dtn_port_diffraction_orders_3d.json",
+  "artifacts": {
+    "raw_audit": {
+      "path": "benchmarks/artifacts/task036/c8725e9eedc8a558719008f8762bc79eca48fbb7/review_v5_cauchy_port_audit/audit.json",
+      "sha256": "f2c1bd8fa6e88a00b8696ad88c97a5a74d37fd57330420923eee418127787998",
+      "size_bytes": 66386
+    },
+    "frozen_projected_one_cell_blocks": {
+      "path": "benchmarks/artifacts/task036/c70ad32e3cb741f382e2cc901e056ae1ea0ba284/review_v4_one_cell/mpi8_m120_exact_oracle_work/projected_one_cell_blocks.npz",
+      "sha256": "40969385ba43f9e36cdcea7d61de6ac5bb97798450d16113f490102ce5d786fa",
+      "size_bytes": 807711
+    },
+    "frozen_exact_petrov_plane_coefficients": {
+      "path": "benchmarks/artifacts/task036/c70ad32e3cb741f382e2cc901e056ae1ea0ba284/review_v4_one_cell/mpi8_m120_exact_oracle_work/full3d_exact_trace/exact_petrov_plane_coefficients.npz",
+      "sha256": "01644583e72400a966f88f5fa310d5c9a8b06a776f741041cdf07dddf1ba3c2b",
+      "size_bytes": 21113
+    },
+    "exact_cauchy_npz": {
+      "path": "benchmarks/artifacts/task036/c8725e9eedc8a558719008f8762bc79eca48fbb7/review_v5_cauchy_port_audit/work/exact_cauchy_traces.npz",
+      "sha256": "d271b32013def15540e86da33bdf27a832cb331c5e4b8d0292b4f7645640fe35",
+      "size_bytes": 568964,
+      "arrays": {
+        "z_nm": [
+          11
+        ],
+        "Et_canonical_owned_dofs": [
+          11,
+          1250
+        ],
+        "middle_weak_conormal_left_by_cell": [
+          10,
+          1200
+        ],
+        "middle_weak_conormal_right_by_cell": [
+          10,
+          1200
+        ]
+      }
+    },
+    "persistent_channel_adjoint_npz": {
+      "path": "benchmarks/artifacts/task036/c8725e9eedc8a558719008f8762bc79eca48fbb7/review_v5_cauchy_port_audit/work/persistent_channel_interface_adjoints.npz",
+      "sha256": "09bca971d5c503f61b361e2862861bfa5497e9f413bb571dfbe1b684f3829683",
+      "size_bytes": 24724,
+      "arrays": {
+        "modal_interface_adjoint_rows": [
+          16,
+          240
+        ],
+        "local_fixed_trace_predictions": [
+          16
+        ],
+        "actual_old_minus_full3d": [
+          16
+        ]
+      }
+    }
+  },
+  "withdrawn_raw_diagnostic": {
+    "field": "exact_cauchy.all_internal_conormal_cancellation_relative",
+    "reason": "left/right endpoint active rows have different numbering and orientation; raw 1200-vectors cannot be added directly",
+    "replacement": "selected Petrov conormals replayed from the coordinate-matched frozen one-cell blocks and exact coefficients"
+  },
+  "selected_petrov_internal_flux_continuity": {
+    "z_nm": [
+      20.0,
+      30.0,
+      40.0,
+      50.0,
+      60.0,
+      70.0,
+      80.0,
+      90.0,
+      100.0
+    ],
+    "relative": [
+      5.7311553741594e-05,
+      1.6808914737924833e-06,
+      4.52183925991196e-08,
+      1.1908622168841563e-08,
+      5.723688926063382e-09,
+      1.2066903434575636e-08,
+      2.8366275620865056e-07,
+      7.255059957450567e-06,
+      0.0002000710486940732
+    ],
+    "max_relative": 0.0002000710486940732,
+    "minimum_relative": 5.723688926063382e-09,
+    "minimum_z_nm": 60.0
+  },
+  "requested_exact_cauchy_planes": {
+    "z10": {
+      "z_nm": 10.0,
+      "electric_projection_relative": 3.5146574818050004e-06,
+      "weak_conormal_sides": [
+        {
+          "side": "upper_cell_left",
+          "norm": 0.13774441857718112,
+          "sha256": "5ac5843146b59d5b0f32ed756034506b24c639853dae6bbe7b293448e0b5ca55"
+        }
+      ]
+    },
+    "z30": {
+      "z_nm": 30.0,
+      "electric_projection_relative": 2.881133110295652e-09,
+      "weak_conormal_sides": [
+        {
+          "side": "lower_cell_right",
+          "norm": 0.16900066074545678,
+          "sha256": "aac1cc96a5510f5822a8ed498d543ec431ba9edfe0458475a78e1788d083fc4b"
+        },
+        {
+          "side": "upper_cell_left",
+          "norm": 0.1690006607603516,
+          "sha256": "837d3e986e6f5049a278574efe170d9da4e2d580ec01b261dff3a322ea067ded"
+        }
+      ]
+    },
+    "z40": {
+      "z_nm": 40.0,
+      "electric_projection_relative": 8.852121444026174e-11,
+      "weak_conormal_sides": [
+        {
+          "side": "lower_cell_right",
+          "norm": 0.1894699521819395,
+          "sha256": "3cdfe760b045f4a450831f977a0b773d3e505b755ca62862c9320c689debdcf8"
+        },
+        {
+          "side": "upper_cell_left",
+          "norm": 0.18946995216737486,
+          "sha256": "16bb76d7f3ae9bfaba3bb3fc2fd6dc5c43e18823f5b5677815aed7ac521e8cdf"
+        }
+      ]
+    },
+    "z80": {
+      "z_nm": 80.0,
+      "electric_projection_relative": 3.7179659123931726e-10,
+      "weak_conormal_sides": [
+        {
+          "side": "lower_cell_right",
+          "norm": 0.32056825598080096,
+          "sha256": "2f53cc03f071d75126d6c63df2cdda671864b3b6add915f18c53ba76caa5c0f2"
+        },
+        {
+          "side": "upper_cell_left",
+          "norm": 0.32056825596750843,
+          "sha256": "3b81396206c75caa66d823ff0760013767fa4d8580a6a9d67affc440e61d963d"
+        }
+      ]
+    },
+    "z90": {
+      "z_nm": 90.0,
+      "electric_projection_relative": 8.687625123869985e-09,
+      "weak_conormal_sides": [
+        {
+          "side": "lower_cell_right",
+          "norm": 0.36946419559374655,
+          "sha256": "e5b8f1631bddfa9af6047f3fe8f5172966fdb83cd51bf43e7898b11349eb7da3"
+        },
+        {
+          "side": "upper_cell_left",
+          "norm": 0.36946419561081173,
+          "sha256": "dd1554124cb3a9f301ecd16fd452cafa55914f111cb9b03f572dfa35a98cd1eb"
+        }
+      ]
+    },
+    "z110": {
+      "z_nm": 110.0,
+      "electric_projection_relative": 5.224931197564338e-06,
+      "weak_conormal_sides": [
+        {
+          "side": "lower_cell_right",
+          "norm": 0.49372607985677813,
+          "sha256": "2e23c0d5f25418d2a421ee8c1649017243c5b1fa54c4e282b62c59487cd9ba9c"
+        }
+      ]
+    }
+  },
+  "one_cell_identity": {
+    "full_rows": 10755,
+    "active_rows": 4440,
+    "left_original_rows": 1250,
+    "right_original_rows": 1250,
+    "left_active_rows": 1200,
+    "right_active_rows": 1200,
+    "axial_internal_active_rows": 2040,
+    "left_original_sha256": "199fc99b524631dac8fcd8799ef465c9de8138c2ccc93551056c14ad7df31843",
+    "right_original_sha256": "6ecbf16fec86dd2d09423166990611ef985f1e8d969db037475dca0767c83e53",
+    "left_active_sha256": "fe04a9e88000b44ba61a1e326ad49dcb2e021b95259c93e1b69672f7dfe1609c",
+    "right_active_sha256": "32695a0c5e8cd44f4820b41d4384e2a3afff68255d706f9ce05182484712bc92",
+    "axial_internal_active_sha256": "ff2f3cada4309269d1cb6f1be2b5447bc373275ab41fc34ee617244fceb12af7",
+    "left_right_disjoint": true,
+    "matrix_nnz": 1987800,
+    "dense_interface_square_formed": false,
+    "matches_frozen_oracle": true
+  },
+  "qep_coordinate_replay": {
+    "mode_count_per_direction": 120,
+    "electric_trace_dofs": 1250,
+    "coefficient_replay_relative": 0.031221729714515742,
+    "coordinate_replay_interpretation": "diagnostic only: a rebuilt non-normal near-degenerate QEP basis may rotate or rephase inside the same physical span",
+    "frozen_to_live_projected_port_coordinate_relative": 0.37845852435208943,
+    "frozen_to_live_negative_map_coordinate_relative": 2.4712074585978498e-14,
+    "negative_trace": {
+      "per_trace_projection_relative_residual": [
+        2.138035682783533e-16,
+        1.5133846847695982e-16,
+        4.2933217430057287e-16,
+        5.460650104742681e-16,
+        5.477079055382271e-16,
+        2.0981060501355393e-16,
+        1.0432125120456826e-16,
+        2.32790401677433e-16,
+        1.8305223646942206e-16,
+        3.8897688076874927e-16,
+        2.4068811728412897e-16,
+        5.2670311582727084e-17,
+        1.037279412145812e-15,
+        9.336964196822685e-16,
+        3.208293944642666e-16,
+        1.2995515695774395e-16,
+        3.1337597542217804e-17,
+        2.9352917618791503e-16,
+        1.9826189625987047e-16,
+        2.945759168822383e-17,
+        1.1820633756648615e-16,
+        1.7698956597616298e-16,
+        3.87553229931333e-16,
+        1.017240397225498e-16,
+        1.3972603219702682e-15,
+        8.482871113395725e-17,
+        4.0186064623977776e-16,
+        1.8990396616288396e-16,
+        2.868368698160933e-16,
+        4.3642693794964715e-16,
+        8.486658158089908e-17,
+        1.6153390990107122e-16,
+        7.46455404513794e-17,
+        5.708756753724697e-17,
+        1.1588008365008483e-16,
+        9.786714363661381e-17,
+        6.495487765854487e-16,
+        1.116627628332683e-15,
+        1.8175572572258061e-16,
+        1.5537626663226837e-16,
+        5.947518520456408e-17,
+        1.9237650404841193e-16,
+        1.3969933200197473e-16,
+        4.770138833296157e-17,
+        1.9893058093704532e-16,
+        3.4394595820523606e-16,
+        1.6684095540704024e-16,
+        3.8182478957008006e-17,
+        2.6395051516222155e-17,
+        1.369337933275296e-16,
+        1.596936337107003e-16,
+        4.383315290727263e-17,
+        3.857512445567063e-16,
+        1.207222602038295e-16,
+        1.6457348117520075e-16,
+        5.996107172355929e-17,
+        2.961384149460272e-16,
+        1.2572248968864683e-16,
+        2.286118119412612e-16,
+        5.235476859008867e-17,
+        5.943263594945789e-17,
+        2.4026773629720965e-16,
+        9.384735474597495e-17,
+        8.76028149657487e-17,
+        3.624612018200915e-16,
+        3.4469232329305366e-16,
+        1.784338563661994e-16,
+        3.88480106704364e-17,
+        3.456005773408782e-15,
+        2.6044814393161443e-16,
+        4.3701253649455816e-17,
+        2.7047137896742454e-16,
+        3.901023837904022e-17,
+        9.582460243042425e-17,
+        2.8677611673814635e-16,
+        3.4743336865920256e-17,
+        4.4195936207011913e-16,
+        3.039710148261783e-16,
+        2.7836665148194525e-17,
+        1.0636151896387703e-16,
+        1.2596408472291833e-16,
+        2.5003256854832816e-17,
+        9.938010570160852e-17,
+        1.2806087689385907e-16,
+        3.776346587794437e-16,
+        1.6325425958495182e-15,
+        3.8022936794441316e-16,
+        2.900407855756522e-16,
+        6.305876088189812e-17,
+        9.688053954098762e-17,
+        8.405456504442385e-17,
+        5.571489410966072e-17,
+        1.7688466920964595e-16,
+        7.791750055233106e-17,
+        4.3905992089043187e-16,
+        1.5995957647013897e-16,
+        2.1341438018499308e-16,
+        1.294292699247742e-16,
+        1.18165997279753e-16,
+        1.197727632262151e-16,
+        2.581660347419902e-16,
+        1.8333278246402681e-16,
+        4.9509729377612795e-17,
+        1.2937966657823236e-16,
+        1.1488027602809974e-16,
+        1.8918104412637452e-16,
+        6.22916053295152e-16,
+        4.064963266927889e-16,
+        1.3736880323693396e-16,
+        5.20704004699376e-16,
+        3.484720775845412e-15,
+        1.2249281428480503e-16,
+        3.3243443538126545e-16,
+        1.0735558138893675e-16,
+        3.968480457604181e-16,
+        3.3490900377290155e-16,
+        3.1335656524592266e-16,
+        1.6731219426471071e-16,
+        2.4082205499136415e-16,
+        1.9964075643502505e-16
+      ],
+      "max_projection_relative_residual": 3.484720775845412e-15,
+      "coordinate_condition": 1.00000000000015,
+      "coordinate_identity_relative_frobenius": 1.7533505386242e-14,
+      "coordinate_sha256": "a9a6146813d79b1cc8d2626a244d806439ec99c5759dfe562d4c9b9ed33bd01a"
+    },
+    "port_pair_gram_and_inf_sup": {
+      "right_self_gram": {
+        "condition": 31179.393286351442,
+        "minimum_eigenvalue": 0.13927785357396846,
+        "maximum_eigenvalue": 4342.598972661632
+      },
+      "left_self_gram": {
+        "condition": 42262.09023087795,
+        "minimum_eigenvalue": 0.0001957813928152685,
+        "maximum_eigenvalue": 8.274130888685837
+      },
+      "raw_left_right_condition": 2987.804413109295,
+      "basis_invariant_whitened_condition": 1.0000197476916994,
+      "inf_sup_smallest_singular_value": 0.9999802526993287,
+      "largest_singular_value": 1.0000000000010645
+    }
+  },
+  "port_pair": {
+    "right_self_gram": {
+      "condition": 31179.393286351442,
+      "minimum_eigenvalue": 0.13927785357396846,
+      "maximum_eigenvalue": 4342.598972661632
+    },
+    "left_self_gram": {
+      "condition": 42262.09023087795,
+      "minimum_eigenvalue": 0.0001957813928152685,
+      "maximum_eigenvalue": 8.274130888685837
+    },
+    "raw_left_right_condition": 2987.804413109295,
+    "basis_invariant_whitened_condition": 1.0000197476916994,
+    "inf_sup_smallest_singular_value": 0.9999802526993287,
+    "largest_singular_value": 1.0000000000010645
+  },
+  "cauchy_best_approximation": {
+    "electric": {
+      "rank": 240,
+      "columns": 240,
+      "rcond": 1e-10,
+      "condition_retained": 3016.670517660355,
+      "relative_by_cell": [
+        1.1545849968036256e-06,
+        3.1949697269610624e-08,
+        9.478544619331246e-10,
+        2.930423309016616e-11,
+        1.021503347705023e-12,
+        6.361462145885723e-12,
+        1.4494038808290615e-10,
+        3.3836235032329827e-09,
+        8.147603865599225e-08,
+        2.0725641792470126e-06
+      ],
+      "max_relative": 2.0725641792470126e-06,
+      "aggregate_relative": 1.0998438574268432e-06
+    },
+    "magnetic_traction": {
+      "rank": 240,
+      "columns": 240,
+      "rcond": 1e-10,
+      "condition_retained": 5692.068479348266,
+      "relative_by_cell": [
+        1.8285295874386005e-05,
+        5.591572611215422e-07,
+        1.7916662904060243e-08,
+        5.860315675402074e-10,
+        2.1374731454083247e-11,
+        1.3633054187919883e-10,
+        3.1589845664283674e-09,
+        7.449773788229015e-08,
+        1.8035052341073497e-06,
+        4.6096200499554514e-05
+      ],
+      "max_relative": 4.6096200499554514e-05,
+      "aggregate_relative": 2.364065474527917e-05
+    },
+    "joint": {
+      "rank": 240,
+      "columns": 240,
+      "rcond": 1e-10,
+      "condition_retained": 1040.8912328599972,
+      "relative_by_cell": [
+        1.4770750852798954e-05,
+        4.3478562090183273e-07,
+        1.3485441406376432e-08,
+        4.2987601223057584e-10,
+        1.5380871381959025e-11,
+        9.67351772623578e-11,
+        2.2226980122095022e-09,
+        5.215963752731006e-08,
+        1.2595969616582258e-06,
+        3.214277302977704e-05
+      ],
+      "max_relative": 3.214277302977704e-05,
+      "aggregate_relative": 1.6773276137317924e-05
+    }
+  },
+  "port_operator_by_length": {
+    "40nm_z40_z80": {
+      "exact_fe_to_current_modal_frobenius_relative": 1.5937465591079567e-11,
+      "exact_projected_trace_to_modal_relative": 2.876615670432507e-10,
+      "actual_selected_to_modal_relative": 2.5930518657771426e-09,
+      "actual_test_space_complement_relative_fixed_coordinate": 0.9490433903749782,
+      "max_star_pivot_condition": 8552.387741148445,
+      "max_star_solve_relative_residual": 1.414998199220004e-16
+    },
+    "60nm_z30_z90": {
+      "exact_fe_to_current_modal_frobenius_relative": 1.749078592087484e-11,
+      "exact_projected_trace_to_modal_relative": 1.2963250314585373e-10,
+      "actual_selected_to_modal_relative": 4.8847514043535375e-08,
+      "actual_test_space_complement_relative_fixed_coordinate": 0.9490671389047137,
+      "max_star_pivot_condition": 8552.387741148445,
+      "max_star_solve_relative_residual": 1.414998199220004e-16
+    },
+    "100nm_z10_z110": {
+      "exact_fe_to_current_modal_frobenius_relative": 1.951491211375024e-11,
+      "exact_projected_trace_to_modal_relative": 1.6275966179732678e-10,
+      "actual_selected_to_modal_relative": 2.8511723194975685e-05,
+      "actual_test_space_complement_relative_fixed_coordinate": 0.9491189004260485,
+      "max_star_pivot_condition": 8552.387741148445,
+      "max_star_solve_relative_residual": 1.7583053963900324e-16
+    }
+  },
+  "test_space_complement_interpretation": "The approximately 0.949 values use the fixed independent-row Euclidean coordinate norm. They are a diagnostic only and must not be reported as a physical-energy deficit.",
+  "persistent_16_channel_adjoint": {
+    "count": 16,
+    "max_adjoint_relative_residual": 1.7767299048616668e-12,
+    "direction_svd": {
+      "singular_values": [
+        1.011255661963953,
+        1.0112360255992172,
+        1.0012243116719735,
+        1.0011773470012215,
+        1.000579508136927,
+        1.000146480199971,
+        1.000145589388169,
+        1.0001408549927706,
+        0.9999916710191663,
+        0.9999632900137514,
+        0.9998591251643046,
+        0.9998543894124744,
+        0.9998534983404355,
+        0.9994284895822999,
+        0.987443983414703,
+        0.9874134303764077
+      ],
+      "first_direction_energy_fraction": 0.06391487586588458,
+      "first_two_energy_fraction": 0.1278272695827409,
+      "rank_for_90_percent": 15,
+      "rank_for_95_percent": 16,
+      "rank_for_99_percent": 16,
+      "row_log10_norm_min": -1.288549148318243,
+      "row_log10_norm_max": -0.7916157251487222,
+      "nonzero_row_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "zero_row_indices": [],
+      "zero_row_count": 0,
+      "normalization": "each row max-scaled before Euclidean normalization"
+    },
+    "local_prediction_vector_relative_error": 0.9994665661456756,
+    "local_prediction_actual_absolute_cosine": 0.49145632353583296,
+    "quantitative_prediction_credit": "not_granted"
+  },
+  "decision": {
+    "selected_core_operator": "qualified_inside_selected_M120_space",
+    "endpoint_joint_cauchy": "incomplete",
+    "few_common_failing_channel_directions": false,
+    "frozen_single_enrichment_family": "transfer_optimal_port_modes",
+    "implementation_status": "not_run_waiting_for_review",
+    "rationale": "The selected-space FE/modal operator agrees to about 2e-11, while endpoint traction/joint-Cauchy residuals are O(1e-5) and the 16 channel sensitivities require rank 16 for 95%. Transfer-optimal modes target the joint trace/traction complement without changing the M120 core or adding one ad-hoc mode per failed output."
+  },
+  "scope": {
+    "full3d_or_hybrid_forward_pde_run": false,
+    "actual_enriched_candidate_run": false,
+    "ordinary_default_changed": false,
+    "rcwa_development": false
+  },
+  "timing_seconds": {
+    "one_cell_assembly_and_interior_factor": 20.98664061499585,
+    "qep_projection_and_endpoint_lifts": 26.323360224007047,
+    "live_basis_projected_port_action": 1.8336292169988155,
+    "exact_cauchy_action_10_cells": 0.06127112699323334,
+    "directional_cauchy_basis_action": 1.43890552999801,
+    "local_operator_and_coupling_reassembly": 71.79550829800428,
+    "bottom_eight_channel_adjoints": 3.3037469159899047,
+    "top_eight_channel_adjoints": 3.3209377250022953,
+    "total": 134.9915805549972
+  }
+}

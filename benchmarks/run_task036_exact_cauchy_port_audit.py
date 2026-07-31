@@ -528,6 +528,29 @@ def _port_actual_report(
     }
 
 
+def _selected_conormal_continuity(
+    left_flux: np.ndarray,
+    right_flux: np.ndarray,
+    petrov_left: np.ndarray,
+    petrov_right: np.ndarray,
+) -> list[float]:
+    """Compare adjacent outward conormals in one common Petrov coordinate."""
+
+    left_selected = petrov_left.conj().T @ left_flux
+    right_selected = petrov_right.conj().T @ right_flux
+    result = []
+    for plane in range(1, left_flux.shape[1]):
+        lower = right_selected[:, plane - 1]
+        upper = left_selected[:, plane]
+        result.append(
+            float(
+                np.linalg.norm(lower + upper)
+                / max(np.linalg.norm(lower), np.linalg.norm(upper), 1.0e-30)
+            )
+        )
+    return result
+
+
 def _orders(path: Path) -> dict[tuple[str, int, int, str], complex]:
     record = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(record, dict) and "validation" in record:
@@ -916,19 +939,12 @@ def main() -> None:
     timings["exact_cauchy_action_10_cells"] = time.perf_counter() - stage
     left_flux = exact_cell_flux[: len(endpoint_rows.left_active), :]
     right_flux = exact_cell_flux[len(endpoint_rows.left_active) :, :]
-    continuity = []
-    for plane in range(1, 10):
-        residual = right_flux[:, plane - 1] + left_flux[:, plane]
-        continuity.append(
-            float(
-                np.linalg.norm(residual)
-                / max(
-                    np.linalg.norm(right_flux[:, plane - 1]),
-                    np.linalg.norm(left_flux[:, plane]),
-                    1.0e-30,
-                )
-            )
-        )
+    continuity = _selected_conormal_continuity(
+        left_flux,
+        right_flux,
+        petrov_left,
+        petrov_right,
+    )
 
     lam = np.asarray(scalar.forward.factors, dtype=np.complex128)
     mu = np.asarray(scalar.backward.factors, dtype=np.complex128)
@@ -1078,7 +1094,7 @@ def main() -> None:
             "z_nm": float(z_nm[plane]),
             "electric_projection_relative": electric_plane_residual[plane],
             "weak_conormal_sides": entries,
-            "interior_cancellation_relative": (
+            "selected_petrov_conormal_cancellation_relative": (
                 None if plane in (0, 10) else continuity[plane - 1]
             ),
         }
@@ -1317,7 +1333,9 @@ def main() -> None:
                 "Maxwell scaling and is not a sampled pointwise H field."
             ),
             "requested_planes": requested_planes,
-            "all_internal_conormal_cancellation_relative": continuity,
+            "all_internal_selected_petrov_conormal_cancellation_relative": (
+                continuity
+            ),
             "electric_best_approximation": electric_fit,
             "magnetic_traction_best_approximation": traction_fit,
             "joint_cauchy_best_approximation": joint_fit,
