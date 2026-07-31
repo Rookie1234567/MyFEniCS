@@ -1,7 +1,7 @@
 {
   "task": "Task003",
   "status": "controlled_stop_before_model_lock",
-  "source_sha": "0629c6c2dd9200c11a130d8e9b91d7fb771b20e9",
+  "source_sha": "e2df6546d2285b117ed04be8d95be33c8e089246",
   "dataset_verification": {
     "status": "pass",
     "dataset_id": "task002_m4e_p5_ny4_112_v3",
@@ -80,13 +80,23 @@
   },
   "analytic_mask_match": true,
   "training_cv_hard_gate": false,
+  "selected_candidate": "exact_gp:features=B",
+  "selected_feature_candidate": "B",
+  "uncertainty_diagnostics": {
+    "aggregate_95pct_coverage": 0.8819444444444444,
+    "reliable_for_acquisition": true,
+    "standardized_residual_definition": "abs(error)/predicted_std"
+  },
+  "oof_record_count": 2304,
   "model_selection_lock": "not_created_hard_cv_gate_failed",
   "frozen_validation": "sealed_not_accessed",
   "active_learning": {
     "required": true,
     "round_budget": 3,
     "points_per_round": 8,
-    "points_used": 0
+    "points_used": 0,
+    "first_round_plan": "eligible_for_review_only",
+    "fem_started": false
   },
   "prohibited_work": {
     "fem_rerun": false,

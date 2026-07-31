@@ -9,13 +9,13 @@
     "diagnostic": [
       "A_volume"
     ],
-    "representation": "composition_softmax_with_fixed_epsilon",
+    "representation": "zR_log_ratio_zT_log_ratio_softmax_zR_zT_0",
     "epsilon": 1e-08,
     "reconstruction": "R,T,A nonnegative and R+T+A=1"
   },
   "power": {
     "schema_version": "task003.fixed-order-power-target.v1",
-    "representation": "independent_log1p_power_then_sidewise_renormalization",
+    "representation": "independent_log_power_plus_training_frozen_floor_then_sidewise_renormalization",
     "primary_threshold_training_max": 1e-06,
     "inactive_semantics": "null_not_zero",
     "analytic_mask": {

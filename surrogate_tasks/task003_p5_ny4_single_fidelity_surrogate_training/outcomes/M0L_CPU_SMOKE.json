@@ -4,17 +4,20 @@
     "family": "exact_gp",
     "kernel": "Matern-5/2-ARD",
     "jitter": 1e-10,
-    "optimizer_restarts": 0,
+    "optimizer_initial_count": 8,
     "random_state": 0,
     "normalize_y": true,
-    "fitted_kernel": null
+    "selected_start": null,
+    "fitted_kernel": null,
+    "log_marginal_likelihood": null,
+    "optimization_runs": []
   },
   "repeats": [
     {
       "repeat": 1,
-      "fit_predict_wall_seconds": 0.08101017196895555,
-      "rss_before_bytes": 115613696,
-      "peak_rss_bytes": 115613696,
+      "fit_predict_wall_seconds": 0.4264698409824632,
+      "rss_before_bytes": 111247360,
+      "peak_rss_bytes": 111247360,
       "swap_before": {
         "total_bytes": 42949672960,
         "used_bytes": 0,
@@ -26,16 +29,16 @@
         "free_bytes": 42949672960
       },
       "swap_delta_bytes": 0,
-      "prediction_sha256": "5e5c5111128240b1e1af99d75140f1348e04e5889b0adee03092ec3fd2b6b79b",
-      "fitted_kernel": "2.15**2 * Matern(length_scale=[0.063, 0.0633, 0.01, 0.01], nu=2.5)",
+      "prediction_sha256": "765541af83b07881465f4f15e9a10937ccd416cbfce3535b62829c1d0ec6027a",
+      "fitted_kernel": "2.15**2 * Matern(length_scale=[0.16, 0.0297, 0.01, 0.01], nu=2.5)",
       "n_samples": 96,
       "target": "aggregates.R_total"
     },
     {
       "repeat": 2,
-      "fit_predict_wall_seconds": 0.052673459984362125,
-      "rss_before_bytes": 115613696,
-      "peak_rss_bytes": 115613696,
+      "fit_predict_wall_seconds": 0.42585252597928047,
+      "rss_before_bytes": 111247360,
+      "peak_rss_bytes": 111247360,
       "swap_before": {
         "total_bytes": 42949672960,
         "used_bytes": 0,
@@ -47,8 +50,8 @@
         "free_bytes": 42949672960
       },
       "swap_delta_bytes": 0,
-      "prediction_sha256": "5e5c5111128240b1e1af99d75140f1348e04e5889b0adee03092ec3fd2b6b79b",
-      "fitted_kernel": "2.15**2 * Matern(length_scale=[0.063, 0.0633, 0.01, 0.01], nu=2.5)",
+      "prediction_sha256": "765541af83b07881465f4f15e9a10937ccd416cbfce3535b62829c1d0ec6027a",
+      "fitted_kernel": "2.15**2 * Matern(length_scale=[0.16, 0.0297, 0.01, 0.01], nu=2.5)",
       "n_samples": 96,
       "target": "aggregates.R_total"
     }

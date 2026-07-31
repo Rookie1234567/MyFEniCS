@@ -26,6 +26,39 @@
     "kx_over_k0": "cos(grazing)*cos(azimuth)",
     "ky_over_k0": "cos(grazing)*sin(azimuth)"
   },
+  "candidate_sets": {
+    "A": {
+      "features": [
+        "height_scaled",
+        "width_scaled",
+        "kx_over_k0",
+        "ky_over_k0"
+      ],
+      "dimension": 4,
+      "scaling": "domain_height_width_and_physical_wavevector"
+    },
+    "B": {
+      "features": [
+        "height_scaled",
+        "width_scaled",
+        "grazing_scaled",
+        "azimuth_scaled"
+      ],
+      "dimension": 4,
+      "scaling": "all four coordinates domain-affine"
+    },
+    "C": {
+      "features": [
+        "height_scaled",
+        "width_scaled",
+        "kx_over_k0",
+        "ky_over_k0",
+        "kz_over_k0"
+      ],
+      "dimension": 5,
+      "scaling": "domain_height_width_and_physical_wavevector"
+    }
+  },
   "domain": {
     "height_nm": [
       115.0,
