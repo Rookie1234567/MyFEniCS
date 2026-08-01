@@ -54,6 +54,45 @@ def _leading_dimension(values: np.ndarray, dimension: int, name: str) -> np.ndar
     return values
 
 
+def joint_cauchy_pairing(
+    electric_left: np.ndarray,
+    traction_left: np.ndarray,
+    electric_right: np.ndarray,
+    traction_right: np.ndarray,
+    mass: np.ndarray,
+    *,
+    k0: float,
+    area: float,
+    electric_reference: complex,
+) -> complex:
+    """Return the dimensionless electric/traction joint-Cauchy pairing."""
+
+    electric_left = np.asarray(electric_left)
+    if electric_left.ndim != 1:
+        raise ValueError("electric_left must be a vector")
+    dimension = electric_left.shape[0]
+    traction_left = _leading_dimension(traction_left, dimension, "traction_left")
+    electric_right = _leading_dimension(electric_right, dimension, "electric_right")
+    traction_right = _leading_dimension(traction_right, dimension, "traction_right")
+    if any(
+        values.ndim != 1 for values in (traction_left, electric_right, traction_right)
+    ):
+        raise ValueError("joint-Cauchy coordinates must be vectors")
+    mass = _hpd_metric(mass, dimension, "mass")
+    k0 = float(k0)
+    normalization = float(area) * abs(complex(electric_reference)) ** 2
+    if k0 <= 0.0 or normalization <= 0.0:
+        raise ValueError("k0, area, and electric_reference must be nonzero")
+    riesz_traction_right = np.linalg.solve(mass, traction_right)
+    return complex(
+        (
+            np.vdot(electric_left, mass @ electric_right)
+            + k0**-2 * np.vdot(traction_left, riesz_traction_right)
+        )
+        / normalization
+    )
+
+
 def transfer_action(
     system: np.ndarray,
     source: np.ndarray,
