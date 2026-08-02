@@ -1,0 +1,17 @@
+{
+  "status": "controlled_stop",
+  "checks": {
+    "single_source_sha": true,
+    "production_identity": true,
+    "nominal_geometry": true,
+    "counts_96_24_4096_5": true,
+    "design_hashes_rebuild": true,
+    "training_validation_disjoint": true,
+    "baseline_controlled_stop": true,
+    "first_failure_direct_lu": true,
+    "no_task003_access": true
+  },
+  "training_responses": "not_run",
+  "blind_validation_responses": "sealed_not_run",
+  "task003_frozen_validation_accessed": false
+}

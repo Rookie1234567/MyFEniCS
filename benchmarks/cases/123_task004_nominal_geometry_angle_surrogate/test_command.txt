@@ -1,0 +1,1 @@
+source scripts/activate_myfenics_wsl.sh && PYTHONPATH=. python -m src.surrogate.angle.design --output-dir benchmarks/cases/123_task004_nominal_geometry_angle_surrogate --source-sha "$(git rev-parse HEAD)"

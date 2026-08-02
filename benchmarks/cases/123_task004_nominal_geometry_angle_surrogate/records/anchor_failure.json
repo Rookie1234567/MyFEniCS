@@ -1,0 +1,18 @@
+{
+  "schema_version": "task004.anchor-failure.v1",
+  "source_sha": "7fe366304023c32bf2e8ddcacdb2ada9996d3e7c",
+  "design_id": "task004_anchor_training_v1",
+  "design_index": 0,
+  "point": {"height_nm": 120.0, "width_x_nm": 17.0, "grazing_deg": 0.5, "azimuth_deg": 0.0},
+  "status": "failed_direct_lu_exception",
+  "formal_record_present": false,
+  "failure_stage": "stage4_dtn_augmented_ksp_setup",
+  "petsc_error_code": 76,
+  "mumps_infog_1": -9,
+  "mumps_infog_2": 919260,
+  "peak_rss_bytes": 5690605568,
+  "peak_swap_bytes": 0,
+  "official_result": false,
+  "numerical_gate": "not_measured",
+  "retry_or_skip": "forbidden_after_first_unexplained_failure"
+}

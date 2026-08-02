@@ -1,0 +1,975 @@
+{
+  "schema_version": "task002.m3r-design.v1",
+  "design_id": "task004_angle_training_v1",
+  "source_sha": "7fe366304023c32bf2e8ddcacdb2ada9996d3e7c",
+  "source_dirty": false,
+  "parameter_schema_version": "task002.s-p5-ny4-production-parameters.v3",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "production_model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "production_solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "sobol_seed": 20260802,
+  "point_count": 96,
+  "point_tuple_sha256": "bfd68a374e5510284a972c640c6332d818917052ae30bd77c10af5240f0500ef",
+  "points": [
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 0.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 5.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 10.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 15.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 20.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 30.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 45.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 60.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 75.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.5,
+      "azimuth_deg": 90.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 0.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 5.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 10.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 15.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 20.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 30.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 45.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 60.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 75.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 0.75,
+      "azimuth_deg": 90.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 0.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 5.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 10.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 15.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 20.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 30.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 45.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 60.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 75.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.0,
+      "azimuth_deg": 90.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 0.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 5.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 10.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 15.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 20.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 30.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 45.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 60.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 75.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.0,
+      "azimuth_deg": 90.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 4.0,
+      "azimuth_deg": 0.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 4.0,
+      "azimuth_deg": 5.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 4.0,
+      "azimuth_deg": 10.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 4.0,
+      "azimuth_deg": 15.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 4.0,
+      "azimuth_deg": 20.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 4.0,
+      "azimuth_deg": 30.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 4.0,
+      "azimuth_deg": 45.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 4.0,
+      "azimuth_deg": 60.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 4.0,
+      "azimuth_deg": 75.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 4.0,
+      "azimuth_deg": 90.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 0.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 5.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 10.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 15.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 20.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 30.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 45.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 60.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 75.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.0,
+      "azimuth_deg": 90.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 0.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 5.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 10.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 15.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 20.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 30.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 45.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 60.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 75.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.0,
+      "azimuth_deg": 90.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 0.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 5.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 10.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 15.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 20.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 30.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 45.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 60.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 75.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 10.0,
+      "azimuth_deg": 90.0,
+      "role": "structured_angle",
+      "design_source": "task004_structured_80",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 1.5360854980535805,
+      "azimuth_deg": 67.84780732356012,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.991511886939406,
+      "azimuth_deg": 17.649381067603827,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.979216346982867,
+      "azimuth_deg": 89.27843892015517,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 9.010884982999414,
+      "azimuth_deg": 52.47642553411424,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 3.0124471527524292,
+      "azimuth_deg": 52.57317842915654,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.9804841317236423,
+      "azimuth_deg": 37.64424813911319,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.95577536476776,
+      "azimuth_deg": 52.51947557553649,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 5.035578638315201,
+      "azimuth_deg": 52.24584893323481,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 5.025018583517522,
+      "azimuth_deg": 67.89516591466963,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 3.0256186104379594,
+      "azimuth_deg": 67.0847212895751,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 6.961731430143118,
+      "azimuth_deg": 67.80765859410167,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 8.969500119797885,
+      "azimuth_deg": 37.92068506591022,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 2.961689197458327,
+      "azimuth_deg": 82.16820339672267,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 5.026909865438938,
+      "azimuth_deg": 38.04610180668533,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 9.05598203651607,
+      "azimuth_deg": 67.7742229308933,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    {
+      "height_nm": 120.0,
+      "width_x_nm": 17.0,
+      "grazing_deg": 7.018797061871737,
+      "azimuth_deg": 36.41941010020673,
+      "role": "cutoff_low_grazing_enrichment",
+      "design_source": "task004_sobol_4096_enrichment",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    }
+  ]
+}

@@ -2351,3 +2351,18 @@ actual-trace Gram audit 完成定向根因分析。Ny=3 的 n=0/n=-3 overlap 为
 Ny=4 恢复到 roundoff；泄漏同时从 `1.2312e-6` 降到 `3.2783e-25`，确认网格诱导
 离散 Bragg alias。Route A Ny=4 是下一 production 候选，但 M4 未恢复；新发现的
 outgoing-P auxiliary/direct projection 不一致等待 Review V7。
+
+# 50. Surrogate Task004：固定中心几何二维角度代理（受控停止）
+
+Task004 已冻结独立的 96 training、24 blind-validation 和 4096 candidate
+angle design，固定 `(h,w)=(120,17) nm`、13.5 nm、S 偏振、Full3D uniform
+N1curl p5/h10/Ny4；设计绑定 clean implementation SHA
+`7fe366304023c32bf2e8ddcacdb2ada9996d3e7c`。角度模型候选、确定性 Matérn-5/2
+ARD GP、Chebyshev/RBF baseline 和 `AngleSurrogate.predict` API 已实现。
+
+新 SHA 的第一个五点 anchor qualification 在 `(0.5°,0°)` 的 augmented DtN
+direct-LU factorization 处受控停止：MUMPS `INFOG(1)=-9`、`INFO(2)=919260`，
+峰值 RSS 约 5.69 GB、swap 为 0，未产生 residual/energy/observable formal record。
+因此 training/validation FEM、CV、model lock、blind validation、主动加点和
+angle maps 均未运行；Task003 Round3 及其 frozen validation 仍未访问。证据见
+Task004 `response_v1.md`、`outcomes/TASK004_FORWARD_BASELINE.json` 和 Case123。

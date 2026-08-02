@@ -1,0 +1,37 @@
+{
+  "schema_version": "task004.forward-baseline.v1",
+  "source_sha": "7fe366304023c32bf2e8ddcacdb2ada9996d3e7c",
+  "anchor_count_required": 5,
+  "anchor_count_measured_at_this_sha": 0,
+  "status": "controlled_stop",
+  "failure": {
+    "campaign": "benchmarks/artifacts/cases/123_task004_anchor_v2/campaign_manifest.json",
+    "design_index": 0,
+    "point": [120.0, 17.0, 0.5, 0.0],
+    "status": "failed_direct_lu_exception",
+    "mumps_infog_1": -9,
+    "mumps_infog_2": 919260,
+    "formal_record_present": false,
+    "true_residual": "not_measured",
+    "energy_closure": "not_measured",
+    "peak_rss_bytes": 5690605568,
+    "peak_swap_bytes": 0,
+    "cleanup": "watchdog process ended; no formal record was produced"
+  },
+  "gate": {
+    "aggregate_le_1e-10": "not_run",
+    "power_le_1e-10": "not_run",
+    "amplitude_le_1e-9": "not_run",
+    "identity_match": "not_run",
+    "reason": "new clean-SHA anchor qualification stopped at the first unexplained direct-LU failure"
+  },
+  "historical_reference": {
+    "prior_sha": "dd8b89dda86081992e8f758279ab77dd0ae602f8",
+    "prior_five_anchor_run": "measured_pass_reference_only",
+    "not_authority_for_current_sha": true
+  },
+  "task003_round3_started": false,
+  "task003_frozen_validation_accessed": false,
+  "training_campaign_started": false,
+  "blind_validation_started": false
+}
