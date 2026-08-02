@@ -29,6 +29,7 @@ from benchmarks.run_task036_r1_port_capacity import (
     _selected_pairing_gate,
     _bounded_right_components,
     _right_pool_gate,
+    _residual_ok,
     _right_reciprocal_closure,
 )
 from src.constraints.floquet_3d import build_double_floquet_mpc
@@ -274,6 +275,9 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
         action.factor.setUp()
         augmented: AugmentedBlochPolynomial | None = None
         pep = None
+        prev_pep = None
+        linear_left = None
+        prev_vector = None
         try:
             augmented = build_augmented_bloch_polynomial(action)
             self.assertFalse(action.dense_interface_square_formed)
@@ -290,6 +294,50 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                 finally:
                     result.destroy()
                     vector.destroy()
+
+            def sparse_apply_h(operator: PETSc.Mat, values: np.ndarray) -> np.ndarray:
+                vector = operator.createVecLeft()
+                result = operator.createVecRight()
+                try:
+                    vector.array[:] = values
+                    operator.multHermitian(vector, result)
+                    return np.asarray(
+                        result.array,
+                        dtype=np.complex128,
+                    ).copy()
+                finally:
+                    result.destroy()
+                    vector.destroy()
+
+            def create_two_sided_pep(
+                operators: tuple[PETSc.Mat, PETSc.Mat, PETSc.Mat],
+                nev: int,
+            ) -> SLEPc.PEP:
+                pep = SLEPc.PEP().create(comm=PETSc.COMM_SELF)
+                pep.setOperators(list(operators))
+                pep.setProblemType(SLEPc.PEP.ProblemType.GENERAL)
+                pep.setType(SLEPc.PEP.Type.LINEAR)
+                pep.setLinearExplicitMatrix(True)
+                pep.setLinearLinearization(alpha=1.0, beta=0.0)
+                pep.setDimensions(nev=nev)
+                pep.setTarget(0.7)
+                pep.setWhichEigenpairs(SLEPc.PEP.Which.TARGET_MAGNITUDE)
+                pep.setTolerances(tol=1.0e-12, max_it=100)
+                eps = pep.getLinearEPS()
+                eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR)
+                eps.setTwoSided(True)
+                eps.setDimensions(nev=nev)
+                eps.setTarget(0.7)
+                eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE)
+                eps.setTolerances(tol=1.0e-12, max_it=100)
+                spectral_transform = eps.getST()
+                spectral_transform.setType(SLEPc.ST.Type.SINVERT)
+                ksp = spectral_transform.getKSP()
+                ksp.setType(PETSc.KSP.Type.PREONLY)
+                pc = ksp.getPC()
+                pc.setType(PETSc.PC.Type.LU)
+                pc.setFactorSolverType("mumps")
+                return pep
 
             for multiplier, electric in (
                 (0.73 + 0.11j, 0.4 - 0.2j),
@@ -318,25 +366,17 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                     augmented_value[1:], np.zeros(1), rtol=0.0, atol=1.0e-12
                 )
 
-            pep = SLEPc.PEP().create(comm=PETSc.COMM_SELF)
-            pep.setOperators([augmented.K0, augmented.K1, augmented.K2])
-            pep.setProblemType(SLEPc.PEP.ProblemType.GENERAL)
-            pep.setType(SLEPc.PEP.Type.TOAR)
-            pep.setDimensions(nev=2)
-            pep.setTarget(1.0)
-            pep.setWhichEigenpairs(SLEPc.PEP.Which.TARGET_MAGNITUDE)
-            pep.setTolerances(tol=1.0e-12, max_it=100)
-            spectral_transform = pep.getST()
-            spectral_transform.setType(SLEPc.ST.Type.SINVERT)
-            ksp = spectral_transform.getKSP()
-            ksp.setType(PETSc.KSP.Type.PREONLY)
-            pc = ksp.getPC()
-            pc.setType(PETSc.PC.Type.LU)
-            pc.setFactorSolverType("mumps")
+            pep = create_two_sided_pep((augmented.K0, augmented.K1, augmented.K2), 2)
+            eps = pep.getLinearEPS()
             pep.solve()
             self.assertGreaterEqual(pep.getConverged(), 2)
-            eigenvalues = [complex(pep.getEigenpair(i)) for i in range(2)]
-            for index, eigenvalue in enumerate(eigenvalues):
+            self.assertEqual(eps.getConverged(), pep.getConverged())
+            linear_left = PETSc.Vec().create(comm=PETSc.COMM_SELF)
+            linear_left.setSizes((4, 4))
+            linear_left.setUp()
+            right_vector = augmented.K0.createVecRight()
+            for index in range(2):
+                eigenvalue = complex(pep.getEigenpair(index, right_vector))
                 self.assertLess(
                     min(abs(eigenvalue - 2.0), abs(eigenvalue + 2.0)),
                     1.0e-9,
@@ -345,7 +385,154 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                     float(pep.computeError(index, SLEPc.PEP.ErrorType.RELATIVE)),
                     1.0e-9,
                 )
+                self.assertLess(
+                    abs(eigenvalue - complex(eps.getEigenvalue(index))),
+                    1.0e-9,
+                )
+                right_state = np.asarray(
+                    right_vector.getArray(readonly=True), dtype=np.complex128
+                ).copy()
+                right_residual = sum(
+                    coefficient * sparse_apply(operator, right_state)
+                    for coefficient, operator in zip(
+                        (1.0, eigenvalue, eigenvalue**2),
+                        (augmented.K0, augmented.K1, augmented.K2),
+                    )
+                )
+                self.assertLess(np.linalg.norm(right_residual), 1.0e-9)
+                eps.getLeftEigenvector(index, linear_left)
+                linear_state = np.asarray(
+                    linear_left.getArray(readonly=True), dtype=np.complex128
+                )
+                self.assertEqual(len(linear_state), 2 * augmented.state_rows)
+                left_state = linear_state[augmented.state_rows :]
+                left_residual = sum(
+                    coefficient * sparse_apply_h(operator, left_state)
+                    for coefficient, operator in zip(
+                        (1.0, np.conj(eigenvalue), np.conj(eigenvalue) ** 2),
+                        (augmented.K0, augmented.K1, augmented.K2),
+                    )
+                )
+                self.assertLess(np.linalg.norm(left_residual), 1.0e-9)
+                _, qrev_nu, _, _ = _canonicalize_candidate(
+                    "Qrev",
+                    np.conj(eigenvalue),
+                    left_state,
+                    endpoint_rows=1,
+                )
+                _, q_nu, _, _ = _canonicalize_candidate(
+                    "Q",
+                    np.conj(1.0 / eigenvalue),
+                    left_state,
+                    endpoint_rows=1,
+                )
+                np.testing.assert_allclose(
+                    qrev_nu,
+                    1.0 / np.conj(eigenvalue),
+                    rtol=0.0,
+                    atol=1.0e-12,
+                )
+                np.testing.assert_allclose(
+                    q_nu,
+                    qrev_nu,
+                    rtol=0.0,
+                    atol=1.0e-12,
+                )
+            right_vector.destroy()
+            prev_pep = create_two_sided_pep(
+                (augmented.K2, augmented.K1, augmented.K0), 2
+            )
+            prev_eps = prev_pep.getLinearEPS()
+            prev_pep.solve()
+            self.assertGreaterEqual(prev_pep.getConverged(), 2)
+            self.assertEqual(prev_eps.getConverged(), prev_pep.getConverged())
+            prev_vector = augmented.K0.createVecRight()
+            prev_indices: list[int] = []
+            for index in range(prev_pep.getConverged()):
+                zeta = complex(prev_pep.getEigenpair(index, prev_vector))
+                if np.isfinite(zeta) and abs(zeta - 0.5) < 1.0e-6:
+                    prev_indices.append(index)
+            self.assertEqual(len(prev_indices), 1)
+            for index in prev_indices:
+                zeta = complex(prev_pep.getEigenpair(index, prev_vector))
+                self.assertLess(
+                    min(abs(zeta - 0.5), abs(zeta + 0.5)),
+                    1.0e-9,
+                )
+                self.assertLess(
+                    float(
+                        prev_pep.computeError(
+                            index,
+                            SLEPc.PEP.ErrorType.RELATIVE,
+                        )
+                    ),
+                    1.0e-9,
+                )
+                self.assertLess(
+                    abs(zeta - complex(prev_eps.getEigenvalue(index))),
+                    1.0e-9,
+                )
+                prev_state = np.asarray(
+                    prev_vector.getArray(readonly=True), dtype=np.complex128
+                ).copy()
+                _, canonical_lambda, mapped_state, prev_mapping = (
+                    _canonicalize_candidate(
+                        "Prev",
+                        zeta,
+                        prev_state,
+                        endpoint_rows=1,
+                    )
+                )
+                np.testing.assert_array_equal(mapped_state, prev_state)
+                np.testing.assert_allclose(
+                    canonical_lambda,
+                    1.0 / zeta,
+                    rtol=0.0,
+                    atol=1.0e-12,
+                )
+                self.assertEqual(prev_mapping["state_map"], "identity")
+                canonical_residual = sum(
+                    coefficient * sparse_apply(operator, prev_state)
+                    for coefficient, operator in zip(
+                        (1.0, canonical_lambda, canonical_lambda**2),
+                        (augmented.K0, augmented.K1, augmented.K2),
+                    )
+                )
+                self.assertLess(np.linalg.norm(canonical_residual), 1.0e-9)
+                prev_eps.getLeftEigenvector(index, linear_left)
+                prev_linear_state = np.asarray(
+                    linear_left.getArray(readonly=True), dtype=np.complex128
+                )
+                prev_left_state = prev_linear_state[augmented.state_rows :]
+                _, prev_nu, mapped_left, prev_left_mapping = _canonicalize_candidate(
+                    "Q",
+                    np.conj(zeta),
+                    prev_left_state,
+                    endpoint_rows=1,
+                )
+                np.testing.assert_array_equal(mapped_left, prev_left_state)
+                self.assertEqual(prev_left_mapping["state_map"], "identity")
+                np.testing.assert_allclose(
+                    prev_nu,
+                    np.conj(zeta),
+                    rtol=0.0,
+                    atol=1.0e-12,
+                )
+                left_q_residual = sum(
+                    coefficient * sparse_apply_h(operator, prev_left_state)
+                    for coefficient, operator in zip(
+                        (1.0, prev_nu, prev_nu**2),
+                        (augmented.K2, augmented.K1, augmented.K0),
+                    )
+                )
+                self.assertLess(np.linalg.norm(left_q_residual), 1.0e-9)
         finally:
+            if prev_vector is not None:
+                prev_vector.destroy()
+            if linear_left is not None:
+                linear_left.destroy()
+            if prev_pep is not None:
+                prev_pep.destroy()
             if pep is not None:
                 pep.destroy()
             if augmented is not None:
@@ -687,6 +874,19 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
         )
         self.assertEqual(closure["effective_columns"], 4)
         self.assertEqual(len(closure["components"]), 1)
+        poisoned = entry("P", 0, 2.0, [1.0, 0.0])
+        poisoned["record"]["full_augmented_relative_residual"] = 1.0e-3
+        poisoned_closure = _right_reciprocal_closure(
+            [item["multiplier"] for item in kept + [poisoned]],
+            kept + [poisoned],
+        )
+        self.assertEqual(poisoned_closure["effective_columns"], 0)
+        residual_first = [item for item in kept + [poisoned] if _residual_ok(item)]
+        residual_first_closure = _right_reciprocal_closure(
+            [item["multiplier"] for item in residual_first],
+            residual_first,
+        )
+        self.assertEqual(residual_first_closure["effective_columns"], 4)
         self.assertFalse(_right_pool_gate(4)["passed"])
         self.assertEqual(
             _right_pool_gate(4)["status_if_failed"],

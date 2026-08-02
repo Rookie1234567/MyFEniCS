@@ -1,10 +1,12 @@
 """Task036 R1b-1a full-interface right/physical-adjoint mode pool.
 
-This runner reuses the existing one-cell local factor setup.  The augmented
-sparse polynomial is the actual solver path; batched Schur action is used only
-to verify its eliminated residual.  Four fixed reciprocal-variable polynomial
-families and four fixed phase targets form a deterministic mode-pool audit;
-this is not a B1 capacity or production propagation solver.
+This runner reuses the existing one-cell local factor setup.  A sparse
+PEP/LINEAR solve with an internal two-sided EPS is the actual mode-pool path;
+the paired EPS left vector supplies the physical-adjoint candidate from the
+same eigenpair.  Batched Schur action and the reversed Hermitian polynomial
+are used only for independent residual checks.  Six fixed phase targets form
+a deterministic mode-pool audit; this is not a B1 capacity or production
+propagation solver.
 """
 
 from __future__ import annotations
@@ -53,6 +55,7 @@ MODE_POOL_RSS_LIMIT_BYTES = 4 * 1024**3
 MODE_POOL_SWAP_LIMIT_KIB = 0
 MODE_POOL_BLOCK_TOL = 1.0e-6
 MODE_POOL_RESIDUAL_TOL = 1.0e-7
+MODE_POOL_PAIR_MATCH_TOL = 1.0e-10
 
 
 def _git(*arguments: str) -> str:
@@ -627,6 +630,7 @@ def main() -> None:
             raise RuntimeError(
                 f"Unexpected augmented state rows: {augmented.state_rows}."
             )
+        reversed_polynomial = build_reversed_hermitian_bloch_polynomial(augmented)
 
         def create_pep(
             operators: tuple[PETSc.Mat, PETSc.Mat, PETSc.Mat],
@@ -635,12 +639,21 @@ def main() -> None:
             pep = SLEPc.PEP().create(comm=PETSc.COMM_WORLD)
             pep.setOperators(list(operators))
             pep.setProblemType(SLEPc.PEP.ProblemType.GENERAL)
-            pep.setType(SLEPc.PEP.Type.TOAR)
+            pep.setType(SLEPc.PEP.Type.LINEAR)
+            pep.setLinearExplicitMatrix(True)
+            pep.setLinearLinearization(alpha=1.0, beta=0.0)
             pep.setDimensions(nev=MODE_POOL_NEV)
             pep.setTarget(target)
             pep.setWhichEigenpairs(SLEPc.PEP.Which.TARGET_MAGNITUDE)
             pep.setTolerances(tol=1.0e-8, max_it=MODE_POOL_MAX_IT)
-            spectral_transform = pep.getST()
+            eps = pep.getLinearEPS()
+            eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR)
+            eps.setTwoSided(True)
+            eps.setDimensions(nev=MODE_POOL_NEV)
+            eps.setTarget(target)
+            eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE)
+            eps.setTolerances(tol=1.0e-8, max_it=MODE_POOL_MAX_IT)
+            spectral_transform = eps.getST()
             spectral_transform.setType(SLEPc.ST.Type.SINVERT)
             ksp = spectral_transform.getKSP()
             ksp.setType(PETSc.KSP.Type.PREONLY)
@@ -675,76 +688,98 @@ def main() -> None:
             target_index: int,
             target: complex,
         ) -> dict[str, Any]:
-            spectral_transform = pep.getST()
+            eps = pep.getLinearEPS()
+            spectral_transform = eps.getST()
             ksp = spectral_transform.getKSP()
             pc = ksp.getPC()
             return {
                 "family": family,
                 "target_index": int(target_index),
                 "target": _complex_pair(target),
+                "pep_type": str(pep.getType()),
+                "linear_explicit_matrix": bool(pep.getLinearExplicitMatrix()),
+                "linear_alpha": 1.0,
+                "linear_beta": 0.0,
+                "eps_type": str(eps.getType()),
+                "eps_two_sided": bool(eps.getTwoSided()),
                 "st_type": str(spectral_transform.getType()),
                 "ksp_type": str(ksp.getType()),
                 "pc_type": str(pc.getType()),
                 "factor_solver_type": pc.getFactorSolverType(),
-                "converged": int(pep.getConverged()),
-                "iteration_number": int(pep.getIterationNumber()),
-                "convergence_reason": int(pep.getConvergedReason()),
+                "converged": int(eps.getConverged()),
+                "iteration_number": int(eps.getIterationNumber()),
+                "convergence_reason": int(eps.getConvergedReason()),
             }
 
-        def collect_pool(
+        def adjoint_schur_terms(electric: np.ndarray) -> tuple[np.ndarray, ...]:
+            columns = np.zeros((action.port_rows, 2), dtype=np.complex128)
+            columns[: action.left_rows, 0] = electric
+            columns[action.left_rows :, 1] = electric
+            applied = action.apply_adjoint_columns(columns)
+            return (
+                applied[action.left_rows :, 0],
+                applied[: action.left_rows, 0] + applied[action.left_rows :, 1],
+                applied[: action.left_rows, 1],
+            )
+
+        def collect_paired_pool(
             pep: SLEPc.PEP,
-            family: str,
+            eps: SLEPc.EPS,
+            right_family: str,
             target_index: int,
             target: complex,
-            canonical_operators: tuple[PETSc.Mat, PETSc.Mat, PETSc.Mat],
-            *,
-            physical_adjoint: bool,
-        ) -> list[dict[str, Any]]:
-            entries: list[dict[str, Any]] = []
-            vector = canonical_operators[0].createVecRight()
+            right_operators: tuple[PETSc.Mat, PETSc.Mat, PETSc.Mat],
+            canonical_right_operators: tuple[PETSc.Mat, PETSc.Mat, PETSc.Mat],
+        ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], int]:
+            right_entries: list[dict[str, Any]] = []
+            adjoint_entries: list[dict[str, Any]] = []
+            eps_converged = int(eps.getConverged())
+            pep_converged = int(pep.getConverged())
+            if pep_converged != eps_converged:
+                raise RuntimeError(
+                    "PEP and internal EPS converged counts do not match."
+                )
+            vector = right_operators[0].createVecRight()
+            linear_left = PETSc.Vec().create(comm=PETSc.COMM_WORLD)
+            linear_left.setSizes((2 * augmented.state_rows, 2 * augmented.state_rows))
+            linear_left.setUp()
+            left_family = "Qrev" if right_family == "P" else "Q"
+            adjoint_operators = (
+                reversed_polynomial.K0,
+                reversed_polynomial.K1,
+                reversed_polynomial.K2,
+            )
             try:
-                for index in range(int(pep.getConverged())):
+                for index in range(pep_converged):
                     source_multiplier = complex(pep.getEigenpair(index, vector))
-                    state = np.asarray(
-                        vector.array,
-                        dtype=np.complex128,
+                    eps_multiplier = complex(eps.getEigenvalue(index))
+                    paired_error = abs(source_multiplier - eps_multiplier) / max(
+                        1.0,
+                        abs(source_multiplier),
+                        abs(eps_multiplier),
+                    )
+                    if paired_error > MODE_POOL_PAIR_MATCH_TOL:
+                        raise RuntimeError(
+                            "PEP/EPS eigenvalue ordering is not strictly paired."
+                        )
+                    right_state = np.asarray(
+                        vector.getArray(readonly=True), dtype=np.complex128
                     ).copy()
-                    variable, multiplier, state, mapping = _canonicalize_candidate(
-                        family,
-                        source_multiplier,
-                        state,
-                        endpoint_rows=action.left_rows,
-                    )
-                    terms = tuple(
-                        sparse_apply(operator, state)
-                        for operator in canonical_operators
-                    )
-                    full_residual = _polynomial_relative_residual(terms, multiplier)
-                    electric = state[: action.left_rows].reshape(-1, 1)
-                    if physical_adjoint:
-                        columns = np.zeros(
-                            (action.port_rows, 2),
-                            dtype=np.complex128,
+                    variable, multiplier, right_state, mapping = (
+                        _canonicalize_candidate(
+                            right_family,
+                            source_multiplier,
+                            right_state,
+                            endpoint_rows=action.left_rows,
                         )
-                        columns[: action.left_rows, 0] = electric[:, 0]
-                        columns[action.left_rows :, 1] = electric[:, 0]
-                        applied = action.apply_adjoint_columns(columns)
-                        schur_terms = (
-                            applied[action.left_rows :, 0],
-                            applied[: action.left_rows, 0]
-                            + applied[action.left_rows :, 1],
-                            applied[: action.left_rows, 1],
-                        )
-                    else:
-                        schur_terms = tuple(
-                            column[:, 0]
-                            for column in bloch_polynomial_action(action, electric)
-                        )
-                    schur_residual = _polynomial_relative_residual(
-                        schur_terms, multiplier
                     )
-                    record = {
-                        "family": family,
+                    right_terms = tuple(
+                        sparse_apply(operator, right_state)
+                        for operator in canonical_right_operators
+                    )
+                    right_electric = right_state[: action.left_rows]
+                    right_record = {
+                        "family": right_family,
                         "target_index": int(target_index),
                         "target": _complex_pair(target),
                         "variable": variable,
@@ -752,11 +787,21 @@ def main() -> None:
                         "canonical_multiplier": mapping["canonical_multiplier"],
                         variable: mapping["canonical_multiplier"],
                         "canonical_mapping": mapping,
-                        "full_augmented_relative_residual": full_residual,
-                        "schur_polynomial_relative_residual": schur_residual,
+                        "full_augmented_relative_residual": _polynomial_relative_residual(
+                            right_terms, multiplier
+                        ),
+                        "schur_polynomial_relative_residual": _polynomial_relative_residual(
+                            tuple(
+                                column[:, 0]
+                                for column in bloch_polynomial_action(
+                                    action, right_electric.reshape(-1, 1)
+                                )
+                            ),
+                            multiplier,
+                        ),
                         "endpoint_vector_norm_fraction": float(
-                            np.linalg.norm(electric)
-                            / max(float(np.linalg.norm(state)), 1.0e-30)
+                            np.linalg.norm(right_electric)
+                            / max(float(np.linalg.norm(right_state)), 1.0e-30)
                         ),
                         "slepc_relative_error": float(
                             pep.computeError(
@@ -764,43 +809,109 @@ def main() -> None:
                                 SLEPc.PEP.ErrorType.RELATIVE,
                             )
                         ),
+                        "eps_eigenvalue": _complex_pair(eps_multiplier),
+                        "paired_eigenvalue_relative_error": float(paired_error),
                     }
-                    entries.append(
+                    right_entries.append(
                         {
-                            "family": family,
+                            "family": right_family,
                             "target_index": int(target_index),
-                            "source_key": (family, int(target_index)),
+                            "source_key": (right_family, int(target_index)),
                             "multiplier": multiplier,
-                            "state": state,
-                            "record": record,
+                            "state": right_state,
+                            "record": right_record,
+                        }
+                    )
+                    eps.getLeftEigenvector(index, linear_left)
+                    linear_state = np.asarray(
+                        linear_left.getArray(readonly=True), dtype=np.complex128
+                    )
+                    if len(linear_state) != 2 * augmented.state_rows:
+                        raise RuntimeError(
+                            "Two-sided EPS left vector has unexpected size."
+                        )
+                    left_state = linear_state[augmented.state_rows :].copy()
+                    left_source_multiplier = np.conj(source_multiplier)
+                    if right_family == "P" and abs(left_source_multiplier) <= 1.0e-30:
+                        continue
+                    left_variable, left_multiplier, left_state, left_mapping = (
+                        _canonicalize_candidate(
+                            left_family,
+                            left_source_multiplier,
+                            left_state,
+                            endpoint_rows=action.left_rows,
+                        )
+                    )
+                    left_terms = tuple(
+                        sparse_apply(operator, left_state)
+                        for operator in adjoint_operators
+                    )
+                    left_electric = left_state[: action.left_rows]
+                    left_record = {
+                        "family": left_family,
+                        "target_index": int(target_index),
+                        "target": _complex_pair(target),
+                        "variable": left_variable,
+                        "source_multiplier": left_mapping["source_multiplier"],
+                        "canonical_multiplier": left_mapping["canonical_multiplier"],
+                        left_variable: left_mapping["canonical_multiplier"],
+                        "canonical_mapping": left_mapping,
+                        "full_augmented_relative_residual": _polynomial_relative_residual(
+                            left_terms, left_multiplier
+                        ),
+                        "schur_polynomial_relative_residual": _polynomial_relative_residual(
+                            adjoint_schur_terms(left_electric), left_multiplier
+                        ),
+                        "endpoint_vector_norm_fraction": float(
+                            np.linalg.norm(left_electric)
+                            / max(float(np.linalg.norm(left_state)), 1.0e-30)
+                        ),
+                        "paired_source_right_slepc_relative_error": float(
+                            pep.computeError(
+                                index,
+                                SLEPc.PEP.ErrorType.RELATIVE,
+                            )
+                        ),
+                        "eps_eigenvalue": _complex_pair(eps_multiplier),
+                        "paired_eigenvalue_relative_error": float(paired_error),
+                        "paired_right_family": right_family,
+                    }
+                    adjoint_entries.append(
+                        {
+                            "family": left_family,
+                            "target_index": int(target_index),
+                            "source_key": (left_family, int(target_index)),
+                            "multiplier": left_multiplier,
+                            "state": left_state,
+                            "record": left_record,
                         }
                     )
             finally:
+                linear_left.destroy()
                 vector.destroy()
-            return entries
+            return right_entries, adjoint_entries, eps_converged
 
-        def run_family(
+        def run_paired_family(
             family: str,
             target_index: int,
             target: complex,
             source_operators: tuple[PETSc.Mat, PETSc.Mat, PETSc.Mat],
-            canonical_operators: tuple[PETSc.Mat, PETSc.Mat, PETSc.Mat],
-            *,
-            physical_adjoint: bool,
-        ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+            canonical_right_operators: tuple[PETSc.Mat, PETSc.Mat, PETSc.Mat],
+        ) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
             pep = create_pep(source_operators, target)
             try:
                 pep.solve()
                 solver = solver_record(pep, family, target_index, target)
-                entries = collect_pool(
+                right_entries, adjoint_entries, _ = collect_paired_pool(
                     pep,
+                    pep.getLinearEPS(),
                     family,
                     target_index,
                     target,
-                    canonical_operators,
-                    physical_adjoint=physical_adjoint,
+                    source_operators,
+                    canonical_right_operators,
                 )
-                return solver, entries
+                return solver, right_entries, adjoint_entries
             finally:
                 pep.destroy()
 
@@ -810,29 +921,48 @@ def main() -> None:
         }
         right_runs: list[dict[str, Any]] = []
         right_raw: list[dict[str, Any]] = []
-        right_stage_started = time.perf_counter()
+        adjoint_runs: list[dict[str, Any]] = []
+        adjoint_raw: list[dict[str, Any]] = []
+        paired_stage_started = time.perf_counter()
         for family in ("P", "Prev"):
             for target_index, target in enumerate(MODE_POOL_TARGETS):
-                solver, entries = run_family(
+                solver, right_entries, adjoint_entries = run_paired_family(
                     family,
                     target_index,
                     target,
                     right_specs[family],
                     (augmented.K0, augmented.K1, augmented.K2),
-                    physical_adjoint=False,
                 )
                 right_runs.append(
                     {
                         "solver": solver,
-                        "raw_candidate_count": len(entries),
+                        "raw_candidate_count": len(right_entries),
                         "family": family,
                         "target_index": int(target_index),
                         "target": _complex_pair(target),
+                        "stage": "paired_two_sided",
                     }
                 )
-                right_raw.extend(entries)
-        right_stage_wall = float(time.perf_counter() - right_stage_started)
-        right_entries, right_removed = _deduplicate_candidates(right_raw)
+                left_family = "Qrev" if family == "P" else "Q"
+                adjoint_runs.append(
+                    {
+                        "solver": solver.copy(),
+                        "raw_candidate_count": len(adjoint_entries),
+                        "family": left_family,
+                        "target_index": int(target_index),
+                        "target": _complex_pair(target),
+                        "paired_source_family": family,
+                        "solver_role": "paired_source_solver",
+                        "paired_output_family": left_family,
+                        "stage": "paired_two_sided",
+                    }
+                )
+                right_raw.extend(right_entries)
+                adjoint_raw.extend(adjoint_entries)
+        paired_stage_wall = float(time.perf_counter() - paired_stage_started)
+        right_qualified_raw = [entry for entry in right_raw if _residual_ok(entry)]
+        adjoint_qualified_raw = [entry for entry in adjoint_raw if _residual_ok(entry)]
+        right_entries, right_removed = _deduplicate_candidates(right_qualified_raw)
         right_blocks = _right_reciprocal_closure(
             [entry["multiplier"] for entry in right_entries],
             right_entries,
@@ -840,13 +970,18 @@ def main() -> None:
         right_bounded = _bounded_right_components(right_blocks)
         for run in right_runs:
             key = (run["family"], run["target_index"])
+            raw_selected = [entry for entry in right_raw if entry["source_key"] == key]
+            qualified = [
+                entry for entry in right_qualified_raw if entry["source_key"] == key
+            ]
             selected = [entry for entry in right_entries if entry["source_key"] == key]
-            qualified = sum(_residual_ok(entry) for entry in selected)
+            run["raw_candidate_count"] = len(raw_selected)
+            run["residual_rejected_count"] = len(raw_selected) - len(qualified)
             run["retained_candidate_count"] = len(selected)
-            run["residual_qualified_count"] = qualified
-            run["deduplicated_count"] = run["raw_candidate_count"] - len(selected)
+            run["residual_qualified_count"] = len(qualified)
+            run["deduplicated_count"] = len(qualified) - len(selected)
             reason = int(run["solver"]["convergence_reason"])
-            if qualified == 0:
+            if not qualified:
                 run["solver"]["convergence_status"] = "failed_no_residual_qualified"
             elif reason <= 0:
                 run["solver"]["convergence_status"] = "partial_convergence"
@@ -923,9 +1058,33 @@ def main() -> None:
             "unusable_runs": right_unusable_runs,
             "runs": right_runs,
         }
-        adjoint_runs: list[dict[str, Any]] = []
-        adjoint_entries: list[dict[str, Any]] = []
-        adjoint_removed = {family: 0 for family in MODE_POOL_FAMILIES}
+        adjoint_entries, adjoint_removed = _deduplicate_candidates(
+            adjoint_qualified_raw
+        )
+        for run in adjoint_runs:
+            key = (run["family"], run["target_index"])
+            raw_selected = [
+                entry for entry in adjoint_raw if entry["source_key"] == key
+            ]
+            qualified = [
+                entry for entry in adjoint_qualified_raw if entry["source_key"] == key
+            ]
+            selected = [
+                entry for entry in adjoint_entries if entry["source_key"] == key
+            ]
+            run["raw_candidate_count"] = len(raw_selected)
+            run["residual_rejected_count"] = len(raw_selected) - len(qualified)
+            run["retained_candidate_count"] = len(selected)
+            run["residual_qualified_count"] = len(qualified)
+            run["deduplicated_count"] = len(qualified) - len(selected)
+            reason = int(run["solver"]["convergence_reason"])
+            if not qualified:
+                run["solver"]["convergence_status"] = "failed_no_residual_qualified"
+            elif reason <= 0:
+                run["solver"]["convergence_status"] = "partial_convergence"
+            else:
+                run["solver"]["convergence_status"] = "converged"
+            run["solver"]["usable"] = bool(qualified)
         adjoint_blocks: list[list[int]] = []
         block_reports: list[dict[str, Any]] = []
         unmatched_adjoint_blocks: list[int] = []
@@ -935,7 +1094,7 @@ def main() -> None:
             "primal_outward_balance_relative": None,
             "adjoint_outward_balance_relative": None,
         }
-        adjoint_stage_wall: float | None = None
+        adjoint_stage_wall: float | None = paired_stage_wall
 
         def emit(
             status: str,
@@ -984,12 +1143,17 @@ def main() -> None:
                     "working_tree_status": dirty,
                 },
                 "solver": {
-                    "type": "SLEPc.PEP/TOAR with sparse augmented coefficients",
+                    "type": (
+                        "SLEPc.PEP/LINEAR + EPS/KRYLOVSCHUR two-sided "
+                        "with sparse augmented coefficients"
+                    ),
                     "target": 1.0,
                     "targets": [_complex_pair(target) for target in MODE_POOL_TARGETS],
                     "families": list(MODE_POOL_FAMILIES),
                     "nev": MODE_POOL_NEV,
                     "max_it": MODE_POOL_MAX_IT,
+                    "paired_two_sided": True,
+                    "independent_adjoint_solves": 0,
                     "right": right_solver,
                     "physical_adjoint": adjoint_solver,
                 },
@@ -1067,8 +1231,10 @@ def main() -> None:
                 },
                 "timing_seconds": {
                     "wall": elapsed,
-                    "right_stage": right_stage_wall,
-                    "physical_adjoint_stage": adjoint_stage_elapsed,
+                    "paired_two_sided_stage": paired_stage_wall,
+                    "right_stage": paired_stage_wall,
+                    "physical_adjoint_stage": paired_stage_wall,
+                    "right_and_adjoint_share_stage": True,
                     "wall_limit_seconds": MODE_POOL_WALL_LIMIT_SECONDS,
                 },
                 "resource": {
@@ -1133,11 +1299,13 @@ def main() -> None:
             emit(
                 right_gate["status_if_failed"],
                 adjoint_solver={
-                    "status": "not_run",
+                    "status": "paired_stage_not_qualified",
                     "reason": right_gate["reason"],
-                    "runs": [],
+                    "run_count": len(adjoint_runs),
+                    "stage": "paired_two_sided",
+                    "runs": adjoint_runs,
                 },
-                adjoint_stage_elapsed=None,
+                adjoint_stage_elapsed=paired_stage_wall,
                 right_entries_for_output=right_entries,
                 right_blocks_for_output=right_blocks["blocks"],
                 adjoint_entries_for_output=[],
@@ -1151,71 +1319,14 @@ def main() -> None:
                 contract_gate={
                     "passed": False,
                     "reason": right_gate["reason"],
-                    "adjoint_stage": "not_run",
+                    "adjoint_stage": "paired_stage_not_qualified",
                 },
             )
             return
 
-        reversed_polynomial = build_reversed_hermitian_bloch_polynomial(augmented)
-        adjoint_specs = {
-            "Q": (
-                reversed_polynomial.K0,
-                reversed_polynomial.K1,
-                reversed_polynomial.K2,
-            ),
-            "Qrev": (
-                reversed_polynomial.K2,
-                reversed_polynomial.K1,
-                reversed_polynomial.K0,
-            ),
-        }
-        adjoint_stage_started = time.perf_counter()
-        for family in ("Q", "Qrev"):
-            for target_index, target in enumerate(MODE_POOL_TARGETS):
-                solver, entries = run_family(
-                    family,
-                    target_index,
-                    target,
-                    adjoint_specs[family],
-                    (
-                        reversed_polynomial.K0,
-                        reversed_polynomial.K1,
-                        reversed_polynomial.K2,
-                    ),
-                    physical_adjoint=True,
-                )
-                adjoint_runs.append(
-                    {
-                        "solver": solver,
-                        "raw_candidate_count": len(entries),
-                        "family": family,
-                        "target_index": int(target_index),
-                        "target": _complex_pair(target),
-                    }
-                )
-                adjoint_entries.extend(entries)
-        adjoint_stage_wall = float(time.perf_counter() - adjoint_stage_started)
-        adjoint_entries, adjoint_removed = _deduplicate_candidates(adjoint_entries)
         adjoint_blocks = _root_blocks(
             [entry["multiplier"] for entry in adjoint_entries]
         )
-        for run in adjoint_runs:
-            key = (run["family"], run["target_index"])
-            selected = [
-                entry for entry in adjoint_entries if entry["source_key"] == key
-            ]
-            qualified = sum(_residual_ok(entry) for entry in selected)
-            run["retained_candidate_count"] = len(selected)
-            run["residual_qualified_count"] = qualified
-            run["deduplicated_count"] = run["raw_candidate_count"] - len(selected)
-            reason = int(run["solver"]["convergence_reason"])
-            if qualified == 0:
-                run["solver"]["convergence_status"] = "failed_no_residual_qualified"
-            elif reason <= 0:
-                run["solver"]["convergence_status"] = "partial_convergence"
-            else:
-                run["solver"]["convergence_status"] = "converged"
-            run["solver"]["usable"] = bool(qualified)
         adjoint_partial_runs = [
             {
                 "family": run["family"],
