@@ -811,6 +811,67 @@ class OneCellTwoPortSchurAction:
                 if obj is not None:
                     obj.destroy()
 
+    def apply_adjoint_columns(self, values: np.ndarray) -> np.ndarray:
+        """Apply the Hermitian-transpose endpoint Schur to columns."""
+
+        columns = np.asarray(values, dtype=np.complex128)
+        if columns.ndim == 1:
+            columns = columns.reshape(-1, 1)
+        if columns.ndim != 2 or columns.shape[0] != self.port_rows:
+            raise ValueError(
+                "Adjoint two-port Schur columns must have shape "
+                f"({self.port_rows}, n), got {columns.shape}."
+            )
+        if self._destroyed:
+            raise RuntimeError("The two-port Schur action has been destroyed.")
+
+        port_input = self.A_pp.createVecLeft()
+        port_action = self.A_pp.createVecRight()
+        interior_rhs = self.A_pi.createVecRight()
+        transpose_rhs = self.A_ii.createVecRight()
+        transpose_solution = self.A_ii.createVecLeft()
+        correction = self.A_ip.createVecRight()
+        result = np.empty_like(columns)
+        try:
+            first, last = map(int, port_input.getOwnershipRange())
+            for column in range(columns.shape[1]):
+                port_input.getArray()[:] = np.asarray(
+                    columns[first:last, column], dtype=PETSc.ScalarType
+                )
+                port_input.assemble()
+                self.A_pp.multHermitian(port_input, port_action)
+                self.A_pi.multHermitian(port_input, interior_rhs)
+                transpose_rhs.getArray()[:] = np.conj(
+                    interior_rhs.getArray(readonly=True)
+                )
+                transpose_rhs.assemble()
+                self.factor.solveTranspose(
+                    transpose_rhs,
+                    transpose_solution,
+                )
+                if int(self.factor.getConvergedReason()) < 0:
+                    raise RuntimeError(
+                        "The Hermitian-transpose interior Schur solve did not converge."
+                    )
+                transpose_solution.getArray()[:] = np.conj(
+                    transpose_solution.getArray(readonly=True)
+                )
+                transpose_solution.assemble()
+                self.A_ip.multHermitian(transpose_solution, correction)
+                port_action.axpy(PETSc.ScalarType(-1.0), correction)
+                result[:, column] = self._replicated_values(port_action)
+        finally:
+            for obj in (
+                correction,
+                transpose_solution,
+                transpose_rhs,
+                interior_rhs,
+                port_action,
+                port_input,
+            ):
+                obj.destroy()
+        return result
+
     def destroy(self) -> None:
         if self._destroyed:
             return
@@ -865,6 +926,30 @@ def bloch_polynomial_action(
 @dataclass
 class AugmentedBlochPolynomial:
     """Sparse quadratic polynomial before axial-interior elimination."""
+
+    K0: PETSc.Mat
+    K1: PETSc.Mat
+    K2: PETSc.Mat
+    endpoint_rows: int
+    interior_rows: int
+    dense_interface_square_formed: bool = False
+    _destroyed: bool = False
+
+    @property
+    def state_rows(self) -> int:
+        return int(self.endpoint_rows + self.interior_rows)
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        for matrix in (self.K2, self.K1, self.K0):
+            matrix.destroy()
+        self._destroyed = True
+
+
+@dataclass
+class ReversedHermitianBlochPolynomial:
+    """Sparse physical-adjoint polynomial with reversed Hermitian terms."""
 
     K0: PETSc.Mat
     K1: PETSc.Mat
@@ -995,6 +1080,184 @@ def build_augmented_bloch_polynomial(
             matrix.destroy()
         for index in (interior_is, right_is, left_is):
             index.destroy()
+
+
+def build_reversed_hermitian_bloch_polynomial(
+    polynomial: AugmentedBlochPolynomial,
+) -> ReversedHermitianBlochPolynomial:
+    """Reverse sparse quadratic coefficients for physical adjoint Bloch roots."""
+
+    matrices: list[PETSc.Mat] = []
+    try:
+        for source in (polynomial.K2, polynomial.K1, polynomial.K0):
+            target = PETSc.Mat()
+            source.hermitianTranspose(target)
+            matrices.append(target)
+        return ReversedHermitianBlochPolynomial(
+            K0=matrices[0],
+            K1=matrices[1],
+            K2=matrices[2],
+            endpoint_rows=polynomial.endpoint_rows,
+            interior_rows=polynomial.interior_rows,
+        )
+    except Exception:
+        for matrix in matrices:
+            matrix.destroy()
+        raise
+
+
+def endpoint_cauchy_balance(
+    action: OneCellTwoPortSchurAction,
+    state_columns: np.ndarray,
+    adjoint_state_columns: np.ndarray,
+    *,
+    multipliers: Sequence[complex],
+    adjoint_multipliers: Sequence[complex],
+) -> dict[str, float]:
+    """Extract endpoint E/traction from full states and pair them."""
+
+    electric_state = np.asarray(state_columns, dtype=np.complex128)
+    adjoint_state = np.asarray(adjoint_state_columns, dtype=np.complex128)
+    state_rows = action.left_rows + action.interior_rows
+    if electric_state.ndim == 1:
+        electric_state = electric_state[:, None]
+    if adjoint_state.ndim == 1:
+        adjoint_state = adjoint_state[:, None]
+    if (
+        electric_state.shape[0] != state_rows
+        or adjoint_state.shape[0] != state_rows
+    ):
+        raise ValueError("Full augmented states have the wrong row count.")
+    electric_left = electric_state[: action.left_rows, :]
+    adjoint_left = adjoint_state[: action.left_rows, :]
+    if electric_left.shape != adjoint_left.shape:
+        raise ValueError("Endpoint Cauchy columns have inconsistent shapes.")
+    count = electric_left.shape[1]
+    lam = np.asarray(multipliers, dtype=np.complex128)
+    nu = np.asarray(adjoint_multipliers, dtype=np.complex128)
+    if lam.shape != (count,) or nu.shape != (count,):
+        raise ValueError("Endpoint Cauchy multiplier counts differ.")
+    left = action.left_rows
+    electric = np.vstack((electric_left, electric_left * lam[None, :]))
+    adjoint = np.vstack((adjoint_left, adjoint_left * nu[None, :]))
+    port_input = action.A_pp.createVecRight()
+    port_action = action.A_pp.createVecLeft()
+    interior_input = action.A_pi.createVecRight()
+    port_correction = action.A_pi.createVecLeft()
+    adjoint_port_input = action.A_pp.createVecLeft()
+    adjoint_port_action = action.A_pp.createVecRight()
+    adjoint_interior_input = action.A_ip.createVecLeft()
+    adjoint_port_correction = action.A_ip.createVecRight()
+    traction = np.empty_like(electric)
+    adjoint_traction = np.empty_like(adjoint)
+    try:
+        primal_port_first, primal_port_last = map(
+            int,
+            port_input.getOwnershipRange(),
+        )
+        adjoint_port_first, adjoint_port_last = map(
+            int,
+            adjoint_port_input.getOwnershipRange(),
+        )
+        primal_interior_first, primal_interior_last = map(
+            int,
+            interior_input.getOwnershipRange(),
+        )
+        adjoint_interior_first, adjoint_interior_last = map(
+            int,
+            adjoint_interior_input.getOwnershipRange(),
+        )
+        for column in range(count):
+            port_input.getArray()[:] = np.asarray(
+                electric[primal_port_first:primal_port_last, column],
+                dtype=PETSc.ScalarType,
+            )
+            port_input.assemble()
+            interior_input.getArray()[:] = np.asarray(
+                electric_state[
+                    action.left_rows + primal_interior_first :
+                    action.left_rows + primal_interior_last,
+                    column,
+                ],
+                dtype=PETSc.ScalarType,
+            )
+            interior_input.assemble()
+            action.A_pp.mult(port_input, port_action)
+            action.A_pi.mult(interior_input, port_correction)
+            port_action.axpy(PETSc.ScalarType(1.0), port_correction)
+            traction[:, column] = action._replicated_values(port_action)
+
+            adjoint_port_input.getArray()[:] = np.asarray(
+                adjoint[adjoint_port_first:adjoint_port_last, column],
+                dtype=PETSc.ScalarType,
+            )
+            adjoint_port_input.assemble()
+            adjoint_interior_input.getArray()[:] = np.asarray(
+                nu[column]
+                * adjoint_state[
+                    action.left_rows + adjoint_interior_first :
+                    action.left_rows + adjoint_interior_last,
+                    column,
+                ],
+                dtype=PETSc.ScalarType,
+            )
+            adjoint_interior_input.assemble()
+            action.A_pp.multHermitian(
+                adjoint_port_input,
+                adjoint_port_action,
+            )
+            action.A_ip.multHermitian(
+                adjoint_interior_input,
+                adjoint_port_correction,
+            )
+            adjoint_port_action.axpy(
+                PETSc.ScalarType(1.0),
+                adjoint_port_correction,
+            )
+            adjoint_traction[:, column] = action._replicated_values(
+                adjoint_port_action
+            )
+    finally:
+        for obj in (
+            adjoint_port_correction,
+            adjoint_interior_input,
+            adjoint_port_action,
+            adjoint_port_input,
+            port_correction,
+            interior_input,
+            port_action,
+            port_input,
+        ):
+            obj.destroy()
+    primal_balance = traction[left:, :] + traction[:left, :] * lam[None, :]
+    adjoint_balance = (
+        adjoint_traction[left:, :]
+        + adjoint_traction[:left, :] * nu[None, :]
+    )
+    green_left = np.sum(np.conj(adjoint) * traction, axis=0)
+    green_right = np.sum(
+        np.conj(adjoint_traction) * electric,
+        axis=0,
+    )
+    scale = max(
+        float(np.linalg.norm(adjoint) * np.linalg.norm(traction)),
+        float(np.linalg.norm(adjoint_traction) * np.linalg.norm(electric)),
+        1.0e-30,
+    )
+    return {
+        "primal_outward_balance_relative": float(
+            np.linalg.norm(primal_balance)
+            / max(float(np.linalg.norm(traction)), 1.0e-30)
+        ),
+        "adjoint_outward_balance_relative": float(
+            np.linalg.norm(adjoint_balance)
+            / max(float(np.linalg.norm(adjoint_traction)), 1.0e-30)
+        ),
+        "green_pairing_relative": float(
+            np.linalg.norm(green_left - green_right) / scale
+        ),
+        "columns": int(count),
+    }
 
 
 def build_one_cell_two_port_schur_action(
@@ -1526,14 +1789,17 @@ __all__ = [
     "EndpointModeLifter",
     "OneCellTwoPortSchurAction",
     "AugmentedBlochPolynomial",
+    "ReversedHermitianBlochPolynomial",
     "ProjectedTwoPortSchur",
     "bloch_polynomial_action",
     "bloch_residual_metrics",
     "build_augmented_bloch_polynomial",
+    "build_reversed_hermitian_bloch_polynomial",
     "build_one_cell_two_port_schur_action",
     "build_projected_two_port_schur",
     "compose_projected_two_port_schur",
     "identify_endpoint_active_rows",
+    "endpoint_cauchy_balance",
     "lifted_endpoint_columns",
     "scalar_cg_sign_fixture",
 ]

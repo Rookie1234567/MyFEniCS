@@ -35,6 +35,8 @@ from src.solvers.one_cell_discrete_bloch import (
     OneCellTwoPortSchurAction,
     bloch_polynomial_action,
     build_augmented_bloch_polynomial,
+    build_reversed_hermitian_bloch_polynomial,
+    endpoint_cauchy_balance,
     identify_endpoint_active_rows,
 )
 
@@ -336,6 +338,211 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
         finally:
             if pep is not None:
                 pep.destroy()
+            if augmented is not None:
+                augmented.destroy()
+            action.destroy()
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 1,
+        "The deterministic adjoint Bloch fixture is serial.",
+    )
+    def test_reversed_hermitian_bloch_and_endpoint_green_contract(self) -> None:
+        def matrix(values: np.ndarray) -> PETSc.Mat:
+            rows, cols = values.shape
+            indptr = [0]
+            indices: list[int] = []
+            data: list[complex] = []
+            for row in range(rows):
+                nonzero = np.flatnonzero(values[row])
+                indices.extend(nonzero.tolist())
+                data.extend(values[row, nonzero].tolist())
+                indptr.append(len(indices))
+            result = PETSc.Mat().createAIJ(
+                size=(rows, cols),
+                csr=(
+                    np.asarray(indptr, dtype=PETSc.IntType),
+                    np.asarray(indices, dtype=PETSc.IntType),
+                    np.asarray(data, dtype=np.complex128),
+                ),
+                comm=PETSc.COMM_SELF,
+            )
+            result.assemble()
+            return result
+
+        A_pp = np.asarray(
+            [
+                [1.2 + 0.3j, 0.4 - 0.2j],
+                [-0.7 + 0.1j, 1.1 - 0.25j],
+            ],
+            dtype=np.complex128,
+        )
+        A_pi = np.asarray(
+            [[0.8 + 0.15j], [-0.35 + 0.2j]],
+            dtype=np.complex128,
+        )
+        A_ip = np.asarray(
+            [[0.2 - 0.4j, 0.55 + 0.1j]],
+            dtype=np.complex128,
+        )
+        A_ii = np.asarray([[2.3 + 0.4j]], dtype=np.complex128)
+        blocks = [matrix(values) for values in (A_pp, A_pi, A_ip, A_ii)]
+        factor = PETSc.KSP().create(PETSc.COMM_SELF)
+        factor.setType(PETSc.KSP.Type.PREONLY)
+        factor.getPC().setType(PETSc.PC.Type.LU)
+        factor.setOperators(blocks[3])
+        factor.setUp()
+        action = OneCellTwoPortSchurAction(
+            *blocks,
+            factor=factor,
+            left_rows=1,
+            right_rows=1,
+            interior_rows=1,
+            interior_matrix_nnz=1,
+            port_active=np.asarray([0, 1], dtype=PETSc.IntType),
+            interior_active=np.asarray([2], dtype=PETSc.IntType),
+        )
+        augmented: AugmentedBlochPolynomial | None = None
+        reversed_polynomial = None
+        try:
+            augmented = build_augmented_bloch_polynomial(action)
+            reversed_polynomial = build_reversed_hermitian_bloch_polynomial(
+                augmented
+            )
+            Schur = A_pp - A_pi @ np.linalg.solve(A_ii, A_ip)
+            K0 = Schur[1:2, 0:1]
+            K1 = Schur[1:2, 1:2] + Schur[0:1, 0:1]
+            K2 = Schur[0:1, 1:2]
+            multiplier = min(
+                np.roots([K2[0, 0], K1[0, 0], K0[0, 0]]),
+                key=abs,
+            )
+            adjoint_multiplier = 1.0 / np.conj(multiplier)
+            left_electric = np.asarray([[1.0 + 0.0j]])
+            left_adjoint = np.asarray([[1.0 + 0.0j]])
+            endpoint_electric = np.vstack(
+                (left_electric, multiplier * left_electric)
+            )
+            endpoint_adjoint = np.vstack(
+                (left_adjoint, adjoint_multiplier * left_adjoint)
+            )
+            interior = -np.linalg.solve(
+                A_ii,
+                A_ip @ endpoint_electric,
+            )
+            adjoint_interior = -np.linalg.solve(
+                A_ii.conj().T,
+                A_pi.conj().T @ endpoint_adjoint,
+            ) / adjoint_multiplier
+            state = np.vstack((left_electric, interior))
+            adjoint_state = np.vstack((left_adjoint, adjoint_interior))
+
+            def sparse_apply(
+                operator: PETSc.Mat,
+                values: np.ndarray,
+            ) -> np.ndarray:
+                vector = operator.createVecRight()
+                result = operator.createVecLeft()
+                try:
+                    vector.array[:] = values[:, 0]
+                    operator.mult(vector, result)
+                    return np.asarray(
+                        result.array,
+                        dtype=np.complex128,
+                    ).copy()[:, None]
+                finally:
+                    result.destroy()
+                    vector.destroy()
+
+            right_residual = sum(
+                coefficient * sparse_apply(operator, state)
+                for coefficient, operator in (
+                    (1.0, augmented.K0),
+                    (multiplier, augmented.K1),
+                    (multiplier**2, augmented.K2),
+                )
+            )
+            adjoint_residual = sum(
+                coefficient * sparse_apply(operator, adjoint_state)
+                for coefficient, operator in (
+                    (1.0, reversed_polynomial.K0),
+                    (adjoint_multiplier, reversed_polynomial.K1),
+                    (adjoint_multiplier**2, reversed_polynomial.K2),
+                )
+            )
+            self.assertLess(np.linalg.norm(right_residual), 1.0e-12)
+            self.assertLess(np.linalg.norm(adjoint_residual), 1.0e-12)
+            self.assertLess(
+                np.linalg.norm(
+                    K2.conj().T
+                    + adjoint_multiplier * K1.conj().T
+                    + adjoint_multiplier**2 * K0.conj().T
+                ),
+                1.0e-12,
+            )
+            wrong_order = (
+                K0.conj().T
+                + adjoint_multiplier * K1.conj().T
+                + adjoint_multiplier**2 * K2.conj().T
+            )
+            self.assertGreater(np.linalg.norm(wrong_order), 1.0e-3)
+            self.assertLess(
+                abs(
+                    adjoint_multiplier
+                    - 1.0 / np.conj(multiplier)
+                ),
+                1.0e-14,
+            )
+            metrics = endpoint_cauchy_balance(
+                action,
+                state,
+                adjoint_state,
+                multipliers=[multiplier],
+                adjoint_multipliers=[adjoint_multiplier],
+            )
+            np.testing.assert_allclose(
+                action.apply_adjoint_columns(endpoint_adjoint),
+                Schur.conj().T @ endpoint_adjoint,
+                rtol=0.0,
+                atol=1.0e-12,
+            )
+            self.assertLess(
+                metrics["primal_outward_balance_relative"],
+                1.0e-12,
+            )
+            self.assertLess(
+                metrics["adjoint_outward_balance_relative"],
+                1.0e-12,
+            )
+            self.assertLess(metrics["green_pairing_relative"], 1.0e-12)
+            tampered_state = state.copy()
+            tampered_state[-1, 0] += 0.37 - 0.21j
+            tampered_metrics = endpoint_cauchy_balance(
+                action,
+                tampered_state,
+                adjoint_state,
+                multipliers=[multiplier],
+                adjoint_multipliers=[adjoint_multiplier],
+            )
+            self.assertGreater(
+                tampered_metrics["primal_outward_balance_relative"],
+                1.0e-3,
+            )
+            tampered_adjoint = adjoint_state.copy()
+            tampered_adjoint[-1, 0] += 0.19 + 0.27j
+            tampered_adjoint_metrics = endpoint_cauchy_balance(
+                action,
+                state,
+                tampered_adjoint,
+                multipliers=[multiplier],
+                adjoint_multipliers=[adjoint_multiplier],
+            )
+            self.assertGreater(
+                tampered_adjoint_metrics["adjoint_outward_balance_relative"],
+                1.0e-3,
+            )
+        finally:
+            if reversed_polynomial is not None:
+                reversed_polynomial.destroy()
             if augmented is not None:
                 augmented.destroy()
             action.destroy()
