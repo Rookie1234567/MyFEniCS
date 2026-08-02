@@ -4,9 +4,9 @@ This runner reuses the existing one-cell local factor setup.  A sparse
 PEP/LINEAR solve with an internal two-sided EPS is the actual mode-pool path;
 the paired EPS left vector supplies the physical-adjoint candidate from the
 same eigenpair.  Batched Schur action and the reversed Hermitian polynomial
-are used only for independent residual checks.  Six fixed phase targets form
-a deterministic mode-pool audit; this is not a B1 capacity or production
-propagation solver.
+are used only for independent residual checks.  Six fixed phase targets plus
+one fixed reciprocal source form a deterministic mode-pool audit; this is not
+a B1 capacity or production propagation solver.
 """
 
 from __future__ import annotations
@@ -46,6 +46,15 @@ MODE_POOL_TARGETS = (
     -1.0j,
     0.38268343236508984 + 0.9238795325112867j,
     0.38268343236508984 - 0.9238795325112867j,
+)
+MODE_POOL_SOURCE_SCHEDULE = (
+    ("P", 0),
+    ("P", 1),
+    ("P", 2),
+    ("P", 3),
+    ("P", 4),
+    ("P", 5),
+    ("Prev", 2),
 )
 MODE_POOL_FAMILIES = ("P", "Prev", "Q", "Qrev")
 MODE_POOL_NEV = 128
@@ -924,41 +933,51 @@ def main() -> None:
         adjoint_runs: list[dict[str, Any]] = []
         adjoint_raw: list[dict[str, Any]] = []
         paired_stage_started = time.perf_counter()
-        for family in ("P", "Prev"):
-            for target_index, target in enumerate(MODE_POOL_TARGETS):
-                solver, right_entries, adjoint_entries = run_paired_family(
-                    family,
-                    target_index,
-                    target,
-                    right_specs[family],
-                    (augmented.K0, augmented.K1, augmented.K2),
+        for schedule_index, (family, target_index) in enumerate(
+            MODE_POOL_SOURCE_SCHEDULE, start=1
+        ):
+            target = MODE_POOL_TARGETS[target_index]
+            solver, right_entries, adjoint_entries = run_paired_family(
+                family,
+                target_index,
+                target,
+                right_specs[family],
+                (augmented.K0, augmented.K1, augmented.K2),
+            )
+            right_runs.append(
+                {
+                    "solver": solver,
+                    "raw_candidate_count": len(right_entries),
+                    "family": family,
+                    "target_index": int(target_index),
+                    "target": _complex_pair(target),
+                    "stage": "paired_two_sided",
+                }
+            )
+            left_family = "Qrev" if family == "P" else "Q"
+            adjoint_runs.append(
+                {
+                    "solver": solver.copy(),
+                    "raw_candidate_count": len(adjoint_entries),
+                    "family": left_family,
+                    "target_index": int(target_index),
+                    "target": _complex_pair(target),
+                    "paired_source_family": family,
+                    "solver_role": "paired_source_solver",
+                    "paired_output_family": left_family,
+                    "stage": "paired_two_sided",
+                }
+            )
+            right_raw.extend(right_entries)
+            adjoint_raw.extend(adjoint_entries)
+            if comm.rank == 0:
+                print(
+                    f"mode-pool source {schedule_index}/7 family={family} "
+                    f"target_index={target_index} raw_right={len(right_entries)} "
+                    f"raw_adjoint={len(adjoint_entries)} "
+                    f"paired_wall={time.perf_counter() - paired_stage_started:.3f}s",
+                    flush=True,
                 )
-                right_runs.append(
-                    {
-                        "solver": solver,
-                        "raw_candidate_count": len(right_entries),
-                        "family": family,
-                        "target_index": int(target_index),
-                        "target": _complex_pair(target),
-                        "stage": "paired_two_sided",
-                    }
-                )
-                left_family = "Qrev" if family == "P" else "Q"
-                adjoint_runs.append(
-                    {
-                        "solver": solver.copy(),
-                        "raw_candidate_count": len(adjoint_entries),
-                        "family": left_family,
-                        "target_index": int(target_index),
-                        "target": _complex_pair(target),
-                        "paired_source_family": family,
-                        "solver_role": "paired_source_solver",
-                        "paired_output_family": left_family,
-                        "stage": "paired_two_sided",
-                    }
-                )
-                right_raw.extend(right_entries)
-                adjoint_raw.extend(adjoint_entries)
         paired_stage_wall = float(time.perf_counter() - paired_stage_started)
         right_qualified_raw = [entry for entry in right_raw if _residual_ok(entry)]
         adjoint_qualified_raw = [entry for entry in adjoint_raw if _residual_ok(entry)]

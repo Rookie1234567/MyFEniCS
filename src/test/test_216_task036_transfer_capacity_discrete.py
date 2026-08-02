@@ -21,6 +21,7 @@ from benchmarks.run_task036_transfer_optimal_port_capacity import (
 )
 from benchmarks.run_task036_r1_port_capacity import (
     MODE_POOL_TARGETS,
+    MODE_POOL_SOURCE_SCHEDULE,
     _canonical_npz_arrays,
     _canonicalize_candidate,
     _deduplicate_candidates,
@@ -751,6 +752,10 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                 0.38268343236508984 + 0.9238795325112867j,
                 0.38268343236508984 - 0.9238795325112867j,
             ),
+        )
+        self.assertEqual(
+            MODE_POOL_SOURCE_SCHEDULE,
+            (("P", 0), ("P", 1), ("P", 2), ("P", 3), ("P", 4), ("P", 5), ("Prev", 2)),
         )
         duplicate_pairing = _select_pairing_subblock(
             np.ones((3, 3), dtype=np.complex128),
