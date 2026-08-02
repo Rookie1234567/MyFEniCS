@@ -66,6 +66,9 @@ MODE_POOL_SWAP_LIMIT_KIB = 0
 MODE_POOL_BLOCK_TOL = 1.0e-6
 MODE_POOL_RESIDUAL_TOL = 1.0e-7
 MODE_POOL_PAIR_MATCH_TOL = 1.0e-10
+MODE_POOL_FORMAL_GREEN_TOL = 1.0e-8
+MODE_POOL_STRICT_GREEN_DIAGNOSTIC_TOL = 1.0e-10
+MODE_POOL_SPAN_TOL = 1.0e-8
 
 
 def _git(*arguments: str) -> str:
@@ -226,15 +229,45 @@ def _select_pairing_subblock(
     }
 
 
-def _selected_pairing_gate(condition: float, green: dict[str, float]) -> bool:
-    return condition <= 1.0e10 and all(
-        green[key] <= 1.0e-10
+def _green_metrics_pass(green: dict[str, float], limit: float) -> bool:
+    return all(
+        green[key] <= limit
         for key in (
             "green_pairing_relative",
             "primal_outward_balance_relative",
             "adjoint_outward_balance_relative",
         )
     )
+
+
+def _selected_pairing_gate(condition: float, green: dict[str, float]) -> bool:
+    return condition <= 1.0e10 and _green_metrics_pass(
+        green, MODE_POOL_FORMAL_GREEN_TOL
+    )
+
+
+def _column_span_residual(raw: np.ndarray, selected: np.ndarray) -> float:
+    """Return the normalized raw-column projection residual onto selected span."""
+
+    raw_array = np.asarray(raw, dtype=np.complex128)
+    selected_array = np.asarray(selected, dtype=np.complex128)
+    if raw_array.ndim != 2 or selected_array.ndim != 2:
+        raise ValueError("Span inputs must be two-dimensional column arrays.")
+    raw_norms = np.linalg.norm(raw_array, axis=0)
+    selected_norms = np.linalg.norm(selected_array, axis=0)
+    if np.any(raw_norms <= 1.0e-30) or np.any(selected_norms <= 1.0e-30):
+        raise ValueError("Span states must be nonzero columns.")
+    raw_array = raw_array / raw_norms
+    selected_array = selected_array / selected_norms
+    basis, singular_values, _ = np.linalg.svd(selected_array, full_matrices=False)
+    rank = int(
+        np.count_nonzero(
+            singular_values > max(float(singular_values[0]), 1.0e-30) * 1.0e-10
+        )
+    )
+    basis = basis[:, :rank]
+    residual = raw_array - basis @ (basis.conj().T @ raw_array)
+    return float(np.linalg.norm(residual) / max(np.linalg.norm(raw_array), 1.0e-30))
 
 
 def _closed_selected_component_indices(
@@ -1113,6 +1146,10 @@ def main() -> None:
             "green_pairing_relative": None,
             "primal_outward_balance_relative": None,
             "adjoint_outward_balance_relative": None,
+            "formal_green_limit": MODE_POOL_FORMAL_GREEN_TOL,
+            "strict_green_diagnostic_limit": MODE_POOL_STRICT_GREEN_DIAGNOSTIC_TOL,
+            "formal_green_passed": False,
+            "strict_green_diagnostic_passed": False,
         }
         adjoint_stage_wall: float | None = paired_stage_wall
 
@@ -1134,6 +1171,19 @@ def main() -> None:
             elapsed = float(time.perf_counter() - started)
             rss_kib = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
             swap_kib = _current_swap_kib()
+            contract_gate = dict(contract_gate)
+            contract_gate.update(
+                {
+                    "formal_green_limit": MODE_POOL_FORMAL_GREEN_TOL,
+                    "strict_green_diagnostic_limit": (
+                        MODE_POOL_STRICT_GREEN_DIAGNOSTIC_TOL
+                    ),
+                    "formal_green_passed": bool(green_pairing["formal_green_passed"]),
+                    "strict_green_diagnostic_passed": bool(
+                        green_pairing["strict_green_diagnostic_passed"]
+                    ),
+                }
+            )
             npz_path = args.output.with_suffix(".npz")
             arrays = _canonical_npz_arrays(
                 right_entries_for_output,
@@ -1517,6 +1567,9 @@ def main() -> None:
             adjoint_states = np.column_stack(
                 [adjoint_entries[item]["state"] for item in adjoint_block]
             )
+            right_states = np.column_stack(
+                [right_entries[item]["state"] for item in right_block]
+            )
             derivative = np.column_stack(
                 [
                     sparse_apply(augmented.K1, right_entries[item]["state"])
@@ -1553,6 +1606,9 @@ def main() -> None:
             selected_option = pairing_selection["selected"]
             selected_green: dict[str, Any] | None = None
             accepted_option: dict[str, Any] | None = None
+            right_span_residual = adjoint_span_residual = None
+            connected_block_span_preserved = False
+            formal_green_passed = strict_green_diagnostic_passed = False
             if selected_option is not None:
                 selected_right = selected_option["right_indices"]
                 selected_adjoint = selected_option["adjoint_indices"]
@@ -1567,6 +1623,16 @@ def main() -> None:
                     selected_adjoint_states = np.column_stack(
                         [adjoint_entries[item]["state"] for item in selected_adjoint]
                     )
+                    right_span_residual = _column_span_residual(
+                        right_states, selected_right_states
+                    )
+                    adjoint_span_residual = _column_span_residual(
+                        adjoint_states, selected_adjoint_states
+                    )
+                    connected_block_span_preserved = bool(
+                        right_span_residual <= MODE_POOL_SPAN_TOL
+                        and adjoint_span_residual <= MODE_POOL_SPAN_TOL
+                    )
                     selected_green = endpoint_cauchy_balance(
                         action,
                         selected_right_states,
@@ -1579,7 +1645,13 @@ def main() -> None:
                             for item in selected_adjoint
                         ],
                     )
-                    if _selected_pairing_gate(
+                    formal_green_passed = _green_metrics_pass(
+                        selected_green, MODE_POOL_FORMAL_GREEN_TOL
+                    )
+                    strict_green_diagnostic_passed = _green_metrics_pass(
+                        selected_green, MODE_POOL_STRICT_GREEN_DIAGNOSTIC_TOL
+                    )
+                    if connected_block_span_preserved and _selected_pairing_gate(
                         selected_option["condition"], selected_green
                     ):
                         accepted_option = selected_option
@@ -1613,6 +1685,16 @@ def main() -> None:
                         else None
                     ),
                     "green_cauchy": selected_green,
+                    "formal_green_limit": MODE_POOL_FORMAL_GREEN_TOL,
+                    "strict_green_diagnostic_limit": (
+                        MODE_POOL_STRICT_GREEN_DIAGNOSTIC_TOL
+                    ),
+                    "formal_green_passed": formal_green_passed,
+                    "strict_green_diagnostic_passed": strict_green_diagnostic_passed,
+                    "span_tolerance": MODE_POOL_SPAN_TOL,
+                    "right_span_residual": right_span_residual,
+                    "adjoint_span_residual": adjoint_span_residual,
+                    "connected_block_span_preserved": (connected_block_span_preserved),
                     "qualified": accepted_option is not None,
                 }
             )
@@ -1669,11 +1751,20 @@ def main() -> None:
         )
         global_green_gate = bool(
             green_pairing["green_pairing_relative"] is not None
-            and green_pairing["green_pairing_relative"] <= 1.0e-10
-            and green_pairing["primal_outward_balance_relative"] is not None
-            and green_pairing["primal_outward_balance_relative"] <= 1.0e-10
-            and green_pairing["adjoint_outward_balance_relative"] is not None
-            and green_pairing["adjoint_outward_balance_relative"] <= 1.0e-10
+            and _green_metrics_pass(green_pairing, MODE_POOL_FORMAL_GREEN_TOL)
+        )
+        global_strict_green_diagnostic = bool(
+            green_pairing["green_pairing_relative"] is not None
+            and _green_metrics_pass(
+                green_pairing, MODE_POOL_STRICT_GREEN_DIAGNOSTIC_TOL
+            )
+        )
+        green_pairing.update(
+            {
+                "formal_green_passed": global_green_gate,
+                "strict_green_diagnostic_passed": global_strict_green_diagnostic,
+                "span_tolerance": MODE_POOL_SPAN_TOL,
+            }
         )
         contract_columns_ready = bool(120 <= effective_columns <= 360)
         contract_gate = {

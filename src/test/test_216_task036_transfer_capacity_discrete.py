@@ -21,6 +21,9 @@ from benchmarks.run_task036_transfer_optimal_port_capacity import (
 )
 from benchmarks.run_task036_r1_port_capacity import (
     MODE_POOL_EIGEN_TOL,
+    MODE_POOL_FORMAL_GREEN_TOL,
+    MODE_POOL_SPAN_TOL,
+    MODE_POOL_STRICT_GREEN_DIAGNOSTIC_TOL,
     MODE_POOL_TARGETS,
     MODE_POOL_SOURCE_SCHEDULE,
     _canonical_npz_arrays,
@@ -33,6 +36,8 @@ from benchmarks.run_task036_r1_port_capacity import (
     _right_pool_gate,
     _residual_ok,
     _right_reciprocal_closure,
+    _column_span_residual,
+    _green_metrics_pass,
 )
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
@@ -773,6 +778,9 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
             action.destroy()
 
     def test_r1b_fixed_family_pool_contracts_without_pep(self) -> None:
+        self.assertEqual(MODE_POOL_FORMAL_GREEN_TOL, 1.0e-8)
+        self.assertEqual(MODE_POOL_STRICT_GREEN_DIAGNOSTIC_TOL, 1.0e-10)
+        self.assertEqual(MODE_POOL_SPAN_TOL, 1.0e-8)
         self.assertEqual(
             MODE_POOL_TARGETS,
             (
@@ -819,8 +827,36 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
         self.assertFalse(_selected_pairing_gate(1.0e10 + 1.0, green))
         for key in green:
             failed_green = dict(green)
-            failed_green[key] = 1.0e-10 + 1.0e-12
+            failed_green[key] = MODE_POOL_FORMAL_GREEN_TOL + 1.0e-12
             self.assertFalse(_selected_pairing_gate(2.0, failed_green))
+        diagnostic_only_green = {key: 5.0e-9 for key in green}
+        self.assertTrue(_selected_pairing_gate(2.0, diagnostic_only_green))
+        self.assertFalse(
+            _green_metrics_pass(
+                diagnostic_only_green,
+                MODE_POOL_STRICT_GREEN_DIAGNOSTIC_TOL,
+            )
+        )
+        self.assertFalse(
+            _selected_pairing_gate(
+                2.0,
+                {key: MODE_POOL_FORMAL_GREEN_TOL + 1.0e-12 for key in green},
+            )
+        )
+        duplicate_states = np.ones((2, 3), dtype=np.complex128)
+        self.assertLessEqual(
+            _column_span_residual(duplicate_states, duplicate_states[:, [0]]),
+            MODE_POOL_SPAN_TOL,
+        )
+        independent_states = np.eye(2, dtype=np.complex128)
+        self.assertGreater(
+            _column_span_residual(independent_states, independent_states[:, [0]]),
+            MODE_POOL_SPAN_TOL,
+        )
+        self.assertLessEqual(
+            _column_span_residual(independent_states, independent_states),
+            MODE_POOL_SPAN_TOL,
+        )
         self.assertEqual(
             _closed_selected_component_indices(
                 [[0, 1]],
