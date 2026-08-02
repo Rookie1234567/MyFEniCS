@@ -32,6 +32,30 @@ def _array_sha256(values: np.ndarray) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _replicated_dense_columns(matrix: PETSc.Mat) -> np.ndarray:
+    """Gather one distributed dense matrix collectively, preserving columns."""
+
+    first, last = map(int, matrix.getOwnershipRange())
+    packets = matrix.getComm().tompi4py().allgather(
+        (
+            first,
+            last,
+            np.asarray(
+                matrix.getDenseArray(readonly=True), dtype=np.complex128
+            ).copy(),
+        )
+    )
+    rows, columns = map(int, matrix.getSize())
+    result = np.empty((rows, columns), dtype=np.complex128)
+    covered = np.zeros(rows, dtype=bool)
+    for start, stop, values in packets:
+        result[int(start) : int(stop), :] = values
+        covered[int(start) : int(stop)] = True
+    if not np.all(covered):
+        raise RuntimeError("Dense Schur action ownership did not close.")
+    return result
+
+
 @dataclass(frozen=True)
 class EndpointActiveRows:
     """Canonical endpoint identities in the active condensed numbering."""
@@ -665,6 +689,8 @@ class OneCellTwoPortSchurAction:
     right_rows: int
     interior_rows: int
     interior_matrix_nnz: int
+    port_active: np.ndarray
+    interior_active: np.ndarray
     dense_interface_square_formed: bool = False
     _destroyed: bool = False
 
@@ -695,6 +721,47 @@ class OneCellTwoPortSchurAction:
             raise RuntimeError("Two-port Schur action ownership did not close.")
         return result
 
+    def recover_homogeneous_columns(self, port_values: np.ndarray) -> np.ndarray:
+        """Recover eliminated active interiors for a zero cell RHS."""
+
+        columns = np.asarray(port_values, dtype=np.complex128)
+        if columns.ndim == 1:
+            columns = columns[:, None]
+        if columns.ndim != 2 or columns.shape[0] != self.port_rows:
+            raise ValueError(
+                "Homogeneous recovery columns must have shape "
+                f"({self.port_rows}, n), got {columns.shape}."
+            )
+        if self._destroyed:
+            raise RuntimeError("The two-port Schur action has been destroyed.")
+        port_vector = self.A_pp.createVecRight()
+        interior_rhs = self.A_ip.createVecLeft()
+        interior_solution = self.A_ii.createVecRight()
+        recovered = np.zeros(
+            (len(self.port_active) + len(self.interior_active), columns.shape[1]),
+            dtype=np.complex128,
+        )
+        try:
+            first, last = map(int, port_vector.getOwnershipRange())
+            recovered[self.port_active, :] = columns
+            for column in range(columns.shape[1]):
+                port_vector.getArray()[:] = np.asarray(
+                    columns[first:last, column], dtype=PETSc.ScalarType
+                )
+                port_vector.assemble()
+                self.A_ip.mult(port_vector, interior_rhs)
+                self.factor.solve(interior_rhs, interior_solution)
+                if int(self.factor.getConvergedReason()) < 0:
+                    raise RuntimeError("The homogeneous interior recovery did not converge.")
+                recovered[self.interior_active, column] = -self._replicated_values(
+                    interior_solution
+                )
+        finally:
+            interior_solution.destroy()
+            interior_rhs.destroy()
+            port_vector.destroy()
+        return recovered
+
     def apply_columns(self, values: np.ndarray) -> np.ndarray:
         """Apply the exact endpoint Schur to replicated endpoint columns."""
 
@@ -709,43 +776,40 @@ class OneCellTwoPortSchurAction:
         if self._destroyed:
             raise RuntimeError("The two-port Schur action has been destroyed.")
 
-        port_vector = self.A_pp.createVecRight()
-        interior_rhs = self.A_ip.createVecLeft()
-        interior_solution = self.A_ii.createVecRight()
-        port_action = self.A_pp.createVecLeft()
-        port_correction = self.A_pi.createVecLeft()
-        result = np.empty_like(columns)
+        dense_port = None
+        interior_rhs = None
+        interior_solution = None
+        port_action = None
+        port_correction = None
         try:
-            first, last = map(int, port_vector.getOwnershipRange())
-            for column in range(columns.shape[1]):
-                port_vector.getArray()[:] = np.asarray(
-                    columns[first:last, column],
-                    dtype=PETSc.ScalarType,
+            first, last = map(int, self.A_pp.getOwnershipRangeColumn())
+            dense_port = PETSc.Mat().createDense(
+                size=((last - first, self.port_rows), columns.shape[1]),
+                comm=self.A_pp.getComm(),
+            )
+            dense_port.getDenseArray()[:, :] = columns[first:last, :]
+            dense_port.assemble()
+            interior_rhs = self.A_ip.matMult(dense_port)
+            interior_solution = interior_rhs.duplicate(copy=False)
+            self.factor.matSolve(interior_rhs, interior_solution)
+            if int(self.factor.getConvergedReason()) < 0:
+                raise RuntimeError(
+                    "The one-cell interior Schur solve did not converge."
                 )
-                port_vector.assemble()
-                self.A_ip.mult(port_vector, interior_rhs)
-                self.factor.solve(interior_rhs, interior_solution)
-                if int(self.factor.getConvergedReason()) < 0:
-                    raise RuntimeError(
-                        "The one-cell interior Schur solve did not converge."
-                    )
-                self.A_pp.mult(port_vector, port_action)
-                self.A_pi.mult(interior_solution, port_correction)
-                port_action.axpy(
-                    PETSc.ScalarType(-1.0),
-                    port_correction,
-                )
-                result[:, column] = self._replicated_values(port_action)
+            port_action = self.A_pp.matMult(dense_port)
+            port_correction = self.A_pi.matMult(interior_solution)
+            port_action.axpy(PETSc.ScalarType(-1.0), port_correction)
+            return _replicated_dense_columns(port_action)
         finally:
             for obj in (
                 port_correction,
                 port_action,
                 interior_solution,
                 interior_rhs,
-                port_vector,
+                dense_port,
             ):
-                obj.destroy()
-        return result
+                if obj is not None:
+                    obj.destroy()
 
     def destroy(self) -> None:
         if self._destroyed:
@@ -791,6 +855,8 @@ def build_one_cell_two_port_schur_action(
             right_rows=len(rows.right_active),
             interior_rows=len(rows.interior_active),
             interior_matrix_nnz=nnz,
+            port_active=np.asarray(rows.port_active, dtype=PETSc.IntType).copy(),
+            interior_active=np.asarray(rows.interior_active, dtype=PETSc.IntType).copy(),
         )
     except Exception:
         for obj in (factor, A_ii, A_ip, A_pi, A_pp):

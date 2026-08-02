@@ -8,7 +8,7 @@ import json
 import time
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 import ufl
@@ -1461,49 +1461,71 @@ def _use_zero_order_local_robin_dtn(cfg: SimulationConfig3D) -> bool:
     return cfg.stage4_dtn_order_policy.lower() == "zero_order" and normal_incidence
 
 
-def _mode_projection_from_solution(
+def _mode_projections_from_solution(
     E_total,
-    mode: PortMode3D,
+    modes: Sequence[PortMode3D],
     mesh_data,
     cfg: SimulationConfig3D,
     *,
     quadrature_degree: int | None,
-) -> complex:
-    """Project the solved tangential E trace onto one tangential port mode.
+) -> list[complex]:
+    """Project modes while compiling at most one form for each port side.
 
-    The auxiliary DtN row and its denominator are tangential-trace contracts.
-    Outgoing P modes can have a nonzero normal component, but neither
-    ``E_total[2]`` nor ``mode.e_vector[2]`` belongs in this numerator.
+    The projection contract is tangential: only ``(E_x, E_y, 0)`` and
+    ``(e_x, e_y, 0)`` enter the numerator, so a P-mode normal component never
+    contributes to this DtN row.
     """
 
-    tag = cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min
+    modes = list(modes)
+    if not modes:
+        return []
+    grouped: dict[str, list[tuple[int, PortMode3D]]] = {"top": [], "bottom": []}
+    for index, mode in enumerate(modes):
+        grouped[mode.side].append((index, mode))
+    results: list[complex | None] = [None] * len(modes)
     x = ufl.SpatialCoordinate(mesh_data.mesh)
-    phase = ufl.exp(
-        PETSc.ScalarType(1j * mode.alpha) * x[0]
-        + PETSc.ScalarType(1j * mode.gamma) * x[1]
-        + PETSc.ScalarType(1j * mode.k_vector[2]) * x[2]
-    )
     tangential_field = ufl.as_vector(
         (E_total[0], E_total[1], PETSc.ScalarType(0.0))
     )
-    tangential_mode = np.asarray(
-        (mode.e_vector[0], mode.e_vector[1], 0.0),
-        dtype=np.complex128,
-    )
-    reference = _as_ufl_vector(tangential_mode, phase)
-    ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
     form_options: dict[str, int] = {}
     if quadrature_degree is not None:
         form_options["quadrature_degree"] = int(quadrature_degree)
-    local = fem.assemble_scalar(
-        fem.form(
+    for side, side_modes in grouped.items():
+        if not side_modes:
+            continue
+        tag = cfg.tags.z_max if side == "top" else cfg.tags.z_min
+        alpha = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
+        gamma = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
+        kz = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
+        mode_x = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
+        mode_y = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
+        phase = ufl.exp(
+            PETSc.ScalarType(1j) * alpha * x[0]
+            + PETSc.ScalarType(1j) * gamma * x[1]
+            + PETSc.ScalarType(1j) * kz * x[2]
+        )
+        reference = ufl.as_vector(
+            (mode_x * phase, mode_y * phase, PETSc.ScalarType(0.0))
+        )
+        ds = ufl.Measure(
+            "ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags
+        )
+        form = fem.form(
             ufl.inner(tangential_field, reference) * ds(tag),
             form_compiler_options=form_options,
         )
-    )
-    total = mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
-    denominator = _mode_projection_denominator(mode, cfg)
-    return complex(total / denominator)
+        for index, mode in side_modes:
+            _set_scalar_constant(alpha, mode.alpha)
+            _set_scalar_constant(gamma, mode.gamma)
+            _set_scalar_constant(kz, mode.k_vector[2])
+            _set_scalar_constant(mode_x, mode.e_vector[0])
+            _set_scalar_constant(mode_y, mode.e_vector[1])
+            local = fem.assemble_scalar(form)
+            total = mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
+            results[index] = complex(
+                total / _mode_projection_denominator(mode, cfg)
+            )
+    return [complex(value) for value in results]
 
 
 def _sampled_tangential_projection(
@@ -1579,16 +1601,13 @@ def _auxiliary_direct_tangential_projection_audit(
             f"modes={mode_count}, auxiliary={len(auxiliary_values)}, "
             f"incident={len(incident_projections)}."
         )
-    direct_values = [
-        _mode_projection_from_solution(
-            E_total,
-            mode,
-            mesh_data,
-            cfg,
-            quadrature_degree=quadrature_degree,
-        )
-        for mode in modes
-    ]
+    direct_values = _mode_projections_from_solution(
+        E_total,
+        modes,
+        mesh_data,
+        cfg,
+        quadrature_degree=quadrature_degree,
+    )
     rows: list[dict[str, Any]] = []
     for mode, auxiliary, direct, incident in zip(
         modes,
@@ -1959,16 +1978,13 @@ def _solve_zero_order_local_robin_dtn(
 
     t0 = time.perf_counter()
     modal_values = np.asarray(
-        [
-            _mode_projection_from_solution(
-                E_total,
-                mode,
-                mesh_data,
-                cfg,
-                quadrature_degree=dtn_quadrature_degree,
-            )
-            for mode in modes
-        ],
+        _mode_projections_from_solution(
+            E_total,
+            modes,
+            mesh_data,
+            cfg,
+            quadrature_degree=dtn_quadrature_degree,
+        ),
         dtype=np.complex128,
     )
     incident_projections = [_incident_projection_onto_top_mode(mode, cfg) for mode in modes]

@@ -13,6 +13,25 @@ _TAIL_THRESHOLDS = (1.0e-6, 1.0e-8, 1.0e-10)
 _RELATIVE_RANK_CUTOFF = 1.0e-10
 
 
+def complex_gaussian_holdout_multiplier(
+    delta_each: float, holdout_count: int
+) -> float:
+    """Return the frozen circular-complex Gaussian holdout multiplier."""
+
+    delta_each = float(delta_each)
+    holdout_count = int(holdout_count)
+    if not 0.0 < delta_each < 1.0:
+        raise ValueError("delta_each must lie strictly between zero and one")
+    if holdout_count <= 0:
+        raise ValueError("holdout_count must be positive")
+    return float(
+        1.0
+        / np.sqrt(
+            -np.log1p(-(delta_each ** (1.0 / holdout_count)))
+        )
+    )
+
+
 def _transfer_blocks(
     system: np.ndarray,
     source: np.ndarray,

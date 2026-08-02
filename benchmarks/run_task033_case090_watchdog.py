@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -33,6 +34,16 @@ GIB = 1024**3
 MAX_EFFECTIVE_MEMORY_BYTES = 14 * GIB
 WARNING_SCALE = 11.5 / 14.0
 TERMINATION_SCALE = 13.0 / 14.0
+
+
+def _run_status(
+    failures: list[str], *, development: bool
+) -> tuple[str, bool, bool]:
+    """Return status and qualification flags without changing formal semantics."""
+
+    if development:
+        return "unqualified_development_probe", False, not failures
+    return ("passed" if not failures else "failed"), not failures, not failures
 
 
 def _read_nonnegative_integer(path: Path) -> int | None:
@@ -456,7 +467,41 @@ def _natural_exit_after_process_tree_sample(
         or decision.get("detail") != "process_tree_status"
     ):
         return None
-    return process.poll()
+    polled = process.poll()
+    if polled is not None:
+        return int(polled)
+    try:
+        return int(process.wait(timeout=0.10))
+    except subprocess.TimeoutExpired:
+        return None
+
+
+def _readable_process_tree_resample(
+    process: subprocess.Popen[Any],
+    decision: Mapping[str, Any],
+    first_sample: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    """Take one immediate status resample for the narrowly defined race."""
+
+    if (
+        decision.get("trigger") != "authority_unreadable"
+        or decision.get("detail") != "process_tree_status"
+    ):
+        return None
+    sample = sample_memory(process.pid, worker_alive=True)
+    if sample.get("process_tree_all_status_readable") is not True:
+        return None
+    sample["observed_memory_bytes"] = max(
+        int(first_sample["observed_memory_bytes"]),
+        int(sample["observed_memory_bytes"]),
+    )
+    sample["swap_current_bytes"] = max(
+        int(first_sample["swap_current_bytes"]),
+        int(sample["swap_current_bytes"]),
+    )
+    sample["process_tree_resample_conservative_carry_forward"] = True
+    sample["sample_kind"] = "worker_resample"
+    return sample
 
 
 def _git_ignored(path: Path) -> bool:
@@ -553,7 +598,10 @@ def summarize_samples(
             for field in required_authorities
         )
         for sample in samples
-        if sample.get("process_tree_exit_race_observed") is not True
+        if (
+            sample.get("process_tree_exit_race_observed") is not True
+            and sample.get("process_tree_status_resample_succeeded") is not True
+        )
     )
     initial_swap = swap[0] if swap else None
     final_swap = swap[-1] if swap else None
@@ -657,6 +705,7 @@ def summarize_samples(
 
 
 def run_watchdog(args: argparse.Namespace) -> int:
+    development = bool(args.development_dirty_probe)
     command = list(args.worker_command)
     if command and command[0] == "--":
         command = command[1:]
@@ -665,19 +714,57 @@ def run_watchdog(args: argparse.Namespace) -> int:
         return 2
     raw_output = Path(args.raw_output).resolve()
     summary_output = Path(args.summary_output).resolve()
+    if development:
+        development_root = (ROOT / "benchmarks" / "artifacts" / "task036" / "direct_d1b").resolve()
+        if development_root not in raw_output.parents or development_root not in summary_output.parents:
+            print(
+                "development probe outputs must be under benchmarks/artifacts/task036/direct_d1b",
+                file=sys.stderr,
+            )
+            return 2
     raw_output.parent.mkdir(parents=True, exist_ok=True)
     summary_output.parent.mkdir(parents=True, exist_ok=True)
     source_at_start = inspect_tracked_source(ROOT)
     samples: list[dict[str, Any]] = []
     preflight_sample = sample_memory(-1, worker_alive=False)
     preflight, preflight_failures = build_preflight(preflight_sample)
-    if (
-        source_at_start.source_commit_full_sha is None
-        or source_at_start.tracked_source_dirty
-    ):
+    if source_at_start.source_commit_full_sha is None:
+        preflight_failures.append("preflight HEAD is unreadable")
+    elif not development and source_at_start.tracked_source_dirty:
         preflight_failures.append("preflight tracked source is not clean/identified")
-        preflight["failures"] = list(preflight_failures)
-        preflight["passed"] = False
+    if development:
+        cap_bytes = int(float(args.development_memory_cap_gib) * GIB)
+        native_effective = preflight.get("effective_memory_bytes")
+        native_warning = preflight.get("warning_threshold_bytes")
+        native_termination = preflight.get("termination_threshold_bytes")
+        if not all(
+            isinstance(value, int) and value > 0
+            for value in (native_effective, native_warning, native_termination)
+        ):
+            preflight_failures.append("development native memory thresholds are unreadable")
+        else:
+            effective = min(native_effective, cap_bytes)
+            termination = min(native_termination, cap_bytes)
+            warning = min(native_warning, int(0.9 * termination))
+            preflight.update(
+                {
+                    "development_mode": True,
+                    "native_effective_memory_bytes": native_effective,
+                    "native_warning_threshold_bytes": native_warning,
+                    "native_termination_threshold_bytes": native_termination,
+                    "development_memory_cap_bytes": cap_bytes,
+                    "effective_memory_bytes": effective,
+                    "warning_threshold_bytes": warning,
+                    "termination_threshold_bytes": termination,
+                    "warning_scale": warning / effective,
+                    "termination_scale": termination / effective,
+                }
+            )
+        preflight["development_memory_cap_gib"] = float(
+            args.development_memory_cap_gib
+        )
+    preflight["failures"] = list(preflight_failures)
+    preflight["passed"] = not preflight_failures
     preflight_sample["sample_kind"] = "preflight"
     samples.append(preflight_sample)
     process: subprocess.Popen[Any] | None = None
@@ -731,6 +818,35 @@ def run_watchdog(args: argparse.Namespace) -> int:
                             exit_race_code
                         )
                         return_code = int(exit_race_code)
+                    elif (
+                        decision.get("trigger") == "authority_unreadable"
+                        and decision.get("detail") == "process_tree_status"
+                        and development
+                    ):
+                        sample["process_tree_status_resample_attempted"] = True
+                        resampled = _readable_process_tree_resample(
+                            process, decision, sample
+                        )
+                        if resampled is not None:
+                            resampled["elapsed_seconds"] = time.monotonic() - started
+                            sample["process_tree_status_resample_succeeded"] = True
+                            samples.append(sample)
+                            raw_stream.write(
+                                json.dumps(
+                                    sample, ensure_ascii=False, allow_nan=False
+                                )
+                                + "\n"
+                            )
+                            raw_stream.flush()
+                            sample = resampled
+                            decision = watchdog_decision(
+                                sample,
+                                preflight=preflight,
+                                elapsed_seconds=float(sample["elapsed_seconds"]),
+                                wall_timeout_seconds=float(args.wall_timeout_seconds),
+                            )
+                        else:
+                            sample["process_tree_status_resample_succeeded"] = False
                 samples.append(sample)
                 raw_stream.write(
                     json.dumps(sample, ensure_ascii=False, allow_nan=False) + "\n"
@@ -806,20 +922,47 @@ def run_watchdog(args: argparse.Namespace) -> int:
     if process is not None and worker_return_code != 0 and not controlled_termination:
         failures.append(f"worker exited with code {worker_return_code}")
     start_sha = source_at_start.source_commit_full_sha
-    source_clean = (
+    source_unchanged = (
         isinstance(start_sha, str)
         and start_sha == source_at_end.source_commit_full_sha
+        and source_at_start.worktree_status_porcelain
+        == source_at_end.worktree_status_porcelain
+    )
+    source_clean = (
+        source_unchanged
         and not source_at_start.tracked_source_dirty
         and not source_at_end.tracked_source_dirty
     )
-    if not source_clean:
+    if not source_unchanged:
         failures.append("tracked source was dirty or changed during watchdog run")
+    status, memory_qualified, checks_satisfied = _run_status(
+        failures, development=development
+    )
+    qualification = {
+        "memory_summary_qualified": memory_qualified,
+        "requires_zero_swap_every_sample": True,
+        "requires_finite_container_limit": (
+            preflight.get("resource_authority_mode")
+            != "task034_wsl_effective_limit"
+        ),
+        "resource_authority_mode": preflight.get("resource_authority_mode"),
+        "warning_scale": preflight.get("warning_scale"),
+        "termination_scale": preflight.get("termination_scale"),
+    }
+    if development:
+        qualification.update(
+            {
+                "memory_summary_qualified": False,
+                "watchdog_checks_satisfied": checks_satisfied,
+                "development_dirty_probe": True,
+            }
+        )
     payload = attach_evidence_sha256(
         {
             "schema_version": WATCHDOG_SCHEMA_VERSION,
             "record_type": "external_shard_memory_watchdog",
             "case_id": CASE_ID,
-            "status": "passed" if not failures else "failed",
+            "status": status,
             "identity": {
                 "mpi_size": int(args.mpi_size),
                 "source_commit_full_sha": start_sha,
@@ -828,6 +971,12 @@ def run_watchdog(args: argparse.Namespace) -> int:
                 "tracked_source_dirty_at_end": source_at_end.tracked_source_dirty,
                 "source_worktree_dirty_at_start": source_at_start.tracked_source_dirty,
                 "source_worktree_dirty_at_end": source_at_end.tracked_source_dirty,
+                "worktree_status_porcelain_at_start": list(
+                    source_at_start.worktree_status_porcelain
+                ),
+                "worktree_status_porcelain_at_end": list(
+                    source_at_end.worktree_status_porcelain
+                ),
                 "nonignored_untracked_paths_at_start": list(
                     source_at_start.nonignored_untracked_paths
                 ),
@@ -838,6 +987,8 @@ def run_watchdog(args: argparse.Namespace) -> int:
                     "tracked changes plus all nonignored untracked paths; ignored artifacts excluded"
                 ),
                 "source_clean_and_stable": source_clean,
+                "source_unchanged_during_run": source_unchanged,
+                "development_dirty_probe": development,
             },
             "worker": {
                 "command": command,
@@ -861,7 +1012,11 @@ def run_watchdog(args: argparse.Namespace) -> int:
                 "controlled_termination": controlled_termination,
                 "process_tree_cleanup": cleanup,
                 "threshold_rule": (
-                    "Task034 effective=min(user 220 GiB, 0.85*WSL total, "
+                    "warning=min(native warning, 0.90*effective termination); "
+                    "termination=min(native termination, development cap); "
+                    f"cap_bytes={preflight.get('development_memory_cap_bytes')}"
+                    if development
+                    else "Task034 effective=min(user 220 GiB, 0.85*WSL total, "
                     "MemAvailable-24 GiB); warning=0.80*effective; "
                     "terminate=0.95*effective"
                     if preflight.get("resource_authority_mode")
@@ -870,33 +1025,25 @@ def run_watchdog(args: argparse.Namespace) -> int:
                     "warning=effective*(11.5/14); terminate=effective*(13/14)"
                 ),
             },
-            "qualification": {
-                "memory_summary_qualified": not failures,
-                "requires_zero_swap_every_sample": True,
-                "requires_finite_container_limit": (
-                    preflight.get("resource_authority_mode")
-                    != "task034_wsl_effective_limit"
-                ),
-                "resource_authority_mode": preflight.get(
-                    "resource_authority_mode"
-                ),
-                "warning_scale": preflight.get("warning_scale"),
-                "termination_scale": preflight.get("termination_scale"),
-            },
+            "qualification": qualification,
             "failures": failures,
         }
     )
     write_json_object(summary_output, payload)
-    validation = validate_watchdog_summary(
-        payload,
-        expected_mpi_size=int(args.mpi_size),
-        expected_source_sha=start_sha,
+    validation = (
+        []
+        if development
+        else validate_watchdog_summary(
+            payload,
+            expected_mpi_size=int(args.mpi_size),
+            expected_source_sha=start_sha,
+        )
     )
     print(
         f"wrote {summary_output} status={payload['status']} "
         f"samples={sampling['sample_count']} validation_errors={len(validation)}"
     )
-    return 0 if not validation else 2
+    return 0 if not failures and not validation else 2
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -906,7 +1053,9 @@ def _parser() -> argparse.ArgumentParser:
             "memory and swap watchdog."
         )
     )
-    parser.add_argument("--mpi-size", type=int, choices=MPI_SIZES, required=True)
+    parser.add_argument("--mpi-size", type=int, required=True)
+    parser.add_argument("--development-dirty-probe", action="store_true")
+    parser.add_argument("--development-memory-cap-gib", type=float)
     parser.add_argument("--raw-output", type=Path, required=True)
     parser.add_argument("--summary-output", type=Path, required=True)
     parser.add_argument("--sample-interval", type=float, default=1.0)
@@ -918,6 +1067,33 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = _parser().parse_args()
+    if int(args.mpi_size) <= 0:
+        print("--mpi-size must be a positive integer", file=sys.stderr)
+        return 2
+    if not args.development_dirty_probe and int(args.mpi_size) not in MPI_SIZES:
+        print(
+            f"formal --mpi-size must be one of {MPI_SIZES}",
+            file=sys.stderr,
+        )
+        return 2
+    cap = args.development_memory_cap_gib
+    if args.development_dirty_probe:
+        if cap is None or not math.isfinite(float(cap)) or float(cap) <= 0.0:
+            print(
+                "--development-dirty-probe requires a finite positive "
+                "--development-memory-cap-gib",
+                file=sys.stderr,
+            )
+            return 2
+        if int(float(cap) * GIB) <= 0:
+            print("--development-memory-cap-gib is too small", file=sys.stderr)
+            return 2
+    elif cap is not None:
+        print(
+            "--development-memory-cap-gib requires --development-dirty-probe",
+            file=sys.stderr,
+        )
+        return 2
     if not 0.05 <= float(args.sample_interval) <= 60.0:
         print("--sample-interval must be between 0.05 and 60 seconds", file=sys.stderr)
         return 2

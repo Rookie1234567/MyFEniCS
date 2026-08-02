@@ -214,7 +214,7 @@ def _authority_config():
 def _one_cell_config(authority):
     return replace(
         authority,
-        case_name="task036_a004_s_exact_one_z_cell",
+        case_name=f"{authority.case_name}_one_z_cell",
         z_min=0.0,
         z_max=10.0,
         air_height=10.0,

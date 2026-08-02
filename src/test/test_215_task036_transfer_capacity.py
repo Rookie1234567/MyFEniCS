@@ -6,6 +6,7 @@ import numpy as np
 
 from benchmarks.task036_transfer_capacity import (
     bilateral_whiten,
+    complex_gaussian_holdout_multiplier,
     core_complement_action,
     core_projector_action,
     decoder,
@@ -20,6 +21,13 @@ def _hpd(seed: np.ndarray, shift: float = 1.0) -> np.ndarray:
 
 
 class Task036TransferCapacityAlgebraTests(unittest.TestCase):
+    def test_frozen_complex_gaussian_holdout_multiplier(self) -> None:
+        observed = complex_gaussian_holdout_multiplier(1.0e-12 / 482.0, 20)
+        self.assertAlmostEqual(observed, 2.2147082545082073, places=15)
+        for delta, count in ((0.0, 20), (1.0, 20), (0.5, 0)):
+            with self.assertRaises(ValueError):
+                complex_gaussian_holdout_multiplier(delta, count)
+
     def test_full_hermitian_weighted_adjoint_includes_direct_term(self) -> None:
         system = np.asarray(
             [

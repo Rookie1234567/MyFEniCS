@@ -7,8 +7,11 @@ from types import SimpleNamespace
 import unittest
 from unittest import mock
 
+import ufl
+from dolfinx import fem, mesh
 from mpi4py import MPI
 import numpy as np
+from petsc4py import PETSc
 
 from src.common.config_3d import SI_SUBSTRATE_INDEX_EUV_13P5_NM
 from src.common.modes_3d import (
@@ -25,6 +28,7 @@ from src.solvers.dtn_port_3d import (
     _mode_boundary_phase,
     _mode_power_at_boundary,
     _mode_projection_denominator,
+    _mode_projections_from_solution,
     _outgoing_projection,
     _port_power_metrics,
     _sampled_tangential_projection,
@@ -289,9 +293,9 @@ class Stage4DtnModeTests(unittest.TestCase):
         auxiliary = np.asarray((2.0 + 3.0j, -1.0 + 0.5j))
         incident = [0.25 - 0.1j, 0.0 + 0.0j]
         with mock.patch(
-            "src.solvers.dtn_port_3d._mode_projection_from_solution",
-            side_effect=list(auxiliary),
-        ):
+            "src.solvers.dtn_port_3d._mode_projections_from_solution",
+            return_value=list(auxiliary),
+        ) as projection_mock:
             audit = _auxiliary_direct_tangential_projection_audit(
                 object(),
                 modes,
@@ -301,6 +305,8 @@ class Stage4DtnModeTests(unittest.TestCase):
                 cfg,
                 quadrature_degree=17,
             )
+        self.assertEqual(projection_mock.call_count, 1)
+        self.assertEqual(projection_mock.call_args.args[1], modes)
         self.assertTrue(audit["pass"])
         self.assertEqual(audit["quadrature_degree"], 17)
         self.assertEqual(len(audit["orders"]), 2)
@@ -322,8 +328,8 @@ class Stage4DtnModeTests(unittest.TestCase):
             )
         with (
             mock.patch(
-                "src.solvers.dtn_port_3d._mode_projection_from_solution",
-                side_effect=(complex(np.nan), auxiliary[1]),
+                "src.solvers.dtn_port_3d._mode_projections_from_solution",
+                return_value=[complex(np.nan), auxiliary[1]],
             ),
             self.assertRaisesRegex(ValueError, "non-finite projection"),
         ):
@@ -336,6 +342,88 @@ class Stage4DtnModeTests(unittest.TestCase):
                 cfg,
                 quadrature_degree=17,
             )
+
+    def test_batch_projection_reuses_one_literal_form_per_active_side(self):
+        msh = mesh.create_unit_cube(
+            MPI.COMM_SELF,
+            1,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        fdim = msh.topology.dim - 1
+        top = mesh.locate_entities_boundary(
+            msh, fdim, lambda coordinates: np.isclose(coordinates[2], 1.0)
+        )
+        bottom = mesh.locate_entities_boundary(
+            msh, fdim, lambda coordinates: np.isclose(coordinates[2], 0.0)
+        )
+        cfg = _dtn_cfg()
+        facets = np.concatenate((top, bottom)).astype(np.int32)
+        values = np.concatenate(
+            (
+                np.full(len(top), cfg.tags.z_max, dtype=np.int32),
+                np.full(len(bottom), cfg.tags.z_min, dtype=np.int32),
+            )
+        )
+        order = np.argsort(facets)
+        facet_tags = mesh.meshtags(msh, fdim, facets[order], values[order])
+        mesh_data = SimpleNamespace(mesh=msh, facet_tags=facet_tags)
+        electric_x = fem.Constant(msh, PETSc.ScalarType(1.25 - 0.3j))
+        electric_y = fem.Constant(msh, PETSc.ScalarType(-0.4 + 0.8j))
+        E_total = ufl.as_vector((electric_x, electric_y, PETSc.ScalarType(0.0)))
+        available = outgoing_port_modes_3d(cfg)
+        top_modes = [mode for mode in available if mode.side == "top"][:2]
+        bottom_modes = [mode for mode in available if mode.side == "bottom"][:2]
+        self.assertEqual(len(top_modes), 2)
+        self.assertEqual(len(bottom_modes), 2)
+        self.assertEqual(
+            len({(mode.m, mode.n, mode.polarization) for mode in top_modes}), 2
+        )
+        self.assertEqual(
+            len({(mode.m, mode.n, mode.polarization) for mode in bottom_modes}), 2
+        )
+        modes = [
+            top_modes[0],
+            bottom_modes[0],
+            top_modes[1],
+            bottom_modes[1],
+        ]
+        expected = []
+        x = ufl.SpatialCoordinate(msh)
+        ds = ufl.Measure("ds", domain=msh, subdomain_data=facet_tags)
+        for mode in modes:
+            phase = ufl.exp(
+                PETSc.ScalarType(1j * mode.alpha) * x[0]
+                + PETSc.ScalarType(1j * mode.gamma) * x[1]
+                + PETSc.ScalarType(1j * mode.k_vector[2]) * x[2]
+            )
+            reference = ufl.as_vector(
+                (
+                    PETSc.ScalarType(mode.e_vector[0]) * phase,
+                    PETSc.ScalarType(mode.e_vector[1]) * phase,
+                    PETSc.ScalarType(0.0),
+                )
+            )
+            literal_form = fem.form(
+                ufl.inner(E_total, reference)
+                * ds(cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min)
+            )
+            local = fem.assemble_scalar(literal_form)
+            total = msh.comm.allreduce(local, op=MPI.SUM)
+            expected.append(total / _mode_projection_denominator(mode, cfg))
+        with mock.patch(
+            "src.solvers.dtn_port_3d.fem.form", wraps=fem.form
+        ) as form_mock:
+            actual = _mode_projections_from_solution(
+                E_total,
+                modes,
+                mesh_data,
+                cfg,
+                quadrature_degree=None,
+            )
+        self.assertEqual(form_mock.call_count, 2)
+        np.testing.assert_allclose(actual, expected, rtol=0.0, atol=1.0e-12)
 
     def test_sampled_projection_rejects_zero_tangential_mode_norm(self):
         electric_samples = np.asarray(((1.0, 2.0, 3.0),), dtype=np.complex128)

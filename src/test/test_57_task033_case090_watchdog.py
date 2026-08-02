@@ -124,6 +124,84 @@ def _summary() -> dict:
 
 
 class Task033Case090WatchdogTests(unittest.TestCase):
+    def test_formal_mpi8_is_rejected_before_worker_launch(self) -> None:
+        with (
+            patch.object(
+                sys,
+                "argv",
+                [
+                    "watchdog",
+                    "--mpi-size",
+                    "8",
+                    "--raw-output",
+                    str(ARTIFACT_ROOT / "raw.jsonl"),
+                    "--summary-output",
+                    str(ARTIFACT_ROOT / "summary.json"),
+                    "--",
+                    "true",
+                ],
+            ),
+            patch.object(watchdog, "run_watchdog") as run,
+        ):
+            self.assertEqual(watchdog.main(), 2)
+        run.assert_not_called()
+
+    def test_development_mpi8_and_cap_are_accepted(self) -> None:
+        parsed = watchdog._parser().parse_args(
+            [
+                "--mpi-size",
+                "8",
+                "--development-dirty-probe",
+                "--development-memory-cap-gib",
+                "8",
+                "--raw-output",
+                "benchmarks/artifacts/task036/direct_d1b/raw.jsonl",
+                "--summary-output",
+                "benchmarks/artifacts/task036/direct_d1b/summary.json",
+                "--",
+                "true",
+            ]
+        )
+        self.assertTrue(parsed.development_dirty_probe)
+        self.assertEqual(parsed.development_memory_cap_gib, 8.0)
+        with (
+            patch.object(
+                sys,
+                "argv",
+                [
+                    "watchdog",
+                    "--mpi-size",
+                    "8",
+                    "--development-dirty-probe",
+                    "--development-memory-cap-gib",
+                    "8",
+                    "--raw-output",
+                    "benchmarks/artifacts/task036/direct_d1b/raw.jsonl",
+                    "--summary-output",
+                    "benchmarks/artifacts/task036/direct_d1b/summary.json",
+                    "--",
+                    "true",
+                ],
+            ),
+            patch.object(watchdog, "run_watchdog", return_value=0) as run,
+        ):
+            self.assertEqual(watchdog.main(), 0)
+        run.assert_called_once()
+
+    def test_development_status_is_unqualified_and_formal_status_is_unchanged(self) -> None:
+        self.assertEqual(
+            watchdog._run_status([], development=True),
+            ("unqualified_development_probe", False, True),
+        )
+        self.assertEqual(
+            watchdog._run_status(["worker failed"], development=True),
+            ("unqualified_development_probe", False, False),
+        )
+        self.assertEqual(
+            watchdog._run_status([], development=False),
+            ("passed", True, True),
+        )
+
     @unittest.skipUnless(os.name == "posix", "POSIX process-group contract")
     def test_process_group_termination_reaches_stubborn_descendant(self) -> None:
         process = subprocess.Popen(
@@ -516,15 +594,184 @@ class Task033Case090WatchdogTests(unittest.TestCase):
         )
         running = Mock()
         running.poll.return_value = None
+        running.wait.side_effect = subprocess.TimeoutExpired("worker", 0.10)
         self.assertIsNone(
             watchdog._natural_exit_after_process_tree_sample(running, decision)
         )
+        delayed_exit = Mock()
+        delayed_exit.poll.return_value = None
+        delayed_exit.wait.return_value = 0
+        self.assertEqual(
+            watchdog._natural_exit_after_process_tree_sample(
+                delayed_exit, decision
+            ),
+            0,
+        )
+        delayed_exit.wait.assert_called_once_with(timeout=0.10)
         self.assertIsNone(
             watchdog._natural_exit_after_process_tree_sample(
                 exited,
                 {"trigger": "nonzero_swap", "detail": "1"},
             )
         )
+        resample_process = Mock(pid=123)
+        first_sample = {
+            "observed_memory_bytes": 20,
+            "swap_current_bytes": 3,
+        }
+        with patch.object(
+            watchdog,
+            "sample_memory",
+            return_value={
+                "process_tree_all_status_readable": True,
+                "observed_memory_bytes": 10,
+                "swap_current_bytes": 0,
+            },
+        ) as sample_memory:
+            resampled = watchdog._readable_process_tree_resample(
+                resample_process, decision, first_sample
+            )
+            self.assertIsNotNone(resampled)
+            assert resampled is not None
+            self.assertEqual(resampled["observed_memory_bytes"], 20)
+            self.assertEqual(resampled["swap_current_bytes"], 3)
+            self.assertTrue(resampled["process_tree_resample_conservative_carry_forward"])
+            sample_memory.assert_called_once_with(123, worker_alive=True)
+        with patch.object(
+            watchdog,
+            "sample_memory",
+            return_value={
+                "process_tree_all_status_readable": False,
+                "observed_memory_bytes": 10,
+                "swap_current_bytes": 0,
+            },
+        ) as sample_memory:
+            self.assertIsNone(
+                watchdog._readable_process_tree_resample(
+                    resample_process, decision, first_sample
+                )
+            )
+            sample_memory.assert_called_once_with(123, worker_alive=True)
+        with patch.object(watchdog, "sample_memory") as sample_memory:
+            self.assertIsNone(
+                watchdog._readable_process_tree_resample(
+                    resample_process,
+                    {"trigger": "nonzero_swap", "detail": "1"},
+                    first_sample,
+                )
+            )
+            sample_memory.assert_not_called()
+        preflight = {
+            "resource_authority_mode": "task034_wsl_effective_limit",
+            "termination_threshold_bytes": 100,
+            "warning_threshold_bytes": 80,
+        }
+        readable_resample = {
+            "observed_memory_bytes": 10,
+            "swap_current_bytes": 0,
+            "worker_tree_rss_sum_bytes": 10,
+            "host_available_memory_bytes": 1000,
+            "process_tree_all_status_readable": True,
+            "process_tree_swap_bytes": 0,
+        }
+        unreadable_resample = {
+            **readable_resample,
+            "process_tree_all_status_readable": False,
+        }
+        bad_event = {
+            **readable_resample,
+            "process_tree_all_status_readable": False,
+        }
+        with patch.object(
+            watchdog,
+            "sample_memory",
+            side_effect=[readable_resample, unreadable_resample],
+        ) as sample_memory:
+            bad_event["process_tree_status_resample_attempted"] = True
+            merged = watchdog._readable_process_tree_resample(
+                resample_process, decision, bad_event
+            )
+            self.assertIsNotNone(merged)
+            assert merged is not None
+            bad_event["process_tree_status_resample_succeeded"] = True
+            self.assertFalse(
+                watchdog.watchdog_decision(
+                    merged,
+                    preflight=preflight,
+                    elapsed_seconds=0.0,
+                    wall_timeout_seconds=10.0,
+                )["terminate"]
+            )
+            second_bad_event = dict(bad_event)
+            second_bad_event["process_tree_all_status_readable"] = False
+            self.assertIsNone(
+                watchdog._readable_process_tree_resample(
+                    resample_process, decision, second_bad_event
+                )
+            )
+            second_bad_event["process_tree_status_resample_succeeded"] = False
+            second_decision = watchdog.watchdog_decision(
+                second_bad_event,
+                preflight=preflight,
+                elapsed_seconds=0.0,
+                wall_timeout_seconds=10.0,
+            )
+            self.assertTrue(second_decision["terminate"])
+            self.assertEqual(second_decision["trigger"], "authority_unreadable")
+            self.assertEqual(second_decision["detail"], "process_tree_status")
+            self.assertEqual(sample_memory.call_count, 2)
+        memory_first = {"observed_memory_bytes": 100, "swap_current_bytes": 0}
+        with patch.object(
+            watchdog,
+            "sample_memory",
+            return_value={
+                "process_tree_all_status_readable": True,
+                "observed_memory_bytes": 10,
+                "swap_current_bytes": 0,
+            },
+        ):
+            carry_memory = watchdog._readable_process_tree_resample(
+                resample_process, decision, memory_first
+            )
+        assert carry_memory is not None
+        carry_memory.update(
+            {
+                "worker_tree_rss_sum_bytes": 10,
+                "host_available_memory_bytes": 1000,
+                "process_tree_swap_bytes": 0,
+            }
+        )
+        memory_decision = watchdog.watchdog_decision(
+            carry_memory,
+            preflight=preflight,
+            elapsed_seconds=0.0,
+            wall_timeout_seconds=10.0,
+        )
+        self.assertEqual(memory_decision["trigger"], "memory_termination_threshold")
+        swap_first = {"observed_memory_bytes": 10, "swap_current_bytes": 3}
+        with patch.object(
+            watchdog,
+            "sample_memory",
+            return_value={
+                "process_tree_all_status_readable": True,
+                "observed_memory_bytes": 10,
+                "swap_current_bytes": 0,
+            },
+        ):
+            carry_swap = watchdog._readable_process_tree_resample(
+                resample_process, decision, swap_first
+            )
+        assert carry_swap is not None
+        carry_swap.update(carry_memory)
+        carry_swap["observed_memory_bytes"] = 10
+        carry_swap["swap_current_bytes"] = 3
+        swap_decision = watchdog.watchdog_decision(
+            carry_swap,
+            preflight=preflight,
+            elapsed_seconds=0.0,
+            wall_timeout_seconds=10.0,
+        )
+        self.assertEqual(swap_decision["trigger"], "nonzero_swap")
 
     def test_confirmed_exit_race_is_not_an_unreadable_live_sample(self) -> None:
         sample = watchdog.sample_memory(os.getpid(), worker_alive=True)
@@ -553,6 +800,24 @@ class Task033Case090WatchdogTests(unittest.TestCase):
             [readable, live_unreadable, readable],
             raw_output=ARTIFACT_ROOT / "live_unreadable_raw.jsonl",
             summary_output=ARTIFACT_ROOT / "live_unreadable_summary.json",
+            preflight=preflight,
+        )
+        self.assertEqual(sampling["authority_unreadable_sample_count"], 1)
+
+        corrected = {
+            **live_unreadable,
+            "process_tree_status_resample_attempted": True,
+            "process_tree_status_resample_succeeded": True,
+        }
+        failed_resample = {
+            **live_unreadable,
+            "process_tree_status_resample_attempted": True,
+            "process_tree_status_resample_succeeded": False,
+        }
+        sampling, _ = watchdog.summarize_samples(
+            [readable, corrected, failed_resample],
+            raw_output=ARTIFACT_ROOT / "resample_status_raw.jsonl",
+            summary_output=ARTIFACT_ROOT / "resample_status_summary.json",
             preflight=preflight,
         )
         self.assertEqual(sampling["authority_unreadable_sample_count"], 1)

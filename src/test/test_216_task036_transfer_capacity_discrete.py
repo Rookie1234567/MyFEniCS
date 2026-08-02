@@ -5,18 +5,18 @@ import tempfile
 import unittest
 
 from dolfinx import fem
-from dolfinx.fem import petsc as fem_petsc
 from mpi4py import MPI
 import numpy as np
-from petsc4py import PETSc
-import ufl
 
 from benchmarks.run_task036_one_cell_discrete_bloch import (
     _authority_config,
     _one_cell_config,
 )
 from benchmarks.task036_transfer_capacity import joint_cauchy_pairing
-from src.constraints.cross_section_floquet import reduce_matrix_hermitian
+from benchmarks.run_task036_transfer_optimal_port_capacity import (
+    _gc_projected_orthonormalize_block,
+    SparsePortTransfer,
+)
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.solvers.common_3d_forms import _build_variational_forms
@@ -24,168 +24,108 @@ from src.solvers.common_3d_solve import _create_nedelec_space
 from src.solvers.hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
 )
+from src.solvers.hybrid_port_metric import (
+    EndpointTraceMassSelection,
+    build_endpoint_trace_mass_actions,
+)
 from src.solvers.one_cell_discrete_bloch import identify_endpoint_active_rows
 
 
-def _endpoint_constraint_matrix(
-    original_rows: np.ndarray,
-    active_rows: np.ndarray,
-    constraints,
-    comm,
-) -> PETSc.Mat:
-    active_local = {int(active): index for index, active in enumerate(active_rows)}
-    row_expansions = [
-        constraints.expansion_by_original[int(original)] for original in original_rows
-    ]
-    transform = PETSc.Mat().createAIJ(
-        size=(len(original_rows), len(active_rows)),
-        nnz=max(len(active) for active, _coefficients in row_expansions),
-        comm=comm,
-    )
-    for row, (active, coefficients) in enumerate(row_expansions):
-        columns = np.asarray(
-            [active_local[int(value)] for value in active],
-            dtype=PETSc.IntType,
-        )
-        transform.setValues(
-            np.asarray([row], dtype=PETSc.IntType),
-            columns,
-            np.asarray(coefficients, dtype=PETSc.ScalarType)[None, :],
-        )
-    transform.assemble()
-    return transform
-
-
-def _qualify_endpoint_mass(
-    testcase: unittest.TestCase,
-    V,
-    mesh_data,
-    tag: int,
-    original_rows: np.ndarray,
-    active_rows: np.ndarray,
-    constraints,
-    *,
-    seed: int,
-) -> None:
-    trial = ufl.TrialFunction(V)
-    test = ufl.TestFunction(V)
-    normal = ufl.FacetNormal(mesh_data.mesh)
-    ds = ufl.Measure(
-        "ds",
-        domain=mesh_data.mesh,
-        subdomain_data=mesh_data.facet_tags,
-        metadata={"quadrature_degree": 14},
-    )
-    full = fem_petsc.assemble_matrix(
-        fem.form(
-            ufl.inner(
-                ufl.cross(normal, trial),
-                ufl.cross(normal, test),
-            )
-            * ds(tag)
-        ),
-        bcs=[],
-    )
-    full.assemble()
-    endpoint_is = PETSc.IS().createGeneral(
-        np.asarray(original_rows, dtype=PETSc.IntType),
-        comm=full.getComm(),
-    )
-    face_mass = full.createSubMatrix(endpoint_is, endpoint_is)
-    transform = _endpoint_constraint_matrix(
-        original_rows,
-        active_rows,
-        constraints,
-        full.getComm(),
-    )
-    reduced_mass = reduce_matrix_hermitian(face_mass, transform)
-    hermitian = PETSc.Mat()
-    reduced_mass.hermitianTranspose(hermitian)
-    difference = reduced_mass.copy()
-    difference.axpy(
-        PETSc.ScalarType(-1.0),
-        hermitian,
-        structure=PETSc.Mat.Structure.DIFFERENT_NONZERO_PATTERN,
-    )
-    rng = np.random.default_rng(seed)
-    probe = reduced_mass.createVecRight()
-    probe.getArray()[:] = rng.standard_normal(
-        len(active_rows)
-    ) + 1j * rng.standard_normal(len(active_rows))
-    probe.assemble()
-    direct_action = reduced_mass.createVecLeft()
-    expanded = transform.createVecLeft()
-    face_action = face_mass.createVecLeft()
-    chained_action = transform.createVecRight()
-    action_error = reduced_mass.createVecLeft()
-    reduced_mass.mult(probe, direct_action)
-    transform.mult(probe, expanded)
-    face_mass.mult(expanded, face_action)
-    transform.multHermitian(face_action, chained_action)
-    direct_action.copy(action_error)
-    action_error.axpy(PETSc.ScalarType(-1.0), chained_action)
-    right_hand_side = direct_action.copy()
-    solution = reduced_mass.createVecRight()
-    residual = reduced_mass.createVecLeft()
-    solver = PETSc.KSP().create(reduced_mass.getComm())
-    options_prefix = "task036_face_mass_"
-    options = PETSc.Options(options_prefix)
-    options["mat_cholmod_final_asis"] = False
-    options["mat_cholmod_final_ll"] = True
-    try:
-        for matrix in (face_mass, transform, reduced_mass):
-            testcase.assertIn("aij", matrix.getType().lower())
-        testcase.assertEqual(face_mass.getSize(), (1250, 1250))
-        testcase.assertEqual(transform.getSize(), (1250, 1200))
-        testcase.assertEqual(reduced_mass.getSize(), (1200, 1200))
-        testcase.assertLessEqual(
-            difference.norm() / max(reduced_mass.norm(), 1.0e-30),
-            1.0e-12,
-        )
-        testcase.assertLessEqual(
-            action_error.norm() / max(direct_action.norm(), 1.0e-30),
-            1.0e-12,
-        )
-        reduced_mass.setOption(PETSc.Mat.Option.HERMITIAN, True)
-        solver.setOptionsPrefix(options_prefix)
-        solver.setType(PETSc.KSP.Type.PREONLY)
-        solver.getPC().setType(PETSc.PC.Type.CHOLESKY)
-        solver.getPC().setFactorSolverType("cholmod")
-        solver.setOperators(reduced_mass)
-        solver.setErrorIfNotConverged(True)
-        solver.setFromOptions()
-        solver.setUp()
-        solver.solve(right_hand_side, solution)
-        testcase.assertGreater(solver.getConvergedReason(), 0)
-        reduced_mass.mult(solution, residual)
-        residual.axpy(PETSc.ScalarType(-1.0), right_hand_side)
-        testcase.assertLessEqual(
-            residual.norm() / max(right_hand_side.norm(), 1.0e-30),
-            1.0e-11,
-        )
-    finally:
-        solver.destroy()
-        options.delValue("mat_cholmod_final_asis")
-        options.delValue("mat_cholmod_final_ll")
-        residual.destroy()
-        solution.destroy()
-        right_hand_side.destroy()
-        action_error.destroy()
-        chained_action.destroy()
-        face_action.destroy()
-        expanded.destroy()
-        direct_action.destroy()
-        probe.destroy()
-        difference.destroy()
-        hermitian.destroy()
-        reduced_mass.destroy()
-        transform.destroy()
-        face_mass.destroy()
-        endpoint_is.destroy()
-        full.destroy()
-
-
 class Task036TransferCapacityDiscreteTests(unittest.TestCase):
+    def test_sparse_port_transfer_bulk_primal_dual_matches_columns(self) -> None:
+        transfer = SparsePortTransfer(
+            source_size=4,
+            target_size=3,
+            rows={
+                0: (
+                    np.asarray([0, 2], dtype=np.int64),
+                    np.asarray([1.0 + 0.2j, -0.3 + 0.1j]),
+                ),
+                1: (
+                    np.asarray([1, 3], dtype=np.int64),
+                    np.asarray([0.4 - 0.2j, 0.7 + 0.05j]),
+                ),
+                2: (
+                    np.asarray([0, 1, 3], dtype=np.int64),
+                    np.asarray([-0.2 + 0.3j, 0.6 - 0.1j, 0.15 + 0.4j]),
+                ),
+            },
+        )
+        source = np.asarray(
+            [
+                [0.2 + 0.1j, -0.4 + 0.3j, 0.7 - 0.2j],
+                [1.0 - 0.2j, 0.5 + 0.4j, -0.1 + 0.6j],
+                [-0.3 + 0.8j, 0.9 - 0.5j, 0.2 + 0.7j],
+                [0.6 + 0.2j, -0.8 + 0.1j, 0.3 - 0.4j],
+            ],
+            dtype=np.complex128,
+        )
+        target_dual = np.asarray(
+            [
+                [0.3 - 0.2j, 0.8 + 0.1j, -0.5 + 0.4j],
+                [-0.7 + 0.6j, 0.2 - 0.3j, 0.9 + 0.05j],
+                [0.4 + 0.7j, -0.1 + 0.8j, 0.6 - 0.2j],
+            ],
+            dtype=np.complex128,
+        )
+        primal_bulk = transfer.primal(source)
+        dual_bulk = transfer.dual(target_dual)
+        primal_columns = np.column_stack(
+            [transfer.primal(source[:, column]) for column in range(source.shape[1])]
+        )
+        dual_columns = np.column_stack(
+            [
+                transfer.dual(target_dual[:, column])
+                for column in range(target_dual.shape[1])
+            ]
+        )
+        np.testing.assert_allclose(primal_bulk, primal_columns, atol=1.0e-13)
+        np.testing.assert_allclose(dual_bulk, dual_columns, atol=1.0e-13)
+        np.testing.assert_allclose(
+            np.vdot(target_dual, primal_bulk),
+            np.vdot(dual_bulk, source),
+            atol=1.0e-13,
+        )
+
+    def test_projected_metric_qr_preserves_complement_and_existing(self) -> None:
+        metric = np.diag(np.arange(1.0, 7.0))
+
+        def gc_action(values: np.ndarray) -> np.ndarray:
+            return metric @ values
+
+        existing = np.zeros((6, 1), dtype=np.complex128)
+        existing[0, 0] = 1.0
+        candidate = np.array(
+            [
+                [0.25 + 0.1j, -0.5 + 0.2j],
+                [1.0 + 0.3j, 0.2 - 0.4j],
+                [0.1 - 0.2j, 0.8 + 0.1j],
+                [0.4 + 0.5j, -0.3 + 0.6j],
+                [0.7 - 0.1j, 0.5 + 0.2j],
+                [-0.2 + 0.4j, 0.9 - 0.3j],
+            ]
+        )
+
+        def projector(values: np.ndarray) -> np.ndarray:
+            return values - existing @ (
+                existing.conj().T @ gc_action(values)
+            )
+
+        block = _gc_projected_orthonormalize_block(
+            candidate, existing, gc_action, projector
+        )
+        np.testing.assert_allclose(projector(block), block, atol=1.0e-12)
+        np.testing.assert_allclose(
+            block.conj().T @ gc_action(block),
+            np.eye(block.shape[1]),
+            atol=1.0e-12,
+        )
+        np.testing.assert_allclose(
+            existing.conj().T @ gc_action(block),
+            np.zeros((1, block.shape[1])),
+            atol=1.0e-12,
+        )
+
     def test_joint_cauchy_pairing_is_hpd_and_unit_invariant(self) -> None:
         rng = np.random.default_rng(36061)
         seed = rng.standard_normal((4, 4)) + 1j * rng.standard_normal((4, 4))
@@ -302,26 +242,38 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                 self.assertEqual(len(endpoints.right_original), 1250)
                 self.assertEqual(len(endpoints.left_active), 1200)
                 self.assertEqual(len(endpoints.right_active), 1200)
-                _qualify_endpoint_mass(
-                    self,
+                actions = build_endpoint_trace_mass_actions(
                     V,
                     mesh_data,
-                    cfg.tags.z_min,
-                    endpoints.left_original,
-                    endpoints.left_active,
                     condensed.trace_constraints,
-                    seed=36062,
+                    (
+                        EndpointTraceMassSelection(
+                            cfg.tags.z_min,
+                            endpoints.left_original,
+                            endpoints.left_active,
+                        ),
+                        EndpointTraceMassSelection(
+                            cfg.tags.z_max,
+                            endpoints.right_original,
+                            endpoints.right_active,
+                        ),
+                    ),
                 )
-                _qualify_endpoint_mass(
-                    self,
-                    V,
-                    mesh_data,
-                    cfg.tags.z_max,
-                    endpoints.right_original,
-                    endpoints.right_active,
-                    condensed.trace_constraints,
-                    seed=36063,
-                )
+                try:
+                    for action in actions:
+                        self.assertEqual(action.shape, (1200, 1200))
+                        self.assertLessEqual(
+                            action.hermitian_relative_defect, 1.0e-12
+                        )
+                        self.assertLessEqual(
+                            action.constraint_action_relative_error, 1.0e-12
+                        )
+                        self.assertLessEqual(
+                            action.solve_relative_residual, 1.0e-11
+                        )
+                finally:
+                    for action in actions:
+                        action.destroy()
             finally:
                 condensed.destroy()
 

@@ -266,3 +266,61 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
                     )
                 )
     return modes
+
+
+def incoming_maxwell_companions(
+    outgoing_modes: list[PortMode3D],
+    cfg: SimulationConfig3D,
+) -> tuple[PortMode3D, ...]:
+    """Return one incoming Maxwell companion for each outgoing mode."""
+
+    companions: list[PortMode3D] = []
+    for outgoing in outgoing_modes:
+        vertical_sign = -int(outgoing.vertical_sign)
+        polarizations = dict(
+            polarization_basis_3d(
+                outgoing.alpha,
+                outgoing.gamma,
+                outgoing.beta,
+                outgoing.refractive_index,
+                vertical_sign,
+                cfg,
+            )
+        )
+        polarization = polarizations[outgoing.polarization]
+        kvec, evec, hvec = mode_eh_vectors(
+            outgoing.alpha,
+            outgoing.gamma,
+            outgoing.beta,
+            polarization,
+            vertical_sign,
+            cfg,
+        )
+        tangential_norm_sq = float(np.real(np.vdot(evec[:2], evec[:2])))
+        outward_normal = np.asarray(
+            (0.0, 0.0, 1.0 if outgoing.side == "top" else -1.0),
+            dtype=np.float64,
+        )
+        companions.append(
+            PortMode3D(
+                side=outgoing.side,
+                m=outgoing.m,
+                n=outgoing.n,
+                polarization=outgoing.polarization,
+                alpha=outgoing.alpha,
+                gamma=outgoing.gamma,
+                beta=outgoing.beta,
+                refractive_index=outgoing.refractive_index,
+                vertical_sign=vertical_sign,
+                e_vector=evec,
+                k_vector=kvec,
+                h_vector=hvec,
+                electric_tangential_norm_sq=tangential_norm_sq,
+                power_per_unit_amplitude=mode_power(
+                    kvec, evec, cfg, outward_normal
+                ),
+                propagating=outgoing.propagating,
+                rayleigh_warning=outgoing.rayleigh_warning,
+            )
+        )
+    return tuple(companions)

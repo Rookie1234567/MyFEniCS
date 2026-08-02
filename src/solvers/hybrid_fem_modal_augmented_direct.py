@@ -786,8 +786,8 @@ def _fe_traction_equilibrium_residual(
 
 def _external_diffraction_order_rows(
     cfg: SimulationConfig3D,
-    systems: tuple[HybridLocalDtnSystem, HybridLocalDtnSystem],
-    auxiliary: tuple[np.ndarray, np.ndarray],
+    systems: tuple[HybridLocalDtnSystem, ...],
+    auxiliary: tuple[np.ndarray, ...],
     *,
     incident_power: float,
 ) -> list[dict]:

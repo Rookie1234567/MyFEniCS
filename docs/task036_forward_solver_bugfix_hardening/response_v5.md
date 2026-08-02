@@ -1,5 +1,10 @@
 # Task036 Review V5 执行响应
 
+> **当前结论 / H5-M1 最终更新**：direct Hybrid 已在同一 dirty source manifest 下修复并通过
+> A007-P 以及五点 grazing/P direct 扫描的数值 Gate；当前 Hybrid 与同 manifest Full3D 的
+> A007-P 对照同时满足完整 observable、external wall 和 simultaneous process-tree peak
+> 更低。下列第 1--17 节保留为历史阶段记录，不再代表当前状态；当前状态以第 18 节为准。
+
 ## 1. 结论先行
 
 本轮严格按 `review_report_v5.md` 执行了接口内移诊断：
@@ -274,6 +279,9 @@ master 未修改、未合并；ordinary default 未改变。最终 execution-bra
 
 ## 13. 后续补充：exact Cauchy / port-operator / 16-channel audit
 
+本节结论是截至 exact-Cauchy audit checkpoint 的历史结论；后续 C2、D0、D1a 和 D1b
+状态以第17节为准，不把本节旧的 candidate 文本当作当前实现状态。
+
 在没有新增 review 文件的情况下，本节按用户要求继续追加到原 `response_v5.md`。完整表格、
 方法和 evidence index 见：
 
@@ -358,7 +366,302 @@ selected_M120_core_operator = qualified_inside_selected_space
 endpoint_joint_Cauchy = incomplete
 few_common_failing_channel_directions = false
 frozen_next_family = transfer_optimal_port_modes
-actual_candidate = not_implemented / not_run
+actual_candidate_at_exact_cauchy_checkpoint = not_implemented / not_run
 Hybrid production = fail
 ordinary default = unchanged
 ```
+
+## 14. Direct-D0 trace-only AIJ first static slice
+
+本轮只交付 Direct-D0 的静态切片，没有启动 live、PDE、MUMPS numeric factor 或 runner。
+目标是把已经存在的 11-plane/10-cell trace action 显式表示为 13,200 行的三对角带状
+AIJ；它只包含端面 trace 与 one-cell Schur，不把 cell interior 或端帽 complement 组回
+46,656-row augmented 系统。
+
+### 14.1 改动文件与目的
+
+| 文件 | 改动目的 |
+|---|---|
+| `src/solvers/hybrid_trace_chain.py` | 新增 `build_explicit_trace_matrix`；按 plane 内小 column block 物化唯一 cell/endpoint Schur 与 transfer，插入 trace-only AIJ；记录 rows、stored/allocated NNZ、matrix type、局部 dense block 体积及 `global_dense_formed=false`。 |
+| `src/test/test_214_task036_one_cell_discrete_bloch.py` | 在已有复数非 Hermitian tiny chain 中验证显式 K 的 Mat.mult、线性/确定性、serial PREONLY+LU direct solve、端点 primal/dual 符号及 destroy。 |
+
+生产 builder 不逐列调用完整 chain；它先分块物化一个 2,400×2,400 one-cell Schur 和两个
+1,200×1,200 endpoint Schur，再按
+`S_LL + J^H S_RR J`、`S_LR J`、`J^H S_RL` 及端点 `J^H S J` 插入 11 个 plane 的
+三对角块。MPI communicator 使用每个 owned row 的实际三平面 column 支撑计算
+`d_nnz/o_nnz` 数组；serial tiny 使用 `COMM_SELF` 和等价三带预分配。
+
+### 14.2 已证结果
+
+资格化环境下：
+
+```text
+targeted test214: 12 passed
+Ruff: pass
+compileall: pass
+git diff --check: pass
+```
+
+tiny AIJ 记录为 22 rows、124 stored NNZ、matrix type `seqaij`，没有形成 global dense
+matrix。`K_explicit @ probe` 与原 matrix-free chain action 的误差限为 `1e-11`；随后用
+serial PETSc PREONLY+LU 解 `Kx=rhs` 并与 tiny probe 对照。端点块沿用现有 primal/dual
+transfer，tiny action identity 同时覆盖 bottom/top raw-outward 符号。
+
+### 14.3 A004 预估与未证边界
+
+对正式 p5 trace（`p=1200`），11 个对角块、10 个上带块和 10 个下带块给出最多
+`31×1200² = 44,640,000` stored complex entries；这是三带 block pattern 的上界，
+实际 stored NNZ 需在 assemble-only preflight 后读取。按 complex128 16 bytes、PETSc
+int32 column index 4 bytes 和 row pointer 4 bytes 粗估，数值与索引合计约
+`892.9 MB`（约 `852 MiB`），还未计 AIJ allocator、MPI off-process buffers 和运行时
+其他对象；因此这只是内存风险上界，不是实测峰值。builder 的
+`local_dense_block_volume_complex_entries` 明确表示每个 rank 单个 replicated dense
+block 的 complex-entry 数，不是 bytes、owned-local 总峰值或进程树峰值。没有形成
+13,200² dense array。
+
+当前 assemble-time 实现按 `2400 + 1200 + 1200 = 4800` 个局部 Schur scalar columns
+分块物化；这意味着约 4800 次潜在 factor solve，暂记为 assemble-time 性能/生命周期
+风险。后续 direct runner 必须在 local Schur 物化后按顺序释放对应 factor，并避免与旧
+coarse/overlap factors 同时驻留；本轮没有伪造计时或声称该风险已解决。
+
+尚未证实：MPI8 实际 ownership 下的 assembled NNZ/峰值内存、AIJ assembly wall time、
+MUMPS symbolic/numeric factor、direct solve residual，以及与 Full3D direct observable
+的同输入比较。后续必须先做 assemble-only preflight，再决定是否进行 numeric factor；
+本轮不改 runner，也不启动小掠射角/P 偏振扫描。
+
+## 15. Direct-D1a local materialization timing probe
+
+本轮只在现有 runner 中加入 `--live-d1a-materialization-timing` 入口，目的是在决定
+Direct-D0 是否适合进入 MPI8 direct 之前，测量三个已经完成局部因子化的 action。它只对
+one-cell 2400 行、bottom 1200 行和 top 1200 行各执行一次真实的 16 列 identity slice，
+记录 MPI 最大段耗时及 `segment_wall/16` 平均列耗时，然后按列数作线性外推到
+2400+1200+1200=4800 个 scalar columns。
+不会构造 13200 行 AIJ，不运行 internal discrete-Bloch QEP/modes、coarse/overlap/FGMRES/
+Q5/C2；端部 external Fourier-DtN modes 仍按定义组装，也不做 global MUMPS factor；函数
+返回后按 action、condensed objects、systems 的顺序清理。
+
+D1a 的 RSS 字段明确采用 Linux `resource.getrusage(RUSAGE_SELF).ru_maxrss`，收集
+`per_rank_process_lifetime_peak_rss_kib`；`not_simultaneous=true`，不求和、不做 start/end
+差分。当前 runner 没有可直接复用的 process-tree 瞬时 watchdog，因此 process-tree RSS 标为
+`unavailable`，不把累计对象体积当作峰值。局部 factor identity 必须是
+`KSP=preonly`、`PC=lu`、`factor_solver_type=mumps`。endpoint assembly 需要外部 Fourier-DtN
+modes，故记录 `internal_discrete_bloch_qep=not_run`、`external_dtn_modes=assembled_required`；
+`full_forward_rhs_solve=not_run`。线性外推值不代表实测总耗时：若估计值不超过20分钟，才保留
+scalar materialization 路线；若超过20分钟，下一步改用现有 `KSP.matSolve` 多右端接口，禁止先
+做完整 assemble-only。该入口已完成静态实现；D1a MPI8 timing 已实际运行一次，结果见下文，D1b assemble-only 仍未资格化。
+
+MPI8 D1a timing 已于唯一一次运行中完成：one-cell/bottom/top 的 MPI.MAX 段耗时分别为
+`0.1016565150 s`、`0.2313270250 s`、`0.2299898160 s`，4800 列线性外推为
+`49.8472403247 s`，低于 `1200 s`（20 分钟）阈值。三段 factor identity 均为
+`KSP=preonly`、`PC=lu`、`factor_solver_type=mumps`。每 rank 的
+`RUSAGE_SELF.ru_maxrss` lifetime peak（非同时值、不求和）已记录；起始约
+`203508--205780 KiB`，结束约 `642104--676872 KiB`。process-tree RSS unavailable，临时目录
+和8-rank进程均已清理。原始日志为
+`/tmp/task036_direct_d1a_materialization_timing_v1.log`，SHA256 为
+`b9b1ac57fe2bfddb6cd5ebe659c7fe6bc143ef8108b964fdf6d8edf2cd43e2d2`。
+
+## 16. Direct-D1b assemble-only 实测
+
+D1b 复用 D1a 局部 setup 和 MPI-safe catalog，构造 13,200-row trace-only AIJ，并用同一
+distributed input ownership layout 分别写 chain/AIJ output Vec 做 Kx 检查。数值/矩阵子 Gate
+通过：MPI8、rows=`13200`、stored/allocated/global-used/global-allocated NNZ 均为
+`44,640,000`、matrix=`mpiaij`、GLOBAL_SUM `mallocs=0`、`global_dense_formed=false`，
+`Kx` relative error=`1.3795077434522408e-14`。local setup、AIJ assembly、Kx wall 分别为
+`73.36240866599837 s`、`108.13421355801984 s`、`0.02407568698981777 s`。
+
+整体仍为 `unqualified_development_probe`：watchdog rc=`2`，唯一失败是自然收尾时一次
+`process_tree_status` unreadable；`watchdog_checks_satisfied=false`。观察到的
+process-tree peak 为 `8041168896` bytes（约 `7.489 GiB`），swap=`0`，低于 development
+cap=`9631464161` bytes（8.97 GiB）。运行前 ABI 探针脚本自身 SyntaxError，且 shell 未因该
+错误停止，故不能倒写成运行前 ABI 通过；运行后正确 MPI8 ABI postcheck 为 8/8 通过，日志
+SHA256=`538aac6bdbc807f058c6f6b4ba57f6d9a26ae4bf3d3dbb91306ebaa86d5cb89d`。
+
+三个 D1b artifact SHA256 为：
+
+| artifact | SHA256 |
+|---|---|
+| `d1b_run.log` | `4c0106f97a088505e0443e6d8f8629b9b83c09584781e0e7d79702155f5c6e4a` |
+| `watchdog_raw.jsonl` | `48fd9d02f937f3bfe81f8beff997ec72c9f26068b0ad8c6b15e0443a916edac3` |
+| `watchdog_summary.json` | `4b39e1553ac0f08a231c0f53828acac1427975bf3f368cb959673d1eabd44c61` |
+
+运行前后 HEAD、完整 porcelain、tracked diff SHA，以及三个 untracked source SHA 均一致；
+tracked diff SHA=`7d01546bdd3f17eb3cb52b6dce3185125bf3ab5c13058d85ef03dbd29f64cac5`，
+runner=`4d985ac67d7a3e4a97ac4e7935134e0ec63d56a754232a68ed06bbdade4a97a0`，
+`hybrid_port_metric.py`=`eb5893da02fbe91efe1e8a257ba6f7ea48219f79a11c1df6225d47fab2b77ae7`，
+`hybrid_trace_chain.py`=`941cfa71513ccab3582f6bf20b6a152bacf76a10d2f0dcaa47aef9be91ce9285`。
+运行后无残留 MPI/Python/task036 进程和 `task036-d1b-*` 临时目录。global factor/solve
+仍为 `not_run`。
+
+## 17. Hybrid 修复累计状态
+
+| 阶段 | 当前结论 | 证据与边界 |
+|---|---|---|
+| Exact-Cauchy | historical checkpoint | 选定 M120 空间内 operator 通过；端部 joint-Cauchy 不完整，旧 checkpoint 结论不代表当前 direct 状态。 |
+| Q5 | negative / tail-not-reached | 冻结方法与 rank≤240 容量下 tail Gate 未达到，因此停止当前 transfer-optimal enrichment；不代表所有更高秩或 exact FE trace 不可行。 |
+| C2 | exact physical decomposition proven | 11-plane exact FE trace 拆分/恢复对 frozen Full3D 的 96 channels、R/T/A_volume 已闭合；true residual=`9.94745e-11`，ΔR=`3.18e-13`、ΔT=`7.56e-14`、ΔA_volume=`2.40e-12`。全局 trace solve 是 FGMRES，transfer chain 为 serial 对 MPI8 oracle，不是最终 direct-vs-direct。 |
+| D0 | trace-only explicit builder proven on tiny | 13200-row AIJ 结构与小型复数 oracle 通过；未做 global numeric factor/solve。 |
+| D1a | measured timing pass | 4800 scalar materialization 线性外推约 49.8472 s，保留 batched/local materialization 路线。 |
+| D1b | numerical pass, resource unqualified | MPI8 formal-size AIJ/Kx 子 Gate 通过；watchdog natural-exit race 导致 rc2，故整体仍 fail-closed/unqualified。 |
+| D1c | not_run | 尚未进入下一 direct 生命周期阶段。 |
+| Direct-vs-Full3D | not_proven | 尚无同输入 direct-vs-direct observable 对照。 |
+
+通俗地说，当前路线没有修好旧的“用 M120 截断模态代表整个接口”的 Hybrid；那条路线在
+Q5 已显示低秩不足。现在采用的是 Hybrid 域分解，但把有损的 M120 接口替换成完整的
+1200 维 FE trace，并逐 cell 做精确 Schur 凝聚。这样更可能与 Full3D 的接口物理等价，代价
+是需要处理一个 13,200 阶的 trace direct 系统；目前只完成 explicit assembly/Kx，尚未做该
+系统的 global factor/solve。
+
+### 17.1 当前变更规模快照
+
+现场按 13 个相关文件重新统计，未包含其他历史工作树修改：
+
+| 类别 | 文件数 | 精确变更 |
+|---|---:|---:|
+| 核心数值 | 5 | `+1684/-2`（含 `hybrid_port_metric.py` 300 行、`hybrid_trace_chain.py` 729 行） |
+| runner/watchdog/helper | 3 | `+6497/-30`（watchdog 146/30、capacity 19/0、综合 runner 约 6332 行） |
+| tests | 4 | `+936/-172` |
+| docs | 1 | `+162/-1`，以本节更新后的 `response_v5.md` 为唯一文档 |
+| 合计 | 13 | `+9279/-205`（含 3 个 untracked source 的完整新增内容） |
+
+综合 runner 当前约 6332 行；立即冻结 Q5/容量、迭代法和新框架扩展，不在下一 anchor 前
+重构 runner。当前总状态是：`exact physical decomposition=C2 proven`；`formal-size
+explicit K assembly/Kx=D1b numerical pass`；`D1b resource qualification=fail-closed/
+unqualified`；`Hybrid global direct factor/solve=not_run`；`Hybrid direct vs Full3D
+direct=not_proven`。下一步唯一为 D1c，不预写其通过或性能结论。
+
+## 18. 当前最终结论：H5-M1 同源码 direct Hybrid 闭环
+
+本节覆盖第 1--17 节之后的最终状态。旧节仍是不可删除的历史证据；它们中的
+`production qualification=fail`、D1b controlled stop 和 `direct_vs_full3d=not_proven`
+分别属于当时的阶段边界，不应覆盖本节已经完成的 direct 结果。
+
+### 18.1 任务边界、根因和最小修复
+
+用户要求的是：在同一离散下，让 direct Hybrid 完整还原 direct Full3D，重点覆盖小掠射角和
+P 偏振，并且 Hybrid 的 external wall 与 simultaneous process-tree peak 都严格低于 Full3D。
+未经用户许可，不开发或运行 iterative/Krylov/FGMRES/PC。
+
+旧根因不是“少做了几层防御检查”，而是 M120/M240 截断接口空间本身不完整：它不能携带端面
+完整的电场/磁场联合信息，所以即使内部 residual 很小，也不能恢复完整端面 observable。
+
+最小修复是把有损的截断接口替换为完整 1200 维 FE trace，在 11 个 plane、10 个 cell 上做
+精确 Schur chain；MPI8 固定分成 bottom/top 两个 MPI4 endpoint 组并行，每侧只做一次
+1200-column materialization；RHS 和 recovery 先在本侧完成，再只分享 canonical vectors 和
+小型 payload；world 端用 recursive block direct LU 完成 trace solve。Hybrid 的 global
+13200-row MUMPS factor/solve、Krylov/FGMRES/PC 均 `not_run`，没有 fallback、retry 或新
+framework。
+
+### 18.2 历史同 source 对照：M120/M240 为什么不是修复
+
+以下数据绑定旧 source `2b56c68cae38b92c803c08c2fd28379a8af7f166`、A007-P、p5/h10、
+theta=89.5、phi=90、P、MPI8。旧 wall/peak 只作历史记录：CPU affinity 与 Full3D
+watchdog/Hybrid sampler 口径不同，不与 H5-M1 的百分比混算。
+
+| 路径 | channels | max amplitude / key | max power | R | T | A_volume | closure | residual | external | peak | swap |
+|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Full3D direct | 80/80 | reference | -- | .6258391432044085 | .006252192503172068 | .36790866429300856 | `+5.890843369e-13` | `4.249455581e-13` | 530.001293 s | 10.2302475 GiB | 0 |
+| M120 direct | 51/80, 29 fail | `7.655261787e-6` @ top(0,0)p | `1.676354229e-6` | .6258408209376 | .00625173075651 | .3678936467230 | `-1.380158284e-5` | `2.229013066e-12` | 338.197927 s | 5.566818 GiB | 0 |
+| M240 direct | 52/80, 28 fail | `7.641402106e-6` @ top(0,0)p | `1.667404507e-6` | .6258408119795 | .006251731296567 | .3678936714706 | `-1.378525335e-5` | `2.451693233e-12` | 683.927168 s | 7.496483 GiB | 0 |
+
+### 18.3 当前同源码 A007-P final-source anchor
+
+H5-K1/H5-M1 运行时 source identity 的 normalized canonical 是
+`ce88c5ec4da54bb05a5cc5bfc8b16f02f13ac4807d6b2280f76e0c9155688ac7`。
+
+| 指标 | Full3D H5-M1 direct preonly/LU/MUMPS | Corrected Hybrid H5-K1 paired MPI4 + recursive block LU |
+|---|---:|---:|
+| channels | 80/80 | 80/80 |
+| full true residual | `4.816720870e-13` | `7.443523829e-14` |
+| direct projection | 80/80, max `5.498892155e-12` | 80/80, max `4.353000492e-12` |
+| R | `.62583914320438716` | `.62583914320430711` |
+| T | `.006252192503172611` | `.006252192503165086` |
+| A_volume | `.36790866429305147` | `.36790866429248181` |
+| closure | `6.112887974e-13` | `-4.596323322e-14` |
+| external wall | `134.523771716 s` | `125.002722556 s` |
+| process-tree peak | `10091102208 B = 9.398071289 GiB` | `8272744448 B = 7.704593658 GiB` |
+| swap | 0 | 0 |
+
+按完整 key-set 对照，当前 Full3D 与 corrected Hybrid 的最大 official
+`outgoing_amplitude_at_boundary` 差为 `4.0085009737419503e-13`，key 为 `top,(0,0),p`；
+最大 per-key power delta（亦为零级反射的 `dR`）为 `8.004708008e-14`，`dT=`
+`7.525230439e-15`，`dA_volume=` `5.696554339e-13`。另有 current Full3D 与旧 Full3D
+重跑的最大差 `2.760668393e-14`；那是 Full3D 重复性，不是 Hybrid 误差。
+
+Hybrid 比同 manifest Full3D 快 `9.521049160 s`（`7.077596%`），峰值少
+`1818357760 B = 1.693477631 GiB`（`18.019417%`）。
+
+### 18.4 五点 grazing/P direct 扫描
+
+以下四案对各自冻结 Full3D reference；A007 使用 18.3 的同源码 Full3D。五案均为
+comparator `failures=[]`。
+
+| case | theta / phi | channels | residual | max amplitude | projection max | dR / dT / dA_volume | closure |
+|---|---|---:|---:|---:|---:|---:|---:|
+| A002-P | 89.5 / 15 | 92/92 | `3.974e-13` | `3.780e-12` | `5.293e-12` | `5.498e-12 / 3.773e-15 / 4.711e-13` | `5.479e-12` |
+| A003-P | 89.5 / 30 | 80/80 | `3.625e-13` | `3.381e-12` | `1.896e-11` | `5.257e-12 / 1.009e-14 / 2.224e-13` | `-3.870e-12` |
+| A007-P | 89.5 / 90 | 80/80 | `7.444e-14` | `4.008500974e-13` | `4.353e-12` | `8.004708008e-14 / 7.525230439e-15 / 5.696554339e-13` | `-4.596e-14` |
+| A008-P | 89.0 / 0 | 80/80 | `5.087e-14` | `8.673e-13` | `6.923e-12` | `9.594e-13 / 3.957e-14 / 1.302e-12` | `1.025e-12` |
+| A046-P | 80.0 / 45 | 88/88 | `6.832e-13` | `4.599e-13` | `6.776e-13` | `1.527e-14 / 3.929e-13 / 7.044e-14` | `-6.588e-13` |
+
+H5-L1 是一次监督命令错误：四个作业误带旧 flag，随后受控停止，保留为无数值结论的
+invalid launch。H5-L2 只使用 paired flag，一次完成四案；A007 已由 H5-K1 独占完成。A007
+行使用最终 current Full3D 与 corrected Hybrid 的 official boundary-plane 对照；旧冻结
+reference 对照的 `3.7898e-13` 仅保留为历史边界，不作为同源码主行。
+
+### 18.5 验证、证据和边界
+
+- qualified PETSc `complex128/int32`；serial test214 `13 passed / 1 skipped`；MPI8 seam
+  targeted test 各 rank 通过；compileall、Ruff、diff-check 通过。没有运行 full repository
+  suite，也没有 CI 声明。
+- paired 修复后没有继续修改生产源码；最后生产补丁约 `+350` 行，未增加 retry、fallback、
+  scheduler 或 iterative 路径。综合 runner 约 6315 行是研究过程累积，不应伪装成精简
+  production；后续 selective merge 仍需区分 production core 与 research runner，本轮不重构。
+- HEAD=`e7208c6c28a42885f4a42ea1ca63cf3a7a3a8033`，两次数值运行时 tracked diff SHA=
+  `06667cc915e3768647ff2d513db505fb88b2ce9796d00090a8f253ed6d9a50e6`；数值运行后仅
+  `response_v5.md` 做了 doc-only closeout，因此当前 full-worktree diff 已有意不同；文档自身属于该哈希输入，故不在文档内嵌自引用 current SHA。
+  数值源码/测试未改，无需重跑 PDE；工作树是 dirty development。因此结论是“同源码开发态数值/资源闭环 pass”，不是 clean-commit、CI 或已合并 production
+  qualification。
+
+整个 dirty research worktree 的最终 17 文件变更规模快照如下；第 17.1 节的数字是早期
+历史快照，本表是当前最终口径。它不是最后 paired 根因修复的单独增量；该增量约为
+`+350` production lines：
+
+| 类别 | 文件数 | 精确变更 |
+|---|---:|---:|
+| core numerical | 7 | `+1821/-73` |
+| runner/watchdog/helper | 4 | `+6542/-32` |
+| tests | 5 | `+1275/-175` |
+| docs | 1 | `+304/-1` |
+| total | 17 | `+9942/-281` |
+
+Evidence index：
+
+| evidence | relative path | SHA256 |
+|---|---|---|
+| H5-K1 result | `benchmarks/artifacts/task036/direct_d2/a007-p/d2_result_full_v1.json` | `35127710d7216396f524c2e6c931e0110307d2f5f9517c4b66e55220059291d1` |
+| H5-K1 trace | `benchmarks/artifacts/task036/direct_d2/a007-p/trace_solution_full_v1.npz` | `7c92e821c9748c82dbe81e333fc70a0c8a9a35c64ec9453d3447b605f28af57e` |
+| H5-K1 recovery | `benchmarks/artifacts/task036/direct_d2/a007-p/recovery_observables_full_v1.npz` | `86ce27cd7a94d7841975616fcd38662e6149e01e611700d3c5149abe4cc49f1a` |
+| H5-K1 log | `benchmarks/artifacts/task036/direct_d2/a007-p/d2_full_run_h5k1_paired_v1.log` | `653bb286548b9bfca8fb869451f8788c57f3b19e211ecce58834627fe0480227` |
+| H5-M1 Full3D result | `benchmarks/artifacts/task036/full3d_same_source_a007_h5m1_v1/full3d_result.json` | `361a2ab2fe91eda8bdeebc2d8b0df00975ff5c9a15ba6ba626042bbb27e18eda` |
+| H5-M1 Full3D log | `benchmarks/artifacts/task036/full3d_same_source_a007_h5m1_v1/full3d_run_h5m1_v1.log` | `96df8b5da175b290b36ddea7ff93674b1c3b5eb08812ea86f58c1cbdab458307` |
+| H5-M1 watchdog raw | `benchmarks/artifacts/task036/direct_d1b/h5m1_full3d_a007_v1/a007-p/watchdog_raw.jsonl` | `1ce38caf2bbbacdb87ae6fd4032b1d330eac66bd8e4042c22b7b38ff7bfb8fb6` |
+| H5-M1 watchdog summary | `benchmarks/artifacts/task036/direct_d1b/h5m1_full3d_a007_v1/a007-p/watchdog_summary.json` | `a74b27ee289f0687c5d2235b6f032a1de3f4ad5a3bc0046cf4c92dbebfe61644` |
+| corrected manifest audit | `benchmarks/artifacts/task036/full3d_same_source_a007_h5m1_v1/source_manifest_canonical_audit.json` | `997cf85a3e56832b70bc55aa232d7e1b9f239c187c97687d6cd3565661eb98eb` |
+
+Manifest carrier口径明确为：M1 JSON before/after raw file SHA=`5686de6931064647199f386baf60d65f76e8ba26e3db1ca3139fcd77bf9c4b3a`；
+K1 TXT raw file SHA=`e4a2c87e4a53358e450a1b95ca817e432feb55e7baec09a95e0384d8cedc3fcc`；两种载体
+解析后的 normalized semantic canonical=`ce88c5ec4da54bb05a5cc5bfc8b16f02f13ac4807d6b2280f76e0c9155688ac7`，且
+parsed identities 相等。raw carrier SHA、normalized semantic SHA 和重建文本 SHA 不混称。
+
+### 18.6 最终状态矩阵
+
+| Gate | 当前状态 |
+|---|---|
+| direct Hybrid ↔ Full3D complete observable equivalence | pass |
+| grazing/P five-point scan | 5/5 pass |
+| Hybrid external wall lower | pass |
+| Hybrid simultaneous process-tree peak lower | pass |
+| swap | 0 |
+| iterative/Krylov/FGMRES/PC | not developed / not run |
+| ordinary default | unchanged |
+| clean-source formal qualification | not_run |
