@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import resource
+import subprocess
 import tempfile
 import time
 from collections.abc import Iterable, Mapping
@@ -1259,6 +1260,111 @@ def _d2_case_descriptor(case_id: str) -> dict[str, Any]:
         "resource_reference": resource_reference,
         "output_root": Path("benchmarks/artifacts/task036/direct_d2")
         / case_id.lower(),
+    }
+
+
+def _validate_current_full3d_reference(
+    record_path: Path, reference_root: Path, cfg: Any
+) -> dict[str, Any]:
+    """Validate the explicit current Full3D authority used by D2."""
+
+    record_bytes = record_path.read_bytes()
+    record = json.loads(record_bytes)
+    if record.get("status") != "full3d_reference_pass":
+        raise AssertionError("current Full3D record is not a reference pass")
+    qualification = record.get("qualification", {})
+    if qualification.get("pass") is not True or qualification.get("failures"):
+        raise AssertionError("current Full3D qualification is not clean")
+    current_sha = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], text=True
+    ).strip()
+    if subprocess.check_output(
+        ["git", "status", "--short", "--untracked-files=all"], text=True
+    ).strip():
+        raise AssertionError("current source worktree is dirty")
+    source = record.get("source", {})
+    if source.get("verified_clean_sha") != current_sha:
+        raise AssertionError("current Full3D record SHA is not the current clean SHA")
+    summary = record.get("solver_summary", {})
+    config = summary.get("config", {})
+    config_checks = {
+        "degree": (record.get("degree"), cfg.nedelec_degree),
+        "h_nm": (record.get("h_nm"), cfg.mesh_target_size),
+        "mpi_size": (record.get("mpi_size"), 8),
+        "polarization_kind": (record.get("polarization_kind"), cfg.polarization_kind),
+        "incident_theta_deg": (
+            summary.get("incident_theta_deg"),
+            cfg.incident_theta_deg,
+        ),
+        "incident_phi_deg": (summary.get("incident_phi_deg"), cfg.incident_phi_deg),
+        "grating_height_nm": (config.get("grating_height"), cfg.grating_height),
+        "grating_width_x_nm": (config.get("grating_width_x"), cfg.grating_width_x),
+        "mesh_axis_cell_counts": (
+            config.get("mesh_axis_cell_counts"),
+            list(cfg.mesh_axis_cell_counts),
+        ),
+    }
+    for key, (observed, expected) in config_checks.items():
+        if observed != expected:
+            raise AssertionError(
+                f"current Full3D physical config mismatch for {key}: "
+                f"observed={observed!r}, expected={expected!r}"
+            )
+    artifact_hashes: dict[str, str] = {}
+    for name in (
+        "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_power_metrics_3d.json",
+        "volume_absorption.json",
+    ):
+        path = reference_root / name
+        if not path.is_file():
+            raise FileNotFoundError(f"current Full3D reference is missing {path}")
+        artifact_hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    if artifact_hashes["dtn_port_diffraction_orders_3d.json"] != record.get(
+        "dtn_orders_sha256"
+    ):
+        raise AssertionError("current diffraction-orders SHA is not record-bound")
+    power = json.loads((reference_root / "dtn_port_power_metrics_3d.json").read_text())
+    volume = json.loads((reference_root / "volume_absorption.json").read_text())
+    for label, payload, keys in (
+        (
+            "power",
+            power,
+            "R_total T_total R00_total R_plus_T_plus_A_volume A_volume_total energy_closure_error_port_volume incident_power_code_units".split(),
+        ),
+        (
+            "volume",
+            volume,
+            "A_volume_total energy_closure_error_port_volume incident_power_code_units".split(),
+        ),
+    ):
+        for key in keys:
+            if key not in payload or key not in summary or payload[key] != summary[key]:
+                raise AssertionError(
+                    f"current Full3D {label} observable mismatch for {key}"
+                )
+    resource_authority = record.get("resource_authority", {})
+    wall_s = summary.get("elapsed_seconds")
+    peak_mb = resource_authority.get("max_process_tree_rss_mb")
+    swap_mb = resource_authority.get("max_process_tree_swap_mb")
+    if wall_s is None or peak_mb is None or swap_mb is None or float(swap_mb) != 0.0:
+        raise AssertionError(
+            "current Full3D resource authority is incomplete or swapped"
+        )
+    return {
+        "record_sha256": hashlib.sha256(record_bytes).hexdigest(),
+        "source_sha": current_sha,
+        "artifact_hashes": artifact_hashes,
+        "physical_config": {key: pair[0] for key, pair in config_checks.items()},
+        "resource_reference": {
+            "watchdog_wall_s": float(wall_s),
+            "process_tree_peak_bytes": int(round(float(peak_mb) * 1024**2)),
+            "process_tree_peak_gib": float(peak_mb) / 1024.0,
+            "swap": float(swap_mb),
+            "resource_baseline_source": "current_full3d_record",
+            "memory_comparison_status": "simultaneous_process_tree_memory_valid",
+            "wall_comparison_status": "same_source_record",
+        },
     }
 
 
@@ -2799,7 +2905,12 @@ def run_live_d1c_direct_factor_solve() -> dict[str, Any]:
 
 
 def run_live_d2_block_direct_solve(
-    case_id: str = "A004-S", *, mpi_endpoints: bool = False
+    case_id: str = "A004-S",
+    *,
+    mpi_endpoints: bool = False,
+    current_full3d_record: Path | None = None,
+    current_full3d_reference_root: Path | None = None,
+    d2_output_root: Path | None = None,
 ) -> dict[str, Any]:
     """Solve one fixed D2 anchor by exact recursive block LU."""
 
@@ -2819,6 +2930,41 @@ def run_live_d2_block_direct_solve(
     run_start = time.perf_counter()
     case = _d2_case_descriptor(case_id)
     case_id = case["case_id"]
+    current_identity: dict[str, Any] | None = None
+    current_args = (
+        current_full3d_record,
+        current_full3d_reference_root,
+        d2_output_root,
+    )
+    if any(value is not None for value in current_args) and not all(
+        value is not None for value in current_args
+    ):
+        raise ValueError(
+            "current Full3D D2 mode requires record, reference root, and output root"
+        )
+    if current_full3d_record is not None:
+        current_identity = _validate_current_full3d_reference(
+            current_full3d_record,
+            current_full3d_reference_root,
+            case["cfg"],
+        )
+        case["reference_root"] = current_full3d_reference_root.resolve()
+        case["reference_hashes"] = current_identity["artifact_hashes"]
+        case["resource_reference"] = current_identity["resource_reference"]
+        case["source_equivalence"] = "current_full3d_same_sha"
+        case["source_equivalence_boundary"] = {
+            "current_full3d_record": str(current_full3d_record.resolve()),
+            "current_full3d_record_sha256": current_identity["record_sha256"],
+            "verified_clean_sha": current_identity["source_sha"],
+            "physical_config": current_identity["physical_config"],
+        }
+    if d2_output_root is not None:
+        d2_output_root = d2_output_root.resolve()
+        if d2_output_root.exists():
+            raise FileExistsError(
+                f"refusing to overwrite existing D2 output root {d2_output_root}"
+            )
+        case["output_root"] = d2_output_root
     output_root = Path(case["output_root"])
     work_dir = tempfile.TemporaryDirectory(prefix="task036-d2-")
     setup: dict[str, Any] | None = None
@@ -3026,8 +3172,11 @@ def run_live_d2_block_direct_solve(
             "RTA": recovery_record["RTA"],
             "direct_vs_full3d": direct_vs_full3d,
             "final_current_source_same_sha_status": (
-                "not_run_requires_final_sha_full3d_rerun"
+                "verified_current_full3d_record_same_sha"
+                if current_identity is not None
+                else "not_run_requires_final_sha_full3d_rerun"
             ),
+            "current_full3d_identity": current_identity,
         }
         result_json_path = output_root / "d2_result_full_v1.json"
         result_json_sha = None
@@ -6185,6 +6334,9 @@ def _parse_args() -> argparse.Namespace:
         default="A004-S",
         help="fixed D2 direct anchor; default preserves the A004-S path",
     )
+    parser.add_argument("--d2-current-full3d-record", type=Path)
+    parser.add_argument("--d2-current-full3d-reference-root", type=Path)
+    parser.add_argument("--d2-output-root", type=Path)
     return parser.parse_args()
 
 
@@ -6226,13 +6378,22 @@ def main() -> int:
             print(json.dumps(result, indent=2, sort_keys=True))
         return 0
     if args.live_d2_block_direct_solve:
-        result = run_live_d2_block_direct_solve(args.d2_case)
+        result = run_live_d2_block_direct_solve(
+            args.d2_case,
+            current_full3d_record=args.d2_current_full3d_record,
+            current_full3d_reference_root=args.d2_current_full3d_reference_root,
+            d2_output_root=args.d2_output_root,
+        )
         if MPI.COMM_WORLD.rank == 0:
             print(json.dumps(result, indent=2, sort_keys=True))
         return 0
     if args.live_d2_block_direct_solve_mpi_endpoints:
         result = run_live_d2_block_direct_solve(
-            args.d2_case, mpi_endpoints=True
+            args.d2_case,
+            mpi_endpoints=True,
+            current_full3d_record=args.d2_current_full3d_record,
+            current_full3d_reference_root=args.d2_current_full3d_reference_root,
+            d2_output_root=args.d2_output_root,
         )
         if MPI.COMM_WORLD.rank == 0:
             print(json.dumps(result, indent=2, sort_keys=True))

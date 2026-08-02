@@ -1,8 +1,16 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import tempfile
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
+
+import benchmarks.run_task036_transfer_optimal_port_capacity as d2_runner
 
 from benchmarks.task036_transfer_capacity import (
     bilateral_whiten,
@@ -21,6 +29,172 @@ def _hpd(seed: np.ndarray, shift: float = 1.0) -> np.ndarray:
 
 
 class Task036TransferCapacityAlgebraTests(unittest.TestCase):
+    def test_d2_current_identity_and_observable_contract(self) -> None:
+        cfg = SimpleNamespace(
+            nedelec_degree=5,
+            mesh_target_size=10.0,
+            polarization_kind="p",
+            incident_theta_deg=89.5,
+            incident_phi_deg=90.0,
+            grating_height=120.0,
+            grating_width_x=17.0,
+            mesh_axis_cell_counts=(6, 4, 14),
+        )
+        with tempfile.TemporaryDirectory(prefix="task036-authority-") as temp_dir:
+            root = Path(temp_dir)
+            record_path = root / "full3d_record.json"
+            reference_root = root / "reference"
+            reference_root.mkdir()
+            orders = reference_root / "dtn_port_diffraction_orders_3d.json"
+            orders.write_bytes(b"minimal orders")
+            values = {
+                "R_total": 0.6,
+                "T_total": 0.1,
+                "R00_total": 0.6,
+                "R_plus_T_plus_A_volume": 1.0,
+                "A_volume_total": 0.3,
+                "energy_closure_error_port_volume": 0.0,
+                "incident_power_code_units": 2.0,
+            }
+            (reference_root / "dtn_port_power_metrics_3d.json").write_text(
+                json.dumps(values)
+            )
+            (reference_root / "volume_absorption.json").write_text(
+                json.dumps(
+                    {
+                        key: values[key]
+                        for key in (
+                            "A_volume_total",
+                            "energy_closure_error_port_volume",
+                            "incident_power_code_units",
+                        )
+                    }
+                )
+            )
+            sha = "3" * 40
+            record = {
+                "status": "full3d_reference_pass",
+                "qualification": {"pass": True, "failures": []},
+                "source": {
+                    "commit_sha": sha,
+                    "head_after_sha": sha,
+                    "verified_clean_sha": sha,
+                },
+                "degree": 5,
+                "h_nm": 10.0,
+                "mpi_size": 8,
+                "polarization_kind": "p",
+                "dtn_orders_sha256": hashlib.sha256(orders.read_bytes()).hexdigest(),
+                "solver_summary": {
+                    "incident_theta_deg": 89.5,
+                    "incident_phi_deg": 90.0,
+                    "elapsed_seconds": 12.5,
+                    "config": {
+                        "grating_height": 120.0,
+                        "grating_width_x": 17.0,
+                        "mesh_axis_cell_counts": [6, 4, 14],
+                    },
+                    **values,
+                },
+                "resource_authority": {
+                    "max_process_tree_rss_mb": 1024.0,
+                    "max_process_tree_swap_mb": 0.0,
+                },
+            }
+            record_path.write_text(json.dumps(record))
+
+            def clean_git(command: list[str], text: bool = True) -> str:
+                return sha if command[1] == "rev-parse" else ""
+
+            with patch.object(
+                d2_runner.subprocess, "check_output", side_effect=clean_git
+            ):
+                identity = d2_runner._validate_current_full3d_reference(
+                    record_path, reference_root, cfg
+                )
+            self.assertEqual(identity["source_sha"], sha)
+            self.assertEqual(identity["resource_reference"]["swap"], 0.0)
+            self.assertEqual(len(identity["artifact_hashes"]), 3)
+
+            power_path = reference_root / "dtn_port_power_metrics_3d.json"
+            power = json.loads(power_path.read_text())
+            power["R_total"] = float(power["R_total"]) + 1.0e-3
+            power_path.write_text(json.dumps(power))
+            with patch.object(
+                d2_runner.subprocess, "check_output", side_effect=clean_git
+            ):
+                with self.assertRaisesRegex(AssertionError, "observable mismatch"):
+                    d2_runner._validate_current_full3d_reference(
+                        record_path, reference_root, cfg
+                    )
+
+    def test_d2_argument_and_output_root_contract(self) -> None:
+        record_path = Path("current_full3d_record.json")
+        fake_mpi = SimpleNamespace(COMM_WORLD=SimpleNamespace(size=8, rank=0))
+        sentinel = RuntimeError("heavy body reached")
+        seen_cases: list[dict[str, object]] = []
+
+        def descriptor(_case_id: str) -> dict[str, object]:
+            case = {
+                "case_id": "A007-P",
+                "cfg": SimpleNamespace(),
+                "reference_root": Path("legacy-reference"),
+                "reference_hashes": {},
+                "source_equivalence": "legacy",
+                "source_equivalence_boundary": {},
+                "resource_reference": {"legacy": True},
+                "output_root": Path("legacy-output"),
+            }
+            seen_cases.append(case)
+            return case
+
+        identity = {
+            "record_sha256": "record",
+            "source_sha": "source",
+            "artifact_hashes": {},
+            "physical_config": {},
+            "resource_reference": {},
+        }
+        with tempfile.TemporaryDirectory(prefix="task036-args-") as temp_dir:
+            temp_root = Path(temp_dir)
+            existing_root = temp_root / "existing"
+            existing_root.mkdir()
+            new_root = temp_root / "new"
+            with (
+                patch.object(d2_runner, "MPI", fake_mpi),
+                patch.object(d2_runner, "_d2_case_descriptor", side_effect=descriptor),
+                patch.object(
+                    d2_runner, "_build_d1_local_factor_setup", side_effect=sentinel
+                ),
+            ):
+                with self.assertRaises(ValueError):
+                    d2_runner.run_live_d2_block_direct_solve(
+                        "A007-P", current_full3d_record=record_path
+                    )
+                with patch.object(
+                    d2_runner,
+                    "_validate_current_full3d_reference",
+                    return_value=identity,
+                ):
+                    with self.assertRaises(FileExistsError):
+                        d2_runner.run_live_d2_block_direct_solve(
+                            "A007-P",
+                            current_full3d_record=record_path,
+                            current_full3d_reference_root=temp_root / "reference",
+                            d2_output_root=existing_root,
+                        )
+                    with self.assertRaisesRegex(RuntimeError, "heavy body reached"):
+                        d2_runner.run_live_d2_block_direct_solve(
+                            "A007-P",
+                            current_full3d_record=record_path,
+                            current_full3d_reference_root=temp_root / "reference",
+                            d2_output_root=new_root,
+                        )
+                with self.assertRaisesRegex(RuntimeError, "heavy body reached"):
+                    d2_runner.run_live_d2_block_direct_solve("A007-P")
+        self.assertEqual(seen_cases[-1]["reference_root"], Path("legacy-reference"))
+        self.assertEqual(seen_cases[-1]["output_root"], Path("legacy-output"))
+
     def test_frozen_complex_gaussian_holdout_multiplier(self) -> None:
         observed = complex_gaussian_holdout_multiplier(1.0e-12 / 482.0, 20)
         self.assertAlmostEqual(observed, 2.2147082545082073, places=15)
