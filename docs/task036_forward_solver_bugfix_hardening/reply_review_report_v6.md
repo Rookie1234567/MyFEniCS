@@ -594,3 +594,99 @@ master merge                           = not authorized
 最值得做的是一个严格有界的 discrete-Bloch 低秩容量判定，而不是一次性建设四条 basis 路线。
 只有候选在远低于完整1200维时同时通过 joint-Cauchy、operator、holdout observable、
 anti-equivalence和峰值上界，才值得继续开发 actual direct Hybrid。
+
+---
+
+## 11. 对 Review V6 第11节的最终执行澄清
+
+```text
+reviewed_supplement_commit = 0379aab1749db93bde6cbb5ba9a89f4586c65a17
+supplement_disposition     = ACCEPTED_WITH_TWO_BINDING_CLARIFICATIONS
+current_execution_scope   = R0 + R1 only
+R2_R3                      = locked_until_response_v6_supervisory_review
+```
+
+Review V6 第11节没有否定本回复的核心纠偏。以下修订全部接受并纳入执行：
+
+- A004 旧老师解只能在 numerical-kernel 和 artifact identity 全等时复用；
+- `uniform_full_trace_diagnostic` 与 `reachable_physics_gate` 分开报告；
+- holdout observable 必须由独立 reduced solve 得到，不允许用老师解投影冒充；
+- reciprocal 和 near-degenerate block 必须整块保留；
+- `ΔK_corr` 非零只是必要条件，候选还必须在 exact action、joint-Cauchy 和
+  independent holdout 上严格优于旧负对照；
+- RCWA、POD、p6 和 iterative 本批延期，但不做永久路线否定。
+
+仅有以下两点必须作为 binding clarification，防止执行时改变用户的原始成功定义。
+
+### 11.1 数学通过不等于 Hybrid 工程目标完成
+
+Review 第11.7节的资源分层可用，但状态必须严格分开：
+
+```text
+physics_compression_pass
+    = 只证明冻结物理流形可低秩表示
+
+0.70 < predicted_peak_upper / Full3D <= 0.80
+    = mathematical_positive_but_engineering_review_only
+    = actual_not_authorized
+
+predicted_peak_upper / Full3D > 0.80
+    = no_meaningful_direct_Hybrid_advantage_in_this_batch
+```
+
+`0.70--0.80` 区间不应被写成数学失败，但也不得写成“Hybrid 已修复”、
+`engineering pass` 或用它自动进入 actual PDE。
+
+Review 第11.8节要求报告 cold/warm 四类时间口径是正确的，但对本批的单点
+direct anchor，原 V6-3 的：
+
+```text
+whole-job external wall <= same-input Full3D external wall
+```
+
+仍是工程通过条件。cold setup 较慢不否定数学等价性，但会使本批“内存和耗时都优于
+Full3D”的整体工程目标不通过。`warm_repeated_solve_wall` 可作为后续多 RHS/扫描服务的
+独立资格，不能在当前单点报告中替代 whole-job cold wall。
+
+### 11.2 代码行数不是数值 Gate，但仍是强制复审触发器
+
+Review 第11.9节正确指出：代码行数不能代替物理正确性。但 `task.md` 第3.3节仍有明确治理
+约束。因此统一解释为：
+
+```text
+about 500 new non-test lines before the first qualified action fixture
+    != automatic numerical failure
+    == mandatory stop-and-review trigger
+```
+
+到达该触发器时，必须报告文件、职责、行数、为何现有组件不足，并停止继续扩展。
+它不等于路线永久失败，但不得因“算法完整性”而静默超过。同时仍必须满足 scope-based 约束：
+
+- 不新增 generic framework、campaign、scheduler、fallback 或自动调参；
+- 不同时重写 mode generation、coupling 和 global solver 三层；
+- 不为 rank、角度、偏振或 RHS 复制 runner；
+- 每个新模块职责单一，失败不自动换 basis 或放宽 Gate。
+
+### 11.3 当前批次的最终放行边界
+
+```text
+R0 clean A007 exact-oracle reproduction                 = authorized
+A004 frozen authority kernel/artifact identity audit    = authorized
+conditional clean A004 rerun on identity mismatch       = authorized
+R1 B0/B1/B∞ bounded offline capacity                     = authorized
+R2 localized candidate                                  = locked
+R3 actual A004/A007                                     = locked
+RCWA / POD / p6 / iterative                             = not authorized
+```
+
+R1 还必须满足以下效率边界：
+
+- `requested_dimension` 可因 reciprocal/near-degenerate block closure 向上取整，但
+  `effective_block_closed_dimension` 仍不得超过 `360`；
+- external incoming channels、parameter-tangent loads 和 holdout RHS 必须在同一已建立的
+  exact/reduced operator 上批量求解，不得转化成数百次 Full3D、exact-trace 或 Hybrid PDE；
+- B0/B1 各只构造一次最大 effective basis/action，rank 只读取冻结前缀；
+- R1 结束必须提交 `response_v6.md` 并停止，由监督审阅决定是否解锁唯一 R2
+  candidate，不再向用户反复请示。
+
+因此，对当前问题的最终答复是：**R0/R1 可以立即执行；R2/R3 不可以提前开始。**
