@@ -635,6 +635,55 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
             _right_pool_gate(4)["status_if_failed"],
             "MODE_POOL_INCOMPLETE_AT_TARGET_SET",
         )
+        partial_run = {
+            "family": "P",
+            "target_index": 1,
+            "convergence_reason": -1,
+            "residual_qualified_count": 3,
+        }
+        partial_gate = _right_pool_gate(
+            120,
+            phase_bins=[1] * 8,
+            full_residual_max=1.0e-8,
+            schur_residual_max=9.0e-8,
+            partial_runs=[partial_run],
+        )
+        self.assertTrue(partial_gate["passed"])
+        self.assertEqual(partial_gate["partial_runs"], [partial_run])
+        missing_evidence_gate = _right_pool_gate(120, phase_bins=[1] * 8)
+        self.assertFalse(missing_evidence_gate["passed"])
+        self.assertEqual(
+            missing_evidence_gate["reason"],
+            "right_pool_gate_evidence_missing",
+        )
+        zero_gate = _right_pool_gate(
+            120,
+            phase_bins=[1] * 8,
+            full_residual_max=1.0e-8,
+            schur_residual_max=9.0e-8,
+            unusable_runs=[
+                {
+                    "family": "P",
+                    "target_index": 2,
+                    "convergence_reason": 1,
+                    "residual_qualified_count": 0,
+                }
+            ],
+        )
+        self.assertFalse(zero_gate["passed"])
+        self.assertEqual(zero_gate["reason"], "right_solver_failed")
+        self.assertEqual(zero_gate["status_if_failed"], "MODE_POOL_SOLVER_FAILED")
+        empty_phase_gate = _right_pool_gate(
+            120,
+            phase_bins=[1, 1, 1, 1, 1, 1, 1, 0],
+            full_residual_max=1.0e-8,
+            schur_residual_max=9.0e-8,
+        )
+        self.assertFalse(empty_phase_gate["passed"])
+        self.assertEqual(
+            empty_phase_gate["reason"],
+            "right_pool_phase_coverage_incomplete",
+        )
         zero_entry = entry("P", 3, 0.0, [1.0, 0.0])
         zero_closure = _right_reciprocal_closure(
             [item["multiplier"] for item in kept] + [zero_entry["multiplier"]],

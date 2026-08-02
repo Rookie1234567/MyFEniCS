@@ -40,7 +40,7 @@ MODE_POOL_TARGETS = (1.0 + 0.0j, 1.0j, -1.0 + 0.0j, -1.0j)
 MODE_POOL_FAMILIES = ("P", "Prev", "Q", "Qrev")
 MODE_POOL_NEV = 128
 MODE_POOL_MAX_IT = 100
-MODE_POOL_WALL_LIMIT_SECONDS = 3600.0
+MODE_POOL_WALL_LIMIT_SECONDS = 4200.0
 MODE_POOL_RSS_LIMIT_BYTES = 4 * 1024**3
 MODE_POOL_SWAP_LIMIT_KIB = 0
 MODE_POOL_BLOCK_TOL = 1.0e-6
@@ -352,18 +352,60 @@ def _right_reciprocal_closure(
     }
 
 
-def _right_pool_gate(effective_columns: int) -> dict[str, Any]:
-    passed = int(effective_columns) >= 120
+def _right_pool_gate(
+    effective_columns: int,
+    *,
+    phase_bins: list[int] | None = None,
+    full_residual_max: float | None = None,
+    schur_residual_max: float | None = None,
+    partial_runs: list[dict[str, Any]] | None = None,
+    unusable_runs: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    partial_runs = [] if partial_runs is None else partial_runs
+    unusable_runs = [] if unusable_runs is None else unusable_runs
+    if unusable_runs:
+        reason = "right_solver_failed"
+        passed = False
+    elif int(effective_columns) < 120:
+        reason = "right_pool_effective_columns_below_120"
+        passed = False
+    elif int(effective_columns) > 360:
+        reason = "bounded_dimension_exceeded"
+        passed = False
+    elif phase_bins is None or full_residual_max is None or schur_residual_max is None:
+        reason = "right_pool_gate_evidence_missing"
+        passed = False
+    elif phase_bins is not None and (
+        len(phase_bins) != 8 or any(int(value) <= 0 for value in phase_bins)
+    ):
+        reason = "right_pool_phase_coverage_incomplete"
+        passed = False
+    elif full_residual_max is not None and full_residual_max > MODE_POOL_RESIDUAL_TOL:
+        reason = "right_pool_full_residual_failed"
+        passed = False
+    elif schur_residual_max is not None and schur_residual_max > MODE_POOL_RESIDUAL_TOL:
+        reason = "right_pool_schur_residual_failed"
+        passed = False
+    else:
+        reason = "right_pool_ready_for_Q_Qrev"
+        passed = True
+    status_if_failed = (
+        "MODE_POOL_SOLVER_FAILED"
+        if unusable_runs
+        else "MODE_POOL_INCOMPLETE_AT_TARGET_SET"
+    )
     return {
         "passed": passed,
         "effective_columns": int(effective_columns),
         "minimum_columns": 120,
-        "reason": (
-            "right_pool_ready_for_Q_Qrev"
-            if passed
-            else "right_pool_effective_columns_below_120"
-        ),
-        "status_if_failed": "MODE_POOL_INCOMPLETE_AT_TARGET_SET",
+        "maximum_columns": 360,
+        "reason": reason,
+        "status_if_failed": status_if_failed,
+        "effective_phase_bins_8": None if phase_bins is None else list(phase_bins),
+        "full_residual_max": full_residual_max,
+        "schur_residual_max": schur_residual_max,
+        "partial_runs": partial_runs,
+        "unusable_runs": unusable_runs,
     }
 
 
@@ -706,39 +748,90 @@ def main() -> None:
             [entry["multiplier"] for entry in right_entries],
             right_entries,
         )
-        right_convergence_failures = [
-            run for run in right_runs if run["solver"]["convergence_reason"] <= 0
-        ]
         right_bounded = _bounded_right_components(right_blocks)
-        right_gate = (
+        for run in right_runs:
+            key = (run["family"], run["target_index"])
+            selected = [entry for entry in right_entries if entry["source_key"] == key]
+            qualified = sum(_residual_ok(entry) for entry in selected)
+            run["retained_candidate_count"] = len(selected)
+            run["residual_qualified_count"] = qualified
+            run["deduplicated_count"] = run["raw_candidate_count"] - len(selected)
+            reason = int(run["solver"]["convergence_reason"])
+            if qualified == 0:
+                run["solver"]["convergence_status"] = "failed_no_residual_qualified"
+            elif reason <= 0:
+                run["solver"]["convergence_status"] = "partial_convergence"
+            else:
+                run["solver"]["convergence_status"] = "converged"
+            run["solver"]["usable"] = bool(qualified)
+
+        right_partial_runs = [
             {
-                "passed": False,
-                "effective_columns": right_bounded["bounded_effective_columns"],
-                "raw_effective_columns": right_bounded["raw_effective_columns"],
-                "bounded_effective_columns": right_bounded["bounded_effective_columns"],
-                "minimum_columns": 120,
-                "reason": "right_solver_failed",
-                "status_if_failed": "MODE_POOL_SOLVER_FAILED",
+                "family": run["family"],
+                "target_index": int(run["target_index"]),
+                "convergence_reason": int(run["solver"]["convergence_reason"]),
+                "residual_qualified_count": int(run["residual_qualified_count"]),
             }
-            if right_convergence_failures
-            else _right_pool_gate(right_bounded["bounded_effective_columns"])
+            for run in right_runs
+            if run["solver"]["convergence_reason"] <= 0
+            and run["residual_qualified_count"] > 0
+        ]
+        right_unusable_runs = [
+            {
+                "family": run["family"],
+                "target_index": int(run["target_index"]),
+                "convergence_reason": int(run["solver"]["convergence_reason"]),
+                "residual_qualified_count": int(run["residual_qualified_count"]),
+            }
+            for run in right_runs
+            if run["residual_qualified_count"] == 0
+        ]
+        bounded_right_entries = [
+            right_entries[item]
+            for index in right_bounded["bounded_effective_block_indices"]
+            for item in right_blocks["blocks"][index]
+        ]
+        bounded_phase = _phase_coverage(
+            [entry["multiplier"] for entry in bounded_right_entries]
+        )
+        bounded_full_max = max(
+            (
+                entry["record"]["full_augmented_relative_residual"]
+                for entry in bounded_right_entries
+            ),
+            default=None,
+        )
+        bounded_schur_max = max(
+            (
+                entry["record"]["schur_polynomial_relative_residual"]
+                for entry in bounded_right_entries
+            ),
+            default=None,
+        )
+        right_gate = _right_pool_gate(
+            right_bounded["bounded_effective_columns"],
+            phase_bins=bounded_phase["phase_bins_8"],
+            full_residual_max=bounded_full_max,
+            schur_residual_max=bounded_schur_max,
+            partial_runs=right_partial_runs,
+            unusable_runs=right_unusable_runs,
         )
         right_gate["raw_effective_columns"] = right_bounded["raw_effective_columns"]
         right_gate["bounded_effective_columns"] = right_bounded[
             "bounded_effective_columns"
         ]
-        for run in right_runs:
-            key = (run["family"], run["target_index"])
-            selected = [entry for entry in right_entries if entry["source_key"] == key]
-            run["retained_candidate_count"] = len(selected)
-            run["residual_qualified_count"] = sum(
-                _residual_ok(entry) for entry in selected
-            )
-            run["deduplicated_count"] = run["raw_candidate_count"] - len(selected)
-
+        right_gate["effective_phase_coverage"] = bounded_phase
         right_solver = {
-            "status": "solver_failed" if right_convergence_failures else "completed",
+            "status": (
+                "solver_failed"
+                if right_unusable_runs
+                else "partial_convergence"
+                if right_partial_runs
+                else "completed"
+            ),
             "run_count": len(right_runs),
+            "partial_runs": right_partial_runs,
+            "unusable_runs": right_unusable_runs,
             "runs": right_runs,
         }
         adjoint_runs: list[dict[str, Any]] = []
@@ -1022,21 +1115,53 @@ def main() -> None:
             selected = [
                 entry for entry in adjoint_entries if entry["source_key"] == key
             ]
+            qualified = sum(_residual_ok(entry) for entry in selected)
             run["retained_candidate_count"] = len(selected)
-            run["residual_qualified_count"] = sum(
-                _residual_ok(entry) for entry in selected
-            )
+            run["residual_qualified_count"] = qualified
             run["deduplicated_count"] = run["raw_candidate_count"] - len(selected)
+            reason = int(run["solver"]["convergence_reason"])
+            if qualified == 0:
+                run["solver"]["convergence_status"] = "failed_no_residual_qualified"
+            elif reason <= 0:
+                run["solver"]["convergence_status"] = "partial_convergence"
+            else:
+                run["solver"]["convergence_status"] = "converged"
+            run["solver"]["usable"] = bool(qualified)
+        adjoint_partial_runs = [
+            {
+                "family": run["family"],
+                "target_index": int(run["target_index"]),
+                "convergence_reason": int(run["solver"]["convergence_reason"]),
+                "residual_qualified_count": int(run["residual_qualified_count"]),
+            }
+            for run in adjoint_runs
+            if run["solver"]["convergence_reason"] <= 0
+            and run["residual_qualified_count"] > 0
+        ]
+        adjoint_unusable_runs = [
+            {
+                "family": run["family"],
+                "target_index": int(run["target_index"]),
+                "convergence_reason": int(run["solver"]["convergence_reason"]),
+                "residual_qualified_count": int(run["residual_qualified_count"]),
+            }
+            for run in adjoint_runs
+            if run["residual_qualified_count"] == 0
+        ]
         adjoint_solver = {
-            "status": "completed",
+            "status": (
+                "solver_failed"
+                if adjoint_unusable_runs
+                else "partial_convergence"
+                if adjoint_partial_runs
+                else "completed"
+            ),
             "run_count": len(adjoint_runs),
+            "partial_runs": adjoint_partial_runs,
+            "unusable_runs": adjoint_unusable_runs,
             "runs": adjoint_runs,
         }
-        adjoint_convergence_failures = [
-            run for run in adjoint_runs if run["solver"]["convergence_reason"] <= 0
-        ]
-        if adjoint_convergence_failures:
-            adjoint_solver["status"] = "solver_failed"
+        if adjoint_unusable_runs:
             failure_right_entries = [
                 right_entries[item]
                 for index in right_bounded["bounded_effective_block_indices"]
