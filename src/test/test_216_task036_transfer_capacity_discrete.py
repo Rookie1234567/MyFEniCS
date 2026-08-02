@@ -20,6 +20,7 @@ from benchmarks.run_task036_transfer_optimal_port_capacity import (
     SparsePortTransfer,
 )
 from benchmarks.run_task036_r1_port_capacity import (
+    MODE_POOL_EIGEN_TOL,
     MODE_POOL_TARGETS,
     MODE_POOL_SOURCE_SCHEDULE,
     _canonical_npz_arrays,
@@ -235,6 +236,8 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
         "The deterministic PEP fixture is serial.",
     )
     def test_full_interface_bloch_polynomial_uses_batched_schur_action(self) -> None:
+        self.assertEqual(MODE_POOL_EIGEN_TOL, 1.0e-12)
+
         def matrix(values: np.ndarray) -> PETSc.Mat:
             rows, cols = values.shape
             indptr = [0]
@@ -439,6 +442,20 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                     rtol=0.0,
                     atol=1.0e-12,
                 )
+                p_green = endpoint_cauchy_balance(
+                    action,
+                    right_state,
+                    left_state,
+                    multipliers=[eigenvalue],
+                    adjoint_multipliers=[qrev_nu],
+                )
+                self.assertLessEqual(
+                    p_green["primal_outward_balance_relative"], 1.0e-10
+                )
+                self.assertLessEqual(
+                    p_green["adjoint_outward_balance_relative"], 1.0e-10
+                )
+                self.assertLessEqual(p_green["green_pairing_relative"], 1.0e-10)
             right_vector.destroy()
             prev_pep = create_two_sided_pep(
                 (augmented.K2, augmented.K1, augmented.K0), 2
@@ -527,6 +544,20 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                     )
                 )
                 self.assertLess(np.linalg.norm(left_q_residual), 1.0e-9)
+                prev_green = endpoint_cauchy_balance(
+                    action,
+                    prev_state,
+                    prev_left_state,
+                    multipliers=[canonical_lambda],
+                    adjoint_multipliers=[prev_nu],
+                )
+                self.assertLessEqual(
+                    prev_green["primal_outward_balance_relative"], 1.0e-10
+                )
+                self.assertLessEqual(
+                    prev_green["adjoint_outward_balance_relative"], 1.0e-10
+                )
+                self.assertLessEqual(prev_green["green_pairing_relative"], 1.0e-10)
         finally:
             if prev_vector is not None:
                 prev_vector.destroy()

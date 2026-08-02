@@ -59,6 +59,7 @@ MODE_POOL_SOURCE_SCHEDULE = (
 MODE_POOL_FAMILIES = ("P", "Prev", "Q", "Qrev")
 MODE_POOL_NEV = 128
 MODE_POOL_MAX_IT = 100
+MODE_POOL_EIGEN_TOL = 1.0e-12
 MODE_POOL_WALL_LIMIT_SECONDS = 6600.0
 MODE_POOL_RSS_LIMIT_BYTES = 4 * 1024**3
 MODE_POOL_SWAP_LIMIT_KIB = 0
@@ -654,14 +655,14 @@ def main() -> None:
             pep.setDimensions(nev=MODE_POOL_NEV)
             pep.setTarget(target)
             pep.setWhichEigenpairs(SLEPc.PEP.Which.TARGET_MAGNITUDE)
-            pep.setTolerances(tol=1.0e-8, max_it=MODE_POOL_MAX_IT)
+            pep.setTolerances(tol=MODE_POOL_EIGEN_TOL, max_it=MODE_POOL_MAX_IT)
             eps = pep.getLinearEPS()
             eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR)
             eps.setTwoSided(True)
             eps.setDimensions(nev=MODE_POOL_NEV)
             eps.setTarget(target)
             eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE)
-            eps.setTolerances(tol=1.0e-8, max_it=MODE_POOL_MAX_IT)
+            eps.setTolerances(tol=MODE_POOL_EIGEN_TOL, max_it=MODE_POOL_MAX_IT)
             spectral_transform = eps.getST()
             spectral_transform.setType(SLEPc.ST.Type.SINVERT)
             ksp = spectral_transform.getKSP()
