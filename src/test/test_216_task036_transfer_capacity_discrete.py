@@ -7,6 +7,8 @@ import unittest
 from dolfinx import fem
 from mpi4py import MPI
 import numpy as np
+from petsc4py import PETSc
+from slepc4py import SLEPc
 
 from benchmarks.run_task036_one_cell_discrete_bloch import (
     _authority_config,
@@ -28,7 +30,13 @@ from src.solvers.hybrid_port_metric import (
     EndpointTraceMassSelection,
     build_endpoint_trace_mass_actions,
 )
-from src.solvers.one_cell_discrete_bloch import identify_endpoint_active_rows
+from src.solvers.one_cell_discrete_bloch import (
+    AugmentedBlochPolynomial,
+    OneCellTwoPortSchurAction,
+    bloch_polynomial_action,
+    build_augmented_bloch_polynomial,
+    identify_endpoint_active_rows,
+)
 
 
 class Task036TransferCapacityDiscreteTests(unittest.TestCase):
@@ -207,6 +215,130 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
             electric_reference=rho * reference,
         )
         np.testing.assert_allclose(rescaled, metric_nm, rtol=1.0e-12, atol=1.0e-12)
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 1,
+        "The deterministic PEP fixture is serial.",
+    )
+    def test_full_interface_bloch_polynomial_uses_batched_schur_action(self) -> None:
+        def matrix(values: np.ndarray) -> PETSc.Mat:
+            rows, cols = values.shape
+            indptr = [0]
+            indices: list[int] = []
+            data: list[complex] = []
+            for row in range(rows):
+                nonzero = np.flatnonzero(values[row])
+                indices.extend(nonzero.tolist())
+                data.extend(values[row, nonzero].tolist())
+                indptr.append(len(indices))
+            result = PETSc.Mat().createAIJ(
+                size=(rows, cols),
+                csr=(
+                    np.asarray(indptr, dtype=PETSc.IntType),
+                    np.asarray(indices, dtype=PETSc.IntType),
+                    np.asarray(data, dtype=np.complex128),
+                ),
+                comm=PETSc.COMM_SELF,
+            )
+            result.assemble()
+            return result
+
+        action = OneCellTwoPortSchurAction(
+            A_pp=matrix(np.asarray([[0.0, 1.0], [-1.0, 0.0]])),
+            A_pi=matrix(np.asarray([[1.0], [0.0]])),
+            A_ip=matrix(np.asarray([[0.0, 1.5]])),
+            A_ii=matrix(np.asarray([[2.0]])),
+            factor=PETSc.KSP().create(PETSc.COMM_SELF),
+            left_rows=1,
+            right_rows=1,
+            interior_rows=1,
+            interior_matrix_nnz=1,
+            port_active=np.asarray([0, 1], dtype=PETSc.IntType),
+            interior_active=np.asarray([2], dtype=PETSc.IntType),
+        )
+        action.factor.setOperators(action.A_ii)
+        action.factor.setType("preonly")
+        action.factor.getPC().setType("lu")
+        action.factor.setUp()
+        augmented: AugmentedBlochPolynomial | None = None
+        pep = None
+        try:
+            augmented = build_augmented_bloch_polynomial(action)
+            self.assertFalse(action.dense_interface_square_formed)
+            self.assertFalse(augmented.dense_interface_square_formed)
+            self.assertEqual(augmented.state_rows, 2)
+
+            def sparse_apply(operator: PETSc.Mat, values: np.ndarray) -> np.ndarray:
+                vector = operator.createVecRight()
+                result = operator.createVecLeft()
+                try:
+                    vector.array[:] = values
+                    operator.mult(vector, result)
+                    return np.asarray(result.array, dtype=np.complex128).copy()
+                finally:
+                    result.destroy()
+                    vector.destroy()
+
+            for multiplier, electric in (
+                (0.73 + 0.11j, 0.4 - 0.2j),
+                (-0.61 + 0.27j, -0.3 + 0.6j),
+            ):
+                interior = -0.75 * multiplier * electric
+                state = np.asarray([electric, interior], dtype=np.complex128)
+                augmented_value = (
+                    sparse_apply(augmented.K0, state)
+                    + multiplier * sparse_apply(augmented.K1, state)
+                    + multiplier**2 * sparse_apply(augmented.K2, state)
+                )
+                coefficients = bloch_polynomial_action(
+                    action,
+                    np.asarray([[electric]], dtype=np.complex128),
+                )
+                schur_value = (
+                    coefficients[0][:, 0]
+                    + multiplier * coefficients[1][:, 0]
+                    + multiplier**2 * coefficients[2][:, 0]
+                )
+                np.testing.assert_allclose(
+                    augmented_value[:1], schur_value, rtol=0.0, atol=1.0e-12
+                )
+                np.testing.assert_allclose(
+                    augmented_value[1:], np.zeros(1), rtol=0.0, atol=1.0e-12
+                )
+
+            pep = SLEPc.PEP().create(comm=PETSc.COMM_SELF)
+            pep.setOperators([augmented.K0, augmented.K1, augmented.K2])
+            pep.setProblemType(SLEPc.PEP.ProblemType.GENERAL)
+            pep.setType(SLEPc.PEP.Type.TOAR)
+            pep.setDimensions(nev=2)
+            pep.setTarget(1.0)
+            pep.setWhichEigenpairs(SLEPc.PEP.Which.TARGET_MAGNITUDE)
+            pep.setTolerances(tol=1.0e-12, max_it=100)
+            spectral_transform = pep.getST()
+            spectral_transform.setType(SLEPc.ST.Type.SINVERT)
+            ksp = spectral_transform.getKSP()
+            ksp.setType(PETSc.KSP.Type.PREONLY)
+            pc = ksp.getPC()
+            pc.setType(PETSc.PC.Type.LU)
+            pc.setFactorSolverType("mumps")
+            pep.solve()
+            self.assertGreaterEqual(pep.getConverged(), 2)
+            eigenvalues = [complex(pep.getEigenpair(i)) for i in range(2)]
+            for index, eigenvalue in enumerate(eigenvalues):
+                self.assertLess(
+                    min(abs(eigenvalue - 2.0), abs(eigenvalue + 2.0)),
+                    1.0e-9,
+                )
+                self.assertLess(
+                    float(pep.computeError(index, SLEPc.PEP.ErrorType.RELATIVE)),
+                    1.0e-9,
+                )
+        finally:
+            if pep is not None:
+                pep.destroy()
+            if augmented is not None:
+                augmented.destroy()
+            action.destroy()
 
     @unittest.skipUnless(
         MPI.COMM_WORLD.size == 1,

@@ -825,6 +825,178 @@ class OneCellTwoPortSchurAction:
         self._destroyed = True
 
 
+def bloch_polynomial_action(
+    action: OneCellTwoPortSchurAction,
+    electric_columns: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Apply the three full-interface Bloch polynomial coefficients.
+
+    The endpoint action is evaluated once on the batched columns ``[x, 0]``
+    and ``[0, x]``.  Thus the returned ``(K0, K1, K2)`` arrays are rectangular
+    action results, never a resident full-interface Schur square.
+    """
+
+    values = np.asarray(electric_columns, dtype=np.complex128)
+    if values.ndim == 1:
+        values = values[:, None]
+    if values.ndim != 2 or values.shape[0] != action.left_rows:
+        raise ValueError(
+            "Electric columns must have shape "
+            f"({action.left_rows}, n), got {values.shape}."
+        )
+    if action.left_rows != action.right_rows:
+        raise ValueError("Bloch endpoint traces must have equal dimensions.")
+    count = values.shape[1]
+    endpoints = np.zeros(
+        (action.port_rows, 2 * count),
+        dtype=np.complex128,
+    )
+    endpoints[: action.left_rows, :count] = values
+    endpoints[action.left_rows :, count:] = values
+    applied = action.apply_columns(endpoints)
+    left = action.left_rows
+    return (
+        applied[left:, :count].copy(),
+        (applied[left:, count:] + applied[:left, :count]).copy(),
+        applied[:left, count:].copy(),
+    )
+
+
+@dataclass
+class AugmentedBlochPolynomial:
+    """Sparse quadratic polynomial before axial-interior elimination."""
+
+    K0: PETSc.Mat
+    K1: PETSc.Mat
+    K2: PETSc.Mat
+    endpoint_rows: int
+    interior_rows: int
+    dense_interface_square_formed: bool = False
+    _destroyed: bool = False
+
+    @property
+    def state_rows(self) -> int:
+        return int(self.endpoint_rows + self.interior_rows)
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        for matrix in (self.K2, self.K1, self.K0):
+            matrix.destroy()
+        self._destroyed = True
+
+
+def _augmented_sparse_matrix(
+    blocks: list[list[PETSc.Mat]],
+    comm: Any,
+) -> PETSc.Mat:
+    result = PETSc.Mat().createNest(blocks, comm=comm)
+    result.assemble()
+    try:
+        result.convert("aij")
+        result.assemble()
+        return result
+    except Exception:
+        result.destroy()
+        raise
+
+
+def _zero_sparse_matrix(rows: int, columns: int, comm: Any) -> PETSc.Mat:
+    result = PETSc.Mat().createAIJ(
+        size=(rows, columns),
+        nnz=0,
+        comm=comm,
+    )
+    result.assemble()
+    return result
+
+
+def build_augmented_bloch_polynomial(
+    action: OneCellTwoPortSchurAction,
+) -> AugmentedBlochPolynomial:
+    """Build sparse K0/K1/K2 without forming the endpoint Schur square."""
+
+    if action.left_rows != action.right_rows:
+        raise ValueError("Augmented Bloch endpoints must have equal dimensions.")
+    left = action.left_rows
+    right = action.right_rows
+    interior = action.interior_rows
+    comm = action.A_pp.getComm()
+    left_is = PETSc.IS().createStride(left, first=0, step=1, comm=comm)
+    right_is = PETSc.IS().createStride(
+        right,
+        first=left,
+        step=1,
+        comm=comm,
+    )
+    interior_is = PETSc.IS().createStride(
+        interior,
+        first=0,
+        step=1,
+        comm=comm,
+    )
+    blocks: list[PETSc.Mat] = []
+    result: list[PETSc.Mat] = []
+    try:
+        A_LL = action.A_pp.createSubMatrix(left_is, left_is)
+        A_LR = action.A_pp.createSubMatrix(left_is, right_is)
+        A_RL = action.A_pp.createSubMatrix(right_is, left_is)
+        A_RR = action.A_pp.createSubMatrix(right_is, right_is)
+        A_LI = action.A_pi.createSubMatrix(left_is, interior_is)
+        A_RI = action.A_pi.createSubMatrix(right_is, interior_is)
+        A_IL = action.A_ip.createSubMatrix(interior_is, left_is)
+        A_IR = action.A_ip.createSubMatrix(interior_is, right_is)
+        A_II = action.A_ii.createSubMatrix(interior_is, interior_is)
+        blocks.extend(
+            (
+                A_LL,
+                A_LR,
+                A_RL,
+                A_RR,
+                A_LI,
+                A_RI,
+                A_IL,
+                A_IR,
+                A_II,
+            )
+        )
+        A_sum = A_RR.copy()
+        A_sum.axpy(
+            PETSc.ScalarType(1.0),
+            A_LL,
+            structure=PETSc.Mat.Structure.DIFFERENT_NONZERO_PATTERN,
+        )
+        A_sum.assemble()
+        blocks.append(A_sum)
+        zero_ei = _zero_sparse_matrix(left, interior, comm)
+        zero_ie = _zero_sparse_matrix(interior, left, comm)
+        zero_ii = _zero_sparse_matrix(interior, interior, comm)
+        blocks.extend((zero_ei, zero_ie, zero_ii))
+        for nest_blocks in (
+            [[A_RL, A_RI], [A_IL, A_II]],
+            [[A_sum, A_LI], [A_IR, zero_ii]],
+            [[A_LR, zero_ei], [zero_ie, zero_ii]],
+        ):
+            result.append(_augmented_sparse_matrix(nest_blocks, comm))
+        augmented = AugmentedBlochPolynomial(
+            K0=result[0],
+            K1=result[1],
+            K2=result[2],
+            endpoint_rows=left,
+            interior_rows=interior,
+        )
+        return augmented
+    except Exception:
+        for matrix in result:
+            matrix.destroy()
+        raise
+    finally:
+        for matrix in blocks:
+            matrix.destroy()
+        for index in (interior_is, right_is, left_is):
+            index.destroy()
+
+
 def build_one_cell_two_port_schur_action(
     matrix: PETSc.Mat,
     rows: EndpointActiveRows,
@@ -1353,8 +1525,11 @@ __all__ = [
     "EndpointActiveRows",
     "EndpointModeLifter",
     "OneCellTwoPortSchurAction",
+    "AugmentedBlochPolynomial",
     "ProjectedTwoPortSchur",
+    "bloch_polynomial_action",
     "bloch_residual_metrics",
+    "build_augmented_bloch_polynomial",
     "build_one_cell_two_port_schur_action",
     "build_projected_two_port_schur",
     "compose_projected_two_port_schur",
