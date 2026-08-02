@@ -24,6 +24,9 @@ from benchmarks.run_task036_r1_port_capacity import (
     _canonical_npz_arrays,
     _canonicalize_candidate,
     _deduplicate_candidates,
+    _closed_selected_component_indices,
+    _select_pairing_subblock,
+    _selected_pairing_gate,
     _bounded_right_components,
     _right_pool_gate,
     _right_reciprocal_closure,
@@ -553,7 +556,61 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
     def test_r1b_fixed_family_pool_contracts_without_pep(self) -> None:
         self.assertEqual(
             MODE_POOL_TARGETS,
-            (1.0 + 0.0j, 1.0j, -1.0 + 0.0j, -1.0j),
+            (
+                1.0 + 0.0j,
+                1.0j,
+                -1.0 + 0.0j,
+                -1.0j,
+                0.38268343236508984 + 0.9238795325112867j,
+                0.38268343236508984 - 0.9238795325112867j,
+            ),
+        )
+        duplicate_pairing = _select_pairing_subblock(
+            np.ones((3, 3), dtype=np.complex128),
+            [10, 11, 12],
+            [20, 21, 22],
+        )
+        self.assertEqual(duplicate_pairing["numerical_rank"], 1)
+        self.assertEqual(
+            duplicate_pairing["selected"]["right_indices"],
+            [10],
+        )
+        self.assertEqual(
+            duplicate_pairing["selected"]["adjoint_indices"],
+            [20],
+        )
+        full_pairing = _select_pairing_subblock(
+            np.diag([1.0, 0.5]).astype(np.complex128),
+            [30, 31],
+            [40, 41],
+        )
+        self.assertEqual(full_pairing["numerical_rank"], 2)
+        self.assertEqual(full_pairing["selected"]["right_indices"], [30, 31])
+        self.assertLessEqual(full_pairing["selected"]["condition"], 1.0e10)
+        green = {
+            "green_pairing_relative": 1.0e-12,
+            "primal_outward_balance_relative": 2.0e-12,
+            "adjoint_outward_balance_relative": 3.0e-12,
+        }
+        self.assertTrue(_selected_pairing_gate(2.0, green))
+        self.assertFalse(_selected_pairing_gate(1.0e10 + 1.0, green))
+        for key in green:
+            failed_green = dict(green)
+            failed_green[key] = 1.0e-10 + 1.0e-12
+            self.assertFalse(_selected_pairing_gate(2.0, failed_green))
+        self.assertEqual(
+            _closed_selected_component_indices(
+                [[0, 1]],
+                {0: {"selected_rank": 1}, 1: {"selected_rank": 2}},
+            ),
+            [],
+        )
+        self.assertEqual(
+            _closed_selected_component_indices(
+                [[0, 1]],
+                {0: {"selected_rank": 2}, 1: {"selected_rank": 2}},
+            ),
+            [0, 1],
         )
         state = np.asarray([1.0 + 0.0j, 0.0j], dtype=np.complex128)
         variable, multiplier, mapped, metadata = _canonicalize_candidate(

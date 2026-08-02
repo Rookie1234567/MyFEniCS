@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+from itertools import combinations
 import json
 from pathlib import Path
 import resource
@@ -36,11 +37,18 @@ from src.solvers.one_cell_discrete_bloch import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MODE_POOL_TARGETS = (1.0 + 0.0j, 1.0j, -1.0 + 0.0j, -1.0j)
+MODE_POOL_TARGETS = (
+    1.0 + 0.0j,
+    1.0j,
+    -1.0 + 0.0j,
+    -1.0j,
+    0.38268343236508984 + 0.9238795325112867j,
+    0.38268343236508984 - 0.9238795325112867j,
+)
 MODE_POOL_FAMILIES = ("P", "Prev", "Q", "Qrev")
 MODE_POOL_NEV = 128
 MODE_POOL_MAX_IT = 100
-MODE_POOL_WALL_LIMIT_SECONDS = 4200.0
+MODE_POOL_WALL_LIMIT_SECONDS = 6600.0
 MODE_POOL_RSS_LIMIT_BYTES = 4 * 1024**3
 MODE_POOL_SWAP_LIMIT_KIB = 0
 MODE_POOL_BLOCK_TOL = 1.0e-6
@@ -147,6 +155,87 @@ def _block_adjoint_mapping_error(
         )
 
     return max(directed(expected, adjoint), directed(adjoint, expected))
+
+
+def _select_pairing_subblock(
+    normalized: np.ndarray,
+    right_indices: list[int],
+    adjoint_indices: list[int],
+) -> dict[str, Any]:
+    """Select one deterministic, numerically strongest raw subblock."""
+
+    matrix = np.asarray(normalized, dtype=np.complex128)
+    if matrix.shape != (len(adjoint_indices), len(right_indices)):
+        raise ValueError("Pairing matrix and block indices have incompatible shapes.")
+    singular_values = np.linalg.svd(matrix, compute_uv=False)
+    if not singular_values.size:
+        rank = 0
+    else:
+        threshold = max(float(singular_values[0]), 1.0e-30) * 1.0e-10
+        rank = int(np.count_nonzero(singular_values > threshold))
+    candidates: list[dict[str, Any]] = []
+    if rank:
+        for right_positions in combinations(range(len(right_indices)), rank):
+            for adjoint_positions in combinations(range(len(adjoint_indices)), rank):
+                block = matrix[np.ix_(adjoint_positions, right_positions)]
+                block_singular = np.linalg.svd(block, compute_uv=False)
+                if not block_singular.size:
+                    continue
+                condition = float(
+                    block_singular[0] / max(float(block_singular[-1]), 1.0e-30)
+                )
+                candidates.append(
+                    {
+                        "right_indices": [right_indices[i] for i in right_positions],
+                        "adjoint_indices": [
+                            adjoint_indices[i] for i in adjoint_positions
+                        ],
+                        "singular_values": block_singular.tolist(),
+                        "minimum_singular_value": float(block_singular[-1]),
+                        "condition": condition,
+                    }
+                )
+    candidates.sort(
+        key=lambda option: (
+            -option["minimum_singular_value"],
+            option["condition"],
+            tuple(option["right_indices"]),
+            tuple(option["adjoint_indices"]),
+        )
+    )
+    return {
+        "raw_right_block_size": len(right_indices),
+        "raw_adjoint_block_size": len(adjoint_indices),
+        "singular_values": singular_values.tolist(),
+        "numerical_rank": rank,
+        "pairing_rcond": 1.0e-10,
+        "selected": candidates[0] if candidates else None,
+    }
+
+
+def _selected_pairing_gate(condition: float, green: dict[str, float]) -> bool:
+    return condition <= 1.0e10 and all(
+        green[key] <= 1.0e-10
+        for key in (
+            "green_pairing_relative",
+            "primal_outward_balance_relative",
+            "adjoint_outward_balance_relative",
+        )
+    )
+
+
+def _closed_selected_component_indices(
+    components: list[list[int]],
+    qualified_blocks: dict[int, dict[str, Any]],
+) -> list[int]:
+    selected: list[int] = []
+    for component in components:
+        if not all(index in qualified_blocks for index in component):
+            continue
+        ranks = {int(qualified_blocks[index]["selected_rank"]) for index in component}
+        if len(ranks) == 1:
+            selected.extend(component)
+    return sorted(selected)
 
 
 def _parse_args() -> argparse.Namespace:
@@ -1240,7 +1329,7 @@ def main() -> None:
             set(range(len(adjoint_blocks))) - set(accepted_mapping.values())
         )
         bounded_right_indices = set(right_bounded["bounded_effective_block_indices"])
-        qualified_blocks: list[tuple[int, list[int], list[int]]] = []
+        qualified_blocks: dict[int, dict[str, Any]] = {}
         for right_index, right_block in enumerate(right_blocks_list):
             if right_index not in bounded_right_indices:
                 block_reports.append(
@@ -1291,15 +1380,9 @@ def main() -> None:
                 "mapped": right_index in accepted_mapping,
                 "qualified": False,
             }
-            if not report["mapped"] or not (
-                all(_residual_ok(right_entries[item]) for item in right_block)
-                and all(_residual_ok(adjoint_entries[item]) for item in adjoint_block)
-            ):
+            if not report["mapped"]:
                 block_reports.append(report)
                 continue
-            right_states = np.column_stack(
-                [right_entries[item]["state"] for item in right_block]
-            )
             adjoint_states = np.column_stack(
                 [adjoint_entries[item]["state"] for item in adjoint_block]
             )
@@ -1322,74 +1405,117 @@ def main() -> None:
                 out=np.zeros_like(pairing),
                 where=normalizer > 1.0e-30,
             )
-            singular_values = np.linalg.svd(normalized, compute_uv=False)
-            pairing_rcond = 1.0e-10
-            rank = int(
-                np.count_nonzero(
-                    singular_values
-                    > max(float(singular_values[0]), 1.0e-30) * pairing_rcond
-                )
+            pairing_selection = _select_pairing_subblock(
+                normalized,
+                right_block,
+                adjoint_block,
             )
-            condition = float(
-                singular_values[0] / max(float(singular_values[-1]), 1.0e-30)
+            singular_values = np.asarray(
+                pairing_selection["singular_values"], dtype=float
             )
-            green = endpoint_cauchy_balance(
-                action,
-                right_states,
-                adjoint_states,
-                multipliers=[right_entries[item]["multiplier"] for item in right_block],
-                adjoint_multipliers=[
-                    adjoint_entries[item]["multiplier"] for item in adjoint_block
-                ],
+            rank = int(pairing_selection["numerical_rank"])
+            raw_condition = (
+                float(singular_values[0] / max(float(singular_values[-1]), 1.0e-30))
+                if singular_values.size
+                else None
+            )
+            selected_option = pairing_selection["selected"]
+            selected_green: dict[str, Any] | None = None
+            accepted_option: dict[str, Any] | None = None
+            if selected_option is not None:
+                selected_right = selected_option["right_indices"]
+                selected_adjoint = selected_option["adjoint_indices"]
+                if all(
+                    _residual_ok(right_entries[item]) for item in selected_right
+                ) and all(
+                    _residual_ok(adjoint_entries[item]) for item in selected_adjoint
+                ):
+                    selected_right_states = np.column_stack(
+                        [right_entries[item]["state"] for item in selected_right]
+                    )
+                    selected_adjoint_states = np.column_stack(
+                        [adjoint_entries[item]["state"] for item in selected_adjoint]
+                    )
+                    selected_green = endpoint_cauchy_balance(
+                        action,
+                        selected_right_states,
+                        selected_adjoint_states,
+                        multipliers=[
+                            right_entries[item]["multiplier"] for item in selected_right
+                        ],
+                        adjoint_multipliers=[
+                            adjoint_entries[item]["multiplier"]
+                            for item in selected_adjoint
+                        ],
+                    )
+                    if _selected_pairing_gate(
+                        selected_option["condition"], selected_green
+                    ):
+                        accepted_option = selected_option
+            selected_right = selected_option["right_indices"] if selected_option else []
+            selected_adjoint = (
+                selected_option["adjoint_indices"] if selected_option else []
             )
             report.update(
                 {
                     "pairing_matrix": "w_i^H*(K1+2*lambda_j*K2)*x_j",
                     "pairing_row_norms": row_norms.tolist(),
                     "pairing_derivative_column_norms": derivative_norms.tolist(),
-                    "pairing_rcond": pairing_rcond,
+                    "pairing_rcond": pairing_selection["pairing_rcond"],
                     "pairing_condition_limit": 1.0e10,
                     "cauchy_pairing_singular_values": singular_values.tolist(),
                     "cauchy_pairing_rank": rank,
-                    "cauchy_pairing_condition": condition,
-                    "green_cauchy": green,
-                    "qualified": bool(
-                        rank == len(right_block)
-                        and condition <= 1.0e10
-                        and green["green_pairing_relative"] <= 1.0e-10
-                        and green["primal_outward_balance_relative"] <= 1.0e-10
-                        and green["adjoint_outward_balance_relative"] <= 1.0e-10
+                    "cauchy_pairing_condition": raw_condition,
+                    "selected_right_indices": selected_right,
+                    "selected_adjoint_indices": selected_adjoint,
+                    "selected_rank": (
+                        len(selected_right) if selected_option is not None else None
                     ),
+                    "selected_cauchy_pairing_singular_values": (
+                        selected_option["singular_values"]
+                        if selected_option is not None
+                        else []
+                    ),
+                    "selected_pairing_condition": (
+                        selected_option["condition"]
+                        if selected_option is not None
+                        else None
+                    ),
+                    "green_cauchy": selected_green,
+                    "qualified": accepted_option is not None,
                 }
             )
             if report["qualified"]:
-                qualified_blocks.append((right_index, right_block, adjoint_block))
+                qualified_blocks[right_index] = {
+                    "right_block_index": right_index,
+                    "right_indices": selected_right,
+                    "adjoint_indices": selected_adjoint,
+                    "selected_rank": len(selected_right),
+                }
             block_reports.append(report)
 
-        qualified_indices = {item[0] for item in qualified_blocks}
-        effective_indices = sorted(
-            index
-            for component in right_blocks["components"]
-            if set(component).issubset(bounded_right_indices)
-            and all(index in qualified_indices for index in component)
-            for index in component
+        effective_indices = _closed_selected_component_indices(
+            [
+                component
+                for component in right_blocks["components"]
+                if set(component).issubset(bounded_right_indices)
+            ],
+            qualified_blocks,
         )
-        effective_blocks = [
-            item for item in qualified_blocks if item[0] in effective_indices
-        ]
+        effective_blocks = [qualified_blocks[index] for index in effective_indices]
         if effective_blocks:
             right_columns = np.column_stack(
                 [
                     right_entries[item]["state"]
-                    for _, block, _ in effective_blocks
-                    for item in block
+                    for selected in effective_blocks
+                    for item in selected["right_indices"]
                 ]
             )
             adjoint_columns = np.column_stack(
                 [
                     adjoint_entries[item]["state"]
-                    for _, _, block in effective_blocks
-                    for item in block
+                    for selected in effective_blocks
+                    for item in selected["adjoint_indices"]
                 ]
             )
             green_pairing = endpoint_cauchy_balance(
@@ -1398,16 +1524,18 @@ def main() -> None:
                 adjoint_columns,
                 multipliers=[
                     right_entries[item]["multiplier"]
-                    for _, block, _ in effective_blocks
-                    for item in block
+                    for selected in effective_blocks
+                    for item in selected["right_indices"]
                 ],
                 adjoint_multipliers=[
                     adjoint_entries[item]["multiplier"]
-                    for _, _, block in effective_blocks
-                    for item in block
+                    for selected in effective_blocks
+                    for item in selected["adjoint_indices"]
                 ],
             )
-        effective_columns = sum(len(block) for _, block, _ in effective_blocks)
+        effective_columns = sum(
+            len(selected["right_indices"]) for selected in effective_blocks
+        )
         global_green_gate = bool(
             green_pairing["green_pairing_relative"] is not None
             and green_pairing["green_pairing_relative"] <= 1.0e-10
@@ -1456,7 +1584,9 @@ def main() -> None:
         adjoint_npz_entries: list[dict[str, Any]] = []
         right_npz_blocks: list[list[int]] = []
         adjoint_npz_blocks: list[list[int]] = []
-        for _, right_block, adjoint_block in effective_blocks:
+        for selected in effective_blocks:
+            right_block = selected["right_indices"]
+            adjoint_block = selected["adjoint_indices"]
             right_start = len(right_npz_entries)
             adjoint_start = len(adjoint_npz_entries)
             right_npz_entries.extend(right_entries[item] for item in right_block)
