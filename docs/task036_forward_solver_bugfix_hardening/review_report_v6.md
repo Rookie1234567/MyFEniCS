@@ -530,3 +530,313 @@ exact local boundary-layer treatment
 候选basis应由 exact trace-chain公平比较，优先审计 discrete Bloch 和 RCWA/Fourier modes；
 transfer/POD只能在真实可达source manifold上重新评价。只有在远低于1200维时通过全部
 operator和observable合同，才算真正解决接口空间问题。
+
+---
+
+## 11. 对 `reply_review_report_v6.md` 的二次审阅与强制修订
+
+### 11.1 总体处置
+
+```text
+reply_disposition                         = ACCEPTED_WITH_MATERIAL_CORRECTIONS
+localized_condensation_equivalence_issue = accepted_and_binding
+rank_normalization                       = accepted_and_binding
+B0_B1_Binfinity_first_batch               = accepted
+RCWA_current_batch                        = deferred_but_not_rejected
+clean_A007_only                           = conditionally_accepted
+R1_capacity_semantics                     = revised_below
+resource_gate                             = split_into_physics_and_engineering
+hard_source_line_limit                    = rejected_as_formal_gate
+```
+
+Codex 的回复不是单纯“反驳 Review”，而是指出了原 V6 中一个真实且重要的代数漏洞：
+**若 exact buffer 最终仍精确凝聚到与历史 `30/90`、`40/80` 完全相同的 M120 retained
+coordinates，那么它与历史负模型代数等价，只能改变存储和生命周期，不能改变物理解。**
+这一点必须接受，且原第4.1节不得被单独当作物理修复方案。
+
+回复对 `M120 per direction = 240 primal columns per side` 的统一口径也是正确的。后续所有
+rank、unknown、left-test和内存比较必须使用明确字段，不能再把单方向 M、双向 primal列数、
+joint-Cauchy状态维数和left/Petrov列数混称为“rank”。
+
+回复把首批比较收窄为 `B0/B1/B∞`，避免同时建设 discrete Bloch、RCWA、POD和层次矩阵
+四条路线，符合当前效率要求。首批重点验证与 exact one-cell FE/Schur 离散一致的 B1，是
+合理的最小研究问题。
+
+但回复仍有若干地方需要实质修正，不能全盘照收。
+
+### 11.2 R0只clean复现A007的适用边界
+
+先clean复现A007-P可以确认 exact trace-chain 最新提交、CPU绑定、watchdog和资源口径没有
+依赖 dirty worktree，因此作为最小R0是合理的。
+
+但 R1 的容量判定主要面向 A004-S 等困难输入。旧 A004-S Full3D/exact-trace artifact 只有在
+以下条件满足时才能作为R1老师解继续复用：
+
+```text
+current clean numerical-kernel blob identity
+    == artifact numerical-kernel blob identity
+
+mesh / p / Ny / material / wavelength / Bloch phase / DtN / postprocess identity
+    == frozen authority identity
+```
+
+不能只因为A007 clean pass，就默认所有旧A004 artifact已被clean-source重新资格化。若任一
+numerical kernel或observable定义发生变化，必须在R1前补一次clean A004 exact-oracle；这不是
+恢复广域PDE扫描，而是保证容量老师解与当前代码一致。
+
+因此：
+
+```text
+R0 clean A007 = minimum reproduction Gate
+A004 clean rerun = conditional on kernel/artifact identity, not permanently forbidden
+```
+
+p6动态trace泛化继续延期是合理的。
+
+### 11.3 R1必须区分“任意全迹空间”与“物理可达流形”
+
+回复已经提醒 reachable-source 与 worst-case full-space metric不能混写，但当前主Gate仍可能
+被理解为要求 `d_port<=360` 对任意1200维Cauchy source都达到统一 `1e-8`。这对低秩物理
+端口空间可能是不必要、甚至原则上不可能的要求。
+
+R1必须并列维护两个不同结论：
+
+```text
+uniform_full_trace_diagnostic
+    = 对任意数学trace方向的最坏情况谱尾；只作可压缩性上界诊断
+
+reachable_physics_gate
+    = 对预先冻结的物理source manifold、参数切向载荷和独立holdout输入的正式Gate
+```
+
+正式低秩资格化应基于：
+
+- 预先冻结的external incoming diffraction channels；
+- 预先冻结的S/P、掠射角、方位角和几何参数切向载荷；
+- 必要的material/endcap residual loads；
+- 与basis构造完全隔离的holdout anchors。
+
+若 full-space uniform tail不通过、但reachable manifold与独立holdout全部通过，只能写：
+
+```text
+physics-manifold compression pass
+uniform arbitrary-trace compression not demonstrated
+```
+
+不能把前者升级为任意输入production pass，也不能用后者否定一个对实际服务输入有效的空间。
+
+反过来，若basis直接吸收某个Full3D solution snapshot，再用同一个snapshot验证，就没有独立
+证据。回复提出capacity/holdout隔离是正确的，必须落实到文件和数据身份，而不是只写原则。
+
+### 11.4 observable replay必须是真正的reduced solve
+
+R1中的“all frozen holdout channel/goal replay”不能通过以下方式完成：
+
+```text
+把Full3D老师解正交投影到candidate basis
+→ 直接从投影场计算通道
+```
+
+这种做法只能证明最佳逼近能力，会系统性高估实际Galerkin/Petrov求解器的性能。
+
+正式replay必须：
+
+1. 从basis和exact trace-chain operator形成冻结的reduced trial/test operator；
+2. 使用独立的physical RHS在reduced operator上求解；
+3. 从reduced solution独立恢复observable；
+4. 与未参与basis/rank选择的holdout Full3D/exact-oracle比较。
+
+最佳逼近误差可以保留为capacity diagnostic，但不能代替reduced-solve observable Gate。
+
+### 11.5 B1 discrete-Bloch的实现边界
+
+B1是当前最合理的第一候选，但它不是天然成功，也不是未来0.7 nm可扩展性的证明。
+
+当前尺度的B1必须：
+
+- 使用同一one-cell FE/Schur离散；
+- 保持forward/backward、reciprocal和near-degenerate connected blocks整体；
+- 不为了恰好得到`280/320/360`列而拆开认证块；
+- 使用稳定的two-sided scattering、ordered QZ/Schur或等价passive classification；
+- 禁止通过growing inverse factors传播强倏逝模式；
+- 明确它是当前p5/h10离线basis generator，不把完整1200/2400维dense eigenproblem包装成
+  0.7 nm可扩展实现。
+
+因此冻结维数 `240/280/320/360` 是目标上限，不是必须精确命中的数字。若reciprocal或
+near-degenerate block closure要求向上取整，应报告：
+
+```text
+requested_dimension
+effective_block_closed_dimension
+```
+
+且所有同维比较使用effective dimension。
+
+若B1在有效维数不超过360时失败，正式结论只能是：
+
+```text
+DISCRETE_BLOCH_LOW_RANK_NOT_DEMONSTRATED_IN_THIS_BATCH
+```
+
+不能由此直接推出所有RCWA、reachable-source transfer/POD或其他低秩接口表示都不可能。
+
+### 11.6 anti-equivalence Gate：非零修正是必要条件，不是充分条件
+
+回复要求报告 `ΔK_corr` 并证明candidate不等价于历史30/90、40/80负模型，这一点正确。
+但仅有：
+
+```text
+||ΔK_corr|| > numerical_noise
+```
+
+不能获得物理credit。一个非零修正也可能让exact-action和observable更差。
+
+必须同时满足：
+
+```text
+candidate exact-operator error
+    < old 30/90 error
+    and < old 40/80 error
+
+candidate joint-Cauchy error
+    < old 30/90 error
+    and < old 40/80 error
+
+independent holdout reduced-solve observables
+    improve in the frozen metric
+```
+
+rank前缀的误差趋势应完整报告，但由于lossy Petrov空间不保证每个单目标严格单调，不能把
+“每一级都单调”设为硬数学Gate。最终冻结rank必须由预先定义的综合合同决定。
+
+### 11.7 资源Gate应与物理容量Gate分开
+
+回复将：
+
+```text
+predicted_peak + uncertainty <= 0.70 * Full3D
+```
+
+作为actual implementation的统一前置条件，工程目标明确，但作为数学容量结论过于刚性。
+建议分为：
+
+```text
+physics_compression_pass
+    joint-Cauchy/operator/holdout observables全部通过
+
+engineering_auto_authorize
+    predicted_peak_upper <= 0.70 * Full3D
+
+engineering_review_zone
+    0.70 * Full3D < predicted_peak_upper <= 0.80 * Full3D
+
+no_meaningful_advantage
+    predicted_peak_upper > 0.80 * Full3D
+```
+
+- `<=0.70`：可以自动进入R2；
+- `0.70–0.80`：不得自动运行actual，但也不得把低秩数学结果写成失败，应停下来review是否
+  还有明确的生命周期/缓存常数可去除；
+- `>0.80`：对当前13.5 nm直接法没有足够工程优势，不进入actual。
+
+这一区分避免用一个资源目标抹掉有价值的数学结论，同时也防止以“以后还能优化”为理由把
+接近Full3D的方案包装成Hybrid成功。
+
+### 11.8 wall time必须区分cold与warm
+
+对于后续代理模型、参数反演和角度扫描，basis/QEP生成可能被多个RHS或邻近参数点摊销。
+因此 `external wall <= Full3D` 不能只比较一次cold全过程。
+
+必须至少报告：
+
+```text
+cold_setup_wall
+warm_repeated_solve_wall
+basis/cache_build_wall
+cache_identity_and_invalidation
+```
+
+正式R3物理资格化不因一次cold setup略慢而失败；工程目标应优先要求：
+
+```text
+warm_repeated_solve_wall <= Full3D repeated_solve_wall
+```
+
+若只能单次运行，则同时给出含/不含一次性basis生成的两个口径，不得选择性引用较好数字。
+
+### 11.9 不接受以代码行数作为正式停止Gate
+
+回复提出“首个action fixture前新增超过约500行非测试代码就停止”。这可以作为提醒，但不能
+成为正式数值Gate。必要的orientation、left/right、Schur和non-Hermitian实现有时确实超过
+任意行数阈值。
+
+正式限制应改为scope-based：
+
+- 不新增generic framework、campaign、scheduler、fallback和自动调参；
+- 每个新增模块必须职责单一；
+- 若需要同时重写mode generation、coupling和global solver三个架构层，则停止review；
+- 若只是在一个已批准数值层中实现完整而必要的算法，不因行数机械停止。
+
+代码规模必须报告，但行数不是物理正确性的替代指标。
+
+### 11.10 RCWA延期是合理的，但不能被路线性否定
+
+当前批次不实现RCWA是合理的：Task036分支没有绑定Lumerical工程、脚本、raw complex
+channel amplitudes和joint E/H trace，无法与B0/B1做同一authority比较。
+
+用户现有RCWA报告只监测`R_total、T_total、R00、T00`，输入为`theta=80°、phi=0°`；同时
+几何在y方向均匀，报告明确说明kv扫描不改变功率。因此它是规则近一维条纹下的强正信号，
+不是generic 3D接口basis已经通过的证据。
+
+若B1失败，下一轮review仍应保留两条候选：
+
+```text
+independent full-RCWA qualification on the exact A004/A007 contract
+reachable-source transfer/POD with strict holdout separation
+```
+
+不能因为本批收窄为B1，就在战略上把RCWA永久删除。
+
+### 11.11 修订后的执行矩阵
+
+| 阶段 | 修订决定 |
+|---|---|
+| R0 clean A007-P | 批准；同时完成A004旧authority的kernel/artifact identity审计 |
+| clean A004 oracle | 仅在identity不等价时必跑；等价时复用 |
+| R1 B0/B1/B∞ | 批准；effective dimensions按reciprocal/near-degenerate block闭合 |
+| full-space tail | diagnostic，不替代reachable-physics Gate |
+| holdout observable | 必须由独立reduced solve得到，不允许teacher-solution投影冒充 |
+| B1 d_port<=360 pass且peak<=0.70 | 自动解锁R2 |
+| B1 physics pass但peak在0.70–0.80 | 停止并review，不自动actual |
+| B1 peak>0.80或physics fail | 本批停止；不得增rank |
+| R2 localized candidate | 必须含真实`R_corr`和可测`ΔK_corr`，不能只是Schur重写 |
+| R3 A004-S | 仍为第一个actual reduced anchor |
+| A007-P confirmation | 仅在A004-S全部Gate通过后运行 |
+| RCWA/POD/p6/iterative | 当前批次延期；不是永久否决 |
+
+### 11.12 对Codex下一步的最终指令
+
+Codex应以 `reply_review_report_v6.md` 的收窄路线为主体，并以上述11.2–11.11修正为最终执行
+边界。当前不得直接实现actual candidate。
+
+下一步只做：
+
+```text
+R0 clean A007 exact-oracle reproduction
++
+A004 frozen authority numerical-kernel identity audit
++
+R1 B0/B1/B∞ bounded offline capacity
+```
+
+R1结束后必须先提交并推送：
+
+```text
+docs/task036_forward_solver_bugfix_hardening/response_v6.md
+```
+
+随后停止等待review。除非R1同时达到physics Gate与`<=0.70 Full3D`的auto-authorize Gate，
+本批不进入R2/R3；即使达到，也应先在response中明确列出effective rank、anti-equivalence、
+reduced-solve holdout、cold/warm资源模型和修改规模，再按既有授权执行单一candidate。
+
+最终状态不得提前写成compressed Hybrid pass。
