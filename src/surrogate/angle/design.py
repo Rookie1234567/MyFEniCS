@@ -36,7 +36,9 @@ def canonical_hash(value: Any) -> str:
 
 
 def point_tuple(point: dict[str, Any]) -> list[float]:
-    return [float(point[key]) for key in ("height_nm", "width_x_nm", "grazing_deg", "azimuth_deg")]
+    # Match the production design contract's 12-decimal tuple canonicalization.
+    return [float(np.round(float(point[key]), 12))
+            for key in ("height_nm", "width_x_nm", "grazing_deg", "azimuth_deg")]
 
 
 def cutoff_margins(angles: np.ndarray) -> np.ndarray:
