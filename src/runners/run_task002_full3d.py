@@ -16,6 +16,7 @@ from src.forward_data.task002_full3d import (
     extract_task002_full3d_orders,
     task002_full3d_config_identity,
     task002_full3d_topology_identity,
+    validate_mumps_icntl_14,
 )
 from src.forward_data.task002_schema import Task002ForwardParameters
 from src.forward_data.task002_runtime_topology import (
@@ -41,13 +42,21 @@ def main() -> int:
         "--output-profile", choices=("ordinary", "compact_surrogate_record"),
         default="compact_surrogate_record",
     )
+    parser.add_argument(
+        "--mumps-icntl-14", type=int, default=40,
+        help="explicit in-core MUMPS workspace percentage (reviewed ladder)",
+    )
     args = parser.parse_args()
+    mumps_icntl_14 = validate_mumps_icntl_14(args.mumps_icntl_14)
     parameters = Task002ForwardParameters.from_mapping(
         json.loads(args.parameters_json.read_text(encoding="utf-8"))
     )
     if len(args.baseline_sha) != 40:
         raise ValueError("formal Task002 Full3D source SHA must be full length")
-    cfg = build_task002_full3d_config(parameters, output_profile=args.output_profile)
+    cfg = build_task002_full3d_config(
+        parameters, output_profile=args.output_profile,
+        mumps_icntl_14=mumps_icntl_14,
+    )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     runtime_identity: dict[str, object] = {}
 
@@ -73,7 +82,9 @@ def main() -> int:
         mother = extract_task002_full3d_orders(
             raw_orders, parameters=parameters, port_power=port,
         )
-        topology = task002_full3d_topology_identity(parameters, comm_size=2)
+        topology = task002_full3d_topology_identity(
+            parameters, comm_size=2, mumps_icntl_14=mumps_icntl_14,
+        )
         if not runtime_identity:
             raise RuntimeError("Task002 production solve did not emit runtime topology identity")
         residual = float(summary["linear_system_relative_residual"])
@@ -87,7 +98,26 @@ def main() -> int:
             "solver_route_id": parameters.fidelity["solver_route_id"],
             "config_identity": task002_full3d_config_identity(
                 parameters, output_profile=args.output_profile,
+                mumps_icntl_14=mumps_icntl_14,
             ),
+            "solver_identity": {
+                "requested_petsc_options": summary.get(
+                    "linear_solve_petsc_options", cfg.petsc_extra_options,
+                ),
+                "actual_ksp_type": summary.get("actual_ksp_type"),
+                "actual_pc_type": summary.get("actual_pc_type"),
+                "actual_pc_factor_solver_type": summary.get(
+                    "actual_pc_factor_solver_type",
+                ),
+                "factor_inventory": summary.get("stage4_dtn_factor_inventory"),
+                "requested_mat_mumps_icntl_14": mumps_icntl_14,
+                "actual_mat_mumps_icntl_14": (
+                    (summary.get("stage4_dtn_factor_inventory") or {}).get(
+                        "mumps_icntl_14_observed_percent"
+                    )
+                ),
+                "option_scope": "prefixed_ksp",
+            },
             "planned_topology_identity": topology,
             "actual_runtime_topology_identity": runtime_identity["actual"],
             "planned_vs_actual": runtime_identity,

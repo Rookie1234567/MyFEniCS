@@ -21,7 +21,7 @@ MODEL_ID = "S_PROD_FULL3D_STATIC_P5_H10_NY4"
 ROUTE_ID = "full3d_static_uniform_n1curl_p5_h10_ny4"
 PARAMETER_SCHEMA = "task002.s-p5-ny4-production-parameters.v3"
 OBSERVABLE_SCHEMA = "task002.fixed-n0-orders.v3"
-DESIGN_SCHEMA = "task002.m3r-design.v1"
+DESIGN_SCHEMA = "task004.angle-design.v2"
 HEIGHT = 120.0
 WIDTH = 17.0
 GRAZING_RANGE = (0.5, 10.0)
@@ -77,21 +77,31 @@ def _labels(angles: np.ndarray) -> list[dict[str, Any]]:
         high_azimuth = bool(point[1] >= 75.0)
         cutoff = bool(distance <= 0.02)
         interior = bool(not low and not high_azimuth and not cutoff)
+        labels = []
+        if low:
+            labels.append("low_grazing")
+        if high_azimuth:
+            labels.append("high_azimuth")
+        if cutoff:
+            labels.append("cutoff_near")
+        if interior:
+            labels.append("ordinary_interior")
         result.append({
             "low_grazing": low, "high_azimuth": high_azimuth,
             "cutoff_near": cutoff, "ordinary_interior": interior,
             "cutoff_distance": float(distance),
-            "region": ("low_grazing" if low else "high_azimuth" if high_azimuth
-                       else "cutoff_near" if cutoff else "ordinary_interior"),
+            "region_labels": labels,
+            "region_signature": "+".join(labels),
         })
     return result
 
 
-def _select_enrichment(pool: np.ndarray, structured: np.ndarray) -> np.ndarray:
+def _select_enrichment(pool: np.ndarray, structured: np.ndarray) -> tuple[np.ndarray, list[str]]:
     labels = _labels(pool)
     selected: list[int] = []
+    reasons: list[str] = []
 
-    def choose(predicate):
+    def choose(predicate, reason: str):
         candidates = [i for i, label in enumerate(labels)
                       if predicate(label) and i not in selected]
         if not candidates:
@@ -104,20 +114,24 @@ def _select_enrichment(pool: np.ndarray, structured: np.ndarray) -> np.ndarray:
                              if selected else 1.0)
             return 0.55 * from_grid + 0.45 * from_selected
         selected.append(max(candidates, key=score))
+        reasons.append(reason)
 
     # Four prescribed regimes first; low/cutoff overlap is intentional.
-    for predicate in (
-        lambda x: x["low_grazing"], lambda x: x["cutoff_near"],
-        lambda x: x["high_azimuth"], lambda x: x["ordinary_interior"],
+    for predicate, reason in (
+        (lambda x: x["low_grazing"], "low_grazing_coverage"),
+        (lambda x: x["cutoff_near"], "cutoff_near_coverage"),
+        (lambda x: x["high_azimuth"], "high_azimuth_coverage"),
+        (lambda x: x["ordinary_interior"], "ordinary_interior_coverage"),
     ):
-        choose(predicate)
+        choose(predicate, reason)
     while len(selected) < 16:
         candidates = [i for i in range(len(pool)) if i not in selected]
         selected.append(max(candidates, key=lambda i: min(
             float(np.min(_normal_angle_distance(pool[i:i + 1], pool[np.asarray(selected)]))),
             float(np.min(_normal_angle_distance(pool[i:i + 1], structured))),
         )))
-    return pool[np.asarray(selected)]
+        reasons.append("space_filling_diversity")
+    return pool[np.asarray(selected)], reasons
 
 
 def _validation_angles(training: np.ndarray) -> np.ndarray:
@@ -137,10 +151,27 @@ def _validation_angles(training: np.ndarray) -> np.ndarray:
     return values
 
 
-def _point(angle: np.ndarray, *, role: str, source: str) -> dict[str, Any]:
+def _point(angle: np.ndarray, *, role: str, source: str,
+           labels: dict[str, Any] | None = None,
+           selection_reason: str | None = None) -> dict[str, Any]:
+    metadata = labels or {
+        "low_grazing": False, "high_azimuth": False,
+        "cutoff_near": False, "ordinary_interior": True,
+        "cutoff_distance": float(cutoff_distance(np.asarray(angle)[None, :])[0]),
+        "region_labels": ["ordinary_interior"],
+        "region_signature": "ordinary_interior",
+    }
     return {"height_nm": HEIGHT, "width_x_nm": float(WIDTH),
             "grazing_deg": float(angle[0]), "azimuth_deg": float(angle[1]),
             "role": role, "design_source": source,
+            "selection_reason": selection_reason,
+            "region_labels": list(metadata["region_labels"]),
+            "region_signature": metadata["region_signature"],
+            "low_grazing": bool(metadata["low_grazing"]),
+            "high_azimuth": bool(metadata["high_azimuth"]),
+            "cutoff_near": bool(metadata["cutoff_near"]),
+            "ordinary_interior": bool(metadata["ordinary_interior"]),
+            "cutoff_distance": float(metadata["cutoff_distance"]),
             "model_id": MODEL_ID, "solver_route_id": ROUTE_ID}
 
 
@@ -154,6 +185,9 @@ def _design(design_id: str, points: list[dict[str, Any]], *, source_sha: str,
         "observable_schema_version": OBSERVABLE_SCHEMA,
         "production_model_id": MODEL_ID,
         "production_solver_route_id": ROUTE_ID,
+        "metadata_schema_version": "task004.angle-design-metadata.v2",
+        "tuple_semantics": "height_nm,width_x_nm,grazing_deg,azimuth_deg rounded to 12 decimals",
+        "anchor_overlap_policy": "explicitly recorded; anchors may overlap training tuples",
         "sobol_seed": sobol_seed, "point_count": len(points),
         "point_tuple_sha256": canonical_hash(tuples), "points": points,
     }
@@ -163,32 +197,49 @@ def build_designs(*, source_sha: str) -> dict[str, dict[str, Any]]:
     structured = np.asarray([[g, a] for g in STRUCTURED_GRAZING
                              for a in STRUCTURED_AZIMUTH], dtype=np.float64)
     pool = _sobol_angles(seed=20260802, count=4096)
-    enrichment = _select_enrichment(pool, structured)
+    enrichment, enrichment_reasons = _select_enrichment(pool, structured)
     training = np.vstack((structured, enrichment))
+    training_labels = _labels(training)
     validation = _validation_angles(training)
     anchors = np.asarray([[0.5, 0.0], [0.5, 90.0], [10.0, 0.0],
                           [10.0, 90.0], [5.25, 45.0]], dtype=np.float64)
-    if any(np.any(np.linalg.norm(training - row, axis=1) < 1.0e-10) for row in anchors):
-        pass
+    anchor_training_overlap = [
+        int(index) for index, anchor in enumerate(anchors)
+        if np.any(np.linalg.norm(training - anchor, axis=1) < 1.0e-10)
+    ]
+    anchor_validation_overlap = [
+        int(index) for index, anchor in enumerate(anchors)
+        if np.any(np.linalg.norm(validation - anchor, axis=1) < 1.0e-10)
+    ]
     designs = {
         "training": _design(
             "task004_angle_training_v1",
-            [_point(row, role="structured_angle" if i < 80 else "cutoff_low_grazing_enrichment",
-                    source="task004_structured_80" if i < 80 else "task004_sobol_4096_enrichment")
-             for i, row in enumerate(training)], source_sha=source_sha, sobol_seed=20260802),
+            [_point(
+                row,
+                role="structured_angle" if i < 80 else "enrichment_angle",
+                source="task004_structured_80" if i < 80 else "task004_sobol_4096_enrichment",
+                labels=training_labels[i],
+                selection_reason=None if i < 80 else enrichment_reasons[i - 80],
+            ) for i, row in enumerate(training)], source_sha=source_sha, sobol_seed=20260802),
         "validation": _design(
             "task004_angle_frozen_validation_v1",
             [_point(row, role="blind_validation",
                     source="task004_sobol_all_domain_16" if i < 16
-                    else "task004_low_grazing_4" if i < 20 else "task004_cutoff_near_4")
+                    else "task004_low_grazing_4" if i < 20 else "task004_cutoff_near_4",
+                    labels=_labels(np.asarray([row]))[0],
+                    selection_reason="sealed_blind_validation")
              for i, row in enumerate(validation)], source_sha=source_sha, sobol_seed=20260803),
         "candidate_pool": _design(
             "task004_angle_candidate_pool_v1",
-            [_point(row, role="candidate_pool", source="task004_sobol_4096") for row in pool],
+            [_point(row, role="candidate_pool", source="task004_sobol_4096",
+                    labels=_labels(np.asarray([row]))[0], selection_reason="candidate_pool")
+             for row in pool],
             source_sha=source_sha, sobol_seed=20260802),
         "anchors": _design(
             "task004_anchor_training_v1",
-            [_point(row, role="clean_sha_anchor", source="case119_center_geometry_training_anchor") for row in anchors],
+            [_point(row, role="clean_sha_anchor", source="case119_center_geometry_training_anchor",
+                    labels=_labels(np.asarray([row]))[0], selection_reason="clean_sha_anchor")
+             for row in anchors],
             source_sha=source_sha),
     }
     return designs
@@ -201,8 +252,19 @@ def write_designs(output_dir: Path, *, source_sha: str) -> dict[str, dict[str, A
              "candidate_pool": "candidate_pool.json", "anchors": "anchor_design.json"}
     for key, design in designs.items():
         (output_dir / names[key]).write_text(json.dumps(design, indent=2) + "\n")
+    training_tuples = {tuple(point_tuple(point)) for point in designs["training"]["points"]}
+    validation_tuples = {tuple(point_tuple(point)) for point in designs["validation"]["points"]}
+    anchor_tuples = [point_tuple(point) for point in designs["anchors"]["points"]]
+    anchor_training_overlap = [
+        index for index, point in enumerate(anchor_tuples)
+        if tuple(point) in training_tuples
+    ]
+    anchor_validation_overlap = [
+        index for index, point in enumerate(anchor_tuples)
+        if tuple(point) in validation_tuples
+    ]
     split = {
-        "schema_version": "task004.angle-design-splits.v1", "source_sha": source_sha,
+        "schema_version": "task004.angle-design-splits.v2", "source_sha": source_sha,
         "training_sha256": designs["training"]["point_tuple_sha256"],
         "validation_sha256": designs["validation"]["point_tuple_sha256"],
         "candidate_pool_sha256": designs["candidate_pool"]["point_tuple_sha256"],
@@ -210,6 +272,9 @@ def write_designs(output_dir: Path, *, source_sha: str) -> dict[str, dict[str, A
         "training_validation_intersection": sorted(set(
             map(tuple, [point_tuple(p) for p in designs["training"]["points"]])) & set(
             map(tuple, [point_tuple(p) for p in designs["validation"]["points"]]))),
+        "anchor_training_overlap_indices": anchor_training_overlap,
+        "anchor_validation_overlap_indices": anchor_validation_overlap,
+        "anchor_overlap_checked": True,
     }
     split["combined_design_sha256"] = canonical_hash({k: split[k] for k in (
         "training_sha256", "validation_sha256", "candidate_pool_sha256", "anchor_sha256")})

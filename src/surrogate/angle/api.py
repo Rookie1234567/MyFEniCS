@@ -51,7 +51,7 @@ class AngleSurrogate:
         mask_identity = power_mask_authority(inputs)
         mask = mask_identity["power_carrying"][0]
         powers, power_std = self.package["power_model"].predict(
-            angles, mean, mask_identity["power_carrying"],
+            angles, mean, mask_identity["power_carrying"], aggregate_std=std,
         )
         nearest = np.min(np.linalg.norm(
             (angles - np.asarray(self.package["training_angles"])[None, :, :]) /

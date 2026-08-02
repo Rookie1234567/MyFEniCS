@@ -474,7 +474,9 @@ def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
     }
 
 
-def _petsc_factor_inventory(ksp) -> dict[str, Any]:
+def _petsc_factor_inventory(
+    ksp, *, requested_options: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Return only factor data exposed by the active petsc4py build."""
 
     inventory: dict[str, Any] = {
@@ -484,6 +486,11 @@ def _petsc_factor_inventory(ksp) -> dict[str, Any]:
         "mumps_raw_infog": {},
         "mumps_raw_rinfog": {},
         "mumps_api_available": False,
+        "mumps_icntl_14_requested_percent": (
+            None if requested_options is None else requested_options.get("mat_mumps_icntl_14")
+        ),
+        "mumps_icntl_14_observed_percent": None,
+        "mumps_workspace_relaxation_verified": False,
         "limitations": [],
     }
     try:
@@ -508,6 +515,19 @@ def _petsc_factor_inventory(ksp) -> dict[str, Any]:
         inventory["limitations"].append("mumps_raw_api_not_exposed")
         return inventory
     inventory["mumps_api_available"] = True
+    try:
+        inventory["mumps_icntl_14_observed_percent"] = int(
+            factor.getMumpsIcntl(14)
+        )
+        requested = inventory["mumps_icntl_14_requested_percent"]
+        inventory["mumps_workspace_relaxation_verified"] = (
+            requested is not None
+            and inventory["mumps_icntl_14_observed_percent"] == int(requested)
+        )
+    except Exception as exc:
+        inventory["limitations"].append(
+            f"mumps_icntl_14_observation_unavailable:{type(exc).__name__}"
+        )
     for index in range(1, 41):
         try:
             inventory["mumps_raw_infog"][str(index)] = int(factor.getMumpsInfog(index))

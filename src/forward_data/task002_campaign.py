@@ -20,6 +20,8 @@ from .task002_schema import Task002ForwardParameters
 CAMPAIGN_SCHEMA_VERSION = "task002.s-p5-ny4-design-campaign.v4"
 ALLOWED_STATUSES = {
     "reserved", "running", "measured_pass", "failed_numerical_gate",
+    "failed_direct_lu_workspace_underestimate", "failed_direct_lu_memory_limit",
+    "failed_direct_lu_numerical_singularity", "failed_direct_lu_other",
     "controlled_stop_resource", "interrupted_retryable",
 }
 
@@ -181,7 +183,11 @@ def run_design(args: argparse.Namespace) -> int:
         _atomic_write(args.campaign_manifest, manifest)
         if state == "measured_pass":
             continue
-        if state in {"failed_numerical_gate", "controlled_stop_resource"}:
+        if state in {
+            "failed_numerical_gate", "failed_direct_lu_workspace_underestimate",
+            "failed_direct_lu_memory_limit", "failed_direct_lu_numerical_singularity",
+            "failed_direct_lu_other", "controlled_stop_resource",
+        }:
             manifest["stop_reason"] = f"existing_failure:{key}:{state}"
             _atomic_write(args.campaign_manifest, manifest)
             return 2
@@ -209,6 +215,7 @@ def run_design(args: argparse.Namespace) -> int:
                 parameters, root=args.root.resolve(), baseline_sha=args.baseline_sha,
                 run_directory=run_directory, timeout_seconds=args.timeout_seconds,
                 output_profile="compact_surrogate_record",
+                mumps_icntl_14=args.mumps_icntl_14,
             )
         except (KeyboardInterrupt, SystemExit):
             row["status"] = "interrupted_retryable"
@@ -310,6 +317,7 @@ def _parser() -> argparse.ArgumentParser:
         run.add_argument("--stop-index", type=int)
         run.add_argument("--max-samples", type=int)
         run.add_argument("--timeout-seconds", type=float, default=1800.0)
+        run.add_argument("--mumps-icntl-14", type=int, choices=(40, 80, 120), default=40)
     status = subparsers.add_parser("status")
     status.add_argument("--baseline-sha", required=True)
     status.add_argument("--campaign-manifest", type=Path, required=True)

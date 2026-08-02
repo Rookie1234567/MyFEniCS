@@ -95,6 +95,20 @@ def formal_record_to_production_sample(
         raise ValueError("formal record actual topology is not Ny4")
     if record.get("source_sha") != manifest_row.get("source_sha"):
         raise ValueError("formal/manifest source SHA mismatch")
+    solver_identity = dict(record.get("solver_identity", {}))
+    config_identity = dict(record.get("config_identity", {}))
+    identity_is_required = (
+        record.get("schema_version") == "task002.full3d-ny4-record.v4"
+        or "solver_identity" in record
+        or "linear_solver" in config_identity
+    )
+    if identity_is_required:
+        if solver_identity.get("requested_mat_mumps_icntl_14") is None:
+            raise ValueError("formal record is missing explicit MUMPS ICNTL(14) identity")
+        if config_identity.get("linear_solver", {}).get("mat_mumps_icntl_14") != solver_identity.get(
+            "requested_mat_mumps_icntl_14"
+        ):
+            raise ValueError("formal solver/config MUMPS workspace identity mismatch")
     geometry = record["parameters"]["geometry"]
     configuration = record["parameters"]["configuration"]
     inputs = [
@@ -116,6 +130,10 @@ def formal_record_to_production_sample(
         "status": "measured_pass", "source_dirty": False,
         "model_id": record["model_id"],
         "solver_route_id": record["solver_route_id"],
+        "parameter_schema_version": record["parameters"].get("schema_version"),
+        "observable_schema_version": record["observables"]["mother_response"].get(
+            "schema_version", TASK002_OBSERVABLE_SCHEMA_VERSION,
+        ),
         "axis_cell_counts": record["actual_runtime_topology_identity"]["axis_cell_counts"],
         "aggregates": {
             name: record["observables"][name]
@@ -123,8 +141,10 @@ def formal_record_to_production_sample(
         },
         "mother_response": record["observables"]["mother_response"],
         "parameter_hash": record["parameter_hash"],
-        "config_hash": record["config_identity"]["config_sha256"],
+        "config_hash": config_identity["config_sha256"],
         "topology_hash": record["planned_topology_identity"]["topology_element_hash"],
+        "solver_identity": solver_identity,
+        "config_identity": config_identity,
         "actual_runtime_topology_hash": canonical_hash(
             record["actual_runtime_topology_identity"]
         ),

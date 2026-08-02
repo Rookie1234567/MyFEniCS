@@ -1209,7 +1209,9 @@ def _solve_augmented_system(
             solver_backend="PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
         ) from exc
     setup_seconds = float(progress_comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX))
-    factor_inventory = _petsc_factor_inventory(ksp)
+    factor_inventory = _petsc_factor_inventory(
+        ksp, requested_options=petsc_options,
+    )
     if out_dir is not None:
         _write_progress_event(
             out_dir,

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
 from scipy.interpolate import RBFInterpolator
 
 from ..models import ExactARDGP
-from ..physics import reconstruct_aggregates
+from ..physics import analytic_power_mask, reconstruct_aggregates
 
 
 def angle_features(angles: np.ndarray, candidate: str = "F1") -> np.ndarray:
@@ -46,19 +46,44 @@ def cutoff_distance(angles: np.ndarray) -> np.ndarray:
 
 
 def region_labels(angles: np.ndarray) -> list[str]:
-    values = np.asarray(angles, dtype=np.float64)
-    distance = cutoff_distance(values)
+    masks = region_masks(angles)
     labels = []
-    for row, cut in zip(values, distance):
-        if row[0] <= 2.0:
-            labels.append("low_grazing")
-        elif row[1] >= 75.0:
-            labels.append("high_azimuth")
-        elif cut <= 0.02:
-            labels.append("cutoff_near")
-        else:
-            labels.append("ordinary_interior")
+    for index in range(len(np.asarray(angles))):
+        current = [name for name, mask in masks.items() if bool(mask[index])]
+        labels.append("+".join(current))
     return labels
+
+
+def region_masks(angles: np.ndarray) -> dict[str, np.ndarray]:
+    """Return independent region masks; difficult regions are allowed to overlap."""
+
+    values = np.asarray(angles, dtype=np.float64)
+    if values.ndim == 1:
+        values = values[None, :]
+    if values.ndim != 2 or values.shape[1] != 2:
+        raise ValueError("angle inputs must have shape (n,2)")
+    low = values[:, 0] <= 2.0
+    high = values[:, 1] >= 75.0
+    cutoff = cutoff_distance(values) <= 0.02
+    ordinary = ~(low | high | cutoff)
+    return {
+        "low_grazing": low,
+        "high_azimuth": high,
+        "cutoff_near": cutoff,
+        "ordinary_interior": ordinary,
+    }
+
+
+def analytic_power_carrying_mask(angles: np.ndarray) -> np.ndarray:
+    """Evaluate the independent runtime propagation/Poynting mask authority."""
+
+    values = np.asarray(angles, dtype=np.float64)
+    if values.ndim == 1:
+        values = values[None, :]
+    points = np.column_stack((
+        np.full(len(values), 120.0), np.full(len(values), 17.0), values,
+    ))
+    return np.asarray(analytic_power_mask(points), dtype=bool)
 
 
 def _metrics(truth: np.ndarray, prediction: np.ndarray) -> dict[str, Any]:
@@ -174,7 +199,10 @@ class AggregateModel:
             means.append(np.asarray(mean).reshape(-1)); stds.append(np.asarray(std).reshape(-1))
         latent = np.column_stack(means)
         latent_std = np.column_stack(stds)
-        aggregate = reconstruct_aggregates(latent)
+        # Task003 retains A_volume as a fourth diagnostic column.  Task004's
+        # angle aggregate contract is the physical composition only: R, T,
+        # and A_balance reconstructed from the same softmax weights.
+        aggregate = reconstruct_aggregates(latent)[:, :3]
         # Delta-method uncertainty through softmax(zR,zT,0).
         if np.all(np.isfinite(latent_std)):
             p = aggregate
@@ -201,7 +229,9 @@ class FractionPowerModel:
     training_mask: np.ndarray
 
     def predict(self, angles: np.ndarray, aggregates: np.ndarray,
-                mask: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+                mask: np.ndarray, *, aggregate_std: np.ndarray | None = None
+                ) -> tuple[np.ndarray, np.ndarray]:
+        del aggregate_std
         values = np.asarray(angles, dtype=np.float64)
         distances = np.linalg.norm(
             (values[:, None, :] - self.training_angles[None, :, :]) /
@@ -223,4 +253,164 @@ class FractionPowerModel:
                 current = np.nansum(output[row, sl, :])
                 if current > 0.0:
                     output[row, sl, :][active] *= float(aggregates[row, total_index]) / current
-        return output, np.zeros_like(output)
+        # This nearest-neighbour object is retained only as a diagnostic
+        # baseline.  It has no calibrated uncertainty, so zero is forbidden.
+        return output, np.full_like(output, np.nan)
+
+
+@dataclass
+class _LatentFractionRegressor:
+    """Small deterministic local-RBF regressor with a constant fallback."""
+
+    model: Any | None = None
+    constant: float = 0.0
+    residual_scale: float = 1.0
+
+    def fit(self, x: np.ndarray, y: np.ndarray) -> "_LatentFractionRegressor":
+        values = np.asarray(y, dtype=np.float64).reshape(-1)
+        self.constant = float(np.mean(values)) if values.size else 0.0
+        self.residual_scale = float(np.std(values - self.constant)) if values.size else 1.0
+        self.residual_scale = max(self.residual_scale, 1.0e-6)
+        if len(values) >= 3:
+            try:
+                self.model = RBFInterpolator(
+                    np.asarray(x, dtype=np.float64), values,
+                    smoothing=1.0e-8, neighbors=min(32, len(values)),
+                    kernel="thin_plate_spline",
+                )
+            except (ValueError, np.linalg.LinAlgError):
+                self.model = None
+        return self
+
+    def predict(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        values = np.full(len(np.asarray(x)), self.constant, dtype=np.float64)
+        if self.model is not None:
+            values = np.asarray(self.model(x), dtype=np.float64).reshape(-1)
+        return values, np.full_like(values, self.residual_scale)
+
+
+@dataclass
+class MaskedFractionPowerModel:
+    """Physics-constrained side-total plus active-channel composition model.
+
+    Each observed mask topology is a separate simplex.  Active-channel
+    fractions are represented by additive log-ratios to the last active
+    channel and reconstructed by a softmax, so side ledgers close exactly.
+    """
+
+    feature: str = "F1"
+    floor: float = 1.0e-12
+    training_angles: np.ndarray | None = None
+    training_powers: np.ndarray | None = None
+    training_mask: np.ndarray | None = None
+    groups: dict[tuple[int, tuple[int, ...]], dict[str, Any]] = field(default_factory=dict)
+
+    def fit(self, angles: np.ndarray, powers: np.ndarray, mask: np.ndarray) -> "MaskedFractionPowerModel":
+        values = np.asarray(angles, dtype=np.float64)
+        powers = np.asarray(powers, dtype=np.float64)
+        mask = np.asarray(mask, dtype=bool)
+        if powers.shape != mask.shape or powers.ndim != 3 or powers.shape[1:] != (22, 2):
+            raise ValueError("Task004 power/mask arrays must have shape (n,22,2)")
+        self.training_angles = values.copy()
+        self.training_powers = powers.copy()
+        self.training_mask = mask.copy()
+        features = angle_features(values, self.feature)
+        self.groups = {}
+        for side, sl in ((0, slice(0, 11)), (1, slice(11, 22))):
+            side_mask = mask[:, sl, :].reshape(len(values), -1)
+            for signature in sorted({tuple(np.flatnonzero(row)) for row in side_mask}):
+                rows = np.asarray([tuple(np.flatnonzero(row)) == signature for row in side_mask])
+                active = np.asarray(signature, dtype=int)
+                if not len(active) or not np.any(rows):
+                    continue
+                reference = int(active[-1])
+                regressors: dict[int, _LatentFractionRegressor] = {}
+                for channel in active[:-1]:
+                    numerator = np.maximum(powers[rows, sl, :].reshape(np.sum(rows), -1)[:, channel], self.floor)
+                    denominator = np.maximum(powers[rows, sl, :].reshape(np.sum(rows), -1)[:, reference], self.floor)
+                    regressors[int(channel)] = _LatentFractionRegressor().fit(
+                        features[rows], np.log(numerator / denominator),
+                    )
+                self.groups[(side, signature)] = {
+                    "rows": rows, "active": active.tolist(),
+                    "reference": reference, "regressors": regressors,
+                    "fallback_fractions": self._mean_fractions(
+                        powers[rows, sl, :].reshape(np.sum(rows), -1), active,
+                    ),
+                }
+        return self
+
+    @staticmethod
+    def _mean_fractions(values: np.ndarray, active: np.ndarray) -> np.ndarray:
+        if len(active) == 0:
+            return np.asarray([], dtype=np.float64)
+        mean = np.nanmean(values[:, active], axis=0)
+        mean = np.where(np.isfinite(mean), np.maximum(mean, 0.0), 0.0)
+        total = float(np.sum(mean))
+        return mean / total if total > 0.0 else np.full(len(active), 1.0 / len(active))
+
+    def predict(
+        self, angles: np.ndarray, aggregates: np.ndarray, mask: np.ndarray,
+        *, aggregate_std: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        if self.training_angles is None or self.training_powers is None or self.training_mask is None:
+            raise RuntimeError("masked fraction model is not fitted")
+        values = np.asarray(angles, dtype=np.float64)
+        aggregates = np.asarray(aggregates, dtype=np.float64)
+        query_mask = np.asarray(mask, dtype=bool)
+        output = np.full((len(values), 22, 2), np.nan, dtype=np.float64)
+        uncertainty = np.full_like(output, np.nan)
+        features = angle_features(values, self.feature)
+        for row in range(len(values)):
+            for side, sl in ((0, slice(0, 11)), (1, slice(11, 22))):
+                active = np.flatnonzero(query_mask[row, sl, :].reshape(-1))
+                signature = tuple(int(value) for value in active)
+                group = self.groups.get((side, signature))
+                if group is None:
+                    # An unseen topology is an explicit diagnostic fallback;
+                    # never invent a numeric value for inactive channels.
+                    distances = np.linalg.norm(
+                        (self.training_angles - values[row]) / np.asarray([9.5, 90.0]), axis=1,
+                    )
+                    source = int(np.argmin(distances))
+                    fractions = self._mean_fractions(
+                        self.training_powers[source, sl, :].reshape(-1)[active][None, :],
+                        np.arange(len(active)),
+                    ) if len(active) else np.asarray([])
+                    fraction_std = np.full(len(active), 0.25) if len(active) else np.asarray([])
+                else:
+                    latent = np.zeros(max(len(active) - 1, 0), dtype=np.float64)
+                    latent_std = np.zeros(max(len(active) - 1, 0), dtype=np.float64)
+                    for index, channel in enumerate(active[:-1]):
+                        latent[index], latent_std[index] = group["regressors"][int(channel)].predict(
+                            features[row:row + 1]
+                        )
+                    logits = np.concatenate((latent, np.asarray([0.0])))
+                    logits -= np.max(logits)
+                    weights = np.exp(logits)
+                    fractions = weights / np.sum(weights)
+                    latent_scale = float(np.max(latent_std)) if latent_std.size else 0.0
+                    fraction_std = np.maximum(np.abs(fractions) * latent_scale, 1.0e-8)
+                total = max(float(aggregates[row, side]), 0.0)
+                total_std = 0.0
+                if aggregate_std is not None and np.asarray(aggregate_std).ndim == 2:
+                    candidate_std = float(aggregate_std[row, side])
+                    total_std = candidate_std if np.isfinite(candidate_std) else 0.0
+                flat_output = output[row, sl, :].reshape(-1)
+                flat_uncertainty = uncertainty[row, sl, :].reshape(-1)
+                flat_output[active] = total * fractions
+                flat_uncertainty[active] = np.maximum(
+                    np.sqrt((total * fraction_std) ** 2 + (total_std * fractions) ** 2),
+                    1.0e-12,
+                )
+                output[row, sl, :] = flat_output.reshape(11, 2)
+                uncertainty[row, sl, :] = flat_uncertainty.reshape(11, 2)
+        return output, uncertainty
+
+    def metadata(self) -> dict[str, Any]:
+        return {
+            "family": "masked_active_fraction_local_rbf",
+            "feature": self.feature, "floor": self.floor,
+            "topology_group_count": len(self.groups),
+            "uncertainty": "derived_from_latent_residual_scale_not_zero",
+        }

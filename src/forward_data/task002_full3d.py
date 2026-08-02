@@ -33,14 +33,30 @@ TASK002_FULL3D_RECORD_SCHEMA = "task002.full3d-ny4-record.v4"
 TASK002_FULL3D_TOPOLOGY_SCHEMA = "task002.full3d-ny4-topology.v2"
 AXIS_CELL_COUNTS = (6, 4, 14)
 LAYER_CELL_COUNTS = (1, 12, 1)
+TASK002_MUMPS_ICNTL_14_VALUES = (40, 80, 120)
+TASK002_DEFAULT_MUMPS_ICNTL_14 = 40
+
+
+def validate_mumps_icntl_14(value: int) -> int:
+    """Validate the reviewed in-core MUMPS workspace ladder values."""
+
+    result = int(value)
+    if result not in TASK002_MUMPS_ICNTL_14_VALUES:
+        raise ValueError(
+            "Task002 MUMPS ICNTL(14) must be one of "
+            f"{TASK002_MUMPS_ICNTL_14_VALUES}; got {value!r}"
+        )
+    return result
 
 
 def build_task002_full3d_config(
     parameters: Task002ForwardParameters, *, output_profile: str = "ordinary",
+    mumps_icntl_14: int = TASK002_DEFAULT_MUMPS_ICNTL_14,
 ) -> SimulationConfig3D:
     """Build the formal Full3D config with fixed logical topology."""
 
     parameters.validate()
+    mumps_icntl_14 = validate_mumps_icntl_14(mumps_icntl_14)
     fidelity = parameters.fidelity
     cfg = target_stage4_config(degree=int(fidelity["degree"]), h_nm=10.0)
     cfg.grating_height = float(parameters.height_nm)
@@ -73,6 +89,14 @@ def build_task002_full3d_config(
     cfg.stage4_full3d_assembly_backend = ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
     cfg.matrix_diagnostics_assemble_only = False
     cfg.unique_output = False
+    # Task004 M0R requires this option to be explicit and prefixed into every
+    # direct KSP.  Keeping it in the config (rather than PETSC_OPTIONS) makes
+    # the solver identity hash-bound and prevents a hidden global override.
+    cfg.petsc_extra_options = {
+        "pc_factor_mat_solver_type": "mumps",
+        "mat_mumps_icntl_14": mumps_icntl_14,
+        "mat_mumps_icntl_22": 0,
+    }
     if output_profile not in {"ordinary", "compact_surrogate_record"}:
         raise ValueError(f"unsupported Task002 output profile: {output_profile}")
     cfg.task002_output_profile = output_profile
@@ -86,10 +110,15 @@ def build_task002_full3d_config(
 
 def task002_full3d_config_identity(
     parameters: Task002ForwardParameters, *, output_profile: str = "ordinary",
+    mumps_icntl_14: int = TASK002_DEFAULT_MUMPS_ICNTL_14,
 ) -> dict[str, Any]:
     """Return the deterministic, JSON-safe numerical configuration authority."""
 
-    cfg = build_task002_full3d_config(parameters, output_profile=output_profile)
+    mumps_icntl_14 = validate_mumps_icntl_14(mumps_icntl_14)
+    cfg = build_task002_full3d_config(
+        parameters, output_profile=output_profile,
+        mumps_icntl_14=mumps_icntl_14,
+    )
     identity = {
         "solver_route_id": parameters.fidelity["solver_route_id"],
         "element": _element_identity(int(cfg.nedelec_degree)),
@@ -115,6 +144,15 @@ def task002_full3d_config_identity(
         "assembly_backend": ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
         "task002_output_profile": output_profile,
         "mpi_ranks": 2, "threads_per_rank": 1,
+        "linear_solver": {
+            "ksp_type": "preonly",
+            "pc_type": "lu",
+            "factor_solver": "mumps",
+            "direct_solver_profile": "default",
+            "mat_mumps_icntl_14": mumps_icntl_14,
+            "mat_mumps_icntl_22": 0,
+            "option_scope": "prefixed_ksp",
+        },
     }
     return {**identity, "config_sha256": canonical_hash(identity)}
 
@@ -158,8 +196,10 @@ def _element_identity(degree: int) -> dict[str, Any]:
 
 def task002_full3d_topology_identity(
     parameters: Task002ForwardParameters, *, comm_size: int = 2,
+    mumps_icntl_14: int = TASK002_DEFAULT_MUMPS_ICNTL_14,
 ) -> dict[str, Any]:
-    cfg = build_task002_full3d_config(parameters)
+    mumps_icntl_14 = validate_mumps_icntl_14(mumps_icntl_14)
+    cfg = build_task002_full3d_config(parameters, mumps_icntl_14=mumps_icntl_14)
     plan = stage4_axis_plan(cfg, comm_size)
     axes = {
         "x": np.asarray(plan.x_values, dtype=np.float64),
@@ -218,7 +258,9 @@ def task002_full3d_topology_identity(
             "connectivity": topology_hash, "material_tags": material_hash,
             "floquet": floquet_hash, "dof_layout": dof_layout,
         }),
-        "config_identity": task002_full3d_config_identity(parameters),
+        "config_identity": task002_full3d_config_identity(
+            parameters, mumps_icntl_14=mumps_icntl_14,
+        ),
     }
 
 
@@ -279,12 +321,15 @@ def extract_task002_full3d_orders(
 def task002_full3d_command(
     *, root: Path, parameters_file: Path, baseline_sha: str, output_dir: Path,
     output_profile: str = "compact_surrogate_record",
+    mumps_icntl_14: int = TASK002_DEFAULT_MUMPS_ICNTL_14,
 ) -> list[str]:
+    mumps_icntl_14 = validate_mumps_icntl_14(mumps_icntl_14)
     return [
         "mpiexec", "-n", "2", str(root / ".venv/bin/python"),
         "-m", "src.runners.run_task002_full3d",
         "--parameters-json", str(parameters_file),
         "--baseline-sha", baseline_sha, "--output-dir", str(output_dir),
+        "--mumps-icntl-14", str(mumps_icntl_14),
         "--output-profile", output_profile,
     ]
 
@@ -293,8 +338,10 @@ def run_formal_task002_full3d(
     parameters: Task002ForwardParameters, *, root: Path, baseline_sha: str,
     run_directory: Path, timeout_seconds: float,
     output_profile: str = "compact_surrogate_record",
+    mumps_icntl_14: int = TASK002_DEFAULT_MUMPS_ICNTL_14,
 ) -> tuple[WatchdogResult, Path]:
     parameters.validate()
+    mumps_icntl_14 = validate_mumps_icntl_14(mumps_icntl_14)
     preflight = formal_preflight(root, baseline_sha)
     run_directory.mkdir(parents=True, exist_ok=False)
     parameters_path = run_directory / "parameters.json"
@@ -306,6 +353,7 @@ def run_formal_task002_full3d(
     command = task002_full3d_command(
         root=root, parameters_file=parameters_path, baseline_sha=baseline_sha,
         output_dir=result_dir, output_profile=output_profile,
+        mumps_icntl_14=mumps_icntl_14,
     )
     env = {**os.environ, "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1",
            "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"}
@@ -320,6 +368,16 @@ def run_formal_task002_full3d(
         "parameter_hash": canonical_hash(parameters.as_dict()),
         "preflight": preflight, "command": command, "watchdog": asdict(result),
         "output_profile": output_profile,
+        "config_identity": task002_full3d_config_identity(
+            parameters, output_profile=output_profile,
+            mumps_icntl_14=mumps_icntl_14,
+        ),
+        "solver_identity": {
+            "factor_solver": "mumps",
+            "requested_mat_mumps_icntl_14": mumps_icntl_14,
+            "requested_mat_mumps_icntl_22": 0,
+            "option_scope": "prefixed_ksp",
+        },
         "formal_record_present": (result_dir / "task002_full3d_record.json").is_file(),
     }
     execution_path = run_directory / "execution.json"
@@ -332,4 +390,20 @@ def formal_record_status(run_directory: Path, result: WatchdogResult) -> str:
     if record.is_file():
         gates = json.loads(record.read_text(encoding="utf-8"))["gates"]
         return "measured_pass" if all(gates.values()) else "failed_numerical_gate"
-    return "controlled_stop_resource" if "memory" in result.status.lower() else "failed_numerical_gate"
+    if "memory" in result.status.lower() or result.peak_swap_bytes:
+        return "controlled_stop_resource"
+    summary_path = run_directory / "results/run_summary.json"
+    if summary_path.is_file():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        diagnostics = summary.get("direct_solve_exception", {})
+        infog_1 = diagnostics.get("mumps_infog_1")
+        info_1 = diagnostics.get("mumps_info_1")
+        if infog_1 == -9 or info_1 == -9:
+            return "failed_direct_lu_workspace_underestimate"
+        if infog_1 in {-13, -19} or info_1 in {-13, -19}:
+            return "failed_direct_lu_memory_limit"
+        if infog_1 == -10 or info_1 == -10:
+            return "failed_direct_lu_numerical_singularity"
+        if summary.get("case_status") == "failed_direct_lu_exception":
+            return "failed_direct_lu_other"
+    return "failed_numerical_gate"
