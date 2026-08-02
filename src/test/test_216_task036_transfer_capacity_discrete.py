@@ -19,6 +19,15 @@ from benchmarks.run_task036_transfer_optimal_port_capacity import (
     _gc_projected_orthonormalize_block,
     SparsePortTransfer,
 )
+from benchmarks.run_task036_r1_port_capacity import (
+    MODE_POOL_TARGETS,
+    _canonical_npz_arrays,
+    _canonicalize_candidate,
+    _deduplicate_candidates,
+    _bounded_right_components,
+    _right_pool_gate,
+    _right_reciprocal_closure,
+)
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.solvers.common_3d_forms import _build_variational_forms
@@ -117,9 +126,7 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
         )
 
         def projector(values: np.ndarray) -> np.ndarray:
-            return values - existing @ (
-                existing.conj().T @ gc_action(values)
-            )
+            return values - existing @ (existing.conj().T @ gc_action(values))
 
         block = _gc_projected_orthonormalize_block(
             candidate, existing, gc_action, projector
@@ -405,9 +412,7 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
         reversed_polynomial = None
         try:
             augmented = build_augmented_bloch_polynomial(action)
-            reversed_polynomial = build_reversed_hermitian_bloch_polynomial(
-                augmented
-            )
+            reversed_polynomial = build_reversed_hermitian_bloch_polynomial(augmented)
             Schur = A_pp - A_pi @ np.linalg.solve(A_ii, A_ip)
             K0 = Schur[1:2, 0:1]
             K1 = Schur[1:2, 1:2] + Schur[0:1, 0:1]
@@ -419,9 +424,7 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
             adjoint_multiplier = 1.0 / np.conj(multiplier)
             left_electric = np.asarray([[1.0 + 0.0j]])
             left_adjoint = np.asarray([[1.0 + 0.0j]])
-            endpoint_electric = np.vstack(
-                (left_electric, multiplier * left_electric)
-            )
+            endpoint_electric = np.vstack((left_electric, multiplier * left_electric))
             endpoint_adjoint = np.vstack(
                 (left_adjoint, adjoint_multiplier * left_adjoint)
             )
@@ -429,10 +432,13 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                 A_ii,
                 A_ip @ endpoint_electric,
             )
-            adjoint_interior = -np.linalg.solve(
-                A_ii.conj().T,
-                A_pi.conj().T @ endpoint_adjoint,
-            ) / adjoint_multiplier
+            adjoint_interior = (
+                -np.linalg.solve(
+                    A_ii.conj().T,
+                    A_pi.conj().T @ endpoint_adjoint,
+                )
+                / adjoint_multiplier
+            )
             state = np.vstack((left_electric, interior))
             adjoint_state = np.vstack((left_adjoint, adjoint_interior))
 
@@ -486,10 +492,7 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
             )
             self.assertGreater(np.linalg.norm(wrong_order), 1.0e-3)
             self.assertLess(
-                abs(
-                    adjoint_multiplier
-                    - 1.0 / np.conj(multiplier)
-                ),
+                abs(adjoint_multiplier - 1.0 / np.conj(multiplier)),
                 1.0e-14,
             )
             metrics = endpoint_cauchy_balance(
@@ -547,6 +550,127 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                 augmented.destroy()
             action.destroy()
 
+    def test_r1b_fixed_family_pool_contracts_without_pep(self) -> None:
+        self.assertEqual(
+            MODE_POOL_TARGETS,
+            (1.0 + 0.0j, 1.0j, -1.0 + 0.0j, -1.0j),
+        )
+        state = np.asarray([1.0 + 0.0j, 0.0j], dtype=np.complex128)
+        variable, multiplier, mapped, metadata = _canonicalize_candidate(
+            "Prev",
+            0.5 + 0.0j,
+            state,
+            endpoint_rows=1,
+        )
+        self.assertEqual(variable, "lambda")
+        self.assertEqual(multiplier, 2.0 + 0.0j)
+        np.testing.assert_array_equal(mapped, state)
+        self.assertEqual(metadata["state_map"], "identity")
+        variable, multiplier, mapped, metadata = _canonicalize_candidate(
+            "Qrev",
+            2.0 + 0.0j,
+            state,
+            endpoint_rows=1,
+        )
+        self.assertEqual(variable, "nu")
+        self.assertEqual(multiplier, 0.5 + 0.0j)
+        np.testing.assert_array_equal(mapped, state)
+        self.assertEqual(metadata["state_map"], "identity")
+        for family, variable in (("P", "lambda"), ("Q", "nu")):
+            mapped_variable, mapped_multiplier, _, _ = _canonicalize_candidate(
+                family,
+                0.0,
+                state,
+                endpoint_rows=1,
+            )
+            self.assertEqual(mapped_variable, variable)
+            self.assertEqual(mapped_multiplier, 0.0j)
+        for family in ("Prev", "Qrev"):
+            with self.assertRaises(ValueError):
+                _canonicalize_candidate(family, 0.0, state, endpoint_rows=1)
+
+        def entry(
+            family: str,
+            target_index: int,
+            multiplier: complex,
+            vector: list[complex],
+        ) -> dict[str, object]:
+            record = {
+                "full_augmented_relative_residual": 1.0e-9,
+                "schur_polynomial_relative_residual": 2.0e-9,
+            }
+            return {
+                "family": family,
+                "target_index": target_index,
+                "source_key": (family, target_index),
+                "multiplier": multiplier,
+                "state": np.asarray(vector, dtype=np.complex128),
+                "record": record,
+            }
+
+        entries = [
+            entry("P", 0, 2.0, [1.0, 0.0]),
+            entry("P", 0, 2.0 + 5.0e-7, [0.0, 1.0]),
+            entry("Prev", 1, 0.5, [1.0, 0.0]),
+            entry("P", 1, 0.5, [1.0, 0.0]),
+            entry("P", 1, 0.5 + 4.0e-7, [0.0, 1.0]),
+            entry("Prev", 2, 2.0, [1.0, 0.0]),
+            entry("Prev", 3, 2.0 - 4.0e-7, [0.0, 1.0]),
+        ]
+        kept, removed = _deduplicate_candidates(entries)
+        self.assertEqual(len(kept), 4)
+        self.assertEqual(removed["Prev"], 2)
+        self.assertEqual(
+            {(item["family"], item["target_index"]) for item in kept},
+            {("P", 0), ("Prev", 1), ("P", 1)},
+        )
+        closure = _right_reciprocal_closure(
+            [item["multiplier"] for item in kept],
+            kept,
+        )
+        self.assertEqual(closure["effective_columns"], 4)
+        self.assertEqual(len(closure["components"]), 1)
+        self.assertFalse(_right_pool_gate(4)["passed"])
+        self.assertEqual(
+            _right_pool_gate(4)["status_if_failed"],
+            "MODE_POOL_INCOMPLETE_AT_TARGET_SET",
+        )
+        zero_entry = entry("P", 3, 0.0, [1.0, 0.0])
+        zero_closure = _right_reciprocal_closure(
+            [item["multiplier"] for item in kept] + [zero_entry["multiplier"]],
+            kept + [zero_entry],
+        )
+        zero_block = next(
+            index for index, block in enumerate(zero_closure["blocks"]) if 4 in block
+        )
+        self.assertNotIn(zero_block, zero_closure["effective_block_indices"])
+        oversized = _bounded_right_components(
+            {
+                "blocks": [list(range(250)), list(range(250, 500))],
+                "components": [[0], [1]],
+                "effective_block_indices": [0, 1],
+                "effective_columns": 500,
+            }
+        )
+        self.assertEqual(oversized["raw_effective_columns"], 500)
+        self.assertEqual(oversized["bounded_effective_columns"], 250)
+        self.assertEqual(oversized["bounded_effective_block_indices"], [0])
+        self.assertLessEqual(oversized["bounded_effective_columns"], 360)
+        arrays = _canonical_npz_arrays(
+            kept,
+            closure["blocks"],
+            state_rows=2,
+            prefix="right",
+        )
+        with tempfile.TemporaryDirectory(prefix="task036-r1b-contract-") as tmp:
+            path = Path(tmp) / "pool.npz"
+            np.savez_compressed(path, **arrays)
+            with np.load(path) as loaded:
+                self.assertEqual(loaded["right_states"].shape, (2, 4))
+                self.assertEqual(loaded["right_multipliers"].shape, (4,))
+                self.assertEqual(loaded["right_block_ids"].shape, (4,))
+                self.assertEqual(loaded["right_target_index"].dtype, np.dtype(np.int32))
+
     @unittest.skipUnless(
         MPI.COMM_WORLD.size == 1,
         "Task036 frozen face-mass qualification is plain serial",
@@ -601,15 +725,11 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                 try:
                     for action in actions:
                         self.assertEqual(action.shape, (1200, 1200))
-                        self.assertLessEqual(
-                            action.hermitian_relative_defect, 1.0e-12
-                        )
+                        self.assertLessEqual(action.hermitian_relative_defect, 1.0e-12)
                         self.assertLessEqual(
                             action.constraint_action_relative_error, 1.0e-12
                         )
-                        self.assertLessEqual(
-                            action.solve_relative_residual, 1.0e-11
-                        )
+                        self.assertLessEqual(action.solve_relative_residual, 1.0e-11)
                 finally:
                     for action in actions:
                         action.destroy()
