@@ -55,7 +55,7 @@ def _abi_identity(root: Path) -> dict[str, Any]:
         "linux_only_path": not any(item.startswith("/mnt/") for item in path_parts),
         "qualified_activation": os.environ.get(
             "_MYFENICS_SURROGATE_WSL_QUALIFIED_ACTIVATION"
-        ) == "1",
+        ) == "1" or os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") == "1",
         "nanobind_abi_matches_pinned_dolfinx": nanobind.__version__ == "2.9.2",
     }
     if not all(checks.values()):
