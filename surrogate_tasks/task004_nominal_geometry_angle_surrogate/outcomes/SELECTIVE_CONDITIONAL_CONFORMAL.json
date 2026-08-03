@@ -1,0 +1,79 @@
+{
+  "coverage_lower_bound": 0.9,
+  "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "formula": "radius_t=quantile_higher(abs(prediction_source_accepted-truth_source_accepted), ceil((n+1)*0.95)/n)",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "max_half_width_upper_bound": 0.03,
+  "method": "accepted-source-OOF absolute residual finite-sample 95th conformal quantile",
+  "old_coverage_upper_bound": "warning_only",
+  "p95_half_width_upper_bound": 0.02,
+  "predictors": {
+    "E1_latent_median_ensemble": {
+      "accepted_count": 91,
+      "conservative_interval_warning": false,
+      "coverage": {
+        "A_balance": 0.967032967032967,
+        "R_total": 0.9560439560439561,
+        "T_total": 0.967032967032967
+      },
+      "coverage_gate": true,
+      "old_upper_bound_is_not_a_gate": true,
+      "sharpness": {
+        "A_balance": {
+          "finite_positive": true,
+          "max_half_width": 0.012676026871723645,
+          "min_half_width": 0.008663756439935055,
+          "p95_half_width": 0.012676026871723645
+        },
+        "R_total": {
+          "finite_positive": true,
+          "max_half_width": 0.007935434831582516,
+          "min_half_width": 0.003292331150755055,
+          "p95_half_width": 0.007935434831582516
+        },
+        "T_total": {
+          "finite_positive": true,
+          "max_half_width": 0.009088379219173853,
+          "min_half_width": 0.007655487895109725,
+          "p95_half_width": 0.009088379219173853
+        }
+      },
+      "sharpness_gate": true
+    },
+    "L2_local_matern_k24": {
+      "accepted_count": 92,
+      "conservative_interval_warning": false,
+      "coverage": {
+        "A_balance": 0.9565217391304348,
+        "R_total": 0.9456521739130435,
+        "T_total": 0.9565217391304348
+      },
+      "coverage_gate": true,
+      "old_upper_bound_is_not_a_gate": true,
+      "sharpness": {
+        "A_balance": {
+          "finite_positive": true,
+          "max_half_width": 0.012676028970038444,
+          "min_half_width": 0.008701628139866191,
+          "p95_half_width": 0.012676028970038444
+        },
+        "R_total": {
+          "finite_positive": true,
+          "max_half_width": 0.00793738905027817,
+          "min_half_width": 0.0030017663007300497,
+          "p95_half_width": 0.00793738905027817
+        },
+        "T_total": {
+          "finite_positive": true,
+          "max_half_width": 0.009088385514217381,
+          "min_half_width": 0.007693466047867914,
+          "p95_half_width": 0.009088385514217381
+        }
+      },
+      "sharpness_gate": true
+    }
+  },
+  "schema_version": "task004.selective-conditional-conformal.v1",
+  "surrogate_training_code_sha": "4884c25a4d8953bbc86f3aaabd0e2d55bb62345c",
+  "validation_response_accessed": false
+}

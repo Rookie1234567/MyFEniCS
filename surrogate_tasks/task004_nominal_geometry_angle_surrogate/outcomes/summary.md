@@ -39,3 +39,26 @@ M4H was training-only and response-blind. S1 Matérn and latent median had
 accepted-set accuracy but empirical 95% coverage of 1.0, above the frozen 0.99
 upper bound; S2 retained the full-domain tail error. Task004 therefore stops
 as a controlled negative and waits for Review V7.
+
+## M4I selective threshold and conditional interval correction
+
+| item | result | evidence |
+|---|---|---|
+| allowed point predictors | Q1 local Matérn k24; Q2 latent median | `SELECTIVE_MODEL_COMPARISON_V2.json` |
+| risk rule | S1 pre-frozen M4E2 ensemble only | `SELECTIVE_THRESHOLD_CORRECTION.json` |
+| predictor-specific source thresholds | 5/5 folds qualified for each Q1/Q2; no fallback | threshold correction + Case130 |
+| final unified threshold | quantile 0.85; threshold 0.5529775444799786 for both | threshold correction JSON |
+| Q1 accepted OOF / pool / blind preacceptance | 92/112; 4013/4096; 22/24 | comparison/acceptance-domain JSON |
+| Q2 accepted OOF / pool / blind preacceptance | 91/112; 4013/4096; 22/24 | comparison/acceptance-domain JSON |
+| conditional conformal coverage/sharpness | pass for all Q1/Q2 targets | `SELECTIVE_CONDITIONAL_CONFORMAL.json` |
+| point-accuracy Gate | fail for both Q1 and Q2 | M4I comparison |
+| Case130 evidence checker | pass; qualification remains controlled negative | `case130_check.json` |
+| model lock / blind FEM | absent / not run | Case130 checker |
+
+M4I kept the frozen point-accuracy Gate unchanged. Predictor-specific thresholds
+and accepted-source conformal intervals qualified the source-selection and
+uncertainty contracts, but the resulting cross-fitted accepted sets still
+exceeded the fixed point-error limits. Consequently no model lock or blind FEM
+was authorized; Task003 validation, second-round active learning, Fisher,
+geometry sensitivity and inversion remain untouched. See
+`outcomes/m4i_selective_qualification.md` and `response_v8.md`.
