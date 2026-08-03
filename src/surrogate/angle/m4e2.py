@@ -630,10 +630,10 @@ def _plan_points(*, train_angles: np.ndarray, train_truth: np.ndarray,
         # category.  Categories intentionally overlap (the 16-point contract
         # has 17 minimum category counts), so treating them as disjoint would
         # make a valid plan mathematically impossible.
-        existing = [i for i in candidates if i in selected]
-        fresh = [i for i in candidates if i not in selected and can_add(i)]
         covered = 0
-        for index in existing + fresh:
+        for index in candidates:
+            if index not in selected and not can_add(index):
+                continue
             if index not in selected:
                 selected.append(index)
             if reason not in reasons.setdefault(index, []):
@@ -667,11 +667,17 @@ def _plan_points(*, train_angles: np.ndarray, train_truth: np.ndarray,
         raise RuntimeError(f"M4E2 category overlap is insufficient: {len(selected)} unique points")
     remaining = 16 - len(selected)
     if remaining:
-        filler = sorted((int(i) for i in range(len(pool_angles)) if can_add(int(i))),
+        filler = sorted((int(i) for i in range(len(pool_angles))),
                         key=lambda i: (-float(score[i]), i))
-        for index in filler[:remaining]:
+        added = 0
+        for index in filler:
+            if not can_add(index):
+                continue
             selected.append(index)
             reasons.setdefault(index, []).append("space_filling_high_acquisition")
+            added += 1
+            if added >= remaining:
+                break
     if len(selected) != 16:
         raise RuntimeError("M4E2 plan did not produce exactly 16 points")
     plan_rows = []
