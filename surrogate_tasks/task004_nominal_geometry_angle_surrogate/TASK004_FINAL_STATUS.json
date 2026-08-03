@@ -1,0 +1,75 @@
+{
+  "schema_version": "task004.final-status.v1",
+  "task": "Task004_nominal_geometry_angle_surrogate",
+  "status": "closed_controlled_negative",
+  "closure_authority": "surrogate_tasks/task004_nominal_geometry_angle_surrogate/review_report_v8.md",
+  "execution_branch": "codex/only-one-13p5nm-surrogate-inversion",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "surrogate_training_code_sha": "4884c25a4d8953bbc86f3aaabd0e2d55bb62345c",
+  "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "training_rows": 112,
+  "training_tuple_sha256": "00fb746bbb881ac7fc3cd27c313b2b526bd2f69f8e89ef621f3e6d9790af5c68",
+  "fixed_geometry_nm": {
+    "height": 120.0,
+    "width": 17.0,
+    "wavelength": 13.5
+  },
+  "angle_domain": {
+    "grazing_deg": [0.5, 10.0],
+    "azimuth_deg": [0.0, 90.0]
+  },
+  "forward_identity": {
+    "model": "Full3D static uniform N1curl p5/h10/Ny4",
+    "mesh": "(Nx,Ny,Nz)=(6,4,14)",
+    "mumps_icntl_14": 40,
+    "mpi_ranks": 2,
+    "threads_per_rank": 1,
+    "observable": "task002.fixed-n0-orders.v3"
+  },
+  "qualification": {
+    "full_domain_aggregate": "controlled_negative",
+    "selective_aggregate": "controlled_negative",
+    "order_resolved": "not_qualified",
+    "case130_checker_status": "pass",
+    "case130_checker_meaning": "evidence_integrity_and_fail_closed_contract_only; not surrogate qualification",
+    "full_domain_model_lock": "absent",
+    "selective_model_lock": "absent",
+    "order_model_lock": "absent"
+  },
+  "blind_validation": {
+    "design_rows": 24,
+    "measured_rows": 0,
+    "status": "intentionally_not_run",
+    "reason": "M4I final training-only Gate failed; no model lock was authorized",
+    "responses_accessed": false,
+    "preacceptance_indices_frozen": false,
+    "validation_package_created": false
+  },
+  "retained_authority": {
+    "dataset": "benchmarks/artifacts/cases/127_task004_active_learning_round1/train112",
+    "case_evidence": [
+      "benchmarks/cases/124_task004_mumps_workspace_and_anchor_requalification/",
+      "benchmarks/cases/125_task004_angle_training_qualification/",
+      "benchmarks/cases/126_task004_local_topology_angle_surrogate/",
+      "benchmarks/cases/127_task004_active_learning_round1/",
+      "benchmarks/cases/128_task004_post_active_local_qualification/",
+      "benchmarks/cases/129_task004_selective_angle_surrogate/",
+      "benchmarks/cases/130_task004_selective_interval_correction/"
+    ],
+    "negative_evidence": [
+      "surrogate_tasks/task004_nominal_geometry_angle_surrogate/outcomes/m4i_selective_qualification.md",
+      "surrogate_tasks/task004_nominal_geometry_angle_surrogate/outcomes/test_summary_v8.md",
+      "surrogate_tasks/task004_nominal_geometry_angle_surrogate/outcomes/SELECTIVE_MODEL_COMPARISON_V2.json",
+      "benchmarks/cases/130_task004_selective_interval_correction/records/case130_check.json"
+    ]
+  },
+  "prohibitions_after_closeout": [
+    "no additional Task004 FEM",
+    "no Task004 model training",
+    "no Task004 threshold or Gate adjustment",
+    "no Task004 blind validation",
+    "no second active-learning round",
+    "no Task005 FEM without a new reviewed task book"
+  ],
+  "next_step": "A separate reviewed Task005 may address discrete-angle sensitivity/Fisher DOE; it is not part of this closeout."
+}

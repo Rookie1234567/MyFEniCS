@@ -1,4 +1,24 @@
-# Task004 M0R/M1R/M2R/M3R summary
+# Task004 final summary — closed controlled negative
+
+## Final Review V8 closeout
+
+| item | final status | evidence / meaning |
+|---|---|---|
+| Task004 overall | `closed_controlled_negative` | `review_report_v8.md`, `TASK004_FINAL_STATUS.json` |
+| full-domain aggregate | `controlled_negative` | no uniform full-angle qualification |
+| selective aggregate | `controlled_negative` | M4I point-accuracy Gate failed for Q1 and Q2 |
+| order-resolved aggregate | `not_qualified` | no order model lock |
+| train112 | retained immutable authority | dataset manifest, file hashes and frozen folds unchanged |
+| Case124–Case130 | retained | checker and negative evidence unchanged |
+| Case130 checker | `pass` | evidence integrity/fail-closed contract only; not surrogate qualification |
+| blind24 | `intentionally_not_run`, 0/24 measured | no model lock, no blind package, no blind claim |
+| additional Task004 FEM/training/tuning | forbidden after closeout | no new Task004 budget authorized |
+| Task005 FEM | not authorized | requires a new reviewed task book |
+
+`TASK004_CONTROLLED_NEGATIVE_CLOSEOUT.md` records the final decision and explains
+why a checker pass must not be read as a qualification pass. All prior M0R–M4I
+records and negative results remain below as historical evidence; they are not
+rewritten by this closeout.
 
 | item | status | evidence |
 |---|---|---|
@@ -38,7 +58,8 @@ unlock blind validation or any surrogate model-selection step.
 M4H was training-only and response-blind. S1 Matérn and latent median had
 accepted-set accuracy but empirical 95% coverage of 1.0, above the frozen 0.99
 upper bound; S2 retained the full-domain tail error. Task004 therefore stops
-as a controlled negative and waits for Review V7.
+as a historical controlled negative; it was subsequently corrected by M4I and
+formally closed by Review V8.
 
 ## M4I selective threshold and conditional interval correction
 

@@ -3,12 +3,15 @@
 ## 状态
 
 ```text
-status = ready_for_codex_execution
+status = closed_controlled_negative
 execution_branch = codex/only-one-13p5nm-surrogate-inversion
 predecessor = Task003 Review V3
 purpose = arbitrary in-domain angle-response prediction at one fixed geometry
-formal_angle_DOE = not yet authorized
+formal_angle_DOE = not authorized in Task004; requires a separate reviewed task
 formal_inversion = forbidden
+blind_validation = intentionally_not_run (0/24)
+model_lock = absent
+closeout_authority = review_report_v8.md
 ```
 
 ## 固定物理与数值身份
@@ -104,3 +107,25 @@ Task004 首轮完成后停止等待 ChatGPT 审阅。不得自行开始：
 - 结构参数反演；
 - P 偏振入射代理；
 - 波长或材料参数扩展。
+
+## 最终关闭状态
+
+Task004 已依据 `review_report_v8.md` 关闭为
+`closed_controlled_negative`。`train112`、Case124–Case130 和全部负结果证据
+继续保留；它们不得被删除、覆盖或静默改写。
+
+Case130 checker 的 `status=pass` 只表示独立证据 checker 和 fail-closed 流程
+正确，不等于代理模型资格通过。M4I 两个允许的 predictor 均未通过冻结点精度
+Gate，因此：
+
+```text
+full-domain model lock = absent
+selective model lock = absent
+order model lock = absent
+blind24 FEM = intentionally_not_run
+```
+
+Task004 关闭后不得运行新的 FEM、训练、阈值调整、blind validation 或第二轮
+active learning。没有新的任务书和审阅，不得开始 Task005 FEM。详细身份与证据
+入口见 `TASK004_FINAL_STATUS.json` 和
+`TASK004_CONTROLLED_NEGATIVE_CLOSEOUT.md`。
