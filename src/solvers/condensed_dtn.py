@@ -132,6 +132,57 @@ def extract_petsc_condensed_blocks(
     return PetscCondensedBlocks(F, C, D, H, b_fe, b_aux, int(n_fe), int(n_aux))
 
 
+def combine_petsc_augmented_solution(
+    blocks: PetscCondensedBlocks,
+    u_fe: PETSc.Vec,
+    u_aux: PETSc.Vec,
+    target: PETSc.Vec,
+) -> PETSc.Vec:
+    if target.getSize() != blocks.n_fe + blocks.n_aux:
+        raise ValueError("augmented target has the wrong global size")
+    target.set(0.0)
+    row_start, row_end = target.getOwnershipRange()
+    fe_end = min(row_end, blocks.n_fe)
+    if fe_end > row_start:
+        indices = np.arange(row_start, fe_end, dtype=PETSc.IntType)
+        target.setValues(indices, u_fe.getValues(indices))
+    aux_start = max(row_start, blocks.n_fe)
+    if row_end > aux_start:
+        indices = np.arange(aux_start, row_end, dtype=PETSc.IntType)
+        target.setValues(indices, u_aux.getValues(indices - blocks.n_fe))
+    target.assemble()
+    return target
+
+
+def full_augmented_relative_residual(
+    blocks: PetscCondensedBlocks,
+    u_fe: PETSc.Vec,
+    u_aux: PETSc.Vec,
+    *,
+    fine_operator: PETSc.Mat | None = None,
+) -> float:
+    fine_operator = blocks.require_f() if fine_operator is None else fine_operator
+    fe_residual = fine_operator.createVecLeft()
+    fe_work = blocks.C.createVecLeft()
+    aux_residual = blocks.D.createVecLeft()
+    aux_work = blocks.H.createVecLeft()
+    fine_operator.mult(u_fe, fe_residual)
+    blocks.C.mult(u_aux, fe_work)
+    fe_residual.axpy(1.0, fe_work)
+    fe_residual.axpy(-1.0, blocks.b_fe)
+    blocks.D.mult(u_fe, aux_residual)
+    blocks.H.mult(u_aux, aux_work)
+    aux_residual.axpy(1.0, aux_work)
+    aux_residual.axpy(-1.0, blocks.b_aux)
+    numerator = np.hypot(float(fe_residual.norm()), float(aux_residual.norm()))
+    denominator = max(
+        np.hypot(float(blocks.b_fe.norm()), float(blocks.b_aux.norm())), TINY
+    )
+    for vector in (fe_residual, fe_work, aux_residual, aux_work):
+        vector.destroy()
+    return float(numerator / denominator)
+
+
 def gather_small_petsc_matrix(matrix: PETSc.Mat) -> np.ndarray:
     """Replicate a small distributed matrix with one collective per rank."""
 

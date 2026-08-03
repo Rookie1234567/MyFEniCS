@@ -8,10 +8,12 @@ from petsc4py import PETSc
 
 from src.solvers.condensed_dtn import (
     build_explicit_condensed_operator,
+    combine_petsc_augmented_solution,
     condense_dense_blocks,
     condensed_rhs,
     create_matrix_free_condensed_operator,
     extract_petsc_condensed_blocks,
+    full_augmented_relative_residual,
     recover_dense_auxiliary,
     recover_petsc_auxiliary,
     relative_action_error,
@@ -200,6 +202,29 @@ class Task026PetscCondensationTests(unittest.TestCase):
             rtol=1.0e-11,
             atol=1.0e-11,
         )
+        target = self.b.duplicate()
+        combined = combine_petsc_augmented_solution(self.blocks, u_fe, u_aux, target)
+        self.assertIs(combined, target)
+        np.testing.assert_allclose(
+            combined.getArray(readonly=True),
+            reference[
+                combined.getOwnershipRange()[0] : combined.getOwnershipRange()[1]
+            ],
+            rtol=1.0e-11,
+            atol=1.0e-11,
+        )
+        direct_residual = self.A.createVecLeft()
+        self.A.mult(combined, direct_residual)
+        direct_residual.axpy(PETSc.ScalarType(-1.0), self.b)
+        direct_relative = float(direct_residual.norm()) / float(self.b.norm())
+        self.assertAlmostEqual(
+            full_augmented_relative_residual(self.blocks, u_fe, u_aux),
+            direct_relative,
+            places=12,
+        )
+        self.assertLess(direct_relative, 1.0e-12)
+        direct_residual.destroy()
+        target.destroy()
         u_aux.destroy()
         u_fe.destroy()
         ksp.destroy()

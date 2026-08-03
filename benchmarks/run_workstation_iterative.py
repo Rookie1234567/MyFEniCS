@@ -20,9 +20,11 @@ from petsc4py import PETSc
 
 from src.postprocessing.rta_3d import compute_volume_absorption_3d
 from src.solvers.condensed_dtn import (
+    combine_petsc_augmented_solution,
     condensed_rhs,
     create_matrix_free_condensed_operator,
     extract_petsc_condensed_blocks,
+    full_augmented_relative_residual,
     matrix_storage_bytes,
     recover_petsc_auxiliary,
     relative_action_error,
@@ -492,59 +494,6 @@ def _shifted_action(matrix: PETSc.Mat, difference: PETSc.Vec) -> PETSc.Mat:
     return action
 
 
-def _combined_augmented_vector(
-    system: RuntimeStage4System,
-    u_fe: PETSc.Vec,
-    u_aux: PETSc.Vec,
-    *,
-    target: PETSc.Vec | None = None,
-) -> PETSc.Vec:
-    result = system.b_petsc.duplicate() if target is None else target
-    if result.getSize() != system.n_fe + system.n_aux:
-        raise ValueError("augmented target has the wrong global size")
-    result.set(0.0)
-    row_start, row_end = result.getOwnershipRange()
-    fe_end = min(row_end, system.n_fe)
-    if fe_end > row_start:
-        indices = np.arange(row_start, fe_end, dtype=PETSc.IntType)
-        result.setValues(indices, u_fe.getValues(indices))
-    aux_start = max(row_start, system.n_fe)
-    if row_end > aux_start:
-        indices = np.arange(aux_start, row_end, dtype=PETSc.IntType)
-        result.setValues(indices, u_aux.getValues(indices - system.n_fe))
-    result.assemble()
-    return result
-
-
-def _full_augmented_residual(
-    blocks,
-    u_fe: PETSc.Vec,
-    u_aux: PETSc.Vec,
-    *,
-    fine_operator: PETSc.Mat | None = None,
-) -> float:
-    fine_operator = blocks.require_f() if fine_operator is None else fine_operator
-    fe_residual = fine_operator.createVecLeft()
-    fe_work = blocks.C.createVecLeft()
-    aux_residual = blocks.D.createVecLeft()
-    aux_work = blocks.H.createVecLeft()
-    fine_operator.mult(u_fe, fe_residual)
-    blocks.C.mult(u_aux, fe_work)
-    fe_residual.axpy(1.0, fe_work)
-    fe_residual.axpy(-1.0, blocks.b_fe)
-    blocks.D.mult(u_fe, aux_residual)
-    blocks.H.mult(u_aux, aux_work)
-    aux_residual.axpy(1.0, aux_work)
-    aux_residual.axpy(-1.0, blocks.b_aux)
-    numerator = np.hypot(float(fe_residual.norm()), float(aux_residual.norm()))
-    denominator = max(
-        np.hypot(float(blocks.b_fe.norm()), float(blocks.b_aux.norm())), TINY
-    )
-    for vector in (fe_residual, fe_work, aux_residual, aux_work):
-        vector.destroy()
-    return float(numerator / denominator)
-
-
 def _official_rta(
     system: RuntimeStage4System,
     augmented_solution: PETSc.Vec,
@@ -886,13 +835,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     )
     condensed_residual = _linear_residual(operator, rhs, solution)
     auxiliary = recover_petsc_auxiliary(blocks, solution)
-    augmented = _combined_augmented_vector(
-        system,
-        solution,
-        auxiliary,
-        target=system.x_petsc if args.compact_lifecycle else None,
+    target = (
+        system.x_petsc
+        if args.compact_lifecycle
+        else system.b_petsc.duplicate()
     )
-    full_residual = _full_augmented_residual(
+    augmented = combine_petsc_augmented_solution(blocks, solution, auxiliary, target)
+    full_residual = full_augmented_relative_residual(
         blocks, solution, auxiliary, fine_operator=fine_operator
     )
     checkpoint(
