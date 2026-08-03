@@ -1,0 +1,13 @@
+{
+  "case_id": "130_task004_selective_interval_correction",
+  "task": "Task004 M4I",
+  "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "predictors": ["L2_local_matern_k24", "E1_latent_median_ensemble"],
+  "risk_rule": "S1_pre_frozen_m4e2_ensemble",
+  "training_count": 112,
+  "candidate_pool_count": 4096,
+  "blind_design_count": 24,
+  "response_blind": true,
+  "new_fem_budget": 0,
+  "model_lock_required_before_blind": true
+}

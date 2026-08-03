@@ -502,9 +502,28 @@ def run_m4i(*, dataset_dir: Path, output_dir: Path, folds_path: Path,
         "selection_order": ["max_absolute_error", "p95_absolute_error", "accepted_fraction", "candidate_name"],
         "model_lock_created": lock_created, "validation_response_accessed": False,
     }
+    acceptance_payload = {
+        "schema_version": "task004.selective-acceptance-domain.v2",
+        "dataset_id": DATASET_ID, "forward_solver_sha": FORWARD_SHA,
+        "surrogate_training_code_sha": implementation_sha,
+        "candidate_pool": None if screen["pool"] is None else {
+            key: screen["pool"]["predictor_screening"][key]
+            for key in (f"{Q1}::{S1}", f"{Q2}::{S1}")
+        },
+        "blind_design": None if screen["blind"] is None else {
+            key: screen["blind"]["predictor_screening"][key]
+            for key in (f"{Q1}::{S1}", f"{Q2}::{S1}")
+        },
+        "candidate_pool_design_id": screen["pool_payload"].get("design_id"),
+        "candidate_pool_tuple_sha256": screen["pool_payload"].get("point_tuple_sha256"),
+        "blind_design_id": screen["blind_payload"].get("design_id"),
+        "blind_tuple_sha256": screen["blind_payload"].get("point_tuple_sha256"),
+        "response_blind": True, "validation_response_accessed": False,
+    }
     (output_dir / "SELECTIVE_THRESHOLD_CORRECTION.json").write_text(json.dumps(threshold_payload, indent=2, sort_keys=True) + "\n")
     (output_dir / "SELECTIVE_CONDITIONAL_CONFORMAL.json").write_text(json.dumps(conformal_payload, indent=2, sort_keys=True) + "\n")
     (output_dir / "SELECTIVE_MODEL_COMPARISON_V2.json").write_text(json.dumps(comparison_payload, indent=2, sort_keys=True) + "\n")
+    (output_dir / "SELECTIVE_ACCEPTANCE_DOMAIN_V2.json").write_text(json.dumps(acceptance_payload, indent=2, sort_keys=True) + "\n")
     (output_dir / "SELECTIVE_OOF_V2.json").write_text(json.dumps({
         "schema_version": "task004.selective-oof.v2", "dataset_id": DATASET_ID,
         "records": oof_records, "validation_response_accessed": False}, indent=2, sort_keys=True) + "\n")
