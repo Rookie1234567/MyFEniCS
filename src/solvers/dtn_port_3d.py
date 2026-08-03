@@ -2652,6 +2652,13 @@ def _solve_stage4_dtn_port_total_field_impl(
     out_dir: Path,
     log,
     started: float | None = None,
+    linear_solver_port: (
+        Callable[
+            [Stage4ExternalLinearSolverRequest],
+            Stage4ExternalLinearSolverSnapshot,
+        ]
+        | None
+    ) = None,
     variable_p_live_observer: (
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
@@ -3954,26 +3961,39 @@ def _solve_stage4_dtn_port_total_field_impl(
     )
 
     t0 = time.perf_counter()
+    external_snapshot: Stage4ExternalLinearSolverSnapshot | None = None
     try:
-        solve_x, ksp, ksp_telemetry = _solve_augmented_system(
-            solve_A,
-            solve_b,
-            petsc_options,
-            solve_prefix,
-            out_dir=out_dir,
-            comm=comm,
-            started=started,
-            dofs=solve_dofs,
-            constraints=floquet_data.num_constraints,
-            matrix_stats=(
-                independent_trace_matrix_stats
-                if independent_trace_matrix_stats is not None
-                else condensed_matrix_stats
-                if condensed_matrix_stats is not None
-                else augmented_matrix_stats_after_finalize
-            ),
-            factorization_only=cfg.matrix_diagnostics_factorization_only,
-        )
+        if linear_solver_port is None:
+            solve_x, ksp, ksp_telemetry = _solve_augmented_system(
+                solve_A,
+                solve_b,
+                petsc_options,
+                solve_prefix,
+                out_dir=out_dir,
+                comm=comm,
+                started=started,
+                dofs=solve_dofs,
+                constraints=floquet_data.num_constraints,
+                matrix_stats=(
+                    independent_trace_matrix_stats
+                    if independent_trace_matrix_stats is not None
+                    else condensed_matrix_stats
+                    if condensed_matrix_stats is not None
+                    else augmented_matrix_stats_after_finalize
+                ),
+                factorization_only=cfg.matrix_diagnostics_factorization_only,
+            )
+        else:
+            external_snapshot = _dispatch_external_linear_solver(
+                solve_A,
+                solve_b,
+                n_fe=n_fe,
+                n_aux=n_aux,
+                port=linear_solver_port,
+            )
+            solve_x = external_snapshot.x
+            ksp = None
+            ksp_telemetry = {}
     except DirectSolveFailure as exc:
         exc.timing_details.update(timing_details)
         exc.extra_summary.setdefault("solver_info", {})
@@ -4219,6 +4239,14 @@ def _solve_stage4_dtn_port_total_field_impl(
         )
     else:
         linear_residual = _linear_residual(A_aug, b_aug, x_aug)
+    external_rta_gate_pass = (
+        None
+        if external_snapshot is None
+        else _external_snapshot_allows_official_rta(
+            external_snapshot,
+            linear_residual.get("linear_system_relative_residual"),
+        )
+    )
     _write_progress_event(
         out_dir,
         comm,
@@ -4267,8 +4295,15 @@ def _solve_stage4_dtn_port_total_field_impl(
         petsc_options=petsc_options,
     )
     aux_values = _gather_auxiliary_values(x_aug, n_fe, n_aux, comm)
-    port_metrics = _port_power_metrics(cfg, modes, aux_values, incident_projections)
-    if cfg.dtn_auxiliary_direct_projection_audit:
+    port_metrics = (
+        {}
+        if external_rta_gate_pass is False
+        else _port_power_metrics(cfg, modes, aux_values, incident_projections)
+    )
+    if (
+        cfg.dtn_auxiliary_direct_projection_audit
+        and external_rta_gate_pass is not False
+    ):
         _write_progress_event(
             out_dir,
             comm,
@@ -4322,11 +4357,24 @@ def _solve_stage4_dtn_port_total_field_impl(
             "ordinary_default_changed": False,
         }
     port_metrics.update(timing_details)
-    _write_port_outputs(out_dir, cfg, modes, aux_values, incident_projections, port_metrics, comm)
+    if external_rta_gate_pass is not False:
+        _write_port_outputs(
+            out_dir,
+            cfg,
+            modes,
+            aux_values,
+            incident_projections,
+            port_metrics,
+            comm,
+        )
     _write_progress_event(
         out_dir,
         comm,
-        stage="after_official_rta",
+        stage=(
+            "after_official_rta"
+            if external_rta_gate_pass is not False
+            else "external_rta_not_run"
+        ),
         status="end",
         started=started,
         dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
@@ -4410,8 +4458,23 @@ def _solve_stage4_dtn_port_total_field_impl(
             "same_full_operator_used_for_recovery_and_residual": False,
             "ordinary_default_changed": False,
         }
+    if external_snapshot is None:
+        solver_converged_reason = int(ksp.getConvergedReason())
+        solver_iterations = int(ksp.getIterationNumber())
+        solver_residual_norm = float(ksp.getResidualNorm())
+        solver_ksp_type = ksp.getType()
+        solver_pc_type = ksp.getPC().getType()
+    else:
+        solver_converged_reason = int(external_snapshot.converged_reason)
+        solver_iterations = int(external_snapshot.iterations)
+        solver_residual_norm = None
+        solver_ksp_type = external_snapshot.ksp_type
+        solver_pc_type = external_snapshot.pc_type
     solver_info = {
         "solver_backend": (
+            "external static-condensed linear-solver port"
+            if external_snapshot is not None
+            else
             "PETSc exact-sequence inactive-row-free variable-p assembly-time "
             "trace Schur + Floquet-independent auxiliary Fourier-DtN port"
             if variable_p_reduction is not None
@@ -4489,11 +4552,11 @@ def _solve_stage4_dtn_port_total_field_impl(
         ),
         "cell_static_condensation": cell_static_condensation_audit,
         "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
-        "ksp_converged_reason": int(ksp.getConvergedReason()),
-        "ksp_iterations": int(ksp.getIterationNumber()),
-        "primal_ksp_residual_norm": float(ksp.getResidualNorm()),
-        "actual_ksp_type": ksp.getType(),
-        "actual_pc_type": ksp.getPC().getType(),
+        "ksp_converged_reason": solver_converged_reason,
+        "ksp_iterations": solver_iterations,
+        "primal_ksp_residual_norm": solver_residual_norm,
+        "actual_ksp_type": solver_ksp_type,
+        "actual_pc_type": solver_pc_type,
         "actual_pc_factor_solver_type": None,
         "variable_p_live_observer_requested": bool(
             variable_p_live_observer is not None
@@ -4519,10 +4582,29 @@ def _solve_stage4_dtn_port_total_field_impl(
         **timing_details,
         **linear_residual,
     }
-    try:
-        solver_info["actual_pc_factor_solver_type"] = ksp.getPC().getFactorSolverType()
-    except Exception:
-        solver_info["actual_pc_factor_solver_type"] = None
+    if external_snapshot is not None:
+        solver_info.update(
+            {
+                "external_linear_solver_port": True,
+                "external_rta_gate_pass": external_rta_gate_pass,
+                "reported_relative_residual": (
+                    external_snapshot.reported_relative_residual
+                ),
+                "condensed_true_residual": (
+                    external_snapshot.condensed_true_residual
+                ),
+                "full_augmented_true_residual": (
+                    external_snapshot.full_augmented_true_residual
+                ),
+                "residual_limit": external_snapshot.residual_limit,
+                "no_global_factor": external_snapshot.no_global_factor,
+            }
+        )
+    if external_snapshot is None:
+        try:
+            solver_info["actual_pc_factor_solver_type"] = ksp.getPC().getFactorSolverType()
+        except Exception:
+            solver_info["actual_pc_factor_solver_type"] = None
 
     if condensed_system is not None:
         if independent_trace_system is not None:
@@ -4727,6 +4809,7 @@ def solve_stage4_dtn_port_total_field(
     out_dir: Path,
     log,
     started: float | None = None,
+    linear_solver_port=None,
     variable_p_live_observer: (
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
@@ -4766,6 +4849,7 @@ def solve_stage4_dtn_port_total_field(
             out_dir=out_dir,
             log=log,
             started=started,
+            linear_solver_port=linear_solver_port,
             variable_p_live_observer=variable_p_live_observer,
             variable_p_retain_local_schur_for_research=(
                 variable_p_retain_local_schur_for_research

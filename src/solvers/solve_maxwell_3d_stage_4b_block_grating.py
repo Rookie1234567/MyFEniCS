@@ -14,6 +14,7 @@ def run_stage4b_block_grating_3d_case(
     out_dir: Path,
     *,
     solution_observer=None,
+    linear_solver_port=None,
     variable_p_live_observer=None,
     variable_p_retain_local_schur_for_research: bool = False,
     mesh_data_override=None,
@@ -42,6 +43,7 @@ def run_stage4b_block_grating_3d_case(
         solve_stage4_dtn_port=True,
         apply_strong_boundary_bc=False,
         solution_observer=solution_observer,
+        linear_solver_port=linear_solver_port,
         variable_p_live_observer=variable_p_live_observer,
         variable_p_retain_local_schur_for_research=(
             variable_p_retain_local_schur_for_research

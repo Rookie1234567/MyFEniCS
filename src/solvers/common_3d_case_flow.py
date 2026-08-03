@@ -14,6 +14,7 @@ from dolfinx import default_scalar_type, fem
 from dolfinx.fem import petsc as fem_petsc
 
 from ..common.config_3d import (
+    ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
     ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
     SimulationConfig3D,
     resolve_stage4_full3d_assembly_backend,
@@ -86,7 +87,14 @@ from .dtn_port_3d import (
 from .solve_vector_maxwell import _json_default
 
 
-def _log_case_header(cfg: SimulationConfig3D, log, petsc_options, selected_parallel_lu, disabled_reason):
+def _log_case_header(
+    cfg: SimulationConfig3D,
+    log,
+    petsc_options,
+    selected_parallel_lu,
+    disabled_reason,
+    linear_solve_method: str = "direct_lu",
+):
     k = cfg.wavevector
     p = cfg.polarization_vector
     dot_k_p = np.dot(k, p)
@@ -115,14 +123,16 @@ def _log_case_header(cfg: SimulationConfig3D, log, petsc_options, selected_paral
         "Stage-4 Full3D assembly backend requested = "
         f"{cfg.stage4_full3d_assembly_backend}"
     )
-    log("linear solve method = direct_lu")
-    log(f"PETSc direct solver profile requested = {cfg.petsc_direct_solver_profile_requested}")
+    log(f"linear solve method = {linear_solve_method}")
+    if linear_solve_method == "direct_lu":
+        log(f"PETSc direct solver profile requested = {cfg.petsc_direct_solver_profile_requested}")
     log(f"divergence penalty = {cfg.divergence_penalty}")
     if selected_parallel_lu is not None:
         log(f"MPI direct factor solver selected = {selected_parallel_lu}")
     if disabled_reason is not None:
         log(f"WARNING: {disabled_reason}")
-    log(f"PETSc direct LU options = {petsc_options}")
+    if linear_solve_method == "direct_lu":
+        log(f"PETSc direct LU options = {petsc_options}")
     return dot_k_p
 
 
@@ -718,6 +728,7 @@ def run_prepared_3d_case_flow(
     apply_strong_boundary_bc: bool = True,
     run_diffraction_postprocess: bool = False,
     solution_observer: Callable[..., None] | None = None,
+    linear_solver_port=None,
     variable_p_live_observer: (
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
@@ -750,12 +761,13 @@ def run_prepared_3d_case_flow(
         (
             variable_p_live_observer is not None,
             bool(variable_p_retain_local_schur_for_research),
+            linear_solver_port is not None,
         )
     )
     if len(set(live_observer_flags)) != 1:
         raise ValueError(
-            "the variable-p live observer must be enabled on every MPI rank "
-            "and research Schur retention flags must match"
+            "variable-p observer, Schur retention, and external solver-port "
+            "presence must match on every MPI rank"
         )
     if cfg.stage_case != expected_stage_case:
         raise ValueError(f"This solver accepts only stage_case={expected_stage_case!r}.")
@@ -845,6 +857,17 @@ def run_prepared_3d_case_flow(
         raise ValueError(
             "assemble-only and factorization-only diagnostics are mutually exclusive."
         )
+    if linear_solver_port is not None and (
+        not solve_stage4_dtn_port
+        or cfg.matrix_diagnostics_assemble_only
+        or cfg.matrix_diagnostics_factorization_only
+        or resolve_stage4_full3d_assembly_backend(cfg)["actual"]
+        != ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+    ):
+        raise ValueError(
+            "external linear-solver port requires a complete "
+            "assembly_time_static_condensed Stage-4 DtN solve"
+        )
     if cfg.matrix_diagnostics_factorization_only and not solve_stage4_dtn_port:
         raise NotImplementedError(
             "factorization-only diagnostics currently require the Stage-4 auxiliary DtN path."
@@ -852,8 +875,31 @@ def run_prepared_3d_case_flow(
     _finish_timed_stage(comm, timings, "config_validation", stage_start, log)
     _write_progress_event(out_dir, comm, stage="after_config", status="end", started=started)
 
-    petsc_options, selected_parallel_lu, disabled_reason = _prepare_direct_lu_options_for_comm(comm, cfg)
-    dot_k_p = _log_case_header(cfg, log, petsc_options, selected_parallel_lu, disabled_reason)
+    if linear_solver_port is None:
+        petsc_options, selected_parallel_lu, disabled_reason = _prepare_direct_lu_options_for_comm(comm, cfg)
+    else:
+        petsc_options = {}
+        selected_parallel_lu = None
+        disabled_reason = None
+    dot_k_p = _log_case_header(
+        cfg,
+        log,
+        petsc_options,
+        selected_parallel_lu,
+        disabled_reason,
+        linear_solve_method=(
+            "external_linear_solver_port"
+            if linear_solver_port is not None
+            else "direct_lu"
+        ),
+    )
+    if linear_solver_port is not None:
+        ooc_info = {
+            "mumps_ooc_enabled": False,
+            "mumps_ooc_tmpdir": None,
+            "mumps_ooc_prefix": None,
+            "status": "not_run_external_linear_solver_port",
+        }
     _write_progress_event(
         out_dir,
         comm,
@@ -867,7 +913,11 @@ def run_prepared_3d_case_flow(
             "stage4_full3d_assembly_backend_requested": (
                 cfg.stage4_full3d_assembly_backend
             ),
-            "solver_profile": cfg.petsc_direct_solver_profile_requested,
+            "solver_profile": (
+                None
+                if linear_solver_port is not None
+                else cfg.petsc_direct_solver_profile_requested
+            ),
             "matrix_diagnostics_assemble_only": cfg.matrix_diagnostics_assemble_only,
             "matrix_diagnostics_factorization_only": (
                 cfg.matrix_diagnostics_factorization_only
@@ -888,7 +938,8 @@ def run_prepared_3d_case_flow(
             disabled_reason,
             dot_k_p,
         )
-    ooc_info = _prepare_mumps_ooc_runtime(cfg, out_dir, petsc_options, comm, log)
+    if linear_solver_port is None:
+        ooc_info = _prepare_mumps_ooc_runtime(cfg, out_dir, petsc_options, comm, log)
     _write_progress_event(
         out_dir,
         comm,
@@ -1174,6 +1225,7 @@ def run_prepared_3d_case_flow(
                 out_dir=out_dir,
                 log=log,
                 started=started,
+                linear_solver_port=linear_solver_port,
                 variable_p_live_observer=variable_p_live_observer,
                 variable_p_retain_local_schur_for_research=(
                     variable_p_retain_local_schur_for_research
@@ -1319,6 +1371,9 @@ def run_prepared_3d_case_flow(
     _finish_timed_stage(comm, timings, "matrix_stats", stage_start, log)
     _log_matrix_stats(matrix_stats, log)
     dtn_solver_info = None if dtn_result is None else dtn_result.get("solver_info", {})
+    external_solver_snapshot = bool(
+        dtn_solver_info and dtn_solver_info.get("external_linear_solver_port")
+    )
     dtn_base_matrix_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_base_matrix_stats")
     dtn_augmented_matrix_stats = (
         None if dtn_solver_info is None else dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
@@ -1384,19 +1439,21 @@ def run_prepared_3d_case_flow(
         reason_name = "FACTORIZATION_ONLY_SKIPPED_SOLVE"
         iterations = 0
         residual_norm = None
-    elif live_observer_primal_snapshot:
+    elif external_solver_snapshot or live_observer_primal_snapshot:
         reason = int(dtn_solver_info["ksp_converged_reason"])
         reason_name = _ksp_reason_name(reason)
         iterations = int(dtn_solver_info["ksp_iterations"])
-        residual_norm = float(
-            dtn_solver_info["primal_ksp_residual_norm"]
+        residual_norm = (
+            None
+            if external_solver_snapshot
+            else float(dtn_solver_info["primal_ksp_residual_norm"])
         )
     else:
         reason = int(system_ksp.getConvergedReason())
         reason_name = _ksp_reason_name(reason)
         iterations = int(system_ksp.getIterationNumber())
         residual_norm = float(system_ksp.getResidualNorm())
-    if live_observer_primal_snapshot:
+    if external_solver_snapshot or live_observer_primal_snapshot:
         ksp_type = dtn_solver_info["actual_ksp_type"]
         pc_type = dtn_solver_info["actual_pc_type"]
         pc_factor_solver_type = dtn_solver_info[
@@ -1425,6 +1482,15 @@ def run_prepared_3d_case_flow(
         else condensed_full_residual
         if condensed_full_residual is not None
         else _linear_system_diagnostics(system_A, system_b, system_x)
+    )
+    external_rta_gate_pass = (
+        None
+        if not external_solver_snapshot
+        else bool(dtn_solver_info["external_rta_gate_pass"])
+    )
+    solver_converged = (reason > 0) and not diagnostic_only_result
+    official_result = solver_converged and (
+        not external_solver_snapshot or external_rta_gate_pass is True
     )
     log(f"solver converged reason = {reason}")
     log(f"solver converged reason name = {reason_name}")
@@ -1465,7 +1531,10 @@ def run_prepared_3d_case_flow(
     )
     solver_release_audit = None
     if solver_objects_released_before_postprocess:
-        system_ksp.destroy()
+        released_objects = ["system Mat", "RHS Vec", "solution Vec"]
+        if system_ksp is not None:
+            system_ksp.destroy()
+            released_objects.insert(0, "KSP/MUMPS factor")
         system_x.destroy()
         system_b.destroy()
         system_A.destroy()
@@ -1558,12 +1627,7 @@ def run_prepared_3d_case_flow(
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
             extra={
-                "released_objects": [
-                    "KSP/MUMPS factor",
-                    "system Mat",
-                    "RHS Vec",
-                    "solution Vec",
-                ],
+                "released_objects": released_objects,
                 "ordinary_default_changed": False,
                 **solver_release_audit,
             },
@@ -1585,6 +1649,10 @@ def run_prepared_3d_case_flow(
             petsc_options=petsc_options,
             extra={
                 "lifecycle_note": (
+                    "External solver-port callback owned temporary solver objects; "
+                    "no KSP/MUMPS factor is retained."
+                    if external_solver_snapshot
+                    else
                     "Telemetry-only baseline preserves the Task28 lifecycle: "
                     "KSP/factor, system Mat, RHS Vec, and solution Vec remain "
                     "referenced during postprocess."
@@ -1593,7 +1661,6 @@ def run_prepared_3d_case_flow(
         )
 
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
-    converged = (reason > 0) and not diagnostic_only_result
     stage4_boundary_model = cfg.stage4_boundary_model.lower() if cfg.stage_case.startswith("stage4_") else None
     summary = {
         "case_name": cfg.case_name,
@@ -1605,17 +1672,25 @@ def run_prepared_3d_case_flow(
         else "diagnostic_factorization_only"
         if factorization_only_result
         else "completed"
-        if converged
+        if official_result
+        else "external_solver_not_converged"
+        if external_solver_snapshot and not solver_converged
+        else "external_residual_gate_failed"
+        if external_solver_snapshot and external_rta_gate_pass is False
         else "failed_not_converged",
-        "official_result": converged,
-        "diagnostic_only": not converged,
-        "postprocess_skipped": not converged,
+        "official_result": official_result,
+        "diagnostic_only": not official_result,
+        "postprocess_skipped": not official_result,
         "postprocess_skip_reason": None
-        if converged
+        if official_result
         else "Matrix diagnostics assemble-only mode skipped LU factorization/solve."
         if assemble_only_result
         else "Matrix diagnostics factorization-only mode stopped after KSPSetUp/LU; KSPSolve and postprocess were skipped."
         if factorization_only_result
+        else "External solver did not converge; official RTA was not run."
+        if external_solver_snapshot and not solver_converged
+        else "External solver residual/RTA gate failed; official RTA was not run."
+        if external_solver_snapshot and external_rta_gate_pass is False
         else "PETSc KSP did not converge.",
         "num_mesh_cells": int(num_cells),
         "variable_p_mesh_identity": variable_p_mesh_identity,
@@ -1834,8 +1909,16 @@ def run_prepared_3d_case_flow(
         "rhs_source_norm": rhs_source_norm,
         "unconstrained_rhs_norm": unconstrained_rhs_norm,
         "domain_tag_volumes": domain_tag_volumes,
-        "linear_solve_method": "direct_lu",
-        "petsc_direct_solver_profile": cfg.petsc_direct_solver_profile_requested,
+        "linear_solve_method": (
+            "external_linear_solver_port"
+            if external_solver_snapshot
+            else "direct_lu"
+        ),
+        "petsc_direct_solver_profile": (
+            None
+            if external_solver_snapshot
+            else cfg.petsc_direct_solver_profile_requested
+        ),
         "matrix_diagnostics_assemble_only": bool(assemble_only_result),
         "matrix_diagnostics_factorization_only": bool(
             factorization_only_result
@@ -1846,7 +1929,7 @@ def run_prepared_3d_case_flow(
         "actual_pc_type": pc_type,
         "actual_pc_factor_solver_type": pc_factor_solver_type,
         "selected_parallel_lu_solver_type": selected_parallel_lu,
-        "ksp_converged": converged,
+        "ksp_converged": solver_converged,
         "ksp_converged_reason": reason,
         "ksp_converged_reason_name": reason_name,
         "ksp_iterations": iterations,
@@ -1983,7 +2066,30 @@ def run_prepared_3d_case_flow(
             }
         )
 
-    if not converged:
+    if external_solver_snapshot:
+        summary.update(
+            {
+                "external_linear_solver_port": True,
+                "external_rta_gate_pass": external_rta_gate_pass,
+                "external_reported_relative_residual": dtn_solver_info[
+                    "reported_relative_residual"
+                ],
+                "external_condensed_true_residual": dtn_solver_info[
+                    "condensed_true_residual"
+                ],
+                "external_full_augmented_true_residual": dtn_solver_info[
+                    "full_augmented_true_residual"
+                ],
+                "external_residual_limit": dtn_solver_info[
+                    "residual_limit"
+                ],
+                "external_no_global_factor": dtn_solver_info[
+                    "no_global_factor"
+                ],
+            }
+        )
+
+    if not official_result:
         summary["mumps_ooc_runtime"] = {
             **ooc_info,
             **_retain_mumps_ooc_directory_on_failure(ooc_info, log),
@@ -1995,6 +2101,16 @@ def run_prepared_3d_case_flow(
             log(
                 "Matrix diagnostics factorization-only mode: KSPSetUp/LU completed; "
                 "KSPSolve and field postprocess were skipped."
+            )
+        elif external_solver_snapshot and not solver_converged:
+            log(
+                "WARNING: external solver did not converge; "
+                "official RTA was not run."
+            )
+        elif external_solver_snapshot and external_rta_gate_pass is False:
+            log(
+                "WARNING: external solver residual/RTA gate failed; "
+                "official RTA was not run."
             )
         else:
             log("WARNING: PETSc KSP did not converge.")
