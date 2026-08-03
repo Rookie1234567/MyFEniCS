@@ -101,6 +101,86 @@ class Stage4VariablePLiveView:
     primal_solver_telemetry: Mapping[str, Any]
 
 
+@dataclass(frozen=True)
+class Stage4ExternalLinearSolverRequest:
+    """Borrowed finalized system passed to an external linear-solver port."""
+
+    A: PETSc.Mat
+    b: PETSc.Vec
+    n_fe: int
+    n_aux: int
+
+
+@dataclass(frozen=True)
+class Stage4ExternalLinearSolverSnapshot:
+    """Transferred solution and fixed scalar evidence from an external port."""
+
+    x: PETSc.Vec
+    converged_reason: int
+    iterations: int
+    reported_relative_residual: float | None
+    condensed_true_residual: float | None
+    full_augmented_true_residual: float | None
+    ksp_type: str
+    pc_type: str
+    residual_limit: float
+    no_global_factor: bool
+
+
+def _external_snapshot_allows_official_rta(
+    snapshot: Stage4ExternalLinearSolverSnapshot,
+    full_fe_relative_residual: float | None,
+) -> bool:
+    residuals = (
+        snapshot.reported_relative_residual,
+        snapshot.condensed_true_residual,
+        snapshot.full_augmented_true_residual,
+        full_fe_relative_residual,
+    )
+    return (
+        snapshot.converged_reason > 0
+        and snapshot.no_global_factor
+        and all(
+            value is not None
+            and np.isfinite(float(value))
+            and float(value) <= snapshot.residual_limit
+            for value in residuals
+        )
+    )
+
+
+def _dispatch_external_linear_solver(
+    A_aug: PETSc.Mat,
+    b_aug: PETSc.Vec,
+    *,
+    n_fe: int,
+    n_aux: int,
+    port: Callable[
+        [Stage4ExternalLinearSolverRequest], Stage4ExternalLinearSolverSnapshot
+    ],
+) -> Stage4ExternalLinearSolverSnapshot:
+    snapshot = port(
+        Stage4ExternalLinearSolverRequest(
+            A=A_aug,
+            b=b_aug,
+            n_fe=int(n_fe),
+            n_aux=int(n_aux),
+        )
+    )
+    if not isinstance(snapshot, Stage4ExternalLinearSolverSnapshot):
+        raise TypeError("external linear-solver port must return its snapshot type")
+    if not snapshot.no_global_factor:
+        raise ValueError(
+            "external linear-solver snapshot must certify no_global_factor"
+        )
+    if (
+        snapshot.x.getSize() != A_aug.getSize()[0]
+        or snapshot.x.getOwnershipRange() != A_aug.getOwnershipRange()
+    ):
+        raise ValueError("external solver x must match finalized augmented ownership")
+    return snapshot
+
+
 def _readonly_goal_context(
     goal_context: Mapping[str, Any],
 ) -> Mapping[str, Any]:
