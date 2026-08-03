@@ -11,6 +11,8 @@ import scipy.sparse as sp
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from src.geometry.tetra_mesh_audit import canonical_owned_cell_ids
+
 
 TINY = np.finfo(float).tiny
 
@@ -440,6 +442,133 @@ def gather_global_subdomain_indices(
             np.unique(np.concatenate(pieces)).astype(PETSc.IntType, copy=False)
         )
     return tuple(result)
+
+
+def _trace_slab_rows_and_incidence(
+    canonical_ids: Sequence[int],
+    records: Sequence[Any],
+    recovery_maps: Sequence[Any],
+    constraints: Any,
+    slab_intervals: Sequence[tuple[float, float]],
+) -> tuple[list[np.ndarray], list[tuple[int, int]]]:
+    local_rows = [set() for _ in slab_intervals]
+    incidence: list[tuple[int, int]] = []
+    for canonical_id, record, recovery in zip(
+        canonical_ids, records, recovery_maps, strict=True
+    ):
+        cell_rows: set[int] = set()
+        for original in recovery.trace_original_dofs:
+            active_ids, coefficients = constraints.expansion_by_original[int(original)]
+            cell_rows.update(
+                int(active)
+                for active, coefficient in zip(active_ids, coefficients, strict=True)
+                if coefficient != 0
+            )
+        incidence.extend((active, int(canonical_id)) for active in cell_rows)
+        z_min = float(np.min(record.coordinates[:, 2]))
+        z_max = float(np.max(record.coordinates[:, 2]))
+        for slab, (low, high) in enumerate(slab_intervals):
+            if z_max >= low and z_min <= high:
+                local_rows[slab].update(cell_rows)
+    return [
+        np.asarray(sorted(rows), dtype=PETSc.IntType) for rows in local_rows
+    ], incidence
+
+
+def _support_multiset_sha256(supports: Sequence[tuple[int, ...]]) -> str:
+    ordered = sorted(
+        tuple(sorted(int(cell) for cell in support)) for support in supports
+    )
+    digest = hashlib.sha256()
+    digest.update(len(ordered).to_bytes(8, "little"))
+    for support in ordered:
+        payload = np.asarray(support, dtype="<i8").tobytes()
+        digest.update(len(payload).to_bytes(8, "little"))
+        digest.update(payload)
+    return digest.hexdigest()
+
+
+def build_trace_aware_physical_slab_partition(
+    condensed: Any,
+    mesh: Any,
+    *,
+    domain_z: tuple[float, float],
+    num_slabs: int,
+    overlap_fraction: float,
+) -> tuple[tuple[np.ndarray, ...], dict[str, Any]]:
+    """Build physical-z slabs from condensed trace support, excluding auxiliaries."""
+
+    z_min, z_max = (float(value) for value in domain_z)
+    if not z_min < z_max or num_slabs < 1 or overlap_fraction < 0.0:
+        raise ValueError("invalid physical slab domain, count, or overlap")
+    canonical_ids, records, _ = canonical_owned_cell_ids(mesh)
+    recovery_maps = condensed.cell_recovery_maps
+    comm = condensed.matrix.getComm().tompi4py()
+    if comm.allreduce(len(records) != len(recovery_maps), MPI.LOR):
+        raise RuntimeError("canonical cell geometry is not aligned with recovery maps")
+    active_rows = int(condensed.active_rows)
+    local_invalid = any(
+        int(active) < 0 or int(active) >= active_rows
+        for recovery in recovery_maps
+        for original in recovery.trace_original_dofs
+        for active in condensed.trace_constraints.expansion_by_original[int(original)][
+            0
+        ]
+    )
+    if comm.allreduce(local_invalid, MPI.LOR):
+        raise RuntimeError("trace expansion produced an out-of-range or auxiliary row")
+    width = (z_max - z_min) / num_slabs
+    slab_intervals = tuple(
+        (
+            z_min + slab * width - overlap_fraction * width,
+            z_min + (slab + 1) * width + overlap_fraction * width,
+        )
+        for slab in range(num_slabs)
+    )
+    local_subdomains, local_incidence = _trace_slab_rows_and_incidence(
+        canonical_ids,
+        records,
+        recovery_maps,
+        condensed.trace_constraints,
+        slab_intervals,
+    )
+    subdomains = gather_global_subdomain_indices(local_subdomains, comm=comm)
+    union = np.unique(np.concatenate(subdomains))
+    if not np.array_equal(union, np.arange(active_rows, dtype=PETSc.IntType)):
+        raise RuntimeError("physical slabs do not cover every active trace row")
+    packets = comm.gather(local_incidence, root=0)
+    audit = None
+    if comm.rank == 0:
+        supports_by_row = [set() for _ in range(active_rows)]
+        for packet in packets:
+            for row, canonical_id in packet:
+                supports_by_row[row].add(canonical_id)
+        multiplicity = np.zeros(active_rows, dtype=np.int64)
+        for subdomain in subdomains:
+            multiplicity[subdomain] += 1
+        supports = [tuple(sorted(support)) for support in supports_by_row]
+        audit = {
+            "active_rows": active_rows,
+            "appended_rows": int(condensed.appended_rows),
+            "auxiliary_rows_in_subdomains": 0,
+            "coverage_pass": True,
+            "union_rows": int(union.size),
+            "out_of_range_rows": 0,
+            "slab_row_counts": [int(rows.size) for rows in subdomains],
+            "multiplicity_histogram": {
+                str(value): int(np.count_nonzero(multiplicity == value))
+                for value in sorted(set(multiplicity.tolist()))
+            },
+            "max_multiplicity": int(np.max(multiplicity)),
+            "multiplicity_gt_one_rows": int(np.count_nonzero(multiplicity > 1)),
+            "multiplicity_eq_one_rows": int(np.count_nonzero(multiplicity == 1)),
+            "global_support_hash": _support_multiset_sha256(supports),
+            "per_slab_support_hashes": [
+                _support_multiset_sha256([supports[int(row)] for row in subdomain])
+                for subdomain in subdomains
+            ],
+        }
+    return subdomains, comm.bcast(audit, root=0)
 
 
 def balanced_subdomain_owners(
