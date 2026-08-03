@@ -1,0 +1,29 @@
+{
+  "aggregate_only": true,
+  "blind_fem_authorized": false,
+  "controlled_negative": true,
+  "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "failure_rule": "if no predictor/rule passes all gates, stop controlled-negative and require FEM on rejected points",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "minimums": {
+    "accepted_blind_count": 12,
+    "accepted_candidate_pool_fraction": 0.7,
+    "accepted_oof_fraction": 0.7
+  },
+  "model_lock_created": false,
+  "order_resolved_qualified": false,
+  "point_predictors": [
+    "L1_local_rbf_k24_s1e-08",
+    "L2_local_matern_k24",
+    "E1_latent_median_ensemble"
+  ],
+  "qualified": false,
+  "risk_rules": [
+    "S1_pre_frozen_m4e2_ensemble",
+    "S2_std_disagreement_max"
+  ],
+  "schema_version": "task004.angle-aggregate-selective-qualification-contract.v1",
+  "surrogate_training_code_sha": "9325d90479a7d0c9448ca302ee4b438632950d2d",
+  "training_tuple_sha256": "00fb746bbb881ac7fc3cd27c313b2b526bd2f69f8e89ef621f3e6d9790af5c68",
+  "validation_response_accessed": false
+}

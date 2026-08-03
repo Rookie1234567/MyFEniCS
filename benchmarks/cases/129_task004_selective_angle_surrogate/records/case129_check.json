@@ -1,0 +1,29 @@
+{
+  "blind_design_count": 24,
+  "blind_fem_run": false,
+  "candidate_pool_count": 4096,
+  "checks": {
+    "all_checks": true,
+    "all_six_selective_pairs_present": true,
+    "controlled_negative_and_no_lock": true,
+    "crossfit_oof_no_leakage_and_metrics": true,
+    "folds_each_index_once_and_hash_bound": true,
+    "immutable_train112_identity": true,
+    "order_remains_unqualified": true,
+    "required_artifacts_present": true,
+    "response_blind_pool_and_blind_acceptance": true,
+    "single_non_placeholder_implementation_sha": true,
+    "source_and_candidate_contract": true,
+    "structural_support_domain_is_separate": true
+  },
+  "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "errors": [],
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_lock_created": false,
+  "new_fem_budget": 0,
+  "qualification_status": "controlled_negative",
+  "schema_version": "case129.check.v1",
+  "status": "pass",
+  "training_count": 112,
+  "validation_response_accessed": false
+}

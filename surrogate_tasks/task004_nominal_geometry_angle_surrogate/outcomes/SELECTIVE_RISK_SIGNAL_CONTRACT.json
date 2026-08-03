@@ -1,0 +1,38 @@
+{
+  "allowed_signals": [
+    "matern_k24_native_or_calibrated_std",
+    "rbf_vs_matern_k24_disagreement",
+    "matern_k24_vs_k32_disagreement",
+    "nearest_training_distance",
+    "signed_nearest_cutoff_margin",
+    "cutoff_order",
+    "low_grazing_flag",
+    "high_azimuth_flag",
+    "boundary_flag",
+    "mask_signature_support"
+  ],
+  "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "normalization": "per-outer-fold q05/q95 fitted only on other outer folds; final response-blind screen uses all-train OOF q05/q95",
+  "response_blind_screening": true,
+  "rules": {
+    "S1_pre_frozen_m4e2_ensemble": {
+      "cutoff_topology": "0.50 cutoff + 0.35 topology rarity/unsupported + 0.15 boundary",
+      "formula": "0.35*std + 0.25*matern_k24_k32 + 0.20*rbf_matern + 0.10*distance + 0.10*cutoff_topology",
+      "weights": {
+        "cutoff_topology_bonus": 0.1,
+        "matern_k24_k32_disagreement": 0.25,
+        "native_std": 0.35,
+        "nearest_training_distance": 0.1,
+        "rbf_matern_disagreement": 0.2
+      }
+    },
+    "S2_std_disagreement_max": {
+      "formula": "max(max_target(std), max_target(rbf_matern, matern_k24_k32))",
+      "uses_geometry": false
+    }
+  },
+  "schema_version": "task004.angle-selective-risk-signal-contract.v1",
+  "surrogate_training_code_sha": "9325d90479a7d0c9448ca302ee4b438632950d2d",
+  "validation_response_accessed": false
+}
