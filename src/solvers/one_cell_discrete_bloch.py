@@ -1106,15 +1106,15 @@ def build_reversed_hermitian_bloch_polynomial(
         raise
 
 
-def endpoint_cauchy_balance(
+def endpoint_cauchy_columns(
     action: OneCellTwoPortSchurAction,
     state_columns: np.ndarray,
     adjoint_state_columns: np.ndarray,
     *,
     multipliers: Sequence[complex],
     adjoint_multipliers: Sequence[complex],
-) -> dict[str, float]:
-    """Extract endpoint E/traction from full states and pair them."""
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Extract endpoint electric/traction columns from full augmented states."""
 
     electric_state = np.asarray(state_columns, dtype=np.complex128)
     adjoint_state = np.asarray(adjoint_state_columns, dtype=np.complex128)
@@ -1137,7 +1137,6 @@ def endpoint_cauchy_balance(
     nu = np.asarray(adjoint_multipliers, dtype=np.complex128)
     if lam.shape != (count,) or nu.shape != (count,):
         raise ValueError("Endpoint Cauchy multiplier counts differ.")
-    left = action.left_rows
     electric = np.vstack((electric_left, electric_left * lam[None, :]))
     adjoint = np.vstack((adjoint_left, adjoint_left * nu[None, :]))
     port_input = action.A_pp.createVecRight()
@@ -1229,6 +1228,30 @@ def endpoint_cauchy_balance(
             port_input,
         ):
             obj.destroy()
+    return electric, traction, adjoint, adjoint_traction
+
+
+def endpoint_cauchy_balance(
+    action: OneCellTwoPortSchurAction,
+    state_columns: np.ndarray,
+    adjoint_state_columns: np.ndarray,
+    *,
+    multipliers: Sequence[complex],
+    adjoint_multipliers: Sequence[complex],
+) -> dict[str, float]:
+    """Extract endpoint E/traction from full states and pair them."""
+
+    electric, traction, adjoint, adjoint_traction = endpoint_cauchy_columns(
+        action,
+        state_columns,
+        adjoint_state_columns,
+        multipliers=multipliers,
+        adjoint_multipliers=adjoint_multipliers,
+    )
+    left = action.left_rows
+    lam = np.asarray(multipliers, dtype=np.complex128)
+    nu = np.asarray(adjoint_multipliers, dtype=np.complex128)
+    count = electric.shape[1]
     primal_balance = traction[left:, :] + traction[:left, :] * lam[None, :]
     adjoint_balance = (
         adjoint_traction[left:, :]
@@ -1799,6 +1822,7 @@ __all__ = [
     "build_projected_two_port_schur",
     "compose_projected_two_port_schur",
     "identify_endpoint_active_rows",
+    "endpoint_cauchy_columns",
     "endpoint_cauchy_balance",
     "lifted_endpoint_columns",
     "scalar_cg_sign_fixture",

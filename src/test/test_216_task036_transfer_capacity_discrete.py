@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+import hashlib
+import json
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from dolfinx import fem
 from mpi4py import MPI
@@ -17,7 +20,15 @@ from benchmarks.run_task036_one_cell_discrete_bloch import (
 from benchmarks.task036_transfer_capacity import joint_cauchy_pairing
 from benchmarks.run_task036_transfer_optimal_port_capacity import (
     _gc_projected_orthonormalize_block,
+    build_b1_harmonic_extension,
+    build_primal_reachable_pod_prefixes,
+    solve_b1_reduced_petrov,
+    build_global_two_end_petrov_fixture,
+    load_v9_mode_pool,
     SparsePortTransfer,
+    select_v9_block_prefixes,
+    v9_core_complement_rank,
+    v9_endpoint_cauchy_arrays,
 )
 from benchmarks.run_task036_r1_port_capacity import (
     MODE_POOL_EIGEN_TOL,
@@ -53,9 +64,12 @@ from src.solvers.hybrid_port_metric import (
 from src.solvers.one_cell_discrete_bloch import (
     AugmentedBlochPolynomial,
     OneCellTwoPortSchurAction,
+    ProjectedTwoPortSchur,
     bloch_polynomial_action,
     build_augmented_bloch_polynomial,
+    compose_projected_two_port_schur,
     build_reversed_hermitian_bloch_polynomial,
+    endpoint_cauchy_columns,
     endpoint_cauchy_balance,
     identify_endpoint_active_rows,
 )
@@ -116,6 +130,121 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
             np.vdot(dual_bulk, source),
             atol=1.0e-13,
         )
+
+        forward = SparsePortTransfer(
+            source_size=2,
+            target_size=2,
+            rows={
+                0: (np.asarray([0, 1]), np.asarray([1.0, 1.0])),
+                1: (np.asarray([1]), np.asarray([2.0])),
+            },
+        )
+        reverse = SparsePortTransfer(
+            source_size=2,
+            target_size=2,
+            rows={
+                0: (np.asarray([0, 1]), np.asarray([1.0, -0.5])),
+                1: (np.asarray([1]), np.asarray([0.5])),
+            },
+        )
+        source_e = np.asarray([[0.3 + 0.2j], [-0.4 + 0.1j]])
+        source_q = np.asarray([[0.6 - 0.3j], [0.2 + 0.5j]])
+        target_e = forward.primal(source_e)
+        target_q = reverse.dual(source_q)
+        np.testing.assert_allclose(
+            np.vdot(target_q, target_e), np.vdot(source_q, source_e)
+        )
+        self.assertFalse(np.allclose(target_q, forward.primal(source_q)))
+
+        class Action:
+            left_rows = 2
+
+        pool = {
+            "right_states": np.zeros((3, 1), dtype=np.complex128),
+            "adjoint_states": np.zeros((3, 1), dtype=np.complex128),
+            "right_multipliers": np.asarray([3.0 + 0.0j]),
+            "adjoint_multipliers": np.asarray([2.0 + 0.0j]),
+            "right_block_ids": np.asarray([7], dtype=np.int64),
+        }
+        columns = (
+            np.asarray([[1.0], [2.0], [3.0], [6.0]]),
+            np.asarray([[4.0], [5.0], [-12.0], [-15.0]]),
+            np.asarray([[1.0], [2.0], [2.0], [4.0]]),
+            np.asarray([[7.0], [8.0], [-14.0], [-16.0]]),
+        )
+        with patch(
+            "benchmarks.run_task036_transfer_optimal_port_capacity.endpoint_cauchy_columns",
+            return_value=columns,
+        ):
+            top_forward = SparsePortTransfer(
+                source_size=2,
+                target_size=2,
+                rows={
+                    0: (np.asarray([0]), np.asarray([1.5])),
+                    1: (np.asarray([0, 1]), np.asarray([0.25, 0.75])),
+                },
+            )
+            top_reverse = SparsePortTransfer(
+                source_size=2,
+                target_size=2,
+                rows={
+                    0: (np.asarray([0, 1]), np.asarray([0.8, -0.2])),
+                    1: (np.asarray([1]), np.asarray([1.4])),
+                },
+            )
+            mapped = v9_endpoint_cauchy_arrays(
+                Action(),
+                pool,
+                {
+                    "bottom": (forward, reverse),
+                    "top": (top_forward, top_reverse),
+                },
+            )
+        np.testing.assert_allclose(
+            mapped["right_electric"][:2], top_forward.primal([1, 2])[:, None]
+        )
+        np.testing.assert_allclose(
+            mapped["right_electric"][2:], forward.primal([1, 2])[:, None]
+        )
+        np.testing.assert_allclose(
+            mapped["right_traction"][:2], top_reverse.dual([4, 5])[:, None]
+        )
+        np.testing.assert_allclose(
+            mapped["right_traction"][2:], reverse.dual([4, 5])[:, None]
+        )
+        self.assertFalse(
+            np.allclose(
+                mapped["right_electric"][:2], mapped["right_electric"][2:]
+            )
+        )
+        self.assertFalse(
+            np.allclose(
+                mapped["right_traction"][:2], mapped["right_traction"][2:]
+            )
+        )
+        np.testing.assert_array_equal(
+            mapped["right_multipliers"], pool["right_multipliers"]
+        )
+        np.testing.assert_array_equal(
+            mapped["adjoint_multipliers"], pool["adjoint_multipliers"]
+        )
+        self.assertFalse(
+            np.allclose(
+                mapped["right_traction"][:2], forward.primal([4, 5])[:, None]
+            )
+        )
+        J = np.array([[2.0, 0.4], [0.0, 1.3]], dtype=np.complex128)
+        J_inverse = np.linalg.inv(J)
+        w_local = np.array([[0.7 + 0.2j], [-0.3 + 0.5j]])
+        residual_local = np.array([[0.2 - 0.1j], [0.6 + 0.4j]])
+        residual_canonical = J.conj().T @ residual_local
+        w_canonical = J_inverse @ w_local
+        np.testing.assert_allclose(
+            np.vdot(w_canonical, residual_canonical),
+            np.vdot(w_local, residual_local),
+            atol=1.0e-13,
+        )
+        self.assertFalse(np.allclose(J.conj().T @ w_local, w_canonical))
 
     def test_projected_metric_qr_preserves_complement_and_existing(self) -> None:
         metric = np.diag(np.arange(1.0, 7.0))
@@ -461,6 +590,23 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                     p_green["adjoint_outward_balance_relative"], 1.0e-10
                 )
                 self.assertLessEqual(p_green["green_pairing_relative"], 1.0e-10)
+                electric, traction, adjoint, adjoint_traction = endpoint_cauchy_columns(
+                    action,
+                    right_state,
+                    left_state,
+                    multipliers=[eigenvalue],
+                    adjoint_multipliers=[qrev_nu],
+                )
+                self.assertEqual(electric.shape, (2, 1))
+                self.assertEqual(traction.shape, (2, 1))
+                self.assertEqual(adjoint.shape, (2, 1))
+                self.assertEqual(adjoint_traction.shape, (2, 1))
+                np.testing.assert_allclose(
+                    electric[1], eigenvalue * electric[0], atol=1.0e-12
+                )
+                np.testing.assert_allclose(
+                    adjoint[1], qrev_nu * adjoint[0], atol=1.0e-12
+                )
             right_vector.destroy()
             prev_pep = create_two_sided_pep(
                 (augmented.K2, augmented.K1, augmented.K0), 2
@@ -796,6 +942,166 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
             MODE_POOL_SOURCE_SCHEDULE,
             (("P", 0), ("P", 1), ("P", 2), ("P", 3), ("P", 4), ("P", 5), ("Prev", 2)),
         )
+        unit = np.eye(5, dtype=np.complex128)
+        right_pool = np.column_stack(
+            (np.sqrt(50.0) * unit[:, 0], np.sqrt(50.0) * unit[:, 1],
+             np.sqrt(10.0) * unit[:, 4], np.sqrt(40.0) * unit[:, 2],
+             np.sqrt(40.0) * unit[:, 3])
+        )
+        adjoint_pool = np.column_stack(
+            (np.sqrt(0.5) * unit[:, 0], np.sqrt(0.5) * unit[:, 1],
+             np.sqrt(120.0) * unit[:, 4], np.sqrt(40.0) * unit[:, 2],
+             np.sqrt(40.0) * unit[:, 3])
+        )
+        block_columns = ((0, 1), (2,), (3, 4))
+        right_energy = [
+            np.linalg.norm(right_pool[:, cols]) ** 2 for cols in block_columns
+        ]
+        adjoint_energy = [
+            np.linalg.norm(adjoint_pool[:, cols]) ** 2 for cols in block_columns
+        ]
+        self.assertEqual(int(np.argmax(right_energy)), 0)
+        self.assertEqual(int(np.argmax(adjoint_energy)), 1)
+        prefixes = select_v9_block_prefixes(
+            {"bottom": right_pool, "top": right_pool},
+            {"bottom": adjoint_pool, "top": adjoint_pool},
+            np.array([0, 0, 1, 2, 2]),
+            {"bottom": right_pool, "top": right_pool},
+            {"bottom": adjoint_pool, "top": adjoint_pool},
+            requested=(2, 3, 5),
+        )
+        prefix_values = prefixes["prefixes"]
+        self.assertEqual(prefixes["ordering"], [2, 1, 0])
+        self.assertEqual(
+            [prefix_values[str(target)]["effective_r"] for target in (2, 3, 5)],
+            [2, 3, 5],
+        )
+        self.assertEqual(
+            [
+                prefix_values[str(target)]["raw_column_count"]
+                for target in (2, 3, 5)
+            ],
+            [2, 3, 5],
+        )
+        expected_blocks = ([2], [2, 1], [2, 1, 0])
+        expected_indices = ([3, 4], [3, 4, 2], [3, 4, 2, 0, 1])
+        for target, blocks, indices in zip(
+            (2, 3, 5), expected_blocks, expected_indices
+        ):
+            prefix = prefix_values[str(target)]
+            self.assertEqual(prefix["selected_block_count"], len(blocks))
+            self.assertEqual(
+                prefix["selected_block_ids_sha256"],
+                hashlib.sha256(
+                    np.asarray(blocks, dtype=np.int64).tobytes()
+                ).hexdigest(),
+            )
+            self.assertEqual(
+                prefix["selected_indices_sha256"],
+                hashlib.sha256(
+                    np.asarray(indices, dtype=np.int64).tobytes()
+                ).hexdigest(),
+            )
+            self.assertEqual(
+                prefix["selected_right_rank_by_side"]["bottom"], target
+            )
+            self.assertEqual(
+                prefix["selected_adjoint_rank_by_side"]["bottom"], target
+            )
+            self.assertEqual(
+                prefix["selected_right_rank_by_side"]["bottom"],
+                prefix["per_side"]["bottom"]["right"]["selected_rank"],
+            )
+            self.assertEqual(
+                prefix["selected_adjoint_rank_by_side"]["bottom"],
+                prefix["per_side"]["bottom"]["adjoint"]["selected_rank"],
+            )
+            self.assertEqual(
+                prefix["pairing_by_side"]["bottom"]["rank"],
+                prefix["pairing_by_side"]["top"]["rank"],
+            )
+            self.assertEqual(
+                prefix["pairing_by_side"]["bottom"]["rank"], target
+            )
+        duplicate_pool = np.column_stack(
+            (
+                np.array([1, 0, 0], dtype=np.complex128),
+                np.array([1, 0, 0], dtype=np.complex128),
+            )
+        )
+        duplicate = select_v9_block_prefixes(
+            {"bottom": duplicate_pool},
+            {"bottom": duplicate_pool},
+            np.array([0, 0]),
+            {"bottom": duplicate_pool},
+            {"bottom": duplicate_pool},
+            requested=(1,),
+        )["prefixes"]["1"]
+        self.assertEqual(duplicate["raw_column_count"], 2)
+        self.assertEqual(
+            duplicate["selected_right_rank_by_side"]["bottom"], 1
+        )
+        self.assertEqual(
+            duplicate["selected_adjoint_rank_by_side"]["bottom"], 1
+        )
+        self.assertEqual(
+            duplicate["pairing_by_side"]["bottom"]["rank"], 1
+        )
+        self.assertAlmostEqual(duplicate["pairing_by_side"]["bottom"]["condition"], 1.0)
+        scale_spread = np.column_stack(
+            (
+                np.array([1.0, 0.0], dtype=np.complex128),
+                1.0e-11 * np.array([0.0, 1.0], dtype=np.complex128),
+            )
+        )
+        spread = select_v9_block_prefixes(
+            {"bottom": scale_spread},
+            {"bottom": scale_spread},
+            np.array([0, 1]),
+            {"bottom": scale_spread},
+            {"bottom": scale_spread},
+            requested=(2,),
+        )["prefixes"]["2"]
+        self.assertEqual(spread["effective_r"], 1)
+        self.assertEqual(spread["selected_right_rank_by_side"]["bottom"], 1)
+        self.assertEqual(spread["selected_adjoint_rank_by_side"]["bottom"], 1)
+        self.assertEqual(spread["raw_column_count"], 2)
+        self.assertEqual(spread["pairing_by_side"]["bottom"]["rank"], 1)
+        empty_prefix = select_v9_block_prefixes(
+            {"bottom": np.eye(2, dtype=np.complex128)},
+            {"bottom": np.eye(2, dtype=np.complex128)},
+            np.array([0, 0], dtype=np.int64),
+            {"bottom": np.eye(2, dtype=np.complex128)},
+            {"bottom": np.eye(2, dtype=np.complex128)},
+            requested=(1,),
+        )["prefixes"]["1"]
+        self.assertEqual(empty_prefix["effective_r"], 0)
+        self.assertEqual(empty_prefix["raw_column_count"], 0)
+        self.assertEqual(empty_prefix["selected_block_count"], 0)
+        self.assertEqual(empty_prefix["selected_right_rank_by_side"]["bottom"], 0)
+        self.assertEqual(
+            empty_prefix["selected_adjoint_rank_by_side"]["bottom"], 0
+        )
+        self.assertEqual(empty_prefix["pairing_by_side"]["bottom"]["rank"], 0)
+        self.assertIsNone(empty_prefix["pairing_by_side"]["bottom"]["condition"])
+        ill_adjoint = np.column_stack(
+            (
+                np.array([1, 0, 0], dtype=np.complex128),
+                np.array([0, 0, 1], dtype=np.complex128),
+            )
+        )
+        ill = select_v9_block_prefixes(
+            {"bottom": np.eye(3, 2, dtype=np.complex128)},
+            {"bottom": ill_adjoint},
+            np.array([0, 0]),
+            {"bottom": np.eye(3, 2, dtype=np.complex128)},
+            {"bottom": ill_adjoint},
+            requested=(2,),
+        )["prefixes"]["2"]["pairing_by_side"]["bottom"]
+        self.assertEqual(ill["right_trial_rank"], 2)
+        self.assertEqual(ill["adjoint_test_rank"], 2)
+        self.assertEqual(ill["rank"], 1)
+        self.assertIsNone(ill["condition"])
         duplicate_pairing = _select_pairing_subblock(
             np.ones((3, 3), dtype=np.complex128),
             [10, 11, 12],
@@ -1048,6 +1354,374 @@ class Task036TransferCapacityDiscreteTests(unittest.TestCase):
                 self.assertEqual(loaded["right_multipliers"].shape, (4,))
                 self.assertEqual(loaded["right_block_ids"].shape, (4,))
                 self.assertEqual(loaded["right_target_index"].dtype, np.dtype(np.int32))
+
+        with tempfile.TemporaryDirectory(prefix="task036-v9-identity-") as tmp:
+            root = Path(tmp)
+            npz_path = root / "runner_result.npz"
+            arrays = {
+                "right_multipliers": np.ones(184, dtype=np.complex128),
+                "right_states": np.zeros((3240, 184), dtype=np.complex128),
+                "right_block_ids": np.arange(184, dtype=np.int32),
+                "right_family": np.full(184, "P", dtype="U4"),
+                "right_target_index": np.zeros(184, dtype=np.int32),
+                "adjoint_multipliers": np.ones(184, dtype=np.complex128),
+                "adjoint_states": np.zeros((3240, 184), dtype=np.complex128),
+                "adjoint_block_ids": np.arange(184, dtype=np.int32),
+                "adjoint_family": np.full(184, "Qrev", dtype="U8"),
+                "adjoint_target_index": np.zeros(184, dtype=np.int32),
+            }
+            np.savez_compressed(npz_path, **arrays)
+            digest = hashlib.sha256(npz_path.read_bytes()).hexdigest()
+            json_path = root / "runner_result.json"
+            json_path.write_text(
+                json.dumps(
+                    {
+                        "status": "mode-pool-qualified",
+                        "source": {
+                            "sha": "d3bed04a33778baf84d6c0938bd4ad305cb36edf"
+                        },
+                        "canonical_npz_manifest": {"sha256": digest},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            json_digest = hashlib.sha256(json_path.read_bytes()).hexdigest()
+            loaded = load_v9_mode_pool(
+                json_path,
+                npz_path,
+                expected_json_sha=json_digest,
+                expected_npz_sha=digest,
+            )
+            self.assertEqual(loaded["right_states"].shape, (3240, 184))
+            self.assertTrue(np.array_equal(loaded["right_block_ids"], loaded["adjoint_block_ids"]))
+
+        core = np.zeros((2400, 240), dtype=np.complex128)
+        core[:240] = np.eye(240, dtype=np.complex128)
+        complement_columns = np.zeros((2400, 3), dtype=np.complex128)
+        complement_columns[300, 0] = 1.0
+        complement_columns[301, 1] = 1.0
+        complement_columns[302, 2] = 1.0
+        complement_rank = v9_core_complement_rank(
+            complement_columns, core, lambda values: values
+        )
+        self.assertEqual(complement_rank["raw_columns"], 3)
+        self.assertEqual(complement_rank["complement_rank_rcond_1e_10"], 3)
+
+        p = 2
+        cell_left_left = np.array(
+            [[1.2, 0.1 + 0.2j], [0.3j, 0.8]], dtype=np.complex128
+        )
+        cell_right_right = np.array(
+            [[0.9 - 0.1j, 0.2], [0.05, 1.1]], dtype=np.complex128
+        )
+        lower = np.array(
+            [[-0.2, 0.03], [0.01j, -0.15]], dtype=np.complex128
+        )
+        upper = np.array(
+            [[-0.17, -0.02j], [0.04, -0.21]], dtype=np.complex128
+        )
+        endpoint_left = np.array(
+            [[0.4, 0.02j], [-0.03, 0.25]], dtype=np.complex128
+        )
+        endpoint_right = np.array(
+            [[0.35 - 0.02j, 0.01], [0.04j, 0.3]], dtype=np.complex128
+        )
+        teacher_trace = np.array(
+            [
+                [1.0, 0.2j, 0.4],
+                [0.3, 0.7, -0.1j],
+                [-0.2j, 0.6, 0.8],
+                [0.5, -0.4j, 0.1],
+                [0.9, 0.2, -0.3j],
+                [-0.7j, 0.1, 0.6],
+            ],
+            dtype=np.complex128,
+        )
+        x_bottom, x_middle, x_top = (
+            teacher_trace[:p],
+            teacher_trace[p : 2 * p],
+            teacher_trace[2 * p :],
+        )
+        bottom_cell_q = cell_left_left @ x_bottom + upper @ x_middle
+        top_cell_q = lower @ x_middle + cell_right_right @ x_top
+        bottom_total_q = (cell_left_left + endpoint_left) @ x_bottom + upper @ x_middle
+        top_total_q = lower @ x_middle + (cell_right_right + endpoint_right) @ x_top
+        self.assertFalse(np.allclose(bottom_cell_q, bottom_total_q))
+        self.assertFalse(np.allclose(top_cell_q, top_total_q))
+        teacher_by_side = {
+            "bottom": np.vstack((x_bottom, bottom_cell_q)),
+            "top": np.vstack((x_top, top_cell_q)),
+        }
+        core_by_side = {
+            "bottom": np.vstack((np.eye(2), np.zeros((2, 2)))),
+            "top": np.vstack((np.zeros((2, 2)), np.eye(2))),
+        }
+        source_keys = (("source", 0), ("source", 1), ("source", 2))
+        pod = build_primal_reachable_pod_prefixes(
+            teacher_by_side,
+            {side: values.copy() for side, values in teacher_by_side.items()},
+            core_by_side,
+            {side: values.copy() for side, values in core_by_side.items()},
+            {"bottom": source_keys, "top": source_keys},
+        )
+        self.assertEqual(pod["status"], "trial_capacity_scaffold")
+        self.assertEqual(pod["raw_source_columns"], 3)
+        self.assertEqual(pod["raw_source_rank"], 3)
+        self.assertEqual(pod["effective_source_rank"], 3)
+        self.assertLessEqual(pod["global_core_orthogonality_relative"], 1.0e-12)
+        self.assertLessEqual(
+            pod["joint_corrector_metric_identity_relative"], 1.0e-12
+        )
+        for target in (40, 80, 96, 120):
+            prefix = pod["prefixes"][str(target)]
+            self.assertEqual(prefix["effective_r"], 3)
+            self.assertEqual(prefix["raw_checkpoint_dimension"], 5)
+        self.assertEqual(pod["corrector_by_side"]["bottom"].shape, (4, 3))
+        self.assertEqual(pod["corrector_by_side"]["top"].shape, (4, 3))
+        zero_prefix = pod["prefixes"]["0"]
+        self.assertEqual(zero_prefix["requested_r"], 0)
+        self.assertEqual(zero_prefix["effective_r"], 0)
+        self.assertEqual(zero_prefix["raw_checkpoint_dimension"], 2)
+        self.assertAlmostEqual(zero_prefix["discarded_energy_relative"], 1.0)
+        swapped_teacher = dict(teacher_by_side)
+        swapped_teacher["top"] = teacher_by_side["top"][:, [1, 0, 2]]
+        with self.assertRaises(ValueError):
+            build_primal_reachable_pod_prefixes(
+                swapped_teacher,
+                {side: values.copy() for side, values in swapped_teacher.items()},
+                core_by_side,
+                {side: values.copy() for side, values in core_by_side.items()},
+                {"bottom": source_keys, "top": (source_keys[1], source_keys[0], source_keys[2])},
+            )
+
+    def test_global_two_end_petrov_shared_columns_and_independent_rhs(self) -> None:
+        left_port = ProjectedTwoPortSchur(
+            S_LL=np.array([[2.0 + 0.1j, 0.1], [0.02j, 1.8 - 0.1j]]),
+            S_LR=np.array([[0.2, 0.05j], [-0.04, 0.15]]),
+            S_RL=np.array([[0.1 + 0.02j, -0.03], [0.04j, 0.12]]),
+            S_RR=np.array([[2.5, 0.08j], [0.01, 2.3 + 0.05j]]),
+            port_rows=4,
+            interior_rows=2,
+            interior_matrix_nnz=8,
+        )
+        right_port = ProjectedTwoPortSchur(
+            S_LL=np.array([[2.7 - 0.05j, -0.03], [0.01j, 2.4 + 0.08j]]),
+            S_LR=np.array([[0.16, -0.02j], [0.03, 0.11]]),
+            S_RL=np.array([[0.07j, 0.02], [-0.05, 0.09 - 0.01j]]),
+            S_RR=np.array([[2.9 + 0.04j, 0.02], [-0.01j, 2.6]]),
+            port_rows=4,
+            interior_rows=3,
+            interior_matrix_nnz=9,
+        )
+        composed, _ = compose_projected_two_port_schur(left_port, right_port)
+        operator = np.block(
+            [[composed.S_LL, composed.S_LR], [composed.S_RL, composed.S_RR]]
+        )
+        reachable_coefficients = np.array(
+            [0.3 + 0.2j, -0.4 + 0.1j, 0.5 - 0.3j, -0.2 + 0.6j]
+        )
+        kwargs = {
+            "bottom_core": np.eye(2, dtype=np.complex128),
+            "top_core": np.diag([0.65 + 0.02j, 0.72 - 0.03j]),
+            "right_bottom_scale": np.array([1.0, 0.9 + 0.02j]),
+            "right_top_scale": np.array([0.8 - 0.01j, 0.7 + 0.03j]),
+            "adjoint_bottom_core": np.array([[1.0, 0.08j], [0.04, 0.96 - 0.02j]]),
+            "adjoint_top_core": np.array(
+                [[0.58 + 0.02j, 0.03], [-0.02j, 0.68 - 0.01j]]
+            ),
+            "adjoint_bottom_scale": np.array([1.0, 0.94 - 0.01j]),
+            "adjoint_top_scale": np.array([0.76 + 0.02j, 0.66 - 0.02j]),
+            "bottom_corrector": np.eye(2, dtype=np.complex128),
+            "top_corrector": 0.2 * np.eye(2, dtype=np.complex128),
+            "adjoint_bottom_corrector": np.array([[1.0, 0.03], [-0.02j, 0.98]]),
+            "adjoint_top_corrector": 0.16 * np.eye(2, dtype=np.complex128),
+            "block_ids": np.array([7, 7], dtype=np.int64),
+            "selected_indices": np.array([0, 1], dtype=np.int64),
+            "top_block_ids": np.array([7, 7], dtype=np.int64),
+            "requested_r": 40,
+            "left_port": left_port,
+            "right_port": right_port,
+            # Manufactured reachable RHS; the helper never constructs it.
+            "rhs": operator @ reachable_coefficients,
+        }
+        report = build_global_two_end_petrov_fixture(**kwargs)
+        self.assertEqual(report["global_primal_shape"], [4, 4])
+        self.assertEqual(report["raw_trial_rank"], 4)
+        self.assertEqual(report["raw_test_rank"], 4)
+        self.assertEqual(report["paired_effective_rank"], 4)
+        self.assertEqual(report["reduced_dimension"], 4)
+        self.assertEqual(report["selected_raw_corrector_columns"], 2)
+        self.assertEqual(report["selected_whole_block_count"], 1)
+        self.assertLess(report["pairing_condition"], 1.0e3)
+        self.assertLess(report["petrov_stationarity_relative"], 1.0e-12)
+        self.assertLess(report["direct_solution_relative"], 1.0e-12)
+        redundant = {
+            **kwargs,
+            "bottom_corrector": np.ones((2, 2), dtype=np.complex128),
+            "top_corrector": 0.2 * np.ones((2, 2), dtype=np.complex128),
+            "adjoint_bottom_corrector": np.ones((2, 2), dtype=np.complex128),
+            "adjoint_top_corrector": 0.16 * np.ones((2, 2), dtype=np.complex128),
+        }
+        redundant_report = build_global_two_end_petrov_fixture(**redundant)
+        self.assertEqual(redundant_report["raw_trial_rank"], 3)
+        self.assertEqual(redundant_report["raw_test_rank"], 3)
+        self.assertEqual(redundant_report["paired_effective_rank"], 3)
+        self.assertEqual(redundant_report["selected_raw_corrector_columns"], 2)
+        with self.assertRaises(ValueError):
+            build_global_two_end_petrov_fixture(
+                **{
+                    **kwargs,
+                    "top_corrector": kwargs["top_corrector"][:, ::-1],
+                    "top_block_ids": np.array([7, 8], dtype=np.int64),
+                }
+            )
+
+    def test_b1_harmonic_extension_uses_endpoint_action_and_shared_prefix(self) -> None:
+        compact = {
+            "bottom_diagonal": np.array([[1.3, 0.08j], [0.04, 1.1]]),
+            "middle_diagonal": np.array([[2.0, 0.12j], [0.03, 1.7]]),
+            "top_diagonal": np.array([[1.4, -0.05j], [0.06, 1.2]]),
+            "lower": np.array([[-0.22, 0.03j], [0.01, -0.19]]),
+            "upper": np.array([[-0.17, -0.02j], [0.05, -0.21]]),
+        }
+        endpoint_basis = np.array(
+            [
+                [1.0, 0.1j, 0.3],
+                [0.2, 0.9, -0.15j],
+                [0.6, -0.2j, 0.8],
+                [-0.1, 0.7, 0.25j],
+            ],
+            dtype=np.complex128,
+        )
+        test_basis = np.array(
+            [
+                [0.9, -0.05j, 0.2],
+                [0.1j, 1.1, -0.1],
+                [0.4, 0.03, 0.7j],
+                [0.2, -0.6j, 0.5],
+            ],
+            dtype=np.complex128,
+        )
+
+        def chain_action(values: np.ndarray) -> np.ndarray:
+            planes = np.asarray(values).reshape(11, 2, -1)
+            result = np.zeros_like(planes)
+            result[0] = compact["bottom_diagonal"] @ planes[0] + compact["upper"] @ planes[1]
+            for index in range(1, 10):
+                result[index] = (
+                    compact["lower"] @ planes[index - 1]
+                    + compact["middle_diagonal"] @ planes[index]
+                    + compact["upper"] @ planes[index + 1]
+                )
+            result[10] = (
+                compact["lower"] @ planes[9] + compact["top_diagonal"] @ planes[10]
+            )
+            return result.reshape(22, -1)
+
+        trace, endpoint_action, _ = build_b1_harmonic_extension(compact, endpoint_basis)
+        trace_action = chain_action(trace)
+        np.testing.assert_allclose(trace_action[2:-2], 0.0, atol=1.0e-12)
+        np.testing.assert_allclose(
+            endpoint_action,
+            np.vstack((trace_action[:2], trace_action[-2:])),
+            atol=1.0e-12,
+            rtol=0.0,
+        )
+        coefficients = np.asarray([[0.4 - 0.1j], [-0.2 + 0.3j], [0.5 + 0.2j]])
+        full_rhs = chain_action(trace @ coefficients)
+        endpoint_rhs = np.vstack((full_rhs[:2], full_rhs[-2:]))
+        report = solve_b1_reduced_petrov(
+            trace,
+            endpoint_basis,
+            endpoint_action,
+            test_basis,
+            endpoint_rhs,
+            full_rhs,
+            chain_action,
+        )
+        self.assertEqual(report["trial_rank"], 3)
+        self.assertEqual(report["test_rank"], 3)
+        self.assertEqual(report["petrov_operator_rank"], 3)
+        self.assertEqual(report["reduced_dimension"], 3)
+        self.assertLess(report["petrov_operator_condition"], 1.0e3)
+        self.assertLess(report["best_trial_endpoint_residual_relative"], 1.0e-12)
+        self.assertLess(report["petrov_stationarity_relative"], 1.0e-12)
+        self.assertLess(report["full_trace_residual_relative"], 1.0e-12)
+
+        core_trace, core_action, _ = build_b1_harmonic_extension(
+            compact, endpoint_basis[:, :2]
+        )
+        np.testing.assert_allclose(core_trace, trace[:, :2], atol=1.0e-12, rtol=0.0)
+        np.testing.assert_allclose(
+            core_action, endpoint_action[:, :2], atol=1.0e-12, rtol=0.0
+        )
+        core_rhs = chain_action(core_trace @ coefficients[:2])
+        core_report = solve_b1_reduced_petrov(
+            core_trace,
+            endpoint_basis[:, :2],
+            core_action,
+            test_basis[:, :2],
+            np.vstack((core_rhs[:2], core_rhs[-2:])),
+            core_rhs,
+            chain_action,
+        )
+        self.assertEqual(core_report["petrov_operator_rank"], 2)
+
+        negative_trace = np.eye(4, 2, dtype=np.complex128)
+        negative_test = np.vstack((np.zeros((2, 2)), np.eye(2)))
+        negative_operator = np.zeros((4, 4), dtype=np.complex128)
+        negative_operator[2:, :2] = np.eye(2)
+        negative_action = negative_operator @ negative_trace
+        negative_coefficients = np.array([[0.2 + 0.1j], [-0.4 + 0.3j]])
+        negative_rhs = negative_action @ negative_coefficients
+        negative = solve_b1_reduced_petrov(
+            negative_trace,
+            negative_trace,
+            negative_action,
+            negative_test,
+            negative_rhs,
+            negative_rhs,
+            lambda values: negative_operator @ values,
+        )
+        self.assertEqual(negative["coordinate_overlap_rank_diagnostic"], 0)
+        self.assertEqual(negative["petrov_operator_rank"], 2)
+        self.assertLess(negative["best_trial_endpoint_residual_relative"], 1.0e-12)
+
+        rank_deficient_action = np.column_stack(
+            (np.eye(4, dtype=np.complex128)[:, 0], np.zeros(4, dtype=np.complex128))
+        )
+        rank_deficient_rhs = rank_deficient_action @ np.array([[0.3], [0.0]])
+        rank_deficient = solve_b1_reduced_petrov(
+            np.eye(4, 2, dtype=np.complex128),
+            np.eye(4, 2, dtype=np.complex128),
+            rank_deficient_action,
+            np.eye(4, 2, dtype=np.complex128),
+            rank_deficient_rhs,
+            rank_deficient_rhs,
+            lambda values: rank_deficient_action @ values,
+        )
+        self.assertEqual(
+            (
+                rank_deficient["solve_status"],
+                rank_deficient["trial_rank"],
+                rank_deficient["petrov_operator_rank"],
+                rank_deficient["petrov_operator_condition"],
+                rank_deficient["petrov_operator_min_relative_singular_value"],
+            ),
+            ("petrov_operator_rank_deficient", 2, 1, None, 0.0),
+        )
+        self.assertLess(rank_deficient["best_trial_endpoint_residual_relative"], 1.0e-12)
+        self.assertTrue(
+            all(
+                rank_deficient[key] is None
+                for key in (
+                    "petrov_stationarity_relative",
+                    "endpoint_residual_relative",
+                    "full_trace_residual_relative",
+                    "lifted_trace",
+                )
+            )
+        )
 
     @unittest.skipUnless(
         MPI.COMM_WORLD.size == 1,

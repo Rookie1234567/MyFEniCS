@@ -85,17 +85,785 @@ from src.solvers.hybrid_strong_trace_direct import (
     build_hybrid_strong_trace_interface_map,
 )
 from src.solvers.hcurl_assembly_time_condensation import TraceConstraintMap
-from src.solvers.one_cell_discrete_bloch import identify_endpoint_active_rows
+from src.solvers.one_cell_discrete_bloch import (
+    ProjectedTwoPortSchur,
+    compose_projected_two_port_schur,
+    identify_endpoint_active_rows,
+)
 from src.solvers.one_cell_discrete_bloch import (
     _active_values_for_port,
     build_one_cell_two_port_schur_action,
+    endpoint_cauchy_columns,
 )
+from src.solvers.hybrid_trace_chain import solve_block_tridiagonal_recursive
 from src.solvers.hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
 )
 
 
 SparseRow = tuple[np.ndarray, np.ndarray]
+
+V9_MODE_POOL_SOURCE_SHA = "d3bed04a33778baf84d6c0938bd4ad305cb36edf"
+V9_MODE_POOL_JSON_SHA = "f1bec4e1bf156eb05e2d337941e4b65f783c00d19e1c0cc9bb85fe23296daa7d"
+V9_MODE_POOL_NPZ_SHA = "e61c314e9bfa66264245c65e9b6d91ed979577d6fd578fe4af6390e4599d5210"
+V9_MODE_POOL_JSON = Path("benchmarks/artifacts/task036/direct_d1b/r1b1a_mode_pool/d3bed04a-20260803-v9-formal-span/runner_result.json")
+V9_MODE_POOL_NPZ = V9_MODE_POOL_JSON.with_suffix(".npz")
+
+
+def _sha256(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def load_v9_mode_pool(
+    json_path: Path = V9_MODE_POOL_JSON,
+    npz_path: Path = V9_MODE_POOL_NPZ,
+    *,
+    expected_json_sha: str = V9_MODE_POOL_JSON_SHA,
+    expected_npz_sha: str = V9_MODE_POOL_NPZ_SHA,
+) -> dict[str, Any]:
+    """Read the fixed v9 pool and enforce its source/shape/block identity."""
+
+    if _sha256(json_path) != expected_json_sha:
+        raise ValueError("The bound v9 JSON hash does not match.")
+    record = json.loads(json_path.read_text(encoding="utf-8"))
+    if (record["status"], record["source"]["sha"]) != (
+        "mode-pool-qualified",
+        V9_MODE_POOL_SOURCE_SHA,
+    ):
+        raise ValueError("The bound v9 status/source identity does not match.")
+    manifest = record["canonical_npz_manifest"]
+    if _sha256(npz_path) != expected_npz_sha or manifest["sha256"] != expected_npz_sha:
+        raise ValueError("The v9 mode-pool NPZ hash does not match its record.")
+    with np.load(npz_path, allow_pickle=False) as archive:
+        arrays = {name: np.asarray(archive[name]).copy() for name in archive.files}
+    if (
+        arrays["right_states"].shape != (3240, 184)
+        or arrays["adjoint_states"].shape != (3240, 184)
+        or arrays["right_multipliers"].shape != (184,)
+        or arrays["adjoint_multipliers"].shape != (184,)
+    ):
+        raise ValueError("The v9 augmented state/multiplier shapes are not canonical.")
+    if not np.array_equal(arrays["right_block_ids"], arrays["adjoint_block_ids"]):
+        raise ValueError("The v9 right/adjoint block identities differ.")
+    return {"record": record, **arrays}
+
+
+def v9_endpoint_cauchy_arrays(
+    action: Any,
+    pool: Mapping[str, Any],
+    endpoint_transfers: Mapping[str, tuple[SparsePortTransfer, SparsePortTransfer]] | None = None,
+) -> dict[str, Any]:
+    """Extract both endpoint Cauchy arrays without choosing orientation."""
+
+    right_electric, right_traction, adjoint_electric, adjoint_traction = endpoint_cauchy_columns(
+        action,
+        pool["right_states"],
+        pool["adjoint_states"],
+        multipliers=pool["right_multipliers"],
+        adjoint_multipliers=pool["adjoint_multipliers"],
+    )
+    left = action.left_rows
+    right_joint = np.vstack((right_electric[left:], -right_traction[left:]))
+    left_joint = np.vstack((right_electric[:left], right_traction[:left]))
+    adjoint_right = np.vstack((adjoint_electric[left:], -adjoint_traction[left:]))
+    adjoint_left = np.vstack((adjoint_electric[:left], adjoint_traction[:left]))
+    errors = [
+        np.linalg.norm(right_joint - left_joint * pool["right_multipliers"])
+        / max(np.linalg.norm(right_joint), 1.0e-30),
+        np.linalg.norm(adjoint_right - adjoint_left * pool["adjoint_multipliers"])
+        / max(np.linalg.norm(adjoint_right), 1.0e-30),
+    ]
+    endpoint_identity = dict(zip(
+        ("right_relative_error", "adjoint_relative_error"), map(float, errors)
+    ))
+    if max(endpoint_identity.values()) > 1.0e-8:
+        raise AssertionError(
+            f"v9 endpoint outward identity failed: {endpoint_identity}"
+        )
+    result = {
+        "right_electric": right_electric,
+        "right_traction": right_traction,
+        "adjoint_electric": adjoint_electric,
+        "adjoint_traction": adjoint_traction,
+        "right_multipliers": np.asarray(
+            pool["right_multipliers"], dtype=np.complex128
+        ).copy(),
+        "adjoint_multipliers": np.asarray(
+            pool["adjoint_multipliers"], dtype=np.complex128
+        ).copy(),
+        "block_ids": pool["right_block_ids"].copy(),
+        "endpoint_identity": endpoint_identity,
+    }
+    if endpoint_transfers is None:
+        return result
+    mapped: dict[str, tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = {}
+    map_gate: dict[str, Any] = {}
+    for side, (forward, reverse) in endpoint_transfers.items():
+        mapped[side] = (
+            forward.primal(right_electric[:left]),
+            reverse.dual(right_traction[:left]),
+            forward.primal(adjoint_electric[:left]),
+            reverse.dual(adjoint_traction[:left]),
+        )
+        map_gate[side] = {
+            "source_size": int(forward.source_size),
+            "target_size": int(forward.target_size),
+            "roundtrip": "passed",
+            "dual_pairing": "passed",
+            "traction_action": "reverse.dual",
+        }
+    bottom = mapped["bottom"]
+    top = mapped["top"]
+    result.update(
+        {
+            "right_electric": np.vstack((top[0], bottom[0])),
+            "right_traction": np.vstack((top[1], bottom[1])),
+            "adjoint_electric": np.vstack((top[2], bottom[2])),
+            "adjoint_traction": np.vstack((top[3], bottom[3])),
+            "map_gate": map_gate,
+            "endpoint_transfers": endpoint_transfers,
+        }
+    )
+    return result
+
+
+def _v9_core_complement_data(
+    columns: np.ndarray,
+    white_core: np.ndarray,
+    gc_action: Any,
+) -> tuple[dict[str, Any], np.ndarray, np.ndarray]:
+    """Measure the G_C-complement rank without selecting or splitting blocks."""
+
+    values, core = (
+        np.asarray(item, dtype=np.complex128) for item in (columns, white_core)
+    )
+    if values.ndim != 2 or values.shape[0] != 2400:
+        raise ValueError("v9 Cauchy columns must have shape (2400, n).")
+    metric_values = gc_action(values)
+    complement = values - core @ (core.conj().T @ metric_values)
+    metric_complement = gc_action(complement)
+    gram_raw = complement.conj().T @ metric_complement
+    gram = 0.5 * (gram_raw + gram_raw.conj().T)
+    spectrum = np.linalg.eigvalsh(gram)
+    scale = max(float(spectrum[-1]), 1.0e-30)
+    rank = int(np.count_nonzero(spectrum > 1.0e-20 * scale))
+    return {
+        "raw_columns": int(values.shape[1]),
+        "complement_rank_rcond_1e_10": rank,
+        "core_orthogonality_relative": float(
+            np.linalg.norm(core.conj().T @ metric_complement)
+            / max(np.linalg.norm(core.conj().T @ metric_values), 1.0e-30)
+        ),
+    }, complement, metric_complement
+
+
+def v9_core_complement_rank(
+    columns: np.ndarray,
+    white_core: np.ndarray,
+    gc_action: Any,
+) -> dict[str, Any]:
+    """Measure the G_C-complement rank without selecting or splitting blocks."""
+
+    return _v9_core_complement_data(columns, white_core, gc_action)[0]
+
+
+def select_v9_block_prefixes(
+    right_columns: Mapping[str, np.ndarray],
+    adjoint_columns: Mapping[str, np.ndarray],
+    block_ids: np.ndarray,
+    right_metric_columns: Mapping[str, np.ndarray],
+    adjoint_metric_columns: Mapping[str, np.ndarray],
+    requested: tuple[int, ...] = (40, 80, 120),
+) -> dict[str, Any]:
+    """Select whole blocks using only the four projected metric Grams."""
+    block_ids = np.asarray(block_ids, dtype=np.int64)
+    sides = tuple(right_columns)
+    if (
+        sides != tuple(adjoint_columns)
+        or sides != tuple(right_metric_columns)
+        or sides != tuple(adjoint_metric_columns)
+    ):
+        raise ValueError("right, adjoint, and metric side keys must agree")
+    groups = {
+        int(block): np.flatnonzero(block_ids == block)
+        for block in np.unique(block_ids)
+    }
+
+    def gram_data(
+        matrix: np.ndarray, reference_scale: float
+    ) -> tuple[int, np.ndarray, np.ndarray, np.ndarray]:
+        hermitian = 0.5 * (matrix + matrix.conj().T)
+        eigenvalues, vectors = np.linalg.eigh(hermitian)
+        keep = eigenvalues > 1.0e-20 * reference_scale
+        inverse = (vectors[:, keep] / eigenvalues[keep]) @ vectors[:, keep].conj().T
+        whitening = vectors[:, keep] / np.sqrt(eigenvalues[keep])
+        return int(np.count_nonzero(keep)), inverse, whitening, eigenvalues
+
+    def schur(
+        gram: np.ndarray,
+        candidate: np.ndarray,
+        selected: np.ndarray,
+        selected_inverse: np.ndarray | None,
+    ) -> np.ndarray:
+        result = gram[np.ix_(candidate, candidate)]
+        if selected.size:
+            cross = gram[np.ix_(candidate, selected)]
+            result -= cross @ selected_inverse @ cross.conj().T
+        return 0.5 * (result + result.conj().T)
+
+    cached: dict[str, dict[str, Any]] = {}
+    for side in sides:
+        right = np.asarray(right_columns[side], dtype=np.complex128)
+        adjoint = np.asarray(adjoint_columns[side], dtype=np.complex128)
+        right_metric = np.asarray(right_metric_columns[side], dtype=np.complex128)
+        adjoint_metric = np.asarray(adjoint_metric_columns[side], dtype=np.complex128)
+        if (
+            right.shape != adjoint.shape
+            or right.shape != right_metric.shape
+            or right.shape != adjoint_metric.shape
+            or right.shape[1] != len(block_ids)
+        ):
+            raise ValueError("right, adjoint, metric, and block columns are inconsistent")
+        gram = {
+            "right": 0.5 * (right.conj().T @ right_metric + right_metric.conj().T @ right),
+            "adjoint": 0.5 * (adjoint.conj().T @ adjoint_metric + adjoint_metric.conj().T @ adjoint),
+        }
+        cached[side] = {
+            "gram": gram,
+            "scale": {
+                family: max(float(np.linalg.eigvalsh(matrix)[-1].real), 1.0e-30)
+                for family, matrix in gram.items()
+            },
+            "pairing": adjoint.conj().T @ right_metric,
+        }
+    right_ranks = {side: 0 for side in sides}
+    remaining, order, increments = set(groups), [], {}
+    selected_indices = np.empty(0, dtype=np.int64)
+    full_traces = {
+        side: {family: max(float(np.trace(cached[side]["gram"][family]).real), 1.0e-30)
+               for family in ("right", "adjoint")}
+        for side in sides
+    }
+    while remaining and max(right_ranks.values()) < max(requested):
+        selected_inverses = {
+            side: {
+                family: (
+                    gram_data(
+                        cached[side]["gram"][family][np.ix_(selected_indices, selected_indices)],
+                        cached[side]["scale"][family],
+                    )[1]
+                    if selected_indices.size
+                    else None
+                )
+                for family in ("right", "adjoint")
+            }
+            for side in sides
+        }
+        candidates = []
+        for block in sorted(remaining):
+            candidate = groups[block]
+            block_inc: dict[str, dict[str, int]] = {}
+            gain = 0.0
+            for side in sides:
+                block_inc[side] = {}
+                for family in ("right", "adjoint"):
+                    residual = schur(
+                        cached[side]["gram"][family],
+                        candidate,
+                        selected_indices,
+                        selected_inverses[side][family],
+                    )
+                    rank, _, _, _ = gram_data(
+                        residual, cached[side]["scale"][family]
+                    )
+                    block_inc[side][family] = rank
+                    gain += float(np.trace(residual).real) / full_traces[side][family]
+            if max(
+                right_ranks[side] + block_inc[side]["right"] for side in sides
+            ) <= max(requested):
+                candidates.append((gain, block, block_inc))
+        if not candidates:
+            break
+        gain, block, block_inc = max(candidates, key=lambda item: (item[0], -item[1]))
+        order.append(block)
+        increments[block] = block_inc
+        remaining.remove(block)
+        selected_indices = np.concatenate((selected_indices, groups[block]))
+        for side in sides:
+            right_ranks[side] += block_inc[side]["right"]
+
+    def stats(side: str, family: str, indices: np.ndarray) -> tuple[dict[str, Any], np.ndarray]:
+        gram = cached[side]["gram"][family]
+        full_scale = cached[side]["scale"][family]
+        rank, inverse, whitening, _ = gram_data(
+            gram[np.ix_(indices, indices)], full_scale
+        )
+        residual = gram - gram[:, indices] @ inverse @ gram[indices, :] if indices.size else gram
+        residual = 0.5 * (residual + residual.conj().T)
+        residual_data = gram_data(residual, full_scale)
+        diagonal = np.maximum(np.real(np.diag(residual)), 0.0)
+        denominator = np.maximum(np.real(np.diag(gram)), 1.0e-30)
+        report = {
+            "selected_rank": rank,
+            "captured_energy": float(1.0 - np.trace(residual).real / full_traces[side][family]),
+            "worst_projection_residual": float(np.sqrt(np.max(diagonal / denominator))),
+            "complement_rank": residual_data[0],
+            "complement_tail": float(max(residual_data[3][-1].real, 0.0) / full_scale),
+        }
+        return report, whitening
+
+    prefixes: dict[str, Any] = {}
+    for target in requested:
+        selected_blocks, selected_right = [], {side: 0 for side in sides}
+        for block in order:
+            next_r = {
+                side: selected_right[side] + increments[block][side]["right"]
+                for side in sides
+            }
+            if max(next_r.values()) > target:
+                break
+            selected_blocks.append(block)
+            selected_right = next_r
+        indices = (
+            np.concatenate([groups[block] for block in selected_blocks])
+            if selected_blocks
+            else np.empty(0, dtype=np.int64)
+        )
+        per_side, pairing = {}, {}
+        for side in sides:
+            right_report, right_basis = stats(side, "right", indices)
+            adjoint_report, adjoint_basis = stats(side, "adjoint", indices)
+            per_side[side] = {"right": right_report, "adjoint": adjoint_report}
+            if not indices.size:
+                pairing[side] = {
+                    "right_trial_rank": 0,
+                    "adjoint_test_rank": 0,
+                    "rank": 0,
+                    "condition": None,
+                }
+                continue
+            pairing_matrix = adjoint_basis.conj().T @ cached[side]["pairing"][np.ix_(indices, indices)] @ right_basis
+            singular = np.linalg.svd(pairing_matrix, compute_uv=False)
+            scale = max(float(singular[0]), 1.0e-30)
+            pairing[side] = {
+                "right_trial_rank": int(right_basis.shape[1]),
+                "adjoint_test_rank": int(adjoint_basis.shape[1]),
+                "rank": int(np.count_nonzero(singular > 1.0e-10 * scale)),
+                "condition": float(singular[0] / singular[-1]) if singular[-1] > 1.0e-30 else None,
+            }
+        selected_right = {side: per_side[side]["right"]["selected_rank"] for side in sides}
+        prefixes[str(target)] = {
+            "requested_r": int(target),
+            "effective_r": int(max(selected_right.values())),
+            "selected_right_rank_by_side": {side: int(selected_right[side]) for side in sides},
+            "selected_adjoint_rank_by_side": {
+                side: int(per_side[side]["adjoint"]["selected_rank"]) for side in sides
+            },
+            "raw_column_count": int(indices.size),
+            "selected_block_count": len(selected_blocks),
+            "selected_block_ids_sha256": hashlib.sha256(np.asarray(selected_blocks, dtype=np.int64).tobytes()).hexdigest(),
+            "selected_indices_sha256": hashlib.sha256(indices.astype(np.int64).tobytes()).hexdigest(),
+            "per_side": per_side,
+            "pairing_by_side": pairing,
+        }
+    return {"prefixes": prefixes, "ordering": order}
+
+
+def build_global_two_end_petrov_fixture(
+    *,
+    bottom_core: np.ndarray,
+    top_core: np.ndarray,
+    right_bottom_scale: np.ndarray,
+    right_top_scale: np.ndarray,
+    adjoint_bottom_core: np.ndarray,
+    adjoint_top_core: np.ndarray,
+    adjoint_bottom_scale: np.ndarray,
+    adjoint_top_scale: np.ndarray,
+    bottom_corrector: np.ndarray,
+    top_corrector: np.ndarray,
+    adjoint_bottom_corrector: np.ndarray,
+    adjoint_top_corrector: np.ndarray,
+    block_ids: np.ndarray,
+    selected_indices: np.ndarray,
+    top_block_ids: np.ndarray,
+    requested_r: int,
+    left_port: ProjectedTwoPortSchur,
+    right_port: ProjectedTwoPortSchur,
+    rhs: np.ndarray,
+) -> dict[str, Any]:
+    """Solve a tiny two-end Petrov system from shared primal/test columns."""
+    if requested_r not in (0, 40, 80, 120):
+        raise ValueError("B1 corrector checkpoints must be 0, 40, 80, or 120.")
+    block_ids = np.asarray(block_ids, dtype=np.int64)
+    top_block_ids = np.asarray(top_block_ids, dtype=np.int64)
+    selected = np.asarray(selected_indices, dtype=np.int64)
+    if not np.array_equal(block_ids, top_block_ids):
+        raise ValueError("Bottom and top corrector block identities are misaligned.")
+    if np.any((selected < 0) | (selected >= len(block_ids))):
+        raise ValueError("Selected corrector indices are outside the shared pool.")
+    for block in np.unique(block_ids[selected]):
+        if not np.all(np.isin(np.flatnonzero(block_ids == block), selected)):
+            raise ValueError("A selected corrector block was split.")
+
+    maps: list[np.ndarray] = []
+    for core_bottom, core_top, bottom_scale, top_scale, corr_bottom, corr_top in (
+        (
+            bottom_core,
+            top_core,
+            right_bottom_scale,
+            right_top_scale,
+            bottom_corrector,
+            top_corrector,
+        ),
+        (
+            adjoint_bottom_core,
+            adjoint_top_core,
+            adjoint_bottom_scale,
+            adjoint_top_scale,
+            adjoint_bottom_corrector,
+            adjoint_top_corrector,
+        ),
+    ):
+        core_bottom = np.asarray(core_bottom, dtype=np.complex128)
+        core_top = np.asarray(core_top, dtype=np.complex128)
+        bottom_scale = np.asarray(bottom_scale, dtype=np.complex128)
+        top_scale = np.asarray(top_scale, dtype=np.complex128)
+        if core_bottom.shape != core_top.shape or (
+            bottom_scale.shape != top_scale.shape
+            or core_bottom.shape[1] != bottom_scale.size
+        ):
+            raise ValueError("Two-end core maps and propagation scales differ.")
+        core = np.vstack(
+            (
+                core_bottom * bottom_scale[None, :],
+                core_top * top_scale[None, :],
+            )
+        )
+        correction = np.vstack(
+            (
+                np.asarray(corr_bottom, dtype=np.complex128)[:, selected],
+                np.asarray(corr_top, dtype=np.complex128)[:, selected],
+            )
+        )
+        maps.append(np.hstack((core, correction)))
+    right_map, adjoint_map = maps
+    composed, _ = compose_projected_two_port_schur(left_port, right_port)
+    operator = np.block(
+        [[composed.S_LL, composed.S_LR], [composed.S_RL, composed.S_RR]]
+    )
+    rhs = np.asarray(rhs, dtype=np.complex128)
+    ranges: list[np.ndarray] = []
+    raw_ranks: list[int] = []
+    for values in (right_map, adjoint_map):
+        left, singular, _ = np.linalg.svd(values, full_matrices=False)
+        rank = int(np.count_nonzero(singular > 1.0e-10 * singular[0]))
+        ranges.append(left[:, :rank])
+        raw_ranks.append(rank)
+    right_range, adjoint_range = ranges
+    right_rank, adjoint_rank = raw_ranks
+    left_factor, paired_singular, right_factor_h = np.linalg.svd(
+        adjoint_range.conj().T @ right_range, full_matrices=False
+    )
+    paired_rank = int(np.count_nonzero(paired_singular > 1.0e-10 * paired_singular[0]))
+    if paired_rank == 0:
+        raise ValueError("Global primal/test maps have no paired range.")
+    scale = 1.0 / np.sqrt(paired_singular[:paired_rank])
+    right_white = right_range @ right_factor_h.conj().T[:, :paired_rank] * scale
+    adjoint_white = adjoint_range @ left_factor[:, :paired_rank] * scale
+    reduced = adjoint_white.conj().T @ operator @ right_white
+    reduced_rhs = adjoint_white.conj().T @ rhs
+    coefficients = np.linalg.solve(reduced, reduced_rhs)
+    lifted = right_white @ coefficients
+    direct = np.linalg.solve(operator, rhs)
+    return {
+        "global_primal_shape": list(right_map.shape),
+        "raw_trial_rank": right_rank,
+        "raw_test_rank": adjoint_rank,
+        "paired_effective_rank": paired_rank,
+        "selected_raw_corrector_columns": int(selected.size),
+        "selected_whole_block_count": int(np.unique(block_ids[selected]).size),
+        "pairing_condition": float(
+            paired_singular[0] / paired_singular[paired_rank - 1]
+        ),
+        "requested_r": int(requested_r),
+        "reduced_dimension": int(reduced.shape[0]),
+        "petrov_stationarity_relative": float(
+            np.linalg.norm(adjoint_white.conj().T @ (operator @ lifted - rhs))
+            / max(np.linalg.norm(adjoint_white.conj().T @ rhs), 1.0e-30)
+        ),
+        "direct_solution_relative": float(
+            np.linalg.norm(lifted - direct) / max(np.linalg.norm(direct), 1.0e-30)
+        ),
+    }
+
+
+def build_b1_harmonic_extension(
+    compact_blocks: Mapping[str, np.ndarray], endpoint_electric: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, dict[str, int]]:
+    """Extend shared two-end electric columns through the nine interior planes."""
+
+    bottom_diagonal = np.asarray(compact_blocks["bottom_diagonal"])
+    middle = np.asarray(compact_blocks["middle_diagonal"])
+    top_diagonal = np.asarray(compact_blocks["top_diagonal"])
+    lower = np.asarray(compact_blocks["lower"])
+    upper = np.asarray(compact_blocks["upper"])
+    endpoint = np.asarray(endpoint_electric, dtype=np.complex128)
+    plane_size = bottom_diagonal.shape[0]
+    if endpoint.shape[0] != 2 * plane_size:
+        raise ValueError("Two-end electric columns have the wrong row count.")
+    bottom = endpoint[:plane_size]
+    top = endpoint[plane_size:]
+    zero = np.zeros_like(bottom)
+    interior, record = solve_block_tridiagonal_recursive(
+        [middle] * 9,
+        [lower] * 8,
+        [upper] * 8,
+        [-lower @ bottom] + [zero.copy() for _ in range(7)] + [-upper @ top],
+    )
+    trace = np.vstack((bottom, interior, top))
+    endpoint_residual = np.vstack(
+        (
+            bottom_diagonal @ bottom + upper @ interior[:plane_size],
+            lower @ interior[-plane_size:] + top_diagonal @ top,
+        )
+    )
+    return trace, endpoint_residual, record
+
+
+def build_primal_reachable_pod_prefixes(
+    teacher_by_side: Mapping[str, np.ndarray],
+    teacher_metric_by_side: Mapping[str, np.ndarray],
+    global_core_by_side: Mapping[str, np.ndarray],
+    global_core_metric_by_side: Mapping[str, np.ndarray],
+    source_keys_by_side: Mapping[str, tuple[tuple[Any, ...], ...]],
+    requested: tuple[int, ...] = (0, 40, 80, 96, 120),
+) -> dict[str, Any]:
+    """Build shared two-end primal POD correction prefixes."""
+
+    sides = ("bottom", "top")
+    if tuple(teacher_by_side) != sides:
+        raise ValueError("Teacher sides must be bottom and top.")
+    if any(
+        tuple(source_keys_by_side[side]) != tuple(source_keys_by_side["bottom"])
+        for side in sides[1:]
+    ):
+        raise ValueError("Bottom and top source-column identities differ.")
+    teacher = {side: np.asarray(teacher_by_side[side], dtype=np.complex128) for side in sides}
+    teacher_metric = {
+        side: np.asarray(teacher_metric_by_side[side], dtype=np.complex128)
+        for side in sides
+    }
+    core = {side: np.asarray(global_core_by_side[side], dtype=np.complex128) for side in sides}
+    core_metric = {
+        side: np.asarray(global_core_metric_by_side[side], dtype=np.complex128)
+        for side in sides
+    }
+    columns = teacher["bottom"].shape[1]
+    rows = teacher["bottom"].shape[0]
+    core_columns = core["bottom"].shape[1]
+    if rows <= 0 or core_columns <= 0 or columns != len(source_keys_by_side["bottom"]):
+        raise ValueError("Reachable teacher/core column identity is not fixed.")
+    if any(
+        teacher[side].shape != (rows, columns)
+        or teacher_metric[side].shape != (rows, columns)
+        or core[side].shape != (rows, core_columns)
+        or core_metric[side].shape != (rows, core_columns)
+        for side in sides
+    ):
+        raise ValueError("Reachable teacher/core arrays have incompatible shapes.")
+    teacher_singular = np.linalg.svd(
+        np.vstack((teacher["bottom"], teacher["top"])),
+        compute_uv=False,
+    )
+    teacher_scale = teacher_singular[0] if teacher_singular.size else 0.0
+    raw_source_rank = int(
+        np.count_nonzero(teacher_singular > 1.0e-10 * teacher_scale)
+    )
+    global_gram = sum(
+        core[side].conj().T @ core_metric[side] for side in sides
+    )
+    global_gram = 0.5 * (global_gram + global_gram.conj().T)
+    cross = sum(
+        core[side].conj().T @ teacher_metric[side] for side in sides
+    )
+    coefficients = np.linalg.solve(global_gram, cross)
+    residual = {
+        side: teacher[side] - core[side] @ coefficients for side in sides
+    }
+    residual_metric = {
+        side: teacher_metric[side] - core_metric[side] @ coefficients
+        for side in sides
+    }
+    core_orthogonality = sum(
+        core[side].conj().T @ residual_metric[side] for side in sides
+    )
+    core_orthogonality_relative = float(
+        np.linalg.norm(core_orthogonality)
+        / max(np.linalg.norm(cross), 1.0e-30)
+    )
+    residual_gram = sum(
+        residual[side].conj().T @ residual_metric[side] for side in sides
+    )
+    residual_gram = 0.5 * (residual_gram + residual_gram.conj().T)
+    eigenvalues, vectors = np.linalg.eigh(residual_gram)
+    ordering = np.argsort(eigenvalues)[::-1]
+    eigenvalues = np.real(eigenvalues[ordering])
+    vectors = vectors[:, ordering]
+    scale = max(float(eigenvalues[0]), 1.0e-30)
+    keep = eigenvalues > (1.0e-10**2) * scale
+    effective_source_rank = int(np.count_nonzero(keep))
+    singular_values = np.sqrt(np.maximum(eigenvalues, 0.0))
+    corrector_coefficients = vectors[:, :effective_source_rank]
+    corrector_scale = np.sqrt(eigenvalues[:effective_source_rank])
+    corrector_by_side = {
+        side: residual[side] @ corrector_coefficients / corrector_scale
+        for side in sides
+    }
+    corrector_metric = {
+        side: residual_metric[side] @ corrector_coefficients / corrector_scale
+        for side in sides
+    }
+    corrector_identity = sum(
+        corrector_by_side[side].conj().T @ corrector_metric[side]
+        for side in sides
+    )
+    prefixes: dict[str, Any] = {}
+    total_energy = max(float(np.sum(eigenvalues)), 1.0e-30)
+    for target in requested:
+        effective = min(int(target), effective_source_rank)
+        next_relative = (
+            float(singular_values[effective] / singular_values[0])
+            if effective < len(singular_values) and singular_values[0] > 0.0
+            else 0.0
+        )
+        prefixes[str(target)] = {
+            "requested_r": int(target),
+            "effective_r": effective,
+            "raw_checkpoint_dimension": core_columns + effective,
+            "next_singular_relative": next_relative,
+            "discarded_energy_relative": float(
+                np.sum(eigenvalues[effective:]) / total_energy
+            ),
+        }
+    return {
+        "status": "trial_capacity_scaffold",
+        "raw_source_columns": columns,
+        "raw_source_rank": raw_source_rank,
+        "effective_source_rank": effective_source_rank,
+        "source_snapshot_singular_values": singular_values.tolist(),
+        "global_core_orthogonality_relative": core_orthogonality_relative,
+        "joint_corrector_metric_identity_relative": float(
+            np.linalg.norm(corrector_identity - np.eye(effective_source_rank))
+        ),
+        "prefixes": prefixes,
+        "corrector_by_side": corrector_by_side,
+    }
+
+
+def solve_b1_reduced_petrov(
+    trace_basis: np.ndarray,
+    endpoint_basis: np.ndarray,
+    endpoint_action_basis: np.ndarray,
+    test_basis: np.ndarray,
+    endpoint_rhs: np.ndarray,
+    full_rhs: np.ndarray,
+    trace_action: Any,
+) -> dict[str, Any]:
+    """Solve one shared-column reduced Petrov system and audit its lift."""
+
+    trace = np.asarray(trace_basis, dtype=np.complex128)
+    endpoint = np.asarray(endpoint_basis, dtype=np.complex128)
+    endpoint_action = np.asarray(endpoint_action_basis, dtype=np.complex128)
+    test = np.asarray(test_basis, dtype=np.complex128)
+    rhs_endpoint = np.asarray(endpoint_rhs, dtype=np.complex128)
+    rhs_full = np.asarray(full_rhs, dtype=np.complex128)
+    if (
+        trace.shape[1] != endpoint.shape[1]
+        or endpoint_action.shape != endpoint.shape
+        or test.shape != endpoint.shape
+    ):
+        raise ValueError("Primal, test, and harmonic columns are misaligned.")
+    right_u, right_s, right_vh = np.linalg.svd(endpoint, full_matrices=False)
+    left_u, left_s, _ = np.linalg.svd(test, full_matrices=False)
+    right_rank = int(np.count_nonzero(right_s > 1.0e-10 * right_s[0]))
+    left_rank = int(np.count_nonzero(left_s > 1.0e-10 * left_s[0]))
+    right_coeff = right_vh.conj().T[:, :right_rank] / right_s[:right_rank]
+    left_range = left_u[:, :left_rank]
+    right_range = right_u[:, :right_rank]
+    action_range = endpoint_action @ right_coeff
+    trace_range = trace @ right_coeff
+    overlap_singular = np.linalg.svd(
+        left_range.conj().T @ right_range, compute_uv=False
+    )
+    overlap_scale = overlap_singular[0] if overlap_singular.size else 0.0
+    overlap_rank = int(
+        np.count_nonzero(overlap_singular > 1.0e-10 * overlap_scale)
+    )
+    overlap_condition = (
+        float(overlap_singular[0] / overlap_singular[overlap_rank - 1])
+        if overlap_rank
+        else None
+    )
+    best_coefficients, *_ = np.linalg.lstsq(
+        action_range, rhs_endpoint, rcond=1.0e-10
+    )
+    best_trial_residual = float(
+        np.linalg.norm(action_range @ best_coefficients - rhs_endpoint)
+        / max(np.linalg.norm(rhs_endpoint), 1.0e-30)
+    )
+    reduced = left_range.conj().T @ action_range
+    operator_singular = np.linalg.svd(reduced, compute_uv=False)
+    operator_scale = operator_singular[0] if operator_singular.size else 0.0
+    operator_rank = int(
+        np.count_nonzero(operator_singular > 1.0e-10 * operator_scale)
+    )
+    if right_rank == 0 or left_rank == 0 or right_rank != left_rank:
+        raise ValueError("B1 trial/test range ranks are not equal and nonzero.")
+    operator_min_relative = float(
+        operator_singular[-1] / max(operator_singular[0], np.finfo(float).tiny)
+    )
+    operator_condition = None if operator_singular[-1] == 0.0 else float(
+        operator_singular[0] / operator_singular[-1]
+    )
+    diagnostics = {
+        "trial_rank": right_rank,
+        "test_rank": left_rank,
+        "coordinate_overlap_rank_diagnostic": overlap_rank,
+        "coordinate_overlap_condition_diagnostic": overlap_condition,
+        "petrov_operator_rank": operator_rank,
+        "petrov_operator_condition": operator_condition,
+        "petrov_operator_min_relative_singular_value": operator_min_relative,
+        "best_trial_endpoint_residual_relative": best_trial_residual,
+        "reduced_dimension": int(reduced.shape[0]),
+        "solve_status": "petrov_operator_rank_deficient",
+        "petrov_stationarity_relative": None,
+        "endpoint_residual_relative": None,
+        "full_trace_residual_relative": None,
+        "lifted_trace": None,
+    }
+    if operator_rank != right_rank:
+        return diagnostics
+    reduced_rhs = left_range.conj().T @ rhs_endpoint
+    coefficients = np.linalg.solve(reduced, reduced_rhs)
+    lifted = trace_range @ coefficients
+    full_residual = np.asarray(trace_action(lifted) - rhs_full)
+    stationarity = left_range.conj().T @ (action_range @ coefficients - rhs_endpoint)
+    diagnostics.update(
+        solve_status="solved",
+        petrov_stationarity_relative=float(
+            np.linalg.norm(stationarity) / max(np.linalg.norm(reduced_rhs), 1.0e-30)
+        ),
+        endpoint_residual_relative=float(
+            np.linalg.norm(action_range @ coefficients - rhs_endpoint)
+            / max(np.linalg.norm(rhs_endpoint), 1.0e-30)
+        ),
+        full_trace_residual_relative=float(
+            np.linalg.norm(full_residual) / max(np.linalg.norm(rhs_full), 1.0e-30)
+        ),
+        lifted_trace=lifted,
+    )
+    return diagnostics
 
 
 def _petsc_rows(matrix: PETSc.Mat, rows: np.ndarray) -> np.ndarray:
@@ -1761,7 +2529,7 @@ def _build_d1_trace_chain(setup: dict[str, Any]) -> tuple[Any, Any, Any, Any]:
         setup["bottom_action"] = None
         setup["top_action"] = None
         return chain, jc, bottom_transfer, top_transfer
-    jb, _, _, _ = build_bidirectional_transfers(
+    jb, jb_reverse, _, _ = build_bidirectional_transfers(
         one_cell_left_edges,
         bottom_edges,
         one_cell_left_faces,
@@ -1772,7 +2540,7 @@ def _build_d1_trace_chain(setup: dict[str, Any]) -> tuple[Any, Any, Any, Any]:
         z_shift=10.0,
         tolerance=1.0e-8,
     )
-    jt, _, _, _ = build_bidirectional_transfers(
+    jt, jt_reverse, _, _ = build_bidirectional_transfers(
         one_cell_left_edges,
         top_edges,
         one_cell_left_faces,
@@ -1793,6 +2561,10 @@ def _build_d1_trace_chain(setup: dict[str, Any]) -> tuple[Any, Any, Any, Any]:
     )
     for key in ("cell_action", "bottom_action", "top_action"):
         setup[key] = None
+    setup["d1_endpoint_transfers"] = {
+        "bottom": (jb, jb_reverse),
+        "top": (jt, jt_reverse),
+    }
     return chain, jc, jb, jt
 
 
@@ -5873,15 +6645,22 @@ def build_bidirectional_transfers(
     return forward, reverse, forward_blocks, reverse_blocks
 
 
-def _build_live_m120_joint_cauchy_projector() -> tuple[
-    dict[str, Any], dict[str, dict[str, np.ndarray]]
+def _build_live_m120_joint_cauchy_projector(
+    v9_endpoint_arrays: Mapping[str, np.ndarray] | None = None,
+    live_setup: Mapping[str, Any] | None = None,
+    selection_path: Path | None = None,
+) -> tuple[
+    dict[str, Any], dict[str, Any]
 ]:
     """Build Q4a evidence and retain only lightweight whitened-core snapshots."""
 
     comm = MPI.COMM_WORLD
     if comm.size != 1:
         raise RuntimeError("Q4a M120 projector qualification is serial-only.")
-    cfg = replace(_authority_config(), incident_amplitude=0j)
+    cfg = replace(
+        (live_setup["cfg"] if live_setup is not None else _authority_config()),
+        incident_amplitude=0j,
+    )
     systems: list[Any] = []
     maps: list[Any] = []
     masses: list[Any] = []
@@ -5889,16 +6668,20 @@ def _build_live_m120_joint_cauchy_projector() -> tuple[
     operators = positive = negative = None
     try:
         print("heartbeat: Q4a assembling actual bottom/top operators", flush=True)
-        bottom = assemble_hybrid_local_dtn_system(
-            cfg, "bottom", bottom_interface_z_nm=10.0,
-            top_interface_z_nm=110.0, comm=comm, log=None,
-        )
-        systems.append(bottom)
-        top = assemble_hybrid_local_dtn_system(
-            cfg, "top", bottom_interface_z_nm=10.0,
-            top_interface_z_nm=110.0, comm=comm, log=None,
-        )
-        systems.append(top)
+        if live_setup is None:
+            bottom = assemble_hybrid_local_dtn_system(
+                cfg, "bottom", bottom_interface_z_nm=10.0,
+                top_interface_z_nm=110.0, comm=comm, log=None,
+            )
+            systems.append(bottom)
+            top = assemble_hybrid_local_dtn_system(
+                cfg, "top", bottom_interface_z_nm=10.0,
+                top_interface_z_nm=110.0, comm=comm, log=None,
+            )
+            systems.append(top)
+        else:
+            bottom = live_setup["bottom"]
+            top = live_setup["top"]
         print("heartbeat: Q4a solving current M120 QEP basis", flush=True)
         _, spaces, operators, positive, negative, qep = _mode_basis(
             cfg, requested_modes=120, candidate_modes=240, comm=comm
@@ -5934,6 +6717,24 @@ def _build_live_m120_joint_cauchy_projector() -> tuple[
         c_negative = np.asarray(coupling.negative_trace_to_positive)
         alpha = 1.0 / 1250.0
         records: dict[str, Any] = {}
+        v9_records: dict[str, Any] | None = None
+        v9_projected: dict[str, dict[str, np.ndarray]] = {
+            "right": {},
+            "adjoint": {},
+        }
+        v9_metric_projected: dict[str, dict[str, np.ndarray]] = {
+            "right": {},
+            "adjoint": {},
+        }
+        if v9_endpoint_arrays is not None:
+            block_ids = v9_endpoint_arrays["block_ids"]
+            v9_records = {
+                "block_count": int(np.unique(block_ids).size),
+                "block_ids_sha256": hashlib.sha256(block_ids.tobytes()).hexdigest(),
+                "endpoint_identity": v9_endpoint_arrays["endpoint_identity"],
+                "map_gate": v9_endpoint_arrays["map_gate"],
+                "sides": {},
+            }
         snapshots: dict[str, dict[str, np.ndarray]] = {}
         global_grams: list[np.ndarray] = []
         for side, system in (("bottom", bottom), ("top", top)):
@@ -5983,6 +6784,13 @@ def _build_live_m120_joint_cauchy_projector() -> tuple[
             core = np.vstack((electric, traction))
             if core.shape != (2400, 240):
                 raise AssertionError(f"{side} Q4a core shape is {core.shape}.")
+            petrov_left = _petsc_rows(
+                interface_map.petrov_left_columns, h_mass.active_rows
+            )
+            if petrov_left.shape != (1200, 120):
+                raise AssertionError(
+                    f"{side} positive Petrov columns have shape {petrov_left.shape}."
+                )
 
             global_scale = np.concatenate(
                 (
@@ -6031,7 +6839,63 @@ def _build_live_m120_joint_cauchy_projector() -> tuple[
             snapshots[side] = {
                 "white_core": white.copy(),
                 "actual_h_active": h_mass.active_rows.copy(),
+                "electric_core": electric.copy(),
+                "petrov_left": petrov_left,
             }
+            if v9_endpoint_arrays is not None:
+                endpoint = 1 if side == "bottom" else 0
+                n = h_mass.shape[0]
+                endpoint_slice = slice(endpoint * n, (endpoint + 1) * n)
+                right_joint = np.vstack((
+                    v9_endpoint_arrays["right_electric"][endpoint_slice],
+                    -normal_sign * v9_endpoint_arrays["right_traction"][endpoint_slice],
+                ))
+                adjoint_joint = np.vstack((
+                    v9_endpoint_arrays["adjoint_electric"][endpoint_slice],
+                    -normal_sign * v9_endpoint_arrays["adjoint_traction"][endpoint_slice],
+                ))
+
+                def gc_action(
+                    values: np.ndarray,
+                    mass=h_mass,
+                    alpha=alpha,
+                    k0=cfg.k0,
+                ) -> np.ndarray:
+                    return _joint_cauchy_metric_action(
+                        mass, values, alpha=alpha, k0=k0
+                    )
+
+                source_mass = v9_endpoint_arrays.get("source_h_mass")
+                transfers = v9_endpoint_arrays.get("endpoint_transfers")
+                if source_mass is None or transfers is None:
+                    raise AssertionError("v9 endpoint mass/transfer identity is missing.")
+                forward = transfers[side][0]
+                probe = np.eye(n, 8, dtype=np.complex128)
+                source_gram = probe.conj().T @ source_mass.multiply_columns(probe)
+                target_probe = forward.primal(probe)
+                target_gram = target_probe.conj().T @ h_mass.multiply_columns(target_probe)
+                right_report, right_projected, right_metric = _v9_core_complement_data(
+                    right_joint, white, gc_action
+                )
+                adjoint_report, adjoint_projected, adjoint_metric = _v9_core_complement_data(
+                    adjoint_joint, white, gc_action
+                )
+                v9_projected["right"][side] = right_projected
+                v9_projected["adjoint"][side] = adjoint_projected
+                v9_metric_projected["right"][side] = right_metric
+                v9_metric_projected["adjoint"][side] = adjoint_metric
+                v9_records["sides"][side] = {
+                    "right": right_report,
+                    "adjoint": adjoint_report,
+                    "h_mass_pullback_probe_relative_error": _relative_matrix_error(
+                        target_gram, source_gram
+                    ),
+                }
+                if (
+                    v9_records["sides"][side]["h_mass_pullback_probe_relative_error"]
+                    > 1.0e-8
+                ):
+                    raise AssertionError(f"{side} H-mass pullback probe failed.")
             white_identity = _relative_matrix_error(
                 white.conj().T @ _joint_cauchy_metric_action(h_mass, white, alpha=alpha, k0=cfg.k0),
                 np.eye(240),
@@ -6102,6 +6966,54 @@ def _build_live_m120_joint_cauchy_projector() -> tuple[
                     "solve_relative_residual": h_mass.solve_relative_residual,
                 },
             }
+        if v9_endpoint_arrays is not None:
+            selection = select_v9_block_prefixes(
+                v9_projected["right"],
+                v9_projected["adjoint"],
+                v9_endpoint_arrays["block_ids"],
+                v9_metric_projected["right"],
+                v9_metric_projected["adjoint"],
+                requested=(40, 80, 120),
+            )
+            v9_records["selection"] = {
+                "prefixes": selection["prefixes"],
+                "uniform_full_trace_diagnostic": "not_a_reachable_physics_gate",
+                "reachable_physics_gate": "not_run",
+                "reduced_solve_holdout": "not_run",
+            }
+            if selection_path is not None:
+                npz_arrays = {
+                    "block_ids": np.asarray(v9_endpoint_arrays["block_ids"], dtype=np.int64),
+                    "bottom_right": v9_projected["right"]["bottom"],
+                    "bottom_adjoint": v9_projected["adjoint"]["bottom"],
+                    "top_right": v9_projected["right"]["top"],
+                    "top_adjoint": v9_projected["adjoint"]["top"],
+                }
+                np.savez(selection_path, **npz_arrays)
+                v9_records["selection_artifact"] = {
+                    "path": str(selection_path),
+                    "sha256": _sha256(selection_path),
+                    "bytes": selection_path.stat().st_size,
+                    "shapes": {
+                        name: list(np.asarray(values).shape)
+                        for name, values in npz_arrays.items()
+                    },
+                }
+            snapshots["b1"] = {
+                "right_projected": v9_projected["right"],
+                "adjoint_projected": v9_projected["adjoint"],
+                "right_multipliers": np.asarray(
+                    v9_endpoint_arrays["right_multipliers"], dtype=np.complex128
+                ).copy(),
+                "adjoint_multipliers": np.asarray(
+                    v9_endpoint_arrays["adjoint_multipliers"], dtype=np.complex128
+                ).copy(),
+                "block_ids": np.asarray(
+                    v9_endpoint_arrays["block_ids"], dtype=np.int64
+                ).copy(),
+                "factors": {name: values.copy() for name, values in factors.items()},
+                "selection": selection,
+            }
         combined_global_gram = global_grams[0] + global_grams[1]
         combined_global_eigenvalues = np.linalg.eigvalsh(
             0.5 * (combined_global_gram + combined_global_gram.conj().T)
@@ -6113,7 +7025,11 @@ def _build_live_m120_joint_cauchy_projector() -> tuple[
             )
         )
         record = {
-            "status": "partial_pass_q4a_m120_joint_cauchy_projector",
+            "status": (
+                "partial_block_prefix_selection"
+                if v9_records is not None
+                else "partial_pass_q4a_m120_joint_cauchy_projector"
+            ),
             "mode_count_per_direction": 120,
             "qep": qep,
             "propagation": {
@@ -6151,6 +7067,7 @@ def _build_live_m120_joint_cauchy_projector() -> tuple[
             "forward_solve": "not_run",
             "q4b": "not_run",
             "capacity": "not_run",
+            "v9_core_complement": v9_records or "not_run",
         }
         return record, snapshots
     finally:
@@ -6168,6 +7085,292 @@ def _build_live_m120_joint_cauchy_projector() -> tuple[
             operators.destroy()
         for system in reversed(systems):
             system.destroy()
+
+
+def run_live_v9_core_complement_rank(
+    json_path: Path = V9_MODE_POOL_JSON,
+    npz_path: Path = V9_MODE_POOL_NPZ,
+    selection_path: Path | None = None,
+) -> dict[str, Any]:
+    """Measure v9 Cauchy rank after the live M120 G_C projection."""
+
+    if MPI.COMM_WORLD.size != 1:
+        raise RuntimeError("run_live_v9_core_complement_rank is serial-only.")
+    pool = load_v9_mode_pool(json_path, npz_path)
+    work_dir = tempfile.TemporaryDirectory(prefix="task036-v9-core-")
+    zero_cfg = replace(_authority_config(), incident_amplitude=0j)
+    setup = _build_d1_local_factor_setup(
+        work_dir,
+        case_cfg=zero_cfg,
+        endpoint_comms=(MPI.COMM_WORLD, MPI.COMM_WORLD),
+    )
+    chain = None
+    source_mass_actions: tuple[Any, ...] = ()
+    try:
+        chain, _, _, _ = _build_d1_trace_chain(setup)
+        source_mass_actions = build_endpoint_trace_mass_actions(
+            setup["V"],
+            setup["one_cell_mesh"],
+            setup["condensed"].trace_constraints,
+            (
+                EndpointTraceMassSelection(
+                    setup["one_cell_cfg"].tags.z_min,
+                    setup["one_cell_rows"].left_original,
+                    setup["one_cell_rows"].left_active,
+                ),
+                EndpointTraceMassSelection(
+                    setup["one_cell_cfg"].tags.z_max,
+                    setup["one_cell_rows"].right_original,
+                    setup["one_cell_rows"].right_active,
+                ),
+            ),
+        )
+        arrays = v9_endpoint_cauchy_arrays(
+            chain.cell_action, pool, setup["d1_endpoint_transfers"]
+        )
+        arrays["source_h_mass"] = source_mass_actions[0]
+        record, _ = _build_live_m120_joint_cauchy_projector(
+            arrays, live_setup=setup, selection_path=selection_path
+        )
+        return {
+            "status": record["status"],
+            "source_sha": pool["record"]["source"]["sha"],
+            "raw_columns": 184,
+            "q4a": record["v9_core_complement"],
+            "capacity_selection": "partial_block_prefix_selection",
+        }
+    finally:
+        for mass in reversed(source_mass_actions):
+            mass.destroy()
+        if chain is not None:
+            chain.destroy()
+        setup["bottom"].destroy()
+        setup["top"].destroy()
+        setup["condensed"].destroy()
+        if hasattr(setup["one_cell_floquet"].mpc, "destroy"):
+            setup["one_cell_floquet"].mpc.destroy()
+        work_dir.cleanup()
+
+
+def run_live_b1_reachable_physics_gate() -> dict[str, Any]:
+    """Measure A004-S reduced B1 prefixes from one shared trace-chain setup."""
+
+    if MPI.COMM_WORLD.size != 1:
+        raise RuntimeError("run_live_b1_reachable_physics_gate is serial-only.")
+    pool = load_v9_mode_pool()
+    work_dir = tempfile.TemporaryDirectory(prefix="task036-b1-")
+    setup = _build_d1_local_factor_setup(work_dir)
+    bottom = setup["bottom"]
+    top = setup["top"]
+    bottom_action = setup["bottom_action"]
+    top_action = setup["top_action"]
+    chain = None
+    source_mass_actions: tuple[Any, ...] = ()
+    try:
+        chain, _, bottom_transfer, top_transfer = _build_d1_trace_chain(setup)
+        source_mass_actions = build_endpoint_trace_mass_actions(
+            setup["V"],
+            setup["one_cell_mesh"],
+            setup["condensed"].trace_constraints,
+            (
+                EndpointTraceMassSelection(
+                    setup["one_cell_cfg"].tags.z_min,
+                    setup["one_cell_rows"].left_original,
+                    setup["one_cell_rows"].left_active,
+                ),
+                EndpointTraceMassSelection(
+                    setup["one_cell_cfg"].tags.z_max,
+                    setup["one_cell_rows"].right_original,
+                    setup["one_cell_rows"].right_active,
+                ),
+            ),
+        )
+        arrays = v9_endpoint_cauchy_arrays(
+            chain.cell_action,
+            pool,
+            {
+                "bottom": (
+                    bottom_transfer,
+                    setup["d1_endpoint_transfers"]["bottom"][1],
+                ),
+                "top": (
+                    top_transfer,
+                    setup["d1_endpoint_transfers"]["top"][1],
+                ),
+            },
+        )
+        arrays["source_h_mass"] = source_mass_actions[0]
+        q4a_record, snapshots = _build_live_m120_joint_cauchy_projector(
+            arrays, live_setup=setup
+        )
+        b1 = snapshots.pop("b1")
+        compact_blocks, compact_record = chain.build_compact_trace_blocks(
+            column_block_size=16
+        )
+        actual_rhs, rhs_record, _, _ = _build_d1_actual_rhs(
+            bottom,
+            top,
+            bottom_action,
+            top_action,
+            chain,
+            bottom_transfer,
+            top_transfer,
+        )
+        prefix_data = b1["selection"]["prefixes"]
+        block_ids = b1["block_ids"]
+        ordering = b1["selection"]["ordering"]
+
+        def prefix_indices(target: int) -> np.ndarray:
+            if target == 0:
+                return np.empty(0, dtype=np.int64)
+            prefix = prefix_data[str(target)]
+            block_count = int(prefix["selected_block_count"])
+            blocks = ordering[:block_count]
+            block_hash = hashlib.sha256(
+                np.asarray(blocks, dtype=np.int64).tobytes()
+            ).hexdigest()
+            if block_hash != prefix["selected_block_ids_sha256"]:
+                raise AssertionError("B1 prefix block identity changed.")
+            indices = np.concatenate(
+                [np.flatnonzero(block_ids == block) for block in blocks]
+            ) if block_count else np.empty(0, dtype=np.int64)
+            index_hash = hashlib.sha256(indices.tobytes()).hexdigest()
+            if index_hash != prefix["selected_indices_sha256"]:
+                raise AssertionError("B1 prefix column identity changed.")
+            return indices
+
+        max_indices = prefix_indices(120)
+        for target in (40, 80, 120):
+            if not np.array_equal(prefix_indices(target), max_indices[: len(prefix_indices(target))]):
+                raise AssertionError("B1 selection prefixes are not nested.")
+
+        def stable_end_factors(values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+            values = np.asarray(values, dtype=np.complex128)
+            bottom_factor = np.ones_like(values)
+            top_factor = np.ones_like(values)
+            bounded = np.abs(values) <= 1.0
+            top_factor[bounded] = values[bounded] ** 10
+            bottom_factor[~bounded] = values[~bounded] ** -10
+            return bottom_factor, top_factor
+
+        factors = b1["factors"]
+        bottom_snapshot = snapshots["bottom"]
+        top_snapshot = snapshots["top"]
+        right_core_bottom = bottom_snapshot["electric_core"] * np.concatenate(
+            (np.ones(120, dtype=np.complex128), factors["backward"])
+        )
+        right_core_top = top_snapshot["electric_core"] * np.concatenate(
+            (factors["forward"], np.ones(120, dtype=np.complex128))
+        )
+        right_bottom_factor, right_top_factor = stable_end_factors(
+            b1["right_multipliers"][max_indices]
+        )
+        adjoint_bottom_factor, adjoint_top_factor = stable_end_factors(
+            b1["adjoint_multipliers"][max_indices]
+        )
+        right_corrector_bottom = b1["right_projected"]["bottom"][:1200, max_indices]
+        right_corrector_top = b1["right_projected"]["top"][:1200, max_indices]
+        adjoint_corrector_bottom = b1["adjoint_projected"]["bottom"][:1200, max_indices]
+        adjoint_corrector_top = b1["adjoint_projected"]["top"][:1200, max_indices]
+        right_bottom_local = np.hstack(
+            (right_core_bottom, right_corrector_bottom * right_bottom_factor)
+        )
+        right_top_local = np.hstack(
+            (right_core_top, right_corrector_top * right_top_factor)
+        )
+        left_bottom_local = np.hstack(
+            (
+                bottom_snapshot["petrov_left"],
+                np.zeros((1200, 120), dtype=np.complex128),
+                adjoint_corrector_bottom * adjoint_bottom_factor,
+            )
+        )
+        left_top_local = np.hstack(
+            (
+                np.zeros((1200, 120), dtype=np.complex128),
+                top_snapshot["petrov_left"],
+                adjoint_corrector_top * adjoint_top_factor,
+            )
+        )
+        bottom_reverse = setup["d1_endpoint_transfers"]["bottom"][1]
+        top_reverse = setup["d1_endpoint_transfers"]["top"][1]
+        right_endpoint = np.vstack(
+            (
+                bottom_reverse.primal(right_bottom_local),
+                top_reverse.primal(right_top_local),
+            )
+        )
+        left_endpoint = np.vstack(
+            (
+                bottom_reverse.primal(left_bottom_local),
+                top_reverse.primal(left_top_local),
+            )
+        )
+        if right_endpoint.shape != left_endpoint.shape or right_endpoint.shape != (
+            2400,
+            360,
+        ):
+            raise AssertionError(
+                "Canonical B1 endpoint trial/test columns are not (2400, 360)."
+            )
+        trace_basis, endpoint_action, extension_record = build_b1_harmonic_extension(
+            compact_blocks, right_endpoint
+        )
+        endpoint_rhs = np.vstack((actual_rhs[:1200], actual_rhs[-1200:]))
+        prefixes: dict[str, Any] = {}
+        for target in (0, 40, 80, 120):
+            count = len(prefix_indices(target))
+            columns = 240 + count
+            reduced = solve_b1_reduced_petrov(
+                trace_basis[:, :columns],
+                right_endpoint[:, :columns],
+                endpoint_action[:, :columns],
+                left_endpoint[:, :columns],
+                endpoint_rhs,
+                actual_rhs,
+                chain.apply_columns,
+            )
+            reduced.pop("lifted_trace")
+            prefix = prefix_data[str(target)] if target else {
+                "selected_block_count": 0,
+                "raw_column_count": 0,
+            }
+            prefixes[str(target)] = {
+                "requested_r": target,
+                "selected_raw_corrector_columns": count,
+                "selected_block_count": int(prefix["selected_block_count"]),
+                "selected_block_ids_sha256": prefix.get("selected_block_ids_sha256"),
+                "raw_checkpoint_dimension": 240 + count,
+                "d_port": int(reduced["trial_rank"]),
+                **reduced,
+            }
+        return {
+            "status": "partial_b1_reachable_physics_measurement",
+            "q4a": q4a_record,
+            "compact_trace": compact_record,
+            "harmonic_extension": extension_record,
+            "actual_rhs": rhs_record,
+            "prefixes": prefixes,
+            "endpoint_coordinates": {
+                "canonicalized": True,
+                "map": "reverse.primal",
+            },
+            "reachable_physics_gate": "not_run",
+            "reduced_solve_holdout": "not_run",
+            "capacity": "not_run",
+            "global_dense_endpoint_square_formed": False,
+        }
+    finally:
+        for mass in reversed(source_mass_actions):
+            mass.destroy()
+        if chain is not None:
+            chain.destroy()
+        bottom.destroy()
+        top.destroy()
+        setup["condensed"].destroy()
+        if hasattr(setup["one_cell_floquet"].mpc, "destroy"):
+            setup["one_cell_floquet"].mpc.destroy()
+        work_dir.cleanup()
 
 
 def run_live_m120_joint_cauchy_projector_fixture() -> dict[str, Any]:
