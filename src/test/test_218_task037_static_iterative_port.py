@@ -53,6 +53,7 @@ def _snapshot(
 
 def test_dispatch_borrows_system_and_does_not_call_direct(monkeypatch) -> None:
     matrix, solution, rhs = _FakeMat(), _FakeVec(), object()
+    sentinels = tuple(object() for _ in range(4))
     seen = {}
     monkeypatch.setattr(
         dtn_port_3d,
@@ -62,9 +63,23 @@ def test_dispatch_borrows_system_and_does_not_call_direct(monkeypatch) -> None:
 
     def port(request):
         seen.update(A=request.A, b=request.b, n_fe=request.n_fe, n_aux=request.n_aux)
+        assert request.static_condensed_system is sentinels[0]
+        assert request.function_space is sentinels[1]
+        assert request.config is sentinels[2]
+        assert request.floquet_data is sentinels[3]
         return _snapshot(solution)
 
-    accepted = _dispatch_external_linear_solver(matrix, rhs, n_fe=2, n_aux=1, port=port)
+    accepted = _dispatch_external_linear_solver(
+        matrix,
+        rhs,
+        n_fe=2,
+        n_aux=1,
+        static_condensed_system=sentinels[0],
+        function_space=sentinels[1],
+        config=sentinels[2],
+        floquet_data=sentinels[3],
+        port=port,
+    )
     assert accepted.x is solution
     assert seen == {"A": matrix, "b": rhs, "n_fe": 2, "n_aux": 1}
 
@@ -77,7 +92,15 @@ def test_dispatch_rejects_snapshot_contract_violations(no_global_factor, x) -> N
     snapshot = replace(_snapshot(_FakeVec()), no_global_factor=no_global_factor, x=x)
     with pytest.raises(ValueError):
         _dispatch_external_linear_solver(
-            _FakeMat(), object(), n_fe=2, n_aux=1, port=lambda _request: snapshot
+            _FakeMat(),
+            object(),
+            n_fe=2,
+            n_aux=1,
+            static_condensed_system=object(),
+            function_space=object(),
+            config=object(),
+            floquet_data=object(),
+            port=lambda _request: snapshot,
         )
 
 

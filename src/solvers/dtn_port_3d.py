@@ -109,6 +109,10 @@ class Stage4ExternalLinearSolverRequest:
     b: PETSc.Vec
     n_fe: int
     n_aux: int
+    static_condensed_system: AssemblyTimeCondensedSystem
+    function_space: Any
+    config: SimulationConfig3D
+    floquet_data: DoubleFloquet3DData
 
 
 @dataclass(frozen=True)
@@ -155,6 +159,10 @@ def _dispatch_external_linear_solver(
     *,
     n_fe: int,
     n_aux: int,
+    static_condensed_system: AssemblyTimeCondensedSystem,
+    function_space: Any,
+    config: SimulationConfig3D,
+    floquet_data: DoubleFloquet3DData,
     port: Callable[
         [Stage4ExternalLinearSolverRequest], Stage4ExternalLinearSolverSnapshot
     ],
@@ -165,6 +173,10 @@ def _dispatch_external_linear_solver(
             b=b_aug,
             n_fe=int(n_fe),
             n_aux=int(n_aux),
+            static_condensed_system=static_condensed_system,
+            function_space=function_space,
+            config=config,
+            floquet_data=floquet_data,
         )
     )
     if not isinstance(snapshot, Stage4ExternalLinearSolverSnapshot):
@@ -3989,6 +4001,10 @@ def _solve_stage4_dtn_port_total_field_impl(
                 solve_b,
                 n_fe=n_fe,
                 n_aux=n_aux,
+                static_condensed_system=assembly_time_system,
+                function_space=V,
+                config=cfg,
+                floquet_data=floquet_data,
                 port=linear_solver_port,
             )
             solve_x = external_snapshot.x
