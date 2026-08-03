@@ -289,93 +289,12 @@ def build_dataset(*, artifact_root: Path, campaign_manifest: Path,
     The old combined ``96_plus24`` writer is intentionally removed.  A caller
     asking for validation must use the explicit post-lock blind package path.
     """
-    if include_validation:
-        raise RuntimeError("Task004 validation must be built as an independent blind24 package after model lock")
-    if len(training_design_ids) != len(training_counts):
-        raise ValueError("training design/count lists must have equal length")
-    training: list[dict[str, Any]] = []
-    for design_id, count in zip(training_design_ids, training_counts):
-        training.extend(_records_from_manifest(campaign_manifest, design_id, count))
-    validation = []
-    if include_validation:
-        # This is the only function that may read Task004 blind-validation
-        # responses, and it must be called only after the model lock exists.
-        if not (artifact_root / "ANGLE_MODEL_SELECTION_LOCK.json").is_file():
-            raise RuntimeError("Task004 validation assembly requires ANGLE_MODEL_SELECTION_LOCK.json")
-        validation = _records_from_manifest(
-            campaign_manifest, "task004_angle_frozen_validation_v1", 24,
-        )
-    records = training
-    if not records:
-        raise ValueError("Task004 dataset cannot be empty")
-    source_shas = {row.get("source_sha") for row in records}
-    if len(source_shas) != 1 or None in source_shas:
-        raise ValueError("Task004 dataset source SHA is not single-valued")
-    identity_fields = (
-        "model_id", "solver_route_id", "parameter_schema_version",
-        "observable_schema_version", "axis_cell_counts", "topology_hash",
+    del artifact_root, campaign_manifest, include_validation, training_design_ids, training_counts
+    del surrogate_training_code_sha
+    raise RuntimeError(
+        "Task004 combined dataset writer is retired; use build_training_package "
+        "and the post-lock independent blind24 package writer"
     )
-    for field in identity_fields:
-        values = {json.dumps(row.get(field), sort_keys=True) for row in records}
-        if len(values) != 1:
-            raise ValueError(f"Task004 dataset identity changed for {field}")
-    workspace_keys = {
-        json.dumps(_solver_workspace_key(row.get("solver_identity", {})), sort_keys=True)
-        for row in records
-    }
-    if len(workspace_keys) != 1:
-        raise ValueError("Task004 solver workspace identity changed across samples")
-    arrays, order_identity = _arrays(records)
-    dataset_dir = artifact_root / "compact_dataset"
-    if dataset_dir.exists():
-        raise RuntimeError("combined Task004 compact_dataset is retired; use train96/train112")
-    dataset_dir.mkdir(parents=True, exist_ok=False)
-    for name, array in arrays.items():
-        np.save(dataset_dir / name, array, allow_pickle=False)
-    training_count = len(training)
-    np.save(dataset_dir / "train_indices.npy", np.arange(training_count, dtype=np.int64))
-    (dataset_dir / "fixed_parameters.json").write_text(json.dumps({
-        "height_nm": 120.0, "width_x_nm": 17.0, "wavelength_nm": 13.5,
-        "incident_polarization": "S", "model_id": MODEL_ID,
-        "solver_route_id": ROUTE_ID, "parameter_schema_version": PARAMETER_SCHEMA,
-        "observable_schema_version": OBSERVABLE_SCHEMA,
-    }, indent=2) + "\n")
-    (dataset_dir / "order_identity.json").write_text(json.dumps(order_identity, indent=2) + "\n")
-    (dataset_dir / "sample_records.jsonl").write_text(
-        "".join(json.dumps(row, separators=(",", ":")) + "\n" for row in records)
-    )
-    tuples = [row["inputs"] for row in records]
-    manifest = {
-        "schema_version": DATASET_SCHEMA,
-        "dataset_id": "task004_angle_nominal_p5_ny4_train_legacy",
-        "source_sha": records[0]["source_sha"], "forward_solver_sha": records[0]["source_sha"],
-        "surrogate_dataset_builder_sha": surrogate_training_code_sha,
-        "source_dirty": False,
-        "parameter_schema_version": PARAMETER_SCHEMA,
-        "observable_schema_version": OBSERVABLE_SCHEMA,
-        "model_id": MODEL_ID, "solver_route_id": ROUTE_ID,
-        "fixed_geometry": {"height_nm": 120.0, "width_x_nm": 17.0},
-        "solver_workspace_identity": order_identity["solver_identity"],
-        "config_hashes": order_identity["config_hashes"],
-        "topology_hashes": order_identity["topology_hashes"],
-        "sample_count": len(records), "training_count": training_count,
-        "blind_validation_count": 0,
-        "train_tuple_sha256": canonical_hash(tuples[:training_count]),
-        "blind_validation_tuple_sha256": None,
-        "sample_ids_hash": canonical_hash([row["sample_id"] for row in records]),
-        "validation_target_accessed": False,
-        "arrays": {},
-    }
-    for path in dataset_dir.iterdir():
-        if path.is_file() and path.name not in {"dataset_manifest.json", "file_hashes.json"}:
-            if path.suffix == ".npy":
-                value = np.load(path, mmap_mode="r", allow_pickle=False)
-                manifest["arrays"][path.name] = {"shape": list(value.shape), "dtype": str(value.dtype)}
-    (dataset_dir / "dataset_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    hashes = {path.name: file_hash(path) for path in dataset_dir.iterdir()
-              if path.is_file() and path.name != "file_hashes.json"}
-    (dataset_dir / "file_hashes.json").write_text(json.dumps(hashes, indent=2) + "\n")
-    return manifest
 
 
 def load_training_dataset(dataset_dir: Path) -> dict[str, np.ndarray]:
@@ -408,6 +327,8 @@ def load_sealed_validation(
             "Task004 sealed validation is fail-closed until ANGLE_MODEL_SELECTION_LOCK.json exists"
         )
     manifest = json.loads((dataset_dir / "dataset_manifest.json").read_text())
+    if manifest.get("dataset_id") != BLIND24_DATASET_ID:
+        raise RuntimeError("Task004 validation loader accepts only the independent blind24 package")
     lock = json.loads(lock_path.read_text())
     if lock.get("dataset_id") != manifest.get("dataset_id"):
         raise RuntimeError("Task004 model lock dataset identity mismatch")
@@ -421,7 +342,7 @@ def load_sealed_validation(
     if not expected_hashes or expected_hashes != actual_hashes:
         raise RuntimeError("Task004 model lock dataset file hashes do not match sealed data")
 
-    indices = np.load(dataset_dir / "sealed_validation_indices.npy", allow_pickle=False)
+    indices = np.load(dataset_dir / "validation_indices.npy", allow_pickle=False)
     if indices.shape != (24,):
         raise ValueError("Task004 sealed validation is not a 24-row split")
     names = ("angles.npy", "inputs.npy", "aggregates.npy", "order_amplitudes.npy",

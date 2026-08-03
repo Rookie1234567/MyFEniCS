@@ -1,0 +1,5366 @@
+{
+  "records": [
+    {
+      "cutoff_order": 0,
+      "error": -0.0001311429465133962,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.0526324695478118,
+      "prediction": 0.6365061801360148,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 0,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.0007549575093997986,
+      "target": "R_total",
+      "truth": 0.6366373230825282
+    },
+    {
+      "cutoff_order": 0,
+      "error": -7.725542981788965e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.0526324695478118,
+      "prediction": 0.005725875953038073,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 0,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 1.780656882432103e-05,
+      "target": "T_total",
+      "truth": 0.005733601496019862
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00013886848949529185,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.0526324695478118,
+      "prediction": 0.35776794391094724,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 0,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.0007430335429917278,
+      "target": "A_balance",
+      "truth": 0.35762907542145195
+    },
+    {
+      "cutoff_order": 0,
+      "error": -5.62427073891314e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263246609815853,
+      "prediction": 0.635938375795979,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 1,
+      "signed_cutoff_margin": 7.615242180425419e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.0005141262901672662,
+      "target": "R_total",
+      "truth": 0.6359946185033681
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.0720727792987855e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263246609815853,
+      "prediction": 0.005765988672794168,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 1,
+      "signed_cutoff_margin": 7.615242180425419e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 1.0635379596966924e-05,
+      "target": "T_total",
+      "truth": 0.00575526794500118
+    },
+    {
+      "cutoff_order": 0,
+      "error": 4.552197959623028e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263246609815853,
+      "prediction": 0.3582956355312269,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 1,
+      "signed_cutoff_margin": 7.615242180425419e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.000505971261943967,
+      "target": "A_balance",
+      "truth": 0.35825011355163067
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00021637589416889647,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263245594263175,
+      "prediction": 0.6344255633244305,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 2,
+      "signed_cutoff_margin": 7.615242180447623e-05,
+      "spatial_windows": [],
+      "std": 0.0007491564304015044,
+      "target": "R_total",
+      "truth": 0.6342091874302616
+    },
+    {
+      "cutoff_order": 0,
+      "error": 5.31095462551201e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263245594263175,
+      "prediction": 0.0058202994245300935,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 2,
+      "signed_cutoff_margin": 7.615242180447623e-05,
+      "spatial_windows": [],
+      "std": 1.449195704719129e-05,
+      "target": "T_total",
+      "truth": 0.0058149884699045815
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00022168684879442235,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263245594263175,
+      "prediction": 0.35975413725103944,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 2,
+      "signed_cutoff_margin": 7.615242180447623e-05,
+      "spatial_windows": [],
+      "std": 0.0007372170275730241,
+      "target": "A_balance",
+      "truth": 0.35997582409983386
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0003419410875826756,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263243965497907,
+      "prediction": 0.6319974872979395,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 3,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.0009101483684528175,
+      "target": "R_total",
+      "truth": 0.6316555462103568
+    },
+    {
+      "cutoff_order": 0,
+      "error": -6.27813623381001e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263243965497907,
+      "prediction": 0.005897665240347406,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 3,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 1.67019677841846e-05,
+      "target": "T_total",
+      "truth": 0.005903943376581216
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00033566295134879187,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263243965497907,
+      "prediction": 0.3621048474617132,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 3,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.0008955526294320433,
+      "target": "A_balance",
+      "truth": 0.36244051041306197
+    },
+    {
+      "cutoff_order": 0,
+      "error": -9.686089580940305e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.0526324181698124,
+      "prediction": 0.6288756388202933,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 4,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.0007922591110034506,
+      "target": "R_total",
+      "truth": 0.6289724997161027
+    },
+    {
+      "cutoff_order": 0,
+      "error": -9.047913896474864e-06,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.0526324181698124,
+      "prediction": 0.005986725048717513,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 4,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 1.4690847413422198e-05,
+      "target": "T_total",
+      "truth": 0.0059957729626139876
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00010590880970601235,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.0526324181698124,
+      "prediction": 0.3651376361309893,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 4,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.0007794704246044523,
+      "target": "A_balance",
+      "truth": 0.3650317273212833
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.000798676267092957,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.10526542142196653,
+      "prediction": 0.6234401095167772,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 5,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.005190870133867646,
+      "target": "R_total",
+      "truth": 0.6242387857838702
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.2860285349492254e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.10526542142196653,
+      "prediction": 0.006155927967233733,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 5,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 8.58513805769271e-05,
+      "target": "T_total",
+      "truth": 0.006154641938698783
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0007973902385580156,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.10526542142196653,
+      "prediction": 0.37040396251598906,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 5,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.0051060067858549035,
+      "target": "A_balance",
+      "truth": 0.36960657227743104
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0002648457230470802,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.05263228585523662,
+      "prediction": 0.6217255941114759,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 6,
+      "signed_cutoff_margin": 7.615242180425419e-05,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.004862787797315297,
+      "target": "R_total",
+      "truth": 0.6214607483884288
+    },
+    {
+      "cutoff_order": 0,
+      "error": 2.2792842717996725e-07,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.05263228585523662,
+      "prediction": 0.006248306424485336,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 6,
+      "signed_cutoff_margin": 7.615242180425419e-05,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 8.194434433915392e-05,
+      "target": "T_total",
+      "truth": 0.006248078496058156
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.000265073651474379,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.05263228585523662,
+      "prediction": 0.3720260994640387,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 6,
+      "signed_cutoff_margin": 7.615242180425419e-05,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.004782458098079434,
+      "target": "A_balance",
+      "truth": 0.3722911731155131
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0032473959381127404,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.052632256038893675,
+      "prediction": 0.6178949931284946,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 7,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.017474024445164743,
+      "target": "R_total",
+      "truth": 0.6211423890666073
+    },
+    {
+      "cutoff_order": 0,
+      "error": 9.967915204679885e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.052632256038893675,
+      "prediction": 0.006386883319466886,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 7,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.0002942974767037511,
+      "target": "T_total",
+      "truth": 0.006287204167420088
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.003147716786065957,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.052632256038893675,
+      "prediction": 0.37571812355203854,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 7,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.017181937466788744,
+      "target": "A_balance",
+      "truth": 0.3725704067659726
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0002920393511123276,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.052632325802882046,
+      "prediction": 0.622438806676498,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 8,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.011942230808553316,
+      "target": "R_total",
+      "truth": 0.6221467673253857
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00014127308348736798,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.052632325802882046,
+      "prediction": 0.006281136179655703,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 8,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.00020415920485060082,
+      "target": "T_total",
+      "truth": 0.006422409263143071
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0001507662676249466,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.052632325802882046,
+      "prediction": 0.3712800571438463,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 8,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.011743536394668876,
+      "target": "A_balance",
+      "truth": 0.37143082341147127
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.013234389815241054,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263252572990294,
+      "prediction": 0.6127725741971308,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 9,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.024805712481643736,
+      "target": "R_total",
+      "truth": 0.6260069640123719
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0006958605452600467,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263252572990294,
+      "prediction": 0.006915228332884309,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 9,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.000468712196730288,
+      "target": "T_total",
+      "truth": 0.006219367787624263
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.012538529269981058,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263252572990294,
+      "prediction": 0.3803121974699849,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 9,
+      "signed_cutoff_margin": 7.615242180436521e-05,
+      "spatial_windows": [
+        "cutoff_near"
+      ],
+      "std": 0.024362618125727313,
+      "target": "A_balance",
+      "truth": 0.36777366820000384
+    },
+    {
+      "cutoff_order": 0,
+      "error": -2.7134118177840616e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.0526324695478118,
+      "prediction": 0.49980831731231556,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 10,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.0007220438630065863,
+      "target": "R_total",
+      "truth": 0.4998354514304934
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.3870212013575994e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.0526324695478118,
+      "prediction": 0.008633792790246312,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 10,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 2.2131766714787086e-05,
+      "target": "T_total",
+      "truth": 0.008647663002259888
+    },
+    {
+      "cutoff_order": 0,
+      "error": 4.100433019160743e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.0526324695478118,
+      "prediction": 0.49155788989743826,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 10,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.0007095807755564188,
+      "target": "A_balance",
+      "truth": 0.49151688556724665
+    },
+    {
+      "cutoff_order": 0,
+      "error": -8.738260919682883e-06,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263246609815853,
+      "prediction": 0.4990558797000919,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 11,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.000597168426270557,
+      "target": "R_total",
+      "truth": 0.4990646179610116
+    },
+    {
+      "cutoff_order": 0,
+      "error": 2.8338563666097452e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263246609815853,
+      "prediction": 0.008706585959812402,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 11,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 1.5710984308162928e-05,
+      "target": "T_total",
+      "truth": 0.008678247396146305
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.9600302746392018e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263246609815853,
+      "prediction": 0.49223753434009565,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 11,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.0005867896477867847,
+      "target": "A_balance",
+      "truth": 0.49225713464284204
+    },
+    {
+      "cutoff_order": 0,
+      "error": 5.632264946370258e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263245594263175,
+      "prediction": 0.49698204898938625,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 12,
+      "signed_cutoff_margin": 0.0001713375122215366,
+      "spatial_windows": [],
+      "std": 0.0005006336956259337,
+      "target": "R_total",
+      "truth": 0.49692572633992255
+    },
+    {
+      "cutoff_order": 0,
+      "error": 3.0282555935979075e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263245594263175,
+      "prediction": 0.0087926631124964,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 12,
+      "signed_cutoff_margin": 0.0001713375122215366,
+      "spatial_windows": [],
+      "std": 1.4358575636960662e-05,
+      "target": "T_total",
+      "truth": 0.008762380556560421
+    },
+    {
+      "cutoff_order": 0,
+      "error": -8.660520539971461e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263245594263175,
+      "prediction": 0.49422528789811737,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 12,
+      "signed_cutoff_margin": 0.0001713375122215366,
+      "spatial_windows": [],
+      "std": 0.0004918834901455726,
+      "target": "A_balance",
+      "truth": 0.4943118931035171
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00018243121655275862,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.05263243965497907,
+      "prediction": 0.49405511094566623,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 13,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.0004914936070785508,
+      "target": "R_total",
+      "truth": 0.4938726797291135
+    },
+    {
+      "cutoff_order": 0,
+      "error": -5.397397046658439e-06,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.05263243965497907,
+      "prediction": 0.008882015145920694,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 13,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 1.1859214340156847e-05,
+      "target": "T_total",
+      "truth": 0.008887412542967352
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00017703381950612274,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.05263243965497907,
+      "prediction": 0.49706287390841297,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 13,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.0004828660893556774,
+      "target": "A_balance",
+      "truth": 0.4972399077279191
+    },
+    {
+      "cutoff_order": 0,
+      "error": 2.5236189425903444e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.0526324181698124,
+      "prediction": 0.49069229549689264,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 14,
+      "signed_cutoff_margin": 0.00017133751222131455,
+      "spatial_windows": [],
+      "std": 0.0007040919396799831,
+      "target": "R_total",
+      "truth": 0.49066705930746674
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.2457141492198606e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.0526324181698124,
+      "prediction": 0.009004935827550572,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 14,
+      "signed_cutoff_margin": 0.00017133751222131455,
+      "spatial_windows": [],
+      "std": 1.584961256179962e-05,
+      "target": "T_total",
+      "truth": 0.00901739296904277
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.2779047933730858e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.0526324181698124,
+      "prediction": 0.5003027686755568,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 14,
+      "signed_cutoff_margin": 0.00017133751222131455,
+      "spatial_windows": [],
+      "std": 0.0006916443475260562,
+      "target": "A_balance",
+      "truth": 0.5003155477234905
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.5206188726524239e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263311932596718,
+      "prediction": 0.48505742039549393,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 15,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.0047169716069501615,
+      "target": "R_total",
+      "truth": 0.4850422142067674
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.8997932429735617e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263311932596718,
+      "prediction": 0.009220277283333916,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 15,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 8.648724917050357e-05,
+      "target": "T_total",
+      "truth": 0.009239275215763652
+    },
+    {
+      "cutoff_order": 0,
+      "error": 3.7917437032408685e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263311932596718,
+      "prediction": 0.5057223023211722,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 15,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.004632513218544464,
+      "target": "A_balance",
+      "truth": 0.505718510577469
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0014588722718035796,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263228585523662,
+      "prediction": 0.4832130560287931,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 16,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.009761541998346227,
+      "target": "R_total",
+      "truth": 0.48175418375698953
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.1766760496498968e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263228585523662,
+      "prediction": 0.009357568277963944,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 16,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.0001802450437667888,
+      "target": "T_total",
+      "truth": 0.009369335038460443
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0014471055113070008,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263228585523662,
+      "prediction": 0.507429375693243,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 16,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.00958478987909861,
+      "target": "A_balance",
+      "truth": 0.50887648120455
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.002765527724655048,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.052632256038893675,
+      "prediction": 0.4841542316843448,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 17,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.008912758872797409,
+      "target": "R_total",
+      "truth": 0.48138870395968975
+    },
+    {
+      "cutoff_order": 0,
+      "error": 3.4965117461096054e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.052632256038893675,
+      "prediction": 0.009455860032976559,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 17,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.00016744439825506165,
+      "target": "T_total",
+      "truth": 0.009420894915515463
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0028004928421161424,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.052632256038893675,
+      "prediction": 0.5063899082826786,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 17,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.008749383361950335,
+      "target": "A_balance",
+      "truth": 0.5091904011247947
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00015724792342519667,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.052632325802882046,
+      "prediction": 0.4827636282135865,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 18,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.00849789354157933,
+      "target": "R_total",
+      "truth": 0.4826063802901613
+    },
+    {
+      "cutoff_order": 0,
+      "error": 2.3470674417984394e-06,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.052632325802882046,
+      "prediction": 0.009597990846860189,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 18,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.00015930451843196156,
+      "target": "T_total",
+      "truth": 0.00959564377941839
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00015959499086715123,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.052632325802882046,
+      "prediction": 0.5076383809395533,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 18,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.008340205158834657,
+      "target": "A_balance",
+      "truth": 0.5077979759304204
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.003434269288719649,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.05263252572990294,
+      "prediction": 0.4904592429635229,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 19,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.026788347656342637,
+      "target": "R_total",
+      "truth": 0.48702497367480324
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0003240287982101773,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.05263252572990294,
+      "prediction": 0.009676714816835425,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 19,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.0005369911652479272,
+      "target": "T_total",
+      "truth": 0.009352686018625248
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.003758298086929679,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.05263252572990294,
+      "prediction": 0.4998640422196418,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 19,
+      "signed_cutoff_margin": 0.00017133751222142557,
+      "spatial_windows": [],
+      "std": 0.026279619289413,
+      "target": "A_balance",
+      "truth": 0.5036223403065715
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0009324935437477477,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.052633324346101226,
+      "prediction": 0.3832933697806152,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 20,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.002666286682069794,
+      "target": "R_total",
+      "truth": 0.3842258633243629
+    },
+    {
+      "cutoff_order": 0,
+      "error": 2.9544208359950225e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.052633324346101226,
+      "prediction": 0.012125447876278731,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 20,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 7.220822532152623e-05,
+      "target": "T_total",
+      "truth": 0.012095903667918781
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0009029493353878149,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.052633324346101226,
+      "prediction": 0.6045811823431061,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 20,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.002613971608453039,
+      "target": "A_balance",
+      "truth": 0.6036782330077183
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0007896324337713367,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263331758471226,
+      "prediction": 0.3826251108055953,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 21,
+      "signed_cutoff_margin": 0.0003045864904519524,
+      "spatial_windows": [],
+      "std": 0.0023382751593909283,
+      "target": "R_total",
+      "truth": 0.38341474323936664
+    },
+    {
+      "cutoff_order": 0,
+      "error": 5.2380627198377744e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263331758471226,
+      "prediction": 0.012188092700317373,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 21,
+      "signed_cutoff_margin": 0.0003045864904519524,
+      "spatial_windows": [],
+      "std": 5.866973444993658e-05,
+      "target": "T_total",
+      "truth": 0.012135712073118995
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0007372518065729139,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263331758471226,
+      "prediction": 0.6051867964940872,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 21,
+      "signed_cutoff_margin": 0.0003045864904519524,
+      "spatial_windows": [],
+      "std": 0.0022921795201845236,
+      "target": "A_balance",
+      "truth": 0.6044495446875143
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0004179497001838839,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263329767965434,
+      "prediction": 0.38074900140512374,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 22,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.0015067986812783622,
+      "target": "R_total",
+      "truth": 0.3811669511053076
+    },
+    {
+      "cutoff_order": 0,
+      "error": 4.37114012209229e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263329767965434,
+      "prediction": 0.012288685792898385,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 22,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 3.956895497894817e-05,
+      "target": "T_total",
+      "truth": 0.012244974391677462
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0003742382989629922,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263329767965434,
+      "prediction": 0.6069623128019779,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 22,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.001476950517167917,
+      "target": "A_balance",
+      "truth": 0.6065880745030149
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00011953158140137754,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263326575541498,
+      "prediction": 0.37808511429049424,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 23,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.0012195122607617822,
+      "target": "R_total",
+      "truth": 0.37796558270909286
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.827530238535449e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263326575541498,
+      "prediction": 0.012388533877839263,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 23,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 2.980892412161422e-05,
+      "target": "T_total",
+      "truth": 0.012406809180224618
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00010125627901602652,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263326575541498,
+      "prediction": 0.6095263518316665,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 23,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.0011952495775975438,
+      "target": "A_balance",
+      "truth": 0.6096276081106825
+    },
+    {
+      "cutoff_order": 0,
+      "error": -5.9499777518179364e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263322364374146,
+      "prediction": 0.3745447192548076,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 24,
+      "signed_cutoff_margin": 0.0003045864904518414,
+      "spatial_windows": [],
+      "std": 0.0017744401480265786,
+      "target": "R_total",
+      "truth": 0.37460421903232577
+    },
+    {
+      "cutoff_order": 0,
+      "error": -2.7467660311603775e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263322364374146,
+      "prediction": 0.012549420434001849,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 24,
+      "signed_cutoff_margin": 0.0003045864904518414,
+      "spatial_windows": [],
+      "std": 4.039027520587116e-05,
+      "target": "T_total",
+      "truth": 0.012576888094313452
+    },
+    {
+      "cutoff_order": 0,
+      "error": 8.696743782965477e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.05263322364374146,
+      "prediction": 0.6129058603111904,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 24,
+      "signed_cutoff_margin": 0.0003045864904518414,
+      "spatial_windows": [],
+      "std": 0.0017388628206585557,
+      "target": "A_balance",
+      "truth": 0.6128188928733608
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00036852114835522753,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263311932596718,
+      "prediction": 0.36837836804557916,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 25,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.0025232387107721826,
+      "target": "R_total",
+      "truth": 0.3687468891939344
+    },
+    {
+      "cutoff_order": 0,
+      "error": -3.457161880039521e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263311932596718,
+      "prediction": 0.012827669786405604,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 25,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 5.6517939702653284e-05,
+      "target": "T_total",
+      "truth": 0.012862241405205999
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0004030927671555551,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263311932596718,
+      "prediction": 0.6187939621680152,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 25,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.0024720237934179384,
+      "target": "A_balance",
+      "truth": 0.6183908694008596
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0006132931327299529,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263296429407866,
+      "prediction": 0.3647251928380785,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 26,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.011493590945953043,
+      "target": "R_total",
+      "truth": 0.3653384859708085
+    },
+    {
+      "cutoff_order": 0,
+      "error": 3.132181746346406e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263296429407866,
+      "prediction": 0.013060408151733106,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 26,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.00024011125255904238,
+      "target": "T_total",
+      "truth": 0.013029086334269642
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.000581971315266383,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.05263296429407866,
+      "prediction": 0.6222143990101883,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 26,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.01125731947671208,
+      "target": "A_balance",
+      "truth": 0.6216324276949219
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0005897855336025604,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.052632905833300984,
+      "prediction": 0.3643863716333942,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 27,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.00799209212825644,
+      "target": "R_total",
+      "truth": 0.3649761571669968
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.2510238374223437e-06,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.052632905833300984,
+      "prediction": 0.013090348254028777,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 27,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.00016879250186986044,
+      "target": "T_total",
+      "truth": 0.013089097230191355
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0005885345097651484,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.052632905833300984,
+      "prediction": 0.6225232801125771,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 27,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.007827520304618751,
+      "target": "A_balance",
+      "truth": 0.6219347456028119
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00918566226152856,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263304253612802,
+      "prediction": 0.35707671250680234,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 28,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.014342933436738382,
+      "target": "R_total",
+      "truth": 0.3662623747683309
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.6117215036935695e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263304253612802,
+      "prediction": 0.013268926107322769,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 28,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.0003085831405261855,
+      "target": "T_total",
+      "truth": 0.013285043322359705
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00920177947656553,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.05263304253612802,
+      "prediction": 0.6296543613858749,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 28,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.01404699399903702,
+      "target": "A_balance",
+      "truth": 0.6204525819093094
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.006503721777186111,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.1052658843753911,
+      "prediction": 0.36410661096178387,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 29,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.03351704445884151,
+      "target": "R_total",
+      "truth": 0.37061033273897
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0005976813459872381,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.1052658843753911,
+      "prediction": 0.013644451446122483,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 29,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.0007808989185164931,
+      "target": "T_total",
+      "truth": 0.013046770100135245
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.005906040431198911,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.1052658843753911,
+      "prediction": 0.6222489375920937,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 29,
+      "signed_cutoff_margin": 0.00030458649045206343,
+      "spatial_windows": [],
+      "std": 0.03279824222598686,
+      "target": "A_balance",
+      "truth": 0.6163428971608947
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00014018817560164376,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.11399625508067085,
+      "prediction": 0.08474834028381223,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 30,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.00020854041766040908,
+      "target": "R_total",
+      "truth": 0.08488852845941387
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.8856079259298164e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.11399625508067085,
+      "prediction": 0.041688970870010444,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 30,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 6.650731301816028e-05,
+      "target": "T_total",
+      "truth": 0.04170782694926974
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00015904425486101825,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.11399625508067085,
+      "prediction": 0.8735626888461774,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 30,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.00020781539519374123,
+      "target": "A_balance",
+      "truth": 0.8734036445913164
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.9867755254976416e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.11399625508067085,
+      "prediction": 0.0844471652059191,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 31,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.00017253190237087487,
+      "target": "R_total",
+      "truth": 0.08446703296117408
+    },
+    {
+      "cutoff_order": 0,
+      "error": 5.6580880004562795e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.11399625508067085,
+      "prediction": 0.041856261654852185,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 31,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 4.847727184379118e-05,
+      "target": "T_total",
+      "truth": 0.04179968077484762
+    },
+    {
+      "cutoff_order": 0,
+      "error": -3.671312474951005e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.11399625508067085,
+      "prediction": 0.8736965731392288,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 31,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.0001702759672974314,
+      "target": "A_balance",
+      "truth": 0.8737332862639783
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00011811008550746682,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.1347637341701543,
+      "prediction": 0.08342678759300605,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 32,
+      "signed_cutoff_margin": 0.0012179748700880122,
+      "spatial_windows": [],
+      "std": 0.00014861006237326744,
+      "target": "R_total",
+      "truth": 0.08330867750749858
+    },
+    {
+      "cutoff_order": 0,
+      "error": 5.26099446289327e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.1347637341701543,
+      "prediction": 0.042101743898160474,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 32,
+      "signed_cutoff_margin": 0.0012179748700880122,
+      "spatial_windows": [],
+      "std": 5.292707607649542e-05,
+      "target": "T_total",
+      "truth": 0.04204913395353154
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00017072003013640646,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.1347637341701543,
+      "prediction": 0.8744714685088335,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 32,
+      "signed_cutoff_margin": 0.0012179748700880122,
+      "spatial_windows": [],
+      "std": 0.00014959750818047823,
+      "target": "A_balance",
+      "truth": 0.8746421885389699
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0001796403191727941,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.20787441758391598,
+      "prediction": 0.08186172656735793,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 33,
+      "signed_cutoff_margin": 0.0012179748700876791,
+      "spatial_windows": [],
+      "std": 0.0001715565918262291,
+      "target": "R_total",
+      "truth": 0.08168208624818514
+    },
+    {
+      "cutoff_order": 0,
+      "error": -2.9621990655162578e-06,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.20787441758391598,
+      "prediction": 0.04240822092047871,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 33,
+      "signed_cutoff_margin": 0.0012179748700876791,
+      "spatial_windows": [],
+      "std": 5.694434224809439e-05,
+      "target": "T_total",
+      "truth": 0.04241118311954423
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00017667812010724315,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.20787441758391598,
+      "prediction": 0.8757300525121633,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 33,
+      "signed_cutoff_margin": 0.0012179748700876791,
+      "spatial_windows": [],
+      "std": 0.0001715048861176976,
+      "target": "A_balance",
+      "truth": 0.8759067306322705
+    },
+    {
+      "cutoff_order": 0,
+      "error": -5.821586988273564e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.20787441758391598,
+      "prediction": 0.07988248105807899,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 34,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.0003431701093739997,
+      "target": "R_total",
+      "truth": 0.07994069692796173
+    },
+    {
+      "cutoff_order": 0,
+      "error": -8.858601542893058e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.20787441758391598,
+      "prediction": 0.042732112802956995,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 34,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 5.243045548807928e-05,
+      "target": "T_total",
+      "truth": 0.042820698818385926
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.000146801885311576,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.20787441758391598,
+      "prediction": 0.877385406138964,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 34,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.0003303957171000795,
+      "target": "A_balance",
+      "truth": 0.8772386042536524
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00043610693374362963,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.21054441334841725,
+      "prediction": 0.0766678965565202,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 35,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.0004925041840150569,
+      "target": "R_total",
+      "truth": 0.07710400349026383
+    },
+    {
+      "cutoff_order": 0,
+      "error": -3.6886624360299436e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.21054441334841725,
+      "prediction": 0.04340053489045678,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 35,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 9.014275958873964e-05,
+      "target": "T_total",
+      "truth": 0.04343742151481708
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00047299355810392907,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.21054441334841725,
+      "prediction": 0.879931568553023,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 35,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.0004761001232958782,
+      "target": "A_balance",
+      "truth": 0.8794585749949191
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0003065932410387384,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.21054259036904577,
+      "prediction": 0.07581698762892058,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 36,
+      "signed_cutoff_margin": 0.0012179748700880122,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.0042594427251557865,
+      "target": "R_total",
+      "truth": 0.07551039438788185
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0001461378929862936,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.21054259036904577,
+      "prediction": 0.04395131206863178,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 36,
+      "signed_cutoff_margin": 0.0012179748700880122,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.0002581526998181581,
+      "target": "T_total",
+      "truth": 0.04380517417564549
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0004527311340249973,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.21054259036904577,
+      "prediction": 0.8802317003024477,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 36,
+      "signed_cutoff_margin": 0.0012179748700880122,
+      "spatial_windows": [
+        "low_grazing"
+      ],
+      "std": 0.004059533426769919,
+      "target": "A_balance",
+      "truth": 0.8806844314364727
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0051956896451244156,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.21054190203390985,
+      "prediction": 0.08063259500037759,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 37,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.008381073540824681,
+      "target": "R_total",
+      "truth": 0.07543690535525317
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0010578714199163189,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.21054190203390985,
+      "prediction": 0.04279876368547423,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 37,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.0007507783193692989,
+      "target": "T_total",
+      "truth": 0.04385663510539055
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00413781822520809,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.21054190203390985,
+      "prediction": 0.8765686413141482,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 37,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.008012309874304572,
+      "target": "A_balance",
+      "truth": 0.8807064595393563
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.03766702542063739,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.26317595345519385,
+      "prediction": 0.1135663424315826,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 38,
+      "signed_cutoff_margin": 0.0012179748700876791,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.02889532645555893,
+      "target": "R_total",
+      "truth": 0.07589931701094521
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0044721413433093105,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.26317595345519385,
+      "prediction": 0.0395479710476853,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 38,
+      "signed_cutoff_margin": 0.0012179748700876791,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.002402427784496744,
+      "target": "T_total",
+      "truth": 0.04402011239099461
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.03319488407732818,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.26317595345519385,
+      "prediction": 0.846885686520732,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 38,
+      "signed_cutoff_margin": 0.0012179748700876791,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.027663036250181437,
+      "target": "A_balance",
+      "truth": 0.8800805705980602
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.14196867987294198,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.2105481101827841,
+      "prediction": 0.21841353286594575,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 39,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.08322634875780131,
+      "target": "R_total",
+      "truth": 0.07644485299300376
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.011471518064073503,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.2105481101827841,
+      "prediction": 0.033013700234046116,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 39,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.005107028478915497,
+      "target": "T_total",
+      "truth": 0.04448521829811962
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.1304971618088685,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.2105481101827841,
+      "prediction": 0.7485727669000082,
+      "region": "low_grazing+high_azimuth+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 39,
+      "signed_cutoff_margin": 0.0012179748700877902,
+      "spatial_windows": [],
+      "std": 0.07975847146724743,
+      "target": "A_balance",
+      "truth": 0.8790699287088767
+    },
+    {
+      "cutoff_order": 0,
+      "error": -2.1014746927498773e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.11398585014383536,
+      "prediction": 0.01712427061718716,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 40,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 4.630389630003702e-05,
+      "target": "R_total",
+      "truth": 0.017145285364114658
+    },
+    {
+      "cutoff_order": 0,
+      "error": -8.867355571637314e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.11398585014383536,
+      "prediction": 0.24142671163493323,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 40,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.00041792384256399097,
+      "target": "T_total",
+      "truth": 0.2415153851906496
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00010968830264390661,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.11398585014383536,
+      "prediction": 0.7414490177478796,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 40,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.00040977397282063475,
+      "target": "A_balance",
+      "truth": 0.7413393294452357
+    },
+    {
+      "cutoff_order": 0,
+      "error": -3.2050504868326446e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.11398585014383536,
+      "prediction": 0.017093880324294857,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 41,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 4.2788796549248826e-05,
+      "target": "R_total",
+      "truth": 0.01709708537478169
+    },
+    {
+      "cutoff_order": 0,
+      "error": 8.360449591096608e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.11398585014383536,
+      "prediction": 0.24168007304652492,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 41,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.00025174836215322385,
+      "target": "T_total",
+      "truth": 0.24159646855061395
+    },
+    {
+      "cutoff_order": 0,
+      "error": -8.039944542415078e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.11398585014383536,
+      "prediction": 0.7412260466291802,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 41,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.0002479338506490639,
+      "target": "A_balance",
+      "truth": 0.7413064460746044
+    },
+    {
+      "cutoff_order": 0,
+      "error": 3.7414657364370774e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.16816100709514642,
+      "prediction": 0.01696366306739335,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 42,
+      "signed_cutoff_margin": 0.004865965629215041,
+      "spatial_windows": [],
+      "std": 3.917111146228359e-05,
+      "target": "R_total",
+      "truth": 0.016959921601656915
+    },
+    {
+      "cutoff_order": 0,
+      "error": 8.460118121605964e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.16816100709514642,
+      "prediction": 0.2418994579417391,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 42,
+      "signed_cutoff_margin": 0.004865965629215041,
+      "spatial_windows": [],
+      "std": 0.00024357647480668045,
+      "target": "T_total",
+      "truth": 0.24181485676052303
+    },
+    {
+      "cutoff_order": 0,
+      "error": -8.834264695245508e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.16816100709514642,
+      "prediction": 0.7411368789908676,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 42,
+      "signed_cutoff_margin": 0.004865965629215041,
+      "spatial_windows": [],
+      "std": 0.00023973367269486268,
+      "target": "A_balance",
+      "truth": 0.74122522163782
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.588581427573038e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.16816100709514642,
+      "prediction": 0.016782768568556813,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 43,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 3.640878645136012e-05,
+      "target": "R_total",
+      "truth": 0.016766882754281082
+    },
+    {
+      "cutoff_order": 0,
+      "error": 5.443489173972971e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.16816100709514642,
+      "prediction": 0.24216426583849598,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 43,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.0002123235248203963,
+      "target": "T_total",
+      "truth": 0.24210983094675625
+    },
+    {
+      "cutoff_order": 0,
+      "error": -7.032070601553642e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.16816100709514642,
+      "prediction": 0.7410529655929472,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 43,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.00020921653740366212,
+      "target": "A_balance",
+      "truth": 0.7411232862989627
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.574389456509076e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.20760307547859888,
+      "prediction": 0.016547675307820153,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 44,
+      "signed_cutoff_margin": 0.004865965629215041,
+      "spatial_windows": [],
+      "std": 7.314875769185115e-05,
+      "target": "R_total",
+      "truth": 0.016563419202385243
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00020231793613986748,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.20760307547859888,
+      "prediction": 0.24238441525419516,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 44,
+      "signed_cutoff_margin": 0.004865965629215041,
+      "spatial_windows": [],
+      "std": 0.00023342993401234623,
+      "target": "T_total",
+      "truth": 0.24258673319033502
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0002180618307049409,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.20760307547859888,
+      "prediction": 0.7410679094379847,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 44,
+      "signed_cutoff_margin": 0.004865965629215041,
+      "spatial_windows": [],
+      "std": 0.0002341993333867072,
+      "target": "A_balance",
+      "truth": 0.7408498476072798
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00014065601034779496,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.421197071673973,
+      "prediction": 0.016046857323071137,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 45,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.0002774129827794991,
+      "target": "R_total",
+      "truth": 0.016187513333418932
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00011174037196881592,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.421197071673973,
+      "prediction": 0.24310338322988323,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 45,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.0007199315989970472,
+      "target": "T_total",
+      "truth": 0.2429916428579144
+    },
+    {
+      "cutoff_order": 0,
+      "error": 2.8915638379034547e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.421197071673973,
+      "prediction": 0.7408497594470457,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 45,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.0007318248146775064,
+      "target": "A_balance",
+      "truth": 0.7408208438086666
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0005239153500205714,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.4211824683381481,
+      "prediction": 0.015488464719230297,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 46,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0011066227070964303,
+      "target": "R_total",
+      "truth": 0.01601238006925087
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0001964945673986751,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.4211824683381481,
+      "prediction": 0.243146849268054,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 46,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0016126593717107661,
+      "target": "T_total",
+      "truth": 0.24334334383545267
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0007204099174191736,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.4211824683381481,
+      "prediction": 0.7413646860127157,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 46,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0017656524488031888,
+      "target": "A_balance",
+      "truth": 0.7406442760952965
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0005521009101920622,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.4211769225745155,
+      "prediction": 0.015464005155195573,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 47,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.001377692185777803,
+      "target": "R_total",
+      "truth": 0.016016106065387635
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0003083240486649319,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.4211769225745155,
+      "prediction": 0.242904702497683,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 47,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.0016650209237605725,
+      "target": "T_total",
+      "truth": 0.24321302654634794
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0008604249588569646,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.4211769225745155,
+      "prediction": 0.7416312923471214,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 47,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [],
+      "std": 0.0019041473012145005,
+      "target": "A_balance",
+      "truth": 0.7407708673882645
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0017853782473013675,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.42118969881913493,
+      "prediction": 0.017725789512492103,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 48,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.006163311305027698,
+      "target": "R_total",
+      "truth": 0.015940411265190736
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0027253931379590257,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.42118969881913493,
+      "prediction": 0.2418239989764841,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 48,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.005417911987087709,
+      "target": "T_total",
+      "truth": 0.24454939211444313
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0009400148906576478,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.42118969881913493,
+      "prediction": 0.7404502115110237,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 48,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.006883235388906602,
+      "target": "A_balance",
+      "truth": 0.7395101966203661
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.011932825613796768,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.4212264293250393,
+      "prediction": 0.02831395462179808,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 49,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.024034007567707703,
+      "target": "R_total",
+      "truth": 0.016381129008001313
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.011947945939628418,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.4212264293250393,
+      "prediction": 0.23686149223880862,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 49,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.017964479262935144,
+      "target": "T_total",
+      "truth": 0.24880943817843704
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.5120325831730064e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.4212264293250393,
+      "prediction": 0.7348245531393934,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 49,
+      "signed_cutoff_margin": 0.00486596562921493,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.024444542593271952,
+      "target": "A_balance",
+      "truth": 0.7348094328135617
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.2470963427200533e-06,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.11396856281599697,
+      "prediction": 0.0026637298378700573,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 50,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [],
+      "std": 7.816622005850634e-06,
+      "target": "R_total",
+      "truth": 0.0026624827415273372
+    },
+    {
+      "cutoff_order": 0,
+      "error": -7.436030398683124e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.11396856281599697,
+      "prediction": 0.4171340700306132,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 50,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [],
+      "std": 0.0006397515455434107,
+      "target": "T_total",
+      "truth": 0.41720843033460003
+    },
+    {
+      "cutoff_order": 0,
+      "error": 7.311320764413765e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.11396856281599697,
+      "prediction": 0.5802022001315168,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 50,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [],
+      "std": 0.0006368346573035761,
+      "target": "A_balance",
+      "truth": 0.5801290869238727
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.0957012002224542e-07,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.11396856281599697,
+      "prediction": 0.002663124170220048,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 51,
+      "signed_cutoff_margin": 0.010926199633097378,
+      "spatial_windows": [],
+      "std": 7.041549827768841e-06,
+      "target": "R_total",
+      "truth": 0.00266323374034007
+    },
+    {
+      "cutoff_order": 0,
+      "error": 6.988167219446062e-06,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.11396856281599697,
+      "prediction": 0.41724571669867694,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 51,
+      "signed_cutoff_margin": 0.010926199633097378,
+      "spatial_windows": [],
+      "std": 0.000346682483650768,
+      "target": "T_total",
+      "truth": 0.4172387285314575
+    },
+    {
+      "cutoff_order": 0,
+      "error": -6.878597099468919e-06,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.11396856281599697,
+      "prediction": 0.580091159131103,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 51,
+      "signed_cutoff_margin": 0.010926199633097378,
+      "spatial_windows": [],
+      "std": 0.00034510942702771914,
+      "target": "A_balance",
+      "truth": 0.5800980377282025
+    },
+    {
+      "cutoff_order": 0,
+      "error": 2.3748275827448206e-07,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.16787226642010875,
+      "prediction": 0.0026641844620522745,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 52,
+      "signed_cutoff_margin": 0.010926199633097378,
+      "spatial_windows": [],
+      "std": 6.327853739970769e-06,
+      "target": "R_total",
+      "truth": 0.002663946979294
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.145589100770561e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.16787226642010875,
+      "prediction": 0.41734290131495355,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 52,
+      "signed_cutoff_margin": 0.010926199633097378,
+      "spatial_windows": [],
+      "std": 0.0003316116862388836,
+      "target": "T_total",
+      "truth": 0.41733144542394585
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.169337376605295e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.16787226642010875,
+      "prediction": 0.5799929142229941,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 52,
+      "signed_cutoff_margin": 0.010926199633097378,
+      "spatial_windows": [],
+      "std": 0.00033010481506626194,
+      "target": "A_balance",
+      "truth": 0.5800046075967602
+    },
+    {
+      "cutoff_order": 0,
+      "error": -2.1327012623218247e-06,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.16787226642010875,
+      "prediction": 0.002665469103335382,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 53,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [],
+      "std": 5.631661881543676e-06,
+      "target": "R_total",
+      "truth": 0.002667601804597704
+    },
+    {
+      "cutoff_order": 0,
+      "error": 9.600997574665815e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.16787226642010875,
+      "prediction": 0.4175401806215452,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 53,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [],
+      "std": 0.00024960999148773537,
+      "target": "T_total",
+      "truth": 0.41744417064579853
+    },
+    {
+      "cutoff_order": 0,
+      "error": -9.387727448428862e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.16787226642010875,
+      "prediction": 0.5797943502751195,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 53,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [],
+      "std": 0.00024847777292628996,
+      "target": "A_balance",
+      "truth": 0.5798882275496038
+    },
+    {
+      "cutoff_order": 0,
+      "error": 4.181807627024088e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.207151522045674,
+      "prediction": 0.002672247860207902,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 54,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [],
+      "std": 1.2447998731720704e-05,
+      "target": "R_total",
+      "truth": 0.0026680660525808778
+    },
+    {
+      "cutoff_order": 0,
+      "error": -8.78576761074168e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.207151522045674,
+      "prediction": 0.4176178258080785,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 54,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [],
+      "std": 0.00029673420594955016,
+      "target": "T_total",
+      "truth": 0.4177056834841859
+    },
+    {
+      "cutoff_order": 0,
+      "error": 8.367586848034847e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.207151522045674,
+      "prediction": 0.5797099263317136,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 54,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [],
+      "std": 0.0002954151813906029,
+      "target": "A_balance",
+      "truth": 0.5796262504632332
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.0739884141747289e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4214518350835493,
+      "prediction": 0.0026716894918158837,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 55,
+      "signed_cutoff_margin": 0.010926199633097156,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 4.670466822700997e-05,
+      "target": "R_total",
+      "truth": 0.002682429375957631
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.000458541173023963,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4214518350835493,
+      "prediction": 0.418337234184073,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 55,
+      "signed_cutoff_margin": 0.010926199633097156,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.001285412094621022,
+      "target": "T_total",
+      "truth": 0.417878693011049
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00044780128888222137,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4214518350835493,
+      "prediction": 0.5789910763241111,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 55,
+      "signed_cutoff_margin": 0.010926199633097156,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0012796444095081318,
+      "target": "A_balance",
+      "truth": 0.5794388776129933
+    },
+    {
+      "cutoff_order": 0,
+      "error": -6.111172510071816e-06,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4214111574984656,
+      "prediction": 0.002658343332587927,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 56,
+      "signed_cutoff_margin": 0.010926199633097156,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.00022924053069969008,
+      "target": "R_total",
+      "truth": 0.0026644545050979987
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0018472631188334865,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4214111574984656,
+      "prediction": 0.4197481606736724,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 56,
+      "signed_cutoff_margin": 0.010926199633097156,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0038504432593719586,
+      "target": "T_total",
+      "truth": 0.4179008975548389
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0018411519463233939,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4214111574984656,
+      "prediction": 0.5775934959937398,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 56,
+      "signed_cutoff_margin": 0.010926199633097156,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0038338924331083727,
+      "target": "A_balance",
+      "truth": 0.5794346479400632
+    },
+    {
+      "cutoff_order": 0,
+      "error": -6.244215212300192e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.42139552268443176,
+      "prediction": 0.002611367243535185,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 57,
+      "signed_cutoff_margin": 0.010926199633097156,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0004659327258704967,
+      "target": "R_total",
+      "truth": 0.002673809395658187
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0039891044058679714,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.42139552268443176,
+      "prediction": 0.42163733675438,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 57,
+      "signed_cutoff_margin": 0.010926199633097156,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.006811474106281629,
+      "target": "T_total",
+      "truth": 0.417648232348512
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.003926662253744939,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.42139552268443176,
+      "prediction": 0.5757512960020849,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 57,
+      "signed_cutoff_margin": 0.010926199633097156,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0067832075710396265,
+      "target": "A_balance",
+      "truth": 0.5796779582558298
+    },
+    {
+      "cutoff_order": -2,
+      "error": -0.0001301483758859431,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4214306289329898,
+      "prediction": 0.0025617732073182063,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 58,
+      "signed_cutoff_margin": -0.002680496490715889,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.0004677617779733015,
+      "target": "R_total",
+      "truth": 0.0026919215832041494
+    },
+    {
+      "cutoff_order": -2,
+      "error": 0.0023536735650206975,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4214306289329898,
+      "prediction": 0.4235764069764446,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 58,
+      "signed_cutoff_margin": -0.002680496490715889,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.0067595754041506195,
+      "target": "T_total",
+      "truth": 0.4212227334114239
+    },
+    {
+      "cutoff_order": -2,
+      "error": -0.002223525189134712,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4214306289329898,
+      "prediction": 0.5738618198162372,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 58,
+      "signed_cutoff_margin": -0.002680496490715889,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.006731998909505975,
+      "target": "A_balance",
+      "truth": 0.5760853450053719
+    },
+    {
+      "cutoff_order": 0,
+      "error": -9.892518610281169e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4215320976599014,
+      "prediction": 0.002462805553010456,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 59,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.0007865398920881327,
+      "target": "R_total",
+      "truth": 0.002561730739113268
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.003649117959624415,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4215320976599014,
+      "prediction": 0.42827437661024353,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 59,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.005471199155025907,
+      "target": "T_total",
+      "truth": 0.4246252586506191
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.003550192773521643,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4215320976599014,
+      "prediction": 0.5692628178367459,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 59,
+      "signed_cutoff_margin": 0.010926199633097267,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.005455732968641455,
+      "target": "A_balance",
+      "truth": 0.5728130106102676
+    },
+    {
+      "cutoff_order": 0,
+      "error": 2.382533744102564e-06,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.24402163010976305,
+      "prediction": 0.00016404196764644062,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 60,
+      "signed_cutoff_margin": 0.019369152030840442,
+      "spatial_windows": [],
+      "std": 8.631399319364694e-07,
+      "target": "R_total",
+      "truth": 0.00016165943390233806
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.9990193104391096e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.24402163010976305,
+      "prediction": 0.5268362741026277,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 60,
+      "signed_cutoff_margin": 0.019369152030840442,
+      "spatial_windows": [],
+      "std": 0.0010782599419205737,
+      "target": "T_total",
+      "truth": 0.5268562642957321
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.760765936031916e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.24402163010976305,
+      "prediction": 0.4729996839297259,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 60,
+      "signed_cutoff_margin": 0.019369152030840442,
+      "spatial_windows": [],
+      "std": 0.0010778861030134217,
+      "target": "A_balance",
+      "truth": 0.4729820762703656
+    },
+    {
+      "cutoff_order": 0,
+      "error": 2.2841192544418188e-06,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.1343710370852054,
+      "prediction": 0.00016270456817329794,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 61,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 6.919437450511323e-07,
+      "target": "R_total",
+      "truth": 0.00016042044891885612
+    },
+    {
+      "cutoff_order": 0,
+      "error": 3.1269689219293184e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.1343710370852054,
+      "prediction": 0.5269045694257305,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 61,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 0.0006446196398093189,
+      "target": "T_total",
+      "truth": 0.5268732997365112
+    },
+    {
+      "cutoff_order": 0,
+      "error": -3.35538084738074e-05,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.1343710370852054,
+      "prediction": 0.47293272600609615,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 61,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 0.0006443979275781923,
+      "target": "A_balance",
+      "truth": 0.47296627981456996
+    },
+    {
+      "cutoff_order": 0,
+      "error": -2.7536282369301215e-07,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.1343710370852054,
+      "prediction": 0.00015800690481164442,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 62,
+      "signed_cutoff_margin": 0.019369152030840553,
+      "spatial_windows": [],
+      "std": 3.319625647325781e-07,
+      "target": "R_total",
+      "truth": 0.00015828226763533744
+    },
+    {
+      "cutoff_order": 0,
+      "error": -3.0376466241266442e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.1343710370852054,
+      "prediction": 0.5268733700381497,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 62,
+      "signed_cutoff_margin": 0.019369152030840553,
+      "spatial_windows": [],
+      "std": 0.00030806765399956157,
+      "target": "T_total",
+      "truth": 0.526903746504391
+    },
+    {
+      "cutoff_order": 0,
+      "error": 3.06518290650315e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.1343710370852054,
+      "prediction": 0.4729686230570387,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 62,
+      "signed_cutoff_margin": 0.019369152030840553,
+      "spatial_windows": [],
+      "std": 0.00030796476203664725,
+      "target": "A_balance",
+      "truth": 0.47293797122797365
+    },
+    {
+      "cutoff_order": 0,
+      "error": -2.3126435393900724e-06,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.1674691708963313,
+      "prediction": 0.00015172408338294104,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 63,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 3.299291829449259e-07,
+      "target": "R_total",
+      "truth": 0.0001540367269223311
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00015340626560245152,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.1674691708963313,
+      "prediction": 0.5270705760093484,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 63,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 0.0002638649308536297,
+      "target": "T_total",
+      "truth": 0.5269171697437459
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00015109362206294774,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.1674691708963313,
+      "prediction": 0.47277769990726876,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 63,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 0.00026378026790727945,
+      "target": "A_balance",
+      "truth": 0.4729287935293317
+    },
+    {
+      "cutoff_order": 0,
+      "error": 3.695711042525163e-06,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.20652078424944062,
+      "prediction": 0.00014875411539588547,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 64,
+      "signed_cutoff_margin": 0.019369152030840442,
+      "spatial_windows": [],
+      "std": 6.761628914169376e-07,
+      "target": "R_total",
+      "truth": 0.0001450584043533603
+    },
+    {
+      "cutoff_order": 0,
+      "error": -7.258730421477733e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.20652078424944062,
+      "prediction": 0.5270706611847913,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 64,
+      "signed_cutoff_margin": 0.019369152030840442,
+      "spatial_windows": [],
+      "std": 0.00034106100792130096,
+      "target": "T_total",
+      "truth": 0.5271432484890061
+    },
+    {
+      "cutoff_order": 0,
+      "error": 6.889159317230442e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.20652078424944062,
+      "prediction": 0.4727805846998128,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 64,
+      "signed_cutoff_margin": 0.019369152030840442,
+      "spatial_windows": [],
+      "std": 0.00034095369599538574,
+      "target": "A_balance",
+      "truth": 0.4727116931066405
+    },
+    {
+      "cutoff_order": 0,
+      "error": -8.078795662675407e-06,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4218291861902246,
+      "prediction": 0.00013220817039798964,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 65,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 1.6772044530823172e-06,
+      "target": "R_total",
+      "truth": 0.00014028696606066505
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0002640254877176451,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4218291861902246,
+      "prediction": 0.5269504570749937,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 65,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 0.0005245761437188602,
+      "target": "T_total",
+      "truth": 0.5272144825627113
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0002721042833802034,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4218291861902246,
+      "prediction": 0.4729173347546083,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 65,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 0.0005244293914489878,
+      "target": "A_balance",
+      "truth": 0.4726452304712281
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.0302503809108782e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.42174912883268745,
+      "prediction": 0.00013958750047988447,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 66,
+      "signed_cutoff_margin": 0.019369152030840553,
+      "spatial_windows": [],
+      "std": 3.32275123632823e-06,
+      "target": "R_total",
+      "truth": 0.00014989000428899325
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0006352878634706682,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.42174912883268745,
+      "prediction": 0.5264733115291053,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 66,
+      "signed_cutoff_margin": 0.019369152030840553,
+      "spatial_windows": [],
+      "std": 0.0008110736002978577,
+      "target": "T_total",
+      "truth": 0.5271085993925759
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0006455903672797358,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.42174912883268745,
+      "prediction": 0.4733871009704148,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 66,
+      "signed_cutoff_margin": 0.019369152030840553,
+      "spatial_windows": [],
+      "std": 0.0008108341512951755,
+      "target": "A_balance",
+      "truth": 0.4727415106031351
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00013421704909216835,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4217178129480463,
+      "prediction": 0.00029716612472931083,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 67,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 2.04238632577048e-05,
+      "target": "R_total",
+      "truth": 0.00016294907563714248
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0021617424904902816,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4217178129480463,
+      "prediction": 0.5289885384608335,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 67,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 0.0009988137425620512,
+      "target": "T_total",
+      "truth": 0.5268267959703432
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0022959595395824484,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4217178129480463,
+      "prediction": 0.47071429541443716,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 67,
+      "signed_cutoff_margin": 0.01936915203084033,
+      "spatial_windows": [],
+      "std": 0.0009981714858048444,
+      "target": "A_balance",
+      "truth": 0.4730102549540196
+    },
+    {
+      "cutoff_order": -2,
+      "error": -0.00027084518571454403,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.42224666704936453,
+      "prediction": 0.00016019223505465087,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 68,
+      "signed_cutoff_margin": 0.004573406853827788,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 8.988765942846424e-06,
+      "target": "R_total",
+      "truth": 0.0004310374207691949
+    },
+    {
+      "cutoff_order": -2,
+      "error": -0.003476054522749017,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.42224666704936453,
+      "prediction": 0.5287025573062367,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 68,
+      "signed_cutoff_margin": 0.004573406853827788,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.00188326159860784,
+      "target": "T_total",
+      "truth": 0.5321786118289857
+    },
+    {
+      "cutoff_order": -2,
+      "error": 0.003746899708463647,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.42224666704936453,
+      "prediction": 0.4711372504587087,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 68,
+      "signed_cutoff_margin": 0.004573406853827788,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.001882620259883492,
+      "target": "A_balance",
+      "truth": 0.46739035075024504
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0018202734363069871,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.42198274426409066,
+      "prediction": 0.001977658012936966,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 69,
+      "signed_cutoff_margin": 0.019369152030840442,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.000460442253774291,
+      "target": "R_total",
+      "truth": 0.00015738457662997876
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.005924916698300864,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.42198274426409066,
+      "prediction": 0.5395370034331887,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 69,
+      "signed_cutoff_margin": 0.019369152030840442,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.005686443512131644,
+      "target": "T_total",
+      "truth": 0.5336120867348878
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.007745190134607949,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.42198274426409066,
+      "prediction": 0.4584853385538743,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 69,
+      "signed_cutoff_margin": 0.019369152030840442,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.005660551016254951,
+      "target": "A_balance",
+      "truth": 0.46623052868848225
+    },
+    {
+      "cutoff_order": 0,
+      "error": -2.943680797856934e-07,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.11391369741552707,
+      "prediction": 0.000794591692265637,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 70,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 2.6734160989883852e-06,
+      "target": "R_total",
+      "truth": 0.0007948860603454227
+    },
+    {
+      "cutoff_order": 0,
+      "error": -5.3963504202392265e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.11391369741552707,
+      "prediction": 0.6024299903812281,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 70,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 0.0005290654576848523,
+      "target": "T_total",
+      "truth": 0.6024839538854305
+    },
+    {
+      "cutoff_order": 0,
+      "error": 5.425787228213741e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.11391369741552707,
+      "prediction": 0.3967754179265062,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 70,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 0.0005280068896723416,
+      "target": "A_balance",
+      "truth": 0.3967211600542241
+    },
+    {
+      "cutoff_order": 0,
+      "error": 2.1254264904600924e-07,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.11391369741552707,
+      "prediction": 0.0007937552706312545,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 71,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 1.9214705007307204e-06,
+      "target": "R_total",
+      "truth": 0.0007935427279822085
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.281208526415778e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.11391369741552707,
+      "prediction": 0.6024752854522529,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 71,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 0.00028933687510137224,
+      "target": "T_total",
+      "truth": 0.6024880975375171
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.2599542615010506e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.11391369741552707,
+      "prediction": 0.39673095927711577,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 71,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 0.00028875795437365785,
+      "target": "A_balance",
+      "truth": 0.39671835973450076
+    },
+    {
+      "cutoff_order": 0,
+      "error": -4.296787881876915e-08,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.1341371713188829,
+      "prediction": 0.0007916054156253734,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 72,
+      "signed_cutoff_margin": 0.030153689607046008,
+      "spatial_windows": [],
+      "std": 1.725288869401056e-06,
+      "target": "R_total",
+      "truth": 0.0007916483835041922
+    },
+    {
+      "cutoff_order": 0,
+      "error": 5.59199918679365e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.1341371713188829,
+      "prediction": 0.6025703046035906,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 72,
+      "signed_cutoff_margin": 0.030153689607046008,
+      "spatial_windows": [],
+      "std": 0.00029056390886919597,
+      "target": "T_total",
+      "truth": 0.6025143846117227
+    },
+    {
+      "cutoff_order": 0,
+      "error": -5.587702398907046e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.1341371713188829,
+      "prediction": 0.39663808998078404,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 72,
+      "signed_cutoff_margin": 0.030153689607046008,
+      "spatial_windows": [],
+      "std": 0.0002899842279157656,
+      "target": "A_balance",
+      "truth": 0.3966939670047731
+    },
+    {
+      "cutoff_order": 0,
+      "error": -1.1480696667757898e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.1669528645082699,
+      "prediction": 0.0007877308134082193,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 73,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 2.145945379947578e-06,
+      "target": "R_total",
+      "truth": 0.0007888788830749951
+    },
+    {
+      "cutoff_order": 0,
+      "error": -3.0733217597500584e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.1669528645082699,
+      "prediction": 0.6025898363051849,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 73,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 0.0002706245819540381,
+      "target": "T_total",
+      "truth": 0.6025929096269447
+    },
+    {
+      "cutoff_order": 0,
+      "error": 4.2213914265287755e-06,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.1669528645082699,
+      "prediction": 0.39662243288140686,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 73,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 0.00027008652456183673,
+      "target": "A_balance",
+      "truth": 0.39661821148998033
+    },
+    {
+      "cutoff_order": 0,
+      "error": 3.7813342566852745e-06,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.20571230357378206,
+      "prediction": 0.0007863216943590707,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 74,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 3.869803430618498e-06,
+      "target": "R_total",
+      "truth": 0.0007825403601023854
+    },
+    {
+      "cutoff_order": 0,
+      "error": 5.9203908958749274e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.20571230357378206,
+      "prediction": 0.6027278456875717,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 74,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 0.0004146739559730073,
+      "target": "T_total",
+      "truth": 0.6026686417786129
+    },
+    {
+      "cutoff_order": 0,
+      "error": -6.298524321535215e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.20571230357378206,
+      "prediction": 0.39648583261806936,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 74,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 0.00041384964928852083,
+      "target": "A_balance",
+      "truth": 0.3965488178612847
+    },
+    {
+      "cutoff_order": 0,
+      "error": 1.2881583980983648e-05,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4223235118924094,
+      "prediction": 0.0007818263951853151,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 75,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 7.600147955769713e-06,
+      "target": "R_total",
+      "truth": 0.0007689448112043315
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0002034902670131622,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4223235118924094,
+      "prediction": 0.6028526683414511,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 75,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 0.0006011508395187156,
+      "target": "T_total",
+      "truth": 0.602649178074438
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00021637185099399048,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4223235118924094,
+      "prediction": 0.39636550526336367,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 75,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 0.0005999577714383445,
+      "target": "A_balance",
+      "truth": 0.39658187711435766
+    },
+    {
+      "cutoff_order": 0,
+      "error": -3.230522176449473e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.6074010671572979,
+      "prediction": 0.0007364975733018133,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 76,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 1.6500819045357044e-05,
+      "target": "R_total",
+      "truth": 0.000768802795066308
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.000793685786600884,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.6074010671572979,
+      "prediction": 0.6018026441504594,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 76,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 0.0007518803173139188,
+      "target": "T_total",
+      "truth": 0.6025963299370602
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0008259910083655009,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.6074010671572979,
+      "prediction": 0.39746085827623895,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 76,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 0.0007504530642027703,
+      "target": "A_balance",
+      "truth": 0.39663486726787345
+    },
+    {
+      "cutoff_order": 0,
+      "error": 8.720027898291517e-05,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.42213721893438055,
+      "prediction": 0.0008576168322038056,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 77,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 0.00010640092452589667,
+      "target": "R_total",
+      "truth": 0.0007704165532208904
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0015985646508812623,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.42213721893438055,
+      "prediction": 0.603955570377157,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 77,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 0.0011081140429461942,
+      "target": "T_total",
+      "truth": 0.6023570057262757
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0016857649298642197,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.42213721893438055,
+      "prediction": 0.3951868127906392,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 77,
+      "signed_cutoff_margin": 0.030153689607045786,
+      "spatial_windows": [],
+      "std": 0.001104652906539405,
+      "target": "A_balance",
+      "truth": 0.39687257772050344
+    },
+    {
+      "cutoff_order": -2,
+      "error": -9.503300059168025e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.42224666704936453,
+      "prediction": 0.000820099811942042,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 78,
+      "signed_cutoff_margin": 0.013831652030758979,
+      "spatial_windows": [],
+      "std": 0.000330275702756996,
+      "target": "R_total",
+      "truth": 0.0009151328125337223
+    },
+    {
+      "cutoff_order": -2,
+      "error": -0.0065322913954176665,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.42224666704936453,
+      "prediction": 0.6003671532726792,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 78,
+      "signed_cutoff_margin": 0.013831652030758979,
+      "spatial_windows": [],
+      "std": 0.0066385104720299215,
+      "target": "T_total",
+      "truth": 0.6068994446680969
+    },
+    {
+      "cutoff_order": -2,
+      "error": 0.006627324396009382,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.42224666704936453,
+      "prediction": 0.39881274691537877,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 78,
+      "signed_cutoff_margin": 0.013831652030758979,
+      "spatial_windows": [],
+      "std": 0.006623241440642336,
+      "target": "A_balance",
+      "truth": 0.3921854225193694
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00024133874669131318,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.22813381333410485,
+      "prediction": 0.0009898389822995414,
+      "region": "high_azimuth",
+      "regions": [
+        "high_azimuth"
+      ],
+      "sample_index": 79,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 0.0010288304453183344,
+      "target": "R_total",
+      "truth": 0.0007485002356082283
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.014262583045087873,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.22813381333410485,
+      "prediction": 0.5943877861256025,
+      "region": "high_azimuth",
+      "regions": [
+        "high_azimuth"
+      ],
+      "sample_index": 79,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 0.02210027820886063,
+      "target": "T_total",
+      "truth": 0.6086503691706904
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.014021244298396573,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.22813381333410485,
+      "prediction": 0.40462237489209796,
+      "region": "high_azimuth",
+      "regions": [
+        "high_azimuth"
+      ],
+      "sample_index": 79,
+      "signed_cutoff_margin": 0.030153689607045897,
+      "spatial_windows": [],
+      "std": 0.022041838957966516,
+      "target": "A_balance",
+      "truth": 0.3906011305937014
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.005511033161549411,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.7347732636096788,
+      "prediction": 0.17206260626766295,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 80,
+      "signed_cutoff_margin": 0.0007185904799421605,
+      "spatial_windows": [],
+      "std": 0.033926446869448595,
+      "target": "R_total",
+      "truth": 0.17757363942921237
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0012005864400719268,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.7347732636096788,
+      "prediction": 0.023712375965200125,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 80,
+      "signed_cutoff_margin": 0.0007185904799421605,
+      "spatial_windows": [],
+      "std": 0.0023627219282075724,
+      "target": "T_total",
+      "truth": 0.024912962405272052
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.006711619601621366,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.7347732636096788,
+      "prediction": 0.804225017767137,
+      "region": "low_grazing+cutoff_near",
+      "regions": [
+        "low_grazing",
+        "cutoff_near"
+      ],
+      "sample_index": 80,
+      "signed_cutoff_margin": 0.0007185904799421605,
+      "spatial_windows": [],
+      "std": 0.03300044455320718,
+      "target": "A_balance",
+      "truth": 0.7975133981655156
+    },
+    {
+      "cutoff_order": -7,
+      "error": -0.0002729124328071694,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.23017113281554183,
+      "prediction": 0.0002438500195981664,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 81,
+      "signed_cutoff_margin": 0.01013622412005677,
+      "spatial_windows": [],
+      "std": 0.0002695134874635152,
+      "target": "R_total",
+      "truth": 0.0005167624524053358
+    },
+    {
+      "cutoff_order": -7,
+      "error": -0.022180901238895268,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.23017113281554183,
+      "prediction": 0.5465980734444527,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 81,
+      "signed_cutoff_margin": 0.01013622412005677,
+      "spatial_windows": [],
+      "std": 0.08523482157759948,
+      "target": "T_total",
+      "truth": 0.5687789746833479
+    },
+    {
+      "cutoff_order": -7,
+      "error": 0.02245381367170235,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.23017113281554183,
+      "prediction": 0.45315807653594914,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 81,
+      "signed_cutoff_margin": 0.01013622412005677,
+      "spatial_windows": [],
+      "std": 0.08518894176320299,
+      "target": "A_balance",
+      "truth": 0.4307042628642468
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0005521812115247215,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.22813381333410485,
+      "prediction": 0.0010122883771272336,
+      "region": "high_azimuth",
+      "regions": [
+        "high_azimuth"
+      ],
+      "sample_index": 82,
+      "signed_cutoff_margin": 0.024359773198853518,
+      "spatial_windows": [],
+      "std": 0.000688465114912101,
+      "target": "R_total",
+      "truth": 0.0004601071656025121
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.004986766525010511,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.22813381333410485,
+      "prediction": 0.579094815772943,
+      "region": "high_azimuth",
+      "regions": [
+        "high_azimuth"
+      ],
+      "sample_index": 82,
+      "signed_cutoff_margin": 0.024359773198853518,
+      "spatial_windows": [],
+      "std": 0.009493642119194068,
+      "target": "T_total",
+      "truth": 0.5741080492479325
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.005538947736535238,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.22813381333410485,
+      "prediction": 0.4198928958499298,
+      "region": "high_azimuth",
+      "regions": [
+        "high_azimuth"
+      ],
+      "sample_index": 82,
+      "signed_cutoff_margin": 0.024359773198853518,
+      "spatial_windows": [],
+      "std": 0.009466865748432009,
+      "target": "A_balance",
+      "truth": 0.425431843586465
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00015186106567369938,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.43353983582765787,
+      "prediction": 0.00036180382675310327,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 83,
+      "signed_cutoff_margin": 0.024530482851897628,
+      "spatial_windows": [],
+      "std": 0.0001847726406978667,
+      "target": "R_total",
+      "truth": 0.0005136648924268026
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.006745222933504658,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.43353983582765787,
+      "prediction": 0.5621546439965872,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 83,
+      "signed_cutoff_margin": 0.024530482851897628,
+      "spatial_windows": [],
+      "std": 0.04284682461838567,
+      "target": "T_total",
+      "truth": 0.5688998669300919
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.006897083999178322,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.43353983582765787,
+      "prediction": 0.4374835521766597,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 83,
+      "signed_cutoff_margin": 0.024530482851897628,
+      "spatial_windows": [],
+      "std": 0.04281137139008755,
+      "target": "A_balance",
+      "truth": 0.43058646817748136
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.004914549636368403,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.4271877557404723,
+      "prediction": 0.015382496869003021,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 84,
+      "signed_cutoff_margin": 0.002761807411839845,
+      "spatial_windows": [],
+      "std": 0.002290005666487688,
+      "target": "R_total",
+      "truth": 0.020297046505371424
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.010647317468170145,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.4271877557404723,
+      "prediction": 0.12193961058435786,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 84,
+      "signed_cutoff_margin": 0.002761807411839845,
+      "spatial_windows": [],
+      "std": 0.0017509280675101525,
+      "target": "T_total",
+      "truth": 0.132586928052528
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.015561867104538551,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.4271877557404723,
+      "prediction": 0.8626778925466391,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 84,
+      "signed_cutoff_margin": 0.002761807411839845,
+      "spatial_windows": [],
+      "std": 0.0026280391372603454,
+      "target": "A_balance",
+      "truth": 0.8471160254421005
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.003305699286787686,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4324161754546218,
+      "prediction": 0.016617527403039012,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 85,
+      "signed_cutoff_margin": 0.0027035636188738055,
+      "spatial_windows": [],
+      "std": 0.0027610802968980677,
+      "target": "R_total",
+      "truth": 0.019923226689826698
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.027960820101349787,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4324161754546218,
+      "prediction": 0.10087782633552284,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 85,
+      "signed_cutoff_margin": 0.0027035636188738055,
+      "spatial_windows": [],
+      "std": 0.0031780389814191844,
+      "target": "T_total",
+      "truth": 0.12883864643687262
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.031266519388137404,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4324161754546218,
+      "prediction": 0.8825046462614381,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 85,
+      "signed_cutoff_margin": 0.0027035636188738055,
+      "spatial_windows": [],
+      "std": 0.003973630725736425,
+      "target": "A_balance",
+      "truth": 0.8512381268733007
+    },
+    {
+      "cutoff_order": 0,
+      "error": 4.576339572136875e-05,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.40568011596010184,
+      "prediction": 0.002683192704459521,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 86,
+      "signed_cutoff_margin": 0.014665983851522846,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.001457307622163025,
+      "target": "R_total",
+      "truth": 0.0026374293087381524
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0022949536462740783,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.40568011596010184,
+      "prediction": 0.4734977770920204,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 86,
+      "signed_cutoff_margin": 0.014665983851522846,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0407889327882948,
+      "target": "T_total",
+      "truth": 0.4757927307382945
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0022491902505527017,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.40568011596010184,
+      "prediction": 0.52381903020352,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 86,
+      "signed_cutoff_margin": 0.014665983851522846,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.04058241389477098,
+      "target": "A_balance",
+      "truth": 0.5215698399529674
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0001190133956156777,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.40568011596010184,
+      "prediction": 0.00036825518247238665,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 87,
+      "signed_cutoff_margin": 0.007704332538136738,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.000144710617194664,
+      "target": "R_total",
+      "truth": 0.00024924178685670895
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0022770279218631284,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.40568011596010184,
+      "prediction": 0.3395264264179256,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 87,
+      "signed_cutoff_margin": 0.007704332538136738,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.033803305256722364,
+      "target": "T_total",
+      "truth": 0.3418034543397887
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0021580145262474204,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.40568011596010184,
+      "prediction": 0.660105318399602,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 87,
+      "signed_cutoff_margin": 0.007704332538136738,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.03378455555163347,
+      "target": "A_balance",
+      "truth": 0.6579473038733545
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0001968591874004763,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.4084135098870068,
+      "prediction": 0.0004542699449965365,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 88,
+      "signed_cutoff_margin": 0.007672135889269294,
+      "spatial_windows": [],
+      "std": 0.00016438021456130866,
+      "target": "R_total",
+      "truth": 0.00025741075759606023
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0015042852204832924,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.4084135098870068,
+      "prediction": 0.3419608570369045,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 88,
+      "signed_cutoff_margin": 0.007672135889269294,
+      "spatial_windows": [],
+      "std": 0.013891977855709926,
+      "target": "T_total",
+      "truth": 0.3404565718164212
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0017011444078836035,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.4084135098870068,
+      "prediction": 0.6575848730180991,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 88,
+      "signed_cutoff_margin": 0.007672135889269294,
+      "spatial_windows": [],
+      "std": 0.013882694098759458,
+      "target": "A_balance",
+      "truth": 0.6592860174259827
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.011263250386118903,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4300102773614073,
+      "prediction": 0.03190697862165331,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 89,
+      "signed_cutoff_margin": 0.0027859888567541846,
+      "spatial_windows": [],
+      "std": 0.0030554196869431844,
+      "target": "R_total",
+      "truth": 0.020643728235534405
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.04666030152170328,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4300102773614073,
+      "prediction": 0.1803257449565831,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 89,
+      "signed_cutoff_margin": 0.0027859888567541846,
+      "spatial_windows": [],
+      "std": 0.0031374395818738114,
+      "target": "T_total",
+      "truth": 0.13366544343487982
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.05792355190782217,
+      "fold": 3,
+      "nearest_actual_fold_training_distance": 0.4300102773614073,
+      "prediction": 0.7877672764217636,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 89,
+      "signed_cutoff_margin": 0.0027859888567541846,
+      "spatial_windows": [],
+      "std": 0.003868521704251938,
+      "target": "A_balance",
+      "truth": 0.8456908283295858
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00014200424659277034,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.4084135098870068,
+      "prediction": 0.002807720816592149,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 90,
+      "signed_cutoff_margin": 0.01469098709712302,
+      "spatial_windows": [],
+      "std": 0.000587876315701204,
+      "target": "R_total",
+      "truth": 0.0026657165699993787
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.002911516185030716,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.4084135098870068,
+      "prediction": 0.4784478902060068,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 90,
+      "signed_cutoff_margin": 0.01469098709712302,
+      "spatial_windows": [],
+      "std": 0.0029837089192151847,
+      "target": "T_total",
+      "truth": 0.4755363740209761
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0030535204316235465,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.4084135098870068,
+      "prediction": 0.518744388977401,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 90,
+      "signed_cutoff_margin": 0.01469098709712302,
+      "spatial_windows": [],
+      "std": 0.0029701404528556775,
+      "target": "A_balance",
+      "truth": 0.5217979094090246
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00022185890305105013,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.42823336648916466,
+      "prediction": 0.00026108421445379784,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 91,
+      "signed_cutoff_margin": 0.024307514426800236,
+      "spatial_windows": [],
+      "std": 0.00022688479707774385,
+      "target": "R_total",
+      "truth": 0.000482943117504848
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.013366428199885205,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.42823336648916466,
+      "prediction": 0.5540457998780015,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 91,
+      "signed_cutoff_margin": 0.024307514426800236,
+      "spatial_windows": [],
+      "std": 0.07795511359246281,
+      "target": "T_total",
+      "truth": 0.5674122280778867
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.013588287102936247,
+      "fold": 4,
+      "nearest_actual_fold_training_distance": 0.42823336648916466,
+      "prediction": 0.4456931159075447,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 91,
+      "signed_cutoff_margin": 0.024307514426800236,
+      "spatial_windows": [],
+      "std": 0.07790944047161485,
+      "target": "A_balance",
+      "truth": 0.43210482880460843
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.03495669497011731,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.8584261481638122,
+      "prediction": 0.02174259835646345,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 92,
+      "signed_cutoff_margin": 0.0026696040600640014,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.003832638910834683,
+      "target": "R_total",
+      "truth": 0.05669929332658076
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.10826706242405895,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.8584261481638122,
+      "prediction": 0.12633640652929415,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 92,
+      "signed_cutoff_margin": 0.0026696040600640014,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.001455414463782487,
+      "target": "T_total",
+      "truth": 0.2346034689533531
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.14322375739417614,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.8584261481638122,
+      "prediction": 0.8519209951142424,
+      "region": "high_azimuth+cutoff_near",
+      "regions": [
+        "high_azimuth",
+        "cutoff_near"
+      ],
+      "sample_index": 92,
+      "signed_cutoff_margin": 0.0026696040600640014,
+      "spatial_windows": [
+        "high_azimuth"
+      ],
+      "std": 0.003594492967253121,
+      "target": "A_balance",
+      "truth": 0.7086972377200662
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.0003493162052550182,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4324161754546218,
+      "prediction": 0.0006013182596327539,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 93,
+      "signed_cutoff_margin": 0.007677897318762339,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0003722565149732945,
+      "target": "R_total",
+      "truth": 0.0002520020543777357
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.0035868457815104726,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4324161754546218,
+      "prediction": 0.33761295764426424,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 93,
+      "signed_cutoff_margin": 0.007677897318762339,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.052248088455225494,
+      "target": "T_total",
+      "truth": 0.3411998034257747
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.003237529576255449,
+      "fold": 1,
+      "nearest_actual_fold_training_distance": 0.4324161754546218,
+      "prediction": 0.661785724096103,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 93,
+      "signed_cutoff_margin": 0.007677897318762339,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.05220108120195637,
+      "target": "A_balance",
+      "truth": 0.6585481945198476
+    },
+    {
+      "cutoff_order": 0,
+      "error": 3.789813034837345e-05,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.8262419346785711,
+      "prediction": 0.0006089451501113539,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 94,
+      "signed_cutoff_margin": 0.024774581102878113,
+      "spatial_windows": [],
+      "std": 0.00011178772124447219,
+      "target": "R_total",
+      "truth": 0.0005710470197629804
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.00383032544379458,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.8262419346785711,
+      "prediction": 0.5735903072459725,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 94,
+      "signed_cutoff_margin": 0.024774581102878113,
+      "spatial_windows": [],
+      "std": 0.0030032347624506977,
+      "target": "T_total",
+      "truth": 0.5697599818021779
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.003868223574142904,
+      "fold": 2,
+      "nearest_actual_fold_training_distance": 0.8262419346785711,
+      "prediction": 0.42580074760391623,
+      "region": "ordinary_interior",
+      "regions": [
+        "ordinary_interior"
+      ],
+      "sample_index": 94,
+      "signed_cutoff_margin": 0.024774581102878113,
+      "spatial_windows": [],
+      "std": 0.0029986402063403527,
+      "target": "A_balance",
+      "truth": 0.42966897117805913
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.00033860879933581044,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.42823336648916466,
+      "prediction": 0.0021274305102295227,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 95,
+      "signed_cutoff_margin": 0.014931608755680337,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.0018868892207987685,
+      "target": "R_total",
+      "truth": 0.002466039309565333
+    },
+    {
+      "cutoff_order": 0,
+      "error": -0.014710963517033993,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.42823336648916466,
+      "prediction": 0.46455782274044344,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 95,
+      "signed_cutoff_margin": 0.014931608755680337,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.09755924203884439,
+      "target": "T_total",
+      "truth": 0.47926878625747743
+    },
+    {
+      "cutoff_order": 0,
+      "error": 0.01504957231636983,
+      "fold": 0,
+      "nearest_actual_fold_training_distance": 0.42823336648916466,
+      "prediction": 0.533314746749327,
+      "region": "cutoff_near+ordinary_interior",
+      "regions": [
+        "cutoff_near",
+        "ordinary_interior"
+      ],
+      "sample_index": 95,
+      "signed_cutoff_margin": 0.014931608755680337,
+      "spatial_windows": [
+        "ordinary_interior"
+      ],
+      "std": 0.09717285672691346,
+      "target": "A_balance",
+      "truth": 0.5182651744329572
+    }
+  ],
+  "schema_version": "task004.training-cv-oof.v3"
+}
