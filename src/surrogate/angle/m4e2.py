@@ -624,12 +624,25 @@ def _plan_points(*, train_angles: np.ndarray, train_truth: np.ndarray,
                         for other in selected))
 
     def choose(count: int, predicate: Callable[[int], bool], reason: str) -> None:
-        candidates = sorted((int(i) for i in range(len(pool_angles)) if predicate(int(i)) and can_add(int(i))),
+        candidates = sorted((int(i) for i in range(len(pool_angles)) if predicate(int(i))),
                             key=lambda i: (-float(score[i]), i))
-        if len(candidates) < count:
-            raise RuntimeError(f"M4E2 plan cannot satisfy group {reason}: {len(candidates)}<{count}")
-        for index in candidates[:count]:
-            selected.append(index); reasons.setdefault(index, []).append(reason)
+        # Reuse an already selected point whenever it satisfies the next
+        # category.  Categories intentionally overlap (the 16-point contract
+        # has 17 minimum category counts), so treating them as disjoint would
+        # make a valid plan mathematically impossible.
+        existing = [i for i in candidates if i in selected]
+        fresh = [i for i in candidates if i not in selected and can_add(i)]
+        covered = 0
+        for index in existing + fresh:
+            if index not in selected:
+                selected.append(index)
+            if reason not in reasons.setdefault(index, []):
+                reasons[index].append(reason)
+            covered += 1
+            if covered >= count:
+                break
+        if covered < count:
+            raise RuntimeError(f"M4E2 plan cannot satisfy group {reason}: {covered}<{count}")
 
     # Preserve the explicit 2-point rare-topology requirement first, with two
     # different signatures and only response-blind mask geometry.
@@ -643,12 +656,22 @@ def _plan_points(*, train_angles: np.ndarray, train_truth: np.ndarray,
             break
     if len(rare_signatures) < 2:
         raise RuntimeError("M4E2 plan lacks two diverse unseen topology anchors")
-    choose(6, lambda i: bool(hotspot_mask[i]), "matern_error_or_disagreement_hotspot")
+    hotspot_ordinary = hotspot_mask & ordinary
+    hotspot_predicate = hotspot_ordinary if int(np.sum(hotspot_ordinary)) >= 6 else hotspot_mask
+    choose(6, lambda i: bool(hotspot_predicate[i]), "matern_error_or_disagreement_hotspot")
     choose(3, lambda i: bool(region["high_azimuth"][i]), "high_azimuth_difficulty")
     choose(3, lambda i: bool(region["low_grazing"][i] or cutoff_distance[i] <= 0.02),
            "low_grazing_or_cutoff_side")
     choose(3, lambda i: bool(ordinary[i]), "ordinary_interior_hole")
-    choose(16 - len(selected), lambda i: True, "space_filling_high_acquisition")
+    if len(selected) > 16:
+        raise RuntimeError(f"M4E2 category overlap is insufficient: {len(selected)} unique points")
+    remaining = 16 - len(selected)
+    if remaining:
+        filler = sorted((int(i) for i in range(len(pool_angles)) if can_add(int(i))),
+                        key=lambda i: (-float(score[i]), i))
+        for index in filler[:remaining]:
+            selected.append(index)
+            reasons.setdefault(index, []).append("space_filling_high_acquisition")
     if len(selected) != 16:
         raise RuntimeError("M4E2 plan did not produce exactly 16 points")
     plan_rows = []
