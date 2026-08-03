@@ -265,6 +265,8 @@ def _build_crossfit(*, records: dict[str, list[dict[str, Any]]], angles: np.ndar
             "predictor": predictor, "risk_rule": S1,
             "accepted_indices": accepted_idx.astype(int).tolist(),
             "rejected_indices": np.flatnonzero(~accepted).astype(int).tolist(),
+            "accepted_indices_sha256": canonical_hash(accepted_idx.astype(int).tolist()),
+            "rejected_indices_sha256": canonical_hash(np.flatnonzero(~accepted).astype(int).tolist()),
             "accepted_count": int(len(accepted_idx)),
             "accepted_fraction": float(len(accepted_idx) / len(angles)),
             "metrics_accepted": metrics, "accepted_accuracy_gate": accuracy_gate,
