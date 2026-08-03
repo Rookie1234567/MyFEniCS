@@ -45,6 +45,14 @@ def cutoff_distance(angles: np.ndarray) -> np.ndarray:
     return np.min(np.abs(angle_features(values, "F3")[:, 2:]), axis=1)
 
 
+def cutoff_identity(angles: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Return the nearest fixed-order cutoff index and its signed margin."""
+    values = np.asarray(angles, dtype=np.float64)
+    margins = angle_features(values, "F3")[:, 2:]
+    nearest = np.argmin(np.abs(margins), axis=1)
+    return nearest.astype(np.int64) - 7, margins[np.arange(len(values)), nearest]
+
+
 def region_labels(angles: np.ndarray) -> list[str]:
     masks = region_masks(angles)
     labels = []
@@ -65,7 +73,10 @@ def region_masks(angles: np.ndarray) -> dict[str, np.ndarray]:
     low = values[:, 0] <= 2.0
     high = values[:, 1] >= 75.0
     cutoff = cutoff_distance(values) <= 0.02
-    ordinary = ~(low | high | cutoff)
+    # ``ordinary_interior`` is intentionally an overlapping region.  It is a
+    # broad interior band, not the complement of every difficult region;
+    # cutoff points can therefore be reported in both windows.
+    ordinary = (values[:, 0] > 2.0) & (values[:, 1] < 75.0)
     return {
         "low_grazing": low,
         "high_azimuth": high,
@@ -304,6 +315,7 @@ class MaskedFractionPowerModel:
     training_powers: np.ndarray | None = None
     training_mask: np.ndarray | None = None
     groups: dict[tuple[int, tuple[int, ...]], dict[str, Any]] = field(default_factory=dict)
+    unsupported_topologies: list[dict[str, Any]] = field(default_factory=list)
 
     def fit(self, angles: np.ndarray, powers: np.ndarray, mask: np.ndarray) -> "MaskedFractionPowerModel":
         values = np.asarray(angles, dtype=np.float64)
@@ -314,6 +326,7 @@ class MaskedFractionPowerModel:
         self.training_angles = values.copy()
         self.training_powers = powers.copy()
         self.training_mask = mask.copy()
+        self.unsupported_topologies = []
         features = angle_features(values, self.feature)
         self.groups = {}
         for side, sl in ((0, slice(0, 11)), (1, slice(11, 22))):
@@ -360,6 +373,7 @@ class MaskedFractionPowerModel:
         query_mask = np.asarray(mask, dtype=bool)
         output = np.full((len(values), 22, 2), np.nan, dtype=np.float64)
         uncertainty = np.full_like(output, np.nan)
+        self.unsupported_topologies = []
         features = angle_features(values, self.feature)
         for row in range(len(values)):
             for side, sl in ((0, slice(0, 11)), (1, slice(11, 22))):
@@ -367,17 +381,14 @@ class MaskedFractionPowerModel:
                 signature = tuple(int(value) for value in active)
                 group = self.groups.get((side, signature))
                 if group is None:
-                    # An unseen topology is an explicit diagnostic fallback;
-                    # never invent a numeric value for inactive channels.
-                    distances = np.linalg.norm(
-                        (self.training_angles - values[row]) / np.asarray([9.5, 90.0]), axis=1,
-                    )
-                    source = int(np.argmin(distances))
-                    fractions = self._mean_fractions(
-                        self.training_powers[source, sl, :].reshape(-1)[active][None, :],
-                        np.arange(len(active)),
-                    ) if len(active) else np.asarray([])
-                    fraction_std = np.full(len(active), 0.25) if len(active) else np.asarray([])
+                    # A topology unseen during training is not qualified.  Do
+                    # not silently borrow a nearest-neighbour fraction: the
+                    # caller must surface this as unsupported_mask_topology.
+                    self.unsupported_topologies.append({
+                        "row": int(row), "side": int(side),
+                        "signature": [int(value) for value in active],
+                    })
+                    continue
                 else:
                     latent = np.zeros(max(len(active) - 1, 0), dtype=np.float64)
                     latent_std = np.zeros(max(len(active) - 1, 0), dtype=np.float64)
@@ -412,5 +423,7 @@ class MaskedFractionPowerModel:
             "family": "masked_active_fraction_local_rbf",
             "feature": self.feature, "floor": self.floor,
             "topology_group_count": len(self.groups),
-            "uncertainty": "derived_from_latent_residual_scale_not_zero",
+            "uncertainty": "heuristic_training_residual_scale",
+            "uncertainty_calibration": "not_calibrated_physical_uncertainty",
+            "unsupported_topology_policy": "fail_closed",
         }

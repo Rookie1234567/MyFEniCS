@@ -27,12 +27,26 @@ class AngleSurrogate:
         self.metadata = metadata or {}
 
     @classmethod
-    def from_package(cls, package_dir: Path) -> "AngleSurrogate":
+    def from_package(cls, package_dir: Path, *, research: bool = False) -> "AngleSurrogate":
         package_dir = Path(package_dir)
+        lock_path = package_dir / "ANGLE_MODEL_SELECTION_LOCK.json"
+        qualification_path = package_dir / "ANGLE_MODEL_QUALIFICATION.json"
+        if not research:
+            if not lock_path.is_file() or not qualification_path.is_file():
+                raise RuntimeError(
+                    "Task004 public API is fail-closed until model lock and qualification exist"
+                )
+            lock = json.loads(lock_path.read_text())
+            qualification = json.loads(qualification_path.read_text())
+            if lock.get("blind_validation_status") != "pass":
+                raise RuntimeError("Task004 public API refuses unqualified blind-validation status")
+            if qualification.get("status") != "qualified_for_nominal-geometry_angle-response prediction":
+                raise RuntimeError("Task004 public API refuses non-qualified model")
         with (package_dir / "angle_model.pkl").open("rb") as stream:
             package = pickle.load(stream)
-        manifest = json.loads((package_dir.parent / "compact_dataset/dataset_manifest.json").read_text()) \
-            if (package_dir.parent / "compact_dataset/dataset_manifest.json").exists() else {}
+        manifest = json.loads(lock_path.read_text()) if lock_path.is_file() else {}
+        if not research and package.get("forward_solver_sha") != manifest.get("forward_solver_sha"):
+            raise RuntimeError("Task004 public API forward SHA mismatch")
         return cls(package, metadata=manifest)
 
     def predict(self, grazing_deg: float, azimuth_deg: float) -> dict[str, Any]:
@@ -44,9 +58,10 @@ class AngleSurrogate:
         angles = np.asarray([[grazing, azimuth]], dtype=np.float64)
         aggregate_model = self.package["aggregate_model"]
         mean, std = aggregate_model.predict(angles, return_std=True)
-        calibration = float(self.package.get("calibration_factor", 1.0))
         if np.all(np.isfinite(std)):
-            std = std * calibration
+            factors = self.package.get("calibration_factors", {})
+            std = std * np.asarray([float(factors.get(name, 1.0))
+                                    for name in ("R_total", "T_total", "A_balance")])[None, :]
         inputs = np.asarray([[120.0, 17.0, grazing, azimuth]], dtype=np.float64)
         mask_identity = power_mask_authority(inputs)
         mask = mask_identity["power_carrying"][0]
@@ -61,8 +76,16 @@ class AngleSurrogate:
         warning = None
         if cut <= 0.02:
             warning = "near_analytic_rayleigh_cutoff"
+        # A production package may only predict fractions for topologies seen
+        # during training.  The fraction model records unsupported groups and
+        # never uses an implicit nearest-neighbour fallback.
+        if self.package["power_model"].unsupported_topologies:
+            warning = "unsupported_mask_topology"
+            status = "unqualified"
+        else:
+            status = "predicted"
         return {
-            "status": "predicted", "configuration": {
+            "status": status, "qualified": status == "predicted", "configuration": {
                 "height_nm": 120.0, "width_x_nm": 17.0, "wavelength_nm": 13.5,
                 "incident_polarization": "S", "grazing_deg": grazing,
                 "azimuth_deg": azimuth,
@@ -78,5 +101,7 @@ class AngleSurrogate:
             "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
             "dataset_id": self.package.get("dataset_id"),
             "selected_candidate": self.package.get("selected_candidate"),
+            "forward_solver_sha": self.package.get("forward_solver_sha"),
+            "surrogate_training_code_sha": self.package.get("surrogate_training_code_sha"),
             "warning": warning,
         }

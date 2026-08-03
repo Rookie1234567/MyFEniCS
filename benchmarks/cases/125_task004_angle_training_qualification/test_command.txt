@@ -1,0 +1,1 @@
+source scripts/activate_myfenics_wsl.sh && python benchmarks/cases/125_task004_angle_training_qualification/checker.py
