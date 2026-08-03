@@ -291,6 +291,16 @@ def _build_crossfit(*, records: dict[str, list[dict[str, Any]]], angles: np.ndar
                 "risk_score": float(risk_by_fold[index]),
                 "risk_components": {key: (value[index].tolist() if np.ndim(value) else float(value[index]))
                                     for key, value in components_by_fold.items()},
+                # Preserve the unscaled, response-blind risk inputs so the
+                # independent Case130 checker can reconstruct each outer
+                # fold's normalization and S1 threshold without importing
+                # this implementation or trusting a stored risk score.
+                "risk_inputs": {
+                    key: (raw[key][index].tolist() if np.ndim(raw[key][index]) else float(raw[key][index]))
+                    for key in ("native_std", "rbf_matern_disagreement",
+                                "matern_k24_k32_disagreement", "nearest_training_distance",
+                                "cutoff_risk", "topology_risk", "boundary_risk")
+                },
                 "threshold": None if selected is None else float(selected["threshold"]),
                 "threshold_quantile": None if selected is None else float(selected["quantile"]),
                 "threshold_source_folds": fold_item["source_outer_folds"],

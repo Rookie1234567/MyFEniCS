@@ -100,6 +100,50 @@ def finite_conformal(values: np.ndarray) -> float:
     return float(np.quantile(values, level, method="higher"))
 
 
+def quantile_bounds(values: np.ndarray) -> list[float]:
+    values = np.asarray(values, dtype=float).reshape(-1)
+    values = values[np.isfinite(values)]
+    if len(values) == 0:
+        return [0.0, 1.0]
+    low, high = float(np.percentile(values, 5)), float(np.percentile(values, 95))
+    if not np.isfinite(low) or not np.isfinite(high) or high <= low:
+        high = low + 1.0
+    return [low, high]
+
+
+def scale(values: np.ndarray, bounds: list[float]) -> np.ndarray:
+    low, high = float(bounds[0]), float(bounds[1])
+    return np.clip((np.asarray(values, dtype=float) - low) / max(high - low, 1.0e-15), 0.0, 1.0)
+
+
+def rebuild_s1_risk(rows: list[dict], source: list[int]) -> tuple[np.ndarray, dict]:
+    """Rebuild raw S1 risk and its fold-local normalization independently."""
+    keys = ("native_std", "rbf_matern_disagreement", "matern_k24_k32_disagreement",
+            "nearest_training_distance", "cutoff_risk", "topology_risk")
+    raw = {key: np.asarray([row["risk_inputs"][key] for row in rows], dtype=float)
+           for key in keys}
+    boundary = np.asarray([row["risk_inputs"]["boundary_risk"] for row in rows], dtype=float)
+    bounds = {}
+    scaled = {}
+    for key in keys:
+        if raw[key].ndim == 1:
+            bounds[key] = quantile_bounds(raw[key][source])
+            scaled[key] = scale(raw[key], bounds[key])
+        else:
+            bounds[key] = [quantile_bounds(raw[key][source, i]) for i in range(raw[key].shape[1])]
+            scaled[key] = np.column_stack([scale(raw[key][:, i], bounds[key][i])
+                                           for i in range(raw[key].shape[1])])
+    geometry = np.clip(0.5 * scaled["cutoff_risk"][:, None] +
+                       0.35 * scaled["topology_risk"][:, None] +
+                       0.15 * boundary[:, None], 0.0, 1.0)
+    risk = np.max(0.35 * scaled["native_std"] +
+                  0.25 * scaled["matern_k24_k32_disagreement"] +
+                  0.20 * scaled["rbf_matern_disagreement"] +
+                  0.10 * scaled["nearest_training_distance"][:, None] +
+                  0.10 * geometry, axis=1)
+    return risk, bounds
+
+
 def design_angles(path: Path) -> np.ndarray:
     payload = json.loads(path.read_text())
     return np.asarray([[float(row["grazing_deg"]), float(row["azimuth_deg"])]
@@ -168,13 +212,21 @@ def main() -> int:
             fold = int(fold_item["fold"])
             source = [i for i in range(112) if fold_for[i] != fold]
             test = [i for i in range(112) if fold_for[i] == fold]
+            fold_risk, rebuilt_bounds = rebuild_s1_risk(rows, source)
+            stored_bounds = fold_item.get("normalization_bounds", {})
+            for key, value in rebuilt_bounds.items():
+                crossfit_ok = crossfit_ok and np.allclose(np.asarray(stored_bounds.get(key), dtype=float),
+                                                          np.asarray(value, dtype=float), atol=1.0e-12, rtol=0.0)
+            crossfit_ok = crossfit_ok and np.allclose(
+                np.asarray([rows[i]["risk_score"] for i in test], dtype=float),
+                fold_risk[test], atol=1.0e-12, rtol=0.0)
             threshold_info = fold_item["threshold"]
             candidates = threshold_info["candidate_grid"]
             passing = []
             for candidate in candidates:
                 q = float(candidate["quantile"])
-                threshold = float(np.quantile([float(rows[i]["risk_score"]) for i in source], q, method="linear"))
-                source_accept = [i for i in source if float(rows[i]["risk_score"]) <= threshold + 1.0e-15]
+                threshold = float(np.quantile(fold_risk[source], q, method="linear"))
+                source_accept = [i for i in source if float(fold_risk[i]) <= threshold + 1.0e-15]
                 values = metric_all(truth, prediction, source_accept)
                 accuracy = point_gate(values)
                 support = supported_gate(set(source_accept), truth, prediction)
@@ -212,7 +264,7 @@ def main() -> int:
             radii[test] = radius[None, :]
             for index in test:
                 row = rows[index]
-                expected_accept = float(row["risk_score"]) <= selected["threshold"] + 1.0e-15
+                expected_accept = float(fold_risk[index]) <= selected["threshold"] + 1.0e-15
                 crossfit_ok = crossfit_ok and bool(row["accepted"]) == expected_accept and \
                     row.get("threshold_source_folds") == fold_item.get("source_outer_folds") and \
                     row.get("threshold_source_indices_hash") == canonical(source) and \
