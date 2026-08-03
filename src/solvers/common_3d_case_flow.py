@@ -1367,9 +1367,6 @@ def run_prepared_3d_case_flow(
         )
     )
     diagnostic_only_result = assemble_only_result or factorization_only_result
-    matrix_stats = _petsc_matrix_stats(system_A)
-    _finish_timed_stage(comm, timings, "matrix_stats", stage_start, log)
-    _log_matrix_stats(matrix_stats, log)
     dtn_solver_info = None if dtn_result is None else dtn_result.get("solver_info", {})
     external_solver_snapshot = bool(
         dtn_solver_info and dtn_solver_info.get("external_linear_solver_port")
@@ -1391,6 +1388,13 @@ def run_prepared_3d_case_flow(
         )
     )
     dtn_auxiliary_block_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_auxiliary_block_stats")
+    matrix_stats = (
+        dtn_augmented_matrix_stats
+        if system_A is None
+        else _petsc_matrix_stats(system_A)
+    )
+    _finish_timed_stage(comm, timings, "matrix_stats", stage_start, log)
+    _log_matrix_stats(matrix_stats, log)
     explicit_chac_constructed = False
     chac_before_stats = None
     chac_after_stats = None
@@ -1528,6 +1532,7 @@ def run_prepared_3d_case_flow(
         and solve_stage4_dtn_port
         and not diagnostic_only_result
         and reason > 0
+        and system_A is not None
     )
     solver_release_audit = None
     if solver_objects_released_before_postprocess:

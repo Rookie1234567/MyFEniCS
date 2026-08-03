@@ -103,7 +103,7 @@ class Stage4VariablePLiveView:
 
 @dataclass(frozen=True)
 class Stage4ExternalLinearSolverRequest:
-    """Borrowed finalized system passed to an external linear-solver port."""
+    """Borrowed system; only the owner callback may release its assembled A."""
 
     A: PETSc.Mat
     b: PETSc.Vec
@@ -113,6 +113,7 @@ class Stage4ExternalLinearSolverRequest:
     function_space: Any
     config: SimulationConfig3D
     floquet_data: DoubleFloquet3DData
+    release_assembled_matrix: Callable[[], None] | None = None
 
 
 @dataclass(frozen=True)
@@ -166,10 +167,13 @@ def _dispatch_external_linear_solver(
     function_space: Any,
     config: SimulationConfig3D,
     floquet_data: DoubleFloquet3DData,
+    release_assembled_matrix: Callable[[], None] | None = None,
     port: Callable[
         [Stage4ExternalLinearSolverRequest], Stage4ExternalLinearSolverSnapshot
     ],
 ) -> Stage4ExternalLinearSolverSnapshot:
+    augmented_size = int(A_aug.getSize()[0])
+    augmented_ownership = A_aug.getOwnershipRange()
     snapshot = port(
         Stage4ExternalLinearSolverRequest(
             A=A_aug,
@@ -180,6 +184,7 @@ def _dispatch_external_linear_solver(
             function_space=function_space,
             config=config,
             floquet_data=floquet_data,
+            release_assembled_matrix=release_assembled_matrix,
         )
     )
     if not isinstance(snapshot, Stage4ExternalLinearSolverSnapshot):
@@ -189,8 +194,8 @@ def _dispatch_external_linear_solver(
             "external linear-solver snapshot must certify no_global_factor"
         )
     if (
-        snapshot.x.getSize() != A_aug.getSize()[0]
-        or snapshot.x.getOwnershipRange() != A_aug.getOwnershipRange()
+        snapshot.x.getSize() != augmented_size
+        or snapshot.x.getOwnershipRange() != augmented_ownership
     ):
         raise ValueError("external solver x must match finalized augmented ownership")
     return snapshot
@@ -860,7 +865,7 @@ def _active_trace_values_from_augmented(
 ) -> np.ndarray:
     """Collect the small independent trace vector on every rank."""
 
-    comm = condensed.matrix.getComm().tompi4py()
+    comm = x_aug.getComm().tompi4py()
     local_active = len(
         condensed.trace_constraints.owned_active_original_dofs
     )
@@ -957,18 +962,19 @@ def _assembly_time_full_operator_residual(
     bilinear_form,
     floquet_data: DoubleFloquet3DData,
     embedded_fe_solution: PETSc.Vec,
-    reduced_matrix: PETSc.Mat,
+    reduced_matrix: PETSc.Mat | None,
     reduced_rhs: PETSc.Vec,
     reduced_solution: PETSc.Vec,
     condensed: AssemblyTimeCondensedSystem,
     full_rhs: PETSc.Vec,
+    reduced_residual_norm: float | None = None,
 ) -> dict[str, Any]:
     """Audit all eliminated FE equations without allocating the full matrix."""
 
-    reduced = _linear_residual(
-        reduced_matrix,
-        reduced_rhs,
-        reduced_solution,
+    reduced = (
+        {"linear_system_residual_norm": float(reduced_residual_norm)}
+        if reduced_residual_norm is not None
+        else _linear_residual(reduced_matrix, reduced_rhs, reduced_solution)
     )
     context = MpcFormActionContext(
         bilinear_form,
@@ -1005,7 +1011,7 @@ def _assembly_time_full_operator_residual(
                 local_interior_max,
                 float(np.max(np.abs(values), initial=0.0)),
             )
-        comm = reduced_matrix.getComm().tompi4py()
+        comm = reduced_solution.getComm().tompi4py()
         interior_norm = float(
             np.sqrt(comm.allreduce(local_interior_sq, op=MPI.SUM))
         )
@@ -1073,7 +1079,10 @@ def _assembly_time_full_operator_residual(
             "eliminated_cell_interior_residual_norm": interior_norm,
             "eliminated_cell_interior_max_abs_residual": interior_max,
             "full_operator_residual_method": (
-                "explicit reduced trace+DtN Mat action combined with "
+                "external snapshot reduced residual plus matrix-free "
+                "dolfinx_mpc UFL action"
+                if reduced_residual_norm is not None
+                else "explicit reduced trace+DtN Mat action combined with "
                 "matrix-free dolfinx_mpc UFL action projected onto every "
                 "active eliminated cell-interior test space, including "
                 "condensed full-space RHS"
@@ -4008,6 +4017,11 @@ def _solve_stage4_dtn_port_total_field_impl(
                 function_space=V,
                 config=cfg,
                 floquet_data=floquet_data,
+                release_assembled_matrix=(
+                    assembly_time_system.destroy
+                    if assembly_time_system is not None
+                    else None
+                ),
                 port=linear_solver_port,
             )
             solve_x = external_snapshot.x
@@ -4053,6 +4067,10 @@ def _solve_stage4_dtn_port_total_field_impl(
         raise
     setup_and_solve_seconds = float(
         comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
+    released_external = bool(
+        external_snapshot is not None
+        and external_snapshot.assembled_matrix_released_before_solve
     )
     if cfg.matrix_diagnostics_factorization_only:
         timing_details["stage4_dtn_factorization_seconds"] = setup_and_solve_seconds
@@ -4238,11 +4256,16 @@ def _solve_stage4_dtn_port_total_field_impl(
             a,
             floquet_data,
             embedded_fe_solution,
-            A_aug,
+            None if released_external else A_aug,
             b_aug,
             x_aug,
             assembly_time_system,
             assembly_time_full_rhs,
+            reduced_residual_norm=(
+                external_snapshot.reduced_residual_norm
+                if released_external
+                else None
+            ),
         )
         embedded_fe_solution.destroy()
         embedded_fe_solution = None
@@ -4617,6 +4640,11 @@ def _solve_stage4_dtn_port_total_field_impl(
                 ),
                 "residual_limit": external_snapshot.residual_limit,
                 "no_global_factor": external_snapshot.no_global_factor,
+                "solver_profile": external_snapshot.solver_profile,
+                "assembled_matrix_released_before_solve": (
+                    external_snapshot.assembled_matrix_released_before_solve
+                ),
+                "reduced_residual_norm": external_snapshot.reduced_residual_norm,
             }
         )
     if external_snapshot is None:
@@ -4637,6 +4665,10 @@ def _solve_stage4_dtn_port_total_field_impl(
         A_aug.destroy()
         b_aug.destroy()
         x_aug.destroy()
+    elif released_external:
+        returned_A = None
+        returned_b = b_aug
+        returned_x = x_aug
     else:
         returned_A = A_aug
         returned_b = b_aug

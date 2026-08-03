@@ -11,11 +11,21 @@ from src.solvers.dtn_port_3d import (
 
 
 class _FakeMat:
+    def __init__(self):
+        self.destroyed = False
+
     def getSize(self) -> tuple[int, int]:
+        if self.destroyed:
+            raise AssertionError("destroyed Mat was queried")
         return (3, 3)
 
     def getOwnershipRange(self) -> tuple[int, int]:
+        if self.destroyed:
+            raise AssertionError("destroyed Mat was queried")
         return (0, 3)
+
+    def destroy(self):
+        self.destroyed = True
 
 
 class _FakeVec:
@@ -63,6 +73,7 @@ def test_dispatch_borrows_system_and_does_not_call_direct(monkeypatch) -> None:
 
     def port(request):
         seen.update(A=request.A, b=request.b, n_fe=request.n_fe, n_aux=request.n_aux)
+        assert request.release_assembled_matrix is None
         assert request.static_condensed_system is sentinels[0]
         assert request.function_space is sentinels[1]
         assert request.config is sentinels[2]
@@ -82,6 +93,36 @@ def test_dispatch_borrows_system_and_does_not_call_direct(monkeypatch) -> None:
     )
     assert accepted.x is solution
     assert seen == {"A": matrix, "b": rhs, "n_fe": 2, "n_aux": 1}
+
+
+def test_dispatch_freezes_identity_before_owner_release() -> None:
+    matrix, solution, rhs = _FakeMat(), _FakeVec(), object()
+    released = []
+
+    def release():
+        released.append(True)
+        matrix.destroy()
+
+    def port(request):
+        assert request.A.getSize() == (3, 3)
+        assert request.A.getOwnershipRange() == (0, 3)
+        request.release_assembled_matrix()
+        return _snapshot(solution)
+
+    accepted = _dispatch_external_linear_solver(
+        matrix,
+        rhs,
+        n_fe=2,
+        n_aux=1,
+        static_condensed_system=object(),
+        function_space=object(),
+        config=object(),
+        floquet_data=object(),
+        release_assembled_matrix=release,
+        port=port,
+    )
+    assert released == [True]
+    assert accepted.x is solution
 
 
 @pytest.mark.parametrize(
