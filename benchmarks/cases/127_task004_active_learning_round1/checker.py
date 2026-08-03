@@ -34,7 +34,7 @@ PLAN = OUTCOMES / "ACTIVE_LEARNING_ROUND1_PLAN_V2.json"
 OUT = ROOT / "records/case127_check.json"
 
 FORWARD_SHA = "fdf961545f217d620e22800f2704ae9913a6d270"
-CODE_SHA = "33f7a84b93a99a7cbd92dfb1d7fc9cb2055134e0"
+CODE_SHA = "fee256d732b97767a38d1cc8aa0fb3acecd4da50"
 DATASET_ID = "task004_angle_nominal_p5_ny4_train96_v2"
 MODEL_ID = "S_PROD_FULL3D_STATIC_P5_H10_NY4"
 ROUTE_ID = "full3d_static_uniform_n1curl_p5_h10_ny4"

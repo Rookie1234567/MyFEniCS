@@ -1,0 +1,25 @@
+{
+  "acquisition_gate": true,
+  "checks": {
+    "acquisition_identity_and_gate": true,
+    "acquisition_spearman_and_recall_recomputed": true,
+    "all_checks": true,
+    "exact_16_plan_independently_checked": true,
+    "finite_f1_f4_matern_comparison": true,
+    "no_blind_or_fem_access": true,
+    "oof_error_maps_complete": true,
+    "required_artifacts_present": true,
+    "train96_hashes_rebuild": true,
+    "train96_identity": true,
+    "training_tuple_identity": true,
+    "v3_geometry_support_recomputed": true,
+    "v3_identity_and_authorities": true
+  },
+  "errors": [],
+  "fem_started": false,
+  "plan_status": "ready_for_m4f",
+  "point_count": 16,
+  "schema_version": "case127.check.v1",
+  "status": "pass",
+  "validation_response_accessed": false
+}

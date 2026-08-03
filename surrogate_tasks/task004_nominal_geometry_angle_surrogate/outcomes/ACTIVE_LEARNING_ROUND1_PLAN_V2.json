@@ -1,0 +1,854 @@
+{
+  "candidate_pool_count": 4096,
+  "candidate_pool_scoring": {
+    "exact_oof_authority": "eight-start local Mat\u00e9rn k24/k32 OOF candidates",
+    "fixed_hyperparameters_from": "train96 F1 geometry only",
+    "local_matern": "fixed-hyperparameter local Matern-5/2 screening posterior",
+    "local_rbf": "exact local RBF train96 fit",
+    "response_blind": true,
+    "validation_response_accessed": false
+  },
+  "candidate_pool_tuple_sha256": "db2a6155274614b5129846ace0a277fe69161f2e5120966d7968d6b210d981fa",
+  "category_counts": {
+    "high_azimuth": 3,
+    "hotspot": 6,
+    "low_or_cutoff": 3,
+    "ordinary_interior": 3,
+    "rare_unseen_topology": 7
+  },
+  "dataset_id": "task004_angle_nominal_p5_ny4_train96_v2",
+  "fem_authorized_if_gates_pass": true,
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "gates": {
+    "acquisition_gate": true,
+    "exact_count_16": true,
+    "high_azimuth_count_ge_3": true,
+    "hotspot_count_ge_6": true,
+    "low_or_cutoff_count_ge_3": true,
+    "ordinary_interior_count_ge_3": true,
+    "pairwise_normalized_distance_ge_0.035": true,
+    "rare_unseen_topology_count_ge_2": true,
+    "training_validation_disjoint": true,
+    "tuple_hash_present": true
+  },
+  "minimum_normalized_distance": 0.035,
+  "model_identity": {
+    "mesh": [
+      6,
+      4,
+      14
+    ],
+    "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+    "mpi": 2,
+    "mumps_icntl_14": 40,
+    "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+    "threads_per_rank": 1
+  },
+  "pairwise_minimum_distance": 0.03994164663280642,
+  "point_count": 16,
+  "point_tuple_sha256": "c603545cb9266485e03029b91b7dc0fcd4da65a8177fdf868704a9c18610bf51",
+  "points": [
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.6149585064898947,
+          0.6149585064898947,
+          0.6149585064898947
+        ],
+        "matern_k24_k32_disagreement": [
+          0.006278140320187688,
+          1.7807357405743328e-05,
+          0.006260036094862577
+        ],
+        "native_std_k24": [
+          0.061716628856068954,
+          0.002195284426108324,
+          0.06042018189610622
+        ],
+        "nearest_training_distance": [
+          0.10705293727663903,
+          0.10705293727663903,
+          0.10705293727663903
+        ],
+        "rbf_matern_disagreement": [
+          0.028046895715776222,
+          0.0002083362569335971,
+          0.027794996048862864
+        ]
+      },
+      "acquisition_score": 0.10098087869947966,
+      "angle": [
+        0.90729793068,
+        82.131933812052
+      ],
+      "candidate_index": 1580,
+      "cutoff_order": 0,
+      "mask_signature": "12;13;14;15;36;37",
+      "nearest_training_distance": 0.1596845162240074,
+      "rare_unseen_topology": true,
+      "selection_reasons": [
+        "rare_unseen_topology",
+        "high_azimuth_difficulty",
+        "low_grazing_or_cutoff_side"
+      ],
+      "signed_cutoff_margin": 0.0002507369130159143,
+      "tuple": [
+        120.0,
+        17.0,
+        0.90729793068,
+        82.131933812052
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.8348812761269562,
+          0.8348812761269562,
+          0.8348812761269562
+        ],
+        "matern_k24_k32_disagreement": [
+          0.00010040308329136834,
+          0.0014441484020133364,
+          0.001544848353224095
+        ],
+        "native_std_k24": [
+          0.0005399467270739185,
+          0.01738438403999173,
+          0.017294610774074154
+        ],
+        "nearest_training_distance": [
+          0.08146305500345974,
+          0.08146305500345974,
+          0.08146305500345974
+        ],
+        "rbf_matern_disagreement": [
+          0.001618692563121801,
+          0.002396701778093526,
+          0.0007344458049918697
+        ]
+      },
+      "acquisition_score": 0.09855934498316074,
+      "angle": [
+        4.15737589309,
+        35.847170697525
+      ],
+      "candidate_index": 151,
+      "cutoff_order": -6,
+      "mask_signature": "2;3;4;5;6;7;8;9;10;11;12;13;14;15;26;27;28;29;30;31;32;33;34;35;36;37",
+      "nearest_training_distance": 0.1340946339508281,
+      "rare_unseen_topology": true,
+      "selection_reasons": [
+        "rare_unseen_topology"
+      ],
+      "signed_cutoff_margin": 0.00023066546471195437,
+      "tuple": [
+        120.0,
+        17.0,
+        4.15737589309,
+        35.847170697525
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.5070111603805582,
+          0.5070111603805582,
+          0.5070111603805582
+        ],
+        "matern_k24_k32_disagreement": [
+          1.6745791299391473e-05,
+          0.0006214110178942487,
+          0.0006043683586754909
+        ],
+        "native_std_k24": [
+          2.603878803543442e-05,
+          0.006550440529300954,
+          0.006544551946467639
+        ],
+        "nearest_training_distance": [
+          0.06460652553154542,
+          0.06460652553154542,
+          0.06460652553154542
+        ],
+        "rbf_matern_disagreement": [
+          0.0,
+          0.0017863416542885278,
+          0.0017749573533070626
+        ]
+      },
+      "acquisition_score": 0.059967043861796965,
+      "angle": [
+        8.521886651404,
+        69.2679007072
+      ],
+      "candidate_index": 2114,
+      "cutoff_order": 0,
+      "mask_signature": "10;11;12;13;14;15;32;33;34;35;36;37",
+      "nearest_training_distance": 0.11723810447891378,
+      "rare_unseen_topology": false,
+      "selection_reasons": [
+        "matern_error_or_disagreement_hotspot"
+      ],
+      "signed_cutoff_margin": 0.021959445825895818,
+      "tuple": [
+        120.0,
+        17.0,
+        8.521886651404,
+        69.2679007072
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.5070111603805582,
+          0.5070111603805582,
+          0.5070111603805582
+        ],
+        "matern_k24_k32_disagreement": [
+          1.8849718046909274e-05,
+          0.0002861364016074528,
+          0.0003052829875738092
+        ],
+        "native_std_k24": [
+          4.434885986152579e-05,
+          0.007659897553707602,
+          0.0076502448682902085
+        ],
+        "nearest_training_distance": [
+          0.06364028818789479,
+          0.06364028818789479,
+          0.06364028818789479
+        ],
+        "rbf_matern_disagreement": [
+          1.861423690619225e-06,
+          0.0005798372277171967,
+          0.0006252620613876233
+        ]
+      },
+      "acquisition_score": 0.059944103719917846,
+      "angle": [
+        8.821685019415,
+        72.512302743271
+      ],
+      "candidate_index": 2586,
+      "cutoff_order": 0,
+      "mask_signature": "10;11;12;13;14;15;32;33;34;35;36;37",
+      "nearest_training_distance": 0.11627186713526315,
+      "rare_unseen_topology": false,
+      "selection_reasons": [
+        "matern_error_or_disagreement_hotspot"
+      ],
+      "signed_cutoff_margin": 0.02351924207129996,
+      "tuple": [
+        120.0,
+        17.0,
+        8.821685019415,
+        72.512302743271
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.5070111603805582,
+          0.5070111603805582,
+          0.5070111603805582
+        ],
+        "matern_k24_k32_disagreement": [
+          1.8239075463417043e-05,
+          0.0002156947614055846,
+          0.0002342307047883316
+        ],
+        "native_std_k24": [
+          6.652905792047934e-05,
+          0.006973985700418914,
+          0.0069593148491676506
+        ],
+        "nearest_training_distance": [
+          0.06168012444130477,
+          0.06168012444130477,
+          0.06168012444130477
+        ],
+        "rbf_matern_disagreement": [
+          6.315330237690896e-05,
+          0.0019743150503473326,
+          0.0020810317627039574
+        ]
+      },
+      "acquisition_score": 0.05977965270813285,
+      "angle": [
+        9.49044716591,
+        73.222987549379
+      ],
+      "candidate_index": 234,
+      "cutoff_order": 0,
+      "mask_signature": "10;11;12;13;14;15;32;33;34;35;36;37",
+      "nearest_training_distance": 0.11431170338867314,
+      "rare_unseen_topology": false,
+      "selection_reasons": [
+        "matern_error_or_disagreement_hotspot"
+      ],
+      "signed_cutoff_margin": 0.027186457025202504,
+      "tuple": [
+        120.0,
+        17.0,
+        9.49044716591,
+        73.222987549379
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.5062656189363733,
+          0.5062656189363733,
+          0.5062656189363733
+        ],
+        "matern_k24_k32_disagreement": [
+          2.2125193915373244e-06,
+          0.0006052398455492678,
+          0.0006077492328601572
+        ],
+        "native_std_k24": [
+          1.916400719432528e-05,
+          0.006189765528051546,
+          0.006185396478897083
+        ],
+        "nearest_training_distance": [
+          0.06520649409534048,
+          0.06520649409534048,
+          0.06520649409534048
+        ],
+        "rbf_matern_disagreement": [
+          1.2532217162277128e-05,
+          6.970315181935775e-05,
+          1.3607524677319e-05
+        ]
+      },
+      "acquisition_score": 0.059478879829740615,
+      "angle": [
+        8.88171152398,
+        62.73507412523
+      ],
+      "candidate_index": 282,
+      "cutoff_order": 0,
+      "mask_signature": "8;9;10;11;12;13;14;15;30;31;32;33;34;35;36;37",
+      "nearest_training_distance": 0.11783807304270884,
+      "rare_unseen_topology": false,
+      "selection_reasons": [
+        "matern_error_or_disagreement_hotspot"
+      ],
+      "signed_cutoff_margin": 0.023837824498769034,
+      "tuple": [
+        120.0,
+        17.0,
+        8.88171152398,
+        62.73507412523
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.5070111603805582,
+          0.5070111603805582,
+          0.5070111603805582
+        ],
+        "matern_k24_k32_disagreement": [
+          1.1785911707344848e-05,
+          0.0005697650670592933,
+          0.0005576822874324614
+        ],
+        "native_std_k24": [
+          7.262111957241277e-05,
+          0.006499135283222703,
+          0.006483683873589997
+        ],
+        "nearest_training_distance": [
+          0.06108659225749677,
+          0.06108659225749677,
+          0.06108659225749677
+        ],
+        "rbf_matern_disagreement": [
+          5.01713418934048e-05,
+          0.00022940664472464095,
+          0.00013567189285156517
+        ]
+      },
+      "acquisition_score": 0.059272795208643196,
+      "angle": [
+        9.825595553033,
+        70.156757114455
+      ],
+      "candidate_index": 3210,
+      "cutoff_order": 0,
+      "mask_signature": "10;11;12;13;14;15;32;33;34;35;36;37",
+      "nearest_training_distance": 0.11371817120486513,
+      "rare_unseen_topology": false,
+      "selection_reasons": [
+        "matern_error_or_disagreement_hotspot"
+      ],
+      "signed_cutoff_margin": 0.02912131675197649,
+      "tuple": [
+        120.0,
+        17.0,
+        9.825595553033,
+        70.156757114455
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.5062656189363733,
+          0.5062656189363733,
+          0.5062656189363733
+        ],
+        "matern_k24_k32_disagreement": [
+          4.2431704727725285e-07,
+          0.0005530788416080365,
+          0.000553800026574671
+        ],
+        "native_std_k24": [
+          1.2897268911978726e-05,
+          0.005314063711551624,
+          0.005310910025197453
+        ],
+        "nearest_training_distance": [
+          0.06339894519162118,
+          0.06339894519162118,
+          0.06339894519162118
+        ],
+        "rbf_matern_disagreement": [
+          0.0,
+          0.001112250390465188,
+          0.0011513922643538363
+        ]
+      },
+      "acquisition_score": 0.059194003381133,
+      "angle": [
+        8.581886843313,
+        65.111552216113
+      ],
+      "candidate_index": 834,
+      "cutoff_order": 0,
+      "mask_signature": "8;9;10;11;12;13;14;15;30;31;32;33;34;35;36;37",
+      "nearest_training_distance": 0.11603052413898954,
+      "rare_unseen_topology": false,
+      "selection_reasons": [
+        "matern_error_or_disagreement_hotspot"
+      ],
+      "signed_cutoff_margin": 0.022267430982007008,
+      "tuple": [
+        120.0,
+        17.0,
+        8.581886843313,
+        65.111552216113
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.6149585064898947,
+          0.6149585064898947,
+          0.6149585064898947
+        ],
+        "matern_k24_k32_disagreement": [
+          0.0023293727365197594,
+          0.008775805107405768,
+          0.011105474711844967
+        ],
+        "native_std_k24": [
+          0.007239379817913999,
+          0.049663300512815055,
+          0.04846441035876913
+        ],
+        "nearest_training_distance": [
+          0.16770573769158928,
+          0.16770573769158928,
+          0.16770573769158928
+        ],
+        "rbf_matern_disagreement": [
+          0.011963085096354475,
+          0.0018826149230371978,
+          0.013889263429371515
+        ]
+      },
+      "acquisition_score": 0.10078318940755313,
+      "angle": [
+        4.733701110352,
+        82.92918481864
+      ],
+      "candidate_index": 280,
+      "cutoff_order": -1,
+      "mask_signature": "12;13;14;15;36;37",
+      "nearest_training_distance": 0.22033731663895764,
+      "rare_unseen_topology": true,
+      "selection_reasons": [
+        "high_azimuth_difficulty",
+        "low_grazing_or_cutoff_side"
+      ],
+      "signed_cutoff_margin": 0.0001554314060638884,
+      "tuple": [
+        120.0,
+        17.0,
+        4.733701110352,
+        82.92918481864
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.6149585064898947,
+          0.6149585064898947,
+          0.6149585064898947
+        ],
+        "matern_k24_k32_disagreement": [
+          0.0017366878180310927,
+          0.00018948874912890756,
+          0.00154690220098296
+        ],
+        "native_std_k24": [
+          0.05554941763646175,
+          0.002639720485540601,
+          0.05422856362514154
+        ],
+        "nearest_training_distance": [
+          0.11015073550174387,
+          0.11015073550174387,
+          0.11015073550174387
+        ],
+        "rbf_matern_disagreement": [
+          0.031410638832294495,
+          0.0,
+          0.03139380971660171
+        ]
+      },
+      "acquisition_score": 0.09866952009289215,
+      "angle": [
+        1.096476651262,
+        82.267959779128
+      ],
+      "candidate_index": 4028,
+      "cutoff_order": -1,
+      "mask_signature": "12;13;14;15;36;37",
+      "nearest_training_distance": 0.16278231444911223,
+      "rare_unseen_topology": true,
+      "selection_reasons": [
+        "high_azimuth_difficulty",
+        "low_grazing_or_cutoff_side"
+      ],
+      "signed_cutoff_margin": 0.00010465968432626926,
+      "tuple": [
+        120.0,
+        17.0,
+        1.096476651262,
+        82.267959779128
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "matern_k24_k32_disagreement": [
+          4.706657028438028e-06,
+          0.0015344288181683339,
+          0.0015294252932205785
+        ],
+        "native_std_k24": [
+          4.818859502377463e-05,
+          0.012922846867086809,
+          0.012913503728452867
+        ],
+        "nearest_training_distance": [
+          0.15909605971983043,
+          0.15909605971983043,
+          0.15909605971983043
+        ],
+        "rbf_matern_disagreement": [
+          0.0,
+          0.0019407542235182948,
+          0.0019507262190608297
+        ]
+      },
+      "acquisition_score": 0.07120436042470918,
+      "angle": [
+        9.00233755447,
+        1.202627168968
+      ],
+      "candidate_index": 1829,
+      "cutoff_order": 0,
+      "mask_signature": "0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;22;23;24;25;26;27;28;29;30;31;32;33;34;35;36;37",
+      "nearest_training_distance": 0.2117276386671988,
+      "rare_unseen_topology": false,
+      "selection_reasons": [
+        "ordinary_interior_hole"
+      ],
+      "signed_cutoff_margin": 0.024484350717540515,
+      "tuple": [
+        120.0,
+        17.0,
+        9.00233755447,
+        1.202627168968
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "matern_k24_k32_disagreement": [
+          3.239022083788214e-06,
+          0.0011138698320890448,
+          0.0011103339420858636
+        ],
+        "native_std_k24": [
+          4.796344210675694e-05,
+          0.012603781062946656,
+          0.01259448703295382
+        ],
+        "nearest_training_distance": [
+          0.1573800768250654,
+          0.1573800768250654,
+          0.1573800768250654
+        ],
+        "rbf_matern_disagreement": [
+          0.0,
+          0.00202718244228244,
+          0.0020454253823088873
+        ]
+      },
+      "acquisition_score": 0.07083323500101663,
+      "angle": [
+        8.980229685083,
+        3.246306907386
+      ],
+      "candidate_index": 2085,
+      "cutoff_order": 0,
+      "mask_signature": "0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;22;23;24;25;26;27;28;29;30;31;32;33;34;35;36;37",
+      "nearest_training_distance": 0.21001165577243378,
+      "rare_unseen_topology": false,
+      "selection_reasons": [
+        "ordinary_interior_hole"
+      ],
+      "signed_cutoff_margin": 0.024365226593178968,
+      "tuple": [
+        120.0,
+        17.0,
+        8.980229685083,
+        3.246306907386
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "matern_k24_k32_disagreement": [
+          2.26656190705863e-06,
+          0.004216585593669987,
+          0.004214022163843413
+        ],
+        "native_std_k24": [
+          4.584004857037554e-05,
+          0.00933647197696835,
+          0.009328606763176537
+        ],
+        "nearest_training_distance": [
+          0.14951244410645817,
+          0.14951244410645817,
+          0.14951244410645817
+        ],
+        "rbf_matern_disagreement": [
+          0.0,
+          0.00554999405360095,
+          0.005570463506753877
+        ]
+      },
+      "acquisition_score": 0.07038385502006925,
+      "angle": [
+        9.040280255023,
+        5.282870829105
+      ],
+      "candidate_index": 165,
+      "cutoff_order": 0,
+      "mask_signature": "0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;22;23;24;25;26;27;28;29;30;31;32;33;34;35;36;37",
+      "nearest_training_distance": 0.20214402305382653,
+      "rare_unseen_topology": false,
+      "selection_reasons": [
+        "ordinary_interior_hole"
+      ],
+      "signed_cutoff_margin": 0.02468945790951782,
+      "tuple": [
+        120.0,
+        17.0,
+        9.040280255023,
+        5.282870829105
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.6149585064898947,
+          0.6149585064898947,
+          0.6149585064898947
+        ],
+        "matern_k24_k32_disagreement": [
+          0.003481799726510496,
+          0.0020393494658987785,
+          0.001442153392692371
+        ],
+        "native_std_k24": [
+          0.012430101827792825,
+          0.03933985658018321,
+          0.037671671726323144
+        ],
+        "nearest_training_distance": [
+          0.11149180887265803,
+          0.11149180887265803,
+          0.11149180887265803
+        ],
+        "rbf_matern_disagreement": [
+          0.024051033404609106,
+          0.027159516196806444,
+          0.05125411301139542
+        ]
+      },
+      "acquisition_score": 0.09644147759092056,
+      "angle": [
+        4.106844223104,
+        82.684139208868
+      ],
+      "candidate_index": 3816,
+      "cutoff_order": -1,
+      "mask_signature": "12;13;14;15;36;37",
+      "nearest_training_distance": 0.1641233878200264,
+      "rare_unseen_topology": true,
+      "selection_reasons": [
+        "space_filling_high_acquisition"
+      ],
+      "signed_cutoff_margin": 0.0008155274697408954,
+      "tuple": [
+        120.0,
+        17.0,
+        4.106844223104,
+        82.684139208868
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.6149585064898947,
+          0.6149585064898947,
+          0.6149585064898947
+        ],
+        "matern_k24_k32_disagreement": [
+          0.0010925846428879462,
+          0.004375555515755959,
+          0.00546843702656329
+        ],
+        "native_std_k24": [
+          0.0034555139381988987,
+          0.0416017561197079,
+          0.0409269940995709
+        ],
+        "nearest_training_distance": [
+          0.159377340816632,
+          0.159377340816632,
+          0.159377340816632
+        ],
+        "rbf_matern_disagreement": [
+          0.006710033528778017,
+          0.007595933915443377,
+          0.0008423369766855001
+        ]
+      },
+      "acquisition_score": 0.09460727503457811,
+      "angle": [
+        5.308891468216,
+        83.060868540779
+      ],
+      "candidate_index": 1342,
+      "cutoff_order": -1,
+      "mask_signature": "12;13;14;15;36;37",
+      "nearest_training_distance": 0.21200891976400035,
+      "rare_unseen_topology": true,
+      "selection_reasons": [
+        "space_filling_high_acquisition"
+      ],
+      "signed_cutoff_margin": 0.0006210509438706602,
+      "tuple": [
+        120.0,
+        17.0,
+        5.308891468216,
+        83.060868540779
+      ]
+    },
+    {
+      "acquisition_components": {
+        "cutoff_topology_bonus": [
+          0.6149585064898947,
+          0.6149585064898947,
+          0.6149585064898947
+        ],
+        "matern_k24_k32_disagreement": [
+          2.012194080364255e-05,
+          0.010595170702079095,
+          0.010574751893355985
+        ],
+        "native_std_k24": [
+          0.00029665923689745674,
+          0.03266990803619924,
+          0.032600892678442496
+        ],
+        "nearest_training_distance": [
+          0.17801985777065382,
+          0.17801985777065382,
+          0.17801985777065382
+        ],
+        "rbf_matern_disagreement": [
+          1.3060799740108339e-05,
+          0.0009753004711654986,
+          0.0010319246808853564
+        ]
+      },
+      "acquisition_score": 0.09357615700847746,
+      "angle": [
+        6.854549495038,
+        83.504671286792
+      ],
+      "candidate_index": 1942,
+      "cutoff_order": -1,
+      "mask_signature": "12;13;14;15;36;37",
+      "nearest_training_distance": 0.23065143671802218,
+      "rare_unseen_topology": true,
+      "selection_reasons": [
+        "space_filling_high_acquisition"
+      ],
+      "signed_cutoff_margin": 0.0019936217892752017,
+      "tuple": [
+        120.0,
+        17.0,
+        6.854549495038,
+        83.504671286792
+      ]
+    }
+  ],
+  "response_blind": true,
+  "schema_version": "task004.active-learning-round1-plan.v2",
+  "status": "ready_for_m4f",
+  "surrogate_training_code_sha": "fee256d732b97767a38d1cc8aa0fb3acecd4da50",
+  "training_tuple_sha256": "bfd68a374e5510284a972c640c6332d818917052ae30bd77c10af5240f0500ef",
+  "validation_response_accessed": false,
+  "validation_tuple_sha256": "af6cc7c87236aa2e1050b40f1cca1282932e071b22b3b767057b94bc8c11af57",
+  "weights": {
+    "cutoff_topology_bonus": 0.1,
+    "matern_k24_k32_disagreement": 0.25,
+    "native_std": 0.35,
+    "nearest_training_distance": 0.1,
+    "rbf_matern_disagreement": 0.2
+  }
+}
