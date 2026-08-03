@@ -136,6 +136,16 @@ src/test/test_28_direct_memory_telemetry.py 的唯一 hunk：
 因此 inherited-test repair Gate 通过。该结果只证明继承测试合同与当前
 Task036 V8 生产代码一致，不等于 Task37 F0 或后续 iterative Gate 通过。
 
+## F0 首次启动的受控负证据
+
+| 项目 | 记录 |
+|---|---|
+| 运行范围 | p6/h10、S、full-solve、MPI8、`assembly_time_static_condensed`；direct watchdog 32 GiB warning / 48 GiB termination / 7200 s，swap=0 |
+| 结果 | 2.69 s 内在 PDE 组装前 fail-fast；不是内存、超时或数值 Gate 结果 |
+| 精确异常 | `ValueError: variable-p live observer requires the exact-sequence assembly-time variable-p backend`（8 ranks） |
+| 根因 | F0 callback 被错误传入既有 `variable_p_live_observer` 插槽，未传入 `solution_observer`；已授权接线修复并由 test217 覆盖 |
+| 原始证据 | `/tmp/task037_f0_direct_authority_20260803.log`；ignored `benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f0_direct_p6_h10_mpi8_14a84f87/failed_watchdog_record.json` |
+
 ## 结论边界
 
 Stage 0 inherited-test repair 已完成；没有运行 full repository pytest、

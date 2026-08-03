@@ -1,9 +1,13 @@
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 
 from benchmarks.run_task033_full3d_watchdog import (
     _parse_args,
+    _worker,
     _task037_canonical_identity,
     _task037_collect_owned_vector,
 )
@@ -53,3 +57,25 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
                     "--task037-f0-vector-observer",
                 ]
             )
+
+    def test_f0_observer_forwards_to_solution_slot(self):
+        args = SimpleNamespace(
+            run_dir=Path("unused"),
+            task037_f0_vector_observer=True,
+            task035d_nested_p_dwr_phase=None,
+            task035d_selective_face_dwr_phase=None,
+        )
+        with (
+            patch(
+                "benchmarks.run_task033_full3d_watchdog._full3d_config",
+                return_value=object(),
+            ) as config,
+            patch(
+                "src.solvers.solve_maxwell_3d_stage_4b_block_grating.run_stage4b_block_grating_3d_case"
+            ) as solver,
+        ):
+            self.assertEqual(_worker(args), 0)
+        config.assert_called_once_with(args)
+        kwargs = solver.call_args.kwargs
+        self.assertIsNotNone(kwargs["solution_observer"])
+        self.assertIsNone(kwargs["variable_p_live_observer"])

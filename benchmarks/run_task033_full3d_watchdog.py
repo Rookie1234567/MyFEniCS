@@ -619,11 +619,12 @@ def _worker(args: argparse.Namespace) -> int:
         run_stage4b_block_grating_3d_case,
     )
 
-    observer = (
+    solution_observer = (
         _task037_f0_solution_observer(args.run_dir)
         if args.task037_f0_vector_observer
         else None
     )
+    observer = None
     retain_local_schur = False
     if args.task035d_nested_p_dwr_phase is not None:
         from src.adaptivity.variable_p_nested_dwr import (
@@ -689,6 +690,7 @@ def _worker(args: argparse.Namespace) -> int:
     run_stage4b_block_grating_3d_case(
         _full3d_config(args),
         args.run_dir,
+        solution_observer=solution_observer,
         variable_p_live_observer=observer,
         variable_p_retain_local_schur_for_research=(retain_local_schur),
     )
