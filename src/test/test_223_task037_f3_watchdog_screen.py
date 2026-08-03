@@ -80,6 +80,7 @@ def test_parser_scope_and_worker_command(tmp_path):
     ]
     ordinary = watchdog._parse_args(base)
     assert ordinary.task037_f3_screen is None
+    assert ordinary.task037_f3_full is False
     valid = []
     for screen_iterations in (20, 100, 200):
         valid_args = base + [
@@ -98,6 +99,20 @@ def test_parser_scope_and_worker_command(tmp_path):
         assert command.count("--task037-f3-screen") == 1
         assert command[position + 1] == str(screen_iterations)
         valid = valid_args
+    full_args = base + [
+        "--task037-f3-full",
+        "--warning-gib",
+        "10",
+        "--terminate-gib",
+        "14",
+        "--timeout-seconds",
+        "7200",
+    ]
+    full = watchdog._parse_args(full_args)
+    assert full.task037_f3_full
+    full_command = watchdog._worker_command(full, tmp_path)
+    assert full_command.count("--task037-f3-full") == 1
+    assert "--task037-f3-screen" not in full_command
     bad_iterations = valid.copy()
     bad_iterations[bad_iterations.index("--task037-f3-screen") + 1] = "3000"
     missing_caps = valid.copy()
@@ -108,6 +123,7 @@ def test_parser_scope_and_worker_command(tmp_path):
         bad_iterations,
         missing_caps,
         valid + ["--task037-f0-vector-observer"],
+        full_args + ["--task037-f3-screen", "20"],
     ):
         with pytest.raises(SystemExit):
             watchdog._parse_args(invalid)
@@ -146,12 +162,13 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         task037_f0_vector_observer=False,
         task037_f1_direct_trace_oracle=None,
         task037_f1_direct_trace_sha256=None,
-        task037_f3_screen=200,
+        task037_f3_screen=None,
+        task037_f3_full=True,
         task035d_nested_p_dwr_phase=None,
         task035d_selective_face_dwr_phase=None,
     )
     assert watchdog._worker(args) == 0
-    assert iterations_seen == [200]
+    assert iterations_seen == [3000]
     history = (tmp_path / "task037_f3_residual_history.jsonl").read_text()
     lines = [json.loads(line) for line in history.splitlines()]
     assert len(lines) == 3
@@ -168,6 +185,7 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
 def test_f3_qualification_uses_core_audit_gate():
     args = SimpleNamespace(
         task037_f3_screen=20,
+        task037_f3_full=False,
         run_kind="full-solve",
         allow_swap=False,
         polarization_kind="s",
@@ -255,6 +273,33 @@ def test_f3_qualification_uses_core_audit_gate():
         full_augmented_true_residual=0.049,
     )
     assert not watchdog._task037_f3_screen_gate(slow, 200, 300.0)["screen_200"]
+    full = _audit(3000)
+    full["reported_history"][-1][1] = 1.0e-7
+    full["condensed_true_samples"][-1][1] = 1.0e-7
+    full["final"].update(
+        converged_reason=1,
+        reported_relative_residual=1.0e-7,
+        condensed_true_residual=1.0e-7,
+        full_augmented_true_residual=1.0e-7,
+    )
+    args_full = SimpleNamespace(
+        **{**vars(args), "task037_f3_screen": None, "task037_f3_full": True}
+    )
+    summary_full = {
+        **summary,
+        "ksp_converged_reason": 1,
+        "linear_system_relative_residual": 1.0e-7,
+        "official_result": True,
+        "postprocess_skipped": False,
+        "external_rta_gate_pass": True,
+        "external_reported_relative_residual": 1.0e-7,
+        "external_condensed_true_residual": 1.0e-7,
+        "external_full_augmented_true_residual": 1.0e-7,
+    }
+    assert watchdog._qualify(
+        **{**qualify_kwargs, "args": args_full, "solver_summary": summary_full},
+        task037_f3_core_audit=full,
+    )["pass"]
     bad_trend = _audit(100)
     bad_trend["reported_history"][-1][1] = 0.5
     assert not watchdog._task037_f3_screen_gate(bad_trend, 100, None)["screen_100"]
@@ -279,6 +324,7 @@ def test_f3_qualification_uses_core_audit_gate():
 def test_ordinary_full_solve_rules_remain_strict():
     args = SimpleNamespace(
         task037_f3_screen=None,
+        task037_f3_full=False,
         run_kind="full-solve",
         allow_swap=False,
         polarization_kind="s",

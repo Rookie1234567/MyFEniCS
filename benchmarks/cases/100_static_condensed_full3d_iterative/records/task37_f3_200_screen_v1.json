@@ -1,0 +1,92 @@
+{
+  "record_id": "task37_f3_200_screen_v1",
+  "status": "task037_f3_200_screen_pass",
+  "classification": "screen_pass_full_authorized_resource_negative_at_screen",
+  "source": {
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "verified_clean_sha": "2bbfd336861079e6386ec3d610304f4f9e81f587",
+    "head_after_sha": "2bbfd336861079e6386ec3d610304f4f9e81f587",
+    "clean_before_after": true
+  },
+  "identity": {
+    "degree": 6,
+    "h_nm": 10.0,
+    "polarization": "S",
+    "theta_normal_deg": 80.0,
+    "phi_deg": 0.0,
+    "mpi_size": 8,
+    "backend": "assembly_time_static_condensed",
+    "run_kind": "full-solve"
+  },
+  "command": "python -m benchmarks.run_task033_full3d_watchdog --degree 6 --h-nm 10 --polarization-kind s --run-kind full-solve --mpi-size 8 --profile default --stage4-full3d-assembly-backend assembly_time_static_condensed --task035c-p6-h10-gate --task035c-p6-preflight-authority benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json --task035c-p6-preflight-sha256 96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8 --verified-clean-sha 2bbfd336861079e6386ec3d610304f4f9e81f587 --task037-f3-screen 200 --poll-interval 0.25 --warning-gib 10 --terminate-gib 14 --timeout-seconds 1800 --run-dir benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_200_assembled_p6_h10_mpi8_2bbfd336",
+  "run_dir": "benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_200_assembled_p6_h10_mpi8_2bbfd336",
+  "candidate": {
+    "outer_ksp": "fgmres",
+    "pc_side": "right",
+    "norm_type": "unpreconditioned",
+    "restart": 90,
+    "rtol": 1.0e-6,
+    "atol": 0.0,
+    "max_it": 200,
+    "num_slabs": 16,
+    "overlap_fraction": 0.25,
+    "absorption_shift": 0.1
+  },
+  "decision_gate": {
+    "full_augmented_true_residual_le_0_05": {"observed": 3.58859197925002e-05, "limit": 0.05, "pass": true},
+    "predicted_iterations_le_3000": {"observed": 323, "limit": 3000, "pass": true},
+    "predicted_wall_seconds_le_7200": {"observed": 473.764246149541, "limit": 7200.0, "pass": true},
+    "formula": "last40 endpoint log-linear reported residual; observed worker elapsed * predicted_iterations / observed_iterations"
+  },
+  "solver": {
+    "reason": -3,
+    "reason_name": "DIVERGED_MAX_IT",
+    "iterations": 200,
+    "external_linear_solver_port": true,
+    "reported_relative_residual": 3.588591979265169e-05,
+    "condensed_true_residual": 3.58859197925002e-05,
+    "full_augmented_true_residual": 3.58859197925002e-05,
+    "external_rta_gate_pass": false,
+    "official_result": false,
+    "postprocess_skipped": true,
+    "rta": "not_run",
+    "channels_12": "not_run"
+  },
+  "residuals": {
+    "reported_history": {"0": 1.0, "20": 0.03411129477168684, "100": 0.0006069564835812949, "160": 0.00011502699092537612, "200": 3.588591979265169e-05},
+    "condensed_true_samples": {"0": 1.0, "10": 0.1212492052824569, "20": 0.0341112947716869, "200": 3.58859197925002e-05},
+    "last40_log_rate": -0.02912054480737944
+  },
+  "application": {
+    "active_rows": 51192,
+    "augmented_rows": 51272,
+    "auxiliary_rows": 80,
+    "operator_apply_count": 682,
+    "coarse": {"dimension": 75, "rank": 75, "apply_count": 200},
+    "partition": {"coverage_pass": true, "auxiliary_rows_in_subdomains": 0, "slab_row_counts": [8424, 8424, 8424, 8424, 8424, 8424, 8424, 11988, 11988, 8424, 8424, 8424, 8424, 8424, 8424, 8424]},
+    "smoother": {"factor_only_storage": true, "local_solver_type_counts": {"ilu": 16}, "local_ksp_iterations": 1, "smoother_iterations": 2},
+    "factor_csr_payload_estimate_bytes": 2067298912,
+    "no_global_factor": {"global_direct_factor_count": 0, "global_schur_matrix_materialized": false, "n_aux": 80, "allowed_factor_scope": ["SmallDenseInverse(H)", "dense coarse LU", "COMM_SELF factor_only ILU(0)"]}
+  },
+  "resources": {
+    "process_tree_simultaneous_rss_gib": 12.970687866210938,
+    "worker_simultaneous_rss_mb": 13267.339,
+    "worker_simultaneous_pss_mb": 11980.865234375,
+    "worker_simultaneous_uss_mb": 11776.5078125,
+    "swap_mb": 0.0,
+    "warning_triggered": true,
+    "terminated_for_memory": false,
+    "terminated_for_timeout": false,
+    "timeout_seconds": 1800.0
+  },
+  "timings_seconds": {"core_setup": 26.442158746009227, "core_solve": 158.12625554698752, "core_recovery": 0.03227345703635365, "core_total": 184.63212100201054, "worker_elapsed": 293.3524743960006, "stage4_runner": 284.14666851900984},
+  "raw_evidence": {
+    "watchdog_summary.json": "ff64647b0a900588b97aa4fdb9a6ca8160e9ce509505622876378cc3e970686b",
+    "run_summary.json": "b6e0e8330277e90650b9fc54cee9c5e61b4ec93c039b74a9b5e4a60ca3040fe9",
+    "task037_f3_core_audit.json": "a5c0a129a130215e9daf5cb0cbce6e330898017dd443448a10a24cb0485af4c7",
+    "task037_f3_residual_history.jsonl": "41267f1e80068a5f1decbbfce05cc71ec66fcba741923f96775bdebb798de786",
+    "memory_timeline.csv": "33680f1e143f92790377b485f71544b93844558abbd3b951b131c439e1ae19c0",
+    "progress_3d.jsonl": "7ccbb1c670e3ae6b5e2865dbfc62010b92d584f295079bd0e5673a7540ef03d2",
+    "worker_stdout.txt": "30eca6fd54eb29aed9d1908a5bce1f3ecce45c29a320dfc5f3995888da8143c5"
+  }
+}
