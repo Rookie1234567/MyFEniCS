@@ -528,7 +528,7 @@ actual compressed Hybrid A004/A007          = locked
 p6 / wavelength continuation / 0.7 nm       = locked
 RCWA / POD beyond frozen C1 / H-matrix      = not authorized
 iterative solver                            = forbidden / not run
-master merge                                = not authorized
+master merge                                = not_authorized
 ```
 
 若 C1b 为负，Task036 的 direct low-rank interface compression 研究应在 13.5 nm 处正式收口：
@@ -561,3 +561,337 @@ Task036 中自动切换。
 > 承认其固定 operator、全局非局部和 source-rank 饱和边界。只批准一次有 80/16 分离的
 > 96-RHS teacher；该实验必须直接回答真实可达响应是否在 `r<=80` 内可压缩。无论正负，完成
 > 后提交 `response_v7.md` 并停止。
+
+---
+
+## 12. 对 `reply_review_report_v7.md` 的二次审阅与绑定修订
+
+### 12.1 总体处置
+
+```text
+reviewed_reply                  = docs/task036_forward_solver_bugfix_hardening/reply_review_report_v7.md
+reviewed_reply_blob             = c6d81ddcbc09026aacc67332b298aa0a7b084ac8
+reply_disposition               = ACCEPTED_WITH_MATERIAL_CLARIFICATIONS
+B1_closure                      = unchanged / accepted
+C1b_80_16_split                 = accepted
+C1b_source_name                 = revised_below
+C1b_formal_coefficient          = full-action minimum-residual lower-bound oracle
+teacher_projection_coefficient  = diagnostic_only
+fixed_operator_source_claim     = strengthened_conditionally_by_induced_norm
+C1c_actual_reduced_solver       = still_locked
+```
+
+回复总体上具有良好的辩证性，特别是以下几点值得接受并纳入执行：
+
+- `A004-S` 是冻结 operator 的算例标签，而 96 列内部的 `s/p` 是端口通道极化，二者不能混称；
+- 16 列 holdout 只能获得同一 operator 下的 source-space 信用，不能外推为跨角度或跨几何；
+- `X_r` 必须是完整 11-plane trial response，不能用 endpoint-only projection 代替全算子残差；
+- 各项正式误差不能分别选择最有利的 coefficient 后再拼接成“同时通过”；
+- `10 GiB / 7200 s` 只是离线 teacher 的 safety cap，不是最终 Hybrid 工程 Gate；
+- C1b-0 / C1b-1 / C1b-2 的分段能够防止再次发生边运行、边改算法的开放式执行；
+- minimum-residual QR 与 periodic-gauge pullback 都应继续锁定在后续阶段。
+
+但回复中仍有两处需要实质修订：
+
+1. 96 列是否都能称为“远场物理 incoming channels”，必须由 mode policy 和 `propagating`
+   identity 决定；
+2. formal `best-trial action residual` 不应由 teacher-solution projection coefficient 冒充，而应
+   使用 trial span 内冻结的 full-action minimum-residual lower bound。
+
+此外，回复对 same-operator holdout 的信用表述略显过度保守：若 96 列构成冻结端口 source
+空间的完整基，且在 rank 选择后对全部 96 列计算诱导算子范数，则可以获得“冻结 96 维 source
+空间上一致”的信用；它仍然不是跨 operator 信用。
+
+### 12.2 接受的 source identity 澄清，并补充传播属性
+
+`build_hybrid_local_incoming_load_columns()` 确实按每侧现有 `PortMode3D` 顺序构造 incoming
+companions，每列可绑定：
+
+```text
+(side, m, n, polarization)
+```
+
+但 `outgoing_port_modes_3d()` 的选取语义还包括：
+
+- `auto_propagating`：选择零级或传播级；
+- `zero_order`：只选择零级；
+- `manual`：可包含非传播级；
+- companion 继承 `propagating` 与 `rayleigh_warning`。
+
+因此 source table 除回复要求的四元组外，还必须记录：
+
+```text
+stage4_dtn_order_policy
+propagating
+rayleigh_warning
+power_per_unit_amplitude
+beta / vertical_sign
+```
+
+正式中性名称使用：
+
+```text
+external_port_companion_load_columns
+```
+
+只有 `propagating=true` 且对应远场可入射解释明确的列，才可简称 far-field physical incoming
+channels。若当前 96 列全部满足该条件，source table 应以实测字段证明，而不是由“48 列/侧”
+数量推断。
+
+80/16 split 的覆盖检查在已有 side、polarization、zero/nonzero order 之外，还应覆盖：
+
+```text
+propagating / nonpropagating（若两类均存在）
+rayleigh_warning（若存在）
+不同 |m| / |n| 层级
+```
+
+这不会增加数值运行，只是让预冻结 source identity 更诚实、更可迁移。
+
+### 12.3 same-operator holdout 的信用：同意边界，但增加完整 96 维算子范数
+
+回复正确指出，80/16 split 首先是防止 rank-selection leakage。16 个 holdout 不参与：
+
+- residual Gram；
+- POD eigenvectors；
+- prefix/rank 选择；
+- 任何运行后调参。
+
+但是，在 prefix 和首次通过 rank 完全冻结后，96 个 canonical source columns 都会被评价。如果：
+
+1. 这 96 列在冻结 source metric 下满秩；
+2. 它们构成当前 external port source space 的完整坐标基；
+3. reduced trial response 对全部 96 列使用同一线性 coefficient map；
+4. 不再根据 16 个 holdout 修改 basis 或 rank；
+
+那么最终证据不只是 16 个离散样本的“插值”。它可以证明该固定 operator 在完整冻结 96 维
+source space 上的统一误差界。
+
+设所有 source coefficient 为 `c`，完整 action residual map 为：
+
+$$
+E_r c = K X_r(c)-B c.
+$$
+
+除 per-column max/aggregate 外，应在小型 96 维空间中报告一个基变换不变的最坏情况量。若使用
+source metric `G_S` 和 residual metric `G_R`，可计算：
+
+$$
+\epsilon_r
+=\left\|G_R^{1/2}E_rG_S^{-1/2}\right\|_2.
+$$
+
+若正式归一化使用 RHS 范数，也可在 `B^H G_R B` 满秩时解广义本征问题：
+
+$$
+E_r^H G_R E_r v
+=\epsilon_r^2 B^H G_R B v.
+$$
+
+实现要求：
+
+- 只处理 `96×96` Gram/generalized eigenproblem；
+- 使用 Cholesky 或明确的满秩 quotient，不显式形成 inverse；
+- source/RHS Gram 若秩亏必须 fail closed，并报告有效商空间；
+- 该指标只在 rank 冻结后计算，不能反向用于选择 rank；
+- per-column maximum 仍必须保留，不能只报一个谱范数。
+
+若该诱导范数和 V7 既有 Gate 均通过，允许写：
+
+```text
+uniform_on_frozen_96D_port_source_space = pass
+```
+
+但仍必须同时写：
+
+```text
+cross_operator_generalization = not_run
+cross_angle_geometry_wavelength = not_demonstrated
+```
+
+因此，本 Review 不同意把任何正结果永久限制为“若干 source 插值样本”，也不同意把它升级为
+跨 operator production 结论；正确结论位于二者之间。
+
+### 12.4 formal action residual 的 coefficient：修正回复中的 teacher-projection 口径
+
+回复提出可由 teacher response 在某个解空间度量下投影得到 coefficient，再计算 `KX_r-B`。
+该量有价值，但它不是 formal `best-trial action residual`，因为解空间最佳逼近 coefficient 一般
+不等于 action/residual 空间中的最小残差 coefficient。
+
+对每个冻结 prefix，令完整 11-plane trial basis 为 `R_r`，定义：
+
+$$
+Y_r=K R_r.
+$$
+
+C1b 的 formal trial-capacity 下界应为：
+
+$$
+a_r^{MR}(b)
+=\arg\min_a\left\|Y_ra-b\right\|_{G_R},
+$$
+
+$$
+\rho_r^{MR}(b)
+=\frac{\left\|Y_ra_r^{MR}-b\right\|_{G_R}}
+       {\left\|b\right\|_{G_R}}.
+$$
+
+这与 B1 已使用的 best-trial lower-bound 语义一致：它回答“即使给这个 trial span 最有利的
+系数，残差最低能到多少”。它仍不是最终 production Petrov formulation，也不解锁 C1c。
+
+C1b 允许用一次小型 rank-revealing QR/SVD 计算该**容量下界**，但约束为：
+
+- 不构造新的 adjoint-load framework；
+- 不形成 normal equations；
+- 不使用 pseudoinverse、regularization、retry 或 fallback；
+- rank 不满时 fail closed；
+- coefficient 只用于离线 best-trial capacity；
+- 不计算 official R/T/A，不声称 actual reduced Hybrid solve。
+
+同时可另行报告：
+
+```text
+teacher_projection_action_residual
+```
+
+其 coefficient 来自 teacher solution 在 joint-Cauchy 或 trace metric 下的投影。两种 coefficient
+必须分别命名、分别报告，不能挑选较小值作为正式 Gate。
+
+正式 pass 行中：
+
+- action residual 使用 `a_r^{MR}`；
+- endpoint、11-plane trace 和 joint-Cauchy 的 solver-relevant 误差也使用同一 `a_r^{MR}`；
+- 各自数学最佳逼近误差可作为额外 lower-bound diagnostics，但不能跨 coefficient 拼成同时通过。
+
+C1c 继续保持 locked。C1c 要回答的是：如何把这种最小残差思想整理成一个可重复、可恢复
+observable、可实测整作业资源的 actual reduced solver；C1b 只做 trial-capacity oracle。
+
+### 12.5 `r=80` 的 capacity 闭合是预期现象，决策重点必须放在 holdout 和低 rank 前缀
+
+capacity set 只有 80 列。若其 core-complement 有效 rank 接近 80，则在 `r=80` 时 capacity
+endpoint response 接近舍入级闭合是构造预期，不获得独立 compression credit。
+
+因此 `response_v7.md` 必须突出：
+
+- 首次通过 rank，而不是只报 `r=80`；
+- `r=20/40/60` 的 singular decay、discarded energy 和 action residual；
+- 16 个 holdout 的 per-column maximum、aggregate 和诱导最坏情况；
+- `r=80` 是否仅仅到达 training-rank ceiling；
+- `d_port/1200` 与 `d_port/13200` 两种维度口径，不能只选择更好看的比例。
+
+若仅在 `r=80` 通过，可分类为：
+
+```text
+capacity_pass_at_training_rank_ceiling
+```
+
+它仍可获得 V7 限定的固定 operator 数学信用，但属于边界正结果，不能自动解释为快速谱衰减或
+局部端口低秩。
+
+### 12.6 正结果仍是固定长度、固定 operator 的全局 ROM，不是可复用 localized port
+
+即使 C1b 完全通过，当前 basis 仍通过 bottom/top 共享 coefficient 和 11-plane harmonic
+extension定义，绑定：
+
+```text
+wavelength / material
+kx / ky / Floquet phase
+p / h / Ny
+cell_count = 10
+trace_plane_z = 10,20,...,110 nm
+bottom/top endcap and DtN identity
+geometry and interface positions
+stage4_dtn_order_policy
+```
+
+因此正结果的准确命名应为：
+
+```text
+fixed_operator_fixed_length_paired_response_ROM
+```
+
+它不能直接证明：
+
+- bottom/top localized corrector 已找到；
+- 改变中间长度或 cell count 后 basis 仍适用；
+- 改角度、几何、材料、网格或波长后仍适用；
+- 0.7 nm 下 rank 比例保持；
+- direct Hybrid 的 cold setup 已有工程优势。
+
+但这并不意味着它没有价值。若后续服务是在同一 operator 上处理多 RHS，或在严格冻结的配置中
+重复求解，它可能成为有效的 global ROM。对几何反演而言 operator 会随参数变化，因此仍需
+跨 operator 验证或更新策略，不能直接当成代理模型基础已完成。
+
+### 12.7 minimum-residual QR 的 metric：接受“范数一致”，不强制新增物理 metric 框架
+
+回复正确要求 QR 与正式显式 residual 使用同一内积。但 binding rule 是：
+
+```text
+QR norm == official residual norm
+```
+
+而不是无条件引入新的 physical `G`-QR。
+
+- 若 exact trace-chain 的正式 true residual 使用 canonical complex Euclidean `2`-norm，则标准
+  complex QR / rank-revealing QR 就是正确且优先的实现；
+- 若 C1b 明确冻结加权 residual metric，则先将 `Y` 和 `b` 映射到同一 whitened residual
+  coordinates，再做标准 QR；
+- 不得一边使用 Euclidean coefficient，一边用另一个 metric 宣称“最小”；
+- 也不得为了这一步新建通用 weighted-QR framework。
+
+这项澄清用于防止 C1c 再次膨胀成新的长期数值基础设施研究。
+
+### 12.8 对 C1b 分段和执行授权的最终确认
+
+接受回复的高效率分段：
+
+```text
+C1b-0 = compact B1 record + frozen source split + contract test
+C1b-1 = minimal teacher/POD/action implementation + focused tests
+C1b-2 = one watchdog numerical run
+```
+
+本节即为对回复的监督复审。满足以下条件后，C1b-2 无需再新增算法性 review 即可按一次性授权
+执行：
+
+- C1b-0 已提交，source split 在看谱前冻结；
+- source table 包含第12.2节新增的传播/Rayleigh字段；
+- C1b-1 diff 只覆盖已批准最小职责；
+- formal coefficient 和 induced-norm 口径符合第12.3--12.4节；
+- focused tests、Ruff lint、compileall、`git diff --check`、watchdog negative path 通过；
+- clean source、ABI、process-group termination、10 GiB/7200 s/zero-swap preflight 通过。
+
+运行后无论正负，都只写 `response_v7.md` 并停止。不得自动进入 C1c、跨角度 gauge、actual
+A004/A007、p6、0.7 nm、RCWA 或迭代法。
+
+### 12.9 最终修订矩阵
+
+```text
+Reply V7 strategic direction                    = accepted
+B1 d<=360                                        = controlled negative / closed
+C1a paired two-end POD                           = accepted research checkpoint
+80/16 pre-frozen split                           = accepted
+all-96 far-field incoming wording                = conditional / source-table verified
+C1b full 11-plane action                         = binding
+C1b formal coefficient                           = minimum-residual trial-capacity oracle
+teacher-solution projection coefficient          = separate diagnostic only
+same-operator 16-column holdout                   = binding anti-leakage test
+full frozen 96D source-space induced norm         = additionally required
+positive C1b identity                             = fixed-operator fixed-length global ROM only
+C1c actual minimum-residual solver                = locked pending response_v7
+cross-angle gauge                                 = locked
+engineering whole-job gate                        = not run in C1b
+p6 / 0.7 nm / RCWA / iterative                    = locked
+ordinary default / master / PR                    = unchanged / not authorized
+```
+
+最终二次审阅结论：
+
+> `reply_review_report_v7.md` 的总体方向正确，并补充了多项此前 Review 未充分明确的边界；这些
+> 补充应被接受。需要修正的是：不要把所有 companion loads 自动称为远场物理入射，也不要
+> 用 teacher-solution projection coefficient 冒充 best-trial action residual。80/16 split 在防止
+> rank-selection leakage 方面仍然必要；但若 rank 冻结后对完整 96 维 source basis 的诱导算子
+> 范数也通过，则可以获得“固定 operator 的完整 96 维端口 source 空间上一致”的正信用。
+> 这仍然只是固定长度的 global response ROM，不是 localized modal Hybrid，也不能外推到
+> 0.7 nm。
