@@ -21,8 +21,10 @@ from scipy.stats import spearmanr
 from ..folds import FOLD_SEED, fold_identity, folds
 from .dataset import load_training_dataset, verify_immutable_package
 from .m4e import (
+    _aggregate,
     F3_LOCAL_FEATURE,
     TARGETS,
+    _latent,
     _crossfit_calibration,
     _hash,
     _inner_radius,
@@ -489,6 +491,53 @@ def _acquisition_quality(results: dict[str, dict[str, Any]], angles: np.ndarray,
 
 def _pool_model_predictions(spec: dict[str, Any], train_angles: np.ndarray,
                             train_truth: np.ndarray, pool_angles: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    if spec["family"] == "local_matern":
+        # The 4096-point candidate pool is screened with a deterministic
+        # fixed-hyperparameter local Matérn posterior.  Exact eight-start
+        # optimization remains the authority for every OOF candidate above;
+        # doing 4096*2*8 optimizations here would be a response-blind scoring
+        # bottleneck without changing the finite acquisition contract.
+        train_x = angle_features(train_angles, spec.get("feature", "F1"))
+        pool_x = angle_features(pool_angles, spec.get("feature", "F1"))
+        latent = _latent(train_truth)
+        neighbors = min(int(spec.get("neighbors", 32)), len(train_x))
+        # Frozen scales are derived from train96 feature geometry only.
+        length = np.maximum(np.median(np.abs(train_x - np.median(train_x, axis=0)), axis=0), 0.15)
+        means = np.empty((len(pool_x), 2), dtype=np.float64)
+        latent_std = np.empty_like(means)
+
+        def kernel(left: np.ndarray, right: np.ndarray) -> np.ndarray:
+            delta = (left[:, None, :] - right[None, :, :]) / length[None, None, :]
+            radius = np.sqrt(np.sum(delta * delta, axis=2))
+            root5 = np.sqrt(5.0) * radius
+            return (1.0 + root5 + 5.0 * radius * radius / 3.0) * np.exp(-root5)
+
+        for row, query in enumerate(pool_x):
+            distance = np.linalg.norm(train_x - query[None, :], axis=1)
+            indices = np.argsort(distance, kind="mergesort")[:neighbors]
+            local_x = train_x[indices]
+            k = kernel(local_x, local_x) + 1.0e-8 * np.eye(len(indices))
+            kq = kernel(local_x, query[None, :])[:, 0]
+            for channel in range(2):
+                target = latent[indices, channel]
+                center = float(np.mean(target))
+                scale = max(float(np.std(target)), 1.0e-6)
+                normalized = (target - center) / scale
+                try:
+                    alpha = np.linalg.solve(k, normalized)
+                    means[row, channel] = center + scale * float(kq @ alpha)
+                    variance = max(1.0 - float(kq @ np.linalg.solve(k, kq)), 1.0e-12)
+                except np.linalg.LinAlgError:
+                    weights = 1.0 / np.maximum(distance[indices], 1.0e-12)
+                    means[row, channel] = float(np.sum(weights * target) / np.sum(weights))
+                    variance = 1.0
+                latent_std[row, channel] = scale * np.sqrt(variance)
+        aggregate = _aggregate(means)
+        jr = aggregate * (np.eye(3)[0][None, :] - aggregate[:, 0, None])
+        jt = aggregate * (np.eye(3)[1][None, :] - aggregate[:, 1, None])
+        std = np.sqrt((jr * latent_std[:, 0, None]) ** 2 +
+                      (jt * latent_std[:, 1, None]) ** 2)
+        return aggregate, std
     model = _make_candidate(spec).fit(train_angles, train_truth)
     return model.predict(pool_angles)
 
@@ -658,6 +707,14 @@ def _plan_points(*, train_angles: np.ndarray, train_truth: np.ndarray,
         "candidate_pool_tuple_sha256": pool_data["tuple_sha256"],
         "candidate_pool_count": int(len(pool_angles)), "point_count": len(plan_rows),
         "weights": M4E2_WEIGHTS, "minimum_normalized_distance": min_distance,
+        "candidate_pool_scoring": {
+            "response_blind": True,
+            "local_rbf": "exact local RBF train96 fit",
+            "local_matern": "fixed-hyperparameter local Matern-5/2 screening posterior",
+            "fixed_hyperparameters_from": "train96 F1 geometry only",
+            "exact_oof_authority": "eight-start local Matérn k24/k32 OOF candidates",
+            "validation_response_accessed": False,
+        },
         "category_counts": category_counts, "pairwise_minimum_distance": min(pairwise),
         "gates": gates, "status": "ready_for_m4f" if all(gates.values()) else "controlled_stop",
         "fem_authorized_if_gates_pass": bool(all(gates.values())),

@@ -1,0 +1,9 @@
+{
+  "status_before_fem": "pass",
+  "plan_status": "ready_for_m4f",
+  "point_count": 16,
+  "training_validation_disjoint": true,
+  "acquisition_gate": true,
+  "response_blind": true,
+  "validation_response_accessed": false
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": "task004.active-learning-round1.case.v1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "surrogate_training_code_sha": "33f7a84b93a99a7cbd92dfb1d7fc9cb2055134e0",
+  "training_dataset_id": "task004_angle_nominal_p5_ny4_train96_v2",
+  "training_count": 96,
+  "candidate_pool_count": 4096,
+  "plan_count": 16,
+  "fixed_model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "fixed_solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "fixed_mesh": [6, 4, 14],
+  "mumps_icntl_14": 40,
+  "mpi": 2,
+  "threads_per_rank": 1,
+  "validation_response_accessed": false,
+  "task003_validation_accessed": false,
+  "second_active_learning_round": false,
+  "fisher_geometry_sensitivity_inversion": false
+}

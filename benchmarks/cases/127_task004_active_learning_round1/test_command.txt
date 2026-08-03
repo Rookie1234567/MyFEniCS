@@ -1,0 +1,1 @@
+source scripts/activate_myfenics_wsl.sh && python benchmarks/cases/127_task004_active_learning_round1/checker.py
