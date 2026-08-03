@@ -436,7 +436,9 @@ def _acquisition_quality(results: dict[str, dict[str, Any]], angles: np.ndarray,
     }
     signal_reports: dict[str, Any] = {}
     scale_bounds: dict[str, Any] = {}
-    for name, values in components.items():
+    # Iterate over the original signal components only; the scaled arrays are
+    # appended to ``components`` below and must not be visited recursively.
+    for name, values in list(components.items()):
         rows = []
         for target_index, target in enumerate((*TARGETS, "max_error")):
             signal = values[:, target_index] if target != "max_error" else np.max(values, axis=1)
