@@ -179,14 +179,28 @@ def _add_internal_tractions(
     queries = 0
     assemblies = 0
     sign = system.local_mesh.local_interface_outward_normal_sign
-    for basis, values in (
-        (coupling.positive_basis, positive_values),
-        (coupling.negative_basis, negative_values),
+    for basis, values, traction_betas in (
+        (
+            coupling.positive_basis,
+            positive_values,
+            coupling.positive_traction_beta_per_nm,
+        ),
+        (
+            coupling.negative_basis,
+            negative_values,
+            coupling.negative_traction_beta_per_nm,
+        ),
     ):
-        for mode, coefficient in zip(basis.modes, values, strict=True):
+        for mode, coefficient, traction_beta in zip(
+            basis.modes,
+            values,
+            traction_betas,
+            strict=True,
+        ):
             traction = evaluator.evaluate(
                 mode,
                 local_outward_normal_sign=sign,
+                beta_override=complex(traction_beta),
             )
             vector, mode_queries = surface.assemble_full_vector(traction)
             try:
@@ -199,6 +213,7 @@ def _add_internal_tractions(
     return {
         "internal_mode_surface_vectors_reassembled": assemblies,
         "internal_mode_lifted_query_points": queries,
+        "traction_beta_source": "coupling_selected_traction_beta_per_nm",
     }
 
 

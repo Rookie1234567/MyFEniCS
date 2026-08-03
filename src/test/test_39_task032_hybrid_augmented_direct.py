@@ -486,6 +486,12 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
             self.spaces,
             self.positive,
             self.negative,
+            positive_traction_beta_per_nm=(
+                self.coupling.positive_traction_beta_per_nm
+            ),
+            negative_traction_beta_per_nm=(
+                self.coupling.negative_traction_beta_per_nm
+            ),
         )
         x_values = np.asarray([0.25, 0.75]) * self.cfg.period_x
         y_values = np.asarray([0.25, 0.75]) * self.cfg.period_y
@@ -516,10 +522,18 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
             interfaces,
         )
         for side in ("bottom", "top"):
-            for field in ("electric_tangential", "magnetic_tangential"):
+            for field in (
+                "electric_tangential",
+                "traction_density_l2_proxy",
+            ):
                 self.assertTrue(
                     np.isfinite(continuity[side][field]["relative_l2"])
                 )
+            self.assertTrue(
+                continuity[side]["traction_density_l2_proxy"][
+                    "diagnostic_only"
+                ]
+            )
         absorption = reconstructor.absorbed_power_code_units(
             self.solution.modal_amplitudes
         )

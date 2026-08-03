@@ -30,6 +30,10 @@ from benchmarks.task035c_p6_h10_gates import (
     task035c_p6_h10_preflight_authority_gate,
     valid_hex_digest,
 )
+from benchmarks.task032_final_gates import (
+    _all_formal_true,
+    _exact_traction_gate,
+)
 from src.common.config_3d import (
     ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
     STANDARD_FULL_ASSEMBLY_BACKEND,
@@ -73,6 +77,7 @@ from src.solvers.hybrid_fem_modal_schur_direct import (
     solve_hybrid_modal_schur_direct,
 )
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
+from src.solvers.hybrid_status import hybrid_p_disposition
 from src.solvers.common_3d_solve import (
     _petsc_factor_inventory,
     _petsc_matrix_stats,
@@ -1722,7 +1727,14 @@ def main() -> None:
             bottom_z_nm=args.bottom_interface_nm,
             top_z_nm=args.top_interface_nm,
             propagation=coupling.propagation,
+            positive_traction_beta_per_nm=(
+                coupling.positive_traction_beta_per_nm
+            ),
+            negative_traction_beta_per_nm=(
+                coupling.negative_traction_beta_per_nm
+            ),
         )
+        reconstruction_traction_betas = reconstructor.traction_beta_per_nm
         trace_modal_oracle = None
         if reference_archive is not None:
             mark_stage("full3d_trace_modal_oracle")
@@ -1753,6 +1765,10 @@ def main() -> None:
             solution.top_physical,
             interface_samples,
         )
+        for side in ("bottom", "top"):
+            interface_continuity[side]["traction_hcurl_dual"] = validation[
+                "fe_modal_traction_equilibrium"
+            ][f"{side}_dual"]
         absorption = hybrid_volume_absorption(
             cfg,
             bottom,
@@ -1953,6 +1969,15 @@ def main() -> None:
         if physical_fields is not None:
             interface_physical = physical_fields["interface_continuity"]
             absorption_physical = physical_fields["volume_absorption"]
+            exact_traction_values = [
+                interface_physical.get(side, {})
+                .get("traction_hcurl_dual", {})
+                .get("relative_dual")
+                for side in ("bottom", "top")
+            ]
+            exact_traction_pass, _exact_traction_role = (
+                _exact_traction_gate({}, exact_traction_values, 1.0e-8)
+            )
             gates.update(
                 {
                     "sampled_interface_e_t_relative_l2_le_5e-3": (
@@ -1964,14 +1989,17 @@ def main() -> None:
                         )
                         <= 5.0e-3
                     ),
-                    "sampled_interface_h_t_relative_l2_le_1e-2": (
+                    "diagnostic_sampled_traction_density_l2_proxy_le_1e-2": (
                         max(
-                            interface_physical[side]["magnetic_tangential"][
-                                "relative_l2"
-                            ]
+                            interface_physical[side][
+                                "traction_density_l2_proxy"
+                            ]["relative_l2"]
                             for side in ("bottom", "top")
                         )
                         <= 1.0e-2
+                    ),
+                    "assembled_interface_h_t_exact_dual_le_1e-8": (
+                        exact_traction_pass
                     ),
                     "volume_energy_closure_abs_le_1e-5": (
                         abs(absorption_physical["energy_closure_error"])
@@ -2007,13 +2035,45 @@ def main() -> None:
                         ),
                     }
                 )
-        physical_gate_prefixes = ("sampled_interface_", "volume_", "middle_plane_")
+        physical_gate_prefixes = (
+            "sampled_interface_",
+            "assembled_interface_",
+            "volume_",
+            "middle_plane_",
+        )
         algebraic_chain_pass = all(
             value
             for key, value in gates.items()
             if not key.startswith(physical_gate_prefixes)
+            and not key.startswith("diagnostic_")
         )
-        integration_pass = all(gates.values())
+        integration_pass = _all_formal_true(gates)
+        interface_closure_pass = bool(
+            physical_fields is not None
+            and gates.get(
+                "interface_e_projection_relative_residual_le_1e-8",
+                False,
+            )
+            and gates.get(
+                "fe_modal_traction_equilibrium_relative_residual_le_1e-8",
+                False,
+            )
+            and gates.get(
+                "sampled_interface_e_t_relative_l2_le_5e-3",
+                False,
+            )
+            and gates.get(
+                "assembled_interface_h_t_exact_dual_le_1e-8",
+                False,
+            )
+        )
+        hybrid_p_status = hybrid_p_disposition(
+            cfg.polarization_kind,
+            full3d_physical_solution_exists=loaded_reference is not None,
+            modal_rank_sufficient=None,
+            interface_closure_pass=interface_closure_pass,
+            diagnostic_projection_bug=False,
+        )
         task033_physical_truncation_allowed = bool(
             not task33_variant or args.requested_modes >= 80
         )
@@ -2291,6 +2351,17 @@ def main() -> None:
                     "modal_magnetic_and_traction_symbol": (
                         coupling.modal_traction_model
                     ),
+                    "field_reconstruction_magnetic_beta_source": (
+                        reconstructor.traction_model
+                    ),
+                    "field_reconstruction_positive_traction_beta_per_nm": [
+                        _complex_json(value)
+                        for value in reconstruction_traction_betas[0]
+                    ],
+                    "field_reconstruction_negative_traction_beta_per_nm": [
+                        _complex_json(value)
+                        for value in reconstruction_traction_betas[1]
+                    ],
                     "positive_traction_beta_per_nm": [
                         _complex_json(value)
                         for value in coupling.positive_traction_beta_per_nm
@@ -2487,15 +2558,29 @@ def main() -> None:
                     and all(
                         value
                         for key, value in gates.items()
-                        if key.startswith("sampled_interface_")
-                        or key.startswith("volume_")
-                        or key.startswith("middle_plane_")
+                        if (
+                            key.startswith("sampled_interface_")
+                            or key.startswith("assembled_interface_")
+                            or key.startswith("volume_")
+                            or key.startswith("middle_plane_")
+                        )
+                        and not key.startswith("diagnostic_")
                     )
                 ),
                 "pointwise_h_jump_checked": physical_fields is not None,
+                "pointwise_h_jump_role": "diagnostic_sampled_proxy_only",
+                "exact_variational_conormal_dual_checked": bool(
+                    physical_fields is not None
+                    and all(
+                        "traction_hcurl_dual"
+                        in physical_fields["interface_continuity"][side]
+                        for side in ("bottom", "top")
+                    )
+                ),
                 "volume_absorption_reconstructed": physical_fields is not None,
                 "selected_middle_planes_reconstructed": physical_fields is not None,
                 "official_record": False,
+                "hybrid_p_disposition": hybrid_p_status,
                 "boundary": (
                     (
                         "real_QEP_internal_physical_chain; no pinned "

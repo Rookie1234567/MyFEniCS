@@ -693,14 +693,16 @@ def _relative_array_residual(actual: np.ndarray, expected: np.ndarray) -> float:
     return float(np.linalg.norm(actual - expected) / scale)
 
 
-def _fe_traction_equilibrium_residual(
+def _fe_traction_equilibrium_diagnostics(
     local_system: HybridLocalDtnSystem,
     field: PETSc.Vec,
     positive_traction: PETSc.Mat,
     positive_values: np.ndarray,
     negative_traction: PETSc.Mat,
     negative_values: np.ndarray,
-) -> tuple[float, float]:
+) -> dict[str, float | str]:
+    """Evaluate the exact variational FE conormal-functional balance."""
+
     residual = local_system.A.createVecLeft()
     positive = _modal_action(positive_traction, positive_values)
     negative = _modal_action(negative_traction, negative_values)
@@ -711,18 +713,54 @@ def _fe_traction_equilibrium_residual(
         residual.axpy(PETSc.ScalarType(1.0), positive)
         residual.axpy(PETSc.ScalarType(1.0), negative)
         absolute = float(residual.norm())
+        rhs_norm = float(local_system.b.norm())
+        positive_norm = float(positive.norm())
+        negative_norm = float(negative.norm())
         scale = max(
             operator_norm,
-            float(local_system.b.norm()),
-            float(positive.norm()),
-            float(negative.norm()),
+            rhs_norm,
+            positive_norm,
+            negative_norm,
             1.0e-30,
         )
-        return absolute, float(absolute / scale)
+        return {
+            "method": "exact_variational_conormal_functional_dual",
+            "absolute_dual_coefficient_norm": absolute,
+            "relative_dual": float(absolute / scale),
+            "comparison_scale_dual": scale,
+            "local_operator_action_norm": operator_norm,
+            "local_rhs_norm": rhs_norm,
+            "positive_modal_traction_load_norm": positive_norm,
+            "negative_modal_traction_load_norm": negative_norm,
+        }
     finally:
         residual.destroy()
         positive.destroy()
         negative.destroy()
+
+
+def _fe_traction_equilibrium_residual(
+    local_system: HybridLocalDtnSystem,
+    field: PETSc.Vec,
+    positive_traction: PETSc.Mat,
+    positive_values: np.ndarray,
+    negative_traction: PETSc.Mat,
+    negative_values: np.ndarray,
+) -> tuple[float, float]:
+    """Backward-compatible scalar view of the exact conormal-dual audit."""
+
+    diagnostics = _fe_traction_equilibrium_diagnostics(
+        local_system,
+        field,
+        positive_traction,
+        positive_values,
+        negative_traction,
+        negative_values,
+    )
+    return (
+        float(diagnostics["absolute_dual_coefficient_norm"]),
+        float(diagnostics["relative_dual"]),
+    )
 
 
 def _external_diffraction_order_rows(
@@ -829,17 +867,15 @@ def evaluate_hybrid_augmented_solution(
     combined_actual = np.concatenate((bottom_actual, top_actual))
     combined_expected = np.concatenate((bottom_expected, top_expected))
 
-    bottom_fe_absolute, bottom_fe_relative = (
-        _fe_traction_equilibrium_residual(
-            bottom_system,
-            solution.bottom,
-            coupling.bottom.positive_traction,
-            bottom_incident,
-            coupling.bottom.negative_traction,
-            backward * top_incident,
-        )
+    bottom_fe_dual = _fe_traction_equilibrium_diagnostics(
+        bottom_system,
+        solution.bottom,
+        coupling.bottom.positive_traction,
+        bottom_incident,
+        coupling.bottom.negative_traction,
+        backward * top_incident,
     )
-    top_fe_absolute, top_fe_relative = _fe_traction_equilibrium_residual(
+    top_fe_dual = _fe_traction_equilibrium_diagnostics(
         top_system,
         solution.top,
         coupling.top.positive_traction,
@@ -889,10 +925,16 @@ def evaluate_hybrid_augmented_solution(
             "interpretation": (
                 "variational_FE_rows_with_modal_traction_not_pointwise_H_jump"
             ),
-            "bottom_absolute_residual": bottom_fe_absolute,
-            "bottom_relative_residual": bottom_fe_relative,
-            "top_absolute_residual": top_fe_absolute,
-            "top_relative_residual": top_fe_relative,
+            "bottom_absolute_residual": bottom_fe_dual[
+                "absolute_dual_coefficient_norm"
+            ],
+            "bottom_relative_residual": bottom_fe_dual["relative_dual"],
+            "top_absolute_residual": top_fe_dual[
+                "absolute_dual_coefficient_norm"
+            ],
+            "top_relative_residual": top_fe_dual["relative_dual"],
+            "bottom_dual": bottom_fe_dual,
+            "top_dual": top_fe_dual,
         },
         "external_auxiliary_amplitudes": {
             "bottom": bottom_aux,

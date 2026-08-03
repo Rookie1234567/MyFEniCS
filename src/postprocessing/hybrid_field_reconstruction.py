@@ -55,6 +55,34 @@ def _interpolation_points(space) -> np.ndarray:
     return points() if callable(points) else points
 
 
+def _validated_traction_beta_pair(
+    positive: Sequence[complex] | None,
+    negative: Sequence[complex] | None,
+    mode_count: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Validate the two explicit beta arrays used by H/traction recovery."""
+
+    if positive is None or negative is None:
+        raise ValueError(
+            "Positive and negative traction betas must both be supplied explicitly."
+        )
+    positive_array = np.asarray(positive, dtype=np.complex128)
+    negative_array = np.asarray(negative, dtype=np.complex128)
+    if (
+        positive_array.shape != (mode_count,)
+        or negative_array.shape != (mode_count,)
+    ):
+        raise ValueError(
+            "Traction beta arrays must match each directional modal basis."
+        )
+    if not (
+        np.all(np.isfinite(positive_array))
+        and np.all(np.isfinite(negative_array))
+    ):
+        raise ValueError("Traction beta arrays must contain only finite values.")
+    return positive_array.copy(), negative_array.copy()
+
+
 def _sample_distributed_2d(function, points_xy: np.ndarray) -> np.ndarray:
     """Evaluate a distributed 2D function on a small replicated point set."""
 
@@ -180,6 +208,8 @@ class ModalFieldReconstructor:
         bottom_z_nm: float = 10.0,
         top_z_nm: float = 110.0,
         propagation: TwoSidedPropagation | None = None,
+        positive_traction_beta_per_nm: Sequence[complex] | None = None,
+        negative_traction_beta_per_nm: Sequence[complex] | None = None,
     ) -> None:
         if len(positive.modes) != len(negative.modes):
             raise ValueError("Positive and negative modal bases must have equal sizes.")
@@ -221,6 +251,16 @@ class ModalFieldReconstructor:
                 propagation.backward.effective_beta_per_nm,
                 dtype=np.complex128,
             )
+        count = len(positive.modes)
+        (
+            self._positive_traction_beta,
+            self._negative_traction_beta,
+        ) = _validated_traction_beta_pair(
+            positive_traction_beta_per_nm,
+            negative_traction_beta_per_nm,
+            count,
+        )
+        self.traction_model = "selected_coupling_traction_beta"
         msh = self.cross_section.mesh
         self._magnetic_space = fem.functionspace(
             msh,
@@ -305,7 +345,12 @@ class ModalFieldReconstructor:
     ) -> tuple[np.ndarray, np.ndarray]:
         electric_rows = []
         magnetic_rows = []
-        for mode in self._modes:
+        magnetic_betas = self._magnetic_traction_betas()
+        for mode, magnetic_beta in zip(
+            self._modes,
+            magnetic_betas,
+            strict=True,
+        ):
             mode.right.right_full.copy(self._sample_source.x.petsc_vec)
             self._sample_source.x.scatter_forward()
             self._sample_transverse.x.array[:] = self._sample_source.x.array[
@@ -329,9 +374,11 @@ class ModalFieldReconstructor:
                 )
             )
             try:
-                self._magnetic_beta.value[...] = PETSc.ScalarType(mode.beta)
+                self._magnetic_beta.value[...] = PETSc.ScalarType(
+                    magnetic_beta
+                )
             except Exception:
-                self._magnetic_beta.value = PETSc.ScalarType(mode.beta)
+                self._magnetic_beta.value = PETSc.ScalarType(magnetic_beta)
             self._magnetic_scratch.interpolate(self._magnetic_expression)
             self._magnetic_scratch.x.scatter_forward()
             magnetic_rows.append(
@@ -340,6 +387,24 @@ class ModalFieldReconstructor:
         return (
             np.asarray(electric_rows, dtype=np.complex128),
             np.asarray(magnetic_rows, dtype=np.complex128),
+        )
+
+    @property
+    def traction_beta_per_nm(
+        self,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Copies of the selected beta arrays used by H/traction recovery."""
+
+        return (
+            self._positive_traction_beta.copy(),
+            self._negative_traction_beta.copy(),
+        )
+
+    def _magnetic_traction_betas(self) -> np.ndarray:
+        """Return the selected coupling betas consumed by H reconstruction."""
+
+        return np.concatenate(
+            (self._positive_traction_beta, self._negative_traction_beta)
         )
 
     def coefficients_at_z(
@@ -867,7 +932,12 @@ def interface_field_continuity(
             "local_trace_side": "negative_z" if z_side < 0 else "positive_z",
             "modal_trace_side": "positive_z" if side == "bottom" else "negative_z",
             "electric_tangential": relative_sample_error(local_e[..., :2], modal_e[..., :2]),
-            "magnetic_tangential": relative_sample_error(local_h[..., :2], modal_h[..., :2]),
+            "traction_density_l2_proxy": {
+                **relative_sample_error(local_h[..., :2], modal_h[..., :2]),
+                "authority": "diagnostic_only",
+                "diagnostic_only": True,
+                "formal_gate": False,
+            },
         }
     return reports
 

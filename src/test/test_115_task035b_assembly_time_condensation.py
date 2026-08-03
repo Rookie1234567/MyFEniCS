@@ -548,12 +548,16 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
                 "embedded_mpc_slave_identity_rows_allocated"
             ]
         )
+        projection_audit: dict[str, object] = {}
         projected_rhs = project_mpc_vector_to_active_trace(
             candidate,
             zero_rhs,
+            audit=projection_audit,
         )
         self.assertEqual(projected_rhs.getSize(), candidate.active_rows)
         self.assertEqual(projected_rhs.norm(), 0.0)
+        self.assertTrue(projection_audit["pass"])
+        self.assertEqual(projection_audit["slave_absolute_cutoff"], 0.0)
 
         active_value = PETSc.ScalarType(20.0 + 3.0j)
         active_index = int(
@@ -618,7 +622,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         zero_rhs.assemble()
         with self.assertRaisesRegex(
             ValueError,
-            r"slave_cutoff=1.000e-12",
+            r"slave_cutoff=0.000e\+00",
         ):
             project_mpc_vector_to_active_trace(candidate, zero_rhs)
 

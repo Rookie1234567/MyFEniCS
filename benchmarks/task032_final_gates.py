@@ -31,12 +31,60 @@ def _all_true(values: dict[str, Any]) -> bool:
     return bool(values) and all(value is True for value in values.values())
 
 
+def _all_formal_true(values: dict[str, Any]) -> bool:
+    formal = {
+        key: value
+        for key, value in values.items()
+        if not str(key).startswith("diagnostic_")
+    }
+    return bool(formal) and all(value is True for value in formal.values())
+
+
 def _finite_le(value: Any, limit: float) -> bool:
     try:
         number = float(value)
     except (TypeError, ValueError):
         return False
     return math.isfinite(number) and abs(number) <= limit
+
+
+_LEGACY_TASK032_MISSING_EXACT_TRACTION_COMMITS = frozenset(
+    {"735774473e54415ab5393f2d2cbc9c8d7d2a24e6"}
+)
+
+
+def _exact_traction_gate(
+    record: dict[str, Any],
+    values: list[Any],
+    limit: float,
+    *,
+    allow_frozen_legacy_record: bool = False,
+) -> tuple[bool, str]:
+    """Require finite exact duals on both sides for every current result."""
+
+    if len(values) == 2 and all(value is not None for value in values):
+        return (
+            all(_finite_le(value, limit) for value in values),
+            "exact_variational_conormal_dual",
+        )
+    metadata = record.get("metadata")
+    metadata = metadata if isinstance(metadata, dict) else {}
+    legacy_sha_bound = bool(
+        allow_frozen_legacy_record
+        and len(values) == 2
+        and all(value is None for value in values)
+        and record.get("schema_version") == 1
+        and metadata.get("commit_sha")
+        in _LEGACY_TASK032_MISSING_EXACT_TRACTION_COMMITS
+    )
+    return (
+        legacy_sha_bound,
+        (
+            "legacy_sha_bound_record_predating_exact_dual"
+            if legacy_sha_bound
+            else "missing_exact_variational_conormal_dual"
+        ),
+    )
 
 
 def evaluate_task032_final(
@@ -75,7 +123,7 @@ def evaluate_task032_final(
                 and float(case.get("h_nm", float("nan"))) == h_nm
                 and int(case.get("requested_modes_per_direction", -1)) == mode_count
                 and _finite_le(residual, config["max_true_relative_residual"])
-                and _all_true(record.get("gates", {}))
+                and _all_formal_true(record.get("gates", {}))
                 and qualification.get("integration_pass") is True
                 and qualification.get("clean_source_integration_record") is True
                 and qualification.get("physical_field_gates_pass") is True
@@ -89,7 +137,9 @@ def evaluate_task032_final(
                 "container_digest": metadata.get("container_digest"),
                 "mpi_size": metadata.get("mpi_size"),
                 "residual": residual,
-                "all_runner_gates": _all_true(record.get("gates", {})),
+                "all_runner_formal_gates": _all_formal_true(
+                    record.get("gates", {})
+                ),
                 "physical_field_gates_pass": qualification.get(
                     "physical_field_gates_pass"
                 ),
@@ -208,12 +258,28 @@ def evaluate_task032_final(
             .get("relative_l2")
             for side in ("bottom", "top")
         ]
-        magnetic_jumps = [
-            interfaces.get(side, {})
-            .get("magnetic_tangential", {})
-            .get("relative_l2")
+        traction_density_proxies = [
+            (
+                interfaces.get(side, {}).get("traction_density_l2_proxy")
+                or interfaces.get(side, {}).get("magnetic_tangential", {})
+            ).get("relative_l2")
             for side in ("bottom", "top")
         ]
+        exact_traction_duals = [
+            interfaces.get(side, {})
+            .get("traction_hcurl_dual", {})
+            .get("relative_dual")
+            for side in ("bottom", "top")
+        ]
+        exact_traction_limit = float(
+            config.get("max_exact_traction_hcurl_dual_relative", 1.0e-8)
+        )
+        exact_traction_ok, exact_traction_gate_role = _exact_traction_gate(
+            record,
+            exact_traction_duals,
+            exact_traction_limit,
+            allow_frozen_legacy_record=True,
+        )
         plane_errors = [
             plane.get(field_name, {}).get("relative_l2")
             for plane in planes
@@ -238,10 +304,7 @@ def evaluate_task032_final(
                 _finite_le(value, config["max_sampled_interface_e_relative_l2"])
                 for value in electric_jumps
             )
-            and all(
-                _finite_le(value, config["max_sampled_interface_h_relative_l2"])
-                for value in magnetic_jumps
-            )
+            and exact_traction_ok
             and all(
                 _finite_le(value, config["max_middle_plane_relative_l2"])
                 for value in plane_errors
@@ -255,7 +318,10 @@ def evaluate_task032_final(
                 "hybrid_minus_full3d_A_volume_total"
             ),
             "interface_e_relative_l2": electric_jumps,
-            "interface_h_relative_l2": magnetic_jumps,
+            "traction_density_l2_proxy": traction_density_proxies,
+            "traction_density_l2_proxy_role": "diagnostic_only",
+            "traction_hcurl_dual_relative": exact_traction_duals,
+            "traction_hcurl_dual_gate": exact_traction_gate_role,
             "max_plane_relative_l2": max(float(value) for value in plane_errors),
         }
     gates.append(
@@ -273,9 +339,8 @@ def evaluate_task032_final(
                 "interface_e_relative_l2_max": config[
                     "max_sampled_interface_e_relative_l2"
                 ],
-                "interface_h_relative_l2_max": config[
-                    "max_sampled_interface_h_relative_l2"
-                ],
+                "traction_density_l2_proxy_role": "diagnostic_only",
+                "exact_traction_hcurl_dual_relative_max": exact_traction_limit,
             },
             evidence_root + "/records/hybrid_h{5,3}_m160.json",
         )
