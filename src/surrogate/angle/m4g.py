@@ -281,12 +281,13 @@ def _build_ensembles(angles: np.ndarray, aggregates: np.ndarray,
         latent = np.stack([latent_models[:, target, :] @ weights[target]
                            for target in range(2)], axis=1)
         stack_prediction[test] = _aggregate(latent)
-        spread = np.sqrt(np.sum(weights[None, :, :] *
-                                 (base_predictions[test] - stack_prediction[test, :, None]) ** 2,
-                                 axis=2))
-        weighted_std = np.sqrt(np.sum(weights[None, :, :] *
-                                      np.nan_to_num(base_stds[test], nan=0.0) ** 2,
-                                      axis=2))
+        # The stack weights are learned in the two latent coordinates, while
+        # the reported uncertainty is in physical R/T/A coordinates.  Use a
+        # conservative physical-space ensemble spread here; cross-fitted
+        # calibration below supplies the target-wise correction.
+        spread = np.std(base_predictions[test], axis=2)
+        weighted_std = np.sqrt(np.mean(np.nan_to_num(base_stds[test], nan=0.0) ** 2,
+                                       axis=2))
         stack_std[test] = np.maximum(np.maximum(spread, weighted_std), 1.0e-8)
 
     ensembles: dict[str, dict[str, Any]] = {}
