@@ -1,0 +1,106 @@
+{
+  "record_id": "task37_f3_20_screen_v1",
+  "case_id": "100_static_condensed_full3d_iterative",
+  "classification": "screen_only_not_convergence_or_official_result",
+  "source": {
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "verified_clean_sha": "6fc62f017c8c525345da42c39e2c7e1ccb19172f",
+    "head_before": "6fc62f017c8c525345da42c39e2c7e1ccb19172f",
+    "head_after": "6fc62f017c8c525345da42c39e2c7e1ccb19172f",
+    "clean_before": true,
+    "clean_after": true
+  },
+  "command": "python -m benchmarks.run_task033_full3d_watchdog --degree 6 --h-nm 10 --polarization-kind s --run-kind full-solve --mpi-size 8 --profile default --stage4-full3d-assembly-backend assembly_time_static_condensed --task035c-p6-h10-gate --task035c-p6-preflight-authority benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json --task035c-p6-preflight-sha256 96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8 --verified-clean-sha 6fc62f017c8c525345da42c39e2c7e1ccb19172f --task037-f3-screen 20 --poll-interval 0.25 --warning-gib 10 --terminate-gib 14 --timeout-seconds 1800 --run-dir benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_20_assembled_p6_h10_mpi8_6fc62f01",
+  "run_dir": "benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_20_assembled_p6_h10_mpi8_6fc62f01",
+  "watchdog": {
+    "return_code": 0,
+    "status": "task037_f3_20_screen_pass",
+    "qualification_pass": true,
+    "qualification_failures": [],
+    "warning_triggered": true,
+    "terminated_for_memory": false,
+    "terminated_for_timeout": false,
+    "no_swap": true
+  },
+  "solver": {
+    "external_linear_solver_port": true,
+    "ksp_type": "fgmres",
+    "pc_side": "right",
+    "norm_type": "unpreconditioned",
+    "restart": 90,
+    "max_it": 20,
+    "reason": -3,
+    "iterations": 20,
+    "official_result": false,
+    "postprocess_skipped": true,
+    "external_rta_gate_pass": false,
+    "no_global_factor": true,
+    "factor_inventory": {
+      "global_direct_factor_count": 0,
+      "global_schur_matrix_materialized": false,
+      "factor_scope": ["SmallDenseInverse(H)", "dense coarse LU", "COMM_SELF factor_only ILU(0)"]
+    }
+  },
+  "rows": {
+    "active": 51192,
+    "appended": 80,
+    "auxiliary_in_subdomains": 0,
+    "subdomain_union": 51192,
+    "coverage_pass": true,
+    "out_of_range": 0,
+    "slab_row_counts": [8424, 8424, 8424, 8424, 8424, 8424, 8424, 11988, 11988, 8424, 8424, 8424, 8424, 8424, 8424, 8424],
+    "coarse_dimension": 75
+  },
+  "residuals": {
+    "initial_reported": 1.0,
+    "history": [
+      [0, 1.0],
+      [10, 0.1132017979089037],
+      [20, 0.03028334659911752]
+    ],
+    "condensed_true_samples": [
+      [0, 1.0],
+      [10, 0.11320179790890314],
+      [20, 0.030283346599117595]
+    ],
+    "final": {
+      "reported_relative_residual": 0.03028334659911752,
+      "condensed_true_residual": 0.030283346599117595,
+      "full_augmented_true_residual": 0.030283346599117595
+    },
+    "rta": "not_run"
+  },
+  "application": {
+    "operator_apply_count": 140,
+    "coarse_apply_count": 20,
+    "smoother_apply_count": 120,
+    "partition": "16 physical slabs, overlap 0.25",
+    "factor_only_storage": true,
+    "local_solver_types": ["ilu", "ilu", "ilu", "ilu", "ilu", "ilu", "ilu", "ilu", "ilu", "ilu", "ilu", "ilu", "ilu", "ilu", "ilu", "ilu"]
+  },
+  "resources": {
+    "process_tree_peak_rss_gib": 13.22119140625,
+    "worker_peak_pss_mib": 12237.2705,
+    "worker_peak_uss_mib": 12032.9883,
+    "process_tree_swap_mib": 0.0,
+    "cgroup_limit": "max",
+    "termination_limit_gib": 14.0
+  },
+  "timings_seconds": {
+    "core_setup": 26.9369412740,
+    "core_solve": 16.4273838130,
+    "core_recovery": 0.0315279370,
+    "core_total": 43.4260218500,
+    "runner_stage4": 145.7903490330,
+    "parent_total": 159.96
+  },
+  "raw_evidence": [
+    {"path": "benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_20_assembled_p6_h10_mpi8_6fc62f01/watchdog_summary.json", "sha256": "428bc6a132c73b23af7b77f66c8c912cd8ffa8ccf399aa7f2caf6b1dc1d82e1a"},
+    {"path": "benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_20_assembled_p6_h10_mpi8_6fc62f01/run_summary.json", "sha256": "3081a76e3cbe47576f4fe988a811662aa20cbaf4425ff67d11df0ee4314573b2"},
+    {"path": "benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_20_assembled_p6_h10_mpi8_6fc62f01/task037_f3_core_audit.json", "sha256": "820a1e04c6b36ed5871ae122881f98c9ae0ff80f0e8bdd5e274773d7b73ad8e8"},
+    {"path": "benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_20_assembled_p6_h10_mpi8_6fc62f01/task037_f3_residual_history.jsonl", "sha256": "0c5a15ec58cd33c07d4f5ecefae26797ece7828854ef8dc1741acb425d6b53e2"},
+    {"path": "benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_20_assembled_p6_h10_mpi8_6fc62f01/memory_timeline.csv", "sha256": "b00437dc4f8ec9e2dc2dae6ca002d1d357f8367f35658f6ce9386de27dfbc0eb"},
+    {"path": "benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_20_assembled_p6_h10_mpi8_6fc62f01/progress_3d.jsonl", "sha256": "8b2be5c76cc984603d9000924ed39a064f4b888fdbad94330ac2b8ccd8600d00"},
+    {"path": "benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f3_20_assembled_p6_h10_mpi8_6fc62f01/worker_stdout.txt", "sha256": "ddd1fd8479962a59fa5aceb3bd391dfa9541f98ef76dbd7d4e17757da1180968"}
+  ]
+}

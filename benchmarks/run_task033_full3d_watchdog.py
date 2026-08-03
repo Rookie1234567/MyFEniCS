@@ -494,7 +494,7 @@ def _task037_f1_direct_trace_oracle(trace_path: Path, trace_sha256: str):
     return solve
 
 
-def _task037_f3_assembled_fgmres_port(run_dir: Path):
+def _task037_f3_assembled_fgmres_port(run_dir: Path, screen_iterations: int):
     from src.solvers.static_condensed_iterative import (
         solve_assembled_static_condensed_fgmres,
     )
@@ -515,7 +515,7 @@ def _task037_f3_assembled_fgmres_port(run_dir: Path):
 
         snapshot, audit = solve_assembled_static_condensed_fgmres(
             request,
-            screen_iterations=20,
+            screen_iterations=screen_iterations,
             residual_observer=observe,
         )
         if comm.rank == 0:
@@ -528,7 +528,9 @@ def _task037_f3_assembled_fgmres_port(run_dir: Path):
     return solve
 
 
-def _task037_f3_screen_gate(audit: Mapping[str, Any]) -> dict[str, bool]:
+def _task037_f3_screen_gate(
+    audit: Mapping[str, Any], expected_screen_iterations: int
+) -> dict[str, bool]:
     try:
         candidate = audit["candidate"]
         final = audit["final"]
@@ -538,6 +540,7 @@ def _task037_f3_screen_gate(audit: Mapping[str, Any]) -> dict[str, bool]:
         ]
         reported = dict(history)
         pairs = [(reported[iteration], value) for iteration, value in samples]
+        history_by_iteration = dict(history)
         initial_reported, initial_condensed = history[0], samples[0]
         final_values = tuple(
             float(final[name])
@@ -548,6 +551,11 @@ def _task037_f3_screen_gate(audit: Mapping[str, Any]) -> dict[str, bool]:
             )
         )
         reason, iterations = int(final["converged_reason"]), int(final["iterations"])
+        final_history_value = history_by_iteration[iterations]
+        comparison_iteration = (
+            max(0, iterations - 40) if expected_screen_iterations == 100 else iterations
+        )
+        comparison_history_value = history_by_iteration[comparison_iteration]
         coarse = audit["coarse"]
         smoother = audit["smoother_diagnostics"]
         counts = (
@@ -590,14 +598,14 @@ def _task037_f3_screen_gate(audit: Mapping[str, Any]) -> dict[str, bool]:
             "restart": 90,
             "rtol": 1.0e-6,
             "atol": 0.0,
-            "max_it": 20,
+            "max_it": expected_screen_iterations,
             "num_slabs": 16,
             "overlap_fraction": 0.25,
             "absorption_shift": 0.1,
         },
         "finite_and_scale": scale,
         "pairing_and_order": same_order and final_order,
-        "reason_iteration": (reason < 0 and iterations == 20)
+        "reason_iteration": (reason < 0 and iterations == expected_screen_iterations)
         or (reason > 0 and all(value <= 1.0e-6 for value in final_values)),
         "apply_counts": (all(value > 0 for value in counts) and coarse_dimension == 75),
         "partition_and_ilu": (
@@ -607,6 +615,12 @@ def _task037_f3_screen_gate(audit: Mapping[str, Any]) -> dict[str, bool]:
             and all(kind == "ilu" for kind in local_types)
         ),
         "no_global_factor": no_global_factor and no_global_schur,
+        "screen_100": expected_screen_iterations != 100
+        or (
+            final_values[1] <= 3.0e-1
+            and final_values[2] <= 3.0e-1
+            and final_history_value < comparison_history_value
+        ),
     }
 
 
@@ -804,7 +818,9 @@ def _worker(args: argparse.Namespace) -> int:
     )
     linear_solver_port = None
     if args.task037_f3_screen is not None:
-        linear_solver_port = _task037_f3_assembled_fgmres_port(args.run_dir)
+        linear_solver_port = _task037_f3_assembled_fgmres_port(
+            args.run_dir, args.task037_f3_screen
+        )
     elif args.task037_f1_direct_trace_oracle is not None:
         linear_solver_port = _task037_f1_direct_trace_oracle(
             args.task037_f1_direct_trace_oracle,
@@ -944,7 +960,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task037-f1-direct-trace-oracle", type=Path)
     parser.add_argument("--task037-f1-direct-trace-sha256")
-    parser.add_argument("--task037-f3-screen", type=int, choices=(20,))
+    parser.add_argument("--task037-f3-screen", type=int, choices=(20, 100))
     parser.add_argument(
         "--task035d-case097-gate",
         action="store_true",
@@ -2436,6 +2452,7 @@ def _qualify(
     if args.task037_f3_screen is not None:
         screen_checks = _task037_f3_screen_gate(
             task037_f3_core_audit or {},
+            args.task037_f3_screen,
         )
         reason = solver_summary.get("ksp_converged_reason")
         residual = solver_summary.get("linear_system_relative_residual")
@@ -3323,9 +3340,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["failures"].append("source_stable_and_clean_after")
         qualification["pass"] = False
     status = (
-        "task037_f3_20_screen_pass"
+        f"task037_f3_{args.task037_f3_screen}_screen_pass"
         if qualification["pass"] and args.task037_f3_screen is not None
-        else "task037_f3_20_screen_not_pass"
+        else f"task037_f3_{args.task037_f3_screen}_screen_not_pass"
         if args.task037_f3_screen is not None
         else "assembly_calibration_pass"
         if qualification["pass"] and args.run_kind == "assembly-only"
