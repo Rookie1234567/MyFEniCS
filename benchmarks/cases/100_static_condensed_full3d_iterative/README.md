@@ -1,10 +1,13 @@
-# Case100：static-condensed Full3D iterative Task37 F0
+# Case100：static-condensed Full3D iterative Task37 F0/F3/F5b
 
 ## 当前阶段
 
-Case100 先冻结 Task37 的 current-source direct authority。它只验证
-Case096 已经使用过的 p6/h10 Full3D static-condensed 模型在 Task37 执行
-分支上的完整身份、物理结果、残差、矩阵规模、向量身份和资源遥测。
+F0 direct authority、F3 assembled screen、F5a action oracle 已完成；F5b
+assembled matrix-free full 已授权但未运行，唯一正式 p6/h10 MPI8 仍未执行。
+
+F5b 在 setup 形成 fine F、完成局部因子/粗基后，于 outer KSP 前释放 F，
+再由 cell-local Schur action 施加 fine action；因此不是 never materialized。
+
 Stage 0 contract 已冻结；F0 direct 已在 current-source clean SHA
 `03f4fa02aece62bb2f193c01616177bffff0aa51` 上完成并通过。compact tracked
 record 为 `records/task37_direct_authority_v1.json`，审阅说明为
@@ -43,5 +46,9 @@ warning 32 GiB、termination 48 GiB、timeout 7200 s、poll 0.25 s、swap=0，
 并使用完整 process-group 的 TERM、5 秒 grace、KILL 语义。Task37 iterative
 candidate 的 warning 10 GiB / termination 14 GiB 不适用于本 direct case。
 
-F1--F6、Hybrid、hp、0.7 nm、Task037b 与任何新的 campaign/registry/
-framework 均不在 Case100。
+F4、F5c、F6、Hybrid、hp、0.7 nm、Task037b 与任何新的
+campaign/registry/framework 均不在当前授权范围。
+
+两次 ignored serial smoke（p2/h50、p6/h50）均在 release/KSP 前因 5 层
+z 网格上的固定 75 维 Floquet 粗基 singular；既不证实也不否定 F5b，
+本阶段不修改粗基。

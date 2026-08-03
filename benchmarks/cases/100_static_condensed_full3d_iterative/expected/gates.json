@@ -71,7 +71,9 @@
     "f0_direct_authority": "pass",
     "f3_screen_20": "pass",
     "f3_screen_100": "pass",
-    "f3_screen_200": "pass"
+    "f3_screen_200": "pass",
+    "f5a_action_oracle": "pass",
+    "f5b_matrix_free_full": "authorized_not_run"
   },
   "task037_f3_screen": {
     "status": "pass",
@@ -126,7 +128,7 @@
       "predicted_iterations_le_3000": "last40 endpoint log-linear reported residual",
       "predicted_wall_seconds_le_7200": "observed worker elapsed times predicted_iterations / observed_iterations"
     },
-    "not_authorized": ["F4-F6"]
+    "not_authorized": ["F4", "F5c", "F6"]
   },
   "task037_f3_assembled_full": {
     "status": "not_pass",
@@ -170,9 +172,29 @@
     "next_stage": {
       "F5a_action_oracle_authorized": true,
       "F4_authorized": false,
-      "F5b_authorized": false,
-      "matrix_free_full_authorized": false,
+      "F5b_authorized": true,
+      "matrix_free_full_authorized": true,
+      "F5c_authorized": false,
       "F6_authorized": false
+    }
+  },
+  "task037_f5b_matrix_free_full": {
+    "status": "authorized_not_run",
+    "solver_profile": "assembled_setup_then_static_local_schur_matrix_free_solve",
+    "gates": {
+      "fine_action_relative_error_max": 1.0e-11,
+      "assembled_matrix_released_before_outer_ksp": true,
+      "three_residuals_max": 1.0e-6,
+      "official_result": true,
+      "external_rta_gate_pass": true,
+      "12_of_12_powers": true,
+      "12_of_12_boundary_complex_amplitudes": true,
+      "no_swap": true
+    },
+    "memory_tier_max_gib": {
+      "resource_pass": 10.30,
+      "preferred": 7.36,
+      "target": 5.00
     }
   }
 }
