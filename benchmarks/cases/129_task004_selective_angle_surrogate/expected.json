@@ -1,0 +1,10 @@
+{
+  "checker_status": "pass",
+  "qualification_status": "controlled_negative",
+  "model_lock_created": false,
+  "blind_fem_run": false,
+  "validation_response_accessed": false,
+  "training_count": 112,
+  "candidate_pool_count": 4096,
+  "blind_design_count": 24
+}
