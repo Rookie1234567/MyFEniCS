@@ -255,6 +255,131 @@ Full/Hybrid 复振幅实虚部、模和相位、振幅误差、功率及各 Gate
 - Full/Hybrid power 均取 analyzer 对比行的 `power_ratio`；
 - 极弱通道的 relative error 不能脱离 absolute threshold 单独解读。
 
+### 5.5 四模型统一七列横向对照
+
+以下五张表从 tracked CSV、hash-bound analyzer 与 raw resource/timeline records 机械派生。
+所有浮点至少保留 12 位有效数字；每个 Pass 只使用该行注明的正式 Gate。
+
+#### 表 A：全部 20 个 order 的 R/T 功率（42 个数据行）
+
+| 指标 | D005-S/Full 3D | D005-S/Hybrid | Pass | D001-P/Full 3D | D001-P/Hybrid | Pass |
+|---|---:|---:|---|---:|---:|---|
+| 总R | 7.628814751429e-04 | 7.628814751484e-04 | PASS (abs delta=5.496471333633e-15; limit=1.000000000000e-04) | 6.212861651253e-01 | 6.213608890102e-01 | PASS (abs delta=7.472388489793e-05; limit=1.000000000000e-04) |
+| R(-7,0) | 6.263542425575e-07 | 6.263542421657e-07 | PASS (s/p power_pass AND; aggregate abs delta=3.918094893126e-16) | 1.146578820336e-06 | 1.232054440168e-06 | FAIL (s/p power_pass AND; aggregate abs delta=8.547561983237e-08) |
+| R(-6,-1) | 1.762673490613e-26 | 2.739105794292e-26 | PASS (s/p power_pass AND; aggregate abs delta=9.764323036792e-27) | 3.089488130695e-25 | 3.488340690521e-20 | PASS (s/p power_pass AND; aggregate abs delta=3.488309795640e-20) |
+| R(-6,0) | 4.134586601939e-09 | 4.134586614256e-09 | PASS (s/p power_pass AND; aggregate abs delta=1.231674165479e-17) | 2.516137713400e-09 | 1.131875059370e-10 | PASS (s/p power_pass AND; aggregate abs delta=2.402950207463e-09) |
+| R(-6,1) | 8.049221812017e-27 | 4.440710815799e-26 | PASS (s/p power_pass AND; aggregate abs delta=3.635788634597e-26) | 4.081440985332e-25 | 6.322910477562e-21 | PASS (s/p power_pass AND; aggregate abs delta=6.322502333463e-21) |
+| R(-5,-1) | 1.119855883492e-26 | 3.411370242113e-26 | PASS (s/p power_pass AND; aggregate abs delta=2.291514358622e-26) | 1.509446555406e-25 | 2.752807588353e-20 | PASS (s/p power_pass AND; aggregate abs delta=2.752792493887e-20) |
+| R(-5,0) | 7.457300544375e-08 | 7.457300543583e-08 | PASS (s/p power_pass AND; aggregate abs delta=7.919996284844e-18) | 4.590063106946e-08 | 2.668546297944e-08 | FAIL (s/p power_pass AND; aggregate abs delta=1.921516809002e-08) |
+| R(-5,1) | 1.561906250714e-26 | 2.180714220228e-26 | PASS (s/p power_pass AND; aggregate abs delta=6.188079695139e-27) | 3.157238887856e-25 | 6.112668235553e-21 | PASS (s/p power_pass AND; aggregate abs delta=6.112352511664e-21) |
+| R(-4,-1) | 5.681885366289e-27 | 2.759561056085e-26 | PASS (s/p power_pass AND; aggregate abs delta=2.191372519456e-26) | 3.090488643552e-26 | 3.328829461152e-20 | PASS (s/p power_pass AND; aggregate abs delta=3.328826370663e-20) |
+| R(-4,0) | 2.675239610244e-07 | 2.675239610030e-07 | PASS (s/p power_pass AND; aggregate abs delta=2.139467581910e-17) | 3.532968505322e-09 | 4.613351523751e-10 | PASS (s/p power_pass AND; aggregate abs delta=3.071633352947e-09) |
+| R(-4,1) | 1.933911916659e-27 | 5.962499945710e-27 | PASS (s/p power_pass AND; aggregate abs delta=4.028588029052e-27) | 5.517440565001e-26 | 1.576932129030e-20 | PASS (s/p power_pass AND; aggregate abs delta=1.576926611589e-20) |
+| R(-3,-1) | 1.958197453334e-27 | 4.065525588176e-26 | PASS (s/p power_pass AND; aggregate abs delta=3.869705842843e-26) | 3.225552885266e-25 | 3.342690790238e-21 | PASS (s/p power_pass AND; aggregate abs delta=3.342368234950e-21) |
+| R(-3,0) | 6.687641739012e-10 | 6.687641798552e-10 | PASS (s/p power_pass AND; aggregate abs delta=5.954059490842e-18) | 7.628711373729e-11 | 4.485378900076e-10 | PASS (s/p power_pass AND; aggregate abs delta=3.722507762704e-10) |
+| R(-3,1) | 2.975660507989e-27 | 3.755994141842e-26 | PASS (s/p power_pass AND; aggregate abs delta=3.458428091043e-26) | 1.424702376313e-26 | 1.979361172327e-22 | PASS (s/p power_pass AND; aggregate abs delta=1.979218702089e-22) |
+| R(-2,-1) | 1.263266339641e-26 | 1.053870391762e-26 | PASS (s/p power_pass AND; aggregate abs delta=2.093959478786e-27) | 4.522902536360e-25 | 2.857099202586e-20 | PASS (s/p power_pass AND; aggregate abs delta=2.857053973561e-20) |
+| R(-2,0) | 1.477690850347e-06 | 1.477690850730e-06 | PASS (s/p power_pass AND; aggregate abs delta=3.830962731424e-16) | 3.321187641117e-07 | 3.253678303718e-07 | FAIL (s/p power_pass AND; aggregate abs delta=6.750933739813e-09) |
+| R(-2,1) | 1.510653975411e-27 | 5.106838115335e-26 | PASS (s/p power_pass AND; aggregate abs delta=4.955772717793e-26) | 8.703772847423e-26 | 1.280143707356e-20 | PASS (s/p power_pass AND; aggregate abs delta=1.280135003584e-20) |
+| R(-1,-1) | 3.162974725918e-26 | 3.189888578212e-27 | PASS (s/p power_pass AND; aggregate abs delta=2.843985868097e-26) | 1.210268735521e-24 | 2.216998229147e-20 | PASS (s/p power_pass AND; aggregate abs delta=2.216877202273e-20) |
+| R(-1,0) | 6.669309654891e-06 | 6.669309653899e-06 | PASS (s/p power_pass AND; aggregate abs delta=9.928733860467e-16) | 1.007309102663e-05 | 9.900647262132e-06 | FAIL (s/p power_pass AND; aggregate abs delta=1.724437644958e-07) |
+| R(-1,1) | 2.917142713929e-26 | 1.022046588974e-25 | PASS (s/p power_pass AND; aggregate abs delta=7.303323175809e-26) | 1.593512997795e-25 | 2.710675316331e-20 | PASS (s/p power_pass AND; aggregate abs delta=2.710659381201e-20) |
+| R(0,0) | 7.537612200779e-04 | 7.537612200844e-04 | PASS (s/p power_pass AND; aggregate abs delta=6.509116162734e-15) | 6.212745613107e-01 | 6.213494032322e-01 | PASS (s/p power_pass AND; aggregate abs delta=7.484192147722e-05) |
+| 总T | 6.027016339827e-01 | 6.027016339832e-01 | PASS (abs delta=5.596634267135e-13; limit=1.000000000000e-04) | 6.244227206617e-03 | 6.241265970413e-03 | PASS (abs delta=2.961236203851e-06; limit=1.000000000000e-04) |
+| T(-7,0) | 2.362010447397e-06 | 2.362010446641e-06 | PASS (s/p power_pass AND; aggregate abs delta=7.556923023542e-16) | 9.442774338122e-07 | 9.420583901321e-07 | FAIL (s/p power_pass AND; aggregate abs delta=2.219043680091e-09) |
+| T(-6,-1) | 3.282682171618e-27 | 8.459641002048e-27 | PASS (s/p power_pass AND; aggregate abs delta=5.176958830430e-27) | 2.925387797480e-25 | 1.928571448048e-20 | PASS (s/p power_pass AND; aggregate abs delta=1.928542194170e-20) |
+| T(-6,0) | 8.329973048744e-09 | 8.329973047359e-09 | PASS (s/p power_pass AND; aggregate abs delta=1.384362855724e-18) | 2.655954741223e-09 | 3.061731935003e-09 | PASS (s/p power_pass AND; aggregate abs delta=4.057771937807e-10) |
+| T(-6,1) | 5.512063589454e-27 | 4.214329934974e-26 | PASS (s/p power_pass AND; aggregate abs delta=3.663123576029e-26) | 2.341028139859e-25 | 1.025243575000e-20 | PASS (s/p power_pass AND; aggregate abs delta=1.025220164718e-20) |
+| T(-5,-1) | 9.079674777556e-27 | 2.293668536957e-26 | PASS (s/p power_pass AND; aggregate abs delta=1.385701059201e-26) | 1.335107815666e-26 | 3.115511496478e-20 | PASS (s/p power_pass AND; aggregate abs delta=3.115510161370e-20) |
+| T(-5,0) | 2.119208256790e-07 | 2.119208256911e-07 | PASS (s/p power_pass AND; aggregate abs delta=1.214573777958e-17) | 2.646342725299e-08 | 4.617577435090e-08 | FAIL (s/p power_pass AND; aggregate abs delta=1.971234709792e-08) |
+| T(-5,1) | 8.271399623269e-27 | 6.252597061759e-26 | PASS (s/p power_pass AND; aggregate abs delta=5.425457099432e-26) | 7.416267128985e-26 | 2.803069402235e-21 | PASS (s/p power_pass AND; aggregate abs delta=2.802995239563e-21) |
+| T(-4,-1) | 6.570476752154e-27 | 2.450304449820e-26 | PASS (s/p power_pass AND; aggregate abs delta=1.793256774604e-26) | 7.543669047775e-26 | 2.644601172800e-20 | PASS (s/p power_pass AND; aggregate abs delta=2.644593629131e-20) |
+| T(-4,0) | 4.372888971607e-07 | 4.372888972276e-07 | PASS (s/p power_pass AND; aggregate abs delta=6.683153481307e-17) | 1.918342692031e-09 | 5.451449736356e-09 | PASS (s/p power_pass AND; aggregate abs delta=3.533107044325e-09) |
+| T(-4,1) | 1.952601171879e-26 | 1.697779319816e-26 | PASS (s/p power_pass AND; aggregate abs delta=2.548218520631e-27) | 9.332332511593e-26 | 1.575343453130e-20 | PASS (s/p power_pass AND; aggregate abs delta=1.575334120797e-20) |
+| T(-3,-1) | 4.677413381964e-27 | 1.218590241053e-26 | PASS (s/p power_pass AND; aggregate abs delta=7.508489028563e-27) | 7.220756761537e-27 | 2.885248606167e-21 | PASS (s/p power_pass AND; aggregate abs delta=2.885241385410e-21) |
+| T(-3,0) | 5.736241835680e-10 | 5.736241775459e-10 | PASS (s/p power_pass AND; aggregate abs delta=6.022080413768e-18) | 2.736383181378e-10 | 9.383877538459e-10 | PASS (s/p power_pass AND; aggregate abs delta=6.647494357081e-10) |
+| T(-3,1) | 2.222626207441e-27 | 1.687159000116e-26 | PASS (s/p power_pass AND; aggregate abs delta=1.464896379372e-26) | 1.078767482347e-25 | 1.006597384217e-21 | PASS (s/p power_pass AND; aggregate abs delta=1.006489507468e-21) |
+| T(-2,-1) | 2.086929568194e-27 | 4.851520337229e-26 | PASS (s/p power_pass AND; aggregate abs delta=4.642827380410e-26) | 1.073073667509e-25 | 3.832782692960e-20 | PASS (s/p power_pass AND; aggregate abs delta=3.832771962223e-20) |
+| T(-2,0) | 2.959841394966e-06 | 2.959841394892e-06 | PASS (s/p power_pass AND; aggregate abs delta=7.399806882156e-17) | 5.319574606458e-07 | 4.794837165731e-07 | FAIL (s/p power_pass AND; aggregate abs delta=5.247374407269e-08) |
+| T(-2,1) | 6.772018315793e-27 | 2.442240192900e-26 | PASS (s/p power_pass AND; aggregate abs delta=1.765038361321e-26) | 2.405890657761e-25 | 2.196470063655e-20 | PASS (s/p power_pass AND; aggregate abs delta=2.196446004748e-20) |
+| T(-1,-1) | 1.272438453287e-26 | 2.379433702691e-26 | PASS (s/p power_pass AND; aggregate abs delta=1.106995249404e-26) | 8.475739561246e-25 | 2.590183637973e-20 | PASS (s/p power_pass AND; aggregate abs delta=2.590098880578e-20) |
+| T(-1,0) | 2.178167398504e-05 | 2.178167398483e-05 | PASS (s/p power_pass AND; aggregate abs delta=2.044466484129e-16) | 8.729786349042e-06 | 8.534153022143e-06 | FAIL (s/p power_pass AND; aggregate abs delta=1.956333268997e-07) |
+| T(-1,1) | 2.360527768991e-26 | 3.573655719125e-26 | PASS (s/p power_pass AND; aggregate abs delta=1.213127950134e-26) | 2.004885841729e-25 | 3.328047273026e-20 | PASS (s/p power_pass AND; aggregate abs delta=3.328027224167e-20) |
+| T(0,0) | 6.026738723435e-01 | 6.026738723441e-01 | PASS (s/p power_pass AND; aggregate abs delta=5.605516051332e-13) | 6.233989874011e-03 | 6.231254647941e-03 | PASS (s/p power_pass AND; aggregate abs delta=2.735226069970e-06) |
+
+每个 R/T(m,n) 是同一 side 和 (m,n) 的 s+p power_ratio 之和，但 Pass 严格取两个
+analyzer power_pass 的 AND；aggregate 差只展示，不用求和抵消重新判定。总R/总T使用 1e-4 Gate。
+20-order 集合为 (-7,0)，m=-6...-1 各含 n=-1,0,1，以及 (0,0)。
+
+#### 表 B：零级复振幅与偏振功率（8 个数据行）
+
+| 指标 | D005-S/Full 3D | D005-S/Hybrid | Pass | D001-P/Full 3D | D001-P/Hybrid | Pass |
+|---|---:|---:|---|---:|---:|---|
+| R(0,0), s complex amplitude | -2.525230435394e-02+1.077415170183e-02i | -2.525230435394e-02+1.077415170212e-02i | PASS (abs amplitude delta=2.934965336954e-13) | 1.788193701454e-12+6.593979235018e-13i | -1.141468989387e-12+7.849860954459e-13i | PASS (abs amplitude delta=2.932353299150e-12) |
+| R(0,0), s power | 7.537612200779e-04 | 7.537612200844e-04 | PASS (abs power delta=6.509116162734e-15) | 3.632442335441e-24 | 1.919154623776e-24 | PASS (abs power delta=1.713287711665e-24) |
+| R(0,0), p complex amplitude | 7.514268120239e-14+2.824107290630e-13i | -2.503933023158e-14-5.885037420050e-14i | PASS (abs amplitude delta=3.556621655667e-13) | -7.875198013065e-01+3.297156138920e-02i | -7.875663695231e-01+3.299419385220e-02i | PASS (abs amplitude delta=5.177670498106e-05) |
+| R(0,0), p power | 8.540224242817e-26 | 4.090334601985e-27 | PASS (abs power delta=8.131190782619e-26) | 6.212745613107e-01 | 6.213494032322e-01 | PASS (abs power delta=7.484192147722e-05) |
+| T(0,0), s complex amplitude | 6.313787033467e-01+4.730209810366e-01i | 6.313787033460e-01+4.730209810382e-01i | PASS (abs amplitude delta=1.713001717231e-12) | -3.635970982228e-14+2.779150126814e-13i | -7.679664117307e-14-7.145209411818e-14i | PASS (abs amplitude delta=3.516994750217e-13) |
+| T(0,0), s power | 6.026738723435e-01 | 6.026738723441e-01 | PASS (abs power delta=5.605516051332e-13) | 2.987593154466e-25 | 4.184492466056e-26 | PASS (abs power delta=2.569143907861e-25) |
+| T(0,0), p complex amplitude | 4.441620577453e-14+3.339186925009e-13i | -5.067292438324e-14+6.915736549379e-14i | PASS (abs amplitude delta=2.813192189538e-13) | 4.035336568390e-02-3.291496446373e-03i | 4.034396339652e-02-3.297493055316e-03i | PASS (abs amplitude delta=1.115178581004e-05) |
+| T(0,0), p power | 1.098802051291e-25 | 7.117660919210e-27 | PASS (abs power delta=1.027625442099e-25) | 6.233989874011e-03 | 6.231254647941e-03 | PASS (abs power delta=2.735226069970e-06) |
+
+#### 表 C：D001 的 14 个复振幅失败键及 D005 同键对照
+
+| 指标 | D005-S/Full 3D | D005-S/Hybrid | Pass | D001-P/Full 3D | D001-P/Hybrid | Pass |
+|---|---:|---:|---|---:|---:|---|
+| R(-7,0), p [significant] | -2.012825881837e-14+2.698712098254e-14i | 1.591162646092e-14-4.339148570921e-14i | PASS (abs amplitude delta=7.906972625991e-14) | -1.335697789184e-04+6.408455596070e-05i | -1.378736881129e-04+6.763674641194e-05i | FAIL (abs amplitude delta=5.580474115785e-06) |
+| R(-6,0), p [weak] | 1.377379968626e-14-4.245186518039e-16i | 9.741215216562e-15-3.009780777547e-14i | PASS (abs amplitude delta=2.994604856942e-14) | 2.182567939520e-06+4.818980889895e-06i | 1.044077005321e-06+4.109147612130e-07i | FAIL (abs amplitude delta=4.552714421319e-06) |
+| R(-5,0), p [significant] | 2.889552503882e-14+3.654223067525e-15i | 3.368331631164e-14+7.872206001984e-16i | PASS (abs amplitude delta=5.580559866156e-15) | -8.675910997821e-06+1.877057088945e-05i | -8.334224551906e-06+1.338431353539e-05i | FAIL (abs amplitude delta=5.397084204588e-06) |
+| R(-4,0), p [weak] | -1.715717333033e-14-2.810946292823e-14i | 6.747965072643e-15+1.083268557897e-14i | PASS (abs amplitude delta=4.569405401605e-14) | 4.262271433507e-06-3.572512573489e-06i | -9.799488043264e-07-1.754569811353e-06i | FAIL (abs amplitude delta=5.548494292000e-06) |
+| R(-3,0), p [weak] | 9.818726723801e-15+3.730854645186e-15i | -3.539724756958e-16+1.340509577101e-14i | PASS (abs amplitude delta=1.403833146653e-14) | -4.929001366852e-07+6.596349795409e-07i | 1.791224600326e-06+8.822072389434e-07i | FAIL (abs amplitude delta=2.294943185546e-06) |
+| R(-2,0), p [significant] | -4.573502607767e-14+1.286415403694e-14i | 2.532238017805e-15-9.611607987570e-16i | PASS (abs amplitude delta=5.020824746562e-14) | -6.366656729944e-07+5.712802240600e-05i | 4.663498498144e-06+5.635530894274e-05i | FAIL (abs amplitude delta=5.356195136226e-06) |
+| R(-1,0), p [significant] | 1.188511493870e-14-7.214912856225e-15i | 4.387170050358e-14+6.886498209112e-15i | PASS (abs amplitude delta=3.495699429488e-14) | -2.992091828139e-04-1.976957251652e-04i | -2.988811089591e-04-1.925567846668e-04i | FAIL (abs amplitude delta=5.149402091586e-06) |
+| T(-7,0), p [significant] | -6.164891054339e-14-8.448537678120e-14i | -8.581876588245e-15-3.871528072855e-14i | PASS (abs amplitude delta=7.007861146931e-14) | 1.344450630074e-04-9.305620115395e-06i | 1.345550332628e-04-3.785743321289e-06i | FAIL (abs amplitude delta=5.520972131715e-06) |
+| T(-6,0), p [weak] | 2.650306869421e-14+4.248733359195e-15i | 1.613982769237e-15-2.167414007598e-14i | PASS (abs amplitude delta=3.593691646924e-14) | -2.981537918586e-06-4.549689409970e-06i | 2.823906477697e-06-5.112283586748e-06i | FAIL (abs amplitude delta=5.832640640916e-06) |
+| T(-5,0), p [significant] | -1.003344634814e-14-3.375113568191e-15i | 3.658939852900e-14+2.754653834507e-14i | PASS (abs amplitude delta=5.594495706926e-14) | 9.957879893223e-06+1.215120953736e-05i | 1.151807936829e-05+1.726245639189e-05i | FAIL (abs amplitude delta=5.344068376237e-06) |
+| T(-4,0), p [weak] | 7.228585282460e-15-3.517473298213e-15i | -1.098221981204e-14+2.150553007879e-14i | PASS (abs amplitude delta=3.094808750465e-14) | 2.831717826845e-06+2.965235205690e-06i | 5.510914399195e-07+6.889822224843e-06i | FAIL (abs amplitude delta=4.539123262002e-06) |
+| T(-3,0), p [weak] | 1.530551699954e-14+4.111466910603e-15i | 6.277913032237e-15-7.524205351671e-15i | PASS (abs amplitude delta=1.472706699875e-14) | -1.560103203787e-06-2.827128214410e-08i | -1.326873930088e-06-2.566864637981e-06i | FAIL (abs amplitude delta=2.549284629148e-06) |
+| T(-2,0), p [significant] | 1.705725938382e-15-3.114029240162e-14i | 1.859931883878e-14+5.174786764875e-15i | PASS (abs amplitude delta=4.005219664329e-14) | -3.871723230262e-05-6.111955943127e-05i | -3.356587429554e-05-5.992995047483e-05i | FAIL (abs amplitude delta=5.286932833537e-06) |
+| T(-1,0), p [significant] | -8.287620343996e-15+2.732342904958e-14i | -5.739465980467e-14-3.548842518925e-14i | PASS (abs amplitude delta=7.972973320859e-14) | 1.239437664470e-04+3.103788920274e-04i | 1.258282546813e-04+3.055507274151e-04i | FAIL (abs amplitude delta=5.182901641814e-06) |
+
+significant/weak 是 D001 analyzer comparison classification；D005 Pass 使用自身同键
+complex_amplitude_pass。D001 本表 14 行必须全部 FAIL。
+
+#### 表 D：全局物理量、残差与接口关系
+
+| 指标 | D005-S/Full 3D | D005-S/Hybrid | Pass | D001-P/Full 3D | D001-P/Hybrid | Pass |
+|---|---:|---:|---|---:|---:|---|
+| 总 A_volume | 3.965354845416e-01 | 3.965354845589e-01 | PASS (abs delta=1.733485577304e-11; limit=1.000000000000e-04) | 3.724696076715e-01 | 3.723847777711e-01 | PASS (abs delta=8.482990036585e-05; limit=1.000000000000e-04) |
+| R+T+A_volume | 0.999999999999413 | 1.000000000017313 | PASS (Hybrid abs(sum-1)=1.731326193521e-11; limit=1.000000000000e-05) | 1.000000000003458 | 0.999986932751786 | FAIL (Hybrid abs(sum-1)=1.306724821371e-05; limit=1.000000000000e-05) |
+| signed closure = R+T+A_volume-1 | -5.867528685144e-13 | 1.731326193521e-11 | PASS (Hybrid abs closure=1.731326193521e-11; limit=1.000000000000e-05) | 3.458122677102e-12 | -1.306724821371e-05 | FAIL (Hybrid abs closure=1.306724821371e-05; limit=1.000000000000e-05) |
+| full true relative residual | 1.251449932123e-11 | 6.361293368388e-12 | PASS (both limit=1.000000000000e-09; max=1.251449932123e-11) | 1.730466709237e-12 | 4.759398637093e-13 | PASS (both limit=1.000000000000e-09; max=1.730466709237e-12) |
+| algebraic interface E relative residual | N/A (Full 3D reference) | 2.254826342298e-12 | PASS (Hybrid limit=1.000000000000e-08) | N/A (Full 3D reference) | 1.716418829008e-11 | PASS (Hybrid limit=1.000000000000e-08) |
+| exact traction relative dual | N/A (Full 3D reference) | 5.632571035837e-12 | PASS (Hybrid limit=1.000000000000e-08) | N/A (Full 3D reference) | 4.328793023732e-13 | PASS (Hybrid limit=1.000000000000e-08) |
+| 80-mode direct projection difference | 7.360198017375e-14 | 9.813926798750e-14 | PASS (both limit=1.000000000000e-10; max=9.813926798750e-14) | 1.997964437432e-12 | 2.978821561172e-12 | PASS (both limit=1.000000000000e-10; max=2.978821561172e-12) |
+| sampled physical E_t max relative L2 | N/A (Full 3D reference) | 1.639491893707e-07 | PASS (Hybrid screening limit=5.000000000000e-03) | N/A (Full 3D reference) | 1.822195976330e-01 | FAIL (Hybrid screening limit=5.000000000000e-03) |
+| abs(A_volume Hybrid-Full3D) | N/A | 1.733485577304e-11 | PASS (limit=1.000000000000e-05) | N/A | 8.482990036585e-05 | FAIL (limit=1.000000000000e-05) |
+
+Full 3D 不存在 Hybrid 内部接口，因此相应字段明确为 N/A/reference，不以 0 代替。
+sampled physical E_t 仅为 screening root locator，不替代 formal algebraic interface Gate。
+
+#### 表 E：规模、资源与耗时
+
+| 指标 | D005-S/Full 3D | D005-S/Hybrid | Pass | D001-P/Full 3D | D001-P/Hybrid | Pass |
+|---|---:|---:|---|---:|---:|---|
+| static/active rows | 68,336 global | 11,272/11,272 local + 240 modal | INFO (different systems; no equality Gate) | 68,336 global | 11,272/11,272 local + 240 modal | INFO (different systems; no equality Gate) |
+| matrix NNZ | 55,985,168 | 8,208,712/8,208,712; inventory sum=16,417,424 | INFO (inventory, not memory peak) | 55,984,880 | 8,208,568/8,208,568; inventory sum=16,417,136 | INFO (inventory, not memory peak) |
+| factor inventory NNZ | 344,304,152 | 31,014,592+31,710,472=62,725,064 inventory | INFO (not simultaneous RSS) | 317,841,392 | 30,897,448+31,804,648=62,702,096 inventory | INFO (not simultaneous RSS) |
+| frozen live-memory authority | 20.352249145508 GiB (process-tree) | 9.708168029785 GiB (live-worker sum) | INFO (paired reduction=52.299286627356%; sampling sets differ) | 18.790069580078 GiB (process-tree) | 9.569057464600 GiB (live-worker sum) | INFO (paired reduction=49.073858274878%; sampling sets differ) |
+| PSS/USS simultaneous diagnostic | PSS/USS=18.054337501526/17.830768585205 GiB | PSS/USS=7.165758132935/6.902801513672 GiB | INFO (8-rank simultaneous smaps diagnostic) | PSS/USS=16.491209983826/16.267761230469 GiB | PSS/USS=7.023274421692/6.764518737793 GiB | INFO (8-rank simultaneous smaps diagnostic) |
+| solver-internal total | 748.447063951986 s | 822.719559165998 s | INFO (Hybrid/Full=1.099235468734) | 872.496243586997 s | 764.817414685036 s | INFO (Hybrid/Full=0.876585338111) |
+| timeline end | 805.550787838001 s (final_cleanup/end) | 825.353389030963 s (record_and_release/unknown) | INFO (sampling/output/drain included) | 922.549377709976 s (final_cleanup/end) | 767.525089716015 s (record_and_release/unknown) | INFO (sampling/output/drain included) |
+| swap | 0.000000000000 MiB process-tree | 0 bytes job process-tree | PASS (both zero; zero-swap Gate) | 0.000000000000 MiB process-tree | 0 bytes job process-tree | PASS (both zero; zero-swap Gate) |
+
+Full authority 是 watchdog max_process_tree_rss_mb；Hybrid authority 是 sampler
+simultaneous_live_worker_rss_sum_bytes。二者仅作 frozen paired engineering comparison，
+不能改称统一 process-tree 或 whole-job RSS；matrix/factor 也是 inventory，不是内存峰值。
+
 ## 6. 为什么 D001 会在“残差很小”时仍然错
 
 ### 6.1 代数 Gate 与恢复物理场
