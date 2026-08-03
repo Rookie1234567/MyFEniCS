@@ -14,6 +14,7 @@ from .condensed_dtn import (
     extract_petsc_condensed_blocks,
     full_augmented_relative_residual,
     recover_petsc_auxiliary,
+    relative_action_error,
 )
 from .dtn_port_3d import (
     Stage4ExternalLinearSolverRequest,
@@ -25,6 +26,7 @@ from .physical_slab_two_level import (
     build_active_trace_floquet_basis,
     build_trace_aware_physical_slab_partition,
 )
+from .static_local_schur_action import create_static_local_schur_action
 
 
 __all__ = ("solve_assembled_static_condensed_fgmres",)
@@ -68,7 +70,23 @@ def solve_assembled_static_condensed_fgmres(
     *,
     screen_iterations: Literal[20],
     residual_observer: Callable[[int, float, float], None] | None = None,
+    solver_profile: Literal[
+        "assembled", "assembled_setup_then_static_local_schur_matrix_free_solve"
+    ] = "assembled",
+    release_assembled_matrix: Callable[[], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
+    if solver_profile not in (
+        "assembled",
+        "assembled_setup_then_static_local_schur_matrix_free_solve",
+    ):
+        raise ValueError("unsupported assembled FGMRES solver profile")
+    exact_profile = (
+        solver_profile == "assembled_setup_then_static_local_schur_matrix_free_solve"
+    )
+    if exact_profile and release_assembled_matrix is None:
+        raise ValueError(
+            "exact F5b profile requires an assembled-matrix release callback"
+        )
     started = perf_counter()
     owned: list[Any] = []
     try:
@@ -79,8 +97,29 @@ def solve_assembled_static_condensed_fgmres(
         rhs = condensed_rhs(blocks)
         owned.append(rhs)
         fine = blocks.require_f()
+        fine_action = fine
+        fine_action_error = None
+        if exact_profile:
+            fine_action, _ = create_static_local_schur_action(
+                request.static_condensed_system, fine
+            )
+            owned.append(fine_action)
+            probe = fine.createVecRight()
+            owned.append(probe)
+            start, end = map(int, fine.getOwnershipRange())
+            probe.getArray()[:] = np.asarray(
+                [1.0 + 0.1 * row + 0.2j * (row + 1) for row in range(start, end)],
+                dtype=PETSc.ScalarType,
+            )
+            fine_action_error = relative_action_error(fine, fine_action, probe)
+            probe.destroy()
+            owned.remove(probe)
+            if fine_action_error > 1.0e-11:
+                raise ValueError(
+                    "retained local Schur action failed the fine-action gate"
+                )
         operator, operator_context = create_matrix_free_condensed_operator(
-            blocks, fine_operator=fine
+            blocks, fine_operator=fine_action
         )
         owned.append(operator)
         basis = build_active_trace_floquet_basis(
@@ -110,7 +149,7 @@ def solve_assembled_static_condensed_fgmres(
         shift.getArray()[:] = -1j * 0.1 * np.maximum(absolute, 1.0e-12 * global_scale)
         diagonal.destroy()
         owned.remove(diagonal)
-        shifted_context = _ShiftedFineAction(fine, shift)
+        shifted_context = _ShiftedFineAction(fine_action, shift)
         shifted_fine = PETSc.Mat().createPython(
             fine.getSizes(), context=shifted_context, comm=fine.getComm()
         )
@@ -134,6 +173,11 @@ def solve_assembled_static_condensed_fgmres(
         owned.append(smoother)
         coarse = SparseGalerkinTwoLevelPc(operator, smoother, basis, post_smooth=True)
         owned.append(coarse)
+        assembled_matrix_released = False
+        if exact_profile:
+            blocks.release_f()
+            release_assembled_matrix()
+            assembled_matrix_released = True
         solution = operator.createVecRight()
         monitor_solution = operator.createVecRight()
         residual_work = operator.createVecLeft()
@@ -194,11 +238,13 @@ def solve_assembled_static_condensed_fgmres(
         recovery_started = perf_counter()
         auxiliary = recover_petsc_auxiliary(blocks, solution)
         owned.append(auxiliary)
-        augmented = request.A.createVecRight()
+        augmented = (
+            request.b.duplicate() if exact_profile else request.A.createVecRight()
+        )
         owned.append(augmented)
         combine_petsc_augmented_solution(blocks, solution, auxiliary, augmented)
         full_augmented = full_augmented_relative_residual(
-            blocks, solution, auxiliary, fine_operator=fine
+            blocks, solution, auxiliary, fine_operator=fine_action
         )
         recovery_seconds = perf_counter() - recovery_started
         smoother_audit = smoother.diagnostics
@@ -223,6 +269,9 @@ def solve_assembled_static_condensed_fgmres(
                 "overlap_fraction": 0.25,
                 "absorption_shift": 0.1,
             },
+            "solver_profile": solver_profile,
+            "assembled_matrix_released_before_solve": assembled_matrix_released,
+            "fine_action_relative_error": fine_action_error,
             "reported_history": reported_history,
             "condensed_true_samples": condensed_samples,
             "final": {
@@ -272,6 +321,9 @@ def solve_assembled_static_condensed_fgmres(
             pc_type=str(pc.getType()),
             residual_limit=1.0e-6,
             no_global_factor=True,
+            solver_profile=solver_profile,
+            assembled_matrix_released_before_solve=assembled_matrix_released,
+            reduced_residual_norm=condensed * rhs_norm,
         )
         owned.remove(augmented)
         return snapshot, audit

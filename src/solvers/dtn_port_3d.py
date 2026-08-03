@@ -129,6 +129,9 @@ class Stage4ExternalLinearSolverSnapshot:
     pc_type: str
     residual_limit: float
     no_global_factor: bool
+    solver_profile: str = "assembled"
+    assembled_matrix_released_before_solve: bool = False
+    reduced_residual_norm: float | None = None
 
 
 def _external_snapshot_allows_official_rta(

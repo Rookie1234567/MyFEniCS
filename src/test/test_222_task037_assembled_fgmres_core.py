@@ -9,7 +9,7 @@ from src.solvers.dtn_port_3d import Stage4ExternalLinearSolverRequest
 from src.solvers.physical_slab_two_level import compress_petsc_vector
 
 
-def test_assembled_fgmres_core_uses_real_petsc(monkeypatch):
+def _build_request(monkeypatch):
     comm = MPI.COMM_WORLD
     matrix_values = np.zeros((5, 5), dtype=PETSc.ScalarType)
     matrix_values[:4, :4] = np.diag([4.0, 5.0, 6.0, 7.0])
@@ -68,6 +68,11 @@ def test_assembled_fgmres_core_uses_real_petsc(monkeypatch):
         config=SimpleNamespace(domain_z_min=0.0, domain_z_max=1.0),
         floquet_data=SimpleNamespace(),
     )
+    return A, b, request
+
+
+def test_assembled_fgmres_core_uses_real_petsc(monkeypatch):
+    A, b, request = _build_request(monkeypatch)
     observed = []
     snapshot, audit = core.solve_assembled_static_condensed_fgmres(
         request,
@@ -105,4 +110,39 @@ def test_assembled_fgmres_core_uses_real_petsc(monkeypatch):
         work.destroy()
         snapshot.x.destroy()
         A.destroy()
+        b.destroy()
+
+
+def test_f5b_profile_releases_assembled_matrix(monkeypatch):
+    A, b, request = _build_request(monkeypatch)
+    monkeypatch.setattr(
+        core,
+        "create_static_local_schur_action",
+        lambda _system, fine: (fine.copy(), None),
+    )
+    released = []
+
+    def release_assembled_matrix():
+        released.append(True)
+        A.destroy()
+
+    snapshot, audit = core.solve_assembled_static_condensed_fgmres(
+        request,
+        screen_iterations=20,
+        solver_profile="assembled_setup_then_static_local_schur_matrix_free_solve",
+        release_assembled_matrix=release_assembled_matrix,
+    )
+    try:
+        assert released == [True]
+        assert snapshot.x.getSize() == b.getSize()
+        assert snapshot.x.getOwnershipRange() == b.getOwnershipRange()
+        assert (
+            snapshot.solver_profile
+            == "assembled_setup_then_static_local_schur_matrix_free_solve"
+        )
+        assert snapshot.assembled_matrix_released_before_solve
+        assert audit["assembled_matrix_released_before_solve"]
+        assert audit["fine_action_relative_error"] <= 1.0e-11
+    finally:
+        snapshot.x.destroy()
         b.destroy()
