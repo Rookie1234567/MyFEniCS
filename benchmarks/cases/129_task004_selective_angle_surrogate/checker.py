@@ -207,7 +207,9 @@ def main() -> int:
                 risk = np.asarray(item.get("risk_score", []), dtype=float)
                 accepted = [int(x) for x in item.get("accepted_indices", [])]
                 rejected = [int(x) for x in item.get("rejected_indices", [])]
-                acceptance_ok = acceptance_ok and len(risk) == count_key and accepted + rejected == list(range(count_key))
+                acceptance_ok = acceptance_ok and len(risk) == count_key and \
+                    len(set(accepted) & set(rejected)) == 0 and \
+                    sorted(accepted + rejected) == list(range(count_key))
                 expected = np.flatnonzero(risk <= float(item.get("threshold", np.inf)) + 1.0e-15).astype(int).tolist()
                 acceptance_ok = acceptance_ok and accepted == expected and item.get("accepted_count") == len(accepted)
                 acceptance_ok = acceptance_ok and item.get("accepted_indices_sha256") == canonical(accepted)
@@ -253,4 +255,3 @@ def write_result(checks: dict[str, bool], errors: list[str]) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

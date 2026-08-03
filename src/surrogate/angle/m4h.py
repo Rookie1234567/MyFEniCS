@@ -730,6 +730,7 @@ def run_m4h(*, dataset_dir: Path, output_dir: Path, folds_path: Path,
     crossfit = {
         "schema_version": "task004.angle-selective-risk-crossfit.v1",
         "dataset_id": DATASET_ID, "training_tuple_sha256": manifest["training_tuple_sha256"],
+        "surrogate_training_code_sha": implementation_sha,
         "fold_seed": FOLD_SEED, "fold_identity": fold_meta["payload"]["fold_identity"],
         "rules": selective["rules"], "final_thresholds": final_thresholds,
         "final_normalization_bounds": final_bounds,
