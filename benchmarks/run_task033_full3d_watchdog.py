@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+import numpy as np
+
 from benchmarks.task034_wsl_resources import (
     cgroup_snapshot,
     effective_memory_limit,
@@ -363,6 +365,81 @@ def _path_from_root(path: Path) -> str:
         return str(path.resolve())
 
 
+def _task037_canonical_identity(namespace: str, values: Any) -> dict[str, Any]:
+    array = np.ascontiguousarray(np.asarray(values, dtype="<c16"))
+    descriptor = json.dumps(
+        [namespace, list(array.shape), array.dtype.str], separators=(",", ":")
+    ).encode("utf-8")
+    return {
+        "namespace": namespace,
+        "shape": list(array.shape),
+        "dtype": array.dtype.str,
+        "sha256": hashlib.sha256(
+            descriptor + b"\0" + array.tobytes(order="C")
+        ).hexdigest(),
+    }
+
+
+def _task037_collect_owned_vector(petsc_vec: Any, comm: Any) -> np.ndarray | None:
+    start, end = map(int, petsc_vec.getOwnershipRange())
+    local = np.asarray(petsc_vec.getArray(readonly=True), dtype="<c16").copy()
+    packets = comm.gather((start, end, local), root=0)
+    if comm.rank:
+        return
+    ordered = sorted(packets, key=lambda packet: int(packet[0]))
+    cursor = 0
+    pieces: list[np.ndarray] = []
+    for packet_start, packet_end, packet_values in ordered:
+        packet_start, packet_end = map(int, (packet_start, packet_end))
+        if packet_start != cursor or packet_end <= packet_start:
+            raise RuntimeError("Task37 owned-vector ranges are not contiguous.")
+        pieces.append(np.asarray(packet_values, dtype="<c16"))
+        cursor = packet_end
+    if cursor != int(petsc_vec.getSize()):
+        raise RuntimeError("Task37 owned-vector ranges do not cover global size.")
+    return np.concatenate(pieces)
+
+
+def _task037_f0_solution_observer(run_dir: Path):
+    def observe(
+        *,
+        field: Any,
+        mesh_data: Any,
+        config: Any,
+        floquet_data: Any,
+        summary: dict[str, Any],
+        linear_system: dict[str, Any],
+        dtn_result: dict[str, Any],
+    ) -> None:
+        comm = mesh_data.mesh.comm
+        active_rows = int(dtn_result["solver_info"]["num_active_trace_dofs"])
+        system_values = _task037_collect_owned_vector(linear_system["x"], comm)
+        recovered_values = _task037_collect_owned_vector(field.x.petsc_vec, comm)
+        if comm.rank != 0:
+            return
+        active_values = system_values[:active_rows]
+        np.save(run_dir / "task037_active_trace_vector.npy", active_values)
+        np.save(run_dir / "task037_recovered_full_fe_vector.npy", recovered_values)
+        summary["task037_f0_vector_identity"] = {
+            "active_trace": {
+                **_task037_canonical_identity(
+                    "task037.f0.active_trace",
+                    active_values,
+                ),
+                "source": "linear_system.x prefix; raw=ignored run_dir",
+            },
+            "recovered_full_fe": {
+                **_task037_canonical_identity(
+                    "task037.f0.recovered_full_fe",
+                    recovered_values,
+                ),
+                "source": "field.x.petsc_vec ownership order; raw=ignored run_dir",
+            },
+        }
+
+    return observe
+
+
 def _full3d_config(args: argparse.Namespace):
     from src.common.config_3d import target_stage4_config
 
@@ -411,6 +488,7 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "profile": str(args.profile),
         "run_dir": str(Path(args.run_dir).resolve()),
         "stage4_full3d_assembly_backend": str(args.stage4_full3d_assembly_backend),
+        "task037_f0_vector_observer": bool(args.task037_f0_vector_observer),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -541,7 +619,11 @@ def _worker(args: argparse.Namespace) -> int:
         run_stage4b_block_grating_3d_case,
     )
 
-    observer = None
+    observer = (
+        _task037_f0_solution_observer(args.run_dir)
+        if args.task037_f0_vector_observer
+        else None
+    )
     retain_local_schur = False
     if args.task035d_nested_p_dwr_phase is not None:
         from src.adaptivity.variable_p_nested_dwr import (
@@ -666,6 +748,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
+    parser.add_argument(
+        "--task037-f0-vector-observer",
+        action="store_true",
+        help="Export only the current-source Case100 F0 vector identities.",
+    )
     parser.add_argument(
         "--task035d-case097-gate",
         action="store_true",
@@ -842,6 +929,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ):
         parser.error(
             "Task035c p6 preflight authority arguments require --task035c-p6-h10-gate."
+        )
+    if args.task037_f0_vector_observer and not (
+        args.task035c_p6_h10_gate
+        and args.mpi_size == 8
+        and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+    ):
+        parser.error(
+            "--task037-f0-vector-observer requires the existing Task035c "
+            "p6/h10 gate, full-solve, static backend, MPI8, and S scope."
         )
     if args.task035d_case097_gate:
         local_h_candidate = args.task035d_candidate_id in TASK035D_LOCAL_H_CANDIDATES
@@ -2287,6 +2383,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
                 str(args.verified_clean_sha),
             )
         )
+    if args.task037_f0_vector_observer:
+        command.append("--task037-f0-vector-observer")
     if args.task035d_case097_gate:
         plan_options = (
             (
