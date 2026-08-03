@@ -113,6 +113,11 @@ def test_parser_scope_and_worker_command(tmp_path):
     full_command = watchdog._worker_command(full, tmp_path)
     assert full_command.count("--task037-f3-full") == 1
     assert "--task037-f3-screen" not in full_command
+    released_args = full_args + ["--task037-f5b-released-profile"]
+    released = watchdog._parse_args(released_args)
+    assert released.task037_f5b_released_profile
+    released_command = watchdog._worker_command(released, tmp_path)
+    assert released_command.count("--task037-f5b-released-profile") == 1
     bad_iterations = valid.copy()
     bad_iterations[bad_iterations.index("--task037-f3-screen") + 1] = "3000"
     missing_caps = valid.copy()
@@ -123,6 +128,8 @@ def test_parser_scope_and_worker_command(tmp_path):
         bad_iterations,
         missing_caps,
         valid + ["--task037-f0-vector-observer"],
+        base + ["--task037-f5b-released-profile"],
+        valid + ["--task037-f5b-released-profile"],
         full_args + ["--task037-f3-screen", "20"],
     ):
         with pytest.raises(SystemExit):
@@ -133,17 +140,26 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
     iterations_seen = []
     comm = SimpleNamespace(rank=0)
     petsc_comm = SimpleNamespace(tompi4py=lambda: comm)
+
+    def owner_release():
+        return None
+
     request = SimpleNamespace(
         A=SimpleNamespace(getComm=lambda: petsc_comm),
+        release_assembled_matrix=owner_release,
     )
 
-    def fake_core(request, *, screen_iterations, residual_observer):
-        iterations_seen.append(screen_iterations)
+    def fake_core(request, **kwargs):
+        iterations_seen.append(kwargs["screen_iterations"])
+        request.profile = kwargs["solver_profile"]
+        request.release = kwargs["release_assembled_matrix"]
+        residual_observer = kwargs["residual_observer"]
         for iteration in (0, 10, 20):
             residual_observer(iteration, 1.0 / (iteration + 1), 0.5)
         return object(), {"core": "audit"}
 
     def stage(*_args, **kwargs):
+        assert kwargs["static_retain_local_schur_for_matrix_free"] is True
         kwargs["linear_solver_port"](request)
 
     monkeypatch.setattr(watchdog, "_full3d_config", lambda _args: object())
@@ -164,11 +180,16 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         task037_f1_direct_trace_sha256=None,
         task037_f3_screen=None,
         task037_f3_full=True,
+        task037_f5b_released_profile=True,
         task035d_nested_p_dwr_phase=None,
         task035d_selective_face_dwr_phase=None,
     )
     assert watchdog._worker(args) == 0
     assert iterations_seen == [3000]
+    assert request.profile == (
+        "assembled_setup_then_static_local_schur_matrix_free_solve"
+    )
+    assert request.release is owner_release
     history = (tmp_path / "task037_f3_residual_history.jsonl").read_text()
     lines = [json.loads(line) for line in history.splitlines()]
     assert len(lines) == 3
@@ -186,6 +207,7 @@ def test_f3_qualification_uses_core_audit_gate():
     args = SimpleNamespace(
         task037_f3_screen=20,
         task037_f3_full=False,
+        task037_f5b_released_profile=False,
         run_kind="full-solve",
         allow_swap=False,
         polarization_kind="s",
@@ -282,9 +304,12 @@ def test_f3_qualification_uses_core_audit_gate():
         condensed_true_residual=1.0e-7,
         full_augmented_true_residual=1.0e-7,
     )
-    args_full = SimpleNamespace(
-        **{**vars(args), "task037_f3_screen": None, "task037_f3_full": True}
-    )
+    full["solver_profile"] = "assembled_setup_then_static_local_schur_matrix_free_solve"
+    full["assembled_matrix_released_before_solve"] = True
+    args_full = SimpleNamespace(**vars(args))
+    args_full.task037_f3_screen = None
+    args_full.task037_f3_full = True
+    args_full.task037_f5b_released_profile = True
     summary_full = {
         **summary,
         "ksp_converged_reason": 1,
@@ -296,7 +321,14 @@ def test_f3_qualification_uses_core_audit_gate():
         "external_condensed_true_residual": 1.0e-7,
         "external_full_augmented_true_residual": 1.0e-7,
     }
+    summary_full["external_solver_profile"] = full["solver_profile"]
+    summary_full["external_assembled_matrix_released_before_solve"] = True
     assert watchdog._qualify(
+        **{**qualify_kwargs, "args": args_full, "solver_summary": summary_full},
+        task037_f3_core_audit=full,
+    )["pass"]
+    summary_full["external_assembled_matrix_released_before_solve"] = False
+    assert not watchdog._qualify(
         **{**qualify_kwargs, "args": args_full, "solver_summary": summary_full},
         task037_f3_core_audit=full,
     )["pass"]

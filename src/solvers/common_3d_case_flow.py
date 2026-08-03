@@ -733,6 +733,7 @@ def run_prepared_3d_case_flow(
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
+    static_retain_local_schur_for_matrix_free: bool = False,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -1229,6 +1230,9 @@ def run_prepared_3d_case_flow(
                 variable_p_live_observer=variable_p_live_observer,
                 variable_p_retain_local_schur_for_research=(
                     variable_p_retain_local_schur_for_research
+                ),
+                static_retain_local_schur_for_matrix_free=(
+                    static_retain_local_schur_for_matrix_free
                 ),
             )
         except DirectSolveFailure as failure:
@@ -2090,6 +2094,17 @@ def run_prepared_3d_case_flow(
                 ],
                 "external_no_global_factor": dtn_solver_info[
                     "no_global_factor"
+                ],
+                "external_solver_profile": dtn_solver_info[
+                    "solver_profile"
+                ],
+                "external_assembled_matrix_released_before_solve": (
+                    dtn_solver_info[
+                        "assembled_matrix_released_before_solve"
+                    ]
+                ),
+                "external_reduced_residual_norm": dtn_solver_info[
+                    "reduced_residual_norm"
                 ],
             }
         )

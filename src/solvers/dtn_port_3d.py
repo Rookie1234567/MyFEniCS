@@ -2687,6 +2687,7 @@ def _solve_stage4_dtn_port_total_field_impl(
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
+    static_retain_local_schur_for_matrix_free: bool = False,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
@@ -2906,6 +2907,9 @@ def _solve_stage4_dtn_port_total_field_impl(
                         support_group_by_row
                     ),
                     defer_final_assembly=True,
+                    retain_local_schur_for_matrix_free=(
+                        static_retain_local_schur_for_matrix_free
+                    ),
                 )
             )
             reduction_system = assembly_time_system
@@ -4865,6 +4869,7 @@ def solve_stage4_dtn_port_total_field(
         Callable[[Stage4VariablePLiveView], None] | None
     ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
+    static_retain_local_schur_for_matrix_free: bool = False,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
 
@@ -4879,6 +4884,7 @@ def solve_stage4_dtn_port_total_field(
         (
             variable_p_live_observer is not None,
             bool(variable_p_retain_local_schur_for_research),
+            bool(static_retain_local_schur_for_matrix_free),
         )
     )
     if len(set(observer_flags)) != 1:
@@ -4904,6 +4910,9 @@ def solve_stage4_dtn_port_total_field(
             variable_p_live_observer=variable_p_live_observer,
             variable_p_retain_local_schur_for_research=(
                 variable_p_retain_local_schur_for_research
+            ),
+            static_retain_local_schur_for_matrix_free=(
+                static_retain_local_schur_for_matrix_free
             ),
             _recovery_cleanup_sink=recovered_cleanup,
         )

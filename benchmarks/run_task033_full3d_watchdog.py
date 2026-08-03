@@ -504,7 +504,12 @@ def _task037_f3_iterations(args: argparse.Namespace) -> int | None:
     return 3000 if args.task037_f3_full else args.task037_f3_screen
 
 
-def _task037_f3_assembled_fgmres_port(run_dir: Path, screen_iterations: int):
+def _task037_f3_assembled_fgmres_port(
+    run_dir: Path,
+    screen_iterations: int,
+    *,
+    solver_profile: str = "assembled",
+):
     from src.solvers.static_condensed_iterative import (
         solve_assembled_static_condensed_fgmres,
     )
@@ -527,6 +532,8 @@ def _task037_f3_assembled_fgmres_port(run_dir: Path, screen_iterations: int):
             request,
             screen_iterations=screen_iterations,
             residual_observer=observe,
+            solver_profile=solver_profile,
+            release_assembled_matrix=request.release_assembled_matrix,
         )
         if comm.rank == 0:
             (run_dir / "task037_f3_core_audit.json").write_text(
@@ -714,6 +721,7 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_f1_direct_trace_sha256": args.task037_f1_direct_trace_sha256,
         "task037_f3_screen": args.task037_f3_screen,
         "task037_f3_full": bool(args.task037_f3_full),
+        "task037_f5b_released_profile": bool(args.task037_f5b_released_profile),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -846,7 +854,10 @@ def _worker(args: argparse.Namespace) -> int:
     )
 
     solution_observer = (
-        _task037_f0_solution_observer(args.run_dir, role="f3_full")
+        _task037_f0_solution_observer(
+            args.run_dir,
+            role=("f5b_full" if args.task037_f5b_released_profile else "f3_full"),
+        )
         if args.task037_f3_full
         else _task037_f0_solution_observer(args.run_dir)
         if args.task037_f0_vector_observer
@@ -855,7 +866,13 @@ def _worker(args: argparse.Namespace) -> int:
     linear_solver_port = None
     if args.task037_f3_full or args.task037_f3_screen is not None:
         linear_solver_port = _task037_f3_assembled_fgmres_port(
-            args.run_dir, _task037_f3_iterations(args)
+            args.run_dir,
+            _task037_f3_iterations(args),
+            solver_profile=(
+                "assembled_setup_then_static_local_schur_matrix_free_solve"
+                if args.task037_f5b_released_profile
+                else "assembled"
+            ),
         )
     elif args.task037_f1_direct_trace_oracle is not None:
         linear_solver_port = _task037_f1_direct_trace_oracle(
@@ -932,6 +949,9 @@ def _worker(args: argparse.Namespace) -> int:
         solution_observer=solution_observer,
         variable_p_live_observer=observer,
         variable_p_retain_local_schur_for_research=(retain_local_schur),
+        static_retain_local_schur_for_matrix_free=(
+            args.task037_f5b_released_profile
+        ),
     )
     return 0
 
@@ -998,6 +1018,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--task037-f1-direct-trace-sha256")
     parser.add_argument("--task037-f3-screen", type=int, choices=(20, 100, 200))
     parser.add_argument("--task037-f3-full", action="store_true")
+    parser.add_argument("--task037-f5b-released-profile", action="store_true")
     parser.add_argument(
         "--task035d-case097-gate",
         action="store_true",
@@ -1215,6 +1236,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Task037 F3 is exclusive of F0/F1 and requires fixed parent "
             "poll, warning, termination, and mode-specific timeout caps."
         )
+    if args.task037_f5b_released_profile and not args.task037_f3_full:
+        parser.error("--task037-f5b-released-profile requires --task037-f3-full.")
     if args.task035d_case097_gate:
         local_h_candidate = args.task035d_candidate_id in TASK035D_LOCAL_H_CANDIDATES
         plan_scope = (
@@ -2490,12 +2513,15 @@ def _qualify(
         ),
     }
     if args.task037_f3_full or args.task037_f3_screen is not None:
+        core_audit = task037_f3_core_audit or {}
         expected_iterations = _task037_f3_iterations(args)
         screen_checks = _task037_f3_screen_gate(
-            task037_f3_core_audit or {},
+            core_audit,
             expected_iterations,
             solver_summary.get("elapsed_seconds"),
         )
+        core_profile = core_audit.get("solver_profile")
+        core_released = core_audit.get("assembled_matrix_released_before_solve")
         reason = solver_summary.get("ksp_converged_reason")
         residual = solver_summary.get("linear_system_relative_residual")
         positive = isinstance(reason, (int, float)) and reason > 0
@@ -2534,6 +2560,24 @@ def _qualify(
                     ),
                     "external_rta_gate_pass": (
                         solver_summary.get("external_rta_gate_pass") is True
+                    ),
+                }
+            )
+        if args.task037_f5b_released_profile:
+            checks.update(
+                {
+                    "f5b_core_release_profile": (
+                        core_profile
+                        == "assembled_setup_then_static_local_schur_matrix_free_solve"
+                        and core_released is True
+                    ),
+                    "f5b_summary_release_profile": (
+                        solver_summary.get("external_solver_profile")
+                        == core_profile
+                        and solver_summary.get(
+                            "external_assembled_matrix_released_before_solve"
+                        )
+                        is True
                     ),
                 }
             )
@@ -2723,6 +2767,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-f3-full")
     elif args.task037_f3_screen is not None:
         command.extend(("--task037-f3-screen", str(args.task037_f3_screen)))
+    if args.task037_f5b_released_profile:
+        command.append("--task037-f5b-released-profile")
     if args.task035d_case097_gate:
         plan_options = (
             (
@@ -3404,7 +3450,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["failures"].append("source_stable_and_clean_after")
         qualification["pass"] = False
     status = (
-        "task037_f3_assembled_full_pass"
+        "task037_f5b_matrix_free_full_pass"
+        if qualification["pass"] and args.task037_f5b_released_profile
+        else "task037_f5b_matrix_free_full_not_pass"
+        if args.task037_f5b_released_profile
+        else "task037_f3_assembled_full_pass"
         if qualification["pass"] and args.task037_f3_full
         else "task037_f3_assembled_full_not_pass"
         if args.task037_f3_full
@@ -3574,6 +3624,7 @@ def _run_parent(args: argparse.Namespace) -> int:
                 {
                     "task037_f3": {
                         "full": bool(args.task037_f3_full),
+                        "f5b_released_profile": bool(args.task037_f5b_released_profile),
                         "screen_iterations": args.task037_f3_screen,
                         "core_audit_path": _path_from_root(task037_f3_core_audit_path),
                         "core_audit_sha256": _sha256(task037_f3_core_audit_path),

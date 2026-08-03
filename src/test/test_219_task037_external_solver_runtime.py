@@ -18,11 +18,15 @@ def test_stage4b_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
 
     def flow(*_args, **kwargs):
         assert kwargs["linear_solver_port"] is port
+        assert kwargs["static_retain_local_schur_for_matrix_free"] is True
         return {"stage4b": True}
 
     monkeypatch.setattr(stage4b, "run_prepared_3d_case_flow", flow)
     assert stage4b.run_stage4b_block_grating_3d_case(
-        cfg, tmp_path, linear_solver_port=port
+        cfg,
+        tmp_path,
+        linear_solver_port=port,
+        static_retain_local_schur_for_matrix_free=True,
     ) == {"stage4b": True}
 
 
@@ -32,6 +36,7 @@ def test_public_dtn_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
 
     def implementation(**kwargs):
         assert kwargs["linear_solver_port"] is port
+        assert kwargs["static_retain_local_schur_for_matrix_free"] is True
         return result
 
     monkeypatch.setattr(
@@ -50,6 +55,7 @@ def test_public_dtn_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         out_dir=tmp_path,
         log=lambda *_args: None,
         linear_solver_port=port,
+        static_retain_local_schur_for_matrix_free=True,
     )
     assert returned is result
 

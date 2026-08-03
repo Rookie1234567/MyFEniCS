@@ -17,6 +17,7 @@ def run_stage4b_block_grating_3d_case(
     linear_solver_port=None,
     variable_p_live_observer=None,
     variable_p_retain_local_schur_for_research: bool = False,
+    static_retain_local_schur_for_matrix_free: bool = False,
     mesh_data_override=None,
 ) -> dict[str, object]:
     """Run Stage 4B: rectangular block grating with 3D DtN total-field ports.
@@ -47,6 +48,9 @@ def run_stage4b_block_grating_3d_case(
         variable_p_live_observer=variable_p_live_observer,
         variable_p_retain_local_schur_for_research=(
             variable_p_retain_local_schur_for_research
+        ),
+        static_retain_local_schur_for_matrix_free=(
+            static_retain_local_schur_for_matrix_free
         ),
         mesh_data_override=mesh_data_override,
     )
