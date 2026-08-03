@@ -20,8 +20,10 @@ the default elsewhere.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from collections.abc import Mapping
 import hashlib
 from time import perf_counter
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
@@ -89,6 +91,7 @@ class AssemblyTimeCondensedSystem:
     interior_rows: int
     active_interior_rows: int
     build_audit: dict[str, Any]
+    retained_local_schur_by_class: Mapping[tuple[Any, ...], np.ndarray] | None = None
     _destroyed: bool = field(default=False, init=False, repr=False)
 
     def destroy(self) -> None:
@@ -1157,6 +1160,7 @@ def build_unconstrained_assembly_time_condensation(
     appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
     appended_support_group_by_row: tuple[int, ...] = (),
     defer_final_assembly: bool = False,
+    retain_local_schur_for_matrix_free: bool = False,
     geometry_tolerance: float = 1.0e-11,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
@@ -1164,6 +1168,9 @@ def build_unconstrained_assembly_time_condensation(
     When ``mpc`` is supplied, its trace constraints are applied to each local
     Schur tensor before insertion.  No full-trace matrix or embedded slave
     identity rows are allocated.
+
+    ``retain_local_schur_for_matrix_free`` retains one readonly Schur array
+    per local class for a later owner-computes action.
     """
 
     if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
@@ -1473,6 +1480,9 @@ def build_unconstrained_assembly_time_condensation(
     active_interior_rows = interior_rows
     raw_class_count = int(raw_cache_audit["raw_tensor_class_count_sum"])
     oriented_class_count = int(comm.allreduce(len(schur_cache), op=MPI.SUM))
+    if retain_local_schur_for_matrix_free:
+        for schur in schur_cache.values():
+            schur.setflags(write=False)
     return AssemblyTimeCondensedSystem(
         matrix=condensed,
         owned_trace_original_dofs=owned_trace,
@@ -1491,6 +1501,11 @@ def build_unconstrained_assembly_time_condensation(
         appended_rows=appended_global_rows,
         interior_rows=interior_rows,
         active_interior_rows=active_interior_rows,
+        retained_local_schur_by_class=(
+            MappingProxyType(schur_cache)
+            if retain_local_schur_for_matrix_free
+            else None
+        ),
         build_audit={
             "schema_version": "task035b.assembly-time-cell-condensation.v1",
             "status": "unconstrained_trace_schur_built_without_full_matrix",
