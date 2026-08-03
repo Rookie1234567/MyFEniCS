@@ -8,6 +8,7 @@ from typing import Any, Callable, Sequence
 import numpy as np
 import scipy.linalg as sla
 import scipy.sparse as sp
+from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -167,6 +168,74 @@ def compress_petsc_vector(
         eigenvalue=eigenvalue,
         eigenpair_residual=0.0,
     )
+
+
+def build_active_trace_floquet_basis(
+    condensed: Any,
+    function_space: Any,
+    config: Any,
+    floquet_data: Any,
+    fine_operator: PETSc.Mat,
+) -> tuple[SparseCoarseVector, ...]:
+    """Build the fixed 75D Floquet basis directly in active trace rows."""
+
+    active_original = np.asarray(
+        condensed.trace_constraints.owned_active_original_dofs,
+        dtype=PETSc.IntType,
+    )
+    active_ids = np.asarray(
+        [
+            condensed.trace_constraints.original_to_active[int(original)]
+            for original in active_original
+        ],
+        dtype=PETSc.IntType,
+    )
+    centers = np.linspace(
+        float(config.domain_z_min), float(config.domain_z_max), 25
+    )
+    spacing = float(centers[1] - centers[0])
+    field = fem.Function(function_space)
+    candidates: list[PETSc.Vec] = []
+    try:
+        for center in centers:
+            for component in range(3):
+
+                def value(x, center=center, component=component):
+                    envelope = np.maximum(
+                        1.0 - np.abs(x[2] - center) / spacing, 0.0
+                    )
+                    phase = np.exp(
+                        1j
+                        * (
+                            complex(config.kx) * x[0]
+                            + complex(config.ky) * x[1]
+                        )
+                    )
+                    values = np.zeros((3, x.shape[1]), dtype=PETSc.ScalarType)
+                    values[component, :] = envelope * phase
+                    return values
+
+                field.interpolate(value)
+                floquet_data.mpc.homogenize(field)
+                vector = fine_operator.createVecRight()
+                vector.setValues(
+                    active_ids,
+                    field.x.petsc_vec.getValues(active_original),
+                )
+                vector.assemble()
+                for accepted in candidates:
+                    vector.axpy(-np.conjugate(accepted.dot(vector)), accepted)
+                norm = float(vector.norm())
+                if norm <= 1.0e-10:
+                    vector.destroy()
+                    raise RuntimeError("active Floquet coarse vector became singular")
+                vector.scale(1.0 / norm)
+                candidates.append(vector)
+        compressed = tuple(compress_petsc_vector(vector) for vector in candidates)
+    finally:
+        for vector in candidates:
+            vector.destroy()
+    return compressed
 
 
 class SparseGalerkinTwoLevelPc:
