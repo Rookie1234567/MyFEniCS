@@ -62,6 +62,8 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
         args = SimpleNamespace(
             run_dir=Path("unused"),
             task037_f0_vector_observer=True,
+            task037_f1_direct_trace_oracle=None,
+            task037_f1_direct_trace_sha256=None,
             task035d_nested_p_dwr_phase=None,
             task035d_selective_face_dwr_phase=None,
         )
@@ -78,4 +80,31 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
         config.assert_called_once_with(args)
         kwargs = solver.call_args.kwargs
         self.assertIsNotNone(kwargs["solution_observer"])
+        self.assertIsNone(kwargs["linear_solver_port"])
         self.assertIsNone(kwargs["variable_p_live_observer"])
+
+    def test_f1_direct_trace_oracle_forwards_to_linear_solver_slot(self):
+        args = SimpleNamespace(
+            run_dir=Path("unused"),
+            task037_f0_vector_observer=False,
+            task037_f1_direct_trace_oracle=Path("trace.npy"),
+            task037_f1_direct_trace_sha256="a" * 64,
+            task035d_nested_p_dwr_phase=None,
+            task035d_selective_face_dwr_phase=None,
+        )
+        sentinel = object()
+        with (
+            patch(
+                "benchmarks.run_task033_full3d_watchdog._full3d_config",
+                return_value=object(),
+            ),
+            patch(
+                "benchmarks.run_task033_full3d_watchdog._task037_f1_direct_trace_oracle",
+                return_value=sentinel,
+            ),
+            patch(
+                "src.solvers.solve_maxwell_3d_stage_4b_block_grating.run_stage4b_block_grating_3d_case"
+            ) as solver,
+        ):
+            self.assertEqual(_worker(args), 0)
+        self.assertIs(solver.call_args.kwargs["linear_solver_port"], sentinel)

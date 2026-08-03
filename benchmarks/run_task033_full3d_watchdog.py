@@ -440,6 +440,60 @@ def _task037_f0_solution_observer(run_dir: Path):
     return observe
 
 
+def _task037_f1_direct_trace_oracle(trace_path: Path, trace_sha256: str):
+    from src.solvers.condensed_dtn import (
+        combine_petsc_augmented_solution,
+        condensed_rhs,
+        create_matrix_free_condensed_operator,
+        extract_petsc_condensed_blocks,
+        full_augmented_relative_residual,
+        recover_petsc_auxiliary,
+    )
+    from src.solvers.dtn_port_3d import (
+        Stage4ExternalLinearSolverSnapshot,
+        _linear_residual,
+    )
+
+    def solve(request):
+        trace = np.load(trace_path)
+        if _sha256(trace_path) != trace_sha256 or trace.shape != (request.n_fe,):
+            raise ValueError("direct trace oracle identity or shape failed")
+        blocks = extract_petsc_condensed_blocks(
+            request.A, request.b, n_fe=request.n_fe, n_aux=request.n_aux
+        )
+        u_fe = blocks.require_f().createVecRight()
+        start, end = map(int, u_fe.getOwnershipRange())
+        u_fe.getArray()[:] = trace[start:end]
+        operator, _ = create_matrix_free_condensed_operator(blocks)
+        rhs = condensed_rhs(blocks)
+        condensed_residual = _linear_residual(operator, rhs, u_fe)[
+            "linear_system_relative_residual"
+        ]
+        u_aux = recover_petsc_auxiliary(blocks, u_fe)
+        target = request.A.createVecRight()
+        combine_petsc_augmented_solution(blocks, u_fe, u_aux, target)
+        full_residual = full_augmented_relative_residual(blocks, u_fe, u_aux)
+        operator.destroy()
+        rhs.destroy()
+        u_aux.destroy()
+        u_fe.destroy()
+        blocks.destroy()
+        return Stage4ExternalLinearSolverSnapshot(
+            x=target,
+            converged_reason=1,
+            iterations=0,
+            reported_relative_residual=condensed_residual,
+            condensed_true_residual=condensed_residual,
+            full_augmented_true_residual=full_residual,
+            ksp_type="direct_vector_oracle",
+            pc_type="none",
+            residual_limit=1.0e-9,
+            no_global_factor=True,
+        )
+
+    return solve
+
+
 def _full3d_config(args: argparse.Namespace):
     from src.common.config_3d import target_stage4_config
 
@@ -489,6 +543,12 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "run_dir": str(Path(args.run_dir).resolve()),
         "stage4_full3d_assembly_backend": str(args.stage4_full3d_assembly_backend),
         "task037_f0_vector_observer": bool(args.task037_f0_vector_observer),
+        "task037_f1_direct_trace_oracle": (
+            None
+            if args.task037_f1_direct_trace_oracle is None
+            else str(Path(args.task037_f1_direct_trace_oracle).resolve())
+        ),
+        "task037_f1_direct_trace_sha256": args.task037_f1_direct_trace_sha256,
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -624,6 +684,14 @@ def _worker(args: argparse.Namespace) -> int:
         if args.task037_f0_vector_observer
         else None
     )
+    linear_solver_port = (
+        _task037_f1_direct_trace_oracle(
+            args.task037_f1_direct_trace_oracle,
+            args.task037_f1_direct_trace_sha256,
+        )
+        if args.task037_f1_direct_trace_oracle is not None
+        else None
+    )
     observer = None
     retain_local_schur = False
     if args.task035d_nested_p_dwr_phase is not None:
@@ -690,6 +758,7 @@ def _worker(args: argparse.Namespace) -> int:
     run_stage4b_block_grating_3d_case(
         _full3d_config(args),
         args.run_dir,
+        linear_solver_port=linear_solver_port,
         solution_observer=solution_observer,
         variable_p_live_observer=observer,
         variable_p_retain_local_schur_for_research=(retain_local_schur),
@@ -755,6 +824,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Export only the current-source Case100 F0 vector identities.",
     )
+    parser.add_argument("--task037-f1-direct-trace-oracle", type=Path)
+    parser.add_argument("--task037-f1-direct-trace-sha256")
     parser.add_argument(
         "--task035d-case097-gate",
         action="store_true",
@@ -872,6 +943,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--parent-launch-descriptor", type=Path)
     parser.add_argument("--parent-launch-descriptor-sha256")
     args = parser.parse_args(argv)
+    if (args.task037_f1_direct_trace_oracle is None) != (
+        args.task037_f1_direct_trace_sha256 is None
+    ):
+        parser.error(
+            "--task037-f1-direct-trace-oracle and --task037-f1-direct-trace-sha256 "
+            "must be provided together."
+        )
     allowed_h_by_degree = {
         2: {5.0, 3.0, 2.0, 1.0},
         3: {10.0, 7.5, 5.0, 3.0, 2.0},
@@ -932,13 +1010,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "Task035c p6 preflight authority arguments require --task035c-p6-h10-gate."
         )
-    if args.task037_f0_vector_observer and not (
+    if (
+        args.task037_f0_vector_observer
+        or args.task037_f1_direct_trace_oracle is not None
+    ) and not (
         args.task035c_p6_h10_gate
         and args.mpi_size == 8
         and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
     ):
         parser.error(
-            "--task037-f0-vector-observer requires the existing Task035c "
+            "Task037 F0/F1 direct-vector options require the existing Task035c "
             "p6/h10 gate, full-solve, static backend, MPI8, and S scope."
         )
     if args.task035d_case097_gate:
@@ -2387,6 +2468,15 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         )
     if args.task037_f0_vector_observer:
         command.append("--task037-f0-vector-observer")
+    if args.task037_f1_direct_trace_oracle is not None:
+        command.extend(
+            (
+                "--task037-f1-direct-trace-oracle",
+                str(args.task037_f1_direct_trace_oracle),
+                "--task037-f1-direct-trace-sha256",
+                str(args.task037_f1_direct_trace_sha256),
+            )
+        )
     if args.task035d_case097_gate:
         plan_options = (
             (
