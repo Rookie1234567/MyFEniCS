@@ -276,6 +276,7 @@ class _LatentFractionRegressor:
     model: Any | None = None
     constant: float = 0.0
     residual_scale: float = 1.0
+    prediction_fallbacks: int = 0
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> "_LatentFractionRegressor":
         values = np.asarray(y, dtype=np.float64).reshape(-1)
@@ -296,7 +297,14 @@ class _LatentFractionRegressor:
     def predict(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         values = np.full(len(np.asarray(x)), self.constant, dtype=np.float64)
         if self.model is not None:
-            values = np.asarray(self.model(x), dtype=np.float64).reshape(-1)
+            try:
+                values = np.asarray(self.model(x), dtype=np.float64).reshape(-1)
+            except (ValueError, np.linalg.LinAlgError):
+                # Collinear local support can make SciPy's thin-plate
+                # polynomial system singular at a query.  The deterministic
+                # constant fit is a declared fallback, not a nearest-point
+                # substitution; retain the event in model provenance.
+                self.prediction_fallbacks += 1
         return values, np.full_like(values, self.residual_scale)
 
 
@@ -426,4 +434,9 @@ class MaskedFractionPowerModel:
             "uncertainty": "heuristic_training_residual_scale",
             "uncertainty_calibration": "not_calibrated_physical_uncertainty",
             "unsupported_topology_policy": "fail_closed",
+            "prediction_fallback_policy": "constant_on_collinear_support",
+            "prediction_fallback_count": int(sum(
+                reg.prediction_fallbacks for group in self.groups.values()
+                for reg in group["regressors"].values()
+            )),
         }

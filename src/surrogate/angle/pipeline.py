@@ -426,8 +426,12 @@ def _candidate_score(result: dict[str, Any]) -> float:
 
 
 def _result_summary(result: dict[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in result.items()
-            if key not in {"oof_prediction", "oof_std", "power_oof_records"}}
+    summary = {key: value for key, value in result.items()
+               if key not in {"oof_prediction", "oof_std", "power_oof_records"}}
+    if isinstance(summary.get("power"), dict):
+        summary["power"] = {key: value for key, value in summary["power"].items()
+                             if key != "records"}
+    return summary
 
 
 def run_training_cv(*, dataset_dir: Path, output_dir: Path,

@@ -27,21 +27,25 @@ def deterministic_optimization_initials(dimension: int, count: int = 8,
     def pad(values: list[float]) -> np.ndarray:
         return np.asarray((values + [values[-1]] * dimension)[:dimension], dtype=np.float64)
 
+    def repeat(values: list[float]) -> np.ndarray:
+        """Repeat a declared pattern to the requested ARD dimension."""
+        return np.resize(np.asarray(values, dtype=np.float64), dimension)
+
     patterns = [
         np.full(dimension, 0.10), np.full(dimension, 0.25),
         np.full(dimension, 0.50), np.full(dimension, 1.00),
         np.full(dimension, 2.00),
         pad([0.25, 0.25, 0.50]),
         pad([2.00, 2.00, 0.50]),
-        np.array([0.50, 2.00, 0.25, 2.00, 0.50] * 2)[:dimension],
-        np.array([2.00, 0.50, 2.00, 0.25, 0.50] * 2)[:dimension],
-        np.array([0.05, 0.50, 1.50, 3.00, 0.15] * 2)[:dimension],
-        np.array([3.00, 1.50, 0.50, 0.05, 2.00] * 2)[:dimension],
-        np.array([0.15, 3.00, 0.05, 1.50, 0.50] * 2)[:dimension],
-        np.array([1.50, 0.05, 3.00, 0.15, 0.50] * 2)[:dimension],
-        np.array([0.75, 0.75, 0.15, 3.00, 0.15] * 2)[:dimension],
-        np.array([3.00, 0.15, 0.75, 0.75, 0.15] * 2)[:dimension],
-        np.array([0.15, 0.75, 3.00, 0.15, 0.75] * 2)[:dimension],
+        repeat([0.50, 2.00, 0.25, 2.00, 0.50]),
+        repeat([2.00, 0.50, 2.00, 0.25, 0.50]),
+        repeat([0.05, 0.50, 1.50, 3.00, 0.15]),
+        repeat([3.00, 1.50, 0.50, 0.05, 2.00]),
+        repeat([0.15, 3.00, 0.05, 1.50, 0.50]),
+        repeat([1.50, 0.05, 3.00, 0.15, 0.50]),
+        repeat([0.75, 0.75, 0.15, 3.00, 0.15]),
+        repeat([3.00, 0.15, 0.75, 0.75, 0.15]),
+        repeat([0.15, 0.75, 3.00, 0.15, 0.75]),
     ]
     rotation = int(seed) % len(patterns)
     ordered = patterns[rotation:] + patterns[:rotation]
