@@ -163,7 +163,9 @@ def freeze_supported_interpolation_windows_v3(*, angles: np.ndarray, v2_path: Pa
     """Create V3 while retaining V2 as immutable authority."""
 
     if output.is_file():
-        return json.loads(output.read_text())
+        cached = json.loads(output.read_text())
+        if cached.get("surrogate_training_code_sha") == implementation_sha:
+            return cached
     v2 = json.loads(v2_path.read_text())
     if v2.get("training_tuple_sha256") != training_tuple_sha256:
         raise ValueError("V2 window tuple hash does not match train96")
