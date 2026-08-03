@@ -77,7 +77,7 @@
     "status": "pass",
     "screen_20_status": "pass",
     "screen_100_status": "pass",
-    "screen_200_status": "not_run",
+    "screen_200_status": "pass",
     "authorized_iterations": [20, 100, 200],
     "record": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_f3_20_screen_v1.json",
     "screen_100_record": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_f3_100_screen_v1.json",
@@ -129,9 +129,16 @@
     "not_authorized": ["F4-F6"]
   },
   "task037_f3_assembled_full": {
-    "status": "not_run",
+    "status": "not_pass",
     "authorized": true,
     "cli": "--task037-f3-full",
+    "record": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_f3_assembled_full_v1.json",
+    "outcome": "docs/task037_static_condensed_full3d_iterative/outcomes/assembled_fgmres_full.md",
+    "solver_residual_status": "pass",
+    "physical_observable_status": "pass",
+    "raw_vector_indexwise_status": "fail",
+    "resource_status": "negative",
+    "combined_task037_numerical_status": "not_pass",
     "candidate": {
       "outer_ksp": "fgmres",
       "pc_side": "right",
@@ -159,6 +166,13 @@
       "external_rta_gate_pass": true,
       "no_global_factor": true,
       "global_schur_matrix_materialized": false
+    },
+    "next_stage": {
+      "F5a_action_oracle_authorized": true,
+      "F4_authorized": false,
+      "F5b_authorized": false,
+      "matrix_free_full_authorized": false,
+      "F6_authorized": false
     }
   }
 }

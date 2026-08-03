@@ -92,9 +92,16 @@
     "not_authorized": ["F4-F6"]
   },
   "task037_f3_assembled_full": {
-    "status": "not_run",
+    "status": "not_pass",
     "authorized": true,
     "cli": "--task037-f3-full",
+    "record": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_f3_assembled_full_v1.json",
+    "outcome": "docs/task037_static_condensed_full3d_iterative/outcomes/assembled_fgmres_full.md",
+    "solver_residual_status": "pass",
+    "physical_observable_status": "pass",
+    "raw_vector_indexwise_status": "fail",
+    "resource_status": "negative",
+    "combined_task037_numerical_status": "not_pass",
     "candidate": {
       "outer_ksp": "fgmres",
       "pc_side": "right",
@@ -122,19 +129,28 @@
       "external_rta_gate_pass": true,
       "no_global_factor": true,
       "global_schur_matrix_materialized": false
+    },
+    "next_stage": {
+      "F5a_action_oracle_authorized": true,
+      "F4_authorized": false,
+      "F5b_authorized": false,
+      "matrix_free_full_authorized": false,
+      "F6_authorized": false
     }
   },
   "canonical_vectors": {
     "active_trace_source": "dtn_result.x global prefix [0, independent_active_trace_rows)",
     "recovered_full_fe_source": "E_total.x.petsc_vec owned entries",
-    "global_order": "ascending PETSc ownership ranges",
+    "global_order": "single-run PETSc ownership order; unstable across independent mesh partitions",
     "dtype": "little-endian complex128",
-    "hash_inputs": ["namespace", "shape", "dtype", "canonical_bytes"],
+    "hash_inputs": ["namespace", "shape", "dtype", "ownership_order_bytes"],
     "raw_vector_storage": "ignored run_dir only",
-    "tracked_record": "hash shape source only"
+    "tracked_record": "hash shape source only",
+    "cross_partition_physical_canonical": false,
+    "raw_vector_gate": "fail; inference cannot substitute"
   },
   "out_of_scope": [
-    "F4-F6 are not authorized in this phase",
+    "F4, F5b/F5c, matrix-free full, F6 are not authorized in this phase",
     "Hybrid or low-rank direct Hybrid",
     "hp/adaptive mesh",
     "0.7 nm",
