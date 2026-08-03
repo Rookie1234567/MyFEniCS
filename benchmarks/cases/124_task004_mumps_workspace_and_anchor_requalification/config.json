@@ -1,0 +1,50 @@
+{
+  "schema_version": "task004.m0r-case.v2",
+  "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "historical_clean_sha": "7fe366304023c32bf2e8ddcacdb2ada9996d3e7c",
+  "production_model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "production_solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "parameter_schema_version": "task002.s-p5-ny4-production-parameters.v3",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "solver": {
+    "mpi_ranks": 2,
+    "threads_per_rank": 1,
+    "factor_solver": "mumps",
+    "option_scope": "prefixed_ksp",
+    "icntl_14_candidates": [40, 80, 120],
+    "selected_icntl_14": 40,
+    "selection_rule": "minimum value with two consecutive fresh-process full solves passing every numerical and resource gate"
+  },
+  "fixed_geometry": {
+    "height_nm": 120.0,
+    "width_x_nm": 17.0,
+    "wavelength_nm": 13.5,
+    "incident_polarization": "S",
+    "grazing_deg_range": [0.5, 10.0],
+    "azimuth_deg_range": [0.0, 90.0]
+  },
+  "designs": {
+    "training_count": 96,
+    "validation_count": 24,
+    "candidate_pool_count": 4096,
+    "anchor_count": 5,
+    "training_tuple_sha256": "bfd68a374e5510284a972c640c6332d818917052ae30bd77c10af5240f0500ef",
+    "validation_tuple_sha256": "af6cc7c87236aa2e1050b40f1cca1282932e071b22b3b767057b94bc8c11af57",
+    "candidate_pool_tuple_sha256": "db2a6155274614b5129846ace0a277fe69161f2e5120966d7968d6b210d981fa",
+    "anchor_tuple_sha256": "63decea83a844d49a9e6a49e0ca01dddf548b8e2e592eea1b3bfadfaf8ec63f5"
+  },
+  "artifacts": {
+    "mumps_ladder": "benchmarks/artifacts/cases/124_task004_mumps_workspace_and_anchor_requalification/mumps_workspace_ladder.json",
+    "anchors": "benchmarks/artifacts/cases/124_task004_mumps_workspace_and_anchor_requalification/anchor_campaign_manifest.json",
+    "forward_comparer": "benchmarks/artifacts/cases/124_task004_mumps_workspace_and_anchor_requalification/forward_baseline_v2.json",
+    "training_campaign": "benchmarks/artifacts/cases/124_task004_mumps_workspace_and_anchor_requalification/training_canary/campaign_manifest.json"
+  },
+  "boundaries": {
+    "task003_round3": "forbidden",
+    "task003_frozen_validation": "sealed_not_accessed",
+    "task004_blind_validation": "sealed_not_run_before_model_lock",
+    "surrogate_training": "not_run",
+    "angle_doe": "not_authorized",
+    "inversion": "forbidden"
+  }
+}

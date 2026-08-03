@@ -1,0 +1,28 @@
+{
+  "schema_version": "task004.forward-baseline.v2",
+  "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "old_mathematical_discretization_reference": "Case119 Ny4/p5",
+  "new_execution_identity": {
+    "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+    "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+    "axis_cell_counts": [6, 4, 14],
+    "degree": 5,
+    "target_h_nm": 10.0,
+    "mpi_ranks": 2,
+    "threads_per_rank": 1,
+    "mumps_icntl_14": 40,
+    "observable_schema_version": "task002.fixed-n0-orders.v3",
+    "parameter_schema_version": "task002.s-p5-ny4-production-parameters.v3",
+    "source_dirty": false
+  },
+  "anchor_count": 5,
+  "anchor_tuples": [[0.5, 0.0], [0.5, 90.0], [10.0, 0.0], [10.0, 90.0], [5.25, 45.0]],
+  "gate": {
+    "aggregate_le_1e-10": true,
+    "power_le_1e-10": true,
+    "amplitude_le_1e-9": true,
+    "identity_match": true
+  },
+  "status": "pass",
+  "comparer_artifact": "benchmarks/artifacts/cases/124_task004_mumps_workspace_and_anchor_requalification/forward_baseline_v2.json"
+}

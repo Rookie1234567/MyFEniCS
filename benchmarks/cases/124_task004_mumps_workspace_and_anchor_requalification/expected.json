@@ -1,0 +1,23 @@
+{
+  "status": "pass",
+  "checks": {
+    "design_identity": true,
+    "design_tuple_hashes": true,
+    "training_validation_disjoint": true,
+    "single_clean_sha": true,
+    "mumps_ladder_minimum_stable": true,
+    "mumps_two_fresh_passes": true,
+    "anchor_count_and_tuples": true,
+    "anchor_observable_gate": true,
+    "training_canary_16_of_16": true,
+    "training_campaign_96_of_96": true,
+    "no_unexplained_failure": true,
+    "no_blind_validation_access": true,
+    "no_task003_validation_access": true
+  },
+  "mumps_selected_icntl_14": 40,
+  "training_status": "96_measured_pass",
+  "blind_validation": "sealed_not_run",
+  "model_lock": "not_created",
+  "surrogate_training": "not_run"
+}

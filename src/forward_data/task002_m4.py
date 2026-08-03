@@ -18,11 +18,12 @@ from .task002_schema import (
 PRODUCTION_MODEL_ID = "S_PROD_FULL3D_STATIC_P5_H10_NY4"
 PRODUCTION_ROUTE_ID = "full3d_static_uniform_n1curl_p5_h10_ny4"
 DESIGN_SCHEMA = "task002.m3r-design.v1"
+TASK004_DESIGN_SCHEMA = "task004.angle-design.v2"
 
 
 def load_frozen_design(path: Path, *, baseline_sha: str, split: str) -> dict[str, Any]:
     design = json.loads(path.read_text(encoding="utf-8"))
-    if design.get("schema_version") != DESIGN_SCHEMA:
+    if design.get("schema_version") not in {DESIGN_SCHEMA, TASK004_DESIGN_SCHEMA}:
         raise ValueError("Task002 M4 design schema mismatch")
     if design.get("source_sha") != baseline_sha or design.get("source_dirty") is not False:
         raise ValueError("Task002 M4 design is not bound to the clean baseline SHA")
