@@ -70,13 +70,17 @@
   "phase_status": {
     "f0_direct_authority": "pass",
     "f3_screen_20": "pass",
-    "f3_screen_100": "not_run"
+    "f3_screen_100": "pass",
+    "f3_screen_200": "not_run"
   },
   "task037_f3_screen": {
     "status": "pass",
-    "screen_100_status": "not_run",
-    "authorized_iterations": [20, 100],
+    "screen_20_status": "pass",
+    "screen_100_status": "pass",
+    "screen_200_status": "not_run",
+    "authorized_iterations": [20, 100, 200],
     "record": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_f3_20_screen_v1.json",
+    "screen_100_record": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_f3_100_screen_v1.json",
     "candidate": {
       "outer_ksp": "fgmres",
       "pc_side": "right",
@@ -116,8 +120,12 @@
       "final_true_residuals_le_0_3": "required when screen_iterations=100",
       "last40_strict_decline": "required when screen_iterations=100"
     },
+    "screen_200_gates": {
+      "full_augmented_true_residual_le_0_05": "required when screen_iterations=200",
+      "predicted_iterations_le_3000": "last40 endpoint log-linear reported residual",
+      "predicted_wall_seconds_le_7200": "observed worker elapsed times predicted_iterations / observed_iterations"
+    },
     "not_authorized": [
-      "200-step CLI not exposed",
       "full-run CLI not exposed"
     ]
   }

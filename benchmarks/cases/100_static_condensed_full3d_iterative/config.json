@@ -57,9 +57,12 @@
   },
   "task037_f3_screen": {
     "status": "pass",
-    "screen_100_status": "not_run",
-    "authorized_iterations": [20, 100],
+    "screen_20_status": "pass",
+    "screen_100_status": "pass",
+    "screen_200_status": "not_run",
+    "authorized_iterations": [20, 100, 200],
     "record": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_f3_20_screen_v1.json",
+    "screen_100_record": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_f3_100_screen_v1.json",
     "candidate": {
       "outer_ksp": "fgmres",
       "pc_side": "right",
@@ -86,7 +89,6 @@
       "swap_allowed": false
     },
     "not_authorized": [
-      "200-step CLI not exposed",
       "full-run CLI not exposed"
     ]
   },
@@ -100,7 +102,7 @@
     "tracked_record": "hash shape source only"
   },
   "out_of_scope": [
-    "F3 200/full and F4-F6 are not authorized in this phase",
+    "F3 full and F4-F6 are not authorized in this phase",
     "Hybrid or low-rank direct Hybrid",
     "hp/adaptive mesh",
     "0.7 nm",

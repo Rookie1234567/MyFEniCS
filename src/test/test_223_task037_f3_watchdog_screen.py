@@ -7,7 +7,7 @@ from benchmarks import run_task033_full3d_watchdog as watchdog
 
 
 def _audit(screen_iterations=20):
-    middle_iteration = 10 if screen_iterations == 20 else 60
+    middle_iteration = 10 if screen_iterations == 20 else screen_iterations - 40
     return {
         "candidate": {
             "outer_ksp": "fgmres",
@@ -81,7 +81,7 @@ def test_parser_scope_and_worker_command(tmp_path):
     ordinary = watchdog._parse_args(base)
     assert ordinary.task037_f3_screen is None
     valid = []
-    for screen_iterations in (20, 100):
+    for screen_iterations in (20, 100, 200):
         valid_args = base + [
             "--task037-f3-screen",
             str(screen_iterations),
@@ -99,7 +99,7 @@ def test_parser_scope_and_worker_command(tmp_path):
         assert command[position + 1] == str(screen_iterations)
         valid = valid_args
     bad_iterations = valid.copy()
-    bad_iterations[bad_iterations.index("--task037-f3-screen") + 1] = "200"
+    bad_iterations[bad_iterations.index("--task037-f3-screen") + 1] = "3000"
     missing_caps = valid.copy()
     for option in ("--warning-gib", "--terminate-gib", "--timeout-seconds"):
         index = missing_caps.index(option)
@@ -146,12 +146,12 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         task037_f0_vector_observer=False,
         task037_f1_direct_trace_oracle=None,
         task037_f1_direct_trace_sha256=None,
-        task037_f3_screen=100,
+        task037_f3_screen=200,
         task035d_nested_p_dwr_phase=None,
         task035d_selective_face_dwr_phase=None,
     )
     assert watchdog._worker(args) == 0
-    assert iterations_seen == [100]
+    assert iterations_seen == [200]
     history = (tmp_path / "task037_f3_residual_history.jsonl").read_text()
     lines = [json.loads(line) for line in history.splitlines()]
     assert len(lines) == 3
@@ -222,9 +222,42 @@ def test_f3_qualification_uses_core_audit_gate():
         **{**qualify_kwargs, "args": args100, "solver_summary": summary100},
         task037_f3_core_audit=audit100,
     )["pass"]
+    good200 = _audit(200)
+    good200["reported_history"][-1][1] = 0.01
+    good200["condensed_true_samples"][-1][1] = 0.01
+    good200["final"].update(
+        reported_relative_residual=0.01,
+        condensed_true_residual=0.01,
+        full_augmented_true_residual=0.01,
+    )
+    args200 = SimpleNamespace(**{**vars(args), "task037_f3_screen": 200})
+    summary200 = {**summary, "elapsed_seconds": 300.0}
+    assert watchdog._task037_f3_screen_gate(good200, 200, 300.0)["screen_200"]
+    good200["final"]["condensed_true_residual"] = 0.051
+    assert watchdog._task037_f3_screen_gate(good200, 200, 300.0)["screen_200"]
+    good200["final"]["condensed_true_residual"] = 0.01
+    assert watchdog._qualify(
+        **{**qualify_kwargs, "args": args200, "solver_summary": summary200},
+        task037_f3_core_audit=good200,
+    )["pass"]
+    assert not watchdog._task037_f3_screen_gate(good200, 200, 5000.0)["screen_200"]
+    bad_full = _audit(200)
+    bad_full["final"]["full_augmented_true_residual"] = 0.051
+    assert not watchdog._task037_f3_screen_gate(bad_full, 200, 300.0)["screen_200"]
+    slow = _audit(200)
+    slow["reported_history"][1][1] = 0.05
+    slow["reported_history"][-1][1] = 0.049
+    slow["condensed_true_samples"][1][1] = 0.05
+    slow["condensed_true_samples"][2][1] = 0.049
+    slow["final"].update(
+        reported_relative_residual=0.049,
+        condensed_true_residual=0.049,
+        full_augmented_true_residual=0.049,
+    )
+    assert not watchdog._task037_f3_screen_gate(slow, 200, 300.0)["screen_200"]
     bad_trend = _audit(100)
     bad_trend["reported_history"][-1][1] = 0.5
-    assert not watchdog._task037_f3_screen_gate(bad_trend, 100)["screen_100"]
+    assert not watchdog._task037_f3_screen_gate(bad_trend, 100, None)["screen_100"]
     bad_residual = _audit(100)
     bad_residual["reported_history"][-1][1] = 0.31
     bad_residual["condensed_true_samples"][-1][1] = 0.31
@@ -233,10 +266,10 @@ def test_f3_qualification_uses_core_audit_gate():
         condensed_true_residual=0.31,
         full_augmented_true_residual=0.31,
     )
-    assert not watchdog._task037_f3_screen_gate(bad_residual, 100)["screen_100"]
+    assert not watchdog._task037_f3_screen_gate(bad_residual, 100, None)["screen_100"]
     bad = _audit()
     bad["reported_history"][1][1] = 11.0
-    assert not watchdog._task037_f3_screen_gate(bad, 20)["finite_and_scale"]
+    assert not watchdog._task037_f3_screen_gate(bad, 20, None)["finite_and_scale"]
     assert not watchdog._qualify(
         **qualify_kwargs,
         task037_f3_core_audit=bad,

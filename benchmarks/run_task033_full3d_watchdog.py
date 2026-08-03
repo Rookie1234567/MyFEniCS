@@ -529,7 +529,9 @@ def _task037_f3_assembled_fgmres_port(run_dir: Path, screen_iterations: int):
 
 
 def _task037_f3_screen_gate(
-    audit: Mapping[str, Any], expected_screen_iterations: int
+    audit: Mapping[str, Any],
+    expected_screen_iterations: int,
+    observed_wall_seconds: float | None,
 ) -> dict[str, bool]:
     try:
         candidate = audit["candidate"]
@@ -553,7 +555,9 @@ def _task037_f3_screen_gate(
         reason, iterations = int(final["converged_reason"]), int(final["iterations"])
         final_history_value = history_by_iteration[iterations]
         comparison_iteration = (
-            max(0, iterations - 40) if expected_screen_iterations == 100 else iterations
+            max(0, iterations - 40)
+            if expected_screen_iterations in (100, 200)
+            else iterations
         )
         comparison_history_value = history_by_iteration[comparison_iteration]
         coarse = audit["coarse"]
@@ -571,6 +575,19 @@ def _task037_f3_screen_gate(
         factor_only = smoother["factor_only_storage"] is True
         no_global_factor = inventory["global_direct_factor_count"] == 0
         no_global_schur = inventory["global_schur_matrix_materialized"] is False
+        if expected_screen_iterations == 200:
+            target = 1.0e-6
+            predicted_iterations = iterations if final_values[0] <= target else math.inf
+            if target < final_values[0] < comparison_history_value:
+                log_rate = math.log(final_values[0] / comparison_history_value) / (
+                    iterations - comparison_iteration
+                )
+                predicted_iterations = math.ceil(
+                    iterations + math.log(target / final_values[0]) / log_rate
+                )
+            predicted_wall_seconds = (
+                float(observed_wall_seconds) * predicted_iterations / iterations
+            )
     except (KeyError, TypeError, ValueError, IndexError):
         return {"core_audit": False}
     tiny = np.finfo(float).tiny
@@ -620,6 +637,12 @@ def _task037_f3_screen_gate(
             final_values[1] <= 3.0e-1
             and final_values[2] <= 3.0e-1
             and final_history_value < comparison_history_value
+        ),
+        "screen_200": expected_screen_iterations != 200
+        or (
+            final_values[2] <= 5.0e-2
+            and predicted_iterations <= 3000
+            and predicted_wall_seconds <= 7200
         ),
     }
 
@@ -960,7 +983,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task037-f1-direct-trace-oracle", type=Path)
     parser.add_argument("--task037-f1-direct-trace-sha256")
-    parser.add_argument("--task037-f3-screen", type=int, choices=(20, 100))
+    parser.add_argument("--task037-f3-screen", type=int, choices=(20, 100, 200))
     parser.add_argument(
         "--task035d-case097-gate",
         action="store_true",
@@ -2453,6 +2476,7 @@ def _qualify(
         screen_checks = _task037_f3_screen_gate(
             task037_f3_core_audit or {},
             args.task037_f3_screen,
+            solver_summary.get("elapsed_seconds"),
         )
         reason = solver_summary.get("ksp_converged_reason")
         residual = solver_summary.get("linear_system_relative_residual")
