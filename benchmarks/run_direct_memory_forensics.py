@@ -678,16 +678,42 @@ def _enrich_factor_inventory(
     factor_inventory: dict[str, Any] | None,
     augmented_matrix_stats: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
-    """Add transparent algebraic ratios without assigning MUMPS index semantics."""
+    """Add algebraic ratios from explicitly sourced factor telemetry."""
 
     if factor_inventory is None:
         return None
     enriched = dict(factor_inventory)
     factor_stats = factor_inventory.get("matrix_stats") or {}
     augmented_stats = augmented_matrix_stats or {}
-    factor_nnz = factor_stats.get("matrix_nnz_used")
+    corrected_factor_nnz = factor_inventory.get("factor_nnz_corrected")
+    factor_nnz = (
+        corrected_factor_nnz
+        if corrected_factor_nnz is not None
+        else factor_stats.get("matrix_nnz_used")
+    )
+    factor_nnz_source = (
+        factor_inventory.get("factor_nnz_corrected_source")
+        if corrected_factor_nnz is not None
+        else "petsc_factor_matrix_nnz_used_raw"
+    )
     augmented_nnz = augmented_stats.get("matrix_nnz_used")
     factor_estimate = factor_stats.get("matrix_memory_estimate_mb")
+    factor_estimate_source = "petsc_factor_matrix_estimate_raw"
+    if corrected_factor_nnz is not None:
+        factor_rows = factor_stats.get("matrix_rows")
+        factor_estimate = (
+            (
+                float(corrected_factor_nnz) * (16.0 + 8.0)
+                + float(int(factor_rows) + 1) * 8.0
+            )
+            / (1024.0 * 1024.0)
+            if isinstance(factor_rows, (int, float))
+            and int(factor_rows) >= 0
+            else None
+        )
+        factor_estimate_source = (
+            "corrected_factor_nnz_complex128_int64_csr_estimate"
+        )
     augmented_estimate = augmented_stats.get("matrix_memory_estimate_mb")
     enriched["derived_ratios"] = {
         "factor_to_augmented_nnz_ratio": (
@@ -697,6 +723,8 @@ def _enrich_factor_inventory(
             and float(augmented_nnz) > 0.0
             else None
         ),
+        "factor_nnz_source": factor_nnz_source,
+        "factor_estimated_storage_source": factor_estimate_source,
         "factor_to_augmented_estimated_storage_ratio": (
             float(factor_estimate) / float(augmented_estimate)
             if isinstance(factor_estimate, (int, float))
@@ -705,8 +733,9 @@ def _enrich_factor_inventory(
             else None
         ),
         "semantics": (
-            "Ratios are algebraically derived from PETSc-reported nnz and the "
-            "same matrix-storage estimator; they are not inferred MUMPS INFOG/RINFOG meanings."
+            "Ratios use the corrected MUMPS INFOG(9) million-entry count when "
+            "the raw int32 telemetry overflowed, otherwise PETSc-reported nnz; "
+            "storage ratios use the same matrix-storage estimator."
         ),
     }
     return enriched

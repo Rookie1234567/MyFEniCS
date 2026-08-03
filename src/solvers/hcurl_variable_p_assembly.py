@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 from time import perf_counter
 from types import MappingProxyType
@@ -160,6 +160,7 @@ class VariablePCondensedTraceSystem:
         Mapping[tuple[Any, ...], np.ndarray] | None
     )
     build_audit: dict[str, Any]
+    _destroyed: bool = field(default=False, init=False, repr=False)
 
     @property
     def trace_constraints(self) -> VariablePTraceConstraintMap | None:
@@ -173,8 +174,11 @@ class VariablePCondensedTraceSystem:
         return self.periodic_constraints
 
     def destroy(self) -> None:
+        if self._destroyed:
+            return
         self.release_retained_local_schur()
         self.matrix.destroy()
+        self._destroyed = True
 
     def release_retained_local_schur(self) -> dict[str, Any]:
         """Release the explicit research-only local Schur lease."""

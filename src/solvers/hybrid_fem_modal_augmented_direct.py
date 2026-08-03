@@ -372,8 +372,8 @@ class HybridAugmentedDirectSystem:
 
 @dataclass
 class HybridAugmentedDirectSolution:
-    x: PETSc.Vec
-    ksp: PETSc.KSP
+    x: PETSc.Vec | None
+    ksp: PETSc.KSP | None
     bottom: PETSc.Vec
     top: PETSc.Vec
     modal_amplitudes: np.ndarray
@@ -384,6 +384,11 @@ class HybridAugmentedDirectSolution:
     factor_solver: str = "mumps"
     bottom_recovered: HybridStaticRecoveredLocalField | None = None
     top_recovered: HybridStaticRecoveredLocalField | None = None
+    _factorization_released: bool = field(
+        default=False,
+        init=False,
+        repr=False,
+    )
     _destroyed: bool = field(default=False, init=False, repr=False)
 
     @property
@@ -402,13 +407,38 @@ class HybridAugmentedDirectSolution:
             else self.top
         )
 
+    def release_factorization(self) -> dict[str, object]:
+        """Release the monolithic solution carrier and direct factor only."""
+
+        if self._factorization_released:
+            return {
+                "released": False,
+                "already_released": True,
+                "retained_physical_fields": True,
+            }
+        if self.x is not None:
+            self.x.destroy()
+            self.x = None
+        if self.ksp is not None:
+            self.ksp.destroy()
+            self.ksp = None
+        self._factorization_released = True
+        return {
+            "released": True,
+            "already_released": False,
+            "released_objects": [
+                "monolithic_solution_carrier",
+                "KSP_MUMPS_factor",
+            ],
+            "retained_physical_fields": True,
+        }
+
     def destroy(self) -> None:
         if self._destroyed:
             return
         self.bottom.destroy()
         self.top.destroy()
-        self.x.destroy()
-        self.ksp.destroy()
+        self.release_factorization()
         self._destroyed = True
 
 

@@ -143,6 +143,14 @@ class SimulationConfig3D:
     diffraction_probe_fraction: float = 0.75
     diffraction_compute_modal_diagnostic: bool = False
     diffraction_rayleigh_tol: float = 1.0e-6
+    # Opt-in guard for a declared y-invariant, physical n=0 subspace. The
+    # ordinary solver remains unchanged unless explicitly enabled.
+    dtn_y_invariant_n0_alias_preflight: bool = False
+    dtn_trace_alias_overlap_tolerance: float = 1.0e-8
+    # Opt-in independent projection audit. Official port amplitudes remain the
+    # auxiliary unknowns; this only reprojects the recovered tangential field.
+    dtn_auxiliary_direct_projection_audit: bool = False
+    dtn_auxiliary_direct_projection_tolerance: float = 1.0e-10
     # Explicit opt-in export used by Hybrid FEM-modal validation.  The default
     # remains off so ordinary Stage-4 runs do not gather or persist sampled
     # volume fields.

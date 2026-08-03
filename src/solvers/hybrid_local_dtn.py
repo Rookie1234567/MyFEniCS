@@ -28,6 +28,7 @@ from .dtn_port_3d import (
     _combine_owned_entries,
     _copy_base_matrix_to_augmented,
     _deferred_preallocation_matrix_stats,
+    _dtn_n0_trace_alias_preflight,
     _dtn_surface_quadrature_degree,
     _incident_projection_onto_top_mode,
     _incident_top_traction_form,
@@ -243,6 +244,16 @@ def _assemble_one_sided_external_dtn(
             quadrature_degree=quadrature_degree,
         ),
     )
+    trace_alias_preflight = _dtn_n0_trace_alias_preflight(
+        modes,
+        {
+            (side, 0): surface_assemblers[0],
+            (side, 1): surface_assemblers[1],
+        },
+        floquet_data.mpc,
+        enabled=bool(cfg.dtn_y_invariant_n0_alias_preflight),
+        overlap_tolerance=float(cfg.dtn_trace_alias_overlap_tolerance),
+    )
     component_key: tuple[int, int, complex] | None = None
     component_right_entries = None
     component_left_entries = None
@@ -417,6 +428,7 @@ def _assemble_one_sided_external_dtn(
                 if static_condensation is not None
                 else None
             ),
+            "dtn_trace_alias_preflight": trace_alias_preflight,
         }
     )
     augmented_stats = _petsc_matrix_stats(A_aug)

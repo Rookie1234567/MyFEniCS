@@ -474,6 +474,20 @@ def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
     }
 
 
+def _corrected_mumps_factor_nnz(
+    factor_solver_type: str | None,
+    raw_infog_9: int | None,
+) -> int | None:
+    """Decode MUMPS' negative INFOG(9) million-entry representation."""
+
+    if factor_solver_type != "mumps" or raw_infog_9 is None:
+        return None
+    raw_value = int(raw_infog_9)
+    if raw_value >= 0:
+        return None
+    return int(abs(raw_value) * 1_000_000)
+
+
 def _petsc_factor_inventory(ksp) -> dict[str, Any]:
     """Return only factor data exposed by the active petsc4py build."""
 
@@ -481,6 +495,8 @@ def _petsc_factor_inventory(ksp) -> dict[str, Any]:
         "available": False,
         "factor_solver_type": None,
         "matrix_stats": None,
+        "factor_nnz_corrected": None,
+        "factor_nnz_corrected_source": None,
         "mumps_raw_infog": {},
         "mumps_raw_rinfog": {},
         "mumps_api_available": False,
@@ -518,7 +534,19 @@ def _petsc_factor_inventory(ksp) -> dict[str, Any]:
             inventory["mumps_raw_rinfog"][str(index)] = float(factor.getMumpsRinfog(index))
         except Exception:
             continue
-    inventory["limitations"].append("MUMPS INFOG/RINFOG values are stored by raw index without inferred semantics.")
+    corrected_factor_nnz = _corrected_mumps_factor_nnz(
+        inventory["factor_solver_type"],
+        inventory["mumps_raw_infog"].get("9"),
+    )
+    if corrected_factor_nnz is not None:
+        inventory["factor_nnz_corrected"] = corrected_factor_nnz
+        inventory["factor_nnz_corrected_source"] = (
+            "mumps_infog_9_negative_millions"
+        )
+    inventory["limitations"].append(
+        "MUMPS INFOG/RINFOG values are stored by raw index; only negative "
+        "INFOG(9) receives the documented million-entry correction."
+    )
     return inventory
 
 

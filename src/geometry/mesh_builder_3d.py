@@ -919,6 +919,17 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
     else:
         mesh_cells_resolved = cfg.mesh_cells
         z_alignment_warnings = _z_alignment_warnings(cfg, mesh_cells_resolved)
+    requested_axis_counts = cfg.mesh_axis_cell_counts_requested
+    if (
+        requested_axis_counts is not None
+        and tuple(int(value) for value in mesh_cells_resolved)
+        != requested_axis_counts
+    ):
+        raise RuntimeError(
+            "Runtime Stage-4 axis counts differ from the explicit config: "
+            f"requested={requested_axis_counts}, "
+            f"actual={tuple(int(value) for value in mesh_cells_resolved)}."
+        )
 
     if mesh_cell_type_resolved == "hexahedron":
         assert hexa_axis_plan is not None

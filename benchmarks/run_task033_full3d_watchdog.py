@@ -64,6 +64,10 @@ from benchmarks.task035d_nested_p_snapshot_gate import (
 from benchmarks.task035d_nested_p_dwr_checker import (
     task035d_nested_p_dwr_report_gate,
 )
+from benchmarks.watchdog_process_control import (
+    terminate_process_tree,
+    worker_process_group_popen_kwargs,
+)
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
     _add_cpu_core_equivalents,
@@ -2245,14 +2249,6 @@ def _qualify(
     }
 
 
-def _terminate(process: subprocess.Popen[str]) -> None:
-    process.terminate()
-    try:
-        process.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        process.kill()
-
-
 def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
     command = [
         "mpiexec",
@@ -2482,6 +2478,7 @@ def _run_parent(args: argparse.Namespace) -> int:
             stderr=subprocess.STDOUT,
             text=True,
             env=environment,
+            **worker_process_group_popen_kwargs(),
         )
         previous: dict[str, Any] | None = None
         while True:
@@ -2520,17 +2517,17 @@ def _run_parent(args: argparse.Namespace) -> int:
                 warning_triggered |= authority_gib >= args.warning_gib
             if process.poll() is None and not authority_readable:
                 terminated_for_authority_unreadable = True
-                _terminate(process)
+                terminate_process_tree(process)
             elif (
                 process.poll() is None
                 and authority_gib is not None
                 and authority_gib >= args.terminate_gib
             ):
                 terminated_for_memory = True
-                _terminate(process)
+                terminate_process_tree(process)
             elif process.poll() is None and elapsed >= args.timeout_seconds:
                 terminated_for_timeout = True
-                _terminate(process)
+                terminate_process_tree(process)
             if process.poll() is not None:
                 break
             time.sleep(args.poll_interval)

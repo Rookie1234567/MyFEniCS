@@ -154,6 +154,27 @@ class Task035dVariablePStage4SmokeTests(unittest.TestCase):
             audit["actual_conforming_active_fe_dofs"],
             summary["num_nedelec_dofs"],
         )
+        self.assertEqual(
+            audit["actual_conforming_active_fe_dofs"],
+            audit["actual_full3d_equivalent_active_fe_dofs"],
+        )
+        self.assertEqual(
+            summary["num_active_exact_sequence_fe_dofs"],
+            audit["actual_conforming_active_fe_dofs"],
+        )
+        self.assertGreaterEqual(
+            summary["num_storage_carrier_fe_dofs"],
+            summary["num_active_exact_sequence_fe_dofs"],
+        )
+        self.assertEqual(
+            summary["num_augmented_rows"],
+            summary["matrix_stats"]["matrix_rows"],
+        )
+        self.assertEqual(
+            summary["num_augmented_rows"],
+            summary["num_independent_trace_rows"]
+            + summary["stage4_dtn_num_auxiliary_dofs"],
+        )
         self.assertFalse(audit["full_p6_global_matrix_allocated"])
         self.assertFalse(audit["inactive_p6_rows_globally_numbered"])
         self.assertFalse(audit["ordinary_default_changed"])

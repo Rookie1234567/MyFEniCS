@@ -19,7 +19,7 @@ the default elsewhere.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 from time import perf_counter
 from typing import Any
@@ -89,9 +89,13 @@ class AssemblyTimeCondensedSystem:
     interior_rows: int
     active_interior_rows: int
     build_audit: dict[str, Any]
+    _destroyed: bool = field(default=False, init=False, repr=False)
 
     def destroy(self) -> None:
+        if self._destroyed:
+            return
         self.matrix.destroy()
+        self._destroyed = True
 
 
 def _owned_trace_numbering(

@@ -327,7 +327,32 @@ def matrix_factor_resource_audit(summary: dict[str, Any]) -> dict[str, Any]:
     factor_inventory = summary.get("stage4_dtn_factor_inventory") or {}
     factor_stats = factor_inventory.get("matrix_stats") or {}
     matrix_nnz = matrix_stats.get("matrix_nnz_used")
-    factor_nnz = factor_stats.get("matrix_nnz_used")
+    corrected_factor_nnz = factor_inventory.get("factor_nnz_corrected")
+    factor_nnz = (
+        corrected_factor_nnz
+        if corrected_factor_nnz is not None
+        else factor_stats.get("matrix_nnz_used")
+    )
+    factor_nnz_source = (
+        factor_inventory.get("factor_nnz_corrected_source")
+        if corrected_factor_nnz is not None
+        else "petsc_factor_matrix_stats.matrix_nnz_used"
+        if factor_nnz is not None
+        else None
+    )
+    factor_rows = factor_stats.get("matrix_rows")
+    factor_average_row_width = (
+        float(corrected_factor_nnz) / float(factor_rows)
+        if corrected_factor_nnz is not None
+        and isinstance(factor_rows, (int, float))
+        and float(factor_rows) > 0.0
+        else factor_stats.get("matrix_average_nnz_per_row")
+    )
+    factor_average_row_width_source = (
+        "corrected_factor_nnz_over_factor_rows"
+        if corrected_factor_nnz is not None
+        else "petsc_factor_matrix_stats.matrix_average_nnz_per_row"
+    )
     fill_ratio = (
         None
         if matrix_nnz in (None, 0) or factor_nnz is None
@@ -362,8 +387,10 @@ def matrix_factor_resource_audit(summary: dict[str, Any]) -> dict[str, Any]:
             "matrix_maximum_nnz_per_row"
         ),
         "factor_nnz": factor_nnz,
-        "factor_average_row_width": factor_stats.get(
-            "matrix_average_nnz_per_row"
+        "factor_nnz_source": factor_nnz_source,
+        "factor_average_row_width": factor_average_row_width,
+        "factor_average_row_width_source": (
+            factor_average_row_width_source
         ),
         "factor_maximum_row_width": factor_stats.get(
             "matrix_maximum_nnz_per_row"

@@ -1571,9 +1571,20 @@ def _resource_metrics(
     summary: dict[str, Any],
 ) -> dict[str, Any]:
     matrix = summary["stage4_dtn_floquet_independent_matrix_stats"]
-    factor = summary["stage4_dtn_factor_inventory"]["matrix_stats"]
+    factor_inventory = summary["stage4_dtn_factor_inventory"]
+    factor = factor_inventory["matrix_stats"]
     matrix_nnz = int(matrix["matrix_nnz_used"])
-    factor_nnz = int(factor["matrix_nnz_used"])
+    corrected_factor_nnz = factor_inventory.get("factor_nnz_corrected")
+    factor_nnz = int(
+        corrected_factor_nnz
+        if corrected_factor_nnz is not None
+        else factor["matrix_nnz_used"]
+    )
+    factor_nnz_source = (
+        factor_inventory.get("factor_nnz_corrected_source")
+        if corrected_factor_nnz is not None
+        else "petsc_factor_matrix_stats.matrix_nnz_used"
+    )
     return {
         "full3d_equivalent_dofs": int(summary["num_nedelec_dofs"]),
         "active_rows": int(matrix["matrix_rows"]),
@@ -1583,6 +1594,7 @@ def _resource_metrics(
         ),
         "matrix_maximum_row_width": int(matrix["matrix_maximum_nnz_per_row"]),
         "factor_nnz": factor_nnz,
+        "factor_nnz_source": factor_nnz_source,
         "factor_fill": factor_nnz / matrix_nnz,
         "overall_process_tree_peak_gib": float(
             record["resource_authority"]["memory_authority_gib"]
