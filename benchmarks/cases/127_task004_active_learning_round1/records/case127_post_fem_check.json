@@ -1,0 +1,148 @@
+{
+  "checks": {
+    "all_checks": true,
+    "all_compact_records_and_gates": true,
+    "campaign_exact_16_pass": true,
+    "plan_design_identity": true,
+    "train112_exact_96_plus_16": true,
+    "train112_immutable_identity": true,
+    "validation_sealed": true
+  },
+  "errors": [],
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "point_count": 16,
+  "resource_rows": [
+    {
+      "elapsed_seconds": 152.5153091759421,
+      "key": "task004_angle_training_round1_v1:0000",
+      "peak_pss_bytes": 6044904448,
+      "peak_rss_bytes": 6248554496,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5900156928
+    },
+    {
+      "elapsed_seconds": 146.03083433490247,
+      "key": "task004_angle_training_round1_v1:0001",
+      "peak_pss_bytes": 6042418176,
+      "peak_rss_bytes": 6246023168,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5898559488
+    },
+    {
+      "elapsed_seconds": 154.67921687907074,
+      "key": "task004_angle_training_round1_v1:0002",
+      "peak_pss_bytes": 5908596736,
+      "peak_rss_bytes": 6112845824,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5764636672
+    },
+    {
+      "elapsed_seconds": 136.98457892402075,
+      "key": "task004_angle_training_round1_v1:0003",
+      "peak_pss_bytes": 5922062336,
+      "peak_rss_bytes": 6126809088,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5777608704
+    },
+    {
+      "elapsed_seconds": 134.28431667294353,
+      "key": "task004_angle_training_round1_v1:0004",
+      "peak_pss_bytes": 5908261888,
+      "peak_rss_bytes": 6112583680,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5764108288
+    },
+    {
+      "elapsed_seconds": 137.1220116900513,
+      "key": "task004_angle_training_round1_v1:0005",
+      "peak_pss_bytes": 5923136512,
+      "peak_rss_bytes": 6127423488,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5779349504
+    },
+    {
+      "elapsed_seconds": 135.93434094800614,
+      "key": "task004_angle_training_round1_v1:0006",
+      "peak_pss_bytes": 5906987008,
+      "peak_rss_bytes": 6111997952,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5762510848
+    },
+    {
+      "elapsed_seconds": 163.63380604493432,
+      "key": "task004_angle_training_round1_v1:0007",
+      "peak_pss_bytes": 5908288512,
+      "peak_rss_bytes": 6112612352,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5764071424
+    },
+    {
+      "elapsed_seconds": 147.63056193501689,
+      "key": "task004_angle_training_round1_v1:0008",
+      "peak_pss_bytes": 6045338624,
+      "peak_rss_bytes": 6250082304,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5900857344
+    },
+    {
+      "elapsed_seconds": 125.71670809900388,
+      "key": "task004_angle_training_round1_v1:0009",
+      "peak_pss_bytes": 6058700800,
+      "peak_rss_bytes": 6263648256,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5914185728
+    },
+    {
+      "elapsed_seconds": 118.674135825946,
+      "key": "task004_angle_training_round1_v1:0010",
+      "peak_pss_bytes": 6053851136,
+      "peak_rss_bytes": 6258708480,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5909168128
+    },
+    {
+      "elapsed_seconds": 118.61366269690916,
+      "key": "task004_angle_training_round1_v1:0011",
+      "peak_pss_bytes": 6057955328,
+      "peak_rss_bytes": 6261620736,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5914107904
+    },
+    {
+      "elapsed_seconds": 118.59592159895692,
+      "key": "task004_angle_training_round1_v1:0012",
+      "peak_pss_bytes": 6039126016,
+      "peak_rss_bytes": 6243872768,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5894721536
+    },
+    {
+      "elapsed_seconds": 117.6251619879622,
+      "key": "task004_angle_training_round1_v1:0013",
+      "peak_pss_bytes": 6044524544,
+      "peak_rss_bytes": 6249566208,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5899784192
+    },
+    {
+      "elapsed_seconds": 115.57785180094652,
+      "key": "task004_angle_training_round1_v1:0014",
+      "peak_pss_bytes": 6057886720,
+      "peak_rss_bytes": 6262640640,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5913530368
+    },
+    {
+      "elapsed_seconds": 115.55311642296147,
+      "key": "task004_angle_training_round1_v1:0015",
+      "peak_pss_bytes": 6056196096,
+      "peak_rss_bytes": 6261215232,
+      "peak_swap_bytes": 0,
+      "peak_uss_bytes": 5911711744
+    }
+  ],
+  "schema_version": "case127.post-fem-check.v1",
+  "status": "pass",
+  "training_count": 112,
+  "validation_target_accessed": false
+}

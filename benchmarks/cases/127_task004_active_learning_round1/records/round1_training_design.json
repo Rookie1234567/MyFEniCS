@@ -1,0 +1,176 @@
+{
+  "design_id": "task004_angle_training_round1_v1",
+  "metadata_schema_version": "task004.angle-design-metadata.v2",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "parameter_schema_version": "task002.s-p5-ny4-production-parameters.v3",
+  "point_count": 16,
+  "point_tuple_sha256": "c603545cb9266485e03029b91b7dc0fcd4da65a8177fdf868704a9c18610bf51",
+  "points": [
+    {
+      "azimuth_deg": 82.131933812052,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 0.90729793068,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 35.847170697525,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 4.15737589309,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 69.2679007072,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 8.521886651404,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 72.512302743271,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 8.821685019415,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 73.222987549379,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 9.49044716591,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 62.73507412523,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 8.88171152398,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 70.156757114455,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 9.825595553033,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 65.111552216113,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 8.581886843313,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 82.92918481864,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 4.733701110352,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 82.267959779128,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 1.096476651262,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 1.202627168968,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 9.00233755447,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 3.246306907386,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 8.980229685083,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 5.282870829105,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 9.040280255023,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 82.684139208868,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 4.106844223104,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 83.060868540779,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 5.308891468216,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    },
+    {
+      "azimuth_deg": 83.504671286792,
+      "design_source": "task004_m4e2_response_blind_plan_v2",
+      "grazing_deg": 6.854549495038,
+      "height_nm": 120.0,
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "role": "active_learning_round1",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "width_x_nm": 17.0
+    }
+  ],
+  "production_model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "production_solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "schema_version": "task004.angle-design.v2",
+  "source_dirty": false,
+  "source_plan_sha256": "d677c329be6ef502b41819023f9fd5229136d9243dccebabeb9bab123f610119",
+  "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270"
+}

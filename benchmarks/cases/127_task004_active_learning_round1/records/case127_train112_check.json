@@ -1,0 +1,20 @@
+{
+  "checks": {
+    "all_checks": true,
+    "array_identity": true,
+    "cv_result_preserves_negative_gate": true,
+    "exact_96_plus_16_design": true,
+    "manifest_identity": true,
+    "no_model_lock_or_validation": true,
+    "package_hashes_recomputed": true,
+    "required_artifacts_present": true,
+    "training_only_cv_identity": true
+  },
+  "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "errors": [],
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "schema_version": "case127.train112-check.v1",
+  "status": "pass",
+  "training_count": 112,
+  "validation_target_accessed": false
+}

@@ -1,7 +1,7 @@
 {
   "schema_version": "task004.active-learning-round1.case.v1",
   "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
-  "surrogate_training_code_sha": "33f7a84b93a99a7cbd92dfb1d7fc9cb2055134e0",
+  "surrogate_training_code_sha": "fee256d732b97767a38d1cc8aa0fb3acecd4da50",
   "training_dataset_id": "task004_angle_nominal_p5_ny4_train96_v2",
   "training_count": 96,
   "candidate_pool_count": 4096,
