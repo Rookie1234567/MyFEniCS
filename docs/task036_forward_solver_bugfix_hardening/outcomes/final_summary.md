@@ -18,7 +18,7 @@ Task036 没有得到一个既低维、又能在小掠射角和 P 偏振下还原
 | selective Group 2 | `a741ad1b5cfb579e2667600bcc6497ec5c4f23d9` | Hybrid 接口安全、exact dual、beta 与 fail-closed 修复 |
 | selective Group 3 | `4c9e1b9cedd4b04d65824698202c9fff96f3a0dc` | strong-trace 与 exact-trace research oracle |
 | ordinary solver default | unchanged | 没有把 research-only 路径设为默认 |
-| Task037 | `pending` | 分支尚未创建；任务书和技术任务尚未定义 |
+| Task037 | `branch prepared / task not defined` | `codex/20260803-task37-matrix-free-iterative-development` 已从已推送 master `b615a130d7c34060a3445c352c1f683bbf3aa23f` 创建并推送；创建时 upstream 正确、ahead/behind=`0/0`、worktree clean；本次结项文档追加后保持与最终 master 快进同步 |
 
 ## 3. 方法与最终状态
 
@@ -78,6 +78,6 @@ focused targeted tests 与两项轻量 Full3D PDE smoke；没有删除测试、�
 
 ## 6. 后续边界
 
-Task036 数值开发到此停止。Task037 分支创建仍为 `pending`，且任务尚未定义；在用户和
-新的任务书明确授权前，不开始 iterative solver、0.7 nm PDE、POD/capacity campaign
-或新的 direct-port basis 开发。
+Task036 数值开发到此停止。Task037 空分支已准备，但任务仍未定义；没有创建 Task037
+`task.md`、实现 solver 或运行新 PDE。在用户和新的任务书明确授权前，不开始 iterative
+solver、0.7 nm PDE、POD/capacity campaign 或新的 direct-port basis 开发。

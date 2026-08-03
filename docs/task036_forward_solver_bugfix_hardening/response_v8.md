@@ -20,7 +20,7 @@ research-only 路径设为 ordinary default。
 | 文档结项包 | 原样加入 `task.md`、`review_report_v8.md`、`fix_report.md`、`test_summary.md`；新增 `final_summary.md` 和本文 | complete |
 | 更新能力和模型总账 | `capability_matrix.md`、`development_model_registry.md`、`development_progress.md` 使用 controlled-negative/research-only/not-run 语义 | complete |
 | 保持模型登记合同 | registry checker 的任务序列 authority 仍冻结到 Task035e；Task036 closeout 进入现有 Hybrid 方法级 registry，不新增 `3.41`，也不把 Task036 冒充旧任务 | complete |
-| 创建 Task037 空分支 | 尚未创建，任务书与技术任务均未定义 | pending |
+| 创建 Task037 空分支 | `codex/20260803-task37-matrix-free-iterative-development` 已从已推送 master `b615a130d7c34060a3445c352c1f683bbf3aa23f` 创建并推送；创建时 upstream 正确、ahead/behind=`0/0`、worktree clean | complete；task not defined |
 
 ## 3. 最终能力判定
 
@@ -58,6 +58,7 @@ full-suite。没有删除失败测试，也没有放宽数值阈值。
 
 ## 5. 停止与交接
 
-Task037 分支实际创建后仍需补充 branch/SHA/upstream；在此之前 Task037 保持
-`pending / task not defined`。本响应不授权新的 iterative、0.7 nm、
-capacity、POD 或 direct-port 数值开发。
+Task037 空分支已创建；本次必须的结项文档追加后，该分支保持与最终 master 快进同步，
+并再次核验 upstream、ahead/behind=`0/0` 与 clean status。没有创建 Task037 `task.md`、
+实现代码或运行新 PDE。本响应不授权新的 iterative、0.7 nm、capacity、POD 或
+direct-port 数值开发。

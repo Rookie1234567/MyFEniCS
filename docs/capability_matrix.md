@@ -85,7 +85,7 @@
 | Task036 exact FE trace-chain | research_only | one-cell/endpoint/full-chain oracle | 域分解 correctness oracle；可对照 Full3D，但不是可扩展生产 solver |
 | Task036 M120/M240 complete port | not_verified | no production entry | 完整 joint-Cauchy/全通道合同未通过，not production-qualified；M120 selected-space 长程模态核心约 `2e-11` 对照仍保留 |
 | 0.7 nm / 2 TiB solver | not_implemented | no solver entry | Task036 未解决；没有满足精度与整作业内存合同的实测或已资格化路线 |
-| Task037 matrix-free iterative | not_implemented | branch pending | 分支尚未创建，task 尚未定义，不得提前宣称 iterative capability |
+| Task037 matrix-free iterative | not_implemented | branch prepared | 空分支 `codex/20260803-task37-matrix-free-iterative-development` 已创建；task 尚未定义，不得提前宣称 iterative capability |
 | future complex-ends Hybrid route | research_only | scalable modal core → low-memory Hybrid iterative → wavelength continuation | exact complex 3D FEM ends required；generic epsilon(x,y) modal middle retained；1–2 TiB 为 conditional opportunity，尚未证明 |
 | FGMRES outer port | recommended | `--ksp-type fgmres` | 与当前 variable/adaptive PC 合法配对；Task27/30/31 frozen target verified |
 | ordinary GMRES outer port | research_only | `--ksp-type gmres` | port implemented；当前 PC linearity error `2.374308e-2`，certification fail closed，not target-qualified |

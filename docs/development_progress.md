@@ -17,7 +17,7 @@ joint-Cauchy 界面信息；因此停止继续扩大 direct 端口，把通用�
 | 0.7 nm / 2 TiB | 未得到通过精度和资源合同的 solver | `not solved`；不得写成 conditional estimate 已兑现 |
 | selective commits | Group1 `7735a261...`；Group2 `a741ad1b...`；Group3 `4c9e1b9...` | Task036 final SHA `7a033400...`；完整历史留远程分支 |
 | 当前测试 | Group3 serial `7 passed`、MPI2 recursion 每 rank `1 passed`；最终 compact targeted `24 passed` + DtN/alias `14 passed`；p2 Full3D ordinary/static PDE smoke 各 `1 passed` | combined suite 在41 passed/107.99s后由用户中断；exit2/KeyboardInterrupt不是代码 failure；小时级 full pytest `cancelled/not_run` |
-| Task037 | branch `pending`，task not defined | 未开始 iterative 或新 PDE |
+| Task037 | 空分支已从 master `b615a130...` 创建并推送；upstream/0-0/clean 在创建时通过 | task not defined；未创建 task.md、未开始 iterative 或新 PDE |
 
 结项入口见
 [`task036_forward_solver_bugfix_hardening/outcomes/final_summary.md`](task036_forward_solver_bugfix_hardening/outcomes/final_summary.md)

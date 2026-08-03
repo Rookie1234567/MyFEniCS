@@ -488,8 +488,9 @@ Task036 先修复 Full3D/Hybrid 共用的投影、界面牵引、beta 身份、n
 
 选择性整合身份为 Group 1 `7735a2617d18fe5f869331a90d47ec16632fd8d3`、Group 2
 `a741ad1b5cfb579e2667600bcc6497ec5c4f23d9`，Group 3
-`4c9e1b9cedd4b04d65824698202c9fff96f3a0dc`。Task037 分支仍为 `pending`，task 未定义，
-因此本总账没有登记 iterative 或新的 0.7 nm 模型。
+`4c9e1b9cedd4b04d65824698202c9fff96f3a0dc`。Task037 空分支已从已推送 master
+`b615a130d7c34060a3445c352c1f683bbf3aa23f` 创建并推送，但 task 未定义，因此本总账
+没有登记 iterative 或新的 0.7 nm 模型。
 
 ---
 
