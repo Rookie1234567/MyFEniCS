@@ -1,0 +1,12 @@
+{
+  "status": "controlled_stop",
+  "training_dataset_id": "task004_angle_nominal_p5_ny4_train96_v2",
+  "training_count": 96,
+  "train96_immutable": true,
+  "aggregate_qualification": "not_qualified_but_viable",
+  "order_qualification": "not_qualified",
+  "active_learning_fem_started": false,
+  "blind_validation_fem_started": false,
+  "task003_frozen_validation_accessed": false,
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270"
+}

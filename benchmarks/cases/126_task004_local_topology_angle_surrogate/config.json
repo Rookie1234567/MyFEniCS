@@ -1,0 +1,24 @@
+{
+  "schema_version": "task004.local-topology-angle-case.v1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "training_dataset_id": "task004_angle_nominal_p5_ny4_train96_v2",
+  "training_count": 96,
+  "fixed_geometry": {"height_nm": 120.0, "width_nm": 17.0},
+  "angle_domain": {"grazing_deg": [0.5, 10.0], "azimuth_deg": [0.0, 90.0]},
+  "aggregate_contract": "ANGLE_AGGREGATE_QUALIFICATION_CONTRACT.json",
+  "order_contract": "ANGLE_ORDER_QUALIFICATION_CONTRACT.json",
+  "supported_windows": "SUPPORTED_INTERPOLATION_WINDOWS_V2.json",
+  "stress_authority": "benchmarks/cases/125_task004_angle_training_qualification/outcomes/SPATIAL_HOLDOUT_WINDOWS.json",
+  "candidate_families": [
+    "local_rbf_cross_conformal",
+    "local_matern52_exact_gp",
+    "topology_aware_local_experts",
+    "global_chebyshev_trend_local_residual"
+  ],
+  "training_only": true,
+  "blind_validation_fem": "not_run",
+  "task003_frozen_validation": "sealed_not_accessed",
+  "active_learning": "eligibility_only_no_fem",
+  "second_active_learning_round": "forbidden",
+  "fisher_geometry_sensitivity_inversion": "forbidden"
+}

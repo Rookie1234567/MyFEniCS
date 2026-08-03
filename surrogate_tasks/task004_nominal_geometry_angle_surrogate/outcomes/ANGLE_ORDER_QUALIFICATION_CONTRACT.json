@@ -1,0 +1,622 @@
+{
+  "aggregate_candidate": "L1_local_rbf_k24_s1e-08",
+  "dataset_id": "task004_angle_nominal_p5_ny4_train96_v2",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "gate_contract": {
+    "mask_agreement_100_percent": true,
+    "primary_channel_accuracy": false,
+    "sidewise_ledger_le_1e-12": true,
+    "unseen_topology_unsupported": true
+  },
+  "level": "B_order_resolved_power",
+  "power": {
+    "channel_metrics": [
+      {
+        "active_training_count": 33,
+        "component_index": 0,
+        "maximum_training_power": 7.762402337788261e-06,
+        "metrics": {
+          "max_abs": 4.716989682014178e-06,
+          "n": 33,
+          "nrmse": 0.14553892658742493,
+          "p95_abs": 1.70837169016139e-06
+        },
+        "order_index": 0,
+        "tier": "secondary",
+        "uncertainty_p50": 1.0350239916632734e-05,
+        "uncertainty_p95": 0.00013625348363727544
+      },
+      {
+        "active_training_count": 61,
+        "component_index": 1,
+        "maximum_training_power": 1.0298673541351859e-06,
+        "metrics": {
+          "max_abs": 1.1539776676605148e-05,
+          "n": 61,
+          "nrmse": 1.7680860568144052,
+          "p95_abs": 2.482622135166051e-06
+        },
+        "order_index": 2,
+        "tier": "secondary",
+        "uncertainty_p50": 6.908377623989179e-07,
+        "uncertainty_p95": 1.988388979215638e-05
+      },
+      {
+        "active_training_count": 65,
+        "component_index": 1,
+        "maximum_training_power": 1.3625162159664647e-06,
+        "metrics": {
+          "max_abs": 7.976742713568855e-05,
+          "n": 65,
+          "nrmse": 10.071155586420609,
+          "p95_abs": 1.2404231005667183e-05
+        },
+        "order_index": 3,
+        "tier": "secondary",
+        "uncertainty_p50": 1.6230459427431708e-06,
+        "uncertainty_p95": 7.894151806776528e-05
+      },
+      {
+        "active_training_count": 80,
+        "component_index": 0,
+        "maximum_training_power": 0.0002526872118522791,
+        "metrics": {
+          "max_abs": 0.0848402742008363,
+          "n": 80,
+          "nrmse": 37.882606502913,
+          "p95_abs": 0.0002264278596471173
+        },
+        "order_index": 5,
+        "tier": "secondary",
+        "uncertainty_p50": 1.0997727386964476e-05,
+        "uncertainty_p95": 0.001055098302843605
+      },
+      {
+        "active_training_count": 80,
+        "component_index": 1,
+        "maximum_training_power": 1.7499364933080427e-06,
+        "metrics": {
+          "max_abs": 0.003919289398454148,
+          "n": 80,
+          "nrmse": 254.60873564746655,
+          "p95_abs": 1.4524177240454047e-05
+        },
+        "order_index": 5,
+        "tier": "secondary",
+        "uncertainty_p50": 8.205154061023324e-07,
+        "uncertainty_p95": 9.283706696542754e-05
+      },
+      {
+        "active_training_count": 87,
+        "component_index": 0,
+        "maximum_training_power": 0.004299781112638774,
+        "metrics": {
+          "max_abs": 0.004110930639327811,
+          "n": 87,
+          "nrmse": 0.14858054498160078,
+          "p95_abs": 0.0014926372578897627
+        },
+        "order_index": 6,
+        "tier": "primary",
+        "uncertainty_p50": 0.0001360954053142552,
+        "uncertainty_p95": 0.004556205014676885
+      },
+      {
+        "active_training_count": 87,
+        "component_index": 1,
+        "maximum_training_power": 3.435387941247826e-06,
+        "metrics": {
+          "max_abs": 3.226540818174412e-05,
+          "n": 87,
+          "nrmse": 1.6156993386468983,
+          "p95_abs": 1.0303223624275137e-05
+        },
+        "order_index": 6,
+        "tier": "secondary",
+        "uncertainty_p50": 8.532071098651626e-07,
+        "uncertainty_p95": 4.771725737875199e-05
+      },
+      {
+        "active_training_count": 96,
+        "component_index": 0,
+        "maximum_training_power": 0.6366144512750905,
+        "metrics": {
+          "max_abs": 0.10852490901689585,
+          "n": 96,
+          "nrmse": 0.025128934286874502,
+          "p95_abs": 0.02302073129446191
+        },
+        "order_index": 7,
+        "tier": "primary",
+        "uncertainty_p50": 0.08096833921525076,
+        "uncertainty_p95": 2.524127861973061
+      },
+      {
+        "active_training_count": 96,
+        "component_index": 1,
+        "maximum_training_power": 1.6393875197353289e-06,
+        "metrics": {
+          "max_abs": 0.004892092800911179,
+          "n": 96,
+          "nrmse": 304.59652693282715,
+          "p95_abs": 2.0204913891995397e-07
+        },
+        "order_index": 7,
+        "tier": "secondary",
+        "uncertainty_p50": 7.337214018291426e-09,
+        "uncertainty_p95": 1.6409170836395703e-06
+      },
+      {
+        "active_training_count": 33,
+        "component_index": 0,
+        "maximum_training_power": 0.00019483014130474563,
+        "metrics": {
+          "max_abs": 0.00019308730493611175,
+          "n": 33,
+          "nrmse": 0.18689640869236243,
+          "p95_abs": 3.454478617885087e-05
+        },
+        "order_index": 11,
+        "tier": "secondary",
+        "uncertainty_p50": 1.241753838506393e-05,
+        "uncertainty_p95": 5.002177707462426e-05
+      },
+      {
+        "active_training_count": 33,
+        "component_index": 1,
+        "maximum_training_power": 1.971871328408518e-06,
+        "metrics": {
+          "max_abs": 2.8166394316203473e-06,
+          "n": 33,
+          "nrmse": 0.27479465148175225,
+          "p95_abs": 8.000795644867429e-07
+        },
+        "order_index": 11,
+        "tier": "secondary",
+        "uncertainty_p50": 4.1253275781784144e-08,
+        "uncertainty_p95": 6.551058950361471e-06
+      },
+      {
+        "active_training_count": 61,
+        "component_index": 1,
+        "maximum_training_power": 2.415771216169399e-06,
+        "metrics": {
+          "max_abs": 4.2076228699865825e-06,
+          "n": 61,
+          "nrmse": 0.3582147716550922,
+          "p95_abs": 1.757952407059045e-06
+        },
+        "order_index": 13,
+        "tier": "secondary",
+        "uncertainty_p50": 5.472903206846661e-07,
+        "uncertainty_p95": 6.493770805028646e-06
+      },
+      {
+        "active_training_count": 65,
+        "component_index": 0,
+        "maximum_training_power": 2.1973845831057826e-06,
+        "metrics": {
+          "max_abs": 1.6724636980137595e-06,
+          "n": 65,
+          "nrmse": 0.15101692707822031,
+          "p95_abs": 6.710645989206396e-07
+        },
+        "order_index": 14,
+        "tier": "secondary",
+        "uncertainty_p50": 1.432574838959502e-07,
+        "uncertainty_p95": 2.984760340250009e-06
+      },
+      {
+        "active_training_count": 65,
+        "component_index": 1,
+        "maximum_training_power": 2.1827783490423807e-06,
+        "metrics": {
+          "max_abs": 3.0430710550610078e-05,
+          "n": 65,
+          "nrmse": 2.3536772085137376,
+          "p95_abs": 1.713924898209388e-06
+        },
+        "order_index": 14,
+        "tier": "secondary",
+        "uncertainty_p50": 1.3064458865242813e-06,
+        "uncertainty_p95": 7.002855522795148e-06
+      },
+      {
+        "active_training_count": 80,
+        "component_index": 0,
+        "maximum_training_power": 0.0018534270677006753,
+        "metrics": {
+          "max_abs": 0.00019038687476272674,
+          "n": 80,
+          "nrmse": 0.015596200485993174,
+          "p95_abs": 3.2528815640699035e-05
+        },
+        "order_index": 16,
+        "tier": "primary",
+        "uncertainty_p50": 1.1187016041428909e-05,
+        "uncertainty_p95": 0.00016846814874878365
+      },
+      {
+        "active_training_count": 80,
+        "component_index": 1,
+        "maximum_training_power": 9.368877255328165e-06,
+        "metrics": {
+          "max_abs": 9.603677849349355e-06,
+          "n": 80,
+          "nrmse": 0.19488309545517835,
+          "p95_abs": 4.425287843640727e-06
+        },
+        "order_index": 16,
+        "tier": "secondary",
+        "uncertainty_p50": 7.232386424732944e-07,
+        "uncertainty_p95": 9.023695523778123e-06
+      },
+      {
+        "active_training_count": 87,
+        "component_index": 0,
+        "maximum_training_power": 0.06142389608622128,
+        "metrics": {
+          "max_abs": 0.06061566932278737,
+          "n": 87,
+          "nrmse": 0.10585327247899513,
+          "p95_abs": 0.0005055135198240413
+        },
+        "order_index": 17,
+        "tier": "primary",
+        "uncertainty_p50": 0.00011241988626700847,
+        "uncertainty_p95": 0.0010241253149135107
+      },
+      {
+        "active_training_count": 87,
+        "component_index": 1,
+        "maximum_training_power": 1.43343573264508e-05,
+        "metrics": {
+          "max_abs": 1.1078407830615976e-05,
+          "n": 87,
+          "nrmse": 0.16347955334627393,
+          "p95_abs": 6.034273581603017e-06
+        },
+        "order_index": 17,
+        "tier": "secondary",
+        "uncertainty_p50": 6.177527352947868e-07,
+        "uncertainty_p95": 9.144633972112611e-06
+      },
+      {
+        "active_training_count": 96,
+        "component_index": 0,
+        "maximum_training_power": 0.6086503691706904,
+        "metrics": {
+          "max_abs": 0.34159482030537025,
+          "n": 96,
+          "nrmse": 0.0626920106880617,
+          "p95_abs": 0.01960767367688319
+        },
+        "order_index": 18,
+        "tier": "primary",
+        "uncertainty_p50": 0.5035956180648371,
+        "uncertainty_p95": 2.3879989419663814
+      }
+    ],
+    "hard_gate": false,
+    "mask_agreement": true,
+    "mask_mismatch_indices": [],
+    "max_sidewise_ledger_error": 2.220446049250313e-16,
+    "tiers": [
+      {
+        "active_training_count": 33,
+        "component_index": 0,
+        "maximum_training_power": 7.762402337788261e-06,
+        "order_index": 0,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 33,
+        "component_index": 1,
+        "maximum_training_power": 2.1672099539672793e-07,
+        "order_index": 0,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 49,
+        "component_index": 0,
+        "maximum_training_power": 1.8548858609094398e-08,
+        "order_index": 1,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 49,
+        "component_index": 1,
+        "maximum_training_power": 6.799965111376048e-09,
+        "order_index": 1,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 61,
+        "component_index": 0,
+        "maximum_training_power": 6.051628872155084e-07,
+        "order_index": 2,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 61,
+        "component_index": 1,
+        "maximum_training_power": 1.0298673541351859e-06,
+        "order_index": 2,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 65,
+        "component_index": 0,
+        "maximum_training_power": 8.056459254233639e-07,
+        "order_index": 3,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 65,
+        "component_index": 1,
+        "maximum_training_power": 1.3625162159664647e-06,
+        "order_index": 3,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 73,
+        "component_index": 0,
+        "maximum_training_power": 2.5084005548741073e-08,
+        "order_index": 4,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 73,
+        "component_index": 1,
+        "maximum_training_power": 1.0152222421688788e-08,
+        "order_index": 4,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 80,
+        "component_index": 0,
+        "maximum_training_power": 0.0002526872118522791,
+        "order_index": 5,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 80,
+        "component_index": 1,
+        "maximum_training_power": 1.7499364933080427e-06,
+        "order_index": 5,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 87,
+        "component_index": 0,
+        "maximum_training_power": 0.004299781112638774,
+        "order_index": 6,
+        "tier": "primary"
+      },
+      {
+        "active_training_count": 87,
+        "component_index": 1,
+        "maximum_training_power": 3.435387941247826e-06,
+        "order_index": 6,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 96,
+        "component_index": 0,
+        "maximum_training_power": 0.6366144512750905,
+        "order_index": 7,
+        "tier": "primary"
+      },
+      {
+        "active_training_count": 96,
+        "component_index": 1,
+        "maximum_training_power": 1.6393875197353289e-06,
+        "order_index": 7,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 0,
+        "maximum_training_power": 0.0,
+        "order_index": 8,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 1,
+        "maximum_training_power": 0.0,
+        "order_index": 8,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 0,
+        "maximum_training_power": 0.0,
+        "order_index": 9,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 1,
+        "maximum_training_power": 0.0,
+        "order_index": 9,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 0,
+        "maximum_training_power": 0.0,
+        "order_index": 10,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 1,
+        "maximum_training_power": 0.0,
+        "order_index": 10,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 33,
+        "component_index": 0,
+        "maximum_training_power": 0.00019483014130474563,
+        "order_index": 11,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 33,
+        "component_index": 1,
+        "maximum_training_power": 1.971871328408518e-06,
+        "order_index": 11,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 49,
+        "component_index": 0,
+        "maximum_training_power": 3.239434532325214e-08,
+        "order_index": 12,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 49,
+        "component_index": 1,
+        "maximum_training_power": 1.6544769033201974e-08,
+        "order_index": 12,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 61,
+        "component_index": 0,
+        "maximum_training_power": 4.4254356062858346e-07,
+        "order_index": 13,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 61,
+        "component_index": 1,
+        "maximum_training_power": 2.415771216169399e-06,
+        "order_index": 13,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 65,
+        "component_index": 0,
+        "maximum_training_power": 2.1973845831057826e-06,
+        "order_index": 14,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 65,
+        "component_index": 1,
+        "maximum_training_power": 2.1827783490423807e-06,
+        "order_index": 14,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 73,
+        "component_index": 0,
+        "maximum_training_power": 9.149281765339234e-08,
+        "order_index": 15,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 73,
+        "component_index": 1,
+        "maximum_training_power": 2.171797085741137e-08,
+        "order_index": 15,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 80,
+        "component_index": 0,
+        "maximum_training_power": 0.0018534270677006753,
+        "order_index": 16,
+        "tier": "primary"
+      },
+      {
+        "active_training_count": 80,
+        "component_index": 1,
+        "maximum_training_power": 9.368877255328165e-06,
+        "order_index": 16,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 87,
+        "component_index": 0,
+        "maximum_training_power": 0.06142389608622128,
+        "order_index": 17,
+        "tier": "primary"
+      },
+      {
+        "active_training_count": 87,
+        "component_index": 1,
+        "maximum_training_power": 1.43343573264508e-05,
+        "order_index": 17,
+        "tier": "secondary"
+      },
+      {
+        "active_training_count": 96,
+        "component_index": 0,
+        "maximum_training_power": 0.6086503691706904,
+        "order_index": 18,
+        "tier": "primary"
+      },
+      {
+        "active_training_count": 96,
+        "component_index": 1,
+        "maximum_training_power": 5.627452165707642e-07,
+        "order_index": 18,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 0,
+        "maximum_training_power": 0.0,
+        "order_index": 19,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 1,
+        "maximum_training_power": 0.0,
+        "order_index": 19,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 0,
+        "maximum_training_power": 0.0,
+        "order_index": 20,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 1,
+        "maximum_training_power": 0.0,
+        "order_index": 20,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 0,
+        "maximum_training_power": 0.0,
+        "order_index": 21,
+        "tier": "structural-null"
+      },
+      {
+        "active_training_count": 0,
+        "component_index": 1,
+        "maximum_training_power": 0.0,
+        "order_index": 21,
+        "tier": "structural-null"
+      }
+    ],
+    "uncertainty_semantics": "heuristic_training_residual_scale/not_calibrated_physical_uncertainty",
+    "unsupported_topologies": []
+  },
+  "qualified": false,
+  "schema_version": "task004.order-qualification.v2",
+  "status": "not_qualified",
+  "training_only": true,
+  "validation_target_accessed": false
+}

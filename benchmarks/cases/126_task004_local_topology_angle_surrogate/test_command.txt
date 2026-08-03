@@ -1,0 +1,1 @@
+TMPDIR=/tmp PYTHONPATH=. .venv-surrogate-cpu/bin/python benchmarks/cases/126_task004_local_topology_angle_surrogate/checker.py

@@ -1,0 +1,24 @@
+{
+  "budget": 16,
+  "candidate_pool_response_blind": true,
+  "candidate_pool_unseen_topology_policy": "response_blind anchors only if later authorized",
+  "checks": {
+    "a_p95_or_max_improvement": false,
+    "cross_fitted_uncertainty_available": true,
+    "dataset_identity_checker": true,
+    "local_candidate_improves_global_gp": true,
+    "localized_oof_region": true,
+    "validation_response_not_accessed": true
+  },
+  "dataset_id": "task004_angle_nominal_p5_ny4_train96_v2",
+  "eligible_for_one_round_16_fem": true,
+  "fem_started": false,
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "global_reference": {
+    "selection_score": 4.950713848612087,
+    "source": "benchmarks/cases/125_task004_angle_training_qualification/outcomes/training_cv.json"
+  },
+  "plan_status": "eligibility_only_no_fem",
+  "schema_version": "task004.active-learning-eligibility.v2",
+  "validation_target_accessed": false
+}

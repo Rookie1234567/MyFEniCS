@@ -1,0 +1,30 @@
+{
+  "active_learning_eligibility": true,
+  "aggregate_status": "not_qualified_but_viable",
+  "checks": {
+    "active_learning_is_eligibility_only": true,
+    "aggregate_order_contracts_are_separate": true,
+    "all_checks": true,
+    "exact_training_design_identity": true,
+    "expected_qualification_outcomes": true,
+    "finite_m4e_candidate_set": true,
+    "no_model_lock_or_new_fem": true,
+    "nominal_geometry_and_angle_domain": true,
+    "old_extrapolation_stress_preserved": true,
+    "required_artifacts_present": true,
+    "supported_windows_v2_frozen_and_supported": true,
+    "task003_and_validation_sealed": true,
+    "train96_arrays_identity": true,
+    "train96_hashes_rebuild": true,
+    "train96_manifest_identity": true
+  },
+  "dataset_id": "task004_angle_nominal_p5_ny4_train96_v2",
+  "errors": [],
+  "fem_started": false,
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "order_status": "not_qualified",
+  "schema_version": "case126.check.v1",
+  "status": "pass",
+  "training_count": 96,
+  "validation_target_accessed": false
+}

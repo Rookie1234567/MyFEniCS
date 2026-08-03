@@ -1,0 +1,365 @@
+{
+  "dataset_id": "task004_angle_nominal_p5_ny4_train96_v2",
+  "frozen_before_model_fitting": true,
+  "qualification_semantics": "supported_local_interpolation_hard_gate; stress_advisory",
+  "schema_version": "task004.supported-interpolation-windows.v2",
+  "stress_authority": {
+    "path": "benchmarks/cases/125_task004_angle_training_qualification/outcomes/SPATIAL_HOLDOUT_WINDOWS.json",
+    "schema_version": "task004.spatial-holdout-windows.v1",
+    "sha256": "c9286f284a8f26faf9a4cd52ca3ed2b21248725aca4cc13607aa1c7fa34ae36b",
+    "status": "advisory_extrapolation_stress",
+    "window_count": 4
+  },
+  "training_tuple_sha256": "bfd68a374e5510284a972c640c6332d818917052ae30bd77c10af5240f0500ef",
+  "windows": [
+    {
+      "count": 4,
+      "cutoff_orders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "indices": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "name": "low_grazing",
+      "nearest_support_distance": [
+        0.10526315789473684,
+        0.1530555827871626,
+        0.24589235136407764,
+        0.3495589271082679
+      ],
+      "signed_cutoff_margins": [
+        0.00030458649045206343,
+        0.0003045864904519524,
+        0.00030458649045206343,
+        0.00030458649045206343
+      ],
+      "support_count_per_point": [
+        6,
+        6,
+        6,
+        6
+      ],
+      "support_indices": [
+        [
+          10,
+          0,
+          11,
+          1,
+          30,
+          12
+        ],
+        [
+          11,
+          1,
+          12,
+          10,
+          2,
+          0
+        ],
+        [
+          12,
+          2,
+          11,
+          13,
+          1,
+          3
+        ],
+        [
+          13,
+          3,
+          24,
+          12,
+          14,
+          2
+        ]
+      ],
+      "tuples": [
+        [
+          1.0,
+          0.0
+        ],
+        [
+          1.0,
+          5.0
+        ],
+        [
+          1.0,
+          10.0
+        ],
+        [
+          1.0,
+          15.0
+        ]
+      ],
+      "window_sha256": "410a5deca3ce99b3d1d4a587fa40321261942a3fc4c31445f96492b974ec3a09"
+    },
+    {
+      "count": 4,
+      "cutoff_orders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "indices": [
+        28,
+        29,
+        38,
+        39
+      ],
+      "name": "high_azimuth",
+      "nearest_support_distance": [
+        1.6699874580929495,
+        2.002768167414784,
+        1.696319772173728,
+        2.0247772696496154
+      ],
+      "signed_cutoff_margins": [
+        0.00030458649045206343,
+        0.00030458649045206343,
+        0.0012179748700876791,
+        0.0012179748700877902
+      ],
+      "support_count_per_point": [
+        6,
+        6,
+        6,
+        6
+      ],
+      "support_indices": [
+        [
+          18,
+          8,
+          80,
+          27,
+          19,
+          17
+        ],
+        [
+          19,
+          9,
+          18,
+          8,
+          92,
+          80
+        ],
+        [
+          80,
+          92,
+          18,
+          89,
+          8,
+          37
+        ],
+        [
+          19,
+          92,
+          9,
+          49,
+          18,
+          8
+        ]
+      ],
+      "tuples": [
+        [
+          1.0,
+          75.0
+        ],
+        [
+          1.0,
+          90.0
+        ],
+        [
+          2.0,
+          75.0
+        ],
+        [
+          2.0,
+          90.0
+        ]
+      ],
+      "window_sha256": "f94f06f999afe0139cbf8532b985c20608dc83259bfd4f8d6449e36f35127c1a"
+    },
+    {
+      "count": 4,
+      "cutoff_orders": [
+        -2,
+        -2,
+        -2,
+        0
+      ],
+      "indices": [
+        58,
+        68,
+        78,
+        88
+      ],
+      "name": "cutoff_near",
+      "nearest_support_distance": [
+        2.0294082879954014,
+        2.295833741807439,
+        2.6034165586355518,
+        1.784358676851728
+      ],
+      "signed_cutoff_margins": [
+        -0.002680496490715889,
+        0.004573406853827788,
+        0.013831652030758979,
+        0.007672135889269294
+      ],
+      "support_count_per_point": [
+        6,
+        6,
+        6,
+        6
+      ],
+      "support_indices": [
+        [
+          90,
+          59,
+          57,
+          48,
+          49,
+          69
+        ],
+        [
+          90,
+          94,
+          69,
+          67,
+          82,
+          79
+        ],
+        [
+          94,
+          79,
+          77,
+          82,
+          69,
+          67
+        ],
+        [
+          48,
+          57,
+          47,
+          87,
+          90,
+          89
+        ]
+      ],
+      "tuples": [
+        [
+          6.0,
+          75.0
+        ],
+        [
+          8.0,
+          75.0
+        ],
+        [
+          10.0,
+          75.0
+        ],
+        [
+          5.025018583518,
+          67.89516591467
+        ]
+      ],
+      "window_sha256": "fb94325dc9c944871f9ec09376f8b82570677956fc3f882c99a0a88f29883d53"
+    },
+    {
+      "count": 4,
+      "cutoff_orders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "indices": [
+        46,
+        47,
+        56,
+        57
+      ],
+      "name": "ordinary_interior",
+      "nearest_support_distance": [
+        1.2421498653900997,
+        1.5233890067433271,
+        1.529941247763014,
+        1.7659269518823326
+      ],
+      "signed_cutoff_margins": [
+        0.00486596562921493,
+        0.00486596562921493,
+        0.010926199633097156,
+        0.010926199633097156
+      ],
+      "support_count_per_point": [
+        6,
+        6,
+        6,
+        6
+      ],
+      "support_indices": [
+        [
+          93,
+          84,
+          85,
+          87,
+          45,
+          36
+        ],
+        [
+          89,
+          84,
+          87,
+          88,
+          48,
+          37
+        ],
+        [
+          93,
+          87,
+          86,
+          95,
+          55,
+          66
+        ],
+        [
+          86,
+          87,
+          90,
+          88,
+          58,
+          67
+        ]
+      ],
+      "tuples": [
+        [
+          4.0,
+          45.0
+        ],
+        [
+          4.0,
+          60.0
+        ],
+        [
+          6.0,
+          45.0
+        ],
+        [
+          6.0,
+          60.0
+        ]
+      ],
+      "window_sha256": "278e1a5ce3a2360ba11379e84305e232482c010673cc086db84893512a77a08c"
+    }
+  ],
+  "windows_sha256": "c55a177a653e84effa841a4f3d93e05606bbed3511514bcaf2b1cc7e5979df11"
+}
