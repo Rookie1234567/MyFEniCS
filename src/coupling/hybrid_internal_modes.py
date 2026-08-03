@@ -54,6 +54,7 @@ class HybridInterfaceModeBlocks:
     positive_traction: PETSc.Mat
     negative_traction: PETSc.Mat
     negative_trace_to_positive: np.ndarray
+    inverse_trace_gram: np.ndarray
     trace_gram_condition: float
     positive_projection_identity_error: float
     local_fem_outward_normal_sign: int
@@ -1173,6 +1174,9 @@ def _build_interface_blocks(
         positive_traction=positive_traction,
         negative_traction=negative_traction,
         negative_trace_to_positive=negative_mapping.copy(),
+        inverse_trace_gram=np.asarray(
+            inverse_gram, dtype=np.complex128
+        ).copy(),
         trace_gram_condition=trace_gram_condition,
         positive_projection_identity_error=positive_identity_error,
         local_fem_outward_normal_sign=(
