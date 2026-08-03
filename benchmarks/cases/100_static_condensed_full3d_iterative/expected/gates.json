@@ -1,0 +1,71 @@
+{
+  "case_id": "100_static_condensed_full3d_iterative",
+  "status_before_f0": "not_run",
+  "identity": {
+    "wavelength_nm": 13.5,
+    "incidence_theta_normal_deg": 80.0,
+    "grazing_angle_deg": 10.0,
+    "phi_deg": 0.0,
+    "polarization": "S",
+    "degree": 6,
+    "h_nm": 10.0,
+    "mpi_size": 8,
+    "backend": "assembly_time_static_condensed",
+    "run_kind": "full-solve"
+  },
+  "rows": {
+    "active_exact_sequence_fe_dofs": 173802,
+    "storage_carrier_fe_dofs": 173802,
+    "full_trace_rows": 60402,
+    "independent_active_trace_rows": 51192,
+    "auxiliary_rows": 80,
+    "augmented_rows": 51272,
+    "recovered_full_fe_shape": [173802],
+    "active_trace_shape": [51192],
+    "solved_system_shape": [51272]
+  },
+  "matrix_reference": {
+    "matrix_nnz": 41989040,
+    "factor_nnz": 212343992,
+    "source": "Case096 full_static reference; current F0 must record independently"
+  },
+  "numerical": {
+    "reported_true_residual_max": 1.0e-9,
+    "full_explicit_true_residual_max": 1.0e-9,
+    "require_rta": true,
+    "require_energy_closure": true,
+    "require_12_of_12_powers": true,
+    "require_12_of_12_boundary_complex_amplitudes": true,
+    "boundary_complex_amplitude_field": "outgoing_amplitude_at_boundary",
+    "channel_contract": "Case096 acceptance_record.frozen_reference_v1_gates"
+  },
+  "canonical_vectors": {
+    "require_active_trace_sha256": true,
+    "require_recovered_full_fe_sha256": true,
+    "order": "ascending PETSc ownership ranges",
+    "dtype": "little-endian complex128",
+    "hash_includes": ["namespace", "shape", "dtype", "canonical_bytes"],
+    "raw_npy_must_be_ignored": true
+  },
+  "resources": {
+    "swap_allowed": false,
+    "maximum_swap_bytes": 0,
+    "direct_warning_gib": 32.0,
+    "direct_termination_gib": 48.0,
+    "direct_timeout_seconds": 7200.0,
+    "poll_interval_seconds": 0.25,
+    "termination_semantics": "complete process group: SIGTERM, 5 second grace, SIGKILL",
+    "iterative_warning_gib": 10.0,
+    "iterative_termination_gib": 14.0,
+    "iterative_limits_apply_to_f0_direct": false
+  },
+  "provenance": {
+    "require_current_source_sha": true,
+    "require_exact_command": true,
+    "require_environment_abi": true,
+    "require_clean_identity_before_run": true,
+    "require_external_simultaneous_rss_pss_uss_swap": true
+  },
+  "ordinary_default_changed": false,
+  "f0_only": true
+}
