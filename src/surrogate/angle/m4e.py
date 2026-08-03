@@ -73,9 +73,10 @@ class LocalRBFLatent:
     train_x: np.ndarray | None = None
     train_y: np.ndarray | None = None
     diagnostics: list[dict[str, Any]] = field(default_factory=list)
+    feature: str = F3_LOCAL_FEATURE
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> "LocalRBFLatent":
-        self.train_x = angle_features(x, F3_LOCAL_FEATURE)
+        self.train_x = angle_features(x, self.feature)
         self.train_y = np.asarray(y, dtype=np.float64).reshape(-1)
         self.diagnostics = []
         return self
@@ -83,7 +84,7 @@ class LocalRBFLatent:
     def predict(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         if self.train_x is None or self.train_y is None:
             raise RuntimeError("local RBF latent is not fitted")
-        query = angle_features(x, F3_LOCAL_FEATURE)
+        query = angle_features(x, self.feature)
         order, distances = _nearest(query, self.train_x)
         prediction = np.empty(len(query), dtype=np.float64)
         self.diagnostics = []
@@ -116,9 +117,10 @@ class LocalMaternLatent:
     train_x: np.ndarray | None = None
     train_y: np.ndarray | None = None
     diagnostics: list[dict[str, Any]] = field(default_factory=list)
+    feature: str = F3_LOCAL_FEATURE
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> "LocalMaternLatent":
-        self.train_x = angle_features(x, F3_LOCAL_FEATURE)
+        self.train_x = angle_features(x, self.feature)
         self.train_y = np.asarray(y, dtype=np.float64).reshape(-1)
         self.diagnostics = []
         return self
@@ -126,7 +128,7 @@ class LocalMaternLatent:
     def predict(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         if self.train_x is None or self.train_y is None:
             raise RuntimeError("local Matérn latent is not fitted")
-        query = angle_features(x, F3_LOCAL_FEATURE)
+        query = angle_features(x, self.feature)
         order, distances = _nearest(query, self.train_x)
         prediction = np.empty(len(query), dtype=np.float64)
         uncertainty = np.empty(len(query), dtype=np.float64)
@@ -166,10 +168,11 @@ class TopologyExpertLatent:
     train_signatures: list[str] | None = None
     diagnostics: list[dict[str, Any]] = field(default_factory=list)
     unsupported: list[dict[str, Any]] = field(default_factory=list)
+    feature: str = F3_LOCAL_FEATURE
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> "TopologyExpertLatent":
         self.train_angles = np.asarray(x, dtype=np.float64)
-        self.train_features = angle_features(x, F3_LOCAL_FEATURE)
+        self.train_features = angle_features(x, self.feature)
         self.train_y = np.asarray(y, dtype=np.float64).reshape(-1)
         mask = analytic_power_carrying_mask(self.train_angles)
         self.train_signatures = [_hash(mask[row].astype(int).tolist()) for row in range(len(mask))]
@@ -180,7 +183,7 @@ class TopologyExpertLatent:
         if self.train_angles is None or self.train_features is None or self.train_y is None:
             raise RuntimeError("topology expert is not fitted")
         query_angles = np.asarray(x, dtype=np.float64)
-        query_features = angle_features(query_angles, F3_LOCAL_FEATURE)
+        query_features = angle_features(query_angles, self.feature)
         query_mask = analytic_power_carrying_mask(query_angles)
         query_signatures = [_hash(query_mask[row].astype(int).tolist())
                             for row in range(len(query_mask))]
@@ -223,6 +226,7 @@ class TrendResidualLatent:
     smoothing: float = 1.0e-8
     trend: ChebyshevTrend | None = None
     residual: LocalRBFLatent | None = None
+    feature: str = F3_LOCAL_FEATURE
 
     @property
     def diagnostics(self) -> list[dict[str, Any]]:
@@ -230,16 +234,18 @@ class TrendResidualLatent:
         return [] if self.residual is None else self.residual.diagnostics
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> "TrendResidualLatent":
-        features = angle_features(x, F3_LOCAL_FEATURE)
+        features = angle_features(x, self.feature)
         self.trend = ChebyshevTrend(degree=2).fit(features, np.asarray(y).reshape(-1, 1))
         residual = np.asarray(y).reshape(-1) - self.trend.predict(features).reshape(-1)
-        self.residual = LocalRBFLatent(self.neighbors, self.smoothing).fit(x, residual)
+        self.residual = LocalRBFLatent(
+            self.neighbors, self.smoothing, feature=self.feature,
+        ).fit(x, residual)
         return self
 
     def predict(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         if self.trend is None or self.residual is None:
             raise RuntimeError("trend-residual model is not fitted")
-        features = angle_features(x, F3_LOCAL_FEATURE)
+        features = angle_features(x, self.feature)
         residual, std = self.residual.predict(x)
         return self.trend.predict(features).reshape(-1) + residual, std
 
@@ -250,6 +256,7 @@ class LocalAggregateModel:
     neighbors: int = 32
     smoothing: float = 1.0e-8
     jitter: float = 1.0e-8
+    feature: str = F3_LOCAL_FEATURE
     latent_models: list[Any] = field(default_factory=list)
     diagnostics: list[dict[str, Any]] = field(default_factory=list)
     unsupported: list[dict[str, Any]] = field(default_factory=list)
@@ -270,11 +277,17 @@ class LocalAggregateModel:
         self.latent_models = []
         for index in range(2):
             if self.family == "local_matern":
-                model = cls(self.neighbors, self.jitter).fit(angles, values[:, index])
+                model = cls(self.neighbors, self.jitter, feature=self.feature).fit(
+                    angles, values[:, index]
+                )
             elif self.family == "trend_local_residual":
-                model = cls(self.neighbors, self.smoothing).fit(angles, values[:, index])
+                model = cls(self.neighbors, self.smoothing, feature=self.feature).fit(
+                    angles, values[:, index]
+                )
             else:
-                model = cls(self.neighbors, self.smoothing).fit(angles, values[:, index])
+                model = cls(self.neighbors, self.smoothing, feature=self.feature).fit(
+                    angles, values[:, index]
+                )
             self.latent_models.append(model)
         return self
 
@@ -301,7 +314,7 @@ class LocalAggregateModel:
     def metadata(self) -> dict[str, Any]:
         return {"family": self.family, "neighbors": self.neighbors,
                 "smoothing": self.smoothing, "jitter": self.jitter,
-                "feature": F3_LOCAL_FEATURE,
+                "feature": self.feature,
                 "unsupported_count": len(self.unsupported)}
 
 
@@ -310,6 +323,7 @@ def _make_candidate(spec: dict[str, Any]) -> LocalAggregateModel:
         family=str(spec["family"]), neighbors=int(spec.get("neighbors", 32)),
         smoothing=float(spec.get("smoothing", 1.0e-8)),
         jitter=float(spec.get("jitter", 1.0e-8)),
+        feature=str(spec.get("feature", F3_LOCAL_FEATURE)),
     )
 
 
@@ -399,7 +413,8 @@ def _inner_radius(spec: dict[str, Any], angles: np.ndarray, aggregates: np.ndarr
     """Nested inner OOF residual radius for one outer-training set."""
     if len(angles) < 12:
         return np.full(3, 1.0e-3)
-    split = folds(angle_features(angles, "F1"), n_splits=3, seed=FOLD_SEED + 19)
+    feature = str(spec.get("feature", F3_LOCAL_FEATURE))
+    split = folds(angle_features(angles, feature), n_splits=3, seed=FOLD_SEED + 19)
     predictions = np.full((len(angles), 3), np.nan)
     for train, test in split:
         # Nested calibration for local Matérn uses a response-blind local-RBF
@@ -409,7 +424,8 @@ def _inner_radius(spec: dict[str, Any], angles: np.ndarray, aggregates: np.ndarr
         inner_spec = spec
         if spec["family"] == "local_matern":
             inner_spec = {"candidate": "nested_rbf_proxy", "family": "local_rbf",
-                          "neighbors": spec.get("neighbors", 32), "smoothing": 1.0e-8}
+                          "neighbors": spec.get("neighbors", 32), "smoothing": 1.0e-8,
+                          "feature": feature}
         model = _make_candidate(inner_spec).fit(angles[train], aggregates[train])
         predictions[test] = model.predict(angles[test])[0]
     error = np.abs(predictions - aggregates[:, :3])

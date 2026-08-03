@@ -37,6 +37,16 @@ def angle_features(angles: np.ndarray, candidate: str = "F1") -> np.ndarray:
         # Keep signed distances, not only an absolute cutoff score, so the GP
         # can distinguish the two sides of a Rayleigh crossing.
         return np.column_stack((f1, margins))
+    if key == "F4":
+        margins = np.stack([1.0 - ((kx + m * 13.5 / 50.0) ** 2 + ky ** 2)
+                            for m in range(-7, 4)], axis=1)
+        nearest = np.argmin(np.abs(margins), axis=1)
+        # F4 adds only the nearest signed cutoff margin and a one-hot identity
+        # for its order.  It is deliberately finite and avoids an unbounded
+        # sweep over all signed margins/features.
+        identity = np.zeros((len(values), margins.shape[1]), dtype=np.float64)
+        identity[np.arange(len(values)), nearest] = 1.0
+        return np.column_stack((f1, margins[np.arange(len(values)), nearest], identity))
     raise ValueError(f"unknown Task004 feature candidate: {candidate}")
 
 
