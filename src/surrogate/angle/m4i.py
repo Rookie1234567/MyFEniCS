@@ -539,6 +539,7 @@ def run_m4i(*, dataset_dir: Path, output_dir: Path, folds_path: Path,
     (output_dir / "SELECTIVE_ACCEPTANCE_DOMAIN_V2.json").write_text(json.dumps(acceptance_payload, indent=2, sort_keys=True) + "\n")
     (output_dir / "SELECTIVE_OOF_V2.json").write_text(json.dumps({
         "schema_version": "task004.selective-oof.v2", "dataset_id": DATASET_ID,
+        "forward_solver_sha": FORWARD_SHA, "surrogate_training_code_sha": implementation_sha,
         "records": oof_records, "validation_response_accessed": False}, indent=2, sort_keys=True) + "\n")
     lock_path = output_dir / "ANGLE_AGGREGATE_SELECTIVE_MODEL_SELECTION_LOCK.json"
     if lock_created:

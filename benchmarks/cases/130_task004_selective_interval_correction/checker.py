@@ -196,7 +196,10 @@ def main() -> int:
     selective = json.loads(OOF.read_text())
     base = json.loads(BASE_OOF.read_text())
     rows_all = selective.get("records", {})
-    crossfit_ok = selective.get("dataset_id") == DATASET_ID and selective.get("validation_response_accessed") is False
+    crossfit_ok = selective.get("dataset_id") == DATASET_ID and \
+        selective.get("forward_solver_sha") == FORWARD_SHA and \
+        selective.get("surrogate_training_code_sha") == code_sha and \
+        selective.get("validation_response_accessed") is False
     for predictor in PREDICTORS:
         rows = rows_all.get(predictor, [])
         crossfit_ok = crossfit_ok and len(rows) == 112 and sorted(int(row["sample_index"]) for row in rows) == list(range(112))
