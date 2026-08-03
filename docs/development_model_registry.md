@@ -1341,6 +1341,41 @@ outcomes。完整证据固定在
   原 `SCAFFOLD_NOT_RUN` 语义；hash-bound checkpoint 单独位于
   `records/path_a_cycle0_v28_progress_checkpoint_v1.json`。
 
+## 3.41 Task036：p6/h10 Full3D 与原有 Hybrid M120 成功/失败点四次对照
+
+Task036 在 clean source `ff2227cac8a19bd3a4c66279a413f6a34d730098` 上，用统一
+`(6,4,14)`/Ny4、p6/h10、MPI8 direct/static 合同，重新计算一个历史成功物理点
+`D005-S` 和一个已知困难点 `D001-P`。D005 是旧 Task035c `(6,3,14)`/Ny3、12-significant
+物理点的全 80 通道严格再验证，不是同一离散 case。完整 160 行 tracked 展示表由
+hash-bound analyzer/raw orders 派生；上游数值 authority 仍是 ignored raw records。
+
+最终处置 authority 为 [Task036 Review Report V8](task036_forward_solver_bugfix_hardening/review_report_v8.md)：
+`Task036_status=CLOSED_CONTROLLED_FAILURE_WITH_REUSABLE_POSITIVES`。本节四次 PDE 均在 V8
+之前、以 clean source `ff2227cac8a19bd3a4c66279a413f6a34d730098` 完成；以下结果仅作最终
+证据归档，不把 M120 升级为 production，也不授权或重开 Task036 PDE/direct-port 研发。
+`C1b=cancelled/not_run`；Task037 iterative 已 deferred，但 implementation 尚未授权。
+
+资源字段保持各 runner 冻结的原始权威语义：Full3D 使用 watchdog
+`resource_authority.max_process_tree_rss_mb`，Hybrid 使用 sampler
+`resource_authority.simultaneous_live_worker_rss_sum_bytes`；四次运行的
+dedicated-cgroup 原始状态分别为 Full `dedicated_job_cgroup_observed=false`、Hybrid
+`job_cgroup_dedicated=false`。所以同一物理点的 Hybrid/Full 数值只能称为任务冻结的
+配对 live-memory authority 比较，采样进程集合并不相同，不能改写成统一 process-tree 或
+whole-job RSS。0.7 nm 后续 direct-only 路线另见
+[0.7 nm geometry-robust direct roadmap](task036_forward_solver_bugfix_hardening/outcomes/0p7nm_geometry_robust_large_scale_direct_roadmap.md)。
+
+| Model ID | 身份/物理及 raw authority | 算法与规模 | 总量/逐通道/冻结 live-memory authority | 结论/status | tracked evidence |
+|---|---|---|---|---|---|
+| `task036_D005_S_p6h10_full_static_Ny4` | 13.5 nm；10° grazing；S；raw `benchmarks/artifacts/task036/ff2227cac8a19bd3a4c66279a413f6a34d730098/p6h10_original_success_vs_failure_v1/D005-S/full3d/watchdog_summary.json` @ `b6005c54eb4cc54b13dd6ba7b92ee193251d4c36bece86f8e135b8d29e462c97` | Full3D p6，336 hex；229,680 raw FE；68,336 augmented rows；55,985,168 matrix NNZ；344,304,152 factor NNZ；MPI8 MUMPS | R/T/Avol=`0.000762881475143/0.602701633982657/0.396535484541613`；residual `1.251450e-11`；Full process-tree authority=`20.352249 GiB`；748.447064 s；zero swap；该 authority 越过 20 GiB warning 但低于 24 GiB termination | `full3d_reference_pass`；official discrete reference | [four-run report](task036_forward_solver_bugfix_hardening/outcomes/p6_h10_full3d_vs_original_m120_four_run_report.md) |
+| `task036_D005_S_p6h10_hybrid_static_M120_Ny4` | 与上行 same-source/same-grid；raw `benchmarks/artifacts/task036/ff2227cac8a19bd3a4c66279a413f6a34d730098/p6h10_original_success_vs_failure_v1/D005-S/hybrid_m120/solver_record.json` @ `17b928f75980576589d1a08e15f54580f6dc447545b5e4150714fa7801998d3f`；sampler `benchmarks/artifacts/task036/ff2227cac8a19bd3a4c66279a413f6a34d730098/p6h10_original_success_vs_failure_v1/D005-S/hybrid_m120/memory_sampler_summary.json` @ `da9b85e1ae2116a4d8e44830506b310569aa35fc6807fd78a1bdbd3fd50c81b7` | 每端 11,272 rows；240 internal；Schur 240×240；matrix NNZ 8,208,712/side；factor inventory 31,014,592+31,710,472 | R/T/Avol=`0.000762881475148/0.602701633983217/0.396535484558948`；80/80 amplitude、80/80 power；residual `6.361293e-12`；Hybrid live-worker-sum authority=`9.708168 GiB`；822.719559 s；zero swap | `rank_pending_next_m`；`integration_pass=true`；`physical_field_gates_pass=true`；`mode_count_converged=false`；`physical_augmented_direct_pass=false`；`official_record=false` | [four-run report](task036_forward_solver_bugfix_hardening/outcomes/p6_h10_full3d_vs_original_m120_four_run_report.md) + [full-channel CSV](task036_forward_solver_bugfix_hardening/outcomes/p6_h10_full3d_vs_original_m120_all_channels.csv) |
+| `task036_D001_P_p6h10_full_static_Ny4` | 13.5 nm；0.5° grazing；P；raw `benchmarks/artifacts/task036/ff2227cac8a19bd3a4c66279a413f6a34d730098/p6h10_original_success_vs_failure_v1/D001-P/full3d/watchdog_summary.json` @ `ded92d34a550e6ff50deba4696280666de47e66978e46a6fd8b67c7a2fefc144` | Full3D p6，336 hex；229,680 raw FE；68,336 rows；55,984,880 matrix NNZ；317,841,392 factor NNZ；MPI8 MUMPS | R/T/Avol=`0.621286165125328/0.006244227206617/0.372469607671513`；residual `1.730467e-12`；Full process-tree authority=`18.790070 GiB`；872.496244 s；zero swap | `full3d_reference_pass`；official discrete reference | [four-run report](task036_forward_solver_bugfix_hardening/outcomes/p6_h10_full3d_vs_original_m120_four_run_report.md) |
+| `task036_D001_P_p6h10_hybrid_static_M120_Ny4` | 与上行 same-source/same-grid；raw `benchmarks/artifacts/task036/ff2227cac8a19bd3a4c66279a413f6a34d730098/p6h10_original_success_vs_failure_v1/D001-P/hybrid_m120/solver_record.json` @ `9649828223491961b5b90449641ffef4d8f68fd67d5bc3cd469f5b53ce8ef3cf`；sampler `benchmarks/artifacts/task036/ff2227cac8a19bd3a4c66279a413f6a34d730098/p6h10_original_success_vs_failure_v1/D001-P/hybrid_m120/memory_sampler_summary.json` @ `69a3659a209ba6bf5d03c5b84f35a33b5fcbc6a469ba4f0a48c6d6c6e86da16b` | 每端 11,272 rows；240 internal；matrix NNZ 8,208,568/side；factor inventory 30,897,448+31,804,648 | R/T/Avol=`0.621360889010226/0.006241265970413/0.372384777771148`；66/80 amplitude、72/80 power；14个co-P amplitude失败，其中8 significant power失败；sampled E_t `0.182220`；residual `4.759399e-13`；Hybrid live-worker-sum authority=`9.569057 GiB`；764.817415 s；zero swap | `formal_not_pass`；`trace_complement_diagnostic_hold`；`integration_pass=false`；`physical_field_gates_pass=false`；`mode_count_converged=false`；`physical_augmented_direct_pass=false`；`official_record=false`；controlled numerical negative | [four-run report](task036_forward_solver_bugfix_hardening/outcomes/p6_h10_full3d_vs_original_m120_four_run_report.md) + [full-channel CSV](task036_forward_solver_bugfix_hardening/outcomes/p6_h10_full3d_vs_original_m120_all_channels.csv) |
+
+本组 fresh direct 证据只资格化两个 13.5 nm 离散点。D005 没有相邻 M 收敛，D001 证明
+总代数残差和总 R/T 不能替代完整通道/恢复物理接口检查；没有运行 M160/M240、角度扫描、
+iterative 或 0.7 nm PDE。表内 status 保留四次运行当时的 raw 状态；V8 的最终处置是 Task036
+`closed controlled failure`，这些证据不得据此升级 production 或重开研发。
+
 
 ---
 
@@ -1380,7 +1415,8 @@ outcomes。完整证据固定在
    structured global-p6 endpoint、Path A cycle-0 stage/shadow、两条
    selected-p negative、M1、projection negative 和 goal-oriented trace
    negative，但尚无 accepted adaptive candidate、hidden final audit、
-   iterative 或 Hybrid。早期没有保存的 source SHA、geometry hash、
+   iterative 或 Hybrid。Task036 已登记本轮 D005/D001 四次 direct/static 对照，
+   但不据此登记 production-qualified Hybrid。早期没有保存的 source SHA、geometry hash、
    12 通道、factor NNZ 或 PSS/cgroup 明确标成“历史未记录”。
 2. Task032–034 的 heavy JSON 包含比总账更细的衍射级、场误差和资源字段；总账保留权威 evidence path，不建立第二份易漂移的逐字段副本。
 3. COMSOL 参考只计算零级；非零衍射级不能写 0。
