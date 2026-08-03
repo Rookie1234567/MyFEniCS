@@ -182,6 +182,7 @@ def main() -> int:
                 source_gate = bool(len(source_accept) / len(source) >= 0.70 and accuracy and support and composition)
                 expected = {"quantile": q, "threshold": threshold, "accepted_count": len(source_accept),
                             "accepted_fraction": len(source_accept) / len(source), "metrics": values,
+                            "accepted_indices": source_accept,
                             "accuracy_gate": accuracy, "supported_window_gate": support,
                             "composition_gate": composition, "source_gate": source_gate}
                 # Stored candidate grids may contain the detailed window rows;

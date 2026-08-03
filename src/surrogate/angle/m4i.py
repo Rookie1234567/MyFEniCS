@@ -306,6 +306,7 @@ def _build_crossfit(*, records: dict[str, list[dict[str, Any]]], angles: np.ndar
                     "upper_clipped": np.clip(prediction[index] + radii[index], 0.0, 1.0).tolist(),
                 },
                 "interval_response_used_for_calibration": False,
+                "response_used_for_acceptance": False,
                 "cutoff_margin": float(raw["cutoff_margin"][index]),
                 "mask_signature": str(raw["mask_signature"][index]),
                 "topology_supported_in_outer_train": bool(raw["topology_supported"][index]),
