@@ -5,7 +5,10 @@
 Case100 先冻结 Task37 的 current-source direct authority。它只验证
 Case096 已经使用过的 p6/h10 Full3D static-condensed 模型在 Task37 执行
 分支上的完整身份、物理结果、残差、矩阵规模、向量身份和资源遥测。
-本次 Stage 0 只提交 contract；F0 direct 尚未运行。
+Stage 0 contract 已冻结；F0 direct 已在 current-source clean SHA
+`03f4fa02aece62bb2f193c01616177bffff0aa51` 上完成并通过。compact tracked
+record 为 `records/task37_direct_authority_v1.json`，审阅说明为
+`docs/task037_static_condensed_full3d_iterative/outcomes/direct_authority.md`。
 
 静态凝聚的直观含义是：在每个单元内先消去只属于该单元的未知量，全球
 系统只保留界面/trace 与 DtN auxiliary 行，求解后再恢复完整有限元场。

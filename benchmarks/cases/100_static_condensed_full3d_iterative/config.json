@@ -1,6 +1,6 @@
 {
   "case_id": "100_static_condensed_full3d_iterative",
-  "status": "stage0_frozen_f0_pending",
+  "status": "f0_direct_authority_pass",
   "source_case": {
     "case_id": "096_hybrid_channel_memory_closure",
     "config": "benchmarks/cases/096_hybrid_channel_memory_closure/config.json",
