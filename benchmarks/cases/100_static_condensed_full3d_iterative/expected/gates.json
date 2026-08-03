@@ -67,5 +67,52 @@
     "require_external_simultaneous_rss_pss_uss_swap": true
   },
   "ordinary_default_changed": false,
-  "f0_only": true
+  "phase_status": {
+    "f0_direct_authority": "pass",
+    "f3_screen_20": "not_run"
+  },
+  "task037_f3_screen": {
+    "status": "not_run",
+    "authorized_iterations": 20,
+    "candidate": {
+      "outer_ksp": "fgmres",
+      "pc_side": "right",
+      "norm_type": "unpreconditioned",
+      "restart": 90,
+      "rtol": 1.0e-6,
+      "atol": 0.0,
+      "max_it": 20,
+      "num_slabs": 16,
+      "overlap_fraction": 0.25,
+      "absorption_shift": 0.1,
+      "local_factorization": "ILU0 factor-only",
+      "local_action": "fixed 1-step local GMRES action",
+      "smoother": "2 pre + 2 post GMRES steps",
+      "coarse_dimension": 75
+    },
+    "gates": {
+      "fixed_candidate_identity": "exact frozen candidate",
+      "finite_residuals": true,
+      "reported_condensed_pairing_same_order": true,
+      "final_three_residuals_same_order": true,
+      "negative_reason_runs_20_or_positive_residuals_le_1e-6": true,
+      "history_and_final_10x_initial_scale": true,
+      "operator_coarse_smoother_apply_counts_positive": true,
+      "coarse_dimension": 75,
+      "partition_coverage": true,
+      "factor_only_storage": true,
+      "all_local_solver_types_ilu": true,
+      "global_direct_factor_count": 0,
+      "global_schur_matrix_materialized": false,
+      "full_fe_residual": "finite and <= 10x initial; <=1e-6 for positive reason",
+      "negative_reason_official_postprocess": "official_result=false and postprocess_skipped=true",
+      "no_swap": true,
+      "source_clean_and_verified": true
+    },
+    "not_authorized": [
+      "100-step CLI not exposed",
+      "200-step CLI not exposed",
+      "full-run CLI not exposed"
+    ]
+  }
 }

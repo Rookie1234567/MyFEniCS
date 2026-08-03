@@ -494,6 +494,122 @@ def _task037_f1_direct_trace_oracle(trace_path: Path, trace_sha256: str):
     return solve
 
 
+def _task037_f3_assembled_fgmres_port(run_dir: Path):
+    from src.solvers.static_condensed_iterative import (
+        solve_assembled_static_condensed_fgmres,
+    )
+
+    def solve(request):
+        comm = request.A.getComm().tompi4py()
+        history_path = run_dir / "task037_f3_residual_history.jsonl"
+
+        def observe(iteration, reported, condensed):
+            if comm.rank == 0:
+                payload = {
+                    "iteration": int(iteration),
+                    "reported_relative_residual": float(reported),
+                    "condensed_true_residual": float(condensed),
+                }
+                with history_path.open("a", encoding="utf-8") as stream:
+                    stream.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+        snapshot, audit = solve_assembled_static_condensed_fgmres(
+            request,
+            screen_iterations=20,
+            residual_observer=observe,
+        )
+        if comm.rank == 0:
+            (run_dir / "task037_f3_core_audit.json").write_text(
+                json.dumps(audit, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        return snapshot
+
+    return solve
+
+
+def _task037_f3_screen_gate(audit: Mapping[str, Any]) -> dict[str, bool]:
+    try:
+        candidate = audit["candidate"]
+        final = audit["final"]
+        history = [(int(row[0]), float(row[1])) for row in audit["reported_history"]]
+        samples = [
+            (int(row[0]), float(row[1])) for row in audit["condensed_true_samples"]
+        ]
+        reported = dict(history)
+        pairs = [(reported[iteration], value) for iteration, value in samples]
+        initial_reported, initial_condensed = history[0], samples[0]
+        final_values = tuple(
+            float(final[name])
+            for name in (
+                "reported_relative_residual",
+                "condensed_true_residual",
+                "full_augmented_true_residual",
+            )
+        )
+        reason, iterations = int(final["converged_reason"]), int(final["iterations"])
+        coarse = audit["coarse"]
+        smoother = audit["smoother_diagnostics"]
+        counts = (
+            int(audit["operator_apply_count"]),
+            int(coarse["apply_count"]),
+            int(smoother["one_level_apply_count"]),
+        )
+        local_types = tuple(smoother["local_solver_types"])
+        partition = audit["partition_audit"]
+        inventory = audit["no_global_factor_inventory"]
+        coarse_dimension = int(coarse["dimension"])
+        coverage = partition["coverage_pass"] is True
+        factor_only = smoother["factor_only_storage"] is True
+        no_global_factor = inventory["global_direct_factor_count"] == 0
+        no_global_schur = inventory["global_schur_matrix_materialized"] is False
+    except (KeyError, TypeError, ValueError, IndexError):
+        return {"core_audit": False}
+    tiny = np.finfo(float).tiny
+    history_values = tuple(value for _, value in history)
+    sample_values = tuple(value for _, value in samples)
+    finite = all(
+        math.isfinite(value)
+        for value in (*history_values, *sample_values, *final_values)
+    )
+    same_order = all(
+        max(abs(left), abs(right)) <= 10.0 * max(min(abs(left), abs(right)), tiny)
+        for left, right in pairs
+    )
+    final_order = max(final_values) <= 10.0 * max(min(final_values), tiny)
+    scale = finite and initial_reported[0] == initial_condensed[0] == 0
+    scale &= max(map(abs, history_values)) <= 10.0 * abs(initial_reported[1])
+    scale &= max(map(abs, sample_values)) <= 10.0 * abs(initial_condensed[1])
+    scale &= max(map(abs, final_values)) <= 10.0
+    return {
+        "candidate": candidate
+        == {
+            "outer_ksp": "fgmres",
+            "pc_side": "right",
+            "norm_type": "unpreconditioned",
+            "restart": 90,
+            "rtol": 1.0e-6,
+            "atol": 0.0,
+            "max_it": 20,
+            "num_slabs": 16,
+            "overlap_fraction": 0.25,
+            "absorption_shift": 0.1,
+        },
+        "finite_and_scale": scale,
+        "pairing_and_order": same_order and final_order,
+        "reason_iteration": (reason < 0 and iterations == 20)
+        or (reason > 0 and all(value <= 1.0e-6 for value in final_values)),
+        "apply_counts": (all(value > 0 for value in counts) and coarse_dimension == 75),
+        "partition_and_ilu": (
+            coverage
+            and factor_only
+            and bool(local_types)
+            and all(kind == "ilu" for kind in local_types)
+        ),
+        "no_global_factor": no_global_factor and no_global_schur,
+    }
+
+
 def _full3d_config(args: argparse.Namespace):
     from src.common.config_3d import target_stage4_config
 
@@ -549,6 +665,7 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
             else str(Path(args.task037_f1_direct_trace_oracle).resolve())
         ),
         "task037_f1_direct_trace_sha256": args.task037_f1_direct_trace_sha256,
+        "task037_f3_screen": args.task037_f3_screen,
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -653,11 +770,12 @@ def _validate_worker_parent_launch(args: argparse.Namespace) -> None:
 
 
 def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
-    if not args.task035d_case097_gate:
+    if not (args.task035d_case097_gate or args.task037_f3_screen is not None):
         return
-    _validate_task035d_case097_plan(args)
-    _validate_task035d_nested_p_inputs(args)
-    _validate_task035d_selective_face_inputs(args)
+    if args.task035d_case097_gate:
+        _validate_task035d_case097_plan(args)
+        _validate_task035d_nested_p_inputs(args)
+        _validate_task035d_selective_face_inputs(args)
     head = subprocess.check_output(
         ["git", "rev-parse", "HEAD"],
         cwd=ROOT,
@@ -670,7 +788,7 @@ def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
     ).strip()
     if head != args.verified_clean_sha or status:
         raise SystemExit(
-            "Task035d worker source identity is not the clean parent-qualified commit."
+            "Task035d/Task37 F3 worker source identity is not the clean parent-qualified commit."
         )
 
 
@@ -684,14 +802,14 @@ def _worker(args: argparse.Namespace) -> int:
         if args.task037_f0_vector_observer
         else None
     )
-    linear_solver_port = (
-        _task037_f1_direct_trace_oracle(
+    linear_solver_port = None
+    if args.task037_f3_screen is not None:
+        linear_solver_port = _task037_f3_assembled_fgmres_port(args.run_dir)
+    elif args.task037_f1_direct_trace_oracle is not None:
+        linear_solver_port = _task037_f1_direct_trace_oracle(
             args.task037_f1_direct_trace_oracle,
             args.task037_f1_direct_trace_sha256,
         )
-        if args.task037_f1_direct_trace_oracle is not None
-        else None
-    )
     observer = None
     retain_local_schur = False
     if args.task035d_nested_p_dwr_phase is not None:
@@ -826,6 +944,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task037-f1-direct-trace-oracle", type=Path)
     parser.add_argument("--task037-f1-direct-trace-sha256")
+    parser.add_argument("--task037-f3-screen", type=int, choices=(20,))
     parser.add_argument(
         "--task035d-case097-gate",
         action="store_true",
@@ -1013,14 +1132,32 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if (
         args.task037_f0_vector_observer
         or args.task037_f1_direct_trace_oracle is not None
+        or args.task037_f3_screen is not None
     ) and not (
         args.task035c_p6_h10_gate
         and args.mpi_size == 8
         and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
     ):
         parser.error(
-            "Task037 F0/F1 direct-vector options require the existing Task035c "
-            "p6/h10 gate, full-solve, static backend, MPI8, and S scope."
+            "Task037 F0/F1/F3 options require the existing Task035c p6/h10 "
+            "gate, full-solve, static backend, MPI8, and S scope."
+        )
+    if args.task037_f3_screen is not None and (
+        args.task037_f0_vector_observer
+        or args.task037_f1_direct_trace_oracle is not None
+        or (
+            not args.worker
+            and not (
+                args.poll_interval <= 0.25
+                and args.warning_gib == 10.0
+                and args.terminate_gib == 14.0
+                and args.timeout_seconds == 1800.0
+            )
+        )
+    ):
+        parser.error(
+            "Task037 F3 is exclusive of F0/F1 and requires parent "
+            "poll<=0.25, warning=10GiB, termination=14GiB, timeout=1800s."
         )
     if args.task035d_case097_gate:
         local_h_candidate = args.task035d_candidate_id in TASK035D_LOCAL_H_CANDIDATES
@@ -2272,6 +2409,7 @@ def _qualify(
     no_swap: bool,
     observed_worker_rank_count: int | None = None,
     resource_summary: dict[str, Any] | None = None,
+    task037_f3_core_audit: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     matrix = solver_summary.get("matrix_stats") or {}
     common = {
@@ -2295,7 +2433,36 @@ def _qualify(
             solver_summary.get("polarization_kind") == args.polarization_kind
         ),
     }
-    if args.run_kind == "assembly-only":
+    if args.task037_f3_screen is not None:
+        screen_checks = _task037_f3_screen_gate(
+            task037_f3_core_audit or {},
+        )
+        reason = solver_summary.get("ksp_converged_reason")
+        residual = solver_summary.get("linear_system_relative_residual")
+        positive = isinstance(reason, (int, float)) and reason > 0
+        negative = isinstance(reason, (int, float)) and reason < 0
+        checks = {
+            **common,
+            **{f"task037_f3_{name}": passed for name, passed in screen_checks.items()},
+            "external_linear_solver_port": (
+                solver_summary.get("external_linear_solver_port") is True
+            ),
+            "external_no_global_factor": (
+                solver_summary.get("external_no_global_factor") is True
+            ),
+            "full_fe_residual_scale": _finite_number_le(
+                residual,
+                1.0e-6 if positive else 10.0,
+            ),
+            "reason_output_gate": positive
+            or (
+                negative
+                and solver_summary.get("official_result") is False
+                and solver_summary.get("postprocess_skipped") is True
+            ),
+            "no_swap": no_swap,
+        }
+    elif args.run_kind == "assembly-only":
         checks = {
             **common,
             "diagnostic_assemble_only_status": (
@@ -2477,6 +2644,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
                 str(args.task037_f1_direct_trace_sha256),
             )
         )
+    if args.task037_f3_screen is not None:
+        command.extend(("--task037-f3-screen", str(args.task037_f3_screen)))
     if args.task035d_case097_gate:
         plan_options = (
             (
@@ -2592,7 +2761,7 @@ def _run_parent(args: argparse.Namespace) -> int:
     task035d_nested_p_gate = _validate_task035d_nested_p_inputs(args)
     task035d_selective_face_gate = _validate_task035d_selective_face_inputs(args)
     source_before = _source_provenance(args)
-    if args.task035d_case097_gate:
+    if args.task035d_case097_gate or args.task037_f3_screen is not None:
         task035d_status_before = subprocess.check_output(
             ["git", "status", "--porcelain", "--untracked-files=all"],
             cwd=ROOT,
@@ -2600,8 +2769,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         ).strip()
         if task035d_status_before:
             raise SystemExit(
-                "Task035d formal PDE requires an actually clean source tree; "
-                "commit the runner/checker and evidence before launch."
+                "Task035d/Task37 F3 formal PDE requires an actually clean "
+                "source tree; commit the runner/checker and evidence before "
+                "launch."
             )
     environment_before = _resource_snapshot()
     if environment_before["host_available_bytes"] is None:
@@ -2733,6 +2903,15 @@ def _run_parent(args: argparse.Namespace) -> int:
         if solver_path.is_file()
         else {}
     )
+    task037_f3_core_audit = None
+    task037_f3_core_audit_path = run_dir / "task037_f3_core_audit.json"
+    if args.task037_f3_screen is not None:
+        try:
+            task037_f3_core_audit = json.loads(
+                task037_f3_core_audit_path.read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError):
+            task037_f3_core_audit = {}
     dtn_orders_path = run_dir / "dtn_port_diffraction_orders_3d.json"
     field_shard_paths = [
         run_dir / f"fields_3d_for_paraview_rank{rank:04d}.vtu"
@@ -2767,6 +2946,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         no_swap=no_swap,
         observed_worker_rank_count=sampler["max_observed_worker_rank_count"],
         resource_summary=sampler,
+        task037_f3_core_audit=task037_f3_core_audit,
     )
     task035d_nested_p_evidence = None
     task035d_selective_face_evidence = None
@@ -3143,7 +3323,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["failures"].append("source_stable_and_clean_after")
         qualification["pass"] = False
     status = (
-        "assembly_calibration_pass"
+        "task037_f3_20_screen_pass"
+        if qualification["pass"] and args.task037_f3_screen is not None
+        else "task037_f3_20_screen_not_pass"
+        if args.task037_f3_screen is not None
+        else "assembly_calibration_pass"
         if qualification["pass"] and args.run_kind == "assembly-only"
         else "factorization_calibration_pass"
         if qualification["pass"] and args.run_kind == "factorization-only"
@@ -3301,6 +3485,24 @@ def _run_parent(args: argparse.Namespace) -> int:
             "stdout": _path_from_root(stdout_path),
             "dtn_orders": _path_from_root(dtn_orders_path),
             "field_shards": field_shard_authority,
+            **(
+                {
+                    "task037_f3": {
+                        "screen_iterations": args.task037_f3_screen,
+                        "core_audit_path": _path_from_root(task037_f3_core_audit_path),
+                        "core_audit_sha256": _sha256(task037_f3_core_audit_path),
+                        "core_audit_payload": task037_f3_core_audit,
+                        "residual_history_path": _path_from_root(
+                            run_dir / "task037_f3_residual_history.jsonl"
+                        ),
+                        "residual_history_sha256": _sha256(
+                            run_dir / "task037_f3_residual_history.jsonl"
+                        ),
+                    }
+                }
+                if args.task037_f3_screen is not None
+                else {}
+            ),
         },
         "solver_summary": solver_summary,
     }

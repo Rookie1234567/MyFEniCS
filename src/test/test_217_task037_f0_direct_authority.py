@@ -64,6 +64,7 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
             task037_f0_vector_observer=True,
             task037_f1_direct_trace_oracle=None,
             task037_f1_direct_trace_sha256=None,
+            task037_f3_screen=None,
             task035d_nested_p_dwr_phase=None,
             task035d_selective_face_dwr_phase=None,
         )
@@ -89,6 +90,7 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
             task037_f0_vector_observer=False,
             task037_f1_direct_trace_oracle=Path("trace.npy"),
             task037_f1_direct_trace_sha256="a" * 64,
+            task037_f3_screen=None,
             task035d_nested_p_dwr_phase=None,
             task035d_selective_face_dwr_phase=None,
         )

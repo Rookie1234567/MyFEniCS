@@ -52,8 +52,42 @@
   "iterative_limits": {
     "warning_gib": 10.0,
     "controlled_termination_gib": 14.0,
-    "applies_to": "future iterative candidates only",
+    "applies_to": "current F3 iterative screen and subsequently authorized iterative candidates",
     "applies_to_f0_direct": false
+  },
+  "task037_f3_screen": {
+    "status": "not_run",
+    "authorized_iterations": 20,
+    "candidate": {
+      "outer_ksp": "fgmres",
+      "pc_side": "right",
+      "norm_type": "unpreconditioned",
+      "restart": 90,
+      "rtol": 1.0e-6,
+      "atol": 0.0,
+      "max_it": 20,
+      "num_slabs": 16,
+      "overlap_fraction": 0.25,
+      "absorption_shift": 0.1,
+      "local_factorization": "ILU0 factor-only",
+      "local_action": "fixed 1-step local GMRES action",
+      "smoother": "2 pre + 2 post GMRES steps",
+      "coarse_dimension": 75,
+      "global_direct_factor_count": 0,
+      "global_schur_matrix_materialized": false
+    },
+    "watchdog": {
+      "poll_interval_seconds": 0.25,
+      "warning_gib": 10.0,
+      "termination_gib": 14.0,
+      "timeout_seconds": 1800.0,
+      "swap_allowed": false
+    },
+    "not_authorized": [
+      "100-step CLI not exposed",
+      "200-step CLI not exposed",
+      "full-run CLI not exposed"
+    ]
   },
   "canonical_vectors": {
     "active_trace_source": "dtn_result.x global prefix [0, independent_active_trace_rows)",
@@ -65,7 +99,7 @@
     "tracked_record": "hash shape source only"
   },
   "out_of_scope": [
-    "F1-F6 iterative candidates",
+    "F3 100/200/full and F4-F6 are not authorized in this phase",
     "Hybrid or low-rank direct Hybrid",
     "hp/adaptive mesh",
     "0.7 nm",
