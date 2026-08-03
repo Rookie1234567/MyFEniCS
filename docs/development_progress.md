@@ -1,4 +1,28 @@
-# 项目开发进度：Task000–Task035c
+# 项目开发进度：Task000–Task036
+
+## 2026-08-03：Task036 direct Hybrid 受控结项与选择性整合
+
+Task036 的目标是修复 Hybrid 在小掠射角、P 偏振和弱衍射通道下不能完整复现
+Full3D 的问题。最终证明域分解和 M120 长程传播核心本身可用，但低维端口没有覆盖完整
+joint-Cauchy 界面信息；因此停止继续扩大 direct 端口，把通用修复和最小 research oracle
+选择性保留，ordinary default 不变。
+
+| 主线 | 实际结果 | 数据身份 / 边界 |
+|---|---|---|
+| compressed direct Hybrid | M120/M240 未闭合完整界面与全部通道 | `controlled_negative / closed`；not production-qualified |
+| strong trace | E jump `4.588e-15`；energy `1.531666e-5 > 1e-5`；固定通道 `77/96` | `research_only`；19个通道失败不能忽略 |
+| exact FE trace-chain | one-cell Schur、endpoint Cauchy 与 full trace-chain 证明域分解 correctness | `research_only correctness oracle`；不是 scalable solver |
+| M120 modal core | 40/60/100 nm selected-space exact FE 对照约 `1.59e-11–1.95e-11` | retained；不等于 complete global port |
+| B1/C1 | B1 `d<=360` controlled negative；C1b/C1c 取消且未运行 | 不恢复 capacity/POD/96-RHS campaign |
+| 0.7 nm / 2 TiB | 未得到通过精度和资源合同的 solver | `not solved`；不得写成 conditional estimate 已兑现 |
+| selective commits | Group1 `7735a261...`；Group2 `a741ad1b...`；Group3 `4c9e1b9...` | Task036 final SHA `7a033400...`；完整历史留远程分支 |
+| 当前测试 | Group3 serial `7 passed`、MPI2 recursion 每 rank `1 passed`；最终 compact targeted `24 passed` + DtN/alias `14 passed`；p2 Full3D ordinary/static PDE smoke 各 `1 passed` | combined suite 在41 passed/107.99s后由用户中断；exit2/KeyboardInterrupt不是代码 failure；小时级 full pytest `cancelled/not_run` |
+| Task037 | branch `pending`，task not defined | 未开始 iterative 或新 PDE |
+
+结项入口见
+[`task036_forward_solver_bugfix_hardening/outcomes/final_summary.md`](task036_forward_solver_bugfix_hardening/outcomes/final_summary.md)
+与
+[`task036_forward_solver_bugfix_hardening/review_report_v8.md`](task036_forward_solver_bugfix_hardening/review_report_v8.md)。
 
 ## 2026-07-26：Task035c Hybrid逐通道与p6/h10内存闭合
 

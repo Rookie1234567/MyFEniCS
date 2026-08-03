@@ -469,6 +469,28 @@ M160 的相对 `1e-3` 失败功率为
 `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/hybrid_static_condensation_h1a_mpi8_v1.json`。
 H1-B p2/h3 为 `not_run_by_review_prerequisite`，不是普通待运行项。
 
+#### Task036 direct Hybrid closeout
+
+Task036 先修复 Full3D/Hybrid 共用的投影、界面牵引、beta 身份、near-degenerate
+检测、trace alias、MUMPS 计数、对象生命周期和资源语义，再追查低维 direct Hybrid
+为什么不能在小掠射角/P 偏振下复现 Full3D 全通道。通俗地说，模态传播核心本身能工作，
+但低维端口没有装下完整的界面电场和磁牵引信息；继续增加同一类模式没有得到生产解。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `task036_original_physical_qep_M120_M240` | frozen Task036 SHA `7a0334008dc9bbdeefe55dd0ffa535cc756e661c` | p5/h10 Full3D reference 与 direct Hybrid 接口 | physical-QEP port，M120/M240 | 完整 joint-Cauchy 与全通道合同未闭合；F2/F5 P 的 M120 energy closure 分别 `1.00994e-3`、`2.56646e-5`，均高于 `1e-5` | `CONTROLLED_NEGATIVE_CLOSED`；complete port not production-qualified | [`final_summary.md`](task036_forward_solver_bugfix_hardening/outcomes/final_summary.md) |
+| `task036_M120_long_range_modal_core` | frozen exact operator audit | 40/60/100 nm 长程传播段 | selected M120 R/W space | exact FE 与 modal selected operator 误差约 `1.59e-11–1.95e-11` | `retained`；只证明 selected-space propagation，不证明端点完整 | 同上；V8 |
+| `task036_strong_trace_M120_A004S` | Task036 measured research result | p5/h10、MPI8 direct | M120 strong trace | E jump `4.588e-15`；energy `1.531666e-5 > 1e-5`；fixed channels `77/96`；峰值 `7.893 GiB` vs Full3D `10.549 GiB` | `RESEARCH_ONLY_CONTROLLED_NEGATIVE`；19项失败 | [`fix_report.md`](task036_forward_solver_bugfix_hardening/outcomes/fix_report.md)；V8 |
+| `task036_exact_FE_trace_chain_oracle` | frozen Task036 exact audit | one-cell two-port Schur、endpoint Cauchy、serial/MPI trace-chain | full-space direct FE trace-chain | 域分解、恢复与 direct algebra 对齐；无 scalable-resource claim | `RESEARCH_ONLY_CORRECTNESS_ORACLE`；不是 scalable solver | [`review_report_v8.md`](task036_forward_solver_bugfix_hardening/review_report_v8.md) |
+| `task036_B1_discrete_bloch_d_le_360` | frozen research branch | Full3D/Hybrid interface port | low-dimensional discrete-Bloch，`d<=360` | 未满足完整 production contract | `CONTROLLED_NEGATIVE_CLOSED` | 同上 |
+| `task036_C1b_C1c` | 用户撤销授权 | teacher/POD/compressed-port 路线 | 96-RHS teacher、POD、actual compressed candidate | 没有 live teacher 或 PDE 结果 | `CANCELLED_NOT_RUN` | 同上 |
+| `task036_0p7nm_2TiB` | planning boundary | 目标 0.7 nm | 整作业内存上限 2 TiB | 没有通过精度与资源 Gate 的 solver；实测/资格化结果为 `not_run` | `NOT_SOLVED` | [`final_summary.md`](task036_forward_solver_bugfix_hardening/outcomes/final_summary.md) |
+
+选择性整合身份为 Group 1 `7735a2617d18fe5f869331a90d47ec16632fd8d3`、Group 2
+`a741ad1b5cfb579e2667600bcc6497ec5c4f23d9`，Group 3
+`4c9e1b9cedd4b04d65824698202c9fff96f3a0dc`。Task037 分支仍为 `pending`，task 未定义，
+因此本总账没有登记 iterative 或新的 0.7 nm 模型。
+
 ---
 
 ## 1.5 静态凝聚法：迭代求解（待定）
@@ -1340,7 +1362,6 @@ outcomes。完整证据固定在
 - `config.json` 的最终 ledger schema 不能无歧义表达此 partial progress，故保持
   原 `SCAFFOLD_NOT_RUN` 语义；hash-bound checkpoint 单独位于
   `records/path_a_cycle0_v28_progress_checkpoint_v1.json`。
-
 
 ---
 
