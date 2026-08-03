@@ -1,0 +1,24 @@
+{
+  "checks": {
+    "all_candidate_oof_rows_and_errors": true,
+    "all_checks": true,
+    "candidate_set_and_source_identity": true,
+    "ensemble_contract": true,
+    "folds_each_index_once_and_hash_bound": true,
+    "metrics_and_composition_recomputed": true,
+    "no_lock_no_blind_no_new_fem": true,
+    "paired_reference_semantics": true,
+    "post_active_outlier_audit_references_oof": true,
+    "required_artifacts_present": true,
+    "safe_domain_secondary_diagnostic": true,
+    "train112_hashes_and_identity": true
+  },
+  "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "errors": [],
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "new_fem_budget": 0,
+  "schema_version": "case128.check.v1",
+  "status": "pass",
+  "training_count": 112,
+  "validation_response_accessed": false
+}

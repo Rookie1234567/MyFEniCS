@@ -16953,6 +16953,7 @@
   },
   "dataset112_id": "task004_angle_nominal_p5_ny4_train112_v1",
   "dataset96_id": "task004_angle_nominal_p5_ny4_train96_v2",
+  "diagnostic_only_not_model_lock": true,
   "fold_identity": {
     "fold_sha256": "8340e04a5612559adefb674eedb1a7439e5c3a0b821630512e0348bd741f78f0",
     "folds": [
@@ -17472,9 +17473,9 @@
     "seed": 20260731
   },
   "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "paired_reference_candidate": "L1_local_rbf_k24_s1e-08",
   "schema_version": "task004.paired-learning-curve.112.v1",
-  "selected_final_candidate": "L1_local_rbf_k24_s1e-08",
-  "surrogate_training_code_sha": "77aee59daf3eaf70e227de7537dd2cc735bfb0e3",
+  "surrogate_training_code_sha": "1ab497da5f1cb0d86b2f3096fa7b7533290a9c14",
   "test_rows_fixed_to_train96": true,
   "train112_additional_indices": [
     96,

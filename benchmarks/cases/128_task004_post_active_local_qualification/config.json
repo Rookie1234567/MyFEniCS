@@ -1,0 +1,12 @@
+{
+  "schema_version": "task004.post-active-local-qualification.case.v1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "surrogate_training_code_sha": "44e9831d4cfae0c95b4e02d59effd6c6fa0b4270",
+  "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "training_count": 112,
+  "candidate_count": 6,
+  "validation_response_accessed": false,
+  "new_fem_budget": 0,
+  "second_active_learning_round": false,
+  "fisher_geometry_sensitivity_inversion": false
+}

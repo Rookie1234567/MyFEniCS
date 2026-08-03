@@ -411,7 +411,7 @@ def _make_oof_records(angles: np.ndarray, aggregates: np.ndarray, masks: np.ndar
 
 
 def _classification(row: dict[str, Any], thresholds: dict[str, float]) -> tuple[str, dict[str, Any]]:
-    distance = float(row["nearest_training_distance"])
+    distance = float(row["nearest_fold_training_distance"])
     disagreement = float(row["model_disagreement"])
     margin = abs(float(row["signed_cutoff_margin"]))
     boundary = bool(row["angle"][0] in (0.5, 10.0) or row["angle"][1] in (0.0, 90.0))

@@ -1,5 +1,8 @@
 # Paired train96 → train112 learning curve
 
+This is a diagnostic paired reference on fixed train96 test rows; it is not a
+final model-selection result or an `ANGLE_AGGREGATE_MODEL_SELECTION_LOCK`.
+
 The test rows are the same five-fold train96 test rows; each train112 fit adds all 16 new FEM points.
 
 | candidate | train96 max abs | train112 max abs | max-error reduction | mean-abs reduction |

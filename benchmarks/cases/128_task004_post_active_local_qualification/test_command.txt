@@ -1,0 +1,1 @@
+source scripts/activate_myfenics_wsl.sh && python benchmarks/cases/128_task004_post_active_local_qualification/checker.py

@@ -1,0 +1,5356 @@
+{
+  "candidate_set": [
+    "L1_local_rbf_k24_s1e-08",
+    "L2_local_matern_k24",
+    "L2_local_matern_k32",
+    "L4_trend_local_residual_k24",
+    "E1_latent_median_ensemble",
+    "E2_cross_fitted_nonnegative_stack"
+  ],
+  "classification_contract": {
+    "boundary_one_sided": "domain boundary and distance >= q50",
+    "coverage_hole": "distance >= q75 and disagreement <= q75",
+    "cutoff_high_curvature": "abs(signed cutoff margin) <= 0.02 and disagreement >= q50",
+    "model_instability": "disagreement >= q75",
+    "unexplained": "none of the preceding evidence rules"
+  },
+  "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "reference_candidate": "L1_local_rbf_k24_s1e-08",
+  "schema_version": "task004.post-active-outlier-audit.v1",
+  "surrogate_training_code_sha": "44e9831d4cfae0c95b4e02d59effd6c6fa0b4270",
+  "targets": {
+    "A_balance": [
+      {
+        "angle": [
+          2.961689197458,
+          82.168203396723
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.13717959515307043,
+            "error": 0.13717959515307043,
+            "prediction": 0.8458768328731366,
+            "std": 0.031018326201849047
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.09793465261501866,
+            "error": 0.09793465261501866,
+            "prediction": 0.8066318903350849,
+            "std": 0.031018326201849047
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.11293290206406237,
+            "error": 0.11293290206406237,
+            "prediction": 0.8216301397841286,
+            "std": 0.022632445046104864
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.06746704560484607,
+            "error": 0.06746704560484607,
+            "prediction": 0.7761642833249123,
+            "std": 0.022632445046104864
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.14291862749671946,
+            "error": 0.14291862749671946,
+            "prediction": 0.8516158652167857,
+            "std": 0.03177081420425115
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.11303526997024294,
+            "error": 0.11303526997024294,
+            "prediction": 0.8217325076903091,
+            "std": 0.02309125768752135
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 4,
+        "identity": "old96",
+        "mask_signature": "12;13;14;15;34;35;36;37",
+        "model_disagreement": 0.0754515818918734,
+        "nearest_fold_training_distance": 0.24135773956854886,
+        "nearest_training_tuples": [
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            10.0,
+            75.0
+          ],
+          [
+            8.0,
+            30.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            0.75,
+            30.0
+          ],
+          [
+            0.75,
+            45.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            2.0,
+            30.0
+          ],
+          [
+            0.5,
+            60.0
+          ],
+          [
+            0.5,
+            75.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            4.0,
+            60.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            4.0,
+            30.0
+          ]
+        ],
+        "reference_absolute_error": 0.11293290206406237,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 92,
+        "signed_cutoff_margin": 0.0026696040600640014,
+        "target": "A_balance",
+        "truth": 0.7086972377200662
+      },
+      {
+        "angle": [
+          4.0,
+          75.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.015568637434174581,
+            "error": -0.015568637434174581,
+            "prediction": 0.7239415591861915,
+            "std": 0.026552016673616164
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.05435416840834972,
+            "error": -0.05435416840834972,
+            "prediction": 0.6851560282120164,
+            "std": 0.026552016673616164
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.06526870844451294,
+            "error": -0.06526870844451294,
+            "prediction": 0.6742414881758532,
+            "std": 0.020187160347794417
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0012141398755127764,
+            "error": -0.0012141398755127764,
+            "prediction": 0.7382960567448533,
+            "std": 0.020187160347794417
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.023479132598017705,
+            "error": -0.023479132598017705,
+            "prediction": 0.7160310640223484,
+            "std": 0.022143594425783265
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.06425771279841141,
+            "error": -0.06425771279841141,
+            "prediction": 0.6752524838219547,
+            "std": 0.021282233463999798
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 0,
+        "identity": "old96",
+        "mask_signature": "12;13;14;15;34;35;36;37",
+        "model_disagreement": 0.06405456856900016,
+        "nearest_fold_training_distance": 0.1722337792334848,
+        "nearest_training_tuples": [
+          [
+            6.955775364768,
+            52.519475575536
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            4.0,
+            15.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            4.0,
+            20.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            8.0,
+            15.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            1.0,
+            0.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            8.0,
+            90.0
+          ]
+        ],
+        "reference_absolute_error": 0.06526870844451294,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 48,
+        "signed_cutoff_margin": 0.00486596562921493,
+        "target": "A_balance",
+        "truth": 0.7395101966203661
+      },
+      {
+        "angle": [
+          2.0,
+          75.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.03281363544143712,
+            "error": -0.03281363544143712,
+            "prediction": 0.8472669351566231,
+            "std": 0.030841066338481972
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.04561965173043203,
+            "error": -0.04561965173043203,
+            "prediction": 0.8344609188676282,
+            "std": 0.03128916099342598
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.05789856253053105,
+            "error": -0.05789856253053105,
+            "prediction": 0.8221820080675292,
+            "std": 0.02990002025103123
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.04214418668476927,
+            "error": -0.04214418668476927,
+            "prediction": 0.837936383913291,
+            "std": 0.033043186939380804
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.0013336706036762846,
+            "error": -0.0013336706036762846,
+            "prediction": 0.8787468999943839,
+            "std": 0.030841066338481972
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.058109107808346994,
+            "error": -0.058109107808346994,
+            "prediction": 0.8219714627897132,
+            "std": 0.03104238621915572
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 1,
+        "identity": "old96",
+        "mask_signature": "12;13;14;15;34;35;36;37",
+        "model_disagreement": 0.056564891926854766,
+        "nearest_fold_training_distance": 0.18654719035855755,
+        "nearest_training_tuples": [
+          [
+            8.0,
+            30.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            10.0,
+            75.0
+          ],
+          [
+            0.5,
+            60.0
+          ],
+          [
+            2.0,
+            15.0
+          ],
+          [
+            2.0,
+            10.0
+          ],
+          [
+            1.0,
+            20.0
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            0.75,
+            30.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            4.0,
+            0.0
+          ]
+        ],
+        "reference_absolute_error": 0.05789856253053105,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 38,
+        "signed_cutoff_margin": 0.0012179748700876791,
+        "target": "A_balance",
+        "truth": 0.8800805705980602
+      },
+      {
+        "angle": [
+          0.90729793068,
+          82.131933812052
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.07632090045430229,
+            "error": -0.07632090045430229,
+            "prediction": 0.5543741289055215,
+            "std": 0.024553500282742766
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.06651767370750483,
+            "error": -0.06651767370750483,
+            "prediction": 0.564177355652319,
+            "std": 0.05645142866515629
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.04564465155407704,
+            "error": -0.04564465155407704,
+            "prediction": 0.5850503778057468,
+            "std": 0.020187160347794417
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.08137852891188224,
+            "error": -0.08137852891188224,
+            "prediction": 0.5493165004479416,
+            "std": 0.024553500282742766
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.06196258108621566,
+            "error": -0.06196258108621566,
+            "prediction": 0.5687324482736081,
+            "std": 0.09246564538232281
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.045126957950501034,
+            "error": -0.045126957950501034,
+            "prediction": 0.5855680714093228,
+            "std": 0.021282233463999798
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 0,
+        "identity": "new16",
+        "mask_signature": "12;13;14;15;36;37",
+        "model_disagreement": 0.0357338773578052,
+        "nearest_fold_training_distance": 0.03994164663280642,
+        "nearest_training_tuples": [
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            8.0,
+            15.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            1.0,
+            0.0
+          ],
+          [
+            6.955775364768,
+            52.519475575536
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            0.75,
+            90.0
+          ],
+          [
+            0.75,
+            10.0
+          ],
+          [
+            0.5,
+            20.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            4.0,
+            15.0
+          ],
+          [
+            4.0,
+            20.0
+          ]
+        ],
+        "reference_absolute_error": 0.04564465155407704,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": {
+          "acquisition_components": {
+            "cutoff_topology_bonus": [
+              0.6149585064898947,
+              0.6149585064898947,
+              0.6149585064898947
+            ],
+            "matern_k24_k32_disagreement": [
+              0.006278140320187688,
+              1.7807357405743328e-05,
+              0.006260036094862577
+            ],
+            "native_std_k24": [
+              0.061716628856068954,
+              0.002195284426108324,
+              0.06042018189610622
+            ],
+            "nearest_training_distance": [
+              0.10705293727663903,
+              0.10705293727663903,
+              0.10705293727663903
+            ],
+            "rbf_matern_disagreement": [
+              0.028046895715776222,
+              0.0002083362569335971,
+              0.027794996048862864
+            ]
+          },
+          "acquisition_score": 0.10098087869947966,
+          "angle": [
+            0.90729793068,
+            82.131933812052
+          ],
+          "candidate_index": 1580,
+          "cutoff_order": 0,
+          "mask_signature": "12;13;14;15;36;37",
+          "nearest_training_distance": 0.1596845162240074,
+          "rare_unseen_topology": true,
+          "selection_reasons": [
+            "rare_unseen_topology",
+            "high_azimuth_difficulty",
+            "low_grazing_or_cutoff_side"
+          ],
+          "signed_cutoff_margin": 0.0002507369130159143,
+          "tuple": [
+            120.0,
+            17.0,
+            0.90729793068,
+            82.131933812052
+          ]
+        },
+        "sample_index": 96,
+        "signed_cutoff_margin": 0.0002507369130159143,
+        "target": "A_balance",
+        "truth": 0.6306950293598238
+      },
+      {
+        "angle": [
+          6.854549495038,
+          83.504671286792
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.044913575263383354,
+            "error": 0.044913575263383354,
+            "prediction": 0.5242207917152529,
+            "std": 0.023324951032018492
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.04336213937180344,
+            "error": 0.04336213937180344,
+            "prediction": 0.522669355823673,
+            "std": 0.028279820072375936
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.041633975946207435,
+            "error": 0.041633975946207435,
+            "prediction": 0.520941192398077,
+            "std": 0.022632445046104864
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.04489943394615681,
+            "error": 0.04489943394615681,
+            "prediction": 0.5242066503980264,
+            "std": 0.03664646996051398
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.04782553119794297,
+            "error": 0.04782553119794297,
+            "prediction": 0.5271327476498125,
+            "std": 0.023324951032018492
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.04335514466800572,
+            "error": 0.04335514466800572,
+            "prediction": 0.5226623611198753,
+            "std": 0.02309125768752135
+          }
+        },
+        "classification": "coverage_hole",
+        "classification_evidence": {
+          "disagreement_high": false,
+          "distance_high": true
+        },
+        "cutoff_order": -1,
+        "fold": 4,
+        "identity": "new16",
+        "mask_signature": "12;13;14;15;36;37",
+        "model_disagreement": 0.0061915552517355366,
+        "nearest_fold_training_distance": 0.23065143671802218,
+        "nearest_training_tuples": [
+          [
+            4.0,
+            60.0
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            6.0,
+            45.0
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            1.536085498054,
+            67.84780732356
+          ],
+          [
+            8.991511886939,
+            17.649381067604
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            4.0,
+            30.0
+          ],
+          [
+            6.0,
+            30.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            10.0,
+            45.0
+          ],
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            9.010884982999,
+            52.476425534114
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            8.0,
+            20.0
+          ],
+          [
+            8.0,
+            15.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            2.0,
+            30.0
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            8.0,
+            10.0
+          ]
+        ],
+        "reference_absolute_error": 0.041633975946207435,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": {
+          "acquisition_components": {
+            "cutoff_topology_bonus": [
+              0.6149585064898947,
+              0.6149585064898947,
+              0.6149585064898947
+            ],
+            "matern_k24_k32_disagreement": [
+              2.012194080364255e-05,
+              0.010595170702079095,
+              0.010574751893355985
+            ],
+            "native_std_k24": [
+              0.00029665923689745674,
+              0.03266990803619924,
+              0.032600892678442496
+            ],
+            "nearest_training_distance": [
+              0.17801985777065382,
+              0.17801985777065382,
+              0.17801985777065382
+            ],
+            "rbf_matern_disagreement": [
+              1.3060799740108339e-05,
+              0.0009753004711654986,
+              0.0010319246808853564
+            ]
+          },
+          "acquisition_score": 0.09357615700847746,
+          "angle": [
+            6.854549495038,
+            83.504671286792
+          ],
+          "candidate_index": 1942,
+          "cutoff_order": -1,
+          "mask_signature": "12;13;14;15;36;37",
+          "nearest_training_distance": 0.23065143671802218,
+          "rare_unseen_topology": true,
+          "selection_reasons": [
+            "space_filling_high_acquisition"
+          ],
+          "signed_cutoff_margin": 0.0019936217892752017,
+          "tuple": [
+            120.0,
+            17.0,
+            6.854549495038,
+            83.504671286792
+          ]
+        },
+        "sample_index": 111,
+        "signed_cutoff_margin": 0.0019936217892752017,
+        "target": "A_balance",
+        "truth": 0.4793072164518696
+      },
+      {
+        "angle": [
+          4.0,
+          90.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.00979567715122387,
+            "error": -0.00979567715122387,
+            "prediction": 0.7250137556623378,
+            "std": 0.03505435929333461
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.03846637073326342,
+            "error": -0.03846637073326342,
+            "prediction": 0.6963430620802983,
+            "std": 0.032263732319942576
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.03912738415429584,
+            "error": -0.03912738415429584,
+            "prediction": 0.6956820486592659,
+            "std": 0.020187160347794417
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.01239851422109639,
+            "error": 0.01239851422109639,
+            "prediction": 0.7472079470346581,
+            "std": 0.03505435929333461
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.025943787759879045,
+            "error": -0.025943787759879045,
+            "prediction": 0.7088656450536827,
+            "std": 0.03855535917696739
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.04466149328131275,
+            "error": -0.04466149328131275,
+            "prediction": 0.690147939532249,
+            "std": 0.021282233463999798
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 0,
+        "identity": "old96",
+        "mask_signature": "14;15;36;37",
+        "model_disagreement": 0.05152589837539223,
+        "nearest_fold_training_distance": 0.1641233878200264,
+        "nearest_training_tuples": [
+          [
+            6.955775364768,
+            52.519475575536
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            4.0,
+            20.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            4.0,
+            15.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            8.0,
+            15.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            6.0,
+            15.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            6.0,
+            10.0
+          ],
+          [
+            1.0,
+            0.0
+          ]
+        ],
+        "reference_absolute_error": 0.03912738415429584,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 49,
+        "signed_cutoff_margin": 0.00486596562921493,
+        "target": "A_balance",
+        "truth": 0.7348094328135617
+      },
+      {
+        "angle": [
+          6.0,
+          75.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.0022381700527094317,
+            "error": 0.0022381700527094317,
+            "prediction": 0.5783235150580813,
+            "std": 0.02990002025103123
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.012220719995564955,
+            "error": -0.012220719995564955,
+            "prediction": 0.5638646250098069,
+            "std": 0.03021695878652031
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.0379729941291439,
+            "error": -0.0379729941291439,
+            "prediction": 0.538112350876228,
+            "std": 0.02990002025103123
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0022381774024149426,
+            "error": 0.0022381774024149426,
+            "prediction": 0.5783235224077868,
+            "std": 0.02990002025103123
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.017824305874337143,
+            "error": 0.017824305874337143,
+            "prediction": 0.593909650879709,
+            "std": 0.030841066338481972
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.03749304651441476,
+            "error": -0.03749304651441476,
+            "prediction": 0.5385922984909571,
+            "std": 0.03104238621915572
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": -2,
+        "fold": 1,
+        "identity": "old96",
+        "mask_signature": "12;13;14;15;34;35;36;37",
+        "model_disagreement": 0.05579730000348104,
+        "nearest_fold_training_distance": 0.23077466417827272,
+        "nearest_training_tuples": [
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            3.025618610438,
+            67.084721289575
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            4.0,
+            60.0
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            6.0,
+            15.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            6.0,
+            20.0
+          ],
+          [
+            6.0,
+            10.0
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            10.0,
+            90.0
+          ],
+          [
+            9.010884982999,
+            52.476425534114
+          ],
+          [
+            1.536085498054,
+            67.84780732356
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            10.0,
+            45.0
+          ],
+          [
+            8.991511886939,
+            17.649381067604
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            8.0,
+            45.0
+          ],
+          [
+            4.0,
+            0.0
+          ],
+          [
+            6.0,
+            5.0
+          ]
+        ],
+        "reference_absolute_error": 0.0379729941291439,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 58,
+        "signed_cutoff_margin": -0.002680496490715889,
+        "target": "A_balance",
+        "truth": 0.5760853450053719
+      },
+      {
+        "angle": [
+          1.536085498054,
+          67.84780732356
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.05277924275823909,
+            "error": 0.05277924275823909,
+            "prediction": 0.8502926409237547,
+            "std": 0.13865455924106618
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.07436292984001391,
+            "error": 0.07436292984001391,
+            "prediction": 0.8718763280055295,
+            "std": 0.12127283273896218
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.03494056889131447,
+            "error": 0.03494056889131447,
+            "prediction": 0.8324539670568301,
+            "std": 0.02856656322770764
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.05620903924059617,
+            "error": 0.05620903924059617,
+            "prediction": 0.8537224374061118,
+            "std": 0.13865455924106618
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.04164833813435309,
+            "error": 0.04164833813435309,
+            "prediction": 0.8391617362998687,
+            "std": 0.1551778481247241
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.03583844298488481,
+            "error": 0.03583844298488481,
+            "prediction": 0.8333518411504004,
+            "std": 0.030188449012584495
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 2,
+        "identity": "old96",
+        "mask_signature": "10;11;12;13;14;15;32;33;34;35;36;37",
+        "model_disagreement": 0.0212684703492817,
+        "nearest_fold_training_distance": 0.18654719035855755,
+        "nearest_training_tuples": [
+          [
+            2.0,
+            0.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            10.0,
+            45.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            0.75,
+            10.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            4.0,
+            0.0
+          ],
+          [
+            2.0,
+            90.0
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            2.0,
+            75.0
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            8.0,
+            45.0
+          ],
+          [
+            9.010884982999,
+            52.476425534114
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            1.0,
+            75.0
+          ]
+        ],
+        "reference_absolute_error": 0.03494056889131447,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 80,
+        "signed_cutoff_margin": 0.0007185904799421605,
+        "target": "A_balance",
+        "truth": 0.7975133981655156
+      },
+      {
+        "angle": [
+          1.096476651262,
+          82.267959779128
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.0942754042999282,
+            "error": -0.0942754042999282,
+            "prediction": 0.5701673700852725,
+            "std": 0.06305040052820146
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.07200953291584555,
+            "error": -0.07200953291584555,
+            "prediction": 0.5924332414693552,
+            "std": 0.06305040052820146
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.03459520066429678,
+            "error": 0.03459520066429678,
+            "prediction": 0.6990379750494975,
+            "std": 0.022632445046104864
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.10351019651312932,
+            "error": -0.10351019651312932,
+            "prediction": 0.5609325778720714,
+            "std": 0.046794537190668326
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.09432621248635475,
+            "error": -0.09432621248635475,
+            "prediction": 0.570116561898846,
+            "std": 0.09589868525696514
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.034740548917086556,
+            "error": 0.034740548917086556,
+            "prediction": 0.6991833233022873,
+            "std": 0.02309125768752135
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": -1,
+        "fold": 4,
+        "identity": "new16",
+        "mask_signature": "12;13;14;15;36;37",
+        "model_disagreement": 0.1381053971774261,
+        "nearest_fold_training_distance": 0.03994164663280642,
+        "nearest_training_tuples": [
+          [
+            10.0,
+            75.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            0.75,
+            30.0
+          ],
+          [
+            0.75,
+            45.0
+          ],
+          [
+            0.5,
+            60.0
+          ],
+          [
+            0.5,
+            75.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            8.0,
+            30.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            2.0,
+            30.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            1.0,
+            75.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            2.0,
+            20.0
+          ]
+        ],
+        "reference_absolute_error": 0.03459520066429678,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": {
+          "acquisition_components": {
+            "cutoff_topology_bonus": [
+              0.6149585064898947,
+              0.6149585064898947,
+              0.6149585064898947
+            ],
+            "matern_k24_k32_disagreement": [
+              0.0017366878180310927,
+              0.00018948874912890756,
+              0.00154690220098296
+            ],
+            "native_std_k24": [
+              0.05554941763646175,
+              0.002639720485540601,
+              0.05422856362514154
+            ],
+            "nearest_training_distance": [
+              0.11015073550174387,
+              0.11015073550174387,
+              0.11015073550174387
+            ],
+            "rbf_matern_disagreement": [
+              0.031410638832294495,
+              0.0,
+              0.03139380971660171
+            ]
+          },
+          "acquisition_score": 0.09866952009289215,
+          "angle": [
+            1.096476651262,
+            82.267959779128
+          ],
+          "candidate_index": 4028,
+          "cutoff_order": -1,
+          "mask_signature": "12;13;14;15;36;37",
+          "nearest_training_distance": 0.16278231444911223,
+          "rare_unseen_topology": true,
+          "selection_reasons": [
+            "high_azimuth_difficulty",
+            "low_grazing_or_cutoff_side"
+          ],
+          "signed_cutoff_margin": 0.00010465968432626926,
+          "tuple": [
+            120.0,
+            17.0,
+            1.096476651262,
+            82.267959779128
+          ]
+        },
+        "sample_index": 105,
+        "signed_cutoff_margin": 0.00010465968432626926,
+        "target": "A_balance",
+        "truth": 0.6644427743852007
+      },
+      {
+        "angle": [
+          2.0,
+          90.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.0005322231833609914,
+            "error": 0.0005322231833609914,
+            "prediction": 0.8796021518922377,
+            "std": 0.022632445046104864
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.005455958255188076,
+            "error": -0.005455958255188076,
+            "prediction": 0.8736139704536886,
+            "std": 0.02286561084668396
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.03384006502106285,
+            "error": -0.03384006502106285,
+            "prediction": 0.8452298636878138,
+            "std": 0.022632445046104864
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0009949083204435771,
+            "error": 0.0009949083204435771,
+            "prediction": 0.8800648370293203,
+            "std": 0.022632445046104864
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.0001522527538773133,
+            "error": -0.0001522527538773133,
+            "prediction": 0.8789176759549994,
+            "std": 0.023324951032018492
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.03193430106513695,
+            "error": -0.03193430106513695,
+            "prediction": 0.8471356276437397,
+            "std": 0.02309125768752135
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 4,
+        "identity": "old96",
+        "mask_signature": "14;15;36;37",
+        "model_disagreement": 0.034834973341506426,
+        "nearest_fold_training_distance": 0.21052631578947367,
+        "nearest_training_tuples": [
+          [
+            1.0,
+            15.0
+          ],
+          [
+            0.75,
+            45.0
+          ],
+          [
+            10.0,
+            75.0
+          ],
+          [
+            0.5,
+            75.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            0.75,
+            30.0
+          ],
+          [
+            0.5,
+            60.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            8.0,
+            30.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            2.0,
+            30.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            4.0,
+            60.0
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            1.0,
+            75.0
+          ]
+        ],
+        "reference_absolute_error": 0.03384006502106285,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 39,
+        "signed_cutoff_margin": 0.0012179748700877902,
+        "target": "A_balance",
+        "truth": 0.8790699287088767
+      }
+    ],
+    "R_total": [
+      {
+        "angle": [
+          0.90729793068,
+          82.131933812052
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.07769369889726169,
+            "error": 0.07769369889726169,
+            "prediction": 0.41369381087654883,
+            "std": 0.026084959104239566
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.07998170446957453,
+            "error": 0.07998170446957453,
+            "prediction": 0.4159818164488617,
+            "std": 0.05652889052852211
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.045250501375795005,
+            "error": 0.045250501375795005,
+            "prediction": 0.38125061335508215,
+            "std": 0.012220519084104741
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0803386036843799,
+            "error": 0.0803386036843799,
+            "prediction": 0.41633871566366704,
+            "std": 0.026084959104239566
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.08840838802261847,
+            "error": 0.08840838802261847,
+            "prediction": 0.4244085000019056,
+            "std": 0.09357766942493329
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.04466991533273584,
+            "error": 0.04466991533273584,
+            "prediction": 0.380670027312023,
+            "std": 0.010068433902835173
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 0,
+        "identity": "new16",
+        "mask_signature": "12;13;14;15;36;37",
+        "model_disagreement": 0.04315788664682346,
+        "nearest_fold_training_distance": 0.03994164663280642,
+        "nearest_training_tuples": [
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            8.0,
+            15.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            1.0,
+            0.0
+          ],
+          [
+            6.955775364768,
+            52.519475575536
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            0.75,
+            90.0
+          ],
+          [
+            0.75,
+            10.0
+          ],
+          [
+            0.5,
+            20.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            4.0,
+            15.0
+          ],
+          [
+            4.0,
+            20.0
+          ]
+        ],
+        "reference_absolute_error": 0.045250501375795005,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": {
+          "acquisition_components": {
+            "cutoff_topology_bonus": [
+              0.6149585064898947,
+              0.6149585064898947,
+              0.6149585064898947
+            ],
+            "matern_k24_k32_disagreement": [
+              0.006278140320187688,
+              1.7807357405743328e-05,
+              0.006260036094862577
+            ],
+            "native_std_k24": [
+              0.061716628856068954,
+              0.002195284426108324,
+              0.06042018189610622
+            ],
+            "nearest_training_distance": [
+              0.10705293727663903,
+              0.10705293727663903,
+              0.10705293727663903
+            ],
+            "rbf_matern_disagreement": [
+              0.028046895715776222,
+              0.0002083362569335971,
+              0.027794996048862864
+            ]
+          },
+          "acquisition_score": 0.10098087869947966,
+          "angle": [
+            0.90729793068,
+            82.131933812052
+          ],
+          "candidate_index": 1580,
+          "cutoff_order": 0,
+          "mask_signature": "12;13;14;15;36;37",
+          "nearest_training_distance": 0.1596845162240074,
+          "rare_unseen_topology": true,
+          "selection_reasons": [
+            "rare_unseen_topology",
+            "high_azimuth_difficulty",
+            "low_grazing_or_cutoff_side"
+          ],
+          "signed_cutoff_margin": 0.0002507369130159143,
+          "tuple": [
+            120.0,
+            17.0,
+            0.90729793068,
+            82.131933812052
+          ]
+        },
+        "sample_index": 96,
+        "signed_cutoff_margin": 0.0002507369130159143,
+        "target": "R_total",
+        "truth": 0.33600011197928714
+      },
+      {
+        "angle": [
+          2.0,
+          90.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.00045773227465642496,
+            "error": 0.00045773227465642496,
+            "prediction": 0.07690258526766018,
+            "std": 0.01703026875818619
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.0070341850174508586,
+            "error": 0.0070341850174508586,
+            "prediction": 0.08347903801045461,
+            "std": 0.01703026875818619
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.03652969807504773,
+            "error": 0.03652969807504773,
+            "prediction": 0.11297455106805149,
+            "std": 0.01688275058421944
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0004981751682241464,
+            "error": 0.0004981751682241464,
+            "prediction": 0.0769430281612279,
+            "std": 0.01688275058421944
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.00030865550176520373,
+            "error": 0.00030865550176520373,
+            "prediction": 0.07675350849476896,
+            "std": 0.016843455405527397
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.033773250873753366,
+            "error": 0.033773250873753366,
+            "prediction": 0.11021810386675712,
+            "std": 0.014527381060875212
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 4,
+        "identity": "old96",
+        "mask_signature": "14;15;36;37",
+        "model_disagreement": 0.03622104257328253,
+        "nearest_fold_training_distance": 0.21052631578947367,
+        "nearest_training_tuples": [
+          [
+            1.0,
+            15.0
+          ],
+          [
+            0.75,
+            45.0
+          ],
+          [
+            10.0,
+            75.0
+          ],
+          [
+            0.5,
+            75.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            0.75,
+            30.0
+          ],
+          [
+            0.5,
+            60.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            8.0,
+            30.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            2.0,
+            30.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            4.0,
+            60.0
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            1.0,
+            75.0
+          ]
+        ],
+        "reference_absolute_error": 0.03652969807504773,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 39,
+        "signed_cutoff_margin": 0.0012179748700877902,
+        "target": "R_total",
+        "truth": 0.07644485299300376
+      },
+      {
+        "angle": [
+          1.536085498054,
+          67.84780732356
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.09691948377917349,
+            "error": -0.09691948377917349,
+            "prediction": 0.08065415565003888,
+            "std": 0.12929116043587754
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.0808887558051344,
+            "error": -0.0808887558051344,
+            "prediction": 0.09668488362407797,
+            "std": 0.1084108361065943
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.032799064752576546,
+            "error": -0.032799064752576546,
+            "prediction": 0.14477457467663582,
+            "std": 0.020637832830691885
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.10062780862978148,
+            "error": -0.10062780862978148,
+            "prediction": 0.07694583079943089,
+            "std": 0.12929116043587754
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.09797531017027357,
+            "error": -0.09797531017027357,
+            "prediction": 0.0795983292589388,
+            "std": 0.13459793403016682
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.033853237707011236,
+            "error": -0.033853237707011236,
+            "prediction": 0.14372040172220113,
+            "std": 0.020299197357325174
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 2,
+        "identity": "old96",
+        "mask_signature": "10;11;12;13;14;15;32;33;34;35;36;37",
+        "model_disagreement": 0.06782874387720493,
+        "nearest_fold_training_distance": 0.18654719035855755,
+        "nearest_training_tuples": [
+          [
+            2.0,
+            0.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            10.0,
+            45.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            0.75,
+            10.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            4.0,
+            0.0
+          ],
+          [
+            2.0,
+            90.0
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            2.0,
+            75.0
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            8.0,
+            45.0
+          ],
+          [
+            9.010884982999,
+            52.476425534114
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            1.0,
+            75.0
+          ]
+        ],
+        "reference_absolute_error": 0.032799064752576546,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 80,
+        "signed_cutoff_margin": 0.0007185904799421605,
+        "target": "R_total",
+        "truth": 0.17757363942921237
+      },
+      {
+        "angle": [
+          2.980484131724,
+          37.644248139113
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.0007908027100669429,
+            "error": 0.0007908027100669429,
+            "prediction": 0.02071402939989364,
+            "std": 0.016388329885196607
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.0034829797945063537,
+            "error": 0.0034829797945063537,
+            "prediction": 0.02340620648433305,
+            "std": 0.0162010573512706
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.030151678772146855,
+            "error": 0.030151678772146855,
+            "prediction": 0.05007490546197355,
+            "std": 0.016388329885196607
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0007898941160250361,
+            "error": 0.0007898941160250361,
+            "prediction": 0.020713120805851734,
+            "std": 0.016388329885196607
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.00056938006526977,
+            "error": 0.00056938006526977,
+            "prediction": 0.020492606755096468,
+            "std": 0.015819862990728493
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.030537948016096203,
+            "error": 0.030537948016096203,
+            "prediction": 0.0504611747059229,
+            "std": 0.015384259493832963
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 3,
+        "identity": "old96",
+        "mask_signature": "4;5;6;7;8;9;10;11;12;13;14;15;26;27;28;29;30;31;32;33;34;35;36;37",
+        "model_disagreement": 0.029582298706877085,
+        "nearest_fold_training_distance": 0.25096441889040727,
+        "nearest_training_tuples": [
+          [
+            10.0,
+            60.0
+          ],
+          [
+            1.0,
+            60.0
+          ],
+          [
+            1.0,
+            45.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            1.0,
+            30.0
+          ],
+          [
+            2.0,
+            30.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            1.0,
+            0.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            1.0,
+            75.0
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            2.0,
+            20.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            0.5,
+            20.0
+          ],
+          [
+            0.75,
+            90.0
+          ],
+          [
+            0.75,
+            10.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            2.0,
+            15.0
+          ],
+          [
+            0.5,
+            15.0
+          ],
+          [
+            0.75,
+            75.0
+          ],
+          [
+            10.0,
+            0.0
+          ]
+        ],
+        "reference_absolute_error": 0.030151678772146855,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "cutoff_near",
+          "ordinary_interior"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 85,
+        "signed_cutoff_margin": 0.0027035636188738055,
+        "target": "R_total",
+        "truth": 0.019923226689826698
+      },
+      {
+        "angle": [
+          0.5,
+          90.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.029946200776205134,
+            "error": -0.029946200776205134,
+            "prediction": 0.5960607632361667,
+            "std": 0.013427749321468393
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.00806806150931727,
+            "error": -0.00806806150931727,
+            "prediction": 0.6179389025030546,
+            "std": 0.01725094365700629
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.02984578589858633,
+            "error": -0.02984578589858633,
+            "prediction": 0.5961611781137856,
+            "std": 0.012592243747775494
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0014115643170259373,
+            "error": -0.0014115643170259373,
+            "prediction": 0.6245953996953459,
+            "std": 0.012592243747775494
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.029946192894382162,
+            "error": -0.029946192894382162,
+            "prediction": 0.5960607711179897,
+            "std": 0.023992831553712762
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.02381212057726545,
+            "error": -0.02381212057726545,
+            "prediction": 0.6021948434351064,
+            "std": 0.011833331002037577
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 1,
+        "identity": "old96",
+        "mask_signature": "14;15;36;37",
+        "model_disagreement": 0.028534628577356225,
+        "nearest_fold_training_distance": 0.052631578947368474,
+        "nearest_training_tuples": [
+          [
+            0.75,
+            30.0
+          ],
+          [
+            1.0,
+            20.0
+          ],
+          [
+            10.0,
+            75.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            2.0,
+            15.0
+          ],
+          [
+            0.5,
+            60.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            8.0,
+            30.0
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            2.0,
+            10.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            4.0,
+            60.0
+          ]
+        ],
+        "reference_absolute_error": 0.02984578589858633,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 9,
+        "signed_cutoff_margin": 7.615242180436521e-05,
+        "target": "R_total",
+        "truth": 0.6260069640123719
+      },
+      {
+        "angle": [
+          2.0,
+          75.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.03305262484600385,
+            "error": 0.03305262484600385,
+            "prediction": 0.10895194185694906,
+            "std": 0.018104554650593536
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.03712014618000921,
+            "error": 0.03712014618000921,
+            "prediction": 0.11301946319095442,
+            "std": 0.02185949226636166
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.029826889499278156,
+            "error": 0.029826889499278156,
+            "prediction": 0.10572620651022337,
+            "std": 0.012592243747775494
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.04326488641578331,
+            "error": 0.04326488641578331,
+            "prediction": 0.11916420342672852,
+            "std": 0.03383341745634353
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 5.400582766315609e-05,
+            "error": -5.400582766315609e-05,
+            "prediction": 0.07584531118328205,
+            "std": 0.011412601239453413
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.030297501277213576,
+            "error": 0.030297501277213576,
+            "prediction": 0.10619681828815879,
+            "std": 0.011833331002037577
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 1,
+        "identity": "old96",
+        "mask_signature": "12;13;14;15;34;35;36;37",
+        "model_disagreement": 0.04331889224344647,
+        "nearest_fold_training_distance": 0.18654719035855755,
+        "nearest_training_tuples": [
+          [
+            8.0,
+            30.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            10.0,
+            75.0
+          ],
+          [
+            0.5,
+            60.0
+          ],
+          [
+            2.0,
+            15.0
+          ],
+          [
+            2.0,
+            10.0
+          ],
+          [
+            1.0,
+            20.0
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            0.75,
+            30.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            4.0,
+            0.0
+          ]
+        ],
+        "reference_absolute_error": 0.029826889499278156,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 38,
+        "signed_cutoff_margin": 0.0012179748700876791,
+        "target": "R_total",
+        "truth": 0.07589931701094521
+      },
+      {
+        "angle": [
+          3.012447152752,
+          52.573178429157
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.002115654450796308,
+            "error": -0.002115654450796308,
+            "prediction": 0.018181392054575116,
+            "std": 0.020637832830691885
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.0037450490812681522,
+            "error": 0.0037450490812681522,
+            "prediction": 0.024042095586639577,
+            "std": 0.021002311832659593
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.029822517014127775,
+            "error": 0.029822517014127775,
+            "prediction": 0.0501195635194992,
+            "std": 0.020637832830691885
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0021156639053545485,
+            "error": -0.0021156639053545485,
+            "prediction": 0.018181382600016876,
+            "std": 0.020637832830691885
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.0020975615450224243,
+            "error": -0.0020975615450224243,
+            "prediction": 0.018199484960349,
+            "std": 0.021712922858372882
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.030012328164494083,
+            "error": 0.030012328164494083,
+            "prediction": 0.05030937466986551,
+            "std": 0.020299197357325174
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 2,
+        "identity": "old96",
+        "mask_signature": "6;7;8;9;10;11;12;13;14;15;28;29;30;31;32;33;34;35;36;37",
+        "model_disagreement": 0.03193818091948232,
+        "nearest_fold_training_distance": 0.2654490676556367,
+        "nearest_training_tuples": [
+          [
+            2.0,
+            90.0
+          ],
+          [
+            2.0,
+            75.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            8.0,
+            45.0
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            10.0,
+            60.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            0.75,
+            10.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            4.0,
+            0.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            1.0,
+            75.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            4.0,
+            75.0
+          ],
+          [
+            4.0,
+            60.0
+          ],
+          [
+            1.0,
+            0.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.75,
+            5.0
+          ]
+        ],
+        "reference_absolute_error": 0.029822517014127775,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "cutoff_near",
+          "ordinary_interior"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 84,
+        "signed_cutoff_margin": 0.002761807411839845,
+        "target": "R_total",
+        "truth": 0.020297046505371424
+      },
+      {
+        "angle": [
+          3.025618610438,
+          67.084721289575
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.004063356523788714,
+            "error": 0.004063356523788714,
+            "prediction": 0.02470708475932312,
+            "std": 0.012220519084104741
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.005768045544414287,
+            "error": 0.005768045544414287,
+            "prediction": 0.026411773779948692,
+            "std": 0.012467175888012234
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.024382718234045482,
+            "error": 0.024382718234045482,
+            "prediction": 0.04502644646957989,
+            "std": 0.012220519084104741
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.004759786428282342,
+            "error": 0.004759786428282342,
+            "prediction": 0.025403514663816747,
+            "std": 0.012220519084104741
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.003779897127888652,
+            "error": 0.003779897127888652,
+            "prediction": 0.024423625363423056,
+            "std": 0.012946399132498756
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.024708031524347605,
+            "error": 0.024708031524347605,
+            "prediction": 0.04535175975988201,
+            "std": 0.010068433902835173
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 0,
+        "identity": "old96",
+        "mask_signature": "10;11;12;13;14;15;32;33;34;35;36;37",
+        "model_disagreement": 0.02060282110615683,
+        "nearest_fold_training_distance": 0.2585852265643067,
+        "nearest_training_tuples": [
+          [
+            2.0,
+            45.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            8.0,
+            15.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            6.955775364768,
+            52.519475575536
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            1.0,
+            0.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            0.75,
+            90.0
+          ],
+          [
+            4.0,
+            15.0
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            0.75,
+            10.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            20.0
+          ]
+        ],
+        "reference_absolute_error": 0.024382718234045482,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "cutoff_near",
+          "ordinary_interior"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 89,
+        "signed_cutoff_margin": 0.0027859888567541846,
+        "target": "R_total",
+        "truth": 0.020643728235534405
+      },
+      {
+        "angle": [
+          1.096476651262,
+          82.267959779128
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.10883624562195415,
+            "error": 0.10883624562195415,
+            "prediction": 0.39608238404169444,
+            "std": 0.06521352734840295
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.08651502108936115,
+            "error": 0.08651502108936115,
+            "prediction": 0.37376115950910144,
+            "std": 0.06598439862842267
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.024367988357530956,
+            "error": -0.024367988357530956,
+            "prediction": 0.2628781500622093,
+            "std": 0.01688275058421944
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.11861768762310526,
+            "error": 0.11861768762310526,
+            "prediction": 0.40586382604284554,
+            "std": 0.04956231933742175
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.10880094727007639,
+            "error": 0.10880094727007639,
+            "prediction": 0.39604708568981667,
+            "std": 0.10158923083511477
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.02453577710492133,
+            "error": -0.02453577710492133,
+            "prediction": 0.26271036131481895,
+            "std": 0.014527381060875212
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": -1,
+        "fold": 4,
+        "identity": "new16",
+        "mask_signature": "12;13;14;15;36;37",
+        "model_disagreement": 0.14298567598063622,
+        "nearest_fold_training_distance": 0.03994164663280642,
+        "nearest_training_tuples": [
+          [
+            10.0,
+            75.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            0.75,
+            30.0
+          ],
+          [
+            0.75,
+            45.0
+          ],
+          [
+            0.5,
+            60.0
+          ],
+          [
+            0.5,
+            75.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            8.0,
+            30.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            2.0,
+            30.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            1.0,
+            75.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            2.0,
+            20.0
+          ]
+        ],
+        "reference_absolute_error": 0.024367988357530956,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": {
+          "acquisition_components": {
+            "cutoff_topology_bonus": [
+              0.6149585064898947,
+              0.6149585064898947,
+              0.6149585064898947
+            ],
+            "matern_k24_k32_disagreement": [
+              0.0017366878180310927,
+              0.00018948874912890756,
+              0.00154690220098296
+            ],
+            "native_std_k24": [
+              0.05554941763646175,
+              0.002639720485540601,
+              0.05422856362514154
+            ],
+            "nearest_training_distance": [
+              0.11015073550174387,
+              0.11015073550174387,
+              0.11015073550174387
+            ],
+            "rbf_matern_disagreement": [
+              0.031410638832294495,
+              0.0,
+              0.03139380971660171
+            ]
+          },
+          "acquisition_score": 0.09866952009289215,
+          "angle": [
+            1.096476651262,
+            82.267959779128
+          ],
+          "candidate_index": 4028,
+          "cutoff_order": -1,
+          "mask_signature": "12;13;14;15;36;37",
+          "nearest_training_distance": 0.16278231444911223,
+          "rare_unseen_topology": true,
+          "selection_reasons": [
+            "high_azimuth_difficulty",
+            "low_grazing_or_cutoff_side"
+          ],
+          "signed_cutoff_margin": 0.00010465968432626926,
+          "tuple": [
+            120.0,
+            17.0,
+            1.096476651262,
+            82.267959779128
+          ]
+        },
+        "sample_index": 105,
+        "signed_cutoff_margin": 0.00010465968432626926,
+        "target": "R_total",
+        "truth": 0.2872461384197403
+      },
+      {
+        "angle": [
+          2.0,
+          60.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.00015663199519476423,
+            "error": -0.00015663199519476423,
+            "prediction": 0.07528027336005841,
+            "std": 0.012220519084104741
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.0022249276031119647,
+            "error": 0.0022249276031119647,
+            "prediction": 0.07766183295836514,
+            "std": 0.012467175888012234
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.022987464730266374,
+            "error": 0.022987464730266374,
+            "prediction": 0.09842437008551955,
+            "std": 0.012220519084104741
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.00031507005338127225,
+            "error": -0.00031507005338127225,
+            "prediction": 0.0751218353018719,
+            "std": 0.012220519084104741
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.000217639438237327,
+            "error": -0.000217639438237327,
+            "prediction": 0.07521926591701585,
+            "std": 0.012946399132498756
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.022873411234583946,
+            "error": 0.022873411234583946,
+            "prediction": 0.09831031658983712,
+            "std": 0.010068433902835173
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 0,
+        "identity": "old96",
+        "mask_signature": "8;9;10;11;12;13;14;15;30;31;32;33;34;35;36;37",
+        "model_disagreement": 0.023302534783647647,
+        "nearest_fold_training_distance": 0.1998813531084164,
+        "nearest_training_tuples": [
+          [
+            8.0,
+            15.0
+          ],
+          [
+            1.0,
+            0.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            0.75,
+            90.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            0.75,
+            10.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            0.5,
+            20.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            1.0,
+            75.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            6.955775364768,
+            52.519475575536
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            10.0,
+            45.0
+          ],
+          [
+            0.75,
+            5.0
+          ],
+          [
+            0.75,
+            20.0
+          ]
+        ],
+        "reference_absolute_error": 0.022987464730266374,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 37,
+        "signed_cutoff_margin": 0.0012179748700877902,
+        "target": "R_total",
+        "truth": 0.07543690535525317
+      }
+    ],
+    "T_total": [
+      {
+        "angle": [
+          2.961689197458,
+          82.168203396723
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.10315902277730074,
+            "error": -0.10315902277730074,
+            "prediction": 0.13144444617605236,
+            "std": 0.03551021259965363
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.06698563239099653,
+            "error": -0.06698563239099653,
+            "prediction": 0.16761783656235657,
+            "std": 0.03551021259965363
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.10692682934812717,
+            "error": -0.10692682934812717,
+            "prediction": 0.12767663960522593,
+            "std": 0.014894825409007786
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.03157740715643692,
+            "error": -0.03157740715643692,
+            "prediction": 0.20302606179691618,
+            "std": 0.01771806516474848
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.10688504036126145,
+            "error": -0.10688504036126145,
+            "prediction": 0.12771842859209165,
+            "std": 0.03213565259382982
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.10697518561071825,
+            "error": -0.10697518561071825,
+            "prediction": 0.12762828334263485,
+            "std": 0.015922472219714396
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 4,
+        "identity": "old96",
+        "mask_signature": "12;13;14;15;34;35;36;37",
+        "model_disagreement": 0.07534942219169025,
+        "nearest_fold_training_distance": 0.24135773956854886,
+        "nearest_training_tuples": [
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            10.0,
+            75.0
+          ],
+          [
+            8.0,
+            30.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            0.75,
+            30.0
+          ],
+          [
+            0.75,
+            45.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            2.0,
+            30.0
+          ],
+          [
+            0.5,
+            60.0
+          ],
+          [
+            0.5,
+            75.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            4.0,
+            60.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            4.0,
+            30.0
+          ]
+        ],
+        "reference_absolute_error": 0.10692682934812717,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 92,
+        "signed_cutoff_margin": 0.0026696040600640014,
+        "target": "T_total",
+        "truth": 0.2346034689533531
+      },
+      {
+        "angle": [
+          4.0,
+          75.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.015108429190003353,
+            "error": 0.015108429190003353,
+            "prediction": 0.2596578213044465,
+            "std": 0.030344143397007528
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.04957952583179839,
+            "error": 0.04957952583179839,
+            "prediction": 0.2941289179462415,
+            "std": 0.030344143397007528
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.06989732882816199,
+            "error": 0.06989732882816199,
+            "prediction": 0.3144467209426051,
+            "std": 0.015643309288016997
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.00042874574539369936,
+            "error": 0.00042874574539369936,
+            "prediction": 0.24497813785983683,
+            "std": 0.01843464725457816
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.012271146875628108,
+            "error": 0.012271146875628108,
+            "prediction": 0.25682053899007123,
+            "std": 0.017258056082037683
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.06878027354437596,
+            "error": 0.06878027354437596,
+            "prediction": 0.3133296656588191,
+            "std": 0.014484058762855356
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 0,
+        "identity": "old96",
+        "mask_signature": "12;13;14;15;34;35;36;37",
+        "model_disagreement": 0.06946858308276829,
+        "nearest_fold_training_distance": 0.1722337792334848,
+        "nearest_training_tuples": [
+          [
+            6.955775364768,
+            52.519475575536
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            4.0,
+            15.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            4.0,
+            20.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            8.0,
+            15.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            1.0,
+            0.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            8.0,
+            90.0
+          ]
+        ],
+        "reference_absolute_error": 0.06989732882816199,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 48,
+        "signed_cutoff_margin": 0.00486596562921493,
+        "target": "T_total",
+        "truth": 0.24454939211444313
+      },
+      {
+        "angle": [
+          6.854549495038,
+          83.504671286792
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.037575777466828775,
+            "error": -0.037575777466828775,
+            "prediction": 0.47297057276325644,
+            "std": 0.021313735729121194
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.03581765260399278,
+            "error": -0.03581765260399278,
+            "prediction": 0.47472869762609243,
+            "std": 0.026035557934815927
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.03338294202442621,
+            "error": -0.03338294202442621,
+            "prediction": 0.477163408205659,
+            "std": 0.014894825409007786
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.03758853724193911,
+            "error": -0.03758853724193911,
+            "prediction": 0.4729578129881461,
+            "std": 0.036843176793482785
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.040503324940072916,
+            "error": -0.040503324940072916,
+            "prediction": 0.4700430252900123,
+            "std": 0.021313735729121194
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.03512683410901496,
+            "error": -0.03512683410901496,
+            "prediction": 0.47541951612107025,
+            "std": 0.015922472219714396
+          }
+        },
+        "classification": "coverage_hole",
+        "classification_evidence": {
+          "disagreement_high": false,
+          "distance_high": true
+        },
+        "cutoff_order": -1,
+        "fold": 4,
+        "identity": "new16",
+        "mask_signature": "12;13;14;15;36;37",
+        "model_disagreement": 0.007120382915646706,
+        "nearest_fold_training_distance": 0.23065143671802218,
+        "nearest_training_tuples": [
+          [
+            4.0,
+            60.0
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            6.0,
+            45.0
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            1.536085498054,
+            67.84780732356
+          ],
+          [
+            8.991511886939,
+            17.649381067604
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            4.0,
+            30.0
+          ],
+          [
+            6.0,
+            30.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            10.0,
+            45.0
+          ],
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            9.010884982999,
+            52.476425534114
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            8.0,
+            20.0
+          ],
+          [
+            8.0,
+            15.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            2.0,
+            30.0
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            8.0,
+            10.0
+          ]
+        ],
+        "reference_absolute_error": 0.03338294202442621,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": {
+          "acquisition_components": {
+            "cutoff_topology_bonus": [
+              0.6149585064898947,
+              0.6149585064898947,
+              0.6149585064898947
+            ],
+            "matern_k24_k32_disagreement": [
+              2.012194080364255e-05,
+              0.010595170702079095,
+              0.010574751893355985
+            ],
+            "native_std_k24": [
+              0.00029665923689745674,
+              0.03266990803619924,
+              0.032600892678442496
+            ],
+            "nearest_training_distance": [
+              0.17801985777065382,
+              0.17801985777065382,
+              0.17801985777065382
+            ],
+            "rbf_matern_disagreement": [
+              1.3060799740108339e-05,
+              0.0009753004711654986,
+              0.0010319246808853564
+            ]
+          },
+          "acquisition_score": 0.09357615700847746,
+          "angle": [
+            6.854549495038,
+            83.504671286792
+          ],
+          "candidate_index": 1942,
+          "cutoff_order": -1,
+          "mask_signature": "12;13;14;15;36;37",
+          "nearest_training_distance": 0.23065143671802218,
+          "rare_unseen_topology": true,
+          "selection_reasons": [
+            "space_filling_high_acquisition"
+          ],
+          "signed_cutoff_margin": 0.0019936217892752017,
+          "tuple": [
+            120.0,
+            17.0,
+            6.854549495038,
+            83.504671286792
+          ]
+        },
+        "sample_index": 111,
+        "signed_cutoff_margin": 0.0019936217892752017,
+        "target": "T_total",
+        "truth": 0.5105463502300852
+      },
+      {
+        "angle": [
+          6.0,
+          75.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.0024849204647467427,
+            "error": -0.0024849204647467427,
+            "prediction": 0.41873781294667717,
+            "std": 0.020872158765384143
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.011400146296189295,
+            "error": 0.011400146296189295,
+            "prediction": 0.4326228797076132,
+            "std": 0.020872158765384143
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.03189950012666881,
+            "error": 0.03189950012666881,
+            "prediction": 0.4531222335380927,
+            "std": 0.01641630558271965
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0024849179026122936,
+            "error": -0.0024849179026122936,
+            "prediction": 0.4187378155088116,
+            "std": 0.01641630558271965
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.018060000498113182,
+            "error": -0.018060000498113182,
+            "prediction": 0.40316273291331073,
+            "std": 0.017004145909855706
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.031381135838675245,
+            "error": 0.031381135838675245,
+            "prediction": 0.45260386925009916,
+            "std": 0.01581893571347971
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": -2,
+        "fold": 1,
+        "identity": "old96",
+        "mask_signature": "12;13;14;15;34;35;36;37",
+        "model_disagreement": 0.049959500624781994,
+        "nearest_fold_training_distance": 0.23077466417827272,
+        "nearest_training_tuples": [
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            3.025618610438,
+            67.084721289575
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            4.0,
+            60.0
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            6.0,
+            15.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            6.0,
+            20.0
+          ],
+          [
+            6.0,
+            10.0
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            10.0,
+            90.0
+          ],
+          [
+            9.010884982999,
+            52.476425534114
+          ],
+          [
+            1.536085498054,
+            67.84780732356
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            10.0,
+            45.0
+          ],
+          [
+            8.991511886939,
+            17.649381067604
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            8.0,
+            45.0
+          ],
+          [
+            4.0,
+            0.0
+          ],
+          [
+            6.0,
+            5.0
+          ]
+        ],
+        "reference_absolute_error": 0.03189950012666881,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 58,
+        "signed_cutoff_margin": -0.002680496490715889,
+        "target": "T_total",
+        "truth": 0.4212227334114239
+      },
+      {
+        "angle": [
+          2.0,
+          75.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.00023898940456676399,
+            "error": -0.00023898940456676399,
+            "prediction": 0.04378112298642785,
+            "std": 0.01641630558271965
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.008499505550422767,
+            "error": 0.008499505550422767,
+            "prediction": 0.05251961794141738,
+            "std": 0.016355885981756718
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.028071673031252936,
+            "error": 0.028071673031252936,
+            "prediction": 0.07209178542224755,
+            "std": 0.01641630558271965
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0011206997310141617,
+            "error": -0.0011206997310141617,
+            "prediction": 0.04289941265998045,
+            "std": 0.01641630558271965
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.001387676431339517,
+            "error": 0.001387676431339517,
+            "prediction": 0.04540778882233413,
+            "std": 0.016234372201419215
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.02781160653113346,
+            "error": 0.02781160653113346,
+            "prediction": 0.07183171892212807,
+            "std": 0.01581893571347971
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 1,
+        "identity": "old96",
+        "mask_signature": "12;13;14;15;34;35;36;37",
+        "model_disagreement": 0.029192372762267098,
+        "nearest_fold_training_distance": 0.18654719035855755,
+        "nearest_training_tuples": [
+          [
+            8.0,
+            30.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            10.0,
+            75.0
+          ],
+          [
+            0.5,
+            60.0
+          ],
+          [
+            2.0,
+            15.0
+          ],
+          [
+            2.0,
+            10.0
+          ],
+          [
+            1.0,
+            20.0
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            0.75,
+            30.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            4.0,
+            0.0
+          ]
+        ],
+        "reference_absolute_error": 0.028071673031252936,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "low_grazing",
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 38,
+        "signed_cutoff_margin": 0.0012179748700876791,
+        "target": "T_total",
+        "truth": 0.04402011239099461
+      },
+      {
+        "angle": [
+          4.0,
+          90.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.004754813684155396,
+            "error": -0.004754813684155396,
+            "prediction": 0.24405462449428164,
+            "std": 0.03422276136560764
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.012879551087123797,
+            "error": 0.012879551087123797,
+            "prediction": 0.26168898926556083,
+            "std": 0.029631481355567042
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.026245832365193345,
+            "error": 0.026245832365193345,
+            "prediction": 0.2750552705436304,
+            "std": 0.015643309288016997
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.02789587722831649,
+            "error": -0.02789587722831649,
+            "prediction": 0.22091356095012055,
+            "std": 0.03422276136560764
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.010190608315221977,
+            "error": -0.010190608315221977,
+            "prediction": 0.23861882986321506,
+            "std": 0.0349021996585898
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.03352623990095627,
+            "error": 0.03352623990095627,
+            "prediction": 0.2823356780793933,
+            "std": 0.014484058762855356
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 0,
+        "identity": "old96",
+        "mask_signature": "14;15;36;37",
+        "model_disagreement": 0.054141709593509835,
+        "nearest_fold_training_distance": 0.1641233878200264,
+        "nearest_training_tuples": [
+          [
+            6.955775364768,
+            52.519475575536
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            4.0,
+            20.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            4.0,
+            15.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            1.0,
+            5.0
+          ],
+          [
+            8.0,
+            15.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            0.75,
+            15.0
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            0.5,
+            30.0
+          ],
+          [
+            6.0,
+            15.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            6.0,
+            10.0
+          ],
+          [
+            1.0,
+            0.0
+          ]
+        ],
+        "reference_absolute_error": 0.026245832365193345,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 49,
+        "signed_cutoff_margin": 0.00486596562921493,
+        "target": "T_total",
+        "truth": 0.24880943817843704
+      },
+      {
+        "angle": [
+          6.0,
+          90.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.003361715046146685,
+            "error": -0.003361715046146685,
+            "prediction": 0.42126354360447243,
+            "std": 0.015661685309349343
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.01922640451929719,
+            "error": 0.01922640451929719,
+            "prediction": 0.4438516631699163,
+            "std": 0.015996933794120885
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.02452271609630985,
+            "error": 0.02452271609630985,
+            "prediction": 0.44914797474692897,
+            "std": 0.015661685309349343
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0034699876094919646,
+            "error": -0.0034699876094919646,
+            "prediction": 0.42115527104112715,
+            "std": 0.015661685309349343
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.004291546361187837,
+            "error": -0.004291546361187837,
+            "prediction": 0.4203337122894313,
+            "std": 0.01664718892132489
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.032969693201799266,
+            "error": 0.032969693201799266,
+            "prediction": 0.4575949518524184,
+            "std": 0.020372008317363462
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 3,
+        "identity": "old96",
+        "mask_signature": "14;15;36;37",
+        "model_disagreement": 0.028814262457497686,
+        "nearest_fold_training_distance": 0.21200891976400035,
+        "nearest_training_tuples": [
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            3.025618610438,
+            67.084721289575
+          ],
+          [
+            8.979216346983,
+            89.278438920155
+          ],
+          [
+            4.0,
+            60.0
+          ],
+          [
+            2.0,
+            90.0
+          ],
+          [
+            6.0,
+            60.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            2.0,
+            75.0
+          ],
+          [
+            6.0,
+            45.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            10.0,
+            75.0
+          ],
+          [
+            8.991511886939,
+            17.649381067604
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            6.0,
+            30.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            10.0,
+            30.0
+          ],
+          [
+            10.0,
+            90.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            8.0,
+            15.0
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            1.0,
+            90.0
+          ]
+        ],
+        "reference_absolute_error": 0.02452271609630985,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 59,
+        "signed_cutoff_margin": 0.010926199633097267,
+        "target": "T_total",
+        "truth": 0.4246252586506191
+      },
+      {
+        "angle": [
+          4.106844223104,
+          82.684139208868
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.0038850897179513177,
+            "error": -0.0038850897179513177,
+            "prediction": 0.3342856936368166,
+            "std": 0.015148011505225038
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.016405895952052163,
+            "error": -0.016405895952052163,
+            "prediction": 0.32176488740271575,
+            "std": 0.015374713458606882
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.02090441840987034,
+            "error": -0.02090441840987034,
+            "prediction": 0.31726636494489757,
+            "std": 0.01204602665138807
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.003572846630999549,
+            "error": -0.003572846630999549,
+            "prediction": 0.33459793672376836,
+            "std": 0.0182914305387638
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.003885089689380561,
+            "error": -0.003885089689380561,
+            "prediction": 0.33428569366538735,
+            "std": 0.015148011505225038
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.022189263149983207,
+            "error": -0.022189263149983207,
+            "prediction": 0.3159815202047847,
+            "std": 0.014159202802360587
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": -1,
+        "fold": 2,
+        "identity": "new16",
+        "mask_signature": "12;13;14;15;36;37",
+        "model_disagreement": 0.01733157177887079,
+        "nearest_fold_training_distance": 0.13208217088017635,
+        "nearest_training_tuples": [
+          [
+            9.010884982999,
+            52.476425534114
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            4.0,
+            0.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            6.0,
+            0.0
+          ],
+          [
+            4.0,
+            90.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            2.0,
+            90.0
+          ],
+          [
+            3.025618610438,
+            67.084721289575
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            4.0,
+            75.0
+          ],
+          [
+            1.0,
+            90.0
+          ],
+          [
+            10.0,
+            45.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            6.0,
+            30.0
+          ]
+        ],
+        "reference_absolute_error": 0.02090441840987034,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": {
+          "acquisition_components": {
+            "cutoff_topology_bonus": [
+              0.6149585064898947,
+              0.6149585064898947,
+              0.6149585064898947
+            ],
+            "matern_k24_k32_disagreement": [
+              0.003481799726510496,
+              0.0020393494658987785,
+              0.001442153392692371
+            ],
+            "native_std_k24": [
+              0.012430101827792825,
+              0.03933985658018321,
+              0.037671671726323144
+            ],
+            "nearest_training_distance": [
+              0.11149180887265803,
+              0.11149180887265803,
+              0.11149180887265803
+            ],
+            "rbf_matern_disagreement": [
+              0.024051033404609106,
+              0.027159516196806444,
+              0.05125411301139542
+            ]
+          },
+          "acquisition_score": 0.09644147759092056,
+          "angle": [
+            4.106844223104,
+            82.684139208868
+          ],
+          "candidate_index": 3816,
+          "cutoff_order": -1,
+          "mask_signature": "12;13;14;15;36;37",
+          "nearest_training_distance": 0.1641233878200264,
+          "rare_unseen_topology": true,
+          "selection_reasons": [
+            "space_filling_high_acquisition"
+          ],
+          "signed_cutoff_margin": 0.0008155274697408954,
+          "tuple": [
+            120.0,
+            17.0,
+            4.106844223104,
+            82.684139208868
+          ]
+        },
+        "sample_index": 109,
+        "signed_cutoff_margin": 0.0008155274697408954,
+        "target": "T_total",
+        "truth": 0.3381707833547679
+      },
+      {
+        "angle": [
+          5.308891468216,
+          83.060868540779
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.01613529001859687,
+            "error": -0.01613529001859687,
+            "prediction": 0.4127117015166174,
+            "std": 0.031230772801077968
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.05298656528757556,
+            "error": -0.05298656528757556,
+            "prediction": 0.3758604262476387,
+            "std": 0.039317620581397754
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.017844575468324797,
+            "error": -0.017844575468324797,
+            "prediction": 0.4110024160668895,
+            "std": 0.014894825409007786
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.0811091637343182,
+            "error": -0.0811091637343182,
+            "prediction": 0.34773782780089607,
+            "std": 0.0647068763147663
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 0.012230135952084165,
+            "error": -0.012230135952084165,
+            "prediction": 0.4166168555831301,
+            "std": 0.015125812314350848
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.019324580613087394,
+            "error": -0.019324580613087394,
+            "prediction": 0.4095224109221269,
+            "std": 0.015922472219714396
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": -1,
+        "fold": 4,
+        "identity": "new16",
+        "mask_signature": "12;13;14;15;36;37",
+        "model_disagreement": 0.06887902778223404,
+        "nearest_fold_training_distance": 0.12112806004179222,
+        "nearest_training_tuples": [
+          [
+            2.980484131724,
+            37.644248139113
+          ],
+          [
+            4.0,
+            60.0
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            2.0,
+            60.0
+          ],
+          [
+            2.0,
+            45.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            4.0,
+            30.0
+          ],
+          [
+            2.0,
+            30.0
+          ],
+          [
+            6.0,
+            45.0
+          ],
+          [
+            10.0,
+            15.0
+          ],
+          [
+            2.0,
+            0.0
+          ],
+          [
+            1.536085498054,
+            67.84780732356
+          ],
+          [
+            10.0,
+            5.0
+          ],
+          [
+            6.0,
+            30.0
+          ],
+          [
+            8.991511886939,
+            17.649381067604
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            4.0,
+            20.0
+          ],
+          [
+            10.0,
+            45.0
+          ],
+          [
+            8.0,
+            30.0
+          ],
+          [
+            1.0,
+            90.0
+          ]
+        ],
+        "reference_absolute_error": 0.017844575468324797,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "high_azimuth",
+          "cutoff_near"
+        ],
+        "round1_acquisition": {
+          "acquisition_components": {
+            "cutoff_topology_bonus": [
+              0.6149585064898947,
+              0.6149585064898947,
+              0.6149585064898947
+            ],
+            "matern_k24_k32_disagreement": [
+              0.0010925846428879462,
+              0.004375555515755959,
+              0.00546843702656329
+            ],
+            "native_std_k24": [
+              0.0034555139381988987,
+              0.0416017561197079,
+              0.0409269940995709
+            ],
+            "nearest_training_distance": [
+              0.159377340816632,
+              0.159377340816632,
+              0.159377340816632
+            ],
+            "rbf_matern_disagreement": [
+              0.006710033528778017,
+              0.007595933915443377,
+              0.0008423369766855001
+            ]
+          },
+          "acquisition_score": 0.09460727503457811,
+          "angle": [
+            5.308891468216,
+            83.060868540779
+          ],
+          "candidate_index": 1342,
+          "cutoff_order": -1,
+          "mask_signature": "12;13;14;15;36;37",
+          "nearest_training_distance": 0.21200891976400035,
+          "rare_unseen_topology": true,
+          "selection_reasons": [
+            "space_filling_high_acquisition"
+          ],
+          "signed_cutoff_margin": 0.0006210509438706602,
+          "tuple": [
+            120.0,
+            17.0,
+            5.308891468216,
+            83.060868540779
+          ]
+        },
+        "sample_index": 110,
+        "signed_cutoff_margin": 0.0006210509438706602,
+        "target": "T_total",
+        "truth": 0.4288469915352143
+      },
+      {
+        "angle": [
+          4.0,
+          60.0
+        ],
+        "candidates": {
+          "E1_latent_median_ensemble": {
+            "absolute_error": 0.01309009189980398,
+            "error": -0.01309009189980398,
+            "prediction": 0.23012293464654396,
+            "std": 0.01641630558271965
+          },
+          "E2_cross_fitted_nonnegative_stack": {
+            "absolute_error": 0.013974940864123986,
+            "error": -0.013974940864123986,
+            "prediction": 0.22923808568222395,
+            "std": 0.021481726246295907
+          },
+          "L1_local_rbf_k24_s1e-08": {
+            "absolute_error": 0.014858209658608484,
+            "error": -0.014858209658608484,
+            "prediction": 0.22835481688773945,
+            "std": 0.01641630558271965
+          },
+          "L2_local_matern_k24": {
+            "absolute_error": 0.013090094996115909,
+            "error": -0.013090094996115909,
+            "prediction": 0.23012293155023203,
+            "std": 0.0291777956296042
+          },
+          "L2_local_matern_k32": {
+            "absolute_error": 2.3184502794537654e-05,
+            "error": 2.3184502794537654e-05,
+            "prediction": 0.24323621104914248,
+            "std": 0.016234372201419215
+          },
+          "L4_trend_local_residual_k24": {
+            "absolute_error": 0.014085696979905,
+            "error": -0.014085696979905,
+            "prediction": 0.22912732956644294,
+            "std": 0.01581893571347971
+          }
+        },
+        "classification": "cutoff_high_curvature",
+        "classification_evidence": {
+          "cutoff_near": true,
+          "disagreement_high": true
+        },
+        "cutoff_order": 0,
+        "fold": 1,
+        "identity": "old96",
+        "mask_signature": "8;9;10;11;12;13;14;15;30;31;32;33;34;35;36;37",
+        "model_disagreement": 0.014881394161403022,
+        "nearest_fold_training_distance": 0.2585852265643067,
+        "nearest_training_tuples": [
+          [
+            10.0,
+            5.0
+          ],
+          [
+            8.0,
+            60.0
+          ],
+          [
+            10.0,
+            0.0
+          ],
+          [
+            4.0,
+            0.0
+          ],
+          [
+            4.0,
+            5.0
+          ],
+          [
+            2.0,
+            10.0
+          ],
+          [
+            5.035578638315,
+            52.245848933235
+          ],
+          [
+            3.012447152752,
+            52.573178429157
+          ],
+          [
+            10.0,
+            30.0
+          ],
+          [
+            4.0,
+            45.0
+          ],
+          [
+            2.0,
+            5.0
+          ],
+          [
+            10.0,
+            20.0
+          ],
+          [
+            8.0,
+            75.0
+          ],
+          [
+            8.0,
+            30.0
+          ],
+          [
+            5.025018583518,
+            67.89516591467
+          ],
+          [
+            8.0,
+            90.0
+          ],
+          [
+            10.0,
+            10.0
+          ],
+          [
+            2.0,
+            90.0
+          ],
+          [
+            4.0,
+            10.0
+          ],
+          [
+            0.75,
+            20.0
+          ],
+          [
+            1.0,
+            10.0
+          ],
+          [
+            1.0,
+            15.0
+          ],
+          [
+            0.5,
+            45.0
+          ],
+          [
+            0.75,
+            15.0
+          ]
+        ],
+        "reference_absolute_error": 0.014858209658608484,
+        "reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "region_labels": [
+          "cutoff_near",
+          "ordinary_interior"
+        ],
+        "round1_acquisition": null,
+        "sample_index": 47,
+        "signed_cutoff_margin": 0.00486596562921493,
+        "target": "T_total",
+        "truth": 0.24321302654634794
+      }
+    ]
+  },
+  "thresholds": {
+    "disagreement_q50": 0.0021081632251437193,
+    "disagreement_q75": 0.010118774640846429,
+    "distance_q50": 0.11111111111111116,
+    "distance_q75": 0.21280068995855617
+  },
+  "validation_target_accessed": false
+}

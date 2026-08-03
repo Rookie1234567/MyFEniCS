@@ -1,0 +1,10 @@
+{
+  "status": "pass",
+  "folds_each_index_once": true,
+  "candidate_set_complete": true,
+  "oof_error_recomputed": true,
+  "paired_reference_semantics": true,
+  "outlier_audit_complete": true,
+  "validation_response_accessed": false,
+  "new_fem_budget": 0
+}
