@@ -160,8 +160,18 @@ def freeze_train112_reference_folds(*, dataset_dir: Path, output: Path,
     }
     if output.is_file():
         old = json.loads(output.read_text())
-        if old != payload:
+        old_structure = dict(old)
+        old_structure.pop("surrogate_training_code_sha", None)
+        new_structure = dict(payload)
+        new_structure.pop("surrogate_training_code_sha", None)
+        if old_structure != new_structure:
             raise ValueError("frozen train112 folds already exist with a different identity")
+        # The fold rows are the immutable authority.  A later implementation
+        # fix may rebind only the provenance SHA; it may not alter any split or
+        # support statistic.
+        if old.get("surrogate_training_code_sha") != implementation_sha:
+            old["surrogate_training_code_sha"] = implementation_sha
+            output.write_text(json.dumps(old, indent=2, sort_keys=True) + "\n")
         return old
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
