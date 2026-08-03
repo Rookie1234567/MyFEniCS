@@ -108,7 +108,11 @@ def run_paired_learning_curve(*, train96_dir: Path, train112_dir: Path,
         "test_rows_fixed_to_train96": True,
         "train112_additional_indices": new_indices.tolist(),
         "validation_target_accessed": False,
-        "selected_final_candidate": "L1_local_rbf_k24_s1e-08",
+        # This paired curve keeps the original train96 test rows fixed and is
+        # therefore diagnostic evidence only.  It is not a model-selection
+        # lock and must not be consumed as a production-candidate decision.
+        "paired_reference_candidate": "L1_local_rbf_k24_s1e-08",
+        "diagnostic_only_not_model_lock": True,
         "candidates": results,
     }
     output_dir.mkdir(parents=True, exist_ok=True)
