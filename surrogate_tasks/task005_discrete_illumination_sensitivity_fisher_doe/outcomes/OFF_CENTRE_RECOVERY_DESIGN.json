@@ -1,0 +1,32 @@
+{
+  "schema_version": "task005.off-centre-recovery-design.v1",
+  "status": "frozen",
+  "selected_angle_ids": [
+    "A05",
+    "A07",
+    "A09"
+  ],
+  "selected_angle_tuple_sha256": "aa0a175b79837f327df79f9aa9e7945d35a951d5063f3294d2c10661cad963c1",
+  "ranking_sha256": "09d96d25c67fbb9d5f99d9d7418f7525a83d6f5411f088003987d51376577bb7",
+  "dataset_manifest_sha256": "2949f4867f3bdead36f2f4824abfffa562450b7fb4359fab10301a9db352d68b",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "test_geometries": {
+    "G1": {
+      "height_nm": 118.75,
+      "width_nm": 16.75
+    },
+    "G2": {
+      "height_nm": 121.25,
+      "width_nm": 17.25
+    },
+    "G3": {
+      "height_nm": 118.75,
+      "width_nm": 17.25
+    }
+  },
+  "max_new_fem": 9,
+  "nominal_reuse": "train112",
+  "formal_inversion": false
+}

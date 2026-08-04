@@ -1,0 +1,8 @@
+{
+  "schema_version": "task005.case132-config.v1",
+  "dataset_id": "task005_discrete_angle_hw_sensitivity_p5_ny4_v1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "new_fem_count": 44,
+  "m1_reused_count": 20,
+  "validation_target_accessed": false
+}

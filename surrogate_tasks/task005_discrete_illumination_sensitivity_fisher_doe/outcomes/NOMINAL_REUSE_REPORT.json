@@ -1,0 +1,291 @@
+{
+  "schema_version": "task005.nominal-reuse-report.v1",
+  "status": "pass",
+  "implementation_sha": "80dad53b34deaed589947edd25bc4fecb35d8f2d",
+  "source_dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+  "source_training_tuple_sha256": "00fb746bbb881ac7fc3cd27c313b2b526bd2f69f8e89ef621f3e6d9790af5c68",
+  "source_manifest_sha256": "f03123fc20faca69d6b1aedcfc2c6b96bfe90035fcad12808cf214d12ebfa507",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "nominal_reuse_policy": "read-only train112 formal records; no central-geometry rerun",
+  "candidate_count": 16,
+  "exactly_one_each": true,
+  "all_status_measured_pass": true,
+  "validation_target_accessed": false,
+  "task004_blind24_run": false,
+  "points": [
+    {
+      "angle_id": "A00",
+      "train_index": 0,
+      "sample_id": "5cb2059f92794089d5bf4ece43779f33e4c52ae0f90d72c40d05860c936c8a36",
+      "point_tuple": [
+        120.0,
+        17.0,
+        0.5,
+        0.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "ee2d2b47bf1dd0aa79e7b233bdf6402e0ccafcea039cd874735bec507e6b5535",
+      "record_execution_sha256": "b76c9ae0168b84015d5f53426da462feb099523eed06ab6b58fb5fabfa80dcd3",
+      "config_hash": "8734b03469fe04f69e3d5bbb9045be1c9d5434cad33096664491e049a5b352d2",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A01",
+      "train_index": 6,
+      "sample_id": "909821de11588bba13a51ce7e52a104446bdadc364604230f8a53a17b603306d",
+      "point_tuple": [
+        120.0,
+        17.0,
+        0.5,
+        45.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "49812191bac260b9237b7f2456ea20e77cc0483cde3b9fcab1d0a7d979d75386",
+      "record_execution_sha256": "56ba4c4e5b7feb784df55a485a33b6f212016c11ce252ce99678f02373805ef5",
+      "config_hash": "3de8f1cb6262ea8a313e52bef1e57e75333f6d79ad662a9dd035cb6bb9d3ab55",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A02",
+      "train_index": 9,
+      "sample_id": "96502c41b745bf18eface0b4e10edde0579a35470f2ece233e514d9a4a03ae5f",
+      "point_tuple": [
+        120.0,
+        17.0,
+        0.5,
+        90.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "9fc63c3aa2c8ed5aa40cafafaace6f439bfd9698d66f4bbf753a988d7ce038c3",
+      "record_execution_sha256": "2ae4117aa171fe50ff47f50d679f32d77a0937030f6dd862833039437ec2a6e3",
+      "config_hash": "f40a09c6047486bdd45100cdf97502c2c85ef9792cd5aaa9936d12099d61021d",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A03",
+      "train_index": 23,
+      "sample_id": "1ae250e86e1e4dfa9a78e8d84d6040ceed61d9a5af278f0eca02b1a90dd7f0ee",
+      "point_tuple": [
+        120.0,
+        17.0,
+        1.0,
+        15.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "14d980d3173da8c3bf7bcada1b560e675f78cb7dea7614bb285d4ba2b613bc31",
+      "record_execution_sha256": "51e7cc82c80732e0d3ba126bff8ee40a74da8ef8a1296876d9eaca4b74d2f7ab",
+      "config_hash": "0907bb98bcd4e6cf116e70496d456d70c15ae5dfc0ccf4cd264e2801dfc3516a",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A04",
+      "train_index": 27,
+      "sample_id": "8caff80a5c7322b2d3d9a4c8096ad6576ce748cd4b8cb55bc2049316304f3488",
+      "point_tuple": [
+        120.0,
+        17.0,
+        1.0,
+        60.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "cdb0b19bbfa372b67f3d7d0598837c91f3b5de48bb44473a9bce39468d7c2685",
+      "record_execution_sha256": "4a68028555bae70d7c5488cfa5b0b28b56e5aa8e210263c465604c137b6b59ea",
+      "config_hash": "f630281f42055f64655715da9fc31a45d2ae4b8f05eb37a62f599f6f96ec8275",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A05",
+      "train_index": 30,
+      "sample_id": "d2c5409795be7305a4da1305585f758bd0aca6abd04936efa1cfcbec95220131",
+      "point_tuple": [
+        120.0,
+        17.0,
+        2.0,
+        0.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "3d49858264a249d6c7376b11751701590aa4594c8e092c99dfac586e804f2e8b",
+      "record_execution_sha256": "8e6c06a7bbbf9470cc3ceaf6fa14f186366faf657179366325f518d416212319",
+      "config_hash": "cfb77bba742b7a93d4c9f09b4057f2a15ff6b1f637ad1d8281a72064670d380b",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A06",
+      "train_index": 36,
+      "sample_id": "0a216186a9d121930484381e81a2290ce4ecd911ac529d8ccd3d6f73fc92b740",
+      "point_tuple": [
+        120.0,
+        17.0,
+        2.0,
+        45.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "1e94d935996f92e373dbce5542c641bf0708957fbc40f2d23c5d462563920ce9",
+      "record_execution_sha256": "424add8941c10624d7bd983de1943d201cc6e427237106f0182467e4697e327b",
+      "config_hash": "9f4b4a4546febfcf1ec998be716a8166b2addb67043f9d90cce8d807c8157f4d",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A07",
+      "train_index": 39,
+      "sample_id": "7429a64ba291987b74c20f20b51dafa10296e03f4471734fd5dc0f842fca91ef",
+      "point_tuple": [
+        120.0,
+        17.0,
+        2.0,
+        90.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "79ff50528ebdc934eafcabf1ce3c2ad2d7fad73640916cc7ae5c1418854a3402",
+      "record_execution_sha256": "f4de47800a4a8d2c5e072d48d8d815f757e6e889acdb6af5300472eca8cc36f2",
+      "config_hash": "c2b8e56e6b76c242a1b0730b17e9a3fdbf540d7de25dd59d1e6fb8ce0797e677",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A08",
+      "train_index": 43,
+      "sample_id": "f9900b90441791958189fbc9aec0a04b673b132083299229e830e219790ee8e5",
+      "point_tuple": [
+        120.0,
+        17.0,
+        4.0,
+        15.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "3194adbcab334d2688ae39a2700be9890ff2bbda08bdc96b366edb3ec236d10e",
+      "record_execution_sha256": "7e228afd3ac4768c5d919ce0a1ec3f1101c56a4cf5767d9b664ae22b47fe0cb4",
+      "config_hash": "37f7dcd91c42db0183b584a2ae4667ae458f9a8a1925d7faa9817f6e0faa60a6",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A09",
+      "train_index": 47,
+      "sample_id": "a451220cb00300609502701caf5e9c570425f9d3499183d323707e8ee765c332",
+      "point_tuple": [
+        120.0,
+        17.0,
+        4.0,
+        60.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "b60003d2bda745c3d045849680fc92ddfb2d17f4c077b6fa2c79cefeef67f90a",
+      "record_execution_sha256": "109064082f71936c2d5043da3c3eaa412fa46238e651418d793165dd97f4e08e",
+      "config_hash": "63935f40666ae9c7d34e659e74fc0cd0c0b7aa38a1e1ee0845963355978a31de",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A10",
+      "train_index": 49,
+      "sample_id": "06081f3d24c4b6fe375ef6f5d9e5ebd1ed97de6dc01c497dca6ce1761e88ddcc",
+      "point_tuple": [
+        120.0,
+        17.0,
+        4.0,
+        90.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "ddce9f16b57cd639d3db62d1eb2b6993bfd971eb2d4da9aed1b7258f7bc41a43",
+      "record_execution_sha256": "dc94b9d68d2cdec92747944deb802ac9ced204c1106ad451473f150fe28534b5",
+      "config_hash": "24755df1a649607fc70e7f5c444cd083942c945b4b9582c089408ee71d41004b",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A11",
+      "train_index": 55,
+      "sample_id": "14e1a1cfe65f2e6d89d3d9333fd3795153ccd18cfa469ebef55681ca31e1e8cc",
+      "point_tuple": [
+        120.0,
+        17.0,
+        6.0,
+        30.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "51376bbaea90647491762dc19733835e39d2c66e081b44d198a9e8a7ed886410",
+      "record_execution_sha256": "5392e1a8a02b9dac35fe6163b6cac01b8157e0072bd78c5a02382e9a4da1982e",
+      "config_hash": "daa6c9aac956486ab1a71e1476e5fc7f4e399dd53e2d1271fff069d32e04281d",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A12",
+      "train_index": 58,
+      "sample_id": "7fa3471a02c3482589a1b025633600fcb4a1686af8f3e8b2dbae4cff82af0072",
+      "point_tuple": [
+        120.0,
+        17.0,
+        6.0,
+        75.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "cbbd675aa026a112c30152ecf9608b3c12592b05c8c73993d30edfe377556349",
+      "record_execution_sha256": "2a6ed2944234255682a9caaf60c05dcac427c607de432da0e52c9e1c0d1e968d",
+      "config_hash": "067ed2742c7005ae07b7719d78fe34782d834cdaf4f30519cabcb00cd8f86b43",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A13",
+      "train_index": 66,
+      "sample_id": "878240651ea6954891666f382d3abcc8e6094c6e3b9a538cea9ae950a90448ba",
+      "point_tuple": [
+        120.0,
+        17.0,
+        8.0,
+        45.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "ac8d0fae4171ea9b96a6b72671830a7ae2334877bfaf8d9307bc41de731711d0",
+      "record_execution_sha256": "bbbda898c15d2d90538ccf1bbed3986872e4ec280f289daa9b3d946e94f68bf1",
+      "config_hash": "63123f42f964f704829851a4c45a6e2e024b4704bff0a6ecd511dda7836dd688",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A14",
+      "train_index": 70,
+      "sample_id": "c6ec94813682cfd810414accaa757fa9918a273b3630cebe46fb30b5b5f78caf",
+      "point_tuple": [
+        120.0,
+        17.0,
+        10.0,
+        0.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "59d4c64027d5ff6ffdb13f4fcc6933c6c0aa3e4362d35143a0c72cf87ea6b188",
+      "record_execution_sha256": "38d97ee54c66849717cd45bfb638f2d5456520b3b018a75afc1bc78bc5877023",
+      "config_hash": "949c8efbb4c925c98432dfb1e77fa96c6189e9049740726c42e20a28be7f46e5",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    },
+    {
+      "angle_id": "A15",
+      "train_index": 79,
+      "sample_id": "176b9e848e3955e352a32e4e54df4b7eeadd7a1d9a65e4ee4c86b525aa00e6c3",
+      "point_tuple": [
+        120.0,
+        17.0,
+        10.0,
+        90.0
+      ],
+      "status": "measured_pass",
+      "record_formal_record_sha256": "dd40130b2c74582dbbb6a9878f75c35812538c9ff680f570efd08169ab8d1357",
+      "record_execution_sha256": "3e65c92619f4fbe65efb3879473c12cd7defb9aa8d4010f03141fa3739cbf2ac",
+      "config_hash": "c7b13f8cbdcfeb3fe29f1148ec527839f692ba6b672aae1e69b602fa8685327c",
+      "topology_hash": "2f453952b19d25af8618c973805ea664d6e5f37e7ee4fc17852e4af1fa6b05e6",
+      "reuse": "immutable_train112_nominal_no_rerun"
+    }
+  ]
+}

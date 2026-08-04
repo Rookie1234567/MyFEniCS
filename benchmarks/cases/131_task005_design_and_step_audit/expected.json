@@ -1,0 +1,6 @@
+{
+  "m0_checker_status": "pass",
+  "m0_new_fem_count": 0,
+  "m1_max_new_fem_count": 40,
+  "m1_first_unexplained_failure": "controlled_stop"
+}

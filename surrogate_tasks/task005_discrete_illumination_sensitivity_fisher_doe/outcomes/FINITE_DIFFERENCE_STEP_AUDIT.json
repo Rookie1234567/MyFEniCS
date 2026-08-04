@@ -1,0 +1,1319 @@
+{
+  "schema_version": "task005.finite-difference-step-audit.v1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "audit_angle_ids": [
+    "A00",
+    "A07",
+    "A09",
+    "A14",
+    "A15"
+  ],
+  "steps": {
+    "coarse": {
+      "delta_h_nm": 2.5,
+      "delta_w_nm": 0.5
+    },
+    "half": {
+      "delta_h_nm": 1.25,
+      "delta_w_nm": 0.25
+    }
+  },
+  "noise_scenarios": [
+    "N1",
+    "N2"
+  ],
+  "contracts": [
+    "M0_aggregate_RT",
+    "M1_order_total_robust",
+    "M2_order_total_extended"
+  ],
+  "records": {
+    "A00/coarse/H-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "5d7ae7c5be2ee2b46be772f26716ecd600f3e7801d75d4824c37a836e0f46944",
+      "execution_sha256": "993e05439a3d58a7cf6217cec16202057d3ca93fa22cc5c5293f29d0819c40ae",
+      "inputs": [
+        117.5,
+        17.0,
+        0.5,
+        0.0
+      ]
+    },
+    "A00/coarse/H+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "a0118ea76bcfb0ae648743991041692f448e4ba28e3e26a726b6ddf4560a8787",
+      "execution_sha256": "43d7a080f497633f9a98b96e90a204158cd5e14938916a682773764b19646129",
+      "inputs": [
+        122.5,
+        17.0,
+        0.5,
+        0.0
+      ]
+    },
+    "A00/coarse/W-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "66410383d0ed33357e0cd841543c5b28c821d366315b11a32e48fae0947a5df9",
+      "execution_sha256": "b7211a31ca680ca1be75257769be720de937d3de6fbb98c37b424c31cd296a4c",
+      "inputs": [
+        120.0,
+        16.5,
+        0.5,
+        0.0
+      ]
+    },
+    "A00/coarse/W+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "0fb29d7339d0a3f85b1f4e41b57b129ebd7713a7de0f1f0158954af370ec7015",
+      "execution_sha256": "56228e23a235c3591e423f7e425d784352a3ce245a15ab83618233dd87a669f3",
+      "inputs": [
+        120.0,
+        17.5,
+        0.5,
+        0.0
+      ]
+    },
+    "A00/half/H-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "99afb2ec25c200a3df89c88cc847195bc483504db7fc343293a16847a6a06b6b",
+      "execution_sha256": "072e389640ddd17a812121eb29401a01e8233359be4f9be9496f343fbd090a13",
+      "inputs": [
+        118.75,
+        17.0,
+        0.5,
+        0.0
+      ]
+    },
+    "A00/half/H+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "4080fda768f86bb79c37b79c0219dfef87c98cdb52ea478e355d83b5f678b47a",
+      "execution_sha256": "6106c4d206515717592813aa9e80cf5ee176f58c9dde23d5fdc86bcc8594f1fa",
+      "inputs": [
+        121.25,
+        17.0,
+        0.5,
+        0.0
+      ]
+    },
+    "A00/half/W-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "17759f635dec2269a4606d12285ad38cf5dcc9bed0c66ae03bf99098ecc64c64",
+      "execution_sha256": "ac14e09b929721bbce1166d23a4bffe2ba05036b246fc163b45e05bf653152a9",
+      "inputs": [
+        120.0,
+        16.75,
+        0.5,
+        0.0
+      ]
+    },
+    "A00/half/W+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "e2e6730238341b059a7f52f9157aa2dbbf60f3244dc909c69656f23951df4ea9",
+      "execution_sha256": "0ab65790c45b9f796f1aa2d52852315d0380dd4882c156ae7adb94103daeaa9d",
+      "inputs": [
+        120.0,
+        17.25,
+        0.5,
+        0.0
+      ]
+    },
+    "A07/coarse/H-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "e6aa3aa486f3d4a293ddb0c2e8446dfdf00464cdb32c82f6018855f5115aee79",
+      "execution_sha256": "2546ce774782db895354f45fdf9060f828ad84aa01755e6484a1a25759b41581",
+      "inputs": [
+        117.5,
+        17.0,
+        2.0,
+        90.0
+      ]
+    },
+    "A07/coarse/H+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "15b1edba66436d96f09bd30a93f70b5e2ada88abfa867f3f46b294331ffa0f22",
+      "execution_sha256": "ea3cc976c5e55cdfaee96ca8cd11db6b0096d49f9bde4dc87253a874cb077a12",
+      "inputs": [
+        122.5,
+        17.0,
+        2.0,
+        90.0
+      ]
+    },
+    "A07/coarse/W-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "8a50117ee934d6dca1b9861c91f3925686b6dd455f5e99624e89397c5fadab28",
+      "execution_sha256": "6dda5b216800de81637ab18ca0fd5e04358419e2cf1c6f4fa999482ab3949aee",
+      "inputs": [
+        120.0,
+        16.5,
+        2.0,
+        90.0
+      ]
+    },
+    "A07/coarse/W+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "5732147abd3540124c54f705df42aa8276f563833b69490068f21eda8c7a2335",
+      "execution_sha256": "c372daaf44ac98ae7718ded45528997d66e137866b753138b5fa93b011009de0",
+      "inputs": [
+        120.0,
+        17.5,
+        2.0,
+        90.0
+      ]
+    },
+    "A07/half/H-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "b2149ebb3097a06e7d01b5afe1d0145d9fea7569015422a4aa8da622aa5c9621",
+      "execution_sha256": "e99e8c8a03063400c99d71c2fda49ced55d2ce3d23d4a2fe4f9a06632c09723c",
+      "inputs": [
+        118.75,
+        17.0,
+        2.0,
+        90.0
+      ]
+    },
+    "A07/half/H+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "a138ef856292545c983913063e19d1b1cd59fd95d71dbcd8faf3bc300e630b54",
+      "execution_sha256": "23c781b2db9048e751498c1656a7b3f0c634dd1579aae4b0346f6528336bca34",
+      "inputs": [
+        121.25,
+        17.0,
+        2.0,
+        90.0
+      ]
+    },
+    "A07/half/W-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "a35c9af39073f08f1ea09df4d5bed6a2ae286c9e3d27116edc079fac0533363a",
+      "execution_sha256": "47c6c2ea3a07dfae56b125bbc888641785a44242299ce22402e6db681424e1e6",
+      "inputs": [
+        120.0,
+        16.75,
+        2.0,
+        90.0
+      ]
+    },
+    "A07/half/W+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "79ae130429ad2e5cecbb280c23a680594597820f70ea491e60101637ca4aae0c",
+      "execution_sha256": "fa6e03b92fd5eb2bca8589ee96e79786d1e757df3ef147ccd8aa295313f31abf",
+      "inputs": [
+        120.0,
+        17.25,
+        2.0,
+        90.0
+      ]
+    },
+    "A09/coarse/H-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "2b0f02eb8bb362158f20aff5944222c5d2ec8bffdb4382f63070919cd9ab2b0d",
+      "execution_sha256": "379139c4c9073e2cb6d897b397f3ec83b926bfbf7a8c20dd84f9bea07189e0d3",
+      "inputs": [
+        117.5,
+        17.0,
+        4.0,
+        60.0
+      ]
+    },
+    "A09/coarse/H+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "32d1a496ac64c1d1a54d24a9be29546aea49a147e1204055c7410d2a501f7e08",
+      "execution_sha256": "7f30d03013b2607e5a486b2dfa40fb95cac2df7d057fb8aee87b58420468be55",
+      "inputs": [
+        122.5,
+        17.0,
+        4.0,
+        60.0
+      ]
+    },
+    "A09/coarse/W-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "0bb793d808f0d373969203069f75fbd2085bf6f7fb62fed25f7114c916e90c14",
+      "execution_sha256": "46cc6849a1da1f4c8c694553dc32f0386df19d61187fa0af12abb655be82996e",
+      "inputs": [
+        120.0,
+        16.5,
+        4.0,
+        60.0
+      ]
+    },
+    "A09/coarse/W+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "d7cdcee5c822e4e826ff96f607924a4219b948f9c39d75005e8eed87cccbbbcb",
+      "execution_sha256": "bc58bd6cfbf71d58876117ff86b5f6066cd74e7ddd58469a92f3f12dd2befed6",
+      "inputs": [
+        120.0,
+        17.5,
+        4.0,
+        60.0
+      ]
+    },
+    "A09/half/H-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "2c1321176903f43550329ccdac1d49b4fe0c322115f7498251be31efeb6db432",
+      "execution_sha256": "4e2818abd48d79e01dacaf860e24d949a65c46f3e9ab6812788cb91a3cb50b55",
+      "inputs": [
+        118.75,
+        17.0,
+        4.0,
+        60.0
+      ]
+    },
+    "A09/half/H+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "339d1179225113278dc0356fcf468c9e1f7ab266d867c0e54f2d5ab25a42fa77",
+      "execution_sha256": "ce2c9a5ecb6ac120ebf78ab90a21d4f975b79a62fa7b696a3440f9c791ff4f57",
+      "inputs": [
+        121.25,
+        17.0,
+        4.0,
+        60.0
+      ]
+    },
+    "A09/half/W-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "72551a0244e258df91d18a441099965bbea51894ae466b2b9100f2c823c48100",
+      "execution_sha256": "b4e81a8b8c152414d27bbf892f6670e181fadcb53f3d85f532881a56277d0800",
+      "inputs": [
+        120.0,
+        16.75,
+        4.0,
+        60.0
+      ]
+    },
+    "A09/half/W+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "a0375116e32ee1df6a50832ad7c4a5e8a17524749c5c9976d7deb6e7beee7cfa",
+      "execution_sha256": "4bec0b7e686b407f76c6c6830d71950e2c94e97c5ef21bde78a9d8cc066916bd",
+      "inputs": [
+        120.0,
+        17.25,
+        4.0,
+        60.0
+      ]
+    },
+    "A14/coarse/H-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "e3453fe162f7131210c273f764d3aa9e9c85fbad92d9a9ceef822f3b69c64795",
+      "execution_sha256": "ca7fa3d043d8e9381edad05e7a3a5b570cd09b13c725220f3686ec61c4714d37",
+      "inputs": [
+        117.5,
+        17.0,
+        10.0,
+        0.0
+      ]
+    },
+    "A14/coarse/H+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "cad1c8ea7b2a1223b229e0a2a2b68c3f143faec10fe163a1a2bb878a0315a304",
+      "execution_sha256": "d5ed51913a670084de8347597b99acc072d1a5d7a9c2a7a3c1a3e13d1500226a",
+      "inputs": [
+        122.5,
+        17.0,
+        10.0,
+        0.0
+      ]
+    },
+    "A14/coarse/W-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "d20f8ed9e4b077fc6f68e7e707746d0b0ac205eabac9393e084b60549c06388f",
+      "execution_sha256": "f8720caf571a97fe4c20380ef7e6ecdb0f0dff8626f8933ad17b1b0cae5da7b1",
+      "inputs": [
+        120.0,
+        16.5,
+        10.0,
+        0.0
+      ]
+    },
+    "A14/coarse/W+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "c2d76af219f6ad50e0f4009f1cbec94326888cef953213d2430ff7f27f0ad3e6",
+      "execution_sha256": "035a62096b41ce7e6393595f49810ea2744df3e1c37c448acbe09f7158cbee07",
+      "inputs": [
+        120.0,
+        17.5,
+        10.0,
+        0.0
+      ]
+    },
+    "A14/half/H-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "ba5cc6e10f1d24b6529f66bc105b05ebb35968196cecc46154b3ea93effb55f0",
+      "execution_sha256": "91b873a539e735fb88e8c2cda309e37e360e36e2a06932845abfb7694560bd06",
+      "inputs": [
+        118.75,
+        17.0,
+        10.0,
+        0.0
+      ]
+    },
+    "A14/half/H+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "eb53548dca71d666050946293c58060a4bfd88bb0f6e408f17991df297e0aeb3",
+      "execution_sha256": "0ed1b15ffe21de2e55866d25b355e8dfcd9d447d84eb44425ef1ebaa51df6b98",
+      "inputs": [
+        121.25,
+        17.0,
+        10.0,
+        0.0
+      ]
+    },
+    "A14/half/W-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "de523e48f029a8f7ee4fc73c8c4cd21ad4343dbd4a00dc136e4b95ff96660327",
+      "execution_sha256": "1c14856b40ff1aecfe0e853241669a248940103dd56452c72bb15641bb578fd4",
+      "inputs": [
+        120.0,
+        16.75,
+        10.0,
+        0.0
+      ]
+    },
+    "A14/half/W+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "bd09f1026f52917971e8d3b829a46a2707c978c428263af16002d1f10c245306",
+      "execution_sha256": "b09e02afe48567f5315a5dbec2a7b0d583226ca39a9839648fe803f71938ff7b",
+      "inputs": [
+        120.0,
+        17.25,
+        10.0,
+        0.0
+      ]
+    },
+    "A15/coarse/H-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "452b96c7ff3b369f858e850fa26389ef888d0be50a006677c3130711c4346645",
+      "execution_sha256": "b8c75441e9fa670081e7a865636d286c669d4134c90a7dcd783afbf258c65366",
+      "inputs": [
+        117.5,
+        17.0,
+        10.0,
+        90.0
+      ]
+    },
+    "A15/coarse/H+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "a5462e6bd86620e84ce880ddf2551c3fb8191c9948307d86a0913c7a1d91e5a8",
+      "execution_sha256": "b2580a4132db7b9e8d46a91d727007eb6d5f135d510f496d94e6087b542b40e8",
+      "inputs": [
+        122.5,
+        17.0,
+        10.0,
+        90.0
+      ]
+    },
+    "A15/coarse/W-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "056a7c5e98dfa5fe0ab44ceeefa3702c1efb77df46565197cfe4124536850b8c",
+      "execution_sha256": "4b69c98ec6013df65b0b56457f3e985cefd2eb66a6cb372b78816025a65043a8",
+      "inputs": [
+        120.0,
+        16.5,
+        10.0,
+        90.0
+      ]
+    },
+    "A15/coarse/W+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "afd736ef0e1b79ae63c766618210276bac40887db5413dc1cff1213c51c0a66e",
+      "execution_sha256": "b77e3271afa24a9a0426b33f4276573c89188216c83b5d9e132fcb854f011b49",
+      "inputs": [
+        120.0,
+        17.5,
+        10.0,
+        90.0
+      ]
+    },
+    "A15/half/H-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "4f10aa685a77923309f000c7510e8828de81481c25a733a190997bab8dd6972c",
+      "execution_sha256": "7572a4a59783d816cc15a7309cb7a89526b68a9934a27a4404d788de630454c4",
+      "inputs": [
+        118.75,
+        17.0,
+        10.0,
+        90.0
+      ]
+    },
+    "A15/half/H+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "ad14f96878fe8169de34f78a7d3848a64c2fedf178811a3cb41f928e4ada277c",
+      "execution_sha256": "f3044b256e57a474c5cea470e6fc57c7df01821a0a8514c556d0d9c1ff819daf",
+      "inputs": [
+        121.25,
+        17.0,
+        10.0,
+        90.0
+      ]
+    },
+    "A15/half/W-": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "6e6bc63b246a9e6b5c1606543422ec6f717579a55a3162d60d2cb0397c89f301",
+      "execution_sha256": "abadb1290352417d75285fc44ccb02be0c8dadec1083a0848d9ffd7c6d1a39d7",
+      "inputs": [
+        120.0,
+        16.75,
+        10.0,
+        90.0
+      ]
+    },
+    "A15/half/W+": {
+      "status": "measured_pass",
+      "record_passes": true,
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "formal_record_sha256": "beda3878cac1eb98afd66c8974fa380e2f10f9a615d09139794d95b7e18ba6f8",
+      "execution_sha256": "30d67227bc02c4e477df72bc457c7f0a0d38feb00a36255b89fc839cb7539098",
+      "inputs": [
+        120.0,
+        17.25,
+        10.0,
+        90.0
+      ]
+    }
+  },
+  "comparisons": {
+    "A00": {
+      "M0_aggregate_RT": {
+        "channels": [
+          "R_total",
+          "T_total"
+        ],
+        "h": {
+          "N1": {
+            "whitened_norm_coarse": 7.268304519351104,
+            "whitened_norm_half": 7.268925333005078,
+            "whitened_cosine": 0.9999999994631712,
+            "relative_l2_difference": 9.148371434219086e-05,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "h"
+          },
+          "N2": {
+            "whitened_norm_coarse": 1.6490972444113128,
+            "whitened_norm_half": 1.6492234374997818,
+            "whitened_cosine": 0.9999999974460837,
+            "relative_l2_difference": 0.00010470874306950985,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "h"
+          }
+        },
+        "w": {
+          "N1": {
+            "whitened_norm_coarse": 6.381296273394503,
+            "whitened_norm_half": 6.379836980758491,
+            "whitened_cosine": 0.9999999934774242,
+            "relative_l2_difference": 0.00025561296283252037,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "w"
+          },
+          "N2": {
+            "whitened_norm_coarse": 1.533778483058475,
+            "whitened_norm_half": 1.533314470375499,
+            "whitened_cosine": 0.9999999753575373,
+            "relative_l2_difference": 0.00037522512582626095,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "w"
+          }
+        }
+      },
+      "M1_order_total_robust": {
+        "channels": [
+          [
+            "reflection",
+            0,
+            0
+          ],
+          [
+            "transmission",
+            0,
+            0
+          ]
+        ],
+        "h": {
+          "N1": {
+            "whitened_norm_coarse": 7.227154251666046,
+            "whitened_norm_half": 7.2240130168544265,
+            "whitened_cosine": 0.9999999998299677,
+            "relative_l2_difference": 0.00043503424235290353,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "h"
+          },
+          "N2": {
+            "whitened_norm_coarse": 1.6389317428738965,
+            "whitened_norm_half": 1.6382276678336614,
+            "whitened_cosine": 0.9999999991905636,
+            "relative_l2_difference": 0.0004314731464063332,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "h"
+          }
+        },
+        "w": {
+          "N1": {
+            "whitened_norm_coarse": 6.38903668780846,
+            "whitened_norm_half": 6.387667840866015,
+            "whitened_cosine": 0.9999999931423821,
+            "relative_l2_difference": 0.00024416199619205464,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "w"
+          },
+          "N2": {
+            "whitened_norm_coarse": 1.5345309840804078,
+            "whitened_norm_half": 1.5340859462298608,
+            "whitened_cosine": 0.9999999740517775,
+            "relative_l2_difference": 0.00036876878251904983,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "w"
+          }
+        }
+      },
+      "richardson_diagnostic": {
+        "M0_aggregate_RT:h": [
+          -0.0006504784738960175,
+          -0.00016716984925995728
+        ],
+        "M1_order_total_robust:h": [
+          -0.0006520913014368338,
+          -0.0001659604032625946
+        ],
+        "M0_aggregate_RT:w": [
+          0.007757643252508421,
+          -0.0007218183060115055
+        ],
+        "M1_order_total_robust:w": [
+          0.007757301139252548,
+          -0.0007221309091961793
+        ]
+      }
+    },
+    "A07": {
+      "M0_aggregate_RT": {
+        "channels": [
+          "R_total",
+          "T_total"
+        ],
+        "h": {
+          "N1": {
+            "whitened_norm_coarse": 9.222372907398604,
+            "whitened_norm_half": 9.21950739122088,
+            "whitened_cosine": 0.9999999940732229,
+            "relative_l2_difference": 0.00032923058477019366,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "h"
+          },
+          "N2": {
+            "whitened_norm_coarse": 4.1243075542621614,
+            "whitened_norm_half": 4.123018356870479,
+            "whitened_cosine": 0.9999999932061169,
+            "relative_l2_difference": 0.0003336060700777211,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "h"
+          }
+        },
+        "w": {
+          "N1": {
+            "whitened_norm_coarse": 16.892473325048226,
+            "whitened_norm_half": 16.890230291768916,
+            "whitened_cosine": 0.9999998940720762,
+            "relative_l2_difference": 0.00047901883222593964,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "w"
+          },
+          "N2": {
+            "whitened_norm_coarse": 7.8545855263380835,
+            "whitened_norm_half": 7.853792972842542,
+            "whitened_cosine": 0.9999998961051616,
+            "relative_l2_difference": 0.0004668513501583996,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "w"
+          }
+        }
+      },
+      "M1_order_total_robust": {
+        "channels": [
+          [
+            "reflection",
+            0,
+            0
+          ],
+          [
+            "transmission",
+            0,
+            0
+          ]
+        ],
+        "h": {
+          "N1": {
+            "whitened_norm_coarse": 9.222372907398604,
+            "whitened_norm_half": 9.21950739122088,
+            "whitened_cosine": 0.9999999940732229,
+            "relative_l2_difference": 0.00032923058477019366,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "h"
+          },
+          "N2": {
+            "whitened_norm_coarse": 4.1243075542621614,
+            "whitened_norm_half": 4.123018356870479,
+            "whitened_cosine": 0.9999999932061169,
+            "relative_l2_difference": 0.0003336060700777211,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "h"
+          }
+        },
+        "w": {
+          "N1": {
+            "whitened_norm_coarse": 16.892473325048226,
+            "whitened_norm_half": 16.890230291768916,
+            "whitened_cosine": 0.9999998940720762,
+            "relative_l2_difference": 0.00047901883222593964,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "w"
+          },
+          "N2": {
+            "whitened_norm_coarse": 7.8545855263380835,
+            "whitened_norm_half": 7.853792972842542,
+            "whitened_cosine": 0.9999998961051616,
+            "relative_l2_difference": 0.0004668513501583996,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "w"
+          }
+        }
+      },
+      "richardson_diagnostic": {
+        "M0_aggregate_RT:h": [
+          -0.0001632825579331069,
+          -0.0008350811415276058
+        ],
+        "M1_order_total_robust:h": [
+          -0.0001632825579331069,
+          -0.0008350811415276058
+        ],
+        "M0_aggregate_RT:w": [
+          0.009674760636200938,
+          -0.005154055587435223
+        ],
+        "M1_order_total_robust:w": [
+          0.009674760636200938,
+          -0.005154055587435223
+        ]
+      }
+    },
+    "A09": {
+      "M0_aggregate_RT": {
+        "channels": [
+          "R_total",
+          "T_total"
+        ],
+        "h": {
+          "N1": {
+            "whitened_norm_coarse": 11.497596859975607,
+            "whitened_norm_half": 11.534895295162025,
+            "whitened_cosine": 0.9999990338186543,
+            "relative_l2_difference": 0.0035301979619999963,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "h"
+          },
+          "N2": {
+            "whitened_norm_coarse": 4.069515025681994,
+            "whitened_norm_half": 4.080253718421412,
+            "whitened_cosine": 0.9999984556770793,
+            "relative_l2_difference": 0.003171771571608521,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "h"
+          }
+        },
+        "w": {
+          "N1": {
+            "whitened_norm_coarse": 6.642924642072732,
+            "whitened_norm_half": 6.642307805630104,
+            "whitened_cosine": 0.9999999662787146,
+            "relative_l2_difference": 0.0002757871897401781,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "w"
+          },
+          "N2": {
+            "whitened_norm_coarse": 3.3052540653160305,
+            "whitened_norm_half": 3.304926603411036,
+            "whitened_cosine": 0.9999999862144228,
+            "relative_l2_difference": 0.0001933491928481865,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "w"
+          }
+        }
+      },
+      "M1_order_total_robust": {
+        "channels": [
+          [
+            "reflection",
+            0,
+            0
+          ],
+          [
+            "transmission",
+            0,
+            0
+          ]
+        ],
+        "h": {
+          "N1": {
+            "whitened_norm_coarse": 11.493863555544769,
+            "whitened_norm_half": 11.528154900116576,
+            "whitened_cosine": 0.9999992138731306,
+            "relative_l2_difference": 0.003236959471207588,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "h"
+          },
+          "N2": {
+            "whitened_norm_coarse": 4.063092239755567,
+            "whitened_norm_half": 4.072975872817049,
+            "whitened_cosine": 0.9999987445572894,
+            "relative_l2_difference": 0.0029041767339547725,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "h"
+          }
+        },
+        "w": {
+          "N1": {
+            "whitened_norm_coarse": 6.648697302245506,
+            "whitened_norm_half": 6.648075289024532,
+            "whitened_cosine": 0.9999999662554261,
+            "relative_l2_difference": 0.0002761072488184792,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "w"
+          },
+          "N2": {
+            "whitened_norm_coarse": 3.3083277721989917,
+            "whitened_norm_half": 3.3079991259692494,
+            "whitened_cosine": 0.9999999862876904,
+            "relative_l2_difference": 0.00019310656887928175,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "w"
+          }
+        }
+      },
+      "richardson_diagnostic": {
+        "M0_aggregate_RT:h": [
+          -0.00039885517474778643,
+          -0.0022722919656915784
+        ],
+        "M1_order_total_robust:h": [
+          -0.000396359914956676,
+          -0.002278259048948707
+        ],
+        "M0_aggregate_RT:w": [
+          5.098497250159243e-05,
+          -0.01615474109406469
+        ],
+        "M1_order_total_robust:w": [
+          4.707267104168735e-05,
+          -0.016159972866612925
+        ]
+      }
+    },
+    "A14": {
+      "M0_aggregate_RT": {
+        "channels": [
+          "R_total",
+          "T_total"
+        ],
+        "h": {
+          "N1": {
+            "whitened_norm_coarse": 1.948223383505575,
+            "whitened_norm_half": 1.9637211288788656,
+            "whitened_cosine": 0.9999081539654613,
+            "relative_l2_difference": 0.01576173513593783,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "h"
+          },
+          "N2": {
+            "whitened_norm_coarse": 0.877697053896148,
+            "whitened_norm_half": 0.8794685959965229,
+            "whitened_cosine": 0.9999773524277872,
+            "relative_l2_difference": 0.007032815873423987,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": false,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "h"
+          }
+        },
+        "w": {
+          "N1": {
+            "whitened_norm_coarse": 2.4017455577028186,
+            "whitened_norm_half": 2.4017150429039034,
+            "whitened_cosine": 0.9999999868945031,
+            "relative_l2_difference": 0.00016239484246577767,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "w"
+          },
+          "N2": {
+            "whitened_norm_coarse": 1.1998059751506482,
+            "whitened_norm_half": 1.199787473231389,
+            "whitened_cosine": 0.9999999978875385,
+            "relative_l2_difference": 6.68031298484006e-05,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "w"
+          }
+        }
+      },
+      "M1_order_total_robust": {
+        "channels": [
+          [
+            "transmission",
+            0,
+            0
+          ]
+        ],
+        "h": {
+          "N1": {
+            "whitened_norm_coarse": 1.7151461936556704,
+            "whitened_norm_half": 1.71596773007781,
+            "whitened_cosine": 1.0,
+            "relative_l2_difference": 0.0004789891527488573,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "h"
+          },
+          "N2": {
+            "whitened_norm_coarse": 0.8569537142005537,
+            "whitened_norm_half": 0.8573641857340636,
+            "whitened_cosine": 1.0,
+            "relative_l2_difference": 0.00047898915274887673,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": false,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "h"
+          }
+        },
+        "w": {
+          "N1": {
+            "whitened_norm_coarse": 2.4016025243617998,
+            "whitened_norm_half": 2.4015672908139694,
+            "whitened_cosine": 1.0,
+            "relative_l2_difference": 1.4670848932330502e-05,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "w"
+          },
+          "N2": {
+            "whitened_norm_coarse": 1.1999339828278468,
+            "whitened_norm_half": 1.1999163787776561,
+            "whitened_cosine": 1.0,
+            "relative_l2_difference": 1.467084893220744e-05,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "w"
+          }
+        }
+      },
+      "richardson_diagnostic": {
+        "M0_aggregate_RT:h": [
+          -1.9274541683817903e-05,
+          -0.0020712497360948637
+        ],
+        "M1_order_total_robust:h": [
+          -0.002068205938936966
+        ],
+        "M0_aggregate_RT:w": [
+          -4.848900314847997e-06,
+          -0.01446894834988166
+        ],
+        "M1_order_total_robust:w": [
+          -0.01447031558463289
+        ]
+      }
+    },
+    "A15": {
+      "M0_aggregate_RT": {
+        "channels": [
+          "R_total",
+          "T_total"
+        ],
+        "h": {
+          "N1": {
+            "whitened_norm_coarse": 1.8390879350685125,
+            "whitened_norm_half": 1.847160539795696,
+            "whitened_cosine": 0.9999658178656251,
+            "relative_l2_difference": 0.009377191409072306,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "h"
+          },
+          "N2": {
+            "whitened_norm_coarse": 0.8460649940493712,
+            "whitened_norm_half": 0.847076438604667,
+            "whitened_cosine": 0.999992294915556,
+            "relative_l2_difference": 0.004105817535286337,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": false,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "h"
+          }
+        },
+        "w": {
+          "N1": {
+            "whitened_norm_coarse": 2.3443342345268707,
+            "whitened_norm_half": 2.3442913127859955,
+            "whitened_cosine": 0.9999999999502279,
+            "relative_l2_difference": 2.08506958047517e-05,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "w"
+          },
+          "N2": {
+            "whitened_norm_coarse": 1.170751452590435,
+            "whitened_norm_half": 1.1707303561727593,
+            "whitened_cosine": 0.9999999999919719,
+            "relative_l2_difference": 1.845970656794796e-05,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "w"
+          }
+        }
+      },
+      "M1_order_total_robust": {
+        "channels": [
+          [
+            "transmission",
+            0,
+            0
+          ]
+        ],
+        "h": {
+          "N1": {
+            "whitened_norm_coarse": 1.6639024912862945,
+            "whitened_norm_half": 1.6646434885945551,
+            "whitened_cosine": 1.0,
+            "relative_l2_difference": 0.0004453369786637979,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "h"
+          },
+          "N2": {
+            "whitened_norm_coarse": 0.8313625199249414,
+            "whitened_norm_half": 0.831732756397739,
+            "whitened_cosine": 1.0,
+            "relative_l2_difference": 0.0004453369786637537,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": false,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "h"
+          }
+        },
+        "w": {
+          "N1": {
+            "whitened_norm_coarse": 2.3429358640665976,
+            "whitened_norm_half": 2.342893775551425,
+            "whitened_cosine": 1.0,
+            "relative_l2_difference": 1.7964006534762792e-05,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N1",
+            "parameter": "w"
+          },
+          "N2": {
+            "whitened_norm_coarse": 1.170638949201368,
+            "whitened_norm_half": 1.1706179198356348,
+            "whitened_cosine": 1.0,
+            "relative_l2_difference": 1.796400653469958e-05,
+            "top_snr_count": 1,
+            "top_snr_sign_agreement": 1.0,
+            "signal_floor_pass": true,
+            "gate": true,
+            "noise": "N2",
+            "parameter": "w"
+          }
+        }
+      },
+      "richardson_diagnostic": {
+        "M0_aggregate_RT:h": [
+          -1.617202321596709e-05,
+          -0.002026945939546813
+        ],
+        "M1_order_total_robust:h": [
+          -0.002026945939546813
+        ],
+        "M0_aggregate_RT:w": [
+          -8.115335130828163e-06,
+          -0.01426187074521427
+        ],
+        "M1_order_total_robust:w": [
+          -0.01426187074521427
+        ]
+      }
+    }
+  },
+  "status": "pass",
+  "record_gate_pass": true,
+  "failure_reasons": [],
+  "angle_gate": {
+    "M0_aggregate_RT:h": {
+      "passing_angle_ids": [
+        "A00",
+        "A07",
+        "A09",
+        "A14",
+        "A15"
+      ],
+      "pass_count": 5,
+      "at_least_4_of_5": true,
+      "A14_A15_not_both_fail": true
+    },
+    "M0_aggregate_RT:w": {
+      "passing_angle_ids": [
+        "A00",
+        "A07",
+        "A09",
+        "A14",
+        "A15"
+      ],
+      "pass_count": 5,
+      "at_least_4_of_5": true,
+      "A14_A15_not_both_fail": true
+    },
+    "M1_order_total_robust:h": {
+      "passing_angle_ids": [
+        "A00",
+        "A07",
+        "A09",
+        "A14",
+        "A15"
+      ],
+      "pass_count": 5,
+      "at_least_4_of_5": true,
+      "A14_A15_not_both_fail": true
+    },
+    "M1_order_total_robust:w": {
+      "passing_angle_ids": [
+        "A00",
+        "A07",
+        "A09",
+        "A14",
+        "A15"
+      ],
+      "pass_count": 5,
+      "at_least_4_of_5": true,
+      "A14_A15_not_both_fail": true
+    }
+  },
+  "production_step_recommendation": {
+    "h": "half",
+    "w": "half"
+  }
+}

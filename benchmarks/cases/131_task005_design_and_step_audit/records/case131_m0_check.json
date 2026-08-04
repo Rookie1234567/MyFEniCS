@@ -1,0 +1,22 @@
+{
+  "schema_version": "task005.case131-m0-check.v1",
+  "status": "pass",
+  "checks": {
+    "required_m0_outputs": true,
+    "train112_hashes_recomputed": true,
+    "train112_array_identity": true,
+    "train112_manifest_identity": true,
+    "design_identity": true,
+    "exact_16_design_order": true,
+    "design_tuple_hash": true,
+    "nominal_tuple_exactly_once": true,
+    "nominal_reuse_sample_identity": true,
+    "perturbation_schema": true,
+    "nominal_reuse_report": true,
+    "task004_closed_and_blind_not_run": true,
+    "m0_no_fem_claim": true
+  },
+  "errors": [],
+  "frozen_validation_accessed": false,
+  "new_fem_count": 0
+}

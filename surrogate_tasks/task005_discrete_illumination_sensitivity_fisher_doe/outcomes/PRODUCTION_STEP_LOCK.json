@@ -1,0 +1,19 @@
+{
+  "schema_version": "task005.production-step-lock.v1",
+  "status": "frozen",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "audit_sha256": "8062d933008b3d064ce55094f8ed7cc9ac22cad6fa6b5eeb72c494c7a31086fc",
+  "selected_steps": {
+    "h": "half",
+    "w": "half"
+  },
+  "method": "central finite differences; Richardson retained diagnostic-only",
+  "audit_angle_ids": [
+    "A00",
+    "A07",
+    "A09",
+    "A14",
+    "A15"
+  ],
+  "new_fem_count": 40
+}

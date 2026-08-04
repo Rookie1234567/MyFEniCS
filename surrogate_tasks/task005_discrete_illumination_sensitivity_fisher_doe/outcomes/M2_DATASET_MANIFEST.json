@@ -1,0 +1,110 @@
+{
+  "schema_version": "task005.discrete-sensitivity-dataset.v1",
+  "dataset_id": "task005_discrete_angle_hw_sensitivity_p5_ny4_v1",
+  "status": "immutable",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "fixed_geometry": {
+    "height_nm": 120.0,
+    "width_nm": 17.0,
+    "wavelength_nm": 13.5,
+    "polarization": "S"
+  },
+  "angle_count": 16,
+  "state_count_per_angle": 4,
+  "angle_tuple_sha256": "072ec3da9b7f537dce5d410208eb999773c9fa2c331937711f59a78f412aaea9",
+  "design_sha256": "1303ec4604c2d2b4d750c94bd9597b87e7cdec3ab1b1c0884eb1da6aa8756136",
+  "production_step_lock_sha256": "1b8acbd548ef54adc2e82c81174ebe16c6d2a2d64b7c53d9567e9bb18c08055e",
+  "step": {
+    "delta_h_nm": 1.25,
+    "delta_w_nm": 0.25,
+    "method": "central_difference"
+  },
+  "measurement_contracts": {
+    "M0": "aggregate_RT=[R_total,T_total]; A audit only",
+    "M1": "order_total_robust threshold 1e-3; active fixed-order total powers",
+    "M2": "order_total_extended threshold 1e-5; absolute noise floor",
+    "M3": "polarization-resolved diagnostic only"
+  },
+  "nominal_reuse": "immutable train112; no nominal FEM rerun",
+  "new_fem_count": 44,
+  "m1_reused_count": 20,
+  "validation_target_accessed": false,
+  "formal_inversion": false,
+  "arrays": {
+    "angles.npy": {
+      "shape": [
+        16,
+        2
+      ],
+      "dtype": "float64"
+    },
+    "nominal_inputs.npy": {
+      "shape": [
+        16,
+        4
+      ],
+      "dtype": "float64"
+    },
+    "nominal_aggregates.npy": {
+      "shape": [
+        16,
+        4
+      ],
+      "dtype": "float64"
+    },
+    "perturbed_aggregates.npy": {
+      "shape": [
+        16,
+        4,
+        4
+      ],
+      "dtype": "float64"
+    },
+    "nominal_order_powers.npy": {
+      "shape": [
+        16,
+        22
+      ],
+      "dtype": "float64"
+    },
+    "perturbed_order_powers.npy": {
+      "shape": [
+        16,
+        4,
+        22
+      ],
+      "dtype": "float64"
+    },
+    "nominal_order_mask.npy": {
+      "shape": [
+        16,
+        22
+      ],
+      "dtype": "bool"
+    },
+    "perturbed_order_mask.npy": {
+      "shape": [
+        16,
+        4,
+        22
+      ],
+      "dtype": "bool"
+    }
+  },
+  "file_hashes": {
+    "angles.npy": "26598a16dfee4c564132f2f6fcefb49c7ab9d1ef1e5907bac76228b608981b5d",
+    "derivatives.json": "5c7e5111128e6e89a173763c61a2cca29e1359285b960ee5bcbf19110a22b5e9",
+    "nominal_aggregates.npy": "44656759ff51019fe43f9317e0287ed198a7e6767e53bc577eb15245d90e4e1f",
+    "nominal_inputs.npy": "d9e874d041448df78de7711abb6c864e7edf6c5b375a239d57c6a548403c7c8a",
+    "nominal_order_mask.npy": "4c8364c2f4e0b272eddbbd0a5f771625fb3872bef4423d4738966b9ec2592e18",
+    "nominal_order_powers.npy": "442ffe762c56b37443e6755b86a04c677b577ef2208bea51e0932e8bb21a166c",
+    "order_identity.json": "25269154b988586145b582dd579686919b3c1dd7abcb838c393939705b5d91d9",
+    "perturbed_aggregates.npy": "0fcf2a5c3846e4f2bc24ac4e7947a9602cc9714c1b749dc70d88c21ba5c89159",
+    "perturbed_order_mask.npy": "ecbf4604950f0248cce9efefa49ec2e2c61f8747cff13583fb4fb57c367e0c72",
+    "perturbed_order_powers.npy": "98210a61717ca9ec5041d383e598ebf5ab04d63a09a3b3fe215a26b1d33fb5fd",
+    "record_identity.json": "b469eb661b02e3866641959d867fd68b376476b9f3e1a816afd0751026f744c9"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": "task005.case132-check.v1",
+  "status": "pass",
+  "checks": {
+    "required_files": true,
+    "array_identity": true,
+    "manifest_identity": true,
+    "package_hashes": true,
+    "exact_angle_identity": true,
+    "aggregate_finite_difference_rebuild": true,
+    "derivative_rows": true,
+    "order_contract_rebuild": true,
+    "campaign_identity": true,
+    "record_source_identity": true
+  },
+  "errors": [],
+  "new_fem_count": 44,
+  "validation_target_accessed": false
+}

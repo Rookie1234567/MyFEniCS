@@ -1,0 +1,1 @@
+bash -lc 'source scripts/activate_myfenics_surrogate_wsl.sh && python benchmarks/cases/131_task005_design_and_step_audit/checker.py'

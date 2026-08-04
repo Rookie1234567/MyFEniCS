@@ -1,0 +1,61 @@
+{
+  "schema_version": "task005.central-finite-difference.v1",
+  "status": "frozen",
+  "implementation_sha": "80dad53b34deaed589947edd25bc4fecb35d8f2d",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "nominal": {
+    "height_nm": 120.0,
+    "width_nm": 17.0
+  },
+  "allowed_domain": {
+    "height_nm": [
+      115.0,
+      125.0
+    ],
+    "width_nm": [
+      16.0,
+      18.0
+    ]
+  },
+  "steps": {
+    "coarse": {
+      "delta_h_nm": 2.5,
+      "delta_w_nm": 0.5
+    },
+    "half": {
+      "delta_h_nm": 1.25,
+      "delta_w_nm": 0.25
+    }
+  },
+  "states": {
+    "H-": {
+      "height_offset_sign": -1,
+      "width_offset_sign": 0
+    },
+    "H+": {
+      "height_offset_sign": 1,
+      "width_offset_sign": 0
+    },
+    "W-": {
+      "height_offset_sign": 0,
+      "width_offset_sign": -1
+    },
+    "W+": {
+      "height_offset_sign": 0,
+      "width_offset_sign": 1
+    }
+  },
+  "derivative": "central: (plus-minus)/(2*delta), physical nm^{-1}",
+  "production_selection": "independently lock delta_h and delta_w after M1; Richardson is diagnostic only",
+  "max_m1_new_fem": 40,
+  "m1_audit_angle_ids": [
+    "A00",
+    "A07",
+    "A09",
+    "A14",
+    "A15"
+  ],
+  "frozen_validation_access": false
+}

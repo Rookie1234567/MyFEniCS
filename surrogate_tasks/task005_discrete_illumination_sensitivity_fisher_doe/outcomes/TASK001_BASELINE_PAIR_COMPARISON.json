@@ -1,0 +1,359 @@
+{
+  "schema_version": "task005.task001-baseline-pair-comparison.v1",
+  "baseline_pair": [
+    "A14",
+    "A15"
+  ],
+  "baseline": {
+    "angle_ids": [
+      "A14",
+      "A15"
+    ],
+    "size": 2,
+    "full_rank_M0_M1_N1_N2": true,
+    "worst_case_minimum_eigenvalue": 7.497272864309679e-06,
+    "worst_case_logdet": -10.357117907639072,
+    "worst_case_condition_number": 565138.0483753306,
+    "scenario_results": {
+      "M0_aggregate_RT": {
+        "N1": {
+          "rank": 2,
+          "full_rank": true,
+          "eigenvalues": [
+            0.8874729248801185,
+            17.64466671341828
+          ],
+          "minimum_eigenvalue": 0.8874729248801185,
+          "condition_number": 19.881921147962633,
+          "logdet": 2.7510563032303113,
+          "condition_number_is_infinite": false,
+          "logdet_defined": true,
+          "trace_inverse": 1.1834692877526836,
+          "covariance_scaled": [
+            [
+              0.7193191745919854,
+              -0.519626506861489
+            ],
+            [
+              -0.519626506861489,
+              0.4641501131606981
+            ]
+          ],
+          "parameter_correlation_rho_hw": -0.899293072540584,
+          "crlb": {
+            "sigma_theta_h": 0.8481268623218966,
+            "sigma_theta_w": 0.6812856325805632,
+            "sigma_h_nm": 4.240634311609483,
+            "sigma_w_nm": 0.6812856325805632
+          },
+          "regularization": {
+            "eigen_floor": 1e-14,
+            "used_for_inversion": false
+          },
+          "contract": "M0",
+          "noise": "N1",
+          "angle_ids": [
+            "A14",
+            "A15"
+          ],
+          "channel_counts": [
+            2,
+            2
+          ],
+          "fisher_matrix": [
+            [
+              7.268202731783614,
+              8.136916677579833
+            ],
+            [
+              8.136916677579833,
+              11.263936906514786
+            ]
+          ]
+        },
+        "N2": {
+          "rank": 2,
+          "full_rank": true,
+          "eigenvalues": [
+            0.0368624941887018,
+            4.264240557781917
+          ],
+          "minimum_eigenvalue": 0.0368624941887018,
+          "condition_number": 115.67965357832158,
+          "logdet": -1.8502965612263707,
+          "condition_number_is_infinite": false,
+          "logdet_defined": true,
+          "trace_inverse": 27.362352568358276,
+          "covariance_scaled": [
+            [
+              17.877026811415973,
+              -12.775277570123357
+            ],
+            [
+              -12.77527757012336,
+              9.485325756942302
+            ]
+          ],
+          "parameter_correlation_rho_hw": -0.9810622701238383,
+          "crlb": {
+            "sigma_theta_h": 4.228123320270587,
+            "sigma_theta_w": 3.079825604955953,
+            "sigma_h_nm": 21.140616601352935,
+            "sigma_w_nm": 3.079825604955953
+          },
+          "regularization": {
+            "eigen_floor": 1e-14,
+            "used_for_inversion": false
+          },
+          "contract": "M0",
+          "noise": "N2",
+          "angle_ids": [
+            "A14",
+            "A15"
+          ],
+          "channel_counts": [
+            2,
+            2
+          ],
+          "fisher_matrix": [
+            [
+              1.4910035041832614,
+              2.0081528154187582
+            ],
+            [
+              2.0081528154187582,
+              2.810099547787357
+            ]
+          ]
+        }
+      },
+      "M1_order_total_robust": {
+        "N1": {
+          "rank": 2,
+          "full_rank": true,
+          "eigenvalues": [
+            3.0032007059865862e-05,
+            16.972229858606745
+          ],
+          "minimum_eigenvalue": 3.0032007059865862e-05,
+          "condition_number": 565138.0483753306,
+          "logdet": -7.581668372392377,
+          "condition_number_is_infinite": false,
+          "logdet_defined": true,
+          "trace_inverse": 33297.866755442235,
+          "covariance_scaled": [
+            [
+              22084.4674275797,
+              -15736.58127768573
+            ],
+            [
+              -15736.581277685727,
+              11213.399327862535
+            ]
+          ],
+          "parameter_correlation_rho_hw": -0.9999960388308937,
+          "crlb": {
+            "sigma_theta_h": 148.60843659624342,
+            "sigma_theta_w": 105.89333939329015,
+            "sigma_h_nm": 743.0421829812171,
+            "sigma_w_nm": 105.89333939329015
+          },
+          "regularization": {
+            "eigen_floor": 1e-14,
+            "used_for_inversion": false
+          },
+          "contract": "M1",
+          "noise": "N1",
+          "angle_ids": [
+            "A14",
+            "A15"
+          ],
+          "channel_counts": [
+            1,
+            1
+          ],
+          "fisher_matrix": [
+            [
+              5.715583194788643,
+              8.021094840587555
+            ],
+            [
+              8.021094840587555,
+              11.25667669582516
+            ]
+          ]
+        },
+        "N2": {
+          "rank": 2,
+          "full_rank": true,
+          "eigenvalues": [
+            7.497272864309679e-06,
+            4.236990858070742
+          ],
+          "minimum_eigenvalue": 7.497272864309679e-06,
+          "condition_number": 565137.6086684379,
+          "logdet": -10.357117907639072,
+          "condition_number_is_infinite": false,
+          "logdet_defined": true,
+          "trace_inverse": 133382.06939374507,
+          "covariance_scaled": [
+            [
+              88464.28722219774,
+              -63036.402999271915
+            ],
+            [
+              -63036.40299927192,
+              44917.78217154732
+            ]
+          ],
+          "parameter_correlation_rho_hw": -0.9999960388277053,
+          "crlb": {
+            "sigma_theta_h": 297.42946596159186,
+            "sigma_theta_w": 211.93815647859947,
+            "sigma_h_nm": 1487.1473298079593,
+            "sigma_w_nm": 211.93815647859947
+          },
+          "regularization": {
+            "eigen_floor": 1e-14,
+            "used_for_inversion": false
+          },
+          "contract": "M1",
+          "noise": "N2",
+          "angle_ids": [
+            "A14",
+            "A15"
+          ],
+          "channel_counts": [
+            1,
+            1
+          ],
+          "fisher_matrix": [
+            [
+              1.4268527250444145,
+              2.0024065981931516
+            ],
+            [
+              2.0024065981931516,
+              2.8101456302991923
+            ]
+          ]
+        }
+      },
+      "M2_order_total_extended": {
+        "N1": {
+          "rank": 2,
+          "full_rank": true,
+          "eigenvalues": [
+            0.794080510747885,
+            17.575512864118874
+          ],
+          "minimum_eigenvalue": 0.794080510747885,
+          "condition_number": 22.1331623509634,
+          "logdet": 2.635936194779929,
+          "condition_number_is_infinite": false,
+          "logdet_defined": true,
+          "trace_inverse": 1.3162154942397555,
+          "covariance_scaled": [
+            [
+              0.8072367990593322,
+              -0.5824212176624489
+            ],
+            [
+              -0.5824212176624489,
+              0.5089786951804233
+            ]
+          ],
+          "parameter_correlation_rho_hw": -0.9086296620164915,
+          "crlb": {
+            "sigma_theta_h": 0.8984635769241468,
+            "sigma_theta_w": 0.7134274281105425,
+            "sigma_h_nm": 4.492317884620734,
+            "sigma_w_nm": 0.7134274281105425
+          },
+          "regularization": {
+            "eigen_floor": 1e-14,
+            "used_for_inversion": false
+          },
+          "contract": "M2",
+          "noise": "N1",
+          "angle_ids": [
+            "A14",
+            "A15"
+          ],
+          "channel_counts": [
+            3,
+            2
+          ],
+          "fisher_matrix": [
+            [
+              7.103496127991583,
+              8.128487309392746
+            ],
+            [
+              8.128487309392746,
+              11.266097246875177
+            ]
+          ]
+        },
+        "N2": {
+          "rank": 2,
+          "full_rank": true,
+          "eigenvalues": [
+            0.032873516357281196,
+            4.260288953484063
+          ],
+          "minimum_eigenvalue": 0.032873516357281196,
+          "condition_number": 129.59638717019837,
+          "logdet": -1.9657509318818125,
+          "condition_number_is_infinite": false,
+          "logdet_defined": true,
+          "trace_inverse": 30.654349645320742,
+          "covariance_scaled": [
+            [
+              20.067908874670085,
+              -14.32855387877038
+            ],
+            [
+              -14.328553878770379,
+              10.58644077065066
+            ]
+          ],
+          "parameter_correlation_rho_hw": -0.9830516011810284,
+          "crlb": {
+            "sigma_theta_h": 4.479721963991748,
+            "sigma_theta_w": 3.2536811107806276,
+            "sigma_h_nm": 22.398609819958743,
+            "sigma_w_nm": 3.2536811107806276
+          },
+          "regularization": {
+            "eigen_floor": 1e-14,
+            "used_for_inversion": false
+          },
+          "contract": "M2",
+          "noise": "N2",
+          "angle_ids": [
+            "A14",
+            "A15"
+          ],
+          "channel_counts": [
+            3,
+            2
+          ],
+          "fisher_matrix": [
+            [
+              1.4826382138788363,
+              2.006723694065602
+            ],
+            [
+              2.006723694065602,
+              2.810524255962508
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "pair_rank_position_M0_M1": 120,
+  "compared_against": "all Task005 pairs and the robust triple/quad candidate tables",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270"
+}

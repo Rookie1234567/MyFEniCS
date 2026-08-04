@@ -1,0 +1,1 @@
+bash -lc 'source scripts/activate_myfenics_surrogate_wsl.sh && python benchmarks/cases/132_task005_sensitivity_dataset/checker.py'

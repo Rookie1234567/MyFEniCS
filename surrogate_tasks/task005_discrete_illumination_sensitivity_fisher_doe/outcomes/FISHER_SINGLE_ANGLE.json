@@ -1,0 +1,5186 @@
+{
+  "schema_version": "task005.fisher-single-angle.v1",
+  "angles": [
+    {
+      "angle_id": "A00",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.5752610456990013,
+              91.9643343521576
+            ],
+            "minimum_eigenvalue": 1.5752610456990013,
+            "condition_number": 58.38037740046422,
+            "logdet": 4.975821833644969,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.6456891991745395,
+            "covariance_scaled": [
+              [
+                0.2809617491894716,
+                -0.30914659743665746
+              ],
+              [
+                -0.3091465974366575,
+                0.36472744998506795
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9657320545567679,
+            "crlb": {
+              "sigma_theta_h": 0.5300582507512468,
+              "sigma_theta_w": 0.6039266925588469,
+              "sigma_h_nm": 2.650291253756234,
+              "sigma_w_nm": 0.6039266925588469
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A00"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                52.83727549680299,
+                44.78539780411005
+              ],
+              [
+                44.78539780411005,
+                40.70231990105363
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.39018154794794924,
+              4.6808096639135455
+            ],
+            "minimum_eigenvalue": 0.39018154794794924,
+            "condition_number": 11.996491603795606,
+            "logdet": 0.6023279594609977,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 2.776547763518641,
+            "covariance_scaled": [
+              [
+                1.287285150436558,
+                -1.1702863479111245
+              ],
+              [
+                -1.1702863479111243,
+                1.4892626130820834
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8452187360631239,
+            "crlb": {
+              "sigma_theta_h": 1.1345858938117281,
+              "sigma_theta_w": 1.2203534787437955,
+              "sigma_h_nm": 5.672929469058641,
+              "sigma_w_nm": 1.2203534787437955
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A00"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                2.719937946798597,
+                2.1373706815322904
+              ],
+              [
+                2.1373706815322904,
+                2.3510532650628972
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.573384584190471,
+              91.41527992872561
+            ],
+            "minimum_eigenvalue": 1.573384584190471,
+            "condition_number": 58.101039534310736,
+            "logdet": 4.968641726046902,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.6465116070353933,
+            "covariance_scaled": [
+              [
+                0.2836814677333607,
+                -0.30979929198690925
+              ],
+              [
+                -0.3097992919869092,
+                0.3628301393020327
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9656355822544668,
+            "crlb": {
+              "sigma_theta_h": 0.5326175623591103,
+              "sigma_theta_w": 0.6023538323128962,
+              "sigma_h_nm": 2.6630878117955517,
+              "sigma_w_nm": 0.6023538323128962
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A00"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                52.18636406768219,
+                44.55886346883876
+              ],
+              [
+                44.55886346883876,
+                40.80230044523389
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.38963399433366075,
+              4.647575587742024
+            ],
+            "minimum_eigenvalue": 0.38963399433366075,
+            "condition_number": 11.92805467523478,
+            "logdet": 0.5937982480834155,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 2.781677119858473,
+            "covariance_scaled": [
+              [
+                1.299619084653618,
+                -1.172128449203822
+              ],
+              [
+                -1.1721284492038222,
+                1.4820580352048551
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8445678821476279,
+            "crlb": {
+              "sigma_theta_h": 1.1400083704313833,
+              "sigma_theta_w": 1.2173980594714513,
+              "sigma_h_nm": 5.700041852156916,
+              "sigma_w_nm": 1.2173980594714513
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A00"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                2.6837898916557172,
+                2.1225528346199303
+              ],
+              [
+                2.1225528346199303,
+                2.3534196904199676
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.5763869909495867,
+              91.41934360481758
+            ],
+            "minimum_eigenvalue": 1.5763869909495867,
+            "condition_number": 57.99295739540977,
+            "logdet": 4.97059260680795,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.6453006012646654,
+            "covariance_scaled": [
+              [
+                0.2831287299212831,
+                -0.3091960983741509
+              ],
+              [
+                -0.30919609837415096,
+                0.36217187134338225
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9655720282398726,
+            "crlb": {
+              "sigma_theta_h": 0.5320984212730602,
+              "sigma_theta_w": 0.6018071712296076,
+              "sigma_h_nm": 2.660492106365301,
+              "sigma_w_nm": 0.6018071712296076
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A00"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                52.19340832909009,
+                44.55894975041509
+              ],
+              [
+                44.55894975041509,
+                40.80232226667708
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.3897609735823072,
+              4.647731252592149
+            ],
+            "minimum_eigenvalue": 0.3897609735823072,
+            "condition_number": 11.924568049681021,
+            "logdet": 0.5941575818659555,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 2.780833776151039,
+            "covariance_scaled": [
+              [
+                1.2991526533485451,
+                -1.1717092447197501
+              ],
+              [
+                -1.1717092447197501,
+                1.4816811228024935
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8445247666117627,
+            "crlb": {
+              "sigma_theta_h": 1.1398037784410724,
+              "sigma_theta_w": 1.2172432471788428,
+              "sigma_h_nm": 5.699018892205362,
+              "sigma_w_nm": 1.2172432471788428
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A00"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                2.684071662894533,
+                2.122556285900023
+              ],
+              [
+                2.122556285900023,
+                2.3534205632799234
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A01",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.2442386078641796,
+              105.62283318085935
+            ],
+            "minimum_eigenvalue": 1.2442386078641796,
+            "condition_number": 84.88953205058324,
+            "logdet": 4.878398354092022,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.8131720146487043,
+            "covariance_scaled": [
+              [
+                0.3365173031163466,
+                -0.3908879206871996
+              ],
+              [
+                -0.39088792068719963,
+                0.4766547115323576
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9759927800787924,
+            "crlb": {
+              "sigma_theta_h": 0.5801011145622343,
+              "sigma_theta_w": 0.6904018478627919,
+              "sigma_h_nm": 2.9005055728111717,
+              "sigma_w_nm": 0.6904018478627919
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A01"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                62.64196548594657,
+                51.37049323994514
+              ],
+              [
+                51.37049323994514,
+                44.22510630277696
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.30576457722410333,
+              5.617024305230081
+            ],
+            "minimum_eigenvalue": 0.30576457722410333,
+            "condition_number": 18.370421963932102,
+            "logdet": 0.5408622120124498,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 3.4485202326605684,
+            "covariance_scaled": [
+              [
+                1.5340866969257783,
+                -1.5344904701368125
+              ],
+              [
+                -1.5344904701368125,
+                1.91443353573479
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8954041378018464,
+            "crlb": {
+              "sigma_theta_h": 1.2385825353708886,
+              "sigma_theta_w": 1.3836305633133397,
+              "sigma_h_nm": 6.1929126768544425,
+              "sigma_w_nm": 1.3836305633133397
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A01"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                3.288014828580397,
+                2.635467529139699
+              ],
+              [
+                2.635467529139699,
+                2.634774053873787
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.2368519778180627,
+              104.33427772573575
+            ],
+            "minimum_eigenvalue": 1.2368519778180627,
+            "condition_number": 84.35470015562608,
+            "logdet": 4.860169377532929,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.8180887625445454,
+            "covariance_scaled": [
+              [
+                0.3436830735244616,
+                -0.3940761779852298
+              ],
+              [
+                -0.39407617798522987,
+                0.4744056890200838
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9759468495458961,
+            "crlb": {
+              "sigma_theta_h": 0.5862448921094849,
+              "sigma_theta_w": 0.6887711441546341,
+              "sigma_h_nm": 2.9312244605474245,
+              "sigma_w_nm": 0.6887711441546341
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A01"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                61.22018394662401,
+                50.8539772258443
+              ],
+              [
+                50.8539772258443,
+                44.3509457569298
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.30377692208919993,
+              5.536280514205221
+            ],
+            "minimum_eigenvalue": 0.30377692208919993,
+            "condition_number": 18.2248225972201,
+            "logdet": 0.5198612320876446,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 3.4725159875646163,
+            "covariance_scaled": [
+              [
+                1.5669130098125428,
+                -1.5463864469489152
+              ],
+              [
+                -1.5463864469489152,
+                1.9056029777520735
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8949100393003526,
+            "crlb": {
+              "sigma_theta_h": 1.2517639593040466,
+              "sigma_theta_w": 1.380435792694493,
+              "sigma_h_nm": 6.258819796520233,
+              "sigma_w_nm": 1.380435792694493
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A01"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                3.204832139203709,
+                2.600703841603515
+              ],
+              [
+                2.600703841603515,
+                2.635225297090712
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.2447508567486913,
+              104.34458517067539
+            ],
+            "minimum_eigenvalue": 1.2447508567486913,
+            "condition_number": 83.82768696639026,
+            "logdet": 4.866634135973214,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.8129572495557715,
+            "covariance_scaled": [
+              [
+                0.34146912903818993,
+                -0.39153467478394277
+              ],
+              [
+                -0.3915346747839428,
+                0.47148812051758165
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.975796214321969,
+            "crlb": {
+              "sigma_theta_h": 0.5843535993199579,
+              "sigma_theta_w": 0.6866499257391511,
+              "sigma_h_nm": 2.9217679965997894,
+              "sigma_w_nm": 0.6866499257391511
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A01"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                61.23829711522142,
+                50.85370278048519
+              ],
+              [
+                50.85370278048519,
+                44.351038912202654
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.3041127067325624,
+              5.5366729893541
+            ],
+            "minimum_eigenvalue": 0.3041127067325624,
+            "condition_number": 18.205990301559698,
+            "logdet": 0.5210368764684943,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 3.4688684591791685,
+            "covariance_scaled": [
+              [
+                1.5650741727909863,
+                -1.544562994782448
+              ],
+              [
+                -1.5445629947824477,
+                1.9037942863881823
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8948044881367473,
+            "crlb": {
+              "sigma_theta_h": 1.2510292453779752,
+              "sigma_theta_w": 1.3797805210931855,
+              "sigma_h_nm": 6.255146226889876,
+              "sigma_w_nm": 1.3797805210931855
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A01"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                3.2055566727539824,
+                2.6006928636218247
+              ],
+              [
+                2.6006928636218247,
+                2.6352290233326796
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A02",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.1792091706489352,
+              103.58493609810569
+            ],
+            "minimum_eigenvalue": 1.1792091706489352,
+            "condition_number": 87.84271584412922,
+            "logdet": 4.805235934226318,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.85767988271949,
+            "covariance_scaled": [
+              [
+                0.36188536413701566,
+                -0.4138043144373019
+              ],
+              [
+                -0.413804314437302,
+                0.4957945185824743
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9769191982617746,
+            "crlb": {
+              "sigma_theta_h": 0.6015690850908278,
+              "sigma_theta_w": 0.7041267773508364,
+              "sigma_h_nm": 3.007845425454139,
+              "sigma_w_nm": 0.7041267773508364
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A02"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                60.560460860447186,
+                50.5454962673124
+              ],
+              [
+                50.5454962673124,
+                44.20368440830744
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.2901669644200682,
+              5.490282015999304
+            ],
+            "minimum_eigenvalue": 0.2901669644200682,
+            "condition_number": 18.921113321677606,
+            "logdet": 0.4656808409401758,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 3.6284317023470267,
+            "covariance_scaled": [
+              [
+                1.6359843675431525,
+                -1.6223147358779901
+              ],
+              [
+                -1.6223147358779901,
+                1.992447334803874
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8985704094402923,
+            "crlb": {
+              "sigma_theta_h": 1.2790560455051032,
+              "sigma_theta_w": 1.4115407662564599,
+              "sigma_h_nm": 6.395280227525516,
+              "sigma_w_nm": 1.4115407662564599
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A02"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                3.174164793444093,
+                2.5845071177333563
+              ],
+              [
+                2.5845071177333563,
+                2.6062841869752784
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.1792091706489352,
+              103.58493609810569
+            ],
+            "minimum_eigenvalue": 1.1792091706489352,
+            "condition_number": 87.84271584412922,
+            "logdet": 4.805235934226318,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.85767988271949,
+            "covariance_scaled": [
+              [
+                0.36188536413701566,
+                -0.4138043144373019
+              ],
+              [
+                -0.413804314437302,
+                0.4957945185824743
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9769191982617746,
+            "crlb": {
+              "sigma_theta_h": 0.6015690850908278,
+              "sigma_theta_w": 0.7041267773508364,
+              "sigma_h_nm": 3.007845425454139,
+              "sigma_w_nm": 0.7041267773508364
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A02"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                60.560460860447186,
+                50.5454962673124
+              ],
+              [
+                50.5454962673124,
+                44.20368440830744
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.2901669644200682,
+              5.490282015999304
+            ],
+            "minimum_eigenvalue": 0.2901669644200682,
+            "condition_number": 18.921113321677606,
+            "logdet": 0.4656808409401758,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 3.6284317023470267,
+            "covariance_scaled": [
+              [
+                1.6359843675431525,
+                -1.6223147358779901
+              ],
+              [
+                -1.6223147358779901,
+                1.992447334803874
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8985704094402923,
+            "crlb": {
+              "sigma_theta_h": 1.2790560455051032,
+              "sigma_theta_w": 1.4115407662564599,
+              "sigma_h_nm": 6.395280227525516,
+              "sigma_w_nm": 1.4115407662564599
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A02"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                3.174164793444093,
+                2.5845071177333563
+              ],
+              [
+                2.5845071177333563,
+                2.6062841869752784
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.1792091706489352,
+              103.58493609810569
+            ],
+            "minimum_eigenvalue": 1.1792091706489352,
+            "condition_number": 87.84271584412922,
+            "logdet": 4.805235934226318,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.85767988271949,
+            "covariance_scaled": [
+              [
+                0.36188536413701566,
+                -0.4138043144373019
+              ],
+              [
+                -0.413804314437302,
+                0.4957945185824743
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9769191982617746,
+            "crlb": {
+              "sigma_theta_h": 0.6015690850908278,
+              "sigma_theta_w": 0.7041267773508364,
+              "sigma_h_nm": 3.007845425454139,
+              "sigma_w_nm": 0.7041267773508364
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A02"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                60.560460860447186,
+                50.5454962673124
+              ],
+              [
+                50.5454962673124,
+                44.20368440830744
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.2901669644200682,
+              5.490282015999304
+            ],
+            "minimum_eigenvalue": 0.2901669644200682,
+            "condition_number": 18.921113321677606,
+            "logdet": 0.4656808409401758,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 3.6284317023470267,
+            "covariance_scaled": [
+              [
+                1.6359843675431525,
+                -1.6223147358779901
+              ],
+              [
+                -1.6223147358779901,
+                1.992447334803874
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8985704094402923,
+            "crlb": {
+              "sigma_theta_h": 1.2790560455051032,
+              "sigma_theta_w": 1.4115407662564599,
+              "sigma_h_nm": 6.395280227525516,
+              "sigma_w_nm": 1.4115407662564599
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A02"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                3.174164793444093,
+                2.5845071177333563
+              ],
+              [
+                2.5845071177333563,
+                2.6062841869752784
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A03",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              7.651094154534988,
+              206.0995333596469
+            ],
+            "minimum_eigenvalue": 7.651094154534988,
+            "condition_number": 26.937262723069058,
+            "logdet": 7.363207888096213,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.1355522851879442,
+            "covariance_scaled": [
+              [
+                0.06308197136675277,
+                -0.06274877995162408
+              ],
+              [
+                -0.06274877995162406,
+                0.07247031382119144
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9280525889784667,
+            "crlb": {
+              "sigma_theta_h": 0.25116124575012116,
+              "sigma_theta_w": 0.26920310886241905,
+              "sigma_h_nm": 1.2558062287506058,
+              "sigma_w_nm": 0.26920310886241905
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A03"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                114.27749103566617,
+                98.94773128916498
+              ],
+              [
+                98.94773128916498,
+                99.47313647851573
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.8698578241430361,
+              17.119628313285634
+            ],
+            "minimum_eigenvalue": 1.8698578241430361,
+            "condition_number": 9.155577548325972,
+            "logdet": 3.466088057911392,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.59321250219228,
+            "covariance_scaled": [
+              [
+                0.29806090710062755,
+                -0.2381893261147011
+              ],
+              [
+                -0.23818932611470106,
+                0.2951515950916524
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8030585660587999,
+            "crlb": {
+              "sigma_theta_h": 0.5459495462958345,
+              "sigma_theta_w": 0.5432785612295523,
+              "sigma_h_nm": 2.7297477314791725,
+              "sigma_w_nm": 0.5432785612295523
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A03"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                9.448177681218523,
+                7.624743055183465
+              ],
+              [
+                7.624743055183465,
+                9.541308456210148
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              7.622661440981332,
+              205.51170922134344
+            ],
+            "minimum_eigenvalue": 7.622661440981332,
+            "condition_number": 26.960624030402446,
+            "logdet": 7.356628590680138,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.1360536785779337,
+            "covariance_scaled": [
+              [
+                0.0639188185084373,
+                -0.06302720098694967
+              ],
+              [
+                -0.06302720098694967,
+                0.07213486006949643
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9281989108662684,
+            "crlb": {
+              "sigma_theta_h": 0.2528217128896118,
+              "sigma_theta_w": 0.2685793366390952,
+              "sigma_h_nm": 1.264108564448059,
+              "sigma_w_nm": 0.2685793366390952
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A03"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                113.00258959863604,
+                98.73502103999772
+              ],
+              [
+                98.73502103999772,
+                100.13178106368875
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.8620263616876809,
+              17.02786204374607
+            ],
+            "minimum_eigenvalue": 1.8620263616876809,
+            "condition_number": 9.144801810599803,
+            "logdet": 3.456516282685011,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.5957766033420356,
+            "covariance_scaled": [
+              [
+                0.3019068244769649,
+                -0.2391272598020222
+              ],
+              [
+                -0.23912725980202224,
+                0.29386977886507076
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8028144097506191,
+            "crlb": {
+              "sigma_theta_h": 0.5494604849094836,
+              "sigma_theta_w": 0.5420975731960721,
+              "sigma_h_nm": 2.747302424547418,
+              "sigma_w_nm": 0.5420975731960721
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A03"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                9.317531600521333,
+                7.581847335089293
+              ],
+              [
+                7.581847335089293,
+                9.572356804912417
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              7.636787028935792,
+              205.52723629642045
+            ],
+            "minimum_eigenvalue": 7.636787028935792,
+            "condition_number": 26.91278878377485,
+            "logdet": 7.358555530649682,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.13581065598292663,
+            "covariance_scaled": [
+              [
+                0.06379585672434321,
+                -0.06290570500986226
+              ],
+              [
+                -0.06290570500986226,
+                0.07201479925858344
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9280746704261852,
+            "crlb": {
+              "sigma_theta_h": 0.2525784169804364,
+              "sigma_theta_w": 0.26835573267322504,
+              "sigma_h_nm": 1.262892084902182,
+              "sigma_w_nm": 0.26835573267322504
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A03"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                113.03210516012356,
+                98.73476475738393
+              ],
+              [
+                98.73476475738393,
+                100.1319181652327
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.8626395195641616,
+              17.028435001541496
+            ],
+            "minimum_eigenvalue": 1.8626395195641616,
+            "condition_number": 9.142099060330242,
+            "logdet": 3.456879172188483,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.59559783734748,
+            "covariance_scaled": [
+              [
+                0.3017974584385323,
+                -0.2390401755641609
+              ],
+              [
+                -0.23904017556416093,
+                0.2938003789089476
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8027622365908036,
+            "crlb": {
+              "sigma_theta_h": 0.5493609545995531,
+              "sigma_theta_w": 0.542033558840177,
+              "sigma_h_nm": 2.746804772997766,
+              "sigma_w_nm": 0.542033558840177
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A03"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                9.31871223209285,
+                7.581837083612861
+              ],
+              [
+                7.581837083612861,
+                9.572362289012808
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A04",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              6.709562248926602,
+              214.6410642494956
+            ],
+            "minimum_eigenvalue": 6.709562248926602,
+            "condition_number": 31.990323106970795,
+            "logdet": 7.272500874650415,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.15369996054726653,
+            "covariance_scaled": [
+              [
+                0.06968514700678513,
+                -0.07183461110311942
+              ],
+              [
+                -0.07183461110311942,
+                0.08401481354048142
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9388272801760822,
+            "crlb": {
+              "sigma_theta_h": 0.2639794442883482,
+              "sigma_theta_w": 0.2898530895824321,
+              "sigma_h_nm": 1.319897221441741,
+              "sigma_w_nm": 0.2898530895824321
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A04"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                120.99373055216063,
+                103.45244146667274
+              ],
+              [
+                103.45244146667274,
+                100.35689594626157
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.6279347728570515,
+              18.764712275308817
+            ],
+            "minimum_eigenvalue": 1.6279347728570515,
+            "condition_number": 11.526697867861406,
+            "logdet": 3.4192903003840796,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.6675667435809512,
+            "covariance_scaled": [
+              [
+                0.32887184073246745,
+                -0.28044884910587525
+              ],
+              [
+                -0.28044884910587525,
+                0.3386949028484838
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8403031414384149,
+            "crlb": {
+              "sigma_theta_h": 0.5734734873840878,
+              "sigma_theta_w": 0.5819750019102915,
+              "sigma_h_nm": 2.8673674369204387,
+              "sigma_w_nm": 0.5819750019102915
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A04"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                10.34635963701869,
+                8.567075052603975
+              ],
+              [
+                8.567075052603975,
+                10.046287411147182
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              6.661246127914765,
+              213.3334924579543
+            ],
+            "minimum_eigenvalue": 6.661246127914765,
+            "condition_number": 32.0260636465532,
+            "logdet": 7.259163206925597,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.15480955787128575,
+            "covariance_scaled": [
+              [
+                0.07133966325806593,
+                -0.07246390505705137
+              ],
+              [
+                -0.07246390505705137,
+                0.08346989461321982
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9390555293064732,
+            "crlb": {
+              "sigma_theta_h": 0.26709485816478373,
+              "sigma_theta_w": 0.2889115688462818,
+              "sigma_h_nm": 1.3354742908239188,
+              "sigma_w_nm": 0.2889115688462818
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A04"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                118.61630443058912,
+                102.976056964078
+              ],
+              [
+                102.976056964078,
+                101.37843415527993
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.614529259553628,
+              18.529158040231685
+            ],
+            "minimum_eigenvalue": 1.614529259553628,
+            "condition_number": 11.476508047524934,
+            "logdet": 3.398389035642276,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.6733445750980778,
+            "covariance_scaled": [
+              [
+                0.3367815593203944,
+                -0.28270327346164237
+              ],
+              [
+                -0.28270327346164237,
+                0.33656301577768344
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8396987183292249,
+            "crlb": {
+              "sigma_theta_h": 0.5803288372297162,
+              "sigma_theta_w": 0.5801405138220252,
+              "sigma_h_nm": 2.901644186148581,
+              "sigma_w_nm": 0.5801405138220252
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A04"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                10.06857469002533,
+                8.45731375857234
+              ],
+              [
+                8.45731375857234,
+                10.075112609759984
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              6.732013877898389,
+              213.4095443977256
+            ],
+            "minimum_eigenvalue": 6.732013877898389,
+            "condition_number": 31.700698820357772,
+            "logdet": 7.270087401063825,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.15322978600907555,
+            "covariance_scaled": [
+              [
+                0.0705671828905206,
+                -0.07167437392111475
+              ],
+              [
+                -0.07167437392111475,
+                0.08266260311855496
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9384431727858755,
+            "crlb": {
+              "sigma_theta_h": 0.26564484352330386,
+              "sigma_theta_w": 0.2875110486895329,
+              "sigma_h_nm": 1.3282242176165193,
+              "sigma_w_nm": 0.2875110486895329
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A04"
+            ],
+            "channel_counts": [
+              6
+            ],
+            "fisher_matrix": [
+              [
+                118.75937920164124,
+                102.97285387117498
+              ],
+              [
+                102.97285387117498,
+                101.38217907398275
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              1.6175946554882388,
+              18.531965915111194
+            ],
+            "minimum_eigenvalue": 1.6175946554882388,
+            "condition_number": 11.456495514642812,
+            "logdet": 3.4004373936101833,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.6721626605456703,
+            "covariance_scaled": [
+              [
+                0.33609741334779164,
+                -0.2821205139689261
+              ],
+              [
+                -0.2821205139689261,
+                0.33606524719787867
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8394411973522462,
+            "crlb": {
+              "sigma_theta_h": 0.5797390907535834,
+              "sigma_theta_w": 0.5797113481706897,
+              "sigma_h_nm": 2.898695453767917,
+              "sigma_w_nm": 0.5797113481706897
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A04"
+            ],
+            "channel_counts": [
+              6
+            ],
+            "fisher_matrix": [
+              [
+                10.074298159600062,
+                8.457185616069012
+              ],
+              [
+                8.457185616069012,
+                10.075262410999372
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A05",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              59.422992673169745,
+              310.5708832240761
+            ],
+            "minimum_eigenvalue": 59.422992673169745,
+            "condition_number": 5.2264429853312135,
+            "logdet": 9.82309339618763,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.020048379682904308,
+            "covariance_scaled": [
+              [
+                0.015055274979116955,
+                -0.004581141506166953
+              ],
+              [
+                -0.004581141506166953,
+                0.004993104703787352
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5283771453367623,
+            "crlb": {
+              "sigma_theta_h": 0.12269993879019238,
+              "sigma_theta_w": 0.07066190419021662,
+              "sigma_h_nm": 0.6134996939509619,
+              "sigma_w_nm": 0.07066190419021662
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A05"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                92.14800354616119,
+                84.54520159281583
+              ],
+              [
+                84.54520159281583,
+                277.84587235108467
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              12.919533026755392,
+              64.79983036819546
+            ],
+            "minimum_eigenvalue": 12.919533026755392,
+            "condition_number": 5.015648029537896,
+            "logdet": 6.730043339841322,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.09283431754923926,
+            "covariance_scaled": [
+              [
+                0.07124490200498218,
+                -0.018537923465190613
+              ],
+              [
+                -0.018537923465190613,
+                0.021589415544257085
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.47267621076816,
+            "crlb": {
+              "sigma_theta_h": 0.2669174067103571,
+              "sigma_theta_w": 0.14693337110492322,
+              "sigma_h_nm": 1.3345870335517853,
+              "sigma_w_nm": 0.14693337110492322
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A05"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                18.07430351689451,
+                15.519644549708246
+              ],
+              [
+                15.519644549708246,
+                59.64505987805634
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              59.282755735074204,
+              310.267321114391
+            ],
+            "minimum_eigenvalue": 59.282755735074204,
+            "condition_number": 5.233685871502488,
+            "logdet": 9.819752718731403,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.02009133881426146,
+            "covariance_scaled": [
+              [
+                0.01512662573528253,
+                -0.004553276858200252
+              ],
+              [
+                -0.004553276858200252,
+                0.004964713078978929
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5254192132631764,
+            "crlb": {
+              "sigma_theta_h": 0.12299034813871587,
+              "sigma_theta_w": 0.07046072011396796,
+              "sigma_h_nm": 0.6149517406935794,
+              "sigma_w_nm": 0.07046072011396796
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A05"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                91.3184590053239,
+                83.75070613364935
+              ],
+              [
+                83.75070613364935,
+                278.2316178441413
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              12.882983267678924,
+              64.74083731243354
+            ],
+            "minimum_eigenvalue": 12.882983267678924,
+            "condition_number": 5.025298563792798,
+            "logdet": 6.726299495895869,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.09306797400094224,
+            "covariance_scaled": [
+              [
+                0.07159288454615229,
+                -0.018398425986904127
+              ],
+              [
+                -0.01839842598690413,
+                0.02147508945478996
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.4692218730567458,
+            "crlb": {
+              "sigma_theta_h": 0.2675684670250818,
+              "sigma_theta_w": 0.14654381411301523,
+              "sigma_h_nm": 1.337842335125409,
+              "sigma_w_nm": 0.14654381411301523
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A05"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                17.91140839450963,
+                15.34530146481394
+              ],
+              [
+                15.34530146481394,
+                59.71241218560283
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              59.35171763596054,
+              310.2777872464779
+            ],
+            "minimum_eigenvalue": 59.35171763596054,
+            "condition_number": 5.227781092193431,
+            "logdet": 9.820949045552133,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.02007163048138608,
+            "covariance_scaled": [
+              [
+                0.01510856875192813,
+                -0.0045478274726171095
+              ],
+              [
+                -0.0045478274726171095,
+                0.004963061729457949
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5251912474928913,
+            "crlb": {
+              "sigma_theta_h": 0.12291691808668215,
+              "sigma_theta_w": 0.07044900091170882,
+              "sigma_h_nm": 0.6145845904334107,
+              "sigma_w_nm": 0.07044900091170882
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A05"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                91.39736064101935,
+                83.75060603836548
+              ],
+              [
+                83.75060603836548,
+                278.23214424141906
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              12.885837720569198,
+              64.74116000614579
+            ],
+            "minimum_eigenvalue": 12.885837720569198,
+            "condition_number": 5.024210409137918,
+            "logdet": 6.726526023426636,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.09305070234401187,
+            "covariance_scaled": [
+              [
+                0.07157669386323166,
+                -0.01839425391035939
+              ],
+              [
+                -0.01839425391035939,
+                0.02147400848078021
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.4691803336387968,
+            "crlb": {
+              "sigma_theta_h": 0.26753821009947654,
+              "sigma_theta_w": 0.1465401258385573,
+              "sigma_h_nm": 1.3376910504973827,
+              "sigma_w_nm": 0.1465401258385573
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A05"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                17.91456448504989,
+                15.345297461647545
+              ],
+              [
+                15.345297461647545,
+                59.712433241665096
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A06",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              48.06689927858223,
+              328.54615878412505
+            ],
+            "minimum_eigenvalue": 48.06689927858223,
+            "condition_number": 6.835185204686575,
+            "logdet": 9.667271117387306,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.02384804994732801,
+            "covariance_scaled": [
+              [
+                0.018293377245229458,
+                -0.00618799676718815
+              ],
+              [
+                -0.006187996767188149,
+                0.005554672702098554
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.6138664465654068,
+            "crlb": {
+              "sigma_theta_h": 0.1352530119636138,
+              "sigma_theta_w": 0.07452967665365626,
+              "sigma_h_nm": 0.6762650598180691,
+              "sigma_w_nm": 0.07452967665365626
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A06"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                87.72047515395136,
+                97.72205236571084
+              ],
+              [
+                97.72205236571084,
+                288.8925829087559
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              10.35620436034962,
+              69.36096892552905
+            ],
+            "minimum_eigenvalue": 10.35620436034962,
+            "condition_number": 6.6975280239822785,
+            "logdet": 6.5769100971054435,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.11097780413429492,
+            "covariance_scaled": [
+              [
+                0.08673261256369726,
+                -0.02665904275403471
+              ],
+              [
+                -0.026659042754034717,
+                0.02424519157059767
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.581353815231611,
+            "crlb": {
+              "sigma_theta_h": 0.2945040111164825,
+              "sigma_theta_w": 0.15570867532221083,
+              "sigma_h_nm": 1.4725200555824125,
+              "sigma_w_nm": 0.15570867532221083
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A06"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                17.41571797044945,
+                19.149626787419006
+              ],
+              [
+                19.149626787419006,
+                62.301455315429216
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              47.85247514905019,
+              328.22829591923335
+            ],
+            "minimum_eigenvalue": 47.85247514905019,
+            "condition_number": 6.859170709495645,
+            "logdet": 9.661832234229713,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.02394422055382312,
+            "covariance_scaled": [
+              [
+                0.018435957070690092,
+                -0.006154863797222105
+              ],
+              [
+                -0.006154863797222106,
+                0.005508263483133028
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.6107707769703457,
+            "crlb": {
+              "sigma_theta_h": 0.13577907449489443,
+              "sigma_theta_w": 0.07421767635228839,
+              "sigma_h_nm": 0.6788953724744722,
+              "sigma_w_nm": 0.07421767635228839
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A06"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                86.51574075369842,
+                96.67159210617805
+              ],
+              [
+                96.67159210617805,
+                289.56503031458516
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              10.303692521723047,
+              69.28169610616936
+            ],
+            "minimum_eigenvalue": 10.303692521723047,
+            "condition_number": 6.72396773876009,
+            "logdet": 6.570683074101954,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.11148641232633288,
+            "covariance_scaled": [
+              [
+                0.08743859803163133,
+                -0.026492771845683306
+              ],
+              [
+                -0.026492771845683313,
+                0.024047814294701552
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5777474027864663,
+            "crlb": {
+              "sigma_theta_h": 0.29570018267094683,
+              "sigma_theta_w": 0.1550735770358753,
+              "sigma_h_nm": 1.4785009133547342,
+              "sigma_w_nm": 0.1550735770358753
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A06"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                17.166707640507333,
+                18.912058421946224
+              ],
+              [
+                18.912058421946224,
+                62.41868098738507
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              48.015590517313065,
+              328.2542033558839
+            ],
+            "minimum_eigenvalue": 48.015590517313065,
+            "condition_number": 6.83640875430918,
+            "logdet": 9.665314079065164,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.02387298829442,
+            "covariance_scaled": [
+              [
+                0.018371993952648505,
+                -0.006133332684228827
+              ],
+              [
+                -0.0061333326842288255,
+                0.005500994341771497
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.6100954362447419,
+            "crlb": {
+              "sigma_theta_h": 0.1355433286910444,
+              "sigma_theta_w": 0.07416868841884355,
+              "sigma_h_nm": 0.677716643455222,
+              "sigma_w_nm": 0.07416868841884355
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A06"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                86.7029289148433,
+                96.66941550798386
+              ],
+              [
+                96.66941550798386,
+                289.5668649583536
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              10.310373250671603,
+              69.28257651882075
+            ],
+            "minimum_eigenvalue": 10.310373250671603,
+            "condition_number": 6.719696254867182,
+            "logdet": 6.571343953653955,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.11142334253071709,
+            "covariance_scaled": [
+              [
+                0.08738093347744808,
+                -0.026475147201374755
+              ],
+              [
+                -0.026475147201374744,
+                0.024042409053269015
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.577618444361996,
+            "crlb": {
+              "sigma_theta_h": 0.29560266148573167,
+              "sigma_theta_w": 0.15505614806665685,
+              "sigma_h_nm": 1.4780133074286583,
+              "sigma_w_nm": 0.15505614806665685
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A06"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                17.174195394352733,
+                18.91197134709915
+              ],
+              [
+                18.91197134709915,
+                62.41875437513961
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A07",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              50.32826047451272,
+              319.95093537125194
+            ],
+            "minimum_eigenvalue": 50.32826047451272,
+            "condition_number": 6.357281820484969,
+            "logdet": 9.68673441486621,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.02299503144739371,
+            "covariance_scaled": [
+              [
+                0.01771641472061359,
+                -0.005605023682494148
+              ],
+              [
+                -0.005605023682494145,
+                0.005278616726780123
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5796014564180942,
+            "crlb": {
+              "sigma_theta_h": 0.13310302295820928,
+              "sigma_theta_w": 0.07265408953926904,
+              "sigma_h_nm": 0.6655151147910464,
+              "sigma_w_nm": 0.07265408953926904
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A07"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                84.99931653677643,
+                90.25530869998572
+              ],
+              [
+                90.25530869998572,
+                285.27987930898826
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              10.890732171710962,
+              67.79061225965087
+            ],
+            "minimum_eigenvalue": 10.890732171710962,
+            "condition_number": 6.22461476334339,
+            "logdet": 6.604335891195955,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.10657249613960926,
+            "covariance_scaled": [
+              [
+                0.08354727008612418,
+                -0.023858172209294357
+              ],
+              [
+                -0.02385817220929436,
+                0.023025226053485073
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5439626561662044,
+            "crlb": {
+              "sigma_theta_h": 0.2890454464026794,
+              "sigma_theta_w": 0.1517406539246654,
+              "sigma_h_nm": 1.445227232013397,
+              "sigma_w_nm": 0.1517406539246654
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A07"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                16.999280371090947,
+                17.614235690258432
+              ],
+              [
+                17.614235690258432,
+                61.68206406027089
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              50.32826047451272,
+              319.95093537125194
+            ],
+            "minimum_eigenvalue": 50.32826047451272,
+            "condition_number": 6.357281820484969,
+            "logdet": 9.68673441486621,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.02299503144739371,
+            "covariance_scaled": [
+              [
+                0.01771641472061359,
+                -0.005605023682494148
+              ],
+              [
+                -0.005605023682494145,
+                0.005278616726780123
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5796014564180942,
+            "crlb": {
+              "sigma_theta_h": 0.13310302295820928,
+              "sigma_theta_w": 0.07265408953926904,
+              "sigma_h_nm": 0.6655151147910464,
+              "sigma_w_nm": 0.07265408953926904
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A07"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                84.99931653677643,
+                90.25530869998572
+              ],
+              [
+                90.25530869998572,
+                285.27987930898826
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              10.890732171710962,
+              67.79061225965087
+            ],
+            "minimum_eigenvalue": 10.890732171710962,
+            "condition_number": 6.22461476334339,
+            "logdet": 6.604335891195955,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.10657249613960926,
+            "covariance_scaled": [
+              [
+                0.08354727008612418,
+                -0.023858172209294357
+              ],
+              [
+                -0.02385817220929436,
+                0.023025226053485073
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5439626561662044,
+            "crlb": {
+              "sigma_theta_h": 0.2890454464026794,
+              "sigma_theta_w": 0.1517406539246654,
+              "sigma_h_nm": 1.445227232013397,
+              "sigma_w_nm": 0.1517406539246654
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A07"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                16.999280371090947,
+                17.614235690258432
+              ],
+              [
+                17.614235690258432,
+                61.68206406027089
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              50.32826047451272,
+              319.95093537125194
+            ],
+            "minimum_eigenvalue": 50.32826047451272,
+            "condition_number": 6.357281820484969,
+            "logdet": 9.68673441486621,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.02299503144739371,
+            "covariance_scaled": [
+              [
+                0.01771641472061359,
+                -0.005605023682494148
+              ],
+              [
+                -0.005605023682494145,
+                0.005278616726780123
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5796014564180942,
+            "crlb": {
+              "sigma_theta_h": 0.13310302295820928,
+              "sigma_theta_w": 0.07265408953926904,
+              "sigma_h_nm": 0.6655151147910464,
+              "sigma_w_nm": 0.07265408953926904
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A07"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                84.99931653677643,
+                90.25530869998572
+              ],
+              [
+                90.25530869998572,
+                285.27987930898826
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              10.890732171710962,
+              67.79061225965087
+            ],
+            "minimum_eigenvalue": 10.890732171710962,
+            "condition_number": 6.22461476334339,
+            "logdet": 6.604335891195955,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.10657249613960926,
+            "covariance_scaled": [
+              [
+                0.08354727008612418,
+                -0.023858172209294357
+              ],
+              [
+                -0.02385817220929436,
+                0.023025226053485073
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5439626561662044,
+            "crlb": {
+              "sigma_theta_h": 0.2890454464026794,
+              "sigma_theta_w": 0.1517406539246654,
+              "sigma_h_nm": 1.445227232013397,
+              "sigma_w_nm": 0.1517406539246654
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A07"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                16.999280371090947,
+                17.614235690258432
+              ],
+              [
+                17.614235690258432,
+                61.68206406027089
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A08",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              36.37336121364968,
+              130.83635927971892
+            ],
+            "minimum_eigenvalue": 36.37336121364968,
+            "condition_number": 3.5970379122020897,
+            "logdet": 8.467784048470575,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.0351357828780144,
+            "covariance_scaled": [
+              [
+                0.009464669881205753,
+                -0.005730495983548744
+              ],
+              [
+                -0.005730495983548743,
+                0.025671112996808652
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.3676352345120182,
+            "crlb": {
+              "sigma_theta_h": 0.0972865349429496,
+              "sigma_theta_w": 0.16022207399983515,
+              "sigma_h_nm": 0.486432674714748,
+              "sigma_w_nm": 0.16022207399983515
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A08"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                122.16775256873491,
+                27.271190598605678
+              ],
+              [
+                27.271190598605678,
+                45.04196792463368
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              5.829470850596318,
+              21.270537635679233
+            ],
+            "minimum_eigenvalue": 5.829470850596318,
+            "condition_number": 3.6487938924170775,
+            "logdet": 4.820249138657547,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.21855554250867568,
+            "covariance_scaled": [
+              [
+                0.08982123568461234,
+                -0.059146402029422666
+              ],
+              [
+                -0.05914640202942267,
+                0.12873430682406334
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5500367012316688,
+            "crlb": {
+              "sigma_theta_h": 0.2997019113796446,
+              "sigma_theta_w": 0.3587956337862312,
+              "sigma_h_nm": 1.498509556898223,
+              "sigma_w_nm": 0.3587956337862312
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A08"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                15.962536421461063,
+                7.333916031282497
+              ],
+              [
+                7.333916031282497,
+                11.137472064814487
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              36.3667323976634,
+              131.1708531524855
+            ],
+            "minimum_eigenvalue": 36.3667323976634,
+            "condition_number": 3.60689136758719,
+            "logdet": 8.470155107600835,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.03512130368041214,
+            "covariance_scaled": [
+              [
+                0.00944873993024963,
+                -0.005739424444407907
+              ],
+              [
+                -0.005739424444407908,
+                0.02567256375016251
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.3685078764214621,
+            "crlb": {
+              "sigma_theta_h": 0.0972046291605993,
+              "sigma_theta_w": 0.16022660125635352,
+              "sigma_h_nm": 0.4860231458029965,
+              "sigma_w_nm": 0.16022660125635352
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A08"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                122.46468367810971,
+                27.378519960803512
+              ],
+              [
+                27.378519960803512,
+                45.072901872039196
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              5.821233761566112,
+              21.30743988044242
+            ],
+            "minimum_eigenvalue": 5.821233761566112,
+            "condition_number": 3.660296210937591,
+            "logdet": 4.8205685276901535,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.2187168536946179,
+            "covariance_scaled": [
+              [
+                0.08985783281286389,
+                -0.05930253033505413
+              ],
+              [
+                -0.059302530335054136,
+                0.12885902088175402
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5511094280678792,
+            "crlb": {
+              "sigma_theta_h": 0.29976296104232736,
+              "sigma_theta_w": 0.3589693871094777,
+              "sigma_h_nm": 1.4988148052116368,
+              "sigma_w_nm": 0.3589693871094777
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A08"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                15.98310447630534,
+                7.355624243988396
+              ],
+              [
+                7.355624243988396,
+                11.145569165703193
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              36.368696620098675,
+              131.19972383499743
+            ],
+            "minimum_eigenvalue": 36.368696620098675,
+            "condition_number": 3.6074903977309885,
+            "logdet": 8.470429193272475,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.03511814097661953,
+            "covariance_scaled": [
+              [
+                0.00944625402650955,
+                -0.005738312431833214
+              ],
+              [
+                -0.005738312431833215,
+                0.025671886950109975
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.36848981153775395,
+            "crlb": {
+              "sigma_theta_h": 0.09719184135774746,
+              "sigma_theta_w": 0.16022448923341892,
+              "sigma_h_nm": 0.4859592067887373,
+              "sigma_w_nm": 0.16022448923341892
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A08"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                122.49502469950545,
+                27.380719011302656
+              ],
+              [
+                27.380719011302656,
+                45.07339575559065
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              5.821580415066949,
+              21.308326644158193
+            ],
+            "minimum_eigenvalue": 5.821580415066949,
+            "condition_number": 3.6602305774235613,
+            "logdet": 4.820669692447298,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.21870467142952266,
+            "covariance_scaled": [
+              [
+                0.0898489020846955,
+                -0.05929724042236805
+              ],
+              [
+                -0.05929724042236806,
+                0.12885576934482718
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5510946071753582,
+            "crlb": {
+              "sigma_theta_h": 0.2997480643552106,
+              "sigma_theta_w": 0.3589648580917458,
+              "sigma_h_nm": 1.498740321776053,
+              "sigma_w_nm": 0.3589648580917458
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A08"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                15.984318137880496,
+                7.355712207755857
+              ],
+              [
+                7.355712207755857,
+                11.145588921344645
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A09",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              35.9676233720263,
+              141.20643908305934
+            ],
+            "minimum_eigenvalue": 35.9676233720263,
+            "condition_number": 3.9259318755234234,
+            "logdet": 8.532842109611131,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.03488461225642784,
+            "covariance_scaled": [
+              [
+                0.00868703859188273,
+                -0.0055393822269024255
+              ],
+              [
+                -0.0055393822269024255,
+                0.02619757366454511
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.3671934475150067,
+            "crlb": {
+              "sigma_theta_h": 0.09320428419274905,
+              "sigma_theta_w": 0.16185664541360392,
+              "sigma_h_nm": 0.46602142096374527,
+              "sigma_w_nm": 0.16185664541360392
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A09"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                133.05380947035104,
+                28.13374692020441
+              ],
+              [
+                28.13374692020441,
+                44.120252984734606
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              5.861591979952882,
+              21.709418280672885
+            ],
+            "minimum_eigenvalue": 5.861591979952882,
+            "condition_number": 3.703672714668788,
+            "logdet": 4.846167424164406,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.21666507383370553,
+            "covariance_scaled": [
+              [
+                0.08583410188939847,
+                -0.05806307784369592
+              ],
+              [
+                -0.05806307784369593,
+                0.13083097194430707
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5479170764231834,
+            "crlb": {
+              "sigma_theta_h": 0.2929745754999885,
+              "sigma_theta_w": 0.361705642676897,
+              "sigma_h_nm": 1.4648728774999427,
+              "sigma_w_nm": 0.361705642676897
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A09"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                16.64847040669176,
+                7.388628386967163
+              ],
+              [
+                7.388628386967163,
+                10.922539853934007
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              35.84268877072368,
+              141.25257167889671
+            ],
+            "minimum_eigenvalue": 35.84268877072368,
+            "condition_number": 3.9409033340788833,
+            "logdet": 8.529689183234398,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.034979209761297814,
+            "covariance_scaled": [
+              [
+                0.008729611445094482,
+                -0.005624272585109774
+              ],
+              [
+                -0.005624272585109774,
+                0.02624959831620333
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.37154170789054447,
+            "crlb": {
+              "sigma_theta_h": 0.09343238970022377,
+              "sigma_theta_w": 0.16201727783234518,
+              "sigma_h_nm": 0.46716194850111886,
+              "sigma_w_nm": 0.16201727783234518
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A09"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                132.8983554010818,
+                28.4749719932701
+              ],
+              [
+                28.4749719932701,
+                44.19690504853861
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              5.8047201524421075,
+              21.727270525521014
+            ],
+            "minimum_eigenvalue": 5.8047201524421075,
+            "condition_number": 3.7430349706660917,
+            "logdet": 4.837239583764784,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.21829870277975721,
+            "covariance_scaled": [
+              [
+                0.08676494851046722,
+                -0.059022101380606574
+              ],
+              [
+                -0.059022101380606574,
+                0.13153375426929
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5524893401128707,
+            "crlb": {
+              "sigma_theta_h": 0.294558904992647,
+              "sigma_theta_w": 0.36267582531689374,
+              "sigma_h_nm": 1.4727945249632348,
+              "sigma_w_nm": 0.36267582531689374
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A09"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                16.589132460549806,
+                7.4439102216934465
+              ],
+              [
+                7.4439102216934465,
+                10.942858217413317
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              35.85040068046977,
+              141.39256589850916
+            ],
+            "minimum_eigenvalue": 35.85040068046977,
+            "condition_number": 3.943960547574455,
+            "logdet": 8.530894920670491,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.034966198655191,
+            "covariance_scaled": [
+              [
+                0.008720091600947687,
+                -0.005620508450753807
+              ],
+              [
+                -0.005620508450753806,
+                0.026246107054243312
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.37152037263377924,
+            "crlb": {
+              "sigma_theta_h": 0.093381430707329,
+              "sigma_theta_w": 0.1620065031233108,
+              "sigma_h_nm": 0.466907153536645,
+              "sigma_w_nm": 0.1620065031233108
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A09"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                133.04099542867908,
+                28.490245717514757
+              ],
+              [
+                28.490245717514757,
+                44.20197115029985
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              5.80612722059808,
+              21.731772848882706
+            ],
+            "minimum_eigenvalue": 5.80612722059808,
+            "condition_number": 3.742903319752637,
+            "logdet": 4.837689153535624,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.21824741831849598,
+            "covariance_scaled": [
+              [
+                0.08672755668197929,
+                -0.059000415992127186
+              ],
+              [
+                -0.05900041599212719,
+                0.1315198616365167
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5524345680790927,
+            "crlb": {
+              "sigma_theta_h": 0.29449542726836914,
+              "sigma_theta_w": 0.36265667184889444,
+              "sigma_h_nm": 1.4724771363418456,
+              "sigma_w_nm": 0.36265667184889444
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A09"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                16.594839172910383,
+                7.4445213243161685
+              ],
+              [
+                7.4445213243161685,
+                10.943060896570401
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A10",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              32.29184306281075,
+              126.3529116370305
+            ],
+            "minimum_eigenvalue": 32.29184306281075,
+            "condition_number": 3.91284298611454,
+            "logdet": 8.313893539368122,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.03888191354250299,
+            "covariance_scaled": [
+              [
+                0.010452242422925322,
+                -0.007215669809541915
+              ],
+              [
+                -0.007215669809541917,
+                0.02842967111957767
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.4185872509628593,
+            "crlb": {
+              "sigma_theta_h": 0.10223620896201757,
+              "sigma_theta_w": 0.16861100533351217,
+              "sigma_h_nm": 0.5111810448100879,
+              "sigma_w_nm": 0.16861100533351217
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A10"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                115.99784552867506,
+                29.441147892026727
+              ],
+              [
+                29.441147892026727,
+                42.6469091711662
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              5.096963528714165,
+              20.455871813795582
+            ],
+            "minimum_eigenvalue": 5.096963528714165,
+            "condition_number": 4.013344748997269,
+            "logdet": 4.646914947424464,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.2450809623091319,
+            "covariance_scaled": [
+              [
+                0.10139731413260848,
+                -0.07055487570913584
+              ],
+              [
+                -0.07055487570913582,
+                0.14368364817652343
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5845344776750055,
+            "crlb": {
+              "sigma_theta_h": 0.31842944922322824,
+              "sigma_theta_w": 0.3790562599094275,
+              "sigma_h_nm": 1.5921472461161412,
+              "sigma_w_nm": 0.3790562599094275
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A10"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                14.980864154738956,
+                7.356251193973754
+              ],
+              [
+                7.356251193973754,
+                10.571971187770787
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              32.29184306281075,
+              126.3529116370305
+            ],
+            "minimum_eigenvalue": 32.29184306281075,
+            "condition_number": 3.91284298611454,
+            "logdet": 8.313893539368122,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.03888191354250299,
+            "covariance_scaled": [
+              [
+                0.010452242422925322,
+                -0.007215669809541915
+              ],
+              [
+                -0.007215669809541917,
+                0.02842967111957767
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.4185872509628593,
+            "crlb": {
+              "sigma_theta_h": 0.10223620896201757,
+              "sigma_theta_w": 0.16861100533351217,
+              "sigma_h_nm": 0.5111810448100879,
+              "sigma_w_nm": 0.16861100533351217
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A10"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                115.99784552867506,
+                29.441147892026727
+              ],
+              [
+                29.441147892026727,
+                42.6469091711662
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              5.096963528714165,
+              20.455871813795582
+            ],
+            "minimum_eigenvalue": 5.096963528714165,
+            "condition_number": 4.013344748997269,
+            "logdet": 4.646914947424464,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.2450809623091319,
+            "covariance_scaled": [
+              [
+                0.10139731413260848,
+                -0.07055487570913584
+              ],
+              [
+                -0.07055487570913582,
+                0.14368364817652343
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5845344776750055,
+            "crlb": {
+              "sigma_theta_h": 0.31842944922322824,
+              "sigma_theta_w": 0.3790562599094275,
+              "sigma_h_nm": 1.5921472461161412,
+              "sigma_w_nm": 0.3790562599094275
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A10"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                14.980864154738956,
+                7.356251193973754
+              ],
+              [
+                7.356251193973754,
+                10.571971187770787
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              32.29184306281075,
+              126.3529116370305
+            ],
+            "minimum_eigenvalue": 32.29184306281075,
+            "condition_number": 3.91284298611454,
+            "logdet": 8.313893539368122,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.03888191354250299,
+            "covariance_scaled": [
+              [
+                0.010452242422925322,
+                -0.007215669809541915
+              ],
+              [
+                -0.007215669809541917,
+                0.02842967111957767
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.4185872509628593,
+            "crlb": {
+              "sigma_theta_h": 0.10223620896201757,
+              "sigma_theta_w": 0.16861100533351217,
+              "sigma_h_nm": 0.5111810448100879,
+              "sigma_w_nm": 0.16861100533351217
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A10"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                115.99784552867506,
+                29.441147892026727
+              ],
+              [
+                29.441147892026727,
+                42.6469091711662
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              5.096963528714165,
+              20.455871813795582
+            ],
+            "minimum_eigenvalue": 5.096963528714165,
+            "condition_number": 4.013344748997269,
+            "logdet": 4.646914947424464,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.2450809623091319,
+            "covariance_scaled": [
+              [
+                0.10139731413260848,
+                -0.07055487570913584
+              ],
+              [
+                -0.07055487570913582,
+                0.14368364817652343
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5845344776750055,
+            "crlb": {
+              "sigma_theta_h": 0.31842944922322824,
+              "sigma_theta_w": 0.3790562599094275,
+              "sigma_h_nm": 1.5921472461161412,
+              "sigma_w_nm": 0.3790562599094275
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A10"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                14.980864154738956,
+                7.356251193973754
+              ],
+              [
+                7.356251193973754,
+                10.571971187770787
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A11",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              17.784990575284564,
+              102.69073227165819
+            ],
+            "minimum_eigenvalue": 17.784990575284564,
+            "condition_number": 5.774011059323551,
+            "logdet": 7.510076747555589,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.065965164620733,
+            "covariance_scaled": [
+              [
+                0.00982897100497395,
+                -0.002054739536336117
+              ],
+              [
+                -0.0020547395363361173,
+                0.05613619361575905
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.08747445993297522,
+            "crlb": {
+              "sigma_theta_h": 0.09914116705473035,
+              "sigma_theta_w": 0.23693077810989235,
+              "sigma_h_nm": 0.49570583527365175,
+              "sigma_w_nm": 0.23693077810989235
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A11"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                102.52454522957203,
+                3.7526811662724384
+              ],
+              [
+                3.7526811662724384,
+                17.95117761737074
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              2.4552151700023077,
+              7.859542434040628
+            ],
+            "minimum_eigenvalue": 2.4552151700023077,
+            "condition_number": 3.2011623787878603,
+            "logdet": 2.9599427932758897,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.5345301477847003,
+            "covariance_scaled": [
+              [
+                0.2247557323339651,
+                -0.13342298885476434
+              ],
+              [
+                -0.13342298885476434,
+                0.30977441545073525
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.50565290146187,
+            "crlb": {
+              "sigma_theta_h": 0.47408409837703386,
+              "sigma_theta_w": 0.5565738185099397,
+              "sigma_h_nm": 2.3704204918851692,
+              "sigma_w_nm": 0.5565738185099397
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A11"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                5.977675946905466,
+                2.5746457791902446
+              ],
+              [
+                2.5746457791902446,
+                4.33708165713747
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              17.829809986837624,
+              103.12661371303832
+            ],
+            "minimum_eigenvalue": 17.829809986837624,
+            "condition_number": 5.7839435074837455,
+            "logdet": 7.516829267541475,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.06578266524256145,
+            "covariance_scaled": [
+              [
+                0.009778023621373023,
+                -0.0019391898953193053
+              ],
+              [
+                -0.0019391898953193055,
+                0.05600464162118842
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.08286722337086007,
+            "crlb": {
+              "sigma_theta_h": 0.09888388959468081,
+              "sigma_theta_w": 0.2366529983355132,
+              "sigma_h_nm": 0.49441944797340404,
+              "sigma_w_nm": 0.2366529983355132
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A11"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                102.97729859551679,
+                3.5656426164533244
+              ],
+              [
+                3.5656426164533244,
+                17.979125104359152
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              2.470963595934021,
+              7.853726341094328
+            ],
+            "minimum_eigenvalue": 2.470963595934021,
+            "condition_number": 3.178406332662149,
+            "logdet": 2.9655963066704913,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.5320285112047761,
+            "covariance_scaled": [
+              [
+                0.22358746969260437,
+                -0.13203718969491876
+              ],
+              [
+                -0.1320371896949188,
+                0.3084410415121718
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5027898028495906,
+            "crlb": {
+              "sigma_theta_h": 0.47285036712749245,
+              "sigma_theta_w": 0.555374685696217,
+              "sigma_h_nm": 2.364251835637462,
+              "sigma_w_nm": 0.555374685696217
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A11"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                5.9856907109279645,
+                2.562349601658703
+              ],
+              [
+                2.562349601658703,
+                4.338999226100384
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              17.83056541179571,
+              103.20933302845944
+            ],
+            "minimum_eigenvalue": 17.83056541179571,
+            "condition_number": 5.7883376463307155,
+            "logdet": 7.517673427914561,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.06577251734064463,
+            "covariance_scaled": [
+              [
+                0.009769940105329392,
+                -0.001935582751975678
+              ],
+              [
+                -0.0019355827519756778,
+                0.05600257723531524
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.08274881552712786,
+            "crlb": {
+              "sigma_theta_h": 0.09884300736688151,
+              "sigma_theta_w": 0.2366486366648142,
+              "sigma_h_nm": 0.49421503683440754,
+              "sigma_w_nm": 0.2366486366648142
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A11"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                103.06046560219228,
+                3.562015704955675
+              ],
+              [
+                3.562015704955675,
+                17.979432838062866
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              2.4722637649686123,
+              7.855765179737603
+            ],
+            "minimum_eigenvalue": 2.4722637649686123,
+            "condition_number": 3.1775594865935917,
+            "logdet": 2.966381914984877,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.5317826323740916,
+            "covariance_scaled": [
+              [
+                0.22341252029904493,
+                -0.13192603099459685
+              ],
+              [
+                -0.13192603099459682,
+                0.3083701120750467
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5026209696047342,
+            "crlb": {
+              "sigma_theta_h": 0.47266533646867415,
+              "sigma_theta_w": 0.5553108247414656,
+              "sigma_h_nm": 2.363326682343371,
+              "sigma_w_nm": 0.5553108247414656
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A11"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                5.989017409190115,
+                2.5622045244115945
+              ],
+              [
+                2.5622045244115945,
+                4.3390115355161
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A12",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              18.774046633725963,
+              105.67882081865875
+            ],
+            "minimum_eigenvalue": 18.774046633725963,
+            "condition_number": 5.628984676580904,
+            "logdet": 7.592879919979211,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.06272765560051069,
+            "covariance_scaled": [
+              [
+                0.009692819013775889,
+                -0.0031669653106641423
+              ],
+              [
+                -0.0031669653106641423,
+                0.053034836586734795
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.13968109696862716,
+            "crlb": {
+              "sigma_theta_h": 0.09845211533418613,
+              "sigma_theta_w": 0.23029293646730634,
+              "sigma_h_nm": 0.49226057667093065,
+              "sigma_w_nm": 0.23029293646730634
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A12"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                105.22212929689107,
+                6.283319697845938
+              ],
+              [
+                6.283319697845938,
+                19.23073815549364
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              2.5280162938210995,
+              8.29583426538834
+            ],
+            "minimum_eigenvalue": 2.5280162938210995,
+            "condition_number": 3.2815588592782277,
+            "logdet": 3.043188414678849,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.5161094981298788,
+            "covariance_scaled": [
+              [
+                0.22496463409521134,
+                -0.13347165575369968
+              ],
+              [
+                -0.1334716557536997,
+                0.29114486403466744
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5215276717507573,
+            "crlb": {
+              "sigma_theta_h": 0.47430436862336756,
+              "sigma_theta_w": 0.5395784132400661,
+              "sigma_h_nm": 2.3715218431168377,
+              "sigma_w_nm": 0.5395784132400661
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A12"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                6.105891309521232,
+                2.7991681242121604
+              ],
+              [
+                2.7991681242121604,
+                4.7179592496882075
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              19.00611932150581,
+              94.73831865425916
+            ],
+            "minimum_eigenvalue": 19.00611932150581,
+            "condition_number": 4.98462190264484,
+            "logdet": 7.495879547257429,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.06317002441731416,
+            "covariance_scaled": [
+              [
+                0.01081579968263247,
+                -0.003299208615316139
+              ],
+              [
+                -0.003299208615316139,
+                0.05235422473468169
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.13864512180680535,
+            "crlb": {
+              "sigma_theta_h": 0.1039990369312739,
+              "sigma_theta_w": 0.2288104559120533,
+              "sigma_h_nm": 0.5199951846563695,
+              "sigma_w_nm": 0.2288104559120533
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A12"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                94.26942482661232,
+                5.940580729157988
+              ],
+              [
+                5.940580729157988,
+                19.475013149152655
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              2.3639415785760973,
+              8.002328756874775
+            ],
+            "minimum_eigenvalue": 2.3639415785760973,
+            "condition_number": 3.3851635037846064,
+            "logdet": 2.9400629802135754,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.5479859222251181,
+            "covariance_scaled": [
+              [
+                0.25156961957621354,
+                -0.14733274295032026
+              ],
+              [
+                -0.14733274295032026,
+                0.29641630264890456
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5395343937869621,
+            "crlb": {
+              "sigma_theta_h": 0.5015671635745441,
+              "sigma_theta_w": 0.5444412756660764,
+              "sigma_h_nm": 2.5078358178727207,
+              "sigma_w_nm": 0.5444412756660764
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A12"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                5.607318364341225,
+                2.7870990489771867
+              ],
+              [
+                2.7870990489771867,
+                4.758951971109647
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              19.17671870928408,
+              95.52119014328909
+            ],
+            "minimum_eigenvalue": 19.17671870928408,
+            "condition_number": 4.981101907546057,
+            "logdet": 7.513045085245203,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.06261544583535807,
+            "covariance_scaled": [
+              [
+                0.010706656878069992,
+                -0.003139012351284788
+              ],
+              [
+                -0.0031390123512847878,
+                0.05190878895728807
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.1331513682998235,
+            "crlb": {
+              "sigma_theta_h": 0.10347297655943793,
+              "sigma_theta_w": 0.2278350038016285,
+              "sigma_h_nm": 0.5173648827971897,
+              "sigma_w_nm": 0.2278350038016285
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A12"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                95.08563685908373,
+                5.749989443522504
+              ],
+              [
+                5.749989443522504,
+                19.61227199348943
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              2.388578142903506,
+              8.015959523136976
+            ],
+            "minimum_eigenvalue": 2.388578142903506,
+            "condition_number": 3.3559544815196807,
+            "logdet": 2.9521327644423865,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.5434102391543782,
+            "covariance_scaled": [
+              [
+                0.24883977959705678,
+                -0.145164222842865
+              ],
+              [
+                -0.14516422284286504,
+                0.29457045955732153
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.5361731885907772,
+            "crlb": {
+              "sigma_theta_h": 0.49883843035301195,
+              "sigma_theta_w": 0.5427434564850335,
+              "sigma_h_nm": 2.4941921517650596,
+              "sigma_w_nm": 0.5427434564850335
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A12"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                5.640065683223725,
+                2.7794224611601415
+              ],
+              [
+                2.7794224611601415,
+                4.764471982816757
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A13",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              3.3250424800673155,
+              16.822221600152638
+            ],
+            "minimum_eigenvalue": 3.3250424800673155,
+            "condition_number": 5.059250130185426,
+            "logdet": 4.024183176674391,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.3601932178880847,
+            "covariance_scaled": [
+              [
+                0.1651184117719592,
+                -0.11971808880413835
+              ],
+              [
+                -0.11971808880413835,
+                0.19507480611612552
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.6670546743493027,
+            "crlb": {
+              "sigma_theta_h": 0.40634764890664643,
+              "sigma_theta_w": 0.441672736441956,
+              "sigma_h_nm": 2.031738244533232,
+              "sigma_w_nm": 0.441672736441956
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A13"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                10.911431529064613,
+                6.696383581174555
+              ],
+              [
+                6.696383581174555,
+                9.235832551155342
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.1596884144143429,
+              3.4967898774202406
+            ],
+            "minimum_eigenvalue": 0.1596884144143429,
+            "condition_number": 21.897580298763152,
+            "logdet": -0.5826854025762904,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 6.548171637826825,
+            "covariance_scaled": [
+              [
+                4.12062501600746,
+                -2.8656880899295905
+              ],
+              [
+                -2.86568808992959,
+                2.4275466218193653
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9060738189436118,
+            "crlb": {
+              "sigma_theta_h": 2.0299322688226473,
+              "sigma_theta_w": 1.55805860667029,
+              "sigma_h_nm": 10.149661344113238,
+              "sigma_w_nm": 1.55805860667029
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A13"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                1.3555343408873592,
+                1.6001911482384346
+              ],
+              [
+                1.6001911482384346,
+                2.3009439509472243
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 1,
+            "full_rank": false,
+            "eigenvalues": [
+              0.0,
+              13.584288445963896
+            ],
+            "minimum_eigenvalue": 0.0,
+            "condition_number": null,
+            "logdet": null,
+            "condition_number_is_infinite": true,
+            "logdet_defined": false,
+            "trace_inverse": null,
+            "covariance_scaled": null,
+            "parameter_correlation_rho_hw": null,
+            "crlb": null,
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A13"
+            ],
+            "channel_counts": [
+              1
+            ],
+            "fisher_matrix": [
+              [
+                4.365802158263343,
+                6.343980401196405
+              ],
+              [
+                6.343980401196405,
+                9.218486287700552
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 1,
+            "full_rank": false,
+            "eigenvalues": [
+              0.0,
+              3.3896690470169175
+            ],
+            "minimum_eigenvalue": 0.0,
+            "condition_number": null,
+            "logdet": null,
+            "condition_number_is_infinite": true,
+            "logdet_defined": false,
+            "trace_inverse": null,
+            "covariance_scaled": null,
+            "parameter_correlation_rho_hw": null,
+            "crlb": null,
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A13"
+            ],
+            "channel_counts": [
+              1
+            ],
+            "fisher_matrix": [
+              [
+                1.0893926833290863,
+                1.5830048137123145
+              ],
+              [
+                1.5830048137123145,
+                2.300276363687831
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              3.7978642564234373,
+              17.536134507933944
+            ],
+            "minimum_eigenvalue": 3.7978642564234373,
+            "condition_number": 4.6173673738534955,
+            "logdet": 4.198702452071351,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 0.32033099263192855,
+            "covariance_scaled": [
+              [
+                0.13869441001043842,
+                -0.100880779804242
+              ],
+              [
+                -0.100880779804242,
+                0.1816365826214901
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.6355903440775477,
+            "crlb": {
+              "sigma_theta_h": 0.3724169840520682,
+              "sigma_theta_w": 0.42618843557925185,
+              "sigma_h_nm": 1.862084920260341,
+              "sigma_w_nm": 0.42618843557925185
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A13"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                12.096970690755224,
+                6.718645654634017
+              ],
+              [
+                6.718645654634017,
+                9.237028073602156
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.1893889892936228,
+              3.510313663818138
+            ],
+            "minimum_eigenvalue": 0.1893889892936228,
+            "condition_number": 18.5349405839843,
+            "logdet": -0.40824683819310903,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 5.565012832139994,
+            "covariance_scaled": [
+              [
+                3.4611417997363665,
+                -2.4036675243214414
+              ],
+              [
+                -2.4036675243214414,
+                2.1038710324036276
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.8907485881540154,
+            "crlb": {
+              "sigma_theta_h": 1.86041441612786,
+              "sigma_theta_w": 1.450472692746619,
+              "sigma_h_nm": 9.3020720806393,
+              "sigma_w_nm": 1.450472692746619
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A13"
+            ],
+            "channel_counts": [
+              4
+            ],
+            "fisher_matrix": [
+              [
+                1.3986845089439808,
+                1.5979936408360298
+              ],
+              [
+                1.5979936408360298,
+                2.30101814416778
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A14",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.5320472976793971,
+              9.092388521636789
+            ],
+            "minimum_eigenvalue": 0.5320472976793971,
+            "condition_number": 17.089436524336435,
+            "logdet": 1.5764147491495324,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 1.9895142493405031,
+            "covariance_scaled": [
+              [
+                1.1923801285151192,
+                -0.8624221642819667
+              ],
+              [
+                -0.8624221642819668,
+                0.797134120825384
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.884599816388144,
+            "crlb": {
+              "sigma_theta_h": 1.0919615966301741,
+              "sigma_theta_w": 0.8928236784636617,
+              "sigma_h_nm": 5.459807983150871,
+              "sigma_w_nm": 0.8928236784636617
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A14"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                3.856200672005287,
+                4.172036853739044
+              ],
+              [
+                4.172036853739044,
+                5.768235147310899
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.022166486827014165,
+              2.1907885054400418
+            ],
+            "minimum_eigenvalue": 0.022166486827014165,
+            "condition_number": 98.833365996913,
+            "logdet": -3.024912205915612,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 45.56960461907305,
+            "covariance_scaled": [
+              [
+                29.64226091944855,
+                -21.249241890929447
+              ],
+              [
+                -21.249241890929447,
+                15.927343699624496
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9779487626252523,
+            "crlb": {
+              "sigma_theta_h": 5.444470673945131,
+              "sigma_theta_w": 3.9909076285507403,
+              "sigma_h_nm": 27.222353369725653,
+              "sigma_w_nm": 3.9909076285507403
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A14"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                0.7734650113440953,
+                1.0319074812587021
+              ],
+              [
+                1.0319074812587021,
+                1.4394899809229609
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 1,
+            "full_rank": false,
+            "eigenvalues": [
+              0.0,
+              8.712070702975941
+            ],
+            "minimum_eigenvalue": 0.0,
+            "condition_number": null,
+            "logdet": null,
+            "condition_number_is_infinite": true,
+            "logdet_defined": false,
+            "trace_inverse": null,
+            "covariance_scaled": null,
+            "parameter_correlation_rho_hw": null,
+            "crlb": null,
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A14"
+            ],
+            "channel_counts": [
+              1
+            ],
+            "fisher_matrix": [
+              [
+                2.944545250668392,
+                4.121011972647163
+              ],
+              [
+                4.121011972647163,
+                5.767525452307549
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 1,
+            "full_rank": false,
+            "eigenvalues": [
+              0.0,
+              2.1748726630383173
+            ],
+            "minimum_eigenvalue": 0.0,
+            "condition_number": null,
+            "logdet": null,
+            "condition_number_is_infinite": true,
+            "logdet_defined": false,
+            "trace_inverse": null,
+            "covariance_scaled": null,
+            "parameter_correlation_rho_hw": null,
+            "crlb": null,
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A14"
+            ],
+            "channel_counts": [
+              1
+            ],
+            "fisher_matrix": [
+              [
+                0.7350733469794339,
+                1.0287653290396714
+              ],
+              [
+                1.0287653290396714,
+                1.4397993160588836
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.43954814377986473,
+              9.02234141210468
+            ],
+            "minimum_eigenvalue": 0.43954814377986473,
+            "condition_number": 20.52640089551434,
+            "logdet": 1.3776958547504394,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 2.3858996143322377,
+            "covariance_scaled": [
+              [
+                1.4550565494623708,
+                -1.0498906624661564
+              ],
+              [
+                -1.0498906624661564,
+                0.9308430648698667
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9021233073167855,
+            "crlb": {
+              "sigma_theta_h": 1.2062572484600333,
+              "sigma_theta_w": 0.9648020858548486,
+              "sigma_h_nm": 6.031286242300167,
+              "sigma_w_nm": 0.9648020858548486
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A14"
+            ],
+            "channel_counts": [
+              3
+            ],
+            "fisher_matrix": [
+              [
+                3.6914940682132564,
+                4.163607485551957
+              ],
+              [
+                4.163607485551957,
+                5.770395487671289
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.018196612797215295,
+              2.186817797340567
+            ],
+            "minimum_eigenvalue": 0.018196612797215295,
+            "condition_number": 120.17719021175331,
+            "logdet": -3.2240723857260902,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 55.412568143134486,
+            "covariance_scaled": [
+              [
+                36.1854192258833,
+                -25.896181029820795
+              ],
+              [
+                -25.89618102982079,
+                19.227148917251185
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9817738790474138,
+            "crlb": {
+              "sigma_theta_h": 6.015431757229343,
+              "sigma_theta_w": 4.3848772978558,
+              "sigma_h_nm": 30.077158786146715,
+              "sigma_w_nm": 4.3848772978558
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A14"
+            ],
+            "channel_counts": [
+              3
+            ],
+            "fisher_matrix": [
+              [
+                0.7650997210396703,
+                1.0304783599055458
+              ],
+              [
+                1.0304783599055458,
+                1.439914689098112
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "angle_id": "A15",
+      "metrics": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.3543735125671379,
+              8.553330306415075
+            ],
+            "minimum_eigenvalue": 0.3543735125671379,
+            "condition_number": 24.136483126104416,
+            "logdet": 1.1089169147814193,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 2.938794858331593,
+            "covariance_scaled": [
+              [
+                1.813120463037313,
+                -1.3080776681613249
+              ],
+              [
+                -1.308077668161325,
+                1.1256743952942798
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9156169162656523,
+            "crlb": {
+              "sigma_theta_h": 1.346521616253268,
+              "sigma_theta_w": 1.0609780371403923,
+              "sigma_h_nm": 6.73260808126634,
+              "sigma_w_nm": 1.0609780371403923
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N1",
+            "angle_ids": [
+              "A15"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                3.412002059778327,
+                3.9648798238407896
+              ],
+              [
+                3.9648798238407896,
+                5.495701759203887
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.014666234368670983,
+              2.0734818253348912
+            ],
+            "minimum_eigenvalue": 0.014666234368670983,
+            "condition_number": 141.37792791339288,
+            "logdet": -3.4929781735748846,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 68.66610846246363,
+            "covariance_scaled": [
+              [
+                45.0707624589425,
+                -32.102593343369
+              ],
+              [
+                -32.102593343369,
+                23.595346003521136
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9844178722308249,
+            "crlb": {
+              "sigma_theta_h": 6.713476182942969,
+              "sigma_theta_w": 4.857504091971631,
+              "sigma_h_nm": 33.567380914714846,
+              "sigma_w_nm": 4.857504091971631
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M0",
+            "noise": "N2",
+            "angle_ids": [
+              "A15"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                0.717538492839166,
+                0.9762453341600561
+              ],
+              [
+                0.9762453341600561,
+                1.370609566864396
+              ]
+            ]
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "rank": 1,
+            "full_rank": false,
+            "eigenvalues": [
+              -2.220446049250313e-16,
+              8.260189187637861
+            ],
+            "minimum_eigenvalue": -2.220446049250313e-16,
+            "condition_number": null,
+            "logdet": null,
+            "condition_number_is_infinite": true,
+            "logdet_defined": false,
+            "trace_inverse": null,
+            "covariance_scaled": null,
+            "parameter_correlation_rho_hw": null,
+            "crlb": null,
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N1",
+            "angle_ids": [
+              "A15"
+            ],
+            "channel_counts": [
+              1
+            ],
+            "fisher_matrix": [
+              [
+                2.7710379441202506,
+                3.9000828679403927
+              ],
+              [
+                3.9000828679403927,
+                5.489151243517611
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 1,
+            "full_rank": false,
+            "eigenvalues": [
+              0.0,
+              2.0621256923052895
+            ],
+            "minimum_eigenvalue": 0.0,
+            "condition_number": null,
+            "logdet": null,
+            "condition_number_is_infinite": true,
+            "logdet_defined": false,
+            "trace_inverse": null,
+            "covariance_scaled": null,
+            "parameter_correlation_rho_hw": null,
+            "crlb": null,
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M1",
+            "noise": "N2",
+            "angle_ids": [
+              "A15"
+            ],
+            "channel_counts": [
+              1
+            ],
+            "fisher_matrix": [
+              [
+                0.6917793780649807,
+                0.97364126915348
+              ],
+              [
+                0.97364126915348,
+                1.3703463142403087
+              ]
+            ]
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.3543735125671379,
+              8.553330306415075
+            ],
+            "minimum_eigenvalue": 0.3543735125671379,
+            "condition_number": 24.136483126104416,
+            "logdet": 1.1089169147814193,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 2.938794858331593,
+            "covariance_scaled": [
+              [
+                1.813120463037313,
+                -1.3080776681613249
+              ],
+              [
+                -1.308077668161325,
+                1.1256743952942798
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9156169162656523,
+            "crlb": {
+              "sigma_theta_h": 1.346521616253268,
+              "sigma_theta_w": 1.0609780371403923,
+              "sigma_h_nm": 6.73260808126634,
+              "sigma_w_nm": 1.0609780371403923
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N1",
+            "angle_ids": [
+              "A15"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                3.412002059778327,
+                3.9648798238407896
+              ],
+              [
+                3.9648798238407896,
+                5.495701759203887
+              ]
+            ]
+          },
+          "N2": {
+            "rank": 2,
+            "full_rank": true,
+            "eigenvalues": [
+              0.014666234368670983,
+              2.0734818253348912
+            ],
+            "minimum_eigenvalue": 0.014666234368670983,
+            "condition_number": 141.37792791339288,
+            "logdet": -3.4929781735748846,
+            "condition_number_is_infinite": false,
+            "logdet_defined": true,
+            "trace_inverse": 68.66610846246363,
+            "covariance_scaled": [
+              [
+                45.0707624589425,
+                -32.102593343369
+              ],
+              [
+                -32.102593343369,
+                23.595346003521136
+              ]
+            ],
+            "parameter_correlation_rho_hw": -0.9844178722308249,
+            "crlb": {
+              "sigma_theta_h": 6.713476182942969,
+              "sigma_theta_w": 4.857504091971631,
+              "sigma_h_nm": 33.567380914714846,
+              "sigma_w_nm": 4.857504091971631
+            },
+            "regularization": {
+              "eigen_floor": 1e-14,
+              "used_for_inversion": false
+            },
+            "contract": "M2",
+            "noise": "N2",
+            "angle_ids": [
+              "A15"
+            ],
+            "channel_counts": [
+              2
+            ],
+            "fisher_matrix": [
+              [
+                0.717538492839166,
+                0.9762453341600561
+              ],
+              [
+                0.9762453341600561,
+                1.370609566864396
+              ]
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270"
+}

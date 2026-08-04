@@ -1,0 +1,19 @@
+{
+  "schema_version": "task005.case131-config.v1",
+  "case_id": "131_task005_design_and_step_audit",
+  "m0": {
+    "new_fem_count": 0,
+    "train_dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+    "validation_target_accessed": false
+  },
+  "m1": {
+    "audit_angle_ids": ["A00", "A07", "A09", "A14", "A15"],
+    "steps": {"coarse": [2.5, 0.5], "half": [1.25, 0.25]},
+    "states_per_angle_step": ["H-", "H+", "W-", "W+"],
+    "max_new_fem": 40,
+    "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+    "mumps_icntl_14": 40,
+    "mpi_ranks": 2,
+    "threads_per_rank": 1
+  }
+}

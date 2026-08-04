@@ -1,0 +1,828 @@
+{
+  "schema_version": "task005.off-centre-recovery.v1",
+  "status": "pass",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "design_sha256": "9d1fb306cf01eb8a413f14d4c34777e3e280c0b4209e03baef624675fa2edc7b",
+  "selected_angle_ids": [
+    "A05",
+    "A07",
+    "A09"
+  ],
+  "geometries": {
+    "G1": {
+      "truth_delta_h_nm": -1.25,
+      "truth_delta_w_nm": -0.25,
+      "contracts": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              9.65150623405788,
+              610.0025435928812
+            ],
+            "fisher_matrix": [
+              [
+                12.408045182131547,
+                40.58685144260119
+              ],
+              [
+                40.58685144260119,
+                607.2460046448076
+              ]
+            ],
+            "estimate_delta_h_nm": -1.2840640964087766,
+            "estimate_delta_w_nm": -0.24894579323606958,
+            "height_error_nm": -0.03406409640877661,
+            "width_error_nm": 0.001054206763930421,
+            "absolute_height_error_nm": 0.03406409640877661,
+            "absolute_width_error_nm": 0.001054206763930421,
+            "reconstruction_residual_l2": 7.308266624009426e-05,
+            "whitened_reconstruction_residual_l2": 0.14510121949059374,
+            "covariance_scaled": [
+              [
+                0.10314256432036217,
+                -0.00689379905912778
+              ],
+              [
+                -0.006893799059127778,
+                0.0021075438759560823
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          },
+          "N2": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              1.566270885411814,
+              132.7522750786365
+            ],
+            "fisher_matrix": [
+              [
+                2.068882171787089,
+                8.104501725386768
+              ],
+              [
+                8.104501725386768,
+                132.24966379226123
+              ]
+            ],
+            "estimate_delta_h_nm": -1.2995866400067613,
+            "estimate_delta_w_nm": -0.24766422731824334,
+            "height_error_nm": -0.04958664000676127,
+            "width_error_nm": 0.002335772681756665,
+            "absolute_height_error_nm": 0.04958664000676127,
+            "absolute_width_error_nm": 0.002335772681756665,
+            "reconstruction_residual_l2": 5.838858317992817e-05,
+            "whitened_reconstruction_residual_l2": 0.05436935941663319,
+            "covariance_scaled": [
+              [
+                0.6360419038079307,
+                -0.038977813319260014
+              ],
+              [
+                -0.038977813319260014,
+                0.0099500877171587
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              9.62664220279277,
+              610.4504052366026
+            ],
+            "fisher_matrix": [
+              [
+                12.368645237727284,
+                40.496197365381036
+              ],
+              [
+                40.496197365381036,
+                607.7084022016682
+              ]
+            ],
+            "estimate_delta_h_nm": -1.2860231894738823,
+            "estimate_delta_w_nm": -0.24879609401701194,
+            "height_error_nm": -0.03602318947388228,
+            "width_error_nm": 0.0012039059829880572,
+            "absolute_height_error_nm": 0.03602318947388228,
+            "absolute_width_error_nm": 0.0012039059829880572,
+            "reconstruction_residual_l2": 7.020985384083802e-05,
+            "whitened_reconstruction_residual_l2": 0.138743644884748,
+            "covariance_scaled": [
+              [
+                0.10341178249605516,
+                -0.006891107542193225
+              ],
+              [
+                -0.00689110754219322,
+                0.002104732543536999
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          },
+          "N2": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              1.560687019805337,
+              132.8366402925277
+            ],
+            "fisher_matrix": [
+              [
+                2.059992849046015,
+                8.080689475353163
+              ],
+              [
+                8.080689475353163,
+                132.33733446328702
+              ]
+            ],
+            "estimate_delta_h_nm": -1.3009257114955575,
+            "estimate_delta_w_nm": -0.24757225823352869,
+            "height_error_nm": -0.05092571149555747,
+            "width_error_nm": 0.002427741766471314,
+            "absolute_height_error_nm": 0.05092571149555747,
+            "absolute_width_error_nm": 0.002427741766471314,
+            "reconstruction_residual_l2": 5.663029292753214e-05,
+            "whitened_reconstruction_residual_l2": 0.05198296336216254,
+            "covariance_scaled": [
+              [
+                0.6383350353912887,
+                -0.038977566105251715
+              ],
+              [
+                -0.03897756610525171,
+                0.009936467388697382
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              9.63507984449708,
+              610.456421760469
+            ],
+            "fisher_matrix": [
+              [
+                12.377506904258993,
+                40.49923209117319
+              ],
+              [
+                40.49923209117319,
+                607.7139947007071
+              ]
+            ],
+            "estimate_delta_h_nm": -1.286095046711907,
+            "estimate_delta_w_nm": -0.24879415242919392,
+            "height_error_nm": -0.036095046711907,
+            "width_error_nm": 0.001205847570806079,
+            "absolute_height_error_nm": 0.036095046711907,
+            "absolute_width_error_nm": 0.001205847570806079,
+            "reconstruction_residual_l2": 7.021271757698569e-05,
+            "whitened_reconstruction_residual_l2": 0.14130547052450326,
+            "covariance_scaled": [
+              [
+                0.10332115513065247,
+                -0.006885520949085913
+              ],
+              [
+                -0.006885520949085913,
+                0.0021043752853107983
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          },
+          "N2": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              1.5610260863883902,
+              132.83687947328002
+            ],
+            "fisher_matrix": [
+              [
+                2.060347361162049,
+                8.08081089524443
+              ],
+              [
+                8.08081089524443,
+                132.33755819850637
+              ]
+            ],
+            "estimate_delta_h_nm": -1.3009404990213511,
+            "estimate_delta_w_nm": -0.24757186672929024,
+            "height_error_nm": -0.050940499021351116,
+            "width_error_nm": 0.002428133270709759,
+            "absolute_height_error_nm": 0.050940499021351116,
+            "absolute_width_error_nm": 0.002428133270709759,
+            "reconstruction_residual_l2": 5.6693793636201985e-05,
+            "whitened_reconstruction_residual_l2": 0.05225139916583548,
+            "covariance_scaled": [
+              [
+                0.6381963140799165,
+                -0.038969615265124546
+              ],
+              [
+                -0.03896961526512457,
+                0.00993600085657877
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          }
+        }
+      },
+      "primary_gate": true,
+      "primary_contract": "M1_order_total_robust",
+      "primary_noise": "N1",
+      "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    "G2": {
+      "truth_delta_h_nm": 1.25,
+      "truth_delta_w_nm": 0.25,
+      "contracts": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              9.65150623405788,
+              610.0025435928812
+            ],
+            "fisher_matrix": [
+              [
+                12.408045182131547,
+                40.58685144260119
+              ],
+              [
+                40.58685144260119,
+                607.2460046448076
+              ]
+            ],
+            "estimate_delta_h_nm": 1.216744374990831,
+            "estimate_delta_w_nm": 0.2508310084350207,
+            "height_error_nm": -0.0332556250091689,
+            "width_error_nm": 0.0008310084350207081,
+            "absolute_height_error_nm": 0.0332556250091689,
+            "absolute_width_error_nm": 0.0008310084350207081,
+            "reconstruction_residual_l2": 7.071430656910932e-05,
+            "whitened_reconstruction_residual_l2": 0.1410800054359167,
+            "covariance_scaled": [
+              [
+                0.10314256432036217,
+                -0.00689379905912778
+              ],
+              [
+                -0.006893799059127778,
+                0.0021075438759560823
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          },
+          "N2": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              1.566270885411814,
+              132.7522750786365
+            ],
+            "fisher_matrix": [
+              [
+                2.068882171787089,
+                8.104501725386768
+              ],
+              [
+                8.104501725386768,
+                132.24966379226123
+              ]
+            ],
+            "estimate_delta_h_nm": 1.2016373629333055,
+            "estimate_delta_w_nm": 0.2520797559481894,
+            "height_error_nm": -0.048362637066694525,
+            "width_error_nm": 0.002079755948189377,
+            "absolute_height_error_nm": 0.048362637066694525,
+            "absolute_width_error_nm": 0.002079755948189377,
+            "reconstruction_residual_l2": 5.6649056710647604e-05,
+            "whitened_reconstruction_residual_l2": 0.0527828570090095,
+            "covariance_scaled": [
+              [
+                0.6360419038079307,
+                -0.038977813319260014
+              ],
+              [
+                -0.038977813319260014,
+                0.0099500877171587
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              9.62664220279277,
+              610.4504052366026
+            ],
+            "fisher_matrix": [
+              [
+                12.368645237727284,
+                40.496197365381036
+              ],
+              [
+                40.496197365381036,
+                607.7084022016682
+              ]
+            ],
+            "estimate_delta_h_nm": 1.2147154472214818,
+            "estimate_delta_w_nm": 0.25098595927962997,
+            "height_error_nm": -0.03528455277851816,
+            "width_error_nm": 0.0009859592796299665,
+            "absolute_height_error_nm": 0.03528455277851816,
+            "absolute_width_error_nm": 0.0009859592796299665,
+            "reconstruction_residual_l2": 6.775788474622406e-05,
+            "whitened_reconstruction_residual_l2": 0.1344945767933965,
+            "covariance_scaled": [
+              [
+                0.10341178249605516,
+                -0.006891107542193225
+              ],
+              [
+                -0.00689110754219322,
+                0.002104732543536999
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          },
+          "N2": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              1.560687019805337,
+              132.8366402925277
+            ],
+            "fisher_matrix": [
+              [
+                2.059992849046015,
+                8.080689475353163
+              ],
+              [
+                8.080689475353163,
+                132.33733446328702
+              ]
+            ],
+            "estimate_delta_h_nm": 1.2002562143969406,
+            "estimate_delta_w_nm": 0.2521749365715551,
+            "height_error_nm": -0.049743785603059365,
+            "width_error_nm": 0.0021749365715550972,
+            "absolute_height_error_nm": 0.049743785603059365,
+            "absolute_width_error_nm": 0.0021749365715550972,
+            "reconstruction_residual_l2": 5.4842802565534505e-05,
+            "whitened_reconstruction_residual_l2": 0.05031450348718294,
+            "covariance_scaled": [
+              [
+                0.6383350353912887,
+                -0.038977566105251715
+              ],
+              [
+                -0.03897756610525171,
+                0.009936467388697382
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              9.63507984449708,
+              610.456421760469
+            ],
+            "fisher_matrix": [
+              [
+                12.377506904258993,
+                40.49923209117319
+              ],
+              [
+                40.49923209117319,
+                607.7139947007071
+              ]
+            ],
+            "estimate_delta_h_nm": 1.214641133708728,
+            "estimate_delta_w_nm": 0.25098800658084075,
+            "height_error_nm": -0.03535886629127205,
+            "width_error_nm": 0.00098800658084075,
+            "absolute_height_error_nm": 0.03535886629127205,
+            "absolute_width_error_nm": 0.00098800658084075,
+            "reconstruction_residual_l2": 6.776468130942416e-05,
+            "whitened_reconstruction_residual_l2": 0.137222253110841,
+            "covariance_scaled": [
+              [
+                0.10332115513065247,
+                -0.006885520949085913
+              ],
+              [
+                -0.006885520949085913,
+                0.0021043752853107983
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          },
+          "N2": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              1.5610260863883902,
+              132.83687947328002
+            ],
+            "fisher_matrix": [
+              [
+                2.060347361162049,
+                8.08081089524443
+              ],
+              [
+                8.08081089524443,
+                132.33755819850637
+              ]
+            ],
+            "estimate_delta_h_nm": 1.2002407190514708,
+            "estimate_delta_w_nm": 0.2521753602975702,
+            "height_error_nm": -0.049759280948529216,
+            "width_error_nm": 0.0021753602975702058,
+            "absolute_height_error_nm": 0.049759280948529216,
+            "absolute_width_error_nm": 0.0021753602975702058,
+            "reconstruction_residual_l2": 5.491105386476173e-05,
+            "whitened_reconstruction_residual_l2": 0.05060109858542611,
+            "covariance_scaled": [
+              [
+                0.6381963140799165,
+                -0.038969615265124546
+              ],
+              [
+                -0.03896961526512457,
+                0.00993600085657877
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          }
+        }
+      },
+      "primary_gate": true,
+      "primary_contract": "M1_order_total_robust",
+      "primary_noise": "N1",
+      "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    },
+    "G3": {
+      "truth_delta_h_nm": -1.25,
+      "truth_delta_w_nm": 0.25,
+      "contracts": {
+        "M0_aggregate_RT": {
+          "N1": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              9.65150623405788,
+              610.0025435928812
+            ],
+            "fisher_matrix": [
+              [
+                12.408045182131547,
+                40.58685144260119
+              ],
+              [
+                40.58685144260119,
+                607.2460046448076
+              ]
+            ],
+            "estimate_delta_h_nm": -1.242431347598029,
+            "estimate_delta_w_nm": 0.24975643437129463,
+            "height_error_nm": 0.00756865240197091,
+            "width_error_nm": -0.0002435656287053667,
+            "absolute_height_error_nm": 0.00756865240197091,
+            "absolute_width_error_nm": 0.0002435656287053667,
+            "reconstruction_residual_l2": 9.175960184490199e-05,
+            "whitened_reconstruction_residual_l2": 0.14033068640222565,
+            "covariance_scaled": [
+              [
+                0.10314256432036217,
+                -0.00689379905912778
+              ],
+              [
+                -0.006893799059127778,
+                0.0021075438759560823
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          },
+          "N2": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              1.566270885411814,
+              132.7522750786365
+            ],
+            "fisher_matrix": [
+              [
+                2.068882171787089,
+                8.104501725386768
+              ],
+              [
+                8.104501725386768,
+                132.24966379226123
+              ]
+            ],
+            "estimate_delta_h_nm": -1.2575093530387866,
+            "estimate_delta_w_nm": 0.25093272181910053,
+            "height_error_nm": -0.007509353038786637,
+            "width_error_nm": 0.0009327218191005349,
+            "absolute_height_error_nm": 0.007509353038786637,
+            "absolute_width_error_nm": 0.0009327218191005349,
+            "reconstruction_residual_l2": 7.006867837379017e-05,
+            "whitened_reconstruction_residual_l2": 0.05388548662425555,
+            "covariance_scaled": [
+              [
+                0.6360419038079307,
+                -0.038977813319260014
+              ],
+              [
+                -0.038977813319260014,
+                0.0099500877171587
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          }
+        },
+        "M1_order_total_robust": {
+          "N1": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              9.62664220279277,
+              610.4504052366026
+            ],
+            "fisher_matrix": [
+              [
+                12.368645237727284,
+                40.496197365381036
+              ],
+              [
+                40.496197365381036,
+                607.7084022016682
+              ]
+            ],
+            "estimate_delta_h_nm": -1.2443390548047748,
+            "estimate_delta_w_nm": 0.24991501761540755,
+            "height_error_nm": 0.005660945195225198,
+            "width_error_nm": -8.498238459245244e-05,
+            "absolute_height_error_nm": 0.005660945195225198,
+            "absolute_width_error_nm": 8.498238459245244e-05,
+            "reconstruction_residual_l2": 8.960106017762174e-05,
+            "whitened_reconstruction_residual_l2": 0.13457674114781432,
+            "covariance_scaled": [
+              [
+                0.10341178249605516,
+                -0.006891107542193225
+              ],
+              [
+                -0.00689110754219322,
+                0.002104732543536999
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          },
+          "N2": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              1.560687019805337,
+              132.8366402925277
+            ],
+            "fisher_matrix": [
+              [
+                2.059992849046015,
+                8.080689475353163
+              ],
+              [
+                8.080689475353163,
+                132.33733446328702
+              ]
+            ],
+            "estimate_delta_h_nm": -1.2588237150630952,
+            "estimate_delta_w_nm": 0.2510345110009271,
+            "height_error_nm": -0.008823715063095205,
+            "width_error_nm": 0.0010345110009271075,
+            "absolute_height_error_nm": 0.008823715063095205,
+            "absolute_width_error_nm": 0.0010345110009271075,
+            "reconstruction_residual_l2": 6.881650319347915e-05,
+            "whitened_reconstruction_residual_l2": 0.05181598534336824,
+            "covariance_scaled": [
+              [
+                0.6383350353912887,
+                -0.038977566105251715
+              ],
+              [
+                -0.03897756610525171,
+                0.009936467388697382
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          }
+        },
+        "M2_order_total_extended": {
+          "N1": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              9.63507984449708,
+              610.456421760469
+            ],
+            "fisher_matrix": [
+              [
+                12.377506904258993,
+                40.49923209117319
+              ],
+              [
+                40.49923209117319,
+                607.7139947007071
+              ]
+            ],
+            "estimate_delta_h_nm": -1.2444528661148389,
+            "estimate_delta_w_nm": 0.2499194763543442,
+            "height_error_nm": 0.0055471338851611485,
+            "width_error_nm": -8.052364565580561e-05,
+            "absolute_height_error_nm": 0.0055471338851611485,
+            "absolute_width_error_nm": 8.052364565580561e-05,
+            "reconstruction_residual_l2": 8.945732875647779e-05,
+            "whitened_reconstruction_residual_l2": 0.13767146635358793,
+            "covariance_scaled": [
+              [
+                0.10332115513065247,
+                -0.006885520949085913
+              ],
+              [
+                -0.006885520949085913,
+                0.0021043752853107983
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          },
+          "N2": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 2,
+            "eigenvalues": [
+              1.5610260863883902,
+              132.83687947328002
+            ],
+            "fisher_matrix": [
+              [
+                2.060347361162049,
+                8.08081089524443
+              ],
+              [
+                8.08081089524443,
+                132.33755819850637
+              ]
+            ],
+            "estimate_delta_h_nm": -1.2588489791620048,
+            "estimate_delta_w_nm": 0.2510354908052496,
+            "height_error_nm": -0.008848979162004778,
+            "width_error_nm": 0.001035490805249617,
+            "absolute_height_error_nm": 0.008848979162004778,
+            "absolute_width_error_nm": 0.001035490805249617,
+            "reconstruction_residual_l2": 6.884018425780512e-05,
+            "whitened_reconstruction_residual_l2": 0.05212891691398184,
+            "covariance_scaled": [
+              [
+                0.6381963140799165,
+                -0.038969615265124546
+              ],
+              [
+                -0.03896961526512457,
+                0.00993600085657877
+              ]
+            ],
+            "full_rank": true,
+            "gate": true
+          }
+        }
+      },
+      "primary_gate": true,
+      "primary_contract": "M1_order_total_robust",
+      "primary_noise": "N1",
+      "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4"
+    }
+  },
+  "new_fem_count": 9,
+  "validation_target_accessed": false,
+  "primary_gate_all_geometries": true
+}
