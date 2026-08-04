@@ -66,3 +66,17 @@ new FEM count was 93, below the hard budget of 96.
 M5R used only existing arrays, JSON records and Fisher tables. It did not modify
 the immutable v1 package, v1 lock, Task004 train112 or blind24 state; no new FEM,
 formal surrogate, Task006 or inversion was started.
+
+## Approved metadata closeout
+
+| item | value |
+|---|---|
+| final status | `approved_closed` |
+| M0–M4 implementation SHA | `d24395b377259da129a81384f88d8a4ad74602d2` |
+| M5R generator commit SHA | `25327ab792a580fb198f07e59564c84149e952a1` |
+| M5R source SHA256 | `0baf314334b67a7668f5ecd663ed1d3c6bb41abd7fe96132ade78f5bbc5f1e42` |
+| V2 lock SHA256 | `065dff4bf85722ca43af368e427708d1da78d5fae0178f7967c094b005ff12c3` |
+| Task006 authorization | M0–M2 only |
+
+The closeout is metadata-only. V1/V2 locks and all raw/derived data packages are
+unchanged. See `TASK005_FINAL_STATUS.json` and `TASK005_APPROVED_CLOSEOUT.md`.

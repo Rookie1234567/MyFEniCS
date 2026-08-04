@@ -3,7 +3,7 @@
 ## 状态
 
 ```text
-status = m5r_review_pending
+status = approved_closed
 execution_branch = codex/only-one-13p5nm-surrogate-inversion
 predecessor = Task004 Review V9
 Task004 = closed_controlled_negative
@@ -12,6 +12,8 @@ formal_inversion = forbidden
 arbitrary-angle surrogate = forbidden
 implementation_sha = d24395b377259da129a81384f88d8a4ad74602d2
 m5r_new_fem_count = 0
+task005_final_status = TASK005_FINAL_STATUS.json
+task006_authorization = M0-M2 only
 ```
 
 本任务不再建立连续角度代理。它从 Task004 不可变 `train112` 中冻结 16 个已有 nominal 角度，复用中心几何响应，并通过直接 Full3D 几何扰动计算：
@@ -87,6 +89,8 @@ surrogate_tasks/task005_discrete_illumination_sensitivity_fisher_doe/
     outcomes/FISHER_PARAMETERIZATION_AND_HASH_SCHEMA.md
     outcomes/test_summary.md
     outcomes/test_summary_v2.md
+    TASK005_FINAL_STATUS.json
+    TASK005_APPROVED_CLOSEOUT.md
     response_v1.md
     response_v2.md
 ```
@@ -103,6 +107,11 @@ M5R 已以 derived-only 方式完成：没有新 FEM，原始 v1 sensitivity pac
 v1 lock 均保持原 hash；新增 M2 弱通道排名稳定性、照明数量 5% 取舍、派生
 灵敏度 supplement、Task001 基准解释、Fisher/hash 语义文档、V2 lock 和
 Case134 独立 checker。V2 lock 当前为 `review_ready`，等待下一轮审阅。
+
+Review V2 已批准上述科学结果。已完成 metadata-only provenance closeout：
+`TASK005_FINAL_STATUS.json` 记录 M0–M4 implementation SHA、M5R generator
+commit SHA、m5r.py 文件 SHA、V2 lock SHA 和 Task006 M0–M2 授权边界。Task005
+现为 `approved_closed`。
 
 ## 硬边界
 
