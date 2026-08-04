@@ -3,6 +3,7 @@
   "status": "training_only_evidence",
   "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
   "pre_m2_git_base_sha": "71593f3ab11d58cd919a66c00319dc619be9bdc9",
+  "m2_implementation_commit_sha": "4bd6d8dff2c56db3dab0cfcd2e640bd6b8e92c86",
   "surrogate_source_file": "src/surrogate/task006/surrogate.py",
   "surrogate_source_sha256": "2c766ebca0f21537ad5f07c6d64238847ab305965882c1db801777ce63a23dbb",
   "runner_file": "benchmarks/cases/138_task006_training_cv/run.py",
