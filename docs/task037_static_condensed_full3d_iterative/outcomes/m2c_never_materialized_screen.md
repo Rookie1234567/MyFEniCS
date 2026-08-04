@@ -63,8 +63,12 @@ M2c 残差确实下降，但 20 步仍为 `DIVERGED_MAX_IT (-3)`，没有达到�
 | stage4 assembly+solve / whole wall | `251.7166 / 261.4332 s` |
 
 与既有 authority 对照，M2c 相对 F0 的 process-tree memory authority
-`15.2550010681 GiB` 节省约 `20.15%`，相对 F3 的 `13.6522331238 GiB`
-节省约 `10.77%`；但仍高于 `10.30 GiB`，不能称资源 Gate 通过。
+`15.2550010681 GiB` 节省约 `20.15%`。同阶段 F3 screen20 为
+`13.22119140625 GiB`，因此 M2c 节省约 `7.862675%`；仍高于
+`10.30 GiB`，不能称资源 Gate 通过。
+
+F3 full 的 `13.6522331238 GiB` 与 `10.771725%` 仅作跨运行补充观察，
+不作为 screen20 的主比较。
 
 ## checker 重评与证据边界
 
