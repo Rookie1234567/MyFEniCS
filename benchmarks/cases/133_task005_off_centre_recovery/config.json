@@ -1,0 +1,7 @@
+{
+  "schema_version": "task005.case133-config.v1",
+  "selected_angle_ids": ["A05", "A07", "A09"],
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "new_fem_count": 9,
+  "validation_target_accessed": false
+}

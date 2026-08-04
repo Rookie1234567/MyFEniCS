@@ -8,7 +8,7 @@
   ],
   "selected_angle_tuple_sha256": "aa0a175b79837f327df79f9aa9e7945d35a951d5063f3294d2c10661cad963c1",
   "ranking_sha256": "09d96d25c67fbb9d5f99d9d7418f7525a83d6f5411f088003987d51376577bb7",
-  "dataset_manifest_sha256": "2949f4867f3bdead36f2f4824abfffa562450b7fb4359fab10301a9db352d68b",
+  "dataset_manifest_sha256": "e3a1b92b5311ec1fb6f5c5fb52d64f2a99f0b22122e57358305e36914229ca20",
   "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
   "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
   "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
@@ -28,5 +28,7 @@
   },
   "max_new_fem": 9,
   "nominal_reuse": "train112",
-  "formal_inversion": false
+  "formal_inversion": false,
+  "implementation_sha": "d24395b377259da129a81384f88d8a4ad74602d2",
+  "metadata_rebind_reason": "clean implementation SHA recorded after M0-M4; tuple and FEM records unchanged"
 }

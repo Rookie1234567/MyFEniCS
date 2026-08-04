@@ -1,0 +1,104 @@
+{
+  "schema_version": "task005.discrete-illumination-fisher-doe-lock.v1",
+  "status": "frozen_review_pending",
+  "implementation_sha": "d24395b377259da129a81384f88d8a4ad74602d2",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "fixed_configuration": {
+    "wavelength_nm": 13.5,
+    "polarization": "S",
+    "nominal_height_nm": 120.0,
+    "nominal_width_nm": 17.0,
+    "mesh": [
+      6,
+      4,
+      14
+    ],
+    "mumps_icntl_14": 40,
+    "mpi_ranks": 2,
+    "threads_per_rank": 1
+  },
+  "dataset_id": "task005_discrete_angle_hw_sensitivity_p5_ny4_v1",
+  "new_fem_count": {
+    "M1": 40,
+    "M2_new": 44,
+    "M2_production_states": 64,
+    "M4": 9,
+    "total": 93
+  },
+  "nominal_reuse": {
+    "dataset_id": "task004_angle_nominal_p5_ny4_train112_v1",
+    "rows": 16,
+    "rerun": false
+  },
+  "design": {
+    "candidate_count": 16,
+    "point_tuple_sha256": "17af3c87850b8af4070c263c224613c66b3a87adf196825be4bd138a91c2d4c5",
+    "design_file_sha256": "f1bbe0dbd3a57a4f9a600a0cc6745cdea70eaa33aba5203a22b4a252bb62962d"
+  },
+  "step_lock": {
+    "selected_steps": {
+      "h": "half",
+      "w": "half"
+    },
+    "audit_file_sha256": "8062d933008b3d064ce55094f8ed7cc9ac22cad6fa6b5eeb72c494c7a31086fc",
+    "lock_file_sha256": "1b8acbd548ef54adc2e82c81174ebe16c6d2a2d64b7c53d9567e9bb18c08055e",
+    "gate": "5/5 for M0 and M1, both h/w under N1"
+  },
+  "measurement_contracts": {
+    "M0": "aggregate_RT=[R_total,T_total]; A_balance audit only",
+    "M1": "fixed-order total S+P powers, active threshold 1e-3",
+    "M2": "fixed-order total S+P powers, active threshold 1e-5 with absolute noise floor",
+    "M3": "polarization-resolved diagnostic only"
+  },
+  "noise_contracts": {
+    "N1": "sqrt((0.01*y)^2+(1e-4)^2)",
+    "N2": "sqrt((0.02*y)^2+(5e-4)^2)",
+    "qualification": "provisional diagonal design scenarios, not calibrated experiment covariance"
+  },
+  "fisher": {
+    "single_count": 16,
+    "pair_count": 120,
+    "triple_count": 560,
+    "quadruple_count": 1820,
+    "robust_full_rank_count": 2513,
+    "recommended_triple": [
+      "A05",
+      "A07",
+      "A09"
+    ],
+    "recommended_triple_hash": "aa0a175b79837f327df79f9aa9e7945d35a951d5063f3294d2c10661cad963c1",
+    "ranking_file_sha256": "09d96d25c67fbb9d5f99d9d7418f7525a83d6f5411f088003987d51376577bb7",
+    "task001_baseline_pair_file_sha256": "fa996c95358839f3b8b16d4ee9543c1fdfc0db8d9ec903adc2e8f9af6c289921",
+    "baseline_pair": [
+      "A14",
+      "A15"
+    ]
+  },
+  "recovery": {
+    "design_file_sha256": "27a9b0898c5bfd3578c82bb5343f3fc998e8e4684012db6be7b26331354e06d7",
+    "result_file_sha256": "81c7c63818c93cacdc295303a63dc42302b19732e005d57000d6d75ece4fee3b",
+    "status": "pass",
+    "primary_gate_all_geometries": true,
+    "geometries": [
+      "G1",
+      "G2",
+      "G3"
+    ]
+  },
+  "scope_boundary": {
+    "formal_inversion": false,
+    "arbitrary_angle_surrogate": false,
+    "task004_blind24_run": false,
+    "task003_validation_accessed": false,
+    "p_polarization": false
+  },
+  "evidence": {
+    "m0_design_sha256": "f1bbe0dbd3a57a4f9a600a0cc6745cdea70eaa33aba5203a22b4a252bb62962d",
+    "perturbation_schema_sha256": "64f8cea87847ff431eb7d1a811410f4d271388be0f7a9a6bdd574b96c57d8ad2",
+    "nominal_reuse_sha256": "771de42c1eef08f7a92b55136666b6be637fb50d4ef5c8835bfe426b81660e57",
+    "m2_dataset_manifest_sha256": "e3a1b92b5311ec1fb6f5c5fb52d64f2a99f0b22122e57358305e36914229ca20"
+  }
+}

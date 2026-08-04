@@ -1,7 +1,7 @@
 {
   "schema_version": "task005.central-finite-difference.v1",
   "status": "frozen",
-  "implementation_sha": "80dad53b34deaed589947edd25bc4fecb35d8f2d",
+  "implementation_sha": "d24395b377259da129a81384f88d8a4ad74602d2",
   "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
   "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
   "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",

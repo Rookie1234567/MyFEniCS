@@ -15,7 +15,7 @@
   "angle_count": 16,
   "state_count_per_angle": 4,
   "angle_tuple_sha256": "072ec3da9b7f537dce5d410208eb999773c9fa2c331937711f59a78f412aaea9",
-  "design_sha256": "1303ec4604c2d2b4d750c94bd9597b87e7cdec3ab1b1c0884eb1da6aa8756136",
+  "design_sha256": "f1bbe0dbd3a57a4f9a600a0cc6745cdea70eaa33aba5203a22b4a252bb62962d",
   "production_step_lock_sha256": "1b8acbd548ef54adc2e82c81174ebe16c6d2a2d64b7c53d9567e9bb18c08055e",
   "step": {
     "delta_h_nm": 1.25,

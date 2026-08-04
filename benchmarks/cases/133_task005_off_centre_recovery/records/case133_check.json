@@ -1,0 +1,14 @@
+{
+  "schema_version": "task005.case133-check.v1",
+  "status": "pass",
+  "checks": {
+    "required_outputs": true,
+    "design_identity": true,
+    "campaign_identity": true,
+    "recovery_gate": true,
+    "error_bounds": true
+  },
+  "errors": [],
+  "new_fem_count": 9,
+  "validation_target_accessed": false
+}
