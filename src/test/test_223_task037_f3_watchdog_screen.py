@@ -218,9 +218,22 @@ def test_parser_scope_and_worker_command(tmp_path):
     assert m3_full_command.count("--task037-f3-full") == 1
     assert m3_full_command.count("--task037-m2c-never-materialized") == 1
     assert m3_full_command.count("--task037-m3a-overlap0125-partition") == 1
+    m3_full_canonical = watchdog._parse_args(
+        m3_full_args + ["--task037-canonical-vector-export"]
+    )
+    assert m3_full_canonical.task037_canonical_vector_export
+    assert watchdog._worker_command(m3_full_canonical, tmp_path).count(
+        "--task037-canonical-vector-export"
+    ) == 1
     m3_full_mpi4_args = list(m3_full_args)
     m3_full_mpi4_args[m3_full_mpi4_args.index("--mpi-size") + 1] = "4"
-    assert watchdog._parse_args(m3_full_mpi4_args).mpi_size == 4
+    m3_full_mpi4 = watchdog._parse_args(
+        m3_full_mpi4_args + ["--task037-canonical-vector-export"]
+    )
+    assert m3_full_mpi4.mpi_size == 4
+    assert watchdog._worker_command(m3_full_mpi4, tmp_path).count(
+        "--task037-canonical-vector-export"
+    ) == 1
     with pytest.raises(SystemExit):
         watchdog._parse_args(m3_full_args + ["--task037-f5b-released-profile"])
     released_args = full_args + ["--task037-f5b-released-profile"]
@@ -272,6 +285,14 @@ def test_parser_scope_and_worker_command(tmp_path):
         )
         == 1
     )
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(
+            m2c_args
+            + [
+                "--task037-m3a-overlap0125-partition",
+                "--task037-canonical-vector-export",
+            ]
+        )
     m3_mpi4_args = list(m2c_args)
     m3_mpi4_args[m3_mpi4_args.index("--mpi-size") + 1] = "4"
     m3_mpi4 = watchdog._parse_args(

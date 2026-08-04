@@ -1609,12 +1609,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and args.task037_f1_direct_trace_oracle is None
         and args.task037_f3_screen is None
     )
+    canonical_m3a_full_scope = (
+        args.task037_f3_full
+        and args.task037_m2c_never_materialized
+        and args.task037_m3a_overlap0125_partition
+        and args.task037_f3_screen is None
+    )
     if args.task037_canonical_vector_export and not (
-        canonical_f0_scope or canonical_f5b_scope
+        canonical_f0_scope or canonical_f5b_scope or canonical_m3a_full_scope
     ):
         parser.error(
             "--task037-canonical-vector-export is restricted to the "
-            "frozen F0 direct or F5b full profile."
+            "frozen F0 direct, F5b full, or M3a full profile."
         )
     if (args.task037_f3_screen is not None or args.task037_f3_full) and (
         args.task037_f3_full
