@@ -1,0 +1,21 @@
+{
+  "schema_version": "task006.m2-implementation-identity.v1",
+  "status": "training_only_evidence",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "pre_m2_git_base_sha": "71593f3ab11d58cd919a66c00319dc619be9bdc9",
+  "surrogate_source_file": "src/surrogate/task006/surrogate.py",
+  "surrogate_source_sha256": "2c766ebca0f21537ad5f07c6d64238847ab305965882c1db801777ce63a23dbb",
+  "runner_file": "benchmarks/cases/138_task006_training_cv/run.py",
+  "runner_sha256": "7e56b897c12a69877eb4ce8fc0fe80483f3fc205dab400559765c675ace7dd79",
+  "checker_file": "benchmarks/cases/138_task006_training_cv/checker.py",
+  "checker_sha256": "40c6cbd6c54e873df8073796877ca6a32402106e9106df55b06e7822598cc35e",
+  "dataset_loader_sha256": "a6a94d72a9f7f96e003415589a1d6aadc85c4f6fbcf415e0abda5a3fb3cad3e1",
+  "dataset_design_sha256": "87210d9e05c0627db90d30f7e510db845dd2d89fd1bf9eb474e107abb3233b1c",
+  "dataset_manifest_sha256": "f36ffe992efe44f89c51bcac35e68145256e80979810d60ae5437686fd91cf84",
+  "cpu_environment": ".venv-surrogate-cpu",
+  "cuda_used": false,
+  "training_threads": 1,
+  "training_only": true,
+  "blind_response_accessed": false,
+  "validation_target_accessed": false
+}

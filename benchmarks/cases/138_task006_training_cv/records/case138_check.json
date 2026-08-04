@@ -1,0 +1,19 @@
+{
+  "schema_version": "task006.case138-m2-check.v1",
+  "status": "pass",
+  "checks": {
+    "required_outputs": true,
+    "finite_candidate_set": true,
+    "selected_from_training_cv": true,
+    "selected_candidate_cv_gate": true,
+    "oof_grouped_and_complete": true,
+    "uncertainty_cross_fitted": true,
+    "recovery_complete": true,
+    "synthetic_recovery_gate": true,
+    "physics_gate_reported": true,
+    "no_validation_or_blind": true
+  },
+  "errors": [],
+  "training_only": true,
+  "blind_response_accessed": false
+}

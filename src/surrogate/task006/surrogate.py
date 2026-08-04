@@ -410,14 +410,33 @@ def synthetic_recovery(candidate: str, geometry: np.ndarray, aggregates: np.ndar
             grid = np.asarray([[h, w] for h in h_grid for w in w_grid], dtype=np.float64)
             values = np.asarray([objective(point, "S1_N1") for point in grid])
             starts = list(fixed_starts) + [grid[int(np.argmin(values))]]
-            fits = []
+            fits: list[tuple[Any, str]] = []
+            attempt_records: list[dict[str, Any]] = []
             for start in starts:
                 result = minimize(lambda p: objective(p, "S1_N1"), start, method="L-BFGS-B", bounds=((115.0,125.0),(16.0,18.0)), options={"maxiter":80, "ftol":1.0e-12})
-                fits.append(result)
-            best = min(fits, key=lambda item: float(item.fun))
+                fits.append((result, "L-BFGS-B"))
+                attempt_records.append({"method": "L-BFGS-B", "start": np.asarray(start, dtype=np.float64).tolist(),
+                                        "success": bool(result.success), "status": int(result.status),
+                                        "message": str(result.message), "objective": float(result.fun)})
+                # The objective is a smooth bounded surrogate objective, but
+                # finite-difference L-BFGS-B can report line-search failure at
+                # a box boundary even when the iterate is numerically settled.
+                # A deterministic bounded Powell retry is a genuine second
+                # local optimizer, not a relaxed success criterion.  A point
+                # remains rejected unless one of the optimizer attempts
+                # explicitly converges.
+                if not result.success:
+                    fallback = minimize(lambda p: objective(p, "S1_N1"), start, method="Powell", bounds=((115.0,125.0),(16.0,18.0)),
+                                        options={"maxiter":200, "xtol":1.0e-10, "ftol":1.0e-12})
+                    fits.append((fallback, "Powell"))
+                    attempt_records.append({"method": "Powell", "start": np.asarray(start, dtype=np.float64).tolist(),
+                                            "success": bool(fallback.success), "status": int(fallback.status),
+                                            "message": str(fallback.message), "objective": float(fallback.fun)})
+            successful = [(item, method) for item, method in fits if bool(item.success)]
+            best, best_method = min(successful if successful else fits, key=lambda pair: float(pair[0].fun))
             estimate = np.asarray(best.x, dtype=np.float64)
             errors = estimate - geometry[index]
-            records.append({"fold": fold, "geometry_index": int(index), "truth_geometry": geometry[index].tolist(), "estimate": estimate.tolist(), "height_error_nm": float(errors[0]), "width_error_nm": float(errors[1]), "objective_S1_N1": float(best.fun), "converged": bool(best.success), "rejected": bool(not best.success), "S0_N1_objective_at_estimate": objective(estimate, "S0_N1"), "S0_N2_objective_at_estimate": objective(estimate, "S0_N2"), "S1_N2_objective_at_estimate": objective(estimate, "S1_N2")})
+            records.append({"fold": fold, "geometry_index": int(index), "truth_geometry": geometry[index].tolist(), "estimate": estimate.tolist(), "height_error_nm": float(errors[0]), "width_error_nm": float(errors[1]), "objective_S1_N1": float(best.fun), "optimizer_method": best_method, "optimizer_attempts": attempt_records, "converged": bool(best.success), "rejected": bool(not best.success), "S0_N1_objective_at_estimate": objective(estimate, "S0_N1"), "S0_N2_objective_at_estimate": objective(estimate, "S0_N2"), "S1_N2_objective_at_estimate": objective(estimate, "S1_N2")})
     height = np.abs(np.asarray([row["height_error_nm"] for row in records])); width = np.abs(np.asarray([row["width_error_nm"] for row in records]))
     summary = {"p95_abs_height_nm": float(np.percentile(height,95)), "p95_abs_width_nm": float(np.percentile(width,95)), "max_abs_height_nm": float(np.max(height)), "max_abs_width_nm": float(np.max(width)), "rejected_count": int(sum(row["rejected"] for row in records))}
     return {"schema_version": "task006.train37-synthetic-recovery.v1", "candidate": candidate, "records": records, "summary": summary, "hard_gate": bool(summary["p95_abs_height_nm"] <= 0.25 and summary["p95_abs_width_nm"] <= 0.05 and summary["max_abs_height_nm"] <= 0.5 and summary["max_abs_width_nm"] <= 0.1 and summary["rejected_count"] == 0), "training_only": True, "test_truth_used_only_as_synthetic_observation": True, "blind_response_accessed": False}

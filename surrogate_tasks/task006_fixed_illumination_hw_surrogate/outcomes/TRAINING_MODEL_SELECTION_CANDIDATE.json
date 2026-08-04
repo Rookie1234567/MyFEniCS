@@ -1,0 +1,21 @@
+{
+  "schema_version": "task006.training-model-selection-candidate.v1",
+  "status": "training_candidate_review_pending",
+  "selected_candidate": "matern52_ard_exact_gp",
+  "selection_basis": "minimum training-only grouped-CV selection_score among hard-gate candidates; if none pass, minimum score is reported without qualification",
+  "eligible_candidates": [
+    "matern52_ard_exact_gp",
+    "degree2_trend_plus_matern52_residual"
+  ],
+  "candidate_scores": {
+    "legendre_2": 4.2190032026453785,
+    "legendre_3": 1.48,
+    "legendre_4": 2.176470588235294,
+    "local_rbf_k8": 263.7085344914101,
+    "matern52_ard_exact_gp": 1.0,
+    "degree2_trend_plus_matern52_residual": 1.088235294117647
+  },
+  "training_only": true,
+  "blind_response_accessed": false,
+  "synthetic_recovery": true
+}

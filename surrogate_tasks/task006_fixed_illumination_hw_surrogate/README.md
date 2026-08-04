@@ -3,7 +3,7 @@
 ## 状态
 
 ```text
-status = ready_after_task005_metadata_closeout
+status = training_only_m2_complete_review_pending
 execution_branch = codex/only-one-13p5nm-surrogate-inversion
 predecessor = Task005 Review V2
 purpose = build a validated 2D h/w forward surrogate at fixed selected illuminations
@@ -73,3 +73,27 @@ P偏振、波长、材料或更多结构参数扩展
 ```
 
 完整执行合同见 `task.md`。
+
+## 当前 M2 结果与停止边界
+
+M0、M1 和 M2 已完成。37 个 training geometry 的 111 条三照明记录由
+79 个新的、逐一串行运行的 FEM 结果和 32 条 exact reuse 记录组成；12 个
+blind geometry 没有读取或运行。M2 使用 geometry-grouped 五折 CV，只在
+`.venv-surrogate-cpu` 中进行 CPU 训练，不依赖 CUDA。
+
+训练候选中 Matérn-5/2 ARD exact GP 的 training-only Gate 通过，并按冻结
+selection score 被选为当前候选；degree-2 orthogonal-trend + GP residual
+也通过，但分数较差。Legendre degree 2/3/4 与 local RBF 没有同时满足
+精度和不确定度 Gate。S0 aggregate 使用 log-ratio composition，S1 使用
+side-total 加冻结 m=0 primary channel fraction，两个合同独立评分。
+
+held-out synthetic h/w recovery 的全部 37 个外层测试点也通过收敛与误差
+Gate（p95 height `0.000677341 nm`、p95 width `0.000137901 nm`，最大误差
+分别 `0.000986796 nm` 和 `0.000217014 nm`，rejected `0`）。这些是
+training-only synthetic 诊断，不是 blind validation 或实验误差证明。
+
+当前仍是 `training_candidate_review_pending`：不创建正式 model lock，
+不运行 12 个 blind FEM，不做主动加点、正式反演或 Task007。证据见
+`outcomes/TRAIN37_MODEL_COMPARISON.json`、`TRAIN37_OOF_PREDICTIONS.json`、
+`TRAIN37_UNCERTAINTY.json`、`TRAIN37_SYNTHETIC_RECOVERY.json` 和
+`TRAINING_MODEL_SELECTION_CANDIDATE.json`。

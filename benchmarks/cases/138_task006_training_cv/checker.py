@@ -28,9 +28,12 @@ def check(root: Path) -> tuple[dict[str, bool], list[str]]:
     candidates = comparison.get("candidates", {})
     checks["finite_candidate_set"] = bool(set(candidates) >= {"legendre_2", "legendre_3", "legendre_4", "local_rbf_k8", "matern52_ard_exact_gp", "degree2_trend_plus_matern52_residual"})
     checks["selected_from_training_cv"] = bool(selection.get("status") == "training_candidate_review_pending" and selection.get("training_only") is True and selection.get("selected_candidate") in candidates and selection.get("selection_basis"))
+    selected_name = selection.get("selected_candidate")
+    checks["selected_candidate_cv_gate"] = bool(selected_name in candidates and candidates[selected_name].get("hard_gate") is True)
     checks["oof_grouped_and_complete"] = bool(oof.get("training_only") is True and len(oof.get("records", [])) == 37 * 3 * 5)
     checks["uncertainty_cross_fitted"] = bool(uncertainty.get("cross_fitted") is True and uncertainty.get("training_only") is True)
     checks["recovery_complete"] = bool(recovery.get("training_only") is True and len(recovery.get("records", [])) == 37 and "summary" in recovery and "hard_gate" in recovery)
+    checks["synthetic_recovery_gate"] = bool(recovery.get("hard_gate") is True and recovery.get("summary", {}).get("rejected_count") == 0)
     checks["physics_gate_reported"] = bool(all("physics" in value and "hard_gate" in value and "selection_score" in value for value in candidates.values()))
     checks["no_validation_or_blind"] = bool(selection.get("blind_response_accessed") is False and comparison.get("training_only") is True and recovery.get("blind_response_accessed") is False)
     if not all(checks.values()):

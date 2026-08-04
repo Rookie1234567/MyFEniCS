@@ -1,0 +1,3706 @@
+{
+  "schema_version": "task006.train37-synthetic-recovery.v1",
+  "candidate": "matern52_ard_exact_gp",
+  "records": [
+    {
+      "fold": 0,
+      "geometry_index": 0,
+      "truth_geometry": [
+        115.0,
+        16.0
+      ],
+      "estimate": [
+        115.0,
+        16.000198520159202
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": 0.00019852015920207577,
+      "objective_S1_N1": 0.0002388297115327179,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 0.00023883926410456352
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 0.0002388297115327179
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 0.0002388745369967514
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 0.00023883064686951562
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 0.00023882998660577025
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 0.00023883409982279898
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 0.0002388321493631382
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 0.00023883926410456352
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 0.00025956022511586637,
+      "S0_N2_objective_at_estimate": 5.8530769483202644e-05,
+      "S1_N2_objective_at_estimate": 5.116471143717501e-05
+    },
+    {
+      "fold": 0,
+      "geometry_index": 5,
+      "truth_geometry": [
+        115.0,
+        17.5
+      ],
+      "estimate": [
+        115.00088703945396,
+        17.499782985890555
+      ],
+      "height_error_nm": 0.0008870394539570725,
+      "width_error_nm": -0.00021701410944530153,
+      "objective_S1_N1": 1.866211514340426e-05,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.9996082340827563e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.879127470484164e-05
+        },
+        {
+          "method": "Powell",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.8662259824905405e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.884618795360128e-05
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.866211514340426e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.218416233838089e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 0.00136405378751638
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            17.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.4161021800366614e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 8.088735279012275e-06,
+      "S0_N2_objective_at_estimate": 1.6964783466681112e-06,
+      "S1_N2_objective_at_estimate": 4.203258055804464e-06
+    },
+    {
+      "fold": 0,
+      "geometry_index": 10,
+      "truth_geometry": [
+        118.75,
+        18.0
+      ],
+      "estimate": [
+        118.75003945228116,
+        17.99999624971484
+      ],
+      "height_error_nm": 3.945228115753707e-05,
+      "width_error_nm": -3.75028515975373e-06,
+      "objective_S1_N1": 9.38335209373506e-08,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3622217137212754e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.1585607220995507e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 9.693507176178123e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 9.577205700353491e-08
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 9.38335209373506e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 9.70291745262146e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            118.5,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.1628435542795802e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.2577147000750286e-08,
+      "S0_N2_objective_at_estimate": 2.682219559207081e-09,
+      "S1_N2_objective_at_estimate": 1.4538274672952862e-08
+    },
+    {
+      "fold": 0,
+      "geometry_index": 15,
+      "truth_geometry": [
+        122.5,
+        16.0
+      ],
+      "estimate": [
+        122.49990489537639,
+        16.000000000996433
+      ],
+      "height_error_nm": -9.51046236110642e-05,
+      "width_error_nm": 9.964331582068553e-10,
+      "objective_S1_N1": 2.877748929760388e-07,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.890180190262567e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 3.80030270546573e-07
+        },
+        {
+          "method": "Powell",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 2.877748929760388e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 7.784711998191e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.8376482840495743e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 299.3143892055738
+        },
+        {
+          "method": "Powell",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 4.97805753225706e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            122.5,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.090667523239771e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.814061270451423e-05,
+      "S0_N2_objective_at_estimate": 2.812000125191442e-06,
+      "S1_N2_objective_at_estimate": 6.299362030197979e-08
+    },
+    {
+      "fold": 0,
+      "geometry_index": 20,
+      "truth_geometry": [
+        125.0,
+        17.0
+      ],
+      "estimate": [
+        124.99999453856066,
+        17.0000077590072
+      ],
+      "height_error_nm": -5.461439343434904e-06,
+      "width_error_nm": 7.75900720029199e-06,
+      "objective_S1_N1": 3.060951855133055e-08,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.060951855133055e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.0721154209602026e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.06965855032263e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.090652751927823e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.181729127856555e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.08092080753791e-08
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.1824964728898726e-07,
+      "S0_N2_objective_at_estimate": 4.797261462703162e-08,
+      "S1_N2_objective_at_estimate": 6.778334661622881e-09
+    },
+    {
+      "fold": 0,
+      "geometry_index": 25,
+      "truth_geometry": [
+        118.75,
+        17.0
+      ],
+      "estimate": [
+        118.74991075139909,
+        17.000007070071028
+      ],
+      "height_error_nm": -8.924860091497067e-05,
+      "width_error_nm": 7.070071028181246e-06,
+      "objective_S1_N1": 9.904660576011824e-09,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.0428797561842944e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 9.904660576011824e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.122074207860331e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2720029610264736e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 9.96096885741056e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            118.5,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 6.53515398791681e-08
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 4.2026212737894813e-08,
+      "S0_N2_objective_at_estimate": 8.09061654995916e-09,
+      "S1_N2_objective_at_estimate": 2.005584194753249e-09
+    },
+    {
+      "fold": 0,
+      "geometry_index": 30,
+      "truth_geometry": [
+        118.75,
+        17.25
+      ],
+      "estimate": [
+        118.74992137295656,
+        17.250006766038968
+      ],
+      "height_error_nm": -7.862704343608584e-05,
+      "width_error_nm": 6.766038968208932e-06,
+      "objective_S1_N1": 2.2201433262971467e-08,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.2212467690172114e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.2210609079998176e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 2.2254603763630767e-08
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 2.2201433262971467e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 0.03976902540874478
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 2.2206480284993438e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.223879611230189e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            118.5,
+            17.3
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.2239688858191927e-08
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 4.2669553745003234e-08,
+      "S0_N2_objective_at_estimate": 8.707008270518556e-09,
+      "S1_N2_objective_at_estimate": 4.094665863424723e-09
+    },
+    {
+      "fold": 0,
+      "geometry_index": 35,
+      "truth_geometry": [
+        120.0,
+        17.5
+      ],
+      "estimate": [
+        120.00028854020877,
+        17.499913367270853
+      ],
+      "height_error_nm": 0.00028854020877133735,
+      "width_error_nm": -8.663272914688491e-05,
+      "objective_S1_N1": 3.9636879287069524e-06,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 4.024383588756447e-06
+        },
+        {
+          "method": "Powell",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 3.9637558570075355e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.400623023498227e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.9689900137082505e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.968785061786815e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.815741105967834e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.5
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 4.733685809237621e-06
+        },
+        {
+          "method": "Powell",
+          "start": [
+            120.0,
+            17.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 3.9636879287069524e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.1223294035709616e-06,
+      "S0_N2_objective_at_estimate": 3.979470950582107e-07,
+      "S1_N2_objective_at_estimate": 8.62705744977501e-07
+    },
+    {
+      "fold": 1,
+      "geometry_index": 1,
+      "truth_geometry": [
+        115.0,
+        16.5
+      ],
+      "estimate": [
+        115.00059804332471,
+        16.49994380017278
+      ],
+      "height_error_nm": 0.0005980433247145811,
+      "width_error_nm": -5.6199827220382303e-05,
+      "objective_S1_N1": 1.220536169718957e-06,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.8495378224654695
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.5437451645991372e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2269577886621668e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.2452240551193383e-06
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.220536169718957e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.224414198930372e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2263181164542448e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 5.020023132640578e-06,
+      "S0_N2_objective_at_estimate": 1.1095592291568783e-06,
+      "S1_N2_objective_at_estimate": 2.4495707608467743e-07
+    },
+    {
+      "fold": 1,
+      "geometry_index": 6,
+      "truth_geometry": [
+        115.0,
+        18.0
+      ],
+      "estimate": [
+        115.00039235527126,
+        17.99999999715758
+      ],
+      "height_error_nm": 0.0003923552712592482,
+      "width_error_nm": -2.8424196329979168e-09,
+      "objective_S1_N1": 4.2965276858079607e-05,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.305037521261536e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 4.307918619740623e-05
+        },
+        {
+          "method": "Powell",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 4.2965321121712743e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 4.2965607135669125e-05
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 4.2965276858079607e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.297585002053387e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.296574216997248e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 4.307918619740623e-05
+        },
+        {
+          "method": "Powell",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 4.2965321121712743e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 9.437592561258067e-06,
+      "S0_N2_objective_at_estimate": 2.1160983893898655e-06,
+      "S1_N2_objective_at_estimate": 8.998421785854013e-06
+    },
+    {
+      "fold": 1,
+      "geometry_index": 11,
+      "truth_geometry": [
+        120.0,
+        16.0
+      ],
+      "estimate": [
+        119.99988037669208,
+        16.000002024419377
+      ],
+      "height_error_nm": -0.00011962330792414377,
+      "width_error_nm": 2.0244193770224683e-06,
+      "objective_S1_N1": 4.0196240711132594e-07,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.2467761133228216e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.05415722664806e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.0196240711132594e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.43472561167752e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.4717426261965426e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.1279067040620585e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.611703300567453e-06,
+      "S0_N2_objective_at_estimate": 1.881044359434017e-07,
+      "S1_N2_objective_at_estimate": 6.251804802297407e-08
+    },
+    {
+      "fold": 1,
+      "geometry_index": 16,
+      "truth_geometry": [
+        122.5,
+        18.0
+      ],
+      "estimate": [
+        122.50062491555988,
+        17.99994221350821
+      ],
+      "height_error_nm": 0.0006249155598823108,
+      "width_error_nm": -5.778649179077888e-05,
+      "objective_S1_N1": 3.3270608103951356e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.3270608103951356e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.3360808711319706e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.345707576617773e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.3396160738938564e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.332564219516445e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            122.5,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.3388482843811614e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 3.7806879215356304e-06,
+      "S0_N2_objective_at_estimate": 6.66187471180982e-07,
+      "S1_N2_objective_at_estimate": 5.331176657288922e-07
+    },
+    {
+      "fold": 1,
+      "geometry_index": 21,
+      "truth_geometry": [
+        125.0,
+        17.25
+      ],
+      "estimate": [
+        124.99999999999987,
+        17.24999473601634
+      ],
+      "height_error_nm": -1.2789769243681803e-13,
+      "width_error_nm": -5.263983659631322e-06,
+      "objective_S1_N1": 1.877867793950234e-08,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 0.0015977334483195734
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.877867793950234e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.8781989318077884e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.8784063568311857e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.8779030997602323e-08
+        },
+        {
+          "method": "Powell",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.8787510672188617e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            17.3
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.878659270171301e-08
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.434900505885522e-07,
+      "S0_N2_objective_at_estimate": 4.896375766497441e-08,
+      "S1_N2_objective_at_estimate": 4.073143474620372e-09
+    },
+    {
+      "fold": 1,
+      "geometry_index": 26,
+      "truth_geometry": [
+        121.25,
+        17.0
+      ],
+      "estimate": [
+        121.2499427121433,
+        17.000012424759777
+      ],
+      "height_error_nm": -5.7287856705556806e-05,
+      "width_error_nm": 1.2424759777474037e-05,
+      "objective_S1_N1": 1.9241431092527995e-08,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.146180875572195e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.926557858851541e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.107102773901137e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.9341043968705374e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.924474536775801e-08
+        },
+        {
+          "method": "Powell",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.9241431092527995e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            121.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.9334744878986562e-08
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 4.557781456710946e-07,
+      "S0_N2_objective_at_estimate": 4.619066862615181e-08,
+      "S1_N2_objective_at_estimate": 3.6683570128092266e-09
+    },
+    {
+      "fold": 1,
+      "geometry_index": 31,
+      "truth_geometry": [
+        121.25,
+        17.25
+      ],
+      "estimate": [
+        121.24991604585385,
+        17.250010277816084
+      ],
+      "height_error_nm": -8.395414614881247e-05,
+      "width_error_nm": 1.027781608442524e-05,
+      "objective_S1_N1": 2.3705727643142204e-07,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.3740298648626547e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.371090163069601e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.5148743733771204e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 2.372386377202133e-07
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 2.3705727643142204e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.8801687751961523e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            121.0,
+            17.3
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.3706625742136648e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.2025665379119172e-07,
+      "S0_N2_objective_at_estimate": 2.359430984769051e-08,
+      "S1_N2_objective_at_estimate": 3.851144905079721e-08
+    },
+    {
+      "fold": 1,
+      "geometry_index": 36,
+      "truth_geometry": [
+        121.25,
+        16.75
+      ],
+      "estimate": [
+        121.25002637757636,
+        16.750000027130106
+      ],
+      "height_error_nm": 2.6377576361369393e-05,
+      "width_error_nm": 2.713010616162137e-08,
+      "objective_S1_N1": 1.3647728077678077e-07,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3675815481968968e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.5151739123884943e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.6665183960387377e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.365577918272376e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.3670721308794946e-07
+        },
+        {
+          "method": "Powell",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.3647728077678077e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            121.0,
+            16.8
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3851214717971262e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.937288348281993e-06,
+      "S0_N2_objective_at_estimate": 1.9814335242666054e-07,
+      "S1_N2_objective_at_estimate": 2.5789523423554826e-08
+    },
+    {
+      "fold": 2,
+      "geometry_index": 2,
+      "truth_geometry": [
+        115.0,
+        16.75
+      ],
+      "estimate": [
+        115.0,
+        16.750007096802626
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": 7.0968026264495165e-06,
+      "objective_S1_N1": 3.5672036489552837e-07,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.567822476438922e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.5672036489552837e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 3.5669436843340115e-07
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 3.5676900178991546e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 3.58360920624917e-07
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 3.5683293390043996e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.591792588615666e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.8
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.5843632270165766e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 4.905386598276876e-07,
+      "S0_N2_objective_at_estimate": 1.1375374771499843e-07,
+      "S1_N2_objective_at_estimate": 7.89050320322901e-08
+    },
+    {
+      "fold": 2,
+      "geometry_index": 7,
+      "truth_geometry": [
+        117.5,
+        16.0
+      ],
+      "estimate": [
+        117.49952167222396,
+        16.00000633083655
+      ],
+      "height_error_nm": -0.0004783277760367355,
+      "width_error_nm": 6.330836548329444e-06,
+      "objective_S1_N1": 1.2556622113880406e-05,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.26534895726464e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.257259285363789e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.2574498388823189e-05
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.2556690575493704e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 20.617015933720342
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.2556683007737881e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.2560468779927421e-05
+        },
+        {
+          "method": "Powell",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.2556622113880406e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            117.5,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.257747903452124e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 6.7528992418783845e-06,
+      "S0_N2_objective_at_estimate": 1.1917704327677505e-06,
+      "S1_N2_objective_at_estimate": 1.8534528729402026e-06
+    },
+    {
+      "fold": 2,
+      "geometry_index": 12,
+      "truth_geometry": [
+        120.0,
+        18.0
+      ],
+      "estimate": [
+        120.00002487250579,
+        17.999998238045144
+      ],
+      "height_error_nm": 2.4872505790085597e-05,
+      "width_error_nm": -1.7619548557945564e-06,
+      "objective_S1_N1": 1.4974328762107876e-09,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.929123422453416e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.5894572481987983e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.737611976559064e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.5601119496031114e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.6756303115421873e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.4974328762107876e-09
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.0913220206920028e-07,
+      "S0_N2_objective_at_estimate": 1.1732324100483665e-08,
+      "S1_N2_objective_at_estimate": 2.9421440626247225e-10
+    },
+    {
+      "fold": 2,
+      "geometry_index": 17,
+      "truth_geometry": [
+        125.0,
+        16.0
+      ],
+      "estimate": [
+        124.99901320397694,
+        16.0
+      ],
+      "height_error_nm": -0.0009867960230565131,
+      "width_error_nm": 0.0,
+      "objective_S1_N1": 1.3944205106546625e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3944205106546625e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.3947902892693887e-06
+        },
+        {
+          "method": "Powell",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.3945302743774308e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.416927848670688e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3955027345445274e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3991348711121544e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.416927848670688e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.0428788242880034e-05,
+      "S0_N2_objective_at_estimate": 3.3367699201206418e-06,
+      "S1_N2_objective_at_estimate": 2.7341664646888645e-07
+    },
+    {
+      "fold": 2,
+      "geometry_index": 22,
+      "truth_geometry": [
+        125.0,
+        17.5
+      ],
+      "estimate": [
+        124.99992782226727,
+        17.500019474146608
+      ],
+      "height_error_nm": -7.217773273282546e-05,
+      "width_error_nm": 1.9474146608189358e-05,
+      "objective_S1_N1": 1.2560628773803283e-07,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2707971315921714e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2608805847698163e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.26510113689926e-07
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.2560628773803283e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.357610516804251e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2573416799660756e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            17.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.7410984379031718e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.321096284329299e-06,
+      "S0_N2_objective_at_estimate": 4.504048209298135e-07,
+      "S1_N2_objective_at_estimate": 2.2470984417257596e-08
+    },
+    {
+      "fold": 2,
+      "geometry_index": 27,
+      "truth_geometry": [
+        120.0,
+        16.75
+      ],
+      "estimate": [
+        119.99997079641783,
+        16.750002227322618
+      ],
+      "height_error_nm": -2.9203582172954157e-05,
+      "width_error_nm": 2.227322617898153e-06,
+      "objective_S1_N1": 4.435785495665374e-09,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.435785495665374e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.022618030386331e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 7.55451328202792e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.479687047505237e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.63659537879758e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            16.8
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.722587130080364e-09
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.8583253618644843e-08,
+      "S0_N2_objective_at_estimate": 3.827633734188288e-09,
+      "S1_N2_objective_at_estimate": 1.018361183322109e-09
+    },
+    {
+      "fold": 2,
+      "geometry_index": 32,
+      "truth_geometry": [
+        117.5,
+        17.0
+      ],
+      "estimate": [
+        117.49961689851204,
+        17.00002904634915
+      ],
+      "height_error_nm": -0.00038310148795517307,
+      "width_error_nm": 2.904634915168458e-05,
+      "objective_S1_N1": 3.7565909017513086e-06,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.8082601733099318e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.7566982903027045e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.7733931759000607e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.758828151189382e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 3.7586470785810085e-06
+        },
+        {
+          "method": "Powell",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 3.7565909017513086e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            117.5,
+            17.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 3.853951903297473e-06
+        },
+        {
+          "method": "Powell",
+          "start": [
+            117.5,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 3.756606388080613e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.5136942958592122e-06,
+      "S0_N2_objective_at_estimate": 2.483288188777561e-07,
+      "S1_N2_objective_at_estimate": 5.482260736234834e-07
+    },
+    {
+      "fold": 3,
+      "geometry_index": 3,
+      "truth_geometry": [
+        115.0,
+        17.0
+      ],
+      "estimate": [
+        115.00005950674468,
+        16.999989876340063
+      ],
+      "height_error_nm": 5.9506744676696144e-05,
+      "width_error_nm": -1.0123659937022467e-05,
+      "objective_S1_N1": 2.8472876989132898e-08,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.375619718815625e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.188125685843376e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.8472876989132898e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.8786147298248246e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2749095415796404e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.1757670801593904e-08
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.7115953581877324e-07,
+      "S0_N2_objective_at_estimate": 3.953912516249912e-08,
+      "S1_N2_objective_at_estimate": 6.263790346715584e-09
+    },
+    {
+      "fold": 3,
+      "geometry_index": 8,
+      "truth_geometry": [
+        117.5,
+        18.0
+      ],
+      "estimate": [
+        117.49992055754753,
+        17.99999999840267
+      ],
+      "height_error_nm": -7.944245247415438e-05,
+      "width_error_nm": -1.5973284916981356e-09,
+      "objective_S1_N1": 1.2573665710045445e-06,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2598655423855204e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.32194570435521e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2707578841850653e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.2585589439280628e-06
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.2573826936476484e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2618265502555762e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            117.5,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 1.3300759329778256e-06
+        },
+        {
+          "method": "Powell",
+          "start": [
+            117.5,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.2573665710045445e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.2813952084537301e-07,
+      "S0_N2_objective_at_estimate": 2.62407645820932e-08,
+      "S1_N2_objective_at_estimate": 1.667755475927821e-07
+    },
+    {
+      "fold": 3,
+      "geometry_index": 13,
+      "truth_geometry": [
+        121.25,
+        16.0
+      ],
+      "estimate": [
+        121.25000904762541,
+        16.00000616492957
+      ],
+      "height_error_nm": 9.047625411540139e-06,
+      "width_error_nm": 6.164929569507649e-06,
+      "objective_S1_N1": 3.77613162300102e-08,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.649871158923583e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.830708768362045e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.77613162300102e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.7830520919111305e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.886606749088539e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            121.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.208665710382489e-08
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.5510577385470645e-06,
+      "S0_N2_objective_at_estimate": 2.614316480886071e-07,
+      "S1_N2_objective_at_estimate": 7.1829989218584265e-09
+    },
+    {
+      "fold": 3,
+      "geometry_index": 18,
+      "truth_geometry": [
+        125.0,
+        16.5
+      ],
+      "estimate": [
+        125.0,
+        16.500049381997783
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": 4.9381997783370934e-05,
+      "objective_S1_N1": 1.2026766859815028e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.309505944353024e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2027493132137828e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.134557632314288e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2114021323237954e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2051858320337326e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.2026766859815028e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 9.037757475855216e-06,
+      "S0_N2_objective_at_estimate": 2.0213041687700176e-06,
+      "S1_N2_objective_at_estimate": 2.6438932973173747e-07
+    },
+    {
+      "fold": 3,
+      "geometry_index": 23,
+      "truth_geometry": [
+        125.0,
+        18.0
+      ],
+      "estimate": [
+        125.0,
+        17.999877253368062
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": -0.0001227466319377868,
+      "objective_S1_N1": 3.02143882017258e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.0501141019847732e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.061977967574086e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.0223423560735286e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 3.0214736934427335e-06
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 3.021808685839915e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.02143882017258e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 3.0214736934427335e-06
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 3.021808685839915e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 4.638082025858127e-05,
+      "S0_N2_objective_at_estimate": 8.588525688904962e-06,
+      "S1_N2_objective_at_estimate": 6.055708738040164e-07
+    },
+    {
+      "fold": 3,
+      "geometry_index": 28,
+      "truth_geometry": [
+        120.0,
+        17.25
+      ],
+      "estimate": [
+        119.9999973852338,
+        17.250000397931792
+      ],
+      "height_error_nm": -2.6147662026687613e-06,
+      "width_error_nm": 3.9793179240632526e-07,
+      "objective_S1_N1": 2.42928070799363e-09,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.6277349112427737e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.340137581907202e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.42928070799363e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 3.1225434040168336e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.5847038479729252e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.3
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.5824851404781725e-09
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.2305421481837806e-08,
+      "S0_N2_objective_at_estimate": 2.1601330362827582e-09,
+      "S1_N2_objective_at_estimate": 5.272745899775604e-10
+    },
+    {
+      "fold": 3,
+      "geometry_index": 33,
+      "truth_geometry": [
+        122.5,
+        17.0
+      ],
+      "estimate": [
+        122.49986492193788,
+        16.999994823277955
+      ],
+      "height_error_nm": -0.00013507806211521256,
+      "width_error_nm": -5.176722044808457e-06,
+      "objective_S1_N1": 4.143772742708548e-07,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.993207739701341e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.1515456566914994e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.143772742708548e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.1616023721803433e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.1448975835207504e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            122.5,
+            17.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 4.246705107236466e-07
+        },
+        {
+          "method": "Powell",
+          "start": [
+            122.5,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 4.1443360468333826e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 4.784332142134782e-06,
+      "S0_N2_objective_at_estimate": 5.08307051675472e-07,
+      "S1_N2_objective_at_estimate": 7.169468738371831e-08
+    },
+    {
+      "fold": 4,
+      "geometry_index": 4,
+      "truth_geometry": [
+        115.0,
+        17.25
+      ],
+      "estimate": [
+        115.0,
+        17.250023974457722
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": 2.3974457722175657e-05,
+      "objective_S1_N1": 5.836581312093107e-07,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.837861124762609e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.853357034345697e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.836581312093107e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.84494571415281e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.837825984076377e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            17.3
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 5.83671696877025e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 3.870518564062674e-07,
+      "S0_N2_objective_at_estimate": 8.815126649108525e-08,
+      "S1_N2_objective_at_estimate": 1.3493410082534771e-07
+    },
+    {
+      "fold": 4,
+      "geometry_index": 9,
+      "truth_geometry": [
+        118.75,
+        16.0
+      ],
+      "estimate": [
+        118.75008410358963,
+        16.00000193129074
+      ],
+      "height_error_nm": 8.410358962862574e-05,
+      "width_error_nm": 1.931290739776159e-06,
+      "objective_S1_N1": 4.6625776472273984e-07,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.67677774058738e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.6773728761832604e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.792513201159376e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.6813367975808237e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 4.6850340064887906e-07
+        },
+        {
+          "method": "Powell",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 4.6625776472273984e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            118.5,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 4.740721753244986e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 5.694335224447574e-07,
+      "S0_N2_objective_at_estimate": 8.381970415766322e-08,
+      "S1_N2_objective_at_estimate": 7.169602269510757e-08
+    },
+    {
+      "fold": 4,
+      "geometry_index": 14,
+      "truth_geometry": [
+        121.25,
+        18.0
+      ],
+      "estimate": [
+        121.24994000202602,
+        18.0
+      ],
+      "height_error_nm": -5.999797397748807e-05,
+      "width_error_nm": 0.0,
+      "objective_S1_N1": 6.857060224874859e-08,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 6.857060224874859e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.7211599838259136e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 6.901195263497538e-08
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3380299911037373e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 6.81740708578827e-08
+        },
+        {
+          "method": "Powell",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 1.5734229415759187e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            121.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 7.365798798833377e-08
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 3.983728690170679e-08,
+      "S0_N2_objective_at_estimate": 6.544906069413037e-09,
+      "S1_N2_objective_at_estimate": 1.0256511256118972e-08
+    },
+    {
+      "fold": 4,
+      "geometry_index": 19,
+      "truth_geometry": [
+        125.0,
+        16.75
+      ],
+      "estimate": [
+        125.0,
+        16.749981271849222
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": -1.8728150777747032e-05,
+      "objective_S1_N1": 2.0577512633097832e-07,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.0577512633097832e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.058707848390785e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.0662439015571824e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.0584123188909296e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.669493924788385e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.8
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.060464460540268e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.1915797370572167e-06,
+      "S0_N2_objective_at_estimate": 2.677884076804668e-07,
+      "S1_N2_objective_at_estimate": 4.623902720893185e-08
+    },
+    {
+      "fold": 4,
+      "geometry_index": 24,
+      "truth_geometry": [
+        120.0,
+        17.0
+      ],
+      "estimate": [
+        120.00000126176984,
+        16.999998603022362
+      ],
+      "height_error_nm": 1.2617698388339704e-06,
+      "width_error_nm": -1.3969776375688525e-06,
+      "objective_S1_N1": 7.1088708923744084e-09,
+      "optimizer_method": "Powell",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 7.629559542686794e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 7.195373183982531e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": false,
+          "status": 2,
+          "message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+          "objective": 7.18722338092686e-09
+        },
+        {
+          "method": "Powell",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "Optimization terminated successfully.",
+          "objective": 7.1088708923744084e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 7.125491391214359e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 7.129015146554987e-09
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 7.129015146554987e-09
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.486825190696605e-08,
+      "S0_N2_objective_at_estimate": 2.181322316257383e-09,
+      "S1_N2_objective_at_estimate": 1.156811723499161e-09
+    },
+    {
+      "fold": 4,
+      "geometry_index": 29,
+      "truth_geometry": [
+        118.75,
+        16.75
+      ],
+      "estimate": [
+        118.75002056101073,
+        16.749997472641965
+      ],
+      "height_error_nm": 2.0561010728670226e-05,
+      "width_error_nm": -2.5273580348539326e-06,
+      "objective_S1_N1": 1.342341554750232e-07,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3434861542453957e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 2.7874956523018812e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3455238656887725e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3965576464229244e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.352496505341132e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            118.5,
+            16.8
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.342341554750232e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.4047580073545008e-07,
+      "S0_N2_objective_at_estimate": 2.3815644290680352e-08,
+      "S1_N2_objective_at_estimate": 2.2494640696414953e-08
+    },
+    {
+      "fold": 4,
+      "geometry_index": 34,
+      "truth_geometry": [
+        120.0,
+        16.5
+      ],
+      "estimate": [
+        119.99989992058752,
+        16.50003644247512
+      ],
+      "height_error_nm": -0.00010007941247636154,
+      "width_error_nm": 3.644247512113452e-05,
+      "objective_S1_N1": 1.3209275782067364e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3326061193170519e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3305336055519024e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3209275782067364e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 0.002802280784448619
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.3574928725256956e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            16.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+          "objective": 1.37751896395605e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 5.330067033607596e-06,
+      "S0_N2_objective_at_estimate": 1.1742574295257133e-06,
+      "S1_N2_objective_at_estimate": 2.735335246917418e-07
+    }
+  ],
+  "summary": {
+    "p95_abs_height_nm": 0.0006773403386972621,
+    "p95_abs_width_nm": 0.00013790133739064427,
+    "max_abs_height_nm": 0.0009867960230565131,
+    "max_abs_width_nm": 0.00021701410944530153,
+    "rejected_count": 0
+  },
+  "hard_gate": true,
+  "training_only": true,
+  "test_truth_used_only_as_synthetic_observation": true,
+  "blind_response_accessed": false
+}
