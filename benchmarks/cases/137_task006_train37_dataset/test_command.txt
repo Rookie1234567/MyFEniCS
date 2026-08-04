@@ -1,0 +1,1 @@
+source scripts/activate_myfenics_surrogate_wsl.sh && PYTHONPATH=src python benchmarks/cases/137_task006_train37_dataset/build.py && PYTHONPATH=src python benchmarks/cases/137_task006_train37_dataset/checker.py
