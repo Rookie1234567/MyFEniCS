@@ -2688,6 +2688,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
+    canonical_vector_export: bool = False,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
@@ -2739,6 +2740,13 @@ def _solve_stage4_dtn_port_total_field_impl(
         raise ValueError(
             "the variable-p live observer requires the exact-sequence "
             "assembly-time variable-p backend"
+        )
+    if canonical_vector_export and (
+        not assembly_time_cell_static_condensation or variable_p_backend
+    ):
+        raise ValueError(
+            "canonical vector export requires the fixed assembly-time "
+            "static-condensed backend"
         )
     if variable_p_live_observer is not None and (
         cfg.matrix_diagnostics_assemble_only
@@ -4840,7 +4848,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             local_schur_release
         )
 
-    return {
+    result = {
         "E_total": E_total,
         "A": returned_A,
         "b": returned_b,
@@ -4850,6 +4858,15 @@ def _solve_stage4_dtn_port_total_field_impl(
         "port_metrics": port_metrics,
         "goal_context": goal_context,
     }
+    if canonical_vector_export:
+        if assembly_time_system is None:
+            raise RuntimeError(
+                "canonical vector export lost its assembly-time system"
+            )
+        result["canonical_vector_context"] = {
+            "assembly_time_system": assembly_time_system,
+        }
+    return result
 
 
 def solve_stage4_dtn_port_total_field(
@@ -4870,6 +4887,7 @@ def solve_stage4_dtn_port_total_field(
     ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
+    canonical_vector_export: bool = False,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
 
@@ -4885,12 +4903,13 @@ def solve_stage4_dtn_port_total_field(
             variable_p_live_observer is not None,
             bool(variable_p_retain_local_schur_for_research),
             bool(static_retain_local_schur_for_matrix_free),
+            bool(canonical_vector_export),
         )
     )
     if len(set(observer_flags)) != 1:
         raise ValueError(
             "the variable-p live observer must be enabled on every MPI rank "
-            "and research Schur retention flags must match"
+            "and research flags must match"
         )
     recovered_cleanup: list[VariablePRecoveredSolution] = []
     implementation_failed = False
@@ -4914,6 +4933,7 @@ def solve_stage4_dtn_port_total_field(
             static_retain_local_schur_for_matrix_free=(
                 static_retain_local_schur_for_matrix_free
             ),
+            canonical_vector_export=canonical_vector_export,
             _recovery_cleanup_sink=recovered_cleanup,
         )
     except BaseException:

@@ -81,6 +81,15 @@ def test_parser_scope_and_worker_command(tmp_path):
     ordinary = watchdog._parse_args(base)
     assert ordinary.task037_f3_screen is None
     assert ordinary.task037_f3_full is False
+    canonical_f0 = watchdog._parse_args(
+        base + [
+            "--task037-f0-vector-observer",
+            "--task037-canonical-vector-export",
+        ]
+    )
+    assert canonical_f0.task037_canonical_vector_export
+    canonical_f0_command = watchdog._worker_command(canonical_f0, tmp_path)
+    assert canonical_f0_command.count("--task037-canonical-vector-export") == 1
     valid = []
     for screen_iterations in (20, 100, 200):
         valid_args = base + [
@@ -118,6 +127,12 @@ def test_parser_scope_and_worker_command(tmp_path):
     assert released.task037_f5b_released_profile
     released_command = watchdog._worker_command(released, tmp_path)
     assert released_command.count("--task037-f5b-released-profile") == 1
+    canonical_f5b = watchdog._parse_args(
+        released_args + ["--task037-canonical-vector-export"]
+    )
+    assert canonical_f5b.task037_canonical_vector_export
+    canonical_f5b_command = watchdog._worker_command(canonical_f5b, tmp_path)
+    assert canonical_f5b_command.count("--task037-canonical-vector-export") == 1
     m0_args = full_args + [
         "--task037-f5b-released-profile",
         "--task037-m0-lifecycle-audit",
@@ -136,6 +151,8 @@ def test_parser_scope_and_worker_command(tmp_path):
         bad_iterations,
         missing_caps,
         valid + ["--task037-f0-vector-observer"],
+        base + ["--task037-canonical-vector-export"],
+        valid + ["--task037-canonical-vector-export"],
         base + ["--task037-f5b-released-profile"],
         valid + ["--task037-f5b-released-profile"],
         full_args + ["--task037-f3-screen", "20"],
@@ -173,6 +190,7 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
 
     def stage(*_args, **kwargs):
         assert kwargs["static_retain_local_schur_for_matrix_free"] is True
+        assert kwargs["canonical_vector_export"] is True
         kwargs["linear_solver_port"](request)
 
     monkeypatch.setattr(watchdog, "_full3d_config", lambda _args: object())
@@ -199,6 +217,7 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         task037_f3_screen=None,
         task037_f3_full=True,
         task037_f5b_released_profile=True,
+        task037_canonical_vector_export=True,
         task037_m0_lifecycle_audit=True,
         task035d_nested_p_dwr_phase=None,
         task035d_selective_face_dwr_phase=None,
@@ -235,6 +254,7 @@ def test_f3_qualification_uses_core_audit_gate():
         task037_f3_screen=20,
         task037_f3_full=False,
         task037_f5b_released_profile=False,
+        task037_canonical_vector_export=False,
         run_kind="full-solve",
         allow_swap=False,
         polarization_kind="s",

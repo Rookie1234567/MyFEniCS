@@ -10,6 +10,7 @@ from benchmarks.run_task033_full3d_watchdog import (
     _worker,
     _task037_canonical_identity,
     _task037_collect_owned_vector,
+    _task037_f0_solution_observer,
 )
 
 
@@ -67,6 +68,7 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
             task037_f3_screen=None,
             task037_f3_full=False,
             task037_f5b_released_profile=False,
+            task037_canonical_vector_export=False,
             task037_m0_lifecycle_audit=False,
             task035d_nested_p_dwr_phase=None,
             task035d_selective_face_dwr_phase=None,
@@ -86,6 +88,7 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
         self.assertIsNotNone(kwargs["solution_observer"])
         self.assertIsNone(kwargs["linear_solver_port"])
         self.assertIsNone(kwargs["variable_p_live_observer"])
+        self.assertFalse(kwargs["canonical_vector_export"])
 
     def test_f1_direct_trace_oracle_forwards_to_linear_solver_slot(self):
         args = SimpleNamespace(
@@ -96,6 +99,7 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
             task037_f3_screen=None,
             task037_f3_full=False,
             task037_f5b_released_profile=False,
+            task037_canonical_vector_export=False,
             task037_m0_lifecycle_audit=False,
             task035d_nested_p_dwr_phase=None,
             task035d_selective_face_dwr_phase=None,
@@ -116,3 +120,26 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
         ):
             self.assertEqual(_worker(args), 0)
         self.assertIs(solver.call_args.kwargs["linear_solver_port"], sentinel)
+
+
+def test_default_observer_does_not_request_canonical_context(tmp_path):
+    observer = _task037_f0_solution_observer(tmp_path)
+    vector = _FakeVec()
+    field = SimpleNamespace(
+        x=SimpleNamespace(petsc_vec=vector),
+    )
+    mesh_data = SimpleNamespace(mesh=SimpleNamespace(comm=_FakeComm()))
+    with patch(
+        "benchmarks.run_task033_full3d_watchdog._task037_write_canonical_solution_artifacts"
+    ) as exporter:
+        observer(
+            field=field,
+            mesh_data=mesh_data,
+            config=None,
+            floquet_data=None,
+            summary={},
+            linear_system={"x": vector},
+            dtn_result={"solver_info": {"num_active_trace_dofs": 2}},
+        )
+    exporter.assert_not_called()
+    assert not list(tmp_path.glob("*canonical*"))

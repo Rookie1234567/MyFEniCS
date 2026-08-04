@@ -401,7 +401,139 @@ def _task037_collect_owned_vector(petsc_vec: Any, comm: Any) -> np.ndarray | Non
     return np.concatenate(pieces)
 
 
-def _task037_f0_solution_observer(run_dir: Path, role: str = "f0"):
+def _task037_write_canonical_solution_artifacts(
+    run_dir: Path,
+    role: str,
+    *,
+    field: Any,
+    mesh_data: Any,
+    floquet_data: Any,
+    summary: dict[str, Any],
+    linear_system: dict[str, Any],
+    dtn_result: dict[str, Any],
+) -> None:
+    from mpi4py import MPI
+    from petsc4py import PETSc
+
+    from benchmarks.canonical_vector_artifacts import (
+        MANIFEST_SCHEMA,
+        canonical_shard_manifest,
+        write_canonical_manifest,
+        write_canonical_packet_shard,
+    )
+    from src.solvers.hcurl_canonical_vector_dolfinx import (
+        extract_canonical_active_trace_packets,
+        extract_canonical_full_fe_packets,
+    )
+
+    comm = mesh_data.mesh.comm
+    started = time.perf_counter()
+    _write_progress_event(
+        run_dir,
+        comm,
+        stage="task037_canonical_vector_export",
+        status="begin",
+        extra={"role": role, "schema_version": MANIFEST_SCHEMA},
+    )
+    context = dtn_result["canonical_vector_context"]
+    condensed = context["assembly_time_system"]
+    function_space = field.function_space
+    x = linear_system["x"]
+    start, end = map(int, x.getOwnershipRange())
+    active_rows = int(condensed.active_rows)
+    local_n = max(0, min(end, active_rows) - start)
+    active_is = PETSc.IS().createStride(
+        local_n,
+        first=start,
+        step=1,
+        comm=x.getComm(),
+    )
+    active_vec = x.getSubVector(active_is)
+    try:
+        active_packets, active_audit = extract_canonical_active_trace_packets(
+            condensed,
+            function_space,
+            floquet_data,
+            active_vec,
+        )
+    finally:
+        x.restoreSubVector(active_is, active_vec)
+        active_is.destroy()
+    full_packets, full_audit = extract_canonical_full_fe_packets(
+        function_space,
+        field.x.petsc_vec,
+        floquet_data,
+    )
+    raw_prefix = "task037" if role == "f0" else f"task037_{role}"
+    exports: dict[str, dict[str, Any]] = {}
+    for packet_role, packets, audit in (
+        ("active_trace", active_packets, active_audit),
+        ("full_fe", full_packets, full_audit),
+    ):
+        shard_path = run_dir / (
+            f"{raw_prefix}_{packet_role}_canonical_rank{comm.rank:04d}.jsonl"
+        )
+        shard = write_canonical_packet_shard(shard_path, packets)
+        shard.update(
+            {
+                "rank": int(comm.rank),
+                "local_duplicate_count": int(audit["local_duplicate_count"]),
+                "extractor_audit": audit,
+            }
+        )
+        by_rank = comm.gather(shard, root=0)
+        if comm.rank == 0:
+            by_rank = sorted(by_rank, key=lambda item: int(item["rank"]))
+            manifest = canonical_shard_manifest(
+                role=packet_role,
+                mpi_size=comm.size,
+                shard_metadata=by_rank,
+                extractor_audit={
+                    "by_rank": [item["extractor_audit"] for item in by_rank]
+                },
+            )
+            manifest_path = run_dir / (
+                f"{raw_prefix}_{packet_role}_canonical_manifest.json"
+            )
+            manifest_sha256 = write_canonical_manifest(
+                manifest_path, manifest
+            )
+            exports[packet_role] = {
+                "manifest": _path_from_root(manifest_path),
+                "manifest_sha256": manifest_sha256,
+                "global_summed_packet_count": manifest[
+                    "global_summed_packet_count"
+                ],
+                "schema_version": MANIFEST_SCHEMA,
+            }
+        exports = comm.bcast(exports if comm.rank == 0 else None, root=0)
+    elapsed_seconds = float(
+        comm.allreduce(time.perf_counter() - started, op=MPI.MAX)
+    )
+    if comm.rank == 0:
+        summary["task037_canonical_vector_export"] = {
+            "status": "completed",
+            "schema_version": MANIFEST_SCHEMA,
+            "roles": exports,
+            "canonical_export_elapsed_seconds": elapsed_seconds,
+        }
+    _write_progress_event(
+        run_dir,
+        comm,
+        stage="task037_canonical_vector_export",
+        status="end",
+        extra={
+            "role": role,
+            "schema_version": MANIFEST_SCHEMA,
+            "manifests": exports,
+            "canonical_export_elapsed_seconds": elapsed_seconds,
+        },
+    )
+
+
+def _task037_f0_solution_observer(
+    run_dir: Path, role: str = "f0", canonical_export: bool = False
+):
     raw_prefix = "task037" if role == "f0" else f"task037_{role}"
     namespace = f"task037.{role}"
     identity_key = f"task037_{role}_vector_identity"
@@ -420,6 +552,17 @@ def _task037_f0_solution_observer(run_dir: Path, role: str = "f0"):
         active_rows = int(dtn_result["solver_info"]["num_active_trace_dofs"])
         system_values = _task037_collect_owned_vector(linear_system["x"], comm)
         recovered_values = _task037_collect_owned_vector(field.x.petsc_vec, comm)
+        if canonical_export:
+            _task037_write_canonical_solution_artifacts(
+                run_dir,
+                role,
+                field=field,
+                mesh_data=mesh_data,
+                floquet_data=floquet_data,
+                summary=summary,
+                linear_system=linear_system,
+                dtn_result=dtn_result,
+            )
         if comm.rank != 0:
             return
         active_values = system_values[:active_rows]
@@ -742,6 +885,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_f3_screen": args.task037_f3_screen,
         "task037_f3_full": bool(args.task037_f3_full),
         "task037_f5b_released_profile": bool(args.task037_f5b_released_profile),
+        "task037_canonical_vector_export": bool(
+            args.task037_canonical_vector_export
+        ),
         "task037_m0_lifecycle_audit": bool(args.task037_m0_lifecycle_audit),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
@@ -878,9 +1024,13 @@ def _worker(args: argparse.Namespace) -> int:
         _task037_f0_solution_observer(
             args.run_dir,
             role=("f5b_full" if args.task037_f5b_released_profile else "f3_full"),
+            canonical_export=args.task037_canonical_vector_export,
         )
         if args.task037_f3_full
-        else _task037_f0_solution_observer(args.run_dir)
+        else _task037_f0_solution_observer(
+            args.run_dir,
+            canonical_export=args.task037_canonical_vector_export,
+        )
         if args.task037_f0_vector_observer
         else None
     )
@@ -974,6 +1124,7 @@ def _worker(args: argparse.Namespace) -> int:
         static_retain_local_schur_for_matrix_free=(
             args.task037_f5b_released_profile
         ),
+        canonical_vector_export=args.task037_canonical_vector_export,
     )
     return 0
 
@@ -1035,6 +1186,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--task037-f0-vector-observer",
         action="store_true",
         help="Export only the current-source Case100 F0 vector identities.",
+    )
+    parser.add_argument(
+        "--task037-canonical-vector-export",
+        action="store_true",
+        help="Export owner-local reversible canonical vector packet shards.",
     )
     parser.add_argument("--task037-f1-direct-trace-oracle", type=Path)
     parser.add_argument("--task037-f1-direct-trace-sha256")
@@ -1239,6 +1395,34 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "Task037 F0/F1/F3 options require the existing Task035c p6/h10 "
             "gate, full-solve, static backend, MPI8, and S scope."
+        )
+    canonical_f0_scope = (
+        args.task037_f0_vector_observer
+        and args.degree == 6
+        and args.h_nm == 10.0
+        and args.polarization_kind == "s"
+        and args.run_kind == "full-solve"
+        and args.mpi_size == 8
+        and args.profile == "default"
+        and args.stage4_full3d_assembly_backend
+        == "assembly_time_static_condensed"
+        and args.task037_f1_direct_trace_oracle is None
+        and args.task037_f3_screen is None
+        and not args.task037_f3_full
+        and not args.task037_f5b_released_profile
+    )
+    canonical_f5b_scope = (
+        args.task037_f3_full and args.task037_f5b_released_profile
+        and not args.task037_f0_vector_observer
+        and args.task037_f1_direct_trace_oracle is None
+        and args.task037_f3_screen is None
+    )
+    if args.task037_canonical_vector_export and not (
+        canonical_f0_scope or canonical_f5b_scope
+    ):
+        parser.error(
+            "--task037-canonical-vector-export is restricted to the "
+            "frozen F0 direct or F5b full profile."
         )
     if (args.task037_f3_screen is not None or args.task037_f3_full) and (
         args.task037_f3_full
@@ -2799,6 +2983,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.extend(("--task037-f3-screen", str(args.task037_f3_screen)))
     if args.task037_f5b_released_profile:
         command.append("--task037-f5b-released-profile")
+    if args.task037_canonical_vector_export:
+        command.append("--task037-canonical-vector-export")
     if args.task037_m0_lifecycle_audit:
         command.append("--task037-m0-lifecycle-audit")
     if args.task035d_case097_gate:
@@ -2920,6 +3106,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         args.task035d_case097_gate
         or args.task037_f3_screen is not None
         or args.task037_f3_full
+        or args.task037_canonical_vector_export
     ):
         task035d_status_before = subprocess.check_output(
             ["git", "status", "--porcelain", "--untracked-files=all"],
