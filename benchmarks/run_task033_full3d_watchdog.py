@@ -2885,16 +2885,13 @@ def _qualify(
                         _finite_number_le(memory_authority_gib, 10.30)
                     ),
                     "m2c_summary_action_only": (
-                        solver_summary.get("action_only_setup") is True
-                        and condensation.get("action_only_setup") is True
+                        condensation.get("action_only_setup") is True
                     ),
                     "m2c_summary_no_global_A": (
-                        solver_summary.get("global_A_materialized") is False
-                        and condensation.get("global_A_materialized") is False
+                        condensation.get("global_A_materialized") is False
                     ),
                     "m2c_summary_no_global_F": (
-                        solver_summary.get("global_F_materialized") is False
-                        and condensation.get("global_F_materialized") is False
+                        condensation.get("global_F_materialized") is False
                     ),
                     "m2c_summary_profile": (
                         solver_summary.get("external_solver_profile")

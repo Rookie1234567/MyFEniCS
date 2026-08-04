@@ -513,9 +513,6 @@ def test_m2c_qualification_requires_action_profile_and_memory_gate():
         "linear_system_relative_residual": 0.1,
         "official_result": False,
         "postprocess_skipped": True,
-        "action_only_setup": True,
-        "global_A_materialized": False,
-        "global_F_materialized": False,
         "external_solver_profile": "never_materialized_owner_local",
         "external_assembled_matrix_released_before_solve": False,
         "cell_static_condensation": {
@@ -538,6 +535,9 @@ def test_m2c_qualification_requires_action_profile_and_memory_gate():
         "task037_f3_core_audit": audit,
     }
     assert watchdog._qualify(**kwargs)["pass"]
+    kwargs["solver_summary"]["cell_static_condensation"]["action_only_setup"] = False
+    assert not watchdog._qualify(**kwargs)["pass"]
+    kwargs["solver_summary"]["cell_static_condensation"]["action_only_setup"] = True
     kwargs["resource_summary"] = {"memory_authority_gib": 10.31}
     assert not watchdog._qualify(**kwargs)["pass"]
 
