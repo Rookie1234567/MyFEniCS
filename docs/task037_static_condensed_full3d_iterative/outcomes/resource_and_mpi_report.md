@@ -1,6 +1,17 @@
-# Task037 F5b 资源与 MPI 边界报告
+# Task037 资源与 MPI 边界报告
 
-## 结论
+## 当前源码 v2 资源收口
+
+| 路径 | MPI | authority 峰值 | worker RSS/PSS/USS MiB | wall |
+|---|---:|---:|---:|---:|
+| Direct v2 | 8 | `15.059223175048828 GiB` | `15406.0078 / 13373.5186 / 13062.9414` | `218.851869611 s` |
+| M3a full overlap .125 partition | 4 | `8.265838623046875 GiB` | `8449.6406 / 7505.6914 / 7209.0938` | `701.6504903390305 s` |
+
+M3a 通过 absolute `<=10.30 GiB` 和 zero-swap Gate。相对 Direct v2 的 derived memory ratio 为 `0.5488887791199146`、reduction `45.111122088008536%`；half of Direct v2 为 `7.529611587524414 GiB`，故工程 50% 目标未通过。whole-wall ratio `3.206052073423701` 是 MPI4-vs-MPI8 的 cross-MPI descriptive 比较，不是同 MPI 资源结论。
+
+M3a 保留 factor CSR payload lower bound `1828829728` bytes、coarse basis `9481648` bytes、factor rows/NNZ `127656/91415952`；setup/solve/recovery/core-total 为 `126.8370741350227/393.26021890802076/0.046614531020168215/520.1891550979926 s`，run-summary Stage4 total 为 `686.207802555 s`，parent wall 为 `701.6504903390305 s`。这些是嵌套 scopes，不能相加。详情见 [M3a outcome](m3a_overlap0125_partition_full.md) 与 [M3a record](../../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_m3a_overlap0125_partition_full_v1.json)。
+
+## 历史 response_v0/F5b 快照（已由上节取代）
 
 F5b 是唯一一次正式 `p6/h10/S/MPI8` matrix-free full run。solver residual、
 物理 observables 和 12+12 channel 通过，但 memory authority 为
@@ -8,9 +19,9 @@ F5b 是唯一一次正式 `p6/h10/S/MPI8` matrix-free full run。solver residual
 因此资源分类为 `negative`，最终分类为
 `PARTIAL_WITH_CONTROLLED_NEGATIVES`；不能写成整体 pass。
 
-## direct / F3 / F5b 对比
+### direct / F3 / F5b 对比
 
-| path | MPI | memory authority | process-tree RSS | worker PSS / USS | wall |
+| 路径 | MPI | authority 峰值 | process-tree RSS | worker PSS / USS | wall |
 |---|---:|---:|---:|---:|---:|
 | F0 direct authority | 8 | 15.255001068115234 GiB | 15621.121 MiB | 13254.321 / 13047.027 MiB | 370.18 s |
 | F3 assembled FGMRES full | 8 | 13.652233123779297 GiB | 13965.281 MiB | 11980.911 / 11776.828 MiB | 410.5464700690354 s |
@@ -21,7 +32,7 @@ swap 为 0，最大观察到 8 个 MPI rank。10 GiB warning 只是记录，不�
 termination；14 GiB controlled cap 未触发。10.30 GiB resource-positive Gate
 仍失败。
 
-## 关键阶段峰值与对象账本
+### 关键阶段峰值与对象账本
 
 `memory_timeline.csv` 的关键峰值按
 `process-tree RSS / worker PSS / worker USS`（MiB）为：assembly
@@ -38,7 +49,7 @@ F5b core setup/solve/recovery/total 为
 ILU(0)、14 unique factor classes、exact_duplicate_factor_count=2、global direct
 factor count 0、global Schur materialized false。
 
-## MPI 与范围边界
+### MPI 与范围边界
 
 正式 F5b 只运行 MPI8；F5a 的轻量 owner/scatter 资格包含 MPI2/MPI4，但本
 报告不把它们当作 F5b formal run。没有第二次 formal run，没有 MPI4 full

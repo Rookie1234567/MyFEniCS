@@ -1,6 +1,10 @@
 # Task037 测试与静态检查汇总
 
-## 环境与阶段测试
+## 当前源码 canonical 收口
+
+canonical fix `2631a4c47258c9def919530787e409774b8ce029` 后的最终 targeted evidence：serial test226 `3 passed / 2 skipped`；MPI2 test226 每 rank `4 passed / 1 skipped`；test227+228 `5 passed / 3 skipped`；Ruff、py_compile/compileall、git diff --check 通过。Direct v2、M3a MPI4 full、canonical comparator 和一次性 physical-norm reconstruction 均绑定各自 artifact/manifest SHA；offline norm 不是 PDE solve。Full repository pytest 未在最终 source 上重跑，记录为 `not_run_by_user_efficiency_policy / not_verified`，因此不写成 full-suite PASS。
+
+## 历史 response_v0 测试快照（当前增量见上节）
 
 所有项目测试均在 `scripts/activate_myfenics_wsl.sh` 资格化环境中执行：项目
 `.venv`、PETSc `complex128/int32`，petsc4py、slepc4py、DOLFINx 和 mpi4py
@@ -18,7 +22,7 @@
 F5b formal p6/h10/MPI8 的数值结果见 [summary](summary.md)；本表不把 smoke
 或组件测试提升为 formal full qualification。
 
-## 唯一 full repository pytest
+### 唯一 full repository pytest
 
 Task037 只运行过一次无筛选 full suite，source `237e9abd2043fd5ec424de4d9f224cfd771bf8d9`：
 
@@ -45,7 +49,7 @@ Task037 只运行过一次无筛选 full suite，source `237e9abd2043fd5ec424de4
 因此准确表述是 `full suite completed_with_2_failures; known assertions closed by
 targeted tests; no second full suite`，不能把原始 full-suite exit 1 改写成 PASS。
 
-## 其他验证边界
+### 其他验证边界
 
 - touched Python 的 Ruff lint 通过；Case100 strict JSON duplicate-key parse 和
   `git diff --check` 通过。

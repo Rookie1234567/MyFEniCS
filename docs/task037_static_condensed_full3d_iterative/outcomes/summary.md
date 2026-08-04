@@ -1,6 +1,19 @@
 # Task037 结果总览
 
-## 最终结论
+## 当前源码 v2 收口
+
+当前 closeout 绑定 source SHA `2631a4c47258c9def919530787e409774b8ce029`；canonical Floquet edge/face 修复只影响显式 opt-in canonical export/comparator 路径，ordinary defaults 未改变。最新结果分类为 `NUMERICAL_SUCCESS_RESOURCE_REVIEW`：数值和物理 Gate 通过，M3a MPI4 absolute memory Gate 通过，但工程 50% memory 目标与 production qualification 未通过。
+
+| 路径 | MPI / artifact | residual / official | peak / wall | 分类 |
+|---|---|---|---:|---|
+| Direct v2 | MPI8；[record](../../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_direct_authority_v2.json) | `1.17818264392128e-11`；official=true | `15.059223175048828 GiB` / `218.851869611 s` | current direct authority |
+| M3a full | MPI4；[record](../../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_m3a_overlap0125_partition_full_v1.json) | `9.923273535279698e-7` full FE；official=true | `8.265838623046875 GiB` / `701.6504903390305 s` | numerical success / resource review |
+
+M3a 的 canonical active/full-FE packets、12/12 powers、12/12 boundary amplitudes和 fresh-mesh H(curl) norms均通过；active/full canonical relative L2 为 `1.2553898016411866e-6` / `7.880394026823442e-7`。M3a/Direct memory ratio `0.5488887791199146`，derived reduction `45.111122088008536%`，cross-MPI descriptive wall ratio `3.206052073423701`；这些不是同 MPI resource authority。`production qualification=NO`、`whole-branch merge recommendation=NO`。
+
+历史 F0/F3/F5b/M2c/M3a screen 和 M4d negative 仍按原 records 保留；本节只提升当前 source v2 的证据，不覆盖历史负结果。完整 M3a 表见 [M3a full outcome](m3a_overlap0125_partition_full.md)。
+
+## 历史 response_v0 快照（已由上节当前源码 v2 收口取代）
 
 Task037 在固定的 13.5 nm、p6/h10、S 偏振、MPI8 Full3D 上完成了 direct
 authority、assembled FGMRES 和一次 released matrix-free full solve。求解器真残差、
@@ -15,7 +28,7 @@ full explicit residual。assembled FGMRES 先形成 fine `F`，再用右预条�
 阶段用同一个 `F` 建立 slab factors 和 coarse basis，随后在 outer KSP 前释放 `F`，
 用 cell-local Schur action 继续施加 fine action；它不是 never-materialized 方案。
 
-## 统一结果
+### 统一结果
 
 | 路径（证据） | 终点与 residual | 物理/向量 Gate | 峰值与 wall | 分类 |
 |---|---|---|---|---|
@@ -30,7 +43,7 @@ F3 screen 的关键 history 均保留在 records；20 步没有预测值，100 �
 last-40 decline，200 步使用记录中的 last-40 log-linear 预测。三项 screen 都是
 screen-only，不是收敛或 official result。
 
-## full solve 数值比较
+### full solve 数值比较
 
 | 量 | F0 direct | F3 assembled | F5b matrix-free |
 |---|---:|---:|---:|
@@ -49,7 +62,7 @@ active-trace 与 recovered-FE ownership-order bytes 相对 F3 的差分别为
 relative L2 为 active `1.4210359558`、full FE `1.4121310623`，均失败
 `<=1e-5`。这支持 ordering inference，不能替代 Task 7.1 raw-vector Gate。
 
-## 资源与结构 Gate
+### 资源与结构 Gate
 
 | 项目 | F0 | F3 full | F5b |
 |---|---:|---:|---:|
@@ -64,7 +77,7 @@ gate；相对 F3 没有实质改善。它有 `16` physical slabs、75/75 coarse�
 factor-only ILU(0)、global direct factor count `0`；这些结构结果不能替代内存
 Gate。
 
-## 规模与分阶段耗时
+### 规模与分阶段耗时
 
 | 规模/存储量 | F0 direct | F3 assembled | F5b released matrix-free |
 |---|---:|---:|---:|
@@ -82,7 +95,7 @@ Gate。
 
 Core setup/solve/recovery 与 stage4/parent total 是不同的嵌套计时口径，不能相加。
 
-## 受控负结果与边界
+### 受控负结果与边界
 
 - F1 direct-vector oracle 的 residual 约 `3029.7262491090364`，远高于其
   `1e-9` Gate；returned augmented norm `1484.6523798860264` 与 F0
@@ -95,7 +108,7 @@ Core setup/solve/recovery 与 stage4/parent total 是不同的嵌套计时口径
 - MPI4 formal full、F4、F5c、F6、Hybrid、hp、0.7 nm 和 Task037b 均未运行，且
   F5c/F6 保持 `not_run`。当前不能外推为 0.7 nm 可用。
 
-## 证据与下一步
+### 证据与下一步
 
 完整 12-channel 表和 F5b/F3/F0 对比在
 [matrix_free_report.md](matrix_free_report.md)，资源与 MPI 边界在

@@ -1,0 +1,151 @@
+{
+  "schema_version": "task037.direct-authority.v2",
+  "case_id": "100_static_condensed_full3d_iterative",
+  "status": "full3d_reference_pass",
+  "return_code": 0,
+  "failures": [],
+  "classification": "current_source_direct_authority",
+  "source": {
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "sha": "2631a4c47258c9def919530787e409774b8ce029",
+    "fix_commit": "2631a4c47258c9def919530787e409774b8ce029",
+    "fix_parent": "151ba7ba3c41550d2b3d98dc9436ef9db732d943",
+    "clean": true,
+    "ahead_behind": "0/0"
+  },
+  "provenance": {
+    "activation": "source scripts/activate_myfenics_wsl.sh",
+    "qualified_activation": "_MYFENICS_WSL_QUALIFIED_ACTIVATION=1",
+    "python": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "petsc_scalar": "complex128",
+    "petsc_int": "int32",
+    "omp_num_threads": "1",
+    "mpi_size": 8,
+    "parent_launch_descriptor": {
+      "path": "benchmarks/artifacts/task037/f0_direct_canonical_p6_h10_mpi8_2631a4c4/parent_launch_descriptor.json",
+      "sha256": "729a4e9fa2eccb0b0b7f2c784b237e9ef8c39dae62db420670ce4ada7776cd28"
+    },
+    "parent_launch_equivalent_argv": [
+      "python", "-m", "benchmarks.run_task033_full3d_watchdog",
+      "--degree", "6", "--h-nm", "10.0", "--polarization-kind", "s",
+      "--run-kind", "full-solve", "--mpi-size", "8", "--profile", "default",
+      "--stage4-full3d-assembly-backend", "assembly_time_static_condensed",
+      "--run-dir", "benchmarks/artifacts/task037/f0_direct_canonical_p6_h10_mpi8_2631a4c4",
+      "--task035c-p6-h10-gate",
+      "--task035c-p6-preflight-authority", "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+      "--task035c-p6-preflight-sha256", "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+      "--verified-clean-sha", "2631a4c47258c9def919530787e409774b8ce029",
+      "--task037-f0-vector-observer", "--task037-canonical-vector-export",
+      "--poll-interval", "0.25", "--warning-gib", "32", "--terminate-gib", "48",
+      "--timeout-seconds", "7200"
+    ],
+    "worker_command": [
+      "mpiexec", "-n", "8", "/home/Projects/MyFEniCS/.venv/bin/python",
+      "-m", "benchmarks.run_task033_full3d_watchdog", "--worker",
+      "--degree", "6", "--h-nm", "10.0", "--polarization-kind", "s",
+      "--run-kind", "full-solve", "--mpi-size", "8", "--profile", "default",
+      "--stage4-full3d-assembly-backend", "assembly_time_static_condensed",
+      "--run-dir", "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/f0_direct_canonical_p6_h10_mpi8_2631a4c4",
+      "--task035c-p6-h10-gate",
+      "--task035c-p6-preflight-authority", "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+      "--task035c-p6-preflight-sha256", "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+      "--verified-clean-sha", "2631a4c47258c9def919530787e409774b8ce029",
+      "--task037-f0-vector-observer", "--task037-canonical-vector-export",
+      "--parent-launch-descriptor", "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/f0_direct_canonical_p6_h10_mpi8_2631a4c4/parent_launch_descriptor.json",
+      "--parent-launch-descriptor-sha256", "729a4e9fa2eccb0b0b7f2c784b237e9ef8c39dae62db420670ce4ada7776cd28"
+    ]
+  },
+  "identity": {
+    "wavelength_nm": 13.5,
+    "incidence_theta_normal_deg": 80.0,
+    "grazing_angle_deg": 10.0,
+    "phi_deg": 0.0,
+    "polarization": "S",
+    "nedelec_degree": 6,
+    "h_nm": 10.0,
+    "global_mesh_cells": 252,
+    "mpi_size": 8,
+    "assembly_backend": "assembly_time_static_condensed",
+    "preflight_authority_sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8"
+  },
+  "artifact": {
+    "run_directory": "benchmarks/artifacts/task037/f0_direct_canonical_p6_h10_mpi8_2631a4c4",
+    "watchdog_summary": {
+      "path": "benchmarks/artifacts/task037/f0_direct_canonical_p6_h10_mpi8_2631a4c4/watchdog_summary.json",
+      "sha256": "eadf4c6db6e743f6d7d95e0dc6402fe15dfcc928b9009b117ff92ce2d6842ae9"
+    },
+    "run_summary": {
+      "path": "benchmarks/artifacts/task037/f0_direct_canonical_p6_h10_mpi8_2631a4c4/run_summary.json",
+      "sha256": "605e06c33cbc87529e172bf14ea1a1dcba890a83c7401bd0594fc9fc847a3c3a"
+    },
+    "canonical_active_manifest": {
+      "path": "benchmarks/artifacts/task037/f0_direct_canonical_p6_h10_mpi8_2631a4c4/task037_active_trace_canonical_manifest.json",
+      "sha256": "e01458aa9380276fa02522ca230e5a913e654e71e7c22a73211634feda389d23"
+    },
+    "canonical_full_fe_manifest": {
+      "path": "benchmarks/artifacts/task037/f0_direct_canonical_p6_h10_mpi8_2631a4c4/task037_full_fe_canonical_manifest.json",
+      "sha256": "095c19eeae37bed2b605e54d0247e034376f50f36fb016329827b6ea3bb6b004"
+    }
+  },
+  "rows": {
+    "full_fe_dofs": 173802,
+    "independent_active_trace_rows": 51192,
+    "full_original_trace_canonical_packets": 60402,
+    "auxiliary_rows": 80,
+    "augmented_rows": 51272,
+    "cell_interior_rows": 113400
+  },
+  "matrix_factor": {
+    "matrix_rows": 51272,
+    "matrix_nnz_used": 41989040,
+    "matrix_nnz_allocated": 42625520,
+    "factor_nnz": 209772680,
+    "factor_solver": "mumps",
+    "factor_nnz_source": "PETSc factor matrix stats / positive MUMPS INFOG(9)"
+  },
+  "residuals": {
+    "ksp_reason": "CONVERGED_ITS",
+    "iterations": 1,
+    "reported_full_relative_residual": 1.17818264392128e-11,
+    "eliminated_interior_max_abs_residual": 1.1924623615668162e-12,
+    "gate_pass": true
+  },
+  "rta_energy": {
+    "R_total": 0.000762881475132771,
+    "T_total": 0.6027016339861171,
+    "A_balance": 0.3965354845387501,
+    "A_volume_total": 0.3965354845429724,
+    "A_volume_grating": 0.3324766666820215,
+    "A_volume_substrate": 0.06405881786095088,
+    "energy_closure_error": 4.222400207254395e-12,
+    "official_result": true,
+    "significant_powers": "12/12",
+    "boundary_amplitudes": "12/12"
+  },
+  "timings_seconds": {
+    "parent_wall": 218.851869611,
+    "stage4_assembly_and_solve": 202.0381494750036,
+    "setup": 101.50229274504818,
+    "solve": 0.16022302297642455,
+    "recovery": 0.12731795402942225,
+    "full_residual": 0.9020630560116842,
+    "canonical_export": 2.5923698300030082,
+    "postprocess": 9.14169939601561
+  },
+  "resources": {
+    "memory_authority_gib": 15.059223175048828,
+    "process_tree_rss_mib": 15420.64453125,
+    "worker_rss_mib": 15406.0078125,
+    "worker_pss_mib": 13373.5185546875,
+    "worker_uss_mib": 13062.94140625,
+    "swap_mib": 0
+  },
+  "canonical_export": {
+    "active_packet_count": 60402,
+    "full_fe_packet_count": 173802,
+    "active_shards": 8,
+    "full_fe_shards": 8,
+    "duplicates": 0
+  },
+  "scope_note": "Direct MPI8 v2 authority for the current source. Its larger memory footprint is the descriptive reference for this closeout, not a change to ordinary defaults."
+}

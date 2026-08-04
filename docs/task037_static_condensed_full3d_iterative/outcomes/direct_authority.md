@@ -1,12 +1,28 @@
 # Task37 F0：当前源码 direct authority
 
-## 结论
+## 当前源码 v2 authority
+
+本节是当前 source `2631a4c47258c9def919530787e409774b8ce029` 的 Direct MPI8 v2 记录；旧的 F0 retry1 段落保留为历史证据，不被覆盖。compact record 为 [task37_direct_authority_v2.json](../../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_direct_authority_v2.json)，raw artifact 为 `benchmarks/artifacts/task037/f0_direct_canonical_p6_h10_mpi8_2631a4c4`。
+
+| Gate | 当前 v2 |
+|---|---:|
+| status / return / official | `full3d_reference_pass` / 0 / true |
+| true residual | `1.17818264392128e-11` |
+| R / T / A_balance | `0.000762881475132771` / `0.6027016339861171` / `0.3965354845387501` |
+| A_volume / energy closure | `0.3965354845429724` / `4.222400207254395e-12` |
+| whole wall / process-tree authority | `218.851869611 s` / `15.059223175048828 GiB` |
+| full residual timing | `0.9020630560116842 s` |
+| canonical manifests | active `e01458aa...`；full `095c19ee...`；8 shards each |
+
+v2 来源信息将 watchdog 的真实 `worker_command` 与 `parent_launch_equivalent_argv` 分开保存；其中包含 `mpiexec -n 8`、绝对路径的 qualified `.venv` Python、`--worker` 以及 parent descriptor/SHA。
+
+## 历史 F0 v1 快照（已由上节 v2 authority 取代）
 
 F0 retry1 在当前 clean source `03f4fa02aece62bb2f193c01616177bffff0aa51` 上完成。
 watchdog `status=full3d_reference_pass`，qualification 为 16/16，`failures=[]`，
 `return_code=0`。本文件只记录 F0 closeout；没有开始 F1--F6。
 
-## F0 Gate
+### F0 Gate
 
 | Gate | 结果 | 实测值/证据 |
 |---|---|---|
@@ -19,7 +35,7 @@ watchdog `status=full3d_reference_pass`，qualification 为 16/16，`failures=[]
 | external memory readable | PASS | 1153 samples；1150 fully-readable MPI8 smaps samples |
 | swap | PASS | process-tree/worker swap `0` |
 
-## 冻结身份、矩阵与残差
+### 冻结身份、矩阵与残差
 
 | 项目 | 当前 F0 值 |
 |---|---:|
@@ -34,7 +50,7 @@ watchdog `status=full3d_reference_pass`，qualification 为 16/16，`failures=[]
 | KSP | reason `4` / `CONVERGED_ITS` |
 | full residual method | reduced trace+DtN Mat action 与 matrix-free DOLFINx MPC UFL action 合并，并投影到所有 active eliminated cell-interior tests |
 
-## Case096 对比
+### Case096 对比
 
 当前 R/T/A 与 Case096 `full_static` 的绝对差为：
 
@@ -48,7 +64,7 @@ Case096 acceptance record：
 `benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_six_path_v1.json`，
 SHA `7e7474fa5b67d65ae255c198982010acc5d6d4d5087f793eb7c2de76c5bbee0a`。
 
-## 12 个冻结 significant channels
+### 12 个冻结 significant channels
 
 逐行使用 Case096 原有 `full_static` frozen gate；复振幅均为
 `outgoing_amplitude_at_boundary`。`observed`、`error`、`tolerance` 和 `pass`
@@ -69,7 +85,7 @@ SHA `7e7474fa5b67d65ae255c198982010acc5d6d4d5087f793eb7c2de76c5bbee0a`。
 | R(-1,0)_s | `6.669309653418762e-06` | `8.334363743849743e-16 / 5.111835340427464e-08 / true` | `(-0.001032707715847578, 0.0007678339217166858)` | `8.161444812663801e-14 / 7.413384075620187e-06 / true` |
 | R(0,0)_s | `0.0007537612200510555` | `1.6448105898125842e-14 / 3.195286914614711e-05 / true` | `(-0.025252304353464303, 0.010774151701691648)` | `4.723989377447651e-13 / 0.0008330266538614554 / true` |
 
-## 向量身份
+### 向量身份
 
 | vector | source | shape | dtype | canonical SHA |
 |---|---|---:|---|---|
@@ -78,7 +94,7 @@ SHA `7e7474fa5b67d65ae255c198982010acc5d6d4d5087f793eb7c2de76c5bbee0a`。
 
 raw `.npy` 只在 ignored run directory；compact JSON 只保留 canonical identity、来源和 raw file hash。
 
-## Wall 与资源
+### Wall 与资源
 
 | 项目 | 值 |
 |---|---:|
@@ -100,7 +116,7 @@ Direct watchdog 的 32 GiB warning、48 GiB termination、7200 s timeout、0.25 
 poll 和 TERM→5 s grace→KILL 未触发。Task37 iterative candidate 的 10/14 GiB
 限制保持原值，不能因当前 direct baseline 较高而放宽。
 
-## Provenance 与命令
+### Provenance 与命令
 
 本次为 qualified WSL native environment，没有 container image；因此记录
 `execution_image.kind=qualified_wsl_environment`、`digest=null`、
@@ -113,7 +129,7 @@ parent launch command 与 raw worker command 分开保存在
 `records/task37_direct_authority_v1.json`；parent command 未使用 `--record`，
 raw watchdog 输出全部留在 ignored run directory。
 
-## 首次 pre-assembly 失败与修复边界
+### 首次 pre-assembly 失败与修复边界
 
 首次启动在 2.69 s、PDE assembly 前 fail-fast，唯一异常为：
 
@@ -125,7 +141,7 @@ raw watchdog 输出全部留在 ignored run directory。
 hash、Gate、阈值或普通默认。首次失败 raw 证据仍在：
 `benchmarks/artifacts/cases/100_static_condensed_full3d_iterative/f0_direct_p6_h10_mpi8_14a84f87/failed_watchdog_record.json`。
 
-## Raw evidence 索引
+### Raw evidence 索引
 
 完整 watchdog/run summary、channel JSON、memory timeline、progress、stdout、
 parent descriptor 和 `.npy` 路径及 SHA 均在 compact record 的 `raw_evidence`/

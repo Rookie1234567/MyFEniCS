@@ -1,6 +1,16 @@
 # Case100：static-condensed Full3D iterative Task37 F0/F3/F5b
 
-## 当前阶段
+## 当前源码 v2 证据索引
+
+当前 closeout source 为 `2631a4c47258c9def919530787e409774b8ce029`。最新 compact evidence：
+
+- [Direct v2 authority record](records/task37_direct_authority_v2.json)：MPI8、return 0、official=true、canonical export 完成；
+- [M3a overlap .125 partition full record](records/task37_m3a_overlap0125_partition_full_v1.json)：MPI4、no-global A/F、16 slabs、partition weights、official=true；
+- [M3a full outcome](../../../docs/task037_static_condensed_full3d_iterative/outcomes/m3a_overlap0125_partition_full.md)：canonical/physical/norm、12+12 channels、nested timing 和资源口径。
+
+`60402` active canonical packets 是由 `51192` 个 independent active coordinates 展开/约束还原后的完整 original-trace packets；full FE 为 `173802`。M3a full 只在 MPI4 完成，历史 MPI8 M3a 只有 screen20 resource-negative，因此不能宣称 same-candidate MPI4/8 formal identity。ordinary defaults、历史 M2c/M3a negative 和 M4d negative 均保留。
+
+## 历史 response_v0 阶段快照（已由上节 v2 索引取代）
 
 F0 direct authority、F3 assembled screen、F5a action oracle 已完成；F5b
 assembled matrix-free full 的 solver residual、物理 observables 和 12+12
@@ -24,7 +34,7 @@ record 为 `records/task37_direct_authority_v1.json`，审阅说明为
 这样通常会降低全局矩阵规模，但可能增加界面稠密度、局部消元和恢复
 时间，所以本 case 同时要求 numerical 与 resource evidence。
 
-## 冻结身份
+### 冻结身份
 
 - geometry/source: Task034 fixed rectangular block grating；
 - wavelength: 13.5 nm；
@@ -38,7 +48,7 @@ record 为 `records/task37_direct_authority_v1.json`，审阅说明为
 - historical acceptance source: benchmarks/cases/096_hybrid_channel_memory_closure/records/p6_h10_mpi8_six_path_v1.json；
 - historical raw authority is reference only; F0 must run current source once.
 
-## 证据规则
+### 证据规则
 
 Case100 不复制 Case096 的 heavy raw evidence。raw vector 与大型 solver/
 watchdog 输出必须写到 ignored benchmarks/artifacts/... run directory；

@@ -1,0 +1,266 @@
+{
+  "schema_version": "task037.m3a-full.v1",
+  "case_id": "100_static_condensed_full3d_iterative",
+  "status": "task037_m3a_overlap0125_partition_full_pass",
+  "return_code": 0,
+  "failures": [],
+  "classification": "NUMERICAL_SUCCESS_RESOURCE_REVIEW",
+  "source": {
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "sha": "2631a4c47258c9def919530787e409774b8ce029",
+    "canonical_fix_commit": "2631a4c47258c9def919530787e409774b8ce029",
+    "canonical_fix_parent": "151ba7ba3c41550d2b3d98dc9436ef9db732d943",
+    "clean": true,
+    "mpi_size": 4,
+    "preflight_authority_sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8"
+  },
+  "provenance": {
+    "activation": "source scripts/activate_myfenics_wsl.sh",
+    "qualified_activation": "_MYFENICS_WSL_QUALIFIED_ACTIVATION=1",
+    "python": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "petsc_scalar": "complex128",
+    "petsc_int": "int32",
+    "omp_num_threads": "1",
+    "mpi_size": 4,
+    "parent_launch_descriptor": {
+      "path": "benchmarks/artifacts/task037/m3a_overlap0125_partition_full_p6_h10_mpi4_2631a4c4/parent_launch_descriptor.json",
+      "sha256": "70058c6255edafcd2790e59ae8ed87671d9521927266574ec97c99e341f0fbfb"
+    },
+    "parent_launch_equivalent_argv": [
+      "python", "-m", "benchmarks.run_task033_full3d_watchdog",
+      "--degree", "6", "--h-nm", "10.0", "--polarization-kind", "s",
+      "--run-kind", "full-solve", "--mpi-size", "4", "--profile", "default",
+      "--stage4-full3d-assembly-backend", "assembly_time_static_condensed",
+      "--run-dir", "benchmarks/artifacts/task037/m3a_overlap0125_partition_full_p6_h10_mpi4_2631a4c4",
+      "--task035c-p6-h10-gate",
+      "--task035c-p6-preflight-authority", "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+      "--task035c-p6-preflight-sha256", "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+      "--verified-clean-sha", "2631a4c47258c9def919530787e409774b8ce029",
+      "--task037-f3-full", "--task037-m2c-never-materialized",
+      "--task037-m3a-overlap0125-partition", "--task037-canonical-vector-export",
+      "--poll-interval", "0.25", "--warning-gib", "10", "--terminate-gib", "14",
+      "--timeout-seconds", "7200"
+    ],
+    "worker_command": [
+      "mpiexec", "-n", "4", "/home/Projects/MyFEniCS/.venv/bin/python",
+      "-m", "benchmarks.run_task033_full3d_watchdog", "--worker",
+      "--degree", "6", "--h-nm", "10.0", "--polarization-kind", "s",
+      "--run-kind", "full-solve", "--mpi-size", "4", "--profile", "default",
+      "--stage4-full3d-assembly-backend", "assembly_time_static_condensed",
+      "--run-dir", "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/m3a_overlap0125_partition_full_p6_h10_mpi4_2631a4c4",
+      "--task035c-p6-h10-gate",
+      "--task035c-p6-preflight-authority", "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+      "--task035c-p6-preflight-sha256", "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+      "--verified-clean-sha", "2631a4c47258c9def919530787e409774b8ce029",
+      "--task037-f3-full", "--task037-m2c-never-materialized",
+      "--task037-m3a-overlap0125-partition", "--task037-canonical-vector-export",
+      "--parent-launch-descriptor", "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/m3a_overlap0125_partition_full_p6_h10_mpi4_2631a4c4/parent_launch_descriptor.json",
+      "--parent-launch-descriptor-sha256", "70058c6255edafcd2790e59ae8ed87671d9521927266574ec97c99e341f0fbfb"
+    ]
+  },
+  "identity": {
+    "wavelength_nm": 13.5,
+    "incidence_theta_normal_deg": 80.0,
+    "grazing_angle_deg": 10.0,
+    "phi_deg": 0.0,
+    "polarization": "S",
+    "nedelec_degree": 6,
+    "h_nm": 10.0,
+    "global_mesh_cells": 252,
+    "assembly_backend": "assembly_time_static_condensed",
+    "profile": "never_materialized_owner_local_overlap0125_partition",
+    "solver": "right_fgmres_with_partition_weighted_owner_local_slab_pc"
+  },
+  "artifact": {
+    "run_directory": "benchmarks/artifacts/task037/m3a_overlap0125_partition_full_p6_h10_mpi4_2631a4c4",
+    "watchdog_summary": {
+      "path": "benchmarks/artifacts/task037/m3a_overlap0125_partition_full_p6_h10_mpi4_2631a4c4/watchdog_summary.json",
+      "sha256": "7861db040c85c2fbc45f90b0b3b4f7cb9ed2a7c5db7af280a36b27cfbced56f5"
+    },
+    "run_summary": {
+      "path": "benchmarks/artifacts/task037/m3a_overlap0125_partition_full_p6_h10_mpi4_2631a4c4/run_summary.json",
+      "sha256": "3bea6281f610fbc43637d7a2d73c44dd56b2e85789bd4d2c93b45dc96b739f5b"
+    },
+    "core_audit": {
+      "path": "benchmarks/artifacts/task037/m3a_overlap0125_partition_full_p6_h10_mpi4_2631a4c4/task037_f3_core_audit.json",
+      "sha256": "8e661da5d906bc85226d47f3c5e8aa4ae47739b84a1860372f3e1f27dede42a2"
+    },
+    "canonical_active_manifest": {
+      "path": "benchmarks/artifacts/task037/m3a_overlap0125_partition_full_p6_h10_mpi4_2631a4c4/task037_f3_full_active_trace_canonical_manifest.json",
+      "sha256": "6cd0a3f82e75656310eeed7e5aac6a53860824c27a1e77ca708ad48f74d6c10c"
+    },
+    "canonical_full_fe_manifest": {
+      "path": "benchmarks/artifacts/task037/m3a_overlap0125_partition_full_p6_h10_mpi4_2631a4c4/task037_f3_full_full_fe_canonical_manifest.json",
+      "sha256": "ecda4258589af866169966e7575c7be290153ef68753025d04a25482f9361f36"
+    }
+  },
+  "algorithm_inventory": {
+    "num_slabs": 16,
+    "overlap_fraction": 0.125,
+    "interpolation": "partition",
+    "partition_weight_min": 0.25,
+    "partition_weight_max": 0.5,
+    "partition_weight_sum_error": 0.0,
+    "two_color": true,
+    "smoother_iterations": 2,
+    "smoother_ksp_type": "gmres",
+    "factor_only_storage": true,
+    "local_factor_type": "ILU(0)",
+    "coarse_dimension": 75,
+    "no_global_A": true,
+    "no_global_F": true,
+    "global_schur_materialized": false,
+    "global_direct_factor_count": 0,
+    "retained_owner_local_slab_matrices_after_factorization": 0,
+    "retained_owner_local_slab_matrices_semantics": "Each owner-local slab matrix is formed during setup, factored, and released before the next slab; no slab matrix is retained after factorization."
+  },
+  "rows_and_factors": {
+    "full_fe_dofs": 173802,
+    "independent_active_trace_rows": 51192,
+    "full_original_trace_canonical_packets": 60402,
+    "auxiliary_rows": 80,
+    "augmented_rows": 51272,
+    "factor_rows": 127656,
+    "stored_factor_nnz": 91415952,
+    "unique_factor_classes": 15,
+    "exact_duplicate_factor_count": 1
+  },
+  "memory_ledger": {
+    "factor_csr_payload_estimate_bytes": 1828829728,
+    "coarse_basis_storage_bytes": 9481648,
+    "operator_apply_count": 1178,
+    "coarse_apply_count": 365,
+    "one_level_apply_count": 2190
+  },
+  "residuals": {
+    "ksp_reason": "CONVERGED_RTOL",
+    "iterations": 365,
+    "reported_relative": 9.923273241434768e-7,
+    "condensed_true": 9.923273236187206e-7,
+    "full_augmented_true": 9.923273236187206e-7,
+    "full_fe_relative": 9.923273535279698e-7,
+    "eliminated_interior_max_abs": 1.1140981751262269e-12,
+    "gate_pass": true
+  },
+  "rta_energy": {
+    "R_total": 0.0007628813414779686,
+    "T_total": 0.6027016365247442,
+    "A_balance": 0.3965354821337779,
+    "A_volume_total": 0.396535483656842,
+    "A_volume_grating": 0.33247666522275066,
+    "A_volume_substrate": 0.06405881843409136,
+    "energy_closure_error": 1.5230641192687244e-9,
+    "official_result": true,
+    "significant_powers": "12/12",
+    "boundary_amplitudes": "12/12"
+  },
+  "channels_12": [
+    {"label":"T(-7,0)_s","direct_power":2.3620104492343318e-6,"m3a_power":2.3613669162884276e-6,"power_abs_diff":6.435329459041241e-10,"power_tolerance":2.1586938039525714e-9,"power_pass":true,"direct_boundary_amplitude":[0.0009812210508325166,-8.723749960417161e-5],"m3a_boundary_amplitude":[0.0009810798444326333,-8.731026623269144e-5],"amplitude_abs_diff":1.5885285516517524e-7,"amplitude_tolerance":1.2165650664394503e-5,"amplitude_pass":true},
+    {"label":"T(-5,0)_s","direct_power":2.119208257107722e-7,"m3a_power":2.1192921354216154e-7,"power_abs_diff":8.387831389343993e-12,"power_tolerance":3.891272584918786e-10,"power_pass":true,"direct_boundary_amplitude":[0.00013403269660640743,0.00014700578427998944],"m3a_boundary_amplitude":[0.00013404281389963352,0.00014700188710034277],"amplitude_abs_diff":1.0841938545357455e-8,"amplitude_tolerance":1.28064572388584e-6,"amplitude_pass":true},
+    {"label":"T(-4,0)_s","direct_power":4.3728889718873036e-7,"m3a_power":4.372874071425644e-7,"power_abs_diff":1.490046165947734e-12,"power_tolerance":5.251002536670234e-10,"power_pass":true,"direct_boundary_amplitude":[-0.0002621322075251311,8.743226903699873e-5],"m3a_boundary_amplitude":[-0.0002621314929436196,8.74329235014322e-5],"amplitude_abs_diff":9.689945465355527e-10,"amplitude_tolerance":2.541657906333072e-6,"amplitude_pass":true},
+    {"label":"T(-2,0)_s","direct_power":2.9598413950937576e-6,"m3a_power":2.959773454139267e-6,"power_abs_diff":6.79409544904769e-11,"power_tolerance":4.651045293875445e-9,"power_pass":true,"direct_boundary_amplitude":[-0.000697002780553906,0.0002979420807189974],"m3a_boundary_amplitude":[-0.0006969955643074389,0.000297936828520291],"amplitude_abs_diff":8.92523413273925e-9,"amplitude_tolerance":4.580806193893276e-6,"amplitude_pass":true},
+    {"label":"T(-1,0)_s","direct_power":2.1781673985633478e-5,"m3a_power":2.1781669995959497e-5,"power_abs_diff":3.989673981539665e-12,"power_tolerance":1.1144136652304436e-7,"power_pass":true,"direct_boundary_amplitude":[0.002091013385309328,-0.001023379862841268],"m3a_boundary_amplitude":[0.002090964249392858,-0.0010234797683762015],"amplitude_abs_diff":1.1133487413049537e-7,"amplitude_tolerance":1.2728990676557803e-5,"amplitude_pass":true},
+    {"label":"T(0,0)_s","direct_power":0.602673872346967,"m3a_power":0.6026738755889417,"power_abs_diff":3.2419746887057954e-9,"power_tolerance":0.00021757657401122454,"power_pass":true,"direct_boundary_amplitude":[0.631378703348196,0.47302098103835544],"m3a_boundary_amplitude":[0.6313787054804125,0.47302098173129575],"amplitude_abs_diff":2.241988748055756e-9,"amplitude_tolerance":0.006779628645197135,"amplitude_pass":true},
+    {"label":"R(-7,0)_s","direct_power":6.263542422002542e-7,"m3a_power":6.266965940710152e-7,"power_abs_diff":3.42351870761007e-10,"power_tolerance":1.2494442957486303e-9,"power_pass":true,"direct_boundary_amplitude":[-0.0005052091112381259,-2.6088861699973378e-5],"m3a_boundary_amplitude":[-0.0005053569256867429,-2.5906199049124885e-5],"amplitude_abs_diff":2.3497820161653558e-7,"amplitude_tolerance":7.995038740979746e-7,"amplitude_pass":true},
+    {"label":"R(-5,0)_s","direct_power":7.457300537578877e-8,"m3a_power":7.457391621214805e-8,"power_abs_diff":9.108363592788594e-13,"power_tolerance":1.1943015599631952e-9,"power_pass":true,"direct_boundary_amplitude":[-9.81780791887592e-5,-6.535503246597065e-5],"m3a_boundary_amplitude":[-9.817934905553943e-5,-6.535442464391256e-5],"amplitude_abs_diff":1.4078385183876074e-9,"amplitude_tolerance":1.113206415872461e-6,"amplitude_pass":true},
+    {"label":"R(-4,0)_s","direct_power":2.6752396096185967e-7,"m3a_power":2.67544150818138e-7,"power_abs_diff":2.0189856278331934e-11,"power_tolerance":1.086491588133722e-9,"power_pass":true,"direct_boundary_amplitude":[0.00021022333612240508,-4.9730436130400444e-5],"m3a_boundary_amplitude":[0.00021023140673015781,-4.973172908266054e-5],"amplitude_abs_diff":8.173520358168358e-9,"amplitude_tolerance":1.8815249525164472e-6,"amplitude_pass":true},
+    {"label":"R(-2,0)_s","direct_power":1.4776908513138024e-6,"m3a_power":1.4776312563850958e-6,"power_abs_diff":5.959492870658859e-11,"power_tolerance":1.2422824425350593e-9,"power_pass":true,"direct_boundary_amplitude":[0.0004942316170633655,-0.00020551576976420865],"m3a_boundary_amplitude":[0.0004942253923456992,-0.00020550262758343816],"amplitude_abs_diff":1.4541802688443106e-8,"amplitude_tolerance":3.1864912826411788e-6,"amplitude_pass":true},
+    {"label":"R(-1,0)_s","direct_power":6.669309654154914e-6,"m3a_power":6.668923170367188e-6,"power_abs_diff":3.864837877264724e-10,"power_tolerance":5.111835340427464e-8,"power_pass":true,"direct_boundary_amplitude":[-0.0010327077159078778,0.000767833921754617],"m3a_boundary_amplitude":[-0.0010327440854674512,0.0007677225046580287],"amplitude_abs_diff":1.1720287656763255e-7,"amplitude_tolerance":7.413384075620187e-6,"amplitude_pass":true},
+    {"label":"R(0,0)_s","direct_power":0.0007537612200679581,"m3a_power":0.0007537611760302352,"power_abs_diff":4.4037722904052834e-11,"power_tolerance":3.195286914614711e-5,"power_pass":true,"direct_boundary_amplitude":[-0.025252304353610845,0.010774151702132584],"m3a_boundary_amplitude":[-0.025252303949629032,0.010774150605304665],"amplitude_abs_diff":1.1688596100845196e-9,"amplitude_tolerance":0.0008330266538614554,"amplitude_pass":true}
+  ],
+  "timings_seconds": {
+    "core_setup": 126.8370741350227,
+    "core_solve": 393.26021890802076,
+    "core_recovery": 0.046614531020168215,
+    "core_total": 520.1891550979926,
+    "stage4_dtn_linear_solve": 520.1943626219872,
+    "stage4_assembly_and_solve": 686.207802555,
+    "cell_recovery": 0.2428163019940257,
+    "full_residual": 1.5376178169972263,
+    "canonical_export": 4.954428789962549,
+    "postprocess": 8.297736085020006,
+    "parent_wall": 701.6504903390305
+  },
+  "resources": {
+    "memory_authority_gib": 8.265838623046875,
+    "worker_rss_mib": 8449.640625,
+    "worker_pss_mib": 7505.69140625,
+    "worker_uss_mib": 7209.09375,
+    "swap_mib": 0,
+    "absolute_resource_gate_gib": 10.30,
+    "absolute_resource_gate_pass": true,
+    "direct_v2_memory_ratio": 0.5488887791199146,
+    "direct_v2_reduction_percent": 45.111122088008536,
+    "cross_mpi_wall_ratio_m3a_over_direct_v2": 3.206052073423701,
+    "half_direct_v2_gib": 7.529611587524414,
+    "engineering_half_memory_gate_pass": false
+  },
+  "canonical_comparison": {
+    "comparison_scope": "Direct MPI8 v2 versus M3a MPI4 full; physical canonical identity, not same-candidate MPI identity",
+    "active": {
+      "direct_manifest_sha256": "e01458aa9380276fa02522ca230e5a913e654e71e7c22a73211634feda389d23",
+      "m3a_manifest_sha256": "6cd0a3f82e75656310eeed7e5aac6a53860824c27a1e77ca708ad48f74d6c10c",
+      "count_direct": 60402,
+      "count_m3a": 60402,
+      "independent_active_coordinates": 51192,
+      "missing": 0,
+      "extra": 0,
+      "duplicates_direct": 0,
+      "duplicates_m3a": 0,
+      "relative_l2": 1.2553898016411866e-6,
+      "max_abs": 4.625555666881793e-5,
+      "gate_limit": 1.0e-5,
+      "gate_pass": true
+    },
+    "full_fe": {
+      "direct_manifest_sha256": "095c19eeae37bed2b605e54d0247e034376f50f36fb016329827b6ea3bb6b004",
+      "m3a_manifest_sha256": "ecda4258589af866169966e7575c7be290153ef68753025d04a25482f9361f36",
+      "count_direct": 173802,
+      "count_m3a": 173802,
+      "missing": 0,
+      "extra": 0,
+      "duplicates_direct": 0,
+      "duplicates_m3a": 0,
+      "relative_l2": 7.880394026823442e-7,
+      "max_abs": 4.625555666881793e-5,
+      "gate_limit": 1.0e-5,
+      "gate_pass": true
+    },
+    "grouped_full_fe_relative_l2": {
+      "cell_interior": 3.936576747669e-7,
+      "non_floquet_edge": 3.306529741593e-6,
+      "non_floquet_face": 6.230218508089e-7,
+      "floquet_edge": 4.484383414599e-6,
+      "floquet_face": 8.393471219525e-7
+    },
+    "fixed_field_relative_l2": {
+      "E_V_per_m": 5.579409694716e-7,
+      "H_A_per_m": 3.246097849130e-7,
+      "E_t_interface_V_per_m": 7.2175703519e-7,
+      "H_t_interface_A_per_m": 1.1814035455e-6
+    },
+    "channel_max_abs_differences": {
+      "significant_power": 3.2419746887057954e-9,
+      "outgoing_boundary_amplitude": 2.3497820161653558e-7,
+      "significant_power_count": 12,
+      "boundary_amplitude_count": 12
+    }
+  },
+  "common_fresh_mesh_physical_norm": {
+    "command_type": "one-off offline reconstruction, not PDE solve",
+    "command": "source scripts/activate_myfenics_wsl.sh && PYTHONPATH=/home/Projects/MyFEniCS mpiexec -n 4 python /tmp/task037_physical_norm_gate.py",
+    "script_path": "/tmp/task037_physical_norm_gate.py",
+    "tracked": false,
+    "mpi_size": 4,
+    "global_mesh_cells": 252,
+    "global_full_fe_dofs": 173802,
+    "relative_l2": 3.449938833419635e-7,
+    "relative_curl_l2": 3.278099243754906e-7,
+    "relative_tangential_trace_mass": 7.099902806903749e-7,
+    "relative_hcurl": 3.419997826589739e-7,
+    "gate_limit": 1.0e-5,
+    "gate_pass": true,
+    "elapsed_seconds": 339.75918469496537
+  },
+  "scope_note": "This is a numerical and physical evidence record. It does not establish same-candidate MPI4/MPI8 bitwise identity, production qualification, 0.7 nm scalability, or whole-branch merge eligibility."
+}
