@@ -654,13 +654,16 @@ def _task037_f3_assembled_fgmres_port(
     *,
     solver_profile: str = "assembled",
     lifecycle_enabled: bool = False,
+    never_materialized: bool = False,
 ):
     from src.solvers.static_condensed_iterative import (
         solve_assembled_static_condensed_fgmres,
+        solve_never_materialized_static_condensed_fgmres,
     )
 
     def solve(request):
-        comm = request.A.getComm().tompi4py()
+        request_operator = request.operator if never_materialized else request.A
+        comm = request_operator.getComm().tompi4py()
         history_path = run_dir / "task037_f3_residual_history.jsonl"
 
         def observe(iteration, reported, condensed):
@@ -690,14 +693,26 @@ def _task037_f3_assembled_fgmres_port(
                 },
             )
 
-        snapshot, audit = solve_assembled_static_condensed_fgmres(
-            request,
-            screen_iterations=screen_iterations,
-            residual_observer=observe,
-            solver_profile=solver_profile,
-            release_assembled_matrix=request.release_assembled_matrix,
-            lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
-        )
+        if never_materialized:
+            snapshot, audit = solve_never_materialized_static_condensed_fgmres(
+                request,
+                screen_iterations=screen_iterations,
+                residual_observer=observe,
+                lifecycle_observer=(
+                    observe_lifecycle if lifecycle_enabled else None
+                ),
+            )
+        else:
+            snapshot, audit = solve_assembled_static_condensed_fgmres(
+                request,
+                screen_iterations=screen_iterations,
+                residual_observer=observe,
+                solver_profile=solver_profile,
+                release_assembled_matrix=request.release_assembled_matrix,
+                lifecycle_observer=(
+                    observe_lifecycle if lifecycle_enabled else None
+                ),
+            )
         if comm.rank == 0:
             (run_dir / "task037_f3_core_audit.json").write_text(
                 json.dumps(audit, ensure_ascii=False, indent=2) + "\n",
@@ -885,6 +900,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_f3_screen": args.task037_f3_screen,
         "task037_f3_full": bool(args.task037_f3_full),
         "task037_f5b_released_profile": bool(args.task037_f5b_released_profile),
+        "task037_m2c_never_materialized": bool(
+            args.task037_m2c_never_materialized
+        ),
         "task037_canonical_vector_export": bool(
             args.task037_canonical_vector_export
         ),
@@ -1036,7 +1054,7 @@ def _worker(args: argparse.Namespace) -> int:
     )
     linear_solver_port = None
     if args.task037_f3_full or args.task037_f3_screen is not None:
-        linear_solver_port = _task037_f3_assembled_fgmres_port(
+        linear_solver_callback = _task037_f3_assembled_fgmres_port(
             args.run_dir,
             _task037_f3_iterations(args),
             solver_profile=(
@@ -1045,7 +1063,16 @@ def _worker(args: argparse.Namespace) -> int:
                 else "assembled"
             ),
             lifecycle_enabled=args.task037_m0_lifecycle_audit,
+            never_materialized=args.task037_m2c_never_materialized,
         )
+        if args.task037_m2c_never_materialized:
+            from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
+
+            linear_solver_port = Stage4NeverMaterializedLinearSolverPort(
+                linear_solver_callback
+            )
+        else:
+            linear_solver_port = linear_solver_callback
     elif args.task037_f1_direct_trace_oracle is not None:
         linear_solver_port = _task037_f1_direct_trace_oracle(
             args.task037_f1_direct_trace_oracle,
@@ -1123,6 +1150,7 @@ def _worker(args: argparse.Namespace) -> int:
         variable_p_retain_local_schur_for_research=(retain_local_schur),
         static_retain_local_schur_for_matrix_free=(
             args.task037_f5b_released_profile
+            or args.task037_m2c_never_materialized
         ),
         canonical_vector_export=args.task037_canonical_vector_export,
     )
@@ -1197,6 +1225,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--task037-f3-screen", type=int, choices=(20, 100, 200))
     parser.add_argument("--task037-f3-full", action="store_true")
     parser.add_argument("--task037-f5b-released-profile", action="store_true")
+    parser.add_argument("--task037-m2c-never-materialized", action="store_true")
     parser.add_argument("--task037-m0-lifecycle-audit", action="store_true")
     parser.add_argument(
         "--task035d-case097-gate",
@@ -1445,6 +1474,25 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.task037_f5b_released_profile and not args.task037_f3_full:
         parser.error("--task037-f5b-released-profile requires --task037-f3-full.")
+    if args.task037_m2c_never_materialized and not (
+        args.task037_f3_screen == 20
+        and not args.task037_f3_full
+        and not args.task037_f5b_released_profile
+        and not args.task037_f0_vector_observer
+        and args.task037_f1_direct_trace_oracle is None
+        and args.task035c_p6_h10_gate
+        and args.degree == 6
+        and math.isclose(args.h_nm, 10.0)
+        and args.polarization_kind == "s"
+        and args.mpi_size == 8
+        and args.stage4_full3d_assembly_backend
+        == "assembly_time_static_condensed"
+        and not args.task037_m0_lifecycle_audit
+    ):
+        parser.error(
+            "--task037-m2c-never-materialized requires the existing p6/h10 "
+            "MPI8 static-backend screen-20 path and is exclusive of F0/F1/F3-full/F5b."
+        )
     if args.task037_m0_lifecycle_audit and not (
         args.task037_f3_full and args.task037_f5b_released_profile
     ):
@@ -2705,6 +2753,8 @@ def _qualify(
     task037_f3_core_audit: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     matrix = solver_summary.get("matrix_stats") or {}
+    action_only_profile = bool(args.task037_m2c_never_materialized)
+    condensation = solver_summary.get("cell_static_condensation") or {}
     common = {
         "process_completed": return_code == 0,
         "not_terminated_for_memory": not terminated_for_memory,
@@ -2719,8 +2769,11 @@ def _qualify(
             and float(matrix["matrix_rows"]) > 0.0
         ),
         "exact_positive_assembled_nnz": (
-            isinstance(matrix.get("matrix_nnz_used"), (int, float))
-            and float(matrix["matrix_nnz_used"]) > 0.0
+            action_only_profile
+            or (
+                isinstance(matrix.get("matrix_nnz_used"), (int, float))
+                and float(matrix["matrix_nnz_used"]) > 0.0
+            )
         ),
         "polarization_identity": (
             solver_summary.get("polarization_kind") == args.polarization_kind
@@ -2792,6 +2845,67 @@ def _qualify(
                             "external_assembled_matrix_released_before_solve"
                         )
                         is True
+                    ),
+                }
+            )
+        if action_only_profile:
+            partition = core_audit.get("partition_audit") or {}
+            smoother = core_audit.get("smoother_diagnostics") or {}
+            inventory = core_audit.get("no_global_factor_inventory") or {}
+            resource = resource_summary if isinstance(resource_summary, dict) else {}
+            memory_authority_gib = resource.get("memory_authority_gib")
+            checks.update(
+                {
+                    "m2c_core_profile": (
+                        core_profile == "never_materialized_owner_local"
+                    ),
+                    "m2c_core_no_assembled_release": (
+                        core_released is False
+                    ),
+                    "m2c_core_no_global_A": (
+                        core_audit.get("global_A_materialized") is False
+                    ),
+                    "m2c_core_no_global_F": (
+                        core_audit.get("global_F_materialized") is False
+                    ),
+                    "m2c_partition_not_materialized": (
+                        partition.get("matrix_materialized") is False
+                    ),
+                    "m2c_two_step_two_color_ilu": (
+                        smoother.get("assembly_order") == "two_color"
+                        and smoother.get("smoother_iterations") == 2
+                        and smoother.get("smoother_ksp_type") == "gmres"
+                        and smoother.get("factor_only_storage") is True
+                    ),
+                    "m2c_no_global_factor": (
+                        inventory.get("global_direct_factor_count") == 0
+                        and inventory.get("global_schur_matrix_materialized") is False
+                    ),
+                    "m2c_memory_authority_le_10_30_gib": (
+                        _finite_number_le(memory_authority_gib, 10.30)
+                    ),
+                    "m2c_summary_action_only": (
+                        solver_summary.get("action_only_setup") is True
+                        and condensation.get("action_only_setup") is True
+                    ),
+                    "m2c_summary_no_global_A": (
+                        solver_summary.get("global_A_materialized") is False
+                        and condensation.get("global_A_materialized") is False
+                    ),
+                    "m2c_summary_no_global_F": (
+                        solver_summary.get("global_F_materialized") is False
+                        and condensation.get("global_F_materialized") is False
+                    ),
+                    "m2c_summary_profile": (
+                        solver_summary.get("external_solver_profile")
+                        == core_profile
+                        == "never_materialized_owner_local"
+                    ),
+                    "m2c_summary_no_assembled_release": (
+                        solver_summary.get(
+                            "external_assembled_matrix_released_before_solve"
+                        )
+                        is False
                     ),
                 }
             )
@@ -2983,6 +3097,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.extend(("--task037-f3-screen", str(args.task037_f3_screen)))
     if args.task037_f5b_released_profile:
         command.append("--task037-f5b-released-profile")
+    if args.task037_m2c_never_materialized:
+        command.append("--task037-m2c-never-materialized")
     if args.task037_canonical_vector_export:
         command.append("--task037-canonical-vector-export")
     if args.task037_m0_lifecycle_audit:
@@ -3669,7 +3785,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["failures"].append("source_stable_and_clean_after")
         qualification["pass"] = False
     status = (
-        "task037_f5b_matrix_free_full_pass"
+        "task037_m2c_never_materialized_screen_pass"
+        if qualification["pass"] and args.task037_m2c_never_materialized
+        else "task037_m2c_never_materialized_screen_not_pass"
+        if args.task037_m2c_never_materialized
+        else "task037_f5b_matrix_free_full_pass"
         if qualification["pass"] and args.task037_f5b_released_profile
         else "task037_f5b_matrix_free_full_not_pass"
         if args.task037_f5b_released_profile

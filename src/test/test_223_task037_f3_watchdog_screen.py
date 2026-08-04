@@ -141,6 +141,21 @@ def test_parser_scope_and_worker_command(tmp_path):
     assert m0.task037_m0_lifecycle_audit
     m0_command = watchdog._worker_command(m0, tmp_path)
     assert m0_command.count("--task037-m0-lifecycle-audit") == 1
+    m2c_args = base + [
+        "--task037-f3-screen",
+        "20",
+        "--warning-gib",
+        "10",
+        "--terminate-gib",
+        "14",
+        "--timeout-seconds",
+        "1800",
+        "--task037-m2c-never-materialized",
+    ]
+    m2c = watchdog._parse_args(m2c_args)
+    assert m2c.task037_m2c_never_materialized
+    m2c_command = watchdog._worker_command(m2c, tmp_path)
+    assert m2c_command.count("--task037-m2c-never-materialized") == 1
     bad_iterations = valid.copy()
     bad_iterations[bad_iterations.index("--task037-f3-screen") + 1] = "3000"
     missing_caps = valid.copy()
@@ -157,6 +172,9 @@ def test_parser_scope_and_worker_command(tmp_path):
         valid + ["--task037-f5b-released-profile"],
         full_args + ["--task037-f3-screen", "20"],
         full_args + ["--task037-m0-lifecycle-audit"],
+        base + ["--task037-m2c-never-materialized"],
+        full_args + ["--task037-m2c-never-materialized"],
+        valid + ["--task037-m2c-never-materialized"],
     ):
         with pytest.raises(SystemExit):
             watchdog._parse_args(invalid)
@@ -217,6 +235,7 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         task037_f3_screen=None,
         task037_f3_full=True,
         task037_f5b_released_profile=True,
+        task037_m2c_never_materialized=False,
         task037_canonical_vector_export=True,
         task037_m0_lifecycle_audit=True,
         task035d_nested_p_dwr_phase=None,
@@ -249,11 +268,66 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
     )
 
 
+def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
+    from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
+
+    class Comm:
+        rank = 0
+        size = 1
+
+        def tompi4py(self):
+            return self
+
+    operator = SimpleNamespace(getComm=lambda: Comm())
+    request = SimpleNamespace(operator=operator)
+    captured = {}
+
+    def fake_action_core(request, **kwargs):
+        captured["request"] = request
+        captured["kwargs"] = kwargs
+        return object(), {"solver_profile": "never_materialized_owner_local"}
+
+    def stage(*_args, **kwargs):
+        captured["retain"] = kwargs["static_retain_local_schur_for_matrix_free"]
+        captured["port"] = kwargs["linear_solver_port"]
+        kwargs["linear_solver_port"](request)
+
+    monkeypatch.setattr(watchdog, "_full3d_config", lambda _args: object())
+    monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative.solve_never_materialized_static_condensed_fgmres",
+        fake_action_core,
+    )
+    monkeypatch.setattr(
+        "src.solvers.solve_maxwell_3d_stage_4b_block_grating.run_stage4b_block_grating_3d_case",
+        stage,
+    )
+    args = SimpleNamespace(
+        run_dir=tmp_path,
+        task037_f0_vector_observer=False,
+        task037_f1_direct_trace_oracle=None,
+        task037_f1_direct_trace_sha256=None,
+        task037_f3_screen=20,
+        task037_f3_full=False,
+        task037_f5b_released_profile=False,
+        task037_m2c_never_materialized=True,
+        task037_canonical_vector_export=False,
+        task037_m0_lifecycle_audit=False,
+        task035d_nested_p_dwr_phase=None,
+        task035d_selective_face_dwr_phase=None,
+    )
+    assert watchdog._worker(args) == 0
+    assert captured["retain"] is True
+    assert isinstance(captured["port"], Stage4NeverMaterializedLinearSolverPort)
+    assert captured["request"] is request
+    assert captured["kwargs"]["screen_iterations"] == 20
+
+
 def test_f3_qualification_uses_core_audit_gate():
     args = SimpleNamespace(
         task037_f3_screen=20,
         task037_f3_full=False,
         task037_f5b_released_profile=False,
+        task037_m2c_never_materialized=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
         allow_swap=False,
@@ -400,10 +474,79 @@ def test_f3_qualification_uses_core_audit_gate():
     )["pass"]
 
 
+def test_m2c_qualification_requires_action_profile_and_memory_gate():
+    args = SimpleNamespace(
+        task037_f3_screen=20,
+        task037_f3_full=False,
+        task037_f5b_released_profile=False,
+        task037_m2c_never_materialized=True,
+        task037_canonical_vector_export=False,
+        run_kind="full-solve",
+        allow_swap=False,
+        polarization_kind="s",
+        mpi_size=8,
+        task035d_case097_gate=False,
+    )
+    audit = _audit()
+    audit.update(
+        {
+            "solver_profile": "never_materialized_owner_local",
+            "assembled_matrix_released_before_solve": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+        }
+    )
+    audit["partition_audit"]["matrix_materialized"] = False
+    audit["smoother_diagnostics"].update(
+        {
+            "assembly_order": "two_color",
+            "smoother_iterations": 2,
+            "smoother_ksp_type": "gmres",
+        }
+    )
+    summary = {
+        "matrix_stats": {"matrix_rows": 1, "matrix_nnz_used": None},
+        "polarization_kind": "s",
+        "external_linear_solver_port": True,
+        "external_no_global_factor": True,
+        "ksp_converged_reason": -3,
+        "linear_system_relative_residual": 0.1,
+        "official_result": False,
+        "postprocess_skipped": True,
+        "action_only_setup": True,
+        "global_A_materialized": False,
+        "global_F_materialized": False,
+        "external_solver_profile": "never_materialized_owner_local",
+        "external_assembled_matrix_released_before_solve": False,
+        "cell_static_condensation": {
+            "action_only_setup": True,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+        },
+    }
+    kwargs = {
+        "args": args,
+        "solver_summary": summary,
+        "events": [],
+        "return_code": 0,
+        "terminated_for_memory": False,
+        "terminated_for_timeout": False,
+        "terminated_for_authority_unreadable": False,
+        "no_swap": True,
+        "observed_worker_rank_count": 8,
+        "resource_summary": {"memory_authority_gib": 10.30},
+        "task037_f3_core_audit": audit,
+    }
+    assert watchdog._qualify(**kwargs)["pass"]
+    kwargs["resource_summary"] = {"memory_authority_gib": 10.31}
+    assert not watchdog._qualify(**kwargs)["pass"]
+
+
 def test_ordinary_full_solve_rules_remain_strict():
     args = SimpleNamespace(
         task037_f3_screen=None,
         task037_f3_full=False,
+        task037_m2c_never_materialized=False,
         run_kind="full-solve",
         allow_swap=False,
         polarization_kind="s",

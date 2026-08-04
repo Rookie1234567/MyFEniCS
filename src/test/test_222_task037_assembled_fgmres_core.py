@@ -6,7 +6,10 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.solvers import static_condensed_iterative as core
-from src.solvers.dtn_port_3d import Stage4ExternalLinearSolverRequest
+from src.solvers.dtn_port_3d import (
+    Stage4ExternalLinearSolverRequest,
+    Stage4NeverMaterializedLinearSolverRequest,
+)
 from src.solvers.physical_slab_two_level import compress_petsc_vector
 
 
@@ -259,3 +262,139 @@ def test_lifecycle_observer_records_failed_setup_cleanup(monkeypatch):
     finally:
         A.destroy()
         b.destroy()
+
+
+def test_never_materialized_core_borrows_action_objects(monkeypatch):
+    A, b, _ordinary_request = _build_request(monkeypatch)
+    blocks = core.extract_petsc_condensed_blocks(A, b, n_fe=4, n_aux=1)
+    fine_action = blocks.require_f().copy()
+    blocks.release_f()
+    comm = MPI.COMM_WORLD
+    carrier = SimpleNamespace()
+    operator = PETSc.Mat().createPython(
+        ((5, 5), (5, 5)), context=carrier, comm=comm
+    )
+    operator.setUp()
+    action_request = Stage4NeverMaterializedLinearSolverRequest(
+        operator=operator,
+        b=b,
+        n_fe=4,
+        n_aux=1,
+        static_condensed_system=SimpleNamespace(
+            active_rows=4,
+            retained_local_schur_by_class={
+                "fixture": np.eye(4, dtype=PETSc.ScalarType)
+            },
+        ),
+        fine_operator=fine_action,
+        blocks=blocks,
+        function_space=SimpleNamespace(mesh=SimpleNamespace()),
+        config=SimpleNamespace(domain_z_min=0.0, domain_z_max=1.0),
+        floquet_data=SimpleNamespace(),
+    )
+    captured = {}
+
+    class FakeSmoother:
+        local_subdomains = tuple(range(16))
+
+        diagnostics = {
+            "assembly_order": "two_color",
+            "smoother_iterations": 2,
+            "smoother_ksp_type": "gmres",
+            "factor_only_storage": True,
+            "global_factor_rows": 0,
+            "global_stored_factor_nnz": 0,
+        }
+
+        def solve(self, _source, target):
+            target.set(0.0)
+
+        def destroy(self):
+            captured["smoother_destroyed"] = True
+
+    def fake_owner_factory(_condensed, _plan, **kwargs):
+        captured["shift"] = kwargs["precomputed_diagonal_shift"]
+        captured["two_step_action_operator"] = kwargs["two_step_action_operator"]
+        return FakeSmoother()
+
+    def fake_plan(*_args, **_kwargs):
+        return SimpleNamespace(
+            slab_owners=(0,) * 16,
+            slab_row_counts=(4,) * 16,
+        )
+
+    def fake_diagonal(_system):
+        captured["diagonal_calls"] = captured.get("diagonal_calls", 0) + 1
+        diagonal = fine_action.createVecLeft()
+        diagonal.set(2.0)
+        return diagonal, {"global_diagonal_max_abs": 2.0}
+
+    original_shifted = core._ShiftedFineAction
+
+    def capture_shift(fine, shift):
+        captured["shifted_action_shift"] = shift
+        return original_shifted(fine, shift)
+
+    monkeypatch.setattr(core, "build_owner_local_slab_plan", fake_plan)
+    monkeypatch.setattr(core, "build_owner_local_slab_diagonal", fake_diagonal)
+    monkeypatch.setattr(
+        core.DistributedPhysicalSlabSmoother,
+        "from_owner_local_plan",
+        fake_owner_factory,
+    )
+    monkeypatch.setattr(core, "_ShiftedFineAction", capture_shift)
+    monkeypatch.setattr(
+        core,
+        "extract_petsc_condensed_blocks",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("action-only core extracted global blocks")
+        ),
+    )
+    events = []
+    try:
+        with pytest.raises(ValueError, match="request type"):
+            core.solve_assembled_static_condensed_fgmres(
+                action_request,
+                screen_iterations=20,
+                solver_profile="assembled",
+            )
+        snapshot, audit = core.solve_never_materialized_static_condensed_fgmres(
+            action_request,
+            lifecycle_observer=lambda event, payload: events.append(
+                (event, payload)
+            ),
+        )
+        assert snapshot.converged_reason > 0
+        assert snapshot.solver_profile == "never_materialized_owner_local"
+        assert not snapshot.assembled_matrix_released_before_solve
+        assert audit["matrix_type"] == "python_action_only"
+        assert audit["global_A_materialized"] is False
+        assert audit["global_F_materialized"] is False
+        assert audit["partition_audit"]["matrix_materialized"] is False
+        assert audit["smoother_diagnostics"]["assembly_order"] == "two_color"
+        assert audit["smoother_diagnostics"]["smoother_iterations"] == 2
+        assert captured["diagonal_calls"] == 1
+        assert captured["shift"] is captured["shifted_action_shift"]
+        assert captured["two_step_action_operator"] is not None
+        assert captured["smoother_destroyed"]
+        assert events[-1][0] == "solver_owned_objects_released"
+        assert not events[-1][1]["rank_local_live_objects"]["borrowed_augmented_A"]
+        assert snapshot.x.getSize() == b.getSize() == operator.getSize()[1]
+        assert snapshot.x.getOwnershipRange() == b.getOwnershipRange()
+        fine_probe = fine_action.createVecRight()
+        fine_probe.set(1.0)
+        fine_probe.assemble()
+        fine_output = fine_action.createVecLeft()
+        fine_action.mult(fine_probe, fine_output)
+        assert np.isfinite(float(fine_output.norm()))
+        fine_output.destroy()
+        fine_probe.destroy()
+        assert blocks.F is None
+        assert operator.getSize() == (5, 5)
+        snapshot.x.destroy()
+    finally:
+        blocks.destroy()
+        fine_action.destroy()
+        operator.destroy()
+        b.destroy()
+        A.destroy()

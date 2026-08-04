@@ -19,17 +19,23 @@ from .condensed_dtn import (
 from .dtn_port_3d import (
     Stage4ExternalLinearSolverRequest,
     Stage4ExternalLinearSolverSnapshot,
+    Stage4NeverMaterializedLinearSolverRequest,
 )
 from .physical_slab_two_level import (
     DistributedPhysicalSlabSmoother,
     SparseGalerkinTwoLevelPc,
     build_active_trace_floquet_basis,
+    build_owner_local_slab_diagonal,
+    build_owner_local_slab_plan,
     build_trace_aware_physical_slab_partition,
 )
 from .static_local_schur_action import create_static_local_schur_action
 
 
-__all__ = ("solve_assembled_static_condensed_fgmres",)
+__all__ = (
+    "solve_assembled_static_condensed_fgmres",
+    "solve_never_materialized_static_condensed_fgmres",
+)
 _TINY = np.finfo(float).tiny
 
 
@@ -65,34 +71,50 @@ def _relative_residual(
     return float(work.norm()) / max(rhs_norm, _TINY)
 
 
-def solve_assembled_static_condensed_fgmres(
-    request: Stage4ExternalLinearSolverRequest,
+def _solve_static_condensed_fgmres_core(
+    request: Stage4ExternalLinearSolverRequest
+    | Stage4NeverMaterializedLinearSolverRequest,
     *,
     screen_iterations: Literal[20],
     residual_observer: Callable[[int, float, float], None] | None = None,
     solver_profile: Literal[
-        "assembled", "assembled_setup_then_static_local_schur_matrix_free_solve"
+        "assembled",
+        "assembled_setup_then_static_local_schur_matrix_free_solve",
+        "never_materialized_owner_local",
     ] = "assembled",
     release_assembled_matrix: Callable[[], None] | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
+    action_only = isinstance(request, Stage4NeverMaterializedLinearSolverRequest)
     if solver_profile not in (
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
+        "never_materialized_owner_local",
     ):
-        raise ValueError("unsupported assembled FGMRES solver profile")
+        raise ValueError("unsupported static-condensed FGMRES solver profile")
     exact_profile = (
         solver_profile == "assembled_setup_then_static_local_schur_matrix_free_solve"
     )
-    if exact_profile and release_assembled_matrix is None:
+    action_only_profile = solver_profile == "never_materialized_owner_local"
+    if action_only != action_only_profile:
+        raise ValueError("solver profile does not match the request type")
+    if exact_profile and not action_only and release_assembled_matrix is None:
         raise ValueError(
             "exact F5b profile requires an assembled-matrix release callback"
         )
+    if action_only and release_assembled_matrix is not None:
+        raise ValueError("never-materialized request cannot release an assembled matrix")
     started = perf_counter()
-    comm = request.A.getComm().tompi4py()
+    request_operator = request.operator if action_only else request.A
+    request_rhs = request.b
+    request_operator_size = tuple(map(int, request_operator.getSize()))
+    request_operator_columns = tuple(
+        map(int, request_operator.getOwnershipRangeColumn())
+    )
+    comm = request_operator.getComm().tompi4py()
     returned_solution_transferred = False
     live_state: dict[str, bool | int] = {
-        "borrowed_augmented_A": True,
+        "borrowed_augmented_A": not action_only,
         "active_F": False,
         "C": False,
         "D": False,
@@ -153,26 +175,41 @@ def solve_assembled_static_condensed_fgmres(
 
     owned: list[Any] = []
     try:
-        blocks = extract_petsc_condensed_blocks(
-            request.A, request.b, n_fe=request.n_fe, n_aux=request.n_aux
-        )
-        owned.append(blocks)
-        fine = blocks.require_f()
-        matrix_blocks = {"F": fine, "C": blocks.C, "D": blocks.D, "H": blocks.H}
+        if action_only:
+            blocks = request.blocks
+            if blocks.F is not None:
+                raise ValueError("never-materialized request must provide blocks.F=None")
+            fine = request.fine_operator
+            matrix_blocks = {"C": blocks.C, "D": blocks.D, "H": blocks.H}
+        else:
+            blocks = extract_petsc_condensed_blocks(
+                request.A, request.b, n_fe=request.n_fe, n_aux=request.n_aux
+            )
+            owned.append(blocks)
+            fine = blocks.require_f()
+            matrix_blocks = {
+                "F": fine,
+                "C": blocks.C,
+                "D": blocks.D,
+                "H": blocks.H,
+            }
         live_state.update(
-            active_F=True,
+            active_F=not action_only,
             C=True,
             D=True,
             H=True,
-            extracted_active_rhs=True,
-            extracted_aux_rhs=True,
+            extracted_active_rhs=not action_only,
+            extracted_aux_rhs=not action_only,
         )
         emit_lifecycle(
             "F_C_D_H_extracted",
-            borrowed_A_already_finalized_at_port_entry=True,
+            blocks_source=("borrowed_action_only" if action_only else "extracted"),
+            borrowed_A_already_finalized_at_port_entry=not action_only,
             global_active_rows=int(blocks.n_fe),
             global_aux_rows=int(blocks.n_aux),
-            global_augmented_rows=int(request.A.getSize()[0]),
+            global_augmented_rows=request_operator_size[0],
+            global_A_materialized=not action_only,
+            global_F_materialized=not action_only,
             global_matrix_shapes={
                 name: [int(matrix.getSize()[0]), int(matrix.getSize()[1])]
                 for name, matrix in matrix_blocks.items()
@@ -191,7 +228,7 @@ def solve_assembled_static_condensed_fgmres(
         )
         fine_action = fine
         fine_action_error = None
-        if exact_profile:
+        if exact_profile and not action_only:
             fine_action, _ = create_static_local_schur_action(
                 request.static_condensed_system, fine
             )
@@ -256,59 +293,100 @@ def solve_assembled_static_condensed_fgmres(
             request.function_space,
             request.config,
             request.floquet_data,
-            fine,
+            fine_action,
         )
         live_state["basis"] = True
         emit_lifecycle(
             "basis_ready",
             global_basis_dimension=len(basis),
         )
-        subdomains, partition_audit = build_trace_aware_physical_slab_partition(
-            request.static_condensed_system,
-            request.function_space.mesh,
-            domain_z=(request.config.domain_z_min, request.config.domain_z_max),
-            num_slabs=16,
-            overlap_fraction=0.25,
-        )
-        diagonal = fine.createVecLeft()
-        owned.append(diagonal)
-        fine.getDiagonal(diagonal)
-        absolute = np.abs(diagonal.getArray(readonly=True))
-        comm = fine.getComm().tompi4py()
-        global_scale = float(
-            comm.allreduce(float(absolute.max(initial=0.0)), op=MPI.MAX)
-        )
-        shift = diagonal.duplicate()
-        owned.append(shift)
+        if action_only:
+            owner_plan = build_owner_local_slab_plan(
+                request.static_condensed_system,
+                request.function_space.mesh,
+                domain_z=(request.config.domain_z_min, request.config.domain_z_max),
+                num_slabs=16,
+                overlap_fraction=0.25,
+            )
+            partition_audit = {
+                "matrix_materialized": False,
+                "coverage_pass": True,
+                "num_slabs": len(owner_plan.slab_owners),
+                "slab_row_counts": list(owner_plan.slab_row_counts),
+                "subdomain_owners": list(owner_plan.slab_owners),
+            }
+            diagonal, diagonal_audit = build_owner_local_slab_diagonal(
+                request.static_condensed_system
+            )
+            owned.append(diagonal)
+            global_scale = float(diagonal_audit["global_diagonal_max_abs"])
+            shift = diagonal
+            absolute = np.abs(shift.getArray(readonly=True))
+            shift.getArray()[:] = -1j * 0.1 * np.maximum(
+                absolute, 1.0e-12 * global_scale
+            )
+        else:
+            subdomains, partition_audit = build_trace_aware_physical_slab_partition(
+                request.static_condensed_system,
+                request.function_space.mesh,
+                domain_z=(request.config.domain_z_min, request.config.domain_z_max),
+                num_slabs=16,
+                overlap_fraction=0.25,
+            )
+            diagonal = fine.createVecLeft()
+            owned.append(diagonal)
+            fine.getDiagonal(diagonal)
+            absolute = np.abs(diagonal.getArray(readonly=True))
+            comm = fine.getComm().tompi4py()
+            global_scale = float(
+                comm.allreduce(float(absolute.max(initial=0.0)), op=MPI.MAX)
+            )
+            shift = diagonal.duplicate()
+            owned.append(shift)
+            shift.getArray()[:] = -1j * 0.1 * np.maximum(
+                absolute, 1.0e-12 * global_scale
+            )
+            diagonal.destroy()
+            owned.remove(diagonal)
         live_state["shift"] = True
-        shift.getArray()[:] = -1j * 0.1 * np.maximum(absolute, 1.0e-12 * global_scale)
-        diagonal.destroy()
-        owned.remove(diagonal)
         shifted_context = _ShiftedFineAction(fine_action, shift)
         shifted_fine = PETSc.Mat().createPython(
-            fine.getSizes(), context=shifted_context, comm=fine.getComm()
+            fine_action.getSizes(), context=shifted_context, comm=fine_action.getComm()
         )
         owned.append(shifted_fine)
         owned.remove(shift)
         shifted_fine.setUp()
         live_state["shifted_action"] = True
-        smoother = DistributedPhysicalSlabSmoother(
-            fine,
-            subdomains,
-            ilu_levels=0,
-            local_ksp_iterations=1,
-            local_ksp_type="gmres",
-            smoother_iterations=2,
-            smoother_ksp_type="gmres",
-            action_operator=shifted_fine,
-            diagonal_shift=shift,
-            factor_only_storage=True,
-            interpolation="basic",
-            assembly_order="two_color",
-            setup_observer=(
-                smoother_setup_observer if lifecycle_observer is not None else None
-            ),
-        )
+        if action_only:
+            smoother = DistributedPhysicalSlabSmoother.from_owner_local_plan(
+                request.static_condensed_system,
+                owner_plan,
+                ilu_levels=0,
+                precomputed_diagonal_shift=shift,
+                two_step_action_operator=shifted_fine,
+                progress=None,
+                setup_observer=(
+                    smoother_setup_observer if lifecycle_observer is not None else None
+                ),
+            )
+        else:
+            smoother = DistributedPhysicalSlabSmoother(
+                fine,
+                subdomains,
+                ilu_levels=0,
+                local_ksp_iterations=1,
+                local_ksp_type="gmres",
+                smoother_iterations=2,
+                smoother_ksp_type="gmres",
+                action_operator=shifted_fine,
+                diagonal_shift=shift,
+                factor_only_storage=True,
+                interpolation="basic",
+                assembly_order="two_color",
+                setup_observer=(
+                    smoother_setup_observer if lifecycle_observer is not None else None
+                ),
+            )
         owned.append(smoother)
         live_state["slab_factors"] = len(smoother.local_subdomains)
         coarse = SparseGalerkinTwoLevelPc(operator, smoother, basis, post_smooth=True)
@@ -319,7 +397,7 @@ def solve_assembled_static_condensed_fgmres(
             global_coarse_dimension=len(basis),
         )
         assembled_matrix_released = False
-        if exact_profile:
+        if exact_profile and not action_only:
             blocks.release_f()
             live_state["active_F"] = False
             emit_lifecycle(
@@ -406,11 +484,23 @@ def solve_assembled_static_condensed_fgmres(
         owned.append(auxiliary)
         live_state["recovered_auxiliary"] = True
         augmented = (
-            request.b.duplicate() if exact_profile else request.A.createVecRight()
+            request_rhs.duplicate()
+            if action_only or exact_profile
+            else request_operator.createVecRight()
         )
         owned.append(augmented)
         live_state["augmented_solution"] = True
         combine_petsc_augmented_solution(blocks, solution, auxiliary, augmented)
+        if (
+            augmented.getSize() != request_rhs.getSize()
+            or augmented.getSize() != request_operator_size[1]
+            or augmented.getOwnershipRange() != request_rhs.getOwnershipRange()
+            or augmented.getOwnershipRange() != request_operator_columns
+        ):
+            raise ValueError(
+                "returned augmented solution layout does not match the borrowed "
+                "RHS and operator columns"
+            )
         emit_lifecycle(
             "augmented_solution_recovered",
         )
@@ -432,6 +522,9 @@ def solve_assembled_static_condensed_fgmres(
             + (factor_rows + 16) * integer_bytes
         )
         audit = {
+            "matrix_type": "python_action_only" if action_only else "assembled",
+            "global_A_materialized": not action_only,
+            "global_F_materialized": not action_only and not exact_profile,
             "candidate": {
                 "outer_ksp": str(ksp.getType()),
                 "pc_side": "right",
@@ -476,6 +569,8 @@ def solve_assembled_static_condensed_fgmres(
             "no_global_factor_inventory": {
                 "global_direct_factor_count": 0,
                 "global_schur_matrix_materialized": False,
+                "global_A_materialized": not action_only,
+                "global_F_materialized": not action_only and not exact_profile,
                 "n_aux": int(request.n_aux),
                 "coarse_dimension": len(basis),
                 "allowed_factor_scope": [
@@ -536,3 +631,44 @@ def solve_assembled_static_condensed_fgmres(
             normal_completion=returned_solution_transferred,
             returned_solution_transferred=returned_solution_transferred,
         )
+
+
+def solve_assembled_static_condensed_fgmres(
+    request: Stage4ExternalLinearSolverRequest,
+    *,
+    screen_iterations: Literal[20],
+    residual_observer: Callable[[int, float, float], None] | None = None,
+    solver_profile: Literal[
+        "assembled", "assembled_setup_then_static_local_schur_matrix_free_solve"
+    ] = "assembled",
+    release_assembled_matrix: Callable[[], None] | None = None,
+    lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
+) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
+    """Preserve the ordinary/F5b entry while sharing the M2c solve core."""
+
+    return _solve_static_condensed_fgmres_core(
+        request,
+        screen_iterations=screen_iterations,
+        residual_observer=residual_observer,
+        solver_profile=solver_profile,
+        release_assembled_matrix=release_assembled_matrix,
+        lifecycle_observer=lifecycle_observer,
+    )
+
+
+def solve_never_materialized_static_condensed_fgmres(
+    request: Stage4NeverMaterializedLinearSolverRequest,
+    *,
+    screen_iterations: Literal[20] = 20,
+    residual_observer: Callable[[int, float, float], None] | None = None,
+    lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
+) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
+    """Run the shared 20-step core against borrowed action-only objects."""
+
+    return _solve_static_condensed_fgmres_core(
+        request,
+        screen_iterations=screen_iterations,
+        residual_observer=residual_observer,
+        solver_profile="never_materialized_owner_local",
+        lifecycle_observer=lifecycle_observer,
+    )

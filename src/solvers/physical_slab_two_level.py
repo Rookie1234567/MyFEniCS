@@ -1335,6 +1335,24 @@ class DistributedPhysicalSlabSmoother:
                 },
             )
 
+    def _initialize_inner_ksp(self, action_operator: PETSc.Mat | None) -> None:
+        if self.smoother_iterations <= 1:
+            return
+        if action_operator is None:
+            raise ValueError("multiple smoothing steps require an action operator")
+        self._inner_pc_context = _DistributedPhysicalSlabPcContext(self)
+        self._inner_ksp = PETSc.KSP().create(action_operator.getComm())
+        self._inner_ksp.setOperators(action_operator)
+        self._inner_ksp.setType(self.smoother_ksp_type)
+        if self.smoother_ksp_type == "gmres":
+            self._inner_ksp.setGMRESRestart(self.smoother_iterations)
+        self._inner_ksp.setNormType(PETSc.KSP.NormType.NONE)
+        self._inner_ksp.setTolerances(max_it=self.smoother_iterations)
+        inner_pc = self._inner_ksp.getPC()
+        inner_pc.setType("python")
+        inner_pc.setPythonContext(self._inner_pc_context)
+        self._inner_ksp.setUp()
+
     def __init__(
         self,
         matrix: PETSc.Mat,
@@ -1530,19 +1548,7 @@ class DistributedPhysicalSlabSmoother:
             len(normalized), progress, setup_observer
         )
 
-        if self.smoother_iterations > 1:
-            self._inner_pc_context = _DistributedPhysicalSlabPcContext(self)
-            self._inner_ksp = PETSc.KSP().create(matrix.getComm())
-            self._inner_ksp.setOperators(action_operator)
-            self._inner_ksp.setType(self.smoother_ksp_type)
-            if self.smoother_ksp_type == "gmres":
-                self._inner_ksp.setGMRESRestart(self.smoother_iterations)
-            self._inner_ksp.setNormType(PETSc.KSP.NormType.NONE)
-            self._inner_ksp.setTolerances(max_it=self.smoother_iterations)
-            inner_pc = self._inner_ksp.getPC()
-            inner_pc.setType("python")
-            inner_pc.setPythonContext(self._inner_pc_context)
-            self._inner_ksp.setUp()
+        self._initialize_inner_ksp(action_operator)
 
     @classmethod
     def from_owner_local_plan(
@@ -1551,6 +1557,8 @@ class DistributedPhysicalSlabSmoother:
         plan: OwnerLocalSlabPlan,
         *,
         ilu_levels: int,
+        precomputed_diagonal_shift: PETSc.Vec | None = None,
+        two_step_action_operator: PETSc.Mat | None = None,
         progress: Callable[[int, int], None] | None = None,
         setup_observer: Callable[[str, dict[str, Any]], None] | None = None,
     ) -> DistributedPhysicalSlabSmoother:
@@ -1562,6 +1570,8 @@ class DistributedPhysicalSlabSmoother:
         smoother._initialize_owner_local_plan(
             condensed,
             plan,
+            precomputed_diagonal_shift=precomputed_diagonal_shift,
+            two_step_action_operator=two_step_action_operator,
             progress=progress,
             setup_observer=setup_observer,
         )
@@ -1572,6 +1582,8 @@ class DistributedPhysicalSlabSmoother:
         condensed: Any,
         plan: OwnerLocalSlabPlan,
         *,
+        precomputed_diagonal_shift: PETSc.Vec | None,
+        two_step_action_operator: PETSc.Mat | None,
         progress: Callable[[int, int], None] | None,
         setup_observer: Callable[[str, dict[str, Any]], None] | None,
     ) -> None:
@@ -1583,10 +1595,12 @@ class DistributedPhysicalSlabSmoother:
         self.global_size = int(condensed.active_rows)
         self.ilu_levels = 0
         self.interpolation = "basic"
-        self.assembly_order = "combined"
+        self.assembly_order = (
+            "two_color" if two_step_action_operator is not None else "combined"
+        )
         self.local_ksp_iterations = 1
         self.local_ksp_type = "gmres"
-        self.smoother_iterations = 1
+        self.smoother_iterations = 2 if two_step_action_operator is not None else 1
         self.smoother_ksp_type = "gmres"
         self.factor_only_storage = True
         self.local_solver_types = ("ilu",) * len(plan.slab_owners)
@@ -1611,19 +1625,30 @@ class DistributedPhysicalSlabSmoother:
         first_submatrix_payload = None
         first_factor_payload = None
 
-        diagonal, diagonal_audit = build_owner_local_slab_diagonal(condensed)
-        global_scale = float(diagonal_audit["global_diagonal_max_abs"])
+        if precomputed_diagonal_shift is None:
+            diagonal, _diagonal_audit = build_owner_local_slab_diagonal(condensed)
+            diagonal_source = diagonal
+        else:
+            diagonal = None
+            diagonal_source = precomputed_diagonal_shift
+            if diagonal_source.getSize() != self.global_size:
+                raise ValueError("precomputed diagonal shift size does not match plan")
         try:
             for slab, owner in enumerate(plan.slab_owners):
                 slab_matrix, _slab_audit = assemble_owner_local_slab_matrix(
                     condensed, plan, slab
                 )
-                slab_shift, _shift_audit = owner_local_slab_diagonal_shift(
-                    diagonal,
-                    plan,
-                    slab,
-                    global_scale,
-                )
+                if precomputed_diagonal_shift is None:
+                    slab_shift, _shift_audit = owner_local_slab_diagonal_shift(
+                        diagonal_source,
+                        plan,
+                        slab,
+                        _diagonal_audit["global_diagonal_max_abs"],
+                    )
+                else:
+                    slab_shift, _shift_audit = extract_owner_local_slab_diagonal(
+                        diagonal_source, plan, slab
+                    )
                 if self.rank == owner:
                     if setup_observer is not None and first_submatrix_payload is None:
                         first_submatrix_payload = {
@@ -1659,7 +1684,8 @@ class DistributedPhysicalSlabSmoother:
                         }
                     self._factors.append(factor)
         finally:
-            diagonal.destroy()
+            if diagonal is not None:
+                diagonal.destroy()
         self._report_first_submatrix(
             setup_observer,
             None,
@@ -1674,6 +1700,7 @@ class DistributedPhysicalSlabSmoother:
         self._finalize_factor_inventory(
             len(plan.slab_owners), progress, setup_observer
         )
+        self._initialize_inner_ksp(two_step_action_operator)
 
     def _apply_once(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         started = time.perf_counter()

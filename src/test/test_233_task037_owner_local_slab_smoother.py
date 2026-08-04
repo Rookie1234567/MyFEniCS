@@ -139,6 +139,9 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
         ilu_levels=0,
         setup_observer=setup_observer,
     )
+    candidate_two = None
+    ordinary_two = None
+    shift_norm_before = float(assembled_shift.norm())
     try:
         assert action_system.matrix is None
         expected_events = [
@@ -192,6 +195,47 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
             and all(character in "0123456789abcdef" for character in item["sha256"])
             for item in candidate_fingerprints + ordinary_fingerprints
         )
+        ordinary_two = DistributedPhysicalSlabSmoother(
+            assembled.matrix,
+            full_subdomains,
+            ilu_levels=0,
+            local_ksp_iterations=1,
+            local_ksp_type="gmres",
+            smoother_iterations=2,
+            smoother_ksp_type="gmres",
+            action_operator=assembled.matrix,
+            diagonal_shift=assembled_shift,
+            factor_only_storage=True,
+            interpolation="basic",
+            assembly_order="two_color",
+        )
+        candidate_two = DistributedPhysicalSlabSmoother.from_owner_local_plan(
+            view,
+            plan,
+            ilu_levels=0,
+            precomputed_diagonal_shift=assembled_shift,
+            two_step_action_operator=assembled.matrix,
+        )
+        two_diagnostics = candidate_two.diagnostics
+        assert two_diagnostics["assembly_order"] == "two_color"
+        assert two_diagnostics["smoother_iterations"] == 2
+        assert two_diagnostics["smoother_ksp_type"] == "gmres"
+        assert two_diagnostics["factor_only_storage"] is True
+        assert all(factor.matrix is None for factor in candidate_two._factors)
+        assert all(factor.ksp is None for factor in candidate_two._factors)
+        for phase in (0.17, 0.41, 0.83):
+            source = assembled.create_active_vector()
+            _set_probe(source, phase)
+            candidate_result = _apply(candidate_two, source)
+            ordinary_result = _apply(ordinary_two, source)
+            max_error, relative_error = _compare_vectors(
+                candidate_result, ordinary_result, comm
+            )
+            assert max_error <= 1.0e-11
+            assert relative_error <= 1.0e-11
+            candidate_result.destroy()
+            ordinary_result.destroy()
+            source.destroy()
         local_owner_rows = [
             plan.owner_rows[slab] for slab in candidate.local_subdomains
         ]
@@ -251,6 +295,11 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
             source.destroy()
     finally:
         candidate.destroy()
+        if candidate_two is not None:
+            candidate_two.destroy()
+        if ordinary_two is not None:
+            ordinary_two.destroy()
+        assert abs(float(assembled_shift.norm()) - shift_norm_before) <= 1.0e-12
         assert candidate._factors == []
         assert candidate._gathered_targets == []
         assert candidate._destroyed is True
