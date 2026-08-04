@@ -3,7 +3,13 @@
 ## 当前阶段
 
 F0 direct authority、F3 assembled screen、F5a action oracle 已完成；F5b
-assembled matrix-free full 已授权但未运行，唯一正式 p6/h10 MPI8 仍未执行。
+assembled matrix-free full 的 solver residual、物理 observables 和 12+12
+channel Gate 通过；raw vector indexwise Gate 与资源 Gate 为 controlled
+negative，最终分类为 `PARTIAL_WITH_CONTROLLED_NEGATIVES`。记录与报告见
+`records/task37_f5b_matrix_free_full_v1.json`、
+`docs/task037_static_condensed_full3d_iterative/outcomes/matrix_free_report.md`
+和
+`docs/task037_static_condensed_full3d_iterative/outcomes/resource_and_mpi_report.md`。
 
 F5b 在 setup 形成 fine F、完成局部因子/粗基后，于 outer KSP 前释放 F，
 再由 cell-local Schur action 施加 fine action；因此不是 never materialized。
@@ -37,9 +43,10 @@ record 为 `records/task37_direct_authority_v1.json`，审阅说明为
 Case100 不复制 Case096 的 heavy raw evidence。raw vector 与大型 solver/
 watchdog 输出必须写到 ignored benchmarks/artifacts/... run directory；
 tracked record 只保留路径、hash、shape、来源和必要的 compact gate 结果。
-active trace 与 recovered full FE vector 使用 ownership-range ascending 的
-canonical global order、little-endian complex128；hash 输入包含 namespace、
-shape、dtype 和 canonical bytes。
+active trace 与 recovered full FE vector 使用当前运行的 ownership-range
+ascending order、little-endian complex128；hash 输入包含 namespace、shape、
+dtype 和 ownership-order bytes。该顺序不是已证明的跨 partition physical
+canonical identity。
 
 Direct F0 的资源上限沿用已资格化 Task035c p6/h10 口径：
 warning 32 GiB、termination 48 GiB、timeout 7200 s、poll 0.25 s、swap=0，
