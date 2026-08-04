@@ -157,6 +157,7 @@ class Stage4NeverMaterializedLinearSolverRequest:
     function_space: Any
     config: SimulationConfig3D
     floquet_data: DoubleFloquet3DData
+    mesh_data: Any | None = None
 
 
 @dataclass(frozen=True)
@@ -4235,6 +4236,7 @@ def _solve_stage4_dtn_port_total_field_impl(
                         function_space=V,
                         config=cfg,
                         floquet_data=floquet_data,
+                        mesh_data=mesh_data,
                     )
                 )
                 if not isinstance(

@@ -655,9 +655,11 @@ def _task037_f3_assembled_fgmres_port(
     solver_profile: str = "assembled",
     lifecycle_enabled: bool = False,
     never_materialized: bool = False,
+    p2_auxiliary: bool = False,
 ):
     from src.solvers.static_condensed_iterative import (
         solve_assembled_static_condensed_fgmres,
+        solve_never_materialized_p2_auxiliary_fgmres,
         solve_never_materialized_static_condensed_fgmres,
     )
 
@@ -693,7 +695,16 @@ def _task037_f3_assembled_fgmres_port(
                 },
             )
 
-        if never_materialized:
+        if p2_auxiliary:
+            snapshot, audit = solve_never_materialized_p2_auxiliary_fgmres(
+                request,
+                screen_iterations=screen_iterations,
+                residual_observer=observe,
+                lifecycle_observer=(
+                    observe_lifecycle if lifecycle_enabled else None
+                ),
+            )
+        elif never_materialized:
             snapshot, audit = solve_never_materialized_static_condensed_fgmres(
                 request,
                 screen_iterations=screen_iterations,
@@ -728,6 +739,7 @@ def _task037_f3_screen_gate(
     expected_screen_iterations: int,
     observed_wall_seconds: float | None,
 ) -> dict[str, bool]:
+    m4_profile = audit.get("solver_profile") == "never_materialized_p2_auxiliary"
     try:
         candidate = audit["candidate"]
         final = audit["final"]
@@ -757,19 +769,73 @@ def _task037_f3_screen_gate(
         comparison_history_value = history_by_iteration[comparison_iteration]
         coarse = audit["coarse"]
         smoother = audit["smoother_diagnostics"]
-        counts = (
-            int(audit["operator_apply_count"]),
-            int(coarse["apply_count"]),
-            int(smoother["one_level_apply_count"]),
-        )
-        local_types = tuple(smoother["local_solver_types"])
         partition = audit["partition_audit"]
         inventory = audit["no_global_factor_inventory"]
         coarse_dimension = int(coarse["dimension"])
-        coverage = partition["coverage_pass"] is True
-        factor_only = smoother["factor_only_storage"] is True
-        no_global_factor = inventory["global_direct_factor_count"] == 0
-        no_global_schur = inventory["global_schur_matrix_materialized"] is False
+        if m4_profile:
+            expected_candidate = {
+                "outer_ksp": "fgmres",
+                "pc_side": "right",
+                "norm_type": "unpreconditioned",
+                "restart": 90,
+                "rtol": 1.0e-6,
+                "atol": 0.0,
+                "max_it": expected_screen_iterations,
+                "p6_smoothing": "not_used",
+                "p2_auxiliary_correction": True,
+                "p2_absorption_shift": 0.1,
+                "p2_diagonal_patch_omega": 0.6,
+                "wave_coarse_post_smooth": False,
+            }
+            counts = (
+                int(audit["operator_apply_count"]),
+                int(coarse["apply_count"]),
+                int(smoother["apply_count"]),
+            )
+            partition_or_factor_gate = (
+                partition.get("p6_slab_matrix_materialized") is False
+                and partition.get("p6_slab_matrix_count") == 0
+                and partition.get("p6_factor_count") == 0
+            )
+            no_global_factor = (
+                inventory.get("full_p6_global_direct_factor_count") == 0
+                and inventory.get("global_schur_matrix_materialized") is False
+                and inventory.get("p2_distributed_mumps_factor_count") == 1
+                and inventory.get("wave_coarse_dense_lu_count") == 1
+                and smoother.get("p2_matrix_materialized") is True
+                and smoother.get("p2_unshifted_matrix_retained") is False
+            )
+        else:
+            expected_candidate = {
+                "outer_ksp": "fgmres",
+                "pc_side": "right",
+                "norm_type": "unpreconditioned",
+                "restart": 90,
+                "rtol": 1.0e-6,
+                "atol": 0.0,
+                "max_it": expected_screen_iterations,
+                "num_slabs": 16,
+                "overlap_fraction": 0.25,
+                "absorption_shift": 0.1,
+            }
+            counts = (
+                int(audit["operator_apply_count"]),
+                int(coarse["apply_count"]),
+                int(smoother["one_level_apply_count"]),
+            )
+            local_types = tuple(smoother["local_solver_types"])
+            coverage = partition["coverage_pass"] is True
+            factor_only = smoother["factor_only_storage"] is True
+            partition_or_factor_gate = (
+                coverage
+                and factor_only
+                and bool(local_types)
+                and all(kind == "ilu" for kind in local_types)
+            )
+            no_global_factor = (
+                inventory["global_direct_factor_count"] == 0
+                and inventory["global_schur_matrix_materialized"] is False
+            )
         if expected_screen_iterations == 200:
             target = 1.0e-6
             predicted_iterations = iterations if final_values[0] <= target else math.inf
@@ -802,31 +868,14 @@ def _task037_f3_screen_gate(
     scale &= max(map(abs, sample_values)) <= 10.0 * abs(initial_condensed[1])
     scale &= max(map(abs, final_values)) <= 10.0
     return {
-        "candidate": candidate
-        == {
-            "outer_ksp": "fgmres",
-            "pc_side": "right",
-            "norm_type": "unpreconditioned",
-            "restart": 90,
-            "rtol": 1.0e-6,
-            "atol": 0.0,
-            "max_it": expected_screen_iterations,
-            "num_slabs": 16,
-            "overlap_fraction": 0.25,
-            "absorption_shift": 0.1,
-        },
+        "candidate": candidate == expected_candidate,
         "finite_and_scale": scale,
         "pairing_and_order": same_order and final_order,
         "reason_iteration": (reason < 0 and iterations == expected_screen_iterations)
         or (reason > 0 and all(value <= 1.0e-6 for value in final_values)),
         "apply_counts": (all(value > 0 for value in counts) and coarse_dimension == 75),
-        "partition_and_ilu": (
-            coverage
-            and factor_only
-            and bool(local_types)
-            and all(kind == "ilu" for kind in local_types)
-        ),
-        "no_global_factor": no_global_factor and no_global_schur,
+        "partition_and_ilu": partition_or_factor_gate,
+        "no_global_factor": no_global_factor,
         "screen_100": expected_screen_iterations != 100
         or (
             final_values[1] <= 3.0e-1
@@ -903,6 +952,7 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_m2c_never_materialized": bool(
             args.task037_m2c_never_materialized
         ),
+        "task037_m4_p2_auxiliary": bool(args.task037_m4_p2_auxiliary),
         "task037_canonical_vector_export": bool(
             args.task037_canonical_vector_export
         ),
@@ -1064,6 +1114,7 @@ def _worker(args: argparse.Namespace) -> int:
             ),
             lifecycle_enabled=args.task037_m0_lifecycle_audit,
             never_materialized=args.task037_m2c_never_materialized,
+            p2_auxiliary=args.task037_m4_p2_auxiliary,
         )
         if args.task037_m2c_never_materialized:
             from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
@@ -1226,6 +1277,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--task037-f3-full", action="store_true")
     parser.add_argument("--task037-f5b-released-profile", action="store_true")
     parser.add_argument("--task037-m2c-never-materialized", action="store_true")
+    parser.add_argument("--task037-m4-p2-auxiliary", action="store_true")
     parser.add_argument("--task037-m0-lifecycle-audit", action="store_true")
     parser.add_argument(
         "--task035d-case097-gate",
@@ -1492,6 +1544,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037-m2c-never-materialized requires the existing p6/h10 "
             "MPI8 static-backend screen-20 path and is exclusive of F0/F1/F3-full/F5b."
+        )
+    if args.task037_m4_p2_auxiliary and not (
+        args.task037_m2c_never_materialized
+        and args.task037_f3_screen == 20
+        and not args.task037_f3_full
+        and not args.task037_f5b_released_profile
+        and not args.task037_m0_lifecycle_audit
+    ):
+        parser.error(
+            "--task037-m4-p2-auxiliary requires the screen-20 "
+            "--task037-m2c-never-materialized path."
         )
     if args.task037_m0_lifecycle_audit and not (
         args.task037_f3_full and args.task037_f5b_released_profile
@@ -2753,7 +2816,11 @@ def _qualify(
     task037_f3_core_audit: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     matrix = solver_summary.get("matrix_stats") or {}
-    action_only_profile = bool(args.task037_m2c_never_materialized)
+    m4_profile = bool(args.task037_m4_p2_auxiliary)
+    m2c_profile = bool(
+        args.task037_m2c_never_materialized and not m4_profile
+    )
+    action_only_profile = m2c_profile or m4_profile
     condensation = solver_summary.get("cell_static_condensation") or {}
     common = {
         "process_completed": return_code == 0,
@@ -2848,7 +2915,7 @@ def _qualify(
                     ),
                 }
             )
-        if action_only_profile:
+        if m2c_profile:
             partition = core_audit.get("partition_audit") or {}
             smoother = core_audit.get("smoother_diagnostics") or {}
             inventory = core_audit.get("no_global_factor_inventory") or {}
@@ -2903,6 +2970,62 @@ def _qualify(
                             "external_assembled_matrix_released_before_solve"
                         )
                         is False
+                    ),
+                }
+            )
+        elif m4_profile:
+            partition = core_audit.get("partition_audit") or {}
+            inventory = core_audit.get("no_global_factor_inventory") or {}
+            p2_pc = core_audit.get("smoother_diagnostics") or {}
+            resource = resource_summary if isinstance(resource_summary, dict) else {}
+            memory_authority_gib = resource.get("memory_authority_gib")
+            checks.update(
+                {
+                    "m4_core_profile": (
+                        core_profile == "never_materialized_p2_auxiliary"
+                    ),
+                    "m4_core_no_assembled_release": core_released is False,
+                    "m4_core_no_global_A": (
+                        core_audit.get("global_A_materialized") is False
+                    ),
+                    "m4_core_no_global_F": (
+                        core_audit.get("global_F_materialized") is False
+                    ),
+                    "m4_partition_no_p6_slab_matrix": (
+                        partition.get("p6_slab_matrix_materialized") is False
+                        and partition.get("p6_slab_matrix_count") == 0
+                        and partition.get("p6_factor_count") == 0
+                    ),
+                    "m4_no_p6_factor": (
+                        inventory.get("full_p6_global_direct_factor_count") == 0
+                        and inventory.get("global_schur_matrix_materialized")
+                        is False
+                        and inventory.get("p2_distributed_mumps_factor_count")
+                        == 1
+                        and inventory.get("wave_coarse_dense_lu_count") == 1
+                    ),
+                    "m4_p2_mumps_factor": (
+                        p2_pc.get("p2_factor_count") == 1
+                        and p2_pc.get("p2_factor_solver_type") == "mumps"
+                        and p2_pc.get("p2_matrix_materialized") is True
+                        and p2_pc.get("p2_unshifted_matrix_retained") is False
+                    ),
+                    "m4_p2_apply_count": (
+                        int(p2_pc.get("apply_count", 0)) > 0
+                    ),
+                    "m4_wave_coarse_dimension": (
+                        int((core_audit.get("coarse") or {}).get("dimension", -1))
+                        == 75
+                    ),
+                    "m4_memory_level1_le_10_30_gib": (
+                        _finite_number_le(memory_authority_gib, 10.30)
+                    ),
+                    "m4_memory_target_le_7_60_gib": (
+                        _finite_number_le(memory_authority_gib, 7.60)
+                    ),
+                    "m4_summary_profile": (
+                        solver_summary.get("external_solver_profile")
+                        == "never_materialized_p2_auxiliary"
                     ),
                 }
             )
@@ -3096,6 +3219,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-f5b-released-profile")
     if args.task037_m2c_never_materialized:
         command.append("--task037-m2c-never-materialized")
+    if args.task037_m4_p2_auxiliary:
+        command.append("--task037-m4-p2-auxiliary")
     if args.task037_canonical_vector_export:
         command.append("--task037-canonical-vector-export")
     if args.task037_m0_lifecycle_audit:

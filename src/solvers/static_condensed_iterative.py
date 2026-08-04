@@ -30,11 +30,13 @@ from .physical_slab_two_level import (
     build_trace_aware_physical_slab_partition,
 )
 from .static_local_schur_action import create_static_local_schur_action
+from .static_p2_auxiliary_pc import build_p2_auxiliary_setup
 
 
 __all__ = (
     "solve_assembled_static_condensed_fgmres",
     "solve_never_materialized_static_condensed_fgmres",
+    "solve_never_materialized_p2_auxiliary_fgmres",
 )
 _TINY = np.finfo(float).tiny
 
@@ -81,6 +83,7 @@ def _solve_static_condensed_fgmres_core(
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
         "never_materialized_owner_local",
+        "never_materialized_p2_auxiliary",
     ] = "assembled",
     release_assembled_matrix: Callable[[], None] | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
@@ -90,12 +93,17 @@ def _solve_static_condensed_fgmres_core(
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
         "never_materialized_owner_local",
+        "never_materialized_p2_auxiliary",
     ):
         raise ValueError("unsupported static-condensed FGMRES solver profile")
     exact_profile = (
         solver_profile == "assembled_setup_then_static_local_schur_matrix_free_solve"
     )
-    action_only_profile = solver_profile == "never_materialized_owner_local"
+    action_only_profile = solver_profile in {
+        "never_materialized_owner_local",
+        "never_materialized_p2_auxiliary",
+    }
+    p2_auxiliary_profile = solver_profile == "never_materialized_p2_auxiliary"
     if action_only != action_only_profile:
         raise ValueError("solver profile does not match the request type")
     if exact_profile and not action_only and release_assembled_matrix is None:
@@ -300,7 +308,30 @@ def _solve_static_condensed_fgmres_core(
             "basis_ready",
             global_basis_dimension=len(basis),
         )
-        if action_only:
+        p2_auxiliary_audit = None
+        if p2_auxiliary_profile:
+            if request.mesh_data is None:
+                raise ValueError(
+                    "p2 auxiliary profile requires borrowed mesh_data"
+                )
+            p2_smoother, p2_transfer, p2_diagonal, p2_auxiliary_audit = (
+                build_p2_auxiliary_setup(
+                    fine_space=request.function_space,
+                    fine_condensed=request.static_condensed_system,
+                    fine_operator=operator,
+                    fine_blocks=blocks,
+                    mesh_data=request.mesh_data,
+                    config=request.config,
+                )
+            )
+            owned.extend((p2_transfer, p2_diagonal, p2_smoother))
+            smoother = p2_smoother
+            partition_audit = {
+                "p6_slab_matrix_materialized": False,
+                "p6_slab_matrix_count": 0,
+                "p6_factor_count": 0,
+            }
+        elif action_only:
             owner_plan = build_owner_local_slab_plan(
                 request.static_condensed_system,
                 request.function_space.mesh,
@@ -348,48 +379,62 @@ def _solve_static_condensed_fgmres_core(
             )
             diagonal.destroy()
             owned.remove(diagonal)
-        live_state["shift"] = True
-        shifted_context = _ShiftedFineAction(fine_action, shift)
-        shifted_fine = PETSc.Mat().createPython(
-            fine_action.getSizes(), context=shifted_context, comm=fine_action.getComm()
+        if not p2_auxiliary_profile:
+            live_state["shift"] = True
+            shifted_context = _ShiftedFineAction(fine_action, shift)
+            shifted_fine = PETSc.Mat().createPython(
+                fine_action.getSizes(),
+                context=shifted_context,
+                comm=fine_action.getComm(),
+            )
+            owned.append(shifted_fine)
+            owned.remove(shift)
+            shifted_fine.setUp()
+            live_state["shifted_action"] = True
+            if action_only:
+                smoother = DistributedPhysicalSlabSmoother.from_owner_local_plan(
+                    request.static_condensed_system,
+                    owner_plan,
+                    ilu_levels=0,
+                    precomputed_diagonal_shift=shift,
+                    two_step_action_operator=shifted_fine,
+                    progress=None,
+                    setup_observer=(
+                        smoother_setup_observer
+                        if lifecycle_observer is not None
+                        else None
+                    ),
+                )
+            else:
+                smoother = DistributedPhysicalSlabSmoother(
+                    fine,
+                    subdomains,
+                    ilu_levels=0,
+                    local_ksp_iterations=1,
+                    local_ksp_type="gmres",
+                    smoother_iterations=2,
+                    smoother_ksp_type="gmres",
+                    action_operator=shifted_fine,
+                    diagonal_shift=shift,
+                    factor_only_storage=True,
+                    interpolation="basic",
+                    assembly_order="two_color",
+                    setup_observer=(
+                        smoother_setup_observer
+                        if lifecycle_observer is not None
+                        else None
+                    ),
+                )
+            owned.append(smoother)
+        live_state["slab_factors"] = (
+            0 if p2_auxiliary_profile else len(smoother.local_subdomains)
         )
-        owned.append(shifted_fine)
-        owned.remove(shift)
-        shifted_fine.setUp()
-        live_state["shifted_action"] = True
-        if action_only:
-            smoother = DistributedPhysicalSlabSmoother.from_owner_local_plan(
-                request.static_condensed_system,
-                owner_plan,
-                ilu_levels=0,
-                precomputed_diagonal_shift=shift,
-                two_step_action_operator=shifted_fine,
-                progress=None,
-                setup_observer=(
-                    smoother_setup_observer if lifecycle_observer is not None else None
-                ),
-            )
-        else:
-            smoother = DistributedPhysicalSlabSmoother(
-                fine,
-                subdomains,
-                ilu_levels=0,
-                local_ksp_iterations=1,
-                local_ksp_type="gmres",
-                smoother_iterations=2,
-                smoother_ksp_type="gmres",
-                action_operator=shifted_fine,
-                diagonal_shift=shift,
-                factor_only_storage=True,
-                interpolation="basic",
-                assembly_order="two_color",
-                setup_observer=(
-                    smoother_setup_observer if lifecycle_observer is not None else None
-                ),
-            )
-        owned.append(smoother)
-        live_state["slab_factors"] = len(smoother.local_subdomains)
-        coarse = SparseGalerkinTwoLevelPc(operator, smoother, basis, post_smooth=True)
+        coarse = SparseGalerkinTwoLevelPc(
+            operator,
+            smoother,
+            basis,
+            post_smooth=not p2_auxiliary_profile,
+        )
         owned.append(coarse)
         live_state["coarse"] = True
         emit_lifecycle(
@@ -513,14 +558,53 @@ def _solve_static_condensed_fgmres_core(
         )
         recovery_seconds = perf_counter() - recovery_started
         smoother_audit = smoother.diagnostics
-        factor_nnz = int(smoother_audit["global_stored_factor_nnz"])
-        factor_rows = int(smoother_audit["global_factor_rows"])
-        scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
-        integer_bytes = np.dtype(PETSc.IntType).itemsize
-        factor_csr_payload_estimate_bytes = int(
-            factor_nnz * (scalar_bytes + integer_bytes)
-            + (factor_rows + 16) * integer_bytes
-        )
+        if p2_auxiliary_profile:
+            factor_nnz = int(smoother_audit["p2_factor_nnz_used"])
+            factor_rows = int(smoother_audit["p2_rows"])
+            factor_csr_payload_estimate_bytes = int(
+                smoother_audit["p2_factor_payload_lower_bound_bytes"]
+            )
+        else:
+            factor_nnz = int(smoother_audit["global_stored_factor_nnz"])
+            factor_rows = int(smoother_audit["global_factor_rows"])
+            scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
+            integer_bytes = np.dtype(PETSc.IntType).itemsize
+            factor_csr_payload_estimate_bytes = int(
+                factor_nnz * (scalar_bytes + integer_bytes)
+                + (factor_rows + 16) * integer_bytes
+            )
+        if p2_auxiliary_profile:
+            factor_inventory = {
+                "full_p6_global_direct_factor_count": 0,
+                "global_schur_matrix_materialized": False,
+                "global_A_materialized": False,
+                "global_F_materialized": False,
+                "p6_factor_count": 0,
+                "p6_slab_matrix_count": 0,
+                "p2_distributed_mumps_factor_count": 1,
+                "wave_coarse_dense_lu_count": 1,
+                "n_aux": int(request.n_aux),
+                "coarse_dimension": len(basis),
+                "allowed_factor_scope": [
+                    "SmallDenseInverse(H)",
+                    "dense coarse LU",
+                    "p2 distributed MUMPS factor",
+                ],
+            }
+        else:
+            factor_inventory = {
+                "global_direct_factor_count": 0,
+                "global_schur_matrix_materialized": False,
+                "global_A_materialized": not action_only,
+                "global_F_materialized": not action_only and not exact_profile,
+                "n_aux": int(request.n_aux),
+                "coarse_dimension": len(basis),
+                "allowed_factor_scope": [
+                    "SmallDenseInverse(H)",
+                    "dense coarse LU",
+                    "COMM_SELF factor_only ILU(0)",
+                ],
+            }
         audit = {
             "matrix_type": "python_action_only" if action_only else "assembled",
             "global_A_materialized": not action_only,
@@ -533,9 +617,21 @@ def _solve_static_condensed_fgmres_core(
                 "rtol": 1.0e-6,
                 "atol": 0.0,
                 "max_it": int(screen_iterations),
-                "num_slabs": 16,
-                "overlap_fraction": 0.25,
-                "absorption_shift": 0.1,
+                **(
+                    {
+                        "p6_smoothing": "not_used",
+                        "p2_auxiliary_correction": True,
+                        "p2_absorption_shift": 0.1,
+                        "p2_diagonal_patch_omega": 0.6,
+                        "wave_coarse_post_smooth": False,
+                    }
+                    if p2_auxiliary_profile
+                    else {
+                        "num_slabs": 16,
+                        "overlap_fraction": 0.25,
+                        "absorption_shift": 0.1,
+                    }
+                ),
             },
             "solver_profile": solver_profile,
             "assembled_matrix_released_before_solve": assembled_matrix_released,
@@ -566,20 +662,10 @@ def _solve_static_condensed_fgmres_core(
             "partition_audit": partition_audit,
             "smoother_diagnostics": smoother_audit,
             "factor_csr_payload_estimate_bytes": factor_csr_payload_estimate_bytes,
-            "no_global_factor_inventory": {
-                "global_direct_factor_count": 0,
-                "global_schur_matrix_materialized": False,
-                "global_A_materialized": not action_only,
-                "global_F_materialized": not action_only and not exact_profile,
-                "n_aux": int(request.n_aux),
-                "coarse_dimension": len(basis),
-                "allowed_factor_scope": [
-                    "SmallDenseInverse(H)",
-                    "dense coarse LU",
-                    "COMM_SELF factor_only ILU(0)",
-                ],
-            },
+            "no_global_factor_inventory": factor_inventory,
         }
+        if p2_auxiliary_profile:
+            audit["p2_auxiliary_audit"] = p2_auxiliary_audit
         snapshot = Stage4ExternalLinearSolverSnapshot(
             x=augmented,
             converged_reason=reason,
@@ -670,5 +756,23 @@ def solve_never_materialized_static_condensed_fgmres(
         screen_iterations=screen_iterations,
         residual_observer=residual_observer,
         solver_profile="never_materialized_owner_local",
+        lifecycle_observer=lifecycle_observer,
+    )
+
+
+def solve_never_materialized_p2_auxiliary_fgmres(
+    request: Stage4NeverMaterializedLinearSolverRequest,
+    *,
+    screen_iterations: Literal[20] = 20,
+    residual_observer: Callable[[int, float, float], None] | None = None,
+    lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
+) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
+    """Run the shared core with the opt-in true p2 auxiliary PC profile."""
+
+    return _solve_static_condensed_fgmres_core(
+        request,
+        screen_iterations=screen_iterations,
+        residual_observer=residual_observer,
+        solver_profile="never_materialized_p2_auxiliary",
         lifecycle_observer=lifecycle_observer,
     )

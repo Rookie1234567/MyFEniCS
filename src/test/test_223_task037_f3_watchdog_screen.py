@@ -53,6 +53,52 @@ def _audit(screen_iterations=20):
     }
 
 
+def _m4_audit(screen_iterations=20):
+    audit = _audit(screen_iterations)
+    audit.update(
+        {
+            "candidate": {
+                "outer_ksp": "fgmres",
+                "pc_side": "right",
+                "norm_type": "unpreconditioned",
+                "restart": 90,
+                "rtol": 1.0e-6,
+                "atol": 0.0,
+                "max_it": screen_iterations,
+                "p6_smoothing": "not_used",
+                "p2_auxiliary_correction": True,
+                "p2_absorption_shift": 0.1,
+                "p2_diagonal_patch_omega": 0.6,
+                "wave_coarse_post_smooth": False,
+            },
+            "solver_profile": "never_materialized_p2_auxiliary",
+            "assembled_matrix_released_before_solve": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "smoother_diagnostics": {
+                "p2_factor_count": 1,
+                "p2_factor_solver_type": "mumps",
+                "p2_matrix_materialized": True,
+                "p2_unshifted_matrix_retained": False,
+                "apply_count": 1,
+            },
+            "partition_audit": {
+                "p6_slab_matrix_materialized": False,
+                "p6_slab_matrix_count": 0,
+                "p6_factor_count": 0,
+            },
+            "no_global_factor_inventory": {
+                "full_p6_global_direct_factor_count": 0,
+                "global_schur_matrix_materialized": False,
+                "p2_distributed_mumps_factor_count": 1,
+                "wave_coarse_dense_lu_count": 1,
+            },
+            "p2_auxiliary_audit": {"p2": {"active_rows": 1}},
+        }
+    )
+    return audit
+
+
 def test_parser_scope_and_worker_command(tmp_path):
     base = [
         "--degree",
@@ -82,7 +128,8 @@ def test_parser_scope_and_worker_command(tmp_path):
     assert ordinary.task037_f3_screen is None
     assert ordinary.task037_f3_full is False
     canonical_f0 = watchdog._parse_args(
-        base + [
+        base
+        + [
             "--task037-f0-vector-observer",
             "--task037-canonical-vector-export",
         ]
@@ -156,6 +203,15 @@ def test_parser_scope_and_worker_command(tmp_path):
     assert m2c.task037_m2c_never_materialized
     m2c_command = watchdog._worker_command(m2c, tmp_path)
     assert m2c_command.count("--task037-m2c-never-materialized") == 1
+    m4 = watchdog._parse_args(m2c_args + ["--task037-m4-p2-auxiliary"])
+    assert m4.task037_m4_p2_auxiliary
+    assert (
+        watchdog._worker_command(m4, tmp_path).count("--task037-m4-p2-auxiliary") == 1
+    )
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(
+            base + ["--task037-f3-screen", "20", "--task037-m4-p2-auxiliary"]
+        )
     bad_iterations = valid.copy()
     bad_iterations[bad_iterations.index("--task037-f3-screen") + 1] = "3000"
     missing_caps = valid.copy()
@@ -236,6 +292,7 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         task037_f3_full=True,
         task037_f5b_released_profile=True,
         task037_m2c_never_materialized=False,
+        task037_m4_p2_auxiliary=False,
         task037_canonical_vector_export=True,
         task037_m0_lifecycle_audit=True,
         task035d_nested_p_dwr_phase=None,
@@ -281,11 +338,19 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
     operator = SimpleNamespace(getComm=lambda: Comm())
     request = SimpleNamespace(operator=operator)
     captured = {}
+    selected_profiles = []
 
     def fake_action_core(request, **kwargs):
+        selected_profiles.append("m2c")
         captured["request"] = request
         captured["kwargs"] = kwargs
         return object(), {"solver_profile": "never_materialized_owner_local"}
+
+    def fake_p2_action_core(request, **kwargs):
+        selected_profiles.append("m4")
+        captured["request"] = request
+        captured["kwargs"] = kwargs
+        return object(), {"solver_profile": "never_materialized_p2_auxiliary"}
 
     def stage(*_args, **kwargs):
         captured["retain"] = kwargs["static_retain_local_schur_for_matrix_free"]
@@ -298,10 +363,14 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
         fake_action_core,
     )
     monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative.solve_never_materialized_p2_auxiliary_fgmres",
+        fake_p2_action_core,
+    )
+    monkeypatch.setattr(
         "src.solvers.solve_maxwell_3d_stage_4b_block_grating.run_stage4b_block_grating_3d_case",
         stage,
     )
-    args = SimpleNamespace(
+    common_args = dict(
         run_dir=tmp_path,
         task037_f0_vector_observer=False,
         task037_f1_direct_trace_oracle=None,
@@ -315,11 +384,17 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
         task035d_nested_p_dwr_phase=None,
         task035d_selective_face_dwr_phase=None,
     )
-    assert watchdog._worker(args) == 0
+    for m4 in (False, True):
+        args = SimpleNamespace(
+            **common_args,
+            task037_m4_p2_auxiliary=m4,
+        )
+        assert watchdog._worker(args) == 0
     assert captured["retain"] is True
     assert isinstance(captured["port"], Stage4NeverMaterializedLinearSolverPort)
     assert captured["request"] is request
     assert captured["kwargs"]["screen_iterations"] == 20
+    assert selected_profiles == ["m2c", "m4"]
 
 
 def test_f3_qualification_uses_core_audit_gate():
@@ -328,6 +403,7 @@ def test_f3_qualification_uses_core_audit_gate():
         task037_f3_full=False,
         task037_f5b_released_profile=False,
         task037_m2c_never_materialized=False,
+        task037_m4_p2_auxiliary=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
         allow_swap=False,
@@ -480,6 +556,7 @@ def test_m2c_qualification_requires_action_profile_and_memory_gate():
         task037_f3_full=False,
         task037_f5b_released_profile=False,
         task037_m2c_never_materialized=True,
+        task037_m4_p2_auxiliary=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
         allow_swap=False,
@@ -542,11 +619,80 @@ def test_m2c_qualification_requires_action_profile_and_memory_gate():
     assert not watchdog._qualify(**kwargs)["pass"]
 
 
+def test_m4_qualification_uses_final_p2_smoother_and_resource_gate():
+    args = SimpleNamespace(
+        task037_f3_screen=20,
+        task037_f3_full=False,
+        task037_f5b_released_profile=False,
+        task037_m2c_never_materialized=True,
+        task037_m4_p2_auxiliary=True,
+        task037_canonical_vector_export=False,
+        run_kind="full-solve",
+        allow_swap=False,
+        polarization_kind="s",
+        mpi_size=8,
+        task035d_case097_gate=False,
+    )
+    audit = _m4_audit()
+    summary = {
+        "matrix_stats": {"matrix_rows": 1, "matrix_nnz_used": None},
+        "polarization_kind": "s",
+        "external_linear_solver_port": True,
+        "external_no_global_factor": True,
+        "ksp_converged_reason": -3,
+        "linear_system_relative_residual": 0.1,
+        "official_result": False,
+        "postprocess_skipped": True,
+        "external_solver_profile": "never_materialized_p2_auxiliary",
+        "external_assembled_matrix_released_before_solve": False,
+        "cell_static_condensation": {
+            "action_only_setup": True,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+        },
+    }
+    kwargs = {
+        "args": args,
+        "solver_summary": summary,
+        "events": [],
+        "return_code": 0,
+        "terminated_for_memory": False,
+        "terminated_for_timeout": False,
+        "terminated_for_authority_unreadable": False,
+        "no_swap": True,
+        "observed_worker_rank_count": 8,
+        "resource_summary": {"memory_authority_gib": 7.60},
+        "task037_f3_core_audit": audit,
+    }
+    screen = watchdog._task037_f3_screen_gate(audit, 20, None)
+    assert screen["candidate"]
+    assert screen["apply_counts"]
+    assert screen["partition_and_ilu"]
+    assert watchdog._qualify(**kwargs)["pass"]
+
+    bad_factor = _m4_audit()
+    bad_factor["no_global_factor_inventory"]["full_p6_global_direct_factor_count"] = 1
+    assert not watchdog._qualify(**{**kwargs, "task037_f3_core_audit": bad_factor})[
+        "pass"
+    ]
+
+    assert not watchdog._qualify(
+        **{**kwargs, "resource_summary": {"memory_authority_gib": 7.61}}
+    )["pass"]
+    bad_scale = _m4_audit()
+    bad_scale["reported_history"][1][1] = 11.0
+    assert (
+        watchdog._task037_f3_screen_gate(bad_scale, 20, None)["finite_and_scale"]
+        is False
+    )
+
+
 def test_ordinary_full_solve_rules_remain_strict():
     args = SimpleNamespace(
         task037_f3_screen=None,
         task037_f3_full=False,
         task037_m2c_never_materialized=False,
+        task037_m4_p2_auxiliary=False,
         run_kind="full-solve",
         allow_swap=False,
         polarization_kind="s",
