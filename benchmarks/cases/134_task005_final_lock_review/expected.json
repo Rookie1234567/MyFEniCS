@@ -1,0 +1,8 @@
+{
+  "schema_version": "task005.case134-final-lock-review.v1",
+  "status": "pass",
+  "new_fem_count": 0,
+  "task004_blind24_run": false,
+  "validation_target_accessed": false,
+  "formal_inversion": false
+}

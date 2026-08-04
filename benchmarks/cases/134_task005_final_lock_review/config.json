@@ -1,0 +1,10 @@
+{
+  "schema_version": "task005.case134-config.v1",
+  "case_id": "134_task005_final_lock_review",
+  "mode": "derived_only",
+  "new_fem_count": 0,
+  "raw_dataset_id": "task005_discrete_angle_hw_sensitivity_p5_ny4_v1",
+  "supplement_dataset_id": "task005_discrete_angle_hw_sensitivity_p5_ny4_derived_contract_v1",
+  "validation_target_accessed": false,
+  "formal_inversion": false
+}

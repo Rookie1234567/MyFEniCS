@@ -1,0 +1,341 @@
+{
+  "schema_version": "task005.discrete-illumination-fisher-doe-lock.v2",
+  "status": "review_ready",
+  "derived_only": true,
+  "new_fem_count": 0,
+  "implementation_sha": "d24395b377259da129a81384f88d8a4ad74602d2",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "fixed_configuration": {
+    "wavelength_nm": 13.5,
+    "polarization": "S",
+    "nominal_height_nm": 120.0,
+    "nominal_width_nm": 17.0,
+    "mesh": [
+      6,
+      4,
+      14
+    ],
+    "mumps_icntl_14": 40,
+    "mpi_ranks": 2,
+    "threads_per_rank": 1
+  },
+  "raw_sensitivity_dataset": {
+    "dataset_id": "task005_discrete_angle_hw_sensitivity_p5_ny4_v1",
+    "manifest_sha256": "e3a1b92b5311ec1fb6f5c5fb52d64f2a99f0b22122e57358305e36914229ca20",
+    "tracked_manifest_sha256": "e3a1b92b5311ec1fb6f5c5fb52d64f2a99f0b22122e57358305e36914229ca20",
+    "file_hashes": {
+      "angles.npy": "26598a16dfee4c564132f2f6fcefb49c7ab9d1ef1e5907bac76228b608981b5d",
+      "derivatives.json": "5c7e5111128e6e89a173763c61a2cca29e1359285b960ee5bcbf19110a22b5e9",
+      "nominal_aggregates.npy": "44656759ff51019fe43f9317e0287ed198a7e6767e53bc577eb15245d90e4e1f",
+      "nominal_inputs.npy": "d9e874d041448df78de7711abb6c864e7edf6c5b375a239d57c6a548403c7c8a",
+      "nominal_order_mask.npy": "4c8364c2f4e0b272eddbbd0a5f771625fb3872bef4423d4738966b9ec2592e18",
+      "nominal_order_powers.npy": "442ffe762c56b37443e6755b86a04c677b577ef2208bea51e0932e8bb21a166c",
+      "order_identity.json": "25269154b988586145b582dd579686919b3c1dd7abcb838c393939705b5d91d9",
+      "perturbed_aggregates.npy": "0fcf2a5c3846e4f2bc24ac4e7947a9602cc9714c1b749dc70d88c21ba5c89159",
+      "perturbed_order_mask.npy": "ecbf4604950f0248cce9efefa49ec2e2c61f8747cff13583fb4fb57c367e0c72",
+      "perturbed_order_powers.npy": "98210a61717ca9ec5041d383e598ebf5ab04d63a09a3b3fe215a26b1d33fb5fd",
+      "record_identity.json": "b469eb661b02e3866641959d867fd68b376476b9f3e1a816afd0751026f744c9"
+    },
+    "angle_tuple_sha256": "072ec3da9b7f537dce5d410208eb999773c9fa2c331937711f59a78f412aaea9",
+    "design_sha256": "f1bbe0dbd3a57a4f9a600a0cc6745cdea70eaa33aba5203a22b4a252bb62962d",
+    "immutable": true
+  },
+  "derived_supplement": {
+    "manifest_sha256": "ab4b3a17784a5505ff2c8ff52e7d3b1b9f56766b204446b745fd59f627b0388f",
+    "manifest": {
+      "schema_version": "task005.derived-contract-supplement.v1",
+      "status": "immutable_derived",
+      "dataset_id": "task005_discrete_angle_hw_sensitivity_p5_ny4_derived_contract_v1",
+      "source_raw_dataset_id": "task005_discrete_angle_hw_sensitivity_p5_ny4_v1",
+      "source_raw_manifest_sha256": "e3a1b92b5311ec1fb6f5c5fb52d64f2a99f0b22122e57358305e36914229ca20",
+      "source_raw_file_hashes": {
+        "angles.npy": "26598a16dfee4c564132f2f6fcefb49c7ab9d1ef1e5907bac76228b608981b5d",
+        "derivatives.json": "5c7e5111128e6e89a173763c61a2cca29e1359285b960ee5bcbf19110a22b5e9",
+        "nominal_aggregates.npy": "44656759ff51019fe43f9317e0287ed198a7e6767e53bc577eb15245d90e4e1f",
+        "nominal_inputs.npy": "d9e874d041448df78de7711abb6c864e7edf6c5b375a239d57c6a548403c7c8a",
+        "nominal_order_mask.npy": "4c8364c2f4e0b272eddbbd0a5f771625fb3872bef4423d4738966b9ec2592e18",
+        "nominal_order_powers.npy": "442ffe762c56b37443e6755b86a04c677b577ef2208bea51e0932e8bb21a166c",
+        "order_identity.json": "25269154b988586145b582dd579686919b3c1dd7abcb838c393939705b5d91d9",
+        "perturbed_aggregates.npy": "0fcf2a5c3846e4f2bc24ac4e7947a9602cc9714c1b749dc70d88c21ba5c89159",
+        "perturbed_order_mask.npy": "ecbf4604950f0248cce9efefa49ec2e2c61f8747cff13583fb4fb57c367e0c72",
+        "perturbed_order_powers.npy": "98210a61717ca9ec5041d383e598ebf5ab04d63a09a3b3fe215a26b1d33fb5fd",
+        "record_identity.json": "b469eb661b02e3866641959d867fd68b376476b9f3e1a816afd0751026f744c9"
+      },
+      "source_raw_package_modified": false,
+      "source_raw_package_mutability": "v1 raw package remains immutable; companion only",
+      "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+      "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+      "observable_schema_version": "task002.fixed-n0-orders.v3",
+      "source_step": {
+        "delta_h_nm": 1.25,
+        "delta_w_nm": 0.25,
+        "method": "central_difference"
+      },
+      "source_design_sha256": "f1bbe0dbd3a57a4f9a600a0cc6745cdea70eaa33aba5203a22b4a252bb62962d",
+      "source_angle_tuple_sha256": "072ec3da9b7f537dce5d410208eb999773c9fa2c331937711f59a78f412aaea9",
+      "files": {
+        "M0_Dh.npy": {
+          "sha256": "306736e43e238ce105f3bbb39c31c129254aa6d24cb708b7ca160771a06b57f3",
+          "bytes": 384
+        },
+        "M0_Dw.npy": {
+          "sha256": "91b40339278fad03a458570ce7a9d4ebf6723124d9cff44872e9fd1f4177bfec",
+          "bytes": 384
+        },
+        "M0_noise_sigma_N1.npy": {
+          "sha256": "fc2cdd40bdfde6bc026c558f24164577ce6d437a269af529c23794613c4176f1",
+          "bytes": 384
+        },
+        "M0_noise_sigma_N2.npy": {
+          "sha256": "886940154b013c2f856d152dc3865aa2d4a097bc87fc19ff25627aff504e17d1",
+          "bytes": 384
+        },
+        "M1_derivatives.npz": {
+          "sha256": "6a570d2fe8283325b79368f9646128d07a0cae4c099a287a1ffbcce3b1b8a1f0",
+          "bytes": 1481
+        },
+        "M1_noise_sigma_N1.npz": {
+          "sha256": "6e07462b34eab5060458143581362b44f9aae8a04a356650b5232d508a55db41",
+          "bytes": 639
+        },
+        "M1_noise_sigma_N2.npz": {
+          "sha256": "8529bf62ca64923574866749f87ddea37d12735c3b7644ad782838de6f3f0138",
+          "bytes": 638
+        },
+        "M2_derivatives.npz": {
+          "sha256": "3d9f4bcdf706f1e9a738b54e80fa36309d4724f0212da264ba1ef0e80b380bc4",
+          "bytes": 2196
+        },
+        "M2_noise_sigma_N1.npz": {
+          "sha256": "7c13d194166e1dd54ab425714fe328748c7dfa460d4379482b30774cb1c9a146",
+          "bytes": 838
+        },
+        "M2_noise_sigma_N2.npz": {
+          "sha256": "91d0a9b8b4b00e24e54f620b8084dfa6c84c1177d95ec8f2ed25613d7b0188ed",
+          "bytes": 820
+        },
+        "channel_contracts.json": {
+          "sha256": "70329bac45abd78cab9fb9606f802a881ca1924cc50859ae1c9f428c8199a6f6",
+          "bytes": 26690
+        },
+        "perturbed_inputs.npy": {
+          "sha256": "a5af24940b8e504b6537ff704d46c35bcdace3e292d14100fcfc6ee39b16d58a",
+          "bytes": 2176
+        },
+        "source_record_ids.json": {
+          "sha256": "5fb4acdf4cf2f7549a2be1336f463c937a0c24022d54471fb1a0487915dd88cd",
+          "bytes": 27329
+        }
+      },
+      "generated_without_fem": true,
+      "new_fem_count": 0,
+      "validation_target_accessed": false,
+      "formal_inversion": false
+    },
+    "generated_without_fem": true
+  },
+  "design": {
+    "candidate_count": 16,
+    "point_tuple_sha256": "17af3c87850b8af4070c263c224613c66b3a87adf196825be4bd138a91c2d4c5",
+    "design_file_sha256": "f1bbe0dbd3a57a4f9a600a0cc6745cdea70eaa33aba5203a22b4a252bb62962d",
+    "hash_schema_doc": "FISHER_PARAMETERIZATION_AND_HASH_SCHEMA.md"
+  },
+  "step_lock": {
+    "selected_steps": {
+      "h": "half",
+      "w": "half"
+    },
+    "audit_file_sha256": "8062d933008b3d064ce55094f8ed7cc9ac22cad6fa6b5eeb72c494c7a31086fc",
+    "lock_file_sha256": "1b8acbd548ef54adc2e82c81174ebe16c6d2a2d64b7c53d9567e9bb18c08055e"
+  },
+  "measurement_contracts": {
+    "M0": "aggregate_RT=[R_total,T_total]; A_balance audit only",
+    "M1": "fixed-order total S+P powers, active threshold 1e-3",
+    "M2": "fixed-order total S+P powers, active threshold 1e-5 with absolute noise floor",
+    "M3": "polarization-resolved diagnostic only"
+  },
+  "noise_contracts": {
+    "N1": "sqrt((0.01*y)^2+(1e-4)^2)",
+    "N2": "sqrt((0.02*y)^2+(5e-4)^2)",
+    "qualification": "provisional diagonal design scenarios, not calibrated experiment covariance"
+  },
+  "m2_ranking_stability": {
+    "audit_sha256": "5f88c6444da02422a487e3fec482eca906fea3c96a018b689435c57f614e9df1",
+    "m2_diagnostic_only": true,
+    "conclusion": {
+      "robust_selection_preserved": true,
+      "m2_worst_case_preserves_selected_sets": true,
+      "m2_N1_changes": {
+        "size_2": true,
+        "size_3": true,
+        "size_4": true
+      },
+      "decision": "M2/N1 weak-channel diagnostics can change the isolated best set, but the absolute-noise-floor worst-case M2 ranking preserves the robust M0/M1 selections. M2 remains diagnostic and cannot change the lock."
+    }
+  },
+  "illumination_count_tradeoff": {
+    "audit_sha256": "e5e3f5ff5762cb6896fae81c07bbe508d11357a63af080d74a1d5a69ea878d20",
+    "best_single": {
+      "angle_ids": [
+        "A05"
+      ],
+      "size": 1,
+      "worst_case_minimum_eigenvalue": 12.882983267678924,
+      "worst_case_logdet": 6.726299495895869,
+      "worst_case_condition_number": 5.233685871502488,
+      "scope": "robust"
+    },
+    "best_pair": {
+      "angle_ids": [
+        "A05",
+        "A07"
+      ],
+      "size": 2,
+      "worst_case_minimum_eigenvalue": 23.7817036852706,
+      "worst_case_logdet": 8.0556762286805,
+      "worst_case_condition_number": 5.749572468291934,
+      "scope": "robust"
+    },
+    "best_triple": {
+      "angle_ids": [
+        "A05",
+        "A07",
+        "A09"
+      ],
+      "size": 3,
+      "worst_case_minimum_eigenvalue": 34.768648303920976,
+      "worst_case_logdet": 8.553122051298876,
+      "worst_case_condition_number": 4.287440399824387,
+      "scope": "robust"
+    },
+    "best_quad": {
+      "angle_ids": [
+        "A05",
+        "A06",
+        "A07",
+        "A09"
+      ],
+      "size": 4,
+      "worst_case_minimum_eigenvalue": 45.149335460644295,
+      "worst_case_logdet": 9.195723091035987,
+      "worst_case_condition_number": 4.834472238178336,
+      "scope": "robust"
+    },
+    "information_global_best": {
+      "angle_ids": [
+        "A05",
+        "A06",
+        "A07",
+        "A09"
+      ],
+      "size": 4,
+      "primary_score": 45.149335460644295,
+      "definition": "highest robust worst-case minimum eigenvalue among sizes 1-4"
+    },
+    "m4_nonlinearly_validated_set": {
+      "angle_ids": [
+        "A05",
+        "A07",
+        "A09"
+      ],
+      "size": 3,
+      "recovery_gate": "G1-G3 M1/N1 noiseless recovery passed"
+    },
+    "recommended_operational_set_for_next_task": {
+      "angle_ids": [
+        "A05",
+        "A07",
+        "A09"
+      ],
+      "size": 3,
+      "reason": [
+        "best robust three-angle set",
+        "only set with the prescribed three-geometry nonlinear recovery evidence",
+        "one fewer illumination than the information-best quad",
+        "quad is not within the 5% tie, so this is a validated cost-information compromise, not the global information optimum"
+      ],
+      "not_a_formal_inversion": true
+    },
+    "five_percent_rule": {
+      "definition": "A smaller set is preferred only when its primary information score is at least 95% of the next larger set.",
+      "adjacent_comparisons": [
+        {
+          "fewer_count": 1,
+          "more_count": 2,
+          "fewer_best_score_min_eigenvalue": 12.882983267678924,
+          "more_best_score_min_eigenvalue": 23.7817036852706,
+          "fewer_over_more": 0.5417182653595213,
+          "within_5_percent_tie": false,
+          "rule_action": "retain_more_information"
+        },
+        {
+          "fewer_count": 2,
+          "more_count": 3,
+          "fewer_best_score_min_eigenvalue": 23.7817036852706,
+          "more_best_score_min_eigenvalue": 34.768648303920976,
+          "fewer_over_more": 0.6839985114574805,
+          "within_5_percent_tie": false,
+          "rule_action": "retain_more_information"
+        },
+        {
+          "fewer_count": 3,
+          "more_count": 4,
+          "fewer_best_score_min_eigenvalue": 34.768648303920976,
+          "more_best_score_min_eigenvalue": 45.149335460644295,
+          "fewer_over_more": 0.7700810642988989,
+          "within_5_percent_tie": false,
+          "rule_action": "retain_more_information"
+        }
+      ],
+      "applied_without_silent_override": true
+    }
+  },
+  "fisher": {
+    "ranking_file_sha256": "09d96d25c67fbb9d5f99d9d7418f7525a83d6f5411f088003987d51376577bb7",
+    "task001_baseline_pair_file_sha256": "fa996c95358839f3b8b16d4ee9543c1fdfc0db8d9ec903adc2e8f9af6c289921",
+    "single_count": 16,
+    "pair_count": 120,
+    "triple_count": 560,
+    "quadruple_count": 1820,
+    "baseline_pair": [
+      "A14",
+      "A15"
+    ],
+    "physical_and_scaled_semantics": "FISHER_PARAMETERIZATION_AND_HASH_SCHEMA.md"
+  },
+  "task001_baseline_interpretation": {
+    "file_sha256": "ec368c1eae1de58ae0c1fc96bd5582a763a64f1f86cdd986ff6166b7599a8da4",
+    "pair": [
+      "A14",
+      "A15"
+    ]
+  },
+  "recovery": {
+    "design_file_sha256": "27a9b0898c5bfd3578c82bb5343f3fc998e8e4684012db6be7b26331354e06d7",
+    "result_file_sha256": "81c7c63818c93cacdc295303a63dc42302b19732e005d57000d6d75ece4fee3b",
+    "status": "pass",
+    "primary_gate_all_geometries": true,
+    "geometries": [
+      "G1",
+      "G2",
+      "G3"
+    ]
+  },
+  "historical_v1_lock": {
+    "status": "frozen_review_pending",
+    "file_sha256": "4509404694c9182a9eeaa1da6efc6f3f9e2f5de63e4eaa025d375936861f4ad7",
+    "preserved_unchanged": true
+  },
+  "scope_boundary": {
+    "formal_inversion": false,
+    "arbitrary_angle_surrogate": false,
+    "task004_blind24_run": false,
+    "task003_validation_accessed": false,
+    "p_polarization": false,
+    "task006_authorized": false
+  }
+}

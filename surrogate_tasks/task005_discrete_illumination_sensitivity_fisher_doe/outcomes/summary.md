@@ -47,3 +47,22 @@ nonlinear checks, not a general structural inversion.
 No P-polarization data, Task004 blind validation, continuous-angle surrogate,
 Bayesian inversion, or experimental uncertainty claim was introduced.  Total
 new FEM count was 93, below the hard budget of 96.
+
+## M5R derived-only closeout
+
+| item | result | identity / evidence |
+|---|---|---|
+| M2 ranking stability | pass | `M2_RANK_STABILITY_AUDIT.json`, Case134 |
+| M2 weak-channel diagnostic | 28 observations on 13 angles; nominal power `1.27707e-5`–`8.18441e-4` | M2 raw derivatives, N1/N2 absolute floors |
+| robust-vs-M2 ranking | worst-case M2 keeps selected single/pair/triple/quad at rank 1; top-10 overlap 10/10 for every size | `M2_RANK_STABILITY_AUDIT.md` |
+| illumination count | 1→2 ratio 0.541718, 2→3 ratio 0.683999, 3→4 ratio 0.770081; no adjacent pair is within 5% | `ILLUMINATION_COUNT_TRADEOFF.json` |
+| information-global-best | A05+A06+A07+A09 (quad) | local robust Fisher score |
+| operational compromise | A05+A07+A09 (triple) | M4 G1–G3 nonlinear recovery evidence |
+| derived supplement | pass, source raw package unchanged | `derived_contract_v1/DERIVED_SUPPLEMENT_MANIFEST.json` |
+| Task001 interpretation | pass, A14+A15 retained as historical baseline | `TASK001_BASELINE_INTERPRETATION_ADDENDUM.md` |
+| V2 lock | `review_ready` | `DISCRETE_ILLUMINATION_FISHER_DOE_LOCK_V2.json` |
+| Case134 | pass | `benchmarks/cases/134_task005_final_lock_review/records/case134_check.json` |
+
+M5R used only existing arrays, JSON records and Fisher tables. It did not modify
+the immutable v1 package, v1 lock, Task004 train112 or blind24 state; no new FEM,
+formal surrogate, Task006 or inversion was started.

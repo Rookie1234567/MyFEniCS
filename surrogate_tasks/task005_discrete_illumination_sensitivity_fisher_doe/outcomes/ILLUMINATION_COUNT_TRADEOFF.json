@@ -1,0 +1,129 @@
+{
+  "schema_version": "task005.illumination-count-tradeoff.v1",
+  "status": "pass",
+  "selection_score": "robust M0/M1/N1/N2 worst-case minimum eigenvalue; logdet and condition are tie-breaks",
+  "five_percent_rule": {
+    "definition": "A smaller set is preferred only when its primary information score is at least 95% of the next larger set.",
+    "adjacent_comparisons": [
+      {
+        "fewer_count": 1,
+        "more_count": 2,
+        "fewer_best_score_min_eigenvalue": 12.882983267678924,
+        "more_best_score_min_eigenvalue": 23.7817036852706,
+        "fewer_over_more": 0.5417182653595213,
+        "within_5_percent_tie": false,
+        "rule_action": "retain_more_information"
+      },
+      {
+        "fewer_count": 2,
+        "more_count": 3,
+        "fewer_best_score_min_eigenvalue": 23.7817036852706,
+        "more_best_score_min_eigenvalue": 34.768648303920976,
+        "fewer_over_more": 0.6839985114574805,
+        "within_5_percent_tie": false,
+        "rule_action": "retain_more_information"
+      },
+      {
+        "fewer_count": 3,
+        "more_count": 4,
+        "fewer_best_score_min_eigenvalue": 34.768648303920976,
+        "more_best_score_min_eigenvalue": 45.149335460644295,
+        "fewer_over_more": 0.7700810642988989,
+        "within_5_percent_tie": false,
+        "rule_action": "retain_more_information"
+      }
+    ],
+    "applied_without_silent_override": true
+  },
+  "best_single": {
+    "angle_ids": [
+      "A05"
+    ],
+    "size": 1,
+    "worst_case_minimum_eigenvalue": 12.882983267678924,
+    "worst_case_logdet": 6.726299495895869,
+    "worst_case_condition_number": 5.233685871502488,
+    "scope": "robust"
+  },
+  "best_pair": {
+    "angle_ids": [
+      "A05",
+      "A07"
+    ],
+    "size": 2,
+    "worst_case_minimum_eigenvalue": 23.7817036852706,
+    "worst_case_logdet": 8.0556762286805,
+    "worst_case_condition_number": 5.749572468291934,
+    "scope": "robust"
+  },
+  "best_triple": {
+    "angle_ids": [
+      "A05",
+      "A07",
+      "A09"
+    ],
+    "size": 3,
+    "worst_case_minimum_eigenvalue": 34.768648303920976,
+    "worst_case_logdet": 8.553122051298876,
+    "worst_case_condition_number": 4.287440399824387,
+    "scope": "robust"
+  },
+  "best_quad": {
+    "angle_ids": [
+      "A05",
+      "A06",
+      "A07",
+      "A09"
+    ],
+    "size": 4,
+    "worst_case_minimum_eigenvalue": 45.149335460644295,
+    "worst_case_logdet": 9.195723091035987,
+    "worst_case_condition_number": 4.834472238178336,
+    "scope": "robust"
+  },
+  "information_global_best": {
+    "angle_ids": [
+      "A05",
+      "A06",
+      "A07",
+      "A09"
+    ],
+    "size": 4,
+    "primary_score": 45.149335460644295,
+    "definition": "highest robust worst-case minimum eigenvalue among sizes 1-4"
+  },
+  "m4_nonlinearly_validated_set": {
+    "angle_ids": [
+      "A05",
+      "A07",
+      "A09"
+    ],
+    "size": 3,
+    "recovery_gate": "G1-G3 M1/N1 noiseless recovery passed"
+  },
+  "recommended_operational_set_for_next_task": {
+    "angle_ids": [
+      "A05",
+      "A07",
+      "A09"
+    ],
+    "size": 3,
+    "reason": [
+      "best robust three-angle set",
+      "only set with the prescribed three-geometry nonlinear recovery evidence",
+      "one fewer illumination than the information-best quad",
+      "quad is not within the 5% tie, so this is a validated cost-information compromise, not the global information optimum"
+    ],
+    "not_a_formal_inversion": true
+  },
+  "baseline_pair": {
+    "angle_ids": [
+      "A14",
+      "A15"
+    ],
+    "task001_reference": true
+  },
+  "m2_diagnostic_reference": {
+    "worst_case_selected_sets_remain_rank_1": true
+  }
+}

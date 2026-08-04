@@ -1,0 +1,20 @@
+{
+  "schema_version": "task005.case134-final-lock-review.v1",
+  "status": "pass",
+  "checks": {
+    "raw_v1_package_hashes_unchanged": true,
+    "v1_lock_preserved": true,
+    "m2_rank_audit_rebuild": true,
+    "illumination_count_tradeoff_rebuild": true,
+    "derived_supplement_rebuild": true,
+    "lock_v2_identity": true,
+    "no_new_fem": true,
+    "no_task004_blind_or_validation": true,
+    "formal_inversion_false": true
+  },
+  "errors": [],
+  "new_fem_count": 0,
+  "task004_blind24_run": false,
+  "validation_target_accessed": false,
+  "formal_inversion": false
+}

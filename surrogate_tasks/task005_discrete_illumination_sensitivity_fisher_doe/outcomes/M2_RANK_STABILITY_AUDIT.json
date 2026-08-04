@@ -1,0 +1,2269 @@
+{
+  "schema_version": "task005.m2-ranking-stability-audit.v1",
+  "status": "pass",
+  "source_ranking_sha256": "09d96d25c67fbb9d5f99d9d7418f7525a83d6f5411f088003987d51376577bb7",
+  "dataset_id": "task005_discrete_angle_hw_sensitivity_p5_ny4_v1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "robust_contract": "M0/M1 N1/N2 worst-case ranking from v1; M2 is diagnostic",
+  "sizes": {
+    "1": {
+      "combination_count": 16,
+      "robust_full_rank_count": 13,
+      "m2_full_rank_count_worst_case": 16,
+      "m2_by_noise": {
+        "N1": {
+          "full_rank_count": 16,
+          "best": {
+            "angle_ids": [
+              "A05"
+            ],
+            "rank": 1,
+            "metrics": {
+              "full_rank": true,
+              "minimum_eigenvalue": 59.35171763596054,
+              "logdet": 9.820949045552133,
+              "condition_number": 5.227781092193431,
+              "scenario_results": {
+                "N1": {
+                  "rank": 2,
+                  "full_rank": true,
+                  "minimum_eigenvalue": 59.35171763596054,
+                  "logdet": 9.820949045552133,
+                  "condition_number": 5.227781092193431,
+                  "channel_counts": [
+                    4
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "N2": {
+          "full_rank_count": 16,
+          "best": {
+            "angle_ids": [
+              "A05"
+            ],
+            "rank": 1,
+            "metrics": {
+              "full_rank": true,
+              "minimum_eigenvalue": 12.885837720569198,
+              "logdet": 6.726526023426636,
+              "condition_number": 5.024210409137918,
+              "scenario_results": {
+                "N2": {
+                  "rank": 2,
+                  "full_rank": true,
+                  "minimum_eigenvalue": 12.885837720569198,
+                  "logdet": 6.726526023426636,
+                  "condition_number": 5.024210409137918,
+                  "channel_counts": [
+                    4
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "m2_worst_case": {
+        "best": {
+          "angle_ids": [
+            "A05"
+          ],
+          "rank": 1,
+          "metrics": {
+            "full_rank": true,
+            "minimum_eigenvalue": 12.885837720569198,
+            "logdet": 6.726526023426636,
+            "condition_number": 5.227781092193431,
+            "scenario_results": {
+              "N1": {
+                "rank": 2,
+                "full_rank": true,
+                "minimum_eigenvalue": 59.35171763596054,
+                "logdet": 9.820949045552133,
+                "condition_number": 5.227781092193431,
+                "channel_counts": [
+                  4
+                ]
+              },
+              "N2": {
+                "rank": 2,
+                "full_rank": true,
+                "minimum_eigenvalue": 12.885837720569198,
+                "logdet": 6.726526023426636,
+                "condition_number": 5.024210409137918,
+                "channel_counts": [
+                  4
+                ]
+              }
+            }
+          }
+        },
+        "top_10": [
+          [
+            "A05"
+          ],
+          [
+            "A07"
+          ],
+          [
+            "A06"
+          ],
+          [
+            "A08"
+          ],
+          [
+            "A09"
+          ],
+          [
+            "A10"
+          ],
+          [
+            "A11"
+          ],
+          [
+            "A12"
+          ],
+          [
+            "A03"
+          ],
+          [
+            "A04"
+          ]
+        ],
+        "top_20": [
+          [
+            "A05"
+          ],
+          [
+            "A07"
+          ],
+          [
+            "A06"
+          ],
+          [
+            "A08"
+          ],
+          [
+            "A09"
+          ],
+          [
+            "A10"
+          ],
+          [
+            "A11"
+          ],
+          [
+            "A12"
+          ],
+          [
+            "A03"
+          ],
+          [
+            "A04"
+          ],
+          [
+            "A00"
+          ],
+          [
+            "A01"
+          ],
+          [
+            "A02"
+          ],
+          [
+            "A13"
+          ],
+          [
+            "A14"
+          ],
+          [
+            "A15"
+          ]
+        ]
+      },
+      "robust_reference": {
+        "best": {
+          "angle_ids": [
+            "A05"
+          ],
+          "rank": 1,
+          "metrics": {
+            "full_rank": true,
+            "minimum_eigenvalue": 12.882983267678924,
+            "logdet": 6.726299495895869,
+            "condition_number": 5.233685871502488
+          }
+        },
+        "top_10": [
+          [
+            "A05"
+          ],
+          [
+            "A07"
+          ],
+          [
+            "A06"
+          ],
+          [
+            "A08"
+          ],
+          [
+            "A09"
+          ],
+          [
+            "A10"
+          ],
+          [
+            "A11"
+          ],
+          [
+            "A12"
+          ],
+          [
+            "A03"
+          ],
+          [
+            "A04"
+          ]
+        ],
+        "top_20": [
+          [
+            "A05"
+          ],
+          [
+            "A07"
+          ],
+          [
+            "A06"
+          ],
+          [
+            "A08"
+          ],
+          [
+            "A09"
+          ],
+          [
+            "A10"
+          ],
+          [
+            "A11"
+          ],
+          [
+            "A12"
+          ],
+          [
+            "A03"
+          ],
+          [
+            "A04"
+          ],
+          [
+            "A00"
+          ],
+          [
+            "A01"
+          ],
+          [
+            "A02"
+          ],
+          [
+            "A13"
+          ],
+          [
+            "A14"
+          ],
+          [
+            "A15"
+          ]
+        ]
+      },
+      "common_full_rank": {
+        "count": 13,
+        "top_10_overlap": {
+          "count": 10,
+          "denominator": 10,
+          "fraction": 1.0
+        },
+        "top_20_overlap": {
+          "count": 13,
+          "denominator": 13,
+          "fraction": 1.0
+        },
+        "spearman_rank_correlation": 1.0
+      },
+      "selected_set": {
+        "angle_ids": [
+          "A05"
+        ],
+        "robust_rank": 1,
+        "m2_worst_case_rank": 1,
+        "m2_N1_rank": 1,
+        "m2_N2_rank": 1,
+        "robust_metrics": {
+          "full_rank": true,
+          "minimum_eigenvalue": 12.882983267678924,
+          "logdet": 6.726299495895869,
+          "condition_number": 5.233685871502488
+        },
+        "m2_worst_case_metrics": {
+          "full_rank": true,
+          "minimum_eigenvalue": 12.885837720569198,
+          "logdet": 6.726526023426636,
+          "condition_number": 5.227781092193431,
+          "scenario_results": {
+            "N1": {
+              "rank": 2,
+              "full_rank": true,
+              "minimum_eigenvalue": 59.35171763596054,
+              "logdet": 9.820949045552133,
+              "condition_number": 5.227781092193431,
+              "channel_counts": [
+                4
+              ]
+            },
+            "N2": {
+              "rank": 2,
+              "full_rank": true,
+              "minimum_eigenvalue": 12.885837720569198,
+              "logdet": 6.726526023426636,
+              "condition_number": 5.024210409137918,
+              "channel_counts": [
+                4
+              ]
+            }
+          }
+        }
+      }
+    },
+    "2": {
+      "combination_count": 120,
+      "robust_full_rank_count": 120,
+      "m2_full_rank_count_worst_case": 120,
+      "m2_by_noise": {
+        "N1": {
+          "full_rank_count": 120,
+          "best": {
+            "angle_ids": [
+              "A05",
+              "A09"
+            ],
+            "rank": 1,
+            "metrics": {
+              "full_rank": true,
+              "minimum_eigenvalue": 150.96664352856112,
+              "logdet": 10.99823528335098,
+              "condition_number": 2.622472214254108,
+              "scenario_results": {
+                "N1": {
+                  "rank": 2,
+                  "full_rank": true,
+                  "minimum_eigenvalue": 150.96664352856112,
+                  "logdet": 10.99823528335098,
+                  "condition_number": 2.622472214254108,
+                  "channel_counts": [
+                    4,
+                    4
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "N2": {
+          "full_rank_count": 120,
+          "best": {
+            "angle_ids": [
+              "A05",
+              "A07"
+            ],
+            "rank": 1,
+            "metrics": {
+              "full_rank": true,
+              "minimum_eigenvalue": 23.784541344652762,
+              "logdet": 8.055798104387364,
+              "condition_number": 5.571845968903581,
+              "scenario_results": {
+                "N2": {
+                  "rank": 2,
+                  "full_rank": true,
+                  "minimum_eigenvalue": 23.784541344652762,
+                  "logdet": 8.055798104387364,
+                  "condition_number": 5.571845968903581,
+                  "channel_counts": [
+                    4,
+                    2
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "m2_worst_case": {
+        "best": {
+          "angle_ids": [
+            "A05",
+            "A07"
+          ],
+          "rank": 1,
+          "metrics": {
+            "full_rank": true,
+            "minimum_eigenvalue": 23.784541344652762,
+            "logdet": 8.055798104387364,
+            "condition_number": 5.746055104437725,
+            "scenario_results": {
+              "N1": {
+                "rank": 2,
+                "full_rank": true,
+                "minimum_eigenvalue": 109.68020410053757,
+                "logdet": 11.143651342813344,
+                "condition_number": 5.746055104437725,
+                "channel_counts": [
+                  4,
+                  2
+                ]
+              },
+              "N2": {
+                "rank": 2,
+                "full_rank": true,
+                "minimum_eigenvalue": 23.784541344652762,
+                "logdet": 8.055798104387364,
+                "condition_number": 5.571845968903581,
+                "channel_counts": [
+                  4,
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "top_10": [
+          [
+            "A05",
+            "A07"
+          ],
+          [
+            "A05",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06"
+          ],
+          [
+            "A05",
+            "A08"
+          ],
+          [
+            "A05",
+            "A10"
+          ],
+          [
+            "A07",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07"
+          ],
+          [
+            "A07",
+            "A08"
+          ],
+          [
+            "A06",
+            "A09"
+          ],
+          [
+            "A06",
+            "A08"
+          ]
+        ],
+        "top_20": [
+          [
+            "A05",
+            "A07"
+          ],
+          [
+            "A05",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06"
+          ],
+          [
+            "A05",
+            "A08"
+          ],
+          [
+            "A05",
+            "A10"
+          ],
+          [
+            "A07",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07"
+          ],
+          [
+            "A07",
+            "A08"
+          ],
+          [
+            "A06",
+            "A09"
+          ],
+          [
+            "A06",
+            "A08"
+          ],
+          [
+            "A07",
+            "A10"
+          ],
+          [
+            "A06",
+            "A10"
+          ],
+          [
+            "A04",
+            "A05"
+          ],
+          [
+            "A03",
+            "A05"
+          ],
+          [
+            "A05",
+            "A11"
+          ],
+          [
+            "A05",
+            "A12"
+          ],
+          [
+            "A04",
+            "A07"
+          ],
+          [
+            "A03",
+            "A07"
+          ],
+          [
+            "A07",
+            "A11"
+          ],
+          [
+            "A07",
+            "A12"
+          ]
+        ]
+      },
+      "robust_reference": {
+        "best": {
+          "angle_ids": [
+            "A05",
+            "A07"
+          ],
+          "rank": 1,
+          "metrics": {
+            "full_rank": true,
+            "minimum_eigenvalue": 23.7817036852706,
+            "logdet": 8.0556762286805,
+            "condition_number": 5.749572468291934
+          }
+        },
+        "top_10": [
+          [
+            "A05",
+            "A07"
+          ],
+          [
+            "A05",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06"
+          ],
+          [
+            "A05",
+            "A08"
+          ],
+          [
+            "A05",
+            "A10"
+          ],
+          [
+            "A07",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07"
+          ],
+          [
+            "A07",
+            "A08"
+          ],
+          [
+            "A06",
+            "A09"
+          ],
+          [
+            "A06",
+            "A08"
+          ]
+        ],
+        "top_20": [
+          [
+            "A05",
+            "A07"
+          ],
+          [
+            "A05",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06"
+          ],
+          [
+            "A05",
+            "A08"
+          ],
+          [
+            "A05",
+            "A10"
+          ],
+          [
+            "A07",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07"
+          ],
+          [
+            "A07",
+            "A08"
+          ],
+          [
+            "A06",
+            "A09"
+          ],
+          [
+            "A06",
+            "A08"
+          ],
+          [
+            "A07",
+            "A10"
+          ],
+          [
+            "A06",
+            "A10"
+          ],
+          [
+            "A04",
+            "A05"
+          ],
+          [
+            "A03",
+            "A05"
+          ],
+          [
+            "A05",
+            "A11"
+          ],
+          [
+            "A05",
+            "A12"
+          ],
+          [
+            "A04",
+            "A07"
+          ],
+          [
+            "A03",
+            "A07"
+          ],
+          [
+            "A07",
+            "A11"
+          ],
+          [
+            "A07",
+            "A12"
+          ]
+        ]
+      },
+      "common_full_rank": {
+        "count": 120,
+        "top_10_overlap": {
+          "count": 10,
+          "denominator": 10,
+          "fraction": 1.0
+        },
+        "top_20_overlap": {
+          "count": 20,
+          "denominator": 20,
+          "fraction": 1.0
+        },
+        "spearman_rank_correlation": 0.9996805333703731
+      },
+      "selected_set": {
+        "angle_ids": [
+          "A05",
+          "A07"
+        ],
+        "robust_rank": 1,
+        "m2_worst_case_rank": 1,
+        "m2_N1_rank": 16,
+        "m2_N2_rank": 1,
+        "robust_metrics": {
+          "full_rank": true,
+          "minimum_eigenvalue": 23.7817036852706,
+          "logdet": 8.0556762286805,
+          "condition_number": 5.749572468291934
+        },
+        "m2_worst_case_metrics": {
+          "full_rank": true,
+          "minimum_eigenvalue": 23.784541344652762,
+          "logdet": 8.055798104387364,
+          "condition_number": 5.746055104437725,
+          "scenario_results": {
+            "N1": {
+              "rank": 2,
+              "full_rank": true,
+              "minimum_eigenvalue": 109.68020410053757,
+              "logdet": 11.143651342813344,
+              "condition_number": 5.746055104437725,
+              "channel_counts": [
+                4,
+                2
+              ]
+            },
+            "N2": {
+              "rank": 2,
+              "full_rank": true,
+              "minimum_eigenvalue": 23.784541344652762,
+              "logdet": 8.055798104387364,
+              "condition_number": 5.571845968903581,
+              "channel_counts": [
+                4,
+                2
+              ]
+            }
+          }
+        }
+      }
+    },
+    "3": {
+      "combination_count": 560,
+      "robust_full_rank_count": 560,
+      "m2_full_rank_count_worst_case": 560,
+      "m2_by_noise": {
+        "N1": {
+          "full_rank_count": 560,
+          "best": {
+            "angle_ids": [
+              "A05",
+              "A09",
+              "A11"
+            ],
+            "rank": 1,
+            "metrics": {
+              "full_rank": true,
+              "minimum_eigenvalue": 217.97342048702376,
+              "logdet": 11.493485036577445,
+              "condition_number": 2.064191810218596,
+              "scenario_results": {
+                "N1": {
+                  "rank": 2,
+                  "full_rank": true,
+                  "minimum_eigenvalue": 217.97342048702376,
+                  "logdet": 11.493485036577445,
+                  "condition_number": 2.064191810218596,
+                  "channel_counts": [
+                    4,
+                    4,
+                    4
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "N2": {
+          "full_rank_count": 560,
+          "best": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A09"
+            ],
+            "rank": 1,
+            "metrics": {
+              "full_rank": true,
+              "minimum_eigenvalue": 34.77581721418149,
+              "logdet": 8.553341082959335,
+              "condition_number": 4.2866117018979955,
+              "scenario_results": {
+                "N2": {
+                  "rank": 2,
+                  "full_rank": true,
+                  "minimum_eigenvalue": 34.77581721418149,
+                  "logdet": 8.553341082959335,
+                  "condition_number": 4.2866117018979955,
+                  "channel_counts": [
+                    4,
+                    2,
+                    4
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "m2_worst_case": {
+        "best": {
+          "angle_ids": [
+            "A05",
+            "A07",
+            "A09"
+          ],
+          "rank": 1,
+          "metrics": {
+            "full_rank": true,
+            "minimum_eigenvalue": 34.77581721418149,
+            "logdet": 8.553341082959335,
+            "condition_number": 4.2866117018979955,
+            "scenario_results": {
+              "N1": {
+                "rank": 2,
+                "full_rank": true,
+                "minimum_eigenvalue": 207.08649773677055,
+                "logdet": 11.898493323397833,
+                "condition_number": 3.428833735326296,
+                "channel_counts": [
+                  4,
+                  2,
+                  4
+                ]
+              },
+              "N2": {
+                "rank": 2,
+                "full_rank": true,
+                "minimum_eigenvalue": 34.77581721418149,
+                "logdet": 8.553341082959335,
+                "condition_number": 4.2866117018979955,
+                "channel_counts": [
+                  4,
+                  2,
+                  4
+                ]
+              }
+            }
+          }
+        },
+        "top_10": [
+          [
+            "A05",
+            "A07",
+            "A09"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07"
+          ],
+          [
+            "A05",
+            "A06",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08"
+          ],
+          [
+            "A05",
+            "A07",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A10"
+          ],
+          [
+            "A05",
+            "A08",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07",
+            "A08"
+          ]
+        ],
+        "top_20": [
+          [
+            "A05",
+            "A07",
+            "A09"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07"
+          ],
+          [
+            "A05",
+            "A06",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08"
+          ],
+          [
+            "A05",
+            "A07",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A10"
+          ],
+          [
+            "A05",
+            "A08",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07",
+            "A08"
+          ],
+          [
+            "A05",
+            "A09",
+            "A10"
+          ],
+          [
+            "A05",
+            "A08",
+            "A10"
+          ],
+          [
+            "A06",
+            "A07",
+            "A10"
+          ],
+          [
+            "A07",
+            "A08",
+            "A09"
+          ],
+          [
+            "A06",
+            "A08",
+            "A09"
+          ],
+          [
+            "A07",
+            "A09",
+            "A10"
+          ],
+          [
+            "A07",
+            "A08",
+            "A10"
+          ],
+          [
+            "A04",
+            "A05",
+            "A07"
+          ],
+          [
+            "A06",
+            "A09",
+            "A10"
+          ],
+          [
+            "A03",
+            "A05",
+            "A07"
+          ]
+        ]
+      },
+      "robust_reference": {
+        "best": {
+          "angle_ids": [
+            "A05",
+            "A07",
+            "A09"
+          ],
+          "rank": 1,
+          "metrics": {
+            "full_rank": true,
+            "minimum_eigenvalue": 34.768648303920976,
+            "logdet": 8.553122051298876,
+            "condition_number": 4.287440399824387
+          }
+        },
+        "top_10": [
+          [
+            "A05",
+            "A07",
+            "A09"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07"
+          ],
+          [
+            "A05",
+            "A06",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08"
+          ],
+          [
+            "A05",
+            "A07",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A10"
+          ],
+          [
+            "A05",
+            "A08",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07",
+            "A08"
+          ]
+        ],
+        "top_20": [
+          [
+            "A05",
+            "A07",
+            "A09"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07"
+          ],
+          [
+            "A05",
+            "A06",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08"
+          ],
+          [
+            "A05",
+            "A07",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A10"
+          ],
+          [
+            "A05",
+            "A08",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07",
+            "A08"
+          ],
+          [
+            "A05",
+            "A09",
+            "A10"
+          ],
+          [
+            "A05",
+            "A08",
+            "A10"
+          ],
+          [
+            "A06",
+            "A07",
+            "A10"
+          ],
+          [
+            "A07",
+            "A08",
+            "A09"
+          ],
+          [
+            "A06",
+            "A08",
+            "A09"
+          ],
+          [
+            "A07",
+            "A09",
+            "A10"
+          ],
+          [
+            "A07",
+            "A08",
+            "A10"
+          ],
+          [
+            "A04",
+            "A05",
+            "A07"
+          ],
+          [
+            "A06",
+            "A09",
+            "A10"
+          ],
+          [
+            "A03",
+            "A05",
+            "A07"
+          ]
+        ]
+      },
+      "common_full_rank": {
+        "count": 560,
+        "top_10_overlap": {
+          "count": 10,
+          "denominator": 10,
+          "fraction": 1.0
+        },
+        "top_20_overlap": {
+          "count": 20,
+          "denominator": 20,
+          "fraction": 1.0
+        },
+        "spearman_rank_correlation": 0.9999022864959938
+      },
+      "selected_set": {
+        "angle_ids": [
+          "A05",
+          "A07",
+          "A09"
+        ],
+        "robust_rank": 1,
+        "m2_worst_case_rank": 1,
+        "m2_N1_rank": 11,
+        "m2_N2_rank": 1,
+        "robust_metrics": {
+          "full_rank": true,
+          "minimum_eigenvalue": 34.768648303920976,
+          "logdet": 8.553122051298876,
+          "condition_number": 4.287440399824387
+        },
+        "m2_worst_case_metrics": {
+          "full_rank": true,
+          "minimum_eigenvalue": 34.77581721418149,
+          "logdet": 8.553341082959335,
+          "condition_number": 4.2866117018979955,
+          "scenario_results": {
+            "N1": {
+              "rank": 2,
+              "full_rank": true,
+              "minimum_eigenvalue": 207.08649773677055,
+              "logdet": 11.898493323397833,
+              "condition_number": 3.428833735326296,
+              "channel_counts": [
+                4,
+                2,
+                4
+              ]
+            },
+            "N2": {
+              "rank": 2,
+              "full_rank": true,
+              "minimum_eigenvalue": 34.77581721418149,
+              "logdet": 8.553341082959335,
+              "condition_number": 4.2866117018979955,
+              "channel_counts": [
+                4,
+                2,
+                4
+              ]
+            }
+          }
+        }
+      }
+    },
+    "4": {
+      "combination_count": 1820,
+      "robust_full_rank_count": 1820,
+      "m2_full_rank_count_worst_case": 1820,
+      "m2_by_noise": {
+        "N1": {
+          "full_rank_count": 1820,
+          "best": {
+            "angle_ids": [
+              "A05",
+              "A07",
+              "A08",
+              "A09"
+            ],
+            "rank": 1,
+            "metrics": {
+              "full_rank": true,
+              "minimum_eigenvalue": 287.33538118124767,
+              "logdet": 12.341987364708622,
+              "condition_number": 2.775101010195643,
+              "scenario_results": {
+                "N1": {
+                  "rank": 2,
+                  "full_rank": true,
+                  "minimum_eigenvalue": 287.33538118124767,
+                  "logdet": 12.341987364708622,
+                  "condition_number": 2.775101010195643,
+                  "channel_counts": [
+                    4,
+                    2,
+                    4,
+                    4
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "N2": {
+          "full_rank_count": 1820,
+          "best": {
+            "angle_ids": [
+              "A05",
+              "A06",
+              "A07",
+              "A09"
+            ],
+            "rank": 1,
+            "metrics": {
+              "full_rank": true,
+              "minimum_eigenvalue": 45.16314877450212,
+              "logdet": 9.19604197678784,
+              "condition_number": 4.833056355578567,
+              "scenario_results": {
+                "N2": {
+                  "rank": 2,
+                  "full_rank": true,
+                  "minimum_eigenvalue": 45.16314877450212,
+                  "logdet": 9.19604197678784,
+                  "condition_number": 4.833056355578567,
+                  "channel_counts": [
+                    4,
+                    4,
+                    2,
+                    4
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "m2_worst_case": {
+        "best": {
+          "angle_ids": [
+            "A05",
+            "A06",
+            "A07",
+            "A09"
+          ],
+          "rank": 1,
+          "metrics": {
+            "full_rank": true,
+            "minimum_eigenvalue": 45.16314877450212,
+            "logdet": 9.19604197678784,
+            "condition_number": 4.833056355578567,
+            "scenario_results": {
+              "N1": {
+                "rank": 2,
+                "full_rank": true,
+                "minimum_eigenvalue": 256.4730704094057,
+                "logdet": 12.491061109613213,
+                "condition_number": 4.043108265190188,
+                "channel_counts": [
+                  4,
+                  4,
+                  2,
+                  4
+                ]
+              },
+              "N2": {
+                "rank": 2,
+                "full_rank": true,
+                "minimum_eigenvalue": 45.16314877450212,
+                "logdet": 9.19604197678784,
+                "condition_number": 4.833056355578567,
+                "channel_counts": [
+                  4,
+                  4,
+                  2,
+                  4
+                ]
+              }
+            }
+          }
+        },
+        "top_10": [
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A08"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08",
+            "A09"
+          ],
+          [
+            "A05",
+            "A07",
+            "A09",
+            "A10"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A09",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08",
+            "A10"
+          ],
+          [
+            "A06",
+            "A07",
+            "A08",
+            "A09"
+          ]
+        ],
+        "top_20": [
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A08"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08",
+            "A09"
+          ],
+          [
+            "A05",
+            "A07",
+            "A09",
+            "A10"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A09",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08",
+            "A10"
+          ],
+          [
+            "A06",
+            "A07",
+            "A08",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07",
+            "A09",
+            "A10"
+          ],
+          [
+            "A06",
+            "A07",
+            "A08",
+            "A10"
+          ],
+          [
+            "A05",
+            "A08",
+            "A09",
+            "A10"
+          ],
+          [
+            "A04",
+            "A05",
+            "A06",
+            "A07"
+          ],
+          [
+            "A05",
+            "A07",
+            "A09",
+            "A11"
+          ],
+          [
+            "A04",
+            "A05",
+            "A07",
+            "A09"
+          ],
+          [
+            "A03",
+            "A05",
+            "A06",
+            "A07"
+          ],
+          [
+            "A03",
+            "A05",
+            "A07",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A11"
+          ],
+          [
+            "A05",
+            "A07",
+            "A09",
+            "A12"
+          ]
+        ]
+      },
+      "robust_reference": {
+        "best": {
+          "angle_ids": [
+            "A05",
+            "A06",
+            "A07",
+            "A09"
+          ],
+          "rank": 1,
+          "metrics": {
+            "full_rank": true,
+            "minimum_eigenvalue": 45.149335460644295,
+            "logdet": 9.195723091035987,
+            "condition_number": 4.834472238178336
+          }
+        },
+        "top_10": [
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A08"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08",
+            "A09"
+          ],
+          [
+            "A05",
+            "A07",
+            "A09",
+            "A10"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A09",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08",
+            "A10"
+          ],
+          [
+            "A06",
+            "A07",
+            "A08",
+            "A09"
+          ]
+        ],
+        "top_20": [
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A08"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08",
+            "A09"
+          ],
+          [
+            "A05",
+            "A07",
+            "A09",
+            "A10"
+          ],
+          [
+            "A05",
+            "A07",
+            "A08",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A09",
+            "A10"
+          ],
+          [
+            "A05",
+            "A06",
+            "A08",
+            "A10"
+          ],
+          [
+            "A06",
+            "A07",
+            "A08",
+            "A09"
+          ],
+          [
+            "A06",
+            "A07",
+            "A09",
+            "A10"
+          ],
+          [
+            "A06",
+            "A07",
+            "A08",
+            "A10"
+          ],
+          [
+            "A05",
+            "A08",
+            "A09",
+            "A10"
+          ],
+          [
+            "A04",
+            "A05",
+            "A06",
+            "A07"
+          ],
+          [
+            "A05",
+            "A07",
+            "A09",
+            "A11"
+          ],
+          [
+            "A04",
+            "A05",
+            "A07",
+            "A09"
+          ],
+          [
+            "A03",
+            "A05",
+            "A06",
+            "A07"
+          ],
+          [
+            "A03",
+            "A05",
+            "A07",
+            "A09"
+          ],
+          [
+            "A05",
+            "A06",
+            "A07",
+            "A11"
+          ],
+          [
+            "A05",
+            "A07",
+            "A09",
+            "A12"
+          ]
+        ]
+      },
+      "common_full_rank": {
+        "count": 1820,
+        "top_10_overlap": {
+          "count": 10,
+          "denominator": 10,
+          "fraction": 1.0
+        },
+        "top_20_overlap": {
+          "count": 20,
+          "denominator": 20,
+          "fraction": 1.0
+        },
+        "spearman_rank_correlation": 0.9999404435500451
+      },
+      "selected_set": {
+        "angle_ids": [
+          "A05",
+          "A06",
+          "A07",
+          "A09"
+        ],
+        "robust_rank": 1,
+        "m2_worst_case_rank": 1,
+        "m2_N1_rank": 52,
+        "m2_N2_rank": 1,
+        "robust_metrics": {
+          "full_rank": true,
+          "minimum_eigenvalue": 45.149335460644295,
+          "logdet": 9.195723091035987,
+          "condition_number": 4.834472238178336
+        },
+        "m2_worst_case_metrics": {
+          "full_rank": true,
+          "minimum_eigenvalue": 45.16314877450212,
+          "logdet": 9.19604197678784,
+          "condition_number": 4.833056355578567,
+          "scenario_results": {
+            "N1": {
+              "rank": 2,
+              "full_rank": true,
+              "minimum_eigenvalue": 256.4730704094057,
+              "logdet": 12.491061109613213,
+              "condition_number": 4.043108265190188,
+              "channel_counts": [
+                4,
+                4,
+                2,
+                4
+              ]
+            },
+            "N2": {
+              "rank": 2,
+              "full_rank": true,
+              "minimum_eigenvalue": 45.16314877450212,
+              "logdet": 9.19604197678784,
+              "condition_number": 4.833056355578567,
+              "channel_counts": [
+                4,
+                4,
+                2,
+                4
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "weak_channel_summary": {
+    "total_weak_channel_observations": 28,
+    "angles_with_weak_channels": 13,
+    "nominal_power_range": [
+      1.277069513049489e-05,
+      0.0008184405625607899
+    ],
+    "sigma_range": {
+      "N1": [
+        0.00010000008154529381,
+        0.00010033436348253017
+      ],
+      "N2": [
+        0.0005000000652362574,
+        0.000500267866229461
+      ]
+    },
+    "per_angle": [
+      {
+        "angle_id": "A00",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 1.9171015183543794e-05,
+            "sigma_N1": 0.00010000018376374274,
+            "sigma_N2": 0.0005000001470111076,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 1.547415441124099e-05,
+            "sigma_N1": 0.0001000001197246557,
+            "sigma_N2": 0.0005000000957797727,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 2
+      },
+      {
+        "angle_id": "A01",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 2.8979986227236617e-05,
+            "sigma_N1": 0.00010000041991891921,
+            "sigma_N2": 0.0005000003359357278,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 3.463628295294719e-05,
+            "sigma_N1": 0.00010000059983424939,
+            "sigma_N2": 0.0005000004798686085,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 2
+      },
+      {
+        "angle_id": "A02",
+        "weak_channels": [],
+        "weak_count": 0
+      },
+      {
+        "angle_id": "A03",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 2.6646808281459466e-05,
+            "sigma_N1": 0.00010000035502556558,
+            "sigma_N2": 0.000500000284020876,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 3.178869573390925e-05,
+            "sigma_N1": 0.0001000005052593118,
+            "sigma_N2": 0.0005000004042083071,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 2
+      },
+      {
+        "angle_id": "A04",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -2,
+              0
+            ],
+            "nominal_power": 1.6824713969307975e-05,
+            "sigma_N1": 0.00010000014153539991,
+            "sigma_N2": 0.0005000001132283872,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 8.348523577403959e-05,
+            "sigma_N1": 0.00010000348483157587,
+            "sigma_N2": 0.0005000027879060644,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -2,
+              0
+            ],
+            "nominal_power": 1.277069513049489e-05,
+            "sigma_N1": 0.00010000008154529381,
+            "sigma_N2": 0.0005000000652362574,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 0.00010563441021588312,
+            "sigma_N1": 0.00010000557915867577,
+            "sigma_N2": 0.0005000044634315264,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 4
+      },
+      {
+        "angle_id": "A05",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 3.5710789553655795e-05,
+            "sigma_N1": 0.00010000063762821243,
+            "sigma_N2": 0.000500000510103936,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 2.5482109635723732e-05,
+            "sigma_N1": 0.0001000003246684287,
+            "sigma_N2": 0.0005000002597350972,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 2
+      },
+      {
+        "angle_id": "A06",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 4.348184133002275e-05,
+            "sigma_N1": 0.00010000094533079447,
+            "sigma_N2": 0.0005000007562676383,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 6.821917301775218e-05,
+            "sigma_N1": 0.00010000232690071128,
+            "sigma_N2": 0.0005000018615387616,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 2
+      },
+      {
+        "angle_id": "A07",
+        "weak_channels": [],
+        "weak_count": 0
+      },
+      {
+        "angle_id": "A08",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 3.613640091925899e-05,
+            "sigma_N1": 0.0001000006529176042,
+            "sigma_N2": 0.0005000005223355157,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 4.587996656293347e-05,
+            "sigma_N1": 0.00010000105248012733,
+            "sigma_N2": 0.0005000008419878238,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 2
+      },
+      {
+        "angle_id": "A09",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 0.0001055487639297535,
+            "sigma_N1": 0.0001000055701156526,
+            "sigma_N2": 0.0005000044561967691,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 0.00015809076871253994,
+            "sigma_N1": 0.00010001249556488035,
+            "sigma_N2": 0.0005000099969765213,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 2
+      },
+      {
+        "angle_id": "A10",
+        "weak_channels": [],
+        "weak_count": 0
+      },
+      {
+        "angle_id": "A11",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 2.568176905349911e-05,
+            "sigma_N1": 0.0001000003297760871,
+            "sigma_N2": 0.000500000263821235,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 2.5371209501572003e-05,
+            "sigma_N1": 0.00010000032184861786,
+            "sigma_N2": 0.0005000002574792423,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 2
+      },
+      {
+        "angle_id": "A12",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 0.00015022280689330083,
+            "sigma_N1": 0.00010001128280934651,
+            "sigma_N2": 0.0005000090266752035,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 0.0008184405625607899,
+            "sigma_N1": 0.00010033436348253017,
+            "sigma_N2": 0.000500267866229461,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 2
+      },
+      {
+        "angle_id": "A13",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              -1,
+              0
+            ],
+            "nominal_power": 1.3788920298169695e-05,
+            "sigma_N1": 0.00010000009506711631,
+            "sigma_N2": 0.0005000000760537234,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "reflection",
+              0,
+              0
+            ],
+            "nominal_power": 0.00013264074062903583,
+            "sigma_N1": 0.00010000879639615438,
+            "sigma_N2": 0.0005000070373769052,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 1.3919571830438273e-05,
+            "sigma_N1": 0.00010000009687719304,
+            "sigma_N2": 0.0005000000775017859,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 3
+      },
+      {
+        "angle_id": "A14",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              0,
+              0
+            ],
+            "nominal_power": 0.0007857140892045993,
+            "sigma_N1": 0.00010030819838376852,
+            "sigma_N2": 0.0005002468777033893,
+            "tier": "weak_extended_near_absolute_floor"
+          },
+          {
+            "channel": [
+              "transmission",
+              -1,
+              0
+            ],
+            "nominal_power": 2.1670232619256408e-05,
+            "sigma_N1": 0.00010000023479921523,
+            "sigma_N2": 0.0005000001878395574,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 2
+      },
+      {
+        "angle_id": "A15",
+        "weak_channels": [
+          {
+            "channel": [
+              "reflection",
+              0,
+              0
+            ],
+            "nominal_power": 0.0007485002356082283,
+            "sigma_N1": 0.00010027973504288171,
+            "sigma_N2": 0.0005002240508423023,
+            "tier": "weak_extended_near_absolute_floor"
+          }
+        ],
+        "weak_count": 1
+      }
+    ],
+    "interpretation": "M2-only channels are weak extended diagnostics. They are retained for ranking stability only and cannot override robust M0/M1 selection."
+  },
+  "m2_diagnostic_only": true,
+  "conclusion": {
+    "robust_selection_preserved": true,
+    "m2_worst_case_preserves_selected_sets": true,
+    "m2_N1_changes": {
+      "size_2": true,
+      "size_3": true,
+      "size_4": true
+    },
+    "decision": "M2/N1 weak-channel diagnostics can change the isolated best set, but the absolute-noise-floor worst-case M2 ranking preserves the robust M0/M1 selections. M2 remains diagnostic and cannot change the lock."
+  }
+}

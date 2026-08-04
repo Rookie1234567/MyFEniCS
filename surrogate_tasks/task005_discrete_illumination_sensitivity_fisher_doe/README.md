@@ -3,7 +3,7 @@
 ## 状态
 
 ```text
-status = complete_review_pending
+status = m5r_review_pending
 execution_branch = codex/only-one-13p5nm-surrogate-inversion
 predecessor = Task004 Review V9
 Task004 = closed_controlled_negative
@@ -11,6 +11,7 @@ purpose = select a small set of discrete illuminations for h/w identification
 formal_inversion = forbidden
 arbitrary-angle surrogate = forbidden
 implementation_sha = d24395b377259da129a81384f88d8a4ad74602d2
+m5r_new_fem_count = 0
 ```
 
 本任务不再建立连续角度代理。它从 Task004 不可变 `train112` 中冻结 16 个已有 nominal 角度，复用中心几何响应，并通过直接 Full3D 几何扰动计算：
@@ -79,8 +80,15 @@ surrogate_tasks/task005_discrete_illumination_sensitivity_fisher_doe/
     outcomes/FISHER_COMBINATION_RANKING.json
     outcomes/OFF_CENTRE_RECOVERY.json
     outcomes/DISCRETE_ILLUMINATION_FISHER_DOE_LOCK.json
+    outcomes/DISCRETE_ILLUMINATION_FISHER_DOE_LOCK_V2.json
+    outcomes/M2_RANK_STABILITY_AUDIT.json
+    outcomes/ILLUMINATION_COUNT_TRADEOFF.json
+    outcomes/TASK001_BASELINE_INTERPRETATION_ADDENDUM.md
+    outcomes/FISHER_PARAMETERIZATION_AND_HASH_SCHEMA.md
     outcomes/test_summary.md
+    outcomes/test_summary_v2.md
     response_v1.md
+    response_v2.md
 ```
 
 ## 完成状态
@@ -90,6 +98,11 @@ M0–M4 已完成并通过：16 个 nominal tuple 精确复用、40 个 M1 审�
 以及推荐三角度在 G1–G3 的恢复 Gate。总新 FEM 为 93/96。最终
 `DISCRETE_ILLUMINATION_FISHER_DOE_LOCK.json` 已建立，等待审阅；Task004
 仍保持关闭，blind24、连续角度代理和 Bayesian inversion 均未运行。
+
+M5R 已以 derived-only 方式完成：没有新 FEM，原始 v1 sensitivity package 和
+v1 lock 均保持原 hash；新增 M2 弱通道排名稳定性、照明数量 5% 取舍、派生
+灵敏度 supplement、Task001 基准解释、Fisher/hash 语义文档、V2 lock 和
+Case134 独立 checker。V2 lock 当前为 `review_ready`，等待下一轮审阅。
 
 ## 硬边界
 
