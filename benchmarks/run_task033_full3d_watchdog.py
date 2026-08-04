@@ -648,6 +648,16 @@ def _task037_f3_iterations(args: argparse.Namespace) -> int | None:
     return 3000 if args.task037_f3_full else args.task037_f3_screen
 
 
+def _task037_m3a_status(
+    args: argparse.Namespace, qualification: Mapping[str, Any]
+) -> str | None:
+    if not args.task037_m3a_overlap0125_partition:
+        return None
+    phase = "full" if args.task037_f3_full else "screen"
+    result = "pass" if qualification["pass"] else "not_pass"
+    return f"task037_m3a_overlap0125_partition_{phase}_{result}"
+
+
 def _task037_f3_assembled_fgmres_port(
     run_dir: Path,
     screen_iterations: int,
@@ -1575,7 +1585,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ):
         parser.error(
             "Task037 F0/F1/F3 options require the existing Task035c p6/h10 "
-            "gate, full-solve, static backend, MPI8, and S scope."
+            "gate, full-solve, static backend, MPI8 (or MPI4 for M3a), "
+            "and S scope."
         )
     canonical_f0_scope = (
         args.task037_f0_vector_observer
@@ -1647,8 +1658,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.task037_m3a_overlap0125_partition and not (
         args.task037_m2c_never_materialized
-        and args.task037_f3_screen in (20, 100, 200)
-        and not args.task037_f3_full
+        and (
+            args.task037_f3_full
+            or args.task037_f3_screen in (20, 100, 200)
+        )
         and not args.task037_f5b_released_profile
         and not args.task037_f0_vector_observer
         and args.task037_f1_direct_trace_oracle is None
@@ -1658,7 +1671,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ):
         parser.error(
             "--task037-m3a-overlap0125-partition requires the action-only "
-            "Task037 screen path and is exclusive of M4/F5b/F0/F1."
+            "Task037 screen/full path and is exclusive of M4/F5b/F0/F1."
         )
     if args.task037_m4_p2_auxiliary and not (
         args.task037_m2c_never_materialized
@@ -4092,11 +4105,10 @@ def _run_parent(args: argparse.Namespace) -> int:
     if not source_stable:
         qualification["failures"].append("source_stable_and_clean_after")
         qualification["pass"] = False
+    m3a_status = _task037_m3a_status(args, qualification)
     status = (
-        "task037_m3a_overlap0125_partition_screen_pass"
-        if qualification["pass"] and args.task037_m3a_overlap0125_partition
-        else "task037_m3a_overlap0125_partition_screen_not_pass"
-        if args.task037_m3a_overlap0125_partition
+        m3a_status
+        if m3a_status is not None
         else
         "task037_m2c_never_materialized_screen_pass"
         if qualification["pass"] and args.task037_m2c_never_materialized

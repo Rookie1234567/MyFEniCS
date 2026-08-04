@@ -207,6 +207,22 @@ def test_parser_scope_and_worker_command(tmp_path):
     full_command = watchdog._worker_command(full, tmp_path)
     assert full_command.count("--task037-f3-full") == 1
     assert "--task037-f3-screen" not in full_command
+    m3_full_args = full_args + [
+        "--task037-m2c-never-materialized",
+        "--task037-m3a-overlap0125-partition",
+    ]
+    m3_full = watchdog._parse_args(m3_full_args)
+    assert m3_full.task037_f3_full
+    assert m3_full.task037_f3_screen is None
+    m3_full_command = watchdog._worker_command(m3_full, tmp_path)
+    assert m3_full_command.count("--task037-f3-full") == 1
+    assert m3_full_command.count("--task037-m2c-never-materialized") == 1
+    assert m3_full_command.count("--task037-m3a-overlap0125-partition") == 1
+    m3_full_mpi4_args = list(m3_full_args)
+    m3_full_mpi4_args[m3_full_mpi4_args.index("--mpi-size") + 1] = "4"
+    assert watchdog._parse_args(m3_full_mpi4_args).mpi_size == 4
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(m3_full_args + ["--task037-f5b-released-profile"])
     released_args = full_args + ["--task037-f5b-released-profile"]
     released = watchdog._parse_args(released_args)
     assert released.task037_f5b_released_profile
@@ -430,6 +446,7 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
     request = SimpleNamespace(operator=operator)
     captured = {}
     selected_profiles = []
+    selected_iterations = []
 
     def fake_action_core(request, **kwargs):
         selected_profiles.append("m2c")
@@ -445,6 +462,7 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
 
     def fake_m3a_action_core(request, **kwargs):
         selected_profiles.append("m3a")
+        selected_iterations.append(kwargs["screen_iterations"])
         captured["request"] = request
         captured["kwargs"] = kwargs
         return object(), {
@@ -499,7 +517,19 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
     assert isinstance(captured["port"], Stage4NeverMaterializedLinearSolverPort)
     assert captured["request"] is request
     assert captured["kwargs"]["screen_iterations"] == 20
-    assert selected_profiles == ["m2c", "m4", "m3a"]
+    full_args = SimpleNamespace(
+        **{
+            **common_args,
+            "task037_f3_screen": None,
+            "task037_f3_full": True,
+            "task037_m3a_overlap0125_partition": True,
+            "task037_m4_p2_auxiliary": False,
+        }
+    )
+    assert watchdog._worker(full_args) == 0
+    assert captured["kwargs"]["screen_iterations"] == 3000
+    assert selected_profiles == ["m2c", "m4", "m3a", "m3a"]
+    assert selected_iterations == [20, 3000]
 
 
 def test_f3_qualification_uses_core_audit_gate():
@@ -872,6 +902,48 @@ def test_m3a_partition_profile_and_memory_gates():
     assert not watchdog._qualify(
         **{**kwargs, "resource_summary": {"memory_authority_gib": 10.31}}
     )["pass"]
+
+    full_args = SimpleNamespace(
+        **{
+            **vars(args),
+            "task037_f3_screen": None,
+            "task037_f3_full": True,
+        }
+    )
+    full_audit = _m3a_audit(3000)
+    full_audit["reported_history"][-1][1] = 1.0e-7
+    full_audit["condensed_true_samples"][-1][1] = 1.0e-7
+    full_audit["final"].update(
+        converged_reason=1,
+        reported_relative_residual=1.0e-7,
+        condensed_true_residual=1.0e-7,
+        full_augmented_true_residual=1.0e-7,
+    )
+    full_summary = {
+        **summary,
+        "ksp_converged_reason": 1,
+        "linear_system_relative_residual": 1.0e-7,
+        "official_result": True,
+        "postprocess_skipped": False,
+        "external_rta_gate_pass": True,
+        "external_solver_profile": full_audit["solver_profile"],
+        "external_assembled_matrix_released_before_solve": False,
+    }
+    full_kwargs = {
+        **kwargs,
+        "args": full_args,
+        "solver_summary": full_summary,
+        "task037_f3_core_audit": full_audit,
+    }
+    assert watchdog._qualify(**full_kwargs)["pass"]
+    assert watchdog._task037_m3a_status(full_args, {"pass": True}) == (
+        "task037_m3a_overlap0125_partition_full_pass"
+    )
+    assert watchdog._task037_m3a_status(full_args, {"pass": False}) == (
+        "task037_m3a_overlap0125_partition_full_not_pass"
+    )
+    full_summary["external_rta_gate_pass"] = False
+    assert not watchdog._qualify(**full_kwargs)["pass"]
 
 
 def test_ordinary_full_solve_rules_remain_strict():
