@@ -15,12 +15,12 @@ class _LocalSchurActionContext:
     def __init__(
         self,
         condensed: AssemblyTimeCondensedSystem,
-        fine_reference: PETSc.Mat,
+        fine_reference: PETSc.Mat | None,
     ) -> None:
         schurs = condensed.retained_local_schur_by_class
         if schurs is None:
             raise ValueError("local Schur retention is required for this action")
-        if tuple(map(int, fine_reference.getSize())) != (
+        if fine_reference is not None and tuple(map(int, fine_reference.getSize())) != (
             condensed.active_rows,
             condensed.active_rows,
         ):
@@ -48,7 +48,11 @@ class _LocalSchurActionContext:
             )
             for class_key, expansion, active_ids in raw_cells
         )
-        template = fine_reference.createVecRight()
+        template = (
+            fine_reference.createVecRight()
+            if fine_reference is not None
+            else condensed.create_active_vector()
+        )
         self._source = PETSc.Vec().createSeq(
             len(self._union_indices), comm=PETSc.COMM_SELF
         )
@@ -106,15 +110,26 @@ class _LocalSchurActionContext:
 
 def create_static_local_schur_action(
     condensed: AssemblyTimeCondensedSystem,
-    fine_reference: PETSc.Mat,
+    fine_reference: PETSc.Mat | None = None,
 ) -> tuple[PETSc.Mat, _LocalSchurActionContext]:
     """Create an active-trace MatPython action from retained local Schur data."""
 
+    if fine_reference is None and condensed.matrix is not None:
+        fine_reference = condensed.matrix
     context = _LocalSchurActionContext(condensed, fine_reference)
+    sizes = (
+        fine_reference.getSizes()
+        if fine_reference is not None
+        else (
+            (condensed.owned_active_rows, condensed.active_rows),
+            (condensed.owned_active_rows, condensed.active_rows),
+        )
+    )
+    comm = fine_reference.getComm() if fine_reference is not None else condensed.comm
     action = PETSc.Mat().createPython(
-        fine_reference.getSizes(),
+        sizes,
         context=context,
-        comm=fine_reference.getComm(),
+        comm=comm,
     )
     action.setUp()
     return action, context
