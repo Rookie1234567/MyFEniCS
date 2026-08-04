@@ -33,6 +33,8 @@ def main() -> int:
     parser.add_argument("--azimuth", type=float)
     parser.add_argument("--design-id", default="task005_m1_audit_v1")
     parser.add_argument("--design-index", type=int, default=0)
+    parser.add_argument("--split", default="audit")
+    parser.add_argument("--sample-name", default="task005_production_sample.json")
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--timeout-seconds", type=float, default=1800.0)
     args = parser.parse_args()
@@ -67,13 +69,13 @@ def main() -> int:
     )
     status = formal_record_status(run_directory, result)
     formal_path = run_directory / "results/task002_full3d_record.json"
-    sample_path = run_directory / "task005_production_sample.json"
+    sample_path = run_directory / args.sample_name
     sample_written = False
     if status == "measured_pass" and formal_path.is_file():
         point_tuple = [float(args.height), float(args.width), float(args.grazing), float(args.azimuth)]
         manifest_row = {
             "design_id": args.design_id, "design_index": int(args.design_index),
-            "split": "audit", "point_tuple": point_tuple,
+            "split": args.split, "point_tuple": point_tuple,
             "point_hash": canonical_hash({
                 "design_id": args.design_id, "design_index": int(args.design_index),
                 "point_tuple": point_tuple,
