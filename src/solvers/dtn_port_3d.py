@@ -38,6 +38,12 @@ from .common_3d_solve import (
     _petsc_factor_inventory,
     _petsc_matrix_stats,
 )
+from .condensed_dtn import (
+    DtnBlockAssembler,
+    PetscCondensedBlocks,
+    combine_petsc_augmented_solution,
+    create_matrix_free_augmented_operator,
+)
 from .common_3d_utils import _write_progress_event
 from .hcurl_cell_static_condensation import (
     build_explicit_cell_static_condensation,
@@ -51,6 +57,7 @@ from .hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
     cell_interior_schur_bilinear,
     condense_unconstrained_vector_to_active_trace,
+    owned_active_support_groups,
     recover_owned_cell_interiors,
 )
 from .hcurl_variable_p_reduction import (
@@ -60,6 +67,7 @@ from .hcurl_variable_p_reduction import (
 )
 from .mpc_form_action import MpcFormActionContext
 from .solve_vector_maxwell import _json_default
+from .static_local_schur_action import create_static_local_schur_action
 
 
 DTN_PORT_MODAL_POWER_SOURCE = "dtn_port_modal_amplitudes"
@@ -133,6 +141,38 @@ class Stage4ExternalLinearSolverSnapshot:
     solver_profile: str = "assembled"
     assembled_matrix_released_before_solve: bool = False
     reduced_residual_norm: float | None = None
+
+
+@dataclass(frozen=True)
+class Stage4NeverMaterializedLinearSolverRequest:
+    """Borrowed action-only DtN system for one explicit solver callback."""
+
+    operator: PETSc.Mat
+    b: PETSc.Vec
+    n_fe: int
+    n_aux: int
+    static_condensed_system: AssemblyTimeCondensedSystem
+    fine_operator: PETSc.Mat
+    blocks: PetscCondensedBlocks
+    function_space: Any
+    config: SimulationConfig3D
+    floquet_data: DoubleFloquet3DData
+
+
+@dataclass(frozen=True)
+class Stage4NeverMaterializedLinearSolverPort:
+    """Typed opt-in tag for a callback that consumes the action-only system."""
+
+    callback: Callable[
+        [Stage4NeverMaterializedLinearSolverRequest],
+        Stage4ExternalLinearSolverSnapshot,
+    ]
+
+    def __call__(
+        self,
+        request: Stage4NeverMaterializedLinearSolverRequest,
+    ) -> Stage4ExternalLinearSolverSnapshot:
+        return self.callback(request)
 
 
 def _external_snapshot_allows_official_rta(
@@ -2736,6 +2776,20 @@ def _solve_stage4_dtn_port_total_field_impl(
         assembly_backend_audit["actual"]
         == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
     )
+    never_materialized_port = isinstance(
+        linear_solver_port,
+        Stage4NeverMaterializedLinearSolverPort,
+    )
+    if never_materialized_port and (
+        not assembly_time_cell_static_condensation
+        or variable_p_backend
+        or cfg.matrix_diagnostics_assemble_only
+        or cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError(
+            "the never-materialized port requires complete fixed-p "
+            "assembly-time condensation"
+        )
     if variable_p_live_observer is not None and not variable_p_backend:
         raise ValueError(
             "the variable-p live observer requires the exact-sequence "
@@ -2853,6 +2907,10 @@ def _solve_stage4_dtn_port_total_field_impl(
     assembly_time_full_rhs: PETSc.Vec | None = None
     variable_p_active_full_rhs: PETSc.Vec | None = None
     variable_p_trace_functional_audits: list[dict[str, Any]] = []
+    dtn_action_assembler: DtnBlockAssembler | None = None
+    dtn_action_blocks = None
+    dtn_fine_action = None
+    dtn_action_preallocation_audit = None
 
     t0 = time.perf_counter()
     if assembly_time_cell_static_condensation:
@@ -2917,7 +2975,9 @@ def _solve_stage4_dtn_port_total_field_impl(
                     defer_final_assembly=True,
                     retain_local_schur_for_matrix_free=(
                         static_retain_local_schur_for_matrix_free
+                        or never_materialized_port
                     ),
+                    materialize_global_matrix=not never_materialized_port,
                 )
             )
             reduction_system = assembly_time_system
@@ -2928,13 +2988,34 @@ def _solve_stage4_dtn_port_total_field_impl(
             if variable_p_reduction is not None
             else reduction_system.active_rows
         )
-        base_matrix_stats = _deferred_preallocation_matrix_stats(
-            A_aug,
-            reduction_system.build_audit["trace_preallocation"],
-        )
-        base_matrix_lifecycle = (
-            "preallocated_values_pending_augmented_final_assembly"
-        )
+        if never_materialized_port:
+            base_matrix_stats = {
+                "matrix_type": "not_materialized_action_only",
+                "matrix_rows": int(n_fe + n_aux),
+                "matrix_cols": int(n_fe + n_aux),
+                "matrix_nnz_used": None,
+                "matrix_nnz_allocated": None,
+                "matrix_average_nnz_per_row": None,
+                "matrix_average_allocated_nnz_per_row": None,
+                "matrix_memory_bytes": None,
+                "matrix_memory_mb": None,
+                "matrix_memory_estimate_bytes": None,
+                "matrix_memory_estimate_mb": None,
+                "matrix_norm_frobenius": None,
+                "matrix_norm_infinity": None,
+                "global_A_materialized": False,
+                "global_F_materialized": False,
+                "matrix_stats_measurement_status": "not_run_action_only",
+            }
+            base_matrix_lifecycle = "not_materialized_action_only"
+        else:
+            base_matrix_stats = _deferred_preallocation_matrix_stats(
+                A_aug,
+                reduction_system.build_audit["trace_preallocation"],
+            )
+            base_matrix_lifecycle = (
+                "preallocated_values_pending_augmented_final_assembly"
+            )
         timing_details.update(
             {
                 f"stage4_dtn_assembly_time_{key}": value
@@ -3110,8 +3191,10 @@ def _solve_stage4_dtn_port_total_field_impl(
             petsc_options=petsc_options,
             extra={
                 "stage4_dtn_num_auxiliary_dofs": int(n_aux),
-                "assembly_time_final_augmented_matrix": True,
+                "assembly_time_final_augmented_matrix": not never_materialized_port,
                 "base_to_augmented_matrix_copy_performed": False,
+                "global_A_materialized": not never_materialized_port,
+                "global_F_materialized": not never_materialized_port,
             },
         )
     _write_progress_event(
@@ -3226,6 +3309,31 @@ def _solve_stage4_dtn_port_total_field_impl(
             dtype=np.dtype("<c16"),
         )
 
+    if never_materialized_port:
+        if assembly_time_system is None:
+            raise RuntimeError("action-only port lost its assembly-time system")
+        support_groups = owned_active_support_groups(
+            assembly_time_system,
+            support_cell_groups,
+        )
+        base_active_rhs = assembly_time_system.create_active_vector()
+        local_active_rows = base_active_rhs.getLocalSize()
+        base_active_rhs.getArray()[:] = b_aug.getArray(
+            readonly=True
+        )[:local_active_rows]
+        base_active_rhs.assemble()
+        dtn_action_assembler = DtnBlockAssembler(
+            base_active_rhs,
+            n_aux,
+            traction_supports=tuple(
+                support_groups[group] for group in support_group_by_row
+            ),
+            ell_supports=tuple(
+                support_groups[group] for group in support_group_by_row
+            ),
+        )
+        base_active_rhs.destroy()
+
     t0 = time.perf_counter()
     if assembly_time_active:
         if assembly_time_full_rhs is None:
@@ -3291,7 +3399,20 @@ def _solve_stage4_dtn_port_total_field_impl(
             inc_values,
         )
     if len(inc_rows):
-        b_aug.setValues(inc_rows, inc_values, addv=PETSc.InsertMode.ADD_VALUES)
+        if never_materialized_port:
+            if dtn_action_assembler is None:
+                raise RuntimeError("action-only RHS sink is unavailable")
+            dtn_action_assembler.b_fe.setValues(
+                inc_rows,
+                inc_values,
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+        else:
+            b_aug.setValues(
+                inc_rows,
+                inc_values,
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
     timing_details["stage4_dtn_incident_source_vector_seconds"] = float(
         comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
     )
@@ -3361,7 +3482,11 @@ def _solve_stage4_dtn_port_total_field_impl(
         if assembly_time_active
         else PETSc.InsertMode.INSERT_VALUES
     )
-    matrix_row_start, matrix_row_end = A_aug.getOwnershipRange()
+    matrix_row_start, matrix_row_end = (
+        b_aug.getOwnershipRange()
+        if never_materialized_port
+        else A_aug.getOwnershipRange()
+    )
     modal_loop_start = time.perf_counter()
     for aux_index, mode in enumerate(modes):
         mode_key = (mode.side, int(mode.m), int(mode.n), complex(mode.k_vector[2]))
@@ -3515,18 +3640,19 @@ def _solve_stage4_dtn_port_total_field_impl(
         t_insert = time.perf_counter()
         if len(traction_rows):
             traction_rows_total_local += int(len(traction_rows))
-            A_aug.setValues(
-                traction_rows,
-                _idx([aux_global]),
-                (-traction_values).reshape((len(traction_rows), 1)),
-                addv=matrix_insert_mode,
-            )
-            if incident_projection != 0.0:
-                b_aug.setValues(
+            if not never_materialized_port:
+                A_aug.setValues(
                     traction_rows,
-                    -traction_values * incident_projection,
-                    addv=PETSc.InsertMode.ADD_VALUES,
+                    _idx([aux_global]),
+                    (-traction_values).reshape((len(traction_rows), 1)),
+                    addv=matrix_insert_mode,
                 )
+                if incident_projection != 0.0:
+                    b_aug.setValues(
+                        traction_rows,
+                        -traction_values * incident_projection,
+                        addv=PETSc.InsertMode.ADD_VALUES,
+                    )
         if (
             incident_projection != 0.0
             and (
@@ -3575,12 +3701,15 @@ def _solve_stage4_dtn_port_total_field_impl(
 
         if len(ell_cols):
             ell_cols_total_local += int(len(ell_cols))
-            A_aug.setValues(
-                _idx([aux_global]),
-                ell_cols,
-                (-np.conj(ell_values) / denominator).reshape((1, len(ell_cols))),
-                addv=matrix_insert_mode,
-            )
+            if not never_materialized_port:
+                A_aug.setValues(
+                    _idx([aux_global]),
+                    ell_cols,
+                    (-np.conj(ell_values) / denominator).reshape(
+                        (1, len(ell_cols))
+                    ),
+                    addv=matrix_insert_mode,
+                )
         auxiliary_diagonal = 1.0 + 0.0j
         if component_interior_bilinear is not None:
             electric = np.asarray(
@@ -3625,11 +3754,29 @@ def _solve_stage4_dtn_port_total_field_impl(
                 dtype=np.dtype("<c16"),
             )
         if matrix_row_start <= aux_global < matrix_row_end:
-            A_aug.setValue(
-                aux_global,
-                aux_global,
-                PETSc.ScalarType(auxiliary_diagonal),
-                addv=matrix_insert_mode,
+            if not never_materialized_port:
+                A_aug.setValue(
+                    aux_global,
+                    aux_global,
+                    PETSc.ScalarType(auxiliary_diagonal),
+                    addv=matrix_insert_mode,
+                )
+        if never_materialized_port:
+            if dtn_action_assembler is None:
+                raise RuntimeError("action-only modal sink is unavailable")
+            dtn_action_assembler.add_mode(
+                aux_index,
+                traction_rows=traction_rows,
+                traction_values=-traction_values,
+                ell_cols=ell_cols,
+                ell_values=-np.conj(ell_values) / denominator,
+                auxiliary_diagonal=auxiliary_diagonal,
+                b_fe_rows=traction_rows if incident_projection != 0.0 else None,
+                b_fe_values=(
+                    -traction_values * incident_projection
+                    if incident_projection != 0.0
+                    else None
+                ),
             )
         modal_block_insert_seconds_local += time.perf_counter() - t_insert
 
@@ -3762,9 +3909,51 @@ def _solve_stage4_dtn_port_total_field_impl(
     )
 
     t0 = time.perf_counter()
-    A_aug.assemble()
-    b_aug.assemble()
-    augmented_matrix_stats_after_finalize = _petsc_matrix_stats(A_aug)
+    if never_materialized_port:
+        if dtn_action_assembler is None or assembly_time_system is None:
+            raise RuntimeError("action-only modal sink was not initialized")
+        dtn_action_preallocation_audit = dict(
+            dtn_action_assembler.preallocation_audit
+        )
+        dtn_action_blocks = dtn_action_assembler.finish()
+        dtn_fine_action, _ = create_static_local_schur_action(
+            assembly_time_system
+        )
+        A_aug, _ = create_matrix_free_augmented_operator(
+            dtn_action_blocks,
+            dtn_fine_action,
+        )
+        old_b_aug = b_aug
+        b_aug = assembly_time_system.create_augmented_vector()
+        combine_petsc_augmented_solution(
+            dtn_action_blocks,
+            dtn_action_blocks.b_fe,
+            dtn_action_blocks.b_aux,
+            b_aug,
+        )
+        old_b_aug.destroy()
+        augmented_matrix_stats_after_finalize = {
+            "matrix_type": "python_action_only",
+            "matrix_rows": int(n_fe + n_aux),
+            "matrix_cols": int(n_fe + n_aux),
+            "matrix_nnz_used": None,
+            "matrix_nnz_allocated": None,
+            "matrix_average_nnz_per_row": None,
+            "matrix_average_allocated_nnz_per_row": None,
+            "matrix_memory_bytes": None,
+            "matrix_memory_mb": None,
+            "matrix_memory_estimate_bytes": None,
+            "matrix_memory_estimate_mb": None,
+            "matrix_norm_frobenius": None,
+            "matrix_norm_infinity": None,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "matrix_stats_measurement_status": "not_run_action_only",
+        }
+    else:
+        A_aug.assemble()
+        b_aug.assemble()
+        augmented_matrix_stats_after_finalize = _petsc_matrix_stats(A_aug)
     storage_carrier_fe_dofs = int(
         V.dofmap.index_map.size_global * V.dofmap.index_map_bs
     )
@@ -3777,7 +3966,7 @@ def _solve_stage4_dtn_port_total_field_impl(
         active_exact_sequence_fe_dofs=active_exact_sequence_fe_dofs,
         storage_carrier_fe_dofs=storage_carrier_fe_dofs,
         independent_trace_rows=int(n_fe) if assembly_time_active else None,
-        augmented_rows=int(A_aug.getSize()[0]),
+        augmented_rows=int(n_fe + n_aux),
         auxiliary_rows=int(n_aux),
     )
     timing_details["stage4_dtn_augmented_matrix_finalize_seconds"] = float(
@@ -3793,7 +3982,12 @@ def _solve_stage4_dtn_port_total_field_impl(
         constraints=floquet_data.num_constraints,
         matrix_stats=augmented_matrix_stats_after_finalize,
         petsc_options=petsc_options,
-        extra={"stage4_dtn_num_auxiliary_dofs": int(n_aux)},
+        extra={
+            "stage4_dtn_num_auxiliary_dofs": int(n_aux),
+            "global_A_materialized": not never_materialized_port,
+            "global_F_materialized": not never_materialized_port,
+            "dtn_action_preallocation_audit": dtn_action_preallocation_audit,
+        },
     )
 
     if cfg.matrix_diagnostics_assemble_only:
@@ -4020,22 +4214,70 @@ def _solve_stage4_dtn_port_total_field_impl(
                 factorization_only=cfg.matrix_diagnostics_factorization_only,
             )
         else:
-            external_snapshot = _dispatch_external_linear_solver(
-                solve_A,
-                solve_b,
-                n_fe=n_fe,
-                n_aux=n_aux,
-                static_condensed_system=assembly_time_system,
-                function_space=V,
-                config=cfg,
-                floquet_data=floquet_data,
-                release_assembled_matrix=(
-                    assembly_time_system.destroy
-                    if assembly_time_system is not None
-                    else None
-                ),
-                port=linear_solver_port,
-            )
+            if never_materialized_port:
+                if (
+                    assembly_time_system is None
+                    or dtn_fine_action is None
+                    or dtn_action_blocks is None
+                ):
+                    raise RuntimeError(
+                        "action-only solver request lost its borrowed objects"
+                    )
+                external_snapshot = linear_solver_port(
+                    Stage4NeverMaterializedLinearSolverRequest(
+                        operator=solve_A,
+                        b=solve_b,
+                        n_fe=int(n_fe),
+                        n_aux=int(n_aux),
+                        static_condensed_system=assembly_time_system,
+                        fine_operator=dtn_fine_action,
+                        blocks=dtn_action_blocks,
+                        function_space=V,
+                        config=cfg,
+                        floquet_data=floquet_data,
+                    )
+                )
+                if not isinstance(
+                    external_snapshot,
+                    Stage4ExternalLinearSolverSnapshot,
+                ):
+                    raise TypeError(
+                        "never-materialized linear-solver port must return "
+                        "its snapshot type"
+                    )
+                if not external_snapshot.no_global_factor:
+                    raise ValueError(
+                        "never-materialized snapshot must certify no_global_factor"
+                    )
+                if external_snapshot.assembled_matrix_released_before_solve:
+                    raise ValueError(
+                        "never-materialized snapshot cannot release an assembled matrix"
+                    )
+                if (
+                    external_snapshot.x.getSize() != solve_A.getSize()[0]
+                    or external_snapshot.x.getOwnershipRange()
+                    != solve_A.getOwnershipRange()
+                ):
+                    raise ValueError(
+                        "never-materialized solver x must match action-only ownership"
+                    )
+            else:
+                external_snapshot = _dispatch_external_linear_solver(
+                    solve_A,
+                    solve_b,
+                    n_fe=n_fe,
+                    n_aux=n_aux,
+                    static_condensed_system=assembly_time_system,
+                    function_space=V,
+                    config=cfg,
+                    floquet_data=floquet_data,
+                    release_assembled_matrix=(
+                        assembly_time_system.destroy
+                        if assembly_time_system is not None
+                        else None
+                    ),
+                    port=linear_solver_port,
+                )
             solve_x = external_snapshot.x
             ksp = None
             ksp_telemetry = {}
@@ -4510,6 +4752,10 @@ def _solve_stage4_dtn_port_total_field_impl(
                 "operator residual; full FE matrix deliberately not allocated"
             ),
             "same_full_operator_used_for_recovery_and_residual": False,
+            "action_only_setup": bool(never_materialized_port),
+            "global_A_materialized": not never_materialized_port,
+            "global_F_materialized": not never_materialized_port,
+            "dtn_action_preallocation_audit": dtn_action_preallocation_audit,
             "ordinary_default_changed": False,
         }
     if external_snapshot is None:
@@ -4629,6 +4875,10 @@ def _solve_stage4_dtn_port_total_field_impl(
             else independent_trace_matrix_stats
         ),
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+        "action_only_setup": bool(never_materialized_port),
+        "global_A_materialized": not never_materialized_port,
+        "global_F_materialized": not never_materialized_port,
+        "dtn_action_preallocation_audit": dtn_action_preallocation_audit,
         "dtn_trace_alias_preflight": trace_alias_preflight,
         "explicit_chac_constructed": False,
         "dtn_auxiliary_dense_block_constructed": False,

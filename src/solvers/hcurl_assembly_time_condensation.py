@@ -1820,6 +1820,38 @@ def cell_interior_schur_bilinear(
     )
 
 
+def owned_active_support_groups(
+    condensed: AssemblyTimeCondensedSystem,
+    owned_cell_groups: tuple[np.ndarray, ...],
+) -> tuple[np.ndarray, ...]:
+    """Return owner-local active support for each group of owned cells."""
+
+    counts = condensed.comm.allgather(condensed.owned_active_rows)
+    active_start = int(sum(counts[: condensed.comm.rank]))
+    active_end = active_start + condensed.owned_active_rows
+    supports = []
+    for cell_group in owned_cell_groups:
+        active_ids: set[int] = set()
+        for cell_index in np.asarray(cell_group, dtype=np.int64):
+            original = condensed.cell_recovery_maps[int(cell_index)].trace_original_dofs
+            ids, _expansion, _identity = _cell_trace_expansion(
+                original,
+                condensed.trace_constraints,
+            )
+            active_ids.update(map(int, ids))
+        supports.append(
+            np.asarray(
+                [
+                    active
+                    for active in sorted(active_ids)
+                    if active_start <= active < active_end
+                ],
+                dtype=PETSc.IntType,
+            )
+        )
+    return tuple(supports)
+
+
 def recover_owned_cell_interiors(
     condensed: AssemblyTimeCondensedSystem,
     active_trace_values: np.ndarray,
@@ -2055,6 +2087,7 @@ __all__ = [
     "build_unconstrained_assembly_time_condensation",
     "cell_interior_schur_bilinear",
     "condense_unconstrained_vector_to_active_trace",
+    "owned_active_support_groups",
     "project_mpc_vector_to_active_trace",
     "recover_owned_cell_interiors",
 ]

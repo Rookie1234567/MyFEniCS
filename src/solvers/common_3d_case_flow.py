@@ -1397,6 +1397,10 @@ def run_prepared_3d_case_flow(
     matrix_stats = (
         dtn_augmented_matrix_stats
         if system_A is None
+        or (
+            dtn_solver_info is not None
+            and dtn_solver_info.get("global_A_materialized") is False
+        )
         else _petsc_matrix_stats(system_A)
     )
     _finish_timed_stage(comm, timings, "matrix_stats", stage_start, log)

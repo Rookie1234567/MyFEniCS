@@ -533,6 +533,69 @@ class CondensedDtnMatContext:
         self.destroyed = True
 
 
+class _AugmentedDtnMatContext:
+    """MatPython carrier for ``[F C; D H]`` without assembled entries."""
+
+    def __init__(self, blocks: PetscCondensedBlocks, fine_operator: PETSc.Mat):
+        self.blocks = blocks
+        self.fine_operator = fine_operator
+        self.fe_source = blocks.D.createVecRight()
+        self.aux_source = blocks.C.createVecRight()
+        self.fe_target = fine_operator.createVecLeft()
+        self.aux_target = blocks.D.createVecLeft()
+        self.c_work = blocks.C.createVecLeft()
+        self.h_work = blocks.H.createVecLeft()
+        self.destroyed = False
+
+    def mult(self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        local_fe = self.fe_source.getLocalSize()
+        source_values = source.getArray(readonly=True)
+        self.fe_source.getArray()[:] = source_values[:local_fe]
+        self.aux_source.getArray()[:] = source_values[local_fe:]
+        self.fine_operator.mult(self.fe_source, self.fe_target)
+        self.blocks.C.mult(self.aux_source, self.c_work)
+        self.fe_target.axpy(PETSc.ScalarType(1.0), self.c_work)
+        self.blocks.D.mult(self.fe_source, self.aux_target)
+        self.blocks.H.mult(self.aux_source, self.h_work)
+        self.aux_target.axpy(PETSc.ScalarType(1.0), self.h_work)
+        target_values = target.getArray()
+        target_values[:local_fe] = self.fe_target.getArray(readonly=True)
+        target_values[local_fe:] = self.aux_target.getArray(readonly=True)
+
+    def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
+        if self.destroyed:
+            return
+        self.h_work.destroy()
+        self.c_work.destroy()
+        self.aux_target.destroy()
+        self.fe_target.destroy()
+        self.aux_source.destroy()
+        self.fe_source.destroy()
+        self.fine_operator.destroy()
+        self.blocks.destroy()
+        self.destroyed = True
+
+
+def create_matrix_free_augmented_operator(
+    blocks: PetscCondensedBlocks,
+    fine_operator: PETSc.Mat,
+) -> tuple[PETSc.Mat, _AugmentedDtnMatContext]:
+    """Create the action-only augmented ``[F C; D H]`` carrier."""
+
+    if fine_operator.getSize() != (blocks.n_fe, blocks.n_fe):
+        raise ValueError("fine action size does not match condensed blocks")
+    local_rows = blocks.b_fe.getLocalSize() + blocks.b_aux.getLocalSize()
+    size = blocks.n_fe + blocks.n_aux
+    context = _AugmentedDtnMatContext(blocks, fine_operator)
+    matrix = PETSc.Mat().createPython(
+        ((local_rows, size), (local_rows, size)),
+        context=context,
+        comm=fine_operator.getComm(),
+    )
+    matrix.setUp()
+    return matrix, context
+
+
 def create_matrix_free_condensed_operator(
     blocks: PetscCondensedBlocks,
     *,
