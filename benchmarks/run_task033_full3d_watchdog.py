@@ -79,6 +79,7 @@ from benchmarks.run_direct_memory_forensics import (
     _source_provenance,
     _stage_peaks,
 )
+from src.solvers.common_3d_utils import _write_progress_event
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -509,6 +510,7 @@ def _task037_f3_assembled_fgmres_port(
     screen_iterations: int,
     *,
     solver_profile: str = "assembled",
+    lifecycle_enabled: bool = False,
 ):
     from src.solvers.static_condensed_iterative import (
         solve_assembled_static_condensed_fgmres,
@@ -528,12 +530,30 @@ def _task037_f3_assembled_fgmres_port(
                 with history_path.open("a", encoding="utf-8") as stream:
                     stream.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
+        def observe_lifecycle(event, payload):
+            ledgers_by_rank = comm.gather(payload, root=0)
+            _write_progress_event(
+                run_dir,
+                comm,
+                stage=f"m0_{event}",
+                status="end",
+                extra={
+                    "task037_m0_lifecycle": True,
+                    "m0_event": event,
+                    "task037_m0_rank_ledgers_by_rank": (
+                        ledgers_by_rank if comm.rank == 0 else None
+                    ),
+                    **payload,
+                },
+            )
+
         snapshot, audit = solve_assembled_static_condensed_fgmres(
             request,
             screen_iterations=screen_iterations,
             residual_observer=observe,
             solver_profile=solver_profile,
             release_assembled_matrix=request.release_assembled_matrix,
+            lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
         )
         if comm.rank == 0:
             (run_dir / "task037_f3_core_audit.json").write_text(
@@ -722,6 +742,7 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_f3_screen": args.task037_f3_screen,
         "task037_f3_full": bool(args.task037_f3_full),
         "task037_f5b_released_profile": bool(args.task037_f5b_released_profile),
+        "task037_m0_lifecycle_audit": bool(args.task037_m0_lifecycle_audit),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -873,6 +894,7 @@ def _worker(args: argparse.Namespace) -> int:
                 if args.task037_f5b_released_profile
                 else "assembled"
             ),
+            lifecycle_enabled=args.task037_m0_lifecycle_audit,
         )
     elif args.task037_f1_direct_trace_oracle is not None:
         linear_solver_port = _task037_f1_direct_trace_oracle(
@@ -1019,6 +1041,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--task037-f3-screen", type=int, choices=(20, 100, 200))
     parser.add_argument("--task037-f3-full", action="store_true")
     parser.add_argument("--task037-f5b-released-profile", action="store_true")
+    parser.add_argument("--task037-m0-lifecycle-audit", action="store_true")
     parser.add_argument(
         "--task035d-case097-gate",
         action="store_true",
@@ -1238,6 +1261,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.task037_f5b_released_profile and not args.task037_f3_full:
         parser.error("--task037-f5b-released-profile requires --task037-f3-full.")
+    if args.task037_m0_lifecycle_audit and not (
+        args.task037_f3_full and args.task037_f5b_released_profile
+    ):
+        parser.error(
+            "--task037-m0-lifecycle-audit requires --task037-f3-full and "
+            "--task037-f5b-released-profile."
+        )
     if args.task035d_case097_gate:
         local_h_candidate = args.task035d_candidate_id in TASK035D_LOCAL_H_CANDIDATES
         plan_scope = (
@@ -2769,6 +2799,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.extend(("--task037-f3-screen", str(args.task037_f3_screen)))
     if args.task037_f5b_released_profile:
         command.append("--task037-f5b-released-profile")
+    if args.task037_m0_lifecycle_audit:
+        command.append("--task037-m0-lifecycle-audit")
     if args.task035d_case097_gate:
         plan_options = (
             (

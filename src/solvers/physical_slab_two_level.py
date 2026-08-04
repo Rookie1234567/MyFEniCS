@@ -715,6 +715,7 @@ class DistributedPhysicalSlabSmoother:
         interpolation: str = "basic",
         assembly_order: str = "combined",
         progress: Callable[[int, int], None] | None = None,
+        setup_observer: Callable[[str, dict[str, Any]], None] | None = None,
     ) -> None:
         if not subdomains:
             raise ValueError("distributed physical-slab smoother needs subdomains")
@@ -826,6 +827,61 @@ class DistributedPhysicalSlabSmoother:
         template.destroy()
 
         self._factors: list[_OwnedSubdomainFactor] = []
+        first_submatrix_reported = False
+        first_factor_reported = False
+
+        def report_first_submatrix(
+            submatrix: PETSc.Mat | None, has_factor: bool
+        ) -> None:
+            if setup_observer is None:
+                return
+            nonlocal first_submatrix_reported
+            if first_submatrix_reported:
+                return
+            first_submatrix_reported = True
+            payload = {
+                "global_matrix_rows": self.global_size,
+                "global_subdomain_count": len(normalized),
+                "rank_local_has_first_submatrix": has_factor,
+                "rank_local_first_submatrix_rows": None,
+                "rank_local_first_submatrix_cols": None,
+                "rank_local_first_submatrix_nnz": None,
+            }
+            if has_factor and submatrix is not None:
+                payload.update(
+                    {
+                        "rank_local_first_submatrix_rows": int(submatrix.getSize()[0]),
+                        "rank_local_first_submatrix_cols": int(submatrix.getSize()[1]),
+                        "rank_local_first_submatrix_nnz": int(
+                            submatrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"]
+                        ),
+                    }
+                )
+            setup_observer("first_owned_slab_submatrix_allocated", payload)
+
+        def report_first_factor(factor: _OwnedSubdomainFactor | None) -> None:
+            if setup_observer is None:
+                return
+            nonlocal first_factor_reported
+            if first_factor_reported:
+                return
+            first_factor_reported = True
+            payload = {
+                "rank_local_has_first_factor": factor is not None,
+                "rank_local_first_factor_subdomain": (
+                    None if factor is None else int(factor.subdomain)
+                ),
+                "rank_local_first_factor_rows": (
+                    None if factor is None else int(factor.indices.size)
+                ),
+                "rank_local_first_factor_matrix_nnz": (
+                    None if factor is None else int(factor.matrix_nnz)
+                ),
+                "rank_local_first_factor_nnz": (
+                    None if factor is None else int(factor.factor_nnz)
+                ),
+            }
+            setup_observer("first_owned_slab_factor_ready", payload)
 
         def build_factor(
             subdomain: int, indices: np.ndarray, submatrix: PETSc.Mat
@@ -852,7 +908,7 @@ class DistributedPhysicalSlabSmoother:
             solution = submatrix.createVecLeft()
             exact_fingerprint = _exact_seqaij_fingerprint(submatrix)
             local_solver_type = self.local_solver_types[subdomain]
-            matrix_nnz = int(submatrix.getInfo()["nz_used"])
+            matrix_nnz = int(submatrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"])
             factor_matrix: PETSc.Mat | None = None
             retained_matrix: PETSc.Mat | None = None
             retained_ksp: PETSc.KSP | None = None
@@ -887,7 +943,9 @@ class DistributedPhysicalSlabSmoother:
                 pc.setFactorLevels(int(ilu_levels))
                 pc.setFactorOrdering("rcm")
                 ksp.setUp()
-                factor_nnz = int(pc.getFactorMatrix().getInfo()["nz_used"])
+                factor_nnz = int(
+                    pc.getFactorMatrix().getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"]
+                )
                 retained_matrix = submatrix
                 retained_ksp = ksp
                 if self.factor_only_storage:
@@ -927,19 +985,32 @@ class DistributedPhysicalSlabSmoother:
                 submatrix = matrix.createSubMatrices([extraction_set])[0]
                 extraction_set.destroy()
                 if has_factor:
-                    self._factors.append(
-                        build_factor(self.local_subdomains[slot], indices, submatrix)
+                    if slot == 0:
+                        report_first_submatrix(submatrix, True)
+                    factor = build_factor(
+                        self.local_subdomains[slot], indices, submatrix
                     )
+                    if slot == 0:
+                        report_first_factor(factor)
+                    self._factors.append(factor)
                 else:
                     submatrix.destroy()
+                    if slot == 0:
+                        report_first_submatrix(None, False)
+                        report_first_factor(None)
         elif self.factor_only_storage:
-            for subdomain, indices in zip(
-                self.local_subdomains, local_indices, strict=True
+            for slot, (subdomain, indices) in enumerate(
+                zip(self.local_subdomains, local_indices, strict=True)
             ):
                 extraction_set = PETSc.IS().createGeneral(indices, comm=PETSc.COMM_SELF)
                 submatrix = matrix.createSubMatrices([extraction_set])[0]
                 extraction_set.destroy()
-                self._factors.append(build_factor(subdomain, indices, submatrix))
+                if slot == 0:
+                    report_first_submatrix(submatrix, True)
+                factor = build_factor(subdomain, indices, submatrix)
+                if slot == 0:
+                    report_first_factor(factor)
+                self._factors.append(factor)
         else:
             extraction_sets = [
                 PETSc.IS().createGeneral(indices, comm=PETSc.COMM_SELF)
@@ -948,13 +1019,24 @@ class DistributedPhysicalSlabSmoother:
             submatrices = matrix.createSubMatrices(extraction_sets)
             for index_set in extraction_sets:
                 index_set.destroy()
-            for subdomain, indices, submatrix in zip(
-                self.local_subdomains,
-                local_indices,
-                submatrices,
-                strict=True,
+            for slot, (subdomain, indices, submatrix) in enumerate(
+                zip(
+                    self.local_subdomains,
+                    local_indices,
+                    submatrices,
+                    strict=True,
+                )
             ):
-                self._factors.append(build_factor(subdomain, indices, submatrix))
+                if slot == 0:
+                    report_first_submatrix(submatrix, True)
+                factor = build_factor(subdomain, indices, submatrix)
+                if slot == 0:
+                    report_first_factor(factor)
+                self._factors.append(factor)
+        if not first_submatrix_reported:
+            report_first_submatrix(None, False)
+        if not first_factor_reported:
+            report_first_factor(None)
         self.comm.Barrier()
         if progress is not None:
             progress(len(normalized), len(normalized))
@@ -984,6 +1066,23 @@ class DistributedPhysicalSlabSmoother:
         self.exact_duplicate_factor_count = (
             len(self.factor_fingerprints) - self.unique_factor_classes
         )
+        if setup_observer is not None:
+            setup_observer(
+                "all_slab_factors_ready",
+                {
+                    "global_factor_rows": self.global_factor_rows,
+                    "global_factor_nnz": self.global_factor_nnz,
+                    "global_stored_factor_nnz": self.global_stored_factor_nnz,
+                    "global_unique_factor_classes": self.unique_factor_classes,
+                    "global_exact_duplicate_factor_count": (
+                        self.exact_duplicate_factor_count
+                    ),
+                    "rank_local_factor_count": len(self._factors),
+                    "rank_local_factor_rows": int(local_rows),
+                    "rank_local_factor_nnz": int(local_nnz),
+                    "rank_local_stored_factor_nnz": int(local_factor_nnz),
+                },
+            )
 
         if self.smoother_iterations > 1:
             self._inner_pc_context = _DistributedPhysicalSlabPcContext(self)

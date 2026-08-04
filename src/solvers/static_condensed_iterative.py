@@ -74,6 +74,7 @@ def solve_assembled_static_condensed_fgmres(
         "assembled", "assembled_setup_then_static_local_schur_matrix_free_solve"
     ] = "assembled",
     release_assembled_matrix: Callable[[], None] | None = None,
+    lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     if solver_profile not in (
         "assembled",
@@ -88,15 +89,106 @@ def solve_assembled_static_condensed_fgmres(
             "exact F5b profile requires an assembled-matrix release callback"
         )
     started = perf_counter()
+    comm = request.A.getComm().tompi4py()
+    returned_solution_transferred = False
+    live_state: dict[str, bool | int] = {
+        "borrowed_augmented_A": True,
+        "active_F": False,
+        "C": False,
+        "D": False,
+        "H": False,
+        "borrowed_augmented_rhs": True,
+        "extracted_active_rhs": False,
+        "extracted_aux_rhs": False,
+        "condensed_active_rhs": False,
+        "borrowed_retained_local_schur": False,
+        "fine_action": False,
+        "matrix_free_operator": False,
+        "basis": False,
+        "shifted_action": False,
+        "shift": False,
+        "slab_submatrices": 0,
+        "slab_factors": 0,
+        "coarse": False,
+        "solution": False,
+        "monitor_solution": False,
+        "residual_work": False,
+        "outer_ksp": False,
+        "outer_pc": False,
+        "recovered_auxiliary": False,
+        "augmented_solution": False,
+        "returned_augmented_solution": False,
+    }
+    if lifecycle_observer is not None:
+        live_state["borrowed_retained_local_schur"] = (
+            request.static_condensed_system.retained_local_schur_by_class is not None
+        )
+
+    def emit_lifecycle(event: str, **payload: Any) -> None:
+        if lifecycle_observer is not None:
+            payload["rank_local_live_objects"] = dict(live_state)
+            lifecycle_observer(
+                event,
+                {
+                    "rank_local_rank": int(comm.rank),
+                    "rank_count": int(comm.size),
+                    **payload,
+                },
+            )
+
+    def smoother_setup_observer(event: str, payload: dict[str, Any]) -> None:
+        if event == "first_owned_slab_submatrix_allocated":
+            live_state["slab_submatrices"] = int(
+                bool(payload["rank_local_has_first_submatrix"])
+            )
+        elif event == "first_owned_slab_factor_ready":
+            live_state["slab_submatrices"] = 0
+            live_state["slab_factors"] = int(
+                bool(payload["rank_local_has_first_factor"])
+            )
+        elif event == "all_slab_factors_ready":
+            live_state["slab_submatrices"] = 0
+            live_state["slab_factors"] = int(payload["rank_local_factor_count"])
+        emit_lifecycle(event, **payload)
+
     owned: list[Any] = []
     try:
         blocks = extract_petsc_condensed_blocks(
             request.A, request.b, n_fe=request.n_fe, n_aux=request.n_aux
         )
         owned.append(blocks)
+        fine = blocks.require_f()
+        matrix_blocks = {"F": fine, "C": blocks.C, "D": blocks.D, "H": blocks.H}
+        live_state.update(
+            active_F=True,
+            C=True,
+            D=True,
+            H=True,
+            extracted_active_rhs=True,
+            extracted_aux_rhs=True,
+        )
+        emit_lifecycle(
+            "F_C_D_H_extracted",
+            borrowed_A_already_finalized_at_port_entry=True,
+            global_active_rows=int(blocks.n_fe),
+            global_aux_rows=int(blocks.n_aux),
+            global_augmented_rows=int(request.A.getSize()[0]),
+            global_matrix_shapes={
+                name: [int(matrix.getSize()[0]), int(matrix.getSize()[1])]
+                for name, matrix in matrix_blocks.items()
+            },
+            rank_local_matrix_nnz_used={
+                name: int(matrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"])
+                for name, matrix in matrix_blocks.items()
+            },
+        )
         rhs = condensed_rhs(blocks)
         owned.append(rhs)
-        fine = blocks.require_f()
+        live_state["condensed_active_rhs"] = True
+        emit_lifecycle(
+            "condensed_active_rhs_ready",
+            global_condensed_rhs_size=int(rhs.getSize()),
+        )
         fine_action = fine
         fine_action_error = None
         if exact_profile:
@@ -118,16 +210,58 @@ def solve_assembled_static_condensed_fgmres(
                 raise ValueError(
                     "retained local Schur action failed the fine-action gate"
                 )
+        retained_schur_class_count = 0
+        retained_schur_bytes = 0
+        if lifecycle_observer is not None:
+            retained_schurs = (
+                request.static_condensed_system.retained_local_schur_by_class
+            )
+            if retained_schurs is None:
+                retained_schur_class_count = 0
+                retained_schur_bytes = 0
+            else:
+                retained_schur_class_count = len(retained_schurs)
+                retained_schur_bytes = sum(
+                    int(np.asarray(value).nbytes) for value in retained_schurs.values()
+                )
+            summed_rank_local_retained_schur_class_count = int(
+                comm.allreduce(retained_schur_class_count, op=MPI.SUM)
+            )
+            summed_rank_local_retained_schur_bytes = int(
+                comm.allreduce(retained_schur_bytes, op=MPI.SUM)
+            )
+        else:
+            summed_rank_local_retained_schur_class_count = None
+            summed_rank_local_retained_schur_bytes = None
+        live_state.update(
+            fine_action=True,
+        )
+        emit_lifecycle(
+            "local_schur_action_ready",
+            fine_action_relative_error=fine_action_error,
+            rank_local_retained_schur_class_count=retained_schur_class_count,
+            rank_local_retained_schur_bytes=retained_schur_bytes,
+            summed_rank_local_retained_schur_class_count=(
+                summed_rank_local_retained_schur_class_count
+            ),
+            summed_rank_local_retained_schur_bytes=summed_rank_local_retained_schur_bytes,
+        )
         operator, operator_context = create_matrix_free_condensed_operator(
             blocks, fine_operator=fine_action
         )
         owned.append(operator)
+        live_state["matrix_free_operator"] = True
         basis = build_active_trace_floquet_basis(
             request.static_condensed_system,
             request.function_space,
             request.config,
             request.floquet_data,
             fine,
+        )
+        live_state["basis"] = True
+        emit_lifecycle(
+            "basis_ready",
+            global_basis_dimension=len(basis),
         )
         subdomains, partition_audit = build_trace_aware_physical_slab_partition(
             request.static_condensed_system,
@@ -146,6 +280,7 @@ def solve_assembled_static_condensed_fgmres(
         )
         shift = diagonal.duplicate()
         owned.append(shift)
+        live_state["shift"] = True
         shift.getArray()[:] = -1j * 0.1 * np.maximum(absolute, 1.0e-12 * global_scale)
         diagonal.destroy()
         owned.remove(diagonal)
@@ -156,6 +291,7 @@ def solve_assembled_static_condensed_fgmres(
         owned.append(shifted_fine)
         owned.remove(shift)
         shifted_fine.setUp()
+        live_state["shifted_action"] = True
         smoother = DistributedPhysicalSlabSmoother(
             fine,
             subdomains,
@@ -169,19 +305,37 @@ def solve_assembled_static_condensed_fgmres(
             factor_only_storage=True,
             interpolation="basic",
             assembly_order="two_color",
+            setup_observer=(
+                smoother_setup_observer if lifecycle_observer is not None else None
+            ),
         )
         owned.append(smoother)
+        live_state["slab_factors"] = len(smoother.local_subdomains)
         coarse = SparseGalerkinTwoLevelPc(operator, smoother, basis, post_smooth=True)
         owned.append(coarse)
+        live_state["coarse"] = True
+        emit_lifecycle(
+            "coarse_operator_ready",
+            global_coarse_dimension=len(basis),
+        )
         assembled_matrix_released = False
         if exact_profile:
             blocks.release_f()
+            live_state["active_F"] = False
+            emit_lifecycle(
+                "F_released",
+            )
             release_assembled_matrix()
             assembled_matrix_released = True
+            live_state["borrowed_augmented_A"] = False
+            emit_lifecycle(
+                "A_released",
+            )
         solution = operator.createVecRight()
         monitor_solution = operator.createVecRight()
         residual_work = operator.createVecLeft()
         owned.extend((solution, monitor_solution, residual_work))
+        live_state.update(solution=True, monitor_solution=True, residual_work=True)
         solution.set(0.0)
         rhs_norm = float(rhs.norm())
         reported_history: list[tuple[int, float]] = []
@@ -196,6 +350,7 @@ def solve_assembled_static_condensed_fgmres(
             residual_observer(0, 1.0, initial_condensed)
         ksp = PETSc.KSP().create(comm)
         owned.append(ksp)
+        live_state["outer_ksp"] = True
         ksp.setOperators(operator)
         ksp.setType("fgmres")
         ksp.setGMRESRestart(90)
@@ -205,7 +360,12 @@ def solve_assembled_static_condensed_fgmres(
         pc = ksp.getPC()
         pc.setType(PETSc.PC.Type.PYTHON)
         pc.setPythonContext(coarse)
+        live_state["outer_pc"] = True
         ksp.setUp()
+        emit_lifecycle(
+            "outer_ksp_setup",
+            ksp_type=str(ksp.getType()),
+        )
         setup_seconds = perf_counter() - started
 
         def monitor(current: PETSc.KSP, iteration: int, residual_norm: float) -> None:
@@ -234,17 +394,32 @@ def solve_assembled_static_condensed_fgmres(
             condensed_samples.append((iterations, condensed))
             if residual_observer is not None:
                 residual_observer(iterations, reported, condensed)
+        emit_lifecycle(
+            "outer_ksp_solved",
+            converged_reason=reason,
+            iterations=iterations,
+            reported_relative_residual=reported,
+        )
 
         recovery_started = perf_counter()
         auxiliary = recover_petsc_auxiliary(blocks, solution)
         owned.append(auxiliary)
+        live_state["recovered_auxiliary"] = True
         augmented = (
             request.b.duplicate() if exact_profile else request.A.createVecRight()
         )
         owned.append(augmented)
+        live_state["augmented_solution"] = True
         combine_petsc_augmented_solution(blocks, solution, auxiliary, augmented)
+        emit_lifecycle(
+            "augmented_solution_recovered",
+        )
         full_augmented = full_augmented_relative_residual(
             blocks, solution, auxiliary, fine_operator=fine_action
+        )
+        emit_lifecycle(
+            "full_augmented_residual_complete",
+            full_augmented_true_residual=float(full_augmented),
         )
         recovery_seconds = perf_counter() - recovery_started
         smoother_audit = smoother.diagnostics
@@ -326,7 +501,38 @@ def solve_assembled_static_condensed_fgmres(
             reduced_residual_norm=condensed * rhs_norm,
         )
         owned.remove(augmented)
+        returned_solution_transferred = True
+        live_state["returned_augmented_solution"] = True
         return snapshot, audit
     finally:
         for item in reversed(owned):
             item.destroy()
+        for name in (
+            "active_F",
+            "C",
+            "D",
+            "H",
+            "extracted_active_rhs",
+            "extracted_aux_rhs",
+            "condensed_active_rhs",
+            "fine_action",
+            "matrix_free_operator",
+            "basis",
+            "shifted_action",
+            "shift",
+            "coarse",
+            "solution",
+            "monitor_solution",
+            "residual_work",
+            "outer_ksp",
+            "outer_pc",
+            "recovered_auxiliary",
+            "augmented_solution",
+        ):
+            live_state[name] = False
+        live_state["slab_factors"] = 0
+        emit_lifecycle(
+            "solver_owned_objects_released",
+            normal_completion=returned_solution_transferred,
+            returned_solution_transferred=returned_solution_transferred,
+        )

@@ -118,6 +118,14 @@ def test_parser_scope_and_worker_command(tmp_path):
     assert released.task037_f5b_released_profile
     released_command = watchdog._worker_command(released, tmp_path)
     assert released_command.count("--task037-f5b-released-profile") == 1
+    m0_args = full_args + [
+        "--task037-f5b-released-profile",
+        "--task037-m0-lifecycle-audit",
+    ]
+    m0 = watchdog._parse_args(m0_args)
+    assert m0.task037_m0_lifecycle_audit
+    m0_command = watchdog._worker_command(m0, tmp_path)
+    assert m0_command.count("--task037-m0-lifecycle-audit") == 1
     bad_iterations = valid.copy()
     bad_iterations[bad_iterations.index("--task037-f3-screen") + 1] = "3000"
     missing_caps = valid.copy()
@@ -131,6 +139,7 @@ def test_parser_scope_and_worker_command(tmp_path):
         base + ["--task037-f5b-released-profile"],
         valid + ["--task037-f5b-released-profile"],
         full_args + ["--task037-f3-screen", "20"],
+        full_args + ["--task037-m0-lifecycle-audit"],
     ):
         with pytest.raises(SystemExit):
             watchdog._parse_args(invalid)
@@ -138,7 +147,8 @@ def test_parser_scope_and_worker_command(tmp_path):
 
 def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
     iterations_seen = []
-    comm = SimpleNamespace(rank=0)
+    progress_events = []
+    comm = SimpleNamespace(rank=0, gather=lambda payload, root=0: [payload])
     petsc_comm = SimpleNamespace(tompi4py=lambda: comm)
 
     def owner_release():
@@ -156,6 +166,9 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         residual_observer = kwargs["residual_observer"]
         for iteration in (0, 10, 20):
             residual_observer(iteration, 1.0 / (iteration + 1), 0.5)
+        lifecycle_observer = kwargs["lifecycle_observer"]
+        for event in ("blocks_extracted", "solver_owned_objects_released"):
+            lifecycle_observer(event, {"rank_local_event": True})
         return object(), {"core": "audit"}
 
     def stage(*_args, **kwargs):
@@ -173,6 +186,11 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         "run_stage4b_block_grating_3d_case",
         stage,
     )
+    monkeypatch.setattr(
+        watchdog,
+        "_write_progress_event",
+        lambda *args, **kwargs: progress_events.append(kwargs),
+    )
     args = SimpleNamespace(
         run_dir=tmp_path,
         task037_f0_vector_observer=False,
@@ -181,6 +199,7 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         task037_f3_screen=None,
         task037_f3_full=True,
         task037_f5b_released_profile=True,
+        task037_m0_lifecycle_audit=True,
         task035d_nested_p_dwr_phase=None,
         task035d_selective_face_dwr_phase=None,
     )
@@ -201,6 +220,14 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
     assert json.loads((tmp_path / "task037_f3_core_audit.json").read_text()) == {
         "core": "audit"
     }
+    assert [item["extra"]["m0_event"] for item in progress_events] == [
+        "blocks_extracted",
+        "solver_owned_objects_released",
+    ]
+    assert all(
+        item["extra"]["task037_m0_rank_ledgers_by_rank"] == [{"rank_local_event": True}]
+        for item in progress_events
+    )
 
 
 def test_f3_qualification_uses_core_audit_gate():

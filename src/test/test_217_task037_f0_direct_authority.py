@@ -67,6 +67,7 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
             task037_f3_screen=None,
             task037_f3_full=False,
             task037_f5b_released_profile=False,
+            task037_m0_lifecycle_audit=False,
             task035d_nested_p_dwr_phase=None,
             task035d_selective_face_dwr_phase=None,
         )
@@ -95,6 +96,7 @@ class Task037F0DirectAuthorityTests(unittest.TestCase):
             task037_f3_screen=None,
             task037_f3_full=False,
             task037_f5b_released_profile=False,
+            task037_m0_lifecycle_audit=False,
             task035d_nested_p_dwr_phase=None,
             task035d_selective_face_dwr_phase=None,
         )
