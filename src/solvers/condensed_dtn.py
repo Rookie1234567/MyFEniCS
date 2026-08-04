@@ -4,7 +4,11 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+from mpi4py import MPI
 from petsc4py import PETSc
+
+
+_PROJECTED_BLOCK_STRUCTURAL_TOLERANCE = 1.0e-14
 
 
 TINY = np.finfo(float).tiny
@@ -368,6 +372,244 @@ class DtnBlockAssembler:
             self.n_fe,
             self.n_aux,
         )
+
+
+def project_condensed_blocks_to_coarse(
+    fine_blocks: PetscCondensedBlocks,
+    transfer,
+    coarse_fine_matrix: PETSc.Mat,
+) -> tuple[PetscCondensedBlocks, dict[str, Any]]:
+    """Project p6 ``C/D/H`` and RHS through an owner-local transfer.
+
+    ``coarse_fine_matrix`` is the already assembled p2 ``F2``.  The returned
+    blocks own that matrix and contain ``C2=P^H C6``, ``D2=D6 P``, and a copy
+    of the small ``H`` block.  Only one fine/coarse scratch pair is retained;
+    no collection of full p6 modal vectors is created.
+    """
+
+    if fine_blocks.F is not None:
+        raise ValueError("coarse projection requires a non-materialized fine F")
+    if fine_blocks.n_aux < 1:
+        raise ValueError("coarse projection requires at least one auxiliary mode")
+    coarse_rows = int(coarse_fine_matrix.getSize()[0])
+    if tuple(map(int, coarse_fine_matrix.getSize())) != (coarse_rows, coarse_rows):
+        raise ValueError("p2 fine matrix must be square")
+    if coarse_rows != int(transfer.coarse_constraints.active_rows):
+        raise ValueError("p2 matrix size does not match the transfer")
+    fine_rows = int(fine_blocks.n_fe)
+    if fine_rows != int(transfer.fine_constraints.active_rows):
+        raise ValueError("p6 block size does not match the transfer")
+    if tuple(map(int, fine_blocks.C.getSize())) != (fine_rows, fine_blocks.n_aux):
+        raise ValueError("fine C block dimensions are inconsistent")
+    if tuple(map(int, fine_blocks.D.getSize())) != (fine_blocks.n_aux, fine_rows):
+        raise ValueError("fine D block dimensions are inconsistent")
+
+    comm = fine_blocks.C.getComm().tompi4py()
+    coarse_start, coarse_end = map(int, coarse_fine_matrix.getOwnershipRange())
+    local_coarse_rows = coarse_end - coarse_start
+    aux_owner = comm.size - 1
+    local_aux_columns = fine_blocks.n_aux if comm.rank == aux_owner else 0
+
+    fine_scratch = fine_blocks.C.createVecLeft()
+    d_layout_probe = fine_blocks.D.createVecRight()
+    if (
+        int(d_layout_probe.getSize()) != int(fine_scratch.getSize())
+        or tuple(map(int, d_layout_probe.getOwnershipRange()))
+        != tuple(map(int, fine_scratch.getOwnershipRange()))
+    ):
+        d_layout_probe.destroy()
+        fine_scratch.destroy()
+        raise ValueError("fine C/D blocks do not share one active-vector layout")
+    d_layout_probe.destroy()
+    coarse_scratch = coarse_fine_matrix.createVecLeft()
+    local_coarse_ids = np.arange(
+        coarse_start,
+        coarse_end,
+        dtype=PETSc.IntType,
+    )
+
+    c_entries: list[tuple[np.ndarray, np.ndarray]] = []
+    discarded_count_local = 0
+    discarded_max_local = 0.0
+    for aux_index in range(fine_blocks.n_aux):
+        fine_blocks.C.getColumnVector(aux_index, fine_scratch)
+        transfer.apply_adjoint(fine_scratch, coarse_scratch)
+        values = np.asarray(coarse_scratch.getArray(readonly=True))
+        keep = np.abs(values) > _PROJECTED_BLOCK_STRUCTURAL_TOLERANCE
+        discarded = np.abs(values[~keep])
+        discarded_count_local += int(len(discarded))
+        discarded_max_local = max(
+            discarded_max_local,
+            float(np.max(discarded, initial=0.0)),
+        )
+        c_entries.append(
+            (
+                local_coarse_ids[keep].copy(),
+                np.asarray(values[keep], dtype=PETSc.ScalarType).copy(),
+            )
+        )
+    c_row_nnz = np.zeros(local_coarse_rows, dtype=PETSc.IntType)
+    for support, _values in c_entries:
+        if len(support):
+            np.add.at(c_row_nnz, support - coarse_start, 1)
+    c_diag = c_row_nnz if comm.rank == aux_owner else np.zeros_like(c_row_nnz)
+    c_offdiag = (
+        np.zeros_like(c_row_nnz)
+        if comm.rank == aux_owner
+        else c_row_nnz
+    )
+    coarse_C = PETSc.Mat().createAIJ(
+        size=((local_coarse_rows, coarse_rows), (local_aux_columns, fine_blocks.n_aux)),
+        nnz=(c_diag, c_offdiag),
+        comm=comm,
+    )
+    coarse_C.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
+    for aux_index, (support, values) in enumerate(c_entries):
+        if len(support):
+            coarse_C.setValues(
+                support,
+                np.asarray([aux_index], dtype=PETSc.IntType),
+                values.reshape((-1, 1)),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+    coarse_C.assemble()
+
+    aux_unit = fine_blocks.D.createVecLeft()
+    d_entries: list[tuple[np.ndarray, np.ndarray]] = []
+    for aux_index in range(fine_blocks.n_aux):
+        aux_unit.set(0.0)
+        if comm.rank == aux_owner:
+            aux_unit.setValue(aux_index, PETSc.ScalarType(1.0))
+        aux_unit.assemble()
+        fine_blocks.D.multHermitian(aux_unit, fine_scratch)
+        transfer.apply_adjoint(fine_scratch, coarse_scratch)
+        values = np.asarray(coarse_scratch.getArray(readonly=True))
+        keep = np.abs(values) > _PROJECTED_BLOCK_STRUCTURAL_TOLERANCE
+        discarded = np.abs(values[~keep])
+        discarded_count_local += int(len(discarded))
+        discarded_max_local = max(
+            discarded_max_local,
+            float(np.max(discarded, initial=0.0)),
+        )
+        d_entries.append(
+            (
+                local_coarse_ids[keep].copy(),
+                np.asarray(
+                    np.conjugate(values[keep]),
+                    dtype=PETSc.ScalarType,
+                ).copy(),
+            )
+        )
+    support_lengths = comm.allgather(
+        tuple(int(len(support)) for support, _values in d_entries)
+    )
+    if comm.rank == aux_owner:
+        d_diag = np.asarray(
+            support_lengths[comm.rank],
+            dtype=PETSc.IntType,
+        )
+        d_offdiag = np.asarray(
+            [
+                sum(int(packet[index]) for packet in support_lengths)
+                - int(d_diag[index])
+                for index in range(fine_blocks.n_aux)
+            ],
+            dtype=PETSc.IntType,
+        )
+        local_aux_rows = fine_blocks.n_aux
+    else:
+        d_diag = np.empty(0, dtype=PETSc.IntType)
+        d_offdiag = np.empty(0, dtype=PETSc.IntType)
+        local_aux_rows = 0
+    coarse_D = PETSc.Mat().createAIJ(
+        size=((local_aux_rows, fine_blocks.n_aux), (local_coarse_rows, coarse_rows)),
+        nnz=(d_diag, d_offdiag),
+        comm=comm,
+    )
+    coarse_D.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
+    for aux_index, (support, values) in enumerate(d_entries):
+        if len(support):
+            coarse_D.setValues(
+                np.asarray([aux_index], dtype=PETSc.IntType),
+                support,
+                values.reshape((1, -1)),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+    coarse_D.assemble()
+    scratch_fine_vector_bytes_local = int(
+        fine_scratch.getLocalSize() * np.dtype(PETSc.ScalarType).itemsize
+    )
+    scratch_coarse_vector_bytes_local = int(
+        coarse_scratch.getLocalSize() * np.dtype(PETSc.ScalarType).itemsize
+    )
+    payload_lower_bound_bytes_local = int(
+        sum(
+            support.nbytes + values.nbytes
+            for support, values in (*c_entries, *d_entries)
+        )
+    )
+    discarded_count_global = int(
+        comm.allreduce(discarded_count_local, op=MPI.SUM)
+    )
+    discarded_max_global = float(
+        comm.allreduce(discarded_max_local, op=MPI.MAX)
+    )
+    aux_unit.destroy()
+    fine_scratch.destroy()
+
+    coarse_H = fine_blocks.H.copy()
+    transfer.apply_adjoint(fine_blocks.b_fe, coarse_scratch)
+    coarse_b_fe = coarse_scratch
+    coarse_b_aux = fine_blocks.b_aux.copy()
+    blocks = PetscCondensedBlocks(
+        coarse_fine_matrix,
+        coarse_C,
+        coarse_D,
+        coarse_H,
+        coarse_b_fe,
+        coarse_b_aux,
+        coarse_rows,
+        fine_blocks.n_aux,
+    )
+    c_info = coarse_C.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
+    d_info = coarse_D.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
+    audit = {
+        "status": "p2_projected_condensed_blocks",
+        "global_p6_transfer_materialized": False,
+        "global_p6_matrix_materialized": False,
+        "global_basis_sweep": False,
+        "projection_mode_count": int(fine_blocks.n_aux),
+        "c2_nnz_used": int(c_info.get("nz_used", 0.0)),
+        "d2_nnz_used": int(d_info.get("nz_used", 0.0)),
+        "c2_local_support_count_sum": int(
+            sum(len(support) for support, _values in c_entries)
+        ),
+        "d2_local_support_count_sum": int(
+            sum(len(support) for support, _values in d_entries)
+        ),
+        "scratch_fine_vector_bytes_local": scratch_fine_vector_bytes_local,
+        "scratch_coarse_vector_bytes_local": scratch_coarse_vector_bytes_local,
+        "projected_payload_lower_bound_bytes_local": payload_lower_bound_bytes_local,
+        "projected_payload_lower_bound_bytes_global": int(
+            comm.allreduce(payload_lower_bound_bytes_local, op=MPI.SUM)
+        ),
+        "structural_zero_tolerance": _PROJECTED_BLOCK_STRUCTURAL_TOLERANCE,
+        "structural_zero_discarded_candidate_count": discarded_count_global,
+        "structural_zero_discarded_candidate_max_abs": discarded_max_global,
+        "c2_petsc_memory_bytes": int(c_info.get("memory", 0.0)),
+        "d2_petsc_memory_bytes": int(d_info.get("memory", 0.0)),
+        "petsc_memory_info_available": (
+            float(c_info.get("memory", 0.0)) > 0.0
+            and float(d_info.get("memory", 0.0)) > 0.0
+        ),
+        "small_h_bytes": int(
+            fine_blocks.n_aux
+            * fine_blocks.n_aux
+            * np.dtype(PETSc.ScalarType).itemsize
+        ),
+        "fine_scratch_vectors_peak": 1,
+    }
+    return blocks, audit
 
 
 def combine_petsc_augmented_solution(

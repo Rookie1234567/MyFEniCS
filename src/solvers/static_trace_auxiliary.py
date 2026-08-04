@@ -19,11 +19,16 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from .hcurl_assembly_time_condensation import (
+    _distributed_trace_preallocation,
     _cell_trace_expansion,
     TraceConstraintMap,
 )
 
-__all__ = ("OwnerLocalTraceTransfer", "build_p2_to_p6_active_trace_transfer")
+__all__ = (
+    "OwnerLocalTraceTransfer",
+    "build_p2_galerkin_fine_matrix",
+    "build_p2_to_p6_active_trace_transfer",
+)
 
 STRUCTURAL_ZERO_TOLERANCE = 1.0e-14
 
@@ -93,6 +98,27 @@ def _oriented_trace_matrix(
     return result
 
 
+def _actual_p2_to_p6_interpolation(coarse_space, fine_space) -> np.ndarray:
+    """Return the construction-time Basix p2-to-p6 interpolation operator."""
+
+    coarse_basix_element = coarse_space.ufl_element().basix_element
+    fine_basix_element = fine_space.ufl_element().basix_element
+    interpolation = np.asarray(
+        basix.compute_interpolation_operator(
+            coarse_basix_element,
+            fine_basix_element,
+        ),
+        dtype=np.complex128,
+    )
+    expected_shape = (
+        int(fine_space.element.space_dimension),
+        int(coarse_space.element.space_dimension),
+    )
+    if interpolation.shape != expected_shape:
+        raise RuntimeError("Basix p2-to-p6 interpolation shape is inconsistent")
+    return interpolation
+
+
 def _row_entries(
     active_ids: np.ndarray,
     values: np.ndarray,
@@ -117,6 +143,203 @@ def _row_entries(
         len(discarded),
         max(discarded, default=0.0),
     )
+
+
+def build_p2_galerkin_fine_matrix(
+    fine_condensed,
+    coarse_space,
+    fine_space,
+    coarse_constraints: TraceConstraintMap,
+) -> tuple[PETSc.Mat, dict[str, Any]]:
+    """Assemble ``F2 = P^H F6 P`` from retained p6 cell Schur blocks.
+
+    ``fine_condensed`` must be the action-only p6 condensation.  The retained
+    tensors use the stored, oriented p6 trace ordering.  Each owned cell is
+    projected with the same construction-time Basix interpolation used by
+    :func:`build_p2_to_p6_active_trace_transfer`; only the local projected
+    block is held during PETSc insertion.
+    """
+
+    _validate_space(coarse_space, 2)
+    _validate_space(fine_space, 6)
+    if coarse_space.mesh is not fine_space.mesh:
+        raise ValueError("p2 and p6 Galerkin spaces must share one mesh")
+    if fine_condensed.matrix is not None:
+        raise ValueError("p2 Galerkin projection requires no global p6 matrix")
+    schurs = fine_condensed.retained_local_schur_by_class
+    if schurs is None:
+        raise ValueError("p2 Galerkin projection requires retained local Schur data")
+
+    comm = coarse_space.mesh.comm
+    topology = fine_space.mesh.topology
+    topology.create_entity_permutations()
+    cell_info = np.asarray(topology.get_cell_permutation_info(), dtype=np.uint32)
+    owned_cells = int(topology.index_map(topology.dim).size_local)
+    if len(fine_condensed.cell_recovery_maps) != owned_cells:
+        raise ValueError("retained p6 cells do not match owned mesh cells")
+    if len(cell_info) < owned_cells:
+        raise ValueError("p6 cell permutation metadata is incomplete")
+
+    coarse_trace, coarse_interior = _trace_and_interior_positions(coarse_space)
+    fine_trace, _fine_interior = _trace_and_interior_positions(fine_space)
+    interpolation = _actual_p2_to_p6_interpolation(coarse_space, fine_space)
+    active_counts = tuple(
+        int(value)
+        for value in comm.allgather(
+            len(coarse_constraints.owned_active_original_dofs)
+        )
+    )
+    active_rows = int(sum(active_counts))
+    if active_rows != int(coarse_constraints.active_rows):
+        raise ValueError("p2 active ownership does not match its constraint map")
+
+    cell_active_ids: list[np.ndarray] = []
+    for cell in range(owned_cells):
+        coarse_global = _global_cell_dofs(coarse_space, cell)
+        coarse_trace_global = coarse_global[coarse_trace]
+        active_ids, _expansion, _identity = _cell_trace_expansion(
+            coarse_trace_global,
+            coarse_constraints,
+        )
+        if len(active_ids) == 0:
+            raise ValueError("a p2 cell has no active trace rows")
+        cell_active_ids.append(np.asarray(active_ids, dtype=PETSc.IntType))
+
+    diagonal_nnz, off_diagonal_nnz, preallocation = (
+        _distributed_trace_preallocation(
+            comm,
+            tuple(cell_active_ids),
+            active_counts=active_counts,
+            appended_global_rows=0,
+            appended_support_owned_cell_groups=(),
+            appended_support_group_by_row=(),
+        )
+    )
+    local_rows = int(active_counts[comm.rank])
+    matrix = PETSc.Mat().createAIJ(
+        size=((local_rows, active_rows), (local_rows, active_rows)),
+        nnz=(diagonal_nnz, off_diagonal_nnz),
+        comm=comm,
+    )
+    matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
+
+    max_temporary_bytes_local = 0
+    max_interior_dependency_local = 0.0
+    projected_cells = 0
+    for cell, active_ids in enumerate(cell_active_ids):
+        recovery = fine_condensed.cell_recovery_maps[cell]
+        schur = schurs.get(recovery.class_key)
+        if schur is None:
+            raise ValueError("retained p6 Schur class is missing")
+        fine_global = _global_cell_dofs(fine_space, cell)
+        fine_trace_global = fine_global[fine_trace]
+        if not np.array_equal(
+            np.asarray(recovery.trace_original_dofs, dtype=np.int64),
+            np.asarray(fine_trace_global, dtype=np.int64),
+        ):
+            raise ValueError(
+                "retained p6 trace ordering differs from stored fine trace DoFs"
+            )
+        if tuple(map(int, schur.shape)) != (len(fine_trace), len(fine_trace)):
+            raise ValueError("retained p6 Schur shape does not match trace ordering")
+        coarse_global = _global_cell_dofs(coarse_space, cell)
+        coarse_trace_global = coarse_global[coarse_trace]
+        coarse_active_ids, expansion, _identity = _cell_trace_expansion(
+            coarse_trace_global,
+            coarse_constraints,
+        )
+        if not np.array_equal(active_ids, coarse_active_ids):
+            raise RuntimeError("p2 cell active ordering changed between projection passes")
+        local_full = _oriented_trace_matrix(
+            coarse_space,
+            fine_space,
+            interpolation,
+            np.arange(int(coarse_space.element.space_dimension), dtype=np.int32),
+            fine_trace,
+            int(cell_info[cell]),
+        )
+        dependency = float(
+            np.max(np.abs(local_full[:, coarse_interior]), initial=0.0)
+        )
+        max_interior_dependency_local = max(
+            max_interior_dependency_local,
+            dependency,
+        )
+        if dependency > 1.0e-12:
+            raise NotImplementedError(
+                "p2 cell-interior DoFs contribute to the p6 trace transfer"
+            )
+        G = np.asarray(
+            local_full[:, coarse_trace] @ expansion.toarray(),
+            dtype=np.complex128,
+        )
+        projected = np.asarray(G.conjugate().T @ schur @ G, dtype=np.complex128)
+        matrix.setValues(
+            active_ids,
+            active_ids,
+            np.asarray(projected, dtype=PETSc.ScalarType),
+            addv=PETSc.InsertMode.ADD_VALUES,
+        )
+        max_temporary_bytes_local = max(
+            max_temporary_bytes_local,
+            int(local_full.nbytes + G.nbytes + projected.nbytes),
+        )
+        projected_cells += 1
+    matrix.assemble()
+
+    info = matrix.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
+    local_info = matrix.getInfo(PETSc.Mat.InfoType.LOCAL)
+    nz_used = int(info.get("nz_used", 0.0))
+    nz_allocated = int(info.get("nz_allocated", nz_used))
+    memory_bytes = float(info.get("memory", 0.0))
+    local_nz_used = int(local_info.get("nz_used", 0.0))
+    local_rows = int(matrix.getLocalSize()[0])
+    payload_lower_bound_bytes_local = int(
+        local_nz_used
+        * (np.dtype(PETSc.ScalarType).itemsize + np.dtype(PETSc.IntType).itemsize)
+        + (local_rows + 1) * np.dtype(PETSc.IntType).itemsize
+    )
+    retained_count_local = len(schurs)
+    retained_bytes_local = sum(int(value.nbytes) for value in schurs.values())
+    audit = {
+        "status": "p2_galerkin_from_retained_p6_cell_schur",
+        "p2_active_rows": int(active_rows),
+        "p6_active_rows": int(fine_condensed.active_rows),
+        "owned_cells_local": int(projected_cells),
+        "projected_cells_global": int(
+            comm.allreduce(projected_cells, op=MPI.SUM)
+        ),
+        "global_p6_matrix_materialized": False,
+        "global_p6_transfer_materialized": False,
+        "global_basis_sweep": False,
+        "local_projected_cell_block": True,
+        "preallocation_status": "executed_existing_trace_preallocation",
+        "preallocated_structural_nnz": int(
+            preallocation["preallocated_structural_nnz"]
+        ),
+        "matrix_nnz_used": nz_used,
+        "matrix_nnz_allocated": nz_allocated,
+        "petsc_memory_bytes": int(memory_bytes),
+        "petsc_memory_info_available": float(info.get("memory", 0.0)) > 0.0,
+        "matrix_payload_lower_bound_bytes_local": payload_lower_bound_bytes_local,
+        "matrix_payload_lower_bound_bytes_global": int(
+            comm.allreduce(payload_lower_bound_bytes_local, op=MPI.SUM)
+        ),
+        "max_cell_temporary_bytes": int(
+            comm.allreduce(max_temporary_bytes_local, op=MPI.MAX)
+        ),
+        "trace_interior_dependency_max": float(
+            comm.allreduce(max_interior_dependency_local, op=MPI.MAX)
+        ),
+        "retained_p6_schur_class_count_local": int(retained_count_local),
+        "retained_p6_schur_class_count_sum": int(
+            comm.allreduce(retained_count_local, op=MPI.SUM)
+        ),
+        "retained_p6_schur_bytes_sum": int(
+            comm.allreduce(retained_bytes_local, op=MPI.SUM)
+        ),
+    }
+    return matrix, audit
 
 
 @dataclass
@@ -218,21 +441,7 @@ def build_p2_to_p6_active_trace_transfer(
     comm = coarse_space.mesh.comm
     coarse_trace, coarse_interior = _trace_and_interior_positions(coarse_space)
     fine_trace, _fine_interior = _trace_and_interior_positions(fine_space)
-    coarse_basix_element = coarse_space.ufl_element().basix_element
-    fine_basix_element = fine_space.ufl_element().basix_element
-    interpolation = np.asarray(
-        basix.compute_interpolation_operator(
-            coarse_basix_element,
-            fine_basix_element,
-        ),
-        dtype=np.complex128,
-    )
-    expected_shape = (
-        int(fine_space.element.space_dimension),
-        int(coarse_space.element.space_dimension),
-    )
-    if interpolation.shape != expected_shape:
-        raise RuntimeError("Basix p2-to-p6 interpolation shape is inconsistent")
+    interpolation = _actual_p2_to_p6_interpolation(coarse_space, fine_space)
 
     topology = fine_space.mesh.topology
     topology.create_entity_permutations()
