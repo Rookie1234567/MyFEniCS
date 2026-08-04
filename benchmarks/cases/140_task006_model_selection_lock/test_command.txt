@@ -1,0 +1,1 @@
+source scripts/activate_myfenics_surrogate_wsl.sh && source .venv-surrogate-cpu/bin/activate && PYTHONPATH=src python benchmarks/cases/140_task006_model_selection_lock/create_lock.py

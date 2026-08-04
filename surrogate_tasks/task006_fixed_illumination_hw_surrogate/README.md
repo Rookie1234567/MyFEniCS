@@ -3,14 +3,21 @@
 ## 状态
 
 ```text
-status = training_only_m2_complete_review_pending
+status = controlled_negative_blind12_completed_review_pending
 execution_branch = codex/only-one-13p5nm-surrogate-inversion
 predecessor = Task005 Review V2
-purpose = build a validated 2D h/w forward surrogate at fixed selected illuminations
-formal inversion = not authorized in first execution
-arbitrary-angle surrogate = forbidden
-blind geometry FEM = forbidden before training-only review
+purpose = fixed A05/A07/A09 S-polarized h/w forward surrogate qualification
+model_lock = created before blind, immutable after blind
+blind = 36 attempted, 34 pass, 2 true-residual failures
+formal inversion = not authorized
+active learning = not authorized
 ```
+
+本任务已经完成一次且仅一次的 12 个 blind geometry × A05/A07/A09 批次。由于
+`117.5,17.25/A07` 和 `117.5,17.25/A09` 的固定真实残差 Gate
+`true_residual_le_1e-9` 为 false，本任务按 controlled-negative 停止。负结果
+保留在 `outcomes/TASK006_BLIND_FAILURE_REPORT.json`；Case141 checker 的
+`pass` 只表示证据身份和失败分类正确，不表示代理资格通过。
 
 ## 固定物理与照明
 
@@ -32,68 +39,36 @@ MPI2 / thread1
 observable = task002.fixed-n0-orders.v3
 ```
 
-## 输入与输出
+## 输入与输出合同
 
-输入：
+输入只有 `(height_nm, width_nm)`。S0 输出每个固定照明的
+`R_total, T_total, A_balance`，使用 log-ratio composition latent 和
+softmax 恢复；S0 同时是 production S1 的唯一 side-total authority。S1 输出
+冻结反射/透射 m=0 primary channel 的 selected power、other power、side total
+和逐点 ledger residual。任何 failed FEM 都不能生成 production sample。
 
-```text
-(height_nm, width_nm)
-```
+## 已完成阶段
 
-输出分成两个互不重复的生产合同：
+- M0/M1：49 点 mother grid、37 点 training、12 点 blind 设计冻结；79 个新
+  FEM 和 32 条 exact reuse 建立不可变 train37 dataset。
+- M2R：S0/S1 authority 修正、geometry folds 冻结、固定六候选 training-only
+  CV、uncertainty 和 synthetic recovery 完成；M2R selected candidate 为
+  `legendre_3`。Case139 deterministic replay 通过。
+- model lock：`TASK006_MODEL_SELECTION_LOCK.json` 在 blind 前创建并绑定所有
+  dataset、solver、合同、fold、candidate 和 blind tuple identity。
+- blind：固定锁和 forward SHA 下串行执行 36 个 FEM；Case141 checker 独立确认
+  34 个 success、2 个 true-residual failures，无调参或 response leakage。
 
-```text
-S0 aggregate:
-    A05/A07/A09 的 R_total, T_total, A_balance
+完整结果、Gate 数值、失败 formal records 和停止边界见
+`outcomes/summary.md`、`outcomes/TASK006_BLIND_FAILURE_REPORT.json` 和
+`response_v2.md`。
 
-S1 robust order-total:
-    Task005 M1 冻结的可测 fixed-order total powers
-```
-
-M2 弱通道仅作诊断。不得在一个正式 likelihood 中同时重复计入 aggregate 与其 order-total 总和。
-
-## 第一轮执行范围
-
-```text
-M0  Task005最终metadata closeout；冻结Task006几何设计与复用合同
-M1  建立37个training geometries的三照明数据
-M2  training-only surrogate comparison、grouped CV和synthetic recovery
-STOP for review
-```
-
-第一轮明确禁止：
+## 明确禁止
 
 ```text
-12个blind geometry FEM
-geometry active learning
-正式Bayesian inversion
-实验数据拟合
-连续角度输入
-P偏振、波长、材料或更多结构参数扩展
+不得重跑失败 blind 点或用其调参后再次宣称 blind validation
+不得主动加点或开始 Task007
+不得开始正式 Bayesian inversion
+不得扩展连续角度、P 偏振、波长、材料或新的几何参数
+不得访问 Task003 frozen validation
 ```
-
-完整执行合同见 `task.md`。
-
-## 当前 M2 结果与停止边界
-
-M0、M1 和 M2 已完成。37 个 training geometry 的 111 条三照明记录由
-79 个新的、逐一串行运行的 FEM 结果和 32 条 exact reuse 记录组成；12 个
-blind geometry 没有读取或运行。M2 使用 geometry-grouped 五折 CV，只在
-`.venv-surrogate-cpu` 中进行 CPU 训练，不依赖 CUDA。
-
-训练候选中 Matérn-5/2 ARD exact GP 的 training-only Gate 通过，并按冻结
-selection score 被选为当前候选；degree-2 orthogonal-trend + GP residual
-也通过，但分数较差。Legendre degree 2/3/4 与 local RBF 没有同时满足
-精度和不确定度 Gate。S0 aggregate 使用 log-ratio composition，S1 使用
-side-total 加冻结 m=0 primary channel fraction，两个合同独立评分。
-
-held-out synthetic h/w recovery 的全部 37 个外层测试点也通过收敛与误差
-Gate（p95 height `0.000677341 nm`、p95 width `0.000137901 nm`，最大误差
-分别 `0.000986796 nm` 和 `0.000217014 nm`，rejected `0`）。这些是
-training-only synthetic 诊断，不是 blind validation 或实验误差证明。
-
-当前仍是 `training_candidate_review_pending`：不创建正式 model lock，
-不运行 12 个 blind FEM，不做主动加点、正式反演或 Task007。证据见
-`outcomes/TRAIN37_MODEL_COMPARISON.json`、`TRAIN37_OOF_PREDICTIONS.json`、
-`TRAIN37_UNCERTAINTY.json`、`TRAIN37_SYNTHETIC_RECOVERY.json` 和
-`TRAINING_MODEL_SELECTION_CANDIDATE.json`。

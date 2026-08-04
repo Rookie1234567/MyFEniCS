@@ -1,0 +1,3 @@
+source scripts/activate_myfenics_surrogate_wsl.sh
+source .venv-surrogate-cpu/bin/activate
+PYTHONPATH=src python benchmarks/cases/141_task006_blind12_forward/checker.py

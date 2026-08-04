@@ -1,0 +1,3310 @@
+{
+  "schema_version": "task006.train37-synthetic-recovery-v2",
+  "candidate": "legendre_3",
+  "records": [
+    {
+      "fold": 0,
+      "geometry_index": 0,
+      "truth_geometry": [
+        115.0,
+        16.0
+      ],
+      "estimate": [
+        115.0,
+        16.00050145223779
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": 0.0005014522377884134,
+      "objective_S1_N1": 0.0005770997883656783,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005770997883831267
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005770997883860299
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005770997883656783
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005770997883870231
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005770997883887016
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005770997883831267
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 0.0006131005225990671,
+      "S0_N2_objective_at_estimate": 8.765765879581927e-05,
+      "S1_N2_objective_at_estimate": 8.238192144025298e-05
+    },
+    {
+      "fold": 0,
+      "geometry_index": 5,
+      "truth_geometry": [
+        115.0,
+        17.5
+      ],
+      "estimate": [
+        115.00060127858976,
+        17.500035338551218
+      ],
+      "height_error_nm": 0.0006012785897553385,
+      "width_error_nm": 3.533855121773399e-05,
+      "objective_S1_N1": 3.6145407919288693e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.6145407919288693e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.61454079440131e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.614540796863189e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.614540791930761e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.6145407925551784e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            17.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.614540792001299e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 3.838438347850792e-05,
+      "S0_N2_objective_at_estimate": 6.189386396835788e-06,
+      "S1_N2_objective_at_estimate": 5.8280016055229875e-06
+    },
+    {
+      "fold": 0,
+      "geometry_index": 10,
+      "truth_geometry": [
+        118.75,
+        18.0
+      ],
+      "estimate": [
+        118.74922256204171,
+        18.0
+      ],
+      "height_error_nm": -0.0007774379582912161,
+      "width_error_nm": 0.0,
+      "objective_S1_N1": 1.544453682638902e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.544453683574403e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.544453682638902e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.544453800442146e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.544453684363788e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.5444536830079975e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            118.5,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.544453817321684e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.271580651235547e-05,
+      "S0_N2_objective_at_estimate": 2.0835411311807084e-06,
+      "S1_N2_objective_at_estimate": 2.3966998890062344e-06
+    },
+    {
+      "fold": 0,
+      "geometry_index": 15,
+      "truth_geometry": [
+        122.5,
+        16.0
+      ],
+      "estimate": [
+        122.49852625830746,
+        16.0
+      ],
+      "height_error_nm": -0.0014737416925356683,
+      "width_error_nm": 0.0,
+      "objective_S1_N1": 2.8496638720349292e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.8496638720892924e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.8496638720393907e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.84966387416817e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.8496638721247238e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.8496638720349292e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            122.5,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.849663872037892e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.9543665393252126e-05,
+      "S0_N2_objective_at_estimate": 6.129275357446954e-06,
+      "S1_N2_objective_at_estimate": 5.751833695370163e-06
+    },
+    {
+      "fold": 0,
+      "geometry_index": 20,
+      "truth_geometry": [
+        125.0,
+        17.0
+      ],
+      "estimate": [
+        125.0,
+        16.99999217243441
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": -7.827565589479946e-06,
+      "objective_S1_N1": 8.020195705857127e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.020195709845837e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.020195715107511e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.020195709827435e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.02019570890308e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.02019570956209e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.020195705857127e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 8.775043474832205e-06,
+      "S0_N2_objective_at_estimate": 1.5969137758320553e-06,
+      "S1_N2_objective_at_estimate": 1.4985313051811137e-06
+    },
+    {
+      "fold": 0,
+      "geometry_index": 25,
+      "truth_geometry": [
+        118.75,
+        17.0
+      ],
+      "estimate": [
+        118.75003525790544,
+        17.00001506806252
+      ],
+      "height_error_nm": 3.525790543790208e-05,
+      "width_error_nm": 1.5068062520384728e-05,
+      "objective_S1_N1": 1.4527395350672213e-07,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.4527395351812526e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.4527395557269383e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.4527401954728651e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.452739554220185e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.4527395410051708e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            118.5,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.4527395350672213e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.2023874592184e-07,
+      "S0_N2_objective_at_estimate": 2.5620550387631477e-08,
+      "S1_N2_objective_at_estimate": 2.8942133852038453e-08
+    },
+    {
+      "fold": 0,
+      "geometry_index": 30,
+      "truth_geometry": [
+        118.75,
+        17.25
+      ],
+      "estimate": [
+        118.74967088589592,
+        17.250053116722675
+      ],
+      "height_error_nm": -0.00032911410407621133,
+      "width_error_nm": 5.31167226753837e-05,
+      "objective_S1_N1": 2.0194494562846767e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0194494638179798e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.019449511005822e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0194494573556203e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0194494571337285e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0194494567593e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            118.5,
+            17.3
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0194494562846767e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.8079807665563848e-06,
+      "S0_N2_objective_at_estimate": 4.116835864553986e-07,
+      "S1_N2_objective_at_estimate": 4.64731766848806e-07
+    },
+    {
+      "fold": 0,
+      "geometry_index": 35,
+      "truth_geometry": [
+        120.0,
+        17.5
+      ],
+      "estimate": [
+        119.99953404436052,
+        17.500048574567327
+      ],
+      "height_error_nm": -0.0004659556394841502,
+      "width_error_nm": 4.857456732665355e-05,
+      "objective_S1_N1": 1.1843996924473986e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1843996982455687e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1843996930274149e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1843996936561233e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1843996937282347e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1843996924473986e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.184399693900908e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 9.456310802494442e-06,
+      "S0_N2_objective_at_estimate": 2.0606268012122355e-06,
+      "S1_N2_objective_at_estimate": 2.597385516043678e-06
+    },
+    {
+      "fold": 1,
+      "geometry_index": 1,
+      "truth_geometry": [
+        115.0,
+        16.5
+      ],
+      "estimate": [
+        115.0006039984329,
+        16.499709835639226
+      ],
+      "height_error_nm": 0.0006039984328936043,
+      "width_error_nm": -0.00029016436077355934,
+      "objective_S1_N1": 1.8260611413098324e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.8260611413098324e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.8260611418266624e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.8260611416716357e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.8260611421083683e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.8260611481102618e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.8260611423542165e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.7561883318747126e-05,
+      "S0_N2_objective_at_estimate": 2.8144688623055144e-06,
+      "S1_N2_objective_at_estimate": 2.8571447188463087e-06
+    },
+    {
+      "fold": 1,
+      "geometry_index": 6,
+      "truth_geometry": [
+        115.0,
+        18.0
+      ],
+      "estimate": [
+        115.00015593478804,
+        18.0
+      ],
+      "height_error_nm": 0.00015593478804021288,
+      "width_error_nm": 0.0,
+      "objective_S1_N1": 0.00010694746049180096,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.00010694746049307137
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.00010694746049180096
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.00010694746049275625
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.00010694746268411086
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.00010694746049286089
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.00010694746049180096
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 9.811131749968676e-05,
+      "S0_N2_objective_at_estimate": 1.6926106590021945e-05,
+      "S1_N2_objective_at_estimate": 1.961396722797205e-05
+    },
+    {
+      "fold": 1,
+      "geometry_index": 11,
+      "truth_geometry": [
+        120.0,
+        16.0
+      ],
+      "estimate": [
+        120.00052697578847,
+        16.0
+      ],
+      "height_error_nm": 0.000526975788474715,
+      "width_error_nm": 0.0,
+      "objective_S1_N1": 4.461175281669045e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.4611752833588175e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.461175282028739e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.461175281669045e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.461175282272982e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.4611752817659585e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.46117528888665e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 5.115930985232536e-06,
+      "S0_N2_objective_at_estimate": 1.0600826255930567e-06,
+      "S1_N2_objective_at_estimate": 9.51995755415261e-07
+    },
+    {
+      "fold": 1,
+      "geometry_index": 16,
+      "truth_geometry": [
+        122.5,
+        18.0
+      ],
+      "estimate": [
+        122.50270976774216,
+        17.999788674517067
+      ],
+      "height_error_nm": 0.002709767742160807,
+      "width_error_nm": -0.0002113254829332334,
+      "objective_S1_N1": 5.965961003026376e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.965961015786475e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.965961003259845e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.965961003026376e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.965961003187512e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.9659610104215066e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            122.5,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.965961009549849e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 4.479997612365845e-05,
+      "S0_N2_objective_at_estimate": 7.011566960069975e-06,
+      "S1_N2_objective_at_estimate": 9.68770856610638e-06
+    },
+    {
+      "fold": 1,
+      "geometry_index": 21,
+      "truth_geometry": [
+        125.0,
+        17.25
+      ],
+      "estimate": [
+        125.0,
+        17.249883047404133
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": -0.00011695259586730344,
+      "objective_S1_N1": 1.3241220161292889e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3241220161737749e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3241220164930094e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.324122016189923e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3241220161292889e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3241220207989819e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            17.2
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3241220161451747e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.3290052574934091e-05,
+      "S0_N2_objective_at_estimate": 2.924484502075708e-06,
+      "S1_N2_objective_at_estimate": 2.8791496878526835e-06
+    },
+    {
+      "fold": 1,
+      "geometry_index": 26,
+      "truth_geometry": [
+        121.25,
+        17.0
+      ],
+      "estimate": [
+        121.24960619694953,
+        17.000093201850746
+      ],
+      "height_error_nm": -0.0003938030504713197,
+      "width_error_nm": 9.32018507455723e-05,
+      "objective_S1_N1": 3.2769698218845134e-07,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.276969999002577e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.2769698580257465e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.2769698620897957e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.2769698218845134e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.2769698372840415e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            121.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.2769698412464627e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 3.579997020840522e-07,
+      "S0_N2_objective_at_estimate": 8.045702835480242e-08,
+      "S1_N2_objective_at_estimate": 6.436406324218044e-08
+    },
+    {
+      "fold": 1,
+      "geometry_index": 31,
+      "truth_geometry": [
+        121.25,
+        17.25
+      ],
+      "estimate": [
+        121.25013171606062,
+        17.25001782003108
+      ],
+      "height_error_nm": 0.00013171606062201136,
+      "width_error_nm": 1.7820031079196497e-05,
+      "objective_S1_N1": 1.1021582651367688e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1021582654433941e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1021582651367688e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1021582663563188e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1021582683549051e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1021582707949413e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            121.0,
+            17.3
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1021582670352052e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 6.644264481664566e-07,
+      "S0_N2_objective_at_estimate": 1.2206176649183526e-07,
+      "S1_N2_objective_at_estimate": 1.8040867476806737e-07
+    },
+    {
+      "fold": 1,
+      "geometry_index": 36,
+      "truth_geometry": [
+        121.25,
+        16.75
+      ],
+      "estimate": [
+        121.24931184828678,
+        16.750109672861992
+      ],
+      "height_error_nm": -0.0006881517132200088,
+      "width_error_nm": 0.0001096728619920384,
+      "objective_S1_N1": 2.0651371668647002e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0651371680549158e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0651371830947925e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0651371668647002e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0651371673142024e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0651371739536414e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            121.0,
+            16.8
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.0651373091932684e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.4419197693175386e-06,
+      "S0_N2_objective_at_estimate": 5.340072009522756e-07,
+      "S1_N2_objective_at_estimate": 4.708067797520913e-07
+    },
+    {
+      "fold": 2,
+      "geometry_index": 2,
+      "truth_geometry": [
+        115.0,
+        16.75
+      ],
+      "estimate": [
+        115.00061825068452,
+        16.749833827718692
+      ],
+      "height_error_nm": 0.0006182506845249236,
+      "width_error_nm": -0.0001661722813075528,
+      "objective_S1_N1": 1.018906611917029e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.018906611917029e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.0189066122227634e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.0189066119742123e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.0189066129867819e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.0189066120382856e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.7
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.0189066164347488e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 9.950995169861229e-06,
+      "S0_N2_objective_at_estimate": 2.191274727314363e-06,
+      "S1_N2_objective_at_estimate": 2.202406055694947e-06
+    },
+    {
+      "fold": 2,
+      "geometry_index": 7,
+      "truth_geometry": [
+        117.5,
+        16.0
+      ],
+      "estimate": [
+        117.5018870159291,
+        16.0
+      ],
+      "height_error_nm": 0.001887015929099789,
+      "width_error_nm": 0.0,
+      "objective_S1_N1": 8.674171430122437e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.674171482279773e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.674171625078554e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.674171430941313e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.674171431751855e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.674171431026162e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            117.5,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 8.674171430122437e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 7.31067837862202e-05,
+      "S0_N2_objective_at_estimate": 9.815486699949052e-06,
+      "S1_N2_objective_at_estimate": 1.228392427466757e-05
+    },
+    {
+      "fold": 2,
+      "geometry_index": 12,
+      "truth_geometry": [
+        120.0,
+        18.0
+      ],
+      "estimate": [
+        120.00047604780156,
+        17.999960049506296
+      ],
+      "height_error_nm": 0.0004760478015555236,
+      "width_error_nm": -3.9950493704310475e-05,
+      "objective_S1_N1": 3.8066212219850903e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.8066220735441433e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.8066212222674183e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.8066212258465187e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.8066212317289097e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.8066212219850903e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.8066212249259493e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.8267345132690224e-06,
+      "S0_N2_objective_at_estimate": 6.342747702556667e-07,
+      "S1_N2_objective_at_estimate": 7.765894492985242e-07
+    },
+    {
+      "fold": 2,
+      "geometry_index": 17,
+      "truth_geometry": [
+        125.0,
+        16.0
+      ],
+      "estimate": [
+        124.99881701341597,
+        16.00025213025788
+      ],
+      "height_error_nm": -0.001182986584026935,
+      "width_error_nm": 0.0002521302578806228,
+      "objective_S1_N1": 3.624342729277066e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.6243427299404666e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.624342731900289e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.624342730253859e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.624342729578817e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.624342729277066e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.624342730253859e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 3.208044714199688e-05,
+      "S0_N2_objective_at_estimate": 6.6832791040055214e-06,
+      "S1_N2_objective_at_estimate": 7.958525529588248e-06
+    },
+    {
+      "fold": 2,
+      "geometry_index": 22,
+      "truth_geometry": [
+        125.0,
+        17.5
+      ],
+      "estimate": [
+        124.99990692893094,
+        17.499791969391293
+      ],
+      "height_error_nm": -9.307106905964702e-05,
+      "width_error_nm": -0.00020803060870733248,
+      "objective_S1_N1": 2.2334658645930812e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.2334658671138092e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.2334658654242123e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.2334658727791508e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.2334658658658258e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.2334658645930812e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            17.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.2334658684268502e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.258759350994249e-05,
+      "S0_N2_objective_at_estimate": 4.152067793138228e-06,
+      "S1_N2_objective_at_estimate": 4.01863855428912e-06
+    },
+    {
+      "fold": 2,
+      "geometry_index": 27,
+      "truth_geometry": [
+        120.0,
+        16.75
+      ],
+      "estimate": [
+        119.99960968939047,
+        16.750065534698873
+      ],
+      "height_error_nm": -0.0003903106095322073,
+      "width_error_nm": 6.553469887293772e-05,
+      "objective_S1_N1": 1.1441433648157492e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1441433651154155e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1441433648157492e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1441433821235269e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1441433650888407e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1441434656885853e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            16.8
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1441433667978612e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 5.896662985193918e-07,
+      "S0_N2_objective_at_estimate": 1.1511493726720194e-07,
+      "S1_N2_objective_at_estimate": 2.3186725890370896e-07
+    },
+    {
+      "fold": 2,
+      "geometry_index": 32,
+      "truth_geometry": [
+        117.5,
+        17.0
+      ],
+      "estimate": [
+        117.49998394585917,
+        16.999984468777118
+      ],
+      "height_error_nm": -1.6054140829169228e-05,
+      "width_error_nm": -1.5531222882003703e-05,
+      "objective_S1_N1": 6.99339679037765e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 6.99339679037765e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 6.993396856697815e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 6.993396794803407e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 6.993396791812505e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 6.993396823713854e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            117.5,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 6.99339679201427e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.7758182392594146e-06,
+      "S0_N2_objective_at_estimate": 2.478602700558506e-07,
+      "S1_N2_objective_at_estimate": 1.2036011729678518e-06
+    },
+    {
+      "fold": 3,
+      "geometry_index": 3,
+      "truth_geometry": [
+        115.0,
+        17.0
+      ],
+      "estimate": [
+        115.00034826576125,
+        16.99999318908445
+      ],
+      "height_error_nm": 0.00034826576124658004,
+      "width_error_nm": -6.810915550659047e-06,
+      "objective_S1_N1": 7.484175875410115e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 7.4841758857176825e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 7.484178142127174e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 7.4841758858639685e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 7.484175875410115e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 7.484175886586433e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 7.484175887215769e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 8.049126018906318e-06,
+      "S0_N2_objective_at_estimate": 1.6605827116247193e-06,
+      "S1_N2_objective_at_estimate": 1.586554246326267e-06
+    },
+    {
+      "fold": 3,
+      "geometry_index": 8,
+      "truth_geometry": [
+        117.5,
+        18.0
+      ],
+      "estimate": [
+        117.49870443695274,
+        17.999948549982115
+      ],
+      "height_error_nm": -0.0012955630472646362,
+      "width_error_nm": -5.145001788520176e-05,
+      "objective_S1_N1": 3.212248210207312e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.212248210587212e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.212248210709291e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.212248210207312e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.2122482129149926e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.212248211086828e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            117.5,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 3.212248212346795e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 3.23855483040035e-05,
+      "S0_N2_objective_at_estimate": 5.8494088005854124e-06,
+      "S1_N2_objective_at_estimate": 5.834866714281127e-06
+    },
+    {
+      "fold": 3,
+      "geometry_index": 13,
+      "truth_geometry": [
+        121.25,
+        16.0
+      ],
+      "estimate": [
+        121.2493102667825,
+        16.0
+      ],
+      "height_error_nm": -0.0006897332174986559,
+      "width_error_nm": 0.0,
+      "objective_S1_N1": 1.1937907158166293e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1937907159517138e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1937907158166293e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1937907161425286e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1937907158992565e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1937907158997214e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            121.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1937907158737238e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.0976415188347877e-05,
+      "S0_N2_objective_at_estimate": 2.2291332722745488e-06,
+      "S1_N2_objective_at_estimate": 2.310694683655311e-06
+    },
+    {
+      "fold": 3,
+      "geometry_index": 18,
+      "truth_geometry": [
+        125.0,
+        16.5
+      ],
+      "estimate": [
+        125.0,
+        16.500076604389626
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": 7.660438962631133e-05,
+      "objective_S1_N1": 4.2429355393700156e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.2429355410742594e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.242935541133041e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.2429355409921575e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.2429355400881125e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.24293554103251e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 4.2429355393700156e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 4.379822295513996e-05,
+      "S0_N2_objective_at_estimate": 4.821154309303192e-06,
+      "S1_N2_objective_at_estimate": 4.625305844898477e-06
+    },
+    {
+      "fold": 3,
+      "geometry_index": 23,
+      "truth_geometry": [
+        125.0,
+        18.0
+      ],
+      "estimate": [
+        124.9968586902107,
+        18.0
+      ],
+      "height_error_nm": -0.0031413097892993846,
+      "width_error_nm": 0.0,
+      "objective_S1_N1": 0.0005493913462943071,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005493913462943071
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005493913462961781
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005493913464288328
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005493913463108782
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005493913463085132
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 0.0005493913463108782
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 0.0005697446595937374,
+      "S0_N2_objective_at_estimate": 0.00010953189398936224,
+      "S1_N2_objective_at_estimate": 0.00010577297147684465
+    },
+    {
+      "fold": 3,
+      "geometry_index": 28,
+      "truth_geometry": [
+        120.0,
+        17.25
+      ],
+      "estimate": [
+        120.00006517340333,
+        17.249993645245166
+      ],
+      "height_error_nm": 6.517340332834465e-05,
+      "width_error_nm": -6.3547548343478866e-06,
+      "objective_S1_N1": 5.874075910784016e-07,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.874075910784016e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.874081732640122e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.874076032352751e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.874076310561612e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.874076024971785e-07
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.3
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 5.874076050699517e-07
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.1609172149211457e-07,
+      "S0_N2_objective_at_estimate": 2.820347637091399e-08,
+      "S1_N2_objective_at_estimate": 1.0139033453205339e-07
+    },
+    {
+      "fold": 3,
+      "geometry_index": 33,
+      "truth_geometry": [
+        122.5,
+        17.0
+      ],
+      "estimate": [
+        122.50069487361846,
+        16.999925376769834
+      ],
+      "height_error_nm": 0.0006948736184568816,
+      "width_error_nm": -7.462323016582673e-05,
+      "objective_S1_N1": 9.912209637794299e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 9.912209761639774e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 9.912209645945788e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 9.912209637794299e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 9.912209642711249e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 9.912209639032897e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            122.5,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 9.91220964650268e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 3.5742537906908173e-06,
+      "S0_N2_objective_at_estimate": 5.870275922092143e-07,
+      "S1_N2_objective_at_estimate": 1.867366192724105e-06
+    },
+    {
+      "fold": 4,
+      "geometry_index": 4,
+      "truth_geometry": [
+        115.0,
+        17.25
+      ],
+      "estimate": [
+        115.00041050759512,
+        17.250033988925228
+      ],
+      "height_error_nm": 0.00041050759512017976,
+      "width_error_nm": 3.398892522810115e-05,
+      "objective_S1_N1": 1.3694456564744424e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3694456564744424e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.369445656738532e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3694456731265218e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3694456565592973e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3694456575430281e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            17.3
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3694456575933161e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.478257736130059e-05,
+      "S0_N2_objective_at_estimate": 2.0551143517192158e-06,
+      "S1_N2_objective_at_estimate": 1.944369256120701e-06
+    },
+    {
+      "fold": 4,
+      "geometry_index": 9,
+      "truth_geometry": [
+        118.75,
+        16.0
+      ],
+      "estimate": [
+        118.75144750521044,
+        16.0
+      ],
+      "height_error_nm": 0.0014475052104359065,
+      "width_error_nm": 0.0,
+      "objective_S1_N1": 2.3907040234981735e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.390704023610658e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.3907040234981735e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.390704024387194e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.390704157888845e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.3907040792993342e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            119.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.3907040861227098e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.7652824208828776e-05,
+      "S0_N2_objective_at_estimate": 4.416105840454472e-06,
+      "S1_N2_objective_at_estimate": 3.7396789993070436e-06
+    },
+    {
+      "fold": 4,
+      "geometry_index": 14,
+      "truth_geometry": [
+        121.25,
+        18.0
+      ],
+      "estimate": [
+        121.25169457136185,
+        17.999858765495475
+      ],
+      "height_error_nm": 0.0016945713618525815,
+      "width_error_nm": -0.0001412345045253005,
+      "objective_S1_N1": 1.516257230406944e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.516257233791871e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.5162572315023708e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.5162572318817743e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.5162572318812645e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.516257230406944e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            121.5,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.5162572317437008e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.5714058821254297e-05,
+      "S0_N2_objective_at_estimate": 2.620489098296709e-06,
+      "S1_N2_objective_at_estimate": 2.61145763060081e-06
+    },
+    {
+      "fold": 4,
+      "geometry_index": 19,
+      "truth_geometry": [
+        125.0,
+        16.75
+      ],
+      "estimate": [
+        125.0,
+        16.750041925900717
+      ],
+      "height_error_nm": 0.0,
+      "width_error_nm": 4.1925900717387776e-05,
+      "objective_S1_N1": 1.3170711704916632e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3170711707622897e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3170711711003135e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3170711778502035e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3170711704916632e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.317071170808911e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.8
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.3170711708165391e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.4469115406973274e-05,
+      "S0_N2_objective_at_estimate": 1.402562484614068e-06,
+      "S1_N2_objective_at_estimate": 1.2853721650196352e-06
+    },
+    {
+      "fold": 4,
+      "geometry_index": 24,
+      "truth_geometry": [
+        120.0,
+        17.0
+      ],
+      "estimate": [
+        119.99944091516612,
+        17.000112543473946
+      ],
+      "height_error_nm": -0.0005590848338812293,
+      "width_error_nm": 0.00011254347394640263,
+      "objective_S1_N1": 2.936034643156121e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.936034645864609e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.936034678032338e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.93603465341496e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.936034643156121e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.936034645208436e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.936034645208436e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 1.5272772053496687e-06,
+      "S0_N2_objective_at_estimate": 2.7794233153020276e-07,
+      "S1_N2_objective_at_estimate": 5.854957294449783e-07
+    },
+    {
+      "fold": 4,
+      "geometry_index": 29,
+      "truth_geometry": [
+        118.75,
+        16.75
+      ],
+      "estimate": [
+        118.74992775947608,
+        16.750018593122388
+      ],
+      "height_error_nm": -7.22405239201862e-05,
+      "width_error_nm": 1.8593122387500216e-05,
+      "objective_S1_N1": 2.562737718578127e-06,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.562737718578127e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.562737723577758e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.5627377312836783e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.562737800761129e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.5627377216128037e-06
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            118.5,
+            16.8
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 2.5627377232416833e-06
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 2.3522010721207193e-06,
+      "S0_N2_objective_at_estimate": 5.11799755838875e-07,
+      "S1_N2_objective_at_estimate": 5.735077497479882e-07
+    },
+    {
+      "fold": 4,
+      "geometry_index": 34,
+      "truth_geometry": [
+        120.0,
+        16.5
+      ],
+      "estimate": [
+        119.9998704962018,
+        16.50000459427108
+      ],
+      "height_error_nm": -0.0001295037982060876,
+      "width_error_nm": 4.5942710791280206e-06,
+      "objective_S1_N1": 1.174006199964538e-05,
+      "optimizer_method": "L-BFGS-B",
+      "optimizer_attempts": [
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1740062002415086e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            115.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1740062000811043e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            16.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1740062001840098e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            125.0,
+            18.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.174006199964538e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            17.0
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1740062000381298e-05
+        },
+        {
+          "method": "L-BFGS-B",
+          "start": [
+            120.0,
+            16.5
+          ],
+          "success": true,
+          "status": 0,
+          "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+          "objective": 1.1740062001657036e-05
+        }
+      ],
+      "converged": true,
+      "rejected": false,
+      "S0_N1_objective_at_estimate": 9.170863239028846e-06,
+      "S0_N2_objective_at_estimate": 1.9988211065293163e-06,
+      "S1_N2_objective_at_estimate": 2.583843861857473e-06
+    }
+  ],
+  "summary": {
+    "p95_abs_height_nm": 0.002051566291711989,
+    "p95_abs_width_nm": 0.00025973707845920995,
+    "max_abs_height_nm": 0.0031413097892993846,
+    "max_abs_width_nm": 0.0005014522377884134,
+    "rejected_count": 0
+  },
+  "hard_gate": true,
+  "training_only": true,
+  "test_truth_used_only_as_synthetic_observation": true,
+  "blind_response_accessed": false
+}

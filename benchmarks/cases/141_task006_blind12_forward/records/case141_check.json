@@ -1,0 +1,32 @@
+{
+  "schema_version": "case141.task006-blind12-check.v1",
+  "status": "pass",
+  "qualification_status": "controlled_negative",
+  "identity_checks": {
+    "campaign_status_completed": true,
+    "campaign_record_count_36": true,
+    "campaign_new_fem_count_36": true,
+    "campaign_keys_exact": true,
+    "campaign_no_blind_access": true,
+    "campaign_no_validation_access": true,
+    "campaign_no_tuning": true,
+    "lock_hash_matches": true,
+    "lock_pre_run_identity": true,
+    "forward_sha_fixed": true,
+    "model_route_schema_fixed": true,
+    "fixed_angles": true,
+    "point_identity_all": true,
+    "point_hashes_unique": true,
+    "failed_records_preserved": true,
+    "success_samples_only_after_lock": true,
+    "failure_sample_absent": true
+  },
+  "forward_gate": false,
+  "recovery_gate": false,
+  "failure_count": 2,
+  "report_path": "surrogate_tasks/task006_fixed_illumination_hw_surrogate/outcomes/TASK006_BLIND_FAILURE_REPORT.json",
+  "report_sha256": "b19d02955a841e109009182b0ea41c529c6a1b00f13da6f7c8c8f387bcac700d",
+  "blind_response_used_for_fit": false,
+  "validation_target_accessed": false,
+  "model_tuned_after_blind": false
+}

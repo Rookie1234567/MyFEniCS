@@ -1,0 +1,26 @@
+{
+  "schema_version": "task006.training-model-selection-candidate-v2",
+  "status": "m2r_training_qualified_pending_lock",
+  "selected_candidate": "legendre_3",
+  "selection_basis": "minimum training-only grouped-CV selection_score among the fixed six candidates",
+  "eligible_candidates": [
+    "legendre_3",
+    "legendre_4",
+    "matern52_ard_exact_gp",
+    "degree2_trend_plus_matern52_residual"
+  ],
+  "candidate_scores": {
+    "legendre_2": 4.2190032026453785,
+    "legendre_3": 1.0,
+    "legendre_4": 1.0571428571428572,
+    "local_rbf_k8": 263.7085344914101,
+    "matern52_ard_exact_gp": 1.0,
+    "degree2_trend_plus_matern52_residual": 1.0
+  },
+  "selected_prediction_hash": "42c22afd56b6ffa2893267687e62e47e349b2185374a6c7332e0b7e0ac95d17a",
+  "folds_sha256": "3bce550e8f3f78e2b8b9cf7d95c4a15aa66e290ce40e9aa538ebede4a181c4f8",
+  "training_only": true,
+  "synthetic_recovery": true,
+  "blind_response_accessed": false,
+  "validation_target_accessed": false
+}

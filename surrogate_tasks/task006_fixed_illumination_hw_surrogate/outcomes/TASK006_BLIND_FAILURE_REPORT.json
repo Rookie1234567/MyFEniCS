@@ -1,0 +1,1421 @@
+{
+  "schema_version": "task006.blind12-failure-report.v1",
+  "status": "controlled_negative",
+  "qualification_status": "controlled_negative",
+  "campaign_id": "task006_fixed_A05_A07_A09_hw_blind12_v1",
+  "campaign_manifest_sha256": "160ef860bcaab6f50ba61288056509d49ce610712aea140e1638bb99bfffbc1e",
+  "model_lock_sha256": "f08180f891b485a4ddedcf4066a2bed6a4164342fc0e296bfb06d2278469a7a1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "fixed_angle_order": [
+    "A05",
+    "A07",
+    "A09"
+  ],
+  "blind_geometry_count": 12,
+  "expected_fem_count": 36,
+  "new_fem_count": 36,
+  "pass_count": 34,
+  "failure_count": 2,
+  "identity_checks": {
+    "campaign_status_completed": true,
+    "campaign_record_count_36": true,
+    "campaign_new_fem_count_36": true,
+    "campaign_keys_exact": true,
+    "campaign_no_blind_access": true,
+    "campaign_no_validation_access": true,
+    "campaign_no_tuning": true,
+    "lock_hash_matches": true,
+    "lock_pre_run_identity": true,
+    "forward_sha_fixed": true,
+    "model_route_schema_fixed": true,
+    "fixed_angles": true,
+    "point_identity_all": true,
+    "point_hashes_unique": true,
+    "failed_records_preserved": true,
+    "success_samples_only_after_lock": true,
+    "failure_sample_absent": true
+  },
+  "failed_records": [
+    {
+      "key": "117.5,17.25/A07",
+      "status": "failed_numerical_gate",
+      "return_code": 2,
+      "formal_record_sha256": "a12366ebf0cc3f7da9f08b6a8a82e90b7a87b06fe4570ff725c364cd9fb74f35",
+      "formal_gates": {
+        "completed_direct_solve": true,
+        "true_residual_le_1e-9": false,
+        "energy_closure_abs_le_1e-7": true,
+        "fixed_order_schema_complete": true,
+        "complete_n0_power_window": true,
+        "uniform_n1curl_identity": true,
+        "fixed_topology_identity_present": true,
+        "actual_runtime_topology_matches_plan": true,
+        "n_nonzero_total_power_le_1e-7": true,
+        "n_nonzero_max_abs_amplitude_le_1e-4": true,
+        "fixed_raw_reflection_ledger_abs_le_1e-12": true,
+        "fixed_raw_transmission_ledger_abs_le_1e-12": true,
+        "compact_output_identity": true
+      },
+      "failed_gate_names": [
+        "true_residual_le_1e-9"
+      ],
+      "sample_absent": true
+    },
+    {
+      "key": "117.5,17.25/A09",
+      "status": "failed_numerical_gate",
+      "return_code": 2,
+      "formal_record_sha256": "96d80e84cd4a783ec5171bf1c5f254c958f3d70d922816eee46325a9bb7a07a9",
+      "formal_gates": {
+        "completed_direct_solve": true,
+        "true_residual_le_1e-9": false,
+        "energy_closure_abs_le_1e-7": true,
+        "fixed_order_schema_complete": true,
+        "complete_n0_power_window": true,
+        "uniform_n1curl_identity": true,
+        "fixed_topology_identity_present": true,
+        "actual_runtime_topology_matches_plan": true,
+        "n_nonzero_total_power_le_1e-7": true,
+        "n_nonzero_max_abs_amplitude_le_1e-4": true,
+        "fixed_raw_reflection_ledger_abs_le_1e-12": true,
+        "fixed_raw_transmission_ledger_abs_le_1e-12": true,
+        "compact_output_identity": true
+      },
+      "failed_gate_names": [
+        "true_residual_le_1e-9"
+      ],
+      "sample_absent": true
+    }
+  ],
+  "successful_sample_records": {
+    "117.5,16.5/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/117.5_16.5/A05/task006_production_sample.json",
+      "sample_sha256": "85936491bfc48d8c524df352f31b1b410aac0d67a7fc2d10ad934ec881f512cd",
+      "formal_record_sha256": "2e29b40a75a47fd41d0a13f08a667c9d7d2a0f3da7895c9ee79279c795edb3da"
+    },
+    "117.5,16.5/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/117.5_16.5/A07/task006_production_sample.json",
+      "sample_sha256": "5f17121064bf274384af6ae46904bd8b61f6c939b027c5a19bc76a24227ad96d",
+      "formal_record_sha256": "06fc9e704372791dcb89dbf69ba0b8a1e18f618e2f6c5f1616adc6f2fa9b64ab"
+    },
+    "117.5,16.5/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/117.5_16.5/A09/task006_production_sample.json",
+      "sample_sha256": "900f14be72032efc707540970d94adff5a173def9752ff4220c2f620634d09bb",
+      "formal_record_sha256": "f9de03b968c6ecf159bc19161229e514e447bbf6c90d891b2ec224acb26b79fb"
+    },
+    "117.5,16.75/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/117.5_16.75/A05/task006_production_sample.json",
+      "sample_sha256": "9d337f03a1d754fbed809c86e7136fd6127bf284323c01d5b51f0a94e01a9559",
+      "formal_record_sha256": "9fa8598f0f13b5740b4b45c4a6ba923d4f0c1eec84ead57416b132350a4c725a"
+    },
+    "117.5,16.75/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/117.5_16.75/A07/task006_production_sample.json",
+      "sample_sha256": "c722398b60ed0e69836c308ff375642c33f40be8a4f5bff289754748409b5436",
+      "formal_record_sha256": "3c99dbef05b9c2e9fe8f0e3c5c1fec99c036b0a88920cfaaa171348888d004df"
+    },
+    "117.5,16.75/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/117.5_16.75/A09/task006_production_sample.json",
+      "sample_sha256": "925864a8cba2e53458c673ed13de4e01c4cd21623a185127a8585eebdb5067e6",
+      "formal_record_sha256": "cbbe077d8f6c1121ce906270f20a9b54bda9112daf7a39cd8e72e8b76f8e8a0a"
+    },
+    "117.5,17.25/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/117.5_17.25/A05/task006_production_sample.json",
+      "sample_sha256": "d3eaed01ae257d535a38ed3bccb7b9a687650be3633820641b1463ba72b93538",
+      "formal_record_sha256": "6c6881d1f52ed416f84fdc2a76123aff8640d0aacf34238b04640ce6c33b7d49"
+    },
+    "117.5,17.5/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/117.5_17.5/A05/task006_production_sample.json",
+      "sample_sha256": "64c9db6329f980976450c0c1deceeb286fcb356ad89b173e4e0572d1483f1123",
+      "formal_record_sha256": "3c9d36a5373c515ef8e000b7876f3b95af23b6968a8e56a2ab5f8a2084be4c4e"
+    },
+    "117.5,17.5/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/117.5_17.5/A07/task006_production_sample.json",
+      "sample_sha256": "1989499bceae1267fcd610cc654f9e8e65c3d09c301eab6d25d8ab03c0459b31",
+      "formal_record_sha256": "4a658554a3f674dfff1926adf2006af292347d9c0d946eaf28cdfb4b96b7ec4c"
+    },
+    "117.5,17.5/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/117.5_17.5/A09/task006_production_sample.json",
+      "sample_sha256": "8cda717b7f3018e7772a0b0fb7f94c185af32ea59e866172ff992b10aa94f6ad",
+      "formal_record_sha256": "51fd22a23593166afc6c057161881621c4b1cee15cd16503dc2240f4f0365620"
+    },
+    "118.75,16.5/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/118.75_16.5/A05/task006_production_sample.json",
+      "sample_sha256": "46d5aad4676fca6395b0bf026ebb00c84ffb5342af332d131642463ca0fdbf3c",
+      "formal_record_sha256": "fe5f423c93c88ad02c3c0159efa220f9f07eff1fb4282e8f9c88d907a3f1a9ba"
+    },
+    "118.75,16.5/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/118.75_16.5/A07/task006_production_sample.json",
+      "sample_sha256": "ca9c1da855107c9d36712bcf5f9812e945795027453a07fc694f0a273f27c568",
+      "formal_record_sha256": "db14ec2f4a7c9ec2b04388fa0f2b1821845b7c8c60bebfe75693c2b1f598ad6b"
+    },
+    "118.75,16.5/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/118.75_16.5/A09/task006_production_sample.json",
+      "sample_sha256": "1b65ce2643b5a6e4d91a80a010f964527bb758a4b12b7047889aba59a7a76767",
+      "formal_record_sha256": "83719e702ad97942c779a000017936e9bf17964a3c55c0536f989841ee39b838"
+    },
+    "118.75,17.5/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/118.75_17.5/A05/task006_production_sample.json",
+      "sample_sha256": "7583385bccdd30f3ef7b317a5fb677f9aadf359e4143e9cd685b2f8560a85a72",
+      "formal_record_sha256": "4f7a2ea5708286dde0e0486bdcb7185851506a0bbcb622421026f8a46813dcb8"
+    },
+    "118.75,17.5/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/118.75_17.5/A07/task006_production_sample.json",
+      "sample_sha256": "7a558747efa83473030d8a7da1d1c1c5cd508230ca6d0de2c43ddad9b7edbaec",
+      "formal_record_sha256": "f7b0d049da7fbfcf4c21af7e8430dd3a71c31c453258785bee183023cfd05e37"
+    },
+    "118.75,17.5/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/118.75_17.5/A09/task006_production_sample.json",
+      "sample_sha256": "4ef29c7726c6f6048fc41f6cc9a8972cb59dbd6efe9b4aed5f62563b27c2f2cf",
+      "formal_record_sha256": "99b18848fbd29e5cc38d15701d58e948bd0b2dca6fb5b8eca9c91a229e96a961"
+    },
+    "121.25,16.5/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/121.25_16.5/A05/task006_production_sample.json",
+      "sample_sha256": "5d83d1e18f76c3870d8f9f519fed58599cb4d661f0ec3a5071ab230af810f69b",
+      "formal_record_sha256": "fa549bbdfbbee7aeaf2409585bb6a98eecbe7c801bce889e2eb21c604f858e4a"
+    },
+    "121.25,16.5/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/121.25_16.5/A07/task006_production_sample.json",
+      "sample_sha256": "1a2bfa20adeb84edfd71b2d3aff52067b783e380b26aa35466f4b8a58583113b",
+      "formal_record_sha256": "1ec0c5894e6810b80696037810f7acdf71d4e9e31ce6888f216c641b703c1fde"
+    },
+    "121.25,16.5/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/121.25_16.5/A09/task006_production_sample.json",
+      "sample_sha256": "07c514cf408109e8f8fb9ab503007e96e3793653d8766b8e10223a0d575dd301",
+      "formal_record_sha256": "08ea85007163cc21d9395f35d6f41714a3adf70a991f647c550080462ec80ce8"
+    },
+    "121.25,17.5/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/121.25_17.5/A05/task006_production_sample.json",
+      "sample_sha256": "3a0d5680c75a1813b7e6e7b2ab703ba55f62e9be22ca6948939799f7af5c29fb",
+      "formal_record_sha256": "cccac7c77df92dafa9fc8118b35e53bc94e0f3615ab61d9d0f9e676abdaa4b01"
+    },
+    "121.25,17.5/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/121.25_17.5/A07/task006_production_sample.json",
+      "sample_sha256": "a05f6cd39655b3ad1d96e929497ed8dd646e96f00dbc37f5e353c17afba26bbe",
+      "formal_record_sha256": "e97a5936f3c862e4198277a9add020d2198676aec7815eddb58afbd7ca980b4c"
+    },
+    "121.25,17.5/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/121.25_17.5/A09/task006_production_sample.json",
+      "sample_sha256": "9080b0bc95d1d7ddb20ff3d7431d6efe7605e050ce9a5faa6567423341991598",
+      "formal_record_sha256": "f2473fe25730d3c109a65cae29c350245bd23dffc131d6bb38127d89f40ce0ce"
+    },
+    "122.5,16.5/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_16.5/A05/task006_production_sample.json",
+      "sample_sha256": "c6966a2e48a67f5f044bdc2b742fd966794497a5a6b57ae32ff3829fb370319f",
+      "formal_record_sha256": "d0758fcd870930fe84ca622a3a55e9193817ef3f846da9a586cf69371f12543e"
+    },
+    "122.5,16.5/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_16.5/A07/task006_production_sample.json",
+      "sample_sha256": "24461764025b329a8a556f0a53d95afb4039245d1c13ba5a4001770e37a52853",
+      "formal_record_sha256": "735198588fea03e203b22d84d3bfceddaf425c948901524849be747143700ebf"
+    },
+    "122.5,16.5/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_16.5/A09/task006_production_sample.json",
+      "sample_sha256": "6dce553c0a48d956d296f731c297aa71dc7d1884917110400aba54869099f466",
+      "formal_record_sha256": "3d814d7cb745e490e43e5e498a6b8db2d3fcf18e70f4421ebba5104b746cef46"
+    },
+    "122.5,16.75/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_16.75/A05/task006_production_sample.json",
+      "sample_sha256": "16f850a4fe86d7124164ddfb66a5d03c3632d6bbf8f9cc73f4e6ede37a3d7639",
+      "formal_record_sha256": "7812eb1f4c98429bc30b7c43132125e9e698a58c2c420e218bbd0fb5c49a36c2"
+    },
+    "122.5,16.75/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_16.75/A07/task006_production_sample.json",
+      "sample_sha256": "0d0a47d8f2714626a624c347c54ebb3be2943f0cdac480c5243b0f104e0d181e",
+      "formal_record_sha256": "66137962f19072baa9349b486a49ce3b31bf3c7be80461982b12755a9a49acef"
+    },
+    "122.5,16.75/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_16.75/A09/task006_production_sample.json",
+      "sample_sha256": "7c73635956b8d442c36fef9d726daadbe0c8f64aee6cbcb96af777c63f41dc0b",
+      "formal_record_sha256": "a90a0db54149fe2548e95974183f67e38cd19182d3e7f32f38fb3dc1005477b3"
+    },
+    "122.5,17.25/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_17.25/A05/task006_production_sample.json",
+      "sample_sha256": "30bb290f62e8a0b846443dd774a7fa97847b07002b1a93deee3b2320510cca90",
+      "formal_record_sha256": "a537cf2f04e65cf505a074f12a1865da5e9e2e7d00646d52de323625d45307bd"
+    },
+    "122.5,17.25/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_17.25/A07/task006_production_sample.json",
+      "sample_sha256": "6859e1bbeef363fb20ab236350ed30c74f0d6caf5febb4d950e61e65d6a6b78e",
+      "formal_record_sha256": "92b5dc03496c1a14ac976f17e7c12abfe16f75a7a811a72334822e595ebd1e33"
+    },
+    "122.5,17.25/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_17.25/A09/task006_production_sample.json",
+      "sample_sha256": "c4749b9f7c08e4b81cb919b311e2219f68ed16ffe72ebd59df90dac0e80e53bb",
+      "formal_record_sha256": "3f815b1178fafce7be796b157ececed564a89ac4f932ecaa23e1482f590950ec"
+    },
+    "122.5,17.5/A05": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_17.5/A05/task006_production_sample.json",
+      "sample_sha256": "a74170a361e9aadf5fffd0d2f0e2c7d367ec5e32f76468e9a7fc3d2a2756e12a",
+      "formal_record_sha256": "88e78b80ff4f2a30bdaaa6ef09da27b5931526b17e0c2ec93efcf88b356f274e"
+    },
+    "122.5,17.5/A07": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_17.5/A07/task006_production_sample.json",
+      "sample_sha256": "836251cfabc60f9933a11ce86e19c0d9b2e0eb05126ca775958ccdc24c9d16f4",
+      "formal_record_sha256": "c2d01f915ed3463ce86222379927481c4905e14af45a56ee22ed9cca689477c8"
+    },
+    "122.5,17.5/A09": {
+      "sample_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/141_task006_blind12_forward/blind/122.5_17.5/A09/task006_production_sample.json",
+      "sample_sha256": "f4792f7f39164888d855618293879262669cebe47f06fee1461c84427932eab5",
+      "formal_record_sha256": "48b8edc8b6260fe434df7b423c291b40d8f74b9869d3b97ea60167ca4d6266f8"
+    }
+  },
+  "forward_gate": false,
+  "s0_metrics_successful_records": {
+    "A05_R_total": {
+      "n": 12,
+      "nrmse": 0.00011883784177669665,
+      "p95_abs": 2.53166047049988e-06,
+      "max_abs": 2.634271922222209e-06,
+      "p95_normalized_N1": 0.0029489880209203987,
+      "max_normalized_N1": 0.0032306272885393155,
+      "coverage_95": 1.0,
+      "p95_half_width": 2.0990052602657575e-05,
+      "p95_N1_sigma": 0.0009144383667327222,
+      "finite_positive_width": true
+    },
+    "A05_T_total": {
+      "n": 12,
+      "nrmse": 4.0481455335770134e-05,
+      "p95_abs": 5.819371041583531e-07,
+      "max_abs": 6.494904856574335e-07,
+      "p95_normalized_N1": 0.0013560364303001286,
+      "max_normalized_N1": 0.0014976078992057164,
+      "coverage_95": 1.0,
+      "p95_half_width": 2.0990052602657575e-05,
+      "p95_N1_sigma": 0.0004684028909793017,
+      "finite_positive_width": true
+    },
+    "A05_A_balance": {
+      "n": 12,
+      "nrmse": 0.00010588428916579094,
+      "p95_abs": 2.1397344494022974e-06,
+      "max_abs": 2.26759403076926e-06,
+      "p95_normalized_N1": 0.0002451014195339217,
+      "max_normalized_N1": 0.0002598132672713895,
+      "coverage_95": 1.0,
+      "p95_half_width": 2.0990052602657575e-05,
+      "p95_N1_sigma": 0.008780676831100119,
+      "finite_positive_width": true
+    },
+    "A07_R_total": {
+      "n": 11,
+      "nrmse": 9.885283803446513e-05,
+      "p95_abs": 1.4311865526306367e-06,
+      "max_abs": 1.4484554656801762e-06,
+      "p95_normalized_N1": 0.001987765920209261,
+      "max_normalized_N1": 0.002014175227070136,
+      "coverage_95": 1.0,
+      "p95_half_width": 5.1189262886964375e-05,
+      "p95_N1_sigma": 0.0008219719953159804,
+      "finite_positive_width": true
+    },
+    "A07_T_total": {
+      "n": 11,
+      "nrmse": 9.101077693465617e-06,
+      "p95_abs": 1.4075000588295583e-07,
+      "max_abs": 1.4939452492451766e-07,
+      "p95_normalized_N1": 0.0003080245737523548,
+      "max_normalized_N1": 0.00032372314316101764,
+      "coverage_95": 1.0,
+      "p95_half_width": 5.1189262886964375e-05,
+      "p95_N1_sigma": 0.0004981246218667649,
+      "finite_positive_width": true
+    },
+    "A07_A_balance": {
+      "n": 11,
+      "nrmse": 0.00010572492446609658,
+      "p95_abs": 1.327147626517533e-06,
+      "max_abs": 1.3552343122169574e-06,
+      "p95_normalized_N1": 0.0001502709678567067,
+      "max_normalized_N1": 0.00015355438850687178,
+      "coverage_95": 1.0,
+      "p95_half_width": 5.1189262886964375e-05,
+      "p95_N1_sigma": 0.008832272023163125,
+      "finite_positive_width": true
+    },
+    "A09_R_total": {
+      "n": 11,
+      "nrmse": 0.00016329973579285806,
+      "p95_abs": 5.228717715969472e-07,
+      "max_abs": 5.639139056615172e-07,
+      "p95_normalized_N1": 0.0027856181908637585,
+      "max_normalized_N1": 0.003124002164632077,
+      "coverage_95": 1.0,
+      "p95_half_width": 8.028413513623759e-05,
+      "p95_N1_sigma": 0.00019684243896833924,
+      "finite_positive_width": true
+    },
+    "A09_T_total": {
+      "n": 11,
+      "nrmse": 1.5142662749192965e-05,
+      "p95_abs": 7.846305027231493e-07,
+      "max_abs": 7.988063471797702e-07,
+      "p95_normalized_N1": 0.00032222678368575637,
+      "max_normalized_N1": 0.00033121922803177776,
+      "coverage_95": 1.0,
+      "p95_half_width": 8.028413513623759e-05,
+      "p95_N1_sigma": 0.0025592506575447442,
+      "finite_positive_width": true
+    },
+    "A09_A_balance": {
+      "n": 11,
+      "nrmse": 1.4422944326012001e-05,
+      "p95_abs": 6.228188773049759e-07,
+      "max_abs": 6.645997349119526e-07,
+      "p95_normalized_N1": 8.313694786360763e-05,
+      "max_normalized_N1": 8.798309113768952e-05,
+      "coverage_95": 1.0,
+      "p95_half_width": 8.028413513623759e-05,
+      "p95_N1_sigma": 0.0075371759936952755,
+      "finite_positive_width": true
+    }
+  },
+  "s1_metrics_successful_records": {
+    "A05_reflection_m0_total": {
+      "n": 12,
+      "nrmse": 0.00010043092620701619,
+      "p95_abs": 2.04652455148141e-06,
+      "max_abs": 2.1311488790920485e-06,
+      "p95_normalized_N1": 0.002518934467178422,
+      "max_normalized_N1": 0.002614533394956961,
+      "coverage_95": 1.0,
+      "p95_half_width": 2.098850003000693e-05,
+      "p95_N1_sigma": 0.0009141005231606734,
+      "finite_positive_width": true
+    },
+    "A05_transmission_m0_total": {
+      "n": 12,
+      "nrmse": 8.613777803719654e-05,
+      "p95_abs": 1.2003704498823873e-06,
+      "max_abs": 1.3863293090998763e-06,
+      "p95_normalized_N1": 0.0028007169065711684,
+      "max_normalized_N1": 0.0032681385796754637,
+      "coverage_95": 1.0,
+      "p95_half_width": 2.0980577231661594e-05,
+      "p95_N1_sigma": 0.0004679898625493027,
+      "finite_positive_width": true
+    },
+    "A07_reflection_m0_total": {
+      "n": 11,
+      "nrmse": 9.885283803648519e-05,
+      "p95_abs": 1.4311865527139034e-06,
+      "max_abs": 1.448455465763443e-06,
+      "p95_normalized_N1": 0.001987765920324908,
+      "max_normalized_N1": 0.002014175227185924,
+      "coverage_95": 1.0,
+      "p95_half_width": 5.118926288696681e-05,
+      "p95_N1_sigma": 0.0008219719953159804,
+      "finite_positive_width": true
+    },
+    "A07_transmission_m0_total": {
+      "n": 11,
+      "nrmse": 9.101077688793475e-06,
+      "p95_abs": 1.4075000583438357e-07,
+      "max_abs": 1.493945248759454e-07,
+      "p95_normalized_N1": 0.0003080245736459883,
+      "max_normalized_N1": 0.0003237231430557664,
+      "coverage_95": 1.0,
+      "p95_half_width": 5.118926288696521e-05,
+      "p95_N1_sigma": 0.0004981246218667649,
+      "finite_positive_width": true
+    },
+    "A09_reflection_m0_total": {
+      "n": 11,
+      "nrmse": 0.00017514707067998867,
+      "p95_abs": 5.829289905509918e-07,
+      "max_abs": 6.292873009437067e-07,
+      "p95_normalized_N1": 0.003119773914160983,
+      "max_normalized_N1": 0.0035017469689153425,
+      "coverage_95": 1.0,
+      "p95_half_width": 7.978631641165165e-05,
+      "p95_N1_sigma": 0.00019592890966128743,
+      "finite_positive_width": true
+    },
+    "A09_transmission_m0_total": {
+      "n": 11,
+      "nrmse": 1.6891222509002378e-05,
+      "p95_abs": 8.693841169471472e-07,
+      "max_abs": 8.871005217903072e-07,
+      "p95_normalized_N1": 0.0003572665129375892,
+      "max_normalized_N1": 0.0003680467495703509,
+      "coverage_95": 1.0,
+      "p95_half_width": 8.024048118354988e-05,
+      "p95_N1_sigma": 0.002557812796987045,
+      "finite_positive_width": true
+    }
+  },
+  "uncertainty_successful_records": {
+    "minimum_coverage_successful_records": 1.0,
+    "p95_width_over_N1_sigma_successful_records": 0.4078598881268218,
+    "all_widths_finite_positive": true
+  },
+  "physics_ledger": {
+    "composition_max_abs_residual": 1.1102230246251565e-16,
+    "predicted_selected_min": 0.014820395085677233,
+    "predicted_other_min": 4.4430189771487424e-17,
+    "predicted_selected_le_side": true,
+    "predicted_max_abs_ledger_residual": 0.0,
+    "actual_success_truth_rows": 34,
+    "actual_success_truth_side_ledger_max_abs": 0.0
+  },
+  "recovery": {
+    "summary": {
+      "count": 11,
+      "p95_abs_height_nm": 0.0009265166997849406,
+      "p95_abs_width_nm": 0.00016961615887112202,
+      "max_abs_height_nm": 0.0009880566351938569,
+      "max_abs_width_nm": 0.00017126694657676467,
+      "rejected_count": 0,
+      "complete_blind_geometry_count": 11,
+      "expected_blind_geometry_count": 12,
+      "hard_gate": false
+    },
+    "records": [
+      {
+        "geometry_index": 0,
+        "truth_geometry": [
+          117.5,
+          16.5
+        ],
+        "estimate": [
+          117.50086497676438,
+          16.499828733053423
+        ],
+        "height_error_nm": 0.0008649767643760242,
+        "width_error_nm": -0.00017126694657676467,
+        "objective_S1_N1": 6.0648197600433194e-06,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.0648197600433194e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.064819782531297e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.064819765630207e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.06481981075398e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.064821253700195e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              117.5,
+              16.5
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.064819760516685e-06
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      },
+      {
+        "geometry_index": 1,
+        "truth_geometry": [
+          117.5,
+          16.75
+        ],
+        "estimate": [
+          117.50030902441311,
+          16.7499168094629
+        ],
+        "height_error_nm": 0.00030902441311297935,
+        "width_error_nm": -8.319053710081903e-05,
+        "objective_S1_N1": 3.5818565777920396e-06,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.5818565777920396e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.5818565852498924e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.581856584998509e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.5818566024837476e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.5818565848172343e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              117.5,
+              16.7
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.5818565871132133e-06
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      },
+      {
+        "geometry_index": 3,
+        "truth_geometry": [
+          117.5,
+          17.5
+        ],
+        "estimate": [
+          117.49937052142408,
+          17.500004736247163
+        ],
+        "height_error_nm": -0.0006294785759166643,
+        "width_error_nm": 4.7362471633505265e-06,
+        "objective_S1_N1": 1.0184062748482074e-05,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.0184062775241227e-05
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.0184063126792677e-05
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.0184062757465307e-05
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.0184062752137123e-05
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.0184062748482074e-05
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              117.5,
+              17.5
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.018406275559685e-05
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      },
+      {
+        "geometry_index": 4,
+        "truth_geometry": [
+          118.75,
+          16.5
+        ],
+        "estimate": [
+          118.75042929447892,
+          16.499922163764825
+        ],
+        "height_error_nm": 0.0004292944789199282,
+        "width_error_nm": -7.78362351745443e-05,
+        "objective_S1_N1": 3.4778014661139365e-06,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.4778014678156223e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.4778014684307038e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.4778014702007824e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.4778014678505696e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.477801472610156e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              119.0,
+              16.5
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.4778014661139365e-06
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      },
+      {
+        "geometry_index": 5,
+        "truth_geometry": [
+          118.75,
+          17.5
+        ],
+        "estimate": [
+          118.74948116991521,
+          17.500022297275606
+        ],
+        "height_error_nm": -0.0005188300847862592,
+        "width_error_nm": 2.229727560632e-05,
+        "objective_S1_N1": 5.835113549440787e-06,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 5.835113573445779e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 5.835114040765196e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 5.835113555409184e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 5.835113558685724e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 5.835113552192455e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              118.5,
+              17.5
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 5.835113549440787e-06
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      },
+      {
+        "geometry_index": 6,
+        "truth_geometry": [
+          121.25,
+          16.5
+        ],
+        "estimate": [
+          121.24934847893218,
+          16.500045909075236
+        ],
+        "height_error_nm": -0.0006515210678230687,
+        "width_error_nm": 4.5909075236494346e-05,
+        "objective_S1_N1": 6.715232127942306e-06,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.71523215056782e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.715232128016175e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.715232146515095e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.715232127942306e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.715232129982641e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              121.0,
+              16.5
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 6.715232129918809e-06
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      },
+      {
+        "geometry_index": 7,
+        "truth_geometry": [
+          121.25,
+          17.5
+        ],
+        "estimate": [
+          121.25047397083983,
+          17.499924363170194
+        ],
+        "height_error_nm": 0.000473970839834692,
+        "width_error_nm": -7.563682980560316e-05,
+        "objective_S1_N1": 1.5942353930930147e-06,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.5942353962898909e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.594235406165444e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.5942354056869726e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.5942354066634335e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.5942353930930147e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              121.5,
+              17.5
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 1.5942354212379142e-06
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      },
+      {
+        "geometry_index": 8,
+        "truth_geometry": [
+          122.5,
+          16.5
+        ],
+        "estimate": [
+          122.49927938271857,
+          16.50004940819762
+        ],
+        "height_error_nm": -0.000720617281430691,
+        "width_error_nm": 4.940819761856119e-05,
+        "objective_S1_N1": 7.120039616954772e-06,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 7.120039959973571e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 7.120039616954772e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 7.120039617557238e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 7.120039618038945e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 7.1200397172769175e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              122.5,
+              16.5
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 7.120039619183202e-06
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      },
+      {
+        "geometry_index": 9,
+        "truth_geometry": [
+          122.5,
+          16.75
+        ],
+        "estimate": [
+          122.49954786258404,
+          16.750057423729817
+        ],
+        "height_error_nm": -0.00045213741596228374,
+        "width_error_nm": 5.74237298174296e-05,
+        "objective_S1_N1": 2.820539058611921e-06,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 2.8205390759063396e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 2.8205390742601217e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 2.8205390762384006e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 2.820539074898748e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 2.820539058611921e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              122.5,
+              16.8
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 2.8205390752075467e-06
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      },
+      {
+        "geometry_index": 10,
+        "truth_geometry": [
+          122.5,
+          17.25
+        ],
+        "estimate": [
+          122.50042058356183,
+          17.24993187954637
+        ],
+        "height_error_nm": 0.00042058356183360956,
+        "width_error_nm": -6.812045362991626e-05,
+        "objective_S1_N1": 3.2222460184294356e-06,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.2222461762732592e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.2222460184294356e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.222246023010746e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.2222460710238696e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.222246018473388e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              122.5,
+              17.2
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 3.2222460191310042e-06
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      },
+      {
+        "geometry_index": 11,
+        "truth_geometry": [
+          122.5,
+          17.5
+        ],
+        "estimate": [
+          122.5009880566352,
+          17.499832034628835
+        ],
+        "height_error_nm": 0.0009880566351938569,
+        "width_error_nm": -0.00016796537116547938,
+        "objective_S1_N1": 4.039526371822271e-06,
+        "optimizer_method": "L-BFGS-B",
+        "optimizer_attempts": [
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 4.039526389190108e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              115.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 4.039526432402602e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              16.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 4.039526371822271e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              125.0,
+              18.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 4.039526393317772e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              120.0,
+              17.0
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 4.039526390864086e-06
+          },
+          {
+            "method": "L-BFGS-B",
+            "start": [
+              122.5,
+              17.5
+            ],
+            "success": true,
+            "status": 0,
+            "message": "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL",
+            "objective": 4.039526392348482e-06
+          }
+        ],
+        "converged": true,
+        "rejected": false
+      }
+    ],
+    "locked_model_only": true,
+    "blind_truth_used_only_as_observation": true
+  },
+  "model_tuned_after_blind": false,
+  "thresholds_or_channels_changed_after_blind": false,
+  "blind_response_used_for_fit": false,
+  "validation_target_accessed": false,
+  "negative_reason": "two blind forward records failed the fixed true-residual <= 1e-9 gate; no retry, retuning, channel change, or gate relaxation was performed"
+}

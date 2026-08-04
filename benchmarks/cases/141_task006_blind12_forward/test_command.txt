@@ -1,0 +1,1 @@
+source scripts/activate_myfenics_surrogate_wsl.sh && PYTHONPATH=src python benchmarks/cases/141_task006_blind12_forward/run.py

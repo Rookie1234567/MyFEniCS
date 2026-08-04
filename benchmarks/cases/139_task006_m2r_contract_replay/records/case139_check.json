@@ -1,0 +1,23 @@
+{
+  "schema_version": "task006.case139-m2r-replay-check.v1",
+  "status": "pass",
+  "checks": {
+    "required_outputs": true,
+    "dataset_identity": true,
+    "truth_transform_replay": true,
+    "fold_identity_frozen": true,
+    "selection_training_only": true,
+    "fixed_candidate_set": true,
+    "selected_prediction_hash_replay": true,
+    "composition_recomputed": true,
+    "ledger_recomputed": true,
+    "oof_row_count_and_folds": true,
+    "ledger_records_complete": true,
+    "metrics_recomputed": true,
+    "selected_cv_and_recovery_gate": true,
+    "no_blind_or_validation": true
+  },
+  "errors": [],
+  "training_only": true,
+  "blind_response_accessed": false
+}
