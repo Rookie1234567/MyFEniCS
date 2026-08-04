@@ -5,10 +5,49 @@ from petsc4py import PETSc
 
 from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
+    _constrain_local_schur,
     _cell_trace_expansion,
 )
 
-__all__ = ("create_static_local_schur_action",)
+__all__ = (
+    "create_static_local_schur_action",
+    "iter_owned_constrained_schur_contributions",
+)
+
+
+def iter_owned_constrained_schur_contributions(
+    condensed: AssemblyTimeCondensedSystem,
+    cell_indices: tuple[int, ...] | None = None,
+):
+    """Yield one owned cell's constrained ``C_K^H S_K C_K`` at a time."""
+
+    schurs = condensed.retained_local_schur_by_class
+    if schurs is None:
+        raise ValueError("local Schur retention is required for cell contributions")
+    indices = (
+        range(len(condensed.cell_recovery_maps))
+        if cell_indices is None
+        else tuple(int(index) for index in cell_indices)
+    )
+    constraints = condensed.trace_constraints
+    for cell_index in indices:
+        cell = condensed.cell_recovery_maps[cell_index]
+        active_ids, expansion, identity = _cell_trace_expansion(
+            cell.trace_original_dofs,
+            constraints,
+        )
+        yield (
+            cell_index,
+            np.asarray(active_ids, dtype=PETSc.IntType),
+            np.asarray(
+                _constrain_local_schur(
+                    schurs[cell.class_key],
+                    expansion,
+                    identity,
+                ),
+                dtype=PETSc.ScalarType,
+            ),
+        )
 
 
 class _LocalSchurActionContext:
