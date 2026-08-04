@@ -17,13 +17,14 @@ F0 是当前源码上的唯一 p6/h10/S/MPI8 direct authority，source
 `03f4fa02aece62bb2f193c01616177bffff0aa51`。reported/full true residual 为
 `2.8094057923e-11`，12/12 powers、12/12 boundary amplitudes、R/T/A 和 energy
 closure 通过；process-tree peak `15.2550010681 GiB`，wall `370.18 s`。详见
-[direct_authority.md](direct_authority.md) 和 tracked F0 record。
+[direct_authority.md](outcomes/direct_authority.md) 和 tracked F0 record。
 
 ## 3. assembled operator 与 recovery
 
 静态凝聚先在 cell-local 层消去 interior unknowns，再以 active trace 加 80 个
 auxiliary rows 组成 51272-row global system；recovery 将 trace 解恢复为 173802 个
-full FE entries。F3 assembled FGMRES 使用 right, unpreconditioned FGMRES，restart
+full FE entries。F3 assembled FGMRES 使用 right-preconditioned FGMRES，residual norm
+type 为 unpreconditioned，restart
 90、rtol `1e-6`、16 slabs、75D coarse、ILU(0) factor-only。
 
 ## 4. trace support 与 subdomain
@@ -37,9 +38,9 @@ records 保存；不把 raw row numbers 当作跨 partition identity。
 
 | screen | endpoint residual | decision evidence | peak |
 |---:|---:|---|---:|
-| 20 | `0.0302833465991175` | negative max-it 20；RTA not run | `13.2211914063 GiB` |
-| 100 | `0.000608485581260` | last-40 ratio `0.1852104694` | `12.9641036987 GiB` |
-| 200 | `3.5885919793e-5` | predicted `323` it / `473.764 s` | `12.9706878662 GiB` |
+| 20 | `0.0302833465991175` | decision pass；solver max-it expected；RTA `not_run` | `13.2211914063 GiB` |
+| 100 | `0.000608485581260` | decision pass；last-40 ratio `0.1852104694`；RTA `not_run` | `12.9641036987 GiB` |
+| 200 | `3.5885919793e-5` | full-solve authorization pass；predicted `323` it / `473.764 s`；RTA `not_run` | `12.9706878662 GiB` |
 
 三项均为 fixed-candidate screen-only evidence，不是 official convergence。
 
@@ -55,7 +56,7 @@ augmented true 均约 `9.8166e-7`，full-FE 也低于 `1e-6`；official result�
 Task 7.1 raw indexwise vector Gate 仍失败：相对 direct active `1.4210359558`、
 recovered FE `1.4121310623`，限值 `1e-5`。F5b 与 F3 的对应差约 `1.55e-14` 和
 `1.42e-14`，只支持 ownership-order inference，不能替代 direct Gate。
-12-channel 明细只保留在 [matrix_free_report.md](matrix_free_report.md)。
+12-channel 明细只保留在 [matrix_free_report.md](outcomes/matrix_free_report.md)。
 
 ## 7. assembled 与 matrix-free action
 
@@ -63,7 +64,8 @@ F5a 证明 cell-local Schur action 与 assembled fine action 的相对误差不�
 `1e-11`。F5b 使用 profile
 `assembled_setup_then_static_local_schur_matrix_free_solve`，fine-action error
 `9.2309237020e-16`；先 assembled setup、再在 outer KSP 前释放 `F`，并非
-never-materialized。F5b 的 global direct factor count 为 0、global Schur 未 materialize。
+never-materialized。F5b setup 曾组装 fine/global `F`，outer KSP 前释放，随后采用
+cell-local Schur action；global direct factor count 为 0。
 
 ## 8. MPI identity
 
@@ -90,7 +92,7 @@ F3/F5b full solve 只做 MPI8。MPI4 formal full candidate `not_run`，不能把
 `1298.58 s`、exit 1。两个旧合同由 `3abe2786` 的 targeted test26=`14 passed`、
 test53=`3 passed` 收口；没有第二次 full suite，也不能把原始 exit 1 改写成 PASS。
 完整测试边界、Case098 恢复证据和 format baseline debt 见
-[test_summary.md](test_summary.md)。文档提交后不再跑 pytest。
+[test_summary.md](outcomes/test_summary.md)。文档提交后不再跑 pytest。
 
 ## 11. changed files、line counts 与 commits
 

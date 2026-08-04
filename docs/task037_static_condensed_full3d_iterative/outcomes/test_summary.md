@@ -49,6 +49,8 @@ targeted tests; no second full suite`，不能把原始 full-suite exit 1 改写
 
 - touched Python 的 Ruff lint 通过；Case100 strict JSON duplicate-key parse 和
   `git diff --check` 通过。
+- 现有 Task37 执行材料中未找到可引用的 aggregate compileall pass 记录；文档收口未
+  重跑，因此该项为 `unverified/not evidenced`，不是数值失败。
 - 两个既有大型测试文件的全文件 Ruff format-check 保留 baseline format debt，未
   做整文件重排；Task §9.1 对本阶段只要求 lint touched Python，format-check 适用于
   new/small extracted modules。
