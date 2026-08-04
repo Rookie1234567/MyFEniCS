@@ -10,6 +10,16 @@ from petsc4py import PETSc
 TINY = np.finfo(float).tiny
 
 
+def _sum_repeated_entries(
+    indices: np.ndarray,
+    values: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    unique, inverse = np.unique(indices, return_inverse=True)
+    summed = np.zeros(len(unique), dtype=values.dtype)
+    np.add.at(summed, inverse, values)
+    return unique, summed
+
+
 def condense_dense_blocks(
     F: np.ndarray,
     C: np.ndarray,
@@ -130,6 +140,234 @@ def extract_petsc_condensed_blocks(
     _copy_vector_segment(b_aug, b_fe, source_offset=0)
     _copy_vector_segment(b_aug, b_aux, source_offset=n_fe)
     return PetscCondensedBlocks(F, C, D, H, b_fe, b_aux, int(n_fe), int(n_aux))
+
+
+class DtnBlockAssembler:
+    """Stream sparse DtN C/D/H blocks without creating an augmented matrix."""
+
+    def __init__(
+        self,
+        base_active_rhs: PETSc.Vec,
+        n_aux: int,
+        *,
+        traction_supports: tuple[np.ndarray, ...],
+        ell_supports: tuple[np.ndarray, ...],
+    ) -> None:
+        if int(n_aux) < 1:
+            raise ValueError("DtN block assembly requires at least one auxiliary row")
+        if len(traction_supports) != int(n_aux) or len(ell_supports) != int(n_aux):
+            raise ValueError("DtN support counts must match n_aux")
+        self.comm = base_active_rhs.getComm().tompi4py()
+        self.n_fe = int(base_active_rhs.getSize())
+        self.n_aux = int(n_aux)
+        self._aux_owner = self.comm.size - 1
+        active_start, active_end = base_active_rhs.getOwnershipRange()
+        self._active_start = int(active_start)
+        self._active_end = int(active_end)
+        traction_supports = tuple(
+            np.asarray(rows, dtype=PETSc.IntType).reshape(-1)
+            for rows in traction_supports
+        )
+        ell_supports = tuple(
+            np.asarray(cols, dtype=PETSc.IntType).reshape(-1)
+            for cols in ell_supports
+        )
+        for rows, cols in zip(
+            traction_supports,
+            ell_supports,
+            strict=True,
+        ):
+            if len(rows) and (
+                int(rows.min()) < self._active_start
+                or int(rows.max()) >= self._active_end
+            ):
+                raise ValueError("traction support rows must be locally owned")
+            if len(cols) and (
+                int(cols.min()) < self._active_start
+                or int(cols.max()) >= self._active_end
+            ):
+                raise ValueError("ell support columns must be locally owned")
+
+        local_c_row_nnz = np.zeros(
+            self._active_end - self._active_start,
+            dtype=PETSc.IntType,
+        )
+        for rows in traction_supports:
+            if len(rows):
+                np.add.at(
+                    local_c_row_nnz,
+                    np.unique(rows) - self._active_start,
+                    1,
+                )
+        local_aux_columns = self.n_aux if self.comm.rank == self._aux_owner else 0
+        c_diag_nnz = (
+            local_c_row_nnz
+            if self.comm.rank == self._aux_owner
+            else np.zeros_like(local_c_row_nnz)
+        )
+        c_offdiag_nnz = (
+            np.zeros_like(local_c_row_nnz)
+            if self.comm.rank == self._aux_owner
+            else local_c_row_nnz
+        )
+        ell_counts_by_rank = self.comm.allgather(
+            tuple(int(len(np.unique(cols))) for cols in ell_supports)
+        )
+        ell_global_nnz = np.sum(
+            np.asarray(ell_counts_by_rank, dtype=np.int64),
+            axis=0,
+        )
+        local_d_diag_nnz = np.asarray(
+            tuple(int(len(np.unique(cols))) for cols in ell_supports),
+            dtype=PETSc.IntType,
+        )
+        local_d_offdiag_nnz = np.asarray(
+            ell_global_nnz - local_d_diag_nnz,
+            dtype=PETSc.IntType,
+        )
+        if self.comm.rank != self._aux_owner:
+            local_d_diag_nnz = np.zeros(0, dtype=PETSc.IntType)
+            local_d_offdiag_nnz = np.zeros(0, dtype=PETSc.IntType)
+        local_aux_rows = self.n_aux if self.comm.rank == self._aux_owner else 0
+        self.C = PETSc.Mat().createAIJ(
+            size=(
+                (self._active_end - self._active_start, self.n_fe),
+                (local_aux_columns, self.n_aux),
+            ),
+            nnz=(c_diag_nnz, c_offdiag_nnz),
+            comm=self.comm,
+        )
+        self.D = PETSc.Mat().createAIJ(
+            size=(
+                (local_aux_rows, self.n_aux),
+                (self._active_end - self._active_start, self.n_fe),
+            ),
+            nnz=(local_d_diag_nnz, local_d_offdiag_nnz),
+            comm=self.comm,
+        )
+        h_nnz = np.ones(local_aux_rows, dtype=PETSc.IntType)
+        self.H = PETSc.Mat().createAIJ(
+            size=((local_aux_rows, self.n_aux), (local_aux_columns, self.n_aux)),
+            nnz=(h_nnz, np.zeros(local_aux_rows, dtype=PETSc.IntType)),
+            comm=self.comm,
+        )
+        for matrix in (self.C, self.D, self.H):
+            matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
+        self.b_fe = base_active_rhs.copy()
+        self.b_aux = self.H.createVecLeft()
+        self.b_aux.set(0.0)
+        self.preallocation_audit = {
+            "status": "dtn_direct_blocks_preallocated",
+            "c_row_nnz_max_local": int(np.max(local_c_row_nnz, initial=0)),
+            "c_row_nnz_local_sum": int(np.sum(local_c_row_nnz)),
+            "c_dense_equivalent_row_nnz": self.n_aux,
+            "d_row_nnz_global_max": int(np.max(ell_global_nnz, initial=0)),
+            "d_diag_nnz_local_sum": int(np.sum(local_d_diag_nnz)),
+            "d_offdiag_nnz_local_sum": int(np.sum(local_d_offdiag_nnz)),
+            "h_diag_nnz_local_sum": int(np.sum(h_nnz)),
+            "support_counts_allgathered": True,
+            "python_triplet_cache": False,
+        }
+
+    def add_mode(
+        self,
+        aux_index: int,
+        *,
+        traction_rows: np.ndarray,
+        traction_values: np.ndarray,
+        ell_cols: np.ndarray,
+        ell_values: np.ndarray,
+        auxiliary_diagonal: complex,
+        b_fe_rows: np.ndarray | None = None,
+        b_fe_values: np.ndarray | None = None,
+        b_aux_value: complex = 0.0,
+    ) -> None:
+        aux_index = int(aux_index)
+        if not 0 <= aux_index < self.n_aux:
+            raise ValueError("DtN auxiliary index is out of range")
+        traction_rows = np.asarray(traction_rows, dtype=PETSc.IntType)
+        traction_values = np.asarray(traction_values, dtype=PETSc.ScalarType)
+        ell_cols = np.asarray(ell_cols, dtype=PETSc.IntType)
+        ell_values = np.asarray(ell_values, dtype=PETSc.ScalarType)
+        if any(
+            values.ndim != 1
+            for values in (traction_rows, traction_values, ell_cols, ell_values)
+        ):
+            raise ValueError("DtN mode rows, columns, and values must be 1-D")
+        if traction_rows.shape != traction_values.shape:
+            raise ValueError("traction rows and values are misaligned")
+        if ell_cols.shape != ell_values.shape:
+            raise ValueError("ell columns and values are misaligned")
+        if len(traction_rows):
+            traction_rows, traction_values = _sum_repeated_entries(
+                traction_rows,
+                traction_values,
+            )
+            self.C.setValues(
+                traction_rows,
+                np.asarray([aux_index], dtype=PETSc.IntType),
+                traction_values.reshape((-1, 1)),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+        if len(ell_cols):
+            ell_cols, ell_values = _sum_repeated_entries(
+                ell_cols,
+                ell_values,
+            )
+            self.D.setValues(
+                np.asarray([aux_index], dtype=PETSc.IntType),
+                ell_cols,
+                ell_values.reshape((1, -1)),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+        if self.comm.rank == self._aux_owner:
+            self.H.setValue(
+                aux_index,
+                aux_index,
+                PETSc.ScalarType(auxiliary_diagonal),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+            if b_aux_value != 0.0:
+                self.b_aux.setValue(
+                    aux_index,
+                    PETSc.ScalarType(b_aux_value),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+        if b_fe_rows is not None or b_fe_values is not None:
+            if b_fe_rows is None or b_fe_values is None:
+                raise ValueError("b_fe rows and values must be supplied together")
+            b_fe_rows = np.asarray(b_fe_rows, dtype=PETSc.IntType)
+            b_fe_values = np.asarray(b_fe_values, dtype=PETSc.ScalarType)
+            if b_fe_rows.ndim != 1 or b_fe_values.ndim != 1:
+                raise ValueError("b_fe rows and values must be 1-D")
+            if b_fe_rows.shape != b_fe_values.shape:
+                raise ValueError("b_fe rows and values are misaligned")
+            if len(b_fe_rows):
+                b_fe_rows, b_fe_values = _sum_repeated_entries(
+                    b_fe_rows,
+                    b_fe_values,
+                )
+                self.b_fe.setValues(
+                    b_fe_rows,
+                    b_fe_values,
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+
+    def finish(self) -> PetscCondensedBlocks:
+        for matrix in (self.C, self.D, self.H):
+            matrix.assemble()
+        self.b_fe.assemble()
+        self.b_aux.assemble()
+        return PetscCondensedBlocks(
+            None,
+            self.C,
+            self.D,
+            self.H,
+            self.b_fe,
+            self.b_aux,
+            self.n_fe,
+            self.n_aux,
+        )
 
 
 def combine_petsc_augmented_solution(
