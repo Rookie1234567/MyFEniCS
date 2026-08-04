@@ -72,6 +72,9 @@ ACTIVE_RESEARCH_CASES = {
     "096_hybrid_channel_memory_closure",
     "097_goal_oriented_exact_sequence_hp_adaptivity",
 }
+PARTIAL_CONTROLLED_NEGATIVE_CASES = {
+    "100_static_condensed_full3d_iterative",
+}
 
 RECORDED_CASES = {
     "002_2d_tm_dtn_equivalence": (
@@ -277,7 +280,8 @@ class DocumentationContractTests(unittest.TestCase):
             observed,
             QUALIFIED_OR_FROZEN_CASES
             | STAGING_OR_IN_PROGRESS_CASES
-            | ACTIVE_RESEARCH_CASES,
+            | ACTIVE_RESEARCH_CASES
+            | PARTIAL_CONTROLLED_NEGATIVE_CASES,
         )
         required_sections = (
             "## 物理问题",
@@ -301,6 +305,27 @@ class DocumentationContractTests(unittest.TestCase):
                     self.assertIn(section, text)
                 self.assertIsInstance(expected.get("status"), str)
                 self.assertTrue(expected["status"])
+
+        for case in sorted(PARTIAL_CONTROLLED_NEGATIVE_CASES):
+            folder = cases_root / case
+            with self.subTest(case=case):
+                for name in (
+                    "README.md",
+                    "config.json",
+                    "expected/gates.json",
+                    "records",
+                ):
+                    self.assertTrue((folder / name).exists(), name)
+                config = _load(folder / "config.json")
+                self.assertEqual(config["status"], "PARTIAL_WITH_CONTROLLED_NEGATIVES")
+                self.assertFalse(config["execution"]["ordinary_default_changed"])
+                f5b = config["task037_f5b_matrix_free_full"]
+                self.assertEqual(f5b["combined_task037_numerical_status"], "not_pass")
+                self.assertEqual(f5b["raw_vector_indexwise_status"], "fail")
+                self.assertEqual(f5b["resource_status"], "negative")
+                scope = " ".join(config["out_of_scope"])
+                for term in ("Hybrid", "hp", "0.7 nm", "Task037b"):
+                    self.assertIn(term, scope)
 
         staging_identity = {
             "status": "phase_a_in_progress",

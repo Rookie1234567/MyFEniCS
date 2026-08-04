@@ -144,7 +144,11 @@ class Task033HighOrderHybridComponentTests(unittest.TestCase):
                         coupling.positive_projection_identity_error, 1.0e-9
                     )
                     self.assertEqual(
-                        coupling.interface_quadrature_degree, 2 * degree + 4
+                        coupling.interface_quadrature_coefficient_degree,
+                        degree,
+                    )
+                    self.assertEqual(
+                        coupling.interface_quadrature_degree, 3 * degree + 4
                     )
                     self.assertEqual(
                         coupling.bottom.quadrature_degree,
