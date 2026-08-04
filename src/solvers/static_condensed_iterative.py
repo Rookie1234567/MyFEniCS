@@ -36,6 +36,7 @@ from .static_p2_auxiliary_pc import build_p2_auxiliary_setup
 __all__ = (
     "solve_assembled_static_condensed_fgmres",
     "solve_never_materialized_static_condensed_fgmres",
+    "solve_never_materialized_overlap0125_partition_fgmres",
     "solve_never_materialized_p2_auxiliary_fgmres",
 )
 _TINY = np.finfo(float).tiny
@@ -77,12 +78,13 @@ def _solve_static_condensed_fgmres_core(
     request: Stage4ExternalLinearSolverRequest
     | Stage4NeverMaterializedLinearSolverRequest,
     *,
-    screen_iterations: Literal[20],
+    screen_iterations: Literal[20, 100, 200],
     residual_observer: Callable[[int, float, float], None] | None = None,
     solver_profile: Literal[
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
         "never_materialized_owner_local",
+        "never_materialized_owner_local_overlap0125_partition",
         "never_materialized_p2_auxiliary",
     ] = "assembled",
     release_assembled_matrix: Callable[[], None] | None = None,
@@ -93,6 +95,7 @@ def _solve_static_condensed_fgmres_core(
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
         "never_materialized_owner_local",
+        "never_materialized_owner_local_overlap0125_partition",
         "never_materialized_p2_auxiliary",
     ):
         raise ValueError("unsupported static-condensed FGMRES solver profile")
@@ -101,8 +104,12 @@ def _solve_static_condensed_fgmres_core(
     )
     action_only_profile = solver_profile in {
         "never_materialized_owner_local",
+        "never_materialized_owner_local_overlap0125_partition",
         "never_materialized_p2_auxiliary",
     }
+    m3a_profile = (
+        solver_profile == "never_materialized_owner_local_overlap0125_partition"
+    )
     p2_auxiliary_profile = solver_profile == "never_materialized_p2_auxiliary"
     if action_only != action_only_profile:
         raise ValueError("solver profile does not match the request type")
@@ -337,7 +344,7 @@ def _solve_static_condensed_fgmres_core(
                 request.function_space.mesh,
                 domain_z=(request.config.domain_z_min, request.config.domain_z_max),
                 num_slabs=16,
-                overlap_fraction=0.25,
+                overlap_fraction=0.125 if m3a_profile else 0.25,
             )
             partition_audit = {
                 "matrix_materialized": False,
@@ -346,6 +353,13 @@ def _solve_static_condensed_fgmres_core(
                 "slab_row_counts": list(owner_plan.slab_row_counts),
                 "subdomain_owners": list(owner_plan.slab_owners),
             }
+            if m3a_profile:
+                partition_audit.update(
+                    {
+                        "overlap_fraction": 0.125,
+                        "interpolation": "partition",
+                    }
+                )
             diagonal, diagonal_audit = build_owner_local_slab_diagonal(
                 request.static_condensed_system
             )
@@ -396,6 +410,7 @@ def _solve_static_condensed_fgmres_core(
                     request.static_condensed_system,
                     owner_plan,
                     ilu_levels=0,
+                    interpolation=("partition" if m3a_profile else "basic"),
                     precomputed_diagonal_shift=shift,
                     two_step_action_operator=shifted_fine,
                     progress=None,
@@ -426,6 +441,21 @@ def _solve_static_condensed_fgmres_core(
                     ),
                 )
             owned.append(smoother)
+            if m3a_profile:
+                smoother_setup = smoother.diagnostics
+                partition_audit.update(
+                    {
+                        "partition_weight_sum_error": smoother_setup[
+                            "partition_weight_sum_error"
+                        ],
+                        "partition_weight_min": smoother_setup[
+                            "partition_weight_min"
+                        ],
+                        "partition_weight_max": smoother_setup[
+                            "partition_weight_max"
+                        ],
+                    }
+                )
         live_state["slab_factors"] = (
             0 if p2_auxiliary_profile else len(smoother.local_subdomains)
         )
@@ -628,6 +658,13 @@ def _solve_static_condensed_fgmres_core(
                     if p2_auxiliary_profile
                     else {
                         "num_slabs": 16,
+                        "overlap_fraction": 0.125,
+                        "interpolation": "partition",
+                        "absorption_shift": 0.1,
+                    }
+                    if m3a_profile
+                    else {
+                        "num_slabs": 16,
                         "overlap_fraction": 0.25,
                         "absorption_shift": 0.1,
                     }
@@ -756,6 +793,24 @@ def solve_never_materialized_static_condensed_fgmres(
         screen_iterations=screen_iterations,
         residual_observer=residual_observer,
         solver_profile="never_materialized_owner_local",
+        lifecycle_observer=lifecycle_observer,
+    )
+
+
+def solve_never_materialized_overlap0125_partition_fgmres(
+    request: Stage4NeverMaterializedLinearSolverRequest,
+    *,
+    screen_iterations: Literal[20, 100, 200] = 20,
+    residual_observer: Callable[[int, float, float], None] | None = None,
+    lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
+) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
+    """Run the opt-in overlap-0.125 partition-weighted slab profile."""
+
+    return _solve_static_condensed_fgmres_core(
+        request,
+        screen_iterations=screen_iterations,
+        residual_observer=residual_observer,
+        solver_profile="never_materialized_owner_local_overlap0125_partition",
         lifecycle_observer=lifecycle_observer,
     )
 

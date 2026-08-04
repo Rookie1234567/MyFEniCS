@@ -656,9 +656,11 @@ def _task037_f3_assembled_fgmres_port(
     lifecycle_enabled: bool = False,
     never_materialized: bool = False,
     p2_auxiliary: bool = False,
+    overlap0125_partition: bool = False,
 ):
     from src.solvers.static_condensed_iterative import (
         solve_assembled_static_condensed_fgmres,
+        solve_never_materialized_overlap0125_partition_fgmres,
         solve_never_materialized_p2_auxiliary_fgmres,
         solve_never_materialized_static_condensed_fgmres,
     )
@@ -704,6 +706,15 @@ def _task037_f3_assembled_fgmres_port(
                     observe_lifecycle if lifecycle_enabled else None
                 ),
             )
+        elif overlap0125_partition:
+            snapshot, audit = solve_never_materialized_overlap0125_partition_fgmres(
+                request,
+                screen_iterations=screen_iterations,
+                residual_observer=observe,
+                lifecycle_observer=(
+                    observe_lifecycle if lifecycle_enabled else None
+                ),
+            )
         elif never_materialized:
             snapshot, audit = solve_never_materialized_static_condensed_fgmres(
                 request,
@@ -739,6 +750,10 @@ def _task037_f3_screen_gate(
     expected_screen_iterations: int,
     observed_wall_seconds: float | None,
 ) -> dict[str, bool]:
+    m3_profile = (
+        audit.get("solver_profile")
+        == "never_materialized_owner_local_overlap0125_partition"
+    )
     m4_profile = audit.get("solver_profile") == "never_materialized_p2_auxiliary"
     try:
         candidate = audit["candidate"]
@@ -748,6 +763,7 @@ def _task037_f3_screen_gate(
             (int(row[0]), float(row[1])) for row in audit["condensed_true_samples"]
         ]
         reported = dict(history)
+        condensed_history = dict(samples)
         pairs = [(reported[iteration], value) for iteration, value in samples]
         history_by_iteration = dict(history)
         initial_reported, initial_condensed = history[0], samples[0]
@@ -805,6 +821,56 @@ def _task037_f3_screen_gate(
                 and smoother.get("p2_matrix_materialized") is True
                 and smoother.get("p2_unshifted_matrix_retained") is False
             )
+        elif m3_profile:
+            expected_candidate = {
+                "outer_ksp": "fgmres",
+                "pc_side": "right",
+                "norm_type": "unpreconditioned",
+                "restart": 90,
+                "rtol": 1.0e-6,
+                "atol": 0.0,
+                "max_it": expected_screen_iterations,
+                "num_slabs": 16,
+                "overlap_fraction": 0.125,
+                "interpolation": "partition",
+                "absorption_shift": 0.1,
+            }
+            counts = (
+                int(audit["operator_apply_count"]),
+                int(coarse["apply_count"]),
+                int(smoother["one_level_apply_count"]),
+            )
+            local_types = tuple(smoother["local_solver_types"])
+            weight_error = partition.get("partition_weight_sum_error")
+            weight_min = partition.get("partition_weight_min")
+            weight_max = partition.get("partition_weight_max")
+            partition_or_factor_gate = (
+                partition.get("matrix_materialized") is False
+                and partition.get("coverage_pass") is True
+                and partition.get("num_slabs") == 16
+                and partition.get("overlap_fraction") == 0.125
+                and partition.get("interpolation") == "partition"
+                and smoother.get("interpolation") == "partition"
+                and isinstance(weight_error, (int, float))
+                and math.isfinite(float(weight_error))
+                and float(weight_error) <= 1.0e-12
+                and isinstance(weight_min, (int, float))
+                and isinstance(weight_max, (int, float))
+                and 0.0 < float(weight_min) <= float(weight_max) <= 1.0
+                and smoother["assembly_order"] == "two_color"
+                and smoother["smoother_iterations"] == 2
+                and smoother["smoother_ksp_type"] == "gmres"
+                and smoother["factor_only_storage"] is True
+                and bool(local_types)
+                and all(kind == "ilu" for kind in local_types)
+                and int(smoother["global_stored_factor_nnz"]) < 103336560
+            )
+            no_global_factor = (
+                audit.get("global_A_materialized") is False
+                and audit.get("global_F_materialized") is False
+                and inventory.get("global_direct_factor_count") == 0
+                and inventory.get("global_schur_matrix_materialized") is False
+            )
         else:
             expected_candidate = {
                 "outer_ksp": "fgmres",
@@ -849,6 +915,22 @@ def _task037_f3_screen_gate(
             predicted_wall_seconds = (
                 float(observed_wall_seconds) * predicted_iterations / iterations
             )
+        if m3_profile and expected_screen_iterations == 20:
+            if {0, 10, 20}.issubset(reported):
+                m3a_screen_decline = (
+                    reported[20] < reported[10] < reported[0]
+                    and condensed_history[20]
+                    < condensed_history[10]
+                    < condensed_history[0]
+                )
+            else:
+                m3a_screen_decline = (
+                    reason > 0
+                    and iterations < expected_screen_iterations
+                    and reported.get(iterations, final_values[0]) < reported[0]
+                )
+        else:
+            m3a_screen_decline = True
     except (KeyError, TypeError, ValueError, IndexError):
         return {"core_audit": False}
     tiny = np.finfo(float).tiny
@@ -887,6 +969,11 @@ def _task037_f3_screen_gate(
             final_values[2] <= 5.0e-2
             and predicted_iterations <= 3000
             and predicted_wall_seconds <= 7200
+        ),
+        **(
+            {"m3a_screen_decline": m3a_screen_decline}
+            if m3_profile
+            else {}
         ),
     }
 
@@ -951,6 +1038,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_f5b_released_profile": bool(args.task037_f5b_released_profile),
         "task037_m2c_never_materialized": bool(
             args.task037_m2c_never_materialized
+        ),
+        "task037_m3a_overlap0125_partition": bool(
+            args.task037_m3a_overlap0125_partition
         ),
         "task037_m4_p2_auxiliary": bool(args.task037_m4_p2_auxiliary),
         "task037_canonical_vector_export": bool(
@@ -1115,6 +1205,7 @@ def _worker(args: argparse.Namespace) -> int:
             lifecycle_enabled=args.task037_m0_lifecycle_audit,
             never_materialized=args.task037_m2c_never_materialized,
             p2_auxiliary=args.task037_m4_p2_auxiliary,
+            overlap0125_partition=args.task037_m3a_overlap0125_partition,
         )
         if args.task037_m2c_never_materialized:
             from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
@@ -1277,6 +1368,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--task037-f3-full", action="store_true")
     parser.add_argument("--task037-f5b-released-profile", action="store_true")
     parser.add_argument("--task037-m2c-never-materialized", action="store_true")
+    parser.add_argument(
+        "--task037-m3a-overlap0125-partition", action="store_true"
+    )
     parser.add_argument("--task037-m4-p2-auxiliary", action="store_true")
     parser.add_argument("--task037-m0-lifecycle-audit", action="store_true")
     parser.add_argument(
@@ -1526,7 +1620,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.task037_f5b_released_profile and not args.task037_f3_full:
         parser.error("--task037-f5b-released-profile requires --task037-f3-full.")
-    if args.task037_m2c_never_materialized and not (
+    if args.task037_m2c_never_materialized and not args.task037_m3a_overlap0125_partition and not (
         args.task037_f3_screen == 20
         and not args.task037_f3_full
         and not args.task037_f5b_released_profile
@@ -1544,6 +1638,20 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037-m2c-never-materialized requires the existing p6/h10 "
             "MPI8 static-backend screen-20 path and is exclusive of F0/F1/F3-full/F5b."
+        )
+    if args.task037_m3a_overlap0125_partition and not (
+        args.task037_m2c_never_materialized
+        and args.task037_f3_screen in (20, 100, 200)
+        and not args.task037_f3_full
+        and not args.task037_f5b_released_profile
+        and not args.task037_f0_vector_observer
+        and args.task037_f1_direct_trace_oracle is None
+        and not args.task037_m4_p2_auxiliary
+        and not args.task037_m0_lifecycle_audit
+    ):
+        parser.error(
+            "--task037-m3a-overlap0125-partition requires the action-only "
+            "Task037 screen path and is exclusive of M4/F5b/F0/F1."
         )
     if args.task037_m4_p2_auxiliary and not (
         args.task037_m2c_never_materialized
@@ -2816,11 +2924,12 @@ def _qualify(
     task037_f3_core_audit: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     matrix = solver_summary.get("matrix_stats") or {}
+    m3a_profile = bool(args.task037_m3a_overlap0125_partition)
     m4_profile = bool(args.task037_m4_p2_auxiliary)
     m2c_profile = bool(
-        args.task037_m2c_never_materialized and not m4_profile
+        args.task037_m2c_never_materialized and not m3a_profile and not m4_profile
     )
-    action_only_profile = m2c_profile or m4_profile
+    action_only_profile = m2c_profile or m3a_profile or m4_profile
     condensation = solver_summary.get("cell_static_condensation") or {}
     common = {
         "process_completed": return_code == 0,
@@ -2915,7 +3024,75 @@ def _qualify(
                     ),
                 }
             )
-        if m2c_profile:
+        if m3a_profile:
+            partition = core_audit.get("partition_audit") or {}
+            smoother = core_audit.get("smoother_diagnostics") or {}
+            inventory = core_audit.get("no_global_factor_inventory") or {}
+            resource = resource_summary if isinstance(resource_summary, dict) else {}
+            memory_authority_gib = resource.get("memory_authority_gib")
+            checks.update(
+                {
+                    "m3a_core_profile": (
+                        core_profile
+                        == "never_materialized_owner_local_overlap0125_partition"
+                    ),
+                    "m3a_core_no_assembled_release": core_released is False,
+                    "m3a_core_no_global_A": (
+                        core_audit.get("global_A_materialized") is False
+                    ),
+                    "m3a_core_no_global_F": (
+                        core_audit.get("global_F_materialized") is False
+                    ),
+                    "m3a_partition_weighted_0125": (
+                        partition.get("matrix_materialized") is False
+                        and partition.get("num_slabs") == 16
+                        and partition.get("overlap_fraction") == 0.125
+                        and partition.get("interpolation") == "partition"
+                        and smoother.get("interpolation") == "partition"
+                        and isinstance(
+                            partition.get("partition_weight_sum_error"),
+                            (int, float),
+                        )
+                        and float(partition["partition_weight_sum_error"])
+                        <= 1.0e-12
+                    ),
+                    "m3a_two_color_factor_only_ilu": (
+                        smoother.get("assembly_order") == "two_color"
+                        and smoother.get("smoother_iterations") == 2
+                        and smoother.get("smoother_ksp_type") == "gmres"
+                        and smoother.get("factor_only_storage") is True
+                        and all(
+                            kind == "ilu"
+                            for kind in smoother.get("local_solver_types", ())
+                        )
+                    ),
+                    "m3a_no_global_direct_factor": (
+                        inventory.get("global_direct_factor_count") == 0
+                        and inventory.get("global_schur_matrix_materialized") is False
+                    ),
+                    "m3a_stored_factor_nnz_reduced": (
+                        isinstance(smoother.get("global_stored_factor_nnz"), int)
+                        and smoother["global_stored_factor_nnz"] < 103336560
+                    ),
+                    "m3a_memory_authority_le_10_30_gib": (
+                        _finite_number_le(memory_authority_gib, 10.30)
+                    ),
+                    "m3a_summary_action_only": (
+                        condensation.get("action_only_setup") is True
+                    ),
+                    "m3a_summary_no_global_A": (
+                        condensation.get("global_A_materialized") is False
+                    ),
+                    "m3a_summary_no_global_F": (
+                        condensation.get("global_F_materialized") is False
+                    ),
+                    "m3a_summary_profile": (
+                        solver_summary.get("external_solver_profile")
+                        == core_profile
+                    ),
+                }
+            )
+        elif m2c_profile:
             partition = core_audit.get("partition_audit") or {}
             smoother = core_audit.get("smoother_diagnostics") or {}
             inventory = core_audit.get("no_global_factor_inventory") or {}
@@ -3219,6 +3396,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-f5b-released-profile")
     if args.task037_m2c_never_materialized:
         command.append("--task037-m2c-never-materialized")
+    if args.task037_m3a_overlap0125_partition:
+        command.append("--task037-m3a-overlap0125-partition")
     if args.task037_m4_p2_auxiliary:
         command.append("--task037-m4-p2-auxiliary")
     if args.task037_canonical_vector_export:
@@ -3907,6 +4086,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["failures"].append("source_stable_and_clean_after")
         qualification["pass"] = False
     status = (
+        "task037_m3a_overlap0125_partition_screen_pass"
+        if qualification["pass"] and args.task037_m3a_overlap0125_partition
+        else "task037_m3a_overlap0125_partition_screen_not_pass"
+        if args.task037_m3a_overlap0125_partition
+        else
         "task037_m2c_never_materialized_screen_pass"
         if qualification["pass"] and args.task037_m2c_never_materialized
         else "task037_m2c_never_materialized_screen_not_pass"

@@ -99,6 +99,44 @@ def _m4_audit(screen_iterations=20):
     return audit
 
 
+def _m3a_audit(screen_iterations=20):
+    audit = _audit(screen_iterations)
+    audit.update(
+        {
+            "solver_profile": "never_materialized_owner_local_overlap0125_partition",
+            "assembled_matrix_released_before_solve": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "candidate": {
+                **audit["candidate"],
+                "overlap_fraction": 0.125,
+                "interpolation": "partition",
+            },
+            "partition_audit": {
+                "matrix_materialized": False,
+                "coverage_pass": True,
+                "num_slabs": 16,
+                "overlap_fraction": 0.125,
+                "interpolation": "partition",
+                "partition_weight_sum_error": 0.0,
+                "partition_weight_min": 0.5,
+                "partition_weight_max": 1.0,
+            },
+            "smoother_diagnostics": {
+                "one_level_apply_count": 1,
+                "factor_only_storage": True,
+                "local_solver_types": ["ilu"],
+                "interpolation": "partition",
+                "assembly_order": "two_color",
+                "smoother_iterations": 2,
+                "smoother_ksp_type": "gmres",
+                "global_stored_factor_nnz": 100,
+            },
+        }
+    )
+    return audit
+
+
 def test_parser_scope_and_worker_command(tmp_path):
     base = [
         "--degree",
@@ -208,9 +246,37 @@ def test_parser_scope_and_worker_command(tmp_path):
     assert (
         watchdog._worker_command(m4, tmp_path).count("--task037-m4-p2-auxiliary") == 1
     )
+    m3 = watchdog._parse_args(
+        m2c_args + ["--task037-m3a-overlap0125-partition"]
+    )
+    assert m3.task037_m3a_overlap0125_partition
+    assert (
+        watchdog._worker_command(m3, tmp_path).count(
+            "--task037-m3a-overlap0125-partition"
+        )
+        == 1
+    )
+    for screen_iterations in (20, 100, 200):
+        m3_screen_args = list(m2c_args)
+        m3_screen_args[m3_screen_args.index("20")] = str(screen_iterations)
+        assert watchdog._parse_args(
+            m3_screen_args + ["--task037-m3a-overlap0125-partition"]
+        ).task037_m3a_overlap0125_partition
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(
+            m2c_args
+            + [
+                "--task037-m3a-overlap0125-partition",
+                "--task037-m4-p2-auxiliary",
+            ]
+        )
     with pytest.raises(SystemExit):
         watchdog._parse_args(
             base + ["--task037-f3-screen", "20", "--task037-m4-p2-auxiliary"]
+        )
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(
+            base + ["--task037-f3-screen", "20", "--task037-m3a-overlap0125-partition"]
         )
     bad_iterations = valid.copy()
     bad_iterations[bad_iterations.index("--task037-f3-screen") + 1] = "3000"
@@ -292,6 +358,7 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         task037_f3_full=True,
         task037_f5b_released_profile=True,
         task037_m2c_never_materialized=False,
+        task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_canonical_vector_export=True,
         task037_m0_lifecycle_audit=True,
@@ -352,6 +419,14 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
         captured["kwargs"] = kwargs
         return object(), {"solver_profile": "never_materialized_p2_auxiliary"}
 
+    def fake_m3a_action_core(request, **kwargs):
+        selected_profiles.append("m3a")
+        captured["request"] = request
+        captured["kwargs"] = kwargs
+        return object(), {
+            "solver_profile": "never_materialized_owner_local_overlap0125_partition"
+        }
+
     def stage(*_args, **kwargs):
         captured["retain"] = kwargs["static_retain_local_schur_for_matrix_free"]
         captured["port"] = kwargs["linear_solver_port"]
@@ -365,6 +440,11 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "src.solvers.static_condensed_iterative.solve_never_materialized_p2_auxiliary_fgmres",
         fake_p2_action_core,
+    )
+    monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative."
+        "solve_never_materialized_overlap0125_partition_fgmres",
+        fake_m3a_action_core,
     )
     monkeypatch.setattr(
         "src.solvers.solve_maxwell_3d_stage_4b_block_grating.run_stage4b_block_grating_3d_case",
@@ -384,9 +464,10 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
         task035d_nested_p_dwr_phase=None,
         task035d_selective_face_dwr_phase=None,
     )
-    for m4 in (False, True):
+    for m3a, m4 in ((False, False), (False, True), (True, False)):
         args = SimpleNamespace(
             **common_args,
+            task037_m3a_overlap0125_partition=m3a,
             task037_m4_p2_auxiliary=m4,
         )
         assert watchdog._worker(args) == 0
@@ -394,7 +475,7 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
     assert isinstance(captured["port"], Stage4NeverMaterializedLinearSolverPort)
     assert captured["request"] is request
     assert captured["kwargs"]["screen_iterations"] == 20
-    assert selected_profiles == ["m2c", "m4"]
+    assert selected_profiles == ["m2c", "m4", "m3a"]
 
 
 def test_f3_qualification_uses_core_audit_gate():
@@ -403,6 +484,7 @@ def test_f3_qualification_uses_core_audit_gate():
         task037_f3_full=False,
         task037_f5b_released_profile=False,
         task037_m2c_never_materialized=False,
+        task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
@@ -556,6 +638,7 @@ def test_m2c_qualification_requires_action_profile_and_memory_gate():
         task037_f3_full=False,
         task037_f5b_released_profile=False,
         task037_m2c_never_materialized=True,
+        task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
@@ -611,6 +694,9 @@ def test_m2c_qualification_requires_action_profile_and_memory_gate():
         "resource_summary": {"memory_authority_gib": 10.30},
         "task037_f3_core_audit": audit,
     }
+    assert "m3a_screen_decline" not in watchdog._task037_f3_screen_gate(
+        audit, 20, None
+    )
     assert watchdog._qualify(**kwargs)["pass"]
     kwargs["solver_summary"]["cell_static_condensation"]["action_only_setup"] = False
     assert not watchdog._qualify(**kwargs)["pass"]
@@ -625,6 +711,7 @@ def test_m4_qualification_uses_final_p2_smoother_and_resource_gate():
         task037_f3_full=False,
         task037_f5b_released_profile=False,
         task037_m2c_never_materialized=True,
+        task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=True,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
@@ -687,11 +774,88 @@ def test_m4_qualification_uses_final_p2_smoother_and_resource_gate():
     )
 
 
+def test_m3a_partition_profile_and_memory_gates():
+    args = SimpleNamespace(
+        task037_f3_screen=20,
+        task037_f3_full=False,
+        task037_f5b_released_profile=False,
+        task037_m2c_never_materialized=True,
+        task037_m3a_overlap0125_partition=True,
+        task037_m4_p2_auxiliary=False,
+        task037_canonical_vector_export=False,
+        run_kind="full-solve",
+        allow_swap=False,
+        polarization_kind="s",
+        mpi_size=8,
+        task035d_case097_gate=False,
+    )
+    audit = _m3a_audit()
+    summary = {
+        "matrix_stats": {"matrix_rows": 1, "matrix_nnz_used": None},
+        "polarization_kind": "s",
+        "external_linear_solver_port": True,
+        "external_no_global_factor": True,
+        "ksp_converged_reason": -3,
+        "linear_system_relative_residual": 0.1,
+        "official_result": False,
+        "postprocess_skipped": True,
+        "external_solver_profile": audit["solver_profile"],
+        "external_assembled_matrix_released_before_solve": False,
+        "cell_static_condensation": {
+            "action_only_setup": True,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+        },
+    }
+    kwargs = {
+        "args": args,
+        "solver_summary": summary,
+        "events": [],
+        "return_code": 0,
+        "terminated_for_memory": False,
+        "terminated_for_timeout": False,
+        "terminated_for_authority_unreadable": False,
+        "no_swap": True,
+        "observed_worker_rank_count": 8,
+        "resource_summary": {"memory_authority_gib": 10.30},
+        "task037_f3_core_audit": audit,
+    }
+    screen = watchdog._task037_f3_screen_gate(audit, 20, None)
+    assert screen["candidate"]
+    assert screen["partition_and_ilu"]
+    assert screen["m3a_screen_decline"]
+    assert watchdog._qualify(**kwargs)["pass"]
+
+    bad_decline = _m3a_audit()
+    bad_decline["reported_history"][1][1] = 1.1
+    bad_decline_screen = watchdog._task037_f3_screen_gate(bad_decline, 20, None)
+    assert not bad_decline_screen["m3a_screen_decline"]
+    assert not watchdog._qualify(
+        **{**kwargs, "task037_f3_core_audit": bad_decline}
+    )["pass"]
+
+    bad_condensed_decline = _m3a_audit()
+    bad_condensed_decline["condensed_true_samples"][1][1] = 1.1
+    assert not watchdog._task037_f3_screen_gate(
+        bad_condensed_decline, 20, None
+    )["m3a_screen_decline"]
+
+    bad_factor = _m3a_audit()
+    bad_factor["smoother_diagnostics"]["global_stored_factor_nnz"] = 103336560
+    assert not watchdog._qualify(
+        **{**kwargs, "task037_f3_core_audit": bad_factor}
+    )["pass"]
+    assert not watchdog._qualify(
+        **{**kwargs, "resource_summary": {"memory_authority_gib": 10.31}}
+    )["pass"]
+
+
 def test_ordinary_full_solve_rules_remain_strict():
     args = SimpleNamespace(
         task037_f3_screen=None,
         task037_f3_full=False,
         task037_m2c_never_materialized=False,
+        task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         run_kind="full-solve",
         allow_swap=False,

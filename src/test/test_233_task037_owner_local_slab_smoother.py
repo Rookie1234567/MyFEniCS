@@ -98,6 +98,14 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
         overlap_fraction=0.0,
     )
     full_subdomains = _full_subdomains(plan)
+    partition_plan = build_owner_local_slab_plan(
+        view,
+        mesh,
+        domain_z=(0.0, 1.0),
+        num_slabs=3,
+        overlap_fraction=0.125,
+    )
+    partition_subdomains = _full_subdomains(partition_plan)
     assembled_diagonal = assembled.create_active_vector()
     assembled.matrix.getDiagonal(assembled_diagonal)
     local_scale = float(
@@ -126,6 +134,16 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
         interpolation="basic",
         assembly_order="combined",
     )
+    partition_oracle = DistributedPhysicalSlabSmoother(
+        assembled.matrix,
+        partition_subdomains,
+        ilu_levels=0,
+        local_ksp_iterations=1,
+        factor_only_storage=True,
+        diagonal_shift=assembled_shift,
+        interpolation="partition",
+        assembly_order="combined",
+    )
 
     observer_events = []
 
@@ -139,6 +157,13 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
         ilu_levels=0,
         setup_observer=setup_observer,
     )
+    candidate_partition = DistributedPhysicalSlabSmoother.from_owner_local_plan(
+        view,
+        partition_plan,
+        ilu_levels=0,
+        interpolation="partition",
+        precomputed_diagonal_shift=assembled_shift,
+    )
     candidate_two = None
     ordinary_two = None
     shift_norm_before = float(assembled_shift.norm())
@@ -151,6 +176,51 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
         ]
         assert comm.allgather(observer_events) == [expected_events] * comm.size
         assert candidate.subdomain_owners == plan.slab_owners
+        local_partition_weights = [
+            weights
+            for weights in partition_plan.partition_weights_by_slab
+            if weights.size
+        ]
+        assert all(
+            len(weights) == len(partition_plan.owner_rows[slab])
+            for slab, owner in enumerate(partition_plan.slab_owners)
+            if owner == comm.rank
+            for weights in (partition_plan.partition_weights_by_slab[slab],)
+        )
+        assert (
+            comm.allreduce(
+                sum(len(weights) for weights in local_partition_weights),
+                op=MPI.SUM,
+            )
+            > 0
+        )
+        assert all(
+            np.all(np.isfinite(np.real(weights)))
+            and np.all(np.real(weights) > 0.0)
+            and np.all(np.real(weights) <= 1.0)
+            for weights in local_partition_weights
+        )
+        assert comm.allreduce(
+            any(np.any(np.real(weights) < 1.0) for weights in local_partition_weights),
+            op=MPI.LOR,
+        )
+        assert abs(
+            float(
+                comm.allreduce(
+                    sum(
+                        float(np.sum(np.real(weights)))
+                        for weights in local_partition_weights
+                    ),
+                    op=MPI.SUM,
+                )
+            )
+            - float(action_system.active_rows)
+        ) <= 1.0e-12
+        partition_diagnostics = candidate_partition.diagnostics
+        assert partition_diagnostics["interpolation"] == "partition"
+        assert partition_diagnostics["partition_weight_sum_error"] <= 1.0e-12
+        assert partition_diagnostics["partition_weight_min"] > 0.0
+        assert partition_diagnostics["partition_weight_max"] <= 1.0
         assert candidate.local_subdomains == tuple(
             slab for slab, owner in enumerate(plan.slab_owners) if owner == comm.rank
         )
@@ -236,6 +306,18 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
             candidate_result.destroy()
             ordinary_result.destroy()
             source.destroy()
+        partition_source = assembled.create_active_vector()
+        _set_probe(partition_source, 0.29)
+        partition_result = _apply(candidate_partition, partition_source)
+        partition_expected = _apply(partition_oracle, partition_source)
+        max_error, relative_error = _compare_vectors(
+            partition_result, partition_expected, comm
+        )
+        assert max_error <= 1.0e-11
+        assert relative_error <= 1.0e-11
+        partition_result.destroy()
+        partition_expected.destroy()
+        partition_source.destroy()
         local_owner_rows = [
             plan.owner_rows[slab] for slab in candidate.local_subdomains
         ]
@@ -295,6 +377,8 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
             source.destroy()
     finally:
         candidate.destroy()
+        candidate_partition.destroy()
+        partition_oracle.destroy()
         if candidate_two is not None:
             candidate_two.destroy()
         if ordinary_two is not None:

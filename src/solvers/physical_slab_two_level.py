@@ -653,6 +653,7 @@ class OwnerLocalSlabPlan:
     owner_rows: tuple[np.ndarray, ...]
     local_cell_indices_by_slab: tuple[tuple[int, ...], ...]
     slab_row_counts: tuple[int, ...]
+    partition_weights_by_slab: tuple[np.ndarray, ...]
 
 
 def _owner_from_scalar_row_counts(
@@ -760,13 +761,17 @@ def build_owner_local_slab_plan(
         raise RuntimeError("owned row masks do not cover all active trace rows")
     row_counts = np.asarray(comm.allreduce(row_counts_local, op=MPI.SUM))
     owners = _owner_from_scalar_row_counts(row_counts, comm.size)
-    response_packets: list[list[tuple[int, int]]] = [
+    response_packets: list[list[tuple[int, int, int]]] = [
         [] for _ in range(comm.size)
     ]
     for source, rows in enumerate(query_sources):
         for row in sorted(rows):
             response_packets[source].append(
-                (int(row), int(owned_row_masks.get(row, 0)))
+                (
+                    int(row),
+                    int(owned_row_masks.get(row, 0)),
+                    int(owned_row_masks.get(row, 0)).bit_count(),
+                )
             )
     owner_slab_masks = [0 for _ in range(comm.size)]
     for slab, owner in enumerate(owners):
@@ -775,12 +780,16 @@ def build_owner_local_slab_plan(
         for row, mask in owned_row_masks.items():
             selected_mask = int(mask) & slab_mask
             if selected_mask:
-                response_packets[owner].append((int(row), selected_mask))
+                response_packets[owner].append(
+                    (int(row), selected_mask, int(mask).bit_count())
+                )
     received_responses = comm.alltoall(response_packets)
     local_row_masks: dict[int, int] = {}
+    local_row_multiplicities: dict[int, int] = {}
     for packet in received_responses:
-        for row, mask in packet:
+        for row, mask, row_multiplicity in packet:
             local_row_masks[int(row)] = local_row_masks.get(int(row), 0) | int(mask)
+            local_row_multiplicities[int(row)] = int(row_multiplicity)
     local_cells_by_slab = [[] for _ in intervals]
     for cell_index, recovery in enumerate(recovery_maps):
         cell_rows = set()
@@ -820,6 +829,19 @@ def build_owner_local_slab_plan(
     )
     if comm.allreduce(owned_invalid, op=MPI.LOR):
         raise RuntimeError("slab owner did not receive its active row closure")
+    partition_weights_by_slab: list[np.ndarray] = []
+    for slab, owner in enumerate(owners):
+        if comm.rank != owner:
+            partition_weights_by_slab.append(empty.copy())
+            continue
+        rows = owner_rows[slab]
+        counts = np.asarray(
+            [local_row_multiplicities[int(row)] for row in rows],
+            dtype=np.int32,
+        )
+        partition_weights_by_slab.append(
+            np.asarray(1.0 / counts, dtype=PETSc.ScalarType)
+        )
     return OwnerLocalSlabPlan(
         comm=comm,
         active_rows=int(condensed.active_rows),
@@ -829,6 +851,7 @@ def build_owner_local_slab_plan(
             tuple(int(cell) for cell in cells) for cells in local_cells_by_slab
         ),
         slab_row_counts=tuple(int(value) for value in row_counts),
+        partition_weights_by_slab=tuple(partition_weights_by_slab),
     )
 
 
@@ -1127,6 +1150,7 @@ class DistributedPhysicalSlabSmoother:
         *,
         diagonal_shift: np.ndarray | None,
         multiplicity: np.ndarray | None,
+        partition_weights: np.ndarray | None = None,
     ) -> _OwnedSubdomainFactor:
         if diagonal_shift is not None:
             submatrix_diagonal = submatrix.createVecLeft()
@@ -1141,11 +1165,16 @@ class DistributedPhysicalSlabSmoother:
         if np.any(self._union_indices[union_positions] != indices):
             raise RuntimeError("subdomain indices are absent from the rank union")
         if self.interpolation == "partition":
-            if multiplicity is None:
-                raise RuntimeError("partition interpolation needs global multiplicity")
-            weights = np.asarray(
-                1.0 / multiplicity[indices], dtype=PETSc.ScalarType
-            )
+            if partition_weights is not None:
+                weights = np.asarray(partition_weights, dtype=PETSc.ScalarType)
+                if weights.size != indices.size:
+                    raise RuntimeError("partition weights are not owner-row aligned")
+            elif multiplicity is not None:
+                weights = np.asarray(
+                    1.0 / multiplicity[indices], dtype=PETSc.ScalarType
+                )
+            else:
+                raise RuntimeError("partition interpolation needs row weights")
         else:
             weights = np.ones(indices.size, dtype=PETSc.ScalarType)
         rhs = submatrix.createVecRight()
@@ -1557,6 +1586,7 @@ class DistributedPhysicalSlabSmoother:
         plan: OwnerLocalSlabPlan,
         *,
         ilu_levels: int,
+        interpolation: str = "basic",
         precomputed_diagonal_shift: PETSc.Vec | None = None,
         two_step_action_operator: PETSc.Mat | None = None,
         progress: Callable[[int, int], None] | None = None,
@@ -1570,6 +1600,7 @@ class DistributedPhysicalSlabSmoother:
         smoother._initialize_owner_local_plan(
             condensed,
             plan,
+            interpolation=interpolation,
             precomputed_diagonal_shift=precomputed_diagonal_shift,
             two_step_action_operator=two_step_action_operator,
             progress=progress,
@@ -1582,6 +1613,7 @@ class DistributedPhysicalSlabSmoother:
         condensed: Any,
         plan: OwnerLocalSlabPlan,
         *,
+        interpolation: str,
         precomputed_diagonal_shift: PETSc.Vec | None,
         two_step_action_operator: PETSc.Mat | None,
         progress: Callable[[int, int], None] | None,
@@ -1594,7 +1626,9 @@ class DistributedPhysicalSlabSmoother:
         self.comm_size = int(self.comm.size)
         self.global_size = int(condensed.active_rows)
         self.ilu_levels = 0
-        self.interpolation = "basic"
+        if interpolation not in {"basic", "partition"}:
+            raise ValueError("interpolation must be 'basic' or 'partition'")
+        self.interpolation = interpolation
         self.assembly_order = (
             "two_color" if two_step_action_operator is not None else "combined"
         )
@@ -1612,6 +1646,9 @@ class DistributedPhysicalSlabSmoother:
         self._first_submatrix_reported = False
         self._first_factor_reported = False
         self._global_subdomain_count = len(plan.slab_owners)
+        self.partition_weight_sum_error: float | None = None
+        self.partition_weight_min: float | None = None
+        self.partition_weight_max: float | None = None
         self.subdomain_local_diagonal_shift = True
         self.subdomain_owners = tuple(plan.slab_owners)
         self.local_subdomains = tuple(
@@ -1671,6 +1708,11 @@ class DistributedPhysicalSlabSmoother:
                         slab_matrix,
                         diagonal_shift=slab_shift,
                         multiplicity=None,
+                        partition_weights=(
+                            plan.partition_weights_by_slab[slab]
+                            if self.interpolation == "partition"
+                            else None
+                        ),
                     )
                     if setup_observer is not None and first_factor_payload is None:
                         first_factor_payload = {
@@ -1686,6 +1728,63 @@ class DistributedPhysicalSlabSmoother:
         finally:
             if diagonal is not None:
                 diagonal.destroy()
+        if self.interpolation == "partition":
+            local_weights = [
+                plan.partition_weights_by_slab[slab]
+                for slab in self.local_subdomains
+            ]
+            local_weight_values = (
+                np.concatenate(local_weights) if local_weights else np.empty(0)
+            )
+            local_invalid_weights = False
+            if local_weight_values.size:
+                real_weights = np.real(local_weight_values)
+                local_invalid_weights = bool(
+                    not np.all(np.isfinite(real_weights))
+                    or np.any(real_weights <= 0.0)
+                    or np.any(real_weights > 1.0)
+                )
+            if self.comm.allreduce(local_invalid_weights, op=MPI.LOR):
+                raise RuntimeError("partition weights are not finite in (0, 1]")
+            weight_sums = condensed.create_active_vector()
+            weight_sums.set(0.0)
+            for slab in self.local_subdomains:
+                weight_sums.setValues(
+                    plan.owner_rows[slab],
+                    plan.partition_weights_by_slab[slab],
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+            weight_sums.assemble()
+            local_weight_error = np.asarray(
+                weight_sums.getArray(readonly=True), dtype=PETSc.ScalarType
+            ) - 1.0
+            local_weight_error_max = (
+                float(np.max(np.abs(local_weight_error)))
+                if local_weight_error.size
+                else 0.0
+            )
+            self.partition_weight_sum_error = float(
+                self.comm.allreduce(local_weight_error_max, op=MPI.MAX)
+            )
+            weight_sums.destroy()
+            local_min = (
+                float(np.min(np.real(local_weight_values)))
+                if local_weight_values.size
+                else 1.0
+            )
+            local_max = (
+                float(np.max(np.real(local_weight_values)))
+                if local_weight_values.size
+                else 0.0
+            )
+            self.partition_weight_min = float(
+                self.comm.allreduce(local_min, op=MPI.MIN)
+            )
+            self.partition_weight_max = float(
+                self.comm.allreduce(local_max, op=MPI.MAX)
+            )
+            if self.partition_weight_sum_error > 1.0e-12:
+                raise RuntimeError("partition weights do not form a unity sum")
         self._report_first_submatrix(
             setup_observer,
             None,
@@ -1753,7 +1852,7 @@ class DistributedPhysicalSlabSmoother:
 
     @property
     def diagnostics(self) -> dict[str, Any]:
-        return {
+        diagnostics = {
             "subdomain_owners": list(self.subdomain_owners),
             "local_subdomains": list(self.local_subdomains),
             "interpolation": self.interpolation,
@@ -1782,6 +1881,15 @@ class DistributedPhysicalSlabSmoother:
             "one_level_apply_count": self.apply_count,
             "one_level_mean_apply_s": self.apply_elapsed_s / max(self.apply_count, 1),
         }
+        if self.interpolation == "partition":
+            diagnostics.update(
+                {
+                    "partition_weight_sum_error": self.partition_weight_sum_error,
+                    "partition_weight_min": self.partition_weight_min,
+                    "partition_weight_max": self.partition_weight_max,
+                }
+            )
+        return diagnostics
 
     def destroy(self) -> None:
         if self._destroyed:
