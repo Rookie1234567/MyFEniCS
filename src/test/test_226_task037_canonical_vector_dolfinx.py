@@ -186,7 +186,7 @@ class TestTask037CanonicalVectorDolfinx(unittest.TestCase):
         condensed.destroy()
 
     def test_real_floquet_phases_and_physical_relation_keys(self) -> None:
-        cfg, mesh_data, V = _fixed_target_fixture(2, h_nm=50.0)
+        cfg, mesh_data, V = _fixed_target_fixture(6, h_nm=50.0)
         field = fem.Function(V)
         field.interpolate(lambda x: electric_field_code_values(cfg, x.T).T)
         field.x.scatter_forward()
@@ -231,6 +231,67 @@ class TestTask037CanonicalVectorDolfinx(unittest.TestCase):
             )
         )
         self.assertTrue(any(key[6] != (1.0, 0.0) for key in phase_keys))
+
+        # The old relation formula stopped at master runtime ordering.  Use one
+        # actual p6 face block as a direct physical-transform oracle.
+        topology = V.mesh.topology
+        topology.create_entities(2)
+        entity_map = topology.index_map(2)
+        entity_globals = entity_map.local_to_global(
+            np.arange(
+                entity_map.size_local + entity_map.num_ghosts,
+                dtype=np.int32,
+            )
+        )
+        face_block = next(
+            (
+                block
+                for block in blocks
+                if block.entity_kind == "face"
+                and int(block.slave_entity_id) in entity_globals
+            ),
+            None,
+        )
+        found = V.mesh.comm.allreduce(int(face_block is not None), op=MPI.SUM)
+        self.assertGreater(found, 0)
+        if face_block is None:
+            new_error = old_error = 0.0
+        else:
+            local_entity = int(
+                np.flatnonzero(entity_globals == face_block.slave_entity_id)[0]
+            )
+            coords = canonical_module._entity_coordinates(V, 2, local_entity)[
+                [1, 3, 0, 2]
+            ]
+            tolerance = mesh_coordinate_tolerance(V.mesh)
+            physical_transform, _ = canonical_module._physical_entity_transform(
+                coords, 2, 6, tolerance
+            )
+            phase = phase_by_kind[face_block.kind]
+            canonical = np.arange(
+                physical_transform.shape[1], dtype=np.complex128
+            ) + 1j * (np.arange(physical_transform.shape[1]) + 1.0) / 7.0
+            stored = phase * physical_transform @ canonical
+            observed = canonical_module._canonical_entity_values(
+                stored,
+                coords,
+                2,
+                6,
+                tolerance,
+                canonical_module._floquet_relations(floquet),
+            )[0]
+            old = np.linalg.solve(
+                np.asarray(face_block.coefficient_transform), stored
+            ) / phase
+            denominator = max(np.linalg.norm(canonical), np.finfo(float).tiny)
+            new_error = float(np.linalg.norm(observed - canonical) / denominator)
+            old_error = float(np.linalg.norm(old - canonical) / denominator)
+        self.assertLessEqual(V.mesh.comm.allreduce(new_error, op=MPI.MAX), 1.0e-12)
+        self.assertGreater(
+            V.mesh.comm.allreduce(old_error, op=MPI.MAX),
+            1.0e-2,
+            "old Floquet face relation formula unexpectedly matched",
+        )
 
     def test_nonzero_basix_cell_info_uses_transpose_inverse(self) -> None:
         _cfg, _mesh_data, V = _fixed_target_fixture(4, h_nm=50.0)
@@ -408,8 +469,13 @@ class TestTask037CanonicalVectorDolfinx(unittest.TestCase):
                 np.arange(transform.shape[1], dtype=np.float64)
                 + 1j * (np.arange(transform.shape[1], dtype=np.float64) + 1.0) / 7.0
             )
-            slave = phase * transform @ master
             coords = canonical_module._entity_coordinates(V, 2, local_entity)
+            physical_transform, _physical_state = (
+                canonical_module._physical_entity_transform(
+                    coords, 2, 6, tolerance
+                )
+            )
+            slave = phase * physical_transform @ master
             floquet_data = SimpleNamespace(
                 phase_independent_topology=data.topology,
                 phase_x=complex(cfg.floquet_phase_x),
@@ -438,8 +504,6 @@ class TestTask037CanonicalVectorDolfinx(unittest.TestCase):
                 and abs(canonical_phase - phase) <= 1.0e-12
                 and np.linalg.norm(canonical - master) / np.linalg.norm(master)
                 <= 1.0e-12
-                and np.linalg.norm(slave / phase - master) / np.linalg.norm(master)
-                > 1.0e-2
                 and row_nnz >= 2
             )
         self.assertEqual(

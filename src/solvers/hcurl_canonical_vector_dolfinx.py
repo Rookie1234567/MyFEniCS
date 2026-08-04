@@ -207,26 +207,14 @@ def _floquet_relations(
         relations[key] = (
             master_key,
             phases[block.kind],
-            np.asarray(block.coefficient_transform, dtype=np.complex128),
             ("floquet", block.kind, tuple(int(x) for x in block.periodic_pair_key)),
         )
     return relations
 
 
-def _canonical_entity_values(
-    values: np.ndarray,
-    coords: np.ndarray,
-    dimension: int,
-    degree: int,
-    tolerance: float,
-    relations: dict,
-):
-    physical_key = canonical_entity_key(coords, tolerance)
-    relation = relations.get((int(dimension), physical_key))
-    if relation is not None:
-        master_key, phase, transform, state = relation
-        canonical_values = np.linalg.solve(transform, values) / phase
-        return canonical_values, physical_key, master_key, phase, state
+def _physical_entity_transform(
+    coords: np.ndarray, dimension: int, degree: int, tolerance: float
+) -> tuple[np.ndarray, tuple[str, ...]]:
     _canonical_coords, permutation = _entity_canonical_order(
         coords, dimension, tolerance
     )
@@ -239,12 +227,32 @@ def _canonical_entity_values(
     else:
         transform = face_coefficient_transform(degree, permutation)
         state = ("canonical_face", "axis_aligned_reference_q1", "basix_coefficient_v1")
+    return np.asarray(transform, dtype=np.complex128), state
+
+
+def _canonical_entity_values(
+    values: np.ndarray,
+    coords: np.ndarray,
+    dimension: int,
+    degree: int,
+    tolerance: float,
+    relations: dict,
+):
+    physical_key = canonical_entity_key(coords, tolerance)
+    transform, _physical_state = _physical_entity_transform(
+        coords, dimension, degree, tolerance
+    )
+    relation = relations.get((int(dimension), physical_key))
+    if relation is not None:
+        master_key, phase, state = relation
+        canonical_values = np.linalg.solve(transform, values) / phase
+        return canonical_values, physical_key, master_key, phase, state
     return (
         np.linalg.solve(transform, values),
         physical_key,
         None,
         1.0 + 0.0j,
-        state,
+        _physical_state,
     )
 
 
@@ -502,23 +510,13 @@ def _fresh_entity_inverse(
     coordinates = _entity_coordinates(function_space, dimension, entity)
     physical_key = canonical_entity_key(coordinates, tolerance)
     relation = relations.get((int(dimension), physical_key))
-    if relation is not None:
-        master_key, phase, transform, state = relation
-        return physical_key, master_key, phase, np.asarray(transform), state
-    _canonical_coords, permutation = _entity_canonical_order(
-        coordinates, dimension, tolerance
+    transform, physical_state = _physical_entity_transform(
+        coordinates, dimension, degree, tolerance
     )
-    if int(dimension) == 1:
-        state = ("canonical_edge", "lexicographic_xyz", "basix_coefficient_v1")
-        transform = edge_coefficient_transform(
-            degree,
-            reversed_orientation=tuple(permutation) != (0, 1),
-            cell_type="hexahedron",
-        )
-    else:
-        state = ("canonical_face", "axis_aligned_reference_q1", "basix_coefficient_v1")
-        transform = face_coefficient_transform(degree, permutation)
-    return physical_key, None, 1.0 + 0.0j, np.asarray(transform), state
+    if relation is not None:
+        master_key, phase, state = relation
+        return physical_key, master_key, phase, transform, state
+    return physical_key, None, 1.0 + 0.0j, transform, physical_state
 
 
 def reconstruct_canonical_full_fe_function(
