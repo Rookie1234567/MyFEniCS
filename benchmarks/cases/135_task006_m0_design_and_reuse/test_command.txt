@@ -1,0 +1,1 @@
+source scripts/activate_myfenics_surrogate_wsl.sh && PYTHONPATH=src python benchmarks/cases/135_task006_m0_design_and_reuse/generate.py && PYTHONPATH=src python benchmarks/cases/135_task006_m0_design_and_reuse/checker.py

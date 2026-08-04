@@ -1,0 +1,178 @@
+{
+  "schema_version": "task006.hw-train37-design.v1",
+  "status": "frozen",
+  "dataset_id": "task006_fixed_A05_A07_A09_hw_train37_p5_ny4_v1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "fixed_angle_order": [
+    "A05",
+    "A07",
+    "A09"
+  ],
+  "geometry_count": 37,
+  "geometries": [
+    [
+      115.0,
+      16.0
+    ],
+    [
+      115.0,
+      16.5
+    ],
+    [
+      115.0,
+      16.75
+    ],
+    [
+      115.0,
+      17.0
+    ],
+    [
+      115.0,
+      17.25
+    ],
+    [
+      115.0,
+      17.5
+    ],
+    [
+      115.0,
+      18.0
+    ],
+    [
+      117.5,
+      16.0
+    ],
+    [
+      117.5,
+      18.0
+    ],
+    [
+      118.75,
+      16.0
+    ],
+    [
+      118.75,
+      18.0
+    ],
+    [
+      120.0,
+      16.0
+    ],
+    [
+      120.0,
+      18.0
+    ],
+    [
+      121.25,
+      16.0
+    ],
+    [
+      121.25,
+      18.0
+    ],
+    [
+      122.5,
+      16.0
+    ],
+    [
+      122.5,
+      18.0
+    ],
+    [
+      125.0,
+      16.0
+    ],
+    [
+      125.0,
+      16.5
+    ],
+    [
+      125.0,
+      16.75
+    ],
+    [
+      125.0,
+      17.0
+    ],
+    [
+      125.0,
+      17.25
+    ],
+    [
+      125.0,
+      17.5
+    ],
+    [
+      125.0,
+      18.0
+    ],
+    [
+      120.0,
+      17.0
+    ],
+    [
+      118.75,
+      17.0
+    ],
+    [
+      121.25,
+      17.0
+    ],
+    [
+      120.0,
+      16.75
+    ],
+    [
+      120.0,
+      17.25
+    ],
+    [
+      118.75,
+      16.75
+    ],
+    [
+      118.75,
+      17.25
+    ],
+    [
+      121.25,
+      17.25
+    ],
+    [
+      117.5,
+      17.0
+    ],
+    [
+      122.5,
+      17.0
+    ],
+    [
+      120.0,
+      16.5
+    ],
+    [
+      120.0,
+      17.5
+    ],
+    [
+      121.25,
+      16.75
+    ]
+  ],
+  "tuple_sha256": "7948b6612e8350be1b6fd26aca010036016681f0484f4aa02b56c353f694bb28",
+  "per_angle_record_count": 111,
+  "expected_new_fem_count": 79,
+  "reuse_record_count": 32,
+  "new_record_count": 79,
+  "new_record_breakdown": {
+    "boundary_geometries_times_three_angles": 72,
+    "coarse_axis_A05_only": 4,
+    "missing_quadrant_times_three_angles": 3
+  },
+  "reuse_policy": "8 complete geometry tuples x 3 angles plus 4 coarse-axis A07/A09 records; exact source/config/schema match only",
+  "blind_response_accessed": false,
+  "repo_root_for_sources": "/home/shenjh/Projects/MyFEniCS-Surrogate"
+}

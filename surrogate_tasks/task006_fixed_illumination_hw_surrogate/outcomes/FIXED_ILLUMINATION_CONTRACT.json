@@ -1,0 +1,118 @@
+{
+  "schema_version": "task006.fixed-illumination-contract.v1",
+  "status": "frozen",
+  "dataset_id": "task006_fixed_A05_A07_A09_hw_train37_p5_ny4_v1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "wavelength_nm": 13.5,
+  "polarization": "S",
+  "mesh": [
+    6,
+    4,
+    14
+  ],
+  "mumps_icntl_14": 40,
+  "mpi_ranks": 2,
+  "threads_per_rank": 1,
+  "angles": [
+    {
+      "angle_id": "A05",
+      "grazing_deg": 2.0,
+      "azimuth_deg": 0.0,
+      "axis_position": 0,
+      "channel_identity": [
+        [
+          "reflection",
+          0,
+          0
+        ],
+        [
+          "transmission",
+          0,
+          0
+        ]
+      ],
+      "channel_tier": "primary_robust",
+      "channel_threshold": 0.001
+    },
+    {
+      "angle_id": "A07",
+      "grazing_deg": 2.0,
+      "azimuth_deg": 90.0,
+      "axis_position": 1,
+      "channel_identity": [
+        [
+          "reflection",
+          0,
+          0
+        ],
+        [
+          "transmission",
+          0,
+          0
+        ]
+      ],
+      "channel_tier": "primary_robust",
+      "channel_threshold": 0.001
+    },
+    {
+      "angle_id": "A09",
+      "grazing_deg": 4.0,
+      "azimuth_deg": 60.0,
+      "axis_position": 2,
+      "channel_identity": [
+        [
+          "reflection",
+          0,
+          0
+        ],
+        [
+          "transmission",
+          0,
+          0
+        ]
+      ],
+      "channel_tier": "primary_robust",
+      "channel_threshold": 0.001
+    }
+  ],
+  "s0_contract": {
+    "targets": [
+      "R_total",
+      "T_total",
+      "A_balance"
+    ],
+    "latent": "zR=log((R+eps)/(A+eps)); zT=log((T+eps)/(A+eps)); softmax(zR,zT,0)"
+  },
+  "s1_contract": {
+    "source": "Task005 M1_order_total_robust",
+    "side_totals": [
+      "reflection",
+      "transmission"
+    ],
+    "other_definition": "side_total - sum(selected frozen channels)",
+    "no_zero_fill": true,
+    "failure_if_mask_false_nonfinite_or_ledger_failure": true
+  },
+  "task005_v2_lock": {
+    "path": "surrogate_tasks/task005_discrete_illumination_sensitivity_fisher_doe/outcomes/DISCRETE_ILLUMINATION_FISHER_DOE_LOCK_V2.json",
+    "sha256": "065dff4bf85722ca43af368e427708d1da78d5fae0178f7967c094b005ff12c3"
+  },
+  "task005_channel_contract": {
+    "path": "benchmarks/artifacts/cases/132_task005_sensitivity_dataset/derived_contract_v1/channel_contracts.json",
+    "sha256": "70329bac45abd78cab9fb9606f802a881ca1924cc50859ae1c9f428c8199a6f6"
+  },
+  "task005_m4_recovery_evidence": {
+    "path": "surrogate_tasks/task005_discrete_illumination_sensitivity_fisher_doe/outcomes/OFF_CENTRE_RECOVERY.json",
+    "sha256": "81c7c63818c93cacdc295303a63dc42302b19732e005d57000d6d75ece4fee3b"
+  },
+  "frozen_angle_order": [
+    "A05",
+    "A07",
+    "A09"
+  ],
+  "validation_target_accessed": false,
+  "blind_response_accessed": false
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": "task006.hw-blind12-design.v1",
+  "status": "frozen_not_run",
+  "dataset_id": "task006_fixed_A05_A07_A09_hw_train37_p5_ny4_v1",
+  "fixed_angle_order": [
+    "A05",
+    "A07",
+    "A09"
+  ],
+  "count": 12,
+  "geometries": [
+    [
+      117.5,
+      16.5
+    ],
+    [
+      117.5,
+      16.75
+    ],
+    [
+      117.5,
+      17.25
+    ],
+    [
+      117.5,
+      17.5
+    ],
+    [
+      118.75,
+      16.5
+    ],
+    [
+      118.75,
+      17.5
+    ],
+    [
+      121.25,
+      16.5
+    ],
+    [
+      121.25,
+      17.5
+    ],
+    [
+      122.5,
+      16.5
+    ],
+    [
+      122.5,
+      16.75
+    ],
+    [
+      122.5,
+      17.25
+    ],
+    [
+      122.5,
+      17.5
+    ]
+  ],
+  "tuple_sha256": "31b8456e98fc5054e0d43d09f28646bda96758af47e7b465dd18cd5e7307d501",
+  "all_strictly_interior": true,
+  "fem_run": false,
+  "responses_accessed": false,
+  "access_policy": "do not open, search, or approximate-match blind responses before review authorization"
+}
