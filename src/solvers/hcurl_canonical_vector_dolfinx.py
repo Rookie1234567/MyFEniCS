@@ -2,17 +2,18 @@
 
 This adapter keeps mesh and constraint extraction beside the pure packet
 kernel.  It supports uniform scalar-blocked complex N1curl spaces on
-axis-aligned structured affine hexahedra; physical trace and full-FE packets
-are coefficient audits only, so trace-mass and H(curl) norms remain explicitly
-not qualified.
+axis-aligned structured affine hexahedra.  Full-FE reconstruction and the
+standard physical norm audit are opt-in offline comparator operations.
 """
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any
 
 import numpy as np
-from dolfinx import cpp
+import ufl
+from dolfinx import cpp, fem
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -29,6 +30,7 @@ from .hcurl_assembly_time_condensation import (
     _cell_trace_expansion,
 )
 from .hcurl_canonical_vector import (
+    CanonicalKey,
     CanonicalPacket,
     canonical_key,
     canonical_packet,
@@ -37,6 +39,8 @@ from .hcurl_canonical_vector import (
 __all__ = (
     "extract_canonical_active_trace_packets",
     "extract_canonical_full_fe_packets",
+    "reconstruct_canonical_full_fe_function",
+    "compare_hcurl_fields",
 )
 
 
@@ -461,3 +465,237 @@ def extract_canonical_full_fe_packets(
         )
     packets = tuple(packets)
     return packets, _packet_audit(packets, function_space.mesh.comm, role="full_fe")
+
+
+def _canonical_packet_map(
+    packets: Iterable[CanonicalPacket],
+) -> dict[CanonicalKey, complex]:
+    packet_map: dict[CanonicalKey, complex] = {}
+    for key, value in packets:
+        if key[0] != "full_fe":
+            raise ValueError("fresh-field reconstruction requires full_fe packets")
+        if key in packet_map:
+            raise ValueError(f"duplicate canonical full-FE key: {key!r}")
+        packet_map[key] = canonical_packet(key, value)[1]
+    if not packet_map:
+        raise ValueError("cannot reconstruct a field from empty canonical packets")
+    return packet_map
+
+
+def _owned_global_to_local(function_space) -> dict[int, int]:
+    index_map = function_space.dofmap.index_map
+    local = np.arange(int(index_map.size_local), dtype=np.int32)
+    return {
+        int(global_id): int(local_id)
+        for local_id, global_id in enumerate(index_map.local_to_global(local))
+    }
+
+
+def _fresh_entity_inverse(
+    function_space,
+    dimension: int,
+    entity: int,
+    degree: int,
+    tolerance: float,
+    relations: dict,
+):
+    coordinates = _entity_coordinates(function_space, dimension, entity)
+    physical_key = canonical_entity_key(coordinates, tolerance)
+    relation = relations.get((int(dimension), physical_key))
+    if relation is not None:
+        master_key, phase, transform, state = relation
+        return physical_key, master_key, phase, np.asarray(transform), state
+    _canonical_coords, permutation = _entity_canonical_order(
+        coordinates, dimension, tolerance
+    )
+    if int(dimension) == 1:
+        state = ("canonical_edge", "lexicographic_xyz", "basix_coefficient_v1")
+        transform = edge_coefficient_transform(
+            degree,
+            reversed_orientation=tuple(permutation) != (0, 1),
+            cell_type="hexahedron",
+        )
+    else:
+        state = ("canonical_face", "axis_aligned_reference_q1", "basix_coefficient_v1")
+        transform = face_coefficient_transform(degree, permutation)
+    return physical_key, None, 1.0 + 0.0j, np.asarray(transform), state
+
+
+def reconstruct_canonical_full_fe_function(
+    function_space,
+    packets: Iterable[CanonicalPacket],
+    floquet_data,
+):
+    """Rebuild a fresh H(curl) Function from reversible full-FE packets.
+
+    Packets are physical keys, so the fresh mesh is resolved independently of
+    the source PETSc numbering.  On MPI, callers pass owner-local packets for
+    the same fresh partition or the same replicated global packet tuple on
+    every rank; only local owned entities/cells are written on each rank.
+    """
+
+    degree, _trace_positions, interior_positions = _space_data(function_space)
+    packet_map = _canonical_packet_map(packets)
+    topology, cell_info, owned_cells = _topology_data(function_space)
+    tolerance = mesh_coordinate_tolerance(function_space.mesh)
+    relations = _floquet_relations(floquet_data)
+    layout = function_space.dofmap.dof_layout
+    global_to_local = _owned_global_to_local(function_space)
+    expected_local_keys: set[CanonicalKey] = set()
+    field = fem.Function(function_space)
+
+    for dimension in (1, 2):
+        cell_to_entity = topology.connectivity(topology.dim, dimension)
+        for entity, cell in _owned_entity_incidents(function_space, dimension):
+            local_entity = int(
+                np.flatnonzero(
+                    np.asarray(cell_to_entity.links(cell), dtype=np.int32)
+                    == int(entity)
+                )[0]
+            )
+            positions = np.asarray(
+                layout.entity_dofs(dimension, local_entity), dtype=np.int32
+            )
+            physical_key, master_key, phase, transform, state = _fresh_entity_inverse(
+                function_space, dimension, entity, degree, tolerance, relations
+            )
+            keys = tuple(
+                canonical_key(
+                    role="full_fe",
+                    entity_dimension=dimension,
+                    physical_entity=physical_key,
+                    entity_local_basis_index=basis,
+                    orientation_state=state,
+                    floquet_master=master_key,
+                    floquet_coefficient=phase,
+                )
+                for basis in range(len(positions))
+            )
+            expected_local_keys.update(keys)
+            if any(key not in packet_map for key in keys):
+                raise ValueError("missing canonical full-FE entity block")
+            canonical_values = np.asarray(
+                [packet_map[key] for key in keys], dtype=np.complex128
+            )
+            if transform.shape != (len(positions), len(positions)):
+                raise ValueError("canonical entity transform has an unexpected shape")
+            stored_values = phase * (transform @ canonical_values)
+            global_dofs = _global_dofs(
+                function_space,
+                np.asarray(function_space.dofmap.cell_dofs(cell))[positions],
+            )
+            for global_id, stored_value in zip(global_dofs, stored_values, strict=True):
+                local_id = global_to_local.get(int(global_id))
+                if local_id is not None:
+                    field.x.array[local_id] = stored_value
+
+    for cell in range(int(owned_cells[0])):
+        local_dofs = np.asarray(function_space.dofmap.cell_dofs(cell), dtype=np.int32)
+        global_dofs = _global_dofs(function_space, local_dofs)
+        coordinates = _entity_coordinates(function_space, 3, cell)
+        physical_key = canonical_entity_key(coordinates, tolerance)
+        keys = tuple(
+            canonical_key(
+                role="full_fe",
+                entity_dimension=3,
+                physical_entity=physical_key,
+                entity_local_basis_index=basis,
+                orientation_state=("canonical_cell", "Tt_apply"),
+            )
+            for basis in range(len(interior_positions))
+        )
+        expected_local_keys.update(keys)
+        if any(key not in packet_map for key in keys):
+            raise ValueError("missing canonical full-FE cell-interior block")
+        canonical_values = np.asarray(
+            [packet_map[key] for key in keys], dtype=np.complex128
+        )
+        canonical_block = np.zeros(
+            int(function_space.element.space_dimension), dtype=np.complex128
+        )
+        canonical_block[interior_positions] = canonical_values
+        stored_block = canonical_block.copy()
+        function_space.element.T_apply(
+            stored_block, np.asarray([cell_info[cell]], dtype=np.uint32), 1
+        )
+        for global_id, stored_value in zip(
+            global_dofs[interior_positions],
+            stored_block[interior_positions],
+            strict=True,
+        ):
+            local_id = global_to_local.get(int(global_id))
+            if local_id is not None:
+                field.x.array[local_id] = stored_value
+
+    missing = expected_local_keys.difference(packet_map)
+    if missing:
+        raise ValueError(f"missing canonical full-FE keys: {len(missing)}")
+    if function_space.mesh.comm.size == 1:
+        extra = set(packet_map).difference(expected_local_keys)
+        if extra:
+            raise ValueError(f"unexpected canonical full-FE keys: {len(extra)}")
+    field.x.scatter_forward()
+    return field
+
+
+def _assembled_real(form, comm) -> float:
+    local = fem.assemble_scalar(fem.form(form))
+    value = comm.allreduce(local, op=MPI.SUM)
+    return max(float(np.real(value)), 0.0) ** 0.5
+
+
+def compare_hcurl_fields(left_field, right_field) -> dict[str, Any]:
+    """Compare fields with standard volume, curl, trace-mass, and H(curl) norms."""
+
+    if left_field.function_space.mesh is not right_field.function_space.mesh:
+        raise ValueError("H(curl) field comparison requires one common fresh mesh")
+    mesh = left_field.function_space.mesh
+    comm = mesh.comm
+    difference = left_field - right_field
+    curl_difference = ufl.curl(difference)
+    curl_reference = ufl.curl(right_field)
+    dx = ufl.Measure("dx", domain=mesh)
+    ds = ufl.Measure("ds", domain=mesh)
+    dS = ufl.Measure("dS", domain=mesh)
+    normal = ufl.FacetNormal(mesh)
+    boundary_difference = ufl.cross(normal, difference)
+    interior_difference = ufl.cross(normal("+"), difference("+"))
+    boundary_reference = ufl.cross(normal, right_field)
+    interior_reference = ufl.cross(normal("+"), right_field("+"))
+    l2_difference = _assembled_real(ufl.inner(difference, difference) * dx, comm)
+    l2_reference = _assembled_real(ufl.inner(right_field, right_field) * dx, comm)
+    curl_difference_norm = _assembled_real(
+        ufl.inner(curl_difference, curl_difference) * dx, comm
+    )
+    curl_reference_norm = _assembled_real(
+        ufl.inner(curl_reference, curl_reference) * dx, comm
+    )
+    trace_difference = _assembled_real(
+        ufl.inner(boundary_difference, boundary_difference) * ds
+        + ufl.inner(interior_difference, interior_difference) * dS,
+        comm,
+    )
+    trace_reference = _assembled_real(
+        ufl.inner(boundary_reference, boundary_reference) * ds
+        + ufl.inner(interior_reference, interior_reference) * dS,
+        comm,
+    )
+    hcurl_difference = float(np.hypot(l2_difference, curl_difference_norm))
+    hcurl_reference = float(np.hypot(l2_reference, curl_reference_norm))
+    return {
+        "l2_difference_norm": l2_difference,
+        "l2_reference_norm": l2_reference,
+        "relative_l2": l2_difference / max(l2_reference, np.finfo(float).tiny),
+        "curl_difference_norm": curl_difference_norm,
+        "curl_reference_norm": curl_reference_norm,
+        "relative_curl_l2": curl_difference_norm
+        / max(curl_reference_norm, np.finfo(float).tiny),
+        "tangential_trace_mass_difference_norm": trace_difference,
+        "tangential_trace_mass_reference_norm": trace_reference,
+        "relative_tangential_trace_mass": trace_difference
+        / max(trace_reference, np.finfo(float).tiny),
+        "hcurl_difference_norm": hcurl_difference,
+        "hcurl_reference_norm": hcurl_reference,
+        "relative_hcurl": hcurl_difference / max(hcurl_reference, np.finfo(float).tiny),
+        "trace_measure": "outer ds plus one (+) side of interior dS",
+    }
