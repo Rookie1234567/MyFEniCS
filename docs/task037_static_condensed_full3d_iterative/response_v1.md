@@ -185,7 +185,7 @@ PDE screen。
 9. 新增：`docs/task037_static_condensed_full3d_iterative/response_v1.md`
 
 当前 closeout exact diffstat：tracked 5 files `+84/-30`；4 个新增文件按最终行数
-`153+266+129+211=759`，合计 9 paths、`+843/-30`。统计只覆盖上述 9 个路径。此前相对 `origin/master` 的基线审计快照为 `62 files,
+`151+266+128+211=756`，合计 9 paths、`+840/-30`。统计只覆盖上述 9 个路径。此前相对 `origin/master` 的基线审计快照为 `62 files,
 +18188/-422`，这是文档 closeout 前的历史统计，不是最终 closeout 后统计。
 四个新增文件的行数按 Direct record、M3a record、M3a outcome、response v1 顺序列示。
 tracked 删除只来自历史标题层级与措辞收口，不涉及数值算法。
