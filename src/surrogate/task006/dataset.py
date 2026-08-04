@@ -21,7 +21,10 @@ from .design import (
 )
 
 
-EPSILON = 1.0e-8
+# All 111 measured records have strictly positive R/T/A.  A tiny nonzero
+# floor keeps the transform defined while keeping softmax round-trip error
+# below the 1e-12 composition identity gate.
+EPSILON = 1.0e-15
 DATASET_ROOT = Path("benchmarks/artifacts/cases/137_task006_train37_dataset/train37")
 
 

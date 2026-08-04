@@ -1,0 +1,10 @@
+{
+  "schema_version": "task006.case137-dataset-build.v1",
+  "status": "pass",
+  "dataset_id": "task006_fixed_A05_A07_A09_hw_train37_p5_ny4_v1",
+  "dataset_root": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/137_task006_train37_dataset/train37",
+  "record_count": 111,
+  "reuse_record_count": 32,
+  "new_fem_record_count": 79,
+  "blind_response_accessed": false
+}

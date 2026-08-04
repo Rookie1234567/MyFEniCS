@@ -63,7 +63,8 @@ def main() -> int:
             for i, (aid, g, a) in enumerate(ANGLES)
         ],
         "s0_contract": {"targets": ["R_total", "T_total", "A_balance"],
-                        "latent": "zR=log((R+eps)/(A+eps)); zT=log((T+eps)/(A+eps)); softmax(zR,zT,0)"},
+                        "latent": "zR=log((R+eps)/(A+eps)); zT=log((T+eps)/(A+eps)); softmax(zR,zT,0)",
+                        "epsilon": 1.0e-15},
         "s1_contract": {
             "source": "Task005 M1_order_total_robust",
             "side_totals": ["reflection", "transmission"],

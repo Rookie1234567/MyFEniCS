@@ -1,0 +1,1 @@
+source scripts/activate_myfenics_surrogate_wsl.sh && PYTHONPATH=src python benchmarks/cases/136_task006_train37_forward/checker.py

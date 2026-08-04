@@ -384,9 +384,11 @@ def synthetic_recovery(candidate: str, geometry: np.ndarray, aggregates: np.ndar
     h_grid = np.linspace(115.0, 125.0, 21); w_grid = np.linspace(16.0, 18.0, 21)
     fixed_starts = np.asarray([[115.0,16.0],[115.0,18.0],[125.0,16.0],[125.0,18.0],[120.0,17.0]], dtype=np.float64)
     for fold, (train, test) in enumerate(folds):
+        # Fit one outer-training contract per fold and reuse it for every
+        # held-out geometry.  No test truth is part of these fits.
+        fitted = _fit_contract(candidate, geometry, latent, side, fractions, train, geometry[test], seed=900 + fold * 31)
+        fitted_models = fitted["_models"]
         for index in test:
-            block = _fit_contract(candidate, geometry, latent, side, fractions, train, geometry[index:index+1], seed=900 + fold * 31)
-            fitted_models = block["_models"]
             # Refit a callable model for arbitrary query points using the same
             # outer-training rows; no test truth enters model construction.
             def predict_at(point: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

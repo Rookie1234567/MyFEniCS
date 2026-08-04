@@ -1,0 +1,47 @@
+{
+  "status": "preflight_pass",
+  "preflight": {
+    "source": {
+      "repository_root": "/tmp/MyFEniCS-forward-fdf9615-verified",
+      "origin": "https://github.com/Rookie1234567/MyFEniCS.git",
+      "branch": "codex/only-one-13p5nm-surrogate-inversion",
+      "upstream": "origin/codex/only-one-13p5nm-surrogate-inversion",
+      "source_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+      "dirty": false,
+      "status": ""
+    },
+    "abi": {
+      "checks": {
+        "project_venv_python": true,
+        "complex128": true,
+        "project_venv_mpc": true,
+        "linux_only_path": true,
+        "qualified_activation": true,
+        "nanobind_abi_matches_pinned_dolfinx": true
+      },
+      "python": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+      "petsc_scalar": "complex128",
+      "petsc_int_bits": 32,
+      "dolfinx_version": "0.10.0.post2",
+      "dolfinx_mpc_path": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/lib/python3.12/site-packages/dolfinx_mpc/__init__.py",
+      "nanobind_version": "2.9.2"
+    },
+    "resources": {
+      "mem_total_bytes": 14654963712,
+      "mem_available_bytes": 13658775552,
+      "swap_total_bytes": 42949672960,
+      "swap_used_bytes": 0,
+      "disk_free_bytes": 991131234304,
+      "hard_ceiling_bytes": 11274289152,
+      "launch_projection_ceiling_bytes": 10146860236,
+      "gates": {
+        "mem_available_at_least_hard_plus_1gib": true,
+        "swap_unused": true,
+        "disk_free_at_least_20gib": true,
+        "threads_per_rank_one": true,
+        "one_forward_job": true
+      },
+      "pass": true
+    }
+  }
+}

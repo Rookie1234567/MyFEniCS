@@ -1,0 +1,20 @@
+{
+  "schema_version": "task006.case137-dataset-check.v1",
+  "status": "pass",
+  "checks": {
+    "required_dataset_files": true,
+    "manifest_identity": true,
+    "exact_geometry_and_angle_arrays": true,
+    "array_shapes": true,
+    "s0_composition_contract": true,
+    "s1_sidewise_ledger_contract": true,
+    "order_identity_and_null_semantics": true,
+    "inputs_match_geometry_angles": true,
+    "unique_sample_and_hash_identity": true,
+    "array_file_hashes": true,
+    "provenance_exact_and_no_blind": true,
+    "training_design_bound": true
+  },
+  "errors": [],
+  "blind_response_accessed": false
+}

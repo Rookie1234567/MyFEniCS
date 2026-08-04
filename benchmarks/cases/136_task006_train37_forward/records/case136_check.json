@@ -1,0 +1,16 @@
+{
+  "schema_version": "task006.case136-m1-check.v1",
+  "status": "pass",
+  "checks": {
+    "campaign_identity": true,
+    "exact_budget": true,
+    "reuse_and_new_counts": true,
+    "no_blind_or_validation": true,
+    "all_new_pass": true,
+    "all_reuse_sources_present": true,
+    "single_process_identity": true
+  },
+  "errors": [],
+  "new_fem_count": 79,
+  "blind_response_accessed": false
+}

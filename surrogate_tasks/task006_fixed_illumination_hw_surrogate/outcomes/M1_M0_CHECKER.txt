@@ -1,0 +1,20 @@
+{
+  "schema_version": "task006.case135-m0-check.v1",
+  "status": "pass",
+  "checks": {
+    "required_outputs": true,
+    "frozen_identity": true,
+    "exact_mother_grid": true,
+    "exact_train37": true,
+    "exact_blind12_frozen": true,
+    "partition_49_37_12": true,
+    "fixed_angles_and_channels": true,
+    "task005_lock_bound": true,
+    "reuse_count_and_budget": true,
+    "explicit_reuse_records_exact": true,
+    "no_blind_access_claim": true
+  },
+  "errors": [],
+  "new_fem_count": 0,
+  "blind_response_accessed": false
+}
