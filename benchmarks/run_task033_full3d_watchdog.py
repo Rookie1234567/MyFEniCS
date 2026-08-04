@@ -1578,14 +1578,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             args.mpi_size == 8
             or (
                 args.task037_m3a_overlap0125_partition
-                and args.mpi_size == 4
+                and args.mpi_size in (1, 2, 4, 8)
             )
         )
         and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
     ):
         parser.error(
             "Task037 F0/F1/F3 options require the existing Task035c p6/h10 "
-            "gate, full-solve, static backend, MPI8 (or MPI4 for M3a), "
+            "gate, full-solve, static backend, MPI8 for F0/F1 or MPI1/2/4/8 "
+            "for M3a, "
             "and S scope."
         )
     canonical_f0_scope = (
@@ -1673,7 +1674,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and args.task037_f1_direct_trace_oracle is None
         and not args.task037_m4_p2_auxiliary
         and not args.task037_m0_lifecycle_audit
-        and args.mpi_size in (4, 8)
+        and args.mpi_size in (1, 2, 4, 8)
     ):
         parser.error(
             "--task037-m3a-overlap0125-partition requires the action-only "

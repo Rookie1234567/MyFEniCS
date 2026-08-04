@@ -225,15 +225,24 @@ def test_parser_scope_and_worker_command(tmp_path):
     assert watchdog._worker_command(m3_full_canonical, tmp_path).count(
         "--task037-canonical-vector-export"
     ) == 1
-    m3_full_mpi4_args = list(m3_full_args)
-    m3_full_mpi4_args[m3_full_mpi4_args.index("--mpi-size") + 1] = "4"
-    m3_full_mpi4 = watchdog._parse_args(
-        m3_full_mpi4_args + ["--task037-canonical-vector-export"]
-    )
-    assert m3_full_mpi4.mpi_size == 4
-    assert watchdog._worker_command(m3_full_mpi4, tmp_path).count(
-        "--task037-canonical-vector-export"
-    ) == 1
+    for mpi_size in (1, 2, 4, 8):
+        m3_full_mpi_args = list(m3_full_args)
+        m3_full_mpi_args[m3_full_mpi_args.index("--mpi-size") + 1] = str(mpi_size)
+        m3_full_mpi = watchdog._parse_args(
+            m3_full_mpi_args + ["--task037-canonical-vector-export"]
+        )
+        assert m3_full_mpi.mpi_size == mpi_size
+        m3_full_mpi_command = watchdog._worker_command(m3_full_mpi, tmp_path)
+        assert m3_full_mpi_command.count("--task037-canonical-vector-export") == 1
+        assert m3_full_mpi_command.count(
+            "--task037-m3a-overlap0125-partition"
+        ) == 1
+        assert m3_full_mpi_command[
+            m3_full_mpi_command.index("-n") + 1
+        ] == str(mpi_size)
+        assert m3_full_mpi_command[
+            m3_full_mpi_command.index("--mpi-size") + 1
+        ] == str(mpi_size)
     with pytest.raises(SystemExit):
         watchdog._parse_args(m3_full_args + ["--task037-f5b-released-profile"])
     released_args = full_args + ["--task037-f5b-released-profile"]
@@ -293,28 +302,28 @@ def test_parser_scope_and_worker_command(tmp_path):
                 "--task037-canonical-vector-export",
             ]
         )
-    m3_mpi4_args = list(m2c_args)
-    m3_mpi4_args[m3_mpi4_args.index("--mpi-size") + 1] = "4"
-    m3_mpi4 = watchdog._parse_args(
-        m3_mpi4_args + ["--task037-m3a-overlap0125-partition"]
-    )
-    assert m3_mpi4.mpi_size == 4
-    assert (
-        watchdog._worker_command(m3_mpi4, tmp_path).count(
+    for mpi_size in (1, 2, 4, 8):
+        m3_mpi_args = list(m2c_args)
+        m3_mpi_args[m3_mpi_args.index("--mpi-size") + 1] = str(mpi_size)
+        m3_mpi = watchdog._parse_args(
+            m3_mpi_args + ["--task037-m3a-overlap0125-partition"]
+        )
+        assert m3_mpi.mpi_size == mpi_size
+        m3_mpi_command = watchdog._worker_command(m3_mpi, tmp_path)
+        assert m3_mpi_command.count(
             "--task037-m3a-overlap0125-partition"
-        )
-        == 1
-    )
-    m3_mpi2_args = list(m2c_args)
-    m3_mpi2_args[m3_mpi2_args.index("--mpi-size") + 1] = "2"
-    with pytest.raises(SystemExit):
-        watchdog._parse_args(
-            m3_mpi2_args + ["--task037-m3a-overlap0125-partition"]
-        )
+        ) == 1
+        assert m3_mpi_command[m3_mpi_command.index("-n") + 1] == str(mpi_size)
+        assert m3_mpi_command[
+            m3_mpi_command.index("--mpi-size") + 1
+        ] == str(mpi_size)
+    for mpi_size in (1, 2, 4):
+        m2c_mpi_args = list(m2c_args)
+        m2c_mpi_args[m2c_mpi_args.index("--mpi-size") + 1] = str(mpi_size)
+        with pytest.raises(SystemExit):
+            watchdog._parse_args(m2c_mpi_args)
     m2c_mpi4_args = list(m2c_args)
     m2c_mpi4_args[m2c_mpi4_args.index("--mpi-size") + 1] = "4"
-    with pytest.raises(SystemExit):
-        watchdog._parse_args(m2c_mpi4_args)
     with pytest.raises(SystemExit):
         watchdog._parse_args(m2c_mpi4_args + ["--task037-m4-p2-auxiliary"])
     for screen_iterations in (20, 100, 200):
