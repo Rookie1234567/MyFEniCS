@@ -256,6 +256,30 @@ def test_parser_scope_and_worker_command(tmp_path):
         )
         == 1
     )
+    m3_mpi4_args = list(m2c_args)
+    m3_mpi4_args[m3_mpi4_args.index("--mpi-size") + 1] = "4"
+    m3_mpi4 = watchdog._parse_args(
+        m3_mpi4_args + ["--task037-m3a-overlap0125-partition"]
+    )
+    assert m3_mpi4.mpi_size == 4
+    assert (
+        watchdog._worker_command(m3_mpi4, tmp_path).count(
+            "--task037-m3a-overlap0125-partition"
+        )
+        == 1
+    )
+    m3_mpi2_args = list(m2c_args)
+    m3_mpi2_args[m3_mpi2_args.index("--mpi-size") + 1] = "2"
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(
+            m3_mpi2_args + ["--task037-m3a-overlap0125-partition"]
+        )
+    m2c_mpi4_args = list(m2c_args)
+    m2c_mpi4_args[m2c_mpi4_args.index("--mpi-size") + 1] = "4"
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(m2c_mpi4_args)
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(m2c_mpi4_args + ["--task037-m4-p2-auxiliary"])
     for screen_iterations in (20, 100, 200):
         m3_screen_args = list(m2c_args)
         m3_screen_args[m3_screen_args.index("20")] = str(screen_iterations)

@@ -1564,7 +1564,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.task037_f3_full
     ) and not (
         args.task035c_p6_h10_gate
-        and args.mpi_size == 8
+        and (
+            args.mpi_size == 8
+            or (
+                args.task037_m3a_overlap0125_partition
+                and args.mpi_size == 4
+            )
+        )
         and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
     ):
         parser.error(
@@ -1648,6 +1654,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and args.task037_f1_direct_trace_oracle is None
         and not args.task037_m4_p2_auxiliary
         and not args.task037_m0_lifecycle_audit
+        and args.mpi_size in (4, 8)
     ):
         parser.error(
             "--task037-m3a-overlap0125-partition requires the action-only "
