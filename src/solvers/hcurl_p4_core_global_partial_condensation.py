@@ -143,6 +143,7 @@ class _RetainedCell:
     factor: P4CorePartialCondensation
     retained_global_ids: np.ndarray
     expansion: sparse.csr_matrix
+    cell_original_dofs: np.ndarray | None = None
 
     def contribution(self) -> tuple[np.ndarray, np.ndarray]:
         """Return global ids and the constrained local block."""
@@ -158,8 +159,11 @@ class _RetainedCell:
 
 class _RetainedScatter:
     def __init__(self, system: RetainedP4CoreSystem) -> None:
-        union = np.unique(
-            np.concatenate([cell.retained_global_ids for cell in system.cells])
+        cell_ids = [cell.retained_global_ids for cell in system.cells]
+        union = (
+            np.unique(np.concatenate(cell_ids))
+            if cell_ids
+            else np.empty(0, dtype=PETSc.IntType)
         )
         self.union_indices = np.asarray(union, dtype=PETSc.IntType)
         self.cells = tuple(
@@ -262,6 +266,17 @@ class RetainedP4CoreSystem:
     numbering: RetainedP4CoreNumbering
     cells: tuple[_RetainedCell, ...]
     audit: dict[str, object]
+    trace_constraints: object | None = field(
+        default=None,
+        repr=False,
+        compare=False,
+    )
+    owned_trace_original_dofs: np.ndarray | None = field(
+        default=None,
+        repr=False,
+        compare=False,
+    )
+    full_rows: int | None = field(default=None, repr=False, compare=False)
 
     @property
     def comm(self) -> MPI.Intracomm:
@@ -395,6 +410,183 @@ class RetainedP4CoreSystem:
             for cell, rhs in zip(self.cells, reference_rhs_by_cell, strict=True)
         )
 
+    def _create_full_fe_reduction(
+        self,
+        full_vector: PETSc.Vec,
+    ) -> tuple[PETSc.Vec, tuple[np.ndarray, ...]]:
+        """Create a trace-once reduction and return owned cell interiors."""
+
+        values, row_start, interiors = self._full_fe_owned_parts(full_vector)
+        result = self.create_retained_vector()
+        accumulated: dict[int, complex] = {}
+        constraints = self.trace_constraints
+        row_end = row_start + len(values)
+        for original in self.owned_trace_original_dofs:
+            row = int(original)
+            if row < row_start or row >= row_end:
+                raise ValueError("owned trace row is outside FE vector ownership")
+            active_ids, coefficients = constraints.expansion_by_original[row]
+            mapped = self.numbering.map_active_ids(active_ids)
+            for retained_id, coefficient in zip(mapped, coefficients, strict=True):
+                key = int(retained_id)
+                accumulated[key] = accumulated.get(key, 0.0j) + (
+                    np.conj(coefficient) * values[row - row_start]
+                )
+        if accumulated:
+            result.setValues(
+                np.asarray(tuple(accumulated), dtype=PETSc.IntType),
+                np.asarray(tuple(accumulated.values()), dtype=PETSc.ScalarType),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+        result.assemble()
+        return result, interiors
+
+    def _full_fe_owned_parts(
+        self,
+        full_vector: PETSc.Vec,
+    ) -> tuple[np.ndarray, int, tuple[np.ndarray, ...]]:
+        if (
+            self.trace_constraints is None
+            or self.owned_trace_original_dofs is None
+            or self.full_rows is None
+        ):
+            raise ValueError(
+                "full FE reduction requires compiled-form retained metadata"
+            )
+        if full_vector.getSize() != int(self.full_rows):
+            raise ValueError("full FE vector size differs from retained metadata")
+        row_start, row_end = map(int, full_vector.getOwnershipRange())
+        values = np.asarray(
+            full_vector.getArray(readonly=True),
+            dtype=PETSc.ScalarType,
+        )
+        interiors = []
+        for cell in self.cells:
+            if cell.cell_original_dofs is None:
+                raise ValueError(
+                    "compiled-form cell metadata is required for FE reduction"
+                )
+            rows = np.asarray(
+                cell.cell_original_dofs[cell.factor.p6_interior_dofs],
+                dtype=np.int64,
+            )
+            if len(rows) and (
+                int(rows.min()) < row_start or int(rows.max()) >= row_end
+            ):
+                raise ValueError("owned cell interior is outside FE ownership")
+            interiors.append(values[rows - row_start].copy())
+        return values, row_start, tuple(interiors)
+
+    def reduce_full_fe_right_rhs(self, full_vector: PETSc.Vec) -> PETSc.Vec:
+        """Reduce an assembled unconstrained full FE load from the right."""
+
+        result, interiors = self._create_full_fe_reduction(full_vector)
+        scatter = _RetainedScatter(self)
+        scatter.target.set(0.0)
+        target_values = scatter.target.getArray()
+        for (cell, positions), values in zip(
+            scatter.cells,
+            interiors,
+            strict=True,
+        ):
+            local = np.zeros(882, dtype=PETSc.ScalarType)
+            local[cell.factor.p6_interior_dofs] = values
+            reduced = cell.factor.reduce_oriented_right_rhs(local)
+            target_values[positions] += np.asarray(
+                cell.expansion.conjugate().transpose() @ reduced,
+                dtype=PETSc.ScalarType,
+            )
+        scatter.reverse(result)
+        scatter.destroy()
+        result.assemble()
+        return result
+
+    def reduce_full_fe_left_functional(
+        self,
+        full_vector: PETSc.Vec,
+    ) -> PETSc.Vec:
+        """Reduce an assembled unconstrained full FE row-functional."""
+
+        result, interiors = self._create_full_fe_reduction(full_vector)
+        scatter = _RetainedScatter(self)
+        scatter.target.set(0.0)
+        target_values = scatter.target.getArray()
+        for (cell, positions), values in zip(
+            scatter.cells,
+            interiors,
+            strict=True,
+        ):
+            local = np.zeros(882, dtype=PETSc.ScalarType)
+            local[cell.factor.p6_interior_dofs] = values
+            reduced = cell.factor.reduce_oriented_left_functional(local)
+            target_values[positions] += np.asarray(
+                cell.expansion.conjugate().transpose() @ reduced,
+                dtype=PETSc.ScalarType,
+            )
+        scatter.reverse(result)
+        scatter.destroy()
+        result.assemble()
+        return result
+
+    def eliminated_complement_bilinear_full_fe(
+        self,
+        left_vector: PETSc.Vec,
+        right_vector: PETSc.Vec,
+    ) -> complex:
+        """Evaluate the eliminated bilinear form from full FE vectors."""
+
+        _left_values, _left_start, left_interiors = self._full_fe_owned_parts(
+            left_vector
+        )
+        _right_values, _right_start, right_interiors = self._full_fe_owned_parts(
+            right_vector
+        )
+        local_value = 0.0 + 0.0j
+        for cell, left, right in zip(
+            self.cells,
+            left_interiors,
+            right_interiors,
+            strict=True,
+        ):
+            left_local = np.zeros(882, dtype=PETSc.ScalarType)
+            right_local = np.zeros(882, dtype=PETSc.ScalarType)
+            left_local[cell.factor.p6_interior_dofs] = left
+            right_local[cell.factor.p6_interior_dofs] = right
+            local_value += cell.factor.eliminated_complement_bilinear(
+                left_local,
+                right_local,
+            )
+        return complex(self.comm.allreduce(local_value, op=MPI.SUM))
+
+    def recover_owned_full_fe_interiors(
+        self,
+        retained_vector: PETSc.Vec,
+        full_rhs: PETSc.Vec,
+    ) -> tuple[tuple[np.ndarray, np.ndarray], ...]:
+        """Recover original interior rows from a retained vector and FE RHS."""
+
+        _rhs_values, _rhs_start, rhs_interiors = self._full_fe_owned_parts(full_rhs)
+        scatter = _RetainedScatter(self)
+        scatter.forward(retained_vector)
+        source_values = scatter.source.getArray(readonly=True)
+        recovered = []
+        for index, (cell, positions) in enumerate(scatter.cells):
+            local_retained = cell.expansion @ source_values[positions]
+            local_rhs = np.zeros(882, dtype=PETSc.ScalarType)
+            local_rhs[cell.factor.p6_interior_dofs] = rhs_interiors[index]
+            values = cell.factor.recover_p6_coefficients(
+                local_retained,
+                oriented_rhs=local_rhs,
+            )
+            assert cell.cell_original_dofs is not None
+            rows = np.asarray(
+                cell.cell_original_dofs[cell.factor.p6_interior_dofs],
+                dtype=PETSc.IntType,
+            )
+            recovered.append((rows, values[cell.factor.p6_interior_dofs]))
+        scatter.destroy()
+        return tuple(recovered)
+
     def project_full_fe_solution(
         self,
         oriented_solution_by_cell: Sequence[np.ndarray],
@@ -488,6 +680,10 @@ def build_global_retained_p4_core_system(
     owned_active_trace_rows: int,
     cell_trace_ids: Sequence[np.ndarray],
     cell_trace_expansions: Sequence[sparse.spmatrix],
+    cell_original_dofs: Sequence[np.ndarray] | None = None,
+    trace_constraints: object | None = None,
+    owned_trace_original_dofs: np.ndarray | None = None,
+    full_rows: int | None = None,
 ) -> RetainedP4CoreSystem:
     """Build a research-only global retained system from owned local factors."""
 
@@ -495,6 +691,12 @@ def build_global_retained_p4_core_system(
         cell_trace_expansions
     ):
         raise ValueError("factor, trace-id, and expansion counts must agree")
+    if cell_original_dofs is not None and len(cell_original_dofs) != len(local_factors):
+        raise ValueError("one original-dof map is required per local factor")
+    if (trace_constraints is None) != (owned_trace_original_dofs is None):
+        raise ValueError("full FE metadata must include trace ownership and map")
+    if trace_constraints is not None and full_rows is None:
+        raise ValueError("full FE metadata requires full_rows")
     numbering = build_retained_p4_core_numbering(
         comm=comm,
         active_trace_rows=active_trace_rows,
@@ -540,8 +742,49 @@ def build_global_retained_p4_core_system(
                     dtype=PETSc.IntType,
                 ),
                 expansion=combined,
+                cell_original_dofs=(
+                    None
+                    if cell_original_dofs is None
+                    else np.asarray(cell_original_dofs[index], dtype=PETSc.IntType)
+                ),
             )
         )
+    unique_factors = {id(cell.factor): cell.factor for cell in cells}
+    partial_schur_bytes = sum(
+        int(factor.partial_schur.nbytes) for factor in unique_factors.values()
+    )
+    eliminated_factor_bytes = sum(
+        int(sum(part.nbytes for part in factor.eliminated_factor))
+        for factor in unique_factors.values()
+    )
+    basis_bytes = sum(
+        int(
+            factor.core_basis.nbytes
+            + factor.eliminated_basis.nbytes
+            + factor.eliminated_from_retained.nbytes
+            + factor.eliminated_load.nbytes
+            + factor.eliminated_rhs_projection.nbytes
+        )
+        for factor in unique_factors.values()
+    )
+    map_bytes = sum(
+        int(
+            cell.retained_global_ids.nbytes
+            + cell.expansion.data.nbytes
+            + cell.expansion.indices.nbytes
+            + cell.expansion.indptr.nbytes
+            + (0 if cell.cell_original_dofs is None else cell.cell_original_dofs.nbytes)
+        )
+        for cell in cells
+    )
+    numbering_bytes = sum(int(array.nbytes) for array in numbering.cell_core_global_ids)
+    ledger_local = {
+        "partial_schur_bytes": partial_schur_bytes,
+        "eliminated_factor_bytes": eliminated_factor_bytes,
+        "basis_bytes": basis_bytes,
+        "maps_bytes": map_bytes,
+        "numbering_bytes": numbering_bytes,
+    }
     audit = {
         "schema_version": "task037.r7b1.global-retained-p4-core.v1",
         **numbering.audit,
@@ -557,11 +800,29 @@ def build_global_retained_p4_core_system(
         "core_is_cell_local_identity": True,
         "research_only": True,
         "ordinary_default_changed": False,
+        "full_fe_reduction_available": trace_constraints is not None,
+        "global_p6_matrix_or_factor_bytes": 0,
+        "retained_storage_bytes_local": int(sum(ledger_local.values())),
+        "retained_storage_bytes_global": int(
+            comm.allreduce(sum(ledger_local.values()), op=MPI.SUM)
+        ),
+        "byte_ledger_local": ledger_local,
+        "byte_ledger_global": {
+            key: int(comm.allreduce(value, op=MPI.SUM))
+            for key, value in ledger_local.items()
+        },
     }
     return RetainedP4CoreSystem(
         numbering=numbering,
         cells=tuple(cells),
         audit=audit,
+        trace_constraints=trace_constraints,
+        owned_trace_original_dofs=(
+            None
+            if owned_trace_original_dofs is None
+            else np.asarray(owned_trace_original_dofs, dtype=PETSc.IntType)
+        ),
+        full_rows=None if full_rows is None else int(full_rows),
     )
 
 

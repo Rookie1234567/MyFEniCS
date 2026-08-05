@@ -1181,6 +1181,7 @@ def build_unconstrained_assembly_time_condensation(
     defer_final_assembly: bool = False,
     retain_local_schur_for_matrix_free: bool = False,
     materialize_global_matrix: bool = True,
+    retained_p4_core_research: bool = False,
     geometry_tolerance: float = 1.0e-11,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
@@ -1198,10 +1199,22 @@ def build_unconstrained_assembly_time_condensation(
     if int(appended_global_rows) < 0:
         raise ValueError("appended_global_rows must be non-negative")
     materialize_global_matrix = bool(materialize_global_matrix)
-    if not materialize_global_matrix and not retain_local_schur_for_matrix_free:
+    retained_p4_core_research = bool(retained_p4_core_research)
+    if retained_p4_core_research and appended_global_rows:
+        raise ValueError(
+            "retained p4-core research does not accept appended rows"
+        )
+    if (
+        not materialize_global_matrix
+        and not retain_local_schur_for_matrix_free
+        and not retained_p4_core_research
+    ):
         raise ValueError(
             "action-only condensation requires retained local Schur classes"
         )
+    if retained_p4_core_research:
+        materialize_global_matrix = False
+        retain_local_schur_for_matrix_free = False
     appended_global_rows = int(appended_global_rows)
     mesh = function_space.mesh
     comm = mesh.comm
@@ -1403,6 +1416,40 @@ def build_unconstrained_assembly_time_condensation(
         if condensed is not None:
             condensed.destroy()
         raise
+    if retained_p4_core_research:
+        from .hcurl_p4_core_global_partial_condensation import (
+            build_global_retained_p4_core_system,
+        )
+        from .hcurl_p4_core_partial_condensation import (
+            condense_p6_local_to_p4_core,
+        )
+
+        factor_cache: dict[tuple[tuple[Any, ...], int], Any] = {}
+        local_factors = []
+        for cell, metadata in enumerate(cell_raw_metadata):
+            _raw_key, policy_raw_key = metadata
+            cell_info = int(cell_permutations[cell])
+            factor_key = (policy_raw_key, cell_info)
+            factor = factor_cache.get(factor_key)
+            if factor is None:
+                factor = condense_p6_local_to_p4_core(
+                    raw_cache[policy_raw_key],
+                    cell_info=cell_info,
+                )
+                factor_cache[factor_key] = factor
+            local_factors.append(factor)
+        return build_global_retained_p4_core_system(
+            local_factors,
+            comm=comm,
+            active_trace_rows=active_rows,
+            owned_active_trace_rows=len(owned_active),
+            cell_trace_ids=tuple(data[0] for data in cell_trace_data),
+            cell_trace_expansions=tuple(data[1] for data in cell_trace_data),
+            cell_original_dofs=tuple(local_cell_dofs),
+            trace_constraints=trace_constraints,
+            owned_trace_original_dofs=owned_trace,
+            full_rows=full_rows,
+        )
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
     lu_cache: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]] = {}
