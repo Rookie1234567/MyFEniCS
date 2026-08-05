@@ -1,0 +1,1026 @@
+{
+  "schema_version": "task007.m4-response-blind-stopping.v1",
+  "implementation_source_sha": "34d52d075842f177f2c055f8f0ef5cdf48d63d67",
+  "status": "complete",
+  "rule": {
+    "max_online_queries": 20,
+    "grid_ei_threshold": 0.001,
+    "low_ei_consecutive": 2,
+    "best_log_improvement_threshold": 0.001,
+    "stagnant_consecutive": 3,
+    "hidden_MAP_used_for_stopping": false
+  },
+  "summary": {
+    "P1_sobol12_N1": {
+      "method": "P1_sobol12",
+      "noise_scenario": "N1",
+      "target_count": 12,
+      "map_hit_count": 12,
+      "map_hit_fraction": 1.0,
+      "median_queries": 20.0,
+      "p90_queries": 20.0,
+      "max_queries": 20,
+      "response_blind_stop_count": 3,
+      "gate_pass": false
+    },
+    "P1_sobol12_N2": {
+      "method": "P1_sobol12",
+      "noise_scenario": "N2",
+      "target_count": 12,
+      "map_hit_count": 11,
+      "map_hit_fraction": 0.9166666666666666,
+      "median_queries": 10.5,
+      "p90_queries": 15.9,
+      "max_queries": 20,
+      "response_blind_stop_count": 11,
+      "gate_pass": false
+    },
+    "P2_sobol37_N1": {
+      "method": "P2_sobol37",
+      "noise_scenario": "N1",
+      "target_count": 12,
+      "map_hit_count": 12,
+      "map_hit_fraction": 1.0,
+      "median_queries": 11.0,
+      "p90_queries": 14.9,
+      "max_queries": 16,
+      "response_blind_stop_count": 12,
+      "gate_pass": false
+    },
+    "P2_sobol37_N2": {
+      "method": "P2_sobol37",
+      "noise_scenario": "N2",
+      "target_count": 12,
+      "map_hit_count": 12,
+      "map_hit_fraction": 1.0,
+      "median_queries": 7.0,
+      "p90_queries": 8.0,
+      "max_queries": 9,
+      "response_blind_stop_count": 12,
+      "gate_pass": true
+    }
+  },
+  "records": [
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 0,
+      "geometry": [
+        116.2,
+        16.18
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 20,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true,
+      "stop_reason": "max_online_queries",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        116.00946104506986,
+        16.16653734729252
+      ],
+      "best_evaluated_F": 0.7096367010922678
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 0,
+      "geometry": [
+        116.2,
+        16.18
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 16,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        116.01415989882202,
+        16.092809924142458
+      ],
+      "best_evaluated_F": 0.5524766413181896
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 1,
+      "geometry": [
+        116.2,
+        17.63
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 15,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        116.36166050928468,
+        17.65822854475922
+      ],
+      "best_evaluated_F": 4.076717592679184
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 1,
+      "geometry": [
+        116.2,
+        17.63
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 7,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        115.0,
+        17.79924662839106
+      ],
+      "best_evaluated_F": 1.6195135175066082
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 2,
+      "geometry": [
+        117.9,
+        16.33
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 20,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true,
+      "stop_reason": "max_online_queries",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        118.07929324058163,
+        16.307672822930176
+      ],
+      "best_evaluated_F": 0.8182988902765513
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 2,
+      "geometry": [
+        117.9,
+        16.33
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 12,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        117.76756516435375,
+        16.215360333366327
+      ],
+      "best_evaluated_F": 1.65959004158694
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 3,
+      "geometry": [
+        118.7,
+        17.81
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 20,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true,
+      "stop_reason": "max_online_queries",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        118.86769330736449,
+        17.779661374298314
+      ],
+      "best_evaluated_F": 1.5059340024158252
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 3,
+      "geometry": [
+        118.7,
+        17.81
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 15,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        118.44597878322443,
+        17.693250198457164
+      ],
+      "best_evaluated_F": 0.5951655244471779
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 4,
+      "geometry": [
+        119.6,
+        16.24
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 20,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true,
+      "stop_reason": "max_online_queries",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        119.41391349154331,
+        16.170002662758485
+      ],
+      "best_evaluated_F": 0.5769583029115095
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 4,
+      "geometry": [
+        119.6,
+        16.24
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 10,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        119.72081226249897,
+        16.18223602694701
+      ],
+      "best_evaluated_F": 2.8016878069390483
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 5,
+      "geometry": [
+        120.4,
+        17.62
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 20,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true,
+      "stop_reason": "max_online_queries",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        120.17413465408595,
+        17.653445328985
+      ],
+      "best_evaluated_F": 0.808104021075375
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 5,
+      "geometry": [
+        120.4,
+        17.62
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 20,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true,
+      "stop_reason": "max_online_queries",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        119.67135610771517,
+        17.56818030847443
+      ],
+      "best_evaluated_F": 0.17308669978050925
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 6,
+      "geometry": [
+        121.3,
+        16.38
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 20,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true,
+      "stop_reason": "max_online_queries",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        121.32307375104205,
+        16.42011123684412
+      ],
+      "best_evaluated_F": 0.5713880158317117
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 6,
+      "geometry": [
+        121.3,
+        16.38
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 8,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        122.09316687738529,
+        16.381374561657637
+      ],
+      "best_evaluated_F": 2.1619120799987894
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 7,
+      "geometry": [
+        122.1,
+        17.83
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 18,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        122.73176618615719,
+        17.809039383171736
+      ],
+      "best_evaluated_F": 2.1105167179359636
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 7,
+      "geometry": [
+        122.1,
+        17.83
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 14,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        121.87119315719576,
+        17.88364561899227
+      ],
+      "best_evaluated_F": 0.883497469600631
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 8,
+      "geometry": [
+        123.0,
+        16.22
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 20,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true,
+      "stop_reason": "max_online_queries",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        122.79408434393805,
+        16.213402500687213
+      ],
+      "best_evaluated_F": 1.447108083656603
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 8,
+      "geometry": [
+        123.0,
+        16.22
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 9,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        123.23807606273508,
+        16.15513486782418
+      ],
+      "best_evaluated_F": 7.11459318486511
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 9,
+      "geometry": [
+        123.8,
+        17.57
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 20,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true,
+      "stop_reason": "max_online_queries",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        123.95828251064589,
+        17.51126580926001
+      ],
+      "best_evaluated_F": 0.5597186705455155
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 9,
+      "geometry": [
+        123.8,
+        17.57
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 7,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        125.0,
+        17.776521183410622
+      ],
+      "best_evaluated_F": 4.165960007489226
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 10,
+      "geometry": [
+        124.4,
+        16.47
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 20,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true,
+      "stop_reason": "max_online_queries",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        124.53676092423827,
+        16.48169881095117
+      ],
+      "best_evaluated_F": 1.4270824534655995
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 10,
+      "geometry": [
+        124.4,
+        16.47
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 7,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        125.0,
+        16.561834103289794
+      ],
+      "best_evaluated_F": 1.5947448090278076
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 11,
+      "geometry": [
+        124.7,
+        17.18
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 15,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        124.34848365396152,
+        17.178723688408695
+      ],
+      "best_evaluated_F": 2.0972011415981697
+    },
+    {
+      "method": "P1_sobol12",
+      "initialization": "sobol12",
+      "target_index": 11,
+      "geometry": [
+        124.7,
+        17.18
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 11,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        123.8671868861089,
+        17.228394935184106
+      ],
+      "best_evaluated_F": 1.9605331722100217
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 0,
+      "geometry": [
+        116.2,
+        16.18
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 15,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        116.03314752020881,
+        16.162828262415818
+      ],
+      "best_evaluated_F": 0.7057061698822414
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 0,
+      "geometry": [
+        116.2,
+        16.18
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 7,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        116.00627170309669,
+        16.09299561786448
+      ],
+      "best_evaluated_F": 0.5524210689463795
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 1,
+      "geometry": [
+        116.2,
+        17.63
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 8,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        116.34743761010513,
+        17.658460769105933
+      ],
+      "best_evaluated_F": 4.076034244649975
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 1,
+      "geometry": [
+        116.2,
+        17.63
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 7,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        115.0,
+        17.799114467522408
+      ],
+      "best_evaluated_F": 1.61951439648885
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 2,
+      "geometry": [
+        117.9,
+        16.33
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 13,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        118.08056854390149,
+        16.310452330927923
+      ],
+      "best_evaluated_F": 0.8157921891286182
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 2,
+      "geometry": [
+        117.9,
+        16.33
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 9,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        117.76917270029176,
+        16.21742868211368
+      ],
+      "best_evaluated_F": 1.659931170199513
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 3,
+      "geometry": [
+        118.7,
+        17.81
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 10,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        118.86473137855599,
+        17.78166145679443
+      ],
+      "best_evaluated_F": 1.5051016008670408
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 3,
+      "geometry": [
+        118.7,
+        17.81
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 8,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        118.46584406604504,
+        17.69062023253169
+      ],
+      "best_evaluated_F": 0.5948457754110885
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 4,
+      "geometry": [
+        119.6,
+        16.24
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 11,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        119.39134108002936,
+        16.1696437316879
+      ],
+      "best_evaluated_F": 0.5728114447300032
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 4,
+      "geometry": [
+        119.6,
+        16.24
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 6,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        119.72185943071342,
+        16.180449316221516
+      ],
+      "best_evaluated_F": 2.8018405399658954
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 5,
+      "geometry": [
+        120.4,
+        17.62
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 16,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        120.20152801250462,
+        17.653686223070256
+      ],
+      "best_evaluated_F": 0.802625544131438
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 5,
+      "geometry": [
+        120.4,
+        17.62
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 5,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        119.65004822057197,
+        17.560638590922018
+      ],
+      "best_evaluated_F": 0.17343884551072702
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 6,
+      "geometry": [
+        121.3,
+        16.38
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 11,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        121.31688056126151,
+        16.415990345864383
+      ],
+      "best_evaluated_F": 0.5644794952094367
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 6,
+      "geometry": [
+        121.3,
+        16.38
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 6,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        122.07172541374408,
+        16.385640457142724
+      ],
+      "best_evaluated_F": 2.160718312537625
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 7,
+      "geometry": [
+        122.1,
+        17.83
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 11,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        122.73346350195118,
+        17.808069871509478
+      ],
+      "best_evaluated_F": 2.1105607506967816
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 7,
+      "geometry": [
+        122.1,
+        17.83
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 7,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        121.85197774608264,
+        17.886400308408525
+      ],
+      "best_evaluated_F": 0.8839739782519472
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 8,
+      "geometry": [
+        123.0,
+        16.22
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 10,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        122.84175004719566,
+        16.20707641690698
+      ],
+      "best_evaluated_F": 1.4294052787449756
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 8,
+      "geometry": [
+        123.0,
+        16.22
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 5,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        123.2364508042498,
+        16.153984168786746
+      ],
+      "best_evaluated_F": 7.114718397514332
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 9,
+      "geometry": [
+        123.8,
+        17.57
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 14,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        123.94337764139662,
+        17.5087346132284
+      ],
+      "best_evaluated_F": 0.554127890109553
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 9,
+      "geometry": [
+        123.8,
+        17.57
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 6,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        124.19815171188478,
+        17.8348502361954
+      ],
+      "best_evaluated_F": 3.6921726721844514
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 10,
+      "geometry": [
+        124.4,
+        16.47
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 10,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        124.51428335243119,
+        16.487490459247773
+      ],
+      "best_evaluated_F": 1.4287149217487287
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 10,
+      "geometry": [
+        124.4,
+        16.47
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 7,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        125.0,
+        16.561830927301717
+      ],
+      "best_evaluated_F": 1.5947448049831543
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 11,
+      "geometry": [
+        124.7,
+        17.18
+      ],
+      "noise_scenario": "N1",
+      "online_query_count": 13,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        124.35430413886246,
+        17.17880551680409
+      ],
+      "best_evaluated_F": 2.096859938015137
+    },
+    {
+      "method": "P2_sobol37",
+      "initialization": "sobol37",
+      "target_index": 11,
+      "geometry": [
+        124.7,
+        17.18
+      ],
+      "noise_scenario": "N2",
+      "online_query_count": 8,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true,
+      "stop_reason": "response_blind_ei_and_stagnation_rule",
+      "response_blind_stop_uses_hidden_map": false,
+      "best_evaluated_geometry": [
+        123.91494217824366,
+        17.22782161925039
+      ],
+      "best_evaluated_F": 1.9624615791673867
+    }
+  ],
+  "readiness_gate_pass": false
+}

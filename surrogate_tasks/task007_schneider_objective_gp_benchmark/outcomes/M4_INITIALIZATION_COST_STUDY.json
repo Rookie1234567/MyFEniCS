@@ -1,0 +1,2515 @@
+{
+  "schema_version": "task007.m4-initialization-cost.v1",
+  "status": "complete",
+  "initialization_contract": {
+    "I0": "existing train37",
+    "I1": "Sobol12",
+    "I2": "Sobol37",
+    "I3": "train37 + Sobol6",
+    "I4": "train37 + Sobol12",
+    "new_physical_fem_runs": "new geometry count relative to existing train37 times 3 fixed illuminations"
+  },
+  "rows": [
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 0,
+      "online_query_count": 8,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 1,
+      "online_query_count": 7,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 2,
+      "online_query_count": 7,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 3,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 4,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 6,
+      "online_query_count": 11,
+      "queries_to_MAP": 9,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 7,
+      "online_query_count": 9,
+      "queries_to_MAP": 9,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 8,
+      "online_query_count": 12,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 9,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 10,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 11,
+      "online_query_count": 10,
+      "queries_to_MAP": 10,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "summary": true,
+      "initial_count": 37,
+      "new_geometry_count_relative_train37": 0,
+      "new_fem_runs_relative_train37": 0,
+      "median_online_queries": 9.5,
+      "p90_online_queries": 20.0,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.75,
+      "single_measurement_median_total_evaluations": 46.5,
+      "amortized_total_evaluations_1": 46.5,
+      "amortized_total_evaluations_10": 132.0,
+      "amortized_total_evaluations_100": 987.0
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 0,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 1,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 2,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 3,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 4,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 5,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 6,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 7,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 8,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 9,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 10,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 11,
+      "online_query_count": 9,
+      "queries_to_MAP": 9,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "summary": true,
+      "initial_count": 37,
+      "new_geometry_count_relative_train37": 0,
+      "new_fem_runs_relative_train37": 0,
+      "median_online_queries": 4.0,
+      "p90_online_queries": 18.900000000000006,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.8333333333333334,
+      "single_measurement_median_total_evaluations": 41.0,
+      "amortized_total_evaluations_1": 41.0,
+      "amortized_total_evaluations_10": 77.0,
+      "amortized_total_evaluations_100": 437.0
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 0,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 1,
+      "online_query_count": 8,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 2,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 3,
+      "online_query_count": 7,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 4,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 6,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 7,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 8,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 9,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 10,
+      "online_query_count": 16,
+      "queries_to_MAP": 16,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 11,
+      "online_query_count": 13,
+      "queries_to_MAP": 13,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "summary": true,
+      "initial_count": 37,
+      "new_geometry_count_relative_train37": 0,
+      "new_fem_runs_relative_train37": 0,
+      "median_online_queries": 7.5,
+      "p90_online_queries": 20.0,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.75,
+      "single_measurement_median_total_evaluations": 44.5,
+      "amortized_total_evaluations_1": 44.5,
+      "amortized_total_evaluations_10": 112.0,
+      "amortized_total_evaluations_100": 787.0
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 0,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 1,
+      "online_query_count": 17,
+      "queries_to_MAP": 17,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 2,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 3,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 4,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 6,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 7,
+      "online_query_count": 7,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 8,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 9,
+      "online_query_count": 1,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 10,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 11,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "summary": true,
+      "initial_count": 37,
+      "new_geometry_count_relative_train37": 0,
+      "new_fem_runs_relative_train37": 0,
+      "median_online_queries": 4.0,
+      "p90_online_queries": 20.0,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.75,
+      "single_measurement_median_total_evaluations": 41.0,
+      "amortized_total_evaluations_1": 41.0,
+      "amortized_total_evaluations_10": 77.0,
+      "amortized_total_evaluations_100": 437.0
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 0,
+      "online_query_count": 6,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 1,
+      "online_query_count": 7,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 2,
+      "online_query_count": 8,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 3,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 4,
+      "online_query_count": 6,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 5,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 6,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 7,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 8,
+      "online_query_count": 7,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 9,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 10,
+      "online_query_count": 8,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 11,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "summary": true,
+      "initial_count": 12,
+      "new_geometry_count_relative_train37": 12,
+      "new_fem_runs_relative_train37": 36,
+      "median_online_queries": 5.5,
+      "p90_online_queries": 7.9,
+      "max_online_queries": 8,
+      "map_hit_fraction": 1.0,
+      "single_measurement_median_total_evaluations": 17.5,
+      "amortized_total_evaluations_1": 17.5,
+      "amortized_total_evaluations_10": 67.0,
+      "amortized_total_evaluations_100": 562.0
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 0,
+      "online_query_count": 6,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 1,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 2,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 3,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 4,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 6,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 7,
+      "online_query_count": 6,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 8,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 9,
+      "online_query_count": 16,
+      "queries_to_MAP": 16,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 10,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 11,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "summary": true,
+      "initial_count": 12,
+      "new_geometry_count_relative_train37": 12,
+      "new_fem_runs_relative_train37": 36,
+      "median_online_queries": 5.0,
+      "p90_online_queries": 6.0,
+      "max_online_queries": 16,
+      "map_hit_fraction": 1.0,
+      "single_measurement_median_total_evaluations": 17.0,
+      "amortized_total_evaluations_1": 17.0,
+      "amortized_total_evaluations_10": 62.0,
+      "amortized_total_evaluations_100": 512.0
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 0,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 1,
+      "online_query_count": 7,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 2,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 3,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 4,
+      "online_query_count": 8,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 5,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 6,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 7,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 8,
+      "online_query_count": 6,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 9,
+      "online_query_count": 7,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 10,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 11,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "summary": true,
+      "initial_count": 12,
+      "new_geometry_count_relative_train37": 12,
+      "new_fem_runs_relative_train37": 36,
+      "median_online_queries": 5.0,
+      "p90_online_queries": 7.0,
+      "max_online_queries": 8,
+      "map_hit_fraction": 1.0,
+      "single_measurement_median_total_evaluations": 17.0,
+      "amortized_total_evaluations_1": 17.0,
+      "amortized_total_evaluations_10": 62.0,
+      "amortized_total_evaluations_100": 512.0
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 0,
+      "online_query_count": 7,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 1,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 2,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 3,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 4,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 6,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 7,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 8,
+      "online_query_count": 6,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 9,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 10,
+      "online_query_count": 7,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 11,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "summary": true,
+      "initial_count": 12,
+      "new_geometry_count_relative_train37": 12,
+      "new_fem_runs_relative_train37": 36,
+      "median_online_queries": 2.5,
+      "p90_online_queries": 7.0,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.9166666666666666,
+      "single_measurement_median_total_evaluations": 14.5,
+      "amortized_total_evaluations_1": 14.5,
+      "amortized_total_evaluations_10": 37.0,
+      "amortized_total_evaluations_100": 262.0
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 0,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 1,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 2,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 3,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 4,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 6,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 7,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 8,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 9,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 10,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 11,
+      "online_query_count": 5,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "summary": true,
+      "initial_count": 37,
+      "new_geometry_count_relative_train37": 37,
+      "new_fem_runs_relative_train37": 111,
+      "median_online_queries": 3.0,
+      "p90_online_queries": 3.0,
+      "max_online_queries": 5,
+      "map_hit_fraction": 1.0,
+      "single_measurement_median_total_evaluations": 40.0,
+      "amortized_total_evaluations_1": 40.0,
+      "amortized_total_evaluations_10": 67.0,
+      "amortized_total_evaluations_100": 337.0
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 0,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 1,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 2,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 3,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 4,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 6,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 7,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 8,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 9,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 10,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 11,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "summary": true,
+      "initial_count": 37,
+      "new_geometry_count_relative_train37": 37,
+      "new_fem_runs_relative_train37": 111,
+      "median_online_queries": 2.0,
+      "p90_online_queries": 3.0,
+      "max_online_queries": 3,
+      "map_hit_fraction": 1.0,
+      "single_measurement_median_total_evaluations": 39.0,
+      "amortized_total_evaluations_1": 39.0,
+      "amortized_total_evaluations_10": 57.0,
+      "amortized_total_evaluations_100": 237.0
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 0,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 1,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 2,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 3,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 4,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 6,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 7,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 8,
+      "online_query_count": 6,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 9,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 10,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 11,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "summary": true,
+      "initial_count": 37,
+      "new_geometry_count_relative_train37": 37,
+      "new_fem_runs_relative_train37": 111,
+      "median_online_queries": 3.0,
+      "p90_online_queries": 5.9,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.9166666666666666,
+      "single_measurement_median_total_evaluations": 40.0,
+      "amortized_total_evaluations_1": 40.0,
+      "amortized_total_evaluations_10": 67.0,
+      "amortized_total_evaluations_100": 337.0
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 0,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 1,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 2,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 3,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 4,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 6,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 7,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 8,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 9,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 10,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 11,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "sobol37",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "summary": true,
+      "initial_count": 37,
+      "new_geometry_count_relative_train37": 37,
+      "new_fem_runs_relative_train37": 111,
+      "median_online_queries": 2.0,
+      "p90_online_queries": 4.9,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.9166666666666666,
+      "single_measurement_median_total_evaluations": 39.0,
+      "amortized_total_evaluations_1": 39.0,
+      "amortized_total_evaluations_10": 57.0,
+      "amortized_total_evaluations_100": 237.0
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 0,
+      "online_query_count": 9,
+      "queries_to_MAP": 9,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 1,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 2,
+      "online_query_count": 8,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 3,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 4,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 6,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 7,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 8,
+      "online_query_count": 8,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 9,
+      "online_query_count": 16,
+      "queries_to_MAP": 16,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 10,
+      "online_query_count": 9,
+      "queries_to_MAP": 9,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 11,
+      "online_query_count": 14,
+      "queries_to_MAP": 14,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "summary": true,
+      "initial_count": 43,
+      "new_geometry_count_relative_train37": 6,
+      "new_fem_runs_relative_train37": 18,
+      "median_online_queries": 8.5,
+      "p90_online_queries": 19.6,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.8333333333333334,
+      "single_measurement_median_total_evaluations": 51.5,
+      "amortized_total_evaluations_1": 51.5,
+      "amortized_total_evaluations_10": 128.0,
+      "amortized_total_evaluations_100": 893.0
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 0,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 1,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 2,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 3,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 4,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 6,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 7,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 8,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 9,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 10,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 11,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "summary": true,
+      "initial_count": 43,
+      "new_geometry_count_relative_train37": 6,
+      "new_fem_runs_relative_train37": 18,
+      "median_online_queries": 2.0,
+      "p90_online_queries": 18.400000000000006,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.8333333333333334,
+      "single_measurement_median_total_evaluations": 45.0,
+      "amortized_total_evaluations_1": 45.0,
+      "amortized_total_evaluations_10": 63.0,
+      "amortized_total_evaluations_100": 243.0
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 0,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 1,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 2,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 3,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 4,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 6,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 7,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 8,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 9,
+      "online_query_count": 9,
+      "queries_to_MAP": 9,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 10,
+      "online_query_count": 12,
+      "queries_to_MAP": 12,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 11,
+      "online_query_count": 18,
+      "queries_to_MAP": 18,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "summary": true,
+      "initial_count": 43,
+      "new_geometry_count_relative_train37": 6,
+      "new_fem_runs_relative_train37": 18,
+      "median_online_queries": 4.0,
+      "p90_online_queries": 17.400000000000002,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.9166666666666666,
+      "single_measurement_median_total_evaluations": 47.0,
+      "amortized_total_evaluations_1": 47.0,
+      "amortized_total_evaluations_10": 83.0,
+      "amortized_total_evaluations_100": 443.0
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 0,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 1,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 2,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 3,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 4,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 6,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 7,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 8,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 9,
+      "online_query_count": 1,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 10,
+      "online_query_count": 8,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 11,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol6",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "summary": true,
+      "initial_count": 43,
+      "new_geometry_count_relative_train37": 6,
+      "new_fem_runs_relative_train37": 18,
+      "median_online_queries": 1.5,
+      "p90_online_queries": 7.600000000000001,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.9166666666666666,
+      "single_measurement_median_total_evaluations": 44.5,
+      "amortized_total_evaluations_1": 44.5,
+      "amortized_total_evaluations_10": 58.0,
+      "amortized_total_evaluations_100": 193.0
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 0,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 1,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 2,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 3,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 4,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 6,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 7,
+      "online_query_count": 7,
+      "queries_to_MAP": 7,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 8,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 9,
+      "online_query_count": 6,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 10,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "target_index": 11,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "summary": true,
+      "initial_count": 49,
+      "new_geometry_count_relative_train37": 12,
+      "new_fem_runs_relative_train37": 36,
+      "median_online_queries": 3.5,
+      "p90_online_queries": 18.700000000000003,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.8333333333333334,
+      "single_measurement_median_total_evaluations": 52.5,
+      "amortized_total_evaluations_1": 52.5,
+      "amortized_total_evaluations_10": 84.0,
+      "amortized_total_evaluations_100": 399.0
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 0,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 1,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 2,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 3,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 4,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 6,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 7,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 8,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 9,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 10,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "target_index": 11,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "summary": true,
+      "initial_count": 49,
+      "new_geometry_count_relative_train37": 12,
+      "new_fem_runs_relative_train37": 36,
+      "median_online_queries": 2.0,
+      "p90_online_queries": 4.9,
+      "max_online_queries": 5,
+      "map_hit_fraction": 1.0,
+      "single_measurement_median_total_evaluations": 51.0,
+      "amortized_total_evaluations_1": 51.0,
+      "amortized_total_evaluations_10": 69.0,
+      "amortized_total_evaluations_100": 249.0
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 0,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 1,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 2,
+      "online_query_count": 6,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 3,
+      "online_query_count": 5,
+      "queries_to_MAP": 5,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 4,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 6,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 7,
+      "online_query_count": 6,
+      "queries_to_MAP": 6,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 8,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 9,
+      "online_query_count": 8,
+      "queries_to_MAP": 8,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 10,
+      "online_query_count": 12,
+      "queries_to_MAP": 12,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "target_index": 11,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "summary": true,
+      "initial_count": 49,
+      "new_geometry_count_relative_train37": 12,
+      "new_fem_runs_relative_train37": 36,
+      "median_online_queries": 4.0,
+      "p90_online_queries": 11.600000000000001,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.9166666666666666,
+      "single_measurement_median_total_evaluations": 53.0,
+      "amortized_total_evaluations_1": 53.0,
+      "amortized_total_evaluations_10": 89.0,
+      "amortized_total_evaluations_100": 449.0
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 0,
+      "online_query_count": 5,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 1,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 2,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 3,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 4,
+      "online_query_count": 2,
+      "queries_to_MAP": 2,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 5,
+      "online_query_count": 1,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 6,
+      "online_query_count": 4,
+      "queries_to_MAP": 4,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 7,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 8,
+      "online_query_count": 3,
+      "queries_to_MAP": 3,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 9,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 10,
+      "online_query_count": 20,
+      "queries_to_MAP": null,
+      "within_MAP_tolerance": false
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "target_index": 11,
+      "online_query_count": 1,
+      "queries_to_MAP": 1,
+      "within_MAP_tolerance": true
+    },
+    {
+      "initialization": "train37_plus_sobol12",
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "summary": true,
+      "initial_count": 49,
+      "new_geometry_count_relative_train37": 12,
+      "new_fem_runs_relative_train37": 36,
+      "median_online_queries": 1.5,
+      "p90_online_queries": 4.9,
+      "max_online_queries": 20,
+      "map_hit_fraction": 0.9166666666666666,
+      "single_measurement_median_total_evaluations": 50.5,
+      "amortized_total_evaluations_1": 50.5,
+      "amortized_total_evaluations_10": 64.0,
+      "amortized_total_evaluations_100": 199.0
+    }
+  ],
+  "implementation_source_sha": "34d52d075842f177f2c055f8f0ef5cdf48d63d67"
+}

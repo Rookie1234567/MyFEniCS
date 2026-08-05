@@ -1,0 +1,2134 @@
+{
+  "schema_version": "task007.m4-map-stability-audit.v1",
+  "implementation_source_sha": "34d52d075842f177f2c055f8f0ef5cdf48d63d67",
+  "status": "pass",
+  "method": "differential_evolution_then_bounded_LBFGSB_polish",
+  "settings": {
+    "maxiter": 120,
+    "popsize": 10,
+    "tol": 1e-09,
+    "objective_abs_gate": 1e-06,
+    "height_gate_nm": 0.02,
+    "width_gate_nm": 0.005
+  },
+  "target_contract_noise_count": 48,
+  "objective_gate_pass_count": 48,
+  "coordinate_gate_pass_count": 48,
+  "gate_pass_count": 48,
+  "all_gate_pass": true,
+  "objective_equivalent_coordinate_mismatch_count": 0,
+  "rows": [
+    {
+      "target_index": 0,
+      "geometry": [
+        116.2,
+        16.18
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        116.0328114866402,
+        16.162865636086416
+      ],
+      "old_map_F": 0.7057055893405862,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610000,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 37,
+        "de_nfev": 760,
+        "de_geometry": [
+          116.03281176330938,
+          16.162865597279275
+        ],
+        "de_F": 0.7057055893409907,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 4,
+        "polish_nfev": 102,
+        "map_geometry": [
+          116.03281176721211,
+          16.162865618655527
+        ],
+        "map_F": 0.7057055893407076,
+        "map_log10F": -0.15137644284552004
+      },
+      "objective_abs_difference": 1.213473765915296e-13,
+      "height_abs_difference_nm": 2.8057191059360775e-07,
+      "width_abs_difference_nm": 1.7430888732405947e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 0,
+      "geometry": [
+        116.2,
+        16.18
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        116.00577732194643,
+        16.09310733472735
+      ],
+      "old_map_F": 0.5524204097581008,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610001,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 28,
+        "de_nfev": 580,
+        "de_geometry": [
+          116.00577662447083,
+          16.093107934956713
+        ],
+        "de_F": 0.5524204097790709,
+        "polish_success": false,
+        "polish_message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+        "polish_nit": 3,
+        "polish_nfev": 144,
+        "map_geometry": [
+          116.00577659507559,
+          16.093107347477186
+        ],
+        "map_F": 0.5524204097585724,
+        "map_log10F": -0.2577302843254571
+      },
+      "objective_abs_difference": 4.716227408607665e-13,
+      "height_abs_difference_nm": 7.268708372976107e-07,
+      "width_abs_difference_nm": 1.2749836741932086e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 0,
+      "geometry": [
+        116.2,
+        16.18
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        116.03570613551372,
+        16.245059126875713
+      ],
+      "old_map_F": 2.6132869656764877,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610010,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 33,
+        "de_nfev": 680,
+        "de_geometry": [
+          116.03570593161407,
+          16.245059399343756
+        ],
+        "de_F": 2.6132869656974056,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 3,
+        "polish_nfev": 24,
+        "map_geometry": [
+          116.03570593903575,
+          16.245059133610514
+        ],
+        "map_F": 2.6132869656767954,
+        "map_log10F": 0.4171871023287101
+      },
+      "objective_abs_difference": 3.077538224260934e-13,
+      "height_abs_difference_nm": 1.964779698937491e-07,
+      "width_abs_difference_nm": 6.734801161201176e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 0,
+      "geometry": [
+        116.2,
+        16.18
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        115.5403416407475,
+        16.145706414285698
+      ],
+      "old_map_F": 0.3197317135099706,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610011,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 37,
+        "de_nfev": 760,
+        "de_geometry": [
+          115.54034263209833,
+          16.14570663366016
+        ],
+        "de_F": 0.31973171351525254,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 8,
+        "polish_nfev": 60,
+        "map_geometry": [
+          115.54034194740504,
+          16.145706403581222
+        ],
+        "map_F": 0.3197317135100236,
+        "map_log10F": -0.495214284842609
+      },
+      "objective_abs_difference": 5.3013149425851225e-14,
+      "height_abs_difference_nm": 3.0665754024994385e-07,
+      "width_abs_difference_nm": 1.0704475528200419e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 1,
+      "geometry": [
+        116.2,
+        17.63
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        116.34822081148792,
+        17.65879694627185
+      ],
+      "old_map_F": 4.075988434327838,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610100,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 33,
+        "de_nfev": 680,
+        "de_geometry": [
+          116.34823303463978,
+          17.658795689322478
+        ],
+        "de_F": 4.075988434930826,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 9,
+        "polish_nfev": 117,
+        "map_geometry": [
+          116.34822062350484,
+          17.658796943979596
+        ],
+        "map_F": 4.075988434328266,
+        "map_log10F": 0.6102329430198389
+      },
+      "objective_abs_difference": 4.2810199829546036e-13,
+      "height_abs_difference_nm": 1.8798307621636923e-07,
+      "width_abs_difference_nm": 2.292253498126229e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 1,
+      "geometry": [
+        116.2,
+        17.63
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        115.0,
+        17.799235059556672
+      ],
+      "old_map_F": 1.61951350935017,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610101,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 56,
+        "de_nfev": 1140,
+        "de_geometry": [
+          115.00000000030677,
+          17.799234597311994
+        ],
+        "de_F": 1.61951350955226,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 5,
+        "polish_nfev": 78,
+        "map_geometry": [
+          115.0,
+          17.799235055206516
+        ],
+        "map_F": 1.619513509350205,
+        "map_log10F": 0.20938457507679908
+      },
+      "objective_abs_difference": 3.5083047578154947e-14,
+      "height_abs_difference_nm": 0.0,
+      "width_abs_difference_nm": 4.350155791144061e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 1,
+      "geometry": [
+        116.2,
+        17.63
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        116.36790124982834,
+        17.683573571483308
+      ],
+      "old_map_F": 3.373130377076981,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610110,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 34,
+        "de_nfev": 700,
+        "de_geometry": [
+          116.36790360986147,
+          17.683573438771894
+        ],
+        "de_F": 3.373130377099752,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 3,
+        "polish_nfev": 39,
+        "map_geometry": [
+          116.36790100360724,
+          17.683573589286883
+        ],
+        "map_F": 3.373130377077286,
+        "map_log10F": 0.5280331277149601
+      },
+      "objective_abs_difference": 3.05089287166993e-13,
+      "height_abs_difference_nm": 2.462210915155083e-07,
+      "width_abs_difference_nm": 1.7803575502739477e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 1,
+      "geometry": [
+        116.2,
+        17.63
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        115.88626167556431,
+        17.58882524288856
+      ],
+      "old_map_F": 2.1604646486718058,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610111,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 30,
+        "de_nfev": 620,
+        "de_geometry": [
+          115.88628482232359,
+          17.588823760813955
+        ],
+        "de_F": 2.160464649069953,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 4,
+        "polish_nfev": 33,
+        "map_geometry": [
+          115.886261676914,
+          17.58882523671436
+        ],
+        "map_F": 2.160464648671839,
+        "map_log10F": 0.33454716441632015
+      },
+      "objective_abs_difference": 3.3306690738754696e-14,
+      "height_abs_difference_nm": 1.3496901374310255e-09,
+      "width_abs_difference_nm": 6.174200706254851e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 2,
+      "geometry": [
+        117.9,
+        16.33
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        118.08061850388319,
+        16.31047501566406
+      ],
+      "old_map_F": 0.8157919794217515,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610200,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 37,
+        "de_nfev": 760,
+        "de_geometry": [
+          118.08061758895734,
+          16.31047530848335
+        ],
+        "de_F": 0.8157919794427677,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 10,
+        "polish_nfev": 54,
+        "map_geometry": [
+          118.08061837048669,
+          16.310475005027488
+        ],
+        "map_F": 0.815791979422072,
+        "map_log10F": -0.08842056882699567
+      },
+      "objective_abs_difference": 3.205213872092827e-13,
+      "height_abs_difference_nm": 1.3339649740373716e-07,
+      "width_abs_difference_nm": 1.0636572511657505e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 2,
+      "geometry": [
+        117.9,
+        16.33
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        117.7707277148872,
+        16.215052158746214
+      ],
+      "old_map_F": 1.6595807330183328,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610201,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 38,
+        "de_nfev": 780,
+        "de_geometry": [
+          117.77072643301938,
+          16.21505239229724
+        ],
+        "de_F": 1.6595807330218362,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 3,
+        "polish_nfev": 15,
+        "map_geometry": [
+          117.7707264525978,
+          16.215052203745962
+        ],
+        "map_F": 1.659580733020012,
+        "map_log10F": 0.21999838422440413
+      },
+      "objective_abs_difference": 1.6793233470480118e-12,
+      "height_abs_difference_nm": 1.262289401893213e-06,
+      "width_abs_difference_nm": 4.499974792793182e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 2,
+      "geometry": [
+        117.9,
+        16.33
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        118.50748536406135,
+        16.258971452661754
+      ],
+      "old_map_F": 1.1603437061428505,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610210,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 33,
+        "de_nfev": 680,
+        "de_geometry": [
+          118.50748764709162,
+          16.258971251064896
+        ],
+        "de_F": 1.1603437061685822,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 9,
+        "polish_nfev": 126,
+        "map_geometry": [
+          118.50748565196994,
+          16.258971442136023
+        ],
+        "map_F": 1.160343706143297,
+        "map_log10F": 0.0645866509269597
+      },
+      "objective_abs_difference": 4.4653170050423796e-13,
+      "height_abs_difference_nm": 2.8790859118998924e-07,
+      "width_abs_difference_nm": 1.0525731397592608e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 2,
+      "geometry": [
+        117.9,
+        16.33
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        118.05216065275826,
+        16.42579519774023
+      ],
+      "old_map_F": 6.3358171890678285,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610211,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 30,
+        "de_nfev": 620,
+        "de_geometry": [
+          118.05216523673825,
+          16.425793973480157
+        ],
+        "de_F": 6.335817189146671,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 2,
+        "polish_nfev": 18,
+        "map_geometry": [
+          118.05216531836895,
+          16.425794941605808
+        ],
+        "map_F": 6.335817189084478,
+        "map_log10F": 0.8018026378180542
+      },
+      "objective_abs_difference": 1.6649792655698548e-11,
+      "height_abs_difference_nm": 4.6656106889031435e-06,
+      "width_abs_difference_nm": 2.56134420340004e-07,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 3,
+      "geometry": [
+        118.7,
+        17.81
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        118.86500430925942,
+        17.78149849076175
+      ],
+      "old_map_F": 1.5050951373405537,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610300,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 39,
+        "de_nfev": 800,
+        "de_geometry": [
+          118.86500496224265,
+          17.781498430417624
+        ],
+        "de_F": 1.505095137342995,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 4,
+        "polish_nfev": 39,
+        "map_geometry": [
+          118.8650049422079,
+          17.781498454635596
+        ],
+        "map_F": 1.5050951373426065,
+        "map_log10F": 0.1775639526325043
+      },
+      "objective_abs_difference": 2.0528023725319144e-12,
+      "height_abs_difference_nm": 6.329484847356071e-07,
+      "width_abs_difference_nm": 3.6126152735960204e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 3,
+      "geometry": [
+        118.7,
+        17.81
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        118.46264444911867,
+        17.69085867156628
+      ],
+      "old_map_F": 0.5948378289434633,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610301,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 36,
+        "de_nfev": 740,
+        "de_geometry": [
+          118.46264864247271,
+          17.690858195833933
+        ],
+        "de_F": 0.5948378289594045,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 7,
+        "polish_nfev": 105,
+        "map_geometry": [
+          118.46264492389479,
+          17.690858632056944
+        ],
+        "map_F": 0.5948378289435873,
+        "map_log10F": -0.22560142014423573
+      },
+      "objective_abs_difference": 1.2401191185062999e-13,
+      "height_abs_difference_nm": 4.747761153112151e-07,
+      "width_abs_difference_nm": 3.9509334470722024e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 3,
+      "geometry": [
+        118.7,
+        17.81
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        118.5271751106999,
+        17.8616442659482
+      ],
+      "old_map_F": 2.75570910987288,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610310,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 34,
+        "de_nfev": 700,
+        "de_geometry": [
+          118.52717723803471,
+          17.861644266905593
+        ],
+        "de_F": 2.7557091098985147,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 11,
+        "polish_nfev": 72,
+        "map_geometry": [
+          118.52717521916443,
+          17.861644242392607
+        ],
+        "map_F": 2.75570910987308,
+        "map_log10F": 0.4402333719278827
+      },
+      "objective_abs_difference": 1.9984014443252818e-13,
+      "height_abs_difference_nm": 1.0846453335489059e-07,
+      "width_abs_difference_nm": 2.355559303168775e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 3,
+      "geometry": [
+        118.7,
+        17.81
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        118.93312758129565,
+        17.66452010268102
+      ],
+      "old_map_F": 0.5564205521923294,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610311,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 34,
+        "de_nfev": 700,
+        "de_geometry": [
+          118.93312698093479,
+          17.664519503424433
+        ],
+        "de_F": 0.556420552219082,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 2,
+        "polish_nfev": 18,
+        "map_geometry": [
+          118.93312704580197,
+          17.664520131631303
+        ],
+        "map_F": 0.5564205521927332,
+        "map_log10F": -0.254596837092131
+      },
+      "objective_abs_difference": 4.0378811405616943e-13,
+      "height_abs_difference_nm": 5.354936831736268e-07,
+      "width_abs_difference_nm": 2.8950282171535946e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 4,
+      "geometry": [
+        119.6,
+        16.24
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        119.38895006525826,
+        16.169590286684464
+      ],
+      "old_map_F": 0.5727714214537725,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610400,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 36,
+        "de_nfev": 740,
+        "de_geometry": [
+          119.38894835234552,
+          16.169590724906868
+        ],
+        "de_F": 0.5727714215027552,
+        "polish_success": false,
+        "polish_message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+        "polish_nit": 10,
+        "polish_nfev": 165,
+        "map_geometry": [
+          119.38895029684258,
+          16.169590264013234
+        ],
+        "map_F": 0.5727714214542174,
+        "map_log10F": -0.24201865936977487
+      },
+      "objective_abs_difference": 4.4497738826976274e-13,
+      "height_abs_difference_nm": 2.3158432327363698e-07,
+      "width_abs_difference_nm": 2.2671230226478656e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 4,
+      "geometry": [
+        119.6,
+        16.24
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        119.72087742062806,
+        16.182015494891033
+      ],
+      "old_map_F": 2.8016846125095416,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610401,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 30,
+        "de_nfev": 620,
+        "de_geometry": [
+          119.72086973229445,
+          16.182015638251084
+        ],
+        "de_F": 2.801684612563573,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 5,
+        "polish_nfev": 51,
+        "map_geometry": [
+          119.72087810937973,
+          16.182015479617718
+        ],
+        "map_F": 2.8016846125098773,
+        "map_log10F": 0.44741924488431734
+      },
+      "objective_abs_difference": 3.3573144264664734e-13,
+      "height_abs_difference_nm": 6.887516690312623e-07,
+      "width_abs_difference_nm": 1.5273315057129366e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 4,
+      "geometry": [
+        119.6,
+        16.24
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        119.96084099972556,
+        16.259272268801162
+      ],
+      "old_map_F": 1.0143737665265025,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610410,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 31,
+        "de_nfev": 640,
+        "de_geometry": [
+          119.96083879356685,
+          16.259272407393507
+        ],
+        "de_F": 1.0143737665521173,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 8,
+        "polish_nfev": 87,
+        "map_geometry": [
+          119.96084098861014,
+          16.25927227632101
+        ],
+        "map_F": 1.0143737665265455,
+        "map_log10F": 0.006198009071126601
+      },
+      "objective_abs_difference": 4.3076653355456074e-14,
+      "height_abs_difference_nm": 1.1115417919427273e-08,
+      "width_abs_difference_nm": 7.519847855519401e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 4,
+      "geometry": [
+        119.6,
+        16.24
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        119.75737064922127,
+        16.317230123205913
+      ],
+      "old_map_F": 2.7234605113637675,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610411,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 34,
+        "de_nfev": 700,
+        "de_geometry": [
+          119.75736285968311,
+          16.317231501088443
+        ],
+        "de_F": 2.723460511470389,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 5,
+        "polish_nfev": 24,
+        "map_geometry": [
+          119.75736958416206,
+          16.31723001770445
+        ],
+        "map_F": 2.723460511366742,
+        "map_log10F": 0.43512108263121174
+      },
+      "objective_abs_difference": 2.9745095275757194e-12,
+      "height_abs_difference_nm": 1.065059208826824e-06,
+      "width_abs_difference_nm": 1.0550146356536061e-07,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 5,
+      "geometry": [
+        120.4,
+        17.62
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        120.20276475639729,
+        17.65371295652533
+      ],
+      "old_map_F": 0.8026143190395499,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610500,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 34,
+        "de_nfev": 700,
+        "de_geometry": [
+          120.20276341234099,
+          17.653713102562936
+        ],
+        "de_F": 0.8026143190482665,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 6,
+        "polish_nfev": 69,
+        "map_geometry": [
+          120.20276346593172,
+          17.65371306286463
+        ],
+        "map_F": 0.8026143190467576,
+        "map_log10F": -0.09549309649857346
+      },
+      "objective_abs_difference": 7.207678898168979e-12,
+      "height_abs_difference_nm": 1.290465561964993e-06,
+      "width_abs_difference_nm": 1.0633930003223213e-07,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 5,
+      "geometry": [
+        120.4,
+        17.62
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        119.65645947292994,
+        17.56510524878052
+      ],
+      "old_map_F": 0.17187065655051345,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610501,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 32,
+        "de_nfev": 660,
+        "de_geometry": [
+          119.65646061172288,
+          17.565105280873265
+        ],
+        "de_F": 0.17187065655220343,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 7,
+        "polish_nfev": 45,
+        "map_geometry": [
+          119.65646043261256,
+          17.5651052186757
+        ],
+        "map_F": 0.17187065655126124,
+        "map_log10F": -0.7647982640065816
+      },
+      "objective_abs_difference": 7.477907182362742e-13,
+      "height_abs_difference_nm": 9.596826231472733e-07,
+      "width_abs_difference_nm": 3.010481819387678e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 5,
+      "geometry": [
+        120.4,
+        17.62
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        120.40003213753165,
+        17.595853895887036
+      ],
+      "old_map_F": 1.725181557807199,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610510,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 26,
+        "de_nfev": 540,
+        "de_geometry": [
+          120.40002983827125,
+          17.595854276671247
+        ],
+        "de_F": 1.7251815578462146,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 14,
+        "polish_nfev": 189,
+        "map_geometry": [
+          120.40003211372023,
+          17.595853901777822
+        ],
+        "map_F": 1.7251815578071734,
+        "map_log10F": 0.236834806890472
+      },
+      "objective_abs_difference": 2.55351295663786e-14,
+      "height_abs_difference_nm": 2.3811423943698173e-08,
+      "width_abs_difference_nm": 5.89078652524222e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 5,
+      "geometry": [
+        120.4,
+        17.62
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        120.01327593109876,
+        17.475425626063476
+      ],
+      "old_map_F": 0.7391492481988456,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610511,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 29,
+        "de_nfev": 600,
+        "de_geometry": [
+          120.01327516381592,
+          17.47542551517765
+        ],
+        "de_F": 0.7391492482010039,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 5,
+        "polish_nfev": 48,
+        "map_geometry": [
+          120.01327527885006,
+          17.475425708202216
+        ],
+        "map_F": 0.739149248199414,
+        "map_log10F": -0.1312678604881552
+      },
+      "objective_abs_difference": 5.683231663056176e-13,
+      "height_abs_difference_nm": 6.522487012716738e-07,
+      "width_abs_difference_nm": 8.213874025386758e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 6,
+      "geometry": [
+        121.3,
+        16.38
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        121.31828723759446,
+        16.41576137153806
+      ],
+      "old_map_F": 0.5644624691378111,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610600,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 36,
+        "de_nfev": 740,
+        "de_geometry": [
+          121.31828674175799,
+          16.415761137514227
+        ],
+        "de_F": 0.5644624691611314,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 4,
+        "polish_nfev": 87,
+        "map_geometry": [
+          121.31828676693839,
+          16.415761400839052
+        ],
+        "map_F": 0.5644624691390662,
+        "map_log10F": -0.24836492882710862
+      },
+      "objective_abs_difference": 1.2551071293387395e-12,
+      "height_abs_difference_nm": 4.706560758904743e-07,
+      "width_abs_difference_nm": 2.9300991855052416e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 6,
+      "geometry": [
+        121.3,
+        16.38
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        122.06741597339638,
+        16.385908176018738
+      ],
+      "old_map_F": 2.1607028646065434,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610601,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 36,
+        "de_nfev": 740,
+        "de_geometry": [
+          122.06741526512391,
+          16.38590774916028
+        ],
+        "de_F": 2.1607028646218387,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 3,
+        "polish_nfev": 48,
+        "map_geometry": [
+          122.06741529557026,
+          16.38590821808448
+        ],
+        "map_F": 2.1607028646071758,
+        "map_log10F": 0.33459504770989995
+      },
+      "objective_abs_difference": 6.323830348264892e-13,
+      "height_abs_difference_nm": 6.778261223416848e-07,
+      "width_abs_difference_nm": 4.2065742889008106e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 6,
+      "geometry": [
+        121.3,
+        16.38
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        121.09878859866548,
+        16.39592390155317
+      ],
+      "old_map_F": 4.03803843885406,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610610,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 33,
+        "de_nfev": 680,
+        "de_geometry": [
+          121.09878454639195,
+          16.39592463155589
+        ],
+        "de_F": 4.038038439014345,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 6,
+        "polish_nfev": 90,
+        "map_geometry": [
+          121.09878762482614,
+          16.395923972758194
+        ],
+        "map_F": 4.0380384388592105,
+        "map_log10F": 0.6061704487595334
+      },
+      "objective_abs_difference": 5.150546655841026e-12,
+      "height_abs_difference_nm": 9.738393345060103e-07,
+      "width_abs_difference_nm": 7.120502232282888e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 6,
+      "geometry": [
+        121.3,
+        16.38
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        121.31473795720501,
+        16.207401083941882
+      ],
+      "old_map_F": 0.9272978388020351,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610611,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 37,
+        "de_nfev": 760,
+        "de_geometry": [
+          121.31473749331634,
+          16.207401924036276
+        ],
+        "de_F": 0.9272978388500088,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 4,
+        "polish_nfev": 96,
+        "map_geometry": [
+          121.3147374573926,
+          16.207401101499077
+        ],
+        "map_F": 0.9272978388022913,
+        "map_log10F": -0.032780752399604235
+      },
+      "objective_abs_difference": 2.5623947408348613e-13,
+      "height_abs_difference_nm": 4.998124154553807e-07,
+      "width_abs_difference_nm": 1.7557194809114662e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 7,
+      "geometry": [
+        122.1,
+        17.83
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        122.73388235089527,
+        17.80859166916349
+      ],
+      "old_map_F": 2.1104658588113416,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610700,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 35,
+        "de_nfev": 720,
+        "de_geometry": [
+          122.7338804229182,
+          17.808592174178674
+        ],
+        "de_F": 2.110465858870624,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 7,
+        "polish_nfev": 57,
+        "map_geometry": [
+          122.73388245090955,
+          17.808591641488064
+        ],
+        "map_F": 2.110465858811807,
+        "map_log10F": 0.32437833092817425
+      },
+      "objective_abs_difference": 4.654054919228656e-13,
+      "height_abs_difference_nm": 1.0001427597217116e-07,
+      "width_abs_difference_nm": 2.7675426395035174e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 7,
+      "geometry": [
+        122.1,
+        17.83
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        121.8736260896672,
+        17.883708461872132
+      ],
+      "old_map_F": 0.883489477072372,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610701,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 31,
+        "de_nfev": 640,
+        "de_geometry": [
+          121.87362723614036,
+          17.88370828238588
+        ],
+        "de_F": 0.8834894770740341,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 6,
+        "polish_nfev": 36,
+        "map_geometry": [
+          121.87362689807564,
+          17.883708392720962
+        ],
+        "map_F": 0.8834894770729067,
+        "map_log10F": -0.05379861885212578
+      },
+      "objective_abs_difference": 5.346834086594754e-13,
+      "height_abs_difference_nm": 8.084084441861705e-07,
+      "width_abs_difference_nm": 6.915117012340488e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 7,
+      "geometry": [
+        122.1,
+        17.83
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        122.57936015523002,
+        17.797706395831792
+      ],
+      "old_map_F": 1.3753806647006581,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610710,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 27,
+        "de_nfev": 560,
+        "de_geometry": [
+          122.57935705411286,
+          17.797706386976984
+        ],
+        "de_F": 1.3753806647686184,
+        "polish_success": false,
+        "polish_message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+        "polish_nit": 10,
+        "polish_nfev": 138,
+        "map_geometry": [
+          122.57935998034088,
+          17.797706389410667
+        ],
+        "map_F": 1.3753806647009825,
+        "map_log10F": 0.13842291467500237
+      },
+      "objective_abs_difference": 3.2440716779547074e-13,
+      "height_abs_difference_nm": 1.7488913783836324e-07,
+      "width_abs_difference_nm": 6.421124965072522e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 7,
+      "geometry": [
+        122.1,
+        17.83
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        121.19966073314745,
+        17.782883873317097
+      ],
+      "old_map_F": 1.5946383240342497,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610711,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 33,
+        "de_nfev": 680,
+        "de_geometry": [
+          121.19967115439621,
+          17.782882656470424
+        ],
+        "de_F": 1.5946383241322823,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 9,
+        "polish_nfev": 96,
+        "map_geometry": [
+          121.19966149757093,
+          17.782883817881412
+        ],
+        "map_F": 1.594638324034651,
+        "map_log10F": 0.20266219730732193
+      },
+      "objective_abs_difference": 4.0123460109953157e-13,
+      "height_abs_difference_nm": 7.644234756298829e-07,
+      "width_abs_difference_nm": 5.543568448729275e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 8,
+      "geometry": [
+        123.0,
+        16.22
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        122.84257604605432,
+        16.207144250186303
+      ],
+      "old_map_F": 1.4293967510046444,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610800,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 31,
+        "de_nfev": 640,
+        "de_geometry": [
+          122.84257838632205,
+          16.207144126521996
+        ],
+        "de_F": 1.4293967510380028,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 12,
+        "polish_nfev": 105,
+        "map_geometry": [
+          122.84257636629803,
+          16.207144220595087
+        ],
+        "map_F": 1.4293967510054653,
+        "map_log10F": 0.15515279062259374
+      },
+      "objective_abs_difference": 8.208989044078407e-13,
+      "height_abs_difference_nm": 3.20243714213575e-07,
+      "width_abs_difference_nm": 2.9591216588187308e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 8,
+      "geometry": [
+        123.0,
+        16.22
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        123.2378327640524,
+        16.155200810612662
+      ],
+      "old_map_F": 7.114592924049249,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610801,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 29,
+        "de_nfev": 600,
+        "de_geometry": [
+          123.23784660405964,
+          16.15520134720089
+        ],
+        "de_F": 7.114592924340459,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 9,
+        "polish_nfev": 75,
+        "map_geometry": [
+          123.23783293406548,
+          16.15520082546931
+        ],
+        "map_F": 7.114592924049289,
+        "map_log10F": 0.8521500560863182
+      },
+      "objective_abs_difference": 3.9968028886505635e-14,
+      "height_abs_difference_nm": 1.700130809467737e-07,
+      "width_abs_difference_nm": 1.4856649244165965e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 8,
+      "geometry": [
+        123.0,
+        16.22
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        123.30368380615519,
+        16.19249526781487
+      ],
+      "old_map_F": 1.4984939029458488,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610810,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 38,
+        "de_nfev": 780,
+        "de_geometry": [
+          123.3036864073783,
+          16.192495396579567
+        ],
+        "de_F": 1.4984939030135536,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 7,
+        "polish_nfev": 135,
+        "map_geometry": [
+          123.30368387518513,
+          16.192495261910384
+        ],
+        "map_F": 1.498493902945925,
+        "map_log10F": 0.1756549802333531
+      },
+      "objective_abs_difference": 7.616129948928574e-14,
+      "height_abs_difference_nm": 6.902993732182949e-08,
+      "width_abs_difference_nm": 5.9044857891876745e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 8,
+      "geometry": [
+        123.0,
+        16.22
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        124.06566216673725,
+        16.17898415566474
+      ],
+      "old_map_F": 2.7745721365872145,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610811,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 33,
+        "de_nfev": 680,
+        "de_geometry": [
+          124.06564911897036,
+          16.17898509379231
+        ],
+        "de_F": 2.7745721367340384,
+        "polish_success": false,
+        "polish_message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+        "polish_nit": 4,
+        "polish_nfev": 117,
+        "map_geometry": [
+          124.06566204937646,
+          16.17898416596549
+        ],
+        "map_F": 2.7745721365872784,
+        "map_log10F": 0.4431960205954798
+      },
+      "objective_abs_difference": 6.394884621840902e-14,
+      "height_abs_difference_nm": 1.1736079841284663e-07,
+      "width_abs_difference_nm": 1.0300748698455209e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 9,
+      "geometry": [
+        123.8,
+        17.57
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        123.94274358516915,
+        17.508690707023124
+      ],
+      "old_map_F": 0.5541231454152049,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610900,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 45,
+        "de_nfev": 920,
+        "de_geometry": [
+          123.94274542315004,
+          17.508690641331295
+        ],
+        "de_F": 0.5541231454363446,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 8,
+        "polish_nfev": 72,
+        "map_geometry": [
+          123.94274363688278,
+          17.508690680483248
+        ],
+        "map_F": 0.5541231454153682,
+        "map_log10F": -0.25639370922166005
+      },
+      "objective_abs_difference": 1.6331380692236053e-13,
+      "height_abs_difference_nm": 5.171362715827854e-08,
+      "width_abs_difference_nm": 2.653987607459385e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 9,
+      "geometry": [
+        123.8,
+        17.57
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        124.20594255742367,
+        17.828036269438453
+      ],
+      "old_map_F": 3.6895592537837443,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610901,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 31,
+        "de_nfev": 640,
+        "de_geometry": [
+          124.20595166463137,
+          17.828036015471582
+        ],
+        "de_F": 3.68955925385472,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 7,
+        "polish_nfev": 45,
+        "map_geometry": [
+          124.20594471333223,
+          17.82803618141589
+        ],
+        "map_F": 3.6895592537876256,
+        "map_log10F": 0.5669744894436186
+      },
+      "objective_abs_difference": 3.881339694089547e-12,
+      "height_abs_difference_nm": 2.155908561007891e-06,
+      "width_abs_difference_nm": 8.802256346029935e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 9,
+      "geometry": [
+        123.8,
+        17.57
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        123.61540941501275,
+        17.52494388083942
+      ],
+      "old_map_F": 2.468762227229271,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610910,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 31,
+        "de_nfev": 640,
+        "de_geometry": [
+          123.61541269415352,
+          17.52494318485944
+        ],
+        "de_F": 2.4687622273615792,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 8,
+        "polish_nfev": 69,
+        "map_geometry": [
+          123.6154095505895,
+          17.524943912246467
+        ],
+        "map_F": 2.468762227229881,
+        "map_log10F": 0.39247926393995336
+      },
+      "objective_abs_difference": 6.10178574333986e-13,
+      "height_abs_difference_nm": 1.3557675515585288e-07,
+      "width_abs_difference_nm": 3.140704762927271e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 9,
+      "geometry": [
+        123.8,
+        17.57
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        124.92401386218472,
+        17.517302773495825
+      ],
+      "old_map_F": 0.7366672255042637,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 610911,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 34,
+        "de_nfev": 700,
+        "de_geometry": [
+          124.92401033396109,
+          17.517302883348954
+        ],
+        "de_F": 0.7366672255156155,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 16,
+        "polish_nfev": 87,
+        "map_geometry": [
+          124.92401455314904,
+          17.51730271652298
+        ],
+        "map_F": 0.7366672255046102,
+        "map_log10F": -0.1327286515767544
+      },
+      "objective_abs_difference": 3.4650060598551136e-13,
+      "height_abs_difference_nm": 6.90964313321274e-07,
+      "width_abs_difference_nm": 5.697284422012672e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 10,
+      "geometry": [
+        124.4,
+        16.47
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        124.51574859418947,
+        16.483683210872364
+      ],
+      "old_map_F": 1.4241574348579247,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 611000,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 34,
+        "de_nfev": 700,
+        "de_geometry": [
+          124.51574904054289,
+          16.48368345450035
+        ],
+        "de_F": 1.4241574348832737,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 4,
+        "polish_nfev": 33,
+        "map_geometry": [
+          124.51574894471698,
+          16.48368317795449
+        ],
+        "map_F": 1.424157434858906,
+        "map_log10F": 0.1535580014578547
+      },
+      "objective_abs_difference": 9.812151091637134e-13,
+      "height_abs_difference_nm": 3.5052750035902136e-07,
+      "width_abs_difference_nm": 3.291787464831941e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 10,
+      "geometry": [
+        124.4,
+        16.47
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        125.0,
+        16.561823590946894
+      ],
+      "old_map_F": 1.5947448011425736,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 611001,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 53,
+        "de_nfev": 1080,
+        "de_geometry": [
+          124.99999999997333,
+          16.561824054249787
+        ],
+        "de_F": 1.5947448011680985,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 5,
+        "polish_nfev": 102,
+        "map_geometry": [
+          125.0,
+          16.561823584605023
+        ],
+        "map_F": 1.5947448011425691,
+        "map_log10F": 0.20269119502795951
+      },
+      "objective_abs_difference": 4.440892098500626e-15,
+      "height_abs_difference_nm": 0.0,
+      "width_abs_difference_nm": 6.341871028325841e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 10,
+      "geometry": [
+        124.4,
+        16.47
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        124.49611450202846,
+        16.432157787713095
+      ],
+      "old_map_F": 1.2813903247098264,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 611010,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 39,
+        "de_nfev": 800,
+        "de_geometry": [
+          124.49611431579272,
+          16.432157810327272
+        ],
+        "de_F": 1.281390324710207,
+        "polish_success": false,
+        "polish_message": "ABNORMAL_TERMINATION_IN_LNSRCH",
+        "polish_nit": 4,
+        "polish_nfev": 180,
+        "map_geometry": [
+          124.49611433414773,
+          16.432157792385276
+        ],
+        "map_F": 1.281390324710039,
+        "map_log10F": 0.107681440476452
+      },
+      "objective_abs_difference": 2.1271873151818e-13,
+      "height_abs_difference_nm": 1.6788072798590292e-07,
+      "width_abs_difference_nm": 4.672180864417896e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 10,
+      "geometry": [
+        124.4,
+        16.47
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        124.69000435579161,
+        16.532329357519153
+      ],
+      "old_map_F": 1.5060068061756504,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 611011,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 36,
+        "de_nfev": 740,
+        "de_geometry": [
+          124.69000114170039,
+          16.532329822198204
+        ],
+        "de_F": 1.506006806190414,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 12,
+        "polish_nfev": 102,
+        "map_geometry": [
+          124.69000374777701,
+          16.532329583126057
+        ],
+        "map_F": 1.5060068061787182,
+        "map_log10F": 0.17782693460014998
+      },
+      "objective_abs_difference": 3.0677682616442326e-12,
+      "height_abs_difference_nm": 6.080146022213739e-07,
+      "width_abs_difference_nm": 2.256069038253372e-07,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 11,
+      "geometry": [
+        124.7,
+        17.18
+      ],
+      "contract": "J1",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        124.35503775600547,
+        17.178804382070286
+      ],
+      "old_map_F": 2.0968559625585486,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 611100,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 34,
+        "de_nfev": 700,
+        "de_geometry": [
+          124.35503778643282,
+          17.178804607369646
+        ],
+        "de_F": 2.096855962575394,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 3,
+        "polish_nfev": 87,
+        "map_geometry": [
+          124.35503777219446,
+          17.17880437331257
+        ],
+        "map_F": 2.096855962558711,
+        "map_log10F": 0.32156859888977807
+      },
+      "objective_abs_difference": 1.6253665080512292e-13,
+      "height_abs_difference_nm": 1.6188991480703407e-08,
+      "width_abs_difference_nm": 8.757716329910181e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 11,
+      "geometry": [
+        124.7,
+        17.18
+      ],
+      "contract": "J1",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        123.87020541474288,
+        17.228416975973087
+      ],
+      "old_map_F": 1.9605228343325205,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 611101,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 29,
+        "de_nfev": 600,
+        "de_geometry": [
+          123.87021326350722,
+          17.22841714269264
+        ],
+        "de_F": 1.960522834408467,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 14,
+        "polish_nfev": 87,
+        "map_geometry": [
+          123.87020552854254,
+          17.228416996047933
+        ],
+        "map_F": 1.9605228343325831,
+        "map_log10F": 0.29237190492101106
+      },
+      "objective_abs_difference": 6.261657858885883e-14,
+      "height_abs_difference_nm": 1.1379965769720002e-07,
+      "width_abs_difference_nm": 2.007484667387871e-08,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 11,
+      "geometry": [
+        124.7,
+        17.18
+      ],
+      "contract": "J0",
+      "noise_scenario": "N1",
+      "old_map_geometry": [
+        124.71790834085608,
+        17.258129758375283
+      ],
+      "old_map_F": 1.5663958930943347,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 611110,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 30,
+        "de_nfev": 620,
+        "de_geometry": [
+          124.71790932987999,
+          17.25812976056453
+        ],
+        "de_F": 1.5663958931025155,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 10,
+        "polish_nfev": 93,
+        "map_geometry": [
+          124.71790821779524,
+          17.25812975999209
+        ],
+        "map_F": 1.5663958930944306,
+        "map_log10F": 0.19490153579184455
+      },
+      "objective_abs_difference": 9.592326932761353e-14,
+      "height_abs_difference_nm": 1.2306084329338773e-07,
+      "width_abs_difference_nm": 1.6168080207989988e-09,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    },
+    {
+      "target_index": 11,
+      "geometry": [
+        124.7,
+        17.18
+      ],
+      "contract": "J0",
+      "noise_scenario": "N2",
+      "old_map_geometry": [
+        125.0,
+        17.27848072781092
+      ],
+      "old_map_F": 0.6887701238970861,
+      "independent_map": {
+        "method": "differential_evolution_bounded_LBFGSB_polish",
+        "seed": 611111,
+        "de_success": true,
+        "de_message": "Optimization terminated successfully.",
+        "de_nit": 52,
+        "de_nfev": 1060,
+        "de_geometry": [
+          124.99999991180148,
+          17.278480403828006
+        ],
+        "de_F": 0.6887701239689954,
+        "polish_success": true,
+        "polish_message": "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH",
+        "polish_nit": 4,
+        "polish_nfev": 21,
+        "map_geometry": [
+          125.0,
+          17.278480728620714
+        ],
+        "map_F": 0.6887701238971202,
+        "map_log10F": -0.16192569910896837
+      },
+      "objective_abs_difference": 3.4083846855992306e-14,
+      "height_abs_difference_nm": 0.0,
+      "width_abs_difference_nm": 8.097948978047498e-10,
+      "objective_gate": true,
+      "coordinate_gate": true,
+      "objective_equivalent_coordinate_difference": false,
+      "gate_pass": true
+    }
+  ]
+}

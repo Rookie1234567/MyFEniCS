@@ -1,0 +1,27 @@
+{
+  "schema_version": "task007.m4a-implementation-identity.v1",
+  "status": "frozen",
+  "implementation_source_sha": "34d52d075842f177f2c055f8f0ef5cdf48d63d67",
+  "implementation_source_commit": "34d52d075842f177f2c055f8f0ef5cdf48d63d67",
+  "source_files": {
+    "src/surrogate/task007/m4a.py": "1f07041fe35bab0499799f0ca96b4204b16a3d8426397effda42ccb1fd3f40ef",
+    "benchmarks/cases/148_task007_m4a_robustness/run.py": "a9679de790b793d9072006ed0f4049a36736ed41d7a6a5585fa10df8ffcd3c1d",
+    "benchmarks/cases/148_task007_m4a_robustness/refresh_after_fix.py": "96c5c7bf32099562fcdee06fc4ac266c532066216f8962fab7815c42ea3cb17c",
+    "benchmarks/cases/148_task007_m4a_robustness/test_command.txt": "6c29e0e72c69c68ff1a21307f98004f410319270a55a6848ea03d2b929d05e6f",
+    "benchmarks/cases/148_task007_m4a_robustness/checker.py": "5187f756e4217fd72d53e74f566e9c115c35fea34ac6d7faa8f9db7eab51e958"
+  },
+  "frozen_m3_artifacts": {
+    "surrogate_tasks/task007_schneider_objective_gp_benchmark/outcomes/M3_IMPLEMENTATION_IDENTITY.json": "57ae14985fcf8deb50ea165bcc845f0d42428510ff6ae4cf3bedace7fb1f8603",
+    "surrogate_tasks/task007_schneider_objective_gp_benchmark/outcomes/M3_LEVEL_A_CONTRACT.json": "10174b74703209066ad02b5d26557f5158f757679ede14b6ddd6d335b281b370",
+    "surrogate_tasks/task007_schneider_objective_gp_benchmark/outcomes/M3_ORACLE_MODEL_AUDIT.json": "42e07b46ba09e52eb4a69876561e1413aec5893412f45b1e1697af3738898993",
+    "surrogate_tasks/task007_schneider_objective_gp_benchmark/outcomes/M3_TARGETS.json": "b0ffaa54d4eaec5bffb44cba8dd56acb5a9741e833eb027ade9a162c55a2e97b",
+    "surrogate_tasks/task007_schneider_objective_gp_benchmark/outcomes/M3_MAP_AUDIT.json": "05a6375095f6d07a0c8bf6dcc19807558d9b11c4bcc8037ba948d845c162903e",
+    "surrogate_tasks/task007_schneider_objective_gp_benchmark/outcomes/M3_BO_REPLAY.json": "5860aa1a768578f2849eb1f32101c2b9c1f286c4009515693665152d61a02b87",
+    "surrogate_tasks/task007_schneider_objective_gp_benchmark/outcomes/M3_GP_AUDIT.json": "63c44e6f9d01164f64731dc1695809a9afca424aec3d35b1a4fbd2d55e5cf43c",
+    "surrogate_tasks/task007_schneider_objective_gp_benchmark/outcomes/M3_METHOD_COMPARISON.md": "52ecbbba6c3a34d286b8a6210191b190673309be3048901cc3e221370c4754d2",
+    "surrogate_tasks/task007_schneider_objective_gp_benchmark/outcomes/test_summary_v2.md": "59161bbe5aa109ad1441d3b6621219eaacac63e3df0621ca0ecb653613e6b5e3"
+  },
+  "scope": "M4A surrogate-oracle MAP stability, standalone acquisition replay, response-blind stopping, noise Monte Carlo, initialization cost and GP warning taxonomy",
+  "new_fem_count": 0,
+  "task006_lock_modified": false
+}

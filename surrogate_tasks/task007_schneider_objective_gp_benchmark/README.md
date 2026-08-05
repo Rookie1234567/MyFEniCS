@@ -3,7 +3,7 @@
 ## 状态
 
 ```text
-status = m3_level_a_complete_primary_j1
+status = m4a_complete_with_controlled_negatives
 execution_branch = codex/only-one-13p5nm-surrogate-inversion
 predecessor = Task006 Review V3
 new FEM in first execution = 0
@@ -13,6 +13,8 @@ experimental claim = false
 M0–M2 stored-response replay 与 M3 Level-A continuous sequential BO 已完成。M3 只调用冻结 Task006 Legendre-3 surrogate oracle：12 个 off-grid h/w targets、J1/J0、N1/N2 固定噪声、连续 oracle MAP、Matérn-5/2 ARD GP、EI query/update 和低 EI bounded local refinement 均已执行。J1 的 Sobol37 P2 在 N1/N2 均为 12/12、median queries-to-MAP 为 3/2，主 Gate 通过；没有运行新 FEM、正式 inversion 或解封 Task006 validation。
 
 Task007 V1 的一次性 posterior-mean P3 负结果保持不可变，标签为 `one_shot_offline_posterior_mean_not_qualified`，不得解释为 Schneider 方法失败。M3 的实现身份为 `555abf1`，完整结果见 `outcomes/summary_m3.md` 和 `response_v2.md`。
+
+M4A 已完成且只增加 companion evidence，M4 clean implementation 为 `34d52d075842f177f2c055f8f0ef5cdf48d63d67`。独立 MAP stability 为 48/48，standalone J1/P2 acquisition replay 为 24/24；response-blind stopping 和 10-seed noise Monte Carlo 的 N1/部分 P1 Gate 为 controlled negative，详见 `outcomes/summary_m4a.md`。因此 physical Full3D online BO、正式 Bayesian inversion 和新 FEM 仍未授权。
 ```
 
 ## 核心思想
