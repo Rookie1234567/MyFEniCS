@@ -1,0 +1,4 @@
+source scripts/activate_myfenics_surrogate_wsl.sh
+# Historical pre-retry M3R0 command; do not rerun after Case143 authorization.
+PYTHONPATH=src .venv/bin/python benchmarks/cases/143_task006_blind_retry_preflight/run.py
+PYTHONPATH=src .venv/bin/python benchmarks/cases/143_task006_blind_retry_preflight/checker.py

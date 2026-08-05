@@ -1,0 +1,37 @@
+{
+  "schema_version": "task006.model-selection-tie-audit.v1",
+  "status": "frozen_historical_semantics",
+  "candidate_order": [
+    "legendre_2",
+    "legendre_3",
+    "legendre_4",
+    "local_rbf_k8",
+    "matern52_ard_exact_gp",
+    "degree2_trend_plus_matern52_residual"
+  ],
+  "selection_scores": {
+    "legendre_2": 4.2190032026453785,
+    "legendre_3": 1.0,
+    "legendre_4": 1.0571428571428572,
+    "local_rbf_k8": 263.7085344914101,
+    "matern52_ard_exact_gp": 1.0,
+    "degree2_trend_plus_matern52_residual": 1.0
+  },
+  "exact_score_ties": [
+    {
+      "score": 1.0,
+      "candidates": [
+        "legendre_3",
+        "matern52_ard_exact_gp",
+        "degree2_trend_plus_matern52_residual"
+      ]
+    }
+  ],
+  "historical_selected_candidate": "legendre_3",
+  "lock_selected_candidate": "legendre_3",
+  "selection_basis": "minimum training-only grouped-CV selection_score among the fixed six candidates",
+  "tie_break_semantics": "minimum score with fixed candidate order; stable first candidate selected before blind",
+  "model_lock_sha256": "f08180f891b485a4ddedcf4066a2bed6a4164342fc0e296bfb06d2278469a7a1",
+  "blind_response_used_for_tie_break": false,
+  "model_lock_modified": false
+}

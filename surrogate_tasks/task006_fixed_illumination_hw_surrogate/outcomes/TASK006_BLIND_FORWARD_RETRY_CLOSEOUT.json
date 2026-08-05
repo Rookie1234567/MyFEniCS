@@ -1,0 +1,82 @@
+{
+  "schema_version": "task006.blind-forward-retry-closeout.v1",
+  "status": "controlled_stop_blind_forward_incomplete",
+  "qualification_status": "blind_forward_route_not_reproducibly_qualified",
+  "m3r0": {
+    "case143_status": "pass",
+    "case143_retry_authorized": true,
+    "case143_check_sha256": "d537000cf0223d455d99f782674739734589adcfb5761338d063e3b1cd2ec133",
+    "generated_without_fem": true,
+    "model_scores_tie_audited": true,
+    "model_lock_modified": false
+  },
+  "m3r1": {
+    "authorized_fem_count": 4,
+    "actual_fem_count": 4,
+    "preflight_abort_fem_count": 0,
+    "preflight_abort_preserved": true,
+    "tuples": [
+      {
+        "key": "117.5,17.25/A07",
+        "attempts": [2, 3],
+        "status": "failed_numerical_gate_both_repeats",
+        "failed_gate": "true_residual_le_1e-9",
+        "relative_residual": 1.5050283166105661e-09,
+        "absolute_residual_norm": 3.2603068026197944e-09,
+        "rhs_norm_denominator": 2.16627605383681,
+        "reduced_trace_dtn_residual_norm": 3.2602936454241072e-09,
+        "eliminated_cell_interior_residual_norm": 9.262441151989774e-12,
+        "both_repeats_same_residual": true,
+        "all_other_original_gates_true": true,
+        "fixed_order_response_consistent_at_1e-10": true,
+        "production_sample_created": false
+      },
+      {
+        "key": "117.5,17.25/A09",
+        "attempts": [2, 3],
+        "status": "failed_numerical_gate_both_repeats",
+        "failed_gate": "true_residual_le_1e-9",
+        "relative_residual": 1.4079544140587495e-09,
+        "absolute_residual_norm": 6.739545376931229e-09,
+        "rhs_norm_denominator": 4.786763910560821,
+        "reduced_trace_dtn_residual_norm": 6.7395207494121034e-09,
+        "eliminated_cell_interior_residual_norm": 1.821965858134474e-11,
+        "both_repeats_same_residual": true,
+        "all_other_original_gates_true": true,
+        "fixed_order_response_consistent_at_1e-10": true,
+        "production_sample_created": false
+      }
+    ],
+    "both_tuples_2_of_2_measured_pass": false,
+    "retry_response_consistency_gate": true,
+    "canonical_retry_records_created": false,
+    "full_12_of_12_qualification_run": false,
+    "original_34_records_reused_for_scoring": false,
+    "model_retrained": false,
+    "active_learning_run": false,
+    "model_lock_modified": false,
+    "original_case141_modified": false
+  },
+  "identity": {
+    "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+    "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+    "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+    "observable_schema_version": "task002.fixed-n0-orders.v3",
+    "mesh": [6, 4, 14],
+    "degree": 5,
+    "h_nm": 10.0,
+    "mumps_icntl_14": 40,
+    "mpi_ranks": 2,
+    "threads_per_rank": 1,
+    "residual_gate": 1e-09
+  },
+  "evidence_hashes": {
+    "original_case141_campaign_sha256": "160ef860bcaab6f50ba61288056509d49ce610712aea140e1638bb99bfffbc1e",
+    "original_failure_report_sha256": "b19d02955a841e109009182b0ea41c529c6a1b00f13da6f7c8c8f387bcac700d",
+    "model_lock_sha256": "f08180f891b485a4ddedcf4066a2bed6a4164342fc0e296bfb06d2278469a7a1",
+    "retry_plan_sha256": "428901444e10bdc189409e99218ae29a10489d61fdc157dd48997b69b5028b1f",
+    "retry_manifest_sha256": "03f275c947289c63baddb6b72fac827c64a8f8f0baea8f0da6055654ea982337",
+    "case144_check_sha256": "c54157884cc2083e5d8c6d44d1241666a8e34109654e90ffe89c7826ca31a33a"
+  },
+  "stop_reason": "Both fixed-identity fresh repeats for both failed tuples reproduce the same residual just above the unchanged 1e-9 Gate. The authorized retry budget is exhausted; no canonical retry or 12/12 blind qualification is valid."
+}

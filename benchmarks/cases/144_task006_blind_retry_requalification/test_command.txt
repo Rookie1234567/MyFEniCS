@@ -1,0 +1,4 @@
+source scripts/activate_myfenics_surrogate_wsl.sh
+# The retry runner is the one-shot M3R1 command; after completion run checker only.
+PYTHONPATH=src .venv/bin/python benchmarks/cases/144_task006_blind_retry_requalification/run.py
+PYTHONPATH=src .venv/bin/python benchmarks/cases/144_task006_blind_retry_requalification/checker.py

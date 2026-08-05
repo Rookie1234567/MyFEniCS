@@ -3,21 +3,24 @@
 ## 状态
 
 ```text
-status = controlled_negative_blind12_completed_review_pending
+status = controlled_stop_blind_forward_incomplete
 execution_branch = codex/only-one-13p5nm-surrogate-inversion
 predecessor = Task005 Review V2
 purpose = fixed A05/A07/A09 S-polarized h/w forward surrogate qualification
 model_lock = created before blind, immutable after blind
-blind = 36 attempted, 34 pass, 2 true-residual failures
+blind = 36 original attempts (34 pass, 2 true-residual failures); 4 authorized retries (0 pass)
 formal inversion = not authorized
 active learning = not authorized
 ```
 
-本任务已经完成一次且仅一次的 12 个 blind geometry × A05/A07/A09 批次。由于
+本任务先完成一次且仅一次的 12 个 blind geometry × A05/A07/A09 批次。由于
 `117.5,17.25/A07` 和 `117.5,17.25/A09` 的固定真实残差 Gate
-`true_residual_le_1e-9` 为 false，本任务按 controlled-negative 停止。负结果
-保留在 `outcomes/TASK006_BLIND_FAILURE_REPORT.json`；Case141 checker 的
-`pass` 只表示证据身份和失败分类正确，不表示代理资格通过。
+`true_residual_le_1e-9` 为 false，Review V2 授权的 M3R 先完成 Case143 无 FEM
+检查，再对两个 tuple 各进行两次完全相同身份的 fresh-process 重试。四次重试
+均以同一 residual Gate 失败，且重复 observable 一致，因此本任务按
+`controlled_stop_blind_forward_incomplete` 停止；原始负结果和重试负结果均保留。
+Case141/Case144 checker 的 `pass` 只表示证据身份、失败分类和重复一致性检查
+正确，不表示代理资格通过。
 
 ## 固定物理与照明
 
@@ -58,15 +61,21 @@ softmax 恢复；S0 同时是 production S1 的唯一 side-total authority。S1 
   dataset、solver、合同、fold、candidate 和 blind tuple identity。
 - blind：固定锁和 forward SHA 下串行执行 36 个 FEM；Case141 checker 独立确认
   34 个 success、2 个 true-residual failures，无调参或 response leakage。
+- M3R：Case143 无 FEM checker 通过；两个失败 tuple 各完成两次固定身份重试，
+  4/4 均重现 `true_residual_le_1e-9` 失败；Case144 只确认负结果身份和重复
+  一致性，未建立 canonical retry 或 12/12 qualification package。
 
-完整结果、Gate 数值、失败 formal records 和停止边界见
-`outcomes/summary.md`、`outcomes/TASK006_BLIND_FAILURE_REPORT.json` 和
-`response_v2.md`。
+完整结果、Gate 数值、失败 formal records、重试遥测和停止边界见
+`outcomes/summary.md`、`outcomes/TASK006_BLIND_FAILURE_REPORT.json`、
+`outcomes/TASK006_BLIND_FORWARD_RETRY_CLOSEOUT.json`、
+`outcomes/BLIND_FORWARD_FAILURE_TELEMETRY.json` 和 `response_v3.md`。
 
 ## 明确禁止
 
 ```text
-不得重跑失败 blind 点或用其调参后再次宣称 blind validation
+不得再次重跑这两个 tuple 或用其调参后再次宣称 blind validation
+不得把四次受控失败重试作为 canonical production sample
+不得把34条原成功记录与本次失败重试混合成12/12 qualification package
 不得主动加点或开始 Task007
 不得开始正式 Bayesian inversion
 不得扩展连续角度、P 偏振、波长、材料或新的几何参数

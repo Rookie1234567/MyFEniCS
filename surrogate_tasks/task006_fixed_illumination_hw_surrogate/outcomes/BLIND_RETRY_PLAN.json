@@ -1,0 +1,105 @@
+{
+  "schema_version": "task006.blind-retry-plan.v1",
+  "status": "frozen_pending_case143",
+  "generated_without_fem": true,
+  "failed_tuple_count": 2,
+  "max_retry_fem_count": 4,
+  "failed_tuples": [
+    {
+      "key": "117.5,17.25/A07",
+      "angle_id": "A07",
+      "geometry_nm": [
+        117.5,
+        17.25
+      ],
+      "grazing_deg": 2.0,
+      "azimuth_deg": 90.0,
+      "original_design_index": 7,
+      "attempts": [
+        {
+          "attempt": 2,
+          "status": "not_run",
+          "run_directory": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/144_task006_blind_retry_requalification/blind_retry/117.5_17.25/A07/attempt_2",
+          "canonical": true,
+          "formal_record_sha256": null,
+          "execution_sha256": null,
+          "sample_path": null
+        },
+        {
+          "attempt": 3,
+          "status": "not_run",
+          "run_directory": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/144_task006_blind_retry_requalification/blind_retry/117.5_17.25/A07/attempt_3",
+          "canonical": false,
+          "formal_record_sha256": null,
+          "execution_sha256": null,
+          "sample_path": null
+        }
+      ]
+    },
+    {
+      "key": "117.5,17.25/A09",
+      "angle_id": "A09",
+      "geometry_nm": [
+        117.5,
+        17.25
+      ],
+      "grazing_deg": 4.0,
+      "azimuth_deg": 60.0,
+      "original_design_index": 8,
+      "attempts": [
+        {
+          "attempt": 2,
+          "status": "not_run",
+          "run_directory": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/144_task006_blind_retry_requalification/blind_retry/117.5_17.25/A09/attempt_2",
+          "canonical": true,
+          "formal_record_sha256": null,
+          "execution_sha256": null,
+          "sample_path": null
+        },
+        {
+          "attempt": 3,
+          "status": "not_run",
+          "run_directory": "/home/shenjh/Projects/MyFEniCS-Surrogate/benchmarks/artifacts/cases/144_task006_blind_retry_requalification/blind_retry/117.5_17.25/A09/attempt_3",
+          "canonical": false,
+          "formal_record_sha256": null,
+          "execution_sha256": null,
+          "sample_path": null
+        }
+      ]
+    }
+  ],
+  "original_campaign_sha256": "160ef860bcaab6f50ba61288056509d49ce610712aea140e1638bb99bfffbc1e",
+  "original_failure_report_sha256": "b19d02955a841e109009182b0ea41c529c6a1b00f13da6f7c8c8f387bcac700d",
+  "model_lock_sha256": "f08180f891b485a4ddedcf4066a2bed6a4164342fc0e296bfb06d2278469a7a1",
+  "identity": {
+    "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+    "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+    "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+    "observable_schema_version": "task002.fixed-n0-orders.v3",
+    "mesh": [
+      6,
+      4,
+      14
+    ],
+    "degree": 5,
+    "h_nm": 10.0,
+    "mpi_ranks": 2,
+    "threads_per_rank": 1,
+    "mumps_icntl_14": 40,
+    "mumps_icntl_22": 0,
+    "assembly_backend": "assembly_time_static_condensed",
+    "output_profile": "compact_surrogate_record",
+    "residual_gate": 1e-09,
+    "same_config_and_observable": true
+  },
+  "retry_contract": {
+    "fresh_process": true,
+    "attempts_per_tuple": 2,
+    "no_retry_of_original_directory": true,
+    "no_gate_relaxation": true,
+    "no_solver_change": true,
+    "no_model_change": true,
+    "no_training_or_active_learning": true,
+    "canonical_rule": "first passing repeat (attempt_2) only after both repeats pass; attempt_3 is reproducibility evidence"
+  }
+}
