@@ -1,0 +1,4 @@
+# Task007 M3 Level-A: qualified WSL CPU activation; no FEM is called.
+source scripts/activate_myfenics_surrogate_wsl.sh
+PYTHONPATH=src .venv-surrogate-cpu/bin/python benchmarks/cases/147_task007_m3_continuous_bo/run.py
+PYTHONPATH=src .venv-surrogate-cpu/bin/python benchmarks/cases/147_task007_m3_continuous_bo/checker.py
