@@ -102,13 +102,115 @@ class P4CorePartialCondensation:
     eliminated_basis: np.ndarray
     eliminated_from_retained: np.ndarray
     eliminated_load: np.ndarray
+    eliminated_rhs_projection: np.ndarray
+    eliminated_factor: tuple[np.ndarray, np.ndarray]
     p6_trace_dofs: np.ndarray
     p6_interior_dofs: np.ndarray
+    cell_info: int
     audit: dict[str, Any]
+
+    def _oriented_rhs_components(
+        self,
+        oriented_rhs: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        rhs = np.asarray(oriented_rhs, dtype=np.complex128)
+        if rhs.shape != (882,):
+            raise ValueError("oriented p6 RHS must have complete length 882")
+        if not np.all(np.isfinite(rhs)):
+            raise ValueError("oriented p6 RHS contains non-finite entries")
+        interior = rhs[self.p6_interior_dofs]
+        retained = np.concatenate(
+            (
+                rhs[self.p6_trace_dofs],
+                self.core_basis.conj().T @ interior,
+            )
+        )
+        eliminated = self.eliminated_basis.conj().T @ interior
+        return retained, eliminated
+
+    def reduce_oriented_right_rhs(self, oriented_rhs: np.ndarray) -> np.ndarray:
+        """Apply the exact right/load Schur reduction to a local RHS."""
+
+        retained, eliminated = self._oriented_rhs_components(oriented_rhs)
+        return retained + self.eliminated_rhs_projection @ eliminated
+
+    def reduce_oriented_left_functional(
+        self,
+        oriented_functional: np.ndarray,
+    ) -> np.ndarray:
+        """Reduce a left row functional through the retained complement."""
+
+        retained, eliminated = self._oriented_rhs_components(oriented_functional)
+        return retained + self.eliminated_from_retained.conj().T @ eliminated
+
+    def eliminate_oriented_rhs(self, oriented_rhs: np.ndarray) -> np.ndarray:
+        """Solve the retained complement equation for an oriented RHS."""
+
+        _retained, eliminated = self._oriented_rhs_components(oriented_rhs)
+        return lu_solve(self.eliminated_factor, eliminated)
+
+    def reduce_reference_rhs(self, rhs_reference: np.ndarray) -> np.ndarray:
+        """Orient and right/load-reduce one arbitrary reference p6 RHS."""
+
+        return self.reduce_oriented_right_rhs(
+            self.orient_reference_vector(rhs_reference)
+        )
+
+    def eliminate_reference_rhs(self, rhs_reference: np.ndarray) -> np.ndarray:
+        """Orient and solve the eliminated complement for one RHS."""
+
+        return self.eliminate_oriented_rhs(self.orient_reference_vector(rhs_reference))
+
+    def orient_reference_vector(self, reference_values: np.ndarray) -> np.ndarray:
+        """Apply the stored cell orientation to one complete p6 vector."""
+
+        values = np.asarray(reference_values, dtype=np.complex128)
+        if values.shape != (882,):
+            raise ValueError("reference p6 vector must have complete length 882")
+        p6 = build_variable_p_reference_space(HexaEntityDegreeMap.uniform(6))
+        return np.asarray(
+            p6.apply_hcurl_dof_transform(
+                values,
+                cell_info=self.cell_info,
+            ),
+            dtype=np.complex128,
+        )
+
+    def project_oriented_solution(self, oriented_solution: np.ndarray) -> np.ndarray:
+        """Return the ``[trace, core]`` coordinates of a full p6 vector."""
+
+        values = np.asarray(oriented_solution, dtype=np.complex128)
+        if values.shape != (882,):
+            raise ValueError("oriented p6 solution must have complete length 882")
+        interior = values[self.p6_interior_dofs]
+        result = np.concatenate(
+            (values[self.p6_trace_dofs], self.core_basis.conj().T @ interior)
+        )
+        if not np.all(np.isfinite(result)):
+            raise RuntimeError("p4-core solution projection is non-finite")
+        return result
+
+    def eliminated_complement_bilinear(
+        self,
+        left_oriented: np.ndarray,
+        right_oriented: np.ndarray,
+    ) -> complex:
+        """Evaluate the exact local ``Qe^H Aee^-1 Qe`` bilinear form."""
+
+        _left_retained, left_eliminated = self._oriented_rhs_components(left_oriented)
+        _right_retained, right_eliminated = self._oriented_rhs_components(
+            right_oriented
+        )
+        return complex(
+            left_eliminated.conj().T
+            @ lu_solve(self.eliminated_factor, right_eliminated)
+        )
 
     def recover_p6_coefficients(
         self,
         retained_coefficients: np.ndarray,
+        *,
+        oriented_rhs: np.ndarray | None = None,
     ) -> np.ndarray:
         """Recover oriented p6 coefficients from ``[trace, p4-core]``."""
 
@@ -118,7 +220,12 @@ class P4CorePartialCondensation:
             raise ValueError(
                 "retained coefficient vector must have trace-plus-core size"
             )
-        eliminated = self.eliminated_load + self.eliminated_from_retained @ retained
+        eliminated_load = (
+            self.eliminate_oriented_rhs(oriented_rhs)
+            if oriented_rhs is not None
+            else self.eliminated_load
+        )
+        eliminated = eliminated_load + self.eliminated_from_retained @ retained
         interior = (
             self.core_basis @ retained[self.p6_trace_dofs.size :]
             + self.eliminated_basis @ eliminated
@@ -246,6 +353,15 @@ def condense_p6_local_to_p4_core(
     factor = lu_factor(A_ee)
     eliminated_from_retained = -lu_solve(factor, A_er)
     eliminated_load = lu_solve(factor, transformed_rhs[retained_rows:])
+    eliminated_rhs_projection = (
+        -lu_solve(
+            factor,
+            A_re.conj().T,
+            trans=2,
+        )
+        .conj()
+        .T
+    )
     partial_schur = A_rr + A_re @ eliminated_from_retained
     partial_rhs = transformed_rhs[:retained_rows] - A_re @ eliminated_load
     audit = {
@@ -275,6 +391,8 @@ def condense_p6_local_to_p4_core(
         "eliminated_rows": eliminated_rows,
         "partial_schur_rows": int(partial_schur.shape[0]),
         "rhs_supplied": rhs_was_supplied,
+        "arbitrary_local_rhs_supported": True,
+        "eliminated_factor_retained": True,
         "orientation_applied_to_full_p6_tensor": True,
         "prefix_assumption_used": False,
         "raw_p6_tensor_retained": False,
@@ -301,8 +419,14 @@ def condense_p6_local_to_p4_core(
         eliminated_basis=_readonly(q[:, 108:]),
         eliminated_from_retained=_readonly(eliminated_from_retained),
         eliminated_load=_readonly(eliminated_load),
+        eliminated_rhs_projection=_readonly(eliminated_rhs_projection),
+        eliminated_factor=(
+            _readonly(factor[0]),
+            np.asarray(factor[1], dtype=np.int32),
+        ),
         p6_trace_dofs=_readonly(trace_dofs),
         p6_interior_dofs=_readonly(interior_dofs),
+        cell_info=int(cell_info),
         audit=audit,
     )
 
