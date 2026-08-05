@@ -2729,6 +2729,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
+    matrix_free_dtn: bool = False,
     canonical_vector_export: bool = False,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
@@ -2781,6 +2782,8 @@ def _solve_stage4_dtn_port_total_field_impl(
         linear_solver_port,
         Stage4NeverMaterializedLinearSolverPort,
     )
+    if matrix_free_dtn and not never_materialized_port:
+        raise ValueError("matrix-free DtN requires the action-only solver port")
     if never_materialized_port and (
         not assembly_time_cell_static_condensation
         or variable_p_backend
@@ -3332,6 +3335,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             ell_supports=tuple(
                 support_groups[group] for group in support_group_by_row
             ),
+            matrix_free_dtn=matrix_free_dtn,
         )
         base_active_rhs.destroy()
 
@@ -4878,6 +4882,7 @@ def _solve_stage4_dtn_port_total_field_impl(
         ),
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "action_only_setup": bool(never_materialized_port),
+        "matrix_free_dtn_profile": bool(matrix_free_dtn),
         "global_A_materialized": not never_materialized_port,
         "global_F_materialized": not never_materialized_port,
         "dtn_action_preallocation_audit": dtn_action_preallocation_audit,
@@ -5139,6 +5144,7 @@ def solve_stage4_dtn_port_total_field(
     ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
+    matrix_free_dtn: bool = False,
     canonical_vector_export: bool = False,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
@@ -5155,6 +5161,7 @@ def solve_stage4_dtn_port_total_field(
             variable_p_live_observer is not None,
             bool(variable_p_retain_local_schur_for_research),
             bool(static_retain_local_schur_for_matrix_free),
+            bool(matrix_free_dtn),
             bool(canonical_vector_export),
         )
     )
@@ -5185,6 +5192,7 @@ def solve_stage4_dtn_port_total_field(
             static_retain_local_schur_for_matrix_free=(
                 static_retain_local_schur_for_matrix_free
             ),
+            matrix_free_dtn=matrix_free_dtn,
             canonical_vector_export=canonical_vector_export,
             _recovery_cleanup_sink=recovered_cleanup,
         )

@@ -119,6 +119,73 @@ class PetscCondensedBlocks:
         self.release_f()
 
 
+class _MatrixFreeDtnBlockState:
+    """Action-only carriers for the modal ``C`` and ``D`` blocks."""
+
+    def __init__(
+        self,
+        *,
+        comm: MPI.Intracomm,
+        n_aux: int,
+        active_start: int,
+        active_end: int,
+        aux_owner: int,
+        entries: tuple[tuple[int, np.ndarray, np.ndarray, np.ndarray, np.ndarray], ...],
+    ) -> None:
+        self.comm = comm
+        self.n_aux = int(n_aux)
+        self.active_start = int(active_start)
+        self.active_end = int(active_end)
+        self.aux_owner = int(aux_owner)
+        self.entries = entries
+
+    def _aux_values(self, vector: PETSc.Vec) -> np.ndarray:
+        local = np.zeros(self.n_aux, dtype=PETSc.ScalarType)
+        if self.comm.rank == self.aux_owner:
+            local[:] = vector.getArray(readonly=True)
+        return np.asarray(
+            self.comm.allreduce(local, op=MPI.SUM), dtype=PETSc.ScalarType
+        )
+
+    def c_mult(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        auxiliary = self._aux_values(source)
+        values = target.getArray()
+        values[:] = 0.0
+        for mode, rows, traction_values, _cols, _ell_values in self.entries:
+            if len(rows):
+                values[rows - self.active_start] += auxiliary[mode] * traction_values
+
+    def d_mult(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        source_values = source.getArray(readonly=True)
+        local = np.zeros(self.n_aux, dtype=PETSc.ScalarType)
+        for mode, _rows, _traction_values, cols, ell_values in self.entries:
+            if len(cols):
+                local[mode] += np.dot(
+                    ell_values,
+                    source_values[cols - self.active_start],
+                )
+        values = np.asarray(
+            self.comm.allreduce(local, op=MPI.SUM),
+            dtype=PETSc.ScalarType,
+        )
+        target.getArray()[:] = values if self.comm.rank == self.aux_owner else 0.0
+
+
+class _MatrixFreeDtnMatContext:
+    def __init__(self, state: _MatrixFreeDtnBlockState, kind: str) -> None:
+        self.state = state
+        self.kind = kind
+
+    def mult(self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self.kind == "C":
+            self.state.c_mult(source, target)
+        else:
+            self.state.d_mult(source, target)
+
+    def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
+        return None
+
+
 def extract_petsc_condensed_blocks(
     A_aug: PETSc.Mat,
     b_aug: PETSc.Vec,
@@ -156,6 +223,7 @@ class DtnBlockAssembler:
         *,
         traction_supports: tuple[np.ndarray, ...],
         ell_supports: tuple[np.ndarray, ...],
+        matrix_free_dtn: bool = False,
     ) -> None:
         if int(n_aux) < 1:
             raise ValueError("DtN block assembly requires at least one auxiliary row")
@@ -165,6 +233,7 @@ class DtnBlockAssembler:
         self.n_fe = int(base_active_rhs.getSize())
         self.n_aux = int(n_aux)
         self._aux_owner = self.comm.size - 1
+        self.matrix_free_dtn = bool(matrix_free_dtn)
         active_start, active_end = base_active_rhs.getOwnershipRange()
         self._active_start = int(active_start)
         self._active_end = int(active_end)
@@ -233,22 +302,28 @@ class DtnBlockAssembler:
             local_d_diag_nnz = np.zeros(0, dtype=PETSc.IntType)
             local_d_offdiag_nnz = np.zeros(0, dtype=PETSc.IntType)
         local_aux_rows = self.n_aux if self.comm.rank == self._aux_owner else 0
-        self.C = PETSc.Mat().createAIJ(
-            size=(
-                (self._active_end - self._active_start, self.n_fe),
-                (local_aux_columns, self.n_aux),
-            ),
-            nnz=(c_diag_nnz, c_offdiag_nnz),
-            comm=self.comm,
-        )
-        self.D = PETSc.Mat().createAIJ(
-            size=(
-                (local_aux_rows, self.n_aux),
-                (self._active_end - self._active_start, self.n_fe),
-            ),
-            nnz=(local_d_diag_nnz, local_d_offdiag_nnz),
-            comm=self.comm,
-        )
+        self.C: PETSc.Mat | None = None
+        self.D: PETSc.Mat | None = None
+        self._matrix_free_entries: list[
+            tuple[int, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        ] = []
+        if not self.matrix_free_dtn:
+            self.C = PETSc.Mat().createAIJ(
+                size=(
+                    (self._active_end - self._active_start, self.n_fe),
+                    (local_aux_columns, self.n_aux),
+                ),
+                nnz=(c_diag_nnz, c_offdiag_nnz),
+                comm=self.comm,
+            )
+            self.D = PETSc.Mat().createAIJ(
+                size=(
+                    (local_aux_rows, self.n_aux),
+                    (self._active_end - self._active_start, self.n_fe),
+                ),
+                nnz=(local_d_diag_nnz, local_d_offdiag_nnz),
+                comm=self.comm,
+            )
         h_nnz = np.ones(local_aux_rows, dtype=PETSc.IntType)
         self.H = PETSc.Mat().createAIJ(
             size=((local_aux_rows, self.n_aux), (local_aux_columns, self.n_aux)),
@@ -256,12 +331,18 @@ class DtnBlockAssembler:
             comm=self.comm,
         )
         for matrix in (self.C, self.D, self.H):
+            if matrix is None:
+                continue
             matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
         self.b_fe = base_active_rhs.copy()
         self.b_aux = self.H.createVecLeft()
         self.b_aux.set(0.0)
         self.preallocation_audit = {
-            "status": "dtn_direct_blocks_preallocated",
+            "status": (
+                "dtn_matrix_free_blocks"
+                if self.matrix_free_dtn
+                else "dtn_direct_blocks_preallocated"
+            ),
             "c_row_nnz_max_local": int(np.max(local_c_row_nnz, initial=0)),
             "c_row_nnz_local_sum": int(np.sum(local_c_row_nnz)),
             "c_dense_equivalent_row_nnz": self.n_aux,
@@ -271,6 +352,10 @@ class DtnBlockAssembler:
             "h_diag_nnz_local_sum": int(np.sum(h_nnz)),
             "support_counts_allgathered": True,
             "python_triplet_cache": False,
+            "matrix_free_dtn": self.matrix_free_dtn,
+            "explicit_c_matrix_count": 0 if self.matrix_free_dtn else 1,
+            "explicit_d_matrix_count": 0 if self.matrix_free_dtn else 1,
+            "small_h_materialized": True,
         }
 
     def add_mode(
@@ -307,23 +392,36 @@ class DtnBlockAssembler:
                 traction_rows,
                 traction_values,
             )
-            self.C.setValues(
-                traction_rows,
-                np.asarray([aux_index], dtype=PETSc.IntType),
-                traction_values.reshape((-1, 1)),
-                addv=PETSc.InsertMode.ADD_VALUES,
-            )
         if len(ell_cols):
             ell_cols, ell_values = _sum_repeated_entries(
                 ell_cols,
                 ell_values,
             )
-            self.D.setValues(
-                np.asarray([aux_index], dtype=PETSc.IntType),
-                ell_cols,
-                ell_values.reshape((1, -1)),
-                addv=PETSc.InsertMode.ADD_VALUES,
+        if self.matrix_free_dtn:
+            self._matrix_free_entries.append(
+                (
+                    aux_index,
+                    traction_rows.copy(),
+                    traction_values.copy(),
+                    ell_cols.copy(),
+                    ell_values.copy(),
+                )
             )
+        else:
+            if len(traction_rows):
+                self.C.setValues(
+                    traction_rows,
+                    np.asarray([aux_index], dtype=PETSc.IntType),
+                    traction_values.reshape((-1, 1)),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+            if len(ell_cols):
+                self.D.setValues(
+                    np.asarray([aux_index], dtype=PETSc.IntType),
+                    ell_cols,
+                    ell_values.reshape((1, -1)),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
         if self.comm.rank == self._aux_owner:
             self.H.setValue(
                 aux_index,
@@ -358,7 +456,32 @@ class DtnBlockAssembler:
                 )
 
     def finish(self) -> PetscCondensedBlocks:
+        if self.matrix_free_dtn:
+            state = _MatrixFreeDtnBlockState(
+                comm=self.comm,
+                n_aux=self.n_aux,
+                active_start=self._active_start,
+                active_end=self._active_end,
+                aux_owner=self._aux_owner,
+                entries=tuple(self._matrix_free_entries),
+            )
+            local_active = self._active_end - self._active_start
+            local_aux = self.n_aux if self.comm.rank == self._aux_owner else 0
+            self.C = PETSc.Mat().createPython(
+                ((local_active, self.n_fe), (local_aux, self.n_aux)),
+                context=_MatrixFreeDtnMatContext(state, "C"),
+                comm=self.comm,
+            )
+            self.D = PETSc.Mat().createPython(
+                ((local_aux, self.n_aux), (local_active, self.n_fe)),
+                context=_MatrixFreeDtnMatContext(state, "D"),
+                comm=self.comm,
+            )
+            self.C.setUp()
+            self.D.setUp()
         for matrix in (self.C, self.D, self.H):
+            if matrix is None:
+                continue
             matrix.assemble()
         self.b_fe.assemble()
         self.b_aux.assemble()

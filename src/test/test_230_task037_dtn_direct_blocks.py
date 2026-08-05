@@ -12,6 +12,7 @@ from src.solvers.condensed_dtn import (
     create_matrix_free_condensed_operator,
     extract_petsc_condensed_blocks,
     gather_small_petsc_matrix,
+    recover_petsc_auxiliary,
     relative_action_error,
 )
 from src.solvers.static_local_schur_action import create_static_local_schur_action
@@ -200,11 +201,19 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
         ),
         ell_supports=tuple(contribution["ell_cols"] for contribution in stream),
     )
+    matrix_free_assembler = DtnBlockAssembler(
+        base_rhs,
+        n_aux,
+        traction_supports=tuple(
+            contribution["traction_rows"] for contribution in stream
+        ),
+        ell_supports=tuple(contribution["ell_cols"] for contribution in stream),
+        matrix_free_dtn=True,
+    )
     for mode, contribution in enumerate(stream):
         repeats = (1.0, 0.25) if mode == 0 else (1.0,)
         for repeat_scale in repeats:
-            assembler.add_mode(
-                mode,
+            values = dict(
                 traction_rows=contribution["traction_rows"],
                 traction_values=repeat_scale * contribution["traction_values"],
                 ell_cols=contribution["ell_cols"],
@@ -214,13 +223,22 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
                 b_fe_values=repeat_scale * contribution["b_fe_values"],
                 b_aux_value=repeat_scale * contribution["b_aux_value"],
             )
+            assembler.add_mode(mode, **values)
+            matrix_free_assembler.add_mode(mode, **values)
     with patch.object(
         condensed_dtn,
         "extract_petsc_condensed_blocks",
         side_effect=AssertionError("direct DtN path extracted an augmented matrix"),
     ):
         direct = assembler.finish()
+    matrix_free = matrix_free_assembler.finish()
     assert direct.F is None
+    assert matrix_free.F is None
+    assert matrix_free_assembler.preallocation_audit["matrix_free_dtn"] is True
+    assert matrix_free_assembler.preallocation_audit["explicit_c_matrix_count"] == 0
+    assert matrix_free_assembler.preallocation_audit["explicit_d_matrix_count"] == 0
+    assert assembler.preallocation_audit["explicit_c_matrix_count"] == 1
+    assert assembler.preallocation_audit["explicit_d_matrix_count"] == 1
     assert assembler.preallocation_audit["python_triplet_cache"] is False
     assert assembler.preallocation_audit["c_row_nnz_max_local"] <= n_aux
     assert assembler.preallocation_audit["c_row_nnz_local_sum"] == sum(
@@ -273,6 +291,10 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
         direct,
         fine_operator=fine_action,
     )
+    matrix_free_operator, _matrix_free_context = create_matrix_free_condensed_operator(
+        matrix_free,
+        fine_operator=fine_action,
+    )
     max_action_error = 0.0
     for offset in (0.25, 1.25, 2.25):
         source = action_only.create_active_vector()
@@ -280,6 +302,7 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
         max_action_error = max(
             max_action_error,
             relative_action_error(oracle_operator, direct_operator, source),
+            relative_action_error(oracle_operator, matrix_free_operator, source),
         )
         source.destroy()
     rng = np.random.default_rng(230)
@@ -290,10 +313,24 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
     source.assemble()
     max_action_error = max(
         max_action_error,
+        relative_action_error(oracle_operator, matrix_free_operator, source),
         relative_action_error(oracle_operator, direct_operator, source),
     )
     source.destroy()
     assert max_action_error <= 1.0e-11
+    matrix_free_rhs = condensed_rhs(matrix_free)
+    direct_rhs = condensed_rhs(direct)
+    assert _vector_error(matrix_free_rhs, direct_rhs) <= 1.0e-12
+    source = action_only.create_active_vector()
+    _fill_active(source, 1.75)
+    direct_aux = recover_petsc_auxiliary(direct, source)
+    matrix_free_aux = recover_petsc_auxiliary(matrix_free, source)
+    assert _vector_error(matrix_free_aux, direct_aux) <= 1.0e-11
+    matrix_free_aux.destroy()
+    direct_aux.destroy()
+    source.destroy()
+    matrix_free_rhs.destroy()
+    direct_rhs.destroy()
     oracle_condensed_rhs = condensed_rhs(oracle)
     direct_condensed_rhs = condensed_rhs(direct)
     condensed_rhs_error = _vector_error(oracle_condensed_rhs, direct_condensed_rhs)
@@ -302,9 +339,11 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
     oracle_condensed_rhs.destroy()
     direct_condensed_rhs.destroy()
     direct_operator.destroy()
+    matrix_free_operator.destroy()
     oracle_operator.destroy()
     fine_action.destroy()
     direct.destroy()
+    matrix_free.destroy()
     oracle.destroy()
     oracle_rhs_augmented.destroy()
     oracle_matrix.destroy()
