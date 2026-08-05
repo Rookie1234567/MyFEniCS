@@ -1,5 +1,22 @@
 # Task037 结果总览
 
+## Review V2 当前候选漏斗收口
+
+本节是当前 V2 结论；下方 V1/M3a 内容保留为历史证据。静态凝聚（先在每个单元内消去内部未知量）把全局问题缩小为 trace 与 auxiliary rows；factor-free（不保留 p6 全局矩阵或 p6 因子）再把局部 slab correction 改为动作计算。p2 auxiliary 是一个较低阶的全局校正空间；RAS 是只让每个共享行由一个固定 slab 回写的非重叠加法 Schwarz。screen Gate 是按 20/100/200 步逐级淘汰研究候选的门槛，不是 full-solve 成功。
+
+权威 compact record：[V2 preconditioner funnel](../../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_v2_preconditioner_funnel_v1.json)。所有数字均绑定各自 MPI8 ignored artifact 与 source SHA；screen 结果不是 official R/T/A，也不是 production qualification。
+
+| 候选 | 20 步 condensed true | 100 步 condensed true | 200 步 condensed true | 漏斗结果 |
+|---|---:|---:|---:|---|
+| A：p2 + diagonal pre/post | `0.9798706637378245` | `0.9625338200823326` | not_run | screen100 淘汰 |
+| B2：factor-free，2 steps | `0.4263392615374972` | `0.26452427778264737` | `0.20957190163452238` | screen200 淘汰 |
+| B4：factor-free，4 steps | `0.42611925267187817` | `0.17083264476239823` | `0.1405734647596501` | screen200 淘汰 |
+| C：B4 + optimized Schwarz/RAS | `0.4631648828112781` | `0.18562438468519604` | `0.1488668017254931` | screen200 淘汰 |
+
+四条路径都保持 p6 matrix/factor/NNZ=`0/0/0`、global A/F=`false/false`；B2/B4/C 使用一个 distributed p2 MUMPS factor（p2 rows=`4680`、matrix NNZ=`477216`），MPI8 screen 峰值约 `6.31–6.47 GiB`，不是完整收敛解的峰值。B2 200 的 derived prediction 为 `3845` iterations / `9027.507786733306 s`；B4 为 `6524` / `26451.930413699356 s`；C 的 prediction 为 `not_generated`。C 的真实几何中 interface rows=`51192` 与 active rows 相同，shared-only shift 因此覆盖全部 active rows；C 的新增有效机制主要是 one-hot RAS，但 100/200 步均劣于 B4。
+
+因 A 在 100-step Gate 失败、B2/B4/C 在 200-step Gate 失败，各自后续 full、restart 90→60→40→30→20 与 MPI1 full 均按漏斗要求 `not_run`。这不是遗漏，也不把 KSP max-it 的 screen 当成收敛或 official result。
+
 ## 当前 M3a MPI scaling follow-up
 
 同一 p6/h10、13.5 nm、S 偏振、M3a overlap `0.125` partition full-solve
