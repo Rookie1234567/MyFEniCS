@@ -495,21 +495,15 @@ def _task037_write_canonical_solution_artifacts(
             manifest_path = run_dir / (
                 f"{raw_prefix}_{packet_role}_canonical_manifest.json"
             )
-            manifest_sha256 = write_canonical_manifest(
-                manifest_path, manifest
-            )
+            manifest_sha256 = write_canonical_manifest(manifest_path, manifest)
             exports[packet_role] = {
                 "manifest": _path_from_root(manifest_path),
                 "manifest_sha256": manifest_sha256,
-                "global_summed_packet_count": manifest[
-                    "global_summed_packet_count"
-                ],
+                "global_summed_packet_count": manifest["global_summed_packet_count"],
                 "schema_version": MANIFEST_SCHEMA,
             }
         exports = comm.bcast(exports if comm.rank == 0 else None, root=0)
-    elapsed_seconds = float(
-        comm.allreduce(time.perf_counter() - started, op=MPI.MAX)
-    )
+    elapsed_seconds = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     if comm.rank == 0:
         summary["task037_canonical_vector_export"] = {
             "status": "completed",
@@ -712,27 +706,21 @@ def _task037_f3_assembled_fgmres_port(
                 request,
                 screen_iterations=screen_iterations,
                 residual_observer=observe,
-                lifecycle_observer=(
-                    observe_lifecycle if lifecycle_enabled else None
-                ),
+                lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
         elif overlap0125_partition:
             snapshot, audit = solve_never_materialized_overlap0125_partition_fgmres(
                 request,
                 screen_iterations=screen_iterations,
                 residual_observer=observe,
-                lifecycle_observer=(
-                    observe_lifecycle if lifecycle_enabled else None
-                ),
+                lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
         elif never_materialized:
             snapshot, audit = solve_never_materialized_static_condensed_fgmres(
                 request,
                 screen_iterations=screen_iterations,
                 residual_observer=observe,
-                lifecycle_observer=(
-                    observe_lifecycle if lifecycle_enabled else None
-                ),
+                lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
         else:
             snapshot, audit = solve_assembled_static_condensed_fgmres(
@@ -741,9 +729,7 @@ def _task037_f3_assembled_fgmres_port(
                 residual_observer=observe,
                 solver_profile=solver_profile,
                 release_assembled_matrix=request.release_assembled_matrix,
-                lifecycle_observer=(
-                    observe_lifecycle if lifecycle_enabled else None
-                ),
+                lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
         if comm.rank == 0:
             (run_dir / "task037_f3_core_audit.json").write_text(
@@ -980,11 +966,7 @@ def _task037_f3_screen_gate(
             and predicted_iterations <= 3000
             and predicted_wall_seconds <= 7200
         ),
-        **(
-            {"m3a_screen_decline": m3a_screen_decline}
-            if m3_profile
-            else {}
-        ),
+        **({"m3a_screen_decline": m3a_screen_decline} if m3_profile else {}),
     }
 
 
@@ -1046,16 +1028,12 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_f3_screen": args.task037_f3_screen,
         "task037_f3_full": bool(args.task037_f3_full),
         "task037_f5b_released_profile": bool(args.task037_f5b_released_profile),
-        "task037_m2c_never_materialized": bool(
-            args.task037_m2c_never_materialized
-        ),
+        "task037_m2c_never_materialized": bool(args.task037_m2c_never_materialized),
         "task037_m3a_overlap0125_partition": bool(
             args.task037_m3a_overlap0125_partition
         ),
         "task037_m4_p2_auxiliary": bool(args.task037_m4_p2_auxiliary),
-        "task037_canonical_vector_export": bool(
-            args.task037_canonical_vector_export
-        ),
+        "task037_canonical_vector_export": bool(args.task037_canonical_vector_export),
         "task037_m0_lifecycle_audit": bool(args.task037_m0_lifecycle_audit),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
@@ -1301,8 +1279,7 @@ def _worker(args: argparse.Namespace) -> int:
         variable_p_live_observer=observer,
         variable_p_retain_local_schur_for_research=(retain_local_schur),
         static_retain_local_schur_for_matrix_free=(
-            args.task037_f5b_released_profile
-            or args.task037_m2c_never_materialized
+            args.task037_f5b_released_profile or args.task037_m2c_never_materialized
         ),
         canonical_vector_export=args.task037_canonical_vector_export,
     )
@@ -1378,9 +1355,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--task037-f3-full", action="store_true")
     parser.add_argument("--task037-f5b-released-profile", action="store_true")
     parser.add_argument("--task037-m2c-never-materialized", action="store_true")
-    parser.add_argument(
-        "--task037-m3a-overlap0125-partition", action="store_true"
-    )
+    parser.add_argument("--task037-m3a-overlap0125-partition", action="store_true")
     parser.add_argument("--task037-m4-p2-auxiliary", action="store_true")
     parser.add_argument("--task037-m0-lifecycle-audit", action="store_true")
     parser.add_argument(
@@ -1577,8 +1552,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and (
             args.mpi_size == 8
             or (
-                args.task037_m3a_overlap0125_partition
-                and args.mpi_size in (1, 2, 4, 8)
+                args.task037_m3a_overlap0125_partition and args.mpi_size in (1, 2, 4, 8)
             )
         )
         and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
@@ -1597,15 +1571,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and args.run_kind == "full-solve"
         and args.mpi_size == 8
         and args.profile == "default"
-        and args.stage4_full3d_assembly_backend
-        == "assembly_time_static_condensed"
+        and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
         and args.task037_f1_direct_trace_oracle is None
         and args.task037_f3_screen is None
         and not args.task037_f3_full
         and not args.task037_f5b_released_profile
     )
     canonical_f5b_scope = (
-        args.task037_f3_full and args.task037_f5b_released_profile
+        args.task037_f3_full
+        and args.task037_f5b_released_profile
         and not args.task037_f0_vector_observer
         and args.task037_f1_direct_trace_oracle is None
         and args.task037_f3_screen is None
@@ -1644,20 +1618,24 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.task037_f5b_released_profile and not args.task037_f3_full:
         parser.error("--task037-f5b-released-profile requires --task037-f3-full.")
-    if args.task037_m2c_never_materialized and not args.task037_m3a_overlap0125_partition and not (
-        args.task037_f3_screen == 20
-        and not args.task037_f3_full
-        and not args.task037_f5b_released_profile
-        and not args.task037_f0_vector_observer
-        and args.task037_f1_direct_trace_oracle is None
-        and args.task035c_p6_h10_gate
-        and args.degree == 6
-        and math.isclose(args.h_nm, 10.0)
-        and args.polarization_kind == "s"
-        and args.mpi_size == 8
-        and args.stage4_full3d_assembly_backend
-        == "assembly_time_static_condensed"
-        and not args.task037_m0_lifecycle_audit
+    if (
+        args.task037_m2c_never_materialized
+        and not args.task037_m3a_overlap0125_partition
+        and not args.task037_m4_p2_auxiliary
+        and not (
+            args.task037_f3_screen == 20
+            and not args.task037_f3_full
+            and not args.task037_f5b_released_profile
+            and not args.task037_f0_vector_observer
+            and args.task037_f1_direct_trace_oracle is None
+            and args.task035c_p6_h10_gate
+            and args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.polarization_kind == "s"
+            and args.mpi_size == 8
+            and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+            and not args.task037_m0_lifecycle_audit
+        )
     ):
         parser.error(
             "--task037-m2c-never-materialized requires the existing p6/h10 "
@@ -1665,10 +1643,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.task037_m3a_overlap0125_partition and not (
         args.task037_m2c_never_materialized
-        and (
-            args.task037_f3_full
-            or args.task037_f3_screen in (20, 100, 200)
-        )
+        and (args.task037_f3_full or args.task037_f3_screen in (20, 100, 200))
         and not args.task037_f5b_released_profile
         and not args.task037_f0_vector_observer
         and args.task037_f1_direct_trace_oracle is None
@@ -1682,13 +1657,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.task037_m4_p2_auxiliary and not (
         args.task037_m2c_never_materialized
-        and args.task037_f3_screen == 20
+        and args.task037_f3_screen in (20, 100, 200)
         and not args.task037_f3_full
         and not args.task037_f5b_released_profile
         and not args.task037_m0_lifecycle_audit
     ):
         parser.error(
-            "--task037-m4-p2-auxiliary requires the screen-20 "
+            "--task037-m4-p2-auxiliary requires screen 20, 100, or 200 "
             "--task037-m2c-never-materialized path."
         )
     if args.task037_m0_lifecycle_audit and not (
@@ -3042,8 +3017,7 @@ def _qualify(
                         and core_released is True
                     ),
                     "f5b_summary_release_profile": (
-                        solver_summary.get("external_solver_profile")
-                        == core_profile
+                        solver_summary.get("external_solver_profile") == core_profile
                         and solver_summary.get(
                             "external_assembled_matrix_released_before_solve"
                         )
@@ -3080,8 +3054,7 @@ def _qualify(
                             partition.get("partition_weight_sum_error"),
                             (int, float),
                         )
-                        and float(partition["partition_weight_sum_error"])
-                        <= 1.0e-12
+                        and float(partition["partition_weight_sum_error"]) <= 1.0e-12
                     ),
                     "m3a_two_color_factor_only_ilu": (
                         smoother.get("assembly_order") == "two_color"
@@ -3114,8 +3087,7 @@ def _qualify(
                         condensation.get("global_F_materialized") is False
                     ),
                     "m3a_summary_profile": (
-                        solver_summary.get("external_solver_profile")
-                        == core_profile
+                        solver_summary.get("external_solver_profile") == core_profile
                     ),
                 }
             )
@@ -3130,9 +3102,7 @@ def _qualify(
                     "m2c_core_profile": (
                         core_profile == "never_materialized_owner_local"
                     ),
-                    "m2c_core_no_assembled_release": (
-                        core_released is False
-                    ),
+                    "m2c_core_no_assembled_release": (core_released is False),
                     "m2c_core_no_global_A": (
                         core_audit.get("global_A_materialized") is False
                     ),
@@ -3202,10 +3172,8 @@ def _qualify(
                     ),
                     "m4_no_p6_factor": (
                         inventory.get("full_p6_global_direct_factor_count") == 0
-                        and inventory.get("global_schur_matrix_materialized")
-                        is False
-                        and inventory.get("p2_distributed_mumps_factor_count")
-                        == 1
+                        and inventory.get("global_schur_matrix_materialized") is False
+                        and inventory.get("p2_distributed_mumps_factor_count") == 1
                         and inventory.get("wave_coarse_dense_lu_count") == 1
                     ),
                     "m4_p2_mumps_factor": (
@@ -3214,12 +3182,9 @@ def _qualify(
                         and p2_pc.get("p2_matrix_materialized") is True
                         and p2_pc.get("p2_unshifted_matrix_retained") is False
                     ),
-                    "m4_p2_apply_count": (
-                        int(p2_pc.get("apply_count", 0)) > 0
-                    ),
+                    "m4_p2_apply_count": (int(p2_pc.get("apply_count", 0)) > 0),
                     "m4_wave_coarse_dimension": (
-                        int((core_audit.get("coarse") or {}).get("dimension", -1))
-                        == 75
+                        int((core_audit.get("coarse") or {}).get("dimension", -1)) == 75
                     ),
                     "m4_memory_level1_le_10_30_gib": (
                         _finite_number_le(memory_authority_gib, 10.30)
@@ -4114,10 +4079,13 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["pass"] = False
     m3a_status = _task037_m3a_status(args, qualification)
     status = (
-        m3a_status
+        f"task037_m4_p2_auxiliary_{args.task037_f3_screen}_screen_pass"
+        if qualification["pass"] and args.task037_m4_p2_auxiliary
+        else f"task037_m4_p2_auxiliary_{args.task037_f3_screen}_screen_not_pass"
+        if args.task037_m4_p2_auxiliary
+        else m3a_status
         if m3a_status is not None
-        else
-        "task037_m2c_never_materialized_screen_pass"
+        else "task037_m2c_never_materialized_screen_pass"
         if qualification["pass"] and args.task037_m2c_never_materialized
         else "task037_m2c_never_materialized_screen_not_pass"
         if args.task037_m2c_never_materialized

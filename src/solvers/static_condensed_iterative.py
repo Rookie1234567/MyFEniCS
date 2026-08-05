@@ -118,7 +118,9 @@ def _solve_static_condensed_fgmres_core(
             "exact F5b profile requires an assembled-matrix release callback"
         )
     if action_only and release_assembled_matrix is not None:
-        raise ValueError("never-materialized request cannot release an assembled matrix")
+        raise ValueError(
+            "never-materialized request cannot release an assembled matrix"
+        )
     started = perf_counter()
     request_operator = request.operator if action_only else request.A
     request_rhs = request.b
@@ -193,7 +195,9 @@ def _solve_static_condensed_fgmres_core(
         if action_only:
             blocks = request.blocks
             if blocks.F is not None:
-                raise ValueError("never-materialized request must provide blocks.F=None")
+                raise ValueError(
+                    "never-materialized request must provide blocks.F=None"
+                )
             fine = request.fine_operator
             matrix_blocks = {"C": blocks.C, "D": blocks.D, "H": blocks.H}
         else:
@@ -318,9 +322,7 @@ def _solve_static_condensed_fgmres_core(
         p2_auxiliary_audit = None
         if p2_auxiliary_profile:
             if request.mesh_data is None:
-                raise ValueError(
-                    "p2 auxiliary profile requires borrowed mesh_data"
-                )
+                raise ValueError("p2 auxiliary profile requires borrowed mesh_data")
             p2_smoother, p2_transfer, p2_diagonal, p2_auxiliary_audit = (
                 build_p2_auxiliary_setup(
                     fine_space=request.function_space,
@@ -367,8 +369,8 @@ def _solve_static_condensed_fgmres_core(
             global_scale = float(diagonal_audit["global_diagonal_max_abs"])
             shift = diagonal
             absolute = np.abs(shift.getArray(readonly=True))
-            shift.getArray()[:] = -1j * 0.1 * np.maximum(
-                absolute, 1.0e-12 * global_scale
+            shift.getArray()[:] = (
+                -1j * 0.1 * np.maximum(absolute, 1.0e-12 * global_scale)
             )
         else:
             subdomains, partition_audit = build_trace_aware_physical_slab_partition(
@@ -388,8 +390,8 @@ def _solve_static_condensed_fgmres_core(
             )
             shift = diagonal.duplicate()
             owned.append(shift)
-            shift.getArray()[:] = -1j * 0.1 * np.maximum(
-                absolute, 1.0e-12 * global_scale
+            shift.getArray()[:] = (
+                -1j * 0.1 * np.maximum(absolute, 1.0e-12 * global_scale)
             )
             diagonal.destroy()
             owned.remove(diagonal)
@@ -448,12 +450,8 @@ def _solve_static_condensed_fgmres_core(
                         "partition_weight_sum_error": smoother_setup[
                             "partition_weight_sum_error"
                         ],
-                        "partition_weight_min": smoother_setup[
-                            "partition_weight_min"
-                        ],
-                        "partition_weight_max": smoother_setup[
-                            "partition_weight_max"
-                        ],
+                        "partition_weight_min": smoother_setup["partition_weight_min"],
+                        "partition_weight_max": smoother_setup["partition_weight_max"],
                     }
                 )
         live_state["slab_factors"] = (
@@ -818,7 +816,7 @@ def solve_never_materialized_overlap0125_partition_fgmres(
 def solve_never_materialized_p2_auxiliary_fgmres(
     request: Stage4NeverMaterializedLinearSolverRequest,
     *,
-    screen_iterations: Literal[20] = 20,
+    screen_iterations: Literal[20, 100, 200] = 20,
     residual_observer: Callable[[int, float, float], None] | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:

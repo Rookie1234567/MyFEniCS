@@ -222,9 +222,12 @@ def test_parser_scope_and_worker_command(tmp_path):
         m3_full_args + ["--task037-canonical-vector-export"]
     )
     assert m3_full_canonical.task037_canonical_vector_export
-    assert watchdog._worker_command(m3_full_canonical, tmp_path).count(
-        "--task037-canonical-vector-export"
-    ) == 1
+    assert (
+        watchdog._worker_command(m3_full_canonical, tmp_path).count(
+            "--task037-canonical-vector-export"
+        )
+        == 1
+    )
     for mpi_size in (1, 2, 4, 8):
         m3_full_mpi_args = list(m3_full_args)
         m3_full_mpi_args[m3_full_mpi_args.index("--mpi-size") + 1] = str(mpi_size)
@@ -234,15 +237,11 @@ def test_parser_scope_and_worker_command(tmp_path):
         assert m3_full_mpi.mpi_size == mpi_size
         m3_full_mpi_command = watchdog._worker_command(m3_full_mpi, tmp_path)
         assert m3_full_mpi_command.count("--task037-canonical-vector-export") == 1
-        assert m3_full_mpi_command.count(
-            "--task037-m3a-overlap0125-partition"
-        ) == 1
-        assert m3_full_mpi_command[
-            m3_full_mpi_command.index("-n") + 1
-        ] == str(mpi_size)
-        assert m3_full_mpi_command[
-            m3_full_mpi_command.index("--mpi-size") + 1
-        ] == str(mpi_size)
+        assert m3_full_mpi_command.count("--task037-m3a-overlap0125-partition") == 1
+        assert m3_full_mpi_command[m3_full_mpi_command.index("-n") + 1] == str(mpi_size)
+        assert m3_full_mpi_command[m3_full_mpi_command.index("--mpi-size") + 1] == str(
+            mpi_size
+        )
     with pytest.raises(SystemExit):
         watchdog._parse_args(m3_full_args + ["--task037-f5b-released-profile"])
     released_args = full_args + ["--task037-f5b-released-profile"]
@@ -284,9 +283,16 @@ def test_parser_scope_and_worker_command(tmp_path):
     assert (
         watchdog._worker_command(m4, tmp_path).count("--task037-m4-p2-auxiliary") == 1
     )
-    m3 = watchdog._parse_args(
-        m2c_args + ["--task037-m3a-overlap0125-partition"]
-    )
+    for screen_iterations in (20, 100, 200):
+        m4_screen_args = list(m2c_args)
+        m4_screen_args[m4_screen_args.index("20")] = str(screen_iterations)
+        m4_screen = watchdog._parse_args(m4_screen_args + ["--task037-m4-p2-auxiliary"])
+        m4_screen_command = watchdog._worker_command(m4_screen, tmp_path)
+        assert m4_screen_command.count("--task037-m4-p2-auxiliary") == 1
+        assert m4_screen_command[
+            m4_screen_command.index("--task037-f3-screen") + 1
+        ] == str(screen_iterations)
+    m3 = watchdog._parse_args(m2c_args + ["--task037-m3a-overlap0125-partition"])
     assert m3.task037_m3a_overlap0125_partition
     assert (
         watchdog._worker_command(m3, tmp_path).count(
@@ -310,13 +316,9 @@ def test_parser_scope_and_worker_command(tmp_path):
         )
         assert m3_mpi.mpi_size == mpi_size
         m3_mpi_command = watchdog._worker_command(m3_mpi, tmp_path)
-        assert m3_mpi_command.count(
-            "--task037-m3a-overlap0125-partition"
-        ) == 1
+        assert m3_mpi_command.count("--task037-m3a-overlap0125-partition") == 1
         assert m3_mpi_command[m3_mpi_command.index("-n") + 1] == str(mpi_size)
-        assert m3_mpi_command[
-            m3_mpi_command.index("--mpi-size") + 1
-        ] == str(mpi_size)
+        assert m3_mpi_command[m3_mpi_command.index("--mpi-size") + 1] == str(mpi_size)
     for mpi_size in (1, 2, 4):
         m2c_mpi_args = list(m2c_args)
         m2c_mpi_args[m2c_mpi_args.index("--mpi-size") + 1] = str(mpi_size)
@@ -778,9 +780,7 @@ def test_m2c_qualification_requires_action_profile_and_memory_gate():
         "resource_summary": {"memory_authority_gib": 10.30},
         "task037_f3_core_audit": audit,
     }
-    assert "m3a_screen_decline" not in watchdog._task037_f3_screen_gate(
-        audit, 20, None
-    )
+    assert "m3a_screen_decline" not in watchdog._task037_f3_screen_gate(audit, 20, None)
     assert watchdog._qualify(**kwargs)["pass"]
     kwargs["solver_summary"]["cell_static_condensation"]["action_only_setup"] = False
     assert not watchdog._qualify(**kwargs)["pass"]
@@ -914,21 +914,21 @@ def test_m3a_partition_profile_and_memory_gates():
     bad_decline["reported_history"][1][1] = 1.1
     bad_decline_screen = watchdog._task037_f3_screen_gate(bad_decline, 20, None)
     assert not bad_decline_screen["m3a_screen_decline"]
-    assert not watchdog._qualify(
-        **{**kwargs, "task037_f3_core_audit": bad_decline}
-    )["pass"]
+    assert not watchdog._qualify(**{**kwargs, "task037_f3_core_audit": bad_decline})[
+        "pass"
+    ]
 
     bad_condensed_decline = _m3a_audit()
     bad_condensed_decline["condensed_true_samples"][1][1] = 1.1
-    assert not watchdog._task037_f3_screen_gate(
-        bad_condensed_decline, 20, None
-    )["m3a_screen_decline"]
+    assert not watchdog._task037_f3_screen_gate(bad_condensed_decline, 20, None)[
+        "m3a_screen_decline"
+    ]
 
     bad_factor = _m3a_audit()
     bad_factor["smoother_diagnostics"]["global_stored_factor_nnz"] = 103336560
-    assert not watchdog._qualify(
-        **{**kwargs, "task037_f3_core_audit": bad_factor}
-    )["pass"]
+    assert not watchdog._qualify(**{**kwargs, "task037_f3_core_audit": bad_factor})[
+        "pass"
+    ]
     assert not watchdog._qualify(
         **{**kwargs, "resource_summary": {"memory_authority_gib": 10.31}}
     )["pass"]
