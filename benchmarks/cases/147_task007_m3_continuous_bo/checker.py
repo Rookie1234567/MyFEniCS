@@ -12,6 +12,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[3]
 OUTCOMES = ROOT / "surrogate_tasks/task007_schneider_objective_gp_benchmark/outcomes"
 RECORD = Path(__file__).resolve().parent / "records/case147_check.json"
+IDENTITY = OUTCOMES / "M3_IMPLEMENTATION_IDENTITY.json"
 sys.path.insert(0, str(ROOT / "src"))
 
 from surrogate.task007.continuous import (  # noqa: E402
@@ -28,6 +29,7 @@ from surrogate.task007.continuous import (  # noqa: E402
     TASK006_MANIFEST_SHA256,
     Legendre3ResponseOracle,
     array_hash,
+    file_sha256,
     initialization_sets,
     noise_sigma,
     objective_scalar,
@@ -46,7 +48,13 @@ def add(checks: dict[str, bool], name: str, value: bool) -> None:
 
 def main() -> int:
     checks: dict[str, bool] = {}
+    implementation_source_sha = "unbound"
     try:
+        identity = json.loads(IDENTITY.read_text())
+        implementation_source_sha = str(identity["implementation_source_sha"])
+        add(checks, "implementation_identity_present", bool(implementation_source_sha) and implementation_source_sha != "unbound")
+        for relative_path, expected_hash in identity.get("source_files", {}).items():
+            add(checks, f"source_hash_{relative_path}", file_sha256(ROOT / relative_path) == expected_hash)
         oracle = Legendre3ResponseOracle(ROOT)
         contract = json.loads((OUTCOMES / "M3_LEVEL_A_CONTRACT.json").read_text())
         targets = json.loads((OUTCOMES / "M3_TARGETS.json").read_text())
@@ -54,6 +62,10 @@ def main() -> int:
         replay = json.loads((OUTCOMES / "M3_BO_REPLAY.json").read_text())
         gp_audit = json.loads((OUTCOMES / "M3_GP_AUDIT.json").read_text())
         sets = initialization_sets(oracle.geometry)
+
+        for name, artifact in (("contract", contract), ("targets", targets), ("maps", maps),
+                               ("replay", replay), ("gp_audit", gp_audit)):
+            add(checks, f"{name}_implementation_sha", artifact.get("implementation_source_sha") == implementation_source_sha)
 
         add(checks, "task006_lock_hash_unchanged", oracle.lock_sha256 == TASK006_LOCK_SHA256)
         add(checks, "task006_manifest_hash_unchanged", oracle.metadata()["dataset_manifest_sha256"] == TASK006_MANIFEST_SHA256)
@@ -149,14 +161,14 @@ def main() -> int:
         }
         result = {
             "schema_version": "task007.case147-m3-check.v1", "status": "pass" if all(checks.values()) else "failed",
-            "implementation_source_sha": "to-be-bound-after-clean-commit",
+            "implementation_source_sha": implementation_source_sha,
             "checks": checks, "errors": [name for name, value in checks.items() if not value],
             "qualification": qualification, "new_fem_count": 0,
             "task006_lock_modified": False, "task006_failed_points_retried": False,
         }
     except Exception as exc:
         result = {"schema_version": "task007.case147-m3-check.v1", "status": "failed",
-                  "implementation_source_sha": "to-be-bound-after-clean-commit",
+                  "implementation_source_sha": implementation_source_sha,
                   "checks": checks, "errors": [f"exception: {type(exc).__name__}: {exc}"],
                   "qualification": {"status": "checker_error"}, "new_fem_count": 0}
     RECORD.parent.mkdir(parents=True, exist_ok=True)

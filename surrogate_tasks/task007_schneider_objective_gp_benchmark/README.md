@@ -3,14 +3,16 @@
 ## 状态
 
 ```text
-status = completed_with_controlled_negative_p3_map
+status = m3_level_a_complete_primary_j1
 execution_branch = codex/only-one-13p5nm-surrogate-inversion
 predecessor = Task006 Review V3
 new FEM in first execution = 0
 formal inversion = false
 experimental claim = false
 
-M0–M2 stored-response replay 已完成。J1/N1 的 11/11 objective identity 与 P2 trained37 离散 query Gate 通过；P3 连续 MAP 仅 2/11 达到规定尺寸容差，按任务书保留为 controlled-negative，等待审阅。没有运行新 FEM、正式 inversion 或解封 Task006 validation。
+M0–M2 stored-response replay 与 M3 Level-A continuous sequential BO 已完成。M3 只调用冻结 Task006 Legendre-3 surrogate oracle：12 个 off-grid h/w targets、J1/J0、N1/N2 固定噪声、连续 oracle MAP、Matérn-5/2 ARD GP、EI query/update 和低 EI bounded local refinement 均已执行。J1 的 Sobol37 P2 在 N1/N2 均为 12/12、median queries-to-MAP 为 3/2，主 Gate 通过；没有运行新 FEM、正式 inversion 或解封 Task006 validation。
+
+Task007 V1 的一次性 posterior-mean P3 负结果保持不可变，标签为 `one_shot_offline_posterior_mean_not_qualified`，不得解释为 Schneider 方法失败。M3 的实现身份为 `555abf1`，完整结果见 `outcomes/summary_m3.md` 和 `response_v2.md`。
 ```
 
 ## 核心思想

@@ -1,0 +1,17 @@
+{
+  "schema_version": "task007.m3-gp-audit.v1",
+  "implementation_source_sha": "555abf1",
+  "status": "pass",
+  "sequential_gp_update_count": 1361,
+  "selected_jitter_counts": {
+    "1e-10": 1090,
+    "1e-08": 271
+  },
+  "warning_count_selected_runs": 2028,
+  "boundary_collision_count_selected_runs": 196,
+  "all_candidate_lml_finite": true,
+  "optimizer_starts": 8,
+  "kernel": "Matern-5/2-ARD",
+  "jitter_selection_training_only": true,
+  "bounded_local_refinement_count": 473
+}

@@ -1,0 +1,178 @@
+{
+  "implementation_source_sha": "555abf1",
+  "oracle_kind": "surrogate_oracle_algorithm_benchmark",
+  "candidate": "legendre_3",
+  "dataset_id": "task006_fixed_A05_A07_A09_hw_train37_p5_ny4_v1",
+  "dataset_manifest_sha256": "f36ffe992efe44f89c51bcac35e68145256e80979810d60ae5437686fd91cf84",
+  "model_lock_sha256": "f08180f891b485a4ddedcf4066a2bed6a4164342fc0e296bfb06d2278469a7a1",
+  "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+  "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+  "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+  "observable_schema_version": "task002.fixed-n0-orders.v3",
+  "task006_surrogate_source_sha256": "2c766ebca0f21537ad5f07c6d64238847ab305965882c1db801777ce63a23dbb",
+  "task006_m2r_source_sha256": "fdc84b59d84ea84c2852af00cdb5f3e76885c5bb43e7086f68231f73b4296524",
+  "train_geometry_hash": "7f25083f2e5caf99459e1bb315f03056cdcd6511a3d5947e9b1b611d84b78f0d",
+  "fit_count": 12,
+  "fit_records": [
+    {
+      "contract": "S0",
+      "angle_index": 0,
+      "target_index": 0,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 1.0709210511559988e-05,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S1_fraction_logit",
+      "angle_index": 0,
+      "target_index": 0,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 0.006621157899508529,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S0",
+      "angle_index": 0,
+      "target_index": 1,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 6.370776542735697e-06,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S1_fraction_logit",
+      "angle_index": 0,
+      "target_index": 1,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 0.007114143935750688,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S0",
+      "angle_index": 1,
+      "target_index": 0,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 2.611697086069611e-05,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S1_fraction_logit",
+      "angle_index": 1,
+      "target_index": 0,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 1e-08,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S0",
+      "angle_index": 1,
+      "target_index": 1,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 1.054338279970562e-06,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S1_fraction_logit",
+      "angle_index": 1,
+      "target_index": 1,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 1e-08,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S0",
+      "angle_index": 2,
+      "target_index": 0,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 4.096129343685591e-05,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S1_fraction_logit",
+      "angle_index": 2,
+      "target_index": 0,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 0.0004132810869121023,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S0",
+      "angle_index": 2,
+      "target_index": 1,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 1.5252295853187564e-06,
+        "term_count": 10
+      }
+    },
+    {
+      "contract": "S1_fraction_logit",
+      "angle_index": 2,
+      "target_index": 1,
+      "metadata": {
+        "family": "legendre_total_degree",
+        "degree": 3,
+        "ridge": 1e-10,
+        "condition_number": 10.283877604515647,
+        "residual_sigma": 0.0003195782259839862,
+        "term_count": 10
+      }
+    }
+  ],
+  "s0_contract": "Legendre-3 aggregate_latent zR/zT then softmax(zR,zT,0)",
+  "s1_contract": "S0 side-total authority times Legendre-3 selected-fraction sigmoid",
+  "new_fem_count": 0,
+  "task006_lock_modified": false
+}

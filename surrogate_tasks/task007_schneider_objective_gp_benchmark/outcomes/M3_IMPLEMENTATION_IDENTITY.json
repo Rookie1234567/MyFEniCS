@@ -1,0 +1,16 @@
+{
+  "schema_version": "task007.m3-implementation-identity.v1",
+  "status": "frozen",
+  "implementation_source_sha": "555abf1",
+  "implementation_source_commit": "555abf1",
+  "implementation_tree_sha": "7aefee53fdd1e4ad211b11e676d94c09331efa17",
+  "source_files": {
+    "src/surrogate/task007/continuous.py": "f5b1ee49a992f351c52395ed1f1909f1728fbc159b7ba0b0a9e85311c5bc9d51",
+    "benchmarks/cases/147_task007_m3_continuous_bo/run.py": "e2260c93cc7fa9cb7e976164b3d5b644ea52c9460606373228d5c5ce88383aef",
+    "benchmarks/cases/147_task007_m3_continuous_bo/checker.py": "50572dd585c7b9bc1706f7e7ed78e13a3b1e9611939df5f0ccb75471e11d8b63",
+    "benchmarks/cases/147_task007_m3_continuous_bo/test_command.txt": "23e978a251f7c117146e3c7749a710beeb0a1a80ca5d4d2564724d7dc1dd1bcb"
+  },
+  "algorithm_scope": "M3 Level-A continuous oracle MAP, Matérn-5/2 ARD GP, EI query, GP update and bounded local refinement",
+  "new_fem_count": 0,
+  "task006_lock_modified": false
+}

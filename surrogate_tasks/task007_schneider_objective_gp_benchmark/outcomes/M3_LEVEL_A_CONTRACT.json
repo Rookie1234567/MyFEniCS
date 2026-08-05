@@ -1,0 +1,695 @@
+{
+  "schema_version": "task007.m3-level-a-contract.v1",
+  "implementation_source_sha": "555abf1",
+  "status": "frozen_algorithm_benchmark",
+  "oracle_kind": "surrogate_oracle_algorithm_benchmark",
+  "new_fem_count": 0,
+  "task006_lock_modified": false,
+  "forward_identity": {
+    "oracle_kind": "surrogate_oracle_algorithm_benchmark",
+    "candidate": "legendre_3",
+    "dataset_id": "task006_fixed_A05_A07_A09_hw_train37_p5_ny4_v1",
+    "dataset_manifest_sha256": "f36ffe992efe44f89c51bcac35e68145256e80979810d60ae5437686fd91cf84",
+    "model_lock_sha256": "f08180f891b485a4ddedcf4066a2bed6a4164342fc0e296bfb06d2278469a7a1",
+    "forward_solver_sha": "fdf961545f217d620e22800f2704ae9913a6d270",
+    "model_id": "S_PROD_FULL3D_STATIC_P5_H10_NY4",
+    "solver_route_id": "full3d_static_uniform_n1curl_p5_h10_ny4",
+    "observable_schema_version": "task002.fixed-n0-orders.v3",
+    "task006_surrogate_source_sha256": "2c766ebca0f21537ad5f07c6d64238847ab305965882c1db801777ce63a23dbb",
+    "task006_m2r_source_sha256": "fdc84b59d84ea84c2852af00cdb5f3e76885c5bb43e7086f68231f73b4296524",
+    "train_geometry_hash": "7f25083f2e5caf99459e1bb315f03056cdcd6511a3d5947e9b1b611d84b78f0d",
+    "fit_count": 12,
+    "fit_records": [
+      {
+        "contract": "S0",
+        "angle_index": 0,
+        "target_index": 0,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 1.0709210511559988e-05,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S1_fraction_logit",
+        "angle_index": 0,
+        "target_index": 0,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 0.006621157899508529,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S0",
+        "angle_index": 0,
+        "target_index": 1,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 6.370776542735697e-06,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S1_fraction_logit",
+        "angle_index": 0,
+        "target_index": 1,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 0.007114143935750688,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S0",
+        "angle_index": 1,
+        "target_index": 0,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 2.611697086069611e-05,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S1_fraction_logit",
+        "angle_index": 1,
+        "target_index": 0,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 1e-08,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S0",
+        "angle_index": 1,
+        "target_index": 1,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 1.054338279970562e-06,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S1_fraction_logit",
+        "angle_index": 1,
+        "target_index": 1,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 1e-08,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S0",
+        "angle_index": 2,
+        "target_index": 0,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 4.096129343685591e-05,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S1_fraction_logit",
+        "angle_index": 2,
+        "target_index": 0,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 0.0004132810869121023,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S0",
+        "angle_index": 2,
+        "target_index": 1,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 1.5252295853187564e-06,
+          "term_count": 10
+        }
+      },
+      {
+        "contract": "S1_fraction_logit",
+        "angle_index": 2,
+        "target_index": 1,
+        "metadata": {
+          "family": "legendre_total_degree",
+          "degree": 3,
+          "ridge": 1e-10,
+          "condition_number": 10.283877604515647,
+          "residual_sigma": 0.0003195782259839862,
+          "term_count": 10
+        }
+      }
+    ],
+    "s0_contract": "Legendre-3 aggregate_latent zR/zT then softmax(zR,zT,0)",
+    "s1_contract": "S0 side-total authority times Legendre-3 selected-fraction sigmoid",
+    "new_fem_count": 0,
+    "task006_lock_modified": false
+  },
+  "geometry_domain_nm": {
+    "height": [
+      115.0,
+      125.0
+    ],
+    "width": [
+      16.0,
+      18.0
+    ]
+  },
+  "offgrid_target_count": 12,
+  "offgrid_targets": [
+    [
+      116.2,
+      16.18
+    ],
+    [
+      116.2,
+      17.63
+    ],
+    [
+      117.9,
+      16.33
+    ],
+    [
+      118.7,
+      17.81
+    ],
+    [
+      119.6,
+      16.24
+    ],
+    [
+      120.4,
+      17.62
+    ],
+    [
+      121.3,
+      16.38
+    ],
+    [
+      122.1,
+      17.83
+    ],
+    [
+      123.0,
+      16.22
+    ],
+    [
+      123.8,
+      17.57
+    ],
+    [
+      124.4,
+      16.47
+    ],
+    [
+      124.7,
+      17.18
+    ]
+  ],
+  "contracts": {
+    "J1": "angle-major m=0 selected order-total power, six reflection/transmission channels",
+    "J0": "angle-major aggregate R_total/T_total, six channels"
+  },
+  "noise": {
+    "N1": {
+      "relative": 0.01,
+      "floor": 0.0001,
+      "seed_base": 70000,
+      "sigma": "sqrt((relative*abs(y_M))^2+floor^2)",
+      "fixed_one_realization_per_target_and_contract": true
+    },
+    "N2": {
+      "relative": 0.02,
+      "floor": 0.0005,
+      "seed_base": 80000,
+      "sigma": "sqrt((relative*abs(y_M))^2+floor^2)",
+      "fixed_one_realization_per_target_and_contract": true
+    }
+  },
+  "objective": {
+    "formula": "0.5*sum(((y_M-y_oracle(x))/sigma(y_M))^2)+Phi_prior",
+    "prior": "bounded_uniform_zero_inside_domain_plus_infinity_outside",
+    "gp_target": "log10(F+1e-12)",
+    "oracle_map_is_noisy_measurement_MAP": true,
+    "one_shot_posterior_mean_P3_is_not_primary_gate": true
+  },
+  "methods": {
+    "B0": "random_continuous_search_budget_2000",
+    "B1": "multi-start_bounded_L-BFGS-B_oracle_objective",
+    "P0": "cold5_continuous_sequential_EI",
+    "P1": "sobol12_continuous_sequential_EI",
+    "P2": "sobol37_continuous_sequential_EI",
+    "P3": "existing_train37_continuous_sequential_EI"
+  },
+  "initializations": {
+    "cold5": {
+      "count": 5,
+      "geometries": [
+        [
+          115.0,
+          16.0
+        ],
+        [
+          125.0,
+          18.0
+        ],
+        [
+          115.0,
+          18.0
+        ],
+        [
+          125.0,
+          16.0
+        ],
+        [
+          120.0,
+          17.0
+        ]
+      ],
+      "geometry_hash": "6c7a2636c0f95183933aacb2f3e3c5bb3a2f0b98ac649843bb21fd13efbcdfd0"
+    },
+    "sobol12": {
+      "count": 12,
+      "geometries": [
+        [
+          118.38099640794098,
+          17.81095881573856
+        ],
+        [
+          124.08972905948758,
+          16.05748219229281
+        ],
+        [
+          122.32202895916998,
+          17.353681910783052
+        ],
+        [
+          115.20727535709739,
+          16.608020648360252
+        ],
+        [
+          117.02103426679969,
+          17.246641971170902
+        ],
+        [
+          120.52777090109885,
+          16.99240432307124
+        ],
+        [
+          123.68180768564343,
+          17.664855437353253
+        ],
+        [
+          118.7693549413234,
+          16.418429335579276
+        ],
+        [
+          119.64827300980687,
+          17.447963792830706
+        ],
+        [
+          122.84197595901787,
+          16.70117338001728
+        ],
+        [
+          121.05514084920287,
+          17.905240757390857
+        ],
+        [
+          116.45465427078307,
+          16.150634983554482
+        ]
+      ],
+      "geometry_hash": "ffcd113ba7fc30e1b578a2ade2b40fee0cc8a691ba5565dad4246a5353957b0a"
+    },
+    "sobol37": {
+      "count": 37,
+      "geometries": [
+        [
+          118.38099640794098,
+          17.81095881573856
+        ],
+        [
+          124.08972905948758,
+          16.05748219229281
+        ],
+        [
+          122.32202895916998,
+          17.353681910783052
+        ],
+        [
+          115.20727535709739,
+          16.608020648360252
+        ],
+        [
+          117.02103426679969,
+          17.246641971170902
+        ],
+        [
+          120.52777090109885,
+          16.99240432307124
+        ],
+        [
+          123.68180768564343,
+          17.664855437353253
+        ],
+        [
+          118.7693549413234,
+          16.418429335579276
+        ],
+        [
+          119.64827300980687,
+          17.447963792830706
+        ],
+        [
+          122.84197595901787,
+          16.70117338001728
+        ],
+        [
+          121.05514084920287,
+          17.905240757390857
+        ],
+        [
+          116.45465427078307,
+          16.150634983554482
+        ],
+        [
+          115.77366971410811,
+          17.508130298927426
+        ],
+        [
+          121.79467326030135,
+          16.262589206919074
+        ],
+        [
+          124.92954668588936,
+          17.08991677314043
+        ],
+        [
+          117.5020638294518,
+          16.836564134806395
+        ],
+        [
+          117.98938889987767,
+          17.03479760326445
+        ],
+        [
+          124.48127875104547,
+          16.788172183558345
+        ],
+        [
+          121.30788252688944,
+          17.617071390151978
+        ],
+        [
+          116.22140331193805,
+          16.36263633146882
+        ],
+        [
+          116.62963641807437,
+          17.96999242529273
+        ],
+        [
+          120.9192253742367,
+          16.22455909103155
+        ],
+        [
+          122.66783276572824,
+          17.426780140027404
+        ],
+        [
+          119.78334953077137,
+          16.67353335209191
+        ],
+        [
+          119.25599867478013,
+          17.710437804460526
+        ],
+        [
+          123.23423181660473,
+          16.456826720386744
+        ],
+        [
+          120.04028825089335,
+          17.128163957968354
+        ],
+        [
+          117.46944905258715,
+          16.882362512871623
+        ],
+        [
+          115.38156659342349,
+          17.271092539653182
+        ],
+        [
+          122.18679605051875,
+          16.51677763648331
+        ],
+        [
+          123.91490344889462,
+          17.814304884523153
+        ],
+        [
+          118.51676369085908,
+          16.0678034350276
+        ],
+        [
+          118.67006985470653,
+          17.325761767104268
+        ],
+        [
+          123.89830292202532,
+          16.571423029527068
+        ],
+        [
+          121.8762587942183,
+          17.775223098695278
+        ],
+        [
+          115.5554196704179,
+          16.028699722141027
+        ],
+        [
+          117.21749608404934,
+          17.640076462179422
+        ]
+      ],
+      "geometry_hash": "82f7b10e4e0cd952355a541829cd8a705175e1d215b2473a444e96d1d32bde5d"
+    },
+    "train37": {
+      "count": 37,
+      "geometries": [
+        [
+          115.0,
+          16.0
+        ],
+        [
+          115.0,
+          16.5
+        ],
+        [
+          115.0,
+          16.75
+        ],
+        [
+          115.0,
+          17.0
+        ],
+        [
+          115.0,
+          17.25
+        ],
+        [
+          115.0,
+          17.5
+        ],
+        [
+          115.0,
+          18.0
+        ],
+        [
+          117.5,
+          16.0
+        ],
+        [
+          117.5,
+          18.0
+        ],
+        [
+          118.75,
+          16.0
+        ],
+        [
+          118.75,
+          18.0
+        ],
+        [
+          120.0,
+          16.0
+        ],
+        [
+          120.0,
+          18.0
+        ],
+        [
+          121.25,
+          16.0
+        ],
+        [
+          121.25,
+          18.0
+        ],
+        [
+          122.5,
+          16.0
+        ],
+        [
+          122.5,
+          18.0
+        ],
+        [
+          125.0,
+          16.0
+        ],
+        [
+          125.0,
+          16.5
+        ],
+        [
+          125.0,
+          16.75
+        ],
+        [
+          125.0,
+          17.0
+        ],
+        [
+          125.0,
+          17.25
+        ],
+        [
+          125.0,
+          17.5
+        ],
+        [
+          125.0,
+          18.0
+        ],
+        [
+          120.0,
+          17.0
+        ],
+        [
+          118.75,
+          17.0
+        ],
+        [
+          121.25,
+          17.0
+        ],
+        [
+          120.0,
+          16.75
+        ],
+        [
+          120.0,
+          17.25
+        ],
+        [
+          118.75,
+          16.75
+        ],
+        [
+          118.75,
+          17.25
+        ],
+        [
+          121.25,
+          17.25
+        ],
+        [
+          117.5,
+          17.0
+        ],
+        [
+          122.5,
+          17.0
+        ],
+        [
+          120.0,
+          16.5
+        ],
+        [
+          120.0,
+          17.5
+        ],
+        [
+          121.25,
+          16.75
+        ]
+      ],
+      "geometry_hash": "7f25083f2e5caf99459e1bb315f03056cdcd6511a3d5947e9b1b611d84b78f0d"
+    }
+  },
+  "sequential_bo": {
+    "kernel": "Matern-5/2-ARD",
+    "mean": "constant",
+    "input_scaling": "[-1,1]^2",
+    "optimizer_starts": 8,
+    "jitter_candidates": [
+      1e-10,
+      1e-08
+    ],
+    "jitter_selection": "training-only LML",
+    "max_online_queries": 20,
+    "EI_grid_size": 61,
+    "EI_switch_threshold": 0.001,
+    "EI_low_rule": "if max grid EI < threshold, bounded local posterior-mean refinement",
+    "deduplicate_rule": "deterministic scaled-domain 1e-3 offset when candidate repeats observed point",
+    "best_metric": "best actually evaluated point",
+    "queries_to_MAP": "first online oracle query whose best evaluated geometry enters MAP tolerance"
+  },
+  "oracle_map": {
+    "grid_size": 161,
+    "height_tolerance_nm": 0.25,
+    "width_tolerance_nm": 0.05,
+    "global_grid_plus_bounded_multistart_LBFGSB": true
+  }
+}
