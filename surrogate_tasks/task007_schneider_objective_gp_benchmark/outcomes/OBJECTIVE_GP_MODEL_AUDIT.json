@@ -1,0 +1,16 @@
+{
+  "schema_version": "task007.objective-gp-model-audit.v1",
+  "implementation_source_sha": "75e5cdb",
+  "status": "pass",
+  "fit_count": 2022,
+  "selected_jitter_counts": {
+    "1e-10": 1577,
+    "1e-08": 445
+  },
+  "warning_count": 1626,
+  "boundary_collision_count": 1558,
+  "all_lml_finite": true,
+  "kernel": "Matern-5/2-ARD",
+  "optimizer_starts": 8,
+  "jitter_selection_training_only": true
+}

@@ -3,12 +3,14 @@
 ## 状态
 
 ```text
-status = authorized_replay_benchmark
+status = completed_with_controlled_negative_p3_map
 execution_branch = codex/only-one-13p5nm-surrogate-inversion
 predecessor = Task006 Review V3
 new FEM in first execution = 0
 formal inversion = false
 experimental claim = false
+
+M0–M2 stored-response replay 已完成。J1/N1 的 11/11 objective identity 与 P2 trained37 离散 query Gate 通过；P3 连续 MAP 仅 2/11 达到规定尺寸容差，按任务书保留为 controlled-negative，等待审阅。没有运行新 FEM、正式 inversion 或解封 Task006 validation。
 ```
 
 ## 核心思想

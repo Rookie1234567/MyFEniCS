@@ -1,0 +1,411 @@
+{
+  "schema_version": "task007.objective-identity-audit.v1",
+  "implementation_source_sha": "75e5cdb",
+  "status": "pass",
+  "checks": {
+    "replay_count_37_plus_11": true,
+    "train_count_37": true,
+    "external_count_11": true,
+    "excluded_incomplete_geometry_absent": true,
+    "all_source_sha_exact": true,
+    "all_schema_exact": true,
+    "all_arrays_finite": true,
+    "all_external_self_objective_zero": true,
+    "all_external_unique_minimizer": true,
+    "initial_P0_train_only": true,
+    "initial_P1_train_only": true,
+    "lock_hash_expected": true,
+    "train_manifest_hash_expected": true
+  },
+  "errors": [],
+  "objective_identity_rows": [
+    {
+      "target_index": 37,
+      "geometry": [
+        117.5,
+        16.5
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    },
+    {
+      "target_index": 38,
+      "geometry": [
+        117.5,
+        16.75
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    },
+    {
+      "target_index": 39,
+      "geometry": [
+        117.5,
+        17.5
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    },
+    {
+      "target_index": 40,
+      "geometry": [
+        118.75,
+        16.5
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    },
+    {
+      "target_index": 41,
+      "geometry": [
+        118.75,
+        17.5
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    },
+    {
+      "target_index": 42,
+      "geometry": [
+        121.25,
+        16.5
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    },
+    {
+      "target_index": 43,
+      "geometry": [
+        121.25,
+        17.5
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    },
+    {
+      "target_index": 44,
+      "geometry": [
+        122.5,
+        16.5
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    },
+    {
+      "target_index": 45,
+      "geometry": [
+        122.5,
+        16.75
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    },
+    {
+      "target_index": 46,
+      "geometry": [
+        122.5,
+        17.25
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    },
+    {
+      "target_index": 47,
+      "geometry": [
+        122.5,
+        17.5
+      ],
+      "J1": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      },
+      "J0": {
+        "N1": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        },
+        "N2": {
+          "finite": true,
+          "self_zero": true,
+          "unique": true,
+          "min_value": 0.0
+        }
+      }
+    }
+  ],
+  "target_objective_not_in_initial_gp": true,
+  "task006_lock_modified": false,
+  "new_fem_count": 0
+}
