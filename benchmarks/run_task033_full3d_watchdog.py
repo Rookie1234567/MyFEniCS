@@ -88,6 +88,8 @@ DEFAULT_ARTIFACT_ROOT = (
 )
 REFERENCE_PLANES_NM = (10.0, 30.0, 60.0, 90.0, 110.0)
 GIB = 1024**3
+LONG_MAX_IT = 1_000_000
+LONG_TIMEOUT = 604800.0
 _PARENT_LAUNCH_TOKEN_ENV = "MYFENICS_WATCHDOG_PARENT_TOKEN"
 TASK035D_LOCAL_H_CANDIDATES = {
     TASK035D_LOCAL_H_PLAN_NAME,
@@ -639,6 +641,8 @@ def _task037_f1_direct_trace_oracle(trace_path: Path, trace_sha256: str):
 
 
 def _task037_f3_iterations(args: argparse.Namespace) -> int | None:
+    if args.task037_m4_b2_long_full:
+        return LONG_MAX_IT
     return 3000 if args.task037_f3_full else args.task037_f3_screen
 
 
@@ -663,6 +667,15 @@ def _task037_m4_factor_free_status(
         "task037_m4_p2_factor_free_slab_"
         f"steps{args.task037_m4_factor_free_local_steps}_{phase}_{result}"
     )
+
+
+def _task037_m4_b2_long_full_status(
+    args: argparse.Namespace, qualification: Mapping[str, Any]
+) -> str | None:
+    if not args.task037_m4_b2_long_full:
+        return None
+    result = "pass" if qualification["pass"] else "not_pass"
+    return f"task037_m4_b2_factor_free_mpi1_long_full_{result}"
 
 
 def _task037_m4_optimized_schwarz_status(
@@ -782,6 +795,7 @@ def _task037_f3_assembled_fgmres_port(
                 release_assembled_matrix=request.release_assembled_matrix,
                 lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
+        audit["task037_m4_b2_long_full"] = screen_iterations == LONG_MAX_IT
         if comm.rank == 0:
             (run_dir / "task037_f3_core_audit.json").write_text(
                 json.dumps(audit, ensure_ascii=False, indent=2) + "\n",
@@ -1236,6 +1250,7 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         ),
         "task037_m4_p2_auxiliary": bool(args.task037_m4_p2_auxiliary),
         "task037_m4_factor_free_slab": bool(args.task037_m4_factor_free_slab),
+        "task037_m4_b2_long_full": bool(args.task037_m4_b2_long_full),
         "task037_m4_optimized_schwarz": bool(args.task037_m4_optimized_schwarz),
         "task037_m4_factor_free_local_steps": int(
             args.task037_m4_factor_free_local_steps
@@ -1575,6 +1590,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=(2, 4),
         default=2,
     )
+    parser.add_argument("--task037-m4-b2-long-full", action="store_true")
     parser.add_argument("--task037-m0-lifecycle-audit", action="store_true")
     parser.add_argument(
         "--task035d-case097-gate",
@@ -1837,7 +1853,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 args.poll_interval <= 0.25
                 and args.warning_gib == 10.0
                 and args.terminate_gib == 14.0
-                and args.timeout_seconds == (7200.0 if args.task037_f3_full else 1800.0)
+                and args.timeout_seconds
+                == (
+                    LONG_TIMEOUT
+                    if args.task037_m4_b2_long_full
+                    else 7200.0
+                    if args.task037_f3_full
+                    else 1800.0
+                )
             )
         )
     ):
@@ -1951,6 +1974,21 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037-m4-optimized-schwarz requires the fixed-four-step "
             "M2c/M4 factor-free screen or canonical full path."
+        )
+    if args.task037_m4_b2_long_full and not (
+        args.mpi_size == 1
+        and args.task037_f3_full
+        and args.task037_m4_factor_free_slab
+        and args.task037_m4_factor_free_local_steps == 2
+        and args.task037_canonical_vector_export
+        and not args.task037_m4_optimized_schwarz
+        and (args.worker or args.timeout_seconds == LONG_TIMEOUT)
+        and not args.allow_swap
+    ):
+        parser.error(
+            "--task037-m4-b2-long-full requires the exact MPI1 canonical "
+            "B2 factor-free full scope, fixed 604800-second timeout, and "
+            "zero swap."
         )
     if args.task037_m0_lifecycle_audit and not (
         args.task037_f3_full and args.task037_f5b_released_profile
@@ -3863,6 +3901,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
                 str(args.task037_m4_factor_free_local_steps),
             )
         )
+    if args.task037_m4_b2_long_full:
+        command.append("--task037-m4-b2-long-full")
     if args.task037_m4_optimized_schwarz:
         command.append("--task037-m4-optimized-schwarz")
     if args.task037_canonical_vector_export:
@@ -4551,12 +4591,15 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["failures"].append("source_stable_and_clean_after")
         qualification["pass"] = False
     m3a_status = _task037_m3a_status(args, qualification)
+    m4_b2_long_full_status = _task037_m4_b2_long_full_status(args, qualification)
     m4_factor_free_status = _task037_m4_factor_free_status(args, qualification)
     m4_optimized_schwarz_status = _task037_m4_optimized_schwarz_status(
         args, qualification
     )
     status = (
-        m4_optimized_schwarz_status
+        m4_b2_long_full_status
+        if m4_b2_long_full_status is not None
+        else m4_optimized_schwarz_status
         if m4_optimized_schwarz_status is not None
         else m4_factor_free_status
         if m4_factor_free_status is not None
@@ -4656,6 +4699,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         "task035d_case097_launch_gate": task035d_case097_gate,
         "task035d_nested_p_launch_gate": task035d_nested_p_gate,
         "task035d_selective_face_launch_gate": (task035d_selective_face_gate),
+        "task037_m4_b2_long_full": bool(args.task037_m4_b2_long_full),
         "task035d_candidate_id": (
             args.task035d_candidate_id if args.task035d_case097_gate else None
         ),
@@ -4744,6 +4788,7 @@ def _run_parent(args: argparse.Namespace) -> int:
                 {
                     "task037_f3": {
                         "full": bool(args.task037_f3_full),
+                        "b2_long_full": bool(args.task037_m4_b2_long_full),
                         "f5b_released_profile": bool(args.task037_f5b_released_profile),
                         "screen_iterations": args.task037_f3_screen,
                         "core_audit_path": _path_from_root(task037_f3_core_audit_path),

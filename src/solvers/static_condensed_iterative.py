@@ -80,7 +80,7 @@ def _solve_static_condensed_fgmres_core(
     request: Stage4ExternalLinearSolverRequest
     | Stage4NeverMaterializedLinearSolverRequest,
     *,
-    screen_iterations: Literal[20, 100, 200],
+    screen_iterations: int,
     local_krylov_steps: Literal[2, 4] = 2,
     residual_observer: Callable[[int, float, float], None] | None = None,
     solver_profile: Literal[
@@ -591,7 +591,10 @@ def _solve_static_condensed_fgmres_core(
             reported = float(residual_norm) / max(rhs_norm, _TINY)
             if not reported_history or reported_history[-1][0] != iteration:
                 reported_history.append((int(iteration), reported))
-            if iteration in (10, 20) and iteration not in sampled_iterations:
+            if (
+                iteration in (10, 20)
+                or (screen_iterations > 3000 and iteration % 100 == 0)
+            ) and iteration not in sampled_iterations:
                 current_solution = current.buildSolution(monitor_solution)
                 condensed = _relative_residual(
                     operator, rhs, current_solution, residual_work, rhs_norm
@@ -933,7 +936,7 @@ def solve_never_materialized_p2_auxiliary_fgmres(
 def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
     request: Stage4NeverMaterializedLinearSolverRequest,
     *,
-    screen_iterations: Literal[20, 100, 200] = 20,
+    screen_iterations: int = 20,
     local_krylov_steps: Literal[2, 4] = 2,
     residual_observer: Callable[[int, float, float], None] | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,

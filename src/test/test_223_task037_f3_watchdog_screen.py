@@ -343,6 +343,8 @@ def test_parser_scope_and_worker_command(tmp_path):
     ]
     full = watchdog._parse_args(full_args)
     assert full.task037_f3_full
+    assert full.task037_m4_b2_long_full is False
+    assert watchdog._task037_f3_iterations(full) == 3000
     full_command = watchdog._worker_command(full, tmp_path)
     assert full_command.count("--task037-f3-full") == 1
     assert "--task037-f3-screen" not in full_command
@@ -544,6 +546,27 @@ def test_parser_scope_and_worker_command(tmp_path):
             watchdog._parse_args(
                 full_factor_free_mpi_args + ["--task037-canonical-vector-export"]
             )
+    long_args = list(m4_factor_free_full_args)
+    long_args[long_args.index("--mpi-size") + 1] = "1"
+    long_args[long_args.index("--timeout-seconds") + 1] = "604800"
+    long_args.extend(["--task037-m4-b2-long-full", "--task037-canonical-vector-export"])
+    long = watchdog._parse_args(long_args)
+    assert long.task037_m4_b2_long_full
+    assert watchdog._task037_f3_iterations(long) == watchdog.LONG_MAX_IT
+    long_command = watchdog._worker_command(long, tmp_path)
+    assert long_command.count("--task037-m4-b2-long-full") == 1
+    long_worker = watchdog._parse_args(long_command[long_command.index("--worker") :])
+    assert long_worker.task037_m4_b2_long_full
+    assert watchdog._task037_f3_iterations(long_worker) == watchdog.LONG_MAX_IT
+    invalid_long_mpi = list(long_args)
+    invalid_long_mpi[invalid_long_mpi.index("--mpi-size") + 1] = "8"
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(invalid_long_mpi)
+    invalid_long_canonical = [
+        item for item in long_args if item != "--task037-canonical-vector-export"
+    ]
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(invalid_long_canonical)
     ras_full_base = m4_factor_free_full_args + [
         "--task037-m4-factor-free-local-steps",
         "4",
@@ -702,6 +725,8 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
+        task037_m4_factor_free_local_steps=2,
+        task037_m4_b2_long_full=False,
         task037_m4_optimized_schwarz=False,
         task037_canonical_vector_export=True,
         task037_m0_lifecycle_audit=True,
@@ -723,7 +748,8 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         for line in lines
     )
     assert json.loads((tmp_path / "task037_f3_core_audit.json").read_text()) == {
-        "core": "audit"
+        "core": "audit",
+        "task037_m4_b2_long_full": False,
     }
     assert [item["extra"]["m0_event"] for item in progress_events] == [
         "blocks_extracted",
@@ -767,6 +793,10 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
         selected_profiles.append("m4-factor-free")
         captured["request"] = request
         captured["kwargs"] = kwargs
+        for iteration in (0, 10, 20):
+            kwargs["residual_observer"](iteration, 1.0 / (iteration + 1), 0.5)
+        if kwargs["screen_iterations"] > 3000:
+            kwargs["residual_observer"](100, 0.01, 0.5)
         return object(), {
             "solver_profile": "never_materialized_p2_factor_free_slab_auxiliary"
         }
@@ -832,6 +862,7 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
         task037_m2c_never_materialized=True,
         task037_canonical_vector_export=False,
         task037_m0_lifecycle_audit=False,
+        task037_m4_b2_long_full=False,
         task035d_nested_p_dwr_phase=None,
         task035d_selective_face_dwr_phase=None,
     )
@@ -878,6 +909,29 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
         "m3a",
     ]
     assert selected_iterations == [20, 3000]
+    long_args = SimpleNamespace(
+        **{
+            **common_args,
+            "task037_f3_screen": None,
+            "task037_f3_full": True,
+            "task037_m3a_overlap0125_partition": False,
+            "task037_m4_p2_auxiliary": True,
+            "task037_m4_factor_free_slab": True,
+            "task037_m4_factor_free_local_steps": 2,
+            "task037_m4_b2_long_full": True,
+            "task037_m4_optimized_schwarz": False,
+            "task037_canonical_vector_export": True,
+        }
+    )
+    assert watchdog._worker(long_args) == 0
+    assert captured["kwargs"]["screen_iterations"] == watchdog.LONG_MAX_IT
+    history = (tmp_path / "task037_f3_residual_history.jsonl").read_text()
+    assert [json.loads(line)["iteration"] for line in history.splitlines()[-4:]] == [
+        0,
+        10,
+        20,
+        100,
+    ]
 
 
 def test_f3_qualification_uses_core_audit_gate():
@@ -889,6 +943,7 @@ def test_f3_qualification_uses_core_audit_gate():
         task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
+        task037_m4_b2_long_full=False,
         task037_m4_optimized_schwarz=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
@@ -1045,6 +1100,7 @@ def test_m2c_qualification_requires_action_profile_and_memory_gate():
         task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
+        task037_m4_b2_long_full=False,
         task037_m4_optimized_schwarz=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
@@ -1118,6 +1174,7 @@ def test_m4_qualification_uses_final_p2_smoother_and_resource_gate():
         task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=True,
         task037_m4_factor_free_slab=False,
+        task037_m4_b2_long_full=False,
         task037_m4_optimized_schwarz=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
@@ -1345,6 +1402,7 @@ def test_m3a_partition_profile_and_memory_gates():
         task037_m3a_overlap0125_partition=True,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
+        task037_m4_b2_long_full=False,
         task037_m4_optimized_schwarz=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
@@ -1464,6 +1522,7 @@ def test_ordinary_full_solve_rules_remain_strict():
         task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
+        task037_m4_b2_long_full=False,
         task037_m4_optimized_schwarz=False,
         run_kind="full-solve",
         allow_swap=False,
