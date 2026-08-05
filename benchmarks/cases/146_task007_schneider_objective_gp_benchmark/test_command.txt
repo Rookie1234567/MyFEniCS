@@ -1,0 +1,3 @@
+source scripts/activate_myfenics_surrogate_wsl.sh
+PYTHONPATH=src .venv-surrogate-cpu/bin/python benchmarks/cases/146_task007_schneider_objective_gp_benchmark/run.py
+PYTHONPATH=src .venv-surrogate-cpu/bin/python benchmarks/cases/146_task007_schneider_objective_gp_benchmark/checker.py
