@@ -734,6 +734,8 @@ def run_prepared_3d_case_flow(
     ) = None,
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
+    retained_p4_core_research: bool = False,
+    matrix_free_dtn: bool = False,
     canonical_vector_export: bool = False,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
@@ -764,6 +766,8 @@ def run_prepared_3d_case_flow(
             variable_p_live_observer is not None,
             bool(variable_p_retain_local_schur_for_research),
             linear_solver_port is not None,
+            bool(retained_p4_core_research),
+            bool(matrix_free_dtn),
         )
     )
     if len(set(live_observer_flags)) != 1:
@@ -1235,6 +1239,8 @@ def run_prepared_3d_case_flow(
                 static_retain_local_schur_for_matrix_free=(
                     static_retain_local_schur_for_matrix_free
                 ),
+                retained_p4_core_research=retained_p4_core_research,
+                matrix_free_dtn=matrix_free_dtn,
                 canonical_vector_export=canonical_vector_export,
             )
         except DirectSolveFailure as failure:

@@ -289,6 +289,45 @@ class RetainedP4CoreSystem:
     def create_retained_vector(self) -> PETSc.Vec:
         return self.numbering.create_retained_vector()
 
+    def owned_trace_support_groups(
+        self,
+        owned_cell_groups: Sequence[np.ndarray],
+    ) -> tuple[np.ndarray, ...]:
+        """Map owner-local surface cell support into retained trace rows."""
+
+        rank_start = int(self.numbering.retained_rank_offsets[self.comm.rank])
+        trace_start = rank_start
+        trace_end = trace_start + self.numbering.owned_active_trace_rows
+        supports = []
+        for cell_group in owned_cell_groups:
+            rows = {
+                int(row)
+                for cell_index in np.asarray(cell_group, dtype=np.int64)
+                for row in self.cells[int(cell_index)].retained_global_ids[
+                    :-_CORE_ROWS_PER_CELL
+                ]
+                if trace_start <= int(row) < trace_end
+            }
+            supports.append(np.asarray(sorted(rows), dtype=PETSc.IntType))
+        return tuple(supports)
+
+    def retained_prefix_from_augmented(
+        self,
+        augmented_vector: PETSc.Vec,
+        auxiliary_rows: int,
+    ) -> PETSc.Vec:
+        """Copy the retained prefix without gathering the global vector."""
+
+        if augmented_vector.getSize() != self.retained_rows + int(auxiliary_rows):
+            raise ValueError("augmented vector size does not match retained prefix")
+        result = self.create_retained_vector()
+        owned = result.getLocalSize()
+        if augmented_vector.getLocalSize() < owned:
+            raise ValueError("augmented vector has no retained prefix ownership")
+        result.getArray()[:] = augmented_vector.getArray(readonly=True)[:owned]
+        result.assemble()
+        return result
+
     def cell_contribution(
         self,
         cell_index: int,

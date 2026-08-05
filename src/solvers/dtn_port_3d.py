@@ -60,6 +60,7 @@ from .hcurl_assembly_time_condensation import (
     owned_active_support_groups,
     recover_owned_cell_interiors,
 )
+from .hcurl_p4_core_global_partial_condensation import RetainedP4CoreSystem
 from .hcurl_variable_p_reduction import (
     VariablePAssemblyTimeReduction,
     VariablePRecoveredSolution,
@@ -151,7 +152,7 @@ class Stage4NeverMaterializedLinearSolverRequest:
     b: PETSc.Vec
     n_fe: int
     n_aux: int
-    static_condensed_system: AssemblyTimeCondensedSystem
+    static_condensed_system: AssemblyTimeCondensedSystem | RetainedP4CoreSystem
     fine_operator: PETSc.Mat
     blocks: PetscCondensedBlocks
     function_space: Any
@@ -716,6 +717,7 @@ def _dof_row_semantics(
     independent_trace_rows: int | None,
     augmented_rows: int,
     auxiliary_rows: int,
+    retained_core_rows: int = 0,
 ) -> dict[str, Any]:
     """Name physical FE spaces and actual linear-system rows unambiguously."""
 
@@ -728,7 +730,8 @@ def _dof_row_semantics(
     )
     augmented = int(augmented_rows)
     auxiliary = int(auxiliary_rows)
-    if min(active, storage, augmented, auxiliary) < 0:
+    retained_core = int(retained_core_rows)
+    if min(active, storage, augmented, auxiliary, retained_core) < 0:
         raise ValueError("DoF and row counts must be nonnegative.")
     if active > storage:
         raise ValueError(
@@ -739,10 +742,10 @@ def _dof_row_semantics(
             raise ValueError(
                 "Independent trace rows must not exceed active FE DoFs."
             )
-        if augmented != independent + auxiliary:
+        if augmented != independent + retained_core + auxiliary:
             raise ValueError(
-                "Augmented rows must equal independent trace plus auxiliary "
-                "rows when independent trace elimination is active."
+                "Augmented rows must equal independent trace, retained core, "
+                "and auxiliary rows when independent trace elimination is active."
             )
     return {
         "num_active_exact_sequence_fe_dofs": active,
@@ -999,6 +1002,146 @@ def _assign_fe_solution_from_assembly_time_condensation(
     }
 
 
+def _assign_fe_solution_from_retained_p4_core(
+    x_aug: PETSc.Vec,
+    retained: RetainedP4CoreSystem,
+    floquet_data: DoubleFloquet3DData,
+    full_rhs: PETSc.Vec,
+    n_aux: int,
+) -> tuple[Any, PETSc.Vec, dict[str, Any]]:
+    """Recover a full FE field from the retained DtN prefix."""
+
+    recovery_started = time.perf_counter()
+    retained_vector = retained.retained_prefix_from_augmented(x_aug, n_aux)
+    recovered = retained.recover_owned_full_fe_interiors(
+        retained_vector,
+        full_rhs,
+    )
+    if (
+        retained.trace_constraints is None
+    ):
+        raise RuntimeError(
+            "retained FE recovery metadata is unavailable"
+        )
+    mpc = floquet_data.mpc
+    E_total = fem.Function(mpc.function_space, name="E_total")
+    index_map = E_total.function_space.dofmap.index_map
+    block_size = E_total.function_space.dofmap.index_map_bs
+    x_fe = create_vector([(index_map, block_size)])
+    x_fe.set(PETSc.ScalarType(0.0))
+    retained_start, _retained_end = retained_vector.getOwnershipRange()
+    retained_values = retained_vector.getArray(readonly=True)
+    owned_trace = np.asarray(
+        retained.trace_constraints.owned_active_original_dofs,
+        dtype=PETSc.IntType,
+    )
+    if len(owned_trace):
+        active_ids = np.asarray(
+            [
+                retained.trace_constraints.original_to_active[int(row)]
+                for row in owned_trace
+            ],
+            dtype=PETSc.IntType,
+        )
+        mapped = retained.numbering.map_active_ids(active_ids)
+        x_fe.setValues(
+            owned_trace,
+            retained_values[mapped - retained_start],
+            addv=PETSc.InsertMode.INSERT_VALUES,
+        )
+    local_recovered = 0
+    for original_rows, values in recovered:
+        x_fe.setValues(
+            original_rows,
+            np.asarray(values, dtype=PETSc.ScalarType),
+            addv=PETSc.InsertMode.INSERT_VALUES,
+        )
+        local_recovered += len(original_rows)
+    x_fe.assemble()
+    _ghost_update(
+        x_fe,
+        PETSc.InsertMode.INSERT,
+        PETSc.ScatterMode.FORWARD,
+    )  # type: ignore[arg-type]
+    fem_petsc.assign(x_fe, E_total)
+    mpc.homogenize(E_total)
+    mpc.backsubstitution(E_total)
+    E_total.x.scatter_forward()
+    retained_vector.destroy()
+    comm = E_total.function_space.mesh.comm
+    return E_total, x_fe, {
+        "schema_version": "task037.r7b2b1.retained-p4-core-recovery.v1",
+        "status": "retained_full_field_recovered",
+        "retained_rows": int(retained.retained_rows),
+        "trace_rows": int(retained.numbering.active_trace_rows),
+        "core_rows": int(retained.audit["global_core_rows"]),
+        "recovered_interior_rows": int(
+            comm.allreduce(local_recovered, op=MPI.SUM)
+        ),
+        "full_global_matrix_allocated": False,
+        "full_trace_matrix_allocated": False,
+        "total_recovery_seconds": float(
+            comm.allreduce(
+                time.perf_counter() - recovery_started,
+                op=MPI.MAX,
+            )
+        ),
+    }
+
+
+def _retained_effective_recovery_rhs(
+    external_rhs: PETSc.Vec,
+    modes: list[PortMode3D],
+    auxiliary_values: np.ndarray,
+    surface_assemblers: Mapping[
+        tuple[str, int], _ReusableSurfaceComponentAssembler
+    ],
+    cfg: SimulationConfig3D,
+) -> PETSc.Vec:
+    """Add the solved auxiliary traction to the retained recovery RHS."""
+
+    auxiliary_values = np.asarray(auxiliary_values, dtype=np.complex128)
+    if auxiliary_values.size != len(modes):
+        raise ValueError("auxiliary values do not match the selected modes")
+    effective_rhs = external_rhs.copy()
+    component_key = None
+    component_vectors: tuple[PETSc.Vec, PETSc.Vec] | None = None
+    try:
+        for aux_index, mode in enumerate(modes):
+            mode_key = (
+                mode.side,
+                int(mode.m),
+                int(mode.n),
+                complex(mode.k_vector[2]),
+            )
+            if mode_key != component_key or component_vectors is None:
+                if component_vectors is not None:
+                    for vector in component_vectors:
+                        vector.destroy()
+                component_vectors = (
+                    surface_assemblers[(mode.side, 0)].assemble_unconstrained_vector(
+                        mode
+                    ),
+                    surface_assemblers[(mode.side, 1)].assemble_unconstrained_vector(
+                        mode
+                    ),
+                )
+                component_key = mode_key
+            traction = _traction_vector(mode, cfg)
+            coefficient = PETSc.ScalarType(auxiliary_values[aux_index])
+            for component, vector in enumerate(component_vectors):
+                effective_rhs.axpy(
+                    coefficient * PETSc.ScalarType(traction[component]),
+                    vector,
+                )
+        effective_rhs.assemble()
+        return effective_rhs
+    finally:
+        if component_vectors is not None:
+            for vector in component_vectors:
+                vector.destroy()
+
+
 def _assembly_time_full_operator_residual(
     bilinear_form,
     floquet_data: DoubleFloquet3DData,
@@ -1127,6 +1270,105 @@ def _assembly_time_full_operator_residual(
                 "matrix-free dolfinx_mpc UFL action projected onto every "
                 "active eliminated cell-interior test space, including "
                 "condensed full-space RHS"
+            ),
+            "full_global_matrix_allocated_for_residual": False,
+            "full_trace_matrix_allocated_for_residual": False,
+        }
+    finally:
+        action.destroy()
+        context.destroy()
+
+
+def _retained_full_operator_residual(
+    bilinear_form,
+    floquet_data: DoubleFloquet3DData,
+    embedded_fe_solution: PETSc.Vec,
+    reduced_matrix: PETSc.Mat | None,
+    reduced_rhs: PETSc.Vec,
+    reduced_solution: PETSc.Vec,
+    retained: RetainedP4CoreSystem,
+    full_rhs: PETSc.Vec,
+    external_rhs: PETSc.Vec,
+    auxiliary_rows: int,
+    reduced_residual_norm: float | None = None,
+) -> dict[str, Any]:
+    """Combine retained+DtN and 342-dimensional complement residuals."""
+
+    reduced = (
+        {"linear_system_residual_norm": float(reduced_residual_norm)}
+        if reduced_residual_norm is not None
+        else _linear_residual(reduced_matrix, reduced_rhs, reduced_solution)
+    )
+    context = MpcFormActionContext(
+        bilinear_form,
+        floquet_data.mpc,
+        reference=None,
+    )
+    action = embedded_fe_solution.duplicate()
+    action.set(PETSc.ScalarType(0.0))
+    try:
+        context.mult(None, embedded_fe_solution, action)
+        local_sq = 0.0
+        local_max = 0.0
+        for cell in retained.cells:
+            rows = np.asarray(
+                cell.cell_original_dofs[cell.factor.p6_interior_dofs],
+                dtype=PETSc.IntType,
+            )
+            residual = np.zeros(882, dtype=PETSc.ScalarType)
+            residual[cell.factor.p6_interior_dofs] = (
+                np.asarray(action.getValues(rows), dtype=PETSc.ScalarType)
+                - np.asarray(full_rhs.getValues(rows), dtype=PETSc.ScalarType)
+            )
+            complement = cell.factor.eliminated_basis.conj().T @ residual[
+                cell.factor.p6_interior_dofs
+            ]
+            local_sq += float(np.vdot(complement, complement).real)
+            local_max = max(
+                local_max,
+                float(np.max(np.abs(complement), initial=0.0)),
+            )
+        comm = reduced_solution.getComm().tompi4py()
+        complement_norm = float(
+            np.sqrt(comm.allreduce(local_sq, op=MPI.SUM))
+        )
+        complement_max = float(comm.allreduce(local_max, op=MPI.MAX))
+        reduced_norm = float(reduced["linear_system_residual_norm"] or 0.0)
+        full_norm = float(np.hypot(reduced_norm, complement_norm))
+        aux_start = retained.retained_rows
+        local_aux_rhs_sq = 0.0
+        local_aux_solution_sq = 0.0
+        if comm.rank == comm.size - 1 and auxiliary_rows:
+            aux_ids = _idx(range(aux_start, aux_start + auxiliary_rows))
+            aux_rhs = np.asarray(reduced_rhs.getValues(aux_ids))
+            aux_solution = np.asarray(reduced_solution.getValues(aux_ids))
+            local_aux_rhs_sq = float(np.vdot(aux_rhs, aux_rhs).real)
+            local_aux_solution_sq = float(
+                np.vdot(aux_solution, aux_solution).real
+            )
+        rhs_norm = float(
+            np.sqrt(
+                external_rhs.norm() ** 2
+                + comm.allreduce(local_aux_rhs_sq, op=MPI.SUM)
+            )
+        )
+        solution_norm = float(
+            np.sqrt(
+                embedded_fe_solution.norm() ** 2
+                + comm.allreduce(local_aux_solution_sq, op=MPI.SUM)
+            )
+        )
+        return {
+            "linear_system_rhs_norm": rhs_norm,
+            "linear_system_solution_norm": solution_norm,
+            "linear_system_residual_norm": full_norm,
+            "linear_system_relative_residual": full_norm / max(rhs_norm, 1.0e-30),
+            "reduced_retained_dtn_residual_norm": reduced_norm,
+            "eliminated_complement_residual_norm": complement_norm,
+            "eliminated_complement_max_abs_residual": complement_max,
+            "full_operator_residual_method": (
+                "retained+DtN action plus local 342-dimensional complement "
+                "projection from the same matrix-free UFL action"
             ),
             "full_global_matrix_allocated_for_residual": False,
             "full_trace_matrix_allocated_for_residual": False,
@@ -2730,6 +2972,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
     matrix_free_dtn: bool = False,
+    retained_p4_core_research: bool = False,
     canonical_vector_export: bool = False,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
@@ -2784,6 +3027,16 @@ def _solve_stage4_dtn_port_total_field_impl(
     )
     if matrix_free_dtn and not never_materialized_port:
         raise ValueError("matrix-free DtN requires the action-only solver port")
+    retained_p4_core_research = bool(retained_p4_core_research)
+    if retained_p4_core_research and (
+        not assembly_time_cell_static_condensation
+        or variable_p_backend
+        or not never_materialized_port
+    ):
+        raise ValueError(
+            "retained p4-core DtN requires the fixed action-only "
+            "assembly-time external port"
+        )
     if never_materialized_port and (
         not assembly_time_cell_static_condensation
         or variable_p_backend
@@ -2805,6 +3058,11 @@ def _solve_stage4_dtn_port_total_field_impl(
         raise ValueError(
             "canonical vector export requires the fixed assembly-time "
             "static-condensed backend"
+        )
+    if retained_p4_core_research and canonical_vector_export:
+        raise ValueError(
+            "canonical vector export is unavailable for retained p4-core "
+            "research"
         )
     if variable_p_live_observer is not None and (
         cfg.matrix_diagnostics_assemble_only
@@ -2906,6 +3164,7 @@ def _solve_stage4_dtn_port_total_field_impl(
         dtn_quadrature_degree
     )
     assembly_time_system: AssemblyTimeCondensedSystem | None = None
+    retained_p4_core_system: RetainedP4CoreSystem | None = None
     variable_p_reduction: VariablePAssemblyTimeReduction | None = None
     local_h_context = getattr(mesh_data, "local_h_context", None)
     assembly_time_full_rhs: PETSc.Vec | None = None
@@ -2961,37 +3220,54 @@ def _solve_stage4_dtn_port_total_field_impl(
                     ),
                 )
             )
-            reduction_system = variable_p_reduction.system
         else:
-            assembly_time_system = (
-                build_unconstrained_assembly_time_condensation(
-                    fem.form(a),
-                    V,
-                    mesh_data.cell_tags,
-                    mpc=floquet_data.mpc,
-                    appended_global_rows=n_aux,
-                    appended_support_owned_cell_groups=(
-                        support_cell_groups
-                    ),
-                    appended_support_group_by_row=(
-                        support_group_by_row
-                    ),
-                    defer_final_assembly=True,
-                    retain_local_schur_for_matrix_free=(
-                        static_retain_local_schur_for_matrix_free
-                        or never_materialized_port
-                    ),
-                    materialize_global_matrix=not never_materialized_port,
+            if retained_p4_core_research:
+                retained_p4_core_system = (
+                    build_unconstrained_assembly_time_condensation(
+                        fem.form(a),
+                        V,
+                        mesh_data.cell_tags,
+                        mpc=floquet_data.mpc,
+                        retained_p4_core_research=True,
+                    )
                 )
-            )
-            reduction_system = assembly_time_system
+            else:
+                assembly_time_system = (
+                    build_unconstrained_assembly_time_condensation(
+                        fem.form(a),
+                        V,
+                        mesh_data.cell_tags,
+                        mpc=floquet_data.mpc,
+                        appended_global_rows=n_aux,
+                        appended_support_owned_cell_groups=(
+                            support_cell_groups
+                        ),
+                        appended_support_group_by_row=(
+                            support_group_by_row
+                        ),
+                        defer_final_assembly=True,
+                        retain_local_schur_for_matrix_free=(
+                            static_retain_local_schur_for_matrix_free
+                            or never_materialized_port
+                        ),
+                        materialize_global_matrix=not never_materialized_port,
+                    )
+                )
         A_base = None
-        A_aug = reduction_system.matrix
-        n_fe = int(
-            reduction_system.active_trace_rows
-            if variable_p_reduction is not None
-            else reduction_system.active_rows
-        )
+        if retained_p4_core_research:
+            A_aug = None
+            n_fe = int(retained_p4_core_system.retained_rows)
+        else:
+            A_aug = (
+                variable_p_reduction.system.matrix
+                if variable_p_reduction is not None
+                else assembly_time_system.matrix
+            )
+            n_fe = int(
+                variable_p_reduction.system.active_trace_rows
+                if variable_p_reduction is not None
+                else assembly_time_system.active_rows
+            )
         if never_materialized_port:
             base_matrix_stats = {
                 "matrix_type": "not_materialized_action_only",
@@ -3015,15 +3291,26 @@ def _solve_stage4_dtn_port_total_field_impl(
         else:
             base_matrix_stats = _deferred_preallocation_matrix_stats(
                 A_aug,
-                reduction_system.build_audit["trace_preallocation"],
+                (
+                    variable_p_reduction.system.build_audit["trace_preallocation"]
+                    if variable_p_reduction is not None
+                    else assembly_time_system.build_audit["trace_preallocation"]
+                ),
             )
             base_matrix_lifecycle = (
                 "preallocated_values_pending_augmented_final_assembly"
             )
+        build_audit = (
+            retained_p4_core_system.audit
+            if retained_p4_core_research
+            else variable_p_reduction.system.build_audit
+            if variable_p_reduction is not None
+            else assembly_time_system.build_audit
+        )
         timing_details.update(
             {
                 f"stage4_dtn_assembly_time_{key}": value
-                for key, value in reduction_system.build_audit.items()
+                for key, value in build_audit.items()
                 if key.endswith("_seconds")
             }
         )
@@ -3040,6 +3327,7 @@ def _solve_stage4_dtn_port_total_field_impl(
         base_matrix_lifecycle = "assembled"
     assembly_time_active = (
         assembly_time_system is not None
+        or retained_p4_core_system is not None
         or variable_p_reduction is not None
     )
 
@@ -3053,6 +3341,14 @@ def _solve_stage4_dtn_port_total_field_impl(
                 vector,
                 side=side,
             )
+        if retained_p4_core_research:
+            if retained_p4_core_system is None:
+                raise RuntimeError("retained p4-core system is unavailable")
+            if side == "right":
+                return retained_p4_core_system.reduce_full_fe_right_rhs(vector)
+            if side == "left":
+                return retained_p4_core_system.reduce_full_fe_left_functional(vector)
+            raise ValueError("retained FE reduction side must be right or left")
         if assembly_time_system is None:
             raise RuntimeError(
                 "assembly-time vector reduction is not active"
@@ -3069,6 +3365,13 @@ def _solve_stage4_dtn_port_total_field_impl(
     ) -> complex:
         if variable_p_reduction is not None:
             return variable_p_reduction.interior_cross_bilinear(
+                left,
+                right,
+            )
+        if retained_p4_core_research:
+            if retained_p4_core_system is None:
+                raise RuntimeError("retained p4-core system is unavailable")
+            return retained_p4_core_system.eliminated_complement_bilinear_full_fe(
                 left,
                 right,
             )
@@ -3314,18 +3617,27 @@ def _solve_stage4_dtn_port_total_field_impl(
         )
 
     if never_materialized_port:
-        if assembly_time_system is None:
+        if assembly_time_system is None and retained_p4_core_system is None:
             raise RuntimeError("action-only port lost its assembly-time system")
-        support_groups = owned_active_support_groups(
-            assembly_time_system,
-            support_cell_groups,
+        support_groups = (
+            retained_p4_core_system.owned_trace_support_groups(support_cell_groups)
+            if retained_p4_core_research
+            else owned_active_support_groups(
+                assembly_time_system,
+                support_cell_groups,
+            )
         )
-        base_active_rhs = assembly_time_system.create_active_vector()
+        base_active_rhs = (
+            b_aug.copy()
+            if retained_p4_core_research
+            else assembly_time_system.create_active_vector()
+        )
         local_active_rows = base_active_rhs.getLocalSize()
-        base_active_rhs.getArray()[:] = b_aug.getArray(
-            readonly=True
-        )[:local_active_rows]
-        base_active_rhs.assemble()
+        if not retained_p4_core_research:
+            base_active_rhs.getArray()[:] = b_aug.getArray(
+                readonly=True
+            )[:local_active_rows]
+            base_active_rhs.assemble()
         dtn_action_assembler = DtnBlockAssembler(
             base_active_rhs,
             n_aux,
@@ -3915,27 +4227,48 @@ def _solve_stage4_dtn_port_total_field_impl(
 
     t0 = time.perf_counter()
     if never_materialized_port:
-        if dtn_action_assembler is None or assembly_time_system is None:
+        if dtn_action_assembler is None or (
+            assembly_time_system is None and retained_p4_core_system is None
+        ):
             raise RuntimeError("action-only modal sink was not initialized")
         dtn_action_preallocation_audit = dict(
             dtn_action_assembler.preallocation_audit
         )
         dtn_action_blocks = dtn_action_assembler.finish()
-        dtn_fine_action, _ = create_static_local_schur_action(
-            assembly_time_system
-        )
+        if retained_p4_core_research:
+            if retained_p4_core_system is None:
+                raise RuntimeError("retained p4-core system is unavailable")
+            dtn_fine_action, _ = retained_p4_core_system.create_retained_action()
+        else:
+            dtn_fine_action, _ = create_static_local_schur_action(
+                assembly_time_system
+            )
         A_aug, _ = create_matrix_free_augmented_operator(
             dtn_action_blocks,
             dtn_fine_action,
         )
         old_b_aug = b_aug
-        b_aug = assembly_time_system.create_augmented_vector()
-        combine_petsc_augmented_solution(
-            dtn_action_blocks,
-            dtn_action_blocks.b_fe,
-            dtn_action_blocks.b_aux,
-            b_aug,
-        )
+        if retained_p4_core_research:
+            b_aug = _augmented_vec_from_base(
+                dtn_action_blocks.b_fe,
+                n_aux,
+                comm,
+            )
+            b_aug.assemble()
+            combine_petsc_augmented_solution(
+                dtn_action_blocks,
+                dtn_action_blocks.b_fe,
+                dtn_action_blocks.b_aux,
+                b_aug,
+            )
+        else:
+            b_aug = assembly_time_system.create_augmented_vector()
+            combine_petsc_augmented_solution(
+                dtn_action_blocks,
+                dtn_action_blocks.b_fe,
+                dtn_action_blocks.b_aux,
+                b_aug,
+            )
         old_b_aug.destroy()
         augmented_matrix_stats_after_finalize = {
             "matrix_type": "python_action_only",
@@ -3967,12 +4300,24 @@ def _solve_stage4_dtn_port_total_field_impl(
         if variable_p_reduction is not None
         else storage_carrier_fe_dofs
     )
+    reported_trace_rows = (
+        int(retained_p4_core_system.numbering.active_trace_rows)
+        if retained_p4_core_system is not None
+        else int(n_fe)
+        if assembly_time_active
+        else None
+    )
     assembled_dof_row_fields = _dof_row_semantics(
         active_exact_sequence_fe_dofs=active_exact_sequence_fe_dofs,
         storage_carrier_fe_dofs=storage_carrier_fe_dofs,
-        independent_trace_rows=int(n_fe) if assembly_time_active else None,
+        independent_trace_rows=reported_trace_rows,
         augmented_rows=int(n_fe + n_aux),
         auxiliary_rows=int(n_aux),
+        retained_core_rows=(
+            int(retained_p4_core_system.audit["global_core_rows"])
+            if retained_p4_core_system is not None
+            else 0
+        ),
     )
     timing_details["stage4_dtn_augmented_matrix_finalize_seconds"] = float(
         comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
@@ -4179,7 +4524,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             )
 
     independent_trace_rows = (
-        int(n_fe)
+        reported_trace_rows
         if assembly_time_active
         else (
             int(independent_trace_system.active_rows) - int(n_aux)
@@ -4193,6 +4538,11 @@ def _solve_stage4_dtn_port_total_field_impl(
         independent_trace_rows=independent_trace_rows,
         augmented_rows=int(solve_A.getSize()[0]),
         auxiliary_rows=int(n_aux),
+        retained_core_rows=(
+            int(retained_p4_core_system.audit["global_core_rows"])
+            if retained_p4_core_system is not None
+            else 0
+        ),
     )
 
     t0 = time.perf_counter()
@@ -4220,21 +4570,29 @@ def _solve_stage4_dtn_port_total_field_impl(
             )
         else:
             if never_materialized_port:
-                if (
-                    assembly_time_system is None
-                    or dtn_fine_action is None
-                    or dtn_action_blocks is None
-                ):
+                if dtn_fine_action is None or dtn_action_blocks is None:
                     raise RuntimeError(
                         "action-only solver request lost its borrowed objects"
                     )
+                if retained_p4_core_research:
+                    if retained_p4_core_system is None:
+                        raise RuntimeError(
+                            "retained p4-core system is unavailable"
+                        )
+                    request_system = retained_p4_core_system
+                else:
+                    if assembly_time_system is None:
+                        raise RuntimeError(
+                            "ordinary assembly-time system is unavailable"
+                        )
+                    request_system = assembly_time_system
                 external_snapshot = linear_solver_port(
                     Stage4NeverMaterializedLinearSolverRequest(
                         operator=solve_A,
                         b=solve_b,
                         n_fe=int(n_fe),
                         n_aux=int(n_aux),
-                        static_condensed_system=assembly_time_system,
+                        static_condensed_system=request_system,
                         fine_operator=dtn_fine_action,
                         blocks=dtn_action_blocks,
                         function_space=V,
@@ -4317,9 +4675,13 @@ def _solve_stage4_dtn_port_total_field_impl(
                     None
                     if not assembly_time_active
                     else (
-                        variable_p_reduction.build_audit
-                        if variable_p_reduction is not None
-                        else assembly_time_system.build_audit
+                        retained_p4_core_system.audit
+                        if retained_p4_core_system is not None
+                        else (
+                            variable_p_reduction.build_audit
+                            if variable_p_reduction is not None
+                            else assembly_time_system.build_audit
+                        )
                     )
                 ),
             }
@@ -4387,6 +4749,21 @@ def _solve_stage4_dtn_port_total_field_impl(
         }
     timing_details["stage4_dtn_linear_solve_seconds"] = setup_and_solve_seconds
 
+    aux_values = _gather_auxiliary_values(solve_x, n_fe, n_aux, comm)
+    retained_recovery_rhs: PETSc.Vec | None = None
+    if retained_p4_core_system is not None:
+        if assembly_time_full_rhs is None:
+            raise RuntimeError(
+                "retained p4-core recovery requires the full-space RHS"
+            )
+        retained_recovery_rhs = _retained_effective_recovery_rhs(
+            assembly_time_full_rhs,
+            modes,
+            aux_values,
+            surface_assemblers,
+            cfg,
+        )
+
     assembly_time_field = None
     embedded_fe_solution = None
     variable_p_recovered: VariablePRecoveredSolution | None = None
@@ -4407,6 +4784,30 @@ def _solve_stage4_dtn_port_total_field_impl(
         _recovery_cleanup_sink.append(variable_p_recovered)
         assembly_time_field = variable_p_recovered.field
         condensation_recovery = variable_p_recovered.audit
+        x_aug = solve_x
+        timing_details[
+            "stage4_dtn_cell_static_condensation_recovery_seconds"
+        ] = float(
+            comm.allreduce(
+                time.perf_counter() - recovery_started,
+                op=MPI.MAX,
+            )
+        )
+    elif retained_p4_core_system is not None:
+        if retained_recovery_rhs is None:
+            raise RuntimeError("retained p4-core recovery RHS is unavailable")
+        recovery_started = time.perf_counter()
+        (
+            assembly_time_field,
+            embedded_fe_solution,
+            condensation_recovery,
+        ) = _assign_fe_solution_from_retained_p4_core(
+            solve_x,
+            retained_p4_core_system,
+            floquet_data,
+            retained_recovery_rhs,
+            n_aux,
+        )
         x_aug = solve_x
         timing_details[
             "stage4_dtn_cell_static_condensation_recovery_seconds"
@@ -4508,6 +4909,46 @@ def _solve_stage4_dtn_port_total_field_impl(
             )
         )
     elif (
+        retained_p4_core_system is not None
+        and embedded_fe_solution is not None
+    ):
+        if assembly_time_full_rhs is None or retained_recovery_rhs is None:
+            raise RuntimeError(
+                "retained p4-core residual RHS lifecycle is invalid"
+            )
+        residual_started = time.perf_counter()
+        linear_residual = _retained_full_operator_residual(
+            a,
+            floquet_data,
+            embedded_fe_solution,
+            None if released_external else A_aug,
+            b_aug,
+            x_aug,
+            retained_p4_core_system,
+            retained_recovery_rhs,
+            assembly_time_full_rhs,
+            n_aux,
+            reduced_residual_norm=(
+                external_snapshot.reduced_residual_norm
+                if released_external
+                else None
+            ),
+        )
+        embedded_fe_solution.destroy()
+        embedded_fe_solution = None
+        retained_recovery_rhs.destroy()
+        retained_recovery_rhs = None
+        assembly_time_full_rhs.destroy()
+        assembly_time_full_rhs = None
+        timing_details[
+            "stage4_dtn_matrix_free_full_residual_seconds"
+        ] = float(
+            comm.allreduce(
+                time.perf_counter() - residual_started,
+                op=MPI.MAX,
+            )
+        )
+    elif (
         assembly_time_system is not None
         and embedded_fe_solution is not None
     ):
@@ -4596,7 +5037,6 @@ def _solve_stage4_dtn_port_total_field_impl(
         matrix_stats=augmented_matrix_stats_after_finalize,
         petsc_options=petsc_options,
     )
-    aux_values = _gather_auxiliary_values(x_aug, n_fe, n_aux, comm)
     port_metrics = (
         {}
         if external_rta_gate_pass is False
@@ -4738,6 +5178,37 @@ def _solve_stage4_dtn_port_total_field_impl(
             "same_full_operator_used_for_recovery_and_residual": True,
             "ordinary_default_changed": False,
         }
+    elif retained_p4_core_system is not None:
+        cell_static_condensation_audit = {
+            **retained_p4_core_system.audit,
+            "condensed_matrix_stats": augmented_matrix_stats_after_finalize,
+            "floquet_independent_matrix_stats": (
+                augmented_matrix_stats_after_finalize
+            ),
+            "recovery": condensation_recovery,
+            "full_operator_true_residual": linear_residual,
+            "full_explicit_true_residual": linear_residual,
+            "true_residual_semantics": (
+                "retained trace plus 108 p4-core DtN residual and per-cell "
+                "342-dimensional eliminated complement residual"
+            ),
+            "retained_trace_rows": int(
+                retained_p4_core_system.numbering.active_trace_rows
+            ),
+            "retained_core_rows": int(
+                retained_p4_core_system.audit["global_core_rows"]
+            ),
+            "retained_rows": int(retained_p4_core_system.retained_rows),
+            "augmented_rows": int(n_fe + n_aux),
+            "same_full_operator_used_for_recovery_and_residual": True,
+            "action_only_setup": True,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "research_only": True,
+            "production_qualified": False,
+            "ordinary_default_changed": False,
+            "dtn_action_preallocation_audit": dtn_action_preallocation_audit,
+        }
     elif assembly_time_system is not None:
         cell_static_condensation_audit = {
             **assembly_time_system.build_audit,
@@ -4778,6 +5249,10 @@ def _solve_stage4_dtn_port_total_field_impl(
         solver_pc_type = external_snapshot.pc_type
     solver_info = {
         "solver_backend": (
+            "research-only retained p4-core action-only system + auxiliary "
+            "Fourier-DtN port"
+            if retained_p4_core_system is not None
+            else
             "external static-condensed linear-solver port"
             if external_snapshot is not None
             else
@@ -4806,8 +5281,27 @@ def _solve_stage4_dtn_port_total_field_impl(
         "num_active_trace_dofs": (
             None
             if not assembly_time_active
-            else int(n_fe)
+            else int(reported_trace_rows)
         ),
+        "num_global_core_rows": (
+            None
+            if retained_p4_core_system is None
+            else int(retained_p4_core_system.audit["global_core_rows"])
+        ),
+        "num_retained_rows": (
+            None
+            if retained_p4_core_system is None
+            else int(retained_p4_core_system.retained_rows)
+        ),
+        "num_retained_augmented_rows": (
+            None
+            if retained_p4_core_system is None
+            else int(n_fe + n_aux)
+        ),
+        "retained_p4_core_research": bool(
+            retained_p4_core_system is not None
+        ),
+        "production_qualified": False if retained_p4_core_system is not None else None,
         "num_total_augmented_dofs": int(n_fe + n_aux),
         "num_active_condensed_dofs": (
             int(n_fe + n_aux)
@@ -5145,6 +5639,7 @@ def solve_stage4_dtn_port_total_field(
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
     matrix_free_dtn: bool = False,
+    retained_p4_core_research: bool = False,
     canonical_vector_export: bool = False,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
@@ -5162,6 +5657,7 @@ def solve_stage4_dtn_port_total_field(
             bool(variable_p_retain_local_schur_for_research),
             bool(static_retain_local_schur_for_matrix_free),
             bool(matrix_free_dtn),
+            bool(retained_p4_core_research),
             bool(canonical_vector_export),
         )
     )
@@ -5193,6 +5689,7 @@ def solve_stage4_dtn_port_total_field(
                 static_retain_local_schur_for_matrix_free
             ),
             matrix_free_dtn=matrix_free_dtn,
+            retained_p4_core_research=retained_p4_core_research,
             canonical_vector_export=canonical_vector_export,
             _recovery_cleanup_sink=recovered_cleanup,
         )
