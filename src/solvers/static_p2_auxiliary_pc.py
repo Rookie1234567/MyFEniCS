@@ -25,6 +25,7 @@ from .hcurl_assembly_time_condensation import (
 )
 from .hcurl_multilevel import ModalWoodburyPc, build_absorption_shifted_matrix
 from .physical_slab_two_level import build_owner_local_slab_diagonal
+from .static_factor_free_slab_pc import FactorFreeLocalSlabKrylovPc
 from .static_trace_auxiliary import (
     build_p2_galerkin_fine_matrix,
     build_p2_to_p6_active_trace_transfer,
@@ -103,13 +104,15 @@ class _ProvidedDiagonalPatch:
 
 
 class P2AuxiliaryDiagonalModalPc:
-    """Compose fine diagonal pre/post patches with the true p2 auxiliary PC.
+    """Compose a fine pre/post patch with the true p2 auxiliary PC.
 
     ``fine_operator``, ``transfer`` and ``fine_diagonal`` are borrowed.  The
     projected ``coarse_blocks`` are transferred to this object and destroyed
     with it.  The p2 matrix is shifted through the existing absorption helper,
     factorized once with PREONLY/MUMPS, and corrected with the existing
-    all-mode Woodbury algebra.
+    all-mode Woodbury algebra.  With no ``fine_patch``, the supplied diagonal
+    provides the pre/post patch.  With a ``fine_patch``, that factor-free
+    patch provides both applications and is owned and destroyed by this PC.
     """
 
     def __init__(
@@ -121,6 +124,7 @@ class P2AuxiliaryDiagonalModalPc:
         fine_diagonal: PETSc.Vec,
         absorption_shift: float = 0.1,
         omega: float = 0.6,
+        fine_patch: FactorFreeLocalSlabKrylovPc | None = None,
     ) -> None:
         if coarse_blocks.F is None:
             raise ValueError("p2 auxiliary PC requires the projected F2 matrix")
@@ -138,12 +142,17 @@ class P2AuxiliaryDiagonalModalPc:
         self.fine_operator = fine_operator
         self.transfer = transfer
         self.coarse_blocks = coarse_blocks
+        self._fine_patch = fine_patch
         self._destroyed = False
         self._absorption_shift = float(absorption_shift)
-        self._patch = _ProvidedDiagonalPatch(
-            fine_diagonal,
-            absorption_shift=absorption_shift,
-            omega=omega,
+        self._patch = (
+            None
+            if fine_patch is not None
+            else _ProvidedDiagonalPatch(
+                fine_diagonal,
+                absorption_shift=absorption_shift,
+                omega=omega,
+            )
         )
         self.p2_shifted_matrix, p2_scale = build_absorption_shifted_matrix(
             coarse_blocks.F,
@@ -185,7 +194,10 @@ class P2AuxiliaryDiagonalModalPc:
         if self._destroyed:
             raise RuntimeError("p2 auxiliary PC has already been destroyed")
         self._check_layout(source, target)
-        self._patch.apply(source, self._fine_pre)
+        if self._fine_patch is None:
+            self._patch.apply(source, self._fine_pre)
+        else:
+            self._fine_patch.apply(source, self._fine_pre)
         self.fine_operator.mult(self._fine_pre, self._fine_work)
         self._fine_residual.getArray()[:] = source.getArray(readonly=True)
         self._fine_residual.axpy(-1.0, self._fine_work)
@@ -197,7 +209,10 @@ class P2AuxiliaryDiagonalModalPc:
         self.fine_operator.mult(target, self._fine_work)
         self._fine_residual.getArray()[:] = source.getArray(readonly=True)
         self._fine_residual.axpy(-1.0, self._fine_work)
-        self._patch.apply(self._fine_residual, self._fine_post)
+        if self._fine_patch is None:
+            self._patch.apply(self._fine_residual, self._fine_post)
+        else:
+            self._fine_patch.apply(self._fine_residual, self._fine_post)
         target.axpy(1.0, self._fine_post)
         target.assemble()
         self.apply_count += 1
@@ -248,8 +263,12 @@ class P2AuxiliaryDiagonalModalPc:
                 )
             )
         )
-        return {
-            "profile": "never_materialized_p2_auxiliary",
+        info_dict = {
+            "profile": (
+                "never_materialized_p2_auxiliary"
+                if self._fine_patch is None
+                else "never_materialized_p2_factor_free_slab_auxiliary"
+            ),
             "fine_operator_kind": "borrowed_p6_condensed_dtn_action",
             "global_p6_matrix_materialized": False,
             "global_p6_transfer_materialized": False,
@@ -271,16 +290,6 @@ class P2AuxiliaryDiagonalModalPc:
             "p2_unshifted_matrix_retained": self.coarse_blocks.F is not None,
             "p2_absorption_shift": self._absorption_shift,
             "p2_diagonal_scale": self._p2_scale,
-            "diagonal_patch": {
-                "omega": self._patch.omega,
-                "absorption_shift": self._patch.absorption_shift,
-                "global_scale": self._patch.global_scale,
-                "inverse_bytes_local": self._patch.local_bytes,
-                "inverse_bytes_global": int(
-                    comm.allreduce(self._patch.local_bytes, op=MPI.SUM)
-                ),
-                "pre_post": True,
-            },
             "modal": self._modal.diagnostics,
             "work_vectors_owned": 7,
             "work_vector_bytes_local": work_vector_bytes_local,
@@ -316,6 +325,22 @@ class P2AuxiliaryDiagonalModalPc:
             ),
             "apply_count": int(self.apply_count),
         }
+        if self._fine_patch is None:
+            info_dict["diagonal_patch"] = {
+                "omega": self._patch.omega,
+                "absorption_shift": self._patch.absorption_shift,
+                "global_scale": self._patch.global_scale,
+                "inverse_bytes_local": self._patch.local_bytes,
+                "inverse_bytes_global": int(
+                    comm.allreduce(self._patch.local_bytes, op=MPI.SUM)
+                ),
+                "pre_post": True,
+            }
+        else:
+            info_dict["factor_free_slab_patch"] = self._fine_patch.diagnostics
+            info_dict["outer_requires_fgmres"] = True
+            info_dict["high_order_patch_kind"] = "factor_free_local_slab_krylov"
+        return info_dict
 
     def destroy(self) -> None:
         if self._destroyed:
@@ -323,7 +348,10 @@ class P2AuxiliaryDiagonalModalPc:
         self._modal.destroy()
         self._p2_lu.destroy()
         self.p2_shifted_matrix.destroy()
-        self._patch.destroy()
+        if self._fine_patch is None:
+            self._patch.destroy()
+        else:
+            self._fine_patch.destroy()
         for vector in (
             self._fine_pre,
             self._fine_work,
