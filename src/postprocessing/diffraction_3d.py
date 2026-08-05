@@ -880,7 +880,8 @@ def compute_diffraction_orders_3d(
                 }
             )
         with (out_dir / "diffraction_orders_3d.csv").open("w", newline="", encoding="utf-8") as fp:
-            writer = csv.DictWriter(fp, fieldnames=list(csv_rows[0].keys()) if csv_rows else ["m", "n"])
+            fieldnames = list(dict.fromkeys(key for row in csv_rows for key in row)) if csv_rows else ["m", "n"]
+            writer = csv.DictWriter(fp, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(csv_rows)
         (out_dir / "power_metrics_3d.json").write_text(
