@@ -176,7 +176,7 @@ def test_factor_free_local_slab_action_and_two_step_krylov():
             rhs = pc._local_source.getArray(readonly=True)[positions].copy()
         else:
             rhs = np.empty(0, dtype=PETSc.ScalarType)
-        correction, _happy_breakdown = pc._two_step_gmres(slab, rhs)
+        correction, _happy_breakdown = pc._fixed_step_gmres(slab, rhs)
         residual = pc._restricted_action(
             slab,
             correction if comm.rank == plan.slab_owners[slab] else np.empty(0),

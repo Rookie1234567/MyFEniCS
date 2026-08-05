@@ -18,6 +18,7 @@ from petsc4py import PETSc
 from .physical_slab_two_level import (
     OwnerLocalSlabPlan,
     _exact_seqaij_fingerprint,
+    extract_owner_local_slab_diagonal,
     _route_owner_slab_cells,
 )
 from .static_trace_auxiliary import (
@@ -256,6 +257,31 @@ def _projected_entries(
     return temporary_bytes
 
 
+def _projected_diagonal_entries(
+    entries: dict[int, dict[int, complex]],
+    offsets: np.ndarray,
+    local_columns: np.ndarray,
+    values: np.ndarray,
+    diagonal: np.ndarray,
+) -> None:
+    """Add ``P_jᴴ diag(diagonal) P_j`` once for each p6 row."""
+
+    if diagonal.size != offsets.size - 1:
+        raise ValueError("slab shift is not aligned with p6 transfer rows")
+    for row, shift in enumerate(diagonal):
+        start = int(offsets[row])
+        end = int(offsets[row + 1])
+        columns = local_columns[start:end]
+        row_values = values[start:end]
+        for left, left_value in zip(columns, row_values, strict=True):
+            row_entries = entries.setdefault(int(left), {})
+            for right, right_value in zip(columns, row_values, strict=True):
+                column = int(right)
+                row_entries[column] = row_entries.get(column, 0.0j) + complex(
+                    np.conjugate(left_value) * shift * right_value
+                )
+
+
 def _factor_from_entries(
     entries: dict[int, dict[int, complex]],
     size: int,
@@ -321,12 +347,15 @@ def build_owner_local_p2_slab_factors(
     plan: OwnerLocalSlabPlan,
     *,
     retain_operator: bool = False,
+    shifted_diagonal: PETSc.Vec | None = None,
 ) -> tuple[tuple[OwnerLocalP2SlabFactor, ...], dict[str, Any]]:
     """Build one owner-local p2 ``P_jᴴ A6_j P_j`` ILU(0) factor per slab.
 
     ``retain_operator`` is intended only for the small algebra oracle; the
     default factor-only path releases every assembled p2 matrix after its
-    fingerprint and ILU(0) factor have been recorded.
+    fingerprint and ILU(0) factor have been recorded.  When supplied,
+    ``shifted_diagonal`` is projected through the same transfer as
+    ``P_jᴴ diag(shifted_diagonal) P_j``.
     """
 
     if condensed.matrix is not None:
@@ -335,6 +364,10 @@ def build_owner_local_p2_slab_factors(
         )
     if int(transfer.fine_constraints.active_rows) != int(plan.active_rows):
         raise ValueError("p2/p6 transfer and slab plan have different fine sizes")
+    if shifted_diagonal is not None and int(shifted_diagonal.getSize()) != int(
+        plan.active_rows
+    ):
+        raise ValueError("p2 shift and slab plan have different fine sizes")
     if len(plan.slab_owners) == 0:
         raise ValueError("at least one slab is required")
     factors: list[OwnerLocalP2SlabFactor] = []
@@ -342,6 +375,11 @@ def build_owner_local_p2_slab_factors(
     max_cell_projected_temporary_bytes = 0
     for slab, owner in enumerate(plan.slab_owners):
         gathered = _gather_slab_transfer(transfer, condensed, plan, slab)
+        slab_shift, _shift_audit = (
+            extract_owner_local_slab_diagonal(shifted_diagonal, plan, slab)
+            if shifted_diagonal is not None
+            else (None, None)
+        )
         entries: dict[int, dict[int, complex]] = {}
         cell_count = 0
         row_positions: dict[int, int] | None = None
@@ -349,6 +387,15 @@ def build_owner_local_p2_slab_factors(
         if plan.comm.rank == owner:
             assert gathered is not None
             p6_rows, p6_offsets, _p2_columns, p2_local_columns, p2_values = gathered
+            if shifted_diagonal is not None:
+                assert slab_shift is not None
+                _projected_diagonal_entries(
+                    entries,
+                    p6_offsets,
+                    p2_local_columns,
+                    p2_values,
+                    slab_shift,
+                )
             row_positions = {int(row): index for index, row in enumerate(p6_rows)}
             row_entries = [
                 tuple(
@@ -499,9 +546,13 @@ def build_owner_local_p2_slab_factors(
             plan.comm.allreduce(max_cell_projected_temporary_bytes, op=MPI.MAX)
         ),
         "transfer_support_mode": "actual_entity_orientation_floquet_stencil_closure",
-        "shift_mode": "none_unshifted_a6_j",
+        "shift_mode": (
+            "projected_same_shift"
+            if shifted_diagonal is not None
+            else "none_unshifted_a6_j"
+        ),
         "operator_kind": "unshifted_PjH_R6_A6_R6T_Pj",
-        "shift_included": False,
+        "shift_included": shifted_diagonal is not None,
         "p6_slab_matrix_count": 0,
         "p6_factor_count": 0,
         "p6_factor_nnz": 0,
@@ -509,4 +560,6 @@ def build_owner_local_p2_slab_factors(
         "global_p6_factor_materialized": False,
         "solver_type": "preonly_ilu0",
     }
+    if shifted_diagonal is not None:
+        audit["operator_kind"] = "projected_same_shift_PjH_R6_(A6+S6)_R6T_Pj"
     return tuple(factors), audit

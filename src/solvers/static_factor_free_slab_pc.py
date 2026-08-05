@@ -10,6 +10,7 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from .physical_slab_two_level import OwnerLocalSlabPlan
+from .static_p2_slab_pc import OwnerLocalP2SlabFactor
 
 __all__ = ("FactorFreeLocalSlabKrylovPc",)
 
@@ -22,7 +23,8 @@ class FactorFreeLocalSlabKrylovPc:
     The supplied fine action and shifted diagonal are borrowed.  Every rank
     participates in every slab action so that the borrowed distributed action
     keeps its collective semantics; only the deterministic slab owner stores
-    the local right-hand side and correction.
+    the local right-hand side and correction.  Candidate-D p2 factors are
+    owned by this PC after successful construction and destroyed with it.
     """
 
     def __init__(
@@ -33,6 +35,8 @@ class FactorFreeLocalSlabKrylovPc:
         local_krylov_steps: Literal[2, 4] = 2,
         variant: Literal["partition", "ras"] = "partition",
         interface_shift_mode: Literal["all_rows", "shared_rows_only"] = "all_rows",
+        p2_factors: tuple[OwnerLocalP2SlabFactor, ...] | None = None,
+        fine_diagonal: PETSc.Vec | None = None,
     ) -> None:
         if local_krylov_steps not in (2, 4):
             raise ValueError("local Krylov steps must be 2 or 4")
@@ -40,11 +44,16 @@ class FactorFreeLocalSlabKrylovPc:
             raise ValueError("local slab variant must be partition or ras")
         if interface_shift_mode not in ("all_rows", "shared_rows_only"):
             raise ValueError("invalid interface shift mode")
+        if p2_factors is not None and local_krylov_steps != 4:
+            raise ValueError("Candidate D local Krylov is fixed to four steps")
+        if p2_factors is not None and fine_diagonal is None:
+            raise ValueError("Candidate D requires the fine operator diagonal")
         self.fine_operator = fine_operator
         self.plan = plan
         self._local_krylov_steps = int(local_krylov_steps)
         self._variant = variant
         self._interface_shift_mode = interface_shift_mode
+        self._p2_factors = p2_factors
         self.comm = plan.comm
         self.rank = int(self.comm.rank)
         self.num_slabs = len(plan.slab_owners)
@@ -56,6 +65,8 @@ class FactorFreeLocalSlabKrylovPc:
             raise ValueError("fine action and owner-local plan have different sizes")
         if int(shifted_diagonal.getSize()) != fine_size[0]:
             raise ValueError("shifted diagonal and fine action have different sizes")
+        if fine_diagonal is not None and int(fine_diagonal.getSize()) != fine_size[0]:
+            raise ValueError("fine diagonal and fine action have different sizes")
         template = fine_operator.createVecRight()
         if tuple(map(int, shifted_diagonal.getOwnershipRange())) != tuple(
             map(int, template.getOwnershipRange())
@@ -64,6 +75,11 @@ class FactorFreeLocalSlabKrylovPc:
             raise ValueError(
                 "shifted diagonal and fine action have different ownership"
             )
+        if fine_diagonal is not None and tuple(
+            map(int, fine_diagonal.getOwnershipRange())
+        ) != tuple(map(int, template.getOwnershipRange())):
+            template.destroy()
+            raise ValueError("fine diagonal and fine action have different ownership")
 
         local_indices = [plan.owner_rows[slab] for slab in self.local_slabs]
         if local_indices:
@@ -112,6 +128,35 @@ class FactorFreeLocalSlabKrylovPc:
             dtype=PETSc.ScalarType,
         ).copy()
         self._local_shift_vec.destroy()
+        if self._p2_factors is not None:
+            if len(self._p2_factors) != self.num_slabs:
+                template.destroy()
+                raise ValueError("Candidate D requires one p2 factor per slab")
+            if np.any(np.abs(self._local_shift) <= _TINY):
+                template.destroy()
+                raise ValueError("Candidate D requires nonzero shifted diagonal rows")
+            local_diagonal_vec = self._local_source.duplicate()
+            self._scatter.scatter(
+                fine_diagonal,
+                local_diagonal_vec,
+                addv=PETSc.InsertMode.INSERT_VALUES,
+                mode=PETSc.ScatterMode.FORWARD,
+            )
+            self._combined_operator_diagonal = (
+                np.asarray(
+                    local_diagonal_vec.getArray(readonly=True),
+                    dtype=PETSc.ScalarType,
+                ).copy()
+                + self._local_shift
+            )
+            local_diagonal_vec.destroy()
+            if np.any(np.abs(self._combined_operator_diagonal) <= _TINY):
+                template.destroy()
+                raise ValueError(
+                    "Candidate D requires nonzero same-operator diagonal rows"
+                )
+        else:
+            self._combined_operator_diagonal = None
 
         if self._interface_shift_mode == "shared_rows_only":
             self._interface_shift_nonzero_rows = self.plan.interface_row_count
@@ -181,6 +226,7 @@ class FactorFreeLocalSlabKrylovPc:
         self._destroyed = False
         self.apply_count = 0
         self._action_calls = 0
+        self._p2_factor_solve_calls = 0
         self._happy_breakdowns_local = 0
         self._happy_breakdowns_global = 0
         self._apply_elapsed_s = 0.0
@@ -234,6 +280,9 @@ class FactorFreeLocalSlabKrylovPc:
     def _fixed_step_gmres(self, slab: int, rhs: np.ndarray) -> tuple[np.ndarray, bool]:
         """Run the configured fixed Arnoldi steps and solve the small LS system."""
 
+        if self._p2_factors is not None:
+            return self._fixed_step_fgmres(slab, rhs)
+
         owner = int(self.plan.slab_owners[slab])
         if self.rank != owner:
             rhs = np.empty(0, dtype=PETSc.ScalarType)
@@ -274,6 +323,73 @@ class FactorFreeLocalSlabKrylovPc:
         correction = sum(
             (
                 q_vectors[step] * coefficients[step]
+                for step in range(self._local_krylov_steps)
+            ),
+            start=np.zeros_like(rhs),
+        )
+        return correction, happy_breakdown
+
+    def _right_p2_precondition(self, slab: int, values: np.ndarray) -> np.ndarray:
+        """Apply ``P_j A2,j^-1 P_jᴴ`` plus the shifted complement."""
+
+        owner = int(self.plan.slab_owners[slab])
+        if self.rank != owner:
+            return np.empty(0, dtype=PETSc.ScalarType)
+        factor = self._p2_factors[slab]
+        positions = self._positions_by_slab[slab]
+        p2_rhs = factor.restrict_adjoint(values)
+        p2_solution = factor.solve(p2_rhs)
+        self._p2_factor_solve_calls += 1
+        low_component = factor.prolong(p2_solution)
+        combined_diagonal = self._combined_operator_diagonal[positions]
+        return low_component + values / combined_diagonal
+
+    def _fixed_step_fgmres(self, slab: int, rhs: np.ndarray) -> tuple[np.ndarray, bool]:
+        """Run fixed four-step right-preconditioned flexible GMRES."""
+
+        owner = int(self.plan.slab_owners[slab])
+        if self.rank != owner:
+            rhs = np.empty(0, dtype=PETSc.ScalarType)
+        rhs = np.asarray(rhs, dtype=PETSc.ScalarType)
+        beta = float(np.linalg.norm(rhs))
+        q_vectors = [rhs / beta if beta > _TINY else np.zeros_like(rhs)]
+        z_vectors: list[np.ndarray] = []
+        H = np.zeros(
+            (self._local_krylov_steps + 1, self._local_krylov_steps),
+            dtype=PETSc.ScalarType,
+        )
+        active = beta > _TINY
+        happy_breakdown = not active
+        for step in range(self._local_krylov_steps):
+            q = q_vectors[step] if active else np.zeros_like(rhs)
+            z = self._right_p2_precondition(slab, q) if active else np.zeros_like(rhs)
+            z_vectors.append(z)
+            w = self._restricted_action(slab, z)
+            if not active:
+                if step + 1 < self._local_krylov_steps:
+                    q_vectors.append(np.zeros_like(rhs))
+                continue
+            for previous, q_previous in enumerate(q_vectors[: step + 1]):
+                coefficient = np.vdot(q_previous, w) if q.size else 0.0
+                H[previous, step] = coefficient
+                w = w - coefficient * q_previous
+            next_norm = float(np.linalg.norm(w))
+            H[step + 1, step] = next_norm
+            if next_norm <= _TINY:
+                active = False
+                happy_breakdown = True
+                if step + 1 < self._local_krylov_steps:
+                    q_vectors.append(np.zeros_like(rhs))
+            elif step + 1 < self._local_krylov_steps:
+                q_vectors.append(w / next_norm)
+        if self.rank == owner and happy_breakdown:
+            self._happy_breakdowns_local += 1
+        g = np.zeros(self._local_krylov_steps + 1, dtype=PETSc.ScalarType)
+        g[0] = beta
+        coefficients, *_ = np.linalg.lstsq(H, g, rcond=None)
+        correction = sum(
+            (
+                z_vectors[step] * coefficients[step]
                 for step in range(self._local_krylov_steps)
             ),
             start=np.zeros_like(rhs),
@@ -367,6 +483,35 @@ class FactorFreeLocalSlabKrylovPc:
             ),
             "one_level_mean_apply_s": self._apply_elapsed_s / max(self.apply_count, 1),
         }
+        if self._p2_factors is not None:
+            local_factor_count = sum(
+                factor.factor_matrix is not None for factor in self._p2_factors
+            )
+            local_factor_nnz = sum(factor.factor_nnz for factor in self._p2_factors)
+            diagnostics.update(
+                {
+                    "profile": "candidate_d_factor_free_local_p2_fgmres",
+                    "local_krylov_type": "fgmres",
+                    "right_preconditioned": True,
+                    "local_inner_preconditioner": (
+                        "p2_factor_plus_same_operator_diagonal"
+                    ),
+                    "p2_slab_factor_count": int(
+                        self.comm.allreduce(local_factor_count, op=MPI.SUM)
+                    ),
+                    "p2_slab_factor_nnz": int(
+                        self.comm.allreduce(local_factor_nnz, op=MPI.SUM)
+                    ),
+                    "p2_factor_solve_calls": int(
+                        self.comm.allreduce(
+                            self._p2_factor_solve_calls,
+                            op=MPI.SUM,
+                        )
+                    ),
+                    "shift_projection": "same_p6_shift_in_p2_factor",
+                    "combined_operator_diagonal": True,
+                }
+            )
         if self._variant == "ras":
             diagnostics.update(
                 {
@@ -400,4 +545,7 @@ class FactorFreeLocalSlabKrylovPc:
         self._local_source.destroy()
         self._local_result.destroy()
         self._local_correction.destroy()
+        if self._p2_factors is not None:
+            for factor in self._p2_factors:
+                factor.destroy()
         self._destroyed = True
