@@ -1,6 +1,21 @@
 # Task037 资源与 MPI 边界报告
 
-## 当前源码 v2 资源收口
+## 当前 M3a MPI1/2/4/8 资源结论
+
+| MPI | process-tree peak | worker RSS/PSS/USS MiB | watchdog lifecycle wall | `<=10.30 GiB` |
+|---:|---:|---:|---:|---|
+| 1 | `4.600486755371094 GiB` | `4696.379 / 4640.899 / 4595.418` | `1999.033196 s` | PASS |
+| 2 | `5.682544708251953 GiB` | `5804.449 / 5467.450 / 5204.203` | `1153.018865 s` | PASS |
+| 4 | `8.265838623046875 GiB` | `8449.641 / 7505.691 / 7209.094` | `711.570295 s` | PASS |
+| 8 | `12.59341049194336 GiB` | `12881.059 / 10866.601 / 10558.777` | `470.571549 s` | FAIL |
+
+四组 numerical/physical/canonical Gate 均通过，MPI8 的唯一失败项是
+`m3a_memory_authority_le_10_30_gib`。MPI 数增加会降低单 rank 因子负担并缩短
+wall，但 process-tree 总内存因 rank-local FE/PETSc/metadata/output 重复而上升。
+完整统一口径、factor owner 分布与 canonical evidence 见
+[M3a MPI scaling comparison](m3a_mpi_scaling_comparison.md)。
+
+## 前序源码 v2 资源收口（MPI4 anchor，已由上节扩展）
 
 | 路径 | MPI | authority 峰值 | worker RSS/PSS/USS MiB | wall |
 |---|---:|---:|---:|---:|

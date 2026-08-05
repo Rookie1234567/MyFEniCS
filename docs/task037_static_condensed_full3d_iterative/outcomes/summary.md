@@ -1,6 +1,29 @@
 # Task037 结果总览
 
-## 当前源码 v2 收口
+## 当前 M3a MPI scaling follow-up
+
+同一 p6/h10、13.5 nm、S 偏振、M3a overlap `0.125` partition full-solve
+候选现已完成 MPI1/2/4/8 对比。四组均收敛并产生 official R/T/A，MPI1/2/8
+相对 MPI4 的 active/full-FE canonical relative L2 全部通过 `<=1e-5`；swap
+均为 0。资源结果如下：
+
+| MPI | full-FE residual | process-tree peak | watchdog lifecycle wall | 分类 |
+|---:|---:|---:|---:|---|
+| 1 | `9.973612808764094e-7` | `4.600486755371094 GiB` | `1999.033196 s` | numerical/resource PASS |
+| 2 | `9.998092180122628e-7` | `5.682544708251953 GiB` | `1153.018865 s` | numerical/resource PASS |
+| 4 | `9.923273535279698e-7` | `8.265838623046875 GiB` | `711.570295 s` | numerical/resource PASS |
+| 8 | `9.861361777006587e-7` | `12.59341049194336 GiB` | `470.571549 s` | numerical PASS；`<=10.30 GiB` FAIL |
+
+因此 MPI1 最省总内存，MPI8 最快但超出 Task37 绝对内存 Gate，MPI4 是该 Gate
+内速度较快的折中。完整 canonical、80 modal orders、分阶段内存和 source 边界见
+[MPI scaling report](m3a_mpi_scaling_comparison.md) 与
+[compact record](../../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_m3a_mpi_scaling_v1.json)。
+MPI1/2/8 raw runs 绑定 `a51c54576655f36078446766f856fcb96431e190`；MPI4
+绑定 `2631a4c47258c9def919530787e409774b8ce029`。`a51c5457` 只扩展 M3a
+runner admission/parser tests，没有改变 `src/` 数值内核或 ordinary defaults。
+production qualification 和 0.7 nm qualification 仍为 NO。
+
+## 前序源码 v2 收口（MPI 范围由上节扩展）
 
 当前 closeout 绑定 source SHA `2631a4c47258c9def919530787e409774b8ce029`；canonical Floquet edge/face 修复只影响显式 opt-in canonical export/comparator 路径，ordinary defaults 未改变。最新结果分类为 `NUMERICAL_SUCCESS_RESOURCE_REVIEW`：数值和物理 Gate 通过，M3a MPI4 absolute memory Gate 通过，但工程 50% memory 目标与 production qualification 未通过。
 

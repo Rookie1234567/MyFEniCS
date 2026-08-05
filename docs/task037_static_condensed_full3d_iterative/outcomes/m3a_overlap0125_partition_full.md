@@ -1,5 +1,9 @@
 # M3a overlap 0.125 partition-weighted：MPI4 Full3D full solve
 
+> 后续状态：MPI1/2/8 full runs 已完成，same-candidate MPI identity 与资源曲线见
+> [M3a MPI scaling comparison](m3a_mpi_scaling_comparison.md)。本文继续作为 MPI4
+> anchor 的不可变细节记录；其中“只有 MPI4 full”的历史范围说明已被后续报告取代。
+
 ## 结论
 
 这是固定 p6/h10、13.5 nm、S 偏振模型上的一次正式 MPI4 full solve。静态凝聚先在单元内消去 interior DoFs，再只对 active trace 与 DtN auxiliary unknowns 做迭代；预条件器使用 16 个 owner-local slab、0.125 overlap、partition-of-unity 权重、two-color ILU(0)、两步 GMRES 和 75D wave coarse。该流程没有形成 global A/F 或 global direct factor。

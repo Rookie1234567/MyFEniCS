@@ -1,5 +1,20 @@
 # Task037 Review V1 response v1
 
+## 0. 2026-08-05 MPI scaling 后续证据
+
+本 response 原始收口后，用户另行授权了同一 M3a candidate 的 MPI1/2/8 full
+运行，与既有 MPI4 anchor 比较。四组均通过 numerical、official R/T/A、zero-swap
+和跨 MPI canonical identity；process-tree 峰值依次为
+`4.600486755371094 / 5.682544708251953 / 8.265838623046875 /
+12.59341049194336 GiB`，其中 MPI8 唯一失败项为绝对内存 `<=10.30 GiB`。
+
+该后续证据由
+[MPI scaling report](outcomes/m3a_mpi_scaling_comparison.md) 和
+[compact record](../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_m3a_mpi_scaling_v1.json)
+承载，并取代本 response 后文“same-candidate MPI4/8 未验证”的旧范围陈述；后文
+仍作为 Review V1 当时的历史收口保留。它不改变 production qualification、
+ordinary defaults、Hybrid/0.7 nm/Task037b 边界。
+
 ## 1. 范围、身份与结论
 
 本 response 只总结 Full3D static-condensed iterative 的 M0–M4 证据，不扩展

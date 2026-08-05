@@ -1,6 +1,19 @@
 # Case100：static-condensed Full3D iterative Task37 F0/F3/F5b
 
-## 当前源码 v2 证据索引
+## 当前 M3a MPI scaling 证据索引
+
+- [M3a MPI1/2/4/8 compact record](records/task37_m3a_mpi_scaling_v1.json)：四组
+  full solve 的 residual、R/T/A、process-tree memory、wall、factor inventory、
+  raw artifact hash 与 canonical comparison；
+- [M3a MPI scaling report](../../../docs/task037_static_condensed_full3d_iterative/outcomes/m3a_mpi_scaling_comparison.md)：
+  统一表格和通俗结论。
+
+四组 numerical/physical/canonical identity 均通过；MPI1/2/4 通过
+`<=10.30 GiB`，MPI8 仅该内存 Gate 失败。MPI1/2/8 carrier 为 `a51c5457`，
+MPI4 numerical anchor 为 `2631a4c4`；carrier 只改变 runner eligibility/tests，
+没有改变 `src/` 数值内核或 ordinary defaults。
+
+## 前序源码 v2 证据索引（由上节扩展）
 
 当前 closeout source 为 `2631a4c47258c9def919530787e409774b8ce029`。最新 compact evidence：
 
