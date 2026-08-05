@@ -31,12 +31,20 @@ class FactorFreeLocalSlabKrylovPc:
         plan: OwnerLocalSlabPlan,
         shifted_diagonal: PETSc.Vec,
         local_krylov_steps: Literal[2, 4] = 2,
+        variant: Literal["partition", "ras"] = "partition",
+        interface_shift_mode: Literal["all_rows", "shared_rows_only"] = "all_rows",
     ) -> None:
         if local_krylov_steps not in (2, 4):
             raise ValueError("local Krylov steps must be 2 or 4")
+        if variant not in ("partition", "ras"):
+            raise ValueError("local slab variant must be partition or ras")
+        if interface_shift_mode not in ("all_rows", "shared_rows_only"):
+            raise ValueError("invalid interface shift mode")
         self.fine_operator = fine_operator
         self.plan = plan
         self._local_krylov_steps = int(local_krylov_steps)
+        self._variant = variant
+        self._interface_shift_mode = interface_shift_mode
         self.comm = plan.comm
         self.rank = int(self.comm.rank)
         self.num_slabs = len(plan.slab_owners)
@@ -104,6 +112,13 @@ class FactorFreeLocalSlabKrylovPc:
             dtype=PETSc.ScalarType,
         ).copy()
         self._local_shift_vec.destroy()
+
+        if self._interface_shift_mode == "shared_rows_only":
+            self._interface_shift_nonzero_rows = self.plan.interface_row_count
+            self._noninterface_shift_nonzero_rows = 0
+        else:
+            self._interface_shift_nonzero_rows = 0
+            self._noninterface_shift_nonzero_rows = 0
 
         local_weight_values = self._partition_weight_error_values()
         if local_weight_values.size:
@@ -201,9 +216,19 @@ class FactorFreeLocalSlabKrylovPc:
             self._local_result.getArray(readonly=True)[positions],
             dtype=PETSc.ScalarType,
         ).copy()
-        result += self._local_shift[positions] * np.asarray(
+        shifted_values = self._local_shift[positions] * np.asarray(
             values, dtype=PETSc.ScalarType
         )
+        if self._interface_shift_mode == "shared_rows_only":
+            interface_mask = np.asarray(
+                self.plan.interface_masks_by_slab[slab],
+                dtype=PETSc.ScalarType,
+            )
+            if interface_mask.size != positions.size:
+                raise RuntimeError("interface mask is not owner-row aligned")
+            result += interface_mask * shifted_values
+        else:
+            result += shifted_values
         return result
 
     def _fixed_step_gmres(self, slab: int, rhs: np.ndarray) -> tuple[np.ndarray, bool]:
@@ -282,12 +307,18 @@ class FactorFreeLocalSlabKrylovPc:
                 rhs = np.empty(0, dtype=PETSc.ScalarType)
             correction, _happy_breakdown = self._fixed_step_gmres(slab, rhs)
             if self.rank == int(self.plan.slab_owners[slab]):
-                weights = np.asarray(
-                    self.plan.partition_weights_by_slab[slab],
-                    dtype=PETSc.ScalarType,
-                )
+                if self._variant == "ras":
+                    weights = np.asarray(
+                        self.plan.ras_core_masks_by_slab[slab],
+                        dtype=PETSc.ScalarType,
+                    )
+                else:
+                    weights = np.asarray(
+                        self.plan.partition_weights_by_slab[slab],
+                        dtype=PETSc.ScalarType,
+                    )
                 if weights.size != positions.size:
-                    raise RuntimeError("partition weights are not owner-row aligned")
+                    raise RuntimeError("slab correction mask is not owner-row aligned")
                 correction_values[positions] += weights * correction
         self._scatter.scatter(
             self._local_correction,
@@ -303,7 +334,7 @@ class FactorFreeLocalSlabKrylovPc:
 
     @property
     def diagnostics(self) -> dict[str, Any]:
-        return {
+        diagnostics = {
             "profile": "factor_free_local_slab_krylov",
             "num_slabs": self.num_slabs,
             "slab_owners": list(self.plan.slab_owners),
@@ -312,7 +343,7 @@ class FactorFreeLocalSlabKrylovPc:
             "local_krylov_steps": self._local_krylov_steps,
             "local_inner_preconditioner": "none",
             "outer_requires_fgmres": True,
-            "partition_weighted_additive_schwarz": True,
+            "partition_weighted_additive_schwarz": self._variant == "partition",
             "partition_weight_sum_error": self._partition_weight_sum_error_value,
             "partition_weight_min": self._partition_weight_min_value,
             "partition_weight_max": self._partition_weight_max_value,
@@ -336,6 +367,19 @@ class FactorFreeLocalSlabKrylovPc:
             ),
             "one_level_mean_apply_s": self._apply_elapsed_s / max(self.apply_count, 1),
         }
+        if self._variant == "ras":
+            diagnostics.update(
+                {
+                    "variant": "ras",
+                    "correction_partition": "one_hot_ras",
+                    "ras_core_sum_error": self.plan.ras_core_sum_error,
+                    "interface_row_count": self.plan.interface_row_count,
+                    "interface_shift_mode": self._interface_shift_mode,
+                    "interface_shift_nonzero_rows": self._interface_shift_nonzero_rows,
+                    "noninterface_shift_nonzero_rows": self._noninterface_shift_nonzero_rows,
+                }
+            )
+        return diagnostics
 
     def _partition_weight_error_values(self) -> np.ndarray:
         values = []

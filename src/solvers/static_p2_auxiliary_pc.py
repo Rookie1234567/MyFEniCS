@@ -242,6 +242,15 @@ class P2AuxiliaryDiagonalModalPc:
             + (self.p2_shifted_matrix.getSize()[0] + 1)
             * np.dtype(PETSc.IntType).itemsize
         )
+        patch_diagnostics = (
+            self._fine_patch.diagnostics if self._fine_patch is not None else None
+        )
+        factor_free_profile = (
+            "never_materialized_p2_factor_free_slab_ras_auxiliary"
+            if patch_diagnostics is not None
+            and patch_diagnostics.get("variant") == "ras"
+            else "never_materialized_p2_factor_free_slab_auxiliary"
+        )
         transfer_audit = self.transfer.audit
         transfer_bytes = {
             "owner_local_stencil_nbytes": int(
@@ -270,7 +279,7 @@ class P2AuxiliaryDiagonalModalPc:
             "profile": (
                 "never_materialized_p2_auxiliary"
                 if self._fine_patch is None
-                else "never_materialized_p2_factor_free_slab_auxiliary"
+                else factor_free_profile
             ),
             "fine_operator_kind": "borrowed_p6_condensed_dtn_action",
             "global_p6_matrix_materialized": False,
@@ -340,7 +349,7 @@ class P2AuxiliaryDiagonalModalPc:
                 "pre_post": True,
             }
         else:
-            info_dict["factor_free_slab_patch"] = self._fine_patch.diagnostics
+            info_dict["factor_free_slab_patch"] = patch_diagnostics
             info_dict["outer_requires_fgmres"] = True
             info_dict["high_order_patch_kind"] = "factor_free_local_slab_krylov"
         return info_dict
@@ -406,8 +415,14 @@ def build_p2_auxiliary_setup(
     config: Any,
     fine_schur_action: PETSc.Mat | None = None,
     local_krylov_steps: Literal[2, 4] = 2,
+    optimized_schwarz: bool = False,
 ) -> tuple[P2AuxiliaryDiagonalModalPc, Any, PETSc.Vec, dict[str, Any]]:
     """Build the same-mesh p2 auxiliary PC without a p6 global matrix."""
+
+    if optimized_schwarz and fine_schur_action is None:
+        raise ValueError("optimized Schwarz requires the pure p6 Schur action")
+    if optimized_schwarz and local_krylov_steps != 4:
+        raise ValueError("optimized Schwarz is fixed to four local Krylov steps")
 
     p2_config = replace(
         config,
@@ -457,7 +472,7 @@ def build_p2_auxiliary_setup(
         shifted = fine_diagonal.duplicate()
         global_scale = float(diagonal_audit["global_diagonal_max_abs"])
         absolute = np.abs(fine_diagonal.getArray(readonly=True))
-        shifted.getArray()[:] = (
+        shift_values = (
             -1j
             * 0.1
             * np.maximum(
@@ -465,12 +480,17 @@ def build_p2_auxiliary_setup(
                 1.0e-12 * global_scale,
             )
         )
+        shifted.getArray()[:] = shift_values
         shifted.assemble()
         fine_patch = FactorFreeLocalSlabKrylovPc(
             fine_schur_action,
             owner_plan,
             shifted,
             local_krylov_steps=local_krylov_steps,
+            variant="ras" if optimized_schwarz else "partition",
+            interface_shift_mode=(
+                "shared_rows_only" if optimized_schwarz else "all_rows"
+            ),
         )
         shifted.destroy()
         patch_diagnostics = fine_patch.diagnostics
@@ -499,6 +519,22 @@ def build_p2_auxiliary_setup(
                 "global_A_materialized_by_pc"
             ],
         }
+        if optimized_schwarz:
+            factor_free_patch_audit.update(
+                {
+                    "variant": patch_diagnostics["variant"],
+                    "correction_partition": patch_diagnostics["correction_partition"],
+                    "ras_core_sum_error": patch_diagnostics["ras_core_sum_error"],
+                    "interface_row_count": patch_diagnostics["interface_row_count"],
+                    "interface_shift_mode": patch_diagnostics["interface_shift_mode"],
+                    "interface_shift_nonzero_rows": patch_diagnostics[
+                        "interface_shift_nonzero_rows"
+                    ],
+                    "noninterface_shift_nonzero_rows": patch_diagnostics[
+                        "noninterface_shift_nonzero_rows"
+                    ],
+                }
+            )
     else:
         fine_patch = None
     pc = P2AuxiliaryDiagonalModalPc(
@@ -509,9 +545,13 @@ def build_p2_auxiliary_setup(
         fine_patch=fine_patch,
     )
     profile = (
-        "never_materialized_p2_factor_free_slab_auxiliary"
-        if fine_schur_action is not None
-        else "never_materialized_p2_auxiliary"
+        "never_materialized_p2_factor_free_slab_ras_auxiliary"
+        if optimized_schwarz
+        else (
+            "never_materialized_p2_factor_free_slab_auxiliary"
+            if fine_schur_action is not None
+            else "never_materialized_p2_auxiliary"
+        )
     )
     audit = {
         "profile": profile,

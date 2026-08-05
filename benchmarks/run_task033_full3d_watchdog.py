@@ -665,6 +665,16 @@ def _task037_m4_factor_free_status(
     )
 
 
+def _task037_m4_optimized_schwarz_status(
+    args: argparse.Namespace, qualification: Mapping[str, Any]
+) -> str | None:
+    if not args.task037_m4_optimized_schwarz:
+        return None
+    phase = "full" if args.task037_f3_full else f"{args.task037_f3_screen}_screen"
+    result = "pass" if qualification["pass"] else "not_pass"
+    return f"task037_m4_p2_factor_free_slab_ras_steps4_{phase}_{result}"
+
+
 def _task037_f3_assembled_fgmres_port(
     run_dir: Path,
     screen_iterations: int,
@@ -675,11 +685,13 @@ def _task037_f3_assembled_fgmres_port(
     p2_auxiliary: bool = False,
     factor_free_slab: bool = False,
     factor_free_local_steps: int = 2,
+    optimized_schwarz: bool = False,
     overlap0125_partition: bool = False,
 ):
     from src.solvers.static_condensed_iterative import (
         solve_assembled_static_condensed_fgmres,
         solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres,
+        solve_never_materialized_p2_factor_free_slab_ras_auxiliary_fgmres,
         solve_never_materialized_overlap0125_partition_fgmres,
         solve_never_materialized_p2_auxiliary_fgmres,
         solve_never_materialized_static_condensed_fgmres,
@@ -717,7 +729,18 @@ def _task037_f3_assembled_fgmres_port(
                 },
             )
 
-        if factor_free_slab:
+        if optimized_schwarz:
+            snapshot, audit = (
+                solve_never_materialized_p2_factor_free_slab_ras_auxiliary_fgmres(
+                    request,
+                    screen_iterations=screen_iterations,
+                    residual_observer=observe,
+                    lifecycle_observer=(
+                        observe_lifecycle if lifecycle_enabled else None
+                    ),
+                )
+            )
+        elif factor_free_slab:
             snapshot, audit = (
                 solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
                     request,
@@ -774,6 +797,7 @@ def _task037_f3_screen_gate(
     expected_screen_iterations: int,
     observed_wall_seconds: float | None,
     expected_factor_free_steps: int | None = None,
+    expected_factor_free_variant: str | None = None,
 ) -> dict[str, bool]:
     m3_profile = (
         audit.get("solver_profile")
@@ -782,6 +806,10 @@ def _task037_f3_screen_gate(
     m4_factor_free_profile = (
         audit.get("solver_profile")
         == "never_materialized_p2_factor_free_slab_auxiliary"
+    )
+    m4_optimized_schwarz_profile = (
+        audit.get("solver_profile")
+        == "never_materialized_p2_factor_free_slab_ras_auxiliary"
     )
     m4_profile = audit.get("solver_profile") == "never_materialized_p2_auxiliary"
     try:
@@ -818,7 +846,7 @@ def _task037_f3_screen_gate(
         inventory = audit["no_global_factor_inventory"]
         coarse_dimension = int(coarse["dimension"])
         factor_free_steps = expected_factor_free_steps
-        if m4_factor_free_profile:
+        if m4_factor_free_profile or m4_optimized_schwarz_profile:
             expected_candidate = {
                 "outer_ksp": "fgmres",
                 "pc_side": "right",
@@ -838,6 +866,14 @@ def _task037_f3_screen_gate(
                 "fine_schur_action_kind": ("borrowed_p6_static_local_schur_action"),
                 "wave_coarse_post_smooth": False,
             }
+            if m4_optimized_schwarz_profile:
+                expected_candidate.update(
+                    {
+                        "variant": "ras",
+                        "correction_partition": "one_hot_ras",
+                        "interface_shift_mode": "shared_rows_only",
+                    }
+                )
             counts = (
                 int(audit["operator_apply_count"]),
                 int(coarse["apply_count"]),
@@ -848,6 +884,31 @@ def _task037_f3_screen_gate(
             weight_error = partition.get("partition_weight_sum_error")
             weight_min = partition.get("partition_weight_min")
             weight_max = partition.get("partition_weight_max")
+            variant_gate = (
+                not m4_optimized_schwarz_profile
+                and expected_factor_free_variant is None
+                and patch.get("partition_weighted_additive_schwarz") is True
+            ) or (
+                m4_optimized_schwarz_profile
+                and expected_factor_free_variant == "ras"
+                and partition.get("variant") == "ras"
+                and partition.get("correction_partition") == "one_hot_ras"
+                and partition.get("ras_core_sum_error") is not None
+                and float(partition["ras_core_sum_error"]) <= 1.0e-12
+                and partition.get("interface_row_count", 0) > 0
+                and partition.get("interface_shift_mode") == "shared_rows_only"
+                and partition.get("interface_shift_nonzero_rows")
+                == partition.get("interface_row_count")
+                and partition.get("noninterface_shift_nonzero_rows") == 0
+                and patch.get("variant") == "ras"
+                and patch.get("correction_partition") == "one_hot_ras"
+                and patch.get("interface_shift_mode") == "shared_rows_only"
+                and patch.get("interface_shift_nonzero_rows")
+                == patch.get("interface_row_count")
+                and patch.get("interface_row_count", 0) > 0
+                and patch.get("noninterface_shift_nonzero_rows") == 0
+                and patch.get("partition_weighted_additive_schwarz") is False
+            )
             partition_or_factor_gate = (
                 partition.get("p6_slab_matrix_materialized") is False
                 and partition.get("p6_slab_matrix_count") == 0
@@ -861,7 +922,7 @@ def _task037_f3_screen_gate(
                 and partition.get("local_inner_preconditioner") == "none"
                 and partition.get("outer_requires_fgmres") is True
                 and partition.get("global_A_materialized_by_pc") is False
-                and patch.get("partition_weighted_additive_schwarz") is True
+                and variant_gate
                 and patch.get("local_krylov_steps") == factor_free_steps
                 and patch.get("local_inner_preconditioner") == "none"
                 and patch.get("outer_requires_fgmres") is True
@@ -889,11 +950,19 @@ def _task037_f3_screen_gate(
                 and inventory.get("p2_distributed_mumps_factor_count") == 1
                 and inventory.get("wave_coarse_dense_lu_count") == 1
                 and smoother.get("profile")
-                == "never_materialized_p2_factor_free_slab_auxiliary"
+                == (
+                    "never_materialized_p2_factor_free_slab_ras_auxiliary"
+                    if m4_optimized_schwarz_profile
+                    else "never_materialized_p2_factor_free_slab_auxiliary"
+                )
                 and smoother.get("fine_operator_kind")
                 == "borrowed_p6_condensed_dtn_action"
                 and p2_setup.get("profile")
-                == "never_materialized_p2_factor_free_slab_auxiliary"
+                == (
+                    "never_materialized_p2_factor_free_slab_ras_auxiliary"
+                    if m4_optimized_schwarz_profile
+                    else "never_materialized_p2_factor_free_slab_auxiliary"
+                )
                 and p2_setup.get("fine_operator_kind")
                 == "borrowed_p6_condensed_dtn_action"
                 and p2_setup.get("fine_schur_action_kind")
@@ -1032,7 +1101,9 @@ def _task037_f3_screen_gate(
             predicted_wall_seconds = (
                 float(observed_wall_seconds) * predicted_iterations / iterations
             )
-        if (m3_profile or m4_factor_free_profile) and expected_screen_iterations == 20:
+        if (
+            m3_profile or m4_factor_free_profile or m4_optimized_schwarz_profile
+        ) and expected_screen_iterations == 20:
             if {0, 10, 20}.issubset(reported):
                 m3a_screen_decline = (
                     reported[20] < reported[10] < reported[0]
@@ -1091,6 +1162,11 @@ def _task037_f3_screen_gate(
         **(
             {"m4_factor_free_screen_decline": m3a_screen_decline}
             if m4_factor_free_profile
+            else {}
+        ),
+        **(
+            {"m4_optimized_schwarz_screen_decline": m3a_screen_decline}
+            if m4_optimized_schwarz_profile
             else {}
         ),
     }
@@ -1160,6 +1236,7 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         ),
         "task037_m4_p2_auxiliary": bool(args.task037_m4_p2_auxiliary),
         "task037_m4_factor_free_slab": bool(args.task037_m4_factor_free_slab),
+        "task037_m4_optimized_schwarz": bool(args.task037_m4_optimized_schwarz),
         "task037_m4_factor_free_local_steps": int(
             args.task037_m4_factor_free_local_steps
         ),
@@ -1325,6 +1402,7 @@ def _worker(args: argparse.Namespace) -> int:
             p2_auxiliary=args.task037_m4_p2_auxiliary,
             factor_free_slab=args.task037_m4_factor_free_slab,
             factor_free_local_steps=args.task037_m4_factor_free_local_steps,
+            optimized_schwarz=args.task037_m4_optimized_schwarz,
             overlap0125_partition=args.task037_m3a_overlap0125_partition,
         )
         if args.task037_m2c_never_materialized:
@@ -1490,6 +1568,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--task037-m3a-overlap0125-partition", action="store_true")
     parser.add_argument("--task037-m4-p2-auxiliary", action="store_true")
     parser.add_argument("--task037-m4-factor-free-slab", action="store_true")
+    parser.add_argument("--task037-m4-optimized-schwarz", action="store_true")
     parser.add_argument(
         "--task037-m4-factor-free-local-steps",
         type=int,
@@ -1848,6 +1927,30 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037-m4-factor-free-local-steps requires "
             "--task037-m4-factor-free-slab."
+        )
+    if args.task037_m4_optimized_schwarz and not (
+        args.task037_m4_factor_free_slab
+        and args.task037_m4_p2_auxiliary
+        and args.task037_m2c_never_materialized
+        and args.task037_m4_factor_free_local_steps == 4
+        and not args.task037_f5b_released_profile
+        and not args.task037_m3a_overlap0125_partition
+        and not args.task037_f0_vector_observer
+        and args.task037_f1_direct_trace_oracle is None
+        and not args.task037_m0_lifecycle_audit
+        and (
+            (args.task037_f3_screen in (20, 100, 200) and args.mpi_size == 8)
+            or (
+                args.task037_f3_full
+                and args.task037_f3_screen is None
+                and args.mpi_size in (1, 8)
+                and args.task037_canonical_vector_export
+            )
+        )
+    ):
+        parser.error(
+            "--task037-m4-optimized-schwarz requires the fixed-four-step "
+            "M2c/M4 factor-free screen or canonical full path."
         )
     if args.task037_m0_lifecycle_audit and not (
         args.task037_f3_full and args.task037_f5b_released_profile
@@ -3110,16 +3213,28 @@ def _qualify(
 ) -> dict[str, Any]:
     matrix = solver_summary.get("matrix_stats") or {}
     m3a_profile = bool(args.task037_m3a_overlap0125_partition)
-    m4_factor_free_profile = bool(args.task037_m4_factor_free_slab)
-    m4_profile = bool(args.task037_m4_p2_auxiliary and not m4_factor_free_profile)
+    m4_optimized_schwarz_profile = bool(args.task037_m4_optimized_schwarz)
+    m4_factor_free_profile = bool(
+        args.task037_m4_factor_free_slab and not m4_optimized_schwarz_profile
+    )
+    m4_profile = bool(
+        args.task037_m4_p2_auxiliary
+        and not m4_factor_free_profile
+        and not m4_optimized_schwarz_profile
+    )
     m2c_profile = bool(
         args.task037_m2c_never_materialized
         and not m3a_profile
         and not m4_profile
         and not m4_factor_free_profile
+        and not m4_optimized_schwarz_profile
     )
     action_only_profile = (
-        m2c_profile or m3a_profile or m4_profile or m4_factor_free_profile
+        m2c_profile
+        or m3a_profile
+        or m4_profile
+        or m4_factor_free_profile
+        or m4_optimized_schwarz_profile
     )
     condensation = solver_summary.get("cell_static_condensation") or {}
     common = {
@@ -3155,8 +3270,11 @@ def _qualify(
             solver_summary.get("elapsed_seconds"),
             expected_factor_free_steps=(
                 int(args.task037_m4_factor_free_local_steps)
-                if m4_factor_free_profile
+                if m4_factor_free_profile or m4_optimized_schwarz_profile
                 else None
+            ),
+            expected_factor_free_variant=(
+                "ras" if m4_optimized_schwarz_profile else None
             ),
         )
         core_profile = core_audit.get("solver_profile")
@@ -3341,20 +3459,24 @@ def _qualify(
                     ),
                 }
             )
-        elif m4_factor_free_profile:
+        elif m4_factor_free_profile or m4_optimized_schwarz_profile:
             partition = core_audit.get("partition_audit") or {}
             inventory = core_audit.get("no_global_factor_inventory") or {}
             p2_pc = core_audit.get("smoother_diagnostics") or {}
             p2_setup = core_audit.get("p2_auxiliary_audit") or {}
             patch = p2_pc.get("factor_free_slab_patch") or {}
             factor_free_steps = int(args.task037_m4_factor_free_local_steps)
+            expected_factor_free_profile = (
+                "never_materialized_p2_factor_free_slab_ras_auxiliary"
+                if m4_optimized_schwarz_profile
+                else "never_materialized_p2_factor_free_slab_auxiliary"
+            )
             resource = resource_summary if isinstance(resource_summary, dict) else {}
             memory_authority_gib = resource.get("memory_authority_gib")
             checks.update(
                 {
                     "m4_factor_free_core_profile": (
-                        core_profile
-                        == "never_materialized_p2_factor_free_slab_auxiliary"
+                        core_profile == expected_factor_free_profile
                     ),
                     "m4_factor_free_core_no_assembled_release": (
                         core_released is False
@@ -3388,6 +3510,27 @@ def _qualify(
                         < float(partition.get("partition_weight_min", 0.0))
                         <= float(partition.get("partition_weight_max", 0.0))
                         <= 1.0
+                        and (
+                            not m4_optimized_schwarz_profile
+                            or (
+                                args.task037_m4_optimized_schwarz
+                                and partition.get("variant") == "ras"
+                                and partition.get("correction_partition")
+                                == "one_hot_ras"
+                                and isinstance(
+                                    partition.get("ras_core_sum_error"),
+                                    (int, float),
+                                )
+                                and partition["ras_core_sum_error"] <= 1.0e-12
+                                and int(partition.get("interface_row_count", 0)) > 0
+                                and partition.get("interface_shift_mode")
+                                == "shared_rows_only"
+                                and partition.get("interface_shift_nonzero_rows")
+                                == partition.get("interface_row_count")
+                                and partition.get("noninterface_shift_nonzero_rows")
+                                == 0
+                            )
+                        )
                     ),
                     "m4_factor_free_local_krylov": (
                         patch.get("profile") == "factor_free_local_slab_krylov"
@@ -3404,6 +3547,21 @@ def _qualify(
                         == factor_free_steps * 16 * int(patch.get("apply_count", 0))
                         and patch.get("restricted_action_calls")
                         == patch.get("expected_action_calls")
+                        and (
+                            not m4_optimized_schwarz_profile
+                            or (
+                                patch.get("variant") == "ras"
+                                and patch.get("correction_partition") == "one_hot_ras"
+                                and patch.get("interface_shift_mode")
+                                == "shared_rows_only"
+                                and patch.get("interface_shift_nonzero_rows")
+                                == patch.get("interface_row_count")
+                                and int(patch.get("interface_row_count", 0)) > 0
+                                and patch.get("noninterface_shift_nonzero_rows") == 0
+                                and patch.get("partition_weighted_additive_schwarz")
+                                is False
+                            )
+                        )
                     ),
                     "m4_factor_free_no_p6_factor": (
                         inventory.get("full_p6_global_direct_factor_count") == 0
@@ -3421,14 +3579,12 @@ def _qualify(
                         and p2_pc.get("p2_unshifted_matrix_retained") is False
                     ),
                     "m4_factor_free_operator_kinds": (
-                        p2_setup.get("profile")
-                        == "never_materialized_p2_factor_free_slab_auxiliary"
+                        p2_setup.get("profile") == expected_factor_free_profile
                         and p2_setup.get("fine_operator_kind")
                         == "borrowed_p6_condensed_dtn_action"
                         and p2_setup.get("fine_schur_action_kind")
                         == "borrowed_p6_static_local_schur_action"
-                        and p2_pc.get("profile")
-                        == "never_materialized_p2_factor_free_slab_auxiliary"
+                        and p2_pc.get("profile") == expected_factor_free_profile
                     ),
                     "m4_factor_free_p2_apply_count": (
                         int(p2_pc.get("apply_count", 0)) > 0
@@ -3450,7 +3606,7 @@ def _qualify(
                     ),
                     "m4_factor_free_summary_profile": (
                         solver_summary.get("external_solver_profile")
-                        == "never_materialized_p2_factor_free_slab_auxiliary"
+                        == expected_factor_free_profile
                     ),
                 }
             )
@@ -3707,6 +3863,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
                 str(args.task037_m4_factor_free_local_steps),
             )
         )
+    if args.task037_m4_optimized_schwarz:
+        command.append("--task037-m4-optimized-schwarz")
     if args.task037_canonical_vector_export:
         command.append("--task037-canonical-vector-export")
     if args.task037_m0_lifecycle_audit:
@@ -4394,8 +4552,13 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["pass"] = False
     m3a_status = _task037_m3a_status(args, qualification)
     m4_factor_free_status = _task037_m4_factor_free_status(args, qualification)
+    m4_optimized_schwarz_status = _task037_m4_optimized_schwarz_status(
+        args, qualification
+    )
     status = (
-        m4_factor_free_status
+        m4_optimized_schwarz_status
+        if m4_optimized_schwarz_status is not None
+        else m4_factor_free_status
         if m4_factor_free_status is not None
         else f"task037_m4_p2_auxiliary_{args.task037_f3_screen}_screen_pass"
         if qualification["pass"] and args.task037_m4_p2_auxiliary

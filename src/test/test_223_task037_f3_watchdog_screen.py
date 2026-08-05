@@ -99,13 +99,15 @@ def _m4_audit(screen_iterations=20):
     return audit
 
 
-def _m4_factor_free_audit(screen_iterations=20):
+def _m4_factor_free_audit(
+    screen_iterations=20, *, optimized_schwarz=False, local_krylov_steps=2
+):
     audit = _audit(screen_iterations)
     patch = {
         "profile": "factor_free_local_slab_krylov",
         "num_slabs": 16,
         "partition_weighted_additive_schwarz": True,
-        "local_krylov_steps": 2,
+        "local_krylov_steps": local_krylov_steps,
         "local_inner_preconditioner": "none",
         "outer_requires_fgmres": True,
         "partition_weight_sum_error": 0.0,
@@ -117,8 +119,8 @@ def _m4_factor_free_audit(screen_iterations=20):
         "p6_factor_nnz": 0,
         "global_A_materialized_by_pc": False,
         "apply_count": 2,
-        "restricted_action_calls": 64,
-        "expected_action_calls": 64,
+        "restricted_action_calls": local_krylov_steps * 16 * 2,
+        "expected_action_calls": local_krylov_steps * 16 * 2,
     }
     audit.update(
         {
@@ -137,7 +139,7 @@ def _m4_factor_free_audit(screen_iterations=20):
                 "num_slabs": 16,
                 "overlap_fraction": 0.125,
                 "interpolation": "partition",
-                "local_krylov_steps": 2,
+                "local_krylov_steps": local_krylov_steps,
                 "local_inner_preconditioner": "none",
                 "outer_requires_fgmres": True,
                 "p2_auxiliary_correction": True,
@@ -170,7 +172,7 @@ def _m4_factor_free_audit(screen_iterations=20):
                 "num_slabs": 16,
                 "overlap_fraction": 0.125,
                 "interpolation": "partition",
-                "local_krylov_steps": 2,
+                "local_krylov_steps": local_krylov_steps,
                 "local_inner_preconditioner": "none",
                 "outer_requires_fgmres": True,
                 "global_A_materialized_by_pc": False,
@@ -191,6 +193,48 @@ def _m4_factor_free_audit(screen_iterations=20):
             },
         }
     )
+    if optimized_schwarz:
+        patch.update(
+            {
+                "variant": "ras",
+                "correction_partition": "one_hot_ras",
+                "ras_core_sum_error": 0.0,
+                "interface_row_count": 3,
+                "interface_shift_mode": "shared_rows_only",
+                "interface_shift_nonzero_rows": 3,
+                "noninterface_shift_nonzero_rows": 0,
+                "partition_weighted_additive_schwarz": False,
+            }
+        )
+        audit["solver_profile"] = "never_materialized_p2_factor_free_slab_ras_auxiliary"
+        audit["candidate"].update(
+            {
+                "variant": "ras",
+                "correction_partition": "one_hot_ras",
+                "interface_shift_mode": "shared_rows_only",
+            }
+        )
+        audit["p2_auxiliary_audit"].update(
+            {
+                "profile": audit["solver_profile"],
+            }
+        )
+        audit["smoother_diagnostics"].update(
+            {
+                "profile": audit["solver_profile"],
+            }
+        )
+        audit["partition_audit"].update(
+            {
+                "variant": "ras",
+                "correction_partition": "one_hot_ras",
+                "ras_core_sum_error": 0.0,
+                "interface_row_count": 3,
+                "interface_shift_mode": "shared_rows_only",
+                "interface_shift_nonzero_rows": 3,
+                "noninterface_shift_nonzero_rows": 0,
+            }
+        )
     return audit
 
 
@@ -428,6 +472,26 @@ def test_parser_scope_and_worker_command(tmp_path):
             ]
             == "4"
         )
+        m4_ras = watchdog._parse_args(
+            m4_screen_args
+            + [
+                "--task037-m4-p2-auxiliary",
+                "--task037-m4-factor-free-slab",
+                "--task037-m4-factor-free-local-steps",
+                "4",
+                "--task037-m4-optimized-schwarz",
+            ]
+        )
+        m4_ras_command = watchdog._worker_command(m4_ras, tmp_path)
+        assert m4_ras.task037_m4_optimized_schwarz
+        assert m4_ras_command.count("--task037-m4-optimized-schwarz") == 1
+        assert m4_ras_command.count("--task037-m4-factor-free-slab") == 1
+        assert (
+            m4_ras_command[
+                m4_ras_command.index("--task037-m4-factor-free-local-steps") + 1
+            ]
+            == "4"
+        )
     with pytest.raises(SystemExit):
         watchdog._parse_args(
             base
@@ -439,6 +503,17 @@ def test_parser_scope_and_worker_command(tmp_path):
         )
     with pytest.raises(SystemExit):
         watchdog._parse_args(m2c_args + ["--task037-m4-factor-free-local-steps", "4"])
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(m2c_args + ["--task037-m4-optimized-schwarz"])
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(
+            m2c_args
+            + [
+                "--task037-m4-p2-auxiliary",
+                "--task037-m4-factor-free-slab",
+                "--task037-m4-optimized-schwarz",
+            ]
+        )
     m4_factor_free_full_args = full_args + [
         "--task037-m2c-never-materialized",
         "--task037-m4-p2-auxiliary",
@@ -469,6 +544,23 @@ def test_parser_scope_and_worker_command(tmp_path):
             watchdog._parse_args(
                 full_factor_free_mpi_args + ["--task037-canonical-vector-export"]
             )
+    ras_full_base = m4_factor_free_full_args + [
+        "--task037-m4-factor-free-local-steps",
+        "4",
+        "--task037-m4-optimized-schwarz",
+    ]
+    ras_full_mpi8 = watchdog._parse_args(
+        ras_full_base + ["--task037-canonical-vector-export"]
+    )
+    assert ras_full_mpi8.task037_m4_optimized_schwarz
+    ras_full_command = watchdog._worker_command(ras_full_mpi8, tmp_path)
+    assert ras_full_command.count("--task037-m4-optimized-schwarz") == 1
+    assert (
+        ras_full_command[
+            ras_full_command.index("--task037-m4-factor-free-local-steps") + 1
+        ]
+        == "4"
+    )
     m3 = watchdog._parse_args(m2c_args + ["--task037-m3a-overlap0125-partition"])
     assert m3.task037_m3a_overlap0125_partition
     assert (
@@ -610,6 +702,7 @@ def test_worker_factory_writes_rank0_artifacts(tmp_path, monkeypatch):
         task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
+        task037_m4_optimized_schwarz=False,
         task037_canonical_vector_export=True,
         task037_m0_lifecycle_audit=True,
         task035d_nested_p_dwr_phase=None,
@@ -678,6 +771,14 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
             "solver_profile": "never_materialized_p2_factor_free_slab_auxiliary"
         }
 
+    def fake_ras_action_core(request, **kwargs):
+        selected_profiles.append("m4-ras")
+        captured["request"] = request
+        captured["kwargs"] = kwargs
+        return object(), {
+            "solver_profile": "never_materialized_p2_factor_free_slab_ras_auxiliary"
+        }
+
     def fake_m3a_action_core(request, **kwargs):
         selected_profiles.append("m3a")
         selected_iterations.append(kwargs["screen_iterations"])
@@ -708,6 +809,11 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(
         "src.solvers.static_condensed_iterative."
+        "solve_never_materialized_p2_factor_free_slab_ras_auxiliary_fgmres",
+        fake_ras_action_core,
+    )
+    monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative."
         "solve_never_materialized_overlap0125_partition_fgmres",
         fake_m3a_action_core,
     )
@@ -729,17 +835,20 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
         task035d_nested_p_dwr_phase=None,
         task035d_selective_face_dwr_phase=None,
     )
-    for m3a, m4, factor_free in (
-        (False, False, False),
-        (False, True, False),
-        (False, True, True),
-        (True, False, False),
+    for m3a, m4, factor_free, optimized in (
+        (False, False, False, False),
+        (False, True, False, False),
+        (False, True, True, False),
+        (False, True, True, True),
+        (True, False, False, False),
     ):
         args = SimpleNamespace(
             **common_args,
             task037_m3a_overlap0125_partition=m3a,
             task037_m4_p2_auxiliary=m4,
             task037_m4_factor_free_slab=factor_free,
+            task037_m4_factor_free_local_steps=(4 if optimized else 2),
+            task037_m4_optimized_schwarz=optimized,
         )
         assert watchdog._worker(args) == 0
     assert captured["retain"] is True
@@ -754,11 +863,20 @@ def test_worker_wraps_never_materialized_port(tmp_path, monkeypatch):
             "task037_m3a_overlap0125_partition": True,
             "task037_m4_p2_auxiliary": False,
             "task037_m4_factor_free_slab": False,
+            "task037_m4_factor_free_local_steps": 2,
+            "task037_m4_optimized_schwarz": False,
         }
     )
     assert watchdog._worker(full_args) == 0
     assert captured["kwargs"]["screen_iterations"] == 3000
-    assert selected_profiles == ["m2c", "m4", "m4-factor-free", "m3a", "m3a"]
+    assert selected_profiles == [
+        "m2c",
+        "m4",
+        "m4-factor-free",
+        "m4-ras",
+        "m3a",
+        "m3a",
+    ]
     assert selected_iterations == [20, 3000]
 
 
@@ -771,6 +889,7 @@ def test_f3_qualification_uses_core_audit_gate():
         task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
+        task037_m4_optimized_schwarz=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
         allow_swap=False,
@@ -926,6 +1045,7 @@ def test_m2c_qualification_requires_action_profile_and_memory_gate():
         task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
+        task037_m4_optimized_schwarz=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
         allow_swap=False,
@@ -998,6 +1118,7 @@ def test_m4_qualification_uses_final_p2_smoother_and_resource_gate():
         task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=True,
         task037_m4_factor_free_slab=False,
+        task037_m4_optimized_schwarz=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
         allow_swap=False,
@@ -1149,6 +1270,71 @@ def test_m4_qualification_uses_final_p2_smoother_and_resource_gate():
     )
     assert watchdog._task037_m4_factor_free_status(args, {"pass": True}) is None
 
+    ras_args = SimpleNamespace(
+        **{
+            **vars(factor_free_args),
+            "task037_m4_factor_free_local_steps": 4,
+            "task037_m4_optimized_schwarz": True,
+        }
+    )
+    ras_audit = _m4_factor_free_audit(optimized_schwarz=True, local_krylov_steps=4)
+    ras_summary = {
+        **summary,
+        "external_solver_profile": ras_audit["solver_profile"],
+    }
+    ras_kwargs = {
+        **factor_free_kwargs,
+        "args": ras_args,
+        "solver_summary": ras_summary,
+        "task037_f3_core_audit": ras_audit,
+    }
+    ras_screen = watchdog._task037_f3_screen_gate(
+        ras_audit,
+        20,
+        None,
+        expected_factor_free_steps=4,
+        expected_factor_free_variant="ras",
+    )
+    assert ras_screen["candidate"]
+    assert ras_screen["partition_and_ilu"]
+    assert watchdog._qualify(**ras_kwargs)["pass"]
+    ordinary_artifact = _m4_factor_free_audit(local_krylov_steps=4)
+    ordinary_artifact["p2_auxiliary_audit"]["profile"] = (
+        "never_materialized_p2_factor_free_slab_auxiliary"
+    )
+    assert not watchdog._qualify(
+        **{**ras_kwargs, "task037_f3_core_audit": ordinary_artifact}
+    )["pass"]
+    wrong_variant = _m4_factor_free_audit(optimized_schwarz=True, local_krylov_steps=4)
+    wrong_variant["partition_audit"]["variant"] = "partition"
+    assert not watchdog._qualify(
+        **{**ras_kwargs, "task037_f3_core_audit": wrong_variant}
+    )["pass"]
+    assert (
+        watchdog._task037_m4_optimized_schwarz_status(ras_args, {"pass": True})
+        == "task037_m4_p2_factor_free_slab_ras_steps4_20_screen_pass"
+    )
+    assert (
+        watchdog._task037_m4_optimized_schwarz_status(ras_args, {"pass": False})
+        == "task037_m4_p2_factor_free_slab_ras_steps4_20_screen_not_pass"
+    )
+    ras_full_args = SimpleNamespace(
+        **{
+            **vars(ras_args),
+            "task037_f3_screen": None,
+            "task037_f3_full": True,
+            "task037_canonical_vector_export": True,
+        }
+    )
+    assert (
+        watchdog._task037_m4_optimized_schwarz_status(ras_full_args, {"pass": True})
+        == "task037_m4_p2_factor_free_slab_ras_steps4_full_pass"
+    )
+    assert (
+        watchdog._task037_m4_optimized_schwarz_status(ras_full_args, {"pass": False})
+        == "task037_m4_p2_factor_free_slab_ras_steps4_full_not_pass"
+    )
+
 
 def test_m3a_partition_profile_and_memory_gates():
     args = SimpleNamespace(
@@ -1159,6 +1345,7 @@ def test_m3a_partition_profile_and_memory_gates():
         task037_m3a_overlap0125_partition=True,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
+        task037_m4_optimized_schwarz=False,
         task037_canonical_vector_export=False,
         run_kind="full-solve",
         allow_swap=False,
@@ -1277,6 +1464,7 @@ def test_ordinary_full_solve_rules_remain_strict():
         task037_m3a_overlap0125_partition=False,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
+        task037_m4_optimized_schwarz=False,
         run_kind="full-solve",
         allow_swap=False,
         polarization_kind="s",

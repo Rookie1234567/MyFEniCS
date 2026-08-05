@@ -39,6 +39,7 @@ __all__ = (
     "solve_never_materialized_overlap0125_partition_fgmres",
     "solve_never_materialized_p2_auxiliary_fgmres",
     "solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres",
+    "solve_never_materialized_p2_factor_free_slab_ras_auxiliary_fgmres",
 )
 _TINY = np.finfo(float).tiny
 
@@ -89,6 +90,7 @@ def _solve_static_condensed_fgmres_core(
         "never_materialized_owner_local_overlap0125_partition",
         "never_materialized_p2_auxiliary",
         "never_materialized_p2_factor_free_slab_auxiliary",
+        "never_materialized_p2_factor_free_slab_ras_auxiliary",
     ] = "assembled",
     release_assembled_matrix: Callable[[], None] | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
@@ -101,6 +103,7 @@ def _solve_static_condensed_fgmres_core(
         "never_materialized_owner_local_overlap0125_partition",
         "never_materialized_p2_auxiliary",
         "never_materialized_p2_factor_free_slab_auxiliary",
+        "never_materialized_p2_factor_free_slab_ras_auxiliary",
     ):
         raise ValueError("unsupported static-condensed FGMRES solver profile")
     exact_profile = (
@@ -111,6 +114,7 @@ def _solve_static_condensed_fgmres_core(
         "never_materialized_owner_local_overlap0125_partition",
         "never_materialized_p2_auxiliary",
         "never_materialized_p2_factor_free_slab_auxiliary",
+        "never_materialized_p2_factor_free_slab_ras_auxiliary",
     }
     m3a_profile = (
         solver_profile == "never_materialized_owner_local_overlap0125_partition"
@@ -118,10 +122,17 @@ def _solve_static_condensed_fgmres_core(
     p2_auxiliary_profile = solver_profile in {
         "never_materialized_p2_auxiliary",
         "never_materialized_p2_factor_free_slab_auxiliary",
+        "never_materialized_p2_factor_free_slab_ras_auxiliary",
     }
-    factor_free_p2_profile = (
-        solver_profile == "never_materialized_p2_factor_free_slab_auxiliary"
+    factor_free_p2_profile = solver_profile in {
+        "never_materialized_p2_factor_free_slab_auxiliary",
+        "never_materialized_p2_factor_free_slab_ras_auxiliary",
+    }
+    factor_free_p2_ras_profile = (
+        solver_profile == "never_materialized_p2_factor_free_slab_ras_auxiliary"
     )
+    if factor_free_p2_ras_profile and local_krylov_steps != 4:
+        raise ValueError("RAS factor-free p2 profile requires four local steps")
     if action_only != action_only_profile:
         raise ValueError("solver profile does not match the request type")
     if exact_profile and not action_only and release_assembled_matrix is None:
@@ -344,6 +355,7 @@ def _solve_static_condensed_fgmres_core(
                     config=request.config,
                     fine_schur_action=(fine_action if factor_free_p2_profile else None),
                     local_krylov_steps=local_krylov_steps,
+                    optimized_schwarz=factor_free_p2_ras_profile,
                 )
             )
             owned.extend((p2_transfer, p2_diagonal, p2_smoother))
@@ -374,6 +386,22 @@ def _solve_static_condensed_fgmres_core(
                     "partition_weight_min": patch_audit["partition_weight_min"],
                     "partition_weight_max": patch_audit["partition_weight_max"],
                 }
+                if factor_free_p2_ras_profile:
+                    partition_audit.update(
+                        {
+                            "variant": patch_audit["variant"],
+                            "correction_partition": patch_audit["correction_partition"],
+                            "ras_core_sum_error": patch_audit["ras_core_sum_error"],
+                            "interface_row_count": patch_audit["interface_row_count"],
+                            "interface_shift_mode": patch_audit["interface_shift_mode"],
+                            "interface_shift_nonzero_rows": patch_audit[
+                                "interface_shift_nonzero_rows"
+                            ],
+                            "noninterface_shift_nonzero_rows": patch_audit[
+                                "noninterface_shift_nonzero_rows"
+                            ],
+                        }
+                    )
             else:
                 partition_audit = {
                     "p6_slab_matrix_materialized": False,
@@ -726,6 +754,14 @@ def _solve_static_condensed_fgmres_core(
                 }
             ),
         }
+        if factor_free_p2_ras_profile:
+            candidate.update(
+                {
+                    "variant": "ras",
+                    "correction_partition": "one_hot_ras",
+                    "interface_shift_mode": "shared_rows_only",
+                }
+            )
         audit = {
             "matrix_type": "python_action_only" if action_only else "assembled",
             "global_A_materialized": not action_only,
@@ -910,5 +946,24 @@ def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
         local_krylov_steps=local_krylov_steps,
         residual_observer=residual_observer,
         solver_profile="never_materialized_p2_factor_free_slab_auxiliary",
+        lifecycle_observer=lifecycle_observer,
+    )
+
+
+def solve_never_materialized_p2_factor_free_slab_ras_auxiliary_fgmres(
+    request: Stage4NeverMaterializedLinearSolverRequest,
+    *,
+    screen_iterations: Literal[20, 100, 200] = 20,
+    residual_observer: Callable[[int, float, float], None] | None = None,
+    lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
+) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
+    """Run the fixed-four-step RAS factor-free p2 auxiliary profile."""
+
+    return _solve_static_condensed_fgmres_core(
+        request,
+        screen_iterations=screen_iterations,
+        local_krylov_steps=4,
+        residual_observer=residual_observer,
+        solver_profile="never_materialized_p2_factor_free_slab_ras_auxiliary",
         lifecycle_observer=lifecycle_observer,
     )

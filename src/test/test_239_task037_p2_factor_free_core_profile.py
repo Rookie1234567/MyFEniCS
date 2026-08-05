@@ -30,9 +30,12 @@ from src.test.test_236_task037_p2_auxiliary_pc import _assembly_time_fixture
 
 
 @pytest.mark.skipif(MPI.COMM_WORLD.size != 1, reason="serial builder gate")
-@pytest.mark.parametrize("local_krylov_steps", (2, 4))
+@pytest.mark.parametrize(
+    ("local_krylov_steps", "optimized_schwarz"),
+    ((2, False), (4, False), (4, True)),
+)
 def test_real_p2_factor_free_builder_routes_full_and_schur_actions(
-    local_krylov_steps,
+    local_krylov_steps, optimized_schwarz
 ):
     config, mesh_data, _V2 = _fixed_target_fixture(2, h_nm=50.0)
     V6 = fem.functionspace(
@@ -71,6 +74,7 @@ def test_real_p2_factor_free_builder_routes_full_and_schur_actions(
         config=config6,
         fine_schur_action=fine_action,
         local_krylov_steps=local_krylov_steps,
+        optimized_schwarz=optimized_schwarz,
     )
     source_layout = fine_shell.createVecRight()
     source = _vector(source_layout, 239)
@@ -86,9 +90,12 @@ def test_real_p2_factor_free_builder_routes_full_and_schur_actions(
     repeat_difference = target_repeat.copy()
     repeat_difference.axpy(PETSc.ScalarType(-1.0), target)
     assert repeat_difference.norm() <= 1.0e-11
-    assert setup_audit["profile"] == (
-        "never_materialized_p2_factor_free_slab_auxiliary"
+    expected_profile = (
+        "never_materialized_p2_factor_free_slab_ras_auxiliary"
+        if optimized_schwarz
+        else "never_materialized_p2_factor_free_slab_auxiliary"
     )
+    assert setup_audit["profile"] == expected_profile
     assert setup_audit["fine_operator_kind"] == "borrowed_p6_condensed_dtn_action"
     assert setup_audit["fine_schur_action_kind"] == (
         "borrowed_p6_static_local_schur_action"
@@ -111,13 +118,63 @@ def test_real_p2_factor_free_builder_routes_full_and_schur_actions(
         local_krylov_steps * 16 * patch["apply_count"]
     )
     assert patch["expected_action_calls"] == patch["restricted_action_calls"]
-    assert audit["profile"] == "never_materialized_p2_factor_free_slab_auxiliary"
+    assert audit["profile"] == expected_profile
     assert audit["p2_factor_count"] == 1
     assert audit["global_p6_matrix_materialized"] is False
     assert audit["global_p6_factor_count"] == 0
     assert audit["p6_slab_matrix_count"] == 0
     assert audit["p2_unshifted_matrix_retained"] is False
     assert patch["apply_count"] == 4
+    if optimized_schwarz:
+        assert patch["variant"] == "ras"
+        assert patch["correction_partition"] == "one_hot_ras"
+        assert patch["ras_core_sum_error"] <= 1.0e-12
+        assert patch["interface_shift_mode"] == "shared_rows_only"
+        assert patch["interface_shift_nonzero_rows"] == patch["interface_row_count"]
+        assert patch["interface_row_count"] > 0
+        assert patch["noninterface_shift_nonzero_rows"] == 0
+        assert patch["partition_weighted_additive_schwarz"] is False
+        plan = pc._fine_patch.plan
+        memberships = {}
+        for slab, rows in enumerate(plan.owner_rows):
+            for row, is_core in zip(
+                rows, plan.ras_core_masks_by_slab[slab], strict=True
+            ):
+                memberships.setdefault(int(row), []).append((slab, bool(is_core)))
+        for entries in memberships.values():
+            core_slabs = [slab for slab, is_core in entries if is_core]
+            assert len(core_slabs) == 1
+            assert core_slabs[0] == min(slab for slab, _ in entries)
+        patch_impl = pc._fine_patch
+        slab = next(
+            slab
+            for slab in patch_impl.local_slabs
+            if patch_impl._positions_by_slab[slab].size > 0
+        )
+        positions = patch_impl._positions_by_slab[slab]
+        values = np.asarray(
+            1.0 + 0.2j + np.arange(positions.size), dtype=PETSc.ScalarType
+        )
+        interface_mask = plan.interface_masks_by_slab[slab]
+        original_mask = interface_mask.copy()
+        interface_mask[:] = False
+        shared_false = patch_impl._restricted_action(slab, values)
+        patch_impl._interface_shift_mode = "all_rows"
+        all_false = patch_impl._restricted_action(slab, values)
+        patch_impl._interface_shift_mode = "shared_rows_only"
+        false_difference = all_false - shared_false
+        false_expected = patch_impl._local_shift[positions] * values
+        interface_mask[:] = True
+        shared_true = patch_impl._restricted_action(slab, values)
+        patch_impl._interface_shift_mode = "all_rows"
+        all_true = patch_impl._restricted_action(slab, values)
+        patch_impl._interface_shift_mode = "shared_rows_only"
+        true_difference = all_true - shared_true
+        interface_mask[:] = original_mask
+        # Synthetic masks isolate the operator-level interface filtering formula.
+        assert np.allclose(false_difference, false_expected)
+        assert np.any(np.abs(false_difference) > 0.0)
+        assert np.allclose(true_difference, 0.0)
 
     repeat_difference.destroy()
     target_repeat.destroy()
@@ -134,9 +191,12 @@ def test_real_p2_factor_free_builder_routes_full_and_schur_actions(
     fine_blocks.destroy()
 
 
-@pytest.mark.parametrize("local_krylov_steps", (2, 4))
+@pytest.mark.parametrize(
+    ("local_krylov_steps", "optimized_schwarz"),
+    ((2, False), (4, False), (4, True)),
+)
 def test_factor_free_wrapper_routes_action_only_request(
-    monkeypatch, local_krylov_steps
+    monkeypatch, local_krylov_steps, optimized_schwarz
 ):
     A, b, ordinary_request = _build_request(monkeypatch)
     blocks = core.extract_petsc_condensed_blocks(A, b, n_fe=4, n_aux=1)
@@ -209,6 +269,25 @@ def test_factor_free_wrapper_routes_action_only_request(
     _FakeP2Pc.diagnostics["factor_free_slab_patch"]["local_krylov_steps"] = (
         local_krylov_steps
     )
+    expected_profile = (
+        "never_materialized_p2_factor_free_slab_ras_auxiliary"
+        if optimized_schwarz
+        else "never_materialized_p2_factor_free_slab_auxiliary"
+    )
+    if optimized_schwarz:
+        _FakeP2Pc.diagnostics["profile"] = expected_profile
+        _FakeP2Pc.diagnostics["factor_free_slab_patch"].update(
+            {
+                "variant": "ras",
+                "correction_partition": "one_hot_ras",
+                "ras_core_sum_error": 0.0,
+                "interface_row_count": 1,
+                "interface_shift_mode": "shared_rows_only",
+                "interface_shift_nonzero_rows": 1,
+                "noninterface_shift_nonzero_rows": 0,
+                "partition_weighted_additive_schwarz": False,
+            }
+        )
 
     def fake_builder(**kwargs):
         captured.update(kwargs)
@@ -224,7 +303,7 @@ def test_factor_free_wrapper_routes_action_only_request(
             _Owned(),
             fine_action.createVecRight(),
             {
-                "profile": "never_materialized_p2_factor_free_slab_auxiliary",
+                "profile": expected_profile,
                 "factor_free_slab_patch": _FakeP2Pc.diagnostics[
                     "factor_free_slab_patch"
                 ],
@@ -232,21 +311,28 @@ def test_factor_free_wrapper_routes_action_only_request(
         )
 
     monkeypatch.setattr(core, "build_p2_auxiliary_setup", fake_builder)
-    snapshot, audit = (
-        core.solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
-            action_request,
-            screen_iterations=20,
-            local_krylov_steps=local_krylov_steps,
+    if optimized_schwarz:
+        snapshot, audit = (
+            core.solve_never_materialized_p2_factor_free_slab_ras_auxiliary_fgmres(
+                action_request,
+                screen_iterations=20,
+            )
         )
-    )
+    else:
+        snapshot, audit = (
+            core.solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
+                action_request,
+                screen_iterations=20,
+                local_krylov_steps=local_krylov_steps,
+            )
+        )
     try:
         assert captured["fine_schur_action_is_request"]
         assert captured["fine_operator_is_distinct"]
         assert captured["local_krylov_steps"] == local_krylov_steps
+        assert captured["optimized_schwarz"] is optimized_schwarz
         assert captured["fine_operator_type"] == "python"
-        assert snapshot.solver_profile == (
-            "never_materialized_p2_factor_free_slab_auxiliary"
-        )
+        assert snapshot.solver_profile == expected_profile
         assert audit["candidate"]["restart"] == 90
         assert audit["candidate"]["pc_side"] == "right"
         assert audit["candidate"]["outer_requires_fgmres"] is True
@@ -256,6 +342,9 @@ def test_factor_free_wrapper_routes_action_only_request(
         assert audit["partition_audit"]["num_slabs"] == 16
         assert audit["partition_audit"]["overlap_fraction"] == 0.125
         assert audit["partition_audit"]["global_A_materialized_by_pc"] is False
+        if optimized_schwarz:
+            assert audit["candidate"]["variant"] == "ras"
+            assert audit["partition_audit"]["correction_partition"] == "one_hot_ras"
         assert captured["destroyed"] >= 2
     finally:
         snapshot.x.destroy()

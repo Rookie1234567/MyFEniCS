@@ -193,9 +193,7 @@ def build_active_trace_floquet_basis(
         ],
         dtype=PETSc.IntType,
     )
-    centers = np.linspace(
-        float(config.domain_z_min), float(config.domain_z_max), 25
-    )
+    centers = np.linspace(float(config.domain_z_min), float(config.domain_z_max), 25)
     spacing = float(centers[1] - centers[0])
     field = fem.Function(function_space)
     candidates: list[PETSc.Vec] = []
@@ -204,15 +202,9 @@ def build_active_trace_floquet_basis(
             for component in range(3):
 
                 def value(x, center=center, component=component):
-                    envelope = np.maximum(
-                        1.0 - np.abs(x[2] - center) / spacing, 0.0
-                    )
+                    envelope = np.maximum(1.0 - np.abs(x[2] - center) / spacing, 0.0)
                     phase = np.exp(
-                        1j
-                        * (
-                            complex(config.kx) * x[0]
-                            + complex(config.ky) * x[1]
-                        )
+                        1j * (complex(config.kx) * x[0] + complex(config.ky) * x[1])
                     )
                     values = np.zeros((3, x.shape[1]), dtype=PETSc.ScalarType)
                     values[component, :] = envelope * phase
@@ -654,6 +646,10 @@ class OwnerLocalSlabPlan:
     local_cell_indices_by_slab: tuple[tuple[int, ...], ...]
     slab_row_counts: tuple[int, ...]
     partition_weights_by_slab: tuple[np.ndarray, ...]
+    ras_core_masks_by_slab: tuple[np.ndarray, ...]
+    interface_masks_by_slab: tuple[np.ndarray, ...]
+    ras_core_sum_error: float
+    interface_row_count: int
 
 
 def _owner_from_scalar_row_counts(
@@ -692,9 +688,7 @@ def build_owner_local_slab_plan(
         raise RuntimeError("owned cell geometry and recovery maps are not aligned")
     layout = condensed.create_active_vector()
     active_start, active_end = layout.getOwnershipRange()
-    ownership_ranges = tuple(
-        comm.allgather((int(active_start), int(active_end)))
-    )
+    ownership_ranges = tuple(comm.allgather((int(active_start), int(active_end))))
     layout.destroy()
     width = (z_max - z_min) / num_slabs
     intervals = tuple(
@@ -711,9 +705,9 @@ def build_owner_local_slab_plan(
     ):
         cell_rows = set()
         for original in recovery.trace_original_dofs:
-            active_ids, coefficients = condensed.trace_constraints.expansion_by_original[
-                int(original)
-            ]
+            active_ids, coefficients = (
+                condensed.trace_constraints.expansion_by_original[int(original)]
+            )
             cell_rows.update(
                 int(active)
                 for active, coefficient in zip(active_ids, coefficients, strict=True)
@@ -735,9 +729,7 @@ def build_owner_local_slab_plan(
                 return rank
         raise RuntimeError("active row is outside its PETSc ownership ranges")
 
-    seed_packets: list[list[tuple[int, int]]] = [
-        [] for _ in range(comm.size)
-    ]
+    seed_packets: list[list[tuple[int, int]]] = [[] for _ in range(comm.size)]
     for row in sorted(local_query_rows):
         seed_packets[row_owner(row)].append((row, local_seed_masks.get(row, 0)))
     received_seed_packets = comm.alltoall(seed_packets)
@@ -761,9 +753,7 @@ def build_owner_local_slab_plan(
         raise RuntimeError("owned row masks do not cover all active trace rows")
     row_counts = np.asarray(comm.allreduce(row_counts_local, op=MPI.SUM))
     owners = _owner_from_scalar_row_counts(row_counts, comm.size)
-    response_packets: list[list[tuple[int, int, int]]] = [
-        [] for _ in range(comm.size)
-    ]
+    response_packets: list[list[tuple[int, int, int]]] = [[] for _ in range(comm.size)]
     for source, rows in enumerate(query_sources):
         for row in sorted(rows):
             response_packets[source].append(
@@ -778,10 +768,9 @@ def build_owner_local_slab_plan(
         owner_slab_masks[owner] |= 1 << slab
     for owner, slab_mask in enumerate(owner_slab_masks):
         for row, mask in owned_row_masks.items():
-            selected_mask = int(mask) & slab_mask
-            if selected_mask:
+            if int(mask) & slab_mask:
                 response_packets[owner].append(
-                    (int(row), selected_mask, int(mask).bit_count())
+                    (int(row), int(mask), int(mask).bit_count())
                 )
     received_responses = comm.alltoall(response_packets)
     local_row_masks: dict[int, int] = {}
@@ -794,9 +783,9 @@ def build_owner_local_slab_plan(
     for cell_index, recovery in enumerate(recovery_maps):
         cell_rows = set()
         for original in recovery.trace_original_dofs:
-            active_ids, coefficients = condensed.trace_constraints.expansion_by_original[
-                int(original)
-            ]
+            active_ids, coefficients = (
+                condensed.trace_constraints.expansion_by_original[int(original)]
+            )
             cell_rows.update(
                 int(active)
                 for active, coefficient in zip(active_ids, coefficients, strict=True)
@@ -814,8 +803,7 @@ def build_owner_local_slab_plan(
         if comm.rank == owner:
             rows = np.asarray(
                 sorted(
-                    row for row, mask in local_row_masks.items()
-                    if mask & (1 << slab)
+                    row for row, mask in local_row_masks.items() if mask & (1 << slab)
                 ),
                 dtype=PETSc.IntType,
             )
@@ -823,16 +811,19 @@ def build_owner_local_slab_plan(
             rows = empty.copy()
         owner_rows.append(rows)
     owned_invalid = any(
-        owners[slab] == comm.rank
-        and int(rows.size) != int(row_counts[slab])
+        owners[slab] == comm.rank and int(rows.size) != int(row_counts[slab])
         for slab, rows in enumerate(owner_rows)
     )
     if comm.allreduce(owned_invalid, op=MPI.LOR):
         raise RuntimeError("slab owner did not receive its active row closure")
     partition_weights_by_slab: list[np.ndarray] = []
+    ras_core_masks_by_slab: list[np.ndarray] = []
+    interface_masks_by_slab: list[np.ndarray] = []
     for slab, owner in enumerate(owners):
         if comm.rank != owner:
             partition_weights_by_slab.append(empty.copy())
+            ras_core_masks_by_slab.append(np.empty(0, dtype=np.bool_))
+            interface_masks_by_slab.append(np.empty(0, dtype=np.bool_))
             continue
         rows = owner_rows[slab]
         counts = np.asarray(
@@ -842,6 +833,42 @@ def build_owner_local_slab_plan(
         partition_weights_by_slab.append(
             np.asarray(1.0 / counts, dtype=PETSc.ScalarType)
         )
+        masks = [int(local_row_masks[int(row)]) for row in rows]
+        slab_bit = 1 << slab
+        ras_core_masks_by_slab.append(
+            np.asarray(
+                [
+                    bool(mask & slab_bit) and (mask & -mask) == slab_bit
+                    for mask in masks
+                ],
+                dtype=np.bool_,
+            )
+        )
+        interface_masks_by_slab.append(np.asarray(counts > 1, dtype=np.bool_))
+
+    ras_core_sum = condensed.create_active_vector()
+    ras_core_sum.set(0.0)
+    for slab, owner in enumerate(owners):
+        if comm.rank == owner:
+            rows = owner_rows[slab]
+            values = np.asarray(ras_core_masks_by_slab[slab], dtype=PETSc.ScalarType)
+            ras_core_sum.setValues(rows, values, addv=PETSc.InsertMode.ADD_VALUES)
+    ras_core_sum.assemble()
+    local_core_error = (
+        np.asarray(ras_core_sum.getArray(readonly=True), dtype=PETSc.ScalarType) - 1.0
+    )
+    ras_core_sum_error = float(
+        comm.allreduce(float(np.max(np.abs(local_core_error), initial=0.0)), op=MPI.MAX)
+    )
+    ras_core_sum.destroy()
+    interface_row_count = int(
+        comm.allreduce(
+            sum(int(mask.bit_count() > 1) for mask in owned_row_masks.values()),
+            op=MPI.SUM,
+        )
+    )
+    if ras_core_sum_error > 1.0e-12:
+        raise RuntimeError("RAS core masks do not form a unity sum")
     return OwnerLocalSlabPlan(
         comm=comm,
         active_rows=int(condensed.active_rows),
@@ -852,6 +879,10 @@ def build_owner_local_slab_plan(
         ),
         slab_row_counts=tuple(int(value) for value in row_counts),
         partition_weights_by_slab=tuple(partition_weights_by_slab),
+        ras_core_masks_by_slab=tuple(ras_core_masks_by_slab),
+        interface_masks_by_slab=tuple(interface_masks_by_slab),
+        ras_core_sum_error=ras_core_sum_error,
+        interface_row_count=interface_row_count,
     )
 
 
@@ -894,15 +925,9 @@ def _route_owner_slab_cells(
         round_index += 1
     return {
         "communication_rounds": rounds,
-        "global_contribution_count": int(
-            comm.allreduce(len(cells), op=MPI.SUM)
-        ),
-        "max_sender_payload_bytes": int(
-            comm.allreduce(local_payload_max, op=MPI.MAX)
-        ),
-        "max_owner_payload_bytes": int(
-            comm.allreduce(owner_payload_max, op=MPI.MAX)
-        ),
+        "global_contribution_count": int(comm.allreduce(len(cells), op=MPI.SUM)),
+        "max_sender_payload_bytes": int(comm.allreduce(local_payload_max, op=MPI.MAX)),
+        "max_owner_payload_bytes": int(comm.allreduce(owner_payload_max, op=MPI.MAX)),
     }
 
 
@@ -931,8 +956,7 @@ def assemble_owner_local_slab_matrix(
             in_range = owner_positions < owner_rows.size
             candidate = np.flatnonzero(in_range)
             selected_cell_positions = candidate[
-                owner_rows[owner_positions[candidate]]
-                == active_ids[candidate]
+                owner_rows[owner_positions[candidate]] == active_ids[candidate]
             ]
             if selected_cell_positions.size == 0:
                 raise RuntimeError("cell support is outside its slab owner rows")
@@ -1050,9 +1074,7 @@ def owner_local_slab_diagonal_shift(
 
     values, audit = extract_owner_local_slab_diagonal(diagonal, plan, slab)
     if values is not None:
-        values = -1j * 0.1 * np.maximum(
-            np.abs(values), 1.0e-12 * float(global_scale)
-        )
+        values = -1j * 0.1 * np.maximum(np.abs(values), 1.0e-12 * float(global_scale))
     return values, audit
 
 
@@ -1268,12 +1290,8 @@ class DistributedPhysicalSlabSmoother:
         elif has_factor and submatrix is not None:
             payload.update(
                 {
-                    "rank_local_first_submatrix_rows": int(
-                        submatrix.getSize()[0]
-                    ),
-                    "rank_local_first_submatrix_cols": int(
-                        submatrix.getSize()[1]
-                    ),
+                    "rank_local_first_submatrix_rows": int(submatrix.getSize()[0]),
+                    "rank_local_first_submatrix_cols": int(submatrix.getSize()[1]),
                     "rank_local_first_submatrix_nnz": int(
                         submatrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"]
                     ),
@@ -1341,7 +1359,9 @@ class DistributedPhysicalSlabSmoother:
             (item for packet in fingerprint_packets for item in packet),
             key=lambda item: item[0],
         )
-        unique_fingerprints = {fingerprint for _, fingerprint in self.factor_fingerprints}
+        unique_fingerprints = {
+            fingerprint for _, fingerprint in self.factor_fingerprints
+        }
         self.unique_factor_classes = len(unique_fingerprints)
         self.exact_duplicate_factor_count = (
             len(self.factor_fingerprints) - self.unique_factor_classes
@@ -1493,6 +1513,7 @@ class DistributedPhysicalSlabSmoother:
         template.destroy()
 
         self._factors: list[_OwnedSubdomainFactor] = []
+
         def build_factor(
             subdomain: int, indices: np.ndarray, submatrix: PETSc.Mat
         ) -> _OwnedSubdomainFactor:
@@ -1573,9 +1594,7 @@ class DistributedPhysicalSlabSmoother:
             self._report_first_submatrix(setup_observer, None, False)
         if not self._first_factor_reported:
             self._report_first_factor(setup_observer, None)
-        self._finalize_factor_inventory(
-            len(normalized), progress, setup_observer
-        )
+        self._finalize_factor_inventory(len(normalized), progress, setup_observer)
 
         self._initialize_inner_ksp(action_operator)
 
@@ -1697,9 +1716,7 @@ class DistributedPhysicalSlabSmoother:
                                 slab_matrix.getSize()[1]
                             ),
                             "rank_local_first_submatrix_nnz": int(
-                                slab_matrix.getInfo(PETSc.Mat.InfoType.LOCAL)[
-                                    "nz_used"
-                                ]
+                                slab_matrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"]
                             ),
                         }
                     factor = self._build_owned_factor(
@@ -1730,8 +1747,7 @@ class DistributedPhysicalSlabSmoother:
                 diagonal.destroy()
         if self.interpolation == "partition":
             local_weights = [
-                plan.partition_weights_by_slab[slab]
-                for slab in self.local_subdomains
+                plan.partition_weights_by_slab[slab] for slab in self.local_subdomains
             ]
             local_weight_values = (
                 np.concatenate(local_weights) if local_weights else np.empty(0)
@@ -1755,9 +1771,10 @@ class DistributedPhysicalSlabSmoother:
                     addv=PETSc.InsertMode.ADD_VALUES,
                 )
             weight_sums.assemble()
-            local_weight_error = np.asarray(
-                weight_sums.getArray(readonly=True), dtype=PETSc.ScalarType
-            ) - 1.0
+            local_weight_error = (
+                np.asarray(weight_sums.getArray(readonly=True), dtype=PETSc.ScalarType)
+                - 1.0
+            )
             local_weight_error_max = (
                 float(np.max(np.abs(local_weight_error)))
                 if local_weight_error.size
@@ -1796,9 +1813,7 @@ class DistributedPhysicalSlabSmoother:
             None,
             cached_payload=first_factor_payload,
         )
-        self._finalize_factor_inventory(
-            len(plan.slab_owners), progress, setup_observer
-        )
+        self._finalize_factor_inventory(len(plan.slab_owners), progress, setup_observer)
         self._initialize_inner_ksp(two_step_action_operator)
 
     def _apply_once(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
