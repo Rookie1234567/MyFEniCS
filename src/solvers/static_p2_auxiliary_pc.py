@@ -24,7 +24,10 @@ from .hcurl_assembly_time_condensation import (
     _trace_constraint_map,
 )
 from .hcurl_multilevel import ModalWoodburyPc, build_absorption_shifted_matrix
-from .physical_slab_two_level import build_owner_local_slab_diagonal
+from .physical_slab_two_level import (
+    build_owner_local_slab_diagonal,
+    build_owner_local_slab_plan,
+)
 from .static_factor_free_slab_pc import FactorFreeLocalSlabKrylovPc
 from .static_trace_auxiliary import (
     build_p2_galerkin_fine_matrix,
@@ -189,7 +192,7 @@ class P2AuxiliaryDiagonalModalPc:
         source: PETSc.Vec,
         target: PETSc.Vec,
     ) -> None:
-        """Apply diagonal-pre, p2 auxiliary, and diagonal-post corrections."""
+        """Apply fine-patch pre, p2 auxiliary, and fine-patch post corrections."""
 
         if self._destroyed:
             raise RuntimeError("p2 auxiliary PC has already been destroyed")
@@ -401,6 +404,7 @@ def build_p2_auxiliary_setup(
     fine_blocks: Any,
     mesh_data: Any,
     config: Any,
+    fine_schur_action: PETSc.Mat | None = None,
 ) -> tuple[P2AuxiliaryDiagonalModalPc, Any, PETSc.Vec, dict[str, Any]]:
     """Build the same-mesh p2 auxiliary PC without a p6 global matrix."""
 
@@ -440,14 +444,75 @@ def build_p2_auxiliary_setup(
         f2,
     )
     fine_diagonal, diagonal_audit = build_owner_local_slab_diagonal(fine_condensed)
+    factor_free_patch_audit = None
+    if fine_schur_action is not None:
+        owner_plan = build_owner_local_slab_plan(
+            fine_condensed,
+            fine_space.mesh,
+            domain_z=(config.domain_z_min, config.domain_z_max),
+            num_slabs=16,
+            overlap_fraction=0.125,
+        )
+        shifted = fine_diagonal.duplicate()
+        global_scale = float(diagonal_audit["global_diagonal_max_abs"])
+        absolute = np.abs(fine_diagonal.getArray(readonly=True))
+        shifted.getArray()[:] = (
+            -1j
+            * 0.1
+            * np.maximum(
+                absolute,
+                1.0e-12 * global_scale,
+            )
+        )
+        shifted.assemble()
+        fine_patch = FactorFreeLocalSlabKrylovPc(
+            fine_schur_action,
+            owner_plan,
+            shifted,
+        )
+        shifted.destroy()
+        patch_diagnostics = fine_patch.diagnostics
+        factor_free_patch_audit = {
+            "profile": "factor_free_local_slab_krylov",
+            "num_slabs": patch_diagnostics["num_slabs"],
+            "overlap_fraction": 0.125,
+            "interpolation": "partition",
+            "local_krylov_steps": patch_diagnostics["local_krylov_steps"],
+            "local_inner_preconditioner": patch_diagnostics[
+                "local_inner_preconditioner"
+            ],
+            "outer_requires_fgmres": patch_diagnostics["outer_requires_fgmres"],
+            "partition_weight_sum_error": patch_diagnostics[
+                "partition_weight_sum_error"
+            ],
+            "partition_weight_min": patch_diagnostics["partition_weight_min"],
+            "partition_weight_max": patch_diagnostics["partition_weight_max"],
+            "p6_slab_matrix_materialized": patch_diagnostics[
+                "p6_slab_matrix_materialized"
+            ],
+            "p6_slab_matrix_count": patch_diagnostics["p6_slab_matrix_count"],
+            "p6_factor_count": patch_diagnostics["p6_factor_count"],
+            "p6_factor_nnz": patch_diagnostics["p6_factor_nnz"],
+            "global_A_materialized_by_pc": patch_diagnostics[
+                "global_A_materialized_by_pc"
+            ],
+        }
+    else:
+        fine_patch = None
     pc = P2AuxiliaryDiagonalModalPc(
         fine_operator=fine_operator,
         transfer=transfer,
         coarse_blocks=coarse_blocks,
         fine_diagonal=fine_diagonal,
+        fine_patch=fine_patch,
+    )
+    profile = (
+        "never_materialized_p2_factor_free_slab_auxiliary"
+        if fine_schur_action is not None
+        else "never_materialized_p2_auxiliary"
     )
     audit = {
-        "profile": "never_materialized_p2_auxiliary",
+        "profile": profile,
         "global_p6_matrix_materialized": False,
         "global_p6_transfer_materialized": False,
         "p2": {
@@ -458,4 +523,7 @@ def build_p2_auxiliary_setup(
         },
         "fine_operator_kind": "borrowed_p6_condensed_dtn_action",
     }
+    if fine_schur_action is not None:
+        audit["fine_schur_action_kind"] = "borrowed_p6_static_local_schur_action"
+        audit["factor_free_slab_patch"] = factor_free_patch_audit
     return pc, transfer, fine_diagonal, audit

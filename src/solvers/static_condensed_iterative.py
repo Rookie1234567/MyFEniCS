@@ -38,6 +38,7 @@ __all__ = (
     "solve_never_materialized_static_condensed_fgmres",
     "solve_never_materialized_overlap0125_partition_fgmres",
     "solve_never_materialized_p2_auxiliary_fgmres",
+    "solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres",
 )
 _TINY = np.finfo(float).tiny
 
@@ -86,6 +87,7 @@ def _solve_static_condensed_fgmres_core(
         "never_materialized_owner_local",
         "never_materialized_owner_local_overlap0125_partition",
         "never_materialized_p2_auxiliary",
+        "never_materialized_p2_factor_free_slab_auxiliary",
     ] = "assembled",
     release_assembled_matrix: Callable[[], None] | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
@@ -97,6 +99,7 @@ def _solve_static_condensed_fgmres_core(
         "never_materialized_owner_local",
         "never_materialized_owner_local_overlap0125_partition",
         "never_materialized_p2_auxiliary",
+        "never_materialized_p2_factor_free_slab_auxiliary",
     ):
         raise ValueError("unsupported static-condensed FGMRES solver profile")
     exact_profile = (
@@ -106,11 +109,18 @@ def _solve_static_condensed_fgmres_core(
         "never_materialized_owner_local",
         "never_materialized_owner_local_overlap0125_partition",
         "never_materialized_p2_auxiliary",
+        "never_materialized_p2_factor_free_slab_auxiliary",
     }
     m3a_profile = (
         solver_profile == "never_materialized_owner_local_overlap0125_partition"
     )
-    p2_auxiliary_profile = solver_profile == "never_materialized_p2_auxiliary"
+    p2_auxiliary_profile = solver_profile in {
+        "never_materialized_p2_auxiliary",
+        "never_materialized_p2_factor_free_slab_auxiliary",
+    }
+    factor_free_p2_profile = (
+        solver_profile == "never_materialized_p2_factor_free_slab_auxiliary"
+    )
     if action_only != action_only_profile:
         raise ValueError("solver profile does not match the request type")
     if exact_profile and not action_only and release_assembled_matrix is None:
@@ -331,15 +341,43 @@ def _solve_static_condensed_fgmres_core(
                     fine_blocks=blocks,
                     mesh_data=request.mesh_data,
                     config=request.config,
+                    fine_schur_action=(fine_action if factor_free_p2_profile else None),
                 )
             )
             owned.extend((p2_transfer, p2_diagonal, p2_smoother))
             smoother = p2_smoother
-            partition_audit = {
-                "p6_slab_matrix_materialized": False,
-                "p6_slab_matrix_count": 0,
-                "p6_factor_count": 0,
-            }
+            if factor_free_p2_profile:
+                patch_audit = p2_auxiliary_audit["factor_free_slab_patch"]
+                partition_audit = {
+                    "p6_slab_matrix_materialized": patch_audit[
+                        "p6_slab_matrix_materialized"
+                    ],
+                    "p6_slab_matrix_count": patch_audit["p6_slab_matrix_count"],
+                    "p6_factor_count": patch_audit["p6_factor_count"],
+                    "local_krylov_steps": patch_audit["local_krylov_steps"],
+                    "local_inner_preconditioner": patch_audit[
+                        "local_inner_preconditioner"
+                    ],
+                    "outer_requires_fgmres": patch_audit["outer_requires_fgmres"],
+                    "p6_factor_nnz": patch_audit["p6_factor_nnz"],
+                    "global_A_materialized_by_pc": patch_audit[
+                        "global_A_materialized_by_pc"
+                    ],
+                    "num_slabs": patch_audit["num_slabs"],
+                    "overlap_fraction": patch_audit["overlap_fraction"],
+                    "interpolation": patch_audit["interpolation"],
+                    "partition_weight_sum_error": patch_audit[
+                        "partition_weight_sum_error"
+                    ],
+                    "partition_weight_min": patch_audit["partition_weight_min"],
+                    "partition_weight_max": patch_audit["partition_weight_max"],
+                }
+            else:
+                partition_audit = {
+                    "p6_slab_matrix_materialized": False,
+                    "p6_slab_matrix_count": 0,
+                    "p6_factor_count": 0,
+                }
         elif action_only:
             owner_plan = build_owner_local_slab_plan(
                 request.static_condensed_system,
@@ -619,6 +657,15 @@ def _solve_static_condensed_fgmres_core(
                     "p2 distributed MUMPS factor",
                 ],
             }
+            if factor_free_p2_profile:
+                patch_runtime = smoother_audit["factor_free_slab_patch"]
+                factor_inventory.update(
+                    {
+                        "p6_factor_count": patch_runtime["p6_factor_count"],
+                        "p6_factor_nnz": patch_runtime["p6_factor_nnz"],
+                        "p6_slab_matrix_count": patch_runtime["p6_slab_matrix_count"],
+                    }
+                )
         else:
             factor_inventory = {
                 "global_direct_factor_count": 0,
@@ -633,41 +680,55 @@ def _solve_static_condensed_fgmres_core(
                     "COMM_SELF factor_only ILU(0)",
                 ],
             }
+        candidate = {
+            "outer_ksp": str(ksp.getType()),
+            "pc_side": "right",
+            "norm_type": "unpreconditioned",
+            "restart": 90,
+            "rtol": 1.0e-6,
+            "atol": 0.0,
+            "max_it": int(screen_iterations),
+            **(
+                {
+                    "num_slabs": 16,
+                    "overlap_fraction": 0.125,
+                    "interpolation": "partition",
+                    "local_krylov_steps": 2,
+                    "local_inner_preconditioner": "none",
+                    "outer_requires_fgmres": True,
+                    "p2_auxiliary_correction": True,
+                    "fine_operator_kind": "borrowed_p6_condensed_dtn_action",
+                    "fine_schur_action_kind": "borrowed_p6_static_local_schur_action",
+                    "wave_coarse_post_smooth": False,
+                }
+                if factor_free_p2_profile
+                else {
+                    "p6_smoothing": "not_used",
+                    "p2_auxiliary_correction": True,
+                    "p2_absorption_shift": 0.1,
+                    "p2_diagonal_patch_omega": 0.6,
+                    "wave_coarse_post_smooth": False,
+                }
+                if p2_auxiliary_profile
+                else {
+                    "num_slabs": 16,
+                    "overlap_fraction": 0.125,
+                    "interpolation": "partition",
+                    "absorption_shift": 0.1,
+                }
+                if m3a_profile
+                else {
+                    "num_slabs": 16,
+                    "overlap_fraction": 0.25,
+                    "absorption_shift": 0.1,
+                }
+            ),
+        }
         audit = {
             "matrix_type": "python_action_only" if action_only else "assembled",
             "global_A_materialized": not action_only,
             "global_F_materialized": not action_only and not exact_profile,
-            "candidate": {
-                "outer_ksp": str(ksp.getType()),
-                "pc_side": "right",
-                "norm_type": "unpreconditioned",
-                "restart": 90,
-                "rtol": 1.0e-6,
-                "atol": 0.0,
-                "max_it": int(screen_iterations),
-                **(
-                    {
-                        "p6_smoothing": "not_used",
-                        "p2_auxiliary_correction": True,
-                        "p2_absorption_shift": 0.1,
-                        "p2_diagonal_patch_omega": 0.6,
-                        "wave_coarse_post_smooth": False,
-                    }
-                    if p2_auxiliary_profile
-                    else {
-                        "num_slabs": 16,
-                        "overlap_fraction": 0.125,
-                        "interpolation": "partition",
-                        "absorption_shift": 0.1,
-                    }
-                    if m3a_profile
-                    else {
-                        "num_slabs": 16,
-                        "overlap_fraction": 0.25,
-                        "absorption_shift": 0.1,
-                    }
-                ),
-            },
+            "candidate": candidate,
             "solver_profile": solver_profile,
             "assembled_matrix_released_before_solve": assembled_matrix_released,
             "fine_action_relative_error": fine_action_error,
@@ -827,5 +888,23 @@ def solve_never_materialized_p2_auxiliary_fgmres(
         screen_iterations=screen_iterations,
         residual_observer=residual_observer,
         solver_profile="never_materialized_p2_auxiliary",
+        lifecycle_observer=lifecycle_observer,
+    )
+
+
+def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
+    request: Stage4NeverMaterializedLinearSolverRequest,
+    *,
+    screen_iterations: Literal[20, 100, 200] = 20,
+    residual_observer: Callable[[int, float, float], None] | None = None,
+    lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
+) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
+    """Run the factor-free slab plus true p2 auxiliary profile."""
+
+    return _solve_static_condensed_fgmres_core(
+        request,
+        screen_iterations=screen_iterations,
+        residual_observer=residual_observer,
+        solver_profile="never_materialized_p2_factor_free_slab_auxiliary",
         lifecycle_observer=lifecycle_observer,
     )
