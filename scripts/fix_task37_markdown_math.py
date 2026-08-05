@@ -2,12 +2,12 @@
 """Normalize Task37 Markdown math delimiters for GitHub rendering.
 
 GitHub renders inline math with ``$...$`` and display math with delimiter lines
-containing ``$$``.  A number of Task37 documents were written with LaTeX-style
+containing ``$$``. A number of Task37 documents were written with LaTeX-style
 ``\\(...\\)`` and ``\\[...\\]`` delimiters, which are not rendered consistently
 by GitHub Markdown.
 
 The script intentionally limits its scope to Task37 documentation and the
-matching Case100 Markdown evidence.  Fenced code blocks are never modified.
+matching Case100 Markdown evidence. Fenced code blocks are never modified.
 
 Usage:
 
@@ -43,18 +43,14 @@ class MarkdownMathError(RuntimeError):
 def _transform_text_segment(segment: str) -> str:
     """Transform a non-code text segment."""
 
-    # A same-line display expression is semantically inline in Markdown.  Use
-    # single-dollar delimiters so it does not create an invalid block in a
+    # A same-line display expression is semantically inline in Markdown. Use
+    # single-dollar delimiters so it does not create an invalid block inside a
     # paragraph.
     segment = SAME_LINE_DISPLAY_PATTERN.sub(
         lambda match: f"${match.group('body').strip()}$",
         segment,
     )
-    segment = segment.replace(r"\(", "$ ").replace(r"\)", " $")
-    # Remove the helper spaces only when they touch an existing space.  This
-    # keeps words from being glued to the formula while avoiding doubled gaps.
-    segment = segment.replace("$  ", "$ ").replace("  $", " $")
-    return segment
+    return segment.replace(r"\(", "$").replace(r"\)", "$")
 
 
 def _transform_inline_outside_code(line: str) -> str:
