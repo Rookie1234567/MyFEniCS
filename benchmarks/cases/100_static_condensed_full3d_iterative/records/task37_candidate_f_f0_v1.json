@@ -1,0 +1,91 @@
+{
+  "schema_version": "task037-candidate-f-f0-v1",
+  "record_status": "F0_IMPLEMENTATION_GATE_FAILED_PETSC_INDEX_DTYPE",
+  "source": {
+    "tested_tracked_head": "2cea3b986303d1553e062f206da452e8f609642b",
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "worktree_at_test": "dirty",
+    "abi": {
+      "qualified_activation": true,
+      "python": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "petsc_scalar": "complex128",
+      "petsc_int": "int32",
+      "linux_stack": true
+    },
+    "implementation_sha256": {
+      "src/solvers/static_factor_free_slab_pc.py": "f1fe04903d29d4ee95ecd624165c15e383edd8e494ccb77e46fdef855a69e5b4",
+      "src/solvers/static_trace_auxiliary.py": "9b9ee24a571dc1de0e51e626b1dca2b675173d611ca93620b56126e7dfc5d650",
+      "src/solvers/static_p4_capacity_oracle.py": "94a3079dfcd3a6a5a8e4299b24e4252818da8b50cdb28d0b700aef88db6e2271",
+      "src/test/test_246_task037_p4_capacity_oracle.py": "dda2a0684128af0e9735b171eba6f80a8abb151487a7610c4b3fc0c15979ddda"
+    }
+  },
+  "prior_boundaries": {
+    "partial_condensation": "CONTROLLED_NEGATIVE_NUMERICAL_AT_R7B2B1_COMPLEMENT_GATE",
+    "candidate_d": {
+      "status": "frozen_controlled_negative",
+      "p2_factor_count": 2,
+      "p2_factor_nnz": 4608,
+      "p6_matrix_count": 0,
+      "p6_factor_count": 0,
+      "p6_factor_nnz": 0,
+      "sources": {
+        "low": {"rho_B4": 0.24599945418880295, "rho_D0": 0.2540230551088513, "improvement": 0.9684138870126958},
+        "high": {"rho_B4": 0.24651896436171644, "rho_D0": 0.26531876351572775, "improvement": 0.929142594723057},
+        "mixed": {"rho_B4": 0.24612971921817314, "rho_D0": 0.2715867504171219, "improvement": 0.9062655628087525}
+      }
+    }
+  },
+  "static_gate": {
+    "ruff_check": "pass",
+    "ruff_format_check": "pass_after_mechanical_format_fix",
+    "compileall": "pass",
+    "git_diff_check": "pass"
+  },
+  "pytest": {
+    "command": "qualified shell: source scripts/activate_myfenics_wsl.sh && /usr/bin/time -v python -m pytest -q -s -x src/test/test_246_task037_p4_capacity_oracle.py::test_f0_degree_pairs_preserve_floquet_orientation_identity src/test/test_246_task037_p4_capacity_oracle.py::test_f0_p4_capacity_oracle_and_d0_comparison",
+    "exit_code": 1,
+    "summary": "1 passed, 1 failed",
+    "wall_seconds": 18.65,
+    "max_rss_kb": 287000,
+    "swap": 0,
+    "stdout_stderr_log": "/tmp/task37_f0_p4_capacity_oracle.log",
+    "time_v_log": "/tmp/task37_f0_p4_capacity_oracle.time"
+  },
+  "transfer_gate": {
+    "status": "pass",
+    "composition_error": 3.512063090206927e-15,
+    "p24_interpolation_error": 8.326653945790752e-16,
+    "p46_interpolation_error": 6.595217588690049e-15,
+    "p24_adjoint_error": 1.1106734086056049e-15,
+    "p46_adjoint_error": 2.6080775955612308e-15,
+    "p24_nonzero_orientation_count": 21,
+    "p46_nonzero_orientation_count": 21,
+    "floquet_phase_x": "0.8541859931542107-0.5199675846619236j",
+    "floquet_phase_y": "0.818001826003227+0.5752156227497531j"
+  },
+  "capacity_gate": {
+    "status": "failed_before_numerical_gate",
+    "classification": "F0_IMPLEMENTATION_GATE_FAILED_PETSC_INDEX_DTYPE",
+    "failure_site": "src/test/test_246_task037_p4_capacity_oracle.py:113",
+    "operation": "diagonal.getValues(p6_rows)",
+    "exception": "TypeError: Cannot cast array data from dtype('int64') to dtype('int32') according to the rule 'safe'",
+    "p4_intermediate_space_not_effective": "not_applicable; high/mixed improvement Gate was not executed"
+  },
+  "not_run": {
+    "projected_action": "not_run_by_implementation_gate",
+    "b4_closure": "not_run_by_implementation_gate",
+    "f0_rho_and_improvement": "not_run_by_implementation_gate",
+    "capacity_rows_nnz_payload": "not_run_by_implementation_gate",
+    "f1": "not_run_by_f0_gate",
+    "mpi8_screen20_100_200": "not_run_by_f0_gate",
+    "pde": "not_run_by_f0_gate"
+  },
+  "scope": {
+    "ordinary_defaults_changed": false,
+    "research_only": true,
+    "p6_matrix_factor_nnz": "0/0/0",
+    "max_rss_interpretation": "serial test process only; not a p4 capacity or formal PDE memory result",
+    "potential_minimal_fix": "align getValues indices with PETSc.IntType; not implemented in this run",
+    "merge_status": "unqualified research draft; known failing test; not selective-mergeable or production-qualified"
+  }
+}

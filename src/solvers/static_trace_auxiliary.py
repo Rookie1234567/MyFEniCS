@@ -1,11 +1,11 @@
-"""Owner-local same-mesh p2-to-p6 H(curl) trace transfer.
+"""Owner-local same-mesh degree-pair H(curl) trace transfer.
 
-This narrow M4a component maps independent p2 trace coordinates to
-independent p6 trace coordinates on one structured hexahedral mesh.  The
-local interpolation is the Basix p2-to-p6 operator surrounded by the actual
-DOLFINx cell transforms.  Only owner-local row stencils are retained; no
-global transfer matrix or global vector/basis sweep is created.  Each local
-element transform is fixed and explicit.
+This narrow M4a component maps independent coarse trace coordinates to
+independent fine trace coordinates on one structured hexahedral mesh.  The
+legacy p2-to-p6 wrapper and the generic degree-pair path both use the Basix
+interpolation operator surrounded by actual DOLFINx cell transforms.  Only
+owner-local row stencils are retained; no global transfer matrix or global
+vector/basis sweep is created.
 """
 
 from __future__ import annotations
@@ -27,6 +27,7 @@ from .hcurl_assembly_time_condensation import (
 __all__ = (
     "OwnerLocalTraceTransfer",
     "build_p2_galerkin_fine_matrix",
+    "build_owner_local_trace_transfer",
     "build_p2_to_p6_active_trace_transfer",
 )
 
@@ -75,7 +76,7 @@ def _oriented_trace_matrix(
     fine_trace_positions: np.ndarray,
     cell_info: int,
 ) -> np.ndarray:
-    """Return stored p2 coefficients to stored p6 trace rows for one cell."""
+    """Return stored coarse coefficients to stored fine trace rows for one cell."""
 
     coarse_element = coarse_space.element
     fine_element = fine_space.element
@@ -98,8 +99,8 @@ def _oriented_trace_matrix(
     return result
 
 
-def _actual_p2_to_p6_interpolation(coarse_space, fine_space) -> np.ndarray:
-    """Return the construction-time Basix p2-to-p6 interpolation operator."""
+def _actual_interpolation(coarse_space, fine_space) -> np.ndarray:
+    """Return the construction-time Basix interpolation operator."""
 
     coarse_basix_element = coarse_space.ufl_element().basix_element
     fine_basix_element = fine_space.ufl_element().basix_element
@@ -115,8 +116,14 @@ def _actual_p2_to_p6_interpolation(coarse_space, fine_space) -> np.ndarray:
         int(coarse_space.element.space_dimension),
     )
     if interpolation.shape != expected_shape:
-        raise RuntimeError("Basix p2-to-p6 interpolation shape is inconsistent")
+        raise RuntimeError("Basix coarse-to-fine interpolation shape is inconsistent")
     return interpolation
+
+
+def _actual_p2_to_p6_interpolation(coarse_space, fine_space) -> np.ndarray:
+    """Return the construction-time Basix p2-to-p6 interpolation operator."""
+
+    return _actual_interpolation(coarse_space, fine_space)
 
 
 def _row_entries(
@@ -185,9 +192,7 @@ def build_p2_galerkin_fine_matrix(
     interpolation = _actual_p2_to_p6_interpolation(coarse_space, fine_space)
     active_counts = tuple(
         int(value)
-        for value in comm.allgather(
-            len(coarse_constraints.owned_active_original_dofs)
-        )
+        for value in comm.allgather(len(coarse_constraints.owned_active_original_dofs))
     )
     active_rows = int(sum(active_counts))
     if active_rows != int(coarse_constraints.active_rows):
@@ -205,15 +210,13 @@ def build_p2_galerkin_fine_matrix(
             raise ValueError("a p2 cell has no active trace rows")
         cell_active_ids.append(np.asarray(active_ids, dtype=PETSc.IntType))
 
-    diagonal_nnz, off_diagonal_nnz, preallocation = (
-        _distributed_trace_preallocation(
-            comm,
-            tuple(cell_active_ids),
-            active_counts=active_counts,
-            appended_global_rows=0,
-            appended_support_owned_cell_groups=(),
-            appended_support_group_by_row=(),
-        )
+    diagonal_nnz, off_diagonal_nnz, preallocation = _distributed_trace_preallocation(
+        comm,
+        tuple(cell_active_ids),
+        active_counts=active_counts,
+        appended_global_rows=0,
+        appended_support_owned_cell_groups=(),
+        appended_support_group_by_row=(),
     )
     local_rows = int(active_counts[comm.rank])
     matrix = PETSc.Mat().createAIJ(
@@ -249,7 +252,9 @@ def build_p2_galerkin_fine_matrix(
             coarse_constraints,
         )
         if not np.array_equal(active_ids, coarse_active_ids):
-            raise RuntimeError("p2 cell active ordering changed between projection passes")
+            raise RuntimeError(
+                "p2 cell active ordering changed between projection passes"
+            )
         local_full = _oriented_trace_matrix(
             coarse_space,
             fine_space,
@@ -258,9 +263,7 @@ def build_p2_galerkin_fine_matrix(
             fine_trace,
             int(cell_info[cell]),
         )
-        dependency = float(
-            np.max(np.abs(local_full[:, coarse_interior]), initial=0.0)
-        )
+        dependency = float(np.max(np.abs(local_full[:, coarse_interior]), initial=0.0))
         max_interior_dependency_local = max(
             max_interior_dependency_local,
             dependency,
@@ -306,9 +309,7 @@ def build_p2_galerkin_fine_matrix(
         "p2_active_rows": int(active_rows),
         "p6_active_rows": int(fine_condensed.active_rows),
         "owned_cells_local": int(projected_cells),
-        "projected_cells_global": int(
-            comm.allreduce(projected_cells, op=MPI.SUM)
-        ),
+        "projected_cells_global": int(comm.allreduce(projected_cells, op=MPI.SUM)),
         "global_p6_matrix_materialized": False,
         "global_p6_transfer_materialized": False,
         "global_basis_sweep": False,
@@ -368,16 +369,18 @@ class OwnerLocalTraceTransfer:
 
     def _check_vectors(self, coarse: PETSc.Vec, fine: PETSc.Vec) -> None:
         if int(coarse.getSize()) != int(self.coarse_constraints.active_rows):
-            raise ValueError("p2 active vector has an unexpected global size")
+            raise ValueError("coarse active vector has an unexpected global size")
         if int(fine.getSize()) != int(self.fine_constraints.active_rows):
-            raise ValueError("p6 active vector has an unexpected global size")
+            raise ValueError("fine active vector has an unexpected global size")
         if tuple(map(int, coarse.getOwnershipRange())) != self.coarse_owner_range:
-            raise ValueError("p2 active vector ownership does not match the transfer")
+            raise ValueError(
+                "coarse active vector ownership does not match the transfer"
+            )
         if tuple(map(int, fine.getOwnershipRange())) != self.fine_owner_range:
-            raise ValueError("p6 active vector ownership does not match the transfer")
+            raise ValueError("fine active vector ownership does not match the transfer")
 
     def apply(self, coarse: PETSc.Vec, fine: PETSc.Vec) -> None:
-        """Apply ``q6 = P q2`` using only owner-local row stencils."""
+        """Apply ``fine = P coarse`` using only owner-local row stencils."""
 
         self._check_vectors(coarse, fine)
         self._scatter.scatter(
@@ -396,7 +399,7 @@ class OwnerLocalTraceTransfer:
         fine.assemble()
 
     def apply_adjoint(self, fine: PETSc.Vec, coarse: PETSc.Vec) -> None:
-        """Apply the exact conjugate transpose ``q2 = Pᴴ q6``."""
+        """Apply the exact conjugate transpose ``coarse = Pᴴ fine``."""
 
         self._check_vectors(coarse, fine)
         coarse.set(0.0)
@@ -426,22 +429,25 @@ class OwnerLocalTraceTransfer:
         self._destroyed = True
 
 
-def build_p2_to_p6_active_trace_transfer(
+def build_owner_local_trace_transfer(
     coarse_space,
     fine_space,
     coarse_constraints: TraceConstraintMap,
     fine_constraints: TraceConstraintMap,
+    *,
+    coarse_degree: int = 2,
+    fine_degree: int = 6,
 ) -> OwnerLocalTraceTransfer:
-    """Build the fixed p2-to-p6 active-trace stencil without materializing P."""
+    """Build an owner-local active-trace stencil without materializing P."""
 
-    _validate_space(coarse_space, 2)
-    _validate_space(fine_space, 6)
+    _validate_space(coarse_space, coarse_degree)
+    _validate_space(fine_space, fine_degree)
     if coarse_space.mesh is not fine_space.mesh:
-        raise ValueError("p2 and p6 transfer spaces must share one mesh")
+        raise ValueError("coarse and fine transfer spaces must share one mesh")
     comm = coarse_space.mesh.comm
     coarse_trace, coarse_interior = _trace_and_interior_positions(coarse_space)
     fine_trace, _fine_interior = _trace_and_interior_positions(fine_space)
-    interpolation = _actual_p2_to_p6_interpolation(coarse_space, fine_space)
+    interpolation = _actual_interpolation(coarse_space, fine_space)
 
     topology = fine_space.mesh.topology
     topology.create_entity_permutations()
@@ -508,14 +514,14 @@ def build_p2_to_p6_active_trace_transfer(
                 right[np.searchsorted(union, columns)] = values
                 if float(np.max(np.abs(left - right), initial=0.0)) > 1.0e-12:
                     raise RuntimeError(
-                        f"p6 active row {int(active_row)} has inconsistent cell stencils"
+                        f"fine active row {int(active_row)} has inconsistent cell stencils"
                     )
                 continue
             row_maps[int(active_row)] = (columns, values)
 
     if max_interior_dependency > 1.0e-12:
         raise NotImplementedError(
-            "p2 cell-interior DoFs contribute to the p6 trace interpolation"
+            "coarse cell-interior DoFs contribute to the fine trace interpolation"
         )
     coarse_layout = PETSc.Vec().createMPI(
         (
@@ -540,7 +546,7 @@ def build_p2_to_p6_active_trace_transfer(
     if missing:
         coarse_layout.destroy()
         raise RuntimeError(
-            f"p6 active owner rows lack designated cell stencils: {missing[:8]}"
+            f"fine active owner rows lack designated cell stencils: {missing[:8]}"
         )
     ordered = [row_maps[int(row)] for row in row_ids]
     offsets = np.zeros(len(ordered) + 1, dtype=PETSc.IntType)
@@ -567,7 +573,58 @@ def build_p2_to_p6_active_trace_transfer(
         global_is.destroy()
         local_is.destroy()
         source.destroy()
-        raise RuntimeError("p6 active row ownership does not cover all rows")
+        raise RuntimeError("fine active row ownership does not cover all rows")
+    audit = {
+        "status": "owner_local_trace_stencil",
+        "coarse_degree": int(coarse_degree),
+        "fine_degree": int(fine_degree),
+        "coarse_global_active_rows": int(coarse_constraints.active_rows),
+        "fine_global_active_rows": int(fine_constraints.active_rows),
+        "local_owned_fine_rows": int(len(row_ids)),
+        "local_stencil_nnz": int(len(column_ids)),
+        "global_stencil_nnz": int(comm.allreduce(len(column_ids), op=MPI.SUM)),
+        "owner_local_stencil_nbytes": int(
+            row_ids.nbytes
+            + offsets.nbytes
+            + column_ids.nbytes
+            + source_positions.nbytes
+            + values.nbytes
+        ),
+        "source_staging_nbytes": int(
+            source.getLocalSize() * np.dtype(np.complex128).itemsize
+        ),
+        "communication_index_nbytes": int(needed.nbytes),
+        "structural_zero_tolerance": STRUCTURAL_ZERO_TOLERANCE,
+        "structural_zero_discarded_candidate_count": int(
+            comm.allreduce(structural_zero_discarded_local, op=MPI.SUM)
+        ),
+        "structural_zero_discarded_candidate_max_abs": float(
+            comm.allreduce(structural_zero_discarded_max_local, op=MPI.MAX)
+        ),
+        "remote_coarse_columns_local": int(
+            np.count_nonzero(
+                (column_ids < coarse_owner_range[0])
+                | (column_ids >= coarse_owner_range[1])
+            )
+        ),
+        "cell_info_nonzero_count": int(
+            comm.allreduce(cell_info_nonzero_owned, op=MPI.SUM)
+        ),
+        "trace_interior_dependency_max": float(
+            comm.allreduce(max_interior_dependency, op=MPI.MAX)
+        ),
+        "global_transfer_matrix_materialized": False,
+        "allgather_active_values": False,
+        "global_basis_sweep": False,
+    }
+    if (int(coarse_degree), int(fine_degree)) == (2, 6):
+        audit.update(
+            {
+                "p2_global_active_rows": int(coarse_constraints.active_rows),
+                "p6_global_active_rows": int(fine_constraints.active_rows),
+                "local_owned_p6_rows": int(len(row_ids)),
+            }
+        )
     return OwnerLocalTraceTransfer(
         coarse_space=coarse_space,
         fine_space=fine_space,
@@ -586,45 +643,23 @@ def build_p2_to_p6_active_trace_transfer(
         _coarse_source=source,
         _coarse_global_is=global_is,
         _coarse_local_is=local_is,
-        audit={
-            "status": "owner_local_trace_stencil",
-            "p2_global_active_rows": int(coarse_constraints.active_rows),
-            "p6_global_active_rows": int(fine_constraints.active_rows),
-            "local_owned_p6_rows": int(len(row_ids)),
-            "local_stencil_nnz": int(len(column_ids)),
-            "global_stencil_nnz": int(comm.allreduce(len(column_ids), op=MPI.SUM)),
-            "owner_local_stencil_nbytes": int(
-                row_ids.nbytes
-                + offsets.nbytes
-                + column_ids.nbytes
-                + source_positions.nbytes
-                + values.nbytes
-            ),
-            "source_staging_nbytes": int(
-                source.getLocalSize() * np.dtype(np.complex128).itemsize
-            ),
-            "communication_index_nbytes": int(needed.nbytes),
-            "structural_zero_tolerance": STRUCTURAL_ZERO_TOLERANCE,
-            "structural_zero_discarded_candidate_count": int(
-                comm.allreduce(structural_zero_discarded_local, op=MPI.SUM)
-            ),
-            "structural_zero_discarded_candidate_max_abs": float(
-                comm.allreduce(structural_zero_discarded_max_local, op=MPI.MAX)
-            ),
-            "remote_coarse_columns_local": int(
-                np.count_nonzero(
-                    (column_ids < coarse_owner_range[0])
-                    | (column_ids >= coarse_owner_range[1])
-                )
-            ),
-            "cell_info_nonzero_count": int(
-                comm.allreduce(cell_info_nonzero_owned, op=MPI.SUM)
-            ),
-            "trace_interior_dependency_max": float(
-                comm.allreduce(max_interior_dependency, op=MPI.MAX)
-            ),
-            "global_transfer_matrix_materialized": False,
-            "allgather_active_values": False,
-            "global_basis_sweep": False,
-        },
+        audit=audit,
+    )
+
+
+def build_p2_to_p6_active_trace_transfer(
+    coarse_space,
+    fine_space,
+    coarse_constraints: TraceConstraintMap,
+    fine_constraints: TraceConstraintMap,
+) -> OwnerLocalTraceTransfer:
+    """Build the fixed p2-to-p6 active-trace stencil without materializing P."""
+
+    return build_owner_local_trace_transfer(
+        coarse_space,
+        fine_space,
+        coarse_constraints,
+        fine_constraints,
+        coarse_degree=2,
+        fine_degree=6,
     )

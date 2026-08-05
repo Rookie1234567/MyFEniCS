@@ -277,6 +277,11 @@ class FactorFreeLocalSlabKrylovPc:
             result += shifted_values
         return result
 
+    def restricted_action(self, slab: int, values: np.ndarray) -> np.ndarray:
+        """Apply one owner-local shifted fine action for a capacity oracle."""
+
+        return self._restricted_action(slab, values)
+
     def _fixed_step_gmres(self, slab: int, rhs: np.ndarray) -> tuple[np.ndarray, bool]:
         """Run the configured fixed Arnoldi steps and solve the small LS system."""
 

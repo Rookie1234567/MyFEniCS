@@ -124,3 +124,75 @@ V2 和 Candidate D 的历史结果保留在既有 `response_v2.md`、outcomes �
 ## 9. 结论与后续限制
 
 R7 证明了 p4-core 组件和 assembly-time retained action 的代数可行性，但没有证明 public DtN integration 已达到 full residual Gate，也没有得到可替代 direct 的 production-qualified 迭代解。停止同一 p4-core/DtN 微调；本 V3 提交推送后按最新用户顺序读取 Candidate F addendum，先只执行 F0，后续严格受其 Gate 约束。此处不提前读取或解释 addendum。
+
+## 10. Candidate F F0 implementation Gate 补充
+
+### 10.1 身份与既有停止边界
+
+Candidate F F0 的目标是一个局部容量 oracle：沿用 Candidate D 的 fully-condensed factor-free p6 action，用真实 exact-sequence degree-pair transfer 构造 p4 中间空间。它只允许临时 dense complex128 p4 LU，用于测量容量，不是 production solver。
+
+此前 partial condensation 已收口为
+`CONTROLLED_NEGATIVE_NUMERICAL_AT_R7B2B1_COMPLEMENT_GATE`；local p2 Candidate D 也仍是冻结负结果：
+
+| source | rho_B4 | rho_D0 | improvement |
+|---|---:|---:|---:|
+| low | 0.24599945418880295 | 0.2540230551088513 | 0.9684138870126958 |
+| high | 0.24651896436171644 | 0.26531876351572775 | 0.929142594723057 |
+| mixed | 0.24612971921817314 | 0.2715867504171219 | 0.9062655628087525 |
+
+测试绑定 tracked HEAD `2cea3b986303d1553e062f206da452e8f609642b`，branch 为
+`codex/20260803-task37-matrix-free-iterative-development`。测试时 worktree 是 dirty；四个实现文件的 SHA256 见
+[`task37_candidate_f_f0_v1.json`](../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_candidate_f_f0_v1.json)。ABI 为 qualified 项目 `.venv`、PETSc `complex128/int32`、同一 Linux 栈。
+
+### 10.2 Static 与唯一 serial 命令
+
+最终 Ruff check、Ruff format-check、compileall、`git diff --check` 均通过。最初 format mismatch 只是机械格式修正，不是数值 Gate。
+
+唯一 pytest 命令在同一 qualified shell 中执行：
+
+```text
+/usr/bin/time -v python -m pytest -q -s -x \
+  src/test/test_246_task037_p4_capacity_oracle.py::test_f0_degree_pairs_preserve_floquet_orientation_identity \
+  src/test/test_246_task037_p4_capacity_oracle.py::test_f0_p4_capacity_oracle_and_d0_comparison
+```
+
+结果是 `1 passed, 1 failed`、exit `1`、wall `18.65 s`、MaxRSS `287000 kB`、swap `0`；原始输出保存在 `/tmp/task37_f0_p4_capacity_oracle.log`，time 输出在 `/tmp/task37_f0_p4_capacity_oracle.time`。
+
+### 10.3 Transfer Gate measured PASS
+
+第一项专门测试实际经过 P24 与 P46 degree pairs，并通过真实 nontrivial orientation/Floquet 插值核对：
+
+| 指标 | measured |
+|---|---:|
+| P24→P46 composition error | `3.512063090206927e-15` |
+| P24 interpolation error | `8.326653945790752e-16` |
+| P46 interpolation error | `6.595217588690049e-15` |
+| P24 adjoint error | `1.1106734086056049e-15` |
+| P46 adjoint error | `2.6080775955612308e-15` |
+| nonzero orientation counts | P24/P46 = `21/21` |
+| Floquet phase x | `0.8541859931542107-0.5199675846619236j` |
+| Floquet phase y | `0.818001826003227+0.5752156227497531j` |
+
+### 10.4 Capacity implementation Gate FAIL
+
+第二项在 p4 oracle 构造前失败：`diagonal.getValues(p6_rows)` 收到 numpy int64 索引，而当前 PETSc ABI 要求 int32。完整异常原文为：
+
+```text
+TypeError: Cannot cast array data from dtype('int64') to dtype('int32') according to the rule 'safe'
+```
+
+失败位置是 `src/test/test_246_task037_p4_capacity_oracle.py:113`。因此本轮分类精确为：
+
+```text
+F0_IMPLEMENTATION_GATE_FAILED_PETSC_INDEX_DTYPE
+```
+
+这不是 `P4_INTERMEDIATE_SPACE_NOT_EFFECTIVE`，因为 high/mixed improvement Gate 尚未执行。projected-action、B4 闭合、F rho、D0 新比较、p4 rows/matrix NNZ/factor NNZ/LU payload/bytes 均为 `not_run_by_implementation_gate`。冻结 D0 数值只是对照，没有重跑。
+
+潜在最小修复仅是将 PETSc `getValues` 索引对齐到 `PETSc.IntType`；本轮严格未实施，也没有重跑。
+
+### 10.5 后续与资格边界
+
+F1、MPI8 screen20/100/200、PDE 均为 `not_run_by_f0_gate`；没有调参、阈值变更或重跑。MaxRSS 只属于该 serial test 进程，不是 p4 容量或正式 PDE 内存证据。
+
+四个实现/测试文件是 unqualified research draft，ordinary defaults 未改变；不得 selective merge，也不得称为 production-qualified。F0 失败后本轮停止在 implementation Gate，等待新的明确修复授权。
