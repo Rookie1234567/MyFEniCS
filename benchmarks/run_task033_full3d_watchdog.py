@@ -659,7 +659,10 @@ def _task037_m4_factor_free_status(
         return None
     phase = "full" if args.task037_f3_full else f"{args.task037_f3_screen}_screen"
     result = "pass" if qualification["pass"] else "not_pass"
-    return f"task037_m4_p2_factor_free_slab_{phase}_{result}"
+    return (
+        "task037_m4_p2_factor_free_slab_"
+        f"steps{args.task037_m4_factor_free_local_steps}_{phase}_{result}"
+    )
 
 
 def _task037_f3_assembled_fgmres_port(
@@ -671,6 +674,7 @@ def _task037_f3_assembled_fgmres_port(
     never_materialized: bool = False,
     p2_auxiliary: bool = False,
     factor_free_slab: bool = False,
+    factor_free_local_steps: int = 2,
     overlap0125_partition: bool = False,
 ):
     from src.solvers.static_condensed_iterative import (
@@ -718,6 +722,7 @@ def _task037_f3_assembled_fgmres_port(
                 solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
                     request,
                     screen_iterations=screen_iterations,
+                    local_krylov_steps=factor_free_local_steps,
                     residual_observer=observe,
                     lifecycle_observer=(
                         observe_lifecycle if lifecycle_enabled else None
@@ -768,6 +773,7 @@ def _task037_f3_screen_gate(
     audit: Mapping[str, Any],
     expected_screen_iterations: int,
     observed_wall_seconds: float | None,
+    expected_factor_free_steps: int | None = None,
 ) -> dict[str, bool]:
     m3_profile = (
         audit.get("solver_profile")
@@ -811,6 +817,7 @@ def _task037_f3_screen_gate(
         partition = audit["partition_audit"]
         inventory = audit["no_global_factor_inventory"]
         coarse_dimension = int(coarse["dimension"])
+        factor_free_steps = expected_factor_free_steps
         if m4_factor_free_profile:
             expected_candidate = {
                 "outer_ksp": "fgmres",
@@ -823,7 +830,7 @@ def _task037_f3_screen_gate(
                 "num_slabs": 16,
                 "overlap_fraction": 0.125,
                 "interpolation": "partition",
-                "local_krylov_steps": 2,
+                "local_krylov_steps": factor_free_steps,
                 "local_inner_preconditioner": "none",
                 "outer_requires_fgmres": True,
                 "p2_auxiliary_correction": True,
@@ -849,12 +856,13 @@ def _task037_f3_screen_gate(
                 and partition.get("num_slabs") == 16
                 and partition.get("overlap_fraction") == 0.125
                 and partition.get("interpolation") == "partition"
-                and partition.get("local_krylov_steps") == 2
+                and factor_free_steps in (2, 4)
+                and partition.get("local_krylov_steps") == factor_free_steps
                 and partition.get("local_inner_preconditioner") == "none"
                 and partition.get("outer_requires_fgmres") is True
                 and partition.get("global_A_materialized_by_pc") is False
                 and patch.get("partition_weighted_additive_schwarz") is True
-                and patch.get("local_krylov_steps") == 2
+                and patch.get("local_krylov_steps") == factor_free_steps
                 and patch.get("local_inner_preconditioner") == "none"
                 and patch.get("outer_requires_fgmres") is True
                 and patch.get("p6_slab_matrix_materialized") is False
@@ -862,6 +870,8 @@ def _task037_f3_screen_gate(
                 and patch.get("p6_factor_count") == 0
                 and patch.get("p6_factor_nnz") == 0
                 and patch.get("global_A_materialized_by_pc") is False
+                and patch.get("expected_action_calls")
+                == factor_free_steps * 16 * int(patch.get("apply_count", 0))
                 and isinstance(weight_error, (int, float))
                 and math.isfinite(float(weight_error))
                 and float(weight_error) <= 1.0e-12
@@ -1150,6 +1160,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         ),
         "task037_m4_p2_auxiliary": bool(args.task037_m4_p2_auxiliary),
         "task037_m4_factor_free_slab": bool(args.task037_m4_factor_free_slab),
+        "task037_m4_factor_free_local_steps": int(
+            args.task037_m4_factor_free_local_steps
+        ),
         "task037_canonical_vector_export": bool(args.task037_canonical_vector_export),
         "task037_m0_lifecycle_audit": bool(args.task037_m0_lifecycle_audit),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
@@ -1311,6 +1324,7 @@ def _worker(args: argparse.Namespace) -> int:
             never_materialized=args.task037_m2c_never_materialized,
             p2_auxiliary=args.task037_m4_p2_auxiliary,
             factor_free_slab=args.task037_m4_factor_free_slab,
+            factor_free_local_steps=args.task037_m4_factor_free_local_steps,
             overlap0125_partition=args.task037_m3a_overlap0125_partition,
         )
         if args.task037_m2c_never_materialized:
@@ -1476,6 +1490,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--task037-m3a-overlap0125-partition", action="store_true")
     parser.add_argument("--task037-m4-p2-auxiliary", action="store_true")
     parser.add_argument("--task037-m4-factor-free-slab", action="store_true")
+    parser.add_argument(
+        "--task037-m4-factor-free-local-steps",
+        type=int,
+        choices=(2, 4),
+        default=2,
+    )
     parser.add_argument("--task037-m0-lifecycle-audit", action="store_true")
     parser.add_argument(
         "--task035d-case097-gate",
@@ -1821,6 +1841,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037-m4-factor-free-slab requires the combined M2c/M4 p2 "
             "path, MPI8 screens 20/100/200, or canonical MPI1/8 full."
+        )
+    if args.task037_m4_factor_free_local_steps != 2 and not (
+        args.task037_m4_factor_free_slab
+    ):
+        parser.error(
+            "--task037-m4-factor-free-local-steps requires "
+            "--task037-m4-factor-free-slab."
         )
     if args.task037_m0_lifecycle_audit and not (
         args.task037_f3_full and args.task037_f5b_released_profile
@@ -3126,6 +3153,11 @@ def _qualify(
             core_audit,
             expected_iterations,
             solver_summary.get("elapsed_seconds"),
+            expected_factor_free_steps=(
+                int(args.task037_m4_factor_free_local_steps)
+                if m4_factor_free_profile
+                else None
+            ),
         )
         core_profile = core_audit.get("solver_profile")
         core_released = core_audit.get("assembled_matrix_released_before_solve")
@@ -3315,6 +3347,7 @@ def _qualify(
             p2_pc = core_audit.get("smoother_diagnostics") or {}
             p2_setup = core_audit.get("p2_auxiliary_audit") or {}
             patch = p2_pc.get("factor_free_slab_patch") or {}
+            factor_free_steps = int(args.task037_m4_factor_free_local_steps)
             resource = resource_summary if isinstance(resource_summary, dict) else {}
             memory_authority_gib = resource.get("memory_authority_gib")
             checks.update(
@@ -3340,7 +3373,9 @@ def _qualify(
                         and partition.get("num_slabs") == 16
                         and partition.get("overlap_fraction") == 0.125
                         and partition.get("interpolation") == "partition"
-                        and partition.get("local_krylov_steps") == 2
+                        and core_audit.get("candidate", {}).get("local_krylov_steps")
+                        == factor_free_steps
+                        and partition.get("local_krylov_steps") == factor_free_steps
                         and partition.get("local_inner_preconditioner") == "none"
                         and partition.get("outer_requires_fgmres") is True
                         and partition.get("global_A_materialized_by_pc") is False
@@ -3357,7 +3392,7 @@ def _qualify(
                     "m4_factor_free_local_krylov": (
                         patch.get("profile") == "factor_free_local_slab_krylov"
                         and patch.get("num_slabs") == 16
-                        and patch.get("local_krylov_steps") == 2
+                        and patch.get("local_krylov_steps") == factor_free_steps
                         and patch.get("local_inner_preconditioner") == "none"
                         and patch.get("outer_requires_fgmres") is True
                         and patch.get("p6_slab_matrix_materialized") is False
@@ -3365,6 +3400,10 @@ def _qualify(
                         and patch.get("p6_factor_count") == 0
                         and patch.get("p6_factor_nnz") == 0
                         and patch.get("global_A_materialized_by_pc") is False
+                        and patch.get("expected_action_calls")
+                        == factor_free_steps * 16 * int(patch.get("apply_count", 0))
+                        and patch.get("restricted_action_calls")
+                        == patch.get("expected_action_calls")
                     ),
                     "m4_factor_free_no_p6_factor": (
                         inventory.get("full_p6_global_direct_factor_count") == 0
@@ -3661,7 +3700,13 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
     if args.task037_m4_p2_auxiliary:
         command.append("--task037-m4-p2-auxiliary")
     if args.task037_m4_factor_free_slab:
-        command.append("--task037-m4-factor-free-slab")
+        command.extend(
+            (
+                "--task037-m4-factor-free-slab",
+                "--task037-m4-factor-free-local-steps",
+                str(args.task037_m4_factor_free_local_steps),
+            )
+        )
     if args.task037_canonical_vector_export:
         command.append("--task037-canonical-vector-export")
     if args.task037_m0_lifecycle_audit:

@@ -8,6 +8,7 @@ import pytest
 from basix.ufl import element
 from dolfinx import default_real_type, fem
 from mpi4py import MPI
+from petsc4py import PETSc
 
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.solvers import static_condensed_iterative as core
@@ -29,7 +30,10 @@ from src.test.test_236_task037_p2_auxiliary_pc import _assembly_time_fixture
 
 
 @pytest.mark.skipif(MPI.COMM_WORLD.size != 1, reason="serial builder gate")
-def test_real_p2_factor_free_builder_routes_full_and_schur_actions():
+@pytest.mark.parametrize("local_krylov_steps", (2, 4))
+def test_real_p2_factor_free_builder_routes_full_and_schur_actions(
+    local_krylov_steps,
+):
     config, mesh_data, _V2 = _fixed_target_fixture(2, h_nm=50.0)
     V6 = fem.functionspace(
         mesh_data.mesh,
@@ -66,14 +70,22 @@ def test_real_p2_factor_free_builder_routes_full_and_schur_actions():
         mesh_data=mesh_data,
         config=config6,
         fine_schur_action=fine_action,
+        local_krylov_steps=local_krylov_steps,
     )
-    source = _vector(fine_shell.createVecRight(), 239)
+    source_layout = fine_shell.createVecRight()
+    source = _vector(source_layout, 239)
+    source_layout.destroy()
     target = fine_shell.createVecLeft()
     pc.apply(None, source, target)
+    target_repeat = fine_shell.createVecLeft()
+    pc.apply(None, source, target_repeat)
     audit = pc.diagnostics
     patch = audit["factor_free_slab_patch"]
 
     assert np.isfinite(target.norm())
+    repeat_difference = target_repeat.copy()
+    repeat_difference.axpy(PETSc.ScalarType(-1.0), target)
+    assert repeat_difference.norm() <= 1.0e-11
     assert setup_audit["profile"] == (
         "never_materialized_p2_factor_free_slab_auxiliary"
     )
@@ -87,7 +99,7 @@ def test_real_p2_factor_free_builder_routes_full_and_schur_actions():
     assert patch["num_slabs"] == 16
     assert setup_audit["factor_free_slab_patch"]["overlap_fraction"] == 0.125
     assert patch["partition_weight_sum_error"] <= 1.0e-12
-    assert patch["local_krylov_steps"] == 2
+    assert patch["local_krylov_steps"] == local_krylov_steps
     assert patch["local_inner_preconditioner"] == "none"
     assert patch["outer_requires_fgmres"] is True
     assert patch["p6_slab_matrix_materialized"] is False
@@ -95,14 +107,20 @@ def test_real_p2_factor_free_builder_routes_full_and_schur_actions():
     assert patch["p6_factor_count"] == 0
     assert patch["p6_factor_nnz"] == 0
     assert patch["global_A_materialized_by_pc"] is False
+    assert patch["restricted_action_calls"] == (
+        local_krylov_steps * 16 * patch["apply_count"]
+    )
+    assert patch["expected_action_calls"] == patch["restricted_action_calls"]
     assert audit["profile"] == "never_materialized_p2_factor_free_slab_auxiliary"
     assert audit["p2_factor_count"] == 1
     assert audit["global_p6_matrix_materialized"] is False
     assert audit["global_p6_factor_count"] == 0
     assert audit["p6_slab_matrix_count"] == 0
     assert audit["p2_unshifted_matrix_retained"] is False
-    assert patch["apply_count"] == 2
+    assert patch["apply_count"] == 4
 
+    repeat_difference.destroy()
+    target_repeat.destroy()
     target.destroy()
     source.destroy()
     pc.destroy()
@@ -116,7 +134,10 @@ def test_real_p2_factor_free_builder_routes_full_and_schur_actions():
     fine_blocks.destroy()
 
 
-def test_factor_free_wrapper_routes_action_only_request(monkeypatch):
+@pytest.mark.parametrize("local_krylov_steps", (2, 4))
+def test_factor_free_wrapper_routes_action_only_request(
+    monkeypatch, local_krylov_steps
+):
     A, b, ordinary_request = _build_request(monkeypatch)
     blocks = core.extract_petsc_condensed_blocks(A, b, n_fe=4, n_aux=1)
     fine_action = blocks.require_f().copy()
@@ -185,6 +206,10 @@ def test_factor_free_wrapper_routes_action_only_request(monkeypatch):
         def solve(self, source, target):
             target.set(0.0)
 
+    _FakeP2Pc.diagnostics["factor_free_slab_patch"]["local_krylov_steps"] = (
+        local_krylov_steps
+    )
+
     def fake_builder(**kwargs):
         captured.update(kwargs)
         captured["fine_operator_is_distinct"] = (
@@ -211,11 +236,13 @@ def test_factor_free_wrapper_routes_action_only_request(monkeypatch):
         core.solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
             action_request,
             screen_iterations=20,
+            local_krylov_steps=local_krylov_steps,
         )
     )
     try:
         assert captured["fine_schur_action_is_request"]
         assert captured["fine_operator_is_distinct"]
+        assert captured["local_krylov_steps"] == local_krylov_steps
         assert captured["fine_operator_type"] == "python"
         assert snapshot.solver_profile == (
             "never_materialized_p2_factor_free_slab_auxiliary"
@@ -223,7 +250,7 @@ def test_factor_free_wrapper_routes_action_only_request(monkeypatch):
         assert audit["candidate"]["restart"] == 90
         assert audit["candidate"]["pc_side"] == "right"
         assert audit["candidate"]["outer_requires_fgmres"] is True
-        assert audit["candidate"]["local_krylov_steps"] == 2
+        assert audit["candidate"]["local_krylov_steps"] == local_krylov_steps
         assert audit["no_global_factor_inventory"]["p6_factor_count"] == 0
         assert audit["no_global_factor_inventory"]["p6_factor_nnz"] == 0
         assert audit["partition_audit"]["num_slabs"] == 16

@@ -80,6 +80,7 @@ def _solve_static_condensed_fgmres_core(
     | Stage4NeverMaterializedLinearSolverRequest,
     *,
     screen_iterations: Literal[20, 100, 200],
+    local_krylov_steps: Literal[2, 4] = 2,
     residual_observer: Callable[[int, float, float], None] | None = None,
     solver_profile: Literal[
         "assembled",
@@ -342,6 +343,7 @@ def _solve_static_condensed_fgmres_core(
                     mesh_data=request.mesh_data,
                     config=request.config,
                     fine_schur_action=(fine_action if factor_free_p2_profile else None),
+                    local_krylov_steps=local_krylov_steps,
                 )
             )
             owned.extend((p2_transfer, p2_diagonal, p2_smoother))
@@ -693,7 +695,7 @@ def _solve_static_condensed_fgmres_core(
                     "num_slabs": 16,
                     "overlap_fraction": 0.125,
                     "interpolation": "partition",
-                    "local_krylov_steps": 2,
+                    "local_krylov_steps": local_krylov_steps,
                     "local_inner_preconditioner": "none",
                     "outer_requires_fgmres": True,
                     "p2_auxiliary_correction": True,
@@ -896,6 +898,7 @@ def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
     request: Stage4NeverMaterializedLinearSolverRequest,
     *,
     screen_iterations: Literal[20, 100, 200] = 20,
+    local_krylov_steps: Literal[2, 4] = 2,
     residual_observer: Callable[[int, float, float], None] | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
@@ -904,6 +907,7 @@ def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
     return _solve_static_condensed_fgmres_core(
         request,
         screen_iterations=screen_iterations,
+        local_krylov_steps=local_krylov_steps,
         residual_observer=residual_observer,
         solver_profile="never_materialized_p2_factor_free_slab_auxiliary",
         lifecycle_observer=lifecycle_observer,

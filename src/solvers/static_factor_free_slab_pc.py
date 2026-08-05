@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 from mpi4py import MPI
@@ -17,7 +17,7 @@ _TINY = np.finfo(float).tiny
 
 
 class FactorFreeLocalSlabKrylovPc:
-    """Two-step owner-local GMRES without slab matrices or factors.
+    """Fixed-step owner-local GMRES without slab matrices or factors.
 
     The supplied fine action and shifted diagonal are borrowed.  Every rank
     participates in every slab action so that the borrowed distributed action
@@ -30,9 +30,13 @@ class FactorFreeLocalSlabKrylovPc:
         fine_operator: PETSc.Mat,
         plan: OwnerLocalSlabPlan,
         shifted_diagonal: PETSc.Vec,
+        local_krylov_steps: Literal[2, 4] = 2,
     ) -> None:
+        if local_krylov_steps not in (2, 4):
+            raise ValueError("local Krylov steps must be 2 or 4")
         self.fine_operator = fine_operator
         self.plan = plan
+        self._local_krylov_steps = int(local_krylov_steps)
         self.comm = plan.comm
         self.rank = int(self.comm.rank)
         self.num_slabs = len(plan.slab_owners)
@@ -202,39 +206,57 @@ class FactorFreeLocalSlabKrylovPc:
         )
         return result
 
-    def _two_step_gmres(self, slab: int, rhs: np.ndarray) -> tuple[np.ndarray, bool]:
-        """Run exactly two Arnoldi steps and solve the small least-squares system."""
+    def _fixed_step_gmres(self, slab: int, rhs: np.ndarray) -> tuple[np.ndarray, bool]:
+        """Run the configured fixed Arnoldi steps and solve the small LS system."""
 
         owner = int(self.plan.slab_owners[slab])
         if self.rank != owner:
             rhs = np.empty(0, dtype=PETSc.ScalarType)
         rhs = np.asarray(rhs, dtype=PETSc.ScalarType)
         beta = float(np.linalg.norm(rhs))
-        q0 = rhs / beta if beta > _TINY else np.zeros_like(rhs)
-        w0 = self._restricted_action(slab, q0)
-        h00 = np.vdot(q0, w0) if q0.size else PETSc.ScalarType(0.0)
-        w0 = w0 - h00 * q0
-        h10 = float(np.linalg.norm(w0))
-        q1 = w0 / h10 if h10 > _TINY else np.zeros_like(w0)
-        w1 = self._restricted_action(slab, q1)
-        h01 = np.vdot(q0, w1) if q0.size else PETSc.ScalarType(0.0)
-        h11 = np.vdot(q1, w1) if q1.size else PETSc.ScalarType(0.0)
-        h21 = float(np.linalg.norm(w1 - h01 * q0 - h11 * q1))
-        if beta <= _TINY or h10 <= _TINY:
+        q_vectors = [rhs / beta if beta > _TINY else np.zeros_like(rhs)]
+        H = np.zeros(
+            (self._local_krylov_steps + 1, self._local_krylov_steps),
+            dtype=PETSc.ScalarType,
+        )
+        active = beta > _TINY
+        happy_breakdown = not active
+        for step in range(self._local_krylov_steps):
+            q = q_vectors[step] if active else np.zeros_like(rhs)
+            w = self._restricted_action(slab, q)
+            if not active:
+                if step + 1 < self._local_krylov_steps:
+                    q_vectors.append(np.zeros_like(rhs))
+                continue
+            for previous, q_previous in enumerate(q_vectors[: step + 1]):
+                coefficient = np.vdot(q_previous, w) if q.size else 0.0
+                H[previous, step] = coefficient
+                w = w - coefficient * q_previous
+            next_norm = float(np.linalg.norm(w))
+            H[step + 1, step] = next_norm
+            if next_norm <= _TINY:
+                active = False
+                happy_breakdown = True
+                if step + 1 < self._local_krylov_steps:
+                    q_vectors.append(np.zeros_like(rhs))
+            elif step + 1 < self._local_krylov_steps:
+                q_vectors.append(w / next_norm)
+        if self.rank == owner and happy_breakdown:
             self._happy_breakdowns_local += 1
-        H = np.zeros((3, 2), dtype=PETSc.ScalarType)
-        H[0, 0] = h00
-        H[1, 0] = h10
-        H[0, 1] = h01
-        H[1, 1] = h11
-        H[2, 1] = h21
-        g = np.asarray((beta, 0.0, 0.0), dtype=PETSc.ScalarType)
+        g = np.zeros(self._local_krylov_steps + 1, dtype=PETSc.ScalarType)
+        g[0] = beta
         coefficients, *_ = np.linalg.lstsq(H, g, rcond=None)
-        correction = q0 * coefficients[0] + q1 * coefficients[1]
-        return correction, beta <= _TINY or h10 <= _TINY
+        correction = sum(
+            (
+                q_vectors[step] * coefficients[step]
+                for step in range(self._local_krylov_steps)
+            ),
+            start=np.zeros_like(rhs),
+        )
+        return correction, happy_breakdown
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
-        """Apply the fixed two-step weighted additive-Schwarz action."""
+        """Apply the fixed-step weighted additive-Schwarz action."""
 
         if self._destroyed:
             raise RuntimeError("factor-free local slab PC has been destroyed")
@@ -258,7 +280,7 @@ class FactorFreeLocalSlabKrylovPc:
             else:
                 positions = np.empty(0, dtype=PETSc.IntType)
                 rhs = np.empty(0, dtype=PETSc.ScalarType)
-            correction, _happy_breakdown = self._two_step_gmres(slab, rhs)
+            correction, _happy_breakdown = self._fixed_step_gmres(slab, rhs)
             if self.rank == int(self.plan.slab_owners[slab]):
                 weights = np.asarray(
                     self.plan.partition_weights_by_slab[slab],
@@ -287,7 +309,7 @@ class FactorFreeLocalSlabKrylovPc:
             "slab_owners": list(self.plan.slab_owners),
             "local_slabs": list(self.local_slabs),
             "local_krylov_type": "gmres",
-            "local_krylov_steps": 2,
+            "local_krylov_steps": self._local_krylov_steps,
             "local_inner_preconditioner": "none",
             "outer_requires_fgmres": True,
             "partition_weighted_additive_schwarz": True,
@@ -304,7 +326,9 @@ class FactorFreeLocalSlabKrylovPc:
             "retained_slab_matrix_count": 0,
             "apply_count": self.apply_count,
             "restricted_action_calls": self._action_calls,
-            "expected_action_calls": 2 * self.num_slabs * self.apply_count,
+            "expected_action_calls": (
+                self._local_krylov_steps * self.num_slabs * self.apply_count
+            ),
             "happy_breakdown_count": self._happy_breakdowns_global,
             "local_union_rows": int(self._union_indices.size),
             "local_work_vector_bytes": int(

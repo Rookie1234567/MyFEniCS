@@ -9,7 +9,7 @@ builds a p6 factor or a global transfer matrix.
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Any
+from typing import Any, Literal
 
 from basix.ufl import element
 import numpy as np
@@ -405,6 +405,7 @@ def build_p2_auxiliary_setup(
     mesh_data: Any,
     config: Any,
     fine_schur_action: PETSc.Mat | None = None,
+    local_krylov_steps: Literal[2, 4] = 2,
 ) -> tuple[P2AuxiliaryDiagonalModalPc, Any, PETSc.Vec, dict[str, Any]]:
     """Build the same-mesh p2 auxiliary PC without a p6 global matrix."""
 
@@ -469,6 +470,7 @@ def build_p2_auxiliary_setup(
             fine_schur_action,
             owner_plan,
             shifted,
+            local_krylov_steps=local_krylov_steps,
         )
         shifted.destroy()
         patch_diagnostics = fine_patch.diagnostics

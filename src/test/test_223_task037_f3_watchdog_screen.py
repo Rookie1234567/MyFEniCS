@@ -116,6 +116,9 @@ def _m4_factor_free_audit(screen_iterations=20):
         "p6_factor_count": 0,
         "p6_factor_nnz": 0,
         "global_A_materialized_by_pc": False,
+        "apply_count": 2,
+        "restricted_action_calls": 64,
+        "expected_action_calls": 64,
     }
     audit.update(
         {
@@ -397,6 +400,34 @@ def test_parser_scope_and_worker_command(tmp_path):
         assert m4_factor_free_screen.task037_m4_factor_free_slab
         assert m4_factor_free_command.count("--task037-m4-p2-auxiliary") == 1
         assert m4_factor_free_command.count("--task037-m4-factor-free-slab") == 1
+        assert m4_factor_free_command.count("--task037-m4-factor-free-local-steps") == 1
+        assert (
+            m4_factor_free_command[
+                m4_factor_free_command.index("--task037-m4-factor-free-local-steps") + 1
+            ]
+            == "2"
+        )
+        m4_factor_free4 = watchdog._parse_args(
+            m4_screen_args
+            + [
+                "--task037-m4-p2-auxiliary",
+                "--task037-m4-factor-free-slab",
+                "--task037-m4-factor-free-local-steps",
+                "4",
+            ]
+        )
+        m4_factor_free4_command = watchdog._worker_command(m4_factor_free4, tmp_path)
+        assert m4_factor_free4.task037_m4_factor_free_local_steps == 4
+        assert (
+            m4_factor_free4_command.count("--task037-m4-factor-free-local-steps") == 1
+        )
+        assert (
+            m4_factor_free4_command[
+                m4_factor_free4_command.index("--task037-m4-factor-free-local-steps")
+                + 1
+            ]
+            == "4"
+        )
     with pytest.raises(SystemExit):
         watchdog._parse_args(
             base
@@ -406,6 +437,8 @@ def test_parser_scope_and_worker_command(tmp_path):
                 "--task037-m4-factor-free-slab",
             ]
         )
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(m2c_args + ["--task037-m4-factor-free-local-steps", "4"])
     m4_factor_free_full_args = full_args + [
         "--task037-m2c-never-materialized",
         "--task037-m4-p2-auxiliary",
@@ -1026,7 +1059,11 @@ def test_m4_qualification_uses_final_p2_smoother_and_resource_gate():
     )
 
     factor_free_args = SimpleNamespace(
-        **{**vars(args), "task037_m4_factor_free_slab": True}
+        **{
+            **vars(args),
+            "task037_m4_factor_free_slab": True,
+            "task037_m4_factor_free_local_steps": 2,
+        }
     )
     factor_free_audit = _m4_factor_free_audit()
     factor_free_summary = {
@@ -1040,7 +1077,9 @@ def test_m4_qualification_uses_final_p2_smoother_and_resource_gate():
         "task037_f3_core_audit": factor_free_audit,
         "resource_summary": {"memory_authority_gib": 10.30},
     }
-    factor_free_screen = watchdog._task037_f3_screen_gate(factor_free_audit, 20, None)
+    factor_free_screen = watchdog._task037_f3_screen_gate(
+        factor_free_audit, 20, None, expected_factor_free_steps=2
+    )
     assert factor_free_screen["candidate"]
     assert factor_free_screen["partition_and_ilu"]
     assert factor_free_screen["m4_factor_free_screen_decline"]
@@ -1055,9 +1094,9 @@ def test_m4_qualification_uses_final_p2_smoother_and_resource_gate():
     bad_factor_free_kind["p2_auxiliary_audit"]["fine_schur_action_kind"] = (
         "wrong-action-kind"
     )
-    assert not watchdog._task037_f3_screen_gate(bad_factor_free_kind, 20, None)[
-        "no_global_factor"
-    ]
+    assert not watchdog._task037_f3_screen_gate(
+        bad_factor_free_kind, 20, None, expected_factor_free_steps=2
+    )["no_global_factor"]
 
     factor_free_full_args = SimpleNamespace(
         **{
@@ -1094,19 +1133,19 @@ def test_m4_qualification_uses_final_p2_smoother_and_resource_gate():
     )["pass"]
     assert (
         watchdog._task037_m4_factor_free_status(factor_free_args, {"pass": True})
-        == "task037_m4_p2_factor_free_slab_20_screen_pass"
+        == "task037_m4_p2_factor_free_slab_steps2_20_screen_pass"
     )
     assert (
         watchdog._task037_m4_factor_free_status(factor_free_args, {"pass": False})
-        == "task037_m4_p2_factor_free_slab_20_screen_not_pass"
+        == "task037_m4_p2_factor_free_slab_steps2_20_screen_not_pass"
     )
     assert (
         watchdog._task037_m4_factor_free_status(factor_free_full_args, {"pass": True})
-        == "task037_m4_p2_factor_free_slab_full_pass"
+        == "task037_m4_p2_factor_free_slab_steps2_full_pass"
     )
     assert (
         watchdog._task037_m4_factor_free_status(factor_free_full_args, {"pass": False})
-        == "task037_m4_p2_factor_free_slab_full_not_pass"
+        == "task037_m4_p2_factor_free_slab_steps2_full_not_pass"
     )
     assert watchdog._task037_m4_factor_free_status(args, {"pass": True}) is None
 
