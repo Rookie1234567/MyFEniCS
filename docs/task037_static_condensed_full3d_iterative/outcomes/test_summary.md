@@ -1,5 +1,24 @@
 # Task037 测试与静态检查汇总
 
+## Review V3 p4-core部分凝聚当前测试章节
+
+本阶段只验证 p4-core 部分凝聚组件与真实 public DtN 接线；“静态凝聚”在这里指单元内先消去内部行，“retained p4 core”指在完整 p6 代数中保留 108 个 exact-sequence p4 core 行。所有结果绑定 qualified activation、PETSc complex128/int32 和同一 Linux ABI。
+
+| 范围 | source | 结果 |
+|---|---|---|
+| R7a local | `ed871cbae51396e30ad5a3fd6bf32dc7601a4020` | PASS；误差 `1e-14–1e-15` |
+| R7b1 global | `b93b72bac9095273c838ff653ca3bbf93567123c` | PASS；最大约 `2.58e-15` |
+| R7b2a compiled-form | `0c882e7a6da38b6a66625e002fe64fabe0a70674` | test244 serial/MPI2、test243 serial PASS |
+| R7b2b1 public DtN | `6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a` | test245 `1 failed, 1 passed`；controlled negative |
+
+R7b2a：serial test244 `1 passed / 132.33 s / MaxRSS 548212 kB / action 3.913e-16`；MPI2 test244 `passed / 129.36 s / MaxRSS 536320 kB / action 4.371e-16`；serial test243 `1 passed / 34.50 s`。ledger 为 partial Schur `9331200`、eliminated factor `3745584`、basis `15070464`、maps `37304`、numbering `864` bytes。
+
+R7b2b1：命令为（在已执行 `source scripts/activate_myfenics_wsl.sh` 的同一 qualified shell 中）`source scripts/activate_myfenics_wsl.sh && /usr/bin/time -v python -m pytest -q -s src/test/test_245_task037_retained_dtn_adapter.py`；exit `1`、wall `88.15 s`、MaxRSS `661088 kB`、swap `0`。visible rows=`760`、KSP reason=`2`、RHS=`11.707507837771832`、solution=`275.1048734370968`、full true residual=`4.271433780052363e-11`。hard complement Gate 的 independent norm=`2.169086505997297e-12`、complement norm=`5.000737489099658e-10`，限值 `1e-11`，在 [test245:435](../../../src/test/test_245_task037_retained_dtn_adapter.py:435) 失败，约超限 `50.00737489099658` 倍。
+
+Candidate D 的 D0 负证据为：low `0.24599945418880295 / 0.2540230551088513 / 0.9684138870126958`，high `0.24651896436171644 / 0.26531876351572775 / 0.929142594723057`，mixed `0.24612971921817314 / 0.2715867504171219 / 0.9062655628087525`（`rho_B4 / rho_D / improvement`）；p2 factor count=`2`、factor NNZ=`4608`、p6 matrix/factor=`0/0`，rows/aggregate bytes=`not_recorded`。D 的 20/100/200、full、restart、MPI1 均 `not_run_by_D0_gate`。
+
+R7b2b1 touched Python scope 的 compileall、Ruff check、`git diff --check` 通过；test245 hard failure 原样保留，未 xfail/skip/放宽阈值。没有运行 full repository pytest；R7b2b2、MPI2 test245、MPI8 screen、full、official R/T/A 均 `not_run_by_gate`。Candidate E 为 `not_run_by_latest_user_sequence`；Candidate F addendum 为 `not_read_pending_v3_closeout`。
+
 ## 当前源码 canonical 收口
 
 canonical fix `2631a4c47258c9def919530787e409774b8ce029` 后的最终 targeted evidence：serial test226 `3 passed / 2 skipped`；MPI2 test226 每 rank `4 passed / 1 skipped`；test227+228 `5 passed / 3 skipped`；Ruff、py_compile/compileall、git diff --check 通过。Direct v2、M3a MPI4 full、canonical comparator 和一次性 physical-norm reconstruction 均绑定各自 artifact/manifest SHA；offline norm 不是 PDE solve。Full repository pytest 未在最终 source 上重跑，记录为 `not_run_by_user_efficiency_policy / not_verified`，因此不写成 full-suite PASS。

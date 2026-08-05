@@ -1,0 +1,283 @@
+{
+  "schema_version": "task037.v3.p4_core_partial_condensation.v1",
+  "record_type": "compact_component_and_integration_evidence",
+  "candidate_numerical_source_sha": "6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a",
+  "source_branch": "codex/20260803-task37-matrix-free-iterative-development",
+  "source_upstream_at_carrier": "d875ba538f8334c5fd9e026192cacbdcd11e0794",
+  "carrier_relation": {
+    "ahead": 5,
+    "behind": 0,
+    "worktree": "clean_at_numerical_carrier_checkpoint"
+  },
+  "research_only": true,
+  "ordinary_default_changed": false,
+  "production_qualified": false,
+  "classification": "CONTROLLED_NEGATIVE_NUMERICAL_AT_R7B2B1_COMPLEMENT_GATE",
+  "r1_evidence": {
+    "test": "test230",
+    "fixture": "n_aux=3 synthetic algebra fixture",
+    "measured_algebra": {
+      "serial": "PASS",
+      "mpi2": "PASS",
+      "mpi4": "PASS",
+      "matrix_free_action_error": "<=1e-11",
+      "aux_recovery_error": "<=1e-11",
+      "mpi2_aux_recovery_error": 3.2871030941353094e-12,
+      "explicit_c_d_matrix_count": 0
+    },
+    "structural_identity": {
+      "mode_key_beta_polarization_rayleigh": "same outgoing_port_modes_3d(cfg) modes object is reused before and after matrix_free_dtn and by downstream R/T",
+      "qualification_boundary": "structural_identity_not_80_mode_matrix_free_pde_measurement",
+      "case100_direct_80_mode_and_existing_mode_tests": "supporting_boundary_evidence"
+    },
+    "formal_80_mode_matrix_free_pde": "not_run",
+    "h_scaling_debt": "H remains 80x80 diagonal AIJ and SmallDenseInverse retains a dense replica; future-thousands-of-modes/0.7nm scaling is unresolved"
+  },
+  "candidates": [
+    {
+      "id": "Candidate_D",
+      "scope": "local p2 slab factor inner preconditioner",
+      "source_sha": "6f152a6e50f8e8fc475fc6b3e2bc39aca1bdf1d2",
+      "status": "CONTROLLED_NEGATIVE_NUMERICAL",
+      "d0_gate": "FAIL",
+      "metrics": {
+        "p2_factor_count": 2,
+        "p2_factor_nnz": 4608,
+        "p6_matrix_count": 0,
+        "p6_factor_count": 0,
+        "p6_factor_nnz": 0,
+        "rows": "not_recorded",
+        "aggregate_bytes": "not_recorded",
+        "low": {
+          "rho_b4": 0.24599945418880295,
+          "rho_d": 0.2540230551088513,
+          "improvement": 0.9684138870126958
+        },
+        "high": {
+          "rho_b4": 0.24651896436171644,
+          "rho_d": 0.26531876351572775,
+          "improvement": 0.929142594723057
+        },
+        "mixed": {
+          "rho_b4": 0.24612971921817314,
+          "rho_d": 0.2715867504171219,
+          "improvement": 0.9062655628087525
+        }
+      },
+      "screen20": "not_run_by_D0_gate",
+      "screen100": "not_run_by_D0_gate",
+      "screen200": "not_run_by_D0_gate",
+      "full": "not_run_by_D0_gate",
+      "restart": "not_run_by_D0_gate",
+      "mpi1": "not_run_by_D0_gate",
+      "artifact": null,
+      "artifact_status": "not_applicable_serial_algebra_test"
+    },
+    {
+      "id": "R7a",
+      "scope": "local p4 hierarchy and p4-core partial condensation oracle",
+      "source_sha": "ed871cbae51396e30ad5a3fd6bf32dc7601a4020",
+      "status": "PASS",
+      "evidence_kind": "targeted algebra tests",
+      "metrics": {
+        "error_scale": "1e-14_to_1e-15",
+        "rank_and_nested_space_gate": "pass",
+        "orientation_gate": "pass",
+        "raw_p6_tensor_retained": false
+      },
+      "artifact": null,
+      "artifact_status": "not_applicable_component_test"
+    },
+    {
+      "id": "R7b1",
+      "scope": "global retained action, RHS, left functional, bilinear and recovery",
+      "source_sha": "b93b72bac9095273c838ff653ca3bbf93567123c",
+      "status": "PASS",
+      "evidence_kind": "targeted serial component test",
+      "metrics": {
+        "max_reported_error": 2.58e-15,
+        "global_complement_error": 0.0,
+        "raw_p6_tensor_retained": false,
+        "global_p6_matrix_or_factor": 0
+      },
+      "artifact": null,
+      "artifact_status": "not_applicable_component_test"
+    },
+    {
+      "id": "R7b2a",
+      "scope": "real compiled-form assembly-time retained p4-core integration",
+      "source_sha": "0c882e7a6da38b6a66625e002fe64fabe0a70674",
+      "status": "PASS",
+      "evidence_kind": "targeted compiled-form tests",
+      "tests": {
+        "serial_test244": {
+          "result": "1 passed",
+          "wall_seconds": 132.33,
+          "max_rss_kb": 548212,
+          "action_error": 3.913e-16,
+          "other_key_errors": 0
+        },
+        "mpi2_test244": {
+          "result": "passed",
+          "wall_seconds": 129.36,
+          "max_rss_kb": 536320,
+          "action_error": 4.371e-16,
+          "other_key_errors": 0
+        },
+        "serial_test243": {
+          "result": "1 passed",
+          "wall_seconds": 34.50
+        }
+      },
+      "ledger_bytes": {
+        "partial_schur": 9331200,
+        "eliminated_factor": 3745584,
+        "basis": 15070464,
+        "maps": 37304,
+        "numbering": 864
+      },
+      "artifact": null,
+      "artifact_status": "not_applicable_component_test"
+    },
+    {
+      "id": "R7b2b1",
+      "scope": "public compiled-form DtN retained p4-core adapter and recovery",
+      "source_sha": "6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a",
+      "status": "FAIL",
+      "classification": "CONTROLLED_NEGATIVE_NUMERICAL",
+      "fixture": "tiny real compiled p6 two-cell public path",
+      "tests": {
+        "test245": "1 failed, 1 passed",
+        "exit_code": 1,
+        "wall_seconds": 88.15,
+        "max_rss_kb": 661088,
+        "swap": 0
+      },
+      "command": "source scripts/activate_myfenics_wsl.sh && /usr/bin/time -v python -m pytest -q -s src/test/test_245_task037_retained_dtn_adapter.py",
+      "visible_solver": {
+        "augmented_rows": 760,
+        "ksp_reason": 2,
+        "rhs_norm": 11.707507837771832,
+        "solution_norm": 275.1048734370968,
+        "full_relative_true_residual": 4.271433780052363e-11
+      },
+      "hard_gate": {
+        "formula": "complement_norm / max(independent_reduced_norm, 1.0) <= 1e-11",
+        "independent_reduced_norm": 2.169086505997297e-12,
+        "eliminated_complement_norm": 5.000737489099658e-10,
+        "actual_ratio": 5.000737489099658e-10,
+        "limit": 1.0e-11,
+        "actual_over_limit": 50.00737489099658,
+        "status": "FAIL",
+        "source_location": "src/test/test_245_task037_retained_dtn_adapter.py:435"
+      },
+      "assertion_order_boundary": {
+        "earlier_assertions": "no failure reported before the complement assertion",
+        "later_recovery_and_mpc_assertions": "not_run_by_assert_order"
+      },
+      "official_rta": "not_run_by_gate",
+      "artifact": null,
+      "artifact_status": "not_recorded_pytest_tmp_path_not_retained"
+    }
+  ],
+  "implementation_blockers": [
+    {
+      "name": "public_backend_legacy_state_conflict",
+      "status": "resolved_before_final_gate",
+      "classification": "implementation_blocker"
+    },
+    {
+      "name": "unassembled_augmented_rhs_vec",
+      "status": "resolved_before_final_gate",
+      "classification": "implementation_blocker",
+      "detail": "PETSc error 73 fixed by assembling retained b_aug before combine"
+    },
+    {
+      "name": "retained_row_semantics_missing_core",
+      "status": "resolved_before_final_gate",
+      "classification": "implementation_blocker"
+    },
+    {
+      "name": "heterogeneous_diffraction_csv_fields",
+      "status": "resolved_before_final_gate",
+      "classification": "generic_postprocess_blocker",
+      "commit": "6bc7d1e397834e4c316eaa3c59d4d90640835424"
+    },
+    {
+      "name": "retained_complement_gate",
+      "status": "unresolved",
+      "classification": "numerical_gate_failure",
+      "value": 5.000737489099658e-10,
+      "limit": 1.0e-11
+    }
+  ],
+  "tests_and_static_checks": {
+    "compileall": "PASS",
+    "ruff_check": "PASS",
+    "git_diff_check": "PASS",
+    "test245": "FAIL: 1 failed, 1 passed",
+    "full_repository_pytest": "not_run_by_user_efficiency_policy",
+    "mpi2_test245": "not_run_by_gate",
+    "tiny_compiled_form_fixture": "run_and_failed_complement_gate",
+    "formal_p6_h10_pde": "not_run_by_gate"
+  },
+  "not_run": [
+    {
+      "item": "R7b2b2 p2/PC integration",
+      "status": "not_run_by_gate",
+      "reason": "R7b2b1 complement Gate failed"
+    },
+    {
+      "item": "setup-only formal memory ledger",
+      "status": "not_run_by_gate",
+      "reason": "R7b2b1 complement Gate failed"
+    },
+    {
+      "item": "MPI2 test245",
+      "status": "not_run_by_gate",
+      "reason": "serial test245 hard Gate failed"
+    },
+    {
+      "item": "MPI8 20/100/200 screens",
+      "status": "not_run_by_gate",
+      "reason": "R7b2b1 complement Gate failed"
+    },
+    {
+      "item": "R7b2b1 full solve and official R/T/A",
+      "status": "not_run_by_gate",
+      "reason": "public integration hard Gate failed"
+    }
+  ],
+  "sequence_status": {
+    "candidate_e": {
+      "status": "not_run_by_latest_user_sequence",
+      "reason": "V3 closeout precedes the next candidate decision"
+    },
+    "candidate_f_addendum_read": {
+      "status": "not_read_pending_v3_closeout",
+      "reason": "read only after V3 is pushed"
+    }
+  },
+  "commits": [
+    {
+      "sha": "ed871cbae51396e30ad5a3fd6bf32dc7601a4020",
+      "role": "R7a local p4-core oracle"
+    },
+    {
+      "sha": "b93b72bac9095273c838ff653ca3bbf93567123c",
+      "role": "R7b1 global retained action"
+    },
+    {
+      "sha": "0c882e7a6da38b6a66625e002fe64fabe0a70674",
+      "role": "R7b2a assembly-time integration"
+    },
+    {
+      "sha": "6bc7d1e397834e4c316eaa3c59d4d90640835424",
+      "role": "generic diffraction CSV field-union fix"
+    },
+    {
+      "sha": "6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a",
+      "role": "R7b2b1 research-only carrier"
+    }
+  ]
+}

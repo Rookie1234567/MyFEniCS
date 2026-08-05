@@ -1,0 +1,126 @@
+# Task037 Review V3 阶段回应：p4-core 部分凝聚收口
+
+## 1. 当前结论
+
+本轮 V3 只收口 p4-core 部分凝聚实验，不把 research-only 路径提升为 ordinary 或 production solver。普通静态凝聚是把每个单元的内部未知量先消去，使全局系统只保留 trace 与辅助变量；对每个局部 p6 `882=432 trace slots + 450 interior` block，本轮保留真实 exact-sequence 嵌入的 108 个 p4 core 行，再消去 342 个 p5/p6 complement 行。这里的 432 是每个单元的局部 trace slots，不是声称正式全局系统只有 432 行。
+
+R7a、R7b1、R7b2a 的局部/全局组件 Gate 通过；R7b2b1 在真实 public DtN integration 的 eliminated-complement Gate 失败。最终分类为：
+
+`CONTROLLED_NEGATIVE_NUMERICAL_AT_R7B2B1_COMPLEMENT_GATE`
+
+这表示实现到达了真实 public path，但一个明确的数值质量门槛未通过；它不表示资源终止，也不表示已经得到可替代 direct 的收敛迭代解。
+
+## 2. V3 §11 的12项回应
+
+| 项 | review_report_v3 §11要求 | 本轮事实与状态 |
+|---:|---|---|
+| 1 | source/branch/environment/clean identity | numerical carrier=`6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a`；branch=`codex/20260803-task37-matrix-free-iterative-development`；carrier upstream=`d875ba538f8334c5fd9e026192cacbdcd11e0794`；ahead/behind=`5/0`；carrier clean；qualified activation、项目 `.venv`、PETSc complex128/int32、同一 Linux ABI。 |
+| 2 | matrix-free DtN action、aux recovery、mode-key identity | `test230` 是 `n_aux=3` synthetic algebra fixture，serial/MPI2/MPI4 均通过；matrix-free action 断言 `<=1e-11`，aux recovery 断言 `<=1e-11`，已记录的 MPI2 aux-recovery actual=`3.2871030941353094e-12`，explicit C/D count=`0`。mode-key/beta/polarization/Rayleigh 是 structural identity：`matrix_free_dtn` 分支前后复用同一个 `outgoing_port_modes_3d(cfg)` `modes` 对象，后续 R/T 继续使用同一数据流；这不是实测 80-mode MF PDE identity。Case100 direct 80-mode artifact/既有 mode tests 只作 supporting boundary。H 仍为 `80x80` diagonal AIJ，`SmallDenseInverse` 仍有 dense replica，是未来数千 mode/0.7nm scaling debt，本轮未解决；formal 80-mode MF PDE=`not_run`。F5b 的 fine action=`9.230923702042441e-16`、337 iterations、12/12 power 与12/12 amplitude通过，只是历史 physical/full supporting evidence，不替代上述 component/structural evidence。 |
+| 3 | Candidate D 局部 p2 slab rows、matrix/factor NNZ、总内存 | p2 factor count=`2`、factor NNZ=`4608`、p6 matrix/factor=`0/0`；rows、aggregate bytes=`not_recorded`；D为serial algebra-only，非PDE。 |
+| 4 | D local low/high/mixed contraction | low `0.24599945418880295 / 0.2540230551088513 / 0.9684138870126958`；high `0.24651896436171644 / 0.26531876351572775 / 0.929142594723057`；mixed `0.24612971921817314 / 0.2715867504171219 / 0.9062655628087525`，顺序均为 `rho_B4 / rho_D / improvement`。 |
+| 5 | D 20/100/200 residual history与screen Gate | D0 low/high/mixed 三组 improvement 均未达到 `1.5`；D 20/100/200均 `not_run_by_D0_gate`，没有可写的 screen residual history。 |
+| 6 | full solve true residual、canonical field、12+12 channels、R/T/A | 当前 p4-core R7b2b1 没有新 full solve，以上均 `not_run_by_gate`；既有 F5b/V2 full evidence属于历史路径，不能冒充 p4-core public integration。 |
+| 7 | restart | D0未通过，D restart `not_run_by_D0_gate`；没有 restart 数值。 |
+| 8 | MPI1 minimum memory | D0未通过，MPI1 minimum-memory run `not_run_by_D0_gate`；没有该项实测值。 |
+| 9 | 当前 partial-condensation evidence | R7a/R7b1/R7b2a组件 PASS；R7b2b1 tiny public compiled-form test在 complement Gate FAIL，详见 [controlled-negative outcome](outcomes/p4_core_partial_condensation_controlled_negative.md)。 |
+| 10 | Candidate E modal basis/rank/condition/memory/residual | `not_run_by_latest_user_sequence`；最新顺序要求先完成 V3 收口，再转读 Candidate F addendum。 |
+| 11 | 全部测试、未运行项、changed files | 见下方测试边界和 changed-files 索引；test245 hard failure原样保留，未运行项按 Gate/最新用户顺序区分。 |
+| 12 | final classification | `CONTROLLED_NEGATIVE_NUMERICAL_AT_R7B2B1_COMPLEMENT_GATE`；不得称 production-qualified。 |
+
+## 3. 阶段证据
+
+| 阶段 | source SHA | 结果 | 关键证据 |
+|---|---|---|---|
+| R7a local hierarchy | `ed871cbae51396e30ad5a3fd6bf32dc7601a4020` | PASS | orientation/rank/nesting/partial Schur/recovery；误差约 `1e-14–1e-15` |
+| R7b1 global retained system | `b93b72bac9095273c838ff653ca3bbf93567123c` | PASS | global action/RHS/left/bilinear/recovery 最大约 `2.58e-15` |
+| R7b2a compiled-form assembly-time | `0c882e7a6da38b6a66625e002fe64fabe0a70674` | PASS | serial/MPI2 test244、serial test243；ledger完整 |
+| R7b2b1 public DtN carrier | `6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a` | CONTROLLED NEGATIVE | test245 complement Gate FAIL |
+
+R7b2a 的直接证据为：serial test244 `1 passed`, `132.33 s`, MaxRSS `548212 kB`，action `3.913e-16`；MPI2 test244 passed，`129.36 s`，MaxRSS `536320 kB`，action `4.371e-16`；serial test243 `1 passed`, `34.50 s`。2-cell ledger 为 partial Schur `9331200`、eliminated factor `3745584`、basis `15070464`、maps `37304`、numbering `864` bytes。
+
+通用 diffraction CSV 修复独立提交为 `6bc7d1e397834e4c316eaa3c59d4d90640835424`，只把异构 row 的字段改成按首次出现顺序的稳定并集，没有改变物理或 solver。
+
+## 4. R7b2b1 最终负证据
+
+test245 使用 tiny 两-cell 真实 compiled p6 public flow，包含 Floquet constraints、真实 surface forms、DtnBlockAssembler、matrix-free C/D、retained action 和 public recovery path。最终命令（在已执行 `source scripts/activate_myfenics_wsl.sh` 的同一 qualified shell 中）：
+
+```text
+/usr/bin/time -v python -m pytest -q -s src/test/test_245_task037_retained_dtn_adapter.py
+```
+
+结果为 `1 failed, 1 passed`、exit `1`、wall `88.15 s`、MaxRSS `661088 kB`、swap `0`。可见 solver 数据：
+
+| 量 | 值 |
+|---|---:|
+| augmented rows | `760` |
+| KSP reason | `2` (`CONVERGED_RTOL`) |
+| RHS norm | `11.707507837771832` |
+| solution norm | `275.1048734370968` |
+| full relative true residual | `4.271433780052363e-11` |
+| independent reduced norm | `2.169086505997297e-12` |
+| eliminated complement norm | `5.000737489099658e-10` |
+
+权威 hard Gate 是：
+
+```text
+complement_norm / max(independent_reduced_norm, 1.0) <= 1e-11
+```
+
+实际值 `5.000737489099658e-10`，约为限值的 `50.00737489099658` 倍，失败位置为 [test245:435](../../../src/test/test_245_task037_retained_dtn_adapter.py:435)。test245 没有 xfail、skip 或阈值放宽。
+
+由于 pytest 按顺序执行，失败前未报错的 effective-RHS、无显式 C/D、p6 zero-inventory、reduced/full consistency 断言不能被提升为完整 PASS；失败之后的 independent recovery 与 MPC assertions 是 `not_run_by_assert_order`。没有 official R/T/A，也没有正式 p6/h10 memory evidence；`661088 kB` 只属于 tiny two-cell test process，不能外推目标模型。
+
+## 5. 已修正的实现 blocker
+
+| blocker | 分类 | 处理 |
+|---|---|---|
+| public backend 与部分 legacy booleans 冲突 | fixture/public contract | 删除 test245 两行 legacy flags |
+| pending augmented PETSc Vec | lifecycle | retained `b_aug` 在 combine 前 assemble |
+| row closure 未计 retained core | bookkeeping contract | `_dof_row_semantics` 加 independent trace + retained core + auxiliary 闭合 |
+| heterogeneous diffraction CSV keys | generic postprocess schema | `6bc7d1e3` 字段稳定并集 |
+| 342D eliminated complement residual | numerical Gate | 未通过，作为最终 controlled negative 保留 |
+
+早期 blocker 是实现修正，不应改写为数值通过；最后一个 complement failure 才是当前正式 stopping Gate。
+
+## 6. 测试边界与未运行项
+
+当前 source 的五文件 compileall、Ruff check、`git diff --check` 通过；test245 hard failure 原样保留。没有运行 full repository pytest，这是用户效率政策下的明确边界，不写成 full-suite PASS。
+
+以下项目均因 R7b2b1 hard Gate 失败而 `not_run_by_gate`：
+
+- R7b2b2 p2/PC integration；
+- setup-only formal memory ledger；
+- MPI2 test245；
+- MPI8 20/100/200；
+- full solve、official R/T/A；
+
+Candidate E 为 `not_run_by_latest_user_sequence`；Candidate F addendum 为
+`not_read_pending_v3_closeout`，最新顺序要求 V3 推送完成后才读取。二者不是
+complement Gate 自动否决的项目。
+
+## 7. changed files、provenance 与历史边界
+
+§11 第11项的 changed-files 索引如下；每行是已核实的 commit→files 关系：
+
+| commit | scope / files |
+|---|---|
+| `592f6307716c428e8eb87e164435233dafabd47d` | matrix-free DtN：`src/solvers/condensed_dtn.py`、`src/solvers/dtn_port_3d.py`、`src/test/test_230_task037_dtn_direct_blocks.py` |
+| `6f152a6e50f8e8fc475fc6b3e2bc39aca1bdf1d2` | Candidate D：`src/solvers/static_factor_free_slab_pc.py`、`src/solvers/static_p2_slab_pc.py`、`src/test/test_237_task037_factor_free_slab_pc.py`、`src/test/test_241_task037_candidate_d_local_p2.py` |
+| `ed871cbae51396e30ad5a3fd6bf32dc7601a4020` | R7a：`src/solvers/hcurl_p4_core_partial_condensation.py`、`src/test/test_242_task037_p4_core_partial_condensation.py` |
+| `64b983f13b4191b4227a2b7d5d6fee6e84be2944` | Candidate D 基础实现：`src/solvers/static_p2_slab_pc.py`、`src/test/test_240_task037_p2_local_slab_pc.py` |
+| `b93b72bac9095273c838ff653ca3bbf93567123c` | R7b1：`src/solvers/hcurl_p4_core_global_partial_condensation.py`、`src/solvers/hcurl_p4_core_partial_condensation.py`、`src/test/test_243_task037_p4_core_partial_condensation_integration.py` |
+| `0c882e7a6da38b6a66625e002fe64fabe0a70674` | R7b2a：`src/solvers/hcurl_assembly_time_condensation.py`、global partial module、`src/test/test_244_task037_p4_core_assembly_time_integration.py` |
+| `6bc7d1e397834e4c316eaa3c59d4d90640835424` | CSV修复：`src/postprocessing/diffraction_3d.py` |
+| `6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a` | R7b2b1：`src/solvers/common_3d_case_flow.py`、`src/solvers/dtn_port_3d.py`、global partial module、`src/test/test_245_task037_retained_dtn_adapter.py` |
+
+## 8. provenance 与历史边界
+
+数值 carrier 为 `6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a`，branch 为 `codex/20260803-task37-matrix-free-iterative-development`，carrier 时 upstream 为 `d875ba538f8334c5fd9e026192cacbdcd11e0794`，ahead/behind=`5/0`，carrier worktree clean。相关 commit 为：
+
+`ed871cbae51396e30ad5a3fd6bf32dc7601a4020`、`b93b72bac9095273c838ff653ca3bbf93567123c`、`0c882e7a6da38b6a66625e002fe64fabe0a70674`、`6bc7d1e397834e4c316eaa3c59d4d90640835424`、`6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a`。
+
+V2 和 Candidate D 的历史结果保留在既有 `response_v2.md`、outcomes 与 records 中；本回应不重写历史，也不读取 Candidate F addendum。当前 V3 文档只记录本次 p4-core carrier 的 measured、derived、not_run 和 controlled-negative 边界。
+
+## 9. 结论与后续限制
+
+R7 证明了 p4-core 组件和 assembly-time retained action 的代数可行性，但没有证明 public DtN integration 已达到 full residual Gate，也没有得到可替代 direct 的 production-qualified 迭代解。停止同一 p4-core/DtN 微调；本 V3 提交推送后按最新用户顺序读取 Candidate F addendum，先只执行 F0，后续严格受其 Gate 约束。此处不提前读取或解释 addendum。

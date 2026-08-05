@@ -1,5 +1,28 @@
 # Task037 结果总览
 
+## Review V3 p4-core部分凝聚收口
+
+本节记录 V3 R7 的当前终点；下方 V2、V1/M3a 内容保留为历史。静态凝聚的通俗含义是先在每个单元内消去内部未知量，只把较小的 trace 系统交给全局求解器。完整 p6 单元局部块是 `882=432` 个 trace slots 加 `450` 个 interior；本轮没有另投影到较小的有限元空间，而是在这一本地代数中保留真实 exact-sequence 嵌入的 `108` 个 p4 core 行，消去 `342` 个 p5/p6 complement 行。这里的 432 是局部 trace slots，不是正式全局系统总行数。
+
+| 阶段 | source | 结果 | 关键证据 |
+|---|---|---|---|
+| R7a local hierarchy | `ed871cbae51396e30ad5a3fd6bf32dc7601a4020` | PASS | 误差量级 `1e-14–1e-15` |
+| R7b1 global retained action | `b93b72bac9095273c838ff653ca3bbf93567123c` | PASS | 最大约 `2.58e-15` |
+| R7b2a compiled-form integration | `0c882e7a6da38b6a66625e002fe64fabe0a70674` | PASS | test244 serial/MPI2、test243 serial |
+| R7b2b1 public DtN integration | `6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a` | CONTROLLED NEGATIVE | complement Gate FAIL |
+
+R7b2a 的 serial test244 为 `1 passed`, `132.33 s`, MaxRSS `548212 kB`，action `3.913e-16`；MPI2 test244 为 `129.36 s`、MaxRSS `536320 kB`、action `4.371e-16`；serial test243 `1 passed`, `34.50 s`。2-cell ledger 为 partial Schur `9331200`、eliminated factor `3745584`、basis `15070464`、maps `37304`、numbering `864` bytes。
+
+R7b2b1 的 tiny 两-cell真实 compiled p6 public test245 结果为 `1 failed, 1 passed`，exit `1`，wall `88.15 s`，MaxRSS `661088 kB`，swap `0`。augmented rows=`760`，KSP reason=`2`，RHS norm=`11.707507837771832`，solution norm=`275.1048734370968`，full relative true residual=`4.271433780052363e-11`。独立 reduced norm=`2.169086505997297e-12`，eliminated complement norm=`5.000737489099658e-10`。
+
+最终 hard Gate 为 `complement_norm / max(independent_reduced_norm, 1.0) <= 1e-11`；实际值超过限值约 `50.00737489099658` 倍，失败位置为 [test245:435](../../../src/test/test_245_task037_retained_dtn_adapter.py:435)。失败前未报错的断言不升级为完整 PASS；后续 recovery/MPC 断言因执行顺序为 `not_run_by_assert_order`。test245 未 xfail/skip/放宽阈值。
+
+R7b2b2、setup-only formal ledger、MPI2 test245、MPI8 20/100/200、full solve、official R/T/A 均为 `not_run_by_gate`。Candidate E 为 `not_run_by_latest_user_sequence`；Candidate F addendum 为 `not_read_pending_v3_closeout`。没有正式目标 p6/h10 memory evidence；`661088 kB` 仅是 tiny test process MaxRSS。CSV 通用字段并集修复由独立 commit `6bc7d1e397834e4c316eaa3c59d4d90640835424` 承载，不改变物理。
+
+Candidate D 的历史 D0 数值负证据（顺序为 `rho_B4 / rho_D / improvement`）为：low `0.24599945418880295 / 0.2540230551088513 / 0.9684138870126958`，high `0.24651896436171644 / 0.26531876351572775 / 0.929142594723057`，mixed `0.24612971921817314 / 0.2715867504171219 / 0.9062655628087525`；p2 factor count=`2`、factor NNZ=`4608`、p6 matrix/factor=`0/0`，rows/aggregate bytes=`not_recorded`。D 的后续 screen/full/restart/MPI1 均为 `not_run_by_D0_gate`。
+
+权威 compact record：[V3 p4-core partial-condensation record](../../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_v3_p4_core_partial_condensation_v1.json)；完整收口：[p4-core controlled negative](p4_core_partial_condensation_controlled_negative.md)。clean numerical carrier 为 `6552385b1b4c4008a84bb5ffcfa90ffe196f7e8a`，carrier 时 branch 相对 upstream `d875ba538f8334c5fd9e026192cacbdcd11e0794` 为 ahead/behind `5/0`。
+
 ## Review V2 当前候选漏斗收口
 
 本节是当前 V2 结论；下方 V1/M3a 内容保留为历史证据。静态凝聚（先在每个单元内消去内部未知量）把全局问题缩小为 trace 与 auxiliary rows；factor-free（不保留 p6 全局矩阵或 p6 因子）再把局部 slab correction 改为动作计算。p2 auxiliary 是一个较低阶的全局校正空间；RAS 是只让每个共享行由一个固定 slab 回写的非重叠加法 Schwarz。screen Gate 是按 20/100/200 步逐级淘汰研究候选的门槛，不是 full-solve 成功。
