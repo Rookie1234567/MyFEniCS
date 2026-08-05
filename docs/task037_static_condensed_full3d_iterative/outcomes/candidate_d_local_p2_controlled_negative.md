@@ -5,17 +5,19 @@
 | 项目 | 值 |
 |---|---|
 | 结论 | `D0 FAIL / controlled_negative_numerical` |
-| source SHA | `6f152a6e50f8e8fc475fc6b3e2bc39aca1bdf1d2` |
+| 最终负结果载体 source SHA | `6f152a6e50f8e8fc475fc6b3e2bc39aca1bdf1d2` |
 | 分支 | `codex/20260803-task37-matrix-free-iterative-development` |
 | 运行类型 | serial algebra-only；非 PDE、非 full solve |
 | activation | qualified `scripts/activate_myfenics_wsl.sh`，项目 `.venv` |
 | ABI | PETSc `complex128/int32`；Python/MPI/PETSc/DOLFINx 同一 Linux ABI |
 | 命令 | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q -s src/test/test_241_task037_candidate_d_local_p2.py` |
-| 测试结果 | `1 xfailed`，4.00 s；完整诊断已打印 |
+| 首次正式 D0 Gate | pre-carrier working tree（尚未 clean-SHA-bound）；exit 1 / `1 failed` / 2.93 s；当时数值实现与最终载体相同，仅末尾 qualification 仍为 hard assert |
+| `6f152a6` 最终载体复跑 | `1 xfailed` / 4.00 s；完整诊断已打印 |
 
 Candidate D 的局部预条件器使用真实 transfer `P_j`，先构造同一局部算子
 `A6_j = R6_j (A6 + S6) R6_j^T`，再使用
-`P_j A2,j^-1 P_j^H v + v/(diag(A6_j))`。这里的 p2 矩阵只保留
+`P_j A2,j^-1 P_j^H v + v/[R6,j diag(A6+S6)] =
+P_j A2,j^-1 P_j^H v + v/diag(A6_j)`；分母按局部行逐分量相除。这里的 p2 矩阵只保留
 ILU factor；p6 slab matrix 和 p6 factor 均不保留。
 
 ## 代数与库存 Gate
@@ -47,6 +49,19 @@ ILU factor；p6 slab matrix 和 p6 factor 均不保留。
 因此 D0 的高频与混合 source 均未达到改善阈值；这是真实数值负结果，
 不是 fixture 或资源失败。Candidate D 不具备继续进入重型漏斗的资格。
 
+## 普通路径回归
+
+| 检查 | 结果 |
+|---|---|
+| test237 serial | `1 passed` |
+| test238 serial | `1 passed` |
+| 四文件 Ruff check / format check | passed |
+| 四文件 compileall | passed |
+| `git diff --check` | passed |
+
+这些结果支持 ordinary B4/default 路径未改变；它们不把 Candidate D 负结果提升为
+production qualification。
+
 ## xfail 语义与停止边界
 
 test241 在完成所有 earlier algebra、same-shift、finite、factor-only
@@ -65,5 +80,6 @@ repeat、inventory 和三类 source 诊断并打印完整 metrics 后，才对
 | PDE、full repository pytest | `not_run` | 本阶段范围禁止 |
 
 普通 B4/default 路径未改变；Candidate D 仍是 research-only，不能称为
-production-qualified，也不能替代 direct solver。后续只允许由 V3 R7 新审查
-明确授权；不得在本轮重开 D 调参、shift/steps 扫描或其他 Schwarz 变体。
+production-qualified，也不能替代 direct solver。后续仅可按 V3 已授权的 R7
+有界对照，具体实现面先由主审批准；不得在本轮重开 D 调参、shift/steps 扫描或
+其他 Schwarz 变体。
