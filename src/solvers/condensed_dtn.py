@@ -170,6 +170,30 @@ class _MatrixFreeDtnBlockState:
         )
         target.getArray()[:] = values if self.comm.rank == self.aux_owner else 0.0
 
+    def c_mult_hermitian(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        source_values = source.getArray(readonly=True)
+        local = np.zeros(self.n_aux, dtype=PETSc.ScalarType)
+        for mode, rows, traction_values, _cols, _ell_values in self.entries:
+            if len(rows):
+                local[mode] += np.vdot(
+                    traction_values,
+                    source_values[rows - self.active_start],
+                )
+        values = np.asarray(
+            self.comm.allreduce(local, op=MPI.SUM), dtype=PETSc.ScalarType
+        )
+        target.getArray()[:] = values if self.comm.rank == self.aux_owner else 0.0
+
+    def d_mult_hermitian(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        auxiliary = self._aux_values(source)
+        values = target.getArray()
+        values[:] = 0.0
+        for mode, _rows, _traction_values, cols, ell_values in self.entries:
+            if len(cols):
+                values[cols - self.active_start] += (
+                    np.conjugate(ell_values) * auxiliary[mode]
+                )
+
 
 class _MatrixFreeDtnMatContext:
     def __init__(self, state: _MatrixFreeDtnBlockState, kind: str) -> None:
@@ -181,6 +205,14 @@ class _MatrixFreeDtnMatContext:
             self.state.c_mult(source, target)
         else:
             self.state.d_mult(source, target)
+
+    def multHermitian(
+        self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        if self.kind == "C":
+            self.state.c_mult_hermitian(source, target)
+        else:
+            self.state.d_mult_hermitian(source, target)
 
     def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
         return None
@@ -551,8 +583,13 @@ def project_condensed_blocks_to_coarse(
     c_entries: list[tuple[np.ndarray, np.ndarray]] = []
     discarded_count_local = 0
     discarded_max_local = 0.0
+    aux_unit = fine_blocks.C.createVecRight()
     for aux_index in range(fine_blocks.n_aux):
-        fine_blocks.C.getColumnVector(aux_index, fine_scratch)
+        aux_unit.set(0.0)
+        if comm.rank == aux_owner:
+            aux_unit.setValue(aux_index, PETSc.ScalarType(1.0))
+        aux_unit.assemble()
+        fine_blocks.C.mult(aux_unit, fine_scratch)
         transfer.apply_adjoint(fine_scratch, coarse_scratch)
         values = np.asarray(coarse_scratch.getArray(readonly=True))
         keep = np.abs(values) > _PROJECTED_BLOCK_STRUCTURAL_TOLERANCE
@@ -590,7 +627,6 @@ def project_condensed_blocks_to_coarse(
             )
     coarse_C.assemble()
 
-    aux_unit = fine_blocks.D.createVecLeft()
     d_entries: list[tuple[np.ndarray, np.ndarray]] = []
     for aux_index in range(fine_blocks.n_aux):
         aux_unit.set(0.0)

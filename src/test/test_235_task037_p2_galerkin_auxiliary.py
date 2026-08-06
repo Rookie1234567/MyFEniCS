@@ -476,7 +476,7 @@ def test_serial_floquet_p2_galerkin_action():
     transfer.destroy()
 
 
-def _distributed_dtn_blocks(active_layout, n_aux=2):
+def _distributed_dtn_blocks(active_layout, n_aux=2, matrix_free_dtn=False):
     base_rhs = active_layout.copy()
     start, end = map(int, base_rhs.getOwnershipRange())
     ids = np.arange(start, end, dtype=PETSc.IntType)
@@ -489,6 +489,7 @@ def _distributed_dtn_blocks(active_layout, n_aux=2):
         n_aux,
         traction_supports=supports,
         ell_supports=supports,
+        matrix_free_dtn=matrix_free_dtn,
     )
     for mode in range(n_aux):
         assembler.add_mode(

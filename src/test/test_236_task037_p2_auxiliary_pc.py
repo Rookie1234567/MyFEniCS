@@ -130,7 +130,8 @@ def test_p2_auxiliary_setup_builder_apply_cleanup():
 
 
 @pytest.mark.skipif(MPI.COMM_WORLD.size not in (1, 2), reason="requires serial or MPI2")
-def test_p2_auxiliary_diagonal_modal_composition():
+@pytest.mark.parametrize("matrix_free_dtn", [False, True], ids=["explicit", "matrix_free"])
+def test_p2_auxiliary_diagonal_modal_composition(matrix_free_dtn):
     mesh_3d, (V2, V6), (C2, C6) = _spaces(MPI.COMM_WORLD)
     transfer = build_p2_to_p6_active_trace_transfer(V2, V6, C2, C6)
     fine_condensed, _schurs = _retained_p6_fixture(V6, C6)
@@ -143,7 +144,9 @@ def test_p2_auxiliary_diagonal_modal_composition():
     fine_condensed = _assembly_time_fixture(C6, fine_condensed, mesh_3d.comm)
     fine_action, fine_action_context = create_static_local_schur_action(fine_condensed)
     fine_layout = fine_action.createVecRight()
-    fine_blocks, _dtn_audit = _distributed_dtn_blocks(fine_layout)
+    fine_blocks, _dtn_audit = _distributed_dtn_blocks(
+        fine_layout, matrix_free_dtn=matrix_free_dtn
+    )
     fine_layout.destroy()
     coarse_blocks, block_audit = project_condensed_blocks_to_coarse(
         fine_blocks,
