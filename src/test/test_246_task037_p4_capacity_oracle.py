@@ -7,6 +7,7 @@ import pytest
 from basix.ufl import element
 from dolfinx import default_real_type, fem
 from mpi4py import MPI
+from petsc4py import PETSc
 
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.solvers.physical_slab_two_level import (
@@ -109,7 +110,7 @@ def test_f0_p4_capacity_oracle_and_d0_comparison():
         local_krylov_steps=4,
     )
     slab = 0
-    p6_rows = np.asarray(plan.owner_rows[slab], dtype=np.int64)
+    p6_rows = np.asarray(plan.owner_rows[slab], dtype=PETSc.IntType)
     combined_diagonal = diagonal.getValues(p6_rows) + shifted.getValues(p6_rows)
     oracle = build_p4_capacity_oracle(
         b4,
