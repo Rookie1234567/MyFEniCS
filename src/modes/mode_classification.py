@@ -432,6 +432,74 @@ def _near_degenerate_groups(
     return [tuple(indices) for indices in grouped.values()]
 
 
+def _joint_near_degenerate_groups(
+    betas: Sequence[complex],
+    groups: Sequence[Sequence[int]],
+    biorthogonality: np.ndarray,
+    *,
+    near_degenerate_tolerance: float,
+    block_rotation_tolerance: float,
+) -> tuple[tuple[int, ...], ...]:
+    """Merge beta-near groups whose normalized left/right blocks still couple."""
+
+    values = np.asarray(biorthogonality, dtype=np.complex128)
+    group_of = {
+        int(index): group_id
+        for group_id, indices in enumerate(groups)
+        for index in indices
+    }
+    parents = list(range(len(groups)))
+
+    def find(index: int) -> int:
+        while parents[index] != index:
+            parents[index] = parents[parents[index]]
+            index = parents[index]
+        return index
+
+    def union(first: int, second: int) -> None:
+        first_root = find(first)
+        second_root = find(second)
+        if first_root != second_root:
+            parents[second_root] = first_root
+
+    for first_group in range(len(groups)):
+        for second_group in range(first_group + 1, len(groups)):
+            joins = any(
+                _relative_beta_distance(betas[first], betas[second])
+                <= 10.0 * float(near_degenerate_tolerance)
+                and max(abs(values[first, second]), abs(values[second, first]))
+                > float(block_rotation_tolerance)
+                for first in groups[first_group]
+                for second in groups[second_group]
+            )
+            if joins:
+                union(first_group, second_group)
+
+    components: dict[int, list[int]] = {}
+    for index in range(len(betas)):
+        components.setdefault(find(group_of[index]), []).append(int(index))
+    return tuple(
+        sorted(
+            (tuple(indices) for indices in components.values()),
+            key=lambda indices: indices[0],
+        )
+    )
+
+
+def _joint_subspace_inverse(
+    overlap: np.ndarray, *, maximum_overlap_condition: float
+) -> tuple[np.ndarray, float]:
+    """Return the same direct overlap inverse used for one modal block."""
+
+    condition = float(np.linalg.cond(overlap))
+    if not np.isfinite(condition) or condition > maximum_overlap_condition:
+        raise RuntimeError(
+            "Near-degenerate joint overlap is singular or ill-conditioned: "
+            f"condition={condition:.6e}."
+        )
+    return np.linalg.inv(overlap).conj().T, condition
+
+
 def _linear_combination(
     vectors: Sequence[PETSc.Vec], coefficients: np.ndarray
 ) -> PETSc.Vec:
@@ -953,21 +1021,83 @@ def build_biorthogonal_mode_basis(
             left_reduced,
             [mode.right_reduced for mode in right_modes],
         )
-        partition_audit = _near_degenerate_partition_audit(
+        joint_group_indices = _joint_near_degenerate_groups(
             betas,
             group_indices,
             biorthogonality,
             near_degenerate_tolerance=near_degenerate_tolerance,
             block_rotation_tolerance=block_rotation_tolerance,
-            directions=[
-                str(classification[1])
-                for classification in classifications
-            ],
+        )
+        joint_group_payload: list[
+            tuple[tuple[int, ...], complex, float, float, str]
+        ] = []
+        joint_rotation_applied = False
+        for joint_indices in joint_group_indices:
+            source_payload = [
+                payload
+                for payload in group_payload
+                if set(payload[0]).issubset(joint_indices)
+            ]
+            if len(source_payload) == 1:
+                joint_group_payload.append(source_payload[0])
+                continue
+
+            joint_rotation_applied = True
+            block = biorthogonality[np.ix_(joint_indices, joint_indices)]
+            transform, condition = _joint_subspace_inverse(
+                block,
+                maximum_overlap_condition=maximum_overlap_condition,
+            )
+            old_reduced = [left_reduced[index] for index in joint_indices]
+            old_full = [left_full[index] for index in joint_indices]
+            new_reduced = [
+                _linear_combination(old_reduced, transform[:, column])
+                for column in range(len(joint_indices))
+            ]
+            new_full = [
+                _linear_combination(old_full, transform[:, column])
+                for column in range(len(joint_indices))
+            ]
+            for vector in old_reduced + old_full:
+                vector.destroy()
+            for local_index, global_index in enumerate(joint_indices):
+                left_reduced[global_index] = new_reduced[local_index]
+                left_full[global_index] = new_full[local_index]
+            joint_betas = np.asarray([betas[index] for index in joint_indices])
+            center = complex(np.mean(joint_betas))
+            spread = max(
+                (_relative_beta_distance(beta, center) for beta in joint_betas),
+                default=0.0,
+            )
+            joint_group_payload.append(
+                (
+                    joint_indices,
+                    center,
+                    spread,
+                    condition,
+                    "near_degenerate_joint_subspace_inverse",
+                )
+            )
+        if joint_rotation_applied:
+            biorthogonality = _qep_overlap_matrix(
+                operators,
+                left_betas,
+                betas,
+                left_reduced,
+                [mode.right_reduced for mode in right_modes],
+            )
+        partition_audit = _near_degenerate_partition_audit(
+            betas,
+            joint_group_indices,
+            biorthogonality,
+            near_degenerate_tolerance=near_degenerate_tolerance,
+            block_rotation_tolerance=block_rotation_tolerance,
+            directions=[str(classification[1]) for classification in classifications],
         )
         if not partition_audit["pass"]:
             raise NearDegenerateBlockPartitionSplitError(partition_audit)
         groups: list[NearDegenerateGroup] = []
-        for indices, center, spread, condition, method in group_payload:
+        for indices, center, spread, condition, method in joint_group_payload:
             block = biorthogonality[np.ix_(indices, indices)]
             groups.append(
                 NearDegenerateGroup(
