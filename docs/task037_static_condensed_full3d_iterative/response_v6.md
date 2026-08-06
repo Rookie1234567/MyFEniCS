@@ -217,3 +217,108 @@ the job to be terminated. The first process to do so was:
 | official result/postprocess | NOT_OBSERVED | not_observed | completed solver summary 未生成 |
 | no swap、非内存/非 timeout 停止 | PASS | measured | no_swap=true，termination flags 均 false |
 | E0 overall | FAIL | derived | MATRIX_FREE_DTN_FORMAL_80MODE_GATE_FAILED |
+
+## 后续修复与正式 E2 容量裁决补充
+
+本文件前文是早期 E1 implementation checkpoint，包含当时的 Error 56、首列 mismatch 和受控停止历史，原文保留不变。随后 95b4c3b5 与 ddcc5ea8 等最小修复已经越过那些 implementation blockers；当前状态以本补充和对应 raw artifact 为权威，不把早期失败倒填成最终结果。
+
+| 阶段 | 当前裁决 | 证据边界 |
+|---|---|---|
+| E0 | PASS | repaired MPI1 component action Gate |
+| E1 | PASS | 同一 MPI8 request 内 240 列 M120 basis |
+| E2 | capacity negative | implementation checks 全通过，late capacity Gate 6/6 失败 |
+| E3–E5 | not_run | V6 硬停止 |
+| E6 | closeout_drafted | 本补充与 compact record |
+
+compact record：[task37_v6_e2_modal_capacity_closeout_v1.json](../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_v6_e2_modal_capacity_closeout_v1.json)。
+
+### E1 与 E2 的含义
+
+“ideal capacity oracle” 是给一个候选 coarse basis 最有利的复数系数，直接计算它能把真实残差压到什么程度；它是容量上界，不是生产 solver。若连这个最有利的线性组合也只能改善约 0.3–0.4%，同一个 M120 coarse space 作为实际 PC 就不可能达到 V6 的 late-residual 门槛。
+
+| E1 项 | 实测值 |
+|---|---:|
+| 完整列 / forward / backward | 240 / 120 / 120 |
+| missing / extra / duplicate | 0 / 0 / 0 |
+| 最大 repeat error | 1.0114502263711128e-13 |
+| action rank / condition | 240 / 740.511230115312 |
+| random action relative error | 6.53573490135987e-15 |
+| 最大 bottom/top retained residual | 6.799167355834361e-13 / 9.287696356432755e-13 |
+| 最大 stitch interface mismatch | 4.479212868666832e-11 |
+| global A/F、official result、KSP | false / false / 0 |
+
+E1 使用完整 condensed action F-C H^-1 D，不是只用 fine F；p6 retained factor count/NNZ 为 0/0，local factor 已释放。
+
+| action space | columns | rank | condition | factorization | equations |
+|---|---:|---:|---:|---:|---|
+| 75D | 75 | 75 | 1520.2120206198704 | 1 | owner-local QR + root SVD |
+| M120 | 240 | 240 | 740.5112301153121 | 1 | owner-local QR + root SVD |
+| 75D+M120 | 315 | 315 | 9985.323201186875 | 1 | owner-local QR + root SVD |
+
+所有 action space 的 normal_equations=false，同一次 request 内使用 owner-local basis；没有复制 global basis。
+
+### 同次 B4 true residual 与容量 Gate
+
+以下四点来自同一次冻结 B4 trajectory，||b||=13.197399418369043。rho 越小代表残差缩减越强；1/rho_M、rho_hat_M|B 和 rho_75/rho_75M 是 V6 late Gate 使用的三项量。
+
+| iteration | true residual norm | relative | rho75 | rhoM | rho75M | rhoB | rhoBM | rho_hat_M|B |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 13.197399418369043 | 1.0 | .3523076473 | 1.0 | .3356959033 | 2.5454114777 | 2.3875865401 | .9379962969 |
+| 20 | 5.596174034261749 | .4240361193 | .8943020663 | .9948007833 | .8862677949 | 1.4571445787 | 1.4129164173 | .9696473761 |
+| 100 | 2.2498785337431007 | .1704789302 | .9714345633 | .9959977437 | .9638071822 | 1.1974356958 | 1.1696913824 | .9768302269 |
+| 200 | 1.864887327107556 | .1413071824 | .9717247345 | .9969376898 | .9656838607 | 1.1564543805 | 1.1337134509 | .9803356449 |
+
+| late Gate | threshold | k=100 actual / pass | k=200 actual / pass |
+|---|---:|---:|---:|
+| 1/rho_M | >= 1.5 | 1.0040183386743322 / false | 1.0030717167190784 / false |
+| rho_hat_M|B | <= 0.67 | .9768302269439019 / false | .9803356448661497 / false |
+| rho75/rho75M | >= 1.20 | 1.0079138039979252 / false | 1.00625553984881 / false |
+
+因此容量 Gate 是 6/6 失败，正式分类为 M120_MODAL_COARSE_INSUFFICIENT_ON_FROZEN_LATE_RESIDUALS。E2 implementation checks 全部通过，implementation_failures=[]；这不是 implementation failure，也不是对所有 M120 coarse spaces 的普遍证明。
+
+B4 solver 本身在 200 次迭代后 converged_reason=-3，final true residual=0.14130718242200643。该 B4 convergence negative 与 capacity oracle Gate 独立记录；不能把它写成 solver convergence success，也不能用它改写 E2 capacity 分类。
+
+### 资源、停止与证据
+
+| 项 | measured |
+|---|---:|
+| stage4 wall | 3682.42344509298 s |
+| whole-run elapsed | 3691.709302290925 s |
+| simultaneous process-tree peak | 12.094310760498047 GiB |
+| simultaneous worker RSS / PSS / USS | 12369.968 / 10952.569 / 10778.551 MB |
+| swap | 0 |
+| warning / memory termination / timeout termination | true / false / false |
+
+该峰值是本次 E1 basis + E2 audit whole-run 的实测资源，不是未来 production solver 的内存预测。E1 阶段约 2878 s、E2 阶段约 707 s 为 progress 时间戳的 derived wall interval。
+
+Raw root：/tmp/task037-e1-diagnostic-tlvcVB/benchmarks/artifacts/task037/e2_modal_capacity_ddcc5ea8/mpi8/。
+
+| raw file | bytes | SHA256 |
+|---|---:|---|
+| task037_e1_modal_basis_audit.json | 23617 | a4305d04037e4b1ea7940d365c6cfbe352883f0b25180e0ff6646c2f2e34e2dd |
+| task037_e2_modal_capacity_audit.json | 26550 | 7962bb6ccf28307706cf0177da237b23bfde797618061468684228371078adb0 |
+| watchdog_summary.json | 143585 | bb62f563722dd93e3cb8ef19778c5a334baaec315ac37f03e8c7f841c22209d5 |
+| run_summary.json | 44577 | ec2101517dcfc7d96088a44cce2f5a0790f516d611cfb5fe59fca1d1d5112fea |
+| progress_3d.jsonl | 47542 | ccdc0e704cb81a637e3de9a9107231f44b5664427fb011c234797682c115f0b0 |
+| memory_timeline.csv | 52192997 | f9f7e9d06107e383b1c994ff502ead251ad65c36a913bc723fb6ec3f9db0dff0 |
+| worker_stdout.txt | 4878 | d26d8aff0022db07992d91b24171def1968d2a5b3258061c4f11aeb1839b9a21 |
+
+### 修复链、合入边界与停止
+
+与本次 source SHA 相关的完整修复链为：
+
+| commit | 作用 |
+|---|---|
+| d7335650dc47e8bc52a436f47f92444837f14ad4 | 近简并 modal subspace joint rotation |
+| 769963b3f3cf9c95877be5d469e8bf611972125f | frozen B4 true-residual carrier |
+| 723ac075dea53adcace1029b9fb5420b7b2dac90 | E1 使用完整 condensed action |
+| 005db75b1b70e0193737a24d2dae91e9b1e90607 | same-run E2 modal capacity gate |
+| 5baa0c732811f1f1ac348513f73dc2687dc24160 | formal E2 timeout admission |
+| 57edf5185d013897c1031e19ff0234a7f3b169ab | matrix-free E2 telemetry |
+| b4e532913a28cd5efeba999139af64683565c199 | same-run E2 budget |
+| 95b4c3b51557e8879b3f273225b87e65e08f35a9 | matrix-free DtN block action projection |
+| ddcc5ea87b56eeec5ae0a385d3dfac4237ce3877 | JSON scalar serialization fix |
+
+Selective merge 仍须分组：通用 MatPython telemetry 与 matrix-free DtN action compatibility 可作为独立 selective-review candidate；E1/E2 Candidate E 的 modal basis、capacity oracle 及其负结果均为 research-only，不能整体合入 production，也不能改变 ordinary defaults。
+
+本轮按 V6 关闭 Candidate E；E3–E5 均 not_run，没有 official result，没有 full pytest（文档/record 收口不重复运行全库测试）。本结果只关闭 frozen p6/h10、MPI8、同次 B4 late residual 上的 Candidate E，不证明 M120 coarse 在其他配置下没有容量。

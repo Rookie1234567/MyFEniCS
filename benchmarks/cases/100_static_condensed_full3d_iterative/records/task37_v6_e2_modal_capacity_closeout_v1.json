@@ -1,0 +1,326 @@
+{
+  "schema_version": "task037.v6.e2.modal_capacity_closeout.v1",
+  "status": "closed_capacity_negative",
+  "classification": "M120_MODAL_COARSE_INSUFFICIENT_ON_FROZEN_LATE_RESIDUALS",
+  "candidate": "E",
+  "research_only": true,
+  "ordinary_defaults_unchanged": true,
+  "scope": {
+    "qualified": "E1 implementation and E2 frozen capacity oracle only",
+    "not_production": true,
+    "factor_free_scalable_pc_demonstrated": false
+  },
+  "identity": {
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "source_sha": "ddcc5ea87b56eeec5ae0a385d3dfac4237ce3877",
+    "verified_clean_sha": "ddcc5ea87b56eeec5ae0a385d3dfac4237ce3877",
+    "mpi_size": 8,
+    "authority_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+    "authority_sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+    "formal_command": "python -m benchmarks.run_task033_full3d_watchdog --degree 6 --h-nm 10 --polarization-kind s --run-kind full-solve --mpi-size 8 --profile default --stage4-full3d-assembly-backend assembly_time_static_condensed --run-dir /tmp/task037-e1-diagnostic-tlvcVB/benchmarks/artifacts/task037/e2_modal_capacity_ddcc5ea8/mpi8 --task035c-p6-h10-gate --task035c-p6-preflight-authority benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json --task035c-p6-preflight-sha256 96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8 --verified-clean-sha ddcc5ea87b56eeec5ae0a385d3dfac4237ce3877 --task037-e2-modal-capacity-gate --task037-f3-screen 200 --task037-m2c-never-materialized --task037-m4-p2-auxiliary --task037-m4-factor-free-slab --task037-m4-factor-free-local-steps 4 --poll-interval 0.25 --warning-gib 10 --terminate-gib 14 --timeout-seconds 7200"
+  },
+  "frozen_configuration": {
+    "degree": 6,
+    "h_nm": 10.0,
+    "polarization": "s",
+    "lambda0_nm": 13.5,
+    "theta_deg": 80.0,
+    "phi_deg": 0.0,
+    "stage4_backend": "assembly_time_static_condensed",
+    "run_kind": "full-solve",
+    "f3_screen": 200,
+    "m2c_never_materialized": true,
+    "m3a_overlap0125_partition": false,
+    "m4_p2_auxiliary": true,
+    "m4_factor_free_slab": true,
+    "m4_factor_free_local_steps": 4,
+    "b4_candidate": {
+      "outer_ksp": "fgmres",
+      "restart": 90,
+      "max_it": 200,
+      "rtol": 1.0e-6,
+      "num_slabs": 16,
+      "overlap_fraction": 0.125,
+      "interpolation": "partition",
+      "p2_auxiliary_correction": true,
+      "pc_side": "right",
+      "local_inner_preconditioner": "none"
+    }
+  },
+  "e1": {
+    "status": "M120_GLOBAL_MODAL_BASIS_GATE_PASSED",
+    "gate_pass": true,
+    "columns": 240,
+    "forward_columns": 120,
+    "backward_columns": 120,
+    "global_active_rows": 51192,
+    "key_counts": {
+      "missing": 0,
+      "extra": 0,
+      "duplicate": 0
+    },
+    "max_repeat_error": 1.0114502263711128e-13,
+    "random_action_relative_error": 6.53573490135987e-15,
+    "max_bottom_retained_residual": 6.799167355834361e-13,
+    "max_top_retained_residual": 9.287696356432755e-13,
+    "max_local_interface_mismatch": 0.0,
+    "max_stitch_interface_mismatch": 4.479212868666832e-11,
+    "action_rank": 240,
+    "action_condition": 740.511230115312,
+    "normal_equations": false,
+    "official_result": false,
+    "ksp_iterations": 0,
+    "materialization": {
+      "action_operator": "matrix_free_condensed_F_minus_C_Hinv_D",
+      "dtn_included": true,
+      "global_A_materialized": false,
+      "global_F_materialized": false,
+      "p6_retained_factor_count": 0,
+      "p6_retained_factor_nnz": 0
+    },
+    "factor_inventory": {
+      "bottom": {
+        "setup_count": 1,
+        "apply_count": 480,
+        "solver": "mumps",
+        "rows": 7168,
+        "nnz_used": 17498752
+      },
+      "top": {
+        "setup_count": 1,
+        "apply_count": 480,
+        "solver": "mumps",
+        "rows": 7168,
+        "nnz_used": 17659528
+      },
+      "released": true
+    },
+    "factor_release": true
+  },
+  "e2": {
+    "status": "capacity_negative",
+    "classification": "M120_MODAL_COARSE_INSUFFICIENT_ON_FROZEN_LATE_RESIDUALS",
+    "implementation_gate_pass": true,
+    "implementation_failures": [],
+    "capacity_gate_pass": false,
+    "repeat_error_all_spaces_all_samples": 0.0,
+    "action_operator": "matrix_free_condensed_F_minus_C_Hinv_D",
+    "dtn_included": true,
+    "normal_equations": false,
+    "global_A_materialized": false,
+    "global_F_materialized": false,
+    "same_run_live_basis": {
+      "owner_local": true,
+      "global_rows": 51192,
+      "columns": 240,
+      "same_layout": true
+    },
+    "samples": [
+      {
+        "iteration": 0,
+        "true_residual_norm": 13.197399418369043,
+        "relative_true_residual": 1.0,
+        "rho_B": 2.545411477662291,
+        "rho_75": 0.3523076473054574,
+        "rho_M": 1.0,
+        "rho_75M": 0.3356959032560605,
+        "rho_BM": 2.387586540134252,
+        "rho_hat_M_B": 0.9379962969001046,
+        "improvement_M": 1.0,
+        "incremental": 1.0494845003715336
+      },
+      {
+        "iteration": 20,
+        "true_residual_norm": 5.596174034261749,
+        "relative_true_residual": 0.4240361193033691,
+        "rho_B": 1.4571445787308914,
+        "rho_75": 0.8943020662876621,
+        "rho_M": 0.9948007833419474,
+        "rho_75M": 0.8862677948578813,
+        "rho_BM": 1.4129164173091928,
+        "rho_hat_M_B": 0.9696473760618735,
+        "improvement_M": 1.005226389790915,
+        "incremental": 1.0090652864477256
+      },
+      {
+        "iteration": 100,
+        "true_residual_norm": 2.2498785337431007,
+        "relative_true_residual": 0.1704789301604046,
+        "rho_B": 1.1974356957547667,
+        "rho_75": 0.9714345632867378,
+        "rho_M": 0.9959977437467548,
+        "rho_75M": 0.9638071821553678,
+        "rho_BM": 1.1696913824348578,
+        "rho_hat_M_B": 0.9768302269439019,
+        "improvement_M": 1.0040183386743322,
+        "incremental": 1.0079138039979252
+      },
+      {
+        "iteration": 200,
+        "true_residual_norm": 1.864887327107556,
+        "relative_true_residual": 0.14130718242200643,
+        "rho_B": 1.1564543805210408,
+        "rho_75": 0.9717247345377041,
+        "rho_M": 0.9969376898302691,
+        "rho_75M": 0.9656838606659556,
+        "rho_BM": 1.1337134508863782,
+        "rho_hat_M_B": 0.9803356448661497,
+        "improvement_M": 1.0030717167190784,
+        "incremental": 1.00625553984881
+      }
+    ],
+    "action_spaces": {
+      "75D": {
+        "columns": 75,
+        "rank": 75,
+        "condition": 1520.2120206198704,
+        "factorization_count": 1,
+        "method": "owner-local QR + root SVD",
+        "normal_equations": false
+      },
+      "M120": {
+        "columns": 240,
+        "rank": 240,
+        "condition": 740.5112301153121,
+        "factorization_count": 1,
+        "method": "owner-local QR + root SVD",
+        "normal_equations": false
+      },
+      "75D+M120": {
+        "columns": 315,
+        "rank": 315,
+        "condition": 9985.323201186875,
+        "factorization_count": 1,
+        "method": "owner-local QR + root SVD",
+        "normal_equations": false
+      }
+    },
+    "late_gate": {
+      "thresholds": {
+        "inverse_rho_M_min": 1.5,
+        "rho_hat_M_B_max": 0.67,
+        "rho_75_over_rho_75M_min": 1.2
+      },
+      "k100": {
+        "inverse_rho_M": 1.0040183386743322,
+        "inverse_rho_M_pass": false,
+        "rho_hat_M_B": 0.9768302269439019,
+        "rho_hat_M_B_pass": false,
+        "rho_75_over_rho_75M": 1.0079138039979252,
+        "rho_75_over_rho_75M_pass": false
+      },
+      "k200": {
+        "inverse_rho_M": 1.0030717167190784,
+        "inverse_rho_M_pass": false,
+        "rho_hat_M_B": 0.9803356448661497,
+        "rho_hat_M_B_pass": false,
+        "rho_75_over_rho_75M": 1.00625553984881,
+        "rho_75_over_rho_75M_pass": false
+      },
+      "failed_gate_count": 6
+    },
+    "b4_solver_gate": {
+      "iterations": 200,
+      "converged_reason": -3,
+      "final_true_residual": 0.14130718242200643,
+      "pass": false,
+      "independent_of_capacity_gate": true
+    },
+    "core_identity": {
+      "solver_profile": "never_materialized_p2_factor_free_slab_auxiliary",
+      "no_global_factor_count": 0,
+      "p6_factor_count": 0,
+      "p6_factor_nnz": 0,
+      "p2_distributed_mumps_factor_count": 1
+    }
+  },
+  "resources": {
+    "whole_run_wall_seconds": 3691.709302290925,
+    "stage4_wall_seconds": 3682.42344509298,
+    "e1_stage_wall_seconds_derived": 2878.0,
+    "e2_stage_wall_seconds_derived": 707.0,
+    "memory_authority_gib": 12.094310760498047,
+    "max_process_tree_rss_mb": 12384.57421875,
+    "max_simultaneous_worker_rss_mb": 12369.96875,
+    "max_simultaneous_worker_pss_mb": 10952.5693359375,
+    "max_simultaneous_worker_uss_mb": 10778.55078125,
+    "max_cgroup_current_observed_mb": 13169.6953125,
+    "cgroup_peak_available": false,
+    "swap_mb": 0.0,
+    "warning_triggered": true,
+    "terminated_for_memory": false,
+    "terminated_for_timeout": false,
+    "process_completed": true,
+    "stage_peaks_process_tree_rss_mb": {
+      "assembly": 6187.44921875,
+      "after_base_matrix_release": 6214.03515625,
+      "E1": 12384.57421875,
+      "E2": 12109.4765625
+    }
+  },
+  "evidence": {
+    "raw_artifact_root": "/tmp/task037-e1-diagnostic-tlvcVB/benchmarks/artifacts/task037/e2_modal_capacity_ddcc5ea8/mpi8",
+    "files": {
+      "parent_launch_descriptor.json": {
+        "bytes": 1609,
+        "sha256": "69208b646a9c9dff84abc1b4634a4df8c36804d0aaf281796f8dac853a4099b1"
+      },
+      "task037_e1_first_column_diagnostic.json": {
+        "bytes": 34923,
+        "sha256": "b632a1fa79837109c45f6b0ec887d33ff18e1392a9db87e29f22ce7c7a3767fb"
+      },
+      "task037_e1_modal_basis_audit.json": {
+        "bytes": 23617,
+        "sha256": "a4305d04037e4b1ea7940d365c6cfbe352883f0b25180e0ff6646c2f2e34e2dd"
+      },
+      "task037_e2_modal_capacity_audit.json": {
+        "bytes": 26550,
+        "sha256": "7962bb6ccf28307706cf0177da237b23bfde797618061468684228371078adb0"
+      },
+      "run_summary.json": {
+        "bytes": 44577,
+        "sha256": "ec2101517dcfc7d96088a44cce2f5a0790f516d611cfb5fe59fca1d1d5112fea"
+      },
+      "watchdog_summary.json": {
+        "bytes": 143585,
+        "sha256": "bb62f563722dd93e3cb8ef19778c5a334baaec315ac37f03e8c7f841c22209d5"
+      },
+      "progress_3d.jsonl": {
+        "bytes": 47542,
+        "sha256": "ccdc0e704cb81a637e3de9a9107231f44b5664427fb011c234797682c115f0b0"
+      },
+      "memory_timeline.csv": {
+        "bytes": 52192997,
+        "sha256": "f9f7e9d06107e383b1c994ff502ead251ad65c36a913bc723fb6ec3f9db0dff0"
+      },
+      "worker_stdout.txt": {
+        "bytes": 4878,
+        "sha256": "d26d8aff0022db07992d91b24171def1968d2a5b3258061c4f11aeb1839b9a21"
+      }
+    }
+  },
+  "outcomes": {
+    "E0": "pass",
+    "E1": "pass",
+    "E2": "capacity_negative",
+    "E3": "not_run",
+    "E4": "not_run",
+    "E5": "not_run",
+    "E6": "closeout_drafted",
+    "official_result": false,
+    "candidate_E": "closed",
+    "full_pytest": "not_run"
+  },
+  "publication": {
+    "record_creation_snapshot": {
+      "source_sha": "ddcc5ea87b56eeec5ae0a385d3dfac4237ce3877",
+      "clone_head": "ddcc5ea87b56eeec5ae0a385d3dfac4237ce3877",
+      "clone_upstream": "ddcc5ea87b56eeec5ae0a385d3dfac4237ce3877",
+      "clone_ahead_behind": "0/0",
+      "clone_worktree_clean_before_closeout": true
+    },
+    "carrier_sha": null,
+    "carrier_sha_reporting": "out_of_band_to_avoid_self_reference",
+    "final_push_state": "out_of_band"
+  }
+}
