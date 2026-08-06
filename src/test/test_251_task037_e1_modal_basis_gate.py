@@ -8,10 +8,12 @@ from mpi4py import MPI
 import benchmarks.run_task033_full3d_watchdog as watchdog
 from src.solvers.static_modal_coarse_gate import (
     OwnerLocalBasis,
+    _diagnose_interface_packets,
     load_owner_local_basis_shard,
     qualify_e1_modal_basis_audit,
     save_owner_local_basis_shard,
 )
+from src.solvers.hcurl_canonical_vector import canonical_key
 
 
 def _e1_args():
@@ -266,3 +268,54 @@ def test_e1_parser_forwarding_and_source_wiring(tmp_path):
     assert "matrix_free_dtn_probe=e0_gate" in source
     assert "static_retain_local_schur_for_matrix_free=(" in source
     assert "task037_e1_modal_basis_generation" in source
+
+
+def test_first_column_interface_diagnostic_reports_scale_and_subgroups():
+    edge = canonical_key(
+        role="active_trace",
+        entity_dimension=1,
+        physical_entity=((0, 0, 100), (1, 0, 100)),
+        entity_local_basis_index=0,
+        orientation_state="identity",
+    )
+    face = canonical_key(
+        role="active_trace",
+        entity_dimension=2,
+        physical_entity=((0, 0, 100), (1, 0, 100), (0, 1, 100), (1, 1, 100)),
+        entity_local_basis_index=1,
+        orientation_state="identity",
+    )
+    middle = ((edge, 1.0 + 0.0j), (face, 2.0 + 0.0j))
+    local = ((edge, 2.0 + 0.0j), (face, 4.0 + 0.0j))
+    identical = _diagnose_interface_packets(
+        middle,
+        middle,
+        interface_keys={edge, face},
+        label="identical",
+    )
+    assert identical["absolute_l2_difference"] == pytest.approx(0.0)
+    assert identical["relative_l2_difference"] == pytest.approx(0.0)
+    audit = _diagnose_interface_packets(
+        middle,
+        local,
+        interface_keys={edge, face},
+        label="top",
+        propagation_factor=1.0 + 0.0j,
+        effective_beta=0.0 + 0.0j,
+        log_magnitude=0.0,
+        roundoff_growth_clipped=False,
+    )
+    assert audit["local_norm"] == pytest.approx(np.sqrt(20.0))
+    assert audit["middle_norm"] == pytest.approx(np.sqrt(5.0))
+    assert audit["absolute_l2_difference"] == pytest.approx(np.sqrt(5.0))
+    assert audit["best_global_complex_scalar"] == pytest.approx([2.0, 0.0])
+    assert audit["relative_residual_after_best_global_scalar"] == pytest.approx(0.0)
+    assert audit["dimension_errors"]["edge"]["relative_l2_difference"] == pytest.approx(
+        0.5
+    )
+    assert audit["dimension_errors"]["face"]["relative_l2_difference"] == pytest.approx(
+        0.5
+    )
+    assert audit["factor"]["stable_factor"] == pytest.approx([1.0, 0.0])
+    assert audit["factor"]["relative_difference"] == pytest.approx(0.0)
+    assert audit["identifiability"]["numerically_identifiable"] is True

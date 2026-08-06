@@ -325,6 +325,151 @@ def _complete_single_column_packets(
     return tuple(packet for rank_packets in packets for packet in rank_packets)
 
 
+def _diagnose_interface_packets(
+    middle_packets: tuple[Any, ...],
+    local_packets: tuple[Any, ...],
+    *,
+    interface_keys: set[Any],
+    label: str,
+    propagation_factor: complex | None = None,
+    effective_beta: complex | None = None,
+    propagation_length_nm: float = 100.0,
+    log_magnitude: float | None = None,
+    roundoff_growth_clipped: bool | None = None,
+) -> dict[str, Any]:
+    """Report one complete-column interface mismatch before the hard Gate."""
+
+    middle_map = {key: complex(value) for key, value in middle_packets}
+    local_map = {key: complex(value) for key, value in local_packets}
+    expected = set(interface_keys)
+    missing = expected - set(local_map)
+    common = tuple(sorted(expected & set(local_map) & set(middle_map), key=repr))
+    if not common:
+        raise ValueError(f"{label} diagnostic has no common interface packet keys")
+    middle_values = np.asarray([middle_map[key] for key in common], dtype=np.complex128)
+    local_values = np.asarray([local_map[key] for key in common], dtype=np.complex128)
+    difference = local_values - middle_values
+    middle_norm = float(np.linalg.norm(middle_values))
+    local_norm = float(np.linalg.norm(local_values))
+    absolute_difference = float(np.linalg.norm(difference))
+    scale = max(local_norm, middle_norm, np.finfo(float).tiny)
+    relative_difference = float(absolute_difference / scale)
+    middle_inner = np.vdot(middle_values, middle_values)
+    scalar = (
+        complex(np.vdot(middle_values, local_values) / middle_inner)
+        if abs(middle_inner) > np.finfo(float).tiny
+        else None
+    )
+    scalar_residual = (
+        float(np.linalg.norm(local_values - scalar * middle_values) / scale)
+        if scalar is not None
+        else None
+    )
+
+    def subgroup(indices: list[int]) -> dict[str, Any]:
+        if not indices:
+            return {
+                "count": 0,
+                "absolute_l2_difference": 0.0,
+                "relative_l2_difference": 0.0,
+            }
+        selected = np.asarray(indices, dtype=np.int64)
+        selected_difference = difference[selected]
+        selected_local = local_values[selected]
+        selected_middle = middle_values[selected]
+        selected_scale = max(
+            float(np.linalg.norm(selected_local)),
+            float(np.linalg.norm(selected_middle)),
+            np.finfo(float).tiny,
+        )
+        return {
+            "count": int(len(indices)),
+            "absolute_l2_difference": float(np.linalg.norm(selected_difference)),
+            "relative_l2_difference": float(
+                np.linalg.norm(selected_difference) / selected_scale
+            ),
+        }
+
+    dimensions: dict[str, list[int]] = {"edge": [], "face": []}
+    basis_indices: dict[str, list[int]] = {}
+    for index, key in enumerate(common):
+        dimension = str(key[1])
+        if dimension == "1":
+            dimensions["edge"].append(index)
+        elif dimension == "2":
+            dimensions["face"].append(index)
+        basis_indices.setdefault(str(int(key[3])), []).append(index)
+    largest = np.argsort(-np.abs(difference), kind="stable")[:4]
+    largest_differences = [
+        {
+            "key": repr(common[int(index)]),
+            "local": [float(local_values[index].real), float(local_values[index].imag)],
+            "middle": [
+                float(middle_values[index].real),
+                float(middle_values[index].imag),
+            ],
+            "absolute_difference": float(abs(difference[index])),
+        }
+        for index in largest
+    ]
+    tiny = np.finfo(float).tiny
+    factor_audit: dict[str, Any] = {}
+    if propagation_factor is not None and effective_beta is not None:
+        factor = complex(propagation_factor)
+        expected_factor = complex(
+            np.exp(1j * complex(effective_beta) * float(propagation_length_nm))
+        )
+        factor_scale = max(abs(factor), abs(expected_factor), np.finfo(float).tiny)
+        factor_audit = {
+            "stable_factor": [float(factor.real), float(factor.imag)],
+            "pointwise_expected_factor": [
+                float(expected_factor.real),
+                float(expected_factor.imag),
+            ],
+            "relative_difference": float(abs(factor - expected_factor) / factor_scale),
+            "magnitude": float(abs(factor)),
+            "log_magnitude": (
+                None if log_magnitude is None else float(log_magnitude)
+            ),
+            "roundoff_growth_clipped": (
+                None
+                if roundoff_growth_clipped is None
+                else bool(roundoff_growth_clipped)
+            ),
+        }
+    return {
+        "label": label,
+        "interface_key_count": int(len(expected)),
+        "common_key_count": int(len(common)),
+        "missing_key_count": int(len(missing)),
+        "middle_norm": middle_norm,
+        "local_norm": local_norm,
+        "absolute_l2_difference": absolute_difference,
+        "relative_l2_difference": relative_difference,
+        "best_global_complex_scalar": (
+            None
+            if scalar is None
+            else [float(scalar.real), float(scalar.imag)]
+        ),
+        "relative_residual_after_best_global_scalar": scalar_residual,
+        "dimension_errors": {
+            name: subgroup(indices) for name, indices in dimensions.items()
+        },
+        "basis_index_errors": {
+            name: subgroup(indices) for name, indices in basis_indices.items()
+        },
+        "largest_differences": largest_differences,
+        "identifiability": {
+            "scale": float(scale),
+            "norms_near_underflow": bool(scale <= np.sqrt(tiny)),
+            "numerically_identifiable": bool(
+                np.isfinite(scale) and scale > np.sqrt(tiny)
+            ),
+        },
+        "factor": factor_audit,
+    }
+
+
 def _normalize_single_active_vector(
     active: PETSc.Vec,
 ) -> tuple[PETSc.Vec, dict[str, Any]]:
@@ -710,6 +855,7 @@ def _build_e1_column(
     mode_index: int,
     direction: str,
     geometry_tolerance: float,
+    run_dir: Path | None = None,
 ) -> tuple[PETSc.Vec, dict[str, Any]]:
     if direction == "forward":
         mode = resources.positive.modes[mode_index]
@@ -800,6 +946,76 @@ def _build_e1_column(
             comm,
         )
         top_packets = _complete_single_column_packets(top_packets_local, comm)
+        if (
+            run_dir is not None
+            and direction == "forward"
+            and int(mode_index) == 0
+        ):
+            bottom_plane = int(
+                np.rint(E1_BOTTOM_INTERFACE_NM / geometry_tolerance)
+            )
+            top_plane = int(np.rint(E1_TOP_INTERFACE_NM / geometry_tolerance))
+            middle_map = {key: complex(value) for key, value in middle_packets}
+            bottom_interface_keys = {
+                key
+                for key in middle_map
+                if all(int(point[2]) == bottom_plane for point in key[2])
+            }
+            top_interface_keys = {
+                key
+                for key in middle_map
+                if all(int(point[2]) == top_plane for point in key[2])
+            }
+            if not bottom_interface_keys or not top_interface_keys:
+                raise ValueError(
+                    "first-column diagnostic requires non-empty middle "
+                    "interface keys"
+                )
+            top_factor = resources.coupling.propagation.forward.factors[mode_index]
+            top_block = resources.coupling.propagation.forward
+            interface_diagnostic = {
+                "bottom": _diagnose_interface_packets(
+                    middle_packets,
+                    bottom_packets,
+                    interface_keys=bottom_interface_keys,
+                    label="bottom",
+                ),
+                "top": _diagnose_interface_packets(
+                    middle_packets,
+                    top_packets,
+                    interface_keys=top_interface_keys,
+                    label="top",
+                    propagation_factor=top_factor,
+                    effective_beta=top_block.effective_beta_per_nm[mode_index],
+                    propagation_length_nm=(
+                        E1_TOP_INTERFACE_NM - E1_BOTTOM_INTERFACE_NM
+                    ),
+                    log_magnitude=top_block.log_magnitudes[mode_index],
+                    roundoff_growth_clipped=top_block.roundoff_growth_clipped[
+                        mode_index
+                    ],
+                ),
+            }
+            top_diagnostic = interface_diagnostic["top"]
+            factor_diagnostic = top_diagnostic["factor"]
+            diagnostic = {
+                "source": "pre_stitch_forward_j0",
+                "direction": direction,
+                "mode_index": int(mode_index),
+                "middle": middle_audit,
+                "bottom_extension": bottom_audit,
+                "top_extension": top_audit,
+                "bottom": interface_diagnostic["bottom"],
+                "top": top_diagnostic,
+                "forward_factor": factor_diagnostic,
+            }
+            if comm.rank == 0:
+                run_dir.mkdir(parents=True, exist_ok=True)
+                _write_json(
+                    run_dir / "task037_e1_first_column_diagnostic.json",
+                    diagnostic,
+                )
+            comm.barrier()
         stitched_packets, stitch_audit = stitch_canonical_active_trace_packets(
             middle_packets,
             bottom_packets,
@@ -1017,6 +1233,7 @@ def _run_e1_modal_basis_gate(
                     mode_index=mode_index,
                     direction=direction,
                     geometry_tolerance=geometry_tolerance,
+                    run_dir=run_dir,
                 )
                 pending_columns.append(column)
                 first_pass_count += 1
@@ -1079,6 +1296,7 @@ def _run_e1_modal_basis_gate(
                     mode_index=mode_index,
                     direction=direction,
                     geometry_tolerance=geometry_tolerance,
+                    run_dir=run_dir,
                 )
                 try:
                     repeat_error = _relative_vector_error(
