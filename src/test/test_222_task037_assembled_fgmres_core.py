@@ -398,3 +398,14 @@ def test_never_materialized_core_borrows_action_objects(monkeypatch):
         operator.destroy()
         b.destroy()
         A.destroy()
+
+
+def test_python_matrix_nnz_telemetry_is_not_applicable():
+    matrix = PETSc.Mat().createPython(
+        ((1, 1), (1, 1)), context=SimpleNamespace(), comm=MPI.COMM_SELF
+    )
+    matrix.setUp()
+    try:
+        assert core._local_matrix_nnz_used(matrix) == "not_applicable"
+    finally:
+        matrix.destroy()

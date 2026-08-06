@@ -46,6 +46,13 @@ _TINY = np.finfo(float).tiny
 _TRUE_RESIDUAL_CARRIER_ITERATIONS = frozenset((0, 20, 100, 200))
 
 
+def _local_matrix_nnz_used(matrix: PETSc.Mat) -> int | str:
+    matrix_type = matrix.getType()
+    if matrix_type in (PETSc.Mat.Type.PYTHON, PETSc.Mat.Type.SHELL):
+        return "not_applicable"
+    return int(matrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"])
+
+
 class _ShiftedFineAction:
     """MatPython action borrowing F and owning its diagonal shift."""
 
@@ -276,7 +283,7 @@ def _solve_static_condensed_fgmres_core(
                 for name, matrix in matrix_blocks.items()
             },
             rank_local_matrix_nnz_used={
-                name: int(matrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"])
+                name: _local_matrix_nnz_used(matrix)
                 for name, matrix in matrix_blocks.items()
             },
         )
