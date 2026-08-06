@@ -12,7 +12,7 @@ working_directory            = docs/task37_extra_development
 write_other_branch           = forbidden
 create_child_branch          = forbidden
 push_other_branch            = forbidden
-pull_request                  = forbidden
+pull_request                 = forbidden
 merge_to_master              = permanently_not_planned
 cherry_pick_to_master         = forbidden_without_new_user_instruction
 rebase_onto_master            = forbidden_without_new_user_instruction
@@ -69,14 +69,14 @@ git remote -v
 
 GitHub 文档中的块公式统一使用：
 
-```markdown
-$$
+~~~markdown
+```math
 A x=b
-$$
 ```
+~~~
 
-禁止新写 `\[ ... \]` 公式块。多行公式仍放在 `$$` 中。普通命令、路径和日志使用
-`~~~text` 或三反引号文本块，避免与数学渲染冲突。
+禁止新写 `\[ ... \]` 或 `$$ ... $$` 公式块。多行块公式同样放在以 `math` 标注的三反引号
+fenced block 中。普通命令、路径和日志使用 `~~~text` 或三反引号文本块，避免与数学渲染冲突。
 
 ---
 
@@ -185,16 +185,16 @@ exact p6 static-condensed matrix-free fine action
 
 Task37 静态凝聚后，外层仍求：
 
-$$
+```math
 A_t x_t=b_t,
-$$
+```
 
 其中 $x_t$ 是 51192 个 active p6 trace unknowns；80 个 DtN auxiliary unknowns按当前精确
 condensed/augmented 代数处理。所有新 PC 都只能改变：
 
-$$
+```math
 r\longmapsto M^{-1}r,
-$$
+```
 
 不得改变 $A_t$、$b_t$、物理、网格、Floquet、DtN 或 official 后处理。
 
@@ -202,21 +202,21 @@ $$
 
 第 $j$ 个 slab 的局部 shifted trace operator 记为：
 
-$$
+```math
 S_j=R_j\left(A_t-i\sigma D_t\right)R_j^T.
-$$
+```
 
 M3a 保存：
 
-$$
+```math
 S_j\approx L_jU_j,
-$$
+```
 
 并反复使用：
 
-$$
+```math
 z_{t,j}=U_j^{-1}L_j^{-1}R_jr.
-$$
+```
 
 本任务的主要目标是减少或取消这 16 套 p6 trace ILU 的长期存储，同时保持足够强的
 $S_j^{-1}$ 近似。
@@ -225,23 +225,23 @@ $S_j^{-1}$ 近似。
 
 对一个 slab，在静态凝聚前的局部 full-space unknowns 分为 interior 和 trace：
 
-$$
+```math
 \mathcal A_j=
 \begin{bmatrix}
 A_{ii}^{(j)} & A_{it}^{(j)}\\
 A_{ti}^{(j)} & A_{tt}^{(j)}
 \end{bmatrix}.
-$$
+```
 
 若需要求：
 
-$$
+```math
 S_jz_{t,j}=r_{t,j},
-$$
+```
 
 可以等价地求局部 full-space 问题：
 
-$$
+```math
 \mathcal A_j
 \begin{bmatrix}
 z_{i,j}\\z_{t,j}
@@ -250,13 +250,13 @@ z_{i,j}\\z_{t,j}
 \begin{bmatrix}
 0\\r_{t,j}
 \end{bmatrix},
-$$
+```
 
 最后只提取 trace correction。匹配同一局部边界、shift 和 constraint 时：
 
-$$
+```math
 S_j^{-1}=R_t\mathcal A_j^{-1}R_t^T.
-$$
+```
 
 因此：
 
@@ -273,18 +273,18 @@ LOR（low-order refined）将一个 p6 hexa 单元内部表示为许多 lowest-o
 
 设：
 
-$$
+```math
 T_j:V_{LOR,j}\rightarrow V_{p6,full,j}
-$$
+```
 
 是 LOR 到 p6 slab full-space 的稳定映射，$B_{HX,j}^{-1}$ 是在 LOR 空间上的 H(curl)
 辅助空间/V-cycle 近似逆。目标局部 PC 为：
 
-$$
+```math
 M_{j,LOR-HX}^{-1}
 =
 R_tT_jB_{HX,j}^{-1}T_j^HR_t^T.
-$$
+```
 
 理想数据流：
 
@@ -315,18 +315,18 @@ coarsest small factor = allowed and must be inventoried
 
 G4 不是“只求一个 slab 并把解插值成全场”。它是在一次 PC apply 中依次处理全部 slab：
 
-$$
+```math
 r^{(0)}=r,
-$$
+```
 
-$$
+```math
 z_j=M_j^{-1}R_jr^{(j-1)},
-$$
+```
 
-$$
+```math
 r^{(j)}=r^{(j-1)}-AR_j^Tz_j,
 \qquad j=1,\ldots,16.
-$$
+```
 
 forward/back sweep 需要约 16 或 32 次局部 solve。其优势是每处理一个 slab 就立即传播误差，且在
 流式实现中可能只同时保留一到少数 slab 的 workspace。它降低的是**峰值常驻资源**，不是把总工作量
@@ -392,10 +392,10 @@ maximum acceptable research wall <= 4.0 * same-machine M3a wall
 
 对同一个真实 residual $r_j$，定义：
 
-$$
+```math
 \rho(M,r_j)=
 \frac{\left\|r_j-S_jM^{-1}r_j\right\|_2}{\left\|r_j\right\|_2}.
-$$
+```
 
 以当前 trace ILU 为 authority、B4 为低内存负基线。LOR-HX 至少满足：
 
@@ -639,14 +639,14 @@ control slab = median residual / ordinary sensitivity
 
 在 tiny fixture 和真实 primary slab 上验证：
 
-$$
+```math
 S_jv
 \approx
 R_t\mathcal A_j
 \begin{bmatrix}
 -A_{ii}^{-1}A_{it}v\\v
 \end{bmatrix}.
-$$
+```
 
 要求 3 个 deterministic vectors 和一个真实 residual direction 的 relative error `<=1e-10`。
 
@@ -773,11 +773,11 @@ benchmarks/cases/101_task37_extra_development/records/g2_*.json
 
 唯一主要变化是：
 
-$$
+```math
 U_j^{-1}L_j^{-1}
 \longrightarrow
 M_{j,LOR-HX}^{-1}.
-$$
+```
 
 ### G3.2 hierarchy reuse
 
@@ -855,11 +855,11 @@ symmetric forward + backward sweep
 
 比较：
 
-$$
+```math
 \rho_{additive},\quad
 \rho_{forward},\quad
 \rho_{forward/backward}.
-$$
+```
 
 进入 20/100-step screen 的 Gate：
 
@@ -963,7 +963,7 @@ docs/task37_extra_development/outcomes/g5_recycling_modal_coarse.md
 
 当完全 factor-free 或 LOR-HX 路线接近收敛但仍不足时，允许做一个有界折中：
 
-$$
+```math
 M^{-1}
 =
 \sum_{j\in\mathcal J_{strong}}
@@ -972,7 +972,7 @@ R_j^TW_jM_{j,ILU}^{-1}R_j
 \sum_{j\notin\mathcal J_{strong}}
 R_j^TW_jM_{j,cheap}^{-1}R_j
 +Q_{wave}.
-$$
+```
 
 ### G6.1 slab 选择
 
