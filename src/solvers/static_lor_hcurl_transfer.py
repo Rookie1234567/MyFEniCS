@@ -351,6 +351,12 @@ def _readonly_csr(
     return matrix
 
 
+def _readonly_array(values: np.ndarray, dtype: np.dtype) -> np.ndarray:
+    array = np.ascontiguousarray(np.asarray(values, dtype=dtype)).copy()
+    array.setflags(write=False)
+    return array
+
+
 def _parent_element(degree: int) -> basix.finite_element.FiniteElement:
     return basix.ufl.element(
         "N1curl",
@@ -948,5 +954,373 @@ def build_lor_slab_edge_space(
         physical_edge_keys=physical_edge_keys,
         active_edge_keys=active_edge_keys,
         _parent_expansions=tuple(parent_expansions),
+        audit=audit,
+    )
+
+
+@dataclass(frozen=True)
+class LORSlabParentPackingRecord:
+    """Owner-local packing metadata for one high-order LOR parent."""
+
+    topology: AffineLORParentTopology
+    trace_original_dofs: np.ndarray
+    trace_active_rows: np.ndarray
+    trace_expansion: sp.csr_matrix
+    active_positions: np.ndarray
+    trace_complete_rows: np.ndarray
+
+    def __post_init__(self) -> None:
+        trace_original = _readonly_array(
+            self.trace_original_dofs,
+            np.dtype(np.int64),
+        )
+        trace_active = _readonly_array(
+            self.trace_active_rows,
+            np.dtype(np.int64),
+        )
+        expansion = _readonly_csr(self.trace_expansion, dtype=np.complex128)
+        active_positions = _readonly_array(
+            self.active_positions,
+            np.dtype(np.int64),
+        )
+        complete = _readonly_array(
+            self.trace_complete_rows,
+            np.dtype(np.bool_),
+        )
+        if trace_original.ndim != 1:
+            raise ValueError("trace original DoFs must be one-dimensional")
+        if trace_active.shape != trace_original.shape:
+            raise ValueError("trace active rows must match trace original DoFs")
+        if expansion.shape[0] != trace_original.size:
+            raise ValueError("trace expansion rows must match trace original DoFs")
+        if expansion.shape[1] != active_positions.size:
+            raise ValueError("trace expansion columns must match active positions")
+        if complete.shape != trace_original.shape:
+            raise ValueError("trace completeness must match local trace rows")
+        if np.any(trace_active < -1):
+            raise ValueError("trace active rows use -1 only for slave rows")
+        if np.any(active_positions < 0):
+            raise ValueError("active positions must be nonnegative")
+        object.__setattr__(self, "trace_original_dofs", trace_original)
+        object.__setattr__(self, "trace_active_rows", trace_active)
+        object.__setattr__(self, "trace_expansion", expansion)
+        object.__setattr__(self, "active_positions", active_positions)
+        object.__setattr__(self, "trace_complete_rows", complete)
+
+
+def _relative_sparse_error(
+    observed: sp.spmatrix,
+    expected: sp.spmatrix,
+) -> float:
+    difference = sp.csr_matrix(observed - expected)
+    expected_norm = float(np.linalg.norm(np.asarray(expected.data)))
+    return float(
+        np.linalg.norm(np.asarray(difference.data))
+        / max(expected_norm, np.finfo(float).tiny)
+    )
+
+
+@dataclass(frozen=True)
+class OwnerLocalLORTransfer:
+    """Owner-local full-space packing of streamed LOR parent actions."""
+
+    _edge_space: LORSlabEdgeSpace
+    _parent_transfers: tuple[LORParentTransfer, ...]
+    _parent_ids: tuple[int, ...]
+    _interior_positions: tuple[np.ndarray, ...]
+    _trace_positions: tuple[np.ndarray, ...]
+    _interior_offsets: tuple[int, ...]
+    _trace_writers: tuple[tuple[int, int], ...]
+    audit: dict[str, object]
+
+    def __post_init__(self) -> None:
+        for name in ("_interior_positions", "_trace_positions"):
+            arrays = tuple(
+                _readonly_array(values, np.dtype(np.int64))
+                for values in getattr(self, name)
+            )
+            object.__setattr__(self, name, arrays)
+        object.__setattr__(self, "_parent_ids", tuple(self._parent_ids))
+        object.__setattr__(self, "_interior_offsets", tuple(self._interior_offsets))
+        object.__setattr__(self, "_trace_writers", tuple(self._trace_writers))
+        object.__setattr__(self, "audit", dict(self.audit))
+
+    def apply(self, active_lor_values: np.ndarray) -> np.ndarray:
+        """Apply E, then each parent T, and pack owner rows."""
+
+        values = np.asarray(active_lor_values, dtype=np.complex128)
+        if values.shape != (len(self._edge_space.active_edge_keys),):
+            raise ValueError("active LOR values have the wrong edge count")
+        output = np.zeros(int(self.audit["full_rows"]), dtype=np.complex128)
+        parent_high: list[np.ndarray] = []
+        for parent_index, transfer in enumerate(self._parent_transfers):
+            parent_edges = np.asarray(
+                self._edge_space._parent_expansions[parent_index] @ values,
+                dtype=np.complex128,
+            )
+            high = transfer.apply(parent_edges)
+            parent_high.append(high)
+            offset = int(self._interior_offsets[parent_index])
+            interior = self._interior_positions[parent_index]
+            output[offset : offset + interior.size] = high[interior]
+        trace_offset = int(self.audit["trace_offset"])
+        for tail_position, (parent_index, local_trace_position) in enumerate(
+            self._trace_writers
+        ):
+            high = parent_high[parent_index]
+            trace = self._trace_positions[parent_index]
+            output[trace_offset + tail_position] = high[trace[local_trace_position]]
+        return output
+
+    def apply_adjoint(self, full_values: np.ndarray) -> np.ndarray:
+        """Apply the exact adjoint of the packed owner-local action."""
+
+        values = np.asarray(full_values, dtype=np.complex128)
+        if values.shape != (int(self.audit["full_rows"]),):
+            raise ValueError("full-space values have the wrong row count")
+        parent_high = [
+            np.zeros(transfer.audit["high_dim"], dtype=np.complex128)
+            for transfer in self._parent_transfers
+        ]
+        for parent_index, interior in enumerate(self._interior_positions):
+            offset = int(self._interior_offsets[parent_index])
+            parent_high[parent_index][interior] = values[
+                offset : offset + interior.size
+            ]
+        trace_offset = int(self.audit["trace_offset"])
+        for tail_position, (parent_index, local_trace_position) in enumerate(
+            self._trace_writers
+        ):
+            trace = self._trace_positions[parent_index]
+            parent_high[parent_index][trace[local_trace_position]] = values[
+                trace_offset + tail_position
+            ]
+        result = np.zeros(
+            len(self._edge_space.active_edge_keys),
+            dtype=np.complex128,
+        )
+        for parent_index, transfer in enumerate(self._parent_transfers):
+            edge_adjoint = self._edge_space._parent_adjoint[parent_index]
+            result += np.asarray(
+                edge_adjoint @ transfer.apply_adjoint(parent_high[parent_index]),
+                dtype=np.complex128,
+            )
+        return result
+
+
+def build_owner_local_lor_transfer(
+    parent_records: Iterable[LORSlabParentPackingRecord],
+    edge_space: LORSlabEdgeSpace,
+    owner_rows: np.ndarray,
+) -> OwnerLocalLORTransfer:
+    """Build a deterministic owner-local LOR-to-full-space packing action."""
+
+    records = tuple(
+        sorted(
+            parent_records,
+            key=lambda record: record.topology.canonical_cell_id,
+        )
+    )
+    if not records:
+        raise ValueError("at least one LOR parent packing record is required")
+    parent_ids = tuple(
+        int(record.topology.canonical_cell_id) for record in records
+    )
+    if parent_ids != edge_space.parent_ids:
+        raise ValueError("edge-space and packing parent IDs are not aligned")
+    owner_rows = np.asarray(owner_rows, dtype=np.int64)
+    if owner_rows.ndim != 1 or np.any(np.diff(owner_rows) <= 0):
+        raise ValueError("owner rows must be strictly increasing")
+    owner_row_count = int(owner_rows.size)
+    transfer_cache: dict[tuple[object, ...], LORParentTransfer] = {}
+    parent_transfers: list[LORParentTransfer] = []
+    interior_positions: list[np.ndarray] = []
+    trace_positions: list[np.ndarray] = []
+    interior_offsets: list[int] = []
+    complete_rows = 0
+    incomplete_rows = 0
+    interior_offset = 0
+    for parent_index, record in enumerate(records):
+        topology = record.topology
+        element = _parent_element(int(topology.degree))
+        local_dimension = int(element.dim)
+        interior = np.asarray(element.entity_dofs[3][0], dtype=np.int64)
+        trace = np.setdiff1d(
+            np.arange(local_dimension, dtype=np.int64),
+            interior,
+            assume_unique=True,
+        )
+        if record.trace_original_dofs.size != trace.size:
+            raise ValueError("packing trace rows do not match Basix trace rows")
+        if np.any(record.active_positions >= owner_row_count):
+            raise ValueError("packing active position is outside owner rows")
+        cache_key = (
+            int(topology.degree),
+            int(topology.cell_permutation),
+            tuple(
+                int(value)
+                for value in _positive_reference_edge_segments(topology)[2]
+            ),
+        )
+        transfer = transfer_cache.get(cache_key)
+        if transfer is None:
+            transfer = build_lor_parent_transfer(topology)
+            transfer_cache[cache_key] = transfer
+        parent_transfers.append(transfer)
+        interior_positions.append(interior)
+        trace_positions.append(trace)
+        interior_offsets.append(interior_offset)
+        interior_offset += int(interior.size)
+        complete_rows += int(np.count_nonzero(record.trace_complete_rows))
+        incomplete_rows += int(
+            record.trace_complete_rows.size
+            - np.count_nonzero(record.trace_complete_rows)
+        )
+
+    trace_offset = interior_offset
+    full_rows = trace_offset + owner_row_count
+    incidences: list[list[tuple[int, int]]] = [
+        [] for _ in range(owner_row_count)
+    ]
+    for parent_index, record in enumerate(records):
+        for local_trace_position, global_row in enumerate(
+            record.trace_active_rows
+        ):
+            if int(global_row) < 0:
+                continue
+            tail_position = int(np.searchsorted(owner_rows, int(global_row)))
+            if (
+                tail_position >= owner_row_count
+                or owner_rows[tail_position] != int(global_row)
+            ):
+                continue
+            incidences[tail_position].append(
+                (parent_index, local_trace_position)
+            )
+    missing = [
+        int(owner_rows[position])
+        for position, rows in enumerate(incidences)
+        if not rows
+    ]
+    if missing:
+        raise RuntimeError(
+            "owner active trace rows have no active-original writer: "
+            f"{missing[:8]}"
+        )
+    writers = tuple(
+        min(
+            rows,
+            key=lambda item: (
+                parent_ids[item[0]],
+                item[1],
+            ),
+        )
+        for rows in incidences
+    )
+
+    writer_requests: list[list[tuple[int, int]]] = [
+        [] for _ in records
+    ]
+    for tail_position, (parent_index, local_trace_position) in enumerate(
+        writers
+    ):
+        writer_requests[parent_index].append(
+            (tail_position, local_trace_position)
+        )
+    writer_rows: list[sp.csr_matrix | None] = [
+        None for _ in range(owner_row_count)
+    ]
+    for parent_index, requests in enumerate(writer_requests):
+        if not requests:
+            continue
+        stencil = sp.csr_matrix(
+            parent_transfers[parent_index]._forward
+            @ edge_space._parent_expansions[parent_index]
+        )
+        for tail_position, local_trace_position in requests:
+            writer_rows[tail_position] = stencil.getrow(
+                trace_positions[parent_index][local_trace_position]
+            )
+        del stencil
+    q_tail = sp.vstack(writer_rows, format="csr")
+    del writer_rows
+
+    shared_max_error = 0.0
+    incidence_requests: list[list[tuple[int, int]]] = [
+        [] for _ in records
+    ]
+    for tail_position, rows in enumerate(incidences):
+        for parent_index, local_trace_position in rows:
+            incidence_requests[parent_index].append(
+                (tail_position, local_trace_position)
+            )
+    complete_max_error = 0.0
+    for parent_index, record in enumerate(records):
+        stencil = sp.csr_matrix(
+            parent_transfers[parent_index]._forward
+            @ edge_space._parent_expansions[parent_index]
+        )
+        for tail_position, local_trace_position in incidence_requests[parent_index]:
+            expected = q_tail.getrow(tail_position)
+            observed = stencil.getrow(
+                trace_positions[parent_index][local_trace_position]
+            )
+            error = _relative_sparse_error(observed, expected)
+            shared_max_error = max(shared_max_error, error)
+            if error > _TRANSFER_INVERSE_TOLERANCE:
+                raise RuntimeError(
+                    "shared owner trace row stencils are inconsistent"
+                )
+        complete = record.trace_complete_rows
+        if np.any(complete):
+            reconstructed = record.trace_expansion @ q_tail[
+                record.active_positions, :
+            ]
+            observed = stencil[trace_positions[parent_index], :]
+            error = _relative_sparse_error(
+                observed[complete],
+                reconstructed[complete],
+            )
+            complete_max_error = max(complete_max_error, error)
+            if error > _TRANSFER_INVERSE_TOLERANCE:
+                raise RuntimeError(
+                    "complete trace expansion does not reconstruct parent T*E rows"
+                )
+        del stencil
+
+    del q_tail
+
+    audit = {
+        "parent_ids": list(parent_ids),
+        "parent_count": len(records),
+        "full_rows": int(full_rows),
+        "interior_rows": int(interior_offset),
+        "trace_rows": owner_row_count,
+        "trace_offset": int(trace_offset),
+        "cell_interior_offsets": [int(value) for value in interior_offsets],
+        "cell_interior_row_counts": [
+            int(values.size) for values in interior_positions
+        ],
+        "owner_row_count": owner_row_count,
+        "unique_parent_transfer_stencil_count": len(transfer_cache),
+        "shared_trace_incidence_count": sum(len(rows) for rows in incidences),
+        "missing_writer_count": len(missing),
+        "shared_trace_max_relative_error": float(shared_max_error),
+        "complete_trace_row_count": int(complete_rows),
+        "incomplete_trace_row_count": int(incomplete_rows),
+        "complete_trace_reconstruction_max_relative_error": float(
+            complete_max_error
+        ),
+        "global_dense_T_retained": False,
+        "row_order": "canonical_cell_id_interiors_then_owner_rows",
+    }
+    return OwnerLocalLORTransfer(
+        _edge_space=edge_space,
+        _parent_transfers=tuple(parent_transfers),
+        _parent_ids=parent_ids,
+        _interior_positions=tuple(interior_positions),
+        _trace_positions=tuple(trace_positions),
+        _interior_offsets=tuple(interior_offsets),
+        _trace_writers=writers,
         audit=audit,
     )
