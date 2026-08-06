@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Sequence
 
 import numpy as np
@@ -12,13 +12,25 @@ from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from src.geometry.tetra_mesh_audit import canonical_owned_cell_ids, owned_cell_geometry
+from src.constraints.high_order_floquet_trace import FloquetTraceTopology
+from src.geometry.tetra_mesh_audit import (
+    canonical_owned_cell_ids,
+    geometry_key_sha256,
+    owned_cell_geometry,
+)
 from src.solvers.hcurl_assembly_time_condensation import _cell_trace_expansion
 from src.solvers.static_factor_reuse import (
     _canonical_global_row_ids_fingerprint,
     _exact_reuse_necessary_prefix,
 )
 from src.solvers.static_fullspace_slab_oracle import FullSpaceSlabCellRecord
+from src.solvers.static_lor_hcurl_transfer import (
+    LORSlabParentPackingRecord,
+    OwnerLocalLORTransfer,
+    build_affine_lor_parent_topology,
+    build_lor_slab_edge_space,
+    build_owner_local_lor_transfer,
+)
 from src.solvers.static_local_schur_action import (
     iter_owned_constrained_schur_contributions,
 )
@@ -1086,6 +1098,307 @@ def collect_owner_local_fullspace_slab_cells(
         raise RuntimeError(owner_error)
     audit = comm.bcast(audit, root=owner)
     return cells, audit
+
+
+def _owner_lor_floquet_identity(block: Any) -> tuple:
+    return (
+        str(block.kind),
+        str(block.entity_kind),
+        tuple(
+            tuple(int(value) for value in point)
+            for point in block.slave_entity_geometry_key
+        ),
+        tuple(
+            tuple(int(value) for value in point)
+            for point in block.master_entity_geometry_key
+        ),
+        tuple(int(value) for value in block.periodic_pair_key),
+        tuple(int(value) for value in block.entity_vertex_permutation),
+        str(block.cell_type),
+    )
+
+
+def _owner_lor_physical_block(block: Any) -> Any:
+    """Strip one Floquet block to the identity consumed by the LOR edge path."""
+
+    return replace(
+        block,
+        slave_global_dofs=(),
+        master_global_dofs=(),
+        coefficient_transform=np.zeros((0, 0), dtype=np.complex128),
+        slave_local_dofs=(),
+        master_owners=(),
+        slave_owned=(),
+        touches_owned_cell=False,
+    )
+
+
+def _owner_lor_physical_identity_payload_bytes(block: Any) -> int:
+    return int(
+        np.asarray(block.slave_entity_geometry_key, dtype="<i8").nbytes
+        + np.asarray(block.master_entity_geometry_key, dtype="<i8").nbytes
+        + np.asarray(block.periodic_pair_key, dtype="<i8").nbytes
+        + np.asarray(block.entity_vertex_permutation, dtype="<i8").nbytes
+        + 16
+    )
+
+
+def collect_owner_local_lor_transfer(
+    condensed: Any,
+    plan: OwnerLocalSlabPlan,
+    mesh: Any,
+    cell_tags: Any,
+    slab: int,
+    *,
+    degree: int,
+    floquet_topology: FloquetTraceTopology,
+    phase_x: complex,
+    phase_y: complex,
+    coordinate_tolerance: float,
+) -> tuple[OwnerLocalLORTransfer | None, dict[str, Any]]:
+    """Build one owner-local LOR-to-full-space transfer from retained cells."""
+
+    if slab < 0 or slab >= len(plan.slab_owners):
+        raise ValueError("slab index is out of range")
+    if float(coordinate_tolerance) <= 0.0:
+        raise ValueError("coordinate tolerance must be positive")
+    degree = int(degree)
+    owner = int(plan.slab_owners[slab])
+    comm = plan.comm
+    cells, collector_audit = collect_owner_local_fullspace_slab_cells(
+        condensed,
+        plan,
+        mesh,
+        slab,
+    )
+
+    canonical_ids, geometry_records, _ordered_keys = canonical_owned_cell_ids(mesh)
+    mesh.topology.create_entity_permutations()
+    cell_permutations = mesh.topology.get_cell_permutation_info()
+    tag_by_cell = {
+        int(index): int(value)
+        for index, value in zip(cell_tags.indices, cell_tags.values, strict=True)
+    }
+    local_descriptors = []
+    for cell_index in plan.local_cell_indices_by_slab[slab]:
+        recovery = condensed.cell_recovery_maps[int(cell_index)]
+        local_descriptors.append(
+            (
+                int(canonical_ids[int(cell_index)]),
+                np.asarray(
+                    geometry_records[int(cell_index)].coordinates,
+                    dtype=np.float64,
+                ).copy(),
+                int(tag_by_cell[int(cell_index)]),
+                int(cell_permutations[int(cell_index)]),
+                np.asarray(recovery.trace_original_dofs, dtype=np.int64).copy(),
+            )
+        )
+    descriptor_packets = comm.gather(tuple(local_descriptors), root=owner)
+    physical_blocks = tuple(
+        _owner_lor_physical_block(block) for block in floquet_topology.blocks
+    )
+    floquet_packets = comm.gather(physical_blocks, root=owner)
+
+    transfer = None
+    audit = None
+    owner_error = None
+    if comm.rank == owner:
+        try:
+            descriptors = [
+                descriptor
+                for packet in descriptor_packets
+                for descriptor in packet
+            ]
+            descriptors.sort(key=lambda descriptor: int(descriptor[0]))
+            descriptor_ids = [int(descriptor[0]) for descriptor in descriptors]
+            if len(descriptor_ids) != len(set(descriptor_ids)):
+                raise RuntimeError("owner LOR descriptors contain duplicate cells")
+            cell_by_id = {
+                int(cell.canonical_cell_id): cell for cell in cells
+            }
+            if set(descriptor_ids) != set(cell_by_id):
+                raise RuntimeError("LOR descriptors and full-space cells do not close")
+
+            blocks_by_identity = {}
+            for packet in floquet_packets:
+                for block in packet:
+                    if not block.has_physical_entity_identity:
+                        raise RuntimeError(
+                            "periodic LOR transfer requires complete physical identity"
+                        )
+                    identity = _owner_lor_floquet_identity(block)
+                    blocks_by_identity.setdefault(identity, block)
+            merged_blocks = tuple(
+                blocks_by_identity[identity]
+                for identity in sorted(blocks_by_identity)
+            )
+            merged_floquet = replace(floquet_topology, blocks=merged_blocks)
+            owner_rows = np.asarray(plan.owner_rows[slab], dtype=PETSc.IntType)
+            constraints = condensed.trace_constraints
+            records = []
+            topologies = []
+            for canonical_id, coordinates, material_tag, cell_info, trace_original in descriptors:
+                cell = cell_by_id[int(canonical_id)]
+                full_active_ids, full_expansion, _identity = _cell_trace_expansion(
+                    trace_original,
+                    constraints,
+                )
+                selected_cell_positions, selected_owner_positions = (
+                    _select_owner_slab_active_positions(owner_rows, full_active_ids)
+                )
+                if not np.array_equal(
+                    selected_owner_positions,
+                    np.asarray(cell.active_positions, dtype=PETSc.IntType),
+                ):
+                    raise RuntimeError(
+                        "collector and trace expansion owner positions disagree"
+                    )
+                if cell.trace_expansion.shape != (
+                    full_expansion.shape[0],
+                    selected_cell_positions.size,
+                ):
+                    raise RuntimeError("collector restricted trace expansion has wrong shape")
+                selected_mask = np.zeros(full_active_ids.size, dtype=np.bool_)
+                selected_mask[selected_cell_positions] = True
+                complete = np.ones(full_expansion.shape[0], dtype=np.bool_)
+                for row in range(full_expansion.shape[0]):
+                    start = int(full_expansion.indptr[row])
+                    stop = int(full_expansion.indptr[row + 1])
+                    complete[row] = bool(
+                        np.all(selected_mask[full_expansion.indices[start:stop]])
+                    )
+                topologies.append(
+                    build_affine_lor_parent_topology(
+                        coordinates,
+                        degree=degree,
+                        canonical_cell_id=int(canonical_id),
+                        material_tag=int(material_tag),
+                        cell_permutation=int(cell_info),
+                        coordinate_tolerance=float(coordinate_tolerance),
+                    )
+                )
+                records.append(
+                    LORSlabParentPackingRecord(
+                        topology=topologies[-1],
+                        trace_original_dofs=trace_original,
+                        trace_active_rows=np.asarray(
+                            [
+                                constraints.original_to_active.get(
+                                    int(original),
+                                    -1,
+                                )
+                                for original in trace_original
+                            ],
+                            dtype=np.int64,
+                        ),
+                        trace_expansion=cell.trace_expansion,
+                        active_positions=cell.active_positions,
+                        trace_complete_rows=complete,
+                    )
+                )
+            edge_space = build_lor_slab_edge_space(
+                topologies,
+                merged_floquet,
+                phase_x=phase_x,
+                phase_y=phase_y,
+            )
+            transfer = build_owner_local_lor_transfer(
+                records,
+                edge_space,
+                owner_rows,
+            )
+            transfer_audit = transfer.audit
+            edge_audit = edge_space.audit
+            gathered_physical_block_count = sum(
+                len(packet) for packet in floquet_packets
+            )
+            gathered_physical_payload_bytes = sum(
+                _owner_lor_physical_identity_payload_bytes(block)
+                for packet in floquet_packets
+                for block in packet
+            )
+            high_order_transform_gathered = any(
+                block.coefficient_transform.size
+                for packet in floquet_packets
+                for block in packet
+            )
+            descriptor_numeric_bytes = sum(
+                int(coordinates.nbytes)
+                + int(trace_original.nbytes)
+                + 20
+                for _canonical_id, coordinates, _material_tag, _cell_info, trace_original
+                in descriptors
+            )
+            parent_ids = tuple(int(value) for value in descriptor_ids)
+            audit = {
+                "slab": int(slab),
+                "owner": owner,
+                "parent_count": len(parent_ids),
+                "parent_id_hash": _canonical_cell_id_sequence_sha256(parent_ids),
+                "owner_active_row_count": int(collector_audit["owner_active_row_count"]),
+                "owner_active_row_hash": collector_audit["owner_active_row_hash"],
+                "global_cell_count": int(collector_audit["global_cell_count"]),
+                "partial_cell_count": int(collector_audit["partial_cell_count"]),
+                "incomplete_trace_row_count": int(
+                    transfer_audit["incomplete_trace_row_count"]
+                ),
+                "complete_trace_row_count": int(
+                    transfer_audit["complete_trace_row_count"]
+                ),
+                "full_rows": int(transfer_audit["full_rows"]),
+                "interior_rows": int(transfer_audit["interior_rows"]),
+                "trace_rows": int(transfer_audit["trace_rows"]),
+                "trace_offset": int(transfer_audit["trace_offset"]),
+                "physical_edge_count": int(edge_audit["physical_edge_count"]),
+                "physical_edge_keys_sha256": geometry_key_sha256(
+                    edge_space.physical_edge_keys
+                ),
+                "active_edge_count": int(edge_audit["active_edge_count"]),
+                "active_edge_keys_sha256": geometry_key_sha256(
+                    edge_space.active_edge_keys
+                ),
+                "periodic_slave_edge_count": int(
+                    edge_audit["periodic_slave_edge_count"]
+                ),
+                "merged_periodic_block_count": len(merged_blocks),
+                "gathered_physical_identity_block_count": int(
+                    gathered_physical_block_count
+                ),
+                "gathered_physical_identity_payload_bytes": int(
+                    gathered_physical_payload_bytes
+                ),
+                "high_order_coefficient_transform_gathered": bool(
+                    high_order_transform_gathered
+                ),
+                "unique_parent_transfer_stencil_count": int(
+                    transfer_audit["unique_parent_transfer_stencil_count"]
+                ),
+                "missing_writer_count": int(transfer_audit["missing_writer_count"]),
+                "shared_trace_max_relative_error": float(
+                    transfer_audit["shared_trace_max_relative_error"]
+                ),
+                "complete_trace_reconstruction_max_relative_error": float(
+                    transfer_audit[
+                        "complete_trace_reconstruction_max_relative_error"
+                    ]
+                ),
+                "descriptor_count": len(descriptors),
+                "descriptor_numeric_payload_bytes": int(descriptor_numeric_bytes),
+                "condensed_trace_matrix_materialized": bool(
+                    collector_audit["condensed_trace_matrix_materialized"]
+                ),
+                "global_dense_T_retained": bool(
+                    transfer_audit["global_dense_T_retained"]
+                ),
+            }
+        except Exception as error:
+            owner_error = f"{type(error).__name__}: {error}"
+    owner_error = comm.bcast(owner_error, root=owner)
+    if owner_error is not None:
+        raise RuntimeError(owner_error)
+    audit = comm.bcast(audit, root=owner)
+    return (transfer if comm.rank == owner else None), audit
 
 
 def _route_owner_slab_cells(
