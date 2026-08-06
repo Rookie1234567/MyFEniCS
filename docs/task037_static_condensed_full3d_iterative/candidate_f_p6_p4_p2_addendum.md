@@ -18,11 +18,11 @@
 
 构造 exact-sequence、orientation/Floquet 一致的局部 transfer：
 
-\[
+$$
 P_{46,j}=R_{6,j}P_{4\to6}R_{4,j}^{T},
 \qquad
 P_{24,j}=R_{4,j}P_{2\to4}R_{2,j}^{T}.
-\]
+$$
 
 禁止连续 row slice、最近坐标、手工 index 对应或训练解投影。
 
@@ -30,23 +30,23 @@ P_{24,j}=R_{4,j}P_{2\to4}R_{2,j}^{T}.
 
 在 tiny/medium local fixture 上构造：
 
-\[
+$$
 A_{4,j}=P_{46,j}^{H}A_{6,j}P_{46,j},
 \qquad
 A_{2,j}=P_{24,j}^{H}A_{4,j}P_{24,j}.
-\]
+$$
 
 所有 shift、人工接口项必须先在高阶算子定义，再通过同一 transfer 投影。
 
 F0 允许临时使用 complex128 的 p4 direct/ILU，只作为空间容量 oracle，不进入正式 PDE solver。计算：
 
-\[
+$$
 z_j=P_{46,j}A_{4,j}^{-1}P_{46,j}^{H}r_j+D_{6,j}^{-1}r_j,
-\]
+$$
 
-\[
+$$
 \rho_j=\frac{\|r_j-A_{6,j}z_j\|}{\|r_j\|}.
-\]
+$$
 
 对与 Candidate D 相同的 low/high/mixed sources 报告结果，并与 B4、D0 比较。
 

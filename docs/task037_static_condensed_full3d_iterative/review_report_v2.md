@@ -70,9 +70,9 @@ MPI1 的阶段峰值为：
 
 因此 MPI1 从静态凝聚完成到 solver/factor 阶段增加：
 
-\[
+$$
 4.262-0.651=3.611\ \mathrm{GiB}.
-\]
+$$
 
 这说明当前最低内存的主要矛盾已经不再是 global matrix，而是预条件器 factor、相关工作区以及求解生命周期。
 
@@ -82,41 +82,41 @@ MPI1 的阶段峰值为：
 
 ## 2.1 局部 slab 系统
 
-对第 \(j\) 个重叠物理 slab，定义 restriction \(R_j\)。当前局部 shifted operator 为：
+对第 $j$ 个重叠物理 slab，定义 restriction $R_j$。当前局部 shifted operator 为：
 
-\[
+$$
 A_j
 =
 R_j\left(S-i\sigma D\right)R_j^T,
 \qquad \sigma=0.1,
-\]
+$$
 
-其中 \(S\) 是精确 p6 静态凝聚 trace operator，\(D\) 是局部对角尺度。
+其中 $S$ 是精确 p6 静态凝聚 trace operator，$D$ 是局部对角尺度。
 
 ## 2.2 ILU(0) 分解
 
 每个局部矩阵执行：
 
-\[
+$$
 A_j\approx L_jU_j.
-\]
+$$
 
 ILU(0) 的含义是：L/U 的填充模式基本限制在局部矩阵既有稀疏图中，不进行完整 LU 那样的任意 fill-in。每次预条件器作用执行：
 
-\[
+$$
 L_jy_j=r_j,
 \qquad
 U_jz_j=y_j.
-\]
+$$
 
 然后用 partition-of-unity 权重装配：
 
-\[
+$$
 M_{\mathrm{AS}}^{-1}r
 =
 \sum_{j=1}^{16}
 R_j^TW_jz_j.
-\]
+$$
 
 ## 2.3 存储语义
 
@@ -140,17 +140,17 @@ stored_factor_nnz = 91,415,952
 
 指的是：
 
-\[
+$$
 \sum_{j=1}^{16}
 \operatorname{nnz}(L_j,U_j),
-\]
+$$
 
 而不是：
 
-\[
+$$
 \sum_{j=1}^{16}
 \operatorname{nnz}(A_j)
-\]
+$$
 
 的长期常驻存储。
 
@@ -160,13 +160,13 @@ stored_factor_nnz = 91,415,952
 
 使用 complex128 数值和 int32 列索引，最低 CSR payload 为：
 
-\[
+$$
 M_{LU,\min}
 \approx
 91{,}415{,}952\times(16+4)
 \approx
 1.703\ \mathrm{GiB}.
-\]
+$$
 
 这是 16 个 factor 的**全局总和**，不是每个 factor 1.7 GiB。
 
@@ -188,43 +188,43 @@ M_{LU,\min}
 
 MPI1 的静态凝聚阶段已经需要：
 
-\[
+$$
 M_{\mathrm{pre-PC}}\approx0.651\ \mathrm{GiB}.
-\]
+$$
 
 FGMRES(90)、恢复与输出还需要约：
 
-\[
+$$
 M_{\mathrm{Krylov+recovery}}
 \approx0.5\text{--}0.7\ \mathrm{GiB}.
-\]
+$$
 
 若 whole-job peak 要求：
 
-\[
+$$
 M_{\mathrm{peak}}\le2.0\ \mathrm{GiB},
-\]
+$$
 
 留给预条件器的预算最多约：
 
-\[
+$$
 2.0-0.651-(0.5\text{--}0.7)
 \approx0.65\text{--}0.85\ \mathrm{GiB}.
-\]
+$$
 
 而当前 L/U 的**最低 payload**已经为：
 
-\[
+$$
 1.703\ \mathrm{GiB}.
-\]
+$$
 
 所以：
 
-\[
+$$
 \boxed{
 \text{保留当前 16 个 p6 ILU factors 时，MPI1 < 2 GiB 在存储下界上就不成立。}
 }
-\]
+$$
 
 当前 0.7 nm 规划不应继续以“稍微压缩 ILU”作为主假设，而应把：
 
@@ -293,39 +293,39 @@ canonical H(curl) field          = pass
 
 本路线取消：
 
-\[
+$$
 A_j\approx L_jU_j
-\]
+$$
 
 的长期 L/U 存储。
 
 仍保留 16 个物理 slab 的定义，但对每个 slab 只提供 matrix-free action：
 
-\[
+$$
 v_j\mapsto A_jv_j
 =
 R_jA_6R_j^Tv_j,
-\]
+$$
 
 局部近似逆通过固定步数内层 Krylov得到：
 
-\[
+$$
 z_j
 \approx
 \operatorname{FGMRES}_{k}
 \left(A_j,P_{2,j}^{-1},r_j\right),
 \qquad k=2,4,6\text{ 等小整数}.
-\]
+$$
 
 全局 PC 仍是：
 
-\[
+$$
 M^{-1}r
 =
 \sum_jR_j^TW_jz_j
 +
 R_wA_w^{-1}R_w^Hr.
-\]
+$$
 
 这里：
 
@@ -348,27 +348,27 @@ retained p6 slab matrices     = 0
 
 这不是把最终 p6 解降成 p2。最终 Maxwell fine operator仍是精确 p6：
 
-\[
+$$
 A_6x=b.
-\]
+$$
 
 建立 H(curl)-一致的 transfer：
 
-\[
+$$
 P_{2\to6}:V_2\to V_6,
-\]
+$$
 
 以及真实 Galerkin auxiliary operator：
 
-\[
+$$
 A_2=P_{2\to6}^HA_6P_{2\to6}.
-\]
+$$
 
 若继续采用 16 个物理 slabs，可以在 p2 空间建立 16 个低阶局部矩阵：
 
-\[
+$$
 A_{2,j}=R_{2,j}A_2R_{2,j}^T,
-\]
+$$
 
 再对这些 p2 局部系统使用：
 
@@ -384,7 +384,7 @@ A_{2,j}=R_{2,j}A_2R_{2,j}^T,
 
 完整预条件器建议为：
 
-\[
+$$
 \boxed{
 M^{-1}
 =
@@ -394,13 +394,13 @@ M_{6,\mathrm{high}}^{-1}
 +
 R_wA_w^{-1}R_w^H
 }
-\]
+$$
 
 其中：
 
-- \(\widetilde A_2^{-1}\)：p2 auxiliary solve；
-- \(M_{6,\mathrm{high}}^{-1}\)：不存 factor 的高阶 complement smoother；
-- \(R_wA_w^{-1}R_w^H\)：现有 75D wave coarse。
+- $\widetilde A_2^{-1}$：p2 auxiliary solve；
+- $M_{6,\mathrm{high}}^{-1}$：不存 factor 的高阶 complement smoother；
+- $R_wA_w^{-1}R_w^H$：现有 75D wave coarse。
 
 M4d 已经否定了简单 single-element/high-order patch 的 efficacy。因此不得重复无限扩展 element/face/edge patch；高阶 complement 优先尝试：
 
@@ -431,25 +431,25 @@ non-overlapping or near-non-overlapping RAS
 
 当前 restart=90。FGMRES 因 flexible PC 大致需要保存两组 Krylov方向，因此不是“只存 90 个向量”，而是约：
 
-\[
+$$
 2m+O(1)
-\]
+$$
 
 个 vectors。
 
 当前一个 active vector：
 
-\[
+$$
 51{,}192\times16
 \approx0.781\ \mathrm{MiB}.
-\]
+$$
 
 从 restart 90 降到 20，当前 anchor 的原始向量存储大约可减少：
 
-\[
+$$
 2(90-20)\times0.781
 \approx109\ \mathrm{MiB}.
-\]
+$$
 
 当前模型收益不大，但若 rows 放大 1000 倍，则同一差异会达到百 GiB 量级，所以必须提前验证。
 
@@ -474,7 +474,7 @@ no loss of 12-channel accuracy on authorized full solve
 
 当前只有 80 个 DtN auxiliary modes，显式 C/D/H 不是当前 4.60 GiB 的主要来源。但到 0.7 nm，mode count 可能显著增加，因此应建立不依赖显式大 C/D 的 action 接口：
 
-\[
+$$
 E_t
 \to
 \widehat E_{mn}
@@ -482,7 +482,7 @@ E_t
 \widehat q_{mn}
 \to
 q_t.
-\]
+$$
 
 当前阶段只授权：
 
@@ -626,29 +626,29 @@ official physics             =pass
 
 MPI1 当前：
 
-\[
+$$
 M_{\mathrm{peak}}=4.600\ \mathrm{GiB},
 \qquad
 N_{\mathrm{active}}=51{,}192.
-\]
+$$
 
 对应：
 
-\[
+$$
 \approx94.2\ \mathrm{KiB/active\ row}.
-\]
+$$
 
 若未来粗略放大到 50 million active rows，2 TiB 预算只允许：
 
-\[
+$$
 \approx41\ \mathrm{KiB/row}.
-\]
+$$
 
 更安全的1.5 TiB设计只允许：
 
-\[
+$$
 \approx31\ \mathrm{KiB/row}.
-\]
+$$
 
 因此当前小模型的最终评价必须同时报告：
 
@@ -720,9 +720,9 @@ Deferred optional:
 
 本审阅不授权继续开发 exact factor reuse 作为主线，也不授权复杂结构前就把 mixed precision写成正式方案。真正面向0.7 nm的成功判据是：
 
-\[
+$$
 \boxed{
 \text{删除 91.4M p6 ILU factor entries，
 而不是仅把它们换一种方式重复存储。}
 }
-\]
+$$

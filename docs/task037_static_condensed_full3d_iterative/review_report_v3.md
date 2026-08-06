@@ -38,11 +38,11 @@ V2 最重要的负结果是：
 
 因此下一阶段不得继续增加裸局部 GMRES 步数，也不得在 B2/B4/C 上继续微调。下一阶段的核心变化必须是：
 
-\[
+$$
 \boxed{
 \text{将 p2 exact-sequence solver 放入每个局部 p6 slab inverse 内部}
 }
-\]
+$$
 
 而不是仅将 p2 当成全局 pre/post correction。
 
@@ -54,7 +54,7 @@ V2 最重要的负结果是：
 
 Candidate A 使用全局 p2 auxiliary correction 和 fine diagonal pre/post：
 
-\[
+$$
 M_A^{-1}
 =
 D_6^{-1}
@@ -62,7 +62,7 @@ D_6^{-1}
 P_2 A_2^{-1}P_2^H
 +
 \text{post diagonal correction}.
-\]
+$$
 
 其 residual 为：
 
@@ -77,21 +77,21 @@ P_2 A_2^{-1}P_2^H
 
 每个局部 slab 的算子为：
 
-\[
+$$
 A_{6,j}
 =
 R_j\left(A_6-i\sigma D_6\right)R_j^T.
-\]
+$$
 
-B2/B4 不保存 \(A_{6,j}\) 或其 factor，而使用固定步数局部 Krylov：
+B2/B4 不保存 $A_{6,j}$ 或其 factor，而使用固定步数局部 Krylov：
 
-\[
+$$
 z_j
 \approx
 \operatorname{GMRES}_{k}
 \left(A_{6,j},r_j\right),
 \qquad k=2,4.
-\]
+$$
 
 当前 local inner preconditioner 明确为：
 
@@ -106,7 +106,7 @@ B4 的最佳 screen 结果为：
 200 steps = 0.1405734648
 ```
 
-它证明 factor-free local action 捕捉到了部分误差，但不足以形成可扩展 inverse。继续将 \(k\) 从 4 增至 6、8、12 会显著增加每次 outer-PC apply 的 fine-action 次数，却没有证据表明能够解除后期平台，因此禁止继续裸步数扩展。
+它证明 factor-free local action 捕捉到了部分误差，但不足以形成可扩展 inverse。继续将 $k$ 从 4 增至 6、8、12 会显著增加每次 outer-PC apply 的 fine-action 次数，却没有证据表明能够解除后期平台，因此禁止继续裸步数扩展。
 
 ## 1.3 Candidate C：不能解释为真正 optimized Schwarz 的否定
 
@@ -119,11 +119,11 @@ active rows    = 51192
 
 所以 `shared_rows_only` mask 覆盖了全部 active rows，并未真正识别：
 
-\[
+$$
 \Gamma_j^{\mathrm{artificial}}
 =
 \partial\Omega_j\setminus\partial\Omega.
-\]
+$$
 
 C 的主要新增机制实际是 one-hot RAS 回写；其 100/200-step residual 均劣于 B4。因此：
 
@@ -142,15 +142,15 @@ true geometric impedance Schwarz = not yet tested
 
 将当前：
 
-\[
+$$
 z_j
 \approx
 \operatorname{GMRES}_{4}(A_{6,j},r_j)
-\]
+$$
 
 改成：
 
-\[
+$$
 \boxed{
 z_j
 \approx
@@ -161,9 +161,9 @@ B_{2,j}^{-1},
 r_j
 \right)
 }
-\]
+$$
 
-其中 \(B_{2,j}^{-1}\) 是与第 \(j\) 个 p6 slab 对应的局部 p2 exact-sequence auxiliary preconditioner。
+其中 $B_{2,j}^{-1}$ 是与第 $j$ 个 p6 slab 对应的局部 p2 exact-sequence auxiliary preconditioner。
 
 最终 p6 fine equation、solution、true residual 和 official observables仍全部使用 complex128；p2 只改变预条件路径，不改变所求 Maxwell 离散方程。
 
@@ -171,17 +171,17 @@ r_j
 
 设全局 p2-to-p6 exact-sequence transfer 为：
 
-\[
+$$
 P_{2\to6}:V_2\to V_{6,\Gamma}^{\mathrm{active}}.
-\]
+$$
 
-第 \(j\) 个 p6 slab restriction 为 \(R_{6,j}\)，对应的 p2 slab restriction 为 \(R_{2,j}\)。局部 transfer 应由真实实体 support构造：
+第 $j$ 个 p6 slab restriction 为 $R_{6,j}$，对应的 p2 slab restriction 为 $R_{2,j}$。局部 transfer 应由真实实体 support构造：
 
-\[
+$$
 P_j
 =
 R_{6,j}P_{2\to6}R_{2,j}^T.
-\]
+$$
 
 禁止按连续 row range、最近坐标或 ad-hoc index slice 构造。必须保持：
 
@@ -195,13 +195,13 @@ R_{6,j}P_{2\to6}R_{2,j}^T.
 
 局部 p2 operator应由真实局部 p6 action投影：
 
-\[
+$$
 A_{2,j}
 =
 P_j^H A_{6,j}P_j.
-\]
+$$
 
-若局部人工接口使用 impedance/shift，则必须在 p6 slab operator 中先定义，再通过同一 \(P_j\) 投影；不得在 p2 和 p6 层使用彼此不一致的边界项。
+若局部人工接口使用 impedance/shift，则必须在 p6 slab operator 中先定义，再通过同一 $P_j$ 投影；不得在 p2 和 p6 层使用彼此不一致的边界项。
 
 允许每个 p2 slab使用：
 
@@ -239,13 +239,13 @@ shifted diagonal / block diagonal / fixed low-degree polynomial
 
 局部 preconditioner可写成：
 
-\[
+$$
 B_{2,j}^{-1}
 =
 P_j\widetilde A_{2,j}^{-1}P_j^H
 +
 D_{6,j}^{-1}.
-\]
+$$
 
 局部 FGMRES仍冻结为 4 步；不得同时扫描 2/4/6/8 步。
 
@@ -253,19 +253,19 @@ D_{6,j}^{-1}.
 
 Candidate D 的全局 PC 推荐使用 multiplicative形式：
 
-\[
+$$
 x_1=M_{\mathrm{local},D}^{-1}r,
-\]
+$$
 
-\[
+$$
 r_1=r-A_6x_1,
-\]
+$$
 
-\[
+$$
 x_2=x_1+Q_w r_1,
-\]
+$$
 
-其中 \(Q_w\) 是现有 75D wave coarse correction。现有全局 p2 MUMPS correction 与局部 p2 slabs可能信息重复；第一版允许保留，但必须单独审计其增益。若移除全局 p2 后 residual不恶化，则应释放它，以降低未来内存。
+其中 $Q_w$ 是现有 75D wave coarse correction。现有全局 p2 MUMPS correction 与局部 p2 slabs可能信息重复；第一版允许保留，但必须单独审计其增益。若移除全局 p2 后 residual不恶化，则应释放它，以降低未来内存。
 
 ---
 
@@ -275,8 +275,8 @@ x_2=x_1+Q_w r_1,
 
 必须先在 tiny/medium fixture上完成：
 
-1. \(P_j\) orientation/Floquet identity；
-2. \(A_{2,j}=P_j^H A_{6,j}P_j\) action误差 `<=1e-11`；
+1. $P_j$ orientation/Floquet identity；
+2. $A_{2,j}=P_j^H A_{6,j}P_j$ action误差 `<=1e-11`；
 3. local p2 solve finite/deterministic；
 4. p6 factor inventory严格为零；
 5. local p2 factor aggregate memory ledger；
@@ -285,11 +285,11 @@ x_2=x_1+Q_w r_1,
 
 至少对 low/high/mixed 三类 local source报告：
 
-\[
+$$
 \rho_j
 =
 \frac{\|r_j-A_{6,j}z_j\|}{\|r_j\|}.
-\]
+$$
 
 Candidate D 必须明显优于当前无预条件 B4；若 mixed/high source contraction没有至少 1.5 倍改善，则不得启动 p6/h10 heavy screen。
 
@@ -373,9 +373,9 @@ restart研究只能在某个 Candidate D 或后续候选已经完成 full numeri
 
 FGMRES大约保存：
 
-\[
+$$
 2m+O(1)
-\]
+$$
 
 个 fine vectors。因此当前小模型中收益有限，但在 0.7 nm 大模型中是必要的。restart降低不能用于掩盖预条件器不足。
 
@@ -393,30 +393,30 @@ FGMRES大约保存：
 
 当前 condensed operator含：
 
-\[
+$$
 A_{\mathrm{cond}}
 =
 F-CH^{-1}D.
-\]
+$$
 
 Matrix-free DtN应按如下过程实现：
 
 1. 从 FE tangential trace 投影得到 modal coefficients：
-   \[
+   $$
    y=Dx;
-   \]
+   $$
 2. mode-by-mode/block-by-block求解：
-   \[
+   $$
    z=H^{-1}y;
-   \]
+   $$
 3. 将 modal traction重新注入 FE trace：
-   \[
+   $$
    t=Cz;
-   \]
+   $$
 4. 返回：
-   \[
+   $$
    A_{\mathrm{cond}}x=Fx-t.
-   \]
+   $$
 
 不得物化完整 C/D dense coupling。H 可以保留为每个通道的 1x1/2x2 小块或小型 diagonal/block-diagonal对象。
 
@@ -432,9 +432,9 @@ optional adjoint/Hermitian-transpose action for future coarse construction
 ## 5.4 资格化 Gate
 
 - 对 deterministic random vectors：
-  \[
+  $$
   \|A_{DtN,MF}x-A_{DtN,block}x\|/\|A_{DtN,block}x\|\le10^{-11};
-  \]
+  $$
 - auxiliary recovery `<=1e-11`；
 - 80/80 mode keys、beta、polarization、Rayleigh flags一致；
 - serial、MPI2、MPI4 identity；
@@ -459,21 +459,21 @@ Matrix-free DtN完成后应直接作为 Candidate D 及后续候选的 fine acti
 
 p6 每单元 interior维数：
 
-\[
+$$
 3p(p-1)^2=450.
-\]
+$$
 
 p4 embedded interior维数：
 
-\[
+$$
 3\cdot4\cdot3^2=108.
-\]
+$$
 
 因此每单元消去约342个最高阶 interior modes，保留108个 p4-core interior modes。252 cells下，新增全局 interior unknowns约：
 
-\[
+$$
 252\times108=27216.
-\]
+$$
 
 粗略 active rows由51192增至约78408，再加80 auxiliary rows。
 
@@ -511,23 +511,23 @@ modal direct Hybrid failure != modal coarse-space failure
 
 ## 7.2 非 Hermitian Petrov coarse correction
 
-从原 M120 Hybrid保留正/反向右模态 \(Z_m\)，并使用匹配左/伴随模态 \(W_m\)。将其映射并延拓到完整 p6 static active trace space后构造：
+从原 M120 Hybrid保留正/反向右模态 $Z_m$，并使用匹配左/伴随模态 $W_m$。将其映射并延拓到完整 p6 static active trace space后构造：
 
-\[
+$$
 E_m=W_m^H A_6 Z_m.
-\]
+$$
 
 modal coarse correction为：
 
-\[
+$$
 Q_m r
 =
 Z_mE_m^{-1}W_m^H r.
-\]
+$$
 
-与最佳 factor-free/local auxiliary PC \(M_0^{-1}\) 采用 multiplicative组合：
+与最佳 factor-free/local auxiliary PC $M_0^{-1}$ 采用 multiplicative组合：
 
-\[
+$$
 \boxed{
 M_{\mathrm{modal}}^{-1}r
 =
@@ -535,7 +535,7 @@ M_0^{-1}r
 +
 Q_m\left(r-A_6M_0^{-1}r\right)
 }
-\]
+$$
 
 这样 modal basis中的误差由 coarse solve消除，其余端部、evanescent和traction complement仍由完整 Full3D FGMRES修正。
 
@@ -546,19 +546,19 @@ Q_m\left(r-A_6M_0^{-1}r\right)
 1. 在中间规则区使用 Task036 已资格化的 long-range modal propagation；
 2. 映射到 p6 active trace coordinates，保持Floquet和orientation；
 3. 对 top/bottom endcap使用一致的局部 harmonic extension或冻结的物理 extension；
-4. 通过 full fine action计算 \(A_6Z_m\)；
-5. 检查 \(W_m^HA_6Z_m\) 的rank和condition；
+4. 通过 full fine action计算 $A_6Z_m$；
+5. 检查 $W_m^HA_6Z_m$ 的rank和condition；
 6. 不以 teacher/direct solution投影构造basis。
 
 第一版只允许一个冻结的 M120 coarse candidate，不进行 M40/M80/M160 rank sweep。
 
 若使用完整正反向240列，当前51k-row模型显式 complex128 basis约：
 
-\[
+$$
 51192\times240\times16\approx187.5\ \mathrm{MiB}.
-\]
+$$
 
-当前anchor可接受，但0.7 nm下不得长期显式存储 \(N\times240\) dense basis；后续需结构化/matrix-free prolongation。本轮只评价数值机制。
+当前anchor可接受，但0.7 nm下不得长期显式存储 $N\times240$ dense basis；后续需结构化/matrix-free prolongation。本轮只评价数值机制。
 
 ## 7.4 授权顺序和 Gate
 
@@ -612,17 +612,17 @@ Task037b 的 original Hybrid block iterative仍需后续独立任务授权。
 
 人工接口必须由几何子域边界定义：
 
-\[
+$$
 \Gamma_j^{art}
 =
 \partial\Omega_j\setminus\partial\Omega.
-\]
+$$
 
 只对该界面上的edge/face trace modes施加：
 
-\[
+$$
 (\mu^{-1}\nabla\times E)\times n+i\eta E_t=g.
-\]
+$$
 
 必须报告：
 
@@ -632,7 +632,7 @@ physical-boundary excluded row count
 non-interface shift row count = 0
 ```
 
-只允许一个冻结 \(\eta\)，禁止参数扫描。若200-step没有至少20%改善，关闭该路线。
+只允许一个冻结 $\eta$，禁止参数扫描。若200-step没有至少20%改善，关闭该路线。
 
 ---
 
