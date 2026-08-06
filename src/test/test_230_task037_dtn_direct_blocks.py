@@ -8,6 +8,7 @@ from petsc4py import PETSc
 import src.solvers.condensed_dtn as condensed_dtn
 from src.solvers.condensed_dtn import (
     DtnBlockAssembler,
+    MatrixFreeDtnProbe,
     condensed_rhs,
     create_matrix_free_condensed_operator,
     extract_petsc_condensed_blocks,
@@ -350,3 +351,66 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
     base_rhs.destroy()
     action_only.destroy()
     assembled.destroy()
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 1,
+    reason="E0 synthetic probe is a serial light Gate",
+)
+def test_e0_matrix_free_probe_uses_one_mode_stream_for_primary_and_oracle():
+    _V, _tags, _compiled, assembled, action_only = _build_systems(MPI.COMM_SELF)
+    base_rhs = action_only.create_active_vector()
+    _fill_active(base_rhs, 0.125)
+    start, end = base_rhs.getOwnershipRange()
+    stream = _mode_stream(start, end, 3)
+    identities = tuple(
+        {
+            "mode_key": ("synthetic", mode),
+            "beta": 1.0 + 0.1j * mode,
+            "polarization": "s" if mode % 2 == 0 else "p",
+            "power_normalization": 1.0 + mode,
+            "rayleigh_warning": False,
+        }
+        for mode in range(3)
+    )
+    probe = MatrixFreeDtnProbe(
+        base_rhs,
+        3,
+        traction_supports=tuple(item["traction_rows"] for item in stream),
+        ell_supports=tuple(item["ell_cols"] for item in stream),
+        mode_identities=identities,
+        expected_mode_count=3,
+    )
+    try:
+        for mode, contribution in enumerate(stream):
+            probe.add_mode(
+                mode,
+                traction_rows=contribution["traction_rows"],
+                traction_values=contribution["traction_values"],
+                ell_cols=contribution["ell_cols"],
+                ell_values=contribution["ell_values"],
+                auxiliary_diagonal=contribution["auxiliary_diagonal"],
+                b_fe_rows=contribution["b_fe_rows"],
+                b_fe_values=contribution["b_fe_values"],
+                b_aux_value=contribution["b_aux_value"],
+            )
+        primary = probe.finish()
+        audit = probe.audit()
+        assert audit["gate_pass"] is True
+        assert audit["forward_action_relative_error_max"] <= 1.0e-11
+        assert audit["auxiliary_recovery_relative_error_max"] <= 1.0e-11
+        assert audit["physical_rhs_identity_relative_error"] <= 1.0e-12
+        assert audit["mode_identity"]["count"] == 3
+        assert audit["mode_identity"]["primary_oracle_match"] is True
+        assert audit["materialization"]["profiles_separate"] is True
+        assert audit["materialization"]["primary"]["explicit_c_matrix_count"] == 0
+        assert audit["materialization"]["primary"]["explicit_d_matrix_count"] == 0
+        assert audit["materialization"]["oracle"]["explicit_c_matrix_count"] == 1
+        assert audit["materialization"]["oracle"]["explicit_d_matrix_count"] == 1
+        assert audit["adjoint"]["status"] == "optional_not_run_with_reason"
+        assert primary.F is None
+    finally:
+        probe.destroy()
+        base_rhs.destroy()
+        action_only.destroy()
+        assembled.destroy()

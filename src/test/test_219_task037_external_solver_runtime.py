@@ -19,6 +19,8 @@ def test_stage4b_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
     def flow(*_args, **kwargs):
         assert kwargs["linear_solver_port"] is port
         assert kwargs["static_retain_local_schur_for_matrix_free"] is True
+        assert kwargs["matrix_free_dtn"] is True
+        assert kwargs["matrix_free_dtn_probe"] is True
         return {"stage4b": True}
 
     monkeypatch.setattr(stage4b, "run_prepared_3d_case_flow", flow)
@@ -27,6 +29,8 @@ def test_stage4b_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         tmp_path,
         linear_solver_port=port,
         static_retain_local_schur_for_matrix_free=True,
+        matrix_free_dtn=True,
+        matrix_free_dtn_probe=True,
     ) == {"stage4b": True}
 
 
@@ -37,6 +41,8 @@ def test_public_dtn_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
     def implementation(**kwargs):
         assert kwargs["linear_solver_port"] is port
         assert kwargs["static_retain_local_schur_for_matrix_free"] is True
+        assert kwargs["matrix_free_dtn"] is True
+        assert kwargs["matrix_free_dtn_probe"] is True
         return result
 
     monkeypatch.setattr(
@@ -56,8 +62,47 @@ def test_public_dtn_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         log=lambda *_args: None,
         linear_solver_port=port,
         static_retain_local_schur_for_matrix_free=True,
+        matrix_free_dtn=True,
+        matrix_free_dtn_probe=True,
     )
     assert returned is result
+
+
+def test_e0_matrix_free_dtn_flags_default_off(monkeypatch, tmp_path):
+    cfg = SimpleNamespace(stage_case="stage4_block_grating")
+
+    def flow(*_args, **kwargs):
+        assert kwargs["matrix_free_dtn"] is False
+        assert kwargs["matrix_free_dtn_probe"] is False
+        return {"default": True}
+
+    monkeypatch.setattr(stage4b, "run_prepared_3d_case_flow", flow)
+    assert stage4b.run_stage4b_block_grating_3d_case(
+        cfg,
+        tmp_path,
+    ) == {"default": True}
+
+    def implementation(**kwargs):
+        assert kwargs["matrix_free_dtn"] is False
+        assert kwargs["matrix_free_dtn_probe"] is False
+        return {"default": True}
+
+    monkeypatch.setattr(
+        dtn_port_3d,
+        "_solve_stage4_dtn_port_total_field_impl",
+        implementation,
+    )
+    assert dtn_port_3d.solve_stage4_dtn_port_total_field(
+        a=None,
+        L=None,
+        V=None,
+        mesh_data=None,
+        cfg=None,
+        floquet_data=None,
+        petsc_options={},
+        out_dir=tmp_path,
+        log=lambda *_args: None,
+    ) == {"default": True}
 
 
 def test_static_external_preflight_bypasses_direct_setup(monkeypatch, tmp_path):

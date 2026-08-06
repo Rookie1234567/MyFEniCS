@@ -1235,6 +1235,7 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "run_dir": str(Path(args.run_dir).resolve()),
         "stage4_full3d_assembly_backend": str(args.stage4_full3d_assembly_backend),
         "task037_f0_vector_observer": bool(args.task037_f0_vector_observer),
+        "task037_e0_matrix_free_dtn_gate": bool(args.task037_e0_matrix_free_dtn_gate),
         "task037_f1_direct_trace_oracle": (
             None
             if args.task037_f1_direct_trace_oracle is None
@@ -1361,7 +1362,11 @@ def _validate_worker_parent_launch(args: argparse.Namespace) -> None:
 
 
 def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
-    if not (args.task035d_case097_gate or _task037_f3_iterations(args) is not None):
+    if not (
+        args.task035d_case097_gate
+        or _task037_f3_iterations(args) is not None
+        or args.task037_e0_matrix_free_dtn_gate
+    ):
         return
     if args.task035d_case097_gate:
         _validate_task035d_case097_plan(args)
@@ -1379,11 +1384,13 @@ def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
     ).strip()
     if head != args.verified_clean_sha or status:
         raise SystemExit(
-            "Task035d/Task37 F3 worker source identity is not the clean parent-qualified commit."
+            "Task035d/Task37 F3/E0 worker source identity is not the clean "
+            "parent-qualified commit."
         )
 
 
 def _worker(args: argparse.Namespace) -> int:
+    e0_gate = bool(getattr(args, "task037_e0_matrix_free_dtn_gate", False))
     from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
         run_stage4b_block_grating_3d_case,
     )
@@ -1403,7 +1410,14 @@ def _worker(args: argparse.Namespace) -> int:
         else None
     )
     linear_solver_port = None
-    if args.task037_f3_full or args.task037_f3_screen is not None:
+    if e0_gate:
+        from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
+
+        def e0_sentinel(_request):
+            raise RuntimeError("MATRIX_FREE_DTN_COMPONENT_SENTINEL_INVOKED")
+
+        linear_solver_port = Stage4NeverMaterializedLinearSolverPort(e0_sentinel)
+    elif args.task037_f3_full or args.task037_f3_screen is not None:
         linear_solver_callback = _task037_f3_assembled_fgmres_port(
             args.run_dir,
             _task037_f3_iterations(args),
@@ -1504,8 +1518,12 @@ def _worker(args: argparse.Namespace) -> int:
         variable_p_live_observer=observer,
         variable_p_retain_local_schur_for_research=(retain_local_schur),
         static_retain_local_schur_for_matrix_free=(
-            args.task037_f5b_released_profile or args.task037_m2c_never_materialized
+            args.task037_f5b_released_profile
+            or args.task037_m2c_never_materialized
+            or e0_gate
         ),
+        matrix_free_dtn=e0_gate,
+        matrix_free_dtn_probe=e0_gate,
         canonical_vector_export=args.task037_canonical_vector_export,
     )
     return 0
@@ -1568,6 +1586,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--task037-f0-vector-observer",
         action="store_true",
         help="Export only the current-source Case100 F0 vector identities.",
+    )
+    parser.add_argument(
+        "--task037-e0-matrix-free-dtn-gate",
+        action="store_true",
+        help=(
+            "Run the research-only Task037 E0 80-mode matrix-free DtN component gate."
+        ),
     )
     parser.add_argument(
         "--task037-canonical-vector-export",
@@ -1776,6 +1801,45 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "Task035c p6 preflight authority arguments require --task035c-p6-h10-gate."
         )
+    if args.task037_e0_matrix_free_dtn_gate:
+        e0_conflicts = (
+            args.task037_f0_vector_observer,
+            args.task037_canonical_vector_export,
+            args.task037_f1_direct_trace_oracle is not None,
+            args.task037_f3_screen is not None,
+            args.task037_f3_full,
+            args.task037_f5b_released_profile,
+            args.task037_m2c_never_materialized,
+            args.task037_m3a_overlap0125_partition,
+            args.task037_m4_p2_auxiliary,
+            args.task037_m4_factor_free_slab,
+            args.task037_m4_optimized_schwarz,
+            args.task037_m4_b2_long_full,
+            args.task037_m0_lifecycle_audit,
+        )
+        e0_scoped = bool(
+            args.task035c_p6_h10_gate
+            and args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.polarization_kind == "s"
+            and args.run_kind == "full-solve"
+            and args.mpi_size in (1, 2, 4)
+            and args.profile == "default"
+            and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+            and not args.allow_swap
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.task035d_case097_gate
+            and not any(e0_conflicts)
+        )
+        if not e0_scoped:
+            parser.error(
+                "--task037-e0-matrix-free-dtn-gate is restricted to the "
+                "Task035c p6/h10 S full-solve, assembly-time static-condensed "
+                "MPI1/2/4 default-profile no-swap scope and is exclusive of "
+                "all other Task037 research flags."
+            )
     if (
         args.task037_f0_vector_observer
         or args.task037_f1_direct_trace_oracle is not None
@@ -3268,7 +3332,8 @@ def _qualify(
         and not m4_optimized_schwarz_profile
     )
     action_only_profile = (
-        m2c_profile
+        bool(args.task037_e0_matrix_free_dtn_gate)
+        or m2c_profile
         or m3a_profile
         or m4_profile
         or m4_factor_free_profile
@@ -3299,6 +3364,100 @@ def _qualify(
             solver_summary.get("polarization_kind") == args.polarization_kind
         ),
     }
+    if args.task037_e0_matrix_free_dtn_gate:
+        audit = solver_summary.get("matrix_free_dtn_probe_audit")
+        audit = audit if isinstance(audit, dict) else {}
+        mode_identity = audit.get("mode_identity")
+        materialization = audit.get("materialization")
+        primary_materialization = (
+            materialization.get("primary") if isinstance(materialization, dict) else {}
+        )
+        oracle_materialization = (
+            materialization.get("oracle") if isinstance(materialization, dict) else {}
+        )
+        source_audits = audit.get("source_audits")
+        source_labels = (
+            [item.get("label") for item in source_audits]
+            if isinstance(source_audits, list)
+            else []
+        )
+        checks = {
+            **common,
+            "e0_component_only": (
+                solver_summary.get("matrix_free_dtn_component_only") is True
+            ),
+            "e0_probe_enabled": (solver_summary.get("matrix_free_dtn_probe") is True),
+            "e0_case_status": (
+                solver_summary.get("case_status") == "diagnostic_assemble_only"
+            ),
+            "e0_ordinary_default_unchanged": (
+                solver_summary.get("ordinary_default_changed") is False
+            ),
+            "e0_audit_gate_pass": audit.get("gate_pass") is True,
+            "e0_mode_identity_80": (
+                isinstance(mode_identity, dict)
+                and mode_identity.get("count") == 80
+                and mode_identity.get("expected_count") == 80
+                and audit.get("n_aux") == 80
+                and mode_identity.get("primary_oracle_match") is True
+            ),
+            "e0_deterministic_seed_identity": (
+                audit.get("deterministic_seeds") == [17037, 27037, 37037]
+            ),
+            "e0_source_audit_identity": (
+                source_labels
+                == [
+                    "seed_17037",
+                    "seed_27037",
+                    "seed_37037",
+                    "physical_active_rhs",
+                ]
+            ),
+            "e0_forward_action_gate": _finite_number_le(
+                audit.get("forward_action_relative_error_max"),
+                1.0e-11,
+            ),
+            "e0_auxiliary_recovery_gate": _finite_number_le(
+                audit.get("auxiliary_recovery_relative_error_max"),
+                1.0e-11,
+            ),
+            "e0_physical_rhs_identity_gate": _finite_number_le(
+                audit.get("physical_rhs_identity_relative_error"),
+                1.0e-12,
+            ),
+            "e0_primary_c_d_materialization_zero": (
+                primary_materialization.get("matrix_free_dtn") is True
+                and primary_materialization.get("explicit_c_matrix_count") == 0
+                and primary_materialization.get("explicit_d_matrix_count") == 0
+            ),
+            "e0_oracle_c_d_materialization_one": (
+                oracle_materialization.get("matrix_free_dtn") is False
+                and oracle_materialization.get("explicit_c_matrix_count") == 1
+                and oracle_materialization.get("explicit_d_matrix_count") == 1
+            ),
+            "e0_profiles_separate": (
+                materialization.get("profiles_separate") is True
+                if isinstance(materialization, dict)
+                else False
+            ),
+            "e0_no_factorization_or_solve_event": (
+                not _factorization_stage_seen(events) and not _solve_stage_seen(events)
+            ),
+            "e0_ksp_iterations_zero": solver_summary.get("ksp_iterations") == 0,
+            "e0_no_official_result": (solver_summary.get("official_result") is False),
+            "e0_no_ksp_solve": (
+                solver_summary.get("matrix_diagnostics_assemble_only") is True
+                and solver_summary.get("postprocess_skipped") is True
+            ),
+            "no_swap": no_swap,
+        }
+        failures = [name for name, passed in checks.items() if not passed]
+        return {
+            "pass": not failures,
+            "checks": checks,
+            "failures": failures,
+            "task035d_case097_solver_gate": None,
+        }
     if args.task037_f3_full or args.task037_f3_screen is not None:
         core_audit = task037_f3_core_audit or {}
         expected_iterations = _task037_f3_iterations(args)
@@ -3870,6 +4029,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
                 str(args.verified_clean_sha),
             )
         )
+    if args.task037_e0_matrix_free_dtn_gate:
+        command.append("--task037-e0-matrix-free-dtn-gate")
     if args.task037_f0_vector_observer:
         command.append("--task037-f0-vector-observer")
     if args.task037_f1_direct_trace_oracle is not None:
@@ -4029,6 +4190,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         or args.task037_f3_screen is not None
         or args.task037_f3_full
         or args.task037_canonical_vector_export
+        or args.task037_e0_matrix_free_dtn_gate
     ):
         task035d_status_before = subprocess.check_output(
             ["git", "status", "--porcelain", "--untracked-files=all"],
@@ -4037,7 +4199,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         ).strip()
         if task035d_status_before:
             raise SystemExit(
-                "Task035d/Task37 F3 formal PDE requires an actually clean "
+                "Task035d/Task37 F3/E0 formal PDE requires an actually clean "
                 "source tree; commit the runner/checker and evidence before "
                 "launch."
             )
@@ -4597,7 +4759,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         args, qualification
     )
     status = (
-        m4_b2_long_full_status
+        "task037_e0_matrix_free_dtn_gate_pass"
+        if qualification["pass"] and args.task037_e0_matrix_free_dtn_gate
+        else "task037_e0_matrix_free_dtn_gate_not_pass"
+        if args.task037_e0_matrix_free_dtn_gate
+        else m4_b2_long_full_status
         if m4_b2_long_full_status is not None
         else m4_optimized_schwarz_status
         if m4_optimized_schwarz_status is not None
@@ -4712,6 +4878,10 @@ def _run_parent(args: argparse.Namespace) -> int:
         "task035d_nested_p_evidence": task035d_nested_p_evidence,
         "task035d_selective_face_dwr_phase": (args.task035d_selective_face_dwr_phase),
         "task035d_selective_face_evidence": (task035d_selective_face_evidence),
+        "task037_e0_matrix_free_dtn_gate": bool(args.task037_e0_matrix_free_dtn_gate),
+        "task037_e0_matrix_free_dtn_probe_audit": solver_summary.get(
+            "matrix_free_dtn_probe_audit"
+        ),
         "resource_policy": {
             "swap_allowed": args.allow_swap,
             "warning_gib": args.warning_gib,

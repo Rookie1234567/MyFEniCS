@@ -18,6 +18,8 @@ def run_stage4b_block_grating_3d_case(
     variable_p_live_observer=None,
     variable_p_retain_local_schur_for_research: bool = False,
     static_retain_local_schur_for_matrix_free: bool = False,
+    matrix_free_dtn: bool = False,
+    matrix_free_dtn_probe: bool = False,
     canonical_vector_export: bool = False,
     mesh_data_override=None,
 ) -> dict[str, object]:
@@ -36,7 +38,9 @@ def run_stage4b_block_grating_3d_case(
     """
 
     if cfg.stage_case not in STAGE4B_CASES:
-        raise ValueError("run_stage4b_block_grating_3d_case accepts only stage_case='stage4_block_grating'.")
+        raise ValueError(
+            "run_stage4b_block_grating_3d_case accepts only stage_case='stage4_block_grating'."
+        )
     return run_prepared_3d_case_flow(
         cfg,
         out_dir,
@@ -53,6 +57,8 @@ def run_stage4b_block_grating_3d_case(
         static_retain_local_schur_for_matrix_free=(
             static_retain_local_schur_for_matrix_free
         ),
+        matrix_free_dtn=matrix_free_dtn,
+        matrix_free_dtn_probe=matrix_free_dtn_probe,
         canonical_vector_export=canonical_vector_export,
         mesh_data_override=mesh_data_override,
     )

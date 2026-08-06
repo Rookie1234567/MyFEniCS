@@ -242,8 +242,7 @@ class DtnBlockAssembler:
             for rows in traction_supports
         )
         ell_supports = tuple(
-            np.asarray(cols, dtype=PETSc.IntType).reshape(-1)
-            for cols in ell_supports
+            np.asarray(cols, dtype=PETSc.IntType).reshape(-1) for cols in ell_supports
         )
         for rows, cols in zip(
             traction_supports,
@@ -535,11 +534,9 @@ def project_condensed_blocks_to_coarse(
 
     fine_scratch = fine_blocks.C.createVecLeft()
     d_layout_probe = fine_blocks.D.createVecRight()
-    if (
-        int(d_layout_probe.getSize()) != int(fine_scratch.getSize())
-        or tuple(map(int, d_layout_probe.getOwnershipRange()))
-        != tuple(map(int, fine_scratch.getOwnershipRange()))
-    ):
+    if int(d_layout_probe.getSize()) != int(fine_scratch.getSize()) or tuple(
+        map(int, d_layout_probe.getOwnershipRange())
+    ) != tuple(map(int, fine_scratch.getOwnershipRange())):
         d_layout_probe.destroy()
         fine_scratch.destroy()
         raise ValueError("fine C/D blocks do not share one active-vector layout")
@@ -576,11 +573,7 @@ def project_condensed_blocks_to_coarse(
         if len(support):
             np.add.at(c_row_nnz, support - coarse_start, 1)
     c_diag = c_row_nnz if comm.rank == aux_owner else np.zeros_like(c_row_nnz)
-    c_offdiag = (
-        np.zeros_like(c_row_nnz)
-        if comm.rank == aux_owner
-        else c_row_nnz
-    )
+    c_offdiag = np.zeros_like(c_row_nnz) if comm.rank == aux_owner else c_row_nnz
     coarse_C = PETSc.Mat().createAIJ(
         size=((local_coarse_rows, coarse_rows), (local_aux_columns, fine_blocks.n_aux)),
         nnz=(c_diag, c_offdiag),
@@ -671,12 +664,8 @@ def project_condensed_blocks_to_coarse(
             for support, values in (*c_entries, *d_entries)
         )
     )
-    discarded_count_global = int(
-        comm.allreduce(discarded_count_local, op=MPI.SUM)
-    )
-    discarded_max_global = float(
-        comm.allreduce(discarded_max_local, op=MPI.MAX)
-    )
+    discarded_count_global = int(comm.allreduce(discarded_count_local, op=MPI.SUM))
+    discarded_max_global = float(comm.allreduce(discarded_max_local, op=MPI.MAX))
     aux_unit.destroy()
     fine_scratch.destroy()
 
@@ -726,9 +715,7 @@ def project_condensed_blocks_to_coarse(
             and float(d_info.get("memory", 0.0)) > 0.0
         ),
         "small_h_bytes": int(
-            fine_blocks.n_aux
-            * fine_blocks.n_aux
-            * np.dtype(PETSc.ScalarType).itemsize
+            fine_blocks.n_aux * fine_blocks.n_aux * np.dtype(PETSc.ScalarType).itemsize
         ),
         "fine_scratch_vectors_peak": 1,
     }
@@ -842,6 +829,337 @@ class SmallDenseInverse:
         solution.getArray()[:] = values[start:end]
 
 
+class MatrixFreeDtnProbe:
+    """Opt-in one-stream matrix-free-primary/sparse-oracle E0 probe."""
+
+    _SEEDS = (17037, 27037, 37037)
+    _ACTION_TOL = 1.0e-11
+    _RECOVERY_TOL = 1.0e-11
+
+    def __init__(
+        self,
+        base_active_rhs: PETSc.Vec,
+        n_aux: int,
+        *,
+        traction_supports: tuple[np.ndarray, ...],
+        ell_supports: tuple[np.ndarray, ...],
+        mode_identities: tuple[dict[str, Any], ...],
+        expected_mode_count: int | None = None,
+    ) -> None:
+        self.n_aux = int(n_aux)
+        self.expected_mode_count = (
+            None if expected_mode_count is None else int(expected_mode_count)
+        )
+        if len(mode_identities) != self.n_aux:
+            raise ValueError("E0 mode identity count must equal n_aux")
+        if expected_mode_count is not None and len(mode_identities) != int(
+            expected_mode_count
+        ):
+            raise ValueError("E0 mode identity count failed the expected count Gate")
+        required = {
+            "mode_key",
+            "beta",
+            "polarization",
+            "power_normalization",
+            "rayleigh_warning",
+        }
+        for index, identity in enumerate(mode_identities):
+            missing = required.difference(identity)
+            if missing:
+                raise ValueError(
+                    f"E0 mode {index} is missing identity fields: {sorted(missing)}"
+                )
+            beta = self._as_complex(identity["beta"])
+            if not np.isfinite(beta.real) or not np.isfinite(beta.imag):
+                raise ValueError(f"E0 mode {index} has non-finite beta")
+            if not np.isfinite(float(identity["power_normalization"])):
+                raise ValueError(f"E0 mode {index} has non-finite power normalization")
+            if not isinstance(identity["rayleigh_warning"], (bool, np.bool_)):
+                raise ValueError(f"E0 mode {index} has a non-boolean Rayleigh flag")
+        keys = [repr(identity["mode_key"]) for identity in mode_identities]
+        if len(set(keys)) != len(keys):
+            raise ValueError("E0 mode identity keys are not unique")
+        self.mode_identities = tuple(dict(identity) for identity in mode_identities)
+        self.primary_assembler = DtnBlockAssembler(
+            base_active_rhs,
+            self.n_aux,
+            traction_supports=traction_supports,
+            ell_supports=ell_supports,
+            matrix_free_dtn=True,
+        )
+        try:
+            self.oracle_assembler = DtnBlockAssembler(
+                base_active_rhs,
+                self.n_aux,
+                traction_supports=traction_supports,
+                ell_supports=ell_supports,
+                matrix_free_dtn=False,
+            )
+        except Exception:
+            self._destroy_assembler(self.primary_assembler)
+            raise
+        self.primary_blocks: PetscCondensedBlocks | None = None
+        self.oracle_blocks: PetscCondensedBlocks | None = None
+
+    @staticmethod
+    def _as_complex(value: Any) -> complex:
+        if isinstance(value, dict):
+            return complex(value["real"], value["imag"])
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            return complex(value[0], value[1])
+        return complex(value)
+
+    @staticmethod
+    def _destroy_assembler(assembler: DtnBlockAssembler) -> None:
+        for obj in (
+            assembler.b_aux,
+            assembler.b_fe,
+            assembler.H,
+            assembler.D,
+            assembler.C,
+        ):
+            if obj is not None:
+                obj.destroy()
+
+    @staticmethod
+    def _detach_assembler(assembler: DtnBlockAssembler) -> None:
+        assembler.b_aux = None
+        assembler.b_fe = None
+        assembler.H = None
+        assembler.D = None
+        assembler.C = None
+
+    def add_active_rhs(self, rows: np.ndarray, values: np.ndarray) -> None:
+        rows = np.asarray(rows, dtype=PETSc.IntType)
+        values = np.asarray(values, dtype=PETSc.ScalarType)
+        for assembler in (self.primary_assembler, self.oracle_assembler):
+            assembler.b_fe.setValues(
+                rows,
+                values,
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+
+    def add_mode(self, aux_index: int, **values: Any) -> None:
+        self.primary_assembler.add_mode(aux_index, **values)
+        self.oracle_assembler.add_mode(aux_index, **values)
+
+    def finish(self) -> PetscCondensedBlocks:
+        if self.primary_blocks is not None:
+            return self.primary_blocks
+        try:
+            self.primary_blocks = self.primary_assembler.finish()
+            self._detach_assembler(self.primary_assembler)
+            self.oracle_blocks = self.oracle_assembler.finish()
+            self._detach_assembler(self.oracle_assembler)
+        except Exception:
+            self.destroy()
+            raise
+        return self.primary_blocks
+
+    @staticmethod
+    def _vector_error(observed: PETSc.Vec, reference: PETSc.Vec) -> float:
+        difference = observed.copy()
+        difference.axpy(PETSc.ScalarType(-1.0), reference)
+        value = float(difference.norm()) / max(
+            float(reference.norm()),
+            np.finfo(float).tiny,
+        )
+        difference.destroy()
+        return value
+
+    @staticmethod
+    def _probe_vector(template: PETSc.Vec, seed: int) -> PETSc.Vec:
+        vector = template.duplicate()
+        start, end = vector.getOwnershipRange()
+        indices = np.arange(start, end, dtype=np.float64) + 1.0
+        phase = (float(seed) + 0.5) * indices * 0.017
+        values = np.sin(phase) + 1j * np.cos(phase * 1.37)
+        vector.getArray()[:] = np.asarray(values, dtype=PETSc.ScalarType)
+        vector.assemble()
+        return vector
+
+    @staticmethod
+    def _action(
+        blocks: PetscCondensedBlocks,
+        solver: SmallDenseInverse,
+        source: PETSc.Vec,
+    ) -> tuple[PETSc.Vec, tuple[PETSc.Vec, PETSc.Vec]]:
+        d_values = blocks.D.createVecLeft()
+        h_values = blocks.H.createVecLeft()
+        target = blocks.C.createVecLeft()
+        blocks.D.mult(source, d_values)
+        solver.solve(d_values, h_values)
+        blocks.C.mult(h_values, target)
+        return target, (d_values, h_values)
+
+    @staticmethod
+    def _recover(
+        blocks: PetscCondensedBlocks,
+        solver: SmallDenseInverse,
+        source: PETSc.Vec,
+    ) -> tuple[PETSc.Vec, tuple[PETSc.Vec, PETSc.Vec]]:
+        d_values = blocks.D.createVecLeft()
+        rhs = blocks.b_aux.copy()
+        recovered = blocks.H.createVecLeft()
+        blocks.D.mult(source, d_values)
+        rhs.axpy(PETSc.ScalarType(-1.0), d_values)
+        solver.solve(rhs, recovered)
+        return recovered, (d_values, rhs)
+
+    def audit(self) -> dict[str, Any]:
+        if self.primary_blocks is None or self.oracle_blocks is None:
+            raise RuntimeError("E0 probe must be finished before audit")
+        primary = self.primary_blocks
+        oracle = self.oracle_blocks
+        physical_rhs = primary.b_fe
+        temporary: list[PETSc.Vec] = []
+        try:
+            primary_solver = SmallDenseInverse(primary.H)
+            oracle_solver = SmallDenseInverse(oracle.H)
+            sources = [
+                (f"seed_{seed}", self._probe_vector(physical_rhs, seed))
+                for seed in self._SEEDS
+            ]
+            temporary.extend(source for _label, source in sources)
+            sources.append(("physical_active_rhs", physical_rhs))
+            source_audits = []
+            for label, source in sources:
+                primary_action, primary_work = self._action(
+                    primary,
+                    primary_solver,
+                    source,
+                )
+                oracle_action, oracle_work = self._action(
+                    oracle,
+                    oracle_solver,
+                    source,
+                )
+                primary_aux, primary_aux_work = self._recover(
+                    primary,
+                    primary_solver,
+                    source,
+                )
+                oracle_aux, oracle_aux_work = self._recover(
+                    oracle,
+                    oracle_solver,
+                    source,
+                )
+                source_audits.append(
+                    {
+                        "label": label,
+                        "forward_action_relative_error": self._vector_error(
+                            primary_action,
+                            oracle_action,
+                        ),
+                        "auxiliary_recovery_relative_error": self._vector_error(
+                            primary_aux,
+                            oracle_aux,
+                        ),
+                    }
+                )
+                for vector in (
+                    primary_action,
+                    oracle_action,
+                    primary_aux,
+                    oracle_aux,
+                    *primary_work,
+                    *oracle_work,
+                    *primary_aux_work,
+                    *oracle_aux_work,
+                ):
+                    vector.destroy()
+            forward_error = max(
+                float(item["forward_action_relative_error"]) for item in source_audits
+            )
+            recovery_error = max(
+                float(item["auxiliary_recovery_relative_error"])
+                for item in source_audits
+            )
+            primary_profile = dict(self.primary_assembler.preallocation_audit)
+            oracle_profile = dict(self.oracle_assembler.preallocation_audit)
+            physical_rhs_identity_error = self._vector_error(
+                primary.b_fe,
+                oracle.b_fe,
+            )
+            finite = all(
+                np.isfinite(float(item[field]))
+                for item in source_audits
+                for field in (
+                    "forward_action_relative_error",
+                    "auxiliary_recovery_relative_error",
+                )
+            )
+            materialization_pass = (
+                primary_profile["matrix_free_dtn"]
+                and primary_profile["explicit_c_matrix_count"] == 0
+                and primary_profile["explicit_d_matrix_count"] == 0
+                and not oracle_profile["matrix_free_dtn"]
+                and oracle_profile["explicit_c_matrix_count"] == 1
+                and oracle_profile["explicit_d_matrix_count"] == 1
+            )
+            gate_pass = bool(
+                finite
+                and forward_error <= self._ACTION_TOL
+                and recovery_error <= self._RECOVERY_TOL
+                and physical_rhs_identity_error <= 1.0e-12
+                and materialization_pass
+            )
+            return {
+                "status": "pass" if gate_pass else "failed",
+                "gate_pass": gate_pass,
+                "research_only": True,
+                "ordinary_default_changed": False,
+                "n_aux": self.n_aux,
+                "deterministic_seeds": list(self._SEEDS),
+                "mode_identity": {
+                    "count": len(self.mode_identities),
+                    "expected_count": self.expected_mode_count,
+                    "primary_oracle_match": True,
+                    "records": list(self.mode_identities),
+                },
+                "source_audits": source_audits,
+                "forward_action_relative_error_max": forward_error,
+                "auxiliary_recovery_relative_error_max": recovery_error,
+                "physical_rhs_identity_relative_error": physical_rhs_identity_error,
+                "materialization": {
+                    "primary": primary_profile,
+                    "oracle": oracle_profile,
+                    "profiles_separate": True,
+                },
+                "adjoint": {
+                    "status": "optional_not_run_with_reason",
+                    "reason": (
+                        "V6 marks Hermitian-transpose identity optional; "
+                        "the existing MatPython C/D path exposes forward mult only."
+                    ),
+                },
+                "distributed": {
+                    "active_action_norms": "PETSc distributed Vec.norm",
+                    "global_active_matrix_gathered": False,
+                    "small_H_gather_only": True,
+                },
+            }
+        finally:
+            for vector in temporary:
+                vector.destroy()
+            self._release_oracle()
+
+    def _release_oracle(self) -> None:
+        if self.oracle_blocks is not None:
+            self.oracle_blocks.destroy()
+            self.oracle_blocks = None
+        else:
+            self._destroy_assembler(self.oracle_assembler)
+
+    def destroy(self) -> None:
+        if self.primary_blocks is not None:
+            self.primary_blocks.destroy()
+            self.primary_blocks = None
+        else:
+            self._destroy_assembler(self.primary_assembler)
+        self._release_oracle()
+
+
 class CondensedDtnMatContext:
     """PETSc MatPython context for F - C H^{-1} D."""
 
@@ -849,7 +1167,9 @@ class CondensedDtnMatContext:
         self, blocks: PetscCondensedBlocks, *, fine_operator: PETSc.Mat | None = None
     ) -> None:
         self.blocks = blocks
-        self.fine_operator = blocks.require_f() if fine_operator is None else fine_operator
+        self.fine_operator = (
+            blocks.require_f() if fine_operator is None else fine_operator
+        )
         self.h_solver = SmallDenseInverse(blocks.H)
         self.d_work = blocks.D.createVecLeft()
         self.h_work = blocks.H.createVecLeft()
