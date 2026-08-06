@@ -12,6 +12,7 @@ from src.solvers.hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
 )
 from src.solvers.physical_slab_two_level import (
+    _select_owner_slab_active_positions,
     build_owner_local_slab_plan,
     collect_owner_local_fullspace_slab_cells,
     extract_owner_local_slab_vector,
@@ -50,6 +51,17 @@ def _fixed_vectors(owner_rows: np.ndarray) -> tuple[np.ndarray, ...]:
         + 1j * np.cos((index + 1.0) * 0.11 * phase - 0.13 * index)
         for index in range(3)
     )
+
+
+def test_select_owner_slab_active_positions_contract():
+    selected_cell_positions, selected_owner_positions = (
+        _select_owner_slab_active_positions(
+            np.asarray([1, 2, 8, 9], dtype=np.int64),
+            np.asarray([2, 5, 8], dtype=np.int64),
+        )
+    )
+    np.testing.assert_array_equal(selected_cell_positions, [0, 2])
+    np.testing.assert_array_equal(selected_owner_positions, [1, 2])
 
 
 @pytest.mark.skipif(
@@ -117,6 +129,12 @@ def test_collect_owner_local_fullspace_cells_serial_or_mpi2():
         )
         assert audit["unique_block_count"] == len(expected_classes)
         assert audit["condensed_trace_matrix_materialized"] is False
+        assert audit["source_active_column_count"] == (
+            audit["retained_active_column_count"]
+            + audit["dropped_outside_slab_column_count"]
+        )
+        assert audit["dropped_outside_slab_column_count"] == 0
+        assert audit["partial_cell_count"] == 0
 
         owner_rows = (
             np.asarray(plan.owner_rows[slab], dtype=np.int64)

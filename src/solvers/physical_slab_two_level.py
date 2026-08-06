@@ -924,6 +924,27 @@ def _unpack_slab_trace_expansion(packet: tuple) -> sp.csr_matrix:
     )
 
 
+def _select_owner_slab_active_positions(
+    owner_rows: np.ndarray,
+    active_ids: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    owner_positions = np.searchsorted(owner_rows, active_ids)
+    in_range = owner_positions < owner_rows.size
+    candidate = np.flatnonzero(in_range)
+    selected_cell_positions = candidate[
+        owner_rows[owner_positions[candidate]] == active_ids[candidate]
+    ]
+    if selected_cell_positions.size == 0:
+        raise RuntimeError("cell support is outside its slab owner rows")
+    return (
+        np.asarray(selected_cell_positions, dtype=np.int64),
+        np.asarray(
+            owner_positions[selected_cell_positions],
+            dtype=PETSc.IntType,
+        ),
+    )
+
+
 def collect_owner_local_fullspace_slab_cells(
     condensed: Any,
     plan: OwnerLocalSlabPlan,
@@ -990,35 +1011,32 @@ def collect_owner_local_fullspace_slab_cells(
         try:
             owner_rows = np.asarray(plan.owner_rows[slab], dtype=PETSc.IntType)
             collected = []
+            source_active_column_count = 0
+            retained_active_column_count = 0
+            dropped_outside_slab_column_count = 0
+            partial_cell_count = 0
             for canonical_id, class_key, active_ids, expansion_packet in descriptors:
                 block = block_by_class.get(class_key)
                 if block is None:
                     raise RuntimeError(
                         f"owner is missing full-space block for class {class_key!r}"
                     )
-                owner_positions = np.searchsorted(owner_rows, active_ids)
-                if np.any(owner_positions >= owner_rows.size):
-                    raise RuntimeError(
-                        "cell active rows are outside the slab owner rows"
-                    )
-                if owner_positions.size and not np.array_equal(
-                    owner_rows[owner_positions],
-                    active_ids,
-                ):
-                    raise RuntimeError(
-                        "cell active rows are not contained in slab owner rows"
-                    )
+                expansion = _unpack_slab_trace_expansion(expansion_packet)
+                selected_cell_positions, selected_owner_positions = (
+                    _select_owner_slab_active_positions(owner_rows, active_ids)
+                )
+                source_count = int(active_ids.size)
+                retained_count = int(selected_cell_positions.size)
+                source_active_column_count += source_count
+                retained_active_column_count += retained_count
+                dropped_outside_slab_column_count += source_count - retained_count
+                partial_cell_count += int(retained_count < source_count)
                 collected.append(
                     FullSpaceSlabCellRecord(
                         block=block,
                         canonical_cell_id=int(canonical_id),
-                        trace_expansion=_unpack_slab_trace_expansion(
-                            expansion_packet
-                        ),
-                        active_positions=np.asarray(
-                            owner_positions,
-                            dtype=np.int64,
-                        ),
+                        trace_expansion=expansion[:, selected_cell_positions],
+                        active_positions=selected_owner_positions,
                     )
                 )
             cells = tuple(collected)
@@ -1049,6 +1067,14 @@ def collect_owner_local_fullspace_slab_cells(
                 ),
                 "sparse_expansion_nnz": int(expansion_nnz),
                 "sparse_expansion_bytes": int(expansion_bytes),
+                "source_active_column_count": int(source_active_column_count),
+                "retained_active_column_count": int(
+                    retained_active_column_count
+                ),
+                "dropped_outside_slab_column_count": int(
+                    dropped_outside_slab_column_count
+                ),
+                "partial_cell_count": int(partial_cell_count),
                 "condensed_trace_matrix_materialized": (
                     condensed_trace_matrix_materialized
                 ),
@@ -1128,16 +1154,8 @@ def assemble_owner_local_slab_matrix(
         matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, False)
 
         def consume(_cell_index, active_ids, block):
-            owner_positions = np.searchsorted(owner_rows, active_ids)
-            in_range = owner_positions < owner_rows.size
-            candidate = np.flatnonzero(in_range)
-            selected_cell_positions = candidate[
-                owner_rows[owner_positions[candidate]] == active_ids[candidate]
-            ]
-            if selected_cell_positions.size == 0:
-                raise RuntimeError("cell support is outside its slab owner rows")
-            selected_owner_positions = np.asarray(
-                owner_positions[selected_cell_positions], dtype=PETSc.IntType
+            selected_cell_positions, selected_owner_positions = (
+                _select_owner_slab_active_positions(owner_rows, active_ids)
             )
             local_block = np.ascontiguousarray(
                 block[np.ix_(selected_cell_positions, selected_cell_positions)]
