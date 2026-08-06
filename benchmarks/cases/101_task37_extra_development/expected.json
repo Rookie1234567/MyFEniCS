@@ -45,6 +45,78 @@
     ],
     "ablation_count": 16
   },
+  "g2_3_factor_inventory": {
+    "decision_contract": {
+      "raw_consistency_qualification_required": true,
+      "route_decision_from_payload_gate": true,
+      "gate_pass_status": "retained_payload_gate_pass_route_not_closed",
+      "gate_false_status": "close_fullspace_ilu_only_route",
+      "signed_reduction_allowed": true
+    },
+    "scope": {
+      "degree": 6,
+      "h_nm": 10.0,
+      "polarization_kind": "s",
+      "mpi_size": 1,
+      "screen_iterations": 20,
+      "task037_m2c_never_materialized": true,
+      "task037_m3a_overlap0125_partition": true,
+      "task037_extra_g2_slab14_identity": true,
+      "task037_extra_g2_slab14_factor_inventory": true,
+      "task037_extra_g0_diagnostics": false,
+      "poll_interval_seconds": 0.25,
+      "warning_gib": 10.0,
+      "terminate_gib": 14.0,
+      "timeout_seconds": 1800.0,
+      "allow_swap": false
+    },
+    "primary_slab": 14,
+    "inventory_only": true,
+    "used_in_outer_preconditioner": false,
+    "global_A_materialized": false,
+    "global_F_materialized": false,
+    "official_result_unaffected": true,
+    "fullspace_factor_contract": {
+      "solver": "ilu",
+      "factor_ordering": "rcm",
+      "ilu_level": 0,
+      "rows_contract": "full_rows=interior_rows+trace_rows",
+      "setup_matrix_released": true,
+      "factor_retained": true,
+      "retained_payload_semantics": "factor CSR structural lower bound plus two Vec arrays; excludes allocator/permutation overhead"
+    },
+    "current_trace_factor_contract": {
+      "factor_only_storage": true,
+      "retained_payload_semantics": "same lower-bound accounting as full-space inventory"
+    },
+    "payload_gate": {
+      "formula": "(trace_retained_payload-fullspace_retained_payload)/trace_retained_payload",
+      "threshold": 0.25,
+      "signed_reduction_allowed": true,
+      "gate_false_route_status": "close_fullspace_ilu_only_route",
+      "gate_false_may_still_qualify_raw_checks": true,
+      "does_not_claim": ["G2_PASS", "production promotion", "outer preconditioner replacement"]
+    },
+    "iter20_contract": {
+      "trace_rhs_exact": true,
+      "finite_required": true,
+      "rho_formula": "post_norm/input_norm",
+      "fullspace_apply_count": 2,
+      "deterministic_required": true
+    },
+    "required_lifecycle_stages": [
+      "g2_fullspace_matrix_assembly_started",
+      "g2_fullspace_matrix_assembly_ready",
+      "g2_fullspace_factor_setup_started",
+      "g2_fullspace_factor_setup_ready"
+    ],
+    "resource_contract": {
+      "zero_swap": true,
+      "memory_peak_gib_lt": 14.0
+    },
+    "official_rta": false,
+    "not_run": ["G2.4", "G2.5", "G2.6"]
+  },
   "resource_gate": {
     "zero_swap": true,
     "memory_peak_gib_lt": 14.0

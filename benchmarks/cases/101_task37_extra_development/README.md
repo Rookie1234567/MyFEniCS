@@ -1,24 +1,17 @@
-# Case101：Task037-extra G0 最小 screen
+# Case101：Task037-extra 的 G0、G2.2 与 G2.3 opt-in lanes
 
-Case101 只定义本轮的一个受限运行：Task037 M3a overlap `0.125`、partition
-插值、MPI1、screen20，并显式启用
-`--task037-extra-g0-diagnostics`。它不是 Case100 历史 full-solve 证据，也不
-产生 official RTA。
+Case101 收纳三个彼此独立、显式 opt-in 的研究 lane：
 
-固定运行约束：
+| lane | 用途 | 当前边界 |
+|---|---|---|
+| G0 | M3a screen20 的 residual snapshot 与 contraction authority | 不产生 official RTA |
+| G2.2 | primary slab14 的 full-space/trace 代数 identity | 只证明两条 action 路径一致 |
+| G2.3 | primary slab14 的 full-space ILU inventory 与 retained-payload 对照 | raw consistency qualification；route 由 payload Gate 动态决定（本次为 plain full-space ILU route closed） |
 
-- p6/h10/S、`assembly_time_static_condensed`、`--task037-m2c-never-materialized`；
-- `poll=0.25` s、warning `10` GiB、terminate `14` GiB、timeout `1800` s；
-- 不使用 `--allow-swap`，因此要求 zero swap；
-- source SHA 在运行时取本次 implementation 的 `git rev-parse HEAD`，并同时传给
-  `--verified-clean-sha`；preflight 文件及其 SHA256 固定为 config 中的值。
+G2.2 与 G2.3 都建立在 M2c never-materialized、M3a overlap `0.125` partition、p6/h10/S、MPI1、screen20 的受限范围内。它们不会物化整个 Full3D uncondensed global `A/F`，也不会改变 ordinary defaults。G2.3 的 full-space factor 只是 inventory-only 研究对象，没有进入外层 16-slab preconditioner。
 
-G0 只保留 true residual `b-Ax` 的 iter0/iter20 snapshot，按 active-row global
-ID 升序写 canonical residual manifest；同时记录 16 个 slab 的 local residual、
-current trace ILU、B4 fixed GMRES(4)、global one-apply、ablation、fixed
-two-step 和完整 M3a two-level contraction 字段。raw snapshot、timeline 和
-其他大型输出必须留在 ignored artifact 目录；`records/` 不预置占位文件。
+固定 watchdog 约束：poll `0.25` s、warning `10` GiB、terminate `14` GiB、timeout `1800` s、禁止 `--allow-swap`，因此要求 zero swap。preflight authority 与 SHA256 见 `config.json`。source SHA 必须在运行时从干净 implementation HEAD 取得，并通过 `--verified-clean-sha` 绑定；大型 raw output 只能留在 ignored `benchmarks/artifacts/`，`records/` 只保存紧凑 hash-bound JSON。
 
-`expected.json` 只列本轮实际 Gate：identity、factor inventory、有限 residual、
-snapshot iterations、canonical manifest、16 slab metrics、contraction 字段、
-zero swap 和 `<14 GiB` 内存。它不填本机运行后的百分比或 scalar 结论。
+G2.3 的正式记录是 [`records/g2_slab14_fullspace_factor_inventory.json`](records/g2_slab14_fullspace_factor_inventory.json)。它同时保留原始 watchdog 的负结果与 patched checker 对同一 raw 的只读重资格结果；原始 summary 不被改写为通过。G2.4、G2.5、G2.6 尚未运行。
+
+`test_command.txt` 保留 G0 命令，并追加 G2.3 的独立命令模板。每条 heavy 命令只能在对应 clean implementation SHA 上运行一次；不要把本目录的契约文件解释为本机实测 payload 或 official RTA 结果。

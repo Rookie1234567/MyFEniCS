@@ -1,0 +1,252 @@
+{
+  "record_kind": "task037-extra.g2.3-slab14-fullspace-factor-inventory",
+  "record_version": "v1",
+  "status": "g2.3_inventory_measurement_qualified_plain_fullspace_ilu_route_closed",
+  "source": {
+    "raw_numerical_source_sha": "1a2dd825e295c38e3cecf30e98fa62b7a3510e1d",
+    "checker_requalification_sha": "e3447748391a902d27323bc796c008c8a1c8770b",
+    "branch": "codex/20260806-task37-iterative-extra-development",
+    "preflight_authority": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+    "preflight_authority_sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8"
+  },
+  "scope": {
+    "degree": 6,
+    "h_nm": 10.0,
+    "polarization_kind": "s",
+    "mpi_size": 1,
+    "profile": "default",
+    "screen_iterations": 20,
+    "stage4_full3d_assembly_backend": "assembly_time_static_condensed",
+    "task037_m2c_never_materialized": true,
+    "task037_m3a_overlap0125_partition": true,
+    "task037_extra_g2_slab14_identity": true,
+    "task037_extra_g2_slab14_factor_inventory": true,
+    "task037_extra_g0_diagnostics": false,
+    "poll_interval_seconds": 0.25,
+    "warning_gib": 10.0,
+    "terminate_gib": 14.0,
+    "timeout_seconds": 1800.0,
+    "allow_swap": false,
+    "run_dir": "benchmarks/artifacts/101_task37_extra_development/g2_slab14_factor_inventory_mpi1_screen20_1a2dd825"
+  },
+  "command": [
+    "python", "-m", "benchmarks.run_task033_full3d_watchdog",
+    "--degree", "6", "--h-nm", "10", "--polarization-kind", "s",
+    "--run-kind", "full-solve", "--mpi-size", "1", "--profile", "default",
+    "--stage4-full3d-assembly-backend", "assembly_time_static_condensed",
+    "--task035c-p6-h10-gate",
+    "--task035c-p6-preflight-authority", "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+    "--task035c-p6-preflight-sha256", "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+    "--verified-clean-sha", "1a2dd825e295c38e3cecf30e98fa62b7a3510e1d",
+    "--task037-f3-screen", "20", "--poll-interval", "0.25",
+    "--warning-gib", "10", "--terminate-gib", "14", "--timeout-seconds", "1800",
+    "--task037-m2c-never-materialized", "--task037-m3a-overlap0125-partition",
+    "--task037-extra-g2-slab14-identity", "--task037-extra-g2-slab14-factor-inventory",
+    "--run-dir", "benchmarks/artifacts/101_task37_extra_development/g2_slab14_factor_inventory_mpi1_screen20_1a2dd825"
+  ],
+  "qualification": {
+    "original_watchdog": {
+      "status": "task037_extra_g2_slab14_factor_inventory_not_pass",
+      "parent_return_code": 2,
+      "watchdog_summary_return_code": 0,
+      "qualification_pass": false,
+      "failures": ["task037_g2_factor_route_reduction_raw"],
+      "reason": "The original checker incorrectly required the signed reduction_fraction to be non-negative; the raw route is a valid negative scientific result."
+    },
+    "patched_read_only_requalification": {
+      "same_raw_run": true,
+      "checker_sha": "e3447748391a902d27323bc796c008c8a1c8770b",
+      "pass": true,
+      "failures": [],
+      "g2_factor_checks_passed": 34,
+      "g2_factor_checks_total": 34,
+      "writes_original_summary": false
+    }
+  },
+  "materialization": {
+    "global_A_materialized": false,
+    "global_F_materialized": false,
+    "inventory_only": true,
+    "used_in_outer_preconditioner": false,
+    "official_result_unaffected": true,
+    "screen20_status": "DIVERGED_MAX_IT(-3)",
+    "official_result": false,
+    "official_rta": false
+  },
+  "selection": {
+    "primary_slab": 14,
+    "primary_basis": "G0 frozen largest iter20 local residual",
+    "control_slab": 5,
+    "comparator_slab": 13,
+    "comparator_basis": "largest positive ILU ablation damage; does not replace primary"
+  },
+  "collector": {
+    "owner_rank": 0,
+    "cell_count": 54,
+    "unique_block_count": 6,
+    "full_rows": 32724,
+    "interior_rows": 24300,
+    "trace_rows": 8424,
+    "source_active_column_count": 23328,
+    "retained_active_column_count": 17064,
+    "dropped_outside_slab_column_count": 6264,
+    "partial_cell_count": 18,
+    "sparse_C_nnz": 17064,
+    "sparse_C_payload_bytes": 434808,
+    "owner_active_row_count": 8424,
+    "owner_active_row_sha256": "6f7c32c5fef8058a9c3a36deeaa65bce5f726c57c0d426220c065f683b57dade",
+    "cell_canonical_id_sha256": "ac7e3532a1ecf55826a25a99b1f5197fb7c9952a084bf88f4ca15bad79511023",
+    "boundary_semantics": "full local block and trace rows retained; C keeps owner active columns; outside columns are zero extension",
+    "column_count_closed": true
+  },
+  "identity": {
+    "tolerance": 1e-10,
+    "deterministic_vectors": [
+      {
+        "label": "canonical_affine_phase",
+        "relative_error": 2.9248960201709676e-15
+      },
+      {
+        "label": "canonical_complex_affine_phase",
+        "relative_error": 2.978578754981666e-15
+      },
+      {
+        "label": "canonical_sinusoidal_phase",
+        "relative_error": 2.6617554455542794e-15
+      }
+    ],
+    "deterministic_count": 3,
+    "deterministic_finite": true,
+    "deterministic_gate_pass": true,
+    "iter20_identity_relative_error": 1.7721399154913289e-15,
+    "iter20_identity_gate_pass": true
+  },
+  "inventory": {
+    "current_trace": {
+      "rows": 8424,
+      "matrix_nnz": 6086016,
+      "factor_nnz": 6086016,
+      "factor_csr_payload_lower_bound_bytes": 121754020,
+      "work_vector_payload_bytes": 269568,
+      "retained_payload_lower_bound_bytes": 122023588,
+      "retained_payload_mib": 116.37076187133789,
+      "factor_only_storage": true
+    },
+    "fullspace": {
+      "solver": "ilu",
+      "factor_ordering": "rcm",
+      "ilu_level": 0,
+      "full_rows": 32724,
+      "interior_rows": 24300,
+      "trace_rows": 8424,
+      "matrix_nnz": 32378616,
+      "factor_nnz": 32378616,
+      "matrix_csr_payload_bytes": 647703220,
+      "factor_csr_payload_bytes": 647703220,
+      "retained_payload_lower_bound_bytes": 648750388,
+      "retained_payload_mib": 618.6965827941895,
+      "matrix_fingerprint": "58d14282df20fb592843cda86d04c0fee86fac0a2b84570f28b2e563aa1e6bb5",
+      "matrix_assembly_seconds": 30.55818408995401,
+      "setup_seconds": 18.97298593702726,
+      "apply_seconds": 0.24651467008516192,
+      "apply_count": 2,
+      "setup_matrix_released": true,
+      "factor_retained": true,
+      "payload_semantics": "factor CSR structural lower bound plus two full-length PETSc Vec arrays; excludes PETSc allocator and permutation overhead"
+    }
+  },
+  "payload_route": {
+    "trace_retained_payload_lower_bound_bytes": 122023588,
+    "fullspace_retained_payload_lower_bound_bytes": 648750388,
+    "full_to_trace_ratio": 5.316598197391147,
+    "delta_bytes": 526726800,
+    "delta_mib": 502.32582092285156,
+    "reduction_fraction": -4.316598197391147,
+    "gate_threshold": 0.25,
+    "gate_pass": false,
+    "status": "close_fullspace_ilu_only_route",
+    "qualification_semantics": "a signed negative reduction is a valid scientific negative result; route qualification checks raw consistency and does not require this payload gate to pass"
+  },
+  "iter20": {
+    "local_residual_norm2": 0.42723143961943305,
+    "owner_residual_sha256": "3aa610ed9bbb63047188b64d21d5dcab04184ffc6316196458e99aab520bb195",
+    "trace_rhs": {
+      "norm2": 0.42723143961943305,
+      "sha256": "a7aee48efdf689c4a60ed04782a459fdf202966db6109aac2e2d0012cbae0674",
+      "finite": true,
+      "exact": true
+    },
+    "current_trace_ilu": {
+      "post_norm2": 0.5385209372860695,
+      "rho": 1.2604899530937386,
+      "correction_norm2": 0.8014811021173734,
+      "correction_sha256": "892d7aa29811b0ccf403377af754fc448d1ba2dee914244a0ecb6c1deb8a9d40",
+      "finite": true
+    },
+    "fullspace_ilu": {
+      "post_norm2": 0.7716852789816032,
+      "rho": 1.806246468352144,
+      "correction_norm2": 0.8237278810044446,
+      "correction_sha256": "02eea6f53e8a5df4f86b17826477a1826dff7a1ab9ff570e493f407d5ae9a72f",
+      "finite": true,
+      "deterministic": true,
+      "apply_count": 2,
+      "apply_seconds": 0.24651467008516192
+    },
+    "contraction_comparison": {
+      "full_minus_trace_rho": 0.5457565152584054,
+      "full_to_trace_rho_ratio": 1.4329717296983637,
+      "both_rho_greater_than_one": true,
+      "fullspace_is_worse": true
+    }
+  },
+  "residual_trajectory": {
+    "true_relative_residual": {
+      "0": 1.0,
+      "10": 0.14446444295860594,
+      "20": 0.04474243612765
+    },
+    "solver_reason": "DIVERGED_MAX_IT(-3); fixed screen20 boundary, not convergence"
+  },
+  "resources": {
+    "process_tree_rss_mb": 7647.62109375,
+    "memory_authority_gib": 7.468379974365234,
+    "worker_rss_mb": 7633.734375,
+    "worker_pss_mb": 7582.0400390625,
+    "worker_uss_mb": 7537.23046875,
+    "swap_mb": 0.0,
+    "warning_triggered": false,
+    "terminated_for_memory": false,
+    "terminated_for_timeout": false,
+    "sample_count": 1267,
+    "wall_seconds": 349.65642845397815,
+    "authority_semantics": "process-tree RSS is the resource authority; worker RSS/PSS/USS are separate; swap remained zero"
+  },
+  "lifecycle": {
+    "stage_peaks_process_tree_rss_mb": {
+      "g2_fullspace_matrix_assembly_started": 7605.90625,
+      "g2_fullspace_factor_setup_started": 7605.91015625,
+      "g2_fullspace_factor_setup_ready": 7605.9609375
+    },
+    "peak_semantics": "existing 16 trace factors remained retained while the additional inventory oracle was assembled; not an independent replacement peak"
+  },
+  "raw_artifacts": {
+    "run_dir": "benchmarks/artifacts/101_task37_extra_development/g2_slab14_factor_inventory_mpi1_screen20_1a2dd825",
+    "sha256": {
+      "watchdog_summary.json": "90b17504fc584cc43ddad53a8ae0918e598ff183940b1b599578ebf59eb59ac1",
+      "run_summary.json": "5ce1828bddd167a0cc9119260a93bf52284a164bf5592ade0c7f276133bcd101",
+      "task037_f3_core_audit.json": "65baa175fcfd1c2d2d04e9b6b4b70f44e44a0b53c98995c3c7520d530795be18",
+      "progress_3d.jsonl": "232c50fc51cac7ed938a2a197a732a1a5c7ad4f3968f843931194810d3ea096c",
+      "memory_timeline.csv": "3698e5f924d6f9d20a7a8e78b573355e0a3145cf370606451807908c49e39b27",
+      "task037_f3_residual_history.jsonl": "75f0bc3ebec3648b60fdfc55daa9afd036b81cf6d5fe0ef1f7051a83e0f24940",
+      "parent_launch_descriptor.json": "0b3340afa3c7e3d557080385860be9ed4e16603f5bee75209302487f32460438",
+      "worker_stdout.txt": "bb438d24852a755b11532411feebc2767e89b004b5236a4fac2ee25ffb8cf3bd"
+    }
+  },
+  "pending": {
+    "G2.4": "pending_not_run",
+    "G2.5": "pending_not_run",
+    "G2.6": "pending_not_run",
+    "overall_G2": "not_claimed"
+  }
+}

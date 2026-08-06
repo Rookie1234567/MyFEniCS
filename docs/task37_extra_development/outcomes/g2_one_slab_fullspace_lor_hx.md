@@ -1,39 +1,39 @@
-# G2.2 一个 slab 的 full-space identity 证据
+# G2 一个 slab 的 full-space identity 与 ILU inventory
 
-本轮把同一个 slab residual 用两条路径计算：一条直接使用 condensed trace Schur action，另一条保留该 slab 的 full-space cell block，先从 trace 值恢复 interior，再计算 full-space action 并投影回 trace。这个检查解决的是“full-space 组装/恢复路径是否与现有 trace 路径代数一致”，避免在以后研究 full-space 或 LOR-HX 时把边界列、Floquet 展开或 interior recovery 接错。
-
-它只证明两条代数应用路径对同一输入一致；不证明预条件器有效，不证明 contraction，不证明外层 FGMRES 收敛，也不证明物理 R/T/A 收敛。
+本 outcome 合并记录 G2.2 的代数 identity 和 G2.3 的一次正式
+full-space factor inventory。这里的 full-space 是“一个 slab 内每个 cell 的
+interior DoF 加 owner trace 行”的局部对象，不是整个 Full3D uncondensed
+global matrix。
 
 ## 结论边界
 
-| lane | 状态 | 本轮含义 |
+| lane | 状态 | 允许的解释 |
 |---|---|---|
-| G2.2 full-space/trace algebraic identity | `pass` | tiny fixture 合同测试通过；真实 slab14 的 3 个 deterministic vectors 与 1 个 iter20 residual direction 均通过 `<=1e-10` |
-| G2.3 full-space p6 ILU inventory | `pending_not_run` | 没有构造 full-space ILU，也没有比较 payload/retained bytes |
-| G2.4 LOR mesh 与 transfer | `pending_not_run` | 没有建立 LOR mesh 或 transfer |
-| G2.5 LOR-HX/V-cycle | `pending_not_run` | 没有实现或运行 HX/V-cycle |
-| G2.6 one/two V-cycle Gate | `pending_not_run` | 没有运行 1/2 V-cycle 对照 |
+| G2.2 full-space/trace identity | `pass_algebraic_identity_only` | tiny fixture、真实 slab14 的 3 个 deterministic vectors 与 1 个 iter20 residual direction 均通过 `<=1e-10` |
+| G2.3 full-space p6 ILU inventory | `inventory_measurement_qualified` | raw 与 patched checker 合同闭合；不是预条件器有效性结论 |
+| plain full-space ILU route | `close_fullspace_ilu_only_route` | retained-payload 25% Gate 未达到，且 iter20 one-apply rho 更差 |
+| G2.4 LOR mesh/transfer | `pending_not_run` | 未实现、未运行 |
+| G2.5 LOR-HX/V-cycle | `pending_not_run` | 未实现、未运行 |
+| G2.6 one/two V-cycle Gate | `pending_not_run` | 未运行 |
 
-因此本轮不能写成整体 G2 通过，也不能声称 minimum contraction、full solve 或 production promotion。
+因此不能把本 outcome 写成整体 G2 通过，也不能宣称 minimum contraction、
+full solve 或 production promotion。
 
-## 正式 v2 运行身份
+## 首次解释：两个研究指标
 
-| 项目 | 值 |
-|---|---|
-| source SHA | `44f5931c479eba86c9d12c57109e3b052e2962e4` |
-| scope | p6/h10/S、MPI1、M2c never-materialized、M3a overlap0.125 partition、screen20 |
-| run directory | `benchmarks/artifacts/101_task37_extra_development/g2_slab14_identity_mpi1_screen20_44f5931c_v2` |
-| watchdog | `task037_extra_g2_slab14_identity_pass`；return code `0`；failures `[]` |
-| source/working tree | verified clean；global A/F 均未物化 |
-| solver boundary | 20 steps，`DIVERGED_MAX_IT(-3)`；`external_solver_not_converged` |
-| official/RTA | `false / false`；postprocess skipped |
-| memory policy | poll `0.25 s`、warning `10 GiB`、terminate `14 GiB`、timeout `1800 s`、no swap |
+`retained payload lower bound` 可以理解为“保留一个因子和两份工作向量至少
+需要的数组空间”：这里按 factor CSR 结构性 payload 加两个 PETSc Vec 数组
+计算，不包括 PETSc allocator、排序置换等额外开销。它用于两个局部对象的
+同口径比较，不能等同进程 RSS 峰值。
 
-该 watchdog pass 只表示本轮 identity、materialization、有限 residual、资源和 source identity checks 通过；它不是 solver convergence 或 physical result pass。
+`rho` 是一次 correction 后的残差范数除以 correction 前输入残差范数。`rho`
+小于 1 表示该方向一次缩小残差，大于 1 表示一次放大残差；它是 stationary
+one-apply 诊断，不是外层 FGMRES 收敛率，更不是物理 R/T/A 收敛。
 
-## 两条路径的代数合同
+## G2.2：代数 identity
 
-真实 identity 比较的是 full-space cell action 经过 trace restriction 后的结果与 trace Schur action。它没有形成整个 Full3D uncondensed global matrix。
+同一个 slab trace vector 分别经过现有 trace Schur action 和 full-space cell
+block recovery/action，再投影回 trace。检查的公式为：
 
 ```math
 S_j v = R_t\mathcal A_j
@@ -43,90 +43,144 @@ v
 \end{bmatrix}.
 ```
 
-slab 边界采用与既有 principal restriction 一致的语义：完整 local block 和 trace rows 保留，稀疏 trace expansion `C` 只保留属于 owner rows 的 active columns；外部 active trace 列等价于零延拓。这个边界语义是本轮修复的重点。
+它解决的是 full-space 组装、interior recovery、Floquet/trace expansion 和
+slab 边界列是否接错的问题；只证明两条代数路径对同一输入一致，不证明
+预条件器有效或外层求解收敛。
 
-## slab 选择与 restriction 证据
+primary 固定为 slab14，因为 G0 的 iter20 local residual 最大；control 为
+slab5；slab13 只作为最大正 ablation-damage comparator，不替换 primary。
 
-primary 固定为 slab14，因为 G0 的 iter20 local residual 最大；control 固定为 slab5；slab13 只作为最大正 ablation-damage comparator，不替换 primary。
-
-| 字段 | slab14 v2 实测 |
+| G2.2 字段 | v2 值 |
 |---|---:|
 | owner / cells / unique blocks | `0 / 54 / 6` |
 | owner active rows | `8424` |
 | source / retained / dropped active columns | `23328 / 17064 / 6264` |
 | partial cells | `18` |
 | sparse `C` NNZ / bytes | `17064 / 434808` |
-| owner row SHA256 | `6f7c32c5fef8058a9c3a36deeaa65bce5f726c57c0d426220c065f683b57dade` |
-| canonical cell ID SHA256 | `ac7e3532a1ecf55826a25a99b1f5197fb7c9952a084bf88f4ca15bad79511023` |
+| deterministic relative errors | `2.9248960201709676e-15`；`2.978578754981666e-15`；`2.6617554455542794e-15` |
+| iter20 local residual norm | `0.42723143961943305` |
+| iter20 identity error | `1.7721399154913289e-15` |
 
-列计数闭合为 `23328 = 17064 + 6264`。这说明跨 slab parent cell 没有被丢弃，也没有把 full block 错误缩成只含 owner rows 的 block。
+边界语义与既有 principal restriction 一致：保留完整 local block/trace rows，
+`C` 只保留属于 owner rows 的 active trace 列，外部列等价于零延拓，因此
+`23328 = 17064 + 6264`。第一次 source
+`5bb270715d5610d7752d5d9f99e112c467765630` 因错误要求 cell 的全部 active IDs
+都属于 owner rows，在进入 solver 前受控失败；该负证据没有被隐藏。
 
-## identity 数值
+## G2.3：正式 inventory 身份
 
-相对误差阈值为 `1e-10`。三个 deterministic vectors 均 finite、deterministic 且通过：
+| 项目 | 值 |
+|---|---|
+| raw numerical source SHA | `1a2dd825e295c38e3cecf30e98fa62b7a3510e1d` |
+| checker fix/requalification SHA | `e3447748391a902d27323bc796c008c8a1c8770b` |
+| scope | p6/h10/S、MPI1、M2c never-materialized、M3a overlap0.125 partition、screen20 |
+| flags | identity + factor inventory；G0 diagnostics 未启用 |
+| run directory | `benchmarks/artifacts/101_task37_extra_development/g2_slab14_factor_inventory_mpi1_screen20_1a2dd825` |
+| watchdog policy | poll `0.25` s；warning `10` GiB；terminate `14` GiB；timeout `1800` s；no swap |
 
-| vector | relative error |
+原始 watchdog summary 保持 `task037_extra_g2_slab14_factor_inventory_not_pass`，
+外层 parent return code 为 `2`，唯一失败为
+`task037_g2_factor_route_reduction_raw`。旧 checker 把 signed reduction 错限
+为非负；它没有反映数值计算失败。patched checker 在
+`e3447748391a902d27323bc796c008c8a1c8770b` 上只读同一 raw，结果为
+`pass=true`、`failures=[]`、`34/34` G2 factor checks，且不改写原始 summary。
+
+screen20 solver 以固定上限 `DIVERGED_MAX_IT(-3)` 结束；因此
+`official_result=false`、`official_rta=false`，没有 official postprocess。这
+个 screen 仍可作为 inventory 资格边界，不能作为收敛或物理结果。
+
+## G2.3 collector 与 materialization
+
+| 字段 | slab14 正式值 |
 |---|---:|
-| `canonical_affine_phase` | `2.9248960201709676e-15` |
-| `canonical_complex_affine_phase` | `2.978578754981666e-15` |
-| `canonical_sinusoidal_phase` | `2.6617554455542794e-15` |
+| cells / unique blocks | `54 / 6` |
+| full rows | `32724` |
+| interior + trace rows | `24300 + 8424` |
+| source / retained / dropped active columns | `23328 / 17064 / 6264` |
+| partial cells | `18` |
+| sparse `C` NNZ / bytes | `17064 / 434808` |
+| primary / control / comparator | `14 / 5 / 13` |
+| global A / global F | `false / false` |
+| inventory-only / used in outer preconditioner | `true / false` |
 
-iter20 使用 solver 内部真实 `r=b-Ax`，没有从 scalar residual 伪造向量：
+完整 local block 和 trace rows 被保留，`C` 的 outside-slab active columns 作零
+延拓；没有形成全局 uncondensed `A/F`。G2.3 因而是局部 inventory 测量，不能
+被解释为已替换 16-slab preconditioner。
 
-| 字段 | 值 |
+## retained-payload 对照
+
+| inventory | current trace factor | full-space ILU(0)/RCM |
+|---|---:|---:|
+| rows | `8424` | `32724` |
+| matrix NNZ / factor NNZ | `6086016 / 6086016` | `32378616 / 32378616` |
+| matrix CSR payload | — | `647703220 B` |
+| retained payload lower bound | `122023588 B = 116.37076187133789 MiB` | `648750388 B = 618.6965827941895 MiB` |
+| full factor setup | — | `18.97298593702726 s` |
+
+full/trace 比率为 `5.316598197391147`，差值为
+`526726800 B = 502.32582092285156 MiB`。signed reduction 为
+`-4.316598197391147`，表示 full-space retained payload 增加约 `431.66%`，
+不是“下降 431.66%”。25% Gate 为 `false`，route 为
+`close_fullspace_ilu_only_route`。这是关闭 plain full-space ILU-only 路线的
+明确科学负结果；它不等于整个 G2 失败，也不等于其他未运行路线的结论。
+
+## iter20 one-apply 结果
+
+iter20 使用 solver 内部真实 `r=b-Ax`，owner-local residual norm 为
+`0.42723143961943305`，trace RHS exact/finite。两种 correction 使用同一
+owner row order 和 current shift：
+
+| 字段 | current trace ILU | full-space ILU |
+|---|---:|---:|
+| input norm | `0.42723143961943305` | `0.42723143961943305` |
+| post norm | `0.5385209372860695` | `0.7716852789816032` |
+| rho | `1.2604899530937386` | `1.806246468352144` |
+| correction norm | `0.8014811021173734` | `0.8237278810044446` |
+| correction SHA256 | `892d7aa29811b0ccf403377af754fc448d1ba2dee914244a0ecb6c1deb8a9d40` | `02eea6f53e8a5df4f86b17826477a1826dff7a1ab9ff570e493f407d5ae9a72f` |
+
+full-space minus trace rho 为 `0.5457565152584054`，ratio 为
+`1.4329717296983637`；二者都大于 1，full-space 更差。full-space apply
+两次且 finite/deterministic，耗时 `0.24651467008516192 s`；matrix assembly
+为 `30.55818408995401 s`。
+
+## 资源 authority 与阶段峰值
+
+| 指标 | 正式 G2.3 authority |
 |---|---:|
-| iteration | `20` |
-| local residual norm2 | `0.42723143961943305` |
-| residual vector SHA256 | `3aa610ed9bbb63047188b64d21d5dcab04184ffc6316196458e99aab520bb195` |
-| identity relative error | `1.7721399154913289e-15` |
-| true relative residual | `0.04474243612765` |
-| current local shift norm2 | `475.7236793796778` |
-| materialization | condensed trace `false`；action-only `true`；blocks.F `false` |
-
-screen residual trajectory 为 `i0=1.0`、`i10=0.14446444295860594`、`i20=0.04474243612765`。其中 iter10 只有 core scalar history，本轮没有把它当作 raw vector。
-
-## 第一次失败与修复边界
-
-source `5bb270715d5610d7752d5d9f99e112c467765630` 的第一次 screen 在进入 solver 前受控失败，错误为：
-
-```text
-RuntimeError: cell active rows are not contained in slab owner rows
-```
-
-这不是普通调试噪声，也没有被覆盖。第一次 collector 错误地要求一个跨 slab cell 的全部 active IDs 都属于 owner rows。source `44f5931c...` 的修复与既有 principal restriction 对齐：完整 local block/trace rows 保留，`C` 的 active trace 列只取 owner rows，外部列作零延拓。v2 的 `partial_cell_count=18` 和 dropped-column 计数正是该边界语义被实际执行的证据。
-
-## 资源与 solver 语义
-
-| 指标 | v2 authority |
-|---|---:|
-| process-tree RSS | `4655.9453125 MB = 4.546821594238281 GiB` |
-| worker RSS / PSS / USS | `4642.10546875 / 4590.4072265625 / 4545.5625 MB` |
+| process-tree RSS | `7647.62109375 MB = 7.468379974365234 GiB` |
+| worker RSS / PSS / USS | `7633.734375 / 7582.0400390625 / 7537.23046875 MB` |
 | swap | `0` |
-| wall | `335.08262702892534 s` |
-| warning/termination/timeout | `false / false / false` |
-| cgroup historical peak | `13279.546875 MB`，不是当前 authority |
+| warning / termination / timeout | `false / false / false` |
+| wall / samples | `349.65642845397815 s / 1267` |
 
-20 步 solver 以 `DIVERGED_MAX_IT(-3)` 结束；这只说明本次 screen 达到固定步数上限。它不否定 G2.2 的代数 identity pass，也不允许把本轮写成收敛或 official RTA 结果。
+现有 16 个 trace factors 在额外 oracle 期间仍保留，所以阶段峰值不是替代
+候选的独立峰值：
 
-正式 audit 仍是 action-only：global A/F 未物化，operator apply count=`140`，coarse apply count=`20`，one-level apply count=`120`，stored factor NNZ=`91415952`。本轮没有运行 G2.3 full-space ILU、LOR transfer、HX/V-cycle 或 one/two-cycle Gate。
+| progress stage | process-tree RSS |
+|---|---:|
+| `g2_fullspace_matrix_assembly_started` | `7605.90625 MB` |
+| `g2_fullspace_factor_setup_started` | `7605.91015625 MB` |
+| `g2_fullspace_factor_setup_ready` | `7605.9609375 MB` |
 
 ## Evidence
 
-compact tracked record：[g2_slab14_fullspace_identity.json](/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/cases/101_task37_extra_development/records/g2_slab14_fullspace_identity.json)。正式 v2 raw 文件均保留在 ignored artifact 目录，关键 SHA256 如下：
+紧凑 tracked record：
+[g2_slab14_fullspace_factor_inventory.json](/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/cases/101_task37_extra_development/records/g2_slab14_fullspace_factor_inventory.json)。raw artifact 均在 ignored run directory；关键 hash 为：
 
-| 文件 | SHA256 |
+| raw 文件 | SHA256 |
 |---|---|
-| `watchdog_summary.json` | `86f0acdbf48e2b10315e84f27622fa74f54f42b561e3a4cefc7e2a23762658e8` |
-| `run_summary.json` | `13d8364450fcda99cf2f7912cfb8e3e3fe960ecb245e1e94fabe994c9f122156` |
-| `task037_f3_core_audit.json` | `198e1575c8b7df71373d015eeb9ab6a5799ce403f2725986465e62eec8a972bc` |
-| `memory_timeline.csv` | `f595dfaa9e933a1062de4b937f6e92bebe8bb4c648841dc2210a648b3642ba66` |
-| `progress_3d.jsonl` | `9caab35a3390d206aa330fa1e4c0d51929a2b76f891a90ec2bc4dfe45fbf6847` |
+| `watchdog_summary.json` | `90b17504fc584cc43ddad53a8ae0918e598ff183940b1b599578ebf59eb59ac1` |
+| `run_summary.json` | `5ce1828bddd167a0cc9119260a93bf52284a164bf5592ade0c7f276133bcd101` |
+| `task037_f3_core_audit.json` | `65baa175fcfd1c2d2d04e9b6b4b70f44e44a0b53c98995c3c7520d530795be18` |
+| `progress_3d.jsonl` | `232c50fc51cac7ed938a2a197a732a1a5c7ad4f3968f843931194810d3ea096c` |
+| `memory_timeline.csv` | `3698e5f924d6f9d20a7a8e78b573355e0a3145cf370606451807908c49e39b27` |
 | `task037_f3_residual_history.jsonl` | `75f0bc3ebec3648b60fdfc55daa9afd036b81cf6d5fe0ef1f7051a83e0f24940` |
-| `worker_stdout.txt` | `33ad63683c44ecb4348a7f445ca276cd413d8a8d8a73defc3c64378f54a53c41` |
-| `parent_launch_descriptor.json` | `a8ad6ee4a57d4b79ee36e6d8926e9599b1e1df0057cde83b6510a7d4c1461ff3` |
-
-第一次受控失败的 run directory 和 hashes 也保存在 compact record 的 `negative_evidence` 中，确保修复后的通过没有抹去负结果。
+| `parent_launch_descriptor.json` | `0b3340afa3c7e3d557080385860be9ed4e16603f5bee75209302487f32460438` |
+| `worker_stdout.txt` | `bb438d24852a755b11532411feebc2767e89b004b5236a4fac2ee25ffb8cf3bd` |
 
 ## Pending
 
-G2.3–G2.6 均保持 `pending_not_run`。当前唯一允许的结论是：已经具备一块 slab 的 full-space identity 实现与验证证据；尚未具备全局 candidate、minimum contraction、full solve 或 production promotion 的依据。
+G2.4、G2.5、G2.6 均为 `pending_not_run`。本轮停止在 G2.3 inventory
+measurement qualified / plain full-space ILU route closed；没有启动新的
+PDE，也没有把本 compact evidence 解释为 global candidate、minimum
+contraction、full solve 或 production promotion。

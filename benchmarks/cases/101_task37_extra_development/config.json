@@ -38,5 +38,38 @@
     "snapshot_iterations": [0, 20],
     "official_rta": false,
     "official_rta_emitted": false
+  },
+  "lanes": {
+    "g0": {
+      "task037_extra_g0_diagnostics": true,
+      "snapshot_iterations": [0, 20],
+      "official_rta": false
+    },
+    "g2_2": {
+      "task037_extra_g2_slab14_identity": true,
+      "primary_slab": 14,
+      "purpose": "one-slab full-space/trace algebraic identity"
+    },
+    "g2_3": {
+      "task037_extra_g2_slab14_identity": true,
+      "task037_extra_g2_slab14_factor_inventory": true,
+      "task037_extra_g0_diagnostics": false,
+      "primary_slab": 14,
+      "inventory_only": true,
+      "used_in_outer_preconditioner": false,
+      "raw_consistency_qualification_required": true,
+      "route_decision_from_payload_gate": true,
+      "gate_pass_status": "retained_payload_gate_pass_route_not_closed",
+      "gate_false_status": "close_fullspace_ilu_only_route",
+      "signed_reduction_allowed": true,
+      "run_dir_template": "benchmarks/artifacts/101_task37_extra_development/g2_slab14_factor_inventory_mpi1_screen20_<IMPLEMENTATION_SHA8>",
+      "payload_gate": {
+        "formula": "(trace_retained_payload-fullspace_retained_payload)/trace_retained_payload",
+        "threshold": 0.25,
+        "signed_reduction_allowed": true,
+        "gate_false_route_status": "close_fullspace_ilu_only_route",
+        "gate_false_may_still_qualify_raw_checks": true
+      }
+    }
   }
 }
