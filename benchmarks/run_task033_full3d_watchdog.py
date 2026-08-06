@@ -1236,6 +1236,7 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "stage4_full3d_assembly_backend": str(args.stage4_full3d_assembly_backend),
         "task037_f0_vector_observer": bool(args.task037_f0_vector_observer),
         "task037_e0_matrix_free_dtn_gate": bool(args.task037_e0_matrix_free_dtn_gate),
+        "task037_e1_modal_basis_gate": bool(args.task037_e1_modal_basis_gate),
         "task037_f1_direct_trace_oracle": (
             None
             if args.task037_f1_direct_trace_oracle is None
@@ -1366,6 +1367,7 @@ def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
         args.task035d_case097_gate
         or _task037_f3_iterations(args) is not None
         or args.task037_e0_matrix_free_dtn_gate
+        or args.task037_e1_modal_basis_gate
     ):
         return
     if args.task035d_case097_gate:
@@ -1384,13 +1386,14 @@ def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
     ).strip()
     if head != args.verified_clean_sha or status:
         raise SystemExit(
-            "Task035d/Task37 F3/E0 worker source identity is not the clean "
+            "Task035d/Task37 F3/E0/E1 worker source identity is not the clean "
             "parent-qualified commit."
         )
 
 
 def _worker(args: argparse.Namespace) -> int:
     e0_gate = bool(getattr(args, "task037_e0_matrix_free_dtn_gate", False))
+    e1_gate = bool(getattr(args, "task037_e1_modal_basis_gate", False))
     from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
         run_stage4b_block_grating_3d_case,
     )
@@ -1410,7 +1413,42 @@ def _worker(args: argparse.Namespace) -> int:
         else None
     )
     linear_solver_port = None
-    if e0_gate:
+    if e1_gate:
+        from mpi4py import MPI
+        from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
+        from src.solvers.static_modal_coarse_gate import run_e1_modal_basis_gate
+
+        def e1_callback(request):
+            started = time.perf_counter()
+            comm = request.b.getComm().tompi4py()
+            _write_progress_event(
+                args.run_dir,
+                comm,
+                stage="task037_e1_modal_basis_generation",
+                status="begin",
+                extra={"research_only": True},
+            )
+            snapshot = run_e1_modal_basis_gate(
+                request,
+                run_dir=args.run_dir,
+                source_sha=args.verified_clean_sha,
+                research_opt_in=True,
+            )
+            elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
+            _write_progress_event(
+                args.run_dir,
+                comm,
+                stage="task037_e1_modal_basis_generation",
+                status="end",
+                extra={
+                    "collective_max_wall_seconds": elapsed,
+                    "research_only": True,
+                },
+            )
+            return snapshot
+
+        linear_solver_port = Stage4NeverMaterializedLinearSolverPort(e1_callback)
+    elif e0_gate:
         from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
 
         def e0_sentinel(_request):
@@ -1521,8 +1559,9 @@ def _worker(args: argparse.Namespace) -> int:
             args.task037_f5b_released_profile
             or args.task037_m2c_never_materialized
             or e0_gate
+            or e1_gate
         ),
-        matrix_free_dtn=e0_gate,
+        matrix_free_dtn=e0_gate or e1_gate,
         matrix_free_dtn_probe=e0_gate,
         canonical_vector_export=args.task037_canonical_vector_export,
     )
@@ -1593,6 +1632,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "Run the research-only Task037 E0 80-mode matrix-free DtN component gate."
         ),
+    )
+    parser.add_argument(
+        "--task037-e1-modal-basis-gate",
+        action="store_true",
+        help="Run the research-only Task037 E1 M120 modal-basis component gate.",
     )
     parser.add_argument(
         "--task037-canonical-vector-export",
@@ -1839,6 +1883,49 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "Task035c p6/h10 S full-solve, assembly-time static-condensed "
                 "MPI1/2/4 default-profile no-swap scope and is exclusive of "
                 "all other Task037 research flags."
+            )
+    if args.task037_e1_modal_basis_gate:
+        e1_conflicts = (
+            args.task037_e0_matrix_free_dtn_gate,
+            args.task037_f0_vector_observer,
+            args.task037_canonical_vector_export,
+            args.task037_f1_direct_trace_oracle is not None,
+            args.task037_f3_screen is not None,
+            args.task037_f3_full,
+            args.task037_f5b_released_profile,
+            args.task037_m2c_never_materialized,
+            args.task037_m3a_overlap0125_partition,
+            args.task037_m4_p2_auxiliary,
+            args.task037_m4_factor_free_slab,
+            args.task037_m4_optimized_schwarz,
+            args.task037_m4_b2_long_full,
+            args.task037_m0_lifecycle_audit,
+            args.task035d_case097_gate,
+            args.task034_p4_h3_added_point,
+        )
+        e1_scoped = bool(
+            args.task035c_p6_h10_gate
+            and args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.polarization_kind == "s"
+            and args.run_kind == "full-solve"
+            and args.mpi_size == 8
+            and args.profile == "default"
+            and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+            and not args.allow_swap
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.p3_gate_record is None
+            and args.p4_trace_record is None
+            and not any(e1_conflicts)
+        )
+        if not e1_scoped:
+            parser.error(
+                "--task037-e1-modal-basis-gate is restricted to the "
+                "Task035c p6/h10 S full-solve, assembly-time static-condensed "
+                "MPI8 default-profile no-swap scope and is exclusive of all "
+                "other Task037/Task035d research flags."
             )
     if (
         args.task037_f0_vector_observer
@@ -3312,8 +3399,10 @@ def _qualify(
     observed_worker_rank_count: int | None = None,
     resource_summary: dict[str, Any] | None = None,
     task037_f3_core_audit: dict[str, Any] | None = None,
+    task037_e1_audit: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     matrix = solver_summary.get("matrix_stats") or {}
+    e1_gate = bool(getattr(args, "task037_e1_modal_basis_gate", False))
     m3a_profile = bool(args.task037_m3a_overlap0125_partition)
     m4_optimized_schwarz_profile = bool(args.task037_m4_optimized_schwarz)
     m4_factor_free_profile = bool(
@@ -3333,6 +3422,7 @@ def _qualify(
     )
     action_only_profile = (
         bool(args.task037_e0_matrix_free_dtn_gate)
+        or e1_gate
         or m2c_profile
         or m3a_profile
         or m4_profile
@@ -3364,6 +3454,49 @@ def _qualify(
             solver_summary.get("polarization_kind") == args.polarization_kind
         ),
     }
+    if e1_gate:
+        from src.solvers.static_modal_coarse_gate import (
+            qualify_e1_modal_basis_audit,
+        )
+
+        audit = task037_e1_audit if isinstance(task037_e1_audit, dict) else {}
+        e1_checker = qualify_e1_modal_basis_audit(
+            audit,
+            solver_summary=solver_summary,
+            return_code=return_code,
+            no_swap=no_swap,
+        )
+        checks = {
+            **common,
+            "e1_action_only": (
+                solver_summary.get("external_linear_solver_port") is True
+            ),
+            "e1_no_global_A_or_F": (
+                matrix.get("global_A_materialized") is False
+                and matrix.get("global_F_materialized") is False
+            ),
+            "e1_audit_present": bool(audit),
+            "e1_audit_checker_pass": e1_checker["pass"] is True,
+            "e1_external_component_profile": (
+                solver_summary.get("external_solver_profile")
+                == "task037_e1_component_only"
+            ),
+            "e1_no_factorization_or_solve_event": (
+                not _factorization_stage_seen(events) and not _solve_stage_seen(events)
+            ),
+            "e1_no_ksp_iterations": solver_summary.get("ksp_iterations") == 0,
+            "e1_no_official_result": (solver_summary.get("official_result") is False),
+            "no_swap": no_swap,
+        }
+        failures = [name for name, passed in checks.items() if not passed]
+        return {
+            "pass": not failures,
+            "checks": checks,
+            "failures": failures,
+            "e1_checker": e1_checker,
+            "e1_checker_classification": e1_checker.get("classification"),
+            "task035d_case097_solver_gate": None,
+        }
     if args.task037_e0_matrix_free_dtn_gate:
         audit = solver_summary.get("matrix_free_dtn_probe_audit")
         audit = audit if isinstance(audit, dict) else {}
@@ -4031,6 +4164,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         )
     if args.task037_e0_matrix_free_dtn_gate:
         command.append("--task037-e0-matrix-free-dtn-gate")
+    if args.task037_e1_modal_basis_gate:
+        command.append("--task037-e1-modal-basis-gate")
     if args.task037_f0_vector_observer:
         command.append("--task037-f0-vector-observer")
     if args.task037_f1_direct_trace_oracle is not None:
@@ -4191,6 +4326,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         or args.task037_f3_full
         or args.task037_canonical_vector_export
         or args.task037_e0_matrix_free_dtn_gate
+        or args.task037_e1_modal_basis_gate
     ):
         task035d_status_before = subprocess.check_output(
             ["git", "status", "--porcelain", "--untracked-files=all"],
@@ -4333,6 +4469,16 @@ def _run_parent(args: argparse.Namespace) -> int:
         if solver_path.is_file()
         else {}
     )
+    e1_audit_path = run_dir / "task037_e1_modal_basis_audit.json"
+    if args.task037_e1_modal_basis_gate:
+        try:
+            e1_audit = json.loads(e1_audit_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            e1_audit = {}
+        if not isinstance(e1_audit, dict):
+            e1_audit = {}
+    else:
+        e1_audit = None
     task037_f3_core_audit = None
     task037_f3_core_audit_path = run_dir / "task037_f3_core_audit.json"
     if args.task037_f3_screen is not None or args.task037_f3_full:
@@ -4377,6 +4523,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         observed_worker_rank_count=sampler["max_observed_worker_rank_count"],
         resource_summary=sampler,
         task037_f3_core_audit=task037_f3_core_audit,
+        task037_e1_audit=e1_audit,
     )
     task035d_nested_p_evidence = None
     task035d_selective_face_evidence = None
@@ -4759,7 +4906,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         args, qualification
     )
     status = (
-        "task037_e0_matrix_free_dtn_gate_pass"
+        "task037_e1_modal_basis_gate_pass"
+        if qualification["pass"] and args.task037_e1_modal_basis_gate
+        else "task037_e1_modal_basis_gate_not_pass"
+        if args.task037_e1_modal_basis_gate
+        else "task037_e0_matrix_free_dtn_gate_pass"
         if qualification["pass"] and args.task037_e0_matrix_free_dtn_gate
         else "task037_e0_matrix_free_dtn_gate_not_pass"
         if args.task037_e0_matrix_free_dtn_gate
@@ -4881,6 +5032,16 @@ def _run_parent(args: argparse.Namespace) -> int:
         "task037_e0_matrix_free_dtn_gate": bool(args.task037_e0_matrix_free_dtn_gate),
         "task037_e0_matrix_free_dtn_probe_audit": solver_summary.get(
             "matrix_free_dtn_probe_audit"
+        ),
+        "task037_e1_modal_basis_gate": bool(args.task037_e1_modal_basis_gate),
+        "task037_e1_modal_basis_audit": (
+            {
+                "path": _path_from_root(e1_audit_path),
+                "sha256": _sha256(e1_audit_path),
+                "payload": e1_audit,
+            }
+            if args.task037_e1_modal_basis_gate
+            else None
         ),
         "resource_policy": {
             "swap_allowed": args.allow_swap,
