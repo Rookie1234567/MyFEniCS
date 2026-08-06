@@ -2218,6 +2218,42 @@ class DistributedPhysicalSlabSmoother:
         ).copy()
         return rhs, correction
 
+    def _diagnostic_owner_local_factor_inventory(
+        self,
+        subdomain: int,
+    ) -> dict[str, int | bool] | None:
+        """Read one existing owner factor without exposing factor storage."""
+
+        owner = int(self.subdomain_owners[subdomain])
+        if self.rank != owner:
+            return None
+        factor = next(
+            factor for factor in self._factors if factor.subdomain == subdomain
+        )
+        if factor.factor_matrix is None:
+            raise RuntimeError(
+                "owner-local factor inventory requires a retained factor matrix"
+            )
+        rows = int(factor.indices.size)
+        scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
+        index_bytes = np.dtype(PETSc.IntType).itemsize
+        factor_payload = int(
+            factor.factor_nnz * (scalar_bytes + index_bytes)
+            + (rows + 1) * index_bytes
+        )
+        work_payload = int(2 * rows * scalar_bytes)
+        return {
+            "owner_rank": owner,
+            "subdomain": int(subdomain),
+            "rows": rows,
+            "matrix_nnz": int(factor.matrix_nnz),
+            "factor_nnz": int(factor.factor_nnz),
+            "factor_csr_payload_lower_bound_bytes": factor_payload,
+            "work_vector_payload_bytes": work_payload,
+            "retained_payload_lower_bound_bytes": factor_payload + work_payload,
+            "factor_only_storage": bool(self.factor_only_storage),
+        }
+
     def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._inner_ksp is None:
             self._apply_once(source, target)

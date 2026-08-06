@@ -138,6 +138,51 @@ def _apply_cell_stream(
     return full_action, schur_action
 
 
+def _recoveries_by_block(
+    cells: Sequence[FullSpaceSlabCellRecord],
+) -> dict[int, np.ndarray]:
+    recovery_by_block: dict[int, np.ndarray] = {}
+    for cell in cells:
+        block_id = id(cell.block)
+        if block_id not in recovery_by_block:
+            recovery_by_block[block_id] = np.linalg.solve(
+                cell.block.a_ii,
+                -cell.block.a_it,
+            )
+    return recovery_by_block
+
+
+def apply_fullspace_slab_schur_action(
+    cells: Sequence[FullSpaceSlabCellRecord],
+    vector: np.ndarray,
+    *,
+    active_size: int,
+    trace_shift: np.ndarray | None = None,
+) -> np.ndarray:
+    """Apply the exact shifted cell-stream Schur action in owner row order."""
+
+    if not cells:
+        raise ValueError("at least one slab cell is required")
+    active_size = int(active_size)
+    vector = np.asarray(vector, dtype=np.complex128)
+    if vector.shape != (active_size,):
+        raise ValueError("active vector must match active_size")
+    shift = None
+    if trace_shift is not None:
+        shift = np.asarray(trace_shift, dtype=np.complex128)
+        if shift.shape != (active_size,):
+            raise ValueError("trace shift must match active_size")
+    schur_action = np.zeros(active_size, dtype=np.complex128)
+    for cell in cells:
+        expansion = cell.trace_expansion
+        trace = expansion @ vector[cell.active_positions]
+        local_action = expansion.conj().T @ (cell.block.schur @ trace)
+        np.add.at(schur_action, cell.active_positions, local_action)
+    if shift is not None:
+        schur_action += shift * vector
+    return schur_action
+
+
 def measure_fullspace_slab_identity(
     cells: Sequence[FullSpaceSlabCellRecord],
     vectors: Iterable[np.ndarray],
@@ -170,14 +215,7 @@ def measure_fullspace_slab_identity(
         if shift.shape != (active_size,):
             raise ValueError("trace shift must match active_size")
 
-    recovery_by_block: dict[int, np.ndarray] = {}
-    for cell in cells:
-        block_id = id(cell.block)
-        if block_id not in recovery_by_block:
-            recovery_by_block[block_id] = np.linalg.solve(
-                cell.block.a_ii,
-                -cell.block.a_it,
-            )
+    recovery_by_block = _recoveries_by_block(cells)
 
     first_actions = tuple(
         _apply_cell_stream(
@@ -257,5 +295,6 @@ def measure_fullspace_slab_identity(
 __all__ = (
     "FullSpaceSlabBlockRecord",
     "FullSpaceSlabCellRecord",
+    "apply_fullspace_slab_schur_action",
     "measure_fullspace_slab_identity",
 )

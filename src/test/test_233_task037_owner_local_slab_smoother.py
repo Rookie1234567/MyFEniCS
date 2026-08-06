@@ -265,6 +265,32 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
             and all(character in "0123456789abcdef" for character in item["sha256"])
             for item in candidate_fingerprints + ordinary_fingerprints
         )
+        owner_inventory = candidate._diagnostic_owner_local_factor_inventory(0)
+        inventory_packets = comm.allgather(owner_inventory)
+        assert sum(packet is not None for packet in inventory_packets) == 1
+        if comm.rank == candidate.subdomain_owners[0]:
+            assert owner_inventory is not None
+            rows = int(plan.owner_rows[0].size)
+            scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
+            index_bytes = np.dtype(PETSc.IntType).itemsize
+            expected_factor_payload = int(
+                owner_inventory["factor_nnz"] * (scalar_bytes + index_bytes)
+                + (rows + 1) * index_bytes
+            )
+            assert owner_inventory["rows"] == rows
+            assert owner_inventory["matrix_nnz"] > 0
+            assert owner_inventory["factor_nnz"] > 0
+            assert owner_inventory["factor_csr_payload_lower_bound_bytes"] == (
+                expected_factor_payload
+            )
+            assert owner_inventory["work_vector_payload_bytes"] == (
+                2 * rows * scalar_bytes
+            )
+            assert owner_inventory["retained_payload_lower_bound_bytes"] == (
+                owner_inventory["factor_csr_payload_lower_bound_bytes"]
+                + owner_inventory["work_vector_payload_bytes"]
+            )
+            assert owner_inventory["factor_only_storage"] is True
         ordinary_two = DistributedPhysicalSlabSmoother(
             assembled.matrix,
             full_subdomains,

@@ -32,7 +32,10 @@ from .physical_slab_two_level import (
     collect_owner_local_fullspace_slab_cells,
     extract_owner_local_slab_vector,
 )
-from .static_fullspace_slab_oracle import measure_fullspace_slab_identity
+from .static_fullspace_slab_oracle import (
+    apply_fullspace_slab_schur_action,
+    measure_fullspace_slab_identity,
+)
 from .static_local_schur_action import create_static_local_schur_action
 from .static_p2_auxiliary_pc import build_p2_auxiliary_setup
 
@@ -125,6 +128,87 @@ def _task037_g2_owner_vector_sha256(
     return digest.hexdigest()
 
 
+def _task037_g2_local_schur_contraction(
+    residual: np.ndarray,
+    post_action: np.ndarray,
+) -> dict[str, float | bool]:
+    residual = np.asarray(residual, dtype=PETSc.ScalarType)
+    post_action = np.asarray(post_action, dtype=PETSc.ScalarType)
+    if residual.shape != post_action.shape:
+        raise ValueError("local residual and Schur action shapes must match")
+    input_norm = float(np.linalg.norm(residual))
+    if input_norm == 0.0:
+        raise ValueError("local Schur contraction requires a nonzero residual")
+    post_norm = float(np.linalg.norm(post_action))
+    return {
+        "input_norm": input_norm,
+        "post_norm": post_norm,
+        "rho": post_norm / input_norm,
+        "finite": bool(
+            np.isfinite(residual).all()
+            and np.isfinite(post_action).all()
+            and np.isfinite(post_norm)
+        ),
+    }
+
+
+def _task037_g2_factor_payload_route(
+    trace_inventory: dict[str, Any],
+    fullspace_inventory: dict[str, Any],
+) -> dict[str, int | float | bool | str]:
+    trace_bytes = int(trace_inventory["retained_payload_lower_bound_bytes"])
+    fullspace_bytes = int(
+        fullspace_inventory["retained_payload_lower_bound_bytes"]
+    )
+    if trace_bytes <= 0:
+        raise ValueError("trace factor retained payload must be positive")
+    reduction_fraction = (trace_bytes - fullspace_bytes) / trace_bytes
+    gate_pass = bool(reduction_fraction >= 0.25)
+    return {
+        "trace_retained_payload_lower_bound_bytes": trace_bytes,
+        "fullspace_retained_payload_lower_bound_bytes": fullspace_bytes,
+        "reduction_fraction": float(reduction_fraction),
+        "gate_pass": gate_pass,
+        "status": (
+            "pass_fullspace_ilu_only_route"
+            if gate_pass
+            else "close_fullspace_ilu_only_route"
+        ),
+    }
+
+
+def _task037_g2_factor_status(
+    payload_route: dict[str, Any],
+    iter20_measurement: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if iter20_measurement is None:
+        return {
+            "status": "missing_iter20",
+            "iter20_gate_pass": False,
+            "missing_iterations": [20],
+        }
+    current_measurement = iter20_measurement["current_trace_ilu"]
+    full_measurement = iter20_measurement["fullspace_ilu"]
+    trace_rhs_measurement = iter20_measurement["trace_rhs"]
+    iter20_gate_pass = bool(
+        trace_rhs_measurement["finite"]
+        and trace_rhs_measurement["trace_rhs_exact"]
+        and current_measurement["finite"]
+        and full_measurement["finite"]
+        and full_measurement["correction_finite"]
+        and full_measurement["deterministic"]
+    )
+    return {
+        "status": (
+            payload_route["status"]
+            if iter20_gate_pass
+            else "close_fullspace_ilu_only_route"
+        ),
+        "iter20_gate_pass": iter20_gate_pass,
+        "missing_iterations": [],
+    }
+
+
 def _solve_static_condensed_fgmres_core(
     request: Stage4ExternalLinearSolverRequest
     | Stage4NeverMaterializedLinearSolverRequest,
@@ -136,6 +220,7 @@ def _solve_static_condensed_fgmres_core(
     | None = None,
     task037_extra_g0_diagnostics: bool = False,
     task037_extra_g2_slab14_identity: bool = False,
+    task037_extra_g2_slab14_factor_inventory: bool = False,
     solver_profile: Literal[
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
@@ -179,6 +264,18 @@ def _solve_static_condensed_fgmres_core(
     ):
         raise ValueError(
             "Task037-extra G2 slab14 identity requires the M3a action-only profile"
+        )
+    if task037_extra_g2_slab14_factor_inventory and not (
+        task037_extra_g2_slab14_identity
+    ):
+        raise ValueError(
+            "Task037-extra G2 slab14 factor inventory requires slab14 identity"
+        )
+    if task037_extra_g2_slab14_factor_inventory and (
+        not action_only or not m3a_profile
+    ):
+        raise ValueError(
+            "Task037-extra G2 slab14 factor inventory requires the M3a action-only profile"
         )
     if task037_extra_g2_slab14_identity and task037_extra_g0_diagnostics:
         raise ValueError(
@@ -280,6 +377,7 @@ def _solve_static_condensed_fgmres_core(
     owned: list[Any] = []
     g0_residual_snapshots: dict[int, PETSc.Vec] = {}
     g2_identity_state: dict[str, Any] | None = None
+    g2_factor_state: dict[str, Any] | None = None
     try:
         if action_only:
             blocks = request.blocks
@@ -681,6 +779,74 @@ def _solve_static_condensed_fgmres_core(
                         "partition_weight_max": smoother_setup["partition_weight_max"],
                     }
                 )
+        if task037_extra_g2_slab14_factor_inventory:
+            from .static_fullspace_slab_factor_oracle import (
+                FullSpaceSlabFactorOracle,
+                assemble_fullspace_slab_matrix,
+            )
+
+            assert g2_identity_state is not None
+            slab = _TASK037_G2_SLAB
+            slab_owner = int(g2_identity_state["owner"])
+            emit_lifecycle(
+                "g2_fullspace_matrix_assembly_started",
+                slab=slab,
+                owner_rank=slab_owner,
+            )
+            fullspace_matrix = None
+            matrix_audit = None
+            if comm.rank == slab_owner:
+                matrix_started = perf_counter()
+                fullspace_matrix, matrix_audit = assemble_fullspace_slab_matrix(
+                    g2_identity_state["cells"],
+                    active_size=int(g2_identity_state["owner_rows_size"]),
+                    trace_shift=g2_identity_state["shift"],
+                )
+                matrix_audit["matrix_assembly_seconds"] = float(
+                    perf_counter() - matrix_started
+                )
+            matrix_audit = comm.bcast(matrix_audit, root=slab_owner)
+            emit_lifecycle(
+                "g2_fullspace_matrix_assembly_ready",
+                slab=slab,
+                owner_rank=slab_owner,
+                full_rows=int(matrix_audit["full_rows"]),
+                matrix_nnz=int(matrix_audit["matrix_nnz"]),
+            )
+            emit_lifecycle(
+                "g2_fullspace_factor_setup_started",
+                slab=slab,
+                owner_rank=slab_owner,
+            )
+            factor_oracle = None
+            setup_inventory = None
+            if comm.rank == slab_owner:
+                assert fullspace_matrix is not None
+                factor_oracle = FullSpaceSlabFactorOracle(
+                    fullspace_matrix,
+                    matrix_audit,
+                    solver="ilu",
+                )
+                owned.append(factor_oracle)
+                setup_inventory = factor_oracle.inventory
+            setup_inventory = comm.bcast(setup_inventory, root=slab_owner)
+            emit_lifecycle(
+                "g2_fullspace_factor_setup_ready",
+                slab=slab,
+                owner_rank=slab_owner,
+                full_rows=int(setup_inventory["full_rows"]),
+                factor_nnz=int(setup_inventory["factor_nnz"]),
+                retained_payload_lower_bound_bytes=int(
+                    setup_inventory["retained_payload_lower_bound_bytes"]
+                ),
+            )
+            g2_factor_state = {
+                "oracle": factor_oracle,
+                "owner": slab_owner,
+                "setup_inventory": setup_inventory,
+                "matrix_audit": matrix_audit,
+                "iter20": None,
+            }
         live_state["slab_factors"] = (
             0 if p2_auxiliary_profile else len(smoother.local_subdomains)
         )
@@ -744,6 +910,7 @@ def _solve_static_condensed_fgmres_core(
                 and int(iteration) == 20
                 and g2_identity_state["audit"]["iter20_real_residual"] is None
             ):
+                owner = int(g2_identity_state["owner"])
                 residual_local, residual_route_audit = (
                     extract_owner_local_slab_vector(
                         residual_work,
@@ -751,9 +918,18 @@ def _solve_static_condensed_fgmres_core(
                         _TASK037_G2_SLAB,
                     )
                 )
+                trace_rhs = None
+                current_trace_correction = None
+                if task037_extra_g2_slab14_factor_inventory:
+                    trace_rhs, current_trace_correction = (
+                        smoother._diagnostic_owner_local_ilu(
+                            residual_work,
+                            _TASK037_G2_SLAB,
+                        )
+                    )
                 residual_measurement = None
                 residual_identity = None
-                owner = int(g2_identity_state["owner"])
+                factor_measurement = None
                 if comm.rank == owner:
                     assert residual_local is not None
                     residual_measurement = measure_fullspace_slab_identity(
@@ -773,11 +949,110 @@ def _solve_static_condensed_fgmres_core(
                             domain="task037.g2.iter20-real-residual.v1",
                         ),
                     }
+                    if task037_extra_g2_slab14_factor_inventory:
+                        assert g2_factor_state is not None
+                        assert trace_rhs is not None
+                        assert current_trace_correction is not None
+                        factor_oracle = g2_factor_state["oracle"]
+                        assert factor_oracle is not None
+                        trace_rhs_difference = trace_rhs - residual_local
+                        trace_rhs_relative_error = float(
+                            np.linalg.norm(trace_rhs_difference)
+                            / np.linalg.norm(residual_local)
+                        )
+                        current_action = apply_fullspace_slab_schur_action(
+                            g2_identity_state["cells"],
+                            current_trace_correction,
+                            active_size=int(g2_identity_state["owner_rows_size"]),
+                            trace_shift=g2_identity_state["shift"],
+                        )
+                        full_first = factor_oracle.apply_trace_rhs(residual_local)
+                        full_second = factor_oracle.apply_trace_rhs(residual_local)
+                        full_action = apply_fullspace_slab_schur_action(
+                            g2_identity_state["cells"],
+                            full_first,
+                            active_size=int(g2_identity_state["owner_rows_size"]),
+                            trace_shift=g2_identity_state["shift"],
+                        )
+                        current_contraction = _task037_g2_local_schur_contraction(
+                            residual_local,
+                            residual_local - current_action,
+                        )
+                        full_contraction = _task037_g2_local_schur_contraction(
+                            residual_local,
+                            residual_local - full_action,
+                        )
+                        factor_measurement = {
+                            "trace_rhs": {
+                                "owner_row_count": int(trace_rhs.size),
+                                "norm2": float(np.linalg.norm(trace_rhs)),
+                                "finite": bool(np.isfinite(trace_rhs).all()),
+                                "sha256": _task037_g2_owner_vector_sha256(
+                                    g2_identity_state["owner_rows"],
+                                    trace_rhs,
+                                    domain="task037.g2.iter20-factor-trace-rhs.v1",
+                                ),
+                                "trace_rhs_vs_extracted_relative_error": (
+                                    trace_rhs_relative_error
+                                ),
+                                "trace_rhs_exact": bool(
+                                    np.array_equal(trace_rhs, residual_local)
+                                ),
+                            },
+                            "current_trace_ilu": {
+                                **current_contraction,
+                                "correction_norm2": float(
+                                    np.linalg.norm(current_trace_correction)
+                                ),
+                                "correction_sha256": _task037_g2_owner_vector_sha256(
+                                    g2_identity_state["owner_rows"],
+                                    current_trace_correction,
+                                    domain="task037.g2.iter20-current-trace-ilu-correction.v1",
+                                ),
+                            },
+                            "fullspace_ilu": {
+                                **full_contraction,
+                                "correction_norm2": float(np.linalg.norm(full_first)),
+                                "correction_sha256": _task037_g2_owner_vector_sha256(
+                                    g2_identity_state["owner_rows"],
+                                    full_first,
+                                    domain="task037.g2.iter20-fullspace-ilu-correction.v1",
+                                ),
+                                "deterministic": bool(
+                                    np.array_equal(full_first, full_second)
+                                ),
+                                "correction_finite": bool(
+                                    np.isfinite(full_first).all()
+                                    and np.isfinite(full_second).all()
+                                ),
+                                "apply_count": 2,
+                                "apply_seconds": float(
+                                    factor_oracle.inventory["apply_seconds"]
+                                ),
+                            },
+                            "contraction_comparison": {
+                                "full_minus_trace_rho": float(
+                                    full_contraction["rho"]
+                                    - current_contraction["rho"]
+                                ),
+                                "full_to_trace_rho_ratio": float(
+                                    full_contraction["rho"]
+                                    / current_contraction["rho"]
+                                ),
+                            },
+                        }
                 residual_measurement = comm.bcast(
                     residual_measurement,
                     root=owner,
                 )
                 residual_identity = comm.bcast(residual_identity, root=owner)
+                if task037_extra_g2_slab14_factor_inventory:
+                    factor_measurement = comm.bcast(
+                        factor_measurement,
+                        root=owner,
+                    )
+                    assert g2_factor_state is not None
+                    g2_factor_state["iter20"] = factor_measurement
                 residual_audit = {
                     "iteration": 20,
                     "true_relative_residual": float(true_value),
@@ -799,6 +1074,8 @@ def _solve_static_condensed_fgmres_core(
                         <= _TASK037_G2_IDENTITY_TOLERANCE
                     ),
                 }
+                if task037_extra_g2_slab14_factor_inventory:
+                    residual_audit["factor_measurement"] = factor_measurement
                 g2_identity_state["audit"]["iter20_real_residual"] = (
                     residual_audit
                 )
@@ -987,6 +1264,49 @@ def _solve_static_condensed_fgmres_core(
                     "COMM_SELF factor_only ILU(0)",
                 ],
             }
+        g2_factor_audit = None
+        if task037_extra_g2_slab14_factor_inventory:
+            assert g2_factor_state is not None
+            slab_owner = int(g2_factor_state["owner"])
+            fullspace_inventory = comm.bcast(
+                (
+                    g2_factor_state["oracle"].inventory
+                    if comm.rank == slab_owner
+                    else None
+                ),
+                root=slab_owner,
+            )
+            trace_inventory = comm.bcast(
+                (
+                    smoother._diagnostic_owner_local_factor_inventory(
+                        _TASK037_G2_SLAB
+                    )
+                    if comm.rank == slab_owner
+                    else None
+                ),
+                root=slab_owner,
+            )
+            payload_route = _task037_g2_factor_payload_route(
+                trace_inventory,
+                fullspace_inventory,
+            )
+            iter20_factor_measurement = g2_factor_state["iter20"]
+            factor_status = _task037_g2_factor_status(
+                payload_route,
+                iter20_factor_measurement,
+            )
+            g2_factor_audit = {
+                "primary_slab": _TASK037_G2_SLAB,
+                "global_A_materialized": False,
+                "global_F_materialized": False,
+                "official_result_unaffected": True,
+                "matrix_audit": dict(g2_factor_state["matrix_audit"]),
+                "fullspace_factor_inventory": fullspace_inventory,
+                "current_trace_factor_inventory": trace_inventory,
+                "retained_payload_route": payload_route,
+                "iter20": iter20_factor_measurement,
+                **factor_status,
+            }
         candidate = {
             "outer_ksp": str(ksp.getType()),
             "pc_side": "right",
@@ -1083,6 +1403,8 @@ def _solve_static_condensed_fgmres_core(
             audit["task037_extra_g2_slab14_identity"] = dict(
                 g2_identity_state["audit"]
             )
+        if g2_factor_audit is not None:
+            audit["task037_extra_g2_slab14_factor_inventory"] = g2_factor_audit
         if p2_auxiliary_profile:
             audit["p2_auxiliary_audit"] = p2_auxiliary_audit
         if task037_extra_g0_diagnostics:
@@ -1261,6 +1583,7 @@ def solve_never_materialized_overlap0125_partition_fgmres(
     | None = None,
     task037_extra_g0_diagnostics: bool = False,
     task037_extra_g2_slab14_identity: bool = False,
+    task037_extra_g2_slab14_factor_inventory: bool = False,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the opt-in overlap-0.125 partition-weighted slab profile."""
@@ -1272,6 +1595,9 @@ def solve_never_materialized_overlap0125_partition_fgmres(
         residual_snapshot_observer=residual_snapshot_observer,
         task037_extra_g0_diagnostics=task037_extra_g0_diagnostics,
         task037_extra_g2_slab14_identity=task037_extra_g2_slab14_identity,
+        task037_extra_g2_slab14_factor_inventory=(
+            task037_extra_g2_slab14_factor_inventory
+        ),
         solver_profile="never_materialized_owner_local_overlap0125_partition",
         lifecycle_observer=lifecycle_observer,
     )

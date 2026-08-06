@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 from petsc4py import PETSc
 
+from src.solvers import static_condensed_iterative as core
 from src.solvers.static_fullspace_slab_factor_oracle import (
     FullSpaceSlabFactorOracle,
     assemble_fullspace_slab_matrix,
@@ -10,6 +12,7 @@ from src.solvers.static_fullspace_slab_factor_oracle import (
 from src.solvers.static_fullspace_slab_oracle import (
     FullSpaceSlabBlockRecord,
     FullSpaceSlabCellRecord,
+    apply_fullspace_slab_schur_action,
 )
 
 
@@ -249,3 +252,93 @@ def test_exact_lu_trace_correction_matches_independent_schur_and_ilu_inventory()
     finally:
         ilu.destroy()
         ilu.destroy()
+
+
+def test_shifted_schur_contractions_payload_route_and_missing_iter20():
+    cells = _make_cells()
+    shift = np.asarray([0.07j, -0.03 + 0.02j, 0.04, -0.02j])
+    residual = np.asarray(
+        [0.8 + 0.1j, -0.3 + 0.6j, 0.2 - 0.4j, 0.5 + 0.2j]
+    )
+    current_correction = 0.25 * residual
+    fullspace_correction = 0.4 * residual
+    current_action = apply_fullspace_slab_schur_action(
+        cells,
+        current_correction,
+        active_size=4,
+        trace_shift=shift,
+    )
+    fullspace_action = apply_fullspace_slab_schur_action(
+        cells,
+        fullspace_correction,
+        active_size=4,
+        trace_shift=shift,
+    )
+    current_measurement = core._task037_g2_local_schur_contraction(
+        residual,
+        residual - current_action,
+    )
+    fullspace_measurement = core._task037_g2_local_schur_contraction(
+        residual,
+        residual - fullspace_action,
+    )
+    assert current_measurement["finite"] is True
+    assert fullspace_measurement["finite"] is True
+    assert current_measurement["input_norm"] == fullspace_measurement["input_norm"]
+    assert np.isfinite(current_measurement["rho"])
+    assert np.isfinite(fullspace_measurement["rho"])
+
+    passing_route = core._task037_g2_factor_payload_route(
+        {"retained_payload_lower_bound_bytes": 1000},
+        {"retained_payload_lower_bound_bytes": 750},
+    )
+    assert passing_route["gate_pass"] is True
+    assert passing_route["status"] == "pass_fullspace_ilu_only_route"
+    closing_route = core._task037_g2_factor_payload_route(
+        {"retained_payload_lower_bound_bytes": 1000},
+        {"retained_payload_lower_bound_bytes": 751},
+    )
+    assert closing_route["gate_pass"] is False
+    assert closing_route["status"] == "close_fullspace_ilu_only_route"
+    factor_measurement = {
+        "trace_rhs": {"finite": True, "trace_rhs_exact": True},
+        "current_trace_ilu": {"finite": True},
+        "fullspace_ilu": {
+            "finite": True,
+            "correction_finite": True,
+            "deterministic": True,
+        },
+    }
+    assert core._task037_g2_factor_status(
+        passing_route,
+        factor_measurement,
+    )["status"] == "pass_fullspace_ilu_only_route"
+    factor_measurement["fullspace_ilu"]["correction_finite"] = False
+    assert core._task037_g2_factor_status(
+        passing_route,
+        factor_measurement,
+    )["status"] == "close_fullspace_ilu_only_route"
+    missing = core._task037_g2_factor_status(passing_route, None)
+    assert missing == {
+        "status": "missing_iter20",
+        "iter20_gate_pass": False,
+        "missing_iterations": [20],
+    }
+
+
+def test_factor_inventory_flag_requires_g2_identity_and_m3a_profile():
+    with pytest.raises(ValueError, match="requires slab14 identity"):
+        core._solve_static_condensed_fgmres_core(
+            object(),
+            screen_iterations=20,
+            task037_extra_g2_slab14_factor_inventory=True,
+            solver_profile="assembled",
+        )
+    with pytest.raises(ValueError, match="requires the M3a action-only profile"):
+        core._solve_static_condensed_fgmres_core(
+            object(),
+            screen_iterations=20,
+            task037_extra_g2_slab14_identity=True,
+            task037_extra_g2_slab14_factor_inventory=True,
+            solver_profile="assembled",
+        )
