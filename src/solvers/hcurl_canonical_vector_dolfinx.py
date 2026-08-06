@@ -9,6 +9,7 @@ standard physical norm audit are opt-in offline comparator operations.
 from __future__ import annotations
 
 from collections.abc import Iterable
+import hashlib
 from typing import Any
 
 import numpy as np
@@ -39,6 +40,7 @@ from .hcurl_canonical_vector import (
 __all__ = (
     "extract_canonical_active_trace_packets",
     "extract_canonical_full_fe_packets",
+    "reconstruct_canonical_active_trace_vector",
     "reconstruct_canonical_full_fe_function",
     "compare_hcurl_fields",
 )
@@ -66,6 +68,15 @@ def _space_data(function_space) -> tuple[int, np.ndarray, np.ndarray]:
         trace_positions,
         np.asarray(element.entity_dofs[3][0], dtype=np.int32),
     )
+
+
+def _resolve_geometry_tolerance(function_space, geometry_tolerance) -> float:
+    if geometry_tolerance is None:
+        return float(mesh_coordinate_tolerance(function_space.mesh))
+    tolerance = float(geometry_tolerance)
+    if not np.isfinite(tolerance) or tolerance <= 0.0:
+        raise ValueError("geometry_tolerance must be finite and strictly positive")
+    return tolerance
 
 
 def _global_dofs(function_space, local_dofs: np.ndarray) -> np.ndarray:
@@ -279,6 +290,8 @@ def extract_canonical_active_trace_packets(
     function_space,
     floquet_data,
     active_vec: PETSc.Vec,
+    *,
+    geometry_tolerance: float | None = None,
 ) -> tuple[tuple[CanonicalPacket, ...], dict[str, Any]]:
     """Expand active trace rows and emit one owner-local packet per edge/face."""
 
@@ -287,7 +300,7 @@ def extract_canonical_active_trace_packets(
     if int(active_vec.getSize()) != int(constraints.active_rows):
         raise ValueError("active vector size does not match trace constraints")
     topology, _cell_info, _owned = _topology_data(function_space)
-    tolerance = mesh_coordinate_tolerance(function_space.mesh)
+    tolerance = _resolve_geometry_tolerance(function_space, geometry_tolerance)
     relations = _floquet_relations(floquet_data)
     cell_to_entity = {
         dimension: topology.connectivity(topology.dim, dimension)
@@ -365,12 +378,14 @@ def extract_canonical_full_fe_packets(
     function_space,
     recovered_vec,
     floquet_data,
+    *,
+    geometry_tolerance: float | None = None,
 ) -> tuple[tuple[CanonicalPacket, ...], dict[str, Any]]:
     """Emit owner-local edge/face and cell-interior packets from a full field."""
 
     degree, _trace_positions, interior_positions = _space_data(function_space)
     topology, cell_info, owned_cells = _topology_data(function_space)
-    tolerance = mesh_coordinate_tolerance(function_space.mesh)
+    tolerance = _resolve_geometry_tolerance(function_space, geometry_tolerance)
     relations = _floquet_relations(floquet_data)
     vector = (
         recovered_vec
@@ -490,6 +505,23 @@ def _canonical_packet_map(
     return packet_map
 
 
+def _canonical_active_packet_map(
+    packets: Iterable[CanonicalPacket],
+) -> tuple[dict[CanonicalKey, complex], int]:
+    packet_map: dict[CanonicalKey, complex] = {}
+    packet_count = 0
+    for key, value in packets:
+        packet_count += 1
+        if key[0] != "active_trace":
+            raise ValueError(
+                "active-trace reconstruction requires active_trace packets"
+            )
+        if key in packet_map:
+            raise ValueError(f"duplicate canonical active-trace key: {key!r}")
+        packet_map[key] = canonical_packet(key, value)[1]
+    return packet_map, packet_count
+
+
 def _owned_global_to_local(function_space) -> dict[int, int]:
     index_map = function_space.dofmap.index_map
     local = np.arange(int(index_map.size_local), dtype=np.int32)
@@ -519,10 +551,222 @@ def _fresh_entity_inverse(
     return physical_key, None, 1.0 + 0.0j, transform, physical_state
 
 
+def reconstruct_canonical_active_trace_vector(
+    condensed: AssemblyTimeCondensedSystem,
+    function_space,
+    floquet_data,
+    packets: Iterable[CanonicalPacket],
+    *,
+    geometry_tolerance: float | None = None,
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Rebuild one complete replicated single-column active trace packet tuple.
+
+    The packet values are field trace coefficients, not condensed loads.  Only
+    independently owned original trace rows are inserted into the fresh active
+    vector; slave rows are represented by the existing constraint expansion.
+    Each rank must pass the complete packet tuple for this one column.  The
+    tuple is temporarily replicated for the inverse, while each rank consumes
+    only its local expected entity keys and writes only owned active rows.
+    """
+
+    degree, _trace_positions, _interior_positions = _space_data(function_space)
+    comm = function_space.mesh.comm
+    packet_error: str | None = None
+    try:
+        packet_map, packet_count = _canonical_active_packet_map(packets)
+    except Exception as exc:
+        packet_map, packet_count = {}, 0
+        packet_error = f"{type(exc).__name__}: {exc}"
+    packet_errors = comm.allgather(packet_error)
+    first_packet_error = next(
+        (error for error in packet_errors if error is not None), None
+    )
+    if first_packet_error is not None:
+        raise ValueError(
+            f"replicated active packet validation failed collectively: "
+            f"{first_packet_error}"
+        )
+    input_packet_digest = hashlib.sha256()
+    ordered_packets = sorted(
+        packet_map.items(),
+        key=lambda item: (repr(item[0]), float(item[1].real), float(item[1].imag)),
+    )
+    for key, value in ordered_packets:
+        input_packet_digest.update(repr(key).encode("utf-8"))
+        input_packet_digest.update(b"\0")
+        input_packet_digest.update(
+            f"{float(value.real).hex()},{float(value.imag).hex()}".encode("ascii")
+        )
+        input_packet_digest.update(b"\0")
+    input_packet_digest = input_packet_digest.hexdigest()
+    replicated_digests = comm.allgather(input_packet_digest)
+    if any(digest != input_packet_digest for digest in replicated_digests):
+        raise ValueError(
+            "replicated active packet tuples have inconsistent keys or values"
+        )
+    topology, _cell_info, _owned = _topology_data(function_space)
+    tolerance = _resolve_geometry_tolerance(function_space, geometry_tolerance)
+    relations = _floquet_relations(floquet_data)
+    constraints = condensed.trace_constraints
+    layout = function_space.dofmap.dof_layout
+    owned_original = {int(value) for value in constraints.owned_active_original_dofs}
+    expected_local_keys: set[CanonicalKey] = set()
+    written_active_rows: set[int] = set()
+    active = condensed.create_active_vector()
+    active.set(PETSc.ScalarType(0.0))
+    try:
+        for dimension in (1, 2):
+            cell_to_entity = topology.connectivity(topology.dim, dimension)
+            for entity, cell in _owned_entity_incidents(function_space, dimension):
+                local_entity = int(
+                    np.flatnonzero(
+                        np.asarray(cell_to_entity.links(cell), dtype=np.int32)
+                        == int(entity)
+                    )[0]
+                )
+                positions = np.asarray(
+                    layout.entity_dofs(dimension, local_entity), dtype=np.int32
+                )
+                physical_key, master_key, phase, transform, state = (
+                    _fresh_entity_inverse(
+                        function_space,
+                        dimension,
+                        entity,
+                        degree,
+                        tolerance,
+                        relations,
+                    )
+                )
+                keys = tuple(
+                    canonical_key(
+                        role="active_trace",
+                        entity_dimension=dimension,
+                        physical_entity=physical_key,
+                        entity_local_basis_index=basis,
+                        orientation_state=state,
+                        floquet_master=master_key,
+                        floquet_coefficient=phase,
+                    )
+                    for basis in range(len(positions))
+                )
+                expected_local_keys.update(keys)
+                if any(key not in packet_map for key in keys):
+                    raise ValueError("missing canonical active-trace entity block")
+                canonical_values = np.asarray(
+                    [packet_map[key] for key in keys], dtype=np.complex128
+                )
+                if transform.shape != (len(positions), len(positions)):
+                    raise ValueError(
+                        "canonical entity transform has an unexpected shape"
+                    )
+                stored_values = phase * (transform @ canonical_values)
+                global_dofs = _global_dofs(
+                    function_space,
+                    np.asarray(function_space.dofmap.cell_dofs(cell))[positions],
+                )
+                for original, stored_value in zip(
+                    global_dofs, stored_values, strict=True
+                ):
+                    original = int(original)
+                    if original not in owned_original:
+                        continue
+                    active_id = constraints.original_to_active.get(original)
+                    if active_id is None:
+                        raise RuntimeError(
+                            "owned active original row has no active-trace mapping"
+                        )
+                    active_id = int(active_id)
+                    if active_id in written_active_rows:
+                        raise RuntimeError(
+                            f"active row {active_id} was written more than once"
+                        )
+                    active.setValue(active_id, PETSc.ScalarType(stored_value))
+                    written_active_rows.add(active_id)
+
+        missing_keys = expected_local_keys.difference(packet_map)
+        expected_active_rows = {
+            int(constraints.original_to_active[original])
+            for original in owned_original
+            if original in constraints.original_to_active
+        }
+        missing_active_rows = expected_active_rows.difference(written_active_rows)
+        extra_active_rows = written_active_rows.difference(expected_active_rows)
+        if missing_keys or missing_active_rows or extra_active_rows:
+            raise ValueError(
+                "replicated active-trace reconstruction coverage failed: "
+                f"missing_keys={len(missing_keys)}, "
+                f"missing_active_rows={len(missing_active_rows)}, "
+                f"extra_active_rows={len(extra_active_rows)}"
+            )
+        active.assemble()
+        global_expected_keys = tuple(
+            key
+            for rank_keys in comm.allgather(tuple(expected_local_keys))
+            for key in rank_keys
+        )
+        global_expected_unique = set(global_expected_keys)
+        global_input_unique = set(packet_map)
+        global_duplicate_count = packet_count - len(global_input_unique)
+        global_expected_duplicate_count = len(global_expected_keys) - len(
+            global_expected_unique
+        )
+        global_missing_keys = global_expected_unique.difference(global_input_unique)
+        global_extra_keys = global_input_unique.difference(global_expected_unique)
+        if (
+            global_duplicate_count
+            or global_expected_duplicate_count
+            or global_missing_keys
+            or global_extra_keys
+        ):
+            raise ValueError(
+                "global replicated active packet coverage failed: "
+                f"duplicate_keys={global_duplicate_count}, "
+                f"expected_duplicate_keys={global_expected_duplicate_count}, "
+                f"missing_keys={len(global_missing_keys)}, "
+                f"extra_keys={len(global_extra_keys)}"
+            )
+        audit = {
+            "role": "active_trace_reconstruction",
+            "owner_local_packets": False,
+            "replicated_complete_packet_column": True,
+            "replicated_key_set_consistent": True,
+            "geometry_tolerance": tolerance,
+            "input_packet_count": int(packet_count),
+            "input_duplicate_count": int(packet_count - len(packet_map)),
+            "expected_packet_count": int(len(expected_local_keys)),
+            "missing_key_count": int(len(missing_keys)),
+            "extra_key_count": int(len(global_extra_keys)),
+            "global_input_packet_count": int(len(global_input_unique)),
+            "global_expected_packet_count": int(len(global_expected_keys)),
+            "global_duplicate_key_count": int(global_duplicate_count),
+            "global_expected_duplicate_key_count": int(global_expected_duplicate_count),
+            "global_missing_key_count": int(len(global_missing_keys)),
+            "global_extra_key_count": int(len(global_extra_keys)),
+            "owned_active_rows_expected": int(len(expected_active_rows)),
+            "owned_active_rows_written": int(len(written_active_rows)),
+            "active_row_write_duplicate_count": 0,
+            "missing_active_row_count": int(len(missing_active_rows)),
+            "extra_active_row_count": int(len(extra_active_rows)),
+            "global_owned_active_rows_expected": int(
+                comm.allreduce(len(expected_active_rows), op=MPI.SUM)
+            ),
+            "global_owned_active_rows_written": int(
+                comm.allreduce(len(written_active_rows), op=MPI.SUM)
+            ),
+            "roundtrip_ready": True,
+        }
+        return active, audit
+    except Exception:
+        active.destroy()
+        raise
+
+
 def reconstruct_canonical_full_fe_function(
     function_space,
     packets: Iterable[CanonicalPacket],
     floquet_data,
+    *,
+    geometry_tolerance: float | None = None,
 ):
     """Rebuild a fresh H(curl) Function from reversible full-FE packets.
 
@@ -535,7 +779,7 @@ def reconstruct_canonical_full_fe_function(
     degree, _trace_positions, interior_positions = _space_data(function_space)
     packet_map = _canonical_packet_map(packets)
     topology, cell_info, owned_cells = _topology_data(function_space)
-    tolerance = mesh_coordinate_tolerance(function_space.mesh)
+    tolerance = _resolve_geometry_tolerance(function_space, geometry_tolerance)
     relations = _floquet_relations(floquet_data)
     layout = function_space.dofmap.dof_layout
     global_to_local = _owned_global_to_local(function_space)

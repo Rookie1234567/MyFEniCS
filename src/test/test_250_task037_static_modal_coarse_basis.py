@@ -1,13 +1,29 @@
 import numpy as np
 import pytest
+import ufl
+from basix.ufl import element, mixed_element
+from dolfinx import default_real_type, fem, mesh
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from src.coupling.hybrid_internal_modes import _DistributedTwoDimensionalEvaluator
+from src.geometry.tetra_mesh_audit import mesh_coordinate_tolerance
+from src.modes.stable_propagation import (
+    DirectionalPropagationBlock,
+    TwoSidedPropagation,
+)
+from src.solvers.hcurl_assembly_time_condensation import (
+    build_unconstrained_assembly_time_condensation,
+)
 from src.solvers.static_modal_coarse_basis import (
     OwnerLocalBasis,
     audit_owner_local_action_space,
+    build_middle_modal_active_column,
     normalize_owner_local_columns,
     solve_homogeneous_prescribed_interface,
+)
+from src.solvers.hcurl_canonical_vector_dolfinx import (
+    extract_canonical_active_trace_packets,
 )
 
 
@@ -260,3 +276,259 @@ def test_comm_world_owner_local_collective_semantics():
         operator.destroy()
         normalized.destroy()
         basis.destroy()
+
+
+def _middle_modal_fixture():
+    target_mesh = mesh.create_unit_cube(
+        MPI.COMM_SELF,
+        1,
+        1,
+        4,
+        cell_type=mesh.CellType.hexahedron,
+    )
+    tdim = target_mesh.topology.dim
+    owned_cells = int(target_mesh.topology.index_map(tdim).size_local)
+    cell_tags = mesh.meshtags(
+        target_mesh,
+        tdim,
+        np.arange(owned_cells, dtype=np.int32),
+        np.ones(owned_cells, dtype=np.int32),
+    )
+    target_space = fem.functionspace(
+        target_mesh,
+        element(
+            "N1curl",
+            target_mesh.basix_cell(),
+            2,
+            dtype=default_real_type,
+        ),
+    )
+    u = ufl.TrialFunction(target_space)
+    v = ufl.TestFunction(target_space)
+    dx = ufl.Measure("dx", domain=target_mesh, subdomain_data=cell_tags)
+    compiled = fem.form(
+        (
+            ufl.inner(ufl.curl(u), ufl.curl(v))
+            + PETSc.ScalarType(2.0 - 0.1j) * ufl.inner(u, v)
+        )
+        * dx(1)
+    )
+    condensed = build_unconstrained_assembly_time_condensation(
+        compiled,
+        target_space,
+        cell_tags,
+        retain_local_schur_for_matrix_free=True,
+    )
+    source_mesh = mesh.create_unit_square(
+        MPI.COMM_SELF,
+        2,
+        2,
+        cell_type=mesh.CellType.quadrilateral,
+    )
+    mixed_space = fem.functionspace(
+        source_mesh,
+        mixed_element(
+            [
+                element(
+                    "N1curl",
+                    source_mesh.basix_cell(),
+                    1,
+                    dtype=default_real_type,
+                ),
+                element(
+                    "Lagrange",
+                    source_mesh.basix_cell(),
+                    1,
+                    dtype=default_real_type,
+                ),
+            ]
+        ),
+    )
+    transverse_space, transverse_to_mixed = mixed_space.sub(0).collapse()
+    longitudinal_space, longitudinal_to_mixed = mixed_space.sub(1).collapse()
+    transverse = fem.Function(transverse_space)
+    transverse.interpolate(
+        lambda x: np.vstack(
+            (
+                1.0 + 0.0 * x[0],
+                2.0 + 0.0 * x[0],
+            )
+        )
+    )
+    longitudinal = fem.Function(longitudinal_space)
+    longitudinal.interpolate(lambda x: 3.0 + 0.0 * x[0])
+    source = fem.Function(mixed_space)
+    source.x.array[np.asarray(transverse_to_mixed, dtype=np.int32)] = transverse.x.array
+    source.x.array[np.asarray(longitudinal_to_mixed, dtype=np.int32)] = (
+        longitudinal.x.array
+    )
+    source.x.scatter_forward()
+    evaluator = _DistributedTwoDimensionalEvaluator(
+        source,
+        padding=1.0e-12,
+        components=(transverse, longitudinal),
+    )
+    evaluator.set_source(source, components=(transverse, longitudinal))
+    length = 0.5
+    effective_beta = 2.0 + 0.25j
+
+    def make_propagation(beta: complex) -> TwoSidedPropagation:
+        def make_block(direction: str) -> DirectionalPropagationBlock:
+            travel_factor = (
+                np.exp(1j * beta * length)
+                if direction == "forward"
+                else np.exp(-1j * beta * length)
+            )
+            return DirectionalPropagationBlock(
+                direction=direction,
+                length_nm=length,
+                source_indices=(0,),
+                beta_per_nm=(17.0 + 0.5j,),
+                effective_beta_per_nm=(beta,),
+                propagation_model="continuous_beta",
+                factors=(complex(travel_factor),),
+                log_magnitudes=(float(np.log(abs(travel_factor))),),
+                phase_advances_rad=(float(np.angle(travel_factor)),),
+                phase_corrections_rad=(0.0,),
+                log_magnitude_corrections=(0.0,),
+                roundoff_growth_clipped=(False,),
+            )
+
+        return TwoSidedPropagation(
+            length_nm=length,
+            forward=make_block("forward"),
+            backward=make_block("backward"),
+        )
+
+    propagation = make_propagation(effective_beta)
+    reference_propagation = make_propagation(0.0 + 0.0j)
+    return (
+        target_space,
+        condensed,
+        evaluator,
+        source,
+        propagation,
+        reference_propagation,
+        effective_beta,
+    )
+
+
+def test_middle_modal_column_uses_pointwise_effective_beta_and_zero_endcaps():
+    (
+        target_space,
+        condensed,
+        evaluator,
+        _source,
+        propagation,
+        reference_propagation,
+        effective_beta,
+    ) = _middle_modal_fixture()
+    bottom = 1.0 / 4.0
+    top = 3.0 / 4.0
+    tolerance = mesh_coordinate_tolerance(target_space.mesh)
+    try:
+        for direction in ("forward", "backward"):
+            active, audit = build_middle_modal_active_column(
+                condensed,
+                target_space,
+                None,
+                evaluator,
+                propagation,
+                mode_index=0,
+                direction=direction,
+                bottom_z_nm=bottom,
+                top_z_nm=top,
+                research_opt_in=True,
+            )
+            reference, reference_audit = build_middle_modal_active_column(
+                condensed,
+                target_space,
+                None,
+                evaluator,
+                reference_propagation,
+                mode_index=0,
+                direction=direction,
+                bottom_z_nm=bottom,
+                top_z_nm=top,
+                research_opt_in=True,
+            )
+            repeat, repeat_audit = build_middle_modal_active_column(
+                condensed,
+                target_space,
+                None,
+                evaluator,
+                propagation,
+                mode_index=0,
+                direction=direction,
+                bottom_z_nm=bottom,
+                top_z_nm=top,
+                research_opt_in=True,
+            )
+            difference = active.copy()
+            difference.axpy(PETSc.ScalarType(-1.0), repeat)
+            repeat_error = difference.norm() / max(active.norm(), 1.0e-30)
+            assert repeat_error <= 1.0e-12
+            assert repeat_audit["global_nonzero_active_rows"] > 0
+            assert audit["global_nonzero_active_rows"] > 0
+            assert reference_audit["global_nonzero_active_rows"] > 0
+            assert (
+                audit["owned_active_rows_expected"]
+                == audit["owned_active_rows_written"]
+            )
+            observed_packets, _observed_audit = extract_canonical_active_trace_packets(
+                condensed,
+                target_space,
+                None,
+                active,
+            )
+            reference_packets, _reference_packet_audit = (
+                extract_canonical_active_trace_packets(
+                    condensed,
+                    target_space,
+                    None,
+                    reference,
+                )
+            )
+            observed_by_key = dict(observed_packets)
+            reference_by_key = dict(reference_packets)
+            for plane in (bottom, 0.5, top):
+                plane_key = int(round(plane / tolerance))
+                candidates = [
+                    key
+                    for key, value in reference_packets
+                    if abs(value) > 1.0e-12
+                    and all(abs(point[2] - plane_key) <= 10 for point in key[2])
+                ]
+                assert candidates, f"no nonzero reference packet on z={plane}"
+                reference_z = bottom if direction == "forward" else top
+                expected_ratio = np.exp(1j * effective_beta * (plane - reference_z))
+                for key in candidates:
+                    assert key in observed_by_key
+                    assert key in reference_by_key
+                    ratio = observed_by_key[key] / reference_by_key[key]
+                    assert abs(ratio - expected_ratio) <= 1.0e-11
+
+            bottom_key = int(round(bottom / tolerance))
+            top_key = int(round(top / tolerance))
+            endcap_values = [
+                abs(value)
+                for key, value in observed_packets
+                if (
+                    (
+                        max(point[2] for point in key[2]) <= bottom_key + 10
+                        and min(point[2] for point in key[2]) < bottom_key - 10
+                    )
+                    or (
+                        min(point[2] for point in key[2]) >= top_key - 10
+                        and max(point[2] for point in key[2]) > top_key + 10
+                    )
+                )
+            ]
+            assert endcap_values
+            assert max(endcap_values) <= 1.0e-12
+            difference.destroy()
+            repeat.destroy()
+            reference.destroy()
+            active.destroy()
+    finally:
+        condensed.destroy()

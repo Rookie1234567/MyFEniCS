@@ -117,10 +117,41 @@ class HybridInternalModeCoupling:
 class _DistributedTwoDimensionalEvaluator:
     """Evaluate a distributed 2D field through the matched structured grid."""
 
-    def __init__(self, source: fem.Function, *, padding: float) -> None:
-        if tuple(source.function_space.element.value_shape) != (2,):
-            raise ValueError("The lifted cross-section field must have two components.")
+    def __init__(
+        self,
+        source: fem.Function,
+        *,
+        padding: float,
+        components: tuple[fem.Function, fem.Function] | None = None,
+    ) -> None:
+        self._components = components
+        if components is not None:
+            if len(components) != 2:
+                raise ValueError(
+                    "mixed modal components must be transverse/longitudinal"
+                )
+            transverse_shape = tuple(components[0].function_space.element.value_shape)
+            longitudinal_shape = tuple(components[1].function_space.element.value_shape)
+            if transverse_shape != (2,) or longitudinal_shape not in {(), (1,)}:
+                raise ValueError("mixed modal components must have 2+1 values")
+            if any(
+                source.function_space.mesh is not component.function_space.mesh
+                for component in components
+            ):
+                raise ValueError("mixed modal components must share the source mesh")
+            value_size = 3
+        else:
+            try:
+                shape = tuple(source.function_space.element.value_shape)
+            except RuntimeError as exc:
+                raise ValueError(
+                    "mixed modal sources require transverse/longitudinal components"
+                ) from exc
+            if len(shape) > 1 or (shape and int(shape[0]) < 1):
+                raise ValueError("The lifted cross-section field must be flat-valued.")
+            value_size = int(shape[0]) if shape else 1
         self.source = source
+        self.value_size = value_size
         self.padding = float(padding)
         self.local_query_points = 0
         self.local_source_evaluations = 0
@@ -187,11 +218,35 @@ class _DistributedTwoDimensionalEvaluator:
             self._axis_cell(y, self.y_values),
         )
 
-    def set_source(self, source: fem.Function) -> None:
+    def set_source(
+        self,
+        source: fem.Function,
+        *,
+        components: tuple[fem.Function, fem.Function] | None = None,
+    ) -> None:
         if source.function_space.mesh is not self.source.function_space.mesh:
             raise ValueError("A cached interface evaluator cannot change source mesh.")
-        if tuple(source.function_space.element.value_shape) != (2,):
-            raise ValueError("The lifted cross-section field must have two components.")
+        if self._components is not None:
+            if components is None:
+                raise ValueError("mixed modal components are required for set_source")
+            transverse_shape = tuple(components[0].function_space.element.value_shape)
+            longitudinal_shape = tuple(components[1].function_space.element.value_shape)
+            if transverse_shape != (2,) or longitudinal_shape not in {(), (1,)}:
+                raise ValueError("mixed modal components must have 2+1 values")
+            if any(
+                source.function_space.mesh is not component.function_space.mesh
+                for component in components
+            ):
+                raise ValueError("mixed modal components must share the source mesh")
+            self._components = components
+            value_size = 3
+        else:
+            shape = tuple(source.function_space.element.value_shape)
+            value_size = int(shape[0]) if shape else 1
+            if len(shape) > 1:
+                raise ValueError("A cached interface evaluator requires flat values.")
+        if value_size != self.value_size:
+            raise ValueError("A cached interface evaluator requires one value size.")
         self.source = source
 
     def evaluate_points(
@@ -272,30 +327,44 @@ class _DistributedTwoDimensionalEvaluator:
                 destinations.append((requester, int(index)))
         dest_points = np.asarray(dest_points_list, dtype=np.float64).reshape(-1, 3)
         dest_cells = np.asarray(dest_cells_list, dtype=np.int32)
-        values = (
-            np.asarray(
-                self.source.eval(dest_points, dest_cells),
-                dtype=PETSc.ScalarType,
-            ).reshape(len(dest_points), 2)
-            if len(dest_points)
-            else np.empty((0, 2), dtype=PETSc.ScalarType)
-        )
+        if len(dest_points):
+            if self._components is None:
+                values = np.asarray(
+                    self.source.eval(dest_points, dest_cells),
+                    dtype=PETSc.ScalarType,
+                ).reshape(len(dest_points), self.value_size)
+            else:
+                transverse = np.asarray(
+                    self._components[0].eval(dest_points, dest_cells),
+                    dtype=PETSc.ScalarType,
+                ).reshape(len(dest_points), 2)
+                longitudinal = np.asarray(
+                    self._components[1].eval(dest_points, dest_cells),
+                    dtype=PETSc.ScalarType,
+                ).reshape(len(dest_points), 1)
+                values = np.column_stack((transverse, longitudinal))
+        else:
+            values = np.empty((0, self.value_size), dtype=PETSc.ScalarType)
         self.local_source_evaluations += len(values)
-        send: list[list[tuple[int, complex, complex]]] = [
+        send: list[list[tuple[int, tuple[complex, ...]]]] = [
             [] for _ in range(comm.size)
         ]
         for (requester, index), value in zip(destinations, values):
             send[requester].append(
-                (index, complex(value[0]), complex(value[1]))
+                (index, tuple(complex(component) for component in value))
             )
         received = comm.alltoall(send)
-        result = np.zeros((len(points), 3), dtype=PETSc.ScalarType)
+        result = np.zeros(
+            (len(points), max(3, self.value_size)), dtype=PETSc.ScalarType
+        )
         resolved = np.zeros(len(points), dtype=bool)
         for packets in received:
-            for index, first, second in packets:
+            for index, components in packets:
                 if resolved[int(index)]:
                     raise RuntimeError("An interface point received two values.")
-                result[int(index), :2] = (first, second)
+                if len(components) != self.value_size:
+                    raise RuntimeError("Received a value with the wrong width.")
+                result[int(index), : self.value_size] = components
                 resolved[int(index)] = True
         if not np.all(resolved):
             raise RuntimeError("At least one interface point received no 2D value.")

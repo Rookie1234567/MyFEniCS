@@ -4,7 +4,8 @@ from types import SimpleNamespace
 import unittest
 
 import numpy as np
-from dolfinx import fem
+import ufl
+from dolfinx import fem, mesh
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -21,6 +22,7 @@ from src.solvers.hcurl_canonical_vector import canonical_key, compare_canonical_
 from src.solvers.hcurl_canonical_vector_dolfinx import (
     extract_canonical_active_trace_packets,
     extract_canonical_full_fe_packets,
+    reconstruct_canonical_active_trace_vector,
 )
 from src.test.test_224_task037_static_local_schur_action import _build_fixture
 from src.test.test_46_task033_high_order_floquet_topology import _fixed_target_fixture
@@ -67,6 +69,37 @@ def _static_fixture(comm):
         retain_local_schur_for_matrix_free=True,
     )
     return mesh_3d, V, condensed
+
+
+def _floquet_condensed_fixture():
+    cfg, mesh_data, V = _fixed_target_fixture(2, h_nm=1000.0)
+    msh = mesh_data.mesh
+    owned_cells = int(msh.topology.index_map(msh.topology.dim).size_local)
+    cell_tags = mesh.meshtags(
+        msh,
+        msh.topology.dim,
+        np.arange(owned_cells, dtype=np.int32),
+        np.ones(owned_cells, dtype=np.int32),
+    )
+    u = ufl.TrialFunction(V)
+    v = ufl.TestFunction(V)
+    dx = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)
+    compiled = fem.form(
+        (
+            ufl.inner(ufl.curl(u), ufl.curl(v))
+            + PETSc.ScalarType(2.5 - 0.2j) * ufl.inner(u, v)
+        )
+        * dx(1)
+    )
+    floquet = build_double_floquet_mpc(V, mesh_data, cfg)
+    condensed = build_unconstrained_assembly_time_condensation(
+        compiled,
+        V,
+        cell_tags,
+        mpc=floquet.mpc,
+        retain_local_schur_for_matrix_free=True,
+    )
+    return V, condensed, floquet
 
 
 class TestTask037CanonicalVectorDolfinx(unittest.TestCase):
@@ -123,14 +156,72 @@ class TestTask037CanonicalVectorDolfinx(unittest.TestCase):
             [field.x.array[int(value)] for value in cell.trace_original_dofs]
         )
         np.testing.assert_allclose(observed, expected, atol=1.0e-13, rtol=0.0)
+        rebuilt, rebuild_audit = reconstruct_canonical_active_trace_vector(
+            condensed,
+            V,
+            None,
+            active_packets,
+            geometry_tolerance=mesh_coordinate_tolerance(V.mesh),
+        )
+        rebuilt_packets, _rebuilt_audit = extract_canonical_active_trace_packets(
+            condensed,
+            V,
+            None,
+            rebuilt,
+            geometry_tolerance=mesh_coordinate_tolerance(V.mesh),
+        )
+        self.assertTrue(
+            compare_canonical_packets(active_packets, rebuilt_packets)["pass"]
+        )
+        self.assertEqual(rebuild_audit["global_missing_key_count"], 0)
+        self.assertEqual(rebuild_audit["global_extra_key_count"], 0)
+        self.assertEqual(rebuild_audit["global_duplicate_key_count"], 0)
+        rebuilt.destroy()
         active.destroy()
         condensed.destroy()
 
+    def test_real_floquet_active_packet_roundtrip(self) -> None:
+        V, condensed, floquet = _floquet_condensed_fixture()
+        active = condensed.create_active_vector()
+        _set_global_vector_values(active)
+        tolerance = mesh_coordinate_tolerance(V.mesh)
+        try:
+            packets, _audit = extract_canonical_active_trace_packets(
+                condensed,
+                V,
+                floquet,
+                active,
+                geometry_tolerance=tolerance,
+            )
+            rebuilt, rebuild_audit = reconstruct_canonical_active_trace_vector(
+                condensed,
+                V,
+                floquet,
+                packets,
+                geometry_tolerance=tolerance,
+            )
+            rebuilt_packets, _rebuilt_audit = extract_canonical_active_trace_packets(
+                condensed,
+                V,
+                floquet,
+                rebuilt,
+                geometry_tolerance=tolerance,
+            )
+            comparison = compare_canonical_packets(packets, rebuilt_packets)
+            self.assertTrue(comparison["pass"], comparison)
+            self.assertEqual(rebuild_audit["global_missing_key_count"], 0)
+            self.assertEqual(rebuild_audit["global_extra_key_count"], 0)
+            self.assertEqual(rebuild_audit["global_duplicate_key_count"], 0)
+            rebuilt.destroy()
+        finally:
+            active.destroy()
+            condensed.destroy()
+
     @unittest.skipUnless(
         MPI.COMM_WORLD.size in (2, 4),
-        "MPI2/MPI4 owner-local packet qualification",
+        "MPI2/MPI4 replicated complete-column qualification",
     )
-    def test_mpi_owner_local_packets_have_no_duplicate_physical_keys(self) -> None:
+    def test_mpi_replicated_active_packet_roundtrip_has_no_duplicate_keys(self) -> None:
         _mesh, V, condensed = _static_fixture(MPI.COMM_WORLD)
         field = fem.Function(V)
         field.interpolate(_physical_field)
@@ -149,6 +240,34 @@ class TestTask037CanonicalVectorDolfinx(unittest.TestCase):
         )
         gathered_active = MPI.COMM_WORLD.gather(active_packets, root=0)
         gathered_full = MPI.COMM_WORLD.gather(full_packets, root=0)
+        replicated_packets = None
+        if MPI.COMM_WORLD.rank == 0:
+            replicated_packets = tuple(
+                packet for part in gathered_active for packet in part
+            )
+        replicated_packets = MPI.COMM_WORLD.bcast(replicated_packets, root=0)
+        rebuilt, rebuild_audit = reconstruct_canonical_active_trace_vector(
+            condensed,
+            V,
+            None,
+            replicated_packets,
+            geometry_tolerance=mesh_coordinate_tolerance(V.mesh),
+        )
+        rebuilt_packets, _rebuilt_audit = extract_canonical_active_trace_packets(
+            condensed,
+            V,
+            None,
+            rebuilt,
+            geometry_tolerance=mesh_coordinate_tolerance(V.mesh),
+        )
+        self.assertTrue(
+            compare_canonical_packets(rebuilt_packets, active_packets)["pass"]
+        )
+        self.assertEqual(rebuild_audit["replicated_complete_packet_column"], True)
+        self.assertEqual(rebuild_audit["global_missing_key_count"], 0)
+        self.assertEqual(rebuild_audit["global_extra_key_count"], 0)
+        self.assertEqual(rebuild_audit["global_duplicate_key_count"], 0)
+        rebuilt.destroy()
         if MPI.COMM_WORLD.rank == 0:
             all_active = tuple(packet for part in gathered_active for packet in part)
             all_full = tuple(packet for part in gathered_full for packet in part)
