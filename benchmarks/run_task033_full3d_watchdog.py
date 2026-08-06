@@ -165,6 +165,12 @@ def _task037_e2_b4_admission(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def _task037_e2_modal_capacity_admission(args: argparse.Namespace) -> dict[str, Any]:
+    """Reuse the frozen B4 identity admission for the live capacity gate."""
+
+    return _task037_e2_b4_admission(args)
+
+
 def _read_int_or_max(path: Path) -> tuple[int | None, str]:
     try:
         text = path.read_text(encoding="utf-8").strip()
@@ -1297,6 +1303,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_e2_b4_snapshot_carrier": bool(
             args.task037_e2_b4_snapshot_carrier
         ),
+        "task037_e2_modal_capacity_gate": bool(
+            args.task037_e2_modal_capacity_gate
+        ),
         "task037_f1_direct_trace_oracle": (
             None
             if args.task037_f1_direct_trace_oracle is None
@@ -1429,6 +1438,7 @@ def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
         or args.task037_e0_matrix_free_dtn_gate
         or args.task037_e1_modal_basis_gate
         or args.task037_e2_b4_snapshot_carrier
+        or args.task037_e2_modal_capacity_gate
     ):
         return
     if args.task035d_case097_gate:
@@ -1680,10 +1690,88 @@ def _task037_e2_b4_snapshot_port(run_dir: Path, source_sha: str):
     return Stage4NeverMaterializedLinearSolverPort(solve)
 
 
+def _task037_e2_capacity_port(run_dir: Path, source_sha: str):
+    from mpi4py import MPI
+    from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
+    from src.solvers.static_modal_capacity_oracle import run_e2_capacity_oracle
+    from src.solvers.static_modal_coarse_gate import run_e1_modal_basis_gate
+
+    def solve(request):
+        comm = request.b.getComm().tompi4py()
+        started = time.perf_counter()
+        _write_progress_event(
+            run_dir,
+            comm,
+            stage="task037_e1_modal_basis_generation",
+            status="begin",
+            extra={"research_only": True, "e2_capacity": True},
+        )
+
+        def live_capacity(z_m, y_m, a6_operator):
+            capacity_started = time.perf_counter()
+            _write_progress_event(
+                run_dir,
+                comm,
+                stage="task037_e2_capacity_oracle",
+                status="begin",
+                extra={"research_only": True},
+            )
+            audit = run_e2_capacity_oracle(
+                request,
+                z_m,
+                y_m,
+                a6_operator,
+                run_dir=run_dir,
+                source_sha=source_sha,
+                research_opt_in=True,
+            )
+            elapsed = float(
+                comm.allreduce(time.perf_counter() - capacity_started, op=MPI.MAX)
+            )
+            _write_progress_event(
+                run_dir,
+                comm,
+                stage="task037_e2_capacity_oracle",
+                status="end",
+                extra={
+                    "collective_max_wall_seconds": elapsed,
+                    "capacity_gate_pass": bool(audit["capacity_gate_pass"]),
+                    "classification": audit["classification"],
+                    "research_only": True,
+                },
+            )
+
+        snapshot = run_e1_modal_basis_gate(
+            request,
+            run_dir=run_dir,
+            source_sha=source_sha,
+            research_opt_in=True,
+            e2_live_callback=live_capacity,
+        )
+        elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
+        _write_progress_event(
+            run_dir,
+            comm,
+            stage="task037_e1_modal_basis_generation",
+            status="end",
+            extra={
+                "collective_max_wall_seconds": elapsed,
+                "e2_capacity": True,
+                "research_only": True,
+            },
+        )
+        return snapshot
+
+    return Stage4NeverMaterializedLinearSolverPort(solve)
+
+
 def _worker(args: argparse.Namespace) -> int:
     e0_gate = bool(getattr(args, "task037_e0_matrix_free_dtn_gate", False))
     e1_gate = bool(getattr(args, "task037_e1_modal_basis_gate", False))
     e2_gate = bool(getattr(args, "task037_e2_b4_snapshot_carrier", False))
+    e2_capacity_gate = bool(
+        getattr(args, "task037_e2_modal_capacity_gate", False)
+    )
     from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
         run_stage4b_block_grating_3d_case,
     )
@@ -1705,6 +1793,11 @@ def _worker(args: argparse.Namespace) -> int:
     linear_solver_port = None
     if e2_gate:
         linear_solver_port = _task037_e2_b4_snapshot_port(
+            Path(args.run_dir),
+            args.verified_clean_sha,
+        )
+    elif e2_capacity_gate:
+        linear_solver_port = _task037_e2_capacity_port(
             Path(args.run_dir),
             args.verified_clean_sha,
         )
@@ -1856,8 +1949,9 @@ def _worker(args: argparse.Namespace) -> int:
             or e0_gate
             or e1_gate
             or e2_gate
+            or e2_capacity_gate
         ),
-        matrix_free_dtn=e0_gate or e1_gate,
+        matrix_free_dtn=e0_gate or e1_gate or e2_capacity_gate,
         matrix_free_dtn_probe=e0_gate,
         canonical_vector_export=args.task037_canonical_vector_export,
     )
@@ -1938,6 +2032,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--task037-e2-b4-snapshot-carrier",
         action="store_true",
         help="Capture the research-only frozen B4 true-residual vector carrier.",
+    )
+    parser.add_argument(
+        "--task037-e2-modal-capacity-gate",
+        action="store_true",
+        help="Run the research-only same-request E2 modal capacity oracle.",
     )
     parser.add_argument(
         "--task037-canonical-vector-export",
@@ -2079,12 +2178,32 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--parent-launch-descriptor", type=Path)
     parser.add_argument("--parent-launch-descriptor-sha256")
     args = parser.parse_args(argv)
-    if args.task037_e2_b4_snapshot_carrier:
-        admission = _task037_e2_b4_admission(args)
-        if not admission["pass"]:
+    if args.task037_e2_b4_snapshot_carrier or args.task037_e2_modal_capacity_gate:
+        capacity_mode = bool(args.task037_e2_modal_capacity_gate)
+        admission = (
+            _task037_e2_modal_capacity_admission(args)
+            if capacity_mode
+            else _task037_e2_b4_admission(args)
+        )
+        mutual_exclusion_failures = (
+            ["b4_carrier_e0_e1_mutual_exclusion"]
+            if capacity_mode
+            and (
+                args.task037_e2_b4_snapshot_carrier
+                or args.task037_e0_matrix_free_dtn_gate
+                or args.task037_e1_modal_basis_gate
+            )
+            else []
+        )
+        failures = admission["failures"] + mutual_exclusion_failures
+        if failures:
+            flag_name = (
+                "--task037-e2-modal-capacity-gate"
+                if capacity_mode
+                else "--task037-e2-b4-snapshot-carrier"
+            )
             parser.error(
-                "--task037-e2-b4-snapshot-carrier admission failed: "
-                + ", ".join(admission["failures"])
+                f"{flag_name} admission failed: " + ", ".join(failures)
             )
     if (args.task037_f1_direct_trace_oracle is None) != (
         args.task037_f1_direct_trace_sha256 is None
@@ -3694,6 +3813,44 @@ def _solve_stage_seen(events: list[dict[str, Any]]) -> bool:
     )
 
 
+def _qualify_task037_e2_modal_capacity(
+    audit: dict[str, Any],
+    *,
+    solver_summary: dict[str, Any],
+    return_code: int,
+    no_swap: bool,
+) -> dict[str, Any]:
+    from src.solvers.static_modal_capacity_oracle import (
+        qualify_e2_capacity_audit,
+    )
+
+    checker = qualify_e2_capacity_audit(audit)
+    checks = {
+        "process_completed": return_code == 0,
+        "no_swap": no_swap,
+        "external_linear_solver_port": (
+            solver_summary.get("external_linear_solver_port") is True
+        ),
+        "official_result_absent": solver_summary.get("official_result") is False,
+        "capacity_checker_pass": checker["pass"] is True,
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    classification = checker["classification"]
+    if not checker["pass"] and checker.get("status") == "capacity_negative":
+        classification = (
+            "M120_MODAL_COARSE_INSUFFICIENT_ON_FROZEN_LATE_RESIDUALS"
+        )
+    return {
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "classification": classification,
+        "capacity_checker": checker,
+        "b4_solver_gate_independent": audit.get("solver_convergence_gate"),
+        "raw_capacity_gate_pass": audit.get("capacity_gate_pass"),
+    }
+
+
 def _qualify_task037_e2_b4_snapshot(
     audit: dict[str, Any],
     *,
@@ -3812,6 +3969,9 @@ def _qualify(
     matrix = solver_summary.get("matrix_stats") or {}
     e1_gate = bool(getattr(args, "task037_e1_modal_basis_gate", False))
     e2_gate = bool(getattr(args, "task037_e2_b4_snapshot_carrier", False))
+    e2_capacity_gate = bool(
+        getattr(args, "task037_e2_modal_capacity_gate", False)
+    )
     m3a_profile = bool(args.task037_m3a_overlap0125_partition)
     m4_optimized_schwarz_profile = bool(args.task037_m4_optimized_schwarz)
     m4_factor_free_profile = bool(
@@ -3833,6 +3993,7 @@ def _qualify(
         bool(args.task037_e0_matrix_free_dtn_gate)
         or e1_gate
         or e2_gate
+        or e2_capacity_gate
         or m2c_profile
         or m3a_profile
         or m4_profile
@@ -3864,6 +4025,36 @@ def _qualify(
             solver_summary.get("polarization_kind") == args.polarization_kind
         ),
     }
+    if e2_capacity_gate:
+        e2_checker = _qualify_task037_e2_modal_capacity(
+            task037_e2_audit if isinstance(task037_e2_audit, dict) else {},
+            solver_summary=solver_summary,
+            return_code=return_code,
+            no_swap=no_swap,
+        )
+        checks = {
+            **common,
+            "e2_capacity_audit_present": isinstance(task037_e2_audit, dict)
+            and bool(task037_e2_audit),
+            "e2_capacity_action_only": (
+                solver_summary.get("external_linear_solver_port") is True
+            ),
+            "e2_capacity_no_official_result": (
+                solver_summary.get("official_result") is False
+            ),
+            "e2_capacity_checker_pass": e2_checker["pass"] is True,
+        }
+        failures = [name for name, passed in checks.items() if not passed]
+        return {
+            "pass": not failures,
+            "checks": checks,
+            "failures": failures,
+            "e2_capacity_checker": e2_checker,
+            "e2_capacity_checker_classification": e2_checker.get(
+                "classification"
+            ),
+            "task035d_case097_solver_gate": None,
+        }
     if e2_gate:
         e2_checker = _qualify_task037_e2_b4_snapshot(
             task037_e2_audit if isinstance(task037_e2_audit, dict) else {},
@@ -4604,6 +4795,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-e1-modal-basis-gate")
     if args.task037_e2_b4_snapshot_carrier:
         command.append("--task037-e2-b4-snapshot-carrier")
+    if args.task037_e2_modal_capacity_gate:
+        command.append("--task037-e2-modal-capacity-gate")
     if args.task037_f0_vector_observer:
         command.append("--task037-f0-vector-observer")
     if args.task037_f1_direct_trace_oracle is not None:
@@ -4766,6 +4959,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         or args.task037_e0_matrix_free_dtn_gate
         or args.task037_e1_modal_basis_gate
         or args.task037_e2_b4_snapshot_carrier
+        or args.task037_e2_modal_capacity_gate
     ):
         task035d_status_before = subprocess.check_output(
             ["git", "status", "--porcelain", "--untracked-files=all"],
@@ -4909,7 +5103,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         else {}
     )
     e1_audit_path = run_dir / "task037_e1_modal_basis_audit.json"
-    if args.task037_e1_modal_basis_gate:
+    e1_audit_expected = bool(
+        args.task037_e1_modal_basis_gate
+        or args.task037_e2_modal_capacity_gate
+    )
+    if e1_audit_expected:
         try:
             e1_audit = json.loads(e1_audit_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -4918,8 +5116,15 @@ def _run_parent(args: argparse.Namespace) -> int:
             e1_audit = {}
     else:
         e1_audit = None
-    e2_audit_path = run_dir / "task037_e2_b4_snapshot_audit.json"
-    if args.task037_e2_b4_snapshot_carrier:
+    e2_audit_path = (
+        run_dir / "task037_e2_modal_capacity_audit.json"
+        if args.task037_e2_modal_capacity_gate
+        else run_dir / "task037_e2_b4_snapshot_audit.json"
+    )
+    if (
+        args.task037_e2_b4_snapshot_carrier
+        or args.task037_e2_modal_capacity_gate
+    ):
         try:
             e2_audit = json.loads(e2_audit_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -5356,6 +5561,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         args, qualification
     )
     status = (
+        "task037_e2_modal_capacity_gate_pass"
+        if qualification["pass"] and args.task037_e2_modal_capacity_gate
+        else "task037_e2_modal_capacity_gate_not_pass"
+        if args.task037_e2_modal_capacity_gate
+        else
         "task037_e2_b4_snapshot_carrier_pass"
         if qualification["pass"] and args.task037_e2_b4_snapshot_carrier
         else "task037_e2_b4_snapshot_carrier_not_pass"
@@ -5488,13 +5698,16 @@ def _run_parent(args: argparse.Namespace) -> int:
             "matrix_free_dtn_probe_audit"
         ),
         "task037_e1_modal_basis_gate": bool(args.task037_e1_modal_basis_gate),
+        "task037_e1_modal_basis_executed_for_e2_capacity": bool(
+            args.task037_e2_modal_capacity_gate
+        ),
         "task037_e1_modal_basis_audit": (
             {
                 "path": _path_from_root(e1_audit_path),
                 "sha256": _sha256(e1_audit_path),
                 "payload": e1_audit,
             }
-            if args.task037_e1_modal_basis_gate
+            if e1_audit_expected
             else None
         ),
         "task037_e2_b4_snapshot_carrier": bool(
@@ -5512,6 +5725,23 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "payload": e2_audit,
             }
             if args.task037_e2_b4_snapshot_carrier
+            else None
+        ),
+        "task037_e2_modal_capacity_gate": bool(
+            args.task037_e2_modal_capacity_gate
+        ),
+        "task037_e2_modal_capacity_admission": (
+            _task037_e2_modal_capacity_admission(args)
+            if args.task037_e2_modal_capacity_gate
+            else None
+        ),
+        "task037_e2_modal_capacity_audit": (
+            {
+                "path": _path_from_root(e2_audit_path),
+                "sha256": _sha256(e2_audit_path),
+                "payload": e2_audit,
+            }
+            if args.task037_e2_modal_capacity_gate
             else None
         ),
         "resource_policy": {

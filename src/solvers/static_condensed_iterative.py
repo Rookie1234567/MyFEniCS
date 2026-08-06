@@ -23,6 +23,7 @@ from .dtn_port_3d import (
 )
 from .physical_slab_two_level import (
     DistributedPhysicalSlabSmoother,
+    SparseCoarseVector,
     SparseGalerkinTwoLevelPc,
     build_active_trace_floquet_basis,
     build_owner_local_slab_diagonal,
@@ -97,6 +98,10 @@ def _solve_static_condensed_fgmres_core(
     local_krylov_steps: Literal[2, 4] = 2,
     residual_observer: Callable[[int, float, float], None] | None = None,
     true_residual_vector_observer: Callable[[int, PETSc.Vec, float], None]
+    | None = None,
+    task037_e2_capacity_live_observer: Callable[
+        [PETSc.Mat, tuple[SparseCoarseVector, ...], SparseGalerkinTwoLevelPc], None
+    ]
     | None = None,
     solver_profile: Literal[
         "assembled",
@@ -661,7 +666,6 @@ def _solve_static_condensed_fgmres_core(
             iterations=iterations,
             reported_relative_residual=reported,
         )
-
         recovery_started = perf_counter()
         auxiliary = recover_petsc_auxiliary(blocks, solution)
         owned.append(auxiliary)
@@ -842,6 +846,8 @@ def _solve_static_condensed_fgmres_core(
         }
         if p2_auxiliary_profile:
             audit["p2_auxiliary_audit"] = p2_auxiliary_audit
+        if task037_e2_capacity_live_observer is not None:
+            task037_e2_capacity_live_observer(operator, tuple(basis), coarse)
         snapshot = Stage4ExternalLinearSolverSnapshot(
             x=augmented,
             converged_reason=reason,
@@ -980,6 +986,10 @@ def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
     residual_observer: Callable[[int, float, float], None] | None = None,
     true_residual_vector_observer: Callable[[int, PETSc.Vec, float], None]
     | None = None,
+    task037_e2_capacity_live_observer: Callable[
+        [PETSc.Mat, tuple[SparseCoarseVector, ...], SparseGalerkinTwoLevelPc], None
+    ]
+    | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the factor-free slab plus true p2 auxiliary profile."""
@@ -990,6 +1000,7 @@ def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
         local_krylov_steps=local_krylov_steps,
         residual_observer=residual_observer,
         true_residual_vector_observer=true_residual_vector_observer,
+        task037_e2_capacity_live_observer=task037_e2_capacity_live_observer,
         solver_profile="never_materialized_p2_factor_free_slab_auxiliary",
         lifecycle_observer=lifecycle_observer,
     )
