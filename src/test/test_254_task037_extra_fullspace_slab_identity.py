@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 import numpy as np
+import scipy.sparse as sparse
 
 from src.solvers.static_fullspace_slab_oracle import (
     FullSpaceSlabBlockRecord,
@@ -57,11 +58,13 @@ def _make_block(seed: float) -> FullSpaceSlabBlockRecord:
 
 def _make_cell(
     block: FullSpaceSlabBlockRecord,
+    canonical_cell_id: int,
     active_positions: list[int],
     trace_expansion: np.ndarray,
 ) -> FullSpaceSlabCellRecord:
     return FullSpaceSlabCellRecord(
         block=block,
+        canonical_cell_id=canonical_cell_id,
         trace_expansion=trace_expansion,
         active_positions=np.asarray(active_positions, dtype=np.int64),
     )
@@ -85,7 +88,8 @@ def _vectors() -> tuple[np.ndarray, ...]:
 def test_single_and_overlapping_cells_match_independent_schur_with_and_without_shift():
     block = _make_block(0.0)
     identity_expansion = np.eye(3, dtype=np.complex128)
-    single = (_make_cell(block, [0, 1, 2], identity_expansion),)
+    single = (_make_cell(block, 0, [0, 1, 2], identity_expansion),)
+    assert sparse.isspmatrix_csr(single[0].trace_expansion)
     single_result = measure_fullspace_slab_identity(
         single,
         _vectors(),
@@ -102,9 +106,10 @@ def test_single_and_overlapping_cells_match_independent_schur_with_and_without_s
         dtype=np.complex128,
     )
     cells = (
-        _make_cell(block, [0, 1, 2], identity_expansion),
-        _make_cell(block, [1, 3], phase_expansion),
+        _make_cell(block, 0, [0, 1, 2], identity_expansion),
+        _make_cell(block, 1, [1, 3], phase_expansion),
     )
+    assert all(sparse.isspmatrix_csr(cell.trace_expansion) for cell in cells)
     for shift in (
         None,
         np.asarray([-0.1j, 0.03 - 0.02j, 0.05j, -0.04j]),
@@ -127,6 +132,7 @@ def test_modified_schur_cannot_pass_identity():
     block = _make_block(0.0)
     cell = _make_cell(
         block,
+        0,
         [0, 1, 2],
         np.eye(3, dtype=np.complex128),
     )

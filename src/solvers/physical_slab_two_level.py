@@ -13,10 +13,12 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.geometry.tetra_mesh_audit import canonical_owned_cell_ids, owned_cell_geometry
+from src.solvers.hcurl_assembly_time_condensation import _cell_trace_expansion
 from src.solvers.static_factor_reuse import (
     _canonical_global_row_ids_fingerprint,
     _exact_reuse_necessary_prefix,
 )
+from src.solvers.static_fullspace_slab_oracle import FullSpaceSlabCellRecord
 from src.solvers.static_local_schur_action import (
     iter_owned_constrained_schur_contributions,
 )
@@ -888,6 +890,176 @@ def build_owner_local_slab_plan(
         ras_core_sum_error=ras_core_sum_error,
         interface_row_count=interface_row_count,
     )
+
+
+_CANONICAL_CELL_ID_HASH_ALGORITHM = (
+    "task037.fullspace-slab-cell-ids-order.v1|dtype=<i8|order=C|count=u64"
+)
+
+
+def _canonical_cell_id_sequence_sha256(values: Sequence[int] | np.ndarray) -> str:
+    canonical = np.asarray(values, dtype="<i8")
+    digest = hashlib.sha256()
+    digest.update(_CANONICAL_CELL_ID_HASH_ALGORITHM.encode("ascii"))
+    digest.update(b"\0")
+    digest.update(np.asarray([canonical.size], dtype="<u8").tobytes())
+    digest.update(canonical.tobytes(order="C"))
+    return digest.hexdigest()
+
+
+def _pack_slab_trace_expansion(expansion: sp.csr_matrix) -> tuple:
+    return (
+        tuple(int(value) for value in expansion.shape),
+        np.asarray(expansion.data, dtype=np.complex128).copy(),
+        np.asarray(expansion.indices).copy(),
+        np.asarray(expansion.indptr).copy(),
+    )
+
+
+def _unpack_slab_trace_expansion(packet: tuple) -> sp.csr_matrix:
+    shape, data, indices, indptr = packet
+    return sp.csr_matrix(
+        (data, indices, indptr),
+        shape=tuple(int(value) for value in shape),
+    )
+
+
+def collect_owner_local_fullspace_slab_cells(
+    condensed: Any,
+    plan: OwnerLocalSlabPlan,
+    mesh: Any,
+    slab: int,
+) -> tuple[tuple[FullSpaceSlabCellRecord, ...], dict[str, Any]]:
+    """Collect one owner-local slab's sparse full-space cell records."""
+
+    if slab < 0 or slab >= len(plan.slab_owners):
+        raise ValueError("slab index is out of range")
+    retained = condensed.retained_fullspace_slab_blocks_by_class
+    if retained is None:
+        raise ValueError("full-space slab blocks are not retained")
+    comm = plan.comm
+    owner = int(plan.slab_owners[slab])
+    canonical_ids, _records, _ordered_keys = canonical_owned_cell_ids(mesh)
+    local_cell_indices = plan.local_cell_indices_by_slab[slab]
+    local_blocks = {}
+    local_descriptors = []
+    for cell_index in local_cell_indices:
+        recovery = condensed.cell_recovery_maps[int(cell_index)]
+        class_key = recovery.class_key
+        block = retained.get(class_key)
+        if block is None:
+            raise RuntimeError(
+                f"retained full-space block is missing class {class_key!r}"
+            )
+        local_blocks.setdefault(class_key, block)
+        active_ids, expansion, _identity = _cell_trace_expansion(
+            recovery.trace_original_dofs,
+            condensed.trace_constraints,
+        )
+        local_descriptors.append(
+            (
+                int(canonical_ids[int(cell_index)]),
+                class_key,
+                np.asarray(active_ids, dtype=PETSc.IntType),
+                _pack_slab_trace_expansion(expansion),
+            )
+        )
+    payload = (local_blocks, tuple(local_descriptors))
+    global_cell_count = int(
+        comm.allreduce(len(local_cell_indices), op=MPI.SUM)
+    )
+    condensed_trace_matrix_materialized = bool(
+        comm.allreduce(
+            condensed.matrix is not None,
+            op=MPI.LOR,
+        )
+    )
+    packets = comm.gather(payload, root=owner)
+
+    cells: tuple[FullSpaceSlabCellRecord, ...] = ()
+    audit = None
+    owner_error = None
+    if comm.rank == owner:
+        block_by_class = {}
+        descriptors = []
+        for source_blocks, source_descriptors in packets:
+            for class_key, block in source_blocks.items():
+                block_by_class.setdefault(class_key, block)
+            descriptors.extend(source_descriptors)
+        descriptors.sort(key=lambda descriptor: descriptor[0])
+        try:
+            owner_rows = np.asarray(plan.owner_rows[slab], dtype=PETSc.IntType)
+            collected = []
+            for canonical_id, class_key, active_ids, expansion_packet in descriptors:
+                block = block_by_class.get(class_key)
+                if block is None:
+                    raise RuntimeError(
+                        f"owner is missing full-space block for class {class_key!r}"
+                    )
+                owner_positions = np.searchsorted(owner_rows, active_ids)
+                if np.any(owner_positions >= owner_rows.size):
+                    raise RuntimeError(
+                        "cell active rows are outside the slab owner rows"
+                    )
+                if owner_positions.size and not np.array_equal(
+                    owner_rows[owner_positions],
+                    active_ids,
+                ):
+                    raise RuntimeError(
+                        "cell active rows are not contained in slab owner rows"
+                    )
+                collected.append(
+                    FullSpaceSlabCellRecord(
+                        block=block,
+                        canonical_cell_id=int(canonical_id),
+                        trace_expansion=_unpack_slab_trace_expansion(
+                            expansion_packet
+                        ),
+                        active_positions=np.asarray(
+                            owner_positions,
+                            dtype=np.int64,
+                        ),
+                    )
+                )
+            cells = tuple(collected)
+            expansion_nnz = sum(
+                int(cell.trace_expansion.nnz) for cell in cells
+            )
+            expansion_bytes = sum(
+                int(cell.trace_expansion.data.nbytes)
+                + int(cell.trace_expansion.indices.nbytes)
+                + int(cell.trace_expansion.indptr.nbytes)
+                for cell in cells
+            )
+            audit = {
+                "slab": int(slab),
+                "owner": owner,
+                "global_cell_count": global_cell_count,
+                "owner_cell_count": int(len(cells)),
+                "owner_active_row_count": int(owner_rows.size),
+                "owner_active_row_hash": _canonical_global_row_ids_fingerprint(
+                    owner_rows
+                ),
+                "unique_block_count": int(len(block_by_class)),
+                "cell_canonical_id_hash": _canonical_cell_id_sequence_sha256(
+                    [descriptor[0] for descriptor in descriptors]
+                ),
+                "cell_canonical_id_hash_algorithm": (
+                    _CANONICAL_CELL_ID_HASH_ALGORITHM
+                ),
+                "sparse_expansion_nnz": int(expansion_nnz),
+                "sparse_expansion_bytes": int(expansion_bytes),
+                "condensed_trace_matrix_materialized": (
+                    condensed_trace_matrix_materialized
+                ),
+            }
+        except Exception as error:
+            owner_error = f"{type(error).__name__}: {error}"
+    owner_error = comm.bcast(owner_error, root=owner)
+    if owner_error is not None:
+        raise RuntimeError(owner_error)
+    audit = comm.bcast(audit, root=owner)
+    return cells, audit
 
 
 def _route_owner_slab_cells(

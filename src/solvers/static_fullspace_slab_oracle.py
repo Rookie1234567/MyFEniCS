@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Iterable, Sequence
 
 import numpy as np
+import scipy.sparse as sp
 
 
 _TINY = np.finfo(float).tiny
@@ -20,6 +21,22 @@ def _readonly_array(values: np.ndarray, dtype: np.dtype) -> np.ndarray:
     array = np.ascontiguousarray(np.asarray(values, dtype=dtype)).copy()
     array.setflags(write=False)
     return array
+
+
+def _readonly_csr(values: sp.spmatrix | np.ndarray) -> sp.csr_matrix:
+    matrix = sp.csr_matrix(values, dtype=np.complex128, copy=True)
+    matrix.sum_duplicates()
+    matrix.sort_indices()
+    data = np.asarray(matrix.data, dtype=np.complex128).copy()
+    indices = np.asarray(matrix.indices).copy()
+    indptr = np.asarray(matrix.indptr).copy()
+    result = sp.csr_matrix(
+        (data, indices, indptr),
+        shape=matrix.shape,
+    )
+    for array in (result.data, result.indices, result.indptr):
+        array.setflags(write=False)
+    return result
 
 
 @dataclass(frozen=True)
@@ -53,18 +70,21 @@ class FullSpaceSlabCellRecord:
 
     ``trace_expansion`` is the local full-trace-by-active-trace matrix ``C``;
     ``active_positions`` locates its columns in the slab vector.  Multiple
-    cells may share one ``block`` object.
+    cells may share one ``block`` object.  ``canonical_cell_id`` is the
+    partition-independent identity of this cell.
     """
 
     block: FullSpaceSlabBlockRecord
-    trace_expansion: np.ndarray
+    canonical_cell_id: int
+    trace_expansion: sp.csr_matrix
     active_positions: np.ndarray
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "canonical_cell_id", int(self.canonical_cell_id))
         object.__setattr__(
             self,
             "trace_expansion",
-            _readonly_array(self.trace_expansion, np.dtype(np.complex128)),
+            _readonly_csr(self.trace_expansion),
         )
         positions = _readonly_array(self.active_positions, np.dtype(np.int64))
         if positions.ndim != 1 or np.any(positions < 0):

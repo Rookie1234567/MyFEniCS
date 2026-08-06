@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import scipy.sparse as sparse
 from mpi4py import MPI
 
 from src.solvers.hcurl_assembly_time_condensation import (
@@ -108,12 +109,14 @@ def test_retain_one_oriented_fullspace_block_per_class_and_verify_identity():
         )
         oracle_cell = FullSpaceSlabCellRecord(
             block=blocks[cell.class_key],
-            trace_expansion=expansion.toarray(),
+            canonical_cell_id=0,
+            trace_expansion=expansion,
             active_positions=np.arange(
                 len(active_ids),
                 dtype=np.int64,
             ),
         )
+        assert sparse.isspmatrix_csr(oracle_cell.trace_expansion)
         result = measure_fullspace_slab_identity(
             (oracle_cell,),
             _fixed_vectors(len(active_ids)),
