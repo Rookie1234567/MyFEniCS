@@ -8,7 +8,7 @@
 
 | lane | 状态 | 本轮含义 |
 |---|---|---|
-| G2.2 full-space/trace algebraic identity | `pass` | tiny 与真实 slab14 的 3 个 deterministic vector、1 个 iter20 residual direction 均通过 `<=1e-10` |
+| G2.2 full-space/trace algebraic identity | `pass` | tiny fixture 合同测试通过；真实 slab14 的 3 个 deterministic vectors 与 1 个 iter20 residual direction 均通过 `<=1e-10` |
 | G2.3 full-space p6 ILU inventory | `pending_not_run` | 没有构造 full-space ILU，也没有比较 payload/retained bytes |
 | G2.4 LOR mesh 与 transfer | `pending_not_run` | 没有建立 LOR mesh 或 transfer |
 | G2.5 LOR-HX/V-cycle | `pending_not_run` | 没有实现或运行 HX/V-cycle |
