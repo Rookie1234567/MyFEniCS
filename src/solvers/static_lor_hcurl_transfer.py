@@ -2,17 +2,20 @@
 
 This module records the ``degree**3`` low-order hexahedra obtained by splitting
 one affine parent with degree-dependent Gauss--Lobatto--Legendre nodes.  It is
-the topology layer for the Task037 LOR path, not a same-mesh p2/p4 coarse
-space, and it does not construct a transfer matrix.
+the topology and local-transfer layer for the Task037 LOR path, not a
+same-mesh p2/p4 coarse space.  It never constructs a global transfer matrix.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Iterable
 
 import basix
+import basix.ufl
 import numpy as np
+import scipy.sparse as sp
 
 from src.geometry.tetra_mesh_audit import (
     canonical_entity_key,
@@ -75,6 +78,14 @@ class AffineLORParentTopology:
             array = np.asarray(getattr(self, name)).copy()
             array.setflags(write=False)
             object.__setattr__(self, name, array)
+
+
+_TRANSFER_STRUCTURAL_ZERO_TOLERANCE = 1.0e-14
+_TRANSFER_INVERSE_TOLERANCE = 1.0e-11
+_TRANSFER_DEFINITION = (
+    "D_p[k,m]=integral_positive_reference_child_edge(phi_m dot t_k ds); "
+    "T_ref=D_p^-1; T=O(cell_info) T_ref S"
+)
 
 
 def _gll_nodes(degree: int) -> np.ndarray:
@@ -293,3 +304,226 @@ def build_affine_lor_parent_topology(
         cell_edge_ids=cell_edge_ids,
         cell_edge_orientations=cell_edge_orientations,
     )
+
+
+def _readonly_csr(values: sp.spmatrix | np.ndarray) -> sp.csr_matrix:
+    matrix = sp.csr_matrix(values, dtype=np.float64, copy=True)
+    matrix.sum_duplicates()
+    matrix.sort_indices()
+    small = np.abs(matrix.data) <= _TRANSFER_STRUCTURAL_ZERO_TOLERANCE
+    if np.any(small):
+        matrix.data[small] = 0.0
+        matrix.eliminate_zeros()
+    for array in (matrix.data, matrix.indices, matrix.indptr):
+        array.setflags(write=False)
+    return matrix
+
+
+def _parent_element(degree: int) -> basix.finite_element.FiniteElement:
+    return basix.ufl.element(
+        "N1curl",
+        "hexahedron",
+        int(degree),
+    ).basix_element
+
+
+def _positive_reference_edge_segments(
+    topology: AffineLORParentTopology,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    degree = int(topology.degree)
+    node_count = degree + 1
+    corners = topology.vertices[
+        [
+            _grid_vertex_index(0, 0, 0, node_count),
+            _grid_vertex_index(degree, 0, 0, node_count),
+            _grid_vertex_index(0, degree, 0, node_count),
+            _grid_vertex_index(0, 0, degree, node_count),
+        ]
+    ]
+    origin = corners[0]
+    affine_axes = np.column_stack(
+        (corners[1] - origin, corners[2] - origin, corners[3] - origin)
+    )
+    reference_edge_signs = np.zeros(len(topology.edge_keys), dtype=np.int8)
+    for edge_ids, edge_signs in zip(
+        topology.cell_edge_ids,
+        topology.cell_edge_orientations,
+        strict=True,
+    ):
+        for edge_id, edge_sign in zip(edge_ids, edge_signs, strict=True):
+            edge_id = int(edge_id)
+            edge_sign = int(edge_sign)
+            if reference_edge_signs[edge_id] == 0:
+                reference_edge_signs[edge_id] = edge_sign
+            elif reference_edge_signs[edge_id] != edge_sign:
+                raise ValueError("one child edge has inconsistent reference signs")
+    physical_edges = topology.vertices[topology.edge_endpoints]
+    reference_edges = np.asarray(
+        [
+            np.linalg.solve(affine_axes, (physical_edge - origin).T).T
+            for physical_edge in physical_edges
+        ],
+        dtype=np.float64,
+    )
+    positive_edges = reference_edges.copy()
+    for edge_id, edge_sign in enumerate(reference_edge_signs):
+        if edge_sign < 0:
+            positive_edges[edge_id] = positive_edges[edge_id, ::-1]
+    return (
+        positive_edges[:, 0],
+        positive_edges[:, 1],
+        reference_edge_signs,
+    )
+
+
+def _reference_edge_moment_matrix(
+    element: basix.finite_element.FiniteElement,
+    topology: AffineLORParentTopology,
+) -> np.ndarray:
+    quadrature_degree = 2 * int(topology.degree) + 2
+    quadrature_points, quadrature_weights = basix.make_quadrature(
+        basix.CellType.interval,
+        quadrature_degree,
+    )
+    quadrature_points = np.asarray(quadrature_points, dtype=np.float64).reshape(-1)
+    quadrature_weights = np.asarray(quadrature_weights, dtype=np.float64).reshape(-1)
+    starts, ends, _signs = _positive_reference_edge_segments(topology)
+    matrix = np.zeros(
+        (len(topology.edge_keys), int(element.dim)),
+        dtype=np.complex128,
+    )
+    for row, (start, end) in enumerate(zip(starts, ends, strict=True)):
+        tangent = end - start
+        points = start + quadrature_points[:, None] * tangent
+        values = np.asarray(element.tabulate(0, points)[0], dtype=np.complex128)
+        axis = int(np.argmax(np.abs(tangent)))
+        matrix[row] = np.einsum(
+            "q,qm->m",
+            quadrature_weights * tangent[axis],
+            values[:, :, axis],
+        )
+    return matrix
+
+
+def _relative_matrix_error(observed: np.ndarray, expected: np.ndarray) -> float:
+    return float(
+        np.linalg.norm(observed - expected)
+        / max(float(np.linalg.norm(expected)), np.finfo(float).tiny)
+    )
+
+
+@lru_cache(maxsize=8)
+def _reference_transfer_data(
+    degree: int,
+) -> tuple[sp.csr_matrix, float, float, float, int]:
+    reference_topology = build_affine_lor_parent_topology(
+        basix.geometry(basix.CellType.hexahedron),
+        degree=int(degree),
+        canonical_cell_id=0,
+        material_tag=0,
+        cell_permutation=0,
+        coordinate_tolerance=1.0e-12,
+    )
+    element = _parent_element(int(degree))
+    moment_matrix = _reference_edge_moment_matrix(element, reference_topology)
+    high_dim = int(element.dim)
+    if moment_matrix.shape != (high_dim, high_dim):
+        raise RuntimeError("reference edge moment matrix is not square")
+    reference_inverse = np.linalg.inv(moment_matrix)
+    reference_csr = _readonly_csr(reference_inverse.real)
+    compact_inverse = reference_csr.toarray()
+    identity = np.eye(high_dim, dtype=np.complex128)
+    left_error = _relative_matrix_error(
+        moment_matrix @ compact_inverse,
+        identity,
+    )
+    right_error = _relative_matrix_error(
+        compact_inverse @ moment_matrix,
+        identity,
+    )
+    if (
+        left_error > _TRANSFER_INVERSE_TOLERANCE
+        or right_error > _TRANSFER_INVERSE_TOLERANCE
+    ):
+        raise RuntimeError(
+            "structural-zero reference transfer inverse exceeds tolerance"
+        )
+    return (
+        reference_csr,
+        float(np.linalg.cond(moment_matrix)),
+        left_error,
+        right_error,
+        high_dim,
+    )
+
+
+@dataclass(frozen=True)
+class LORParentTransfer:
+    """Read-only local ``T`` and exact conjugate-transpose ``T^H`` actions."""
+
+    _forward: sp.csr_matrix
+    _adjoint: sp.csr_matrix
+    audit: dict[str, object]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "_forward", _readonly_csr(self._forward))
+        object.__setattr__(self, "_adjoint", _readonly_csr(self._adjoint))
+        object.__setattr__(self, "audit", dict(self.audit))
+
+    def apply(self, lor_values: np.ndarray) -> np.ndarray:
+        values = np.asarray(lor_values, dtype=np.complex128)
+        if values.shape != (int(self.audit["lor_edges"]),):
+            raise ValueError("LOR values must match the parent edge count")
+        return np.asarray(self._forward @ values, dtype=np.complex128)
+
+    def apply_adjoint(self, high_values: np.ndarray) -> np.ndarray:
+        values = np.asarray(high_values, dtype=np.complex128)
+        if values.shape != (int(self.audit["high_dim"]),):
+            raise ValueError("high values must match the parent element dimension")
+        return np.asarray(self._adjoint @ values, dtype=np.complex128)
+
+
+def build_lor_parent_transfer(
+    topology: AffineLORParentTopology,
+) -> LORParentTransfer:
+    """Build the frozen local LOR-edge to stored parent N1curl transfer."""
+
+    reference_csr, condition_number, left_error, right_error, high_dim = (
+        _reference_transfer_data(int(topology.degree))
+    )
+    lor_edges = len(topology.edge_keys)
+    if lor_edges != high_dim:
+        raise ValueError("LOR edge count must equal the parent N1curl dimension")
+    starts, ends, signs = _positive_reference_edge_segments(topology)
+    del starts, ends
+    reference_matrix = reference_csr.toarray()
+    oriented = np.ascontiguousarray(
+        reference_matrix.real * signs[None, :],
+        dtype=np.float64,
+    )
+    element = _parent_element(int(topology.degree))
+    element.T_apply(oriented.ravel(), high_dim, int(topology.cell_permutation))
+    forward = _readonly_csr(oriented)
+    adjoint = _readonly_csr(forward.conjugate().transpose())
+    audit = {
+        "degree": int(topology.degree),
+        "high_dim": high_dim,
+        "lor_edges": lor_edges,
+        "definition": _TRANSFER_DEFINITION,
+        "quadrature_degree": 2 * int(topology.degree) + 2,
+        "condition_number": condition_number,
+        "left_inverse_error": left_error,
+        "right_inverse_error": right_error,
+        "T_nnz": int(forward.nnz),
+        "T_payload_bytes": int(
+            forward.data.nbytes
+            + forward.indices.nbytes
+            + forward.indptr.nbytes
+        ),
+        "cell_permutation": int(topology.cell_permutation),
+        "reference_cache_key": (
+            f"N1curl-hexahedron-legendre-p{int(topology.degree)}-"
+            f"gll-{2 * int(topology.degree) + 2}"
+        ),
+    }
+    return LORParentTransfer(forward, adjoint, audit)
