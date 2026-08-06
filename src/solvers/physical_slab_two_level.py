@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import hashlib
 import time
+from dataclasses import dataclass, field
 from typing import Any, Callable, Sequence
 
 import numpy as np
@@ -13,6 +13,10 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.geometry.tetra_mesh_audit import canonical_owned_cell_ids, owned_cell_geometry
+from src.solvers.static_factor_reuse import (
+    _canonical_global_row_ids_fingerprint,
+    _exact_reuse_necessary_prefix,
+)
 from src.solvers.static_local_schur_action import (
     iter_owned_constrained_schur_contributions,
 )
@@ -102,7 +106,7 @@ def certify_fixed_linear_preconditioner(
 
 
 def _exact_seqaij_fingerprint(matrix: PETSc.Mat) -> str:
-    """Return an exact, canonical fingerprint for a sequential AIJ matrix."""
+    """Fingerprint only the shifted local numeric SeqAIJ matrix."""
 
     indptr, indices, values = matrix.getValuesCSR()
     digest = hashlib.sha256()
@@ -1112,6 +1116,8 @@ class _OwnedSubdomainFactor:
     matrix_nnz: int
     factor_nnz: int
     exact_fingerprint: str
+    canonical_global_row_ids_fingerprint: str
+    exact_reuse_necessary_prefix: str
     rhs: PETSc.Vec
     solution: PETSc.Vec
 
@@ -1202,6 +1208,12 @@ class DistributedPhysicalSlabSmoother:
         rhs = submatrix.createVecRight()
         solution = submatrix.createVecLeft()
         exact_fingerprint = _exact_seqaij_fingerprint(submatrix)
+        canonical_global_row_ids_sha256 = _canonical_global_row_ids_fingerprint(
+            indices
+        )
+        exact_reuse_necessary_prefix_sha256 = _exact_reuse_necessary_prefix(
+            canonical_global_row_ids_sha256, exact_fingerprint
+        )
         local_solver_type = self.local_solver_types[subdomain]
         matrix_nnz = int(submatrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"])
         factor_matrix: PETSc.Mat | None = None
@@ -1263,6 +1275,8 @@ class DistributedPhysicalSlabSmoother:
             matrix_nnz=matrix_nnz,
             factor_nnz=factor_nnz,
             exact_fingerprint=exact_fingerprint,
+            canonical_global_row_ids_fingerprint=canonical_global_row_ids_sha256,
+            exact_reuse_necessary_prefix=exact_reuse_necessary_prefix_sha256,
             rhs=rhs,
             solution=solution,
         )
@@ -1351,14 +1365,42 @@ class DistributedPhysicalSlabSmoother:
         self.minimum_owner_rows = int(self.comm.allreduce(local_rows, op=MPI.MIN))
         fingerprint_packets = self.comm.allgather(
             [
-                (int(factor.subdomain), factor.exact_fingerprint)
+                (
+                    int(factor.subdomain),
+                    factor.exact_fingerprint,
+                    factor.canonical_global_row_ids_fingerprint,
+                    factor.exact_reuse_necessary_prefix,
+                )
                 for factor in self._factors
             ]
         )
-        self.factor_fingerprints = sorted(
+        factor_records = sorted(
             (item for packet in fingerprint_packets for item in packet),
             key=lambda item: item[0],
         )
+        self.factor_fingerprints = [
+            (subdomain, shifted_matrix_sha256)
+            for (
+                subdomain,
+                shifted_matrix_sha256,
+                _row_ids_sha256,
+                _prefix_sha256,
+            ) in factor_records
+        ]
+        self.factor_reuse_fingerprints = [
+            {
+                "subdomain": subdomain,
+                "row_ids_sha256": row_ids_sha256,
+                "shifted_matrix_sha256": shifted_matrix_sha256,
+                "necessary_prefix_sha256": prefix_sha256,
+            }
+            for (
+                subdomain,
+                shifted_matrix_sha256,
+                row_ids_sha256,
+                prefix_sha256,
+            ) in factor_records
+        ]
         unique_fingerprints = {
             fingerprint for _, fingerprint in self.factor_fingerprints
         }
@@ -1366,6 +1408,43 @@ class DistributedPhysicalSlabSmoother:
         self.exact_duplicate_factor_count = (
             len(self.factor_fingerprints) - self.unique_factor_classes
         )
+        self.numeric_local_matrix_unique_classes = self.unique_factor_classes
+        self.numeric_local_matrix_duplicate_count = self.exact_duplicate_factor_count
+        prefix_groups: dict[str, list[int]] = {}
+        for (
+            subdomain,
+            _shifted_matrix_sha256,
+            _row_ids_sha256,
+            prefix_sha256,
+        ) in factor_records:
+            prefix_groups.setdefault(prefix_sha256, []).append(subdomain)
+        self.exact_reuse_necessary_prefix_groups = [
+            {
+                "prefix_sha256": prefix_sha256,
+                "subdomains": sorted(subdomains),
+            }
+            for prefix_sha256, subdomains in sorted(prefix_groups.items())
+        ]
+        self.exact_reuse_necessary_prefix_unique_classes = len(prefix_groups)
+        self.exact_reuse_candidate_count = sum(
+            max(len(subdomains) - 1, 0) for subdomains in prefix_groups.values()
+        )
+        self.exact_reuse_qualified_count = 0
+        qualification_status = (
+            "not_evaluated_after_necessary_condition_stop"
+            if self.exact_reuse_candidate_count == 0
+            else "not_evaluated_pending_necessary_prefix_candidates"
+        )
+        self.exact_reuse_qualification_status = qualification_status
+        self.exact_reuse_deferred_checks = {
+            name: qualification_status
+            for name in (
+                "material_cell_class_identity",
+                "diagonal_shift_identity",
+                "factor_ordering",
+                "factor_values_or_deterministic_factor_fingerprint",
+            )
+        }
         if setup_observer is not None:
             setup_observer(
                 "all_slab_factors_ready",
@@ -1376,6 +1455,21 @@ class DistributedPhysicalSlabSmoother:
                     "global_unique_factor_classes": self.unique_factor_classes,
                     "global_exact_duplicate_factor_count": (
                         self.exact_duplicate_factor_count
+                    ),
+                    "global_numeric_local_matrix_duplicate_count": (
+                        self.numeric_local_matrix_duplicate_count
+                    ),
+                    "global_exact_reuse_necessary_prefix_unique_classes": (
+                        self.exact_reuse_necessary_prefix_unique_classes
+                    ),
+                    "global_exact_reuse_candidate_count": (
+                        self.exact_reuse_candidate_count
+                    ),
+                    "global_exact_reuse_qualified_count": (
+                        self.exact_reuse_qualified_count
+                    ),
+                    "global_exact_reuse_qualification_status": (
+                        self.exact_reuse_qualification_status
                     ),
                     "rank_local_factor_count": len(self._factors),
                     "rank_local_factor_rows": int(local_rows),
@@ -1957,8 +2051,28 @@ class DistributedPhysicalSlabSmoother:
                 {"subdomain": subdomain, "sha256": fingerprint}
                 for subdomain, fingerprint in self.factor_fingerprints
             ],
+            "factor_fingerprints_semantics": (
+                "shifted_local_matrix_numeric_only_not_exact_reuse_qualified"
+            ),
             "unique_factor_classes": self.unique_factor_classes,
             "exact_duplicate_factor_count": self.exact_duplicate_factor_count,
+            "numeric_local_matrix_unique_classes": (
+                self.numeric_local_matrix_unique_classes
+            ),
+            "numeric_local_matrix_duplicate_count": (
+                self.numeric_local_matrix_duplicate_count
+            ),
+            "factor_reuse_fingerprints": self.factor_reuse_fingerprints,
+            "exact_reuse_necessary_prefix_groups": (
+                self.exact_reuse_necessary_prefix_groups
+            ),
+            "exact_reuse_necessary_prefix_unique_classes": (
+                self.exact_reuse_necessary_prefix_unique_classes
+            ),
+            "exact_reuse_candidate_count": self.exact_reuse_candidate_count,
+            "exact_reuse_qualified_count": self.exact_reuse_qualified_count,
+            "exact_reuse_qualification_status": self.exact_reuse_qualification_status,
+            "exact_reuse_deferred_checks": self.exact_reuse_deferred_checks,
             "one_level_apply_count": self.apply_count,
             "one_level_mean_apply_s": self.apply_elapsed_s / max(self.apply_count, 1),
         }
