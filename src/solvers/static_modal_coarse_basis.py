@@ -1050,11 +1050,13 @@ def build_middle_modal_active_column(
 
     mesh = function_space.mesh
     tdim = mesh.topology.dim
-    owned_cells = int(mesh.topology.index_map(tdim).size_local)
+    cell_index_map = mesh.topology.index_map(tdim)
+    owned_cells = int(cell_index_map.size_local)
+    total_cells = owned_cells + int(cell_index_map.num_ghosts)
     geometry_dofmap = np.asarray(mesh.geometry.dofmap)
     coordinates = np.asarray(mesh.geometry.x)
     middle_cells = []
-    for cell in range(owned_cells):
+    for cell in range(total_cells):
         z_values = coordinates[geometry_dofmap[cell], 2]
         if (
             float(np.min(z_values)) >= bottom_z_nm - 1.0e-12
@@ -1149,6 +1151,7 @@ def build_middle_modal_active_column(
     active.assemble()
     comm = mesh.comm
     nonzero_owned = int(np.count_nonzero(np.abs(active.getArray(readonly=True)) > 0.0))
+    owned_middle_cell_count = sum(cell < owned_cells for cell in middle_cells)
     return active, {
         "research_only": True,
         "middle_only_component": True,
@@ -1171,8 +1174,10 @@ def build_middle_modal_active_column(
             complex(np.exp(1j * effective_beta * (top_z_nm - reference_z))).imag,
         ],
         "propagation_model": str(propagation.propagation_model),
-        "owned_middle_cell_count": int(len(cells)),
-        "global_middle_cell_count": int(comm.allreduce(len(cells), op=MPI.SUM)),
+        "owned_middle_cell_count": int(owned_middle_cell_count),
+        "global_middle_cell_count": int(
+            comm.allreduce(owned_middle_cell_count, op=MPI.SUM)
+        ),
         "owned_active_rows_written": int(written),
         "owned_active_rows_expected": int(len(owned_originals)),
         "global_nonzero_active_rows": int(comm.allreduce(nonzero_owned, op=MPI.SUM)),
