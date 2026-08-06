@@ -106,6 +106,63 @@ TASK035D_SELECTIVE_FACE_PHASES = {
     "coarse-snapshot",
     "enriched-evaluate",
 }
+TASK037_E2_B4_ITERATIONS = (0, 20, 100, 200)
+
+
+def _task037_e2_b4_admission(args: argparse.Namespace) -> dict[str, Any]:
+    """Centralize the frozen research-only B4 carrier admission."""
+
+    conflicts = {
+        "f0_vector_observer": bool(args.task037_f0_vector_observer),
+        "e0_gate": bool(args.task037_e0_matrix_free_dtn_gate),
+        "e1_gate": bool(args.task037_e1_modal_basis_gate),
+        "canonical_export": bool(args.task037_canonical_vector_export),
+        "f1_oracle": args.task037_f1_direct_trace_oracle is not None,
+        "f3_full": bool(args.task037_f3_full),
+        "f5b": bool(args.task037_f5b_released_profile),
+        "m4_optimized_schwarz": bool(args.task037_m4_optimized_schwarz),
+        "m4_b2_long_full": bool(args.task037_m4_b2_long_full),
+        "m0_lifecycle": bool(args.task037_m0_lifecycle_audit),
+        "task035d": bool(args.task035d_case097_gate),
+        "task035d_nested": args.task035d_nested_p_dwr_phase is not None,
+        "task035d_selective_face": (
+            args.task035d_selective_face_dwr_phase is not None
+        ),
+        "task034": bool(args.task034_p4_h3_added_point),
+    }
+    checks = {
+        "identity": (
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.polarization_kind == "s"
+            and args.run_kind == "full-solve"
+            and args.mpi_size == 8
+            and args.profile == "default"
+            and args.stage4_full3d_assembly_backend
+            == "assembly_time_static_condensed"
+        ),
+        "task035c_p6_h10": bool(args.task035c_p6_h10_gate),
+        "preflight_authority": args.task035c_p6_preflight_authority is not None,
+        "preflight_sha": valid_hex_digest(args.task035c_p6_preflight_sha256, 64),
+        "verified_clean_sha": valid_hex_digest(args.verified_clean_sha, 40),
+        "no_swap": not args.allow_swap,
+        "screen_200": args.task037_f3_screen == 200,
+        "m2c_never_materialized": bool(args.task037_m2c_never_materialized),
+        "m3a_overlap_partition_flag_disabled": not bool(
+            args.task037_m3a_overlap0125_partition
+        ),
+        "m4_p2_auxiliary": bool(args.task037_m4_p2_auxiliary),
+        "m4_factor_free_slab": bool(args.task037_m4_factor_free_slab),
+        "factor_free_local_steps": args.task037_m4_factor_free_local_steps == 4,
+        "no_conflicting_research_flag": not any(conflicts.values()),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "iterations": list(TASK037_E2_B4_ITERATIONS),
+    }
 
 
 def _read_int_or_max(path: Path) -> tuple[int | None, str]:
@@ -1237,6 +1294,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_f0_vector_observer": bool(args.task037_f0_vector_observer),
         "task037_e0_matrix_free_dtn_gate": bool(args.task037_e0_matrix_free_dtn_gate),
         "task037_e1_modal_basis_gate": bool(args.task037_e1_modal_basis_gate),
+        "task037_e2_b4_snapshot_carrier": bool(
+            args.task037_e2_b4_snapshot_carrier
+        ),
         "task037_f1_direct_trace_oracle": (
             None
             if args.task037_f1_direct_trace_oracle is None
@@ -1368,6 +1428,7 @@ def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
         or _task037_f3_iterations(args) is not None
         or args.task037_e0_matrix_free_dtn_gate
         or args.task037_e1_modal_basis_gate
+        or args.task037_e2_b4_snapshot_carrier
     ):
         return
     if args.task035d_case097_gate:
@@ -1391,9 +1452,238 @@ def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
         )
 
 
+def _task037_e2_b4_snapshot_port(run_dir: Path, source_sha: str):
+    from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
+    from src.solvers.static_condensed_iterative import (
+        solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres,
+    )
+    from src.solvers.static_modal_coarse_gate import (
+        OwnerLocalBasis,
+        save_owner_local_basis_shard,
+    )
+
+    def solve(request):
+        comm = request.operator.getComm().tompi4py()
+        residual_vectors: dict[int, Any] = {}
+        samples: dict[int, dict[str, Any]] = {}
+
+        def observe_true_residual(iteration, residual, rhs_norm):
+            iteration = int(iteration)
+            if iteration not in TASK037_E2_B4_ITERATIONS:
+                return
+            local = np.asarray(residual.getArray(readonly=True), dtype=np.complex128)
+            copied = residual.duplicate()
+            residual.copy(copied)
+            residual_vectors[iteration] = copied
+            samples[iteration] = {
+                "global_rows": int(residual.getSize()),
+                "ownership": [int(value) for value in residual.getOwnershipRange()],
+                "local_finite": bool(np.all(np.isfinite(local))),
+                "relative_true_residual": float(
+                    residual.norm() / max(float(rhs_norm), np.finfo(float).tiny)
+                ),
+            }
+
+        snapshot, core_audit = (
+            solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
+                request,
+                screen_iterations=200,
+                local_krylov_steps=4,
+                true_residual_vector_observer=observe_true_residual,
+            )
+        )
+        expected_iterations = tuple(TASK037_E2_B4_ITERATIONS)
+        if tuple(sorted(residual_vectors)) != expected_iterations:
+            raise RuntimeError(
+                "TASK037_E2_B4_TRUE_RESIDUAL_SAMPLES_INCOMPLETE"
+            )
+        vectors = tuple(residual_vectors[index] for index in expected_iterations)
+        basis = OwnerLocalBasis.from_vectors(
+            vectors,
+            label="task037_e2_b4_true_residual",
+            research_opt_in=True,
+        )
+        try:
+            shard_dir = run_dir / "e2_b4_snapshot"
+            manifest = save_owner_local_basis_shard(
+                basis,
+                shard_dir,
+                source_sha=source_sha,
+                prefix="true_residual",
+                research_opt_in=True,
+            )
+        finally:
+            basis.destroy()
+        samples_by_rank = comm.gather(samples, root=0)
+        manifest_path = shard_dir / "true_residual.manifest.json"
+        gate_payload = None
+        if comm.rank == 0:
+            candidate = core_audit.get("candidate")
+            candidate = candidate if isinstance(candidate, dict) else {}
+            factor_inventory = core_audit.get("no_global_factor_inventory")
+            factor_inventory = (
+                factor_inventory if isinstance(factor_inventory, dict) else {}
+            )
+            core_samples = core_audit.get("condensed_true_samples")
+            core_samples = core_samples if isinstance(core_samples, list) else []
+            core_values = {
+                int(item[0]): float(item[1])
+                for item in core_samples
+                if isinstance(item, (list, tuple)) and len(item) == 2
+            }
+            relative_values = {
+                str(iteration): float(samples[iteration]["relative_true_residual"])
+                for iteration in expected_iterations
+            }
+            checks = {
+                "iterations_exact": tuple(sorted(samples)) == expected_iterations,
+                "finite": all(
+                    bool(samples_by_rank[rank][iteration]["local_finite"])
+                    for rank in range(comm.size)
+                    for iteration in expected_iterations
+                ),
+                "positive_rows": all(
+                    int(samples[iteration]["global_rows"]) > 0
+                    for iteration in expected_iterations
+                ),
+                "core_scalar_identity": all(
+                    iteration in core_values
+                    and abs(
+                        relative_values[str(iteration)] - core_values[iteration]
+                    )
+                    <= 1.0e-12
+                    for iteration in expected_iterations
+                ),
+                "solver_profile": (
+                    core_audit.get("solver_profile")
+                    == "never_materialized_p2_factor_free_slab_auxiliary"
+                ),
+                "restart": candidate.get("restart") == 90,
+                "max_it": candidate.get("max_it") == 200,
+                "local_krylov_steps": candidate.get("local_krylov_steps") == 4,
+                "overlap_fraction": candidate.get("overlap_fraction") == 0.125,
+                "partition": candidate.get("interpolation") == "partition",
+                "global_A_materialized": (
+                    core_audit.get("global_A_materialized") is False
+                ),
+                "global_F_materialized": (
+                    core_audit.get("global_F_materialized") is False
+                ),
+                "p6_factor_count": factor_inventory.get("p6_factor_count") == 0,
+                "p6_factor_nnz": factor_inventory.get("p6_factor_nnz") == 0,
+                "manifest_source": manifest.get("source_sha") == source_sha,
+                "manifest_global_rows": manifest.get("global_rows") == 51192,
+                "manifest_column_count": manifest.get("column_count") == 4,
+                "manifest_shard_count": len(manifest.get("shards", ())) == 8,
+                "manifest_owner_local": manifest.get("owner_local") is True,
+                "manifest_not_replicated": (
+                    manifest.get("replicated_global_basis") is False
+                ),
+            }
+            gate_payload = {
+                "schema_version": "task037.e2.b4.true-residual-carrier.v1",
+                "candidate": "B4_true_residual_snapshot_carrier",
+                "source_sha": source_sha,
+                "carrier_gate_pass": not [name for name, ok in checks.items() if not ok],
+                "checks": checks,
+                "iterations": list(expected_iterations),
+                "true_residual_samples": [
+                    {
+                        "iteration": iteration,
+                        "relative_true_residual": relative_values[str(iteration)],
+                        "core_relative_true_residual": core_values.get(iteration),
+                        "global_rows": int(samples[iteration]["global_rows"]),
+                        "owner_ranges_by_rank": [
+                            samples_by_rank[rank][iteration]["ownership"]
+                            for rank in range(comm.size)
+                        ],
+                    }
+                    for iteration in expected_iterations
+                ],
+                "owner_local": True,
+                "replicated_global_vector": False,
+                "manifest": {
+                    "path": _path_from_root(manifest_path),
+                    "sha256": _sha256(manifest_path),
+                    "bytes": manifest_path.stat().st_size,
+                    "source_sha": manifest["source_sha"],
+                    "global_rows": int(manifest["global_rows"]),
+                    "column_count": int(manifest["column_count"]),
+                    "owner_local": bool(manifest["owner_local"]),
+                    "replicated_global_basis": bool(
+                        manifest["replicated_global_basis"]
+                    ),
+                    "shard_count": len(manifest["shards"]),
+                    "total_shard_bytes": sum(
+                        int(entry["bytes"]) for entry in manifest["shards"]
+                    ),
+                },
+                "config": {
+                    "mpi_size": comm.size,
+                    "screen_iterations": candidate.get("max_it"),
+                    "restart": candidate.get("restart"),
+                    "local_krylov_steps": candidate.get("local_krylov_steps"),
+                    "overlap_fraction": candidate.get("overlap_fraction"),
+                    "partition": candidate.get("interpolation"),
+                    "global_A_materialized": core_audit.get(
+                        "global_A_materialized"
+                    ),
+                    "global_F_materialized": core_audit.get(
+                        "global_F_materialized"
+                    ),
+                },
+                "solver_profile": core_audit.get("solver_profile"),
+                "p6_factor_inventory": factor_inventory,
+                "core_condensed_true_samples": [
+                    [iteration, core_values.get(iteration)]
+                    for iteration in expected_iterations
+                ],
+                "solver_convergence_gate": {
+                    "pass": int(snapshot.converged_reason) > 0,
+                    "converged_reason": int(snapshot.converged_reason),
+                    "iterations": int(snapshot.iterations),
+                    "independent_of_carrier_gate": True,
+                },
+            }
+            (run_dir / "task037_e2_b4_snapshot_audit.json").write_text(
+                json.dumps(gate_payload, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            (run_dir / "task037_f3_core_audit.json").write_text(
+                json.dumps(core_audit, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            history_path = run_dir / "task037_f3_residual_history.jsonl"
+            history = core_audit.get("reported_history", ())
+            reported_values = {int(iteration): float(reported) for iteration, reported in history}
+            with history_path.open("w", encoding="utf-8") as stream:
+                for iteration in expected_iterations:
+                    stream.write(
+                        json.dumps(
+                            {
+                                "iteration": iteration,
+                                "reported_relative_residual": reported_values.get(
+                                    iteration
+                                ),
+                                "condensed_true_residual": core_values.get(
+                                    iteration
+                                ),
+                            }
+                        )
+                        + "\n"
+                    )
+        gate_payload = comm.bcast(gate_payload, root=0)
+        if not gate_payload["carrier_gate_pass"]:
+            raise RuntimeError("TASK037_E2_B4_TRUE_RESIDUAL_CARRIER_GATE_FAILED")
+        return snapshot
+
+    return Stage4NeverMaterializedLinearSolverPort(solve)
+
+
 def _worker(args: argparse.Namespace) -> int:
     e0_gate = bool(getattr(args, "task037_e0_matrix_free_dtn_gate", False))
     e1_gate = bool(getattr(args, "task037_e1_modal_basis_gate", False))
+    e2_gate = bool(getattr(args, "task037_e2_b4_snapshot_carrier", False))
     from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
         run_stage4b_block_grating_3d_case,
     )
@@ -1413,7 +1703,12 @@ def _worker(args: argparse.Namespace) -> int:
         else None
     )
     linear_solver_port = None
-    if e1_gate:
+    if e2_gate:
+        linear_solver_port = _task037_e2_b4_snapshot_port(
+            Path(args.run_dir),
+            args.verified_clean_sha,
+        )
+    elif e1_gate:
         from mpi4py import MPI
         from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
         from src.solvers.static_modal_coarse_gate import run_e1_modal_basis_gate
@@ -1560,6 +1855,7 @@ def _worker(args: argparse.Namespace) -> int:
             or args.task037_m2c_never_materialized
             or e0_gate
             or e1_gate
+            or e2_gate
         ),
         matrix_free_dtn=e0_gate or e1_gate,
         matrix_free_dtn_probe=e0_gate,
@@ -1637,6 +1933,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--task037-e1-modal-basis-gate",
         action="store_true",
         help="Run the research-only Task037 E1 M120 modal-basis component gate.",
+    )
+    parser.add_argument(
+        "--task037-e2-b4-snapshot-carrier",
+        action="store_true",
+        help="Capture the research-only frozen B4 true-residual vector carrier.",
     )
     parser.add_argument(
         "--task037-canonical-vector-export",
@@ -1778,6 +2079,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--parent-launch-descriptor", type=Path)
     parser.add_argument("--parent-launch-descriptor-sha256")
     args = parser.parse_args(argv)
+    if args.task037_e2_b4_snapshot_carrier:
+        admission = _task037_e2_b4_admission(args)
+        if not admission["pass"]:
+            parser.error(
+                "--task037-e2-b4-snapshot-carrier admission failed: "
+                + ", ".join(admission["failures"])
+            )
     if (args.task037_f1_direct_trace_oracle is None) != (
         args.task037_f1_direct_trace_sha256 is None
     ):
@@ -3386,6 +3694,105 @@ def _solve_stage_seen(events: list[dict[str, Any]]) -> bool:
     )
 
 
+def _qualify_task037_e2_b4_snapshot(
+    audit: dict[str, Any],
+    *,
+    solver_summary: dict[str, Any],
+    return_code: int,
+    no_swap: bool,
+) -> dict[str, Any]:
+    samples = audit.get("true_residual_samples")
+    by_iteration = (
+        {int(item["iteration"]): item for item in samples}
+        if isinstance(samples, list)
+        else {}
+    )
+    config = audit.get("config")
+    config = config if isinstance(config, dict) else {}
+    manifest = audit.get("manifest")
+    manifest = manifest if isinstance(manifest, dict) else {}
+    factor_inventory = audit.get("p6_factor_inventory")
+    factor_inventory = (
+        factor_inventory if isinstance(factor_inventory, dict) else {}
+    )
+    values = {
+        iteration: (
+            by_iteration.get(iteration, {}).get("relative_true_residual")
+        )
+        for iteration in TASK037_E2_B4_ITERATIONS
+    }
+    checks = {
+        "process_completed": return_code == 0,
+        "iterations_exact": tuple(sorted(by_iteration)) == TASK037_E2_B4_ITERATIONS,
+        "finite_samples": all(
+            isinstance(item, dict)
+            and item.get("global_rows") == 51192
+            and _finite_number_le(item.get("relative_true_residual"), 1.0e300)
+            for item in by_iteration.values()
+        )
+        and len(by_iteration) == len(TASK037_E2_B4_ITERATIONS),
+        "core_scalar_identity": all(
+            isinstance(values[iteration], (int, float))
+            and isinstance(
+                by_iteration.get(iteration, {}).get("core_relative_true_residual"),
+                (int, float),
+            )
+            and abs(
+                float(values[iteration])
+                - float(
+                    by_iteration[iteration]["core_relative_true_residual"]
+                )
+            )
+            <= 1.0e-12
+            for iteration in TASK037_E2_B4_ITERATIONS
+        ),
+        "owner_local_storage": (
+            audit.get("carrier_gate_pass") is True
+            and audit.get("source_sha") == manifest.get("source_sha")
+            and audit.get("owner_local") is True
+            and audit.get("replicated_global_vector") is False
+            and manifest.get("owner_local") is True
+            and manifest.get("replicated_global_basis") is False
+            and manifest.get("source_sha") == audit.get("source_sha")
+            and manifest.get("global_rows") == 51192
+            and manifest.get("column_count") == 4
+            and manifest.get("shard_count", 0) == 8
+        ),
+        "global_A_F_unmaterialized": (
+            config.get("global_A_materialized") is False
+            and config.get("global_F_materialized") is False
+        ),
+        "solver_profile": (
+            audit.get("solver_profile")
+            == "never_materialized_p2_factor_free_slab_auxiliary"
+        ),
+        "restart": config.get("restart") == 90,
+        "max_it": config.get("screen_iterations") == 200,
+        "local_krylov_steps": config.get("local_krylov_steps") == 4,
+        "overlap_fraction": config.get("overlap_fraction") == 0.125,
+        "partition": config.get("partition") == "partition",
+        "p6_factor_count": factor_inventory.get("p6_factor_count") == 0,
+        "p6_factor_nnz": factor_inventory.get("p6_factor_nnz") == 0,
+        "no_swap": no_swap,
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "classification": (
+            "task037_e2_b4_snapshot_carrier_pass"
+            if not failures
+            else "task037_e2_b4_snapshot_carrier_not_pass"
+        ),
+        "b4_solver_gate_independent": audit.get("solver_convergence_gate"),
+        "raw_carrier_gate_pass": audit.get("carrier_gate_pass"),
+        "external_linear_solver_port": (
+            solver_summary.get("external_linear_solver_port")
+        ),
+    }
+
+
 def _qualify(
     *,
     args: argparse.Namespace,
@@ -3400,9 +3807,11 @@ def _qualify(
     resource_summary: dict[str, Any] | None = None,
     task037_f3_core_audit: dict[str, Any] | None = None,
     task037_e1_audit: dict[str, Any] | None = None,
+    task037_e2_audit: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     matrix = solver_summary.get("matrix_stats") or {}
     e1_gate = bool(getattr(args, "task037_e1_modal_basis_gate", False))
+    e2_gate = bool(getattr(args, "task037_e2_b4_snapshot_carrier", False))
     m3a_profile = bool(args.task037_m3a_overlap0125_partition)
     m4_optimized_schwarz_profile = bool(args.task037_m4_optimized_schwarz)
     m4_factor_free_profile = bool(
@@ -3423,6 +3832,7 @@ def _qualify(
     action_only_profile = (
         bool(args.task037_e0_matrix_free_dtn_gate)
         or e1_gate
+        or e2_gate
         or m2c_profile
         or m3a_profile
         or m4_profile
@@ -3454,6 +3864,32 @@ def _qualify(
             solver_summary.get("polarization_kind") == args.polarization_kind
         ),
     }
+    if e2_gate:
+        e2_checker = _qualify_task037_e2_b4_snapshot(
+            task037_e2_audit if isinstance(task037_e2_audit, dict) else {},
+            solver_summary=solver_summary,
+            return_code=return_code,
+            no_swap=no_swap,
+        )
+        checks = {
+            **common,
+            "e2_audit_present": isinstance(task037_e2_audit, dict)
+            and bool(task037_e2_audit),
+            "e2_action_only": (
+                solver_summary.get("external_linear_solver_port") is True
+            ),
+            "e2_no_official_result": solver_summary.get("official_result") is False,
+            "e2_checker_pass": e2_checker["pass"] is True,
+        }
+        failures = [name for name, passed in checks.items() if not passed]
+        return {
+            "pass": not failures,
+            "checks": checks,
+            "failures": failures,
+            "e2_checker": e2_checker,
+            "e2_checker_classification": e2_checker.get("classification"),
+            "task035d_case097_solver_gate": None,
+        }
     if e1_gate:
         from src.solvers.static_modal_coarse_gate import (
             qualify_e1_modal_basis_audit,
@@ -4166,6 +4602,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-e0-matrix-free-dtn-gate")
     if args.task037_e1_modal_basis_gate:
         command.append("--task037-e1-modal-basis-gate")
+    if args.task037_e2_b4_snapshot_carrier:
+        command.append("--task037-e2-b4-snapshot-carrier")
     if args.task037_f0_vector_observer:
         command.append("--task037-f0-vector-observer")
     if args.task037_f1_direct_trace_oracle is not None:
@@ -4327,6 +4765,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         or args.task037_canonical_vector_export
         or args.task037_e0_matrix_free_dtn_gate
         or args.task037_e1_modal_basis_gate
+        or args.task037_e2_b4_snapshot_carrier
     ):
         task035d_status_before = subprocess.check_output(
             ["git", "status", "--porcelain", "--untracked-files=all"],
@@ -4479,6 +4918,16 @@ def _run_parent(args: argparse.Namespace) -> int:
             e1_audit = {}
     else:
         e1_audit = None
+    e2_audit_path = run_dir / "task037_e2_b4_snapshot_audit.json"
+    if args.task037_e2_b4_snapshot_carrier:
+        try:
+            e2_audit = json.loads(e2_audit_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            e2_audit = {}
+        if not isinstance(e2_audit, dict):
+            e2_audit = {}
+    else:
+        e2_audit = None
     task037_f3_core_audit = None
     task037_f3_core_audit_path = run_dir / "task037_f3_core_audit.json"
     if args.task037_f3_screen is not None or args.task037_f3_full:
@@ -4524,6 +4973,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         resource_summary=sampler,
         task037_f3_core_audit=task037_f3_core_audit,
         task037_e1_audit=e1_audit,
+        task037_e2_audit=e2_audit,
     )
     task035d_nested_p_evidence = None
     task035d_selective_face_evidence = None
@@ -4906,7 +5356,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         args, qualification
     )
     status = (
-        "task037_e1_modal_basis_gate_pass"
+        "task037_e2_b4_snapshot_carrier_pass"
+        if qualification["pass"] and args.task037_e2_b4_snapshot_carrier
+        else "task037_e2_b4_snapshot_carrier_not_pass"
+        if args.task037_e2_b4_snapshot_carrier
+        else "task037_e1_modal_basis_gate_pass"
         if qualification["pass"] and args.task037_e1_modal_basis_gate
         else "task037_e1_modal_basis_gate_not_pass"
         if args.task037_e1_modal_basis_gate
@@ -5041,6 +5495,23 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "payload": e1_audit,
             }
             if args.task037_e1_modal_basis_gate
+            else None
+        ),
+        "task037_e2_b4_snapshot_carrier": bool(
+            args.task037_e2_b4_snapshot_carrier
+        ),
+        "task037_e2_b4_snapshot_admission": (
+            _task037_e2_b4_admission(args)
+            if args.task037_e2_b4_snapshot_carrier
+            else None
+        ),
+        "task037_e2_b4_snapshot_audit": (
+            {
+                "path": _path_from_root(e2_audit_path),
+                "sha256": _sha256(e2_audit_path),
+                "payload": e2_audit,
+            }
+            if args.task037_e2_b4_snapshot_carrier
             else None
         ),
         "resource_policy": {

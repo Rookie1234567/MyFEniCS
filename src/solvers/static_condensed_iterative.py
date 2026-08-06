@@ -42,6 +42,7 @@ __all__ = (
     "solve_never_materialized_p2_factor_free_slab_ras_auxiliary_fgmres",
 )
 _TINY = np.finfo(float).tiny
+_TRUE_RESIDUAL_CARRIER_ITERATIONS = frozenset((0, 20, 100, 200))
 
 
 class _ShiftedFineAction:
@@ -71,9 +72,21 @@ def _relative_residual(
     work: PETSc.Vec,
     rhs_norm: float,
 ) -> float:
-    operator.mult(solution, work)
-    work.axpy(PETSc.ScalarType(-1.0), rhs)
+    _true_residual_vector(operator, rhs, solution, work)
     return float(work.norm()) / max(rhs_norm, _TINY)
+
+
+def _true_residual_vector(
+    operator: PETSc.Mat,
+    rhs: PETSc.Vec,
+    solution: PETSc.Vec,
+    target: PETSc.Vec,
+) -> None:
+    """Fill target with the condensed true residual b - A*x."""
+
+    operator.mult(solution, target)
+    target.scale(PETSc.ScalarType(-1.0))
+    target.axpy(PETSc.ScalarType(1.0), rhs)
 
 
 def _solve_static_condensed_fgmres_core(
@@ -83,6 +96,8 @@ def _solve_static_condensed_fgmres_core(
     screen_iterations: int,
     local_krylov_steps: Literal[2, 4] = 2,
     residual_observer: Callable[[int, float, float], None] | None = None,
+    true_residual_vector_observer: Callable[[int, PETSc.Vec, float], None]
+    | None = None,
     solver_profile: Literal[
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
@@ -560,6 +575,7 @@ def _solve_static_condensed_fgmres_core(
         reported_history: list[tuple[int, float]] = []
         condensed_samples: list[tuple[int, float]] = []
         sampled_iterations = {0}
+        true_residual_sampled_iterations: set[int] = set()
         initial_condensed = _relative_residual(
             operator, rhs, solution, residual_work, rhs_norm
         )
@@ -567,6 +583,9 @@ def _solve_static_condensed_fgmres_core(
         condensed_samples.append((0, initial_condensed))
         if residual_observer is not None:
             residual_observer(0, 1.0, initial_condensed)
+        if true_residual_vector_observer is not None:
+            true_residual_vector_observer(0, residual_work, rhs_norm)
+            true_residual_sampled_iterations.add(0)
         ksp = PETSc.KSP().create(comm)
         owned.append(ksp)
         live_state["outer_ksp"] = True
@@ -591,10 +610,15 @@ def _solve_static_condensed_fgmres_core(
             reported = float(residual_norm) / max(rhs_norm, _TINY)
             if not reported_history or reported_history[-1][0] != iteration:
                 reported_history.append((int(iteration), reported))
-            if (
+            should_sample = (
                 iteration in (10, 20)
+                or (
+                    true_residual_vector_observer is not None
+                    and iteration in _TRUE_RESIDUAL_CARRIER_ITERATIONS
+                )
                 or (screen_iterations > 3000 and iteration % 100 == 0)
-            ) and iteration not in sampled_iterations:
+            )
+            if should_sample and iteration not in sampled_iterations:
                 current_solution = current.buildSolution(monitor_solution)
                 condensed = _relative_residual(
                     operator, rhs, current_solution, residual_work, rhs_norm
@@ -603,6 +627,14 @@ def _solve_static_condensed_fgmres_core(
                 sampled_iterations.add(iteration)
                 if residual_observer is not None:
                     residual_observer(int(iteration), reported, condensed)
+                if (
+                    true_residual_vector_observer is not None
+                    and iteration in _TRUE_RESIDUAL_CARRIER_ITERATIONS
+                ):
+                    true_residual_vector_observer(
+                        int(iteration), residual_work, rhs_norm
+                    )
+                    true_residual_sampled_iterations.add(int(iteration))
 
         ksp.setMonitor(monitor)
         solve_started = perf_counter()
@@ -616,6 +648,13 @@ def _solve_static_condensed_fgmres_core(
             condensed_samples.append((iterations, condensed))
             if residual_observer is not None:
                 residual_observer(iterations, reported, condensed)
+        if (
+            true_residual_vector_observer is not None
+            and iterations in _TRUE_RESIDUAL_CARRIER_ITERATIONS
+            and iterations not in true_residual_sampled_iterations
+        ):
+            true_residual_vector_observer(iterations, residual_work, rhs_norm)
+            true_residual_sampled_iterations.add(iterations)
         emit_lifecycle(
             "outer_ksp_solved",
             converged_reason=reason,
@@ -939,6 +978,8 @@ def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
     screen_iterations: int = 20,
     local_krylov_steps: Literal[2, 4] = 2,
     residual_observer: Callable[[int, float, float], None] | None = None,
+    true_residual_vector_observer: Callable[[int, PETSc.Vec, float], None]
+    | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the factor-free slab plus true p2 auxiliary profile."""
@@ -948,6 +989,7 @@ def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
         screen_iterations=screen_iterations,
         local_krylov_steps=local_krylov_steps,
         residual_observer=residual_observer,
+        true_residual_vector_observer=true_residual_vector_observer,
         solver_profile="never_materialized_p2_factor_free_slab_auxiliary",
         lifecycle_observer=lifecycle_observer,
     )
