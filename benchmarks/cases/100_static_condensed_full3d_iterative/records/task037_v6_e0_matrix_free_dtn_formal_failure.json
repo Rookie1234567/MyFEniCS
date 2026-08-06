@@ -1,0 +1,333 @@
+{
+  "schema_version": "task037.v6.e0.formal.failure.v1",
+  "task": "Task037",
+  "candidate": "E",
+  "candidate_name": "Candidate E",
+  "phase": "V6-E0",
+  "classification": "MATRIX_FREE_DTN_FORMAL_80MODE_GATE_FAILED",
+  "status": "controlled_stop",
+  "failure_kind": "implementation_failure_before_probe_audit",
+  "research_only": true,
+  "scope_limit": "MPI1 frozen p6/h10 S assembly-time static-condensed component-only formal attempt only",
+  "selective_merge": {
+    "recommendation": "do_not_merge",
+    "qualification": "not_qualified",
+    "reason": "The E0 formal implementation failure leaves this research path unqualified; the lightweight E0 8/8 evidence does not qualify a general-path merge."
+  },
+  "ordinary_defaults": {
+    "formal_run_changed": null,
+    "data_class": "not_observed",
+    "note": "The worker failed before a completed solver summary; no formal-run claim is inferred."
+  },
+  "identity": {
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "tested_source_sha": "fbefca0250980a790eba3d464ad37b86d2d02abf",
+    "tested_upstream_sha": "fbefca0250980a790eba3d464ad37b86d2d02abf",
+    "ahead": 0,
+    "behind": 0,
+    "worktree_clean_at_test": true,
+    "worktree_clean_after_test": true,
+    "checkpoint_commit": "fbefca0250980a790eba3d464ad37b86d2d02abf"
+  },
+  "authority": {
+    "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+    "sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8"
+  },
+  "execution": {
+    "mpi_size": 1,
+    "formal_attempt_count": 1,
+    "exact_command": "python -m benchmarks.run_task033_full3d_watchdog --degree 6 --h-nm 10 --polarization-kind s --run-kind full-solve --mpi-size 1 --profile default --stage4-full3d-assembly-backend assembly_time_static_condensed --task035c-p6-h10-gate --task035c-p6-preflight-authority benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json --task035c-p6-preflight-sha256 96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8 --verified-clean-sha fbefca0250980a790eba3d464ad37b86d2d02abf --task037-e0-matrix-free-dtn-gate --poll-interval 0.25 --warning-gib 10 --terminate-gib 14 --timeout-seconds 3600 --run-dir benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_fbefca02/mpi1",
+    "worker_command": [
+      "mpiexec",
+      "-n",
+      "1",
+      "/home/Projects/MyFEniCS/.venv/bin/python",
+      "-m",
+      "benchmarks.run_task033_full3d_watchdog",
+      "--worker",
+      "--degree",
+      "6",
+      "--h-nm",
+      "10.0",
+      "--polarization-kind",
+      "s",
+      "--run-kind",
+      "full-solve",
+      "--mpi-size",
+      "1",
+      "--profile",
+      "default",
+      "--stage4-full3d-assembly-backend",
+      "assembly_time_static_condensed",
+      "--run-dir",
+      "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_fbefca02/mpi1",
+      "--task035c-p6-h10-gate",
+      "--task035c-p6-preflight-authority",
+      "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+      "--task035c-p6-preflight-sha256",
+      "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+      "--verified-clean-sha",
+      "fbefca0250980a790eba3d464ad37b86d2d02abf",
+      "--task037-e0-matrix-free-dtn-gate",
+      "--parent-launch-descriptor",
+      "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_fbefca02/mpi1/parent_launch_descriptor.json",
+      "--parent-launch-descriptor-sha256",
+      "6549eb98c481f66e507be54d658efc52d9ec773727d73e328546fe05efcfa18d"
+    ],
+    "worker_exit_code": 1,
+    "watchdog_exit_code": 2,
+    "watchdog_status": "task037_e0_matrix_free_dtn_gate_not_pass",
+    "exit_semantics": "worker exit 1 from PETSc Error 56; watchdog outer CLI exit 2 after qualification failure; no timeout or memory termination"
+  },
+  "abi": {
+    "qualified_activation": 1,
+    "sys_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "sys_prefix": "/home/Projects/MyFEniCS/.venv",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "origins": {
+      "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+      "slepc4py": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py",
+      "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+      "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py"
+    }
+  },
+  "observed_setup": {
+    "degree": 6,
+    "h_nm": 10.0,
+    "polarization": "s",
+    "backend": "assembly_time_static_condensed",
+    "run_kind": "full-solve",
+    "selected_modes": 80,
+    "top_modes": 40,
+    "bottom_modes": 40,
+    "active_rows": 51192,
+    "finite_element_dofs": 173802,
+    "data_class": "measured",
+    "mode_identity_complete": null,
+    "mode_identity_complete_data_class": "not_observed"
+  },
+  "failure": {
+    "data_class": "measured",
+    "phase": "after_dtn_port_assembly_and_solve_before_probe_audit",
+    "exception": "petsc4py.PETSc.Error",
+    "error_code": 56,
+    "message": "No method getinfo for Mat of type python",
+    "call_chain": [
+      "src/solvers/common_3d_case_flow.py:1483",
+      "src/solvers/common_3d_solve.py:_petsc_matrix_stats(system_A)",
+      "petsc4py.PETSc.Mat.getInfo()",
+      "PETSc MatGetInfo: no support for this operation for Mat type python"
+    ],
+    "probe_audit_emitted": false,
+    "run_summary_emitted": false
+  },
+  "gates": {
+    "qualified_preflight": {
+      "status": "PASS",
+      "data_class": "measured",
+      "activation": 1,
+      "abi": "complex128/int32"
+    },
+    "mode_preparation": {
+      "status": "PASS",
+      "data_class": "measured",
+      "selected_modes": 80,
+      "top_bottom": "40/40",
+      "active_rows": 51192,
+      "finite_element_dofs": 173802
+    },
+    "mode_identity_80_complete": {
+      "status": "NOT_OBSERVED",
+      "data_class": "not_observed",
+      "reason": "The probe audit and completed run summary were not emitted."
+    },
+    "three_seed_plus_physical_rhs": {
+      "status": "NOT_OBSERVED",
+      "data_class": "not_observed",
+      "labels": null
+    },
+    "forward_action_relative_error": {
+      "status": "NOT_OBSERVED",
+      "data_class": "not_observed",
+      "value": null,
+      "limit": 1.0e-11
+    },
+    "auxiliary_recovery_relative_error": {
+      "status": "NOT_OBSERVED",
+      "data_class": "not_observed",
+      "value": null,
+      "limit": 1.0e-11
+    },
+    "physical_rhs_identity_relative_error": {
+      "status": "NOT_OBSERVED",
+      "data_class": "not_observed",
+      "value": null,
+      "limit": 1.0e-12
+    },
+    "primary_oracle_materialization": {
+      "status": "NOT_OBSERVED",
+      "data_class": "not_observed",
+      "primary": null,
+      "oracle": null
+    },
+    "component_probe_summary": {
+      "status": "NOT_OBSERVED",
+      "data_class": "not_observed",
+      "component_only": null,
+      "probe_enabled": null,
+      "ordinary_default_changed": null
+    },
+    "no_factorization_or_ksp_solve_event": {
+      "status": "NOT_OBSERVED",
+      "data_class": "not_observed",
+      "raw_observation_no_ksp_event": true,
+      "ksp_iterations": null,
+      "official_result": null,
+      "postprocess": null,
+      "note": "Progress/stdout did not show a KSP-specific event before the implementation exception; the completed formal Gate is not observable."
+    },
+    "resource_and_stop": {
+      "status": "PASS",
+      "data_class": "measured",
+      "no_swap": true,
+      "terminated_for_memory": false,
+      "terminated_for_timeout": false,
+      "terminated_for_authority_unreadable": false
+    },
+    "overall": {
+      "status": "FAIL",
+      "classification": "MATRIX_FREE_DTN_FORMAL_80MODE_GATE_FAILED",
+      "data_class": "derived_from_worker_and_watchdog_exit"
+    }
+  },
+  "resources": {
+    "wall_seconds_last_timeline_sample": 334.50361661892384,
+    "dtn_port_stage_elapsed_seconds": 330.5629061110085,
+    "max_process_tree_rss_mb": 675.91015625,
+    "max_process_tree_swap_mb": 0.0,
+    "max_simultaneous_worker_rss_mb": 661.3984375,
+    "max_simultaneous_worker_pss_mb": 608.1591796875,
+    "max_simultaneous_worker_uss_mb": 562.8671875,
+    "no_swap": true,
+    "sample_count": 1303,
+    "data_class": "measured",
+    "semantics": "max_process_tree_rss_mb is the watchdog resource authority; worker RSS/PSS/USS are simultaneous rank observations."
+  },
+  "qualification_failures": [
+    "process_completed",
+    "exact_positive_rows",
+    "polarization_identity",
+    "e0_component_only",
+    "e0_probe_enabled",
+    "e0_case_status",
+    "e0_ordinary_default_unchanged",
+    "e0_audit_gate_pass",
+    "e0_mode_identity_80",
+    "e0_deterministic_seed_identity",
+    "e0_source_audit_identity",
+    "e0_forward_action_gate",
+    "e0_auxiliary_recovery_gate",
+    "e0_physical_rhs_identity_gate",
+    "e0_primary_c_d_materialization_zero",
+    "e0_oracle_c_d_materialization_one",
+    "e0_profiles_separate",
+    "e0_ksp_iterations_zero",
+    "e0_no_official_result",
+    "e0_no_ksp_solve"
+  ],
+  "stages": {
+    "E0": {
+      "status": "completed_controlled_failure",
+      "classification": "MATRIX_FREE_DTN_FORMAL_80MODE_GATE_FAILED"
+    },
+    "E1": {
+      "status": "not_run",
+      "reason": "V6 hard stop after E0 implementation failure"
+    },
+    "E2": {
+      "status": "not_run",
+      "reason": "V6 hard stop after E0 implementation failure"
+    },
+    "E3": {
+      "status": "not_run",
+      "reason": "V6 hard stop after E0 implementation failure"
+    },
+    "E4": {
+      "status": "not_run",
+      "reason": "V6 hard stop after E0 implementation failure"
+    },
+    "E5": {
+      "status": "not_run",
+      "reason": "V6 hard stop after E0 implementation failure"
+    },
+    "E6": {
+      "status": "completed_closeout",
+      "reason": "The two-file E6 closeout is complete; publication carrier SHA and post-push clean state are reported out-of-band."
+    },
+    "candidate_E": {
+      "status": "not_run",
+      "reason": "Blocked by the higher-priority V6 stop after E0 implementation failure; no capacity conclusion."
+    }
+  },
+  "artifacts": {
+    "run_dir": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_fbefca02/mpi1",
+    "required_raw": {
+      "parent_launch_descriptor.json": {
+        "absolute_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_fbefca02/mpi1/parent_launch_descriptor.json",
+        "bytes": 1493,
+        "sha256": "6549eb98c481f66e507be54d658efc52d9ec773727d73e328546fe05efcfa18d"
+      },
+      "progress_3d.jsonl": {
+        "absolute_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_fbefca02/mpi1/progress_3d.jsonl",
+        "bytes": 30787,
+        "sha256": "175b1a568a213e6b90f885849a1143b965093bd48a7c0d24999c8f1b044b90a2"
+      },
+      "worker_stdout.txt": {
+        "absolute_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_fbefca02/mpi1/worker_stdout.txt",
+        "bytes": 5164,
+        "sha256": "090eea790832c8a18fa92f627d812d3911734d730d7d6e9e46f6afddf7bb3b4f"
+      },
+      "watchdog_summary.json": {
+        "absolute_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_fbefca02/mpi1/watchdog_summary.json",
+        "bytes": 17948,
+        "sha256": "dbcd12ded0ff54de1fbf81c99ff9f4ff15e7959907ce874dbc387bf993649fd0"
+      },
+      "memory_timeline.csv": {
+        "absolute_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_fbefca02/mpi1/memory_timeline.csv",
+        "bytes": 1097883,
+        "sha256": "6210ce033672d472bb5a0d42680f5f440ab19275ab11364ca4a0ae67616f0fd1"
+      }
+    },
+    "auxiliary_raw": {
+      "mesh_3d.h5": {
+        "bytes": 31720,
+        "sha256": "de9e54c43b9cfcbbb658f18e79fd848f7264fd6185e3fb34b75304f7732cf893"
+      },
+      "mesh_3d.xdmf": {
+        "bytes": 658,
+        "sha256": "e40e1b05f3269101fe93e96416481f14bcaa64fb1df5f030381c747b484b9864"
+      },
+      "mesh_3d_partition_note.txt": {
+        "bytes": 1353,
+        "sha256": "0a3e481d76798fa867ac1151dee5b3899920e623606faf36f175ee670c9ed974"
+      }
+    },
+    "missing": {
+      "run_summary.json": "not_emitted_after_worker_failure",
+      "dtn_port_diffraction_orders_3d.json": "not_emitted_after_worker_failure",
+      "fields_3d_for_paraview_rank0000.vtu": "not_emitted_after_worker_failure"
+    },
+    "compact_record_relative_path": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task037_v6_e0_matrix_free_dtn_formal_failure.json"
+  },
+  "provenance": {
+    "checkpoint_commit": "fbefca0250980a790eba3d464ad37b86d2d02abf",
+    "raw_artifact_hashes_are_external_to_tracked_record": true,
+    "tracked_record_and_response_are_not_self_hash_bound": true,
+    "publication_status": "completed_closeout",
+    "publication_carrier_sha_policy": "intentionally_reported_out_of_band_to_avoid_self_reference",
+    "publication_carrier_sha": null,
+    "publication_worktree_clean_policy": "reported_out_of_band_after_publication",
+    "publication_worktree_clean": null
+  }
+}
