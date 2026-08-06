@@ -1361,6 +1361,12 @@ def collect_owner_local_lor_transfer(
                 "periodic_slave_edge_count": int(
                     edge_audit["periodic_slave_edge_count"]
                 ),
+                "matched_identity_block_count": int(
+                    edge_audit["matched_identity_block_count"]
+                ),
+                "periodic_relation_count": int(
+                    edge_audit["periodic_relation_count"]
+                ),
                 "merged_periodic_block_count": len(merged_blocks),
                 "gathered_physical_identity_block_count": int(
                     gathered_physical_block_count

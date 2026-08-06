@@ -10,7 +10,10 @@ from mpi4py import MPI
 from dolfinx import cpp, fem, mesh
 
 from ..common.config_3d import SimulationConfig3D
-from .floquet_3d_high_order import build_high_order_constraint_data
+from .floquet_3d_high_order import (
+    build_high_order_constraint_data,
+    floquet_geometry_tolerance,
+)
 
 
 @dataclass
@@ -194,13 +197,7 @@ def _require_supported_topological_trace_p2(V, cfg: SimulationConfig3D) -> None:
 
 
 def _geometry_tolerance(cfg: SimulationConfig3D) -> float:
-    span = max(
-        abs(cfg.x_max - cfg.x_min),
-        abs(cfg.y_max - cfg.y_min),
-        abs(cfg.domain_z_max - cfg.domain_z_min),
-        1.0,
-    )
-    return max(1.0e-8, 1.0e-10 * span)
+    return floquet_geometry_tolerance(cfg)
 
 
 def _edge_match_key(point: np.ndarray, tangent: np.ndarray, tol: float) -> tuple[int, int, int, int]:

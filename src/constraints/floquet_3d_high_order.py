@@ -80,6 +80,12 @@ class HighOrderFloquetConstraintData:
 
 
 def _geometry_tolerance(cfg: SimulationConfig3D) -> float:
+    return floquet_geometry_tolerance(cfg)
+
+
+def floquet_geometry_tolerance(cfg: SimulationConfig3D) -> float:
+    """Return the coordinate quantization tolerance used by Floquet builders."""
+
     span = max(
         abs(cfg.x_max - cfg.x_min),
         abs(cfg.y_max - cfg.y_min),
