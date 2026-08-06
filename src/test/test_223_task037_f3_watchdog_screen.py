@@ -1545,3 +1545,170 @@ def test_ordinary_full_solve_rules_remain_strict():
         observed_worker_rank_count=8,
     )
     assert not result["pass"]
+
+
+def test_task037_extra_g0_snapshot_observer_filters_requested_iterations(tmp_path):
+    calls = []
+    records = {}
+    comm = SimpleNamespace(rank=0)
+
+    def fake_writer(directory, residual, **kwargs):
+        calls.append(
+            {
+                "directory": directory,
+                "residual": residual,
+                **kwargs,
+            }
+        )
+        iteration = int(kwargs["iteration"])
+        return {
+            "manifest_filename": f"manifest_{iteration}.json",
+            "manifest_sha256": f"hash-{iteration}",
+        }
+
+    observer = watchdog._task037_extra_g0_snapshot_observer(
+        tmp_path,
+        "a" * 40,
+        comm,
+        records,
+        writer=fake_writer,
+    )
+    borrowed_residual = object()
+    for iteration in (0, 10, 20):
+        observer(iteration, borrowed_residual, 0.5, 0.25)
+
+    assert [call["iteration"] for call in calls] == [0, 20]
+    assert all(call["residual"] is borrowed_residual for call in calls)
+    assert all(call["source_sha"] == "a" * 40 for call in calls)
+    assert set(records) == {"0", "20"}
+    assert records["0"]["sha256"] == "hash-0"
+    assert records["20"]["sha256"] == "hash-20"
+
+
+def test_task037_extra_g0_flag_reaches_only_m3a_wrapper(tmp_path, monkeypatch):
+    class Comm:
+        rank = 0
+
+        def tompi4py(self):
+            return self
+
+    request = SimpleNamespace(operator=SimpleNamespace(getComm=lambda: Comm()))
+    captured = []
+    ordinary_captured = []
+
+    def fake_m3a_core(_request, **kwargs):
+        captured.append(kwargs)
+        return object(), {
+            "solver_profile": "never_materialized_owner_local_overlap0125_partition"
+        }
+
+    def fake_ordinary_core(_request, **kwargs):
+        ordinary_captured.append(kwargs)
+        return object(), {"solver_profile": "never_materialized_owner_local"}
+
+    monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative."
+        "solve_never_materialized_overlap0125_partition_fgmres",
+        fake_m3a_core,
+    )
+    monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative."
+        "solve_never_materialized_static_condensed_fgmres",
+        fake_ordinary_core,
+    )
+
+    for enabled in (True, False):
+        solve = watchdog._task037_f3_assembled_fgmres_port(
+            tmp_path,
+            20,
+            never_materialized=True,
+            overlap0125_partition=True,
+            task037_extra_g0_diagnostics=enabled,
+            verified_clean_sha="b" * 40,
+        )
+        solve(request)
+
+    assert [kwargs["task037_extra_g0_diagnostics"] for kwargs in captured] == [
+        True,
+        False,
+    ]
+    assert captured[0]["residual_snapshot_observer"] is not None
+    assert captured[1]["residual_snapshot_observer"] is None
+
+    ordinary_solve = watchdog._task037_f3_assembled_fgmres_port(
+        tmp_path,
+        20,
+        never_materialized=True,
+        verified_clean_sha="b" * 40,
+    )
+    ordinary_solve(request)
+    assert "task037_extra_g0_diagnostics" not in ordinary_captured[0]
+    assert "residual_snapshot_observer" not in ordinary_captured[0]
+
+
+def test_task037_extra_g0_parser_is_exact_screen20_mpi1_scope(tmp_path):
+    authority = (
+        "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/"
+        "global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json"
+    )
+    base = [
+        "--degree",
+        "6",
+        "--h-nm",
+        "10",
+        "--polarization-kind",
+        "s",
+        "--run-kind",
+        "full-solve",
+        "--mpi-size",
+        "1",
+        "--profile",
+        "default",
+        "--stage4-full3d-assembly-backend",
+        "assembly_time_static_condensed",
+        "--task035c-p6-h10-gate",
+        "--task035c-p6-preflight-authority",
+        authority,
+        "--task035c-p6-preflight-sha256",
+        "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+        "--verified-clean-sha",
+        "c" * 40,
+        "--run-dir",
+        str(tmp_path),
+        "--task037-f3-screen",
+        "20",
+        "--warning-gib",
+        "10",
+        "--terminate-gib",
+        "14",
+        "--timeout-seconds",
+        "1800",
+        "--task037-m2c-never-materialized",
+        "--task037-m3a-overlap0125-partition",
+        "--task037-extra-g0-diagnostics",
+    ]
+    args = watchdog._parse_args(base)
+    assert args.task037_extra_g0_diagnostics is True
+    command = watchdog._worker_command(args, tmp_path)
+    assert command.count("--task037-extra-g0-diagnostics") == 1
+    assert command.count("--verified-clean-sha") == 1
+    assert command[command.index("--verified-clean-sha") + 1] == "c" * 40
+    worker_args = watchdog._parse_args(command[command.index("--worker") :])
+    assert worker_args.worker is True
+    assert worker_args.task037_extra_g0_diagnostics is True
+    contract = watchdog._worker_launch_contract(args)
+    assert contract["task037_extra_g0_diagnostics"] is True
+    assert contract["verified_clean_sha"] == "c" * 40
+
+    for invalid in (
+        base[: base.index("--mpi-size") + 1]
+        + ["2"]
+        + base[base.index("--mpi-size") + 2 :],
+        base[: base.index("--task037-f3-screen") + 1]
+        + ["100"]
+        + base[base.index("--task037-f3-screen") + 2 :],
+        base + ["--poll-interval", "0.1"],
+        [item for item in base if item != "--task037-m3a-overlap0125-partition"],
+    ):
+        with pytest.raises(SystemExit):
+            watchdog._parse_args(invalid)

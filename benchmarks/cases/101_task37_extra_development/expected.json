@@ -1,0 +1,56 @@
+{
+  "case_id": "101_task37_extra_development",
+  "screen20_identity": {
+    "solver_profile": "never_materialized_owner_local_overlap0125_partition",
+    "mpi_size": 1,
+    "screen_iterations": 20,
+    "num_slabs": 16,
+    "overlap_fraction": 0.125,
+    "interpolation": "partition",
+    "coarse_dimension": 75,
+    "global_A_materialized": false,
+    "global_F_materialized": false
+  },
+  "factor_inventory": {
+    "global_direct_factor_count": 0,
+    "global_schur_matrix_materialized": false,
+    "global_A_materialized": false,
+    "global_F_materialized": false,
+    "factor_only_storage": true,
+    "local_solver_types": ["ilu"],
+    "allowed_factor_scope": [
+      "SmallDenseInverse(H)",
+      "dense coarse LU",
+      "COMM_SELF factor_only ILU(0)"
+    ]
+  },
+  "residual_gate": {
+    "reported_and_true_residuals_finite": true,
+    "snapshot_iterations": [0, 20],
+    "canonical_residual_manifest": true
+  },
+  "contraction_gate": {
+    "local_slab_metric_count": 16,
+    "local_fields": [
+      "local_residual_norm",
+      "current_trace_ilu_unweighted_local_one_solve_rho",
+      "b4_fixed_gmres4_unweighted_local_one_solve_rho"
+    ],
+    "global_fields": [
+      "global_current_trace_ilu_one_additive_apply",
+      "global_b4_partition_weighted_one_apply",
+      "global_current_trace_ilu_ablation",
+      "global_fixed_two_step_smoother",
+      "global_m3a_two_step_wave_coarse_post_smooth"
+    ],
+    "ablation_count": 16
+  },
+  "resource_gate": {
+    "zero_swap": true,
+    "memory_peak_gib_lt": 14.0
+  },
+  "official_rta": {
+    "expected": false,
+    "emitted": false
+  }
+}

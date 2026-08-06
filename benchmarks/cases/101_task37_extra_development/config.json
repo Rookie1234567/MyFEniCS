@@ -1,0 +1,42 @@
+{
+  "case_id": "101_task37_extra_development",
+  "scope": {
+    "solver_profile": "never_materialized_owner_local_overlap0125_partition",
+    "degree": 6,
+    "h_nm": 10.0,
+    "polarization_kind": "s",
+    "run_kind": "full-solve",
+    "assembly_backend": "assembly_time_static_condensed",
+    "mpi_size": 1,
+    "screen_iterations": 20,
+    "overlap_fraction": 0.125,
+    "interpolation": "partition",
+    "task037_m2c_never_materialized": true,
+    "task037_m3a_overlap0125_partition": true,
+    "task037_extra_g0_diagnostics": true
+  },
+  "watchdog": {
+    "poll_interval_seconds": 0.25,
+    "warning_gib": 10.0,
+    "terminate_gib": 14.0,
+    "timeout_seconds": 1800.0,
+    "allow_swap": false,
+    "zero_swap_required": true
+  },
+  "preflight_authority": {
+    "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+    "sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8"
+  },
+  "source_sha": {
+    "mode": "runtime",
+    "command": "GIT_DIR=.git-codex GIT_WORK_TREE=. git rev-parse HEAD",
+    "passed_as": "--verified-clean-sha",
+    "must_be_clean_implementation_head": true
+  },
+  "artifacts": {
+    "raw_output_policy": "ignored",
+    "snapshot_iterations": [0, 20],
+    "official_rta": false,
+    "official_rta_emitted": false
+  }
+}

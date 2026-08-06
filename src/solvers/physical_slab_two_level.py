@@ -1816,8 +1816,32 @@ class DistributedPhysicalSlabSmoother:
         self._finalize_factor_inventory(len(plan.slab_owners), progress, setup_observer)
         self._initialize_inner_ksp(two_step_action_operator)
 
-    def _apply_once(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
-        started = time.perf_counter()
+    def _solve_owned_factor(
+        self,
+        factor: _OwnedSubdomainFactor,
+        gathered_source: np.ndarray,
+    ) -> None:
+        factor.rhs.getArray()[:] = gathered_source[factor.union_positions]
+        factor.solution.set(0.0)
+        if factor.factor_matrix is not None:
+            factor.factor_matrix.solve(factor.rhs, factor.solution)
+        elif factor.diagonal_inverse is not None:
+            factor.solution.getArray()[:] = (
+                factor.diagonal_inverse * factor.rhs.getArray(readonly=True)
+            )
+        else:
+            assert factor.ksp is not None
+            factor.ksp.solve(factor.rhs, factor.solution)
+
+    def _apply_once(
+        self,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+        *,
+        excluded_subdomain: int | None = None,
+        record_telemetry: bool = True,
+    ) -> None:
+        started = time.perf_counter() if record_telemetry else 0.0
         target.set(0.0)
         self._gathered_source.set(0.0)
         self._scatter.scatter(
@@ -1833,17 +1857,9 @@ class DistributedPhysicalSlabSmoother:
             gathered_target.getArray() for gathered_target in self._gathered_targets
         ]
         for factor in self._factors:
-            factor.rhs.getArray()[:] = gathered_source[factor.union_positions]
-            factor.solution.set(0.0)
-            if factor.factor_matrix is not None:
-                factor.factor_matrix.solve(factor.rhs, factor.solution)
-            elif factor.diagonal_inverse is not None:
-                factor.solution.getArray()[:] = (
-                    factor.diagonal_inverse * factor.rhs.getArray(readonly=True)
-                )
-            else:
-                assert factor.ksp is not None
-                factor.ksp.solve(factor.rhs, factor.solution)
+            if factor.subdomain == excluded_subdomain:
+                continue
+            self._solve_owned_factor(factor, gathered_source)
             color = factor.subdomain % 2 if self.assembly_order == "two_color" else 0
             gathered_target_arrays[color][factor.union_positions] += (
                 factor.weights * factor.solution.getArray(readonly=True)
@@ -1855,8 +1871,58 @@ class DistributedPhysicalSlabSmoother:
                 addv=PETSc.InsertMode.ADD_VALUES,
                 mode=PETSc.ScatterMode.REVERSE,
             )
-        self.apply_count += 1
-        self.apply_elapsed_s += time.perf_counter() - started
+        if record_telemetry:
+            self.apply_count += 1
+            self.apply_elapsed_s += time.perf_counter() - started
+
+    def _diagnostic_one_level_apply(
+        self,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+        *,
+        excluded_subdomain: int | None = None,
+    ) -> None:
+        """Apply one level for diagnostics without changing telemetry."""
+
+        self._apply_once(
+            source,
+            target,
+            excluded_subdomain=excluded_subdomain,
+            record_telemetry=False,
+        )
+
+    def _diagnostic_owner_local_ilu(
+        self,
+        source: PETSc.Vec,
+        subdomain: int,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Return one owner-local shifted ILU RHS and unweighted correction."""
+
+        self._gathered_source.set(0.0)
+        self._scatter.scatter(
+            source,
+            self._gathered_source,
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        owner = int(self.subdomain_owners[subdomain])
+        if self.rank != owner:
+            empty = np.empty(0, dtype=PETSc.ScalarType)
+            return empty, empty.copy()
+        factor = next(
+            factor for factor in self._factors if factor.subdomain == subdomain
+        )
+        self._solve_owned_factor(
+            factor,
+            self._gathered_source.getArray(readonly=True),
+        )
+        rhs = np.asarray(
+            factor.rhs.getArray(readonly=True), dtype=PETSc.ScalarType
+        ).copy()
+        correction = np.asarray(
+            factor.solution.getArray(readonly=True), dtype=PETSc.ScalarType
+        ).copy()
+        return rhs, correction
 
     def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._inner_ksp is None:

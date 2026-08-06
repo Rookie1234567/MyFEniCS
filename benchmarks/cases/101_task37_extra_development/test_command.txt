@@ -1,0 +1,27 @@
+Run only after the implementation commit exists and the worktree is clean. Replace
+`<IMPLEMENTATION_SHA>` with the output of:
+
+```bash
+GIT_DIR=.git-codex GIT_WORK_TREE=. git rev-parse HEAD
+```
+
+Then use the qualified activation and the exact parent command below. The command
+does not pass `--allow-swap`; raw output belongs under ignored `benchmarks/artifacts/`.
+
+```bash
+source scripts/activate_myfenics_wsl.sh
+python -m benchmarks.run_task033_full3d_watchdog \
+  --degree 6 --h-nm 10 --polarization-kind s --run-kind full-solve \
+  --mpi-size 1 --profile default \
+  --stage4-full3d-assembly-backend assembly_time_static_condensed \
+  --task035c-p6-h10-gate \
+  --task035c-p6-preflight-authority benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json \
+  --task035c-p6-preflight-sha256 96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8 \
+  --verified-clean-sha <IMPLEMENTATION_SHA> \
+  --task037-f3-screen 20 --poll-interval 0.25 --warning-gib 10 \
+  --terminate-gib 14 --timeout-seconds 1800 \
+  --task037-m2c-never-materialized \
+  --task037-m3a-overlap0125-partition \
+  --task037-extra-g0-diagnostics \
+  --run-dir benchmarks/artifacts/101_task37_extra_development
+```

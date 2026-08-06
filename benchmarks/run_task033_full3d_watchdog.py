@@ -13,7 +13,7 @@ import time
 from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 import numpy as np
 
@@ -688,6 +688,51 @@ def _task037_m4_optimized_schwarz_status(
     return f"task037_m4_p2_factor_free_slab_ras_steps4_{phase}_{result}"
 
 
+def _task037_extra_g0_snapshot_observer(
+    run_dir: Path,
+    source_sha: str,
+    comm,
+    records: dict[str, dict[str, str]],
+    *,
+    writer: Callable[..., dict[str, Any]] | None = None,
+) -> Callable[[int, Any, float, float], None]:
+    """Write only the explicitly requested M3a G0 residual iterations."""
+
+    if writer is None:
+        from src.solvers.static_residual_snapshot import write_residual_snapshot
+
+        writer = write_residual_snapshot
+    snapshot_dir = run_dir / "task037_f3_g0_residual_snapshots"
+
+    def observe(
+        iteration: int,
+        residual: Any,
+        reported_relative_residual: float,
+        true_relative_residual: float,
+    ) -> None:
+        if int(iteration) not in (0, 20):
+            return
+        record = writer(
+            snapshot_dir,
+            residual,
+            iteration=int(iteration),
+            profile="never_materialized_owner_local_overlap0125_partition",
+            source_sha=str(source_sha),
+            true_relative_residual=float(true_relative_residual),
+            reported_relative_residual=float(reported_relative_residual),
+            comm=comm,
+        )
+        if comm.rank == 0:
+            records[str(iteration)] = {
+                "path": _path_from_root(
+                    snapshot_dir / str(record["manifest_filename"])
+                ),
+                "sha256": str(record["manifest_sha256"]),
+            }
+
+    return observe
+
+
 def _task037_f3_assembled_fgmres_port(
     run_dir: Path,
     screen_iterations: int,
@@ -700,6 +745,8 @@ def _task037_f3_assembled_fgmres_port(
     factor_free_local_steps: int = 2,
     optimized_schwarz: bool = False,
     overlap0125_partition: bool = False,
+    task037_extra_g0_diagnostics: bool = False,
+    verified_clean_sha: str | None = None,
 ):
     from src.solvers.static_condensed_iterative import (
         solve_assembled_static_condensed_fgmres,
@@ -714,6 +761,7 @@ def _task037_f3_assembled_fgmres_port(
         request_operator = request.operator if never_materialized else request.A
         comm = request_operator.getComm().tompi4py()
         history_path = run_dir / "task037_f3_residual_history.jsonl"
+        g0_snapshot_records: dict[str, dict[str, str]] = {}
 
         def observe(iteration, reported, condensed):
             if comm.rank == 0:
@@ -741,6 +789,17 @@ def _task037_f3_assembled_fgmres_port(
                     **payload,
                 },
             )
+
+        g0_snapshot_observer = (
+            _task037_extra_g0_snapshot_observer(
+                run_dir,
+                str(verified_clean_sha),
+                comm,
+                g0_snapshot_records,
+            )
+            if task037_extra_g0_diagnostics
+            else None
+        )
 
         if optimized_schwarz:
             snapshot, audit = (
@@ -777,6 +836,8 @@ def _task037_f3_assembled_fgmres_port(
                 request,
                 screen_iterations=screen_iterations,
                 residual_observer=observe,
+                residual_snapshot_observer=g0_snapshot_observer,
+                task037_extra_g0_diagnostics=task037_extra_g0_diagnostics,
                 lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
         elif never_materialized:
@@ -796,6 +857,10 @@ def _task037_f3_assembled_fgmres_port(
                 lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
         audit["task037_m4_b2_long_full"] = screen_iterations == LONG_MAX_IT
+        if task037_extra_g0_diagnostics:
+            audit.setdefault("task037_extra_g0_diagnostics", {})[
+                "residual_snapshots"
+            ] = dict(g0_snapshot_records)
         if comm.rank == 0:
             (run_dir / "task037_f3_core_audit.json").write_text(
                 json.dumps(audit, ensure_ascii=False, indent=2) + "\n",
@@ -1258,6 +1323,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         ),
         "task037_canonical_vector_export": bool(args.task037_canonical_vector_export),
         "task037_m0_lifecycle_audit": bool(args.task037_m0_lifecycle_audit),
+        "task037_extra_g0_diagnostics": bool(
+            getattr(args, "task037_extra_g0_diagnostics", False)
+        ),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -1433,6 +1501,10 @@ def _worker(args: argparse.Namespace) -> int:
             factor_free_local_steps=args.task037_m4_factor_free_local_steps,
             optimized_schwarz=args.task037_m4_optimized_schwarz,
             overlap0125_partition=args.task037_m3a_overlap0125_partition,
+            task037_extra_g0_diagnostics=getattr(
+                args, "task037_extra_g0_diagnostics", False
+            ),
+            verified_clean_sha=getattr(args, "verified_clean_sha", None),
         )
         if args.task037_m2c_never_materialized:
             from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
@@ -1617,6 +1689,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task037-m4-b2-long-full", action="store_true")
     parser.add_argument("--task037-m0-lifecycle-audit", action="store_true")
+    parser.add_argument(
+        "--task037-extra-g0-diagnostics",
+        action="store_true",
+        help="Run the opt-in Task037-extra G0 diagnostics on M3a screen-20 only.",
+    )
     parser.add_argument(
         "--task035d-case097-gate",
         action="store_true",
@@ -1970,6 +2047,45 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037-m3a-overlap0125-partition requires the action-only "
             "Task037 screen/full path and is exclusive of M4/F5b/F0/F1."
+        )
+    if args.task037_extra_g0_diagnostics and not (
+        args.task035c_p6_h10_gate
+        and args.degree == 6
+        and math.isclose(args.h_nm, 10.0)
+        and args.polarization_kind == "s"
+        and args.run_kind == "full-solve"
+        and args.mpi_size == 1
+        and args.profile == "default"
+        and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+        and not args.allow_swap
+        and valid_hex_digest(args.verified_clean_sha, 40)
+        and (
+            args.worker
+            or (
+                math.isclose(args.poll_interval, 0.25)
+                and args.warning_gib == 10.0
+                and args.terminate_gib == 14.0
+                and args.timeout_seconds == 1800.0
+            )
+        )
+        and args.task037_f3_screen == 20
+        and not args.task037_f3_full
+        and args.task037_m2c_never_materialized
+        and args.task037_m3a_overlap0125_partition
+        and not args.task037_f5b_released_profile
+        and not args.task037_f0_vector_observer
+        and args.task037_f1_direct_trace_oracle is None
+        and not args.task037_e0_matrix_free_dtn_gate
+        and not args.task037_m4_p2_auxiliary
+        and not args.task037_m4_factor_free_slab
+        and not args.task037_m4_optimized_schwarz
+        and not args.task037_m4_b2_long_full
+        and not args.task037_canonical_vector_export
+        and not args.task037_m0_lifecycle_audit
+    ):
+        parser.error(
+            "--task037-extra-g0-diagnostics is restricted to the verified "
+            "p6/h10 S MPI1 M3a overlap-0.125 screen-20 no-swap scope."
         )
     if (
         args.task037_m4_p2_auxiliary
@@ -3332,7 +3448,7 @@ def _qualify(
         and not m4_optimized_schwarz_profile
     )
     action_only_profile = (
-        bool(args.task037_e0_matrix_free_dtn_gate)
+        bool(getattr(args, "task037_e0_matrix_free_dtn_gate", False))
         or m2c_profile
         or m3a_profile
         or m4_profile
@@ -3364,7 +3480,7 @@ def _qualify(
             solver_summary.get("polarization_kind") == args.polarization_kind
         ),
     }
-    if args.task037_e0_matrix_free_dtn_gate:
+    if getattr(args, "task037_e0_matrix_free_dtn_gate", False):
         audit = solver_summary.get("matrix_free_dtn_probe_audit")
         audit = audit if isinstance(audit, dict) else {}
         mode_identity = audit.get("mode_identity")
@@ -4052,6 +4168,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-m2c-never-materialized")
     if args.task037_m3a_overlap0125_partition:
         command.append("--task037-m3a-overlap0125-partition")
+    if getattr(args, "task037_extra_g0_diagnostics", False):
+        command.append("--task037-extra-g0-diagnostics")
     if args.task037_m4_p2_auxiliary:
         command.append("--task037-m4-p2-auxiliary")
     if args.task037_m4_factor_free_slab:

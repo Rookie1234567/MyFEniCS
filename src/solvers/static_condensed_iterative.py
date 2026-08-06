@@ -72,7 +72,8 @@ def _relative_residual(
     rhs_norm: float,
 ) -> float:
     operator.mult(solution, work)
-    work.axpy(PETSc.ScalarType(-1.0), rhs)
+    work.scale(PETSc.ScalarType(-1.0))
+    work.axpy(PETSc.ScalarType(1.0), rhs)
     return float(work.norm()) / max(rhs_norm, _TINY)
 
 
@@ -83,6 +84,9 @@ def _solve_static_condensed_fgmres_core(
     screen_iterations: int,
     local_krylov_steps: Literal[2, 4] = 2,
     residual_observer: Callable[[int, float, float], None] | None = None,
+    residual_snapshot_observer: Callable[[int, PETSc.Vec, float, float], None]
+    | None = None,
+    task037_extra_g0_diagnostics: bool = False,
     solver_profile: Literal[
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
@@ -119,6 +123,8 @@ def _solve_static_condensed_fgmres_core(
     m3a_profile = (
         solver_profile == "never_materialized_owner_local_overlap0125_partition"
     )
+    if task037_extra_g0_diagnostics and not m3a_profile:
+        raise ValueError("Task037-extra G0 diagnostics require the M3a profile")
     p2_auxiliary_profile = solver_profile in {
         "never_materialized_p2_auxiliary",
         "never_materialized_p2_factor_free_slab_auxiliary",
@@ -213,6 +219,7 @@ def _solve_static_condensed_fgmres_core(
         emit_lifecycle(event, **payload)
 
     owned: list[Any] = []
+    g0_residual_snapshots: dict[int, PETSc.Vec] = {}
     try:
         if action_only:
             blocks = request.blocks
@@ -567,6 +574,29 @@ def _solve_static_condensed_fgmres_core(
         condensed_samples.append((0, initial_condensed))
         if residual_observer is not None:
             residual_observer(0, 1.0, initial_condensed)
+
+        def emit_residual_snapshot(
+            iteration: int,
+            reported_value: float,
+            true_value: float,
+        ) -> None:
+            if (
+                task037_extra_g0_diagnostics
+                and iteration in (0, 20)
+                and iteration not in g0_residual_snapshots
+            ):
+                g0_residual_snapshots[int(iteration)] = residual_work.copy()
+                owned.append(g0_residual_snapshots[int(iteration)])
+            if residual_snapshot_observer is None:
+                return
+            residual_snapshot_observer(
+                int(iteration),
+                residual_work,
+                float(reported_value),
+                float(true_value),
+            )
+
+        emit_residual_snapshot(0, 1.0, initial_condensed)
         ksp = PETSc.KSP().create(comm)
         owned.append(ksp)
         live_state["outer_ksp"] = True
@@ -594,6 +624,10 @@ def _solve_static_condensed_fgmres_core(
             if (
                 iteration in (10, 20)
                 or (screen_iterations > 3000 and iteration % 100 == 0)
+                or (
+                    residual_snapshot_observer is not None
+                    and iteration == 100
+                )
             ) and iteration not in sampled_iterations:
                 current_solution = current.buildSolution(monitor_solution)
                 condensed = _relative_residual(
@@ -603,6 +637,11 @@ def _solve_static_condensed_fgmres_core(
                 sampled_iterations.add(iteration)
                 if residual_observer is not None:
                     residual_observer(int(iteration), reported, condensed)
+                emit_residual_snapshot(
+                    int(iteration),
+                    reported,
+                    condensed,
+                )
 
         ksp.setMonitor(monitor)
         solve_started = perf_counter()
@@ -616,6 +655,7 @@ def _solve_static_condensed_fgmres_core(
             condensed_samples.append((iterations, condensed))
             if residual_observer is not None:
                 residual_observer(iterations, reported, condensed)
+            emit_residual_snapshot(iterations, reported, condensed)
         emit_lifecycle(
             "outer_ksp_solved",
             converged_reason=reason,
@@ -657,6 +697,13 @@ def _solve_static_condensed_fgmres_core(
         )
         recovery_seconds = perf_counter() - recovery_started
         smoother_audit = smoother.diagnostics
+        formal_operator_apply_count = int(operator_context.apply_count)
+        formal_coarse_audit = {
+            "apply_count": int(coarse.apply_count),
+            "apply_elapsed_s": float(coarse.apply_elapsed_s),
+            "smoother_elapsed_s": float(coarse.smoother_elapsed_s),
+            "coarse_elapsed_s": float(coarse.coarse_elapsed_s),
+        }
         if p2_auxiliary_profile:
             factor_nnz = int(smoother_audit["p2_factor_nnz_used"])
             factor_rows = int(smoother_audit["p2_rows"])
@@ -788,13 +835,13 @@ def _solve_static_condensed_fgmres_core(
                 "recovery": float(recovery_seconds),
                 "total": float(perf_counter() - started),
             },
-            "operator_apply_count": int(operator_context.apply_count),
+            "operator_apply_count": formal_operator_apply_count,
             "coarse": {
                 "dimension": len(basis),
                 "rank": int(coarse.coarse_rank),
                 "condition": float(coarse.coarse_condition),
                 "basis_storage_bytes": int(coarse.basis_storage_bytes),
-                "apply_count": int(coarse.apply_count),
+                "apply_count": formal_coarse_audit["apply_count"],
             },
             "partition_audit": partition_audit,
             "smoother_diagnostics": smoother_audit,
@@ -803,6 +850,73 @@ def _solve_static_condensed_fgmres_core(
         }
         if p2_auxiliary_profile:
             audit["p2_auxiliary_audit"] = p2_auxiliary_audit
+        if task037_extra_g0_diagnostics:
+            from .static_factor_free_slab_pc import FactorFreeLocalSlabKrylovPc
+            from .static_slab_contraction import (
+                measure_owner_local_slab_contractions,
+            )
+
+            diagnostic_started = perf_counter()
+            diagnostics_by_iteration: dict[str, Any] = {}
+            b4 = FactorFreeLocalSlabKrylovPc(
+                fine_action,
+                owner_plan,
+                shift,
+                local_krylov_steps=4,
+                variant="partition",
+            )
+            try:
+                for iteration in (0, 20):
+                    residual_snapshot = g0_residual_snapshots.get(iteration)
+                    if residual_snapshot is None:
+                        continue
+                    diagnostics_by_iteration[str(iteration)] = (
+                        measure_owner_local_slab_contractions(
+                            global_operator=operator,
+                            shifted_local_operator=shifted_fine,
+                            residual=residual_snapshot,
+                            plan=owner_plan,
+                            smoother=smoother,
+                            b4=b4,
+                            fixed_two_step_apply=smoother.solve,
+                            m3a_two_level_apply=(
+                                lambda source, target: coarse.apply(
+                                    None, source, target
+                                )
+                            ),
+                        )
+                    )
+            finally:
+                b4.destroy()
+            audit["task037_extra_g0_diagnostics"] = {
+                "enabled": True,
+                "retained_iterations": sorted(g0_residual_snapshots),
+                "missing_iterations": [
+                    iteration
+                    for iteration in (0, 20)
+                    if iteration not in g0_residual_snapshots
+                ],
+                "formal_audit_frozen_before_diagnostic": {
+                    "operator_apply_count": formal_operator_apply_count,
+                    "coarse": formal_coarse_audit,
+                    "smoother_apply_count": int(
+                        smoother_audit.get(
+                            "one_level_apply_count",
+                            smoother_audit.get("apply_count", 0),
+                        )
+                    ),
+                    "global_factor_rows": int(
+                        smoother_audit.get("global_factor_rows", 0)
+                    ),
+                    "global_stored_factor_nnz": int(
+                        smoother_audit.get("global_stored_factor_nnz", 0)
+                    ),
+                },
+                "diagnostic_wall_seconds": float(
+                    perf_counter() - diagnostic_started
+                ),
+                "by_iteration": diagnostics_by_iteration,
+            }
         snapshot = Stage4ExternalLinearSolverSnapshot(
             x=augmented,
             converged_reason=reason,
@@ -861,6 +975,8 @@ def solve_assembled_static_condensed_fgmres(
     *,
     screen_iterations: Literal[20],
     residual_observer: Callable[[int, float, float], None] | None = None,
+    residual_snapshot_observer: Callable[[int, PETSc.Vec, float, float], None]
+    | None = None,
     solver_profile: Literal[
         "assembled", "assembled_setup_then_static_local_schur_matrix_free_solve"
     ] = "assembled",
@@ -873,6 +989,7 @@ def solve_assembled_static_condensed_fgmres(
         request,
         screen_iterations=screen_iterations,
         residual_observer=residual_observer,
+        residual_snapshot_observer=residual_snapshot_observer,
         solver_profile=solver_profile,
         release_assembled_matrix=release_assembled_matrix,
         lifecycle_observer=lifecycle_observer,
@@ -884,6 +1001,8 @@ def solve_never_materialized_static_condensed_fgmres(
     *,
     screen_iterations: Literal[20] = 20,
     residual_observer: Callable[[int, float, float], None] | None = None,
+    residual_snapshot_observer: Callable[[int, PETSc.Vec, float, float], None]
+    | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the shared 20-step core against borrowed action-only objects."""
@@ -892,6 +1011,7 @@ def solve_never_materialized_static_condensed_fgmres(
         request,
         screen_iterations=screen_iterations,
         residual_observer=residual_observer,
+        residual_snapshot_observer=residual_snapshot_observer,
         solver_profile="never_materialized_owner_local",
         lifecycle_observer=lifecycle_observer,
     )
@@ -902,6 +1022,9 @@ def solve_never_materialized_overlap0125_partition_fgmres(
     *,
     screen_iterations: Literal[20, 100, 200] = 20,
     residual_observer: Callable[[int, float, float], None] | None = None,
+    residual_snapshot_observer: Callable[[int, PETSc.Vec, float, float], None]
+    | None = None,
+    task037_extra_g0_diagnostics: bool = False,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the opt-in overlap-0.125 partition-weighted slab profile."""
@@ -910,6 +1033,8 @@ def solve_never_materialized_overlap0125_partition_fgmres(
         request,
         screen_iterations=screen_iterations,
         residual_observer=residual_observer,
+        residual_snapshot_observer=residual_snapshot_observer,
+        task037_extra_g0_diagnostics=task037_extra_g0_diagnostics,
         solver_profile="never_materialized_owner_local_overlap0125_partition",
         lifecycle_observer=lifecycle_observer,
     )
@@ -920,6 +1045,8 @@ def solve_never_materialized_p2_auxiliary_fgmres(
     *,
     screen_iterations: Literal[20, 100, 200] = 20,
     residual_observer: Callable[[int, float, float], None] | None = None,
+    residual_snapshot_observer: Callable[[int, PETSc.Vec, float, float], None]
+    | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the shared core with the opt-in true p2 auxiliary PC profile."""
@@ -928,6 +1055,7 @@ def solve_never_materialized_p2_auxiliary_fgmres(
         request,
         screen_iterations=screen_iterations,
         residual_observer=residual_observer,
+        residual_snapshot_observer=residual_snapshot_observer,
         solver_profile="never_materialized_p2_auxiliary",
         lifecycle_observer=lifecycle_observer,
     )
@@ -939,6 +1067,8 @@ def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
     screen_iterations: int = 20,
     local_krylov_steps: Literal[2, 4] = 2,
     residual_observer: Callable[[int, float, float], None] | None = None,
+    residual_snapshot_observer: Callable[[int, PETSc.Vec, float, float], None]
+    | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the factor-free slab plus true p2 auxiliary profile."""
@@ -948,6 +1078,7 @@ def solve_never_materialized_p2_factor_free_slab_auxiliary_fgmres(
         screen_iterations=screen_iterations,
         local_krylov_steps=local_krylov_steps,
         residual_observer=residual_observer,
+        residual_snapshot_observer=residual_snapshot_observer,
         solver_profile="never_materialized_p2_factor_free_slab_auxiliary",
         lifecycle_observer=lifecycle_observer,
     )
@@ -958,6 +1089,8 @@ def solve_never_materialized_p2_factor_free_slab_ras_auxiliary_fgmres(
     *,
     screen_iterations: Literal[20, 100, 200] = 20,
     residual_observer: Callable[[int, float, float], None] | None = None,
+    residual_snapshot_observer: Callable[[int, PETSc.Vec, float, float], None]
+    | None = None,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the fixed-four-step RAS factor-free p2 auxiliary profile."""
@@ -967,6 +1100,7 @@ def solve_never_materialized_p2_factor_free_slab_ras_auxiliary_fgmres(
         screen_iterations=screen_iterations,
         local_krylov_steps=4,
         residual_observer=residual_observer,
+        residual_snapshot_observer=residual_snapshot_observer,
         solver_profile="never_materialized_p2_factor_free_slab_ras_auxiliary",
         lifecycle_observer=lifecycle_observer,
     )
