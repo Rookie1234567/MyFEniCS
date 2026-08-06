@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable
+from typing import Iterable, Sequence
 
 import basix
 import basix.ufl
@@ -20,6 +20,10 @@ import scipy.sparse as sp
 from src.geometry.tetra_mesh_audit import (
     canonical_entity_key,
     canonical_point_key,
+)
+from src.constraints.high_order_floquet_trace import (
+    FloquetTraceTopology,
+    PhaseIndependentConstraintBlock,
 )
 
 
@@ -45,6 +49,30 @@ _HEX_BOUNDARY_FACES: tuple[tuple[int, int], ...] = (
     (0, 1),  # Basix face 3: x = 1
     (1, 1),  # Basix face 4: y = 1
     (2, 1),  # Basix face 5: z = 1
+)
+
+_HEX_FACE_VERTICES: tuple[tuple[int, ...], ...] = (
+    (0, 1, 2, 3),
+    (0, 1, 4, 5),
+    (0, 2, 4, 6),
+    (1, 3, 5, 7),
+    (2, 3, 6, 7),
+    (4, 5, 6, 7),
+)
+
+_HEX_EDGE_FACES: tuple[tuple[int, int], ...] = (
+    (0, 1),
+    (0, 2),
+    (1, 2),
+    (0, 3),
+    (1, 3),
+    (0, 4),
+    (2, 4),
+    (3, 4),
+    (1, 5),
+    (2, 5),
+    (3, 5),
+    (4, 5),
 )
 
 
@@ -306,8 +334,12 @@ def build_affine_lor_parent_topology(
     )
 
 
-def _readonly_csr(values: sp.spmatrix | np.ndarray) -> sp.csr_matrix:
-    matrix = sp.csr_matrix(values, dtype=np.float64, copy=True)
+def _readonly_csr(
+    values: sp.spmatrix | np.ndarray,
+    *,
+    dtype: np.dtype | type = np.float64,
+) -> sp.csr_matrix:
+    matrix = sp.csr_matrix(values, dtype=dtype, copy=True)
     matrix.sum_duplicates()
     matrix.sort_indices()
     small = np.abs(matrix.data) <= _TRANSFER_STRUCTURAL_ZERO_TOLERANCE
@@ -527,3 +559,394 @@ def build_lor_parent_transfer(
         ),
     }
     return LORParentTransfer(forward, adjoint, audit)
+
+
+def _parent_corner_keys(
+    topology: AffineLORParentTopology,
+) -> tuple[tuple[int, int, int], ...]:
+    degree = int(topology.degree)
+    node_count = degree + 1
+    grid_corners = (
+        (0, 0, 0),
+        (degree, 0, 0),
+        (0, degree, 0),
+        (degree, degree, 0),
+        (0, 0, degree),
+        (degree, 0, degree),
+        (0, degree, degree),
+        (degree, degree, degree),
+    )
+    return tuple(
+        topology.vertex_keys[_grid_vertex_index(*corner, node_count)]
+        for corner in grid_corners
+    )
+
+
+def _child_edge_keys_on_entity(
+    topology: AffineLORParentTopology,
+    entity_kind: str,
+    entity_key: tuple[tuple[int, int, int], ...],
+) -> tuple[tuple[tuple[int, int, int], ...], ...]:
+    """Find child edges on one parent edge or in one parent-face interior."""
+
+    corners = _parent_corner_keys(topology)
+    if entity_kind == "edge":
+        for edge_id, (first, second) in enumerate(_HEX_EDGES):
+            macro_key = tuple(sorted((corners[first], corners[second])))
+            if macro_key != entity_key:
+                continue
+            adjacent_faces = set(_HEX_EDGE_FACES[edge_id])
+            return tuple(
+                key
+                for key, faces in zip(
+                    topology.edge_keys,
+                    topology.edge_boundary_faces,
+                    strict=True,
+                )
+                if adjacent_faces.issubset(faces)
+            )
+        return ()
+    if entity_kind == "face":
+        for face_id, vertex_ids in enumerate(_HEX_FACE_VERTICES):
+            macro_key = tuple(sorted(corners[index] for index in vertex_ids))
+            if macro_key != entity_key:
+                continue
+            return tuple(
+                key
+                for key, faces in zip(
+                    topology.edge_keys,
+                    topology.edge_boundary_faces,
+                    strict=True,
+                )
+                if len(faces) == 1 and int(face_id) in faces
+            )
+        return ()
+    raise ValueError(f"unsupported Floquet entity kind {entity_kind!r}")
+
+
+def _translation_from_entity_keys(
+    master_key: tuple[tuple[int, int, int], ...],
+    slave_key: tuple[tuple[int, int, int], ...],
+) -> tuple[int, int, int]:
+    master = np.asarray(master_key, dtype=np.int64)
+    slave = np.asarray(slave_key, dtype=np.int64)
+    if master.shape != slave.shape or master.ndim != 2:
+        raise ValueError("periodic entity geometry keys have incompatible shapes")
+    translation = slave[0] - master[0]
+    if not np.all(slave - master == translation):
+        raise NotImplementedError(
+            "C1a LOR periodic identity requires a single quantized translation"
+        )
+    return tuple(int(value) for value in translation)
+
+
+def _translated_edge_key(
+    edge_key: tuple[tuple[int, int, int], ...],
+    translation: tuple[int, int, int],
+) -> tuple[tuple[int, int, int], ...]:
+    return tuple(
+        sorted(
+            tuple(int(point[axis]) + int(translation[axis]) for axis in range(3))
+            for point in edge_key
+        )
+    )
+
+
+def _child_edge_orientation_sign(
+    master_key: tuple[tuple[int, int, int], ...],
+    slave_key: tuple[tuple[int, int, int], ...],
+    translation: tuple[int, int, int],
+) -> int:
+    translated = tuple(
+        tuple(
+            int(point[axis]) + int(translation[axis]) for axis in range(3)
+        )
+        for point in master_key
+    )
+    if translated == slave_key:
+        return 1
+    if translated[::-1] == slave_key:
+        return -1
+    raise RuntimeError("periodic child-edge endpoint orientation is inconsistent")
+
+
+def _periodic_phase(
+    kind: str,
+    phase_x: complex,
+    phase_y: complex,
+) -> complex:
+    if kind == "x":
+        return complex(phase_x)
+    if kind == "y":
+        return complex(phase_y)
+    if kind == "corner":
+        return complex(phase_x) * complex(phase_y)
+    raise ValueError(f"unsupported Floquet phase kind {kind!r}")
+
+
+def _validate_lor_floquet_block(block: PhaseIndependentConstraintBlock) -> None:
+    if not block.has_physical_entity_identity:
+        raise RuntimeError(
+            "LOR periodic edge space requires complete physical entity identity"
+        )
+    if block.cell_type != "hexahedron":
+        raise NotImplementedError("C1a LOR periodic identity supports hexahedra")
+
+
+def _csr_payload_bytes(matrix: sp.csr_matrix) -> int:
+    return int(
+        matrix.data.nbytes + matrix.indices.nbytes + matrix.indptr.nbytes
+    )
+
+
+@dataclass(frozen=True)
+class LORSlabEdgeSpace:
+    """Owner-independent physical/independent LOR child-edge space.
+
+    ``active_edge_keys`` removes only periodic slave physical edges.  Each
+    stored CSR matrix maps those independent values to one parent-local
+    canonical child-edge cochain; it is not a high-order transfer matrix.
+    """
+
+    parent_ids: tuple[int, ...]
+    physical_edge_keys: tuple[tuple[tuple[int, int, int], ...], ...]
+    active_edge_keys: tuple[tuple[tuple[int, int, int], ...], ...]
+    _parent_expansions: tuple[sp.csr_matrix, ...]
+    audit: dict[str, object]
+    _parent_adjoint: tuple[sp.csr_matrix, ...] = ()
+
+    def __post_init__(self) -> None:
+        matrices = tuple(
+            _readonly_csr(matrix, dtype=np.complex128)
+            for matrix in self._parent_expansions
+        )
+        if len(matrices) != len(self.parent_ids):
+            raise ValueError("one LOR expansion is required per parent")
+        adjoints = tuple(
+            _readonly_csr(
+                matrix.conjugate().transpose(),
+                dtype=np.complex128,
+            )
+            for matrix in matrices
+        )
+        object.__setattr__(self, "parent_ids", tuple(int(value) for value in self.parent_ids))
+        object.__setattr__(self, "_parent_expansions", matrices)
+        object.__setattr__(self, "_parent_adjoint", adjoints)
+        object.__setattr__(self, "audit", dict(self.audit))
+
+    def expand_parent(
+        self,
+        canonical_cell_id: int,
+        active_values: np.ndarray,
+    ) -> np.ndarray:
+        """Expand independent active edge values to one parent edge cochain."""
+
+        values = np.asarray(active_values, dtype=np.complex128)
+        if values.shape != (len(self.active_edge_keys),):
+            raise ValueError("active LOR values have the wrong edge count")
+        try:
+            position = self.parent_ids.index(int(canonical_cell_id))
+        except ValueError as error:
+            raise IndexError("unknown LOR parent canonical ID") from error
+        return np.asarray(self._parent_expansions[position] @ values)
+
+    def apply_adjoint(
+        self,
+        parent_values: Sequence[np.ndarray],
+    ) -> np.ndarray:
+        """Apply the exact conjugate transpose of all parent expansions."""
+
+        if len(parent_values) != len(self._parent_expansions):
+            raise ValueError("one parent value vector is required per parent")
+        result = np.zeros(len(self.active_edge_keys), dtype=np.complex128)
+        for adjoint, values in zip(
+            self._parent_adjoint,
+            parent_values,
+            strict=True,
+        ):
+            vector = np.asarray(values, dtype=np.complex128)
+            if vector.shape != (adjoint.shape[1],):
+                raise ValueError("parent LOR values have the wrong edge count")
+            result += np.asarray(adjoint @ vector)
+        return result
+
+
+def build_lor_slab_edge_space(
+    parent_topologies: Iterable[AffineLORParentTopology],
+    floquet_topology: FloquetTraceTopology,
+    *,
+    phase_x: complex,
+    phase_y: complex,
+) -> LORSlabEdgeSpace:
+    """Build deterministic multi-parent LOR edge expansions.
+
+    The input Floquet topology supplies physical entity identity only.  Its
+    high-order ``coefficient_transform`` is deliberately not used: a refined
+    lowest-order edge has one scalar cochain, related by translation, phase,
+    and canonical endpoint orientation alone.
+    """
+
+    topologies = tuple(
+        sorted(parent_topologies, key=lambda topology: topology.canonical_cell_id)
+    )
+    if not topologies:
+        raise ValueError("at least one LOR parent topology is required")
+    parent_ids = tuple(int(topology.canonical_cell_id) for topology in topologies)
+    if len(set(parent_ids)) != len(parent_ids):
+        raise ValueError("LOR parent canonical IDs must be unique")
+    degrees = {int(topology.degree) for topology in topologies}
+    if len(degrees) != 1:
+        raise ValueError("all LOR parents must use one refinement degree")
+
+    physical_edge_keys = tuple(
+        sorted(
+            {
+                edge_key
+                for topology in topologies
+                for edge_key in topology.edge_keys
+            }
+        )
+    )
+    physical_edge_set = set(physical_edge_keys)
+    relations: dict[
+        tuple[tuple[int, int, int], ...],
+        tuple[tuple[tuple[int, int, int], ...], str, complex],
+    ] = {}
+    matched_blocks = 0
+
+    def add_block_relations(
+        block: PhaseIndependentConstraintBlock,
+        entity_kind: str,
+    ) -> None:
+        nonlocal matched_blocks
+        _validate_lor_floquet_block(block)
+        if block.entity_kind != entity_kind:
+            return
+        slave_entity_key = tuple(block.slave_entity_geometry_key)
+        master_entity_key = tuple(block.master_entity_geometry_key)
+        translation = _translation_from_entity_keys(
+            master_entity_key,
+            slave_entity_key,
+        )
+        candidates = {
+            edge_key
+            for topology in topologies
+            for edge_key in _child_edge_keys_on_entity(
+                topology,
+                entity_kind,
+                slave_entity_key,
+            )
+        }
+        if not candidates:
+            return
+        matched_blocks += 1
+        phase = _periodic_phase(block.kind, phase_x, phase_y)
+        for slave_key in sorted(candidates):
+            master_key = _translated_edge_key(
+                slave_key,
+                tuple(-value for value in translation),
+            )
+            if master_key not in physical_edge_set:
+                raise RuntimeError("periodic child-edge master is outside the inventory")
+            orientation = _child_edge_orientation_sign(
+                master_key,
+                slave_key,
+                translation,
+            )
+            relation = (master_key, block.kind, phase * orientation)
+            previous = relations.get(slave_key)
+            if previous is not None and previous != relation:
+                raise RuntimeError("conflicting periodic child-edge relations")
+            relations[slave_key] = relation
+
+    edge_blocks = sorted(
+        (
+            block
+            for block in floquet_topology.blocks
+            if block.entity_kind == "edge"
+        ),
+        key=lambda block: (
+            block.kind,
+            tuple(block.slave_entity_geometry_key),
+            tuple(block.master_entity_geometry_key),
+        ),
+    )
+    face_blocks = sorted(
+        (
+            block
+            for block in floquet_topology.blocks
+            if block.entity_kind == "face"
+        ),
+        key=lambda block: (
+            block.kind,
+            tuple(block.slave_entity_geometry_key),
+            tuple(block.master_entity_geometry_key),
+        ),
+    )
+    for block in edge_blocks:
+        add_block_relations(block, "edge")
+    for block in face_blocks:
+        add_block_relations(block, "face")
+
+    slave_keys = set(relations)
+    if any(master_key in slave_keys for master_key, _kind, _coefficient in relations.values()):
+        raise RuntimeError("periodic child-edge relations contain a slave chain")
+    active_edge_keys = tuple(
+        key for key in physical_edge_keys if key not in slave_keys
+    )
+    active_index = {key: index for index, key in enumerate(active_edge_keys)}
+    parent_expansions = []
+    for topology in topologies:
+        columns = []
+        values = []
+        for edge_key in topology.edge_keys:
+            relation = relations.get(edge_key)
+            if relation is None:
+                columns.append(active_index[edge_key])
+                values.append(1.0 + 0.0j)
+            else:
+                columns.append(active_index[relation[0]])
+                values.append(relation[2])
+        indptr = np.arange(len(columns) + 1, dtype=np.int64)
+        parent_expansions.append(
+            sp.csr_matrix(
+                (
+                    np.asarray(values, dtype=np.complex128),
+                    np.asarray(columns, dtype=np.int64),
+                    indptr,
+                ),
+                shape=(len(columns), len(active_edge_keys)),
+            )
+        )
+
+    relation_kind_counts = {
+        kind: sum(1 for _master, relation_kind, _coefficient in relations.values() if relation_kind == kind)
+        for kind in ("x", "y", "corner")
+    }
+    audit = {
+        "definition": "physical canonical child edges -> independent LOR edges",
+        "parent_ids": list(parent_ids),
+        "parent_count": len(topologies),
+        "refinement_degree": int(next(iter(degrees))),
+        "physical_edge_count": len(physical_edge_keys),
+        "active_edge_count": len(active_edge_keys),
+        "periodic_slave_edge_count": len(slave_keys),
+        "periodic_relation_count": len(relations),
+        "periodic_relation_kind_counts": relation_kind_counts,
+        "matched_identity_block_count": matched_blocks,
+        "one_nonzero_per_parent_edge_row": True,
+        "E_nnz_by_parent": [int(matrix.nnz) for matrix in parent_expansions],
+        "E_payload_bytes_by_parent": [
+            _csr_payload_bytes(matrix) for matrix in parent_expansions
+        ],
+        "high_order_coefficient_transform_used": False,
+        "parent_order": "canonical_cell_id_ascending",
+        "active_edge_order": "canonical_physical_endpoint_key_ascending",
+    }
+    return LORSlabEdgeSpace(
+        parent_ids=parent_ids,
+        physical_edge_keys=physical_edge_keys,
+        active_edge_keys=active_edge_keys,
+        _parent_expansions=tuple(parent_expansions),
+        audit=audit,
+    )
