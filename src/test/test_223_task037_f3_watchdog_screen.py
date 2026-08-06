@@ -337,8 +337,9 @@ def _task037_g2_identity_audit(
     }
 
 
-def _task037_g2_factor_audit(*, fullspace_retained_bytes=700):
-    trace_retained_bytes = 1000
+def _task037_g2_factor_audit(
+    *, fullspace_retained_bytes=700, trace_retained_bytes=1000
+):
     reduction = (
         trace_retained_bytes - fullspace_retained_bytes
     ) / trace_retained_bytes
@@ -380,7 +381,7 @@ def _task037_g2_factor_audit(*, fullspace_retained_bytes=700):
         "rows": 3,
         "matrix_nnz": 20,
         "factor_nnz": 10,
-        "factor_csr_payload_lower_bound_bytes": 900,
+        "factor_csr_payload_lower_bound_bytes": trace_retained_bytes - 100,
         "work_vector_payload_bytes": 100,
         "retained_payload_lower_bound_bytes": trace_retained_bytes,
         "factor_only_storage": True,
@@ -1831,6 +1832,28 @@ def test_task037_extra_g2_factor_static_inventory_positive_and_route_negative():
     assert watchdog._task037_extra_g2_status(negative_args, negative) == (
         "task037_extra_g2_slab14_factor_inventory_pass"
     )
+
+    signed_negative_audit = _task037_g2_factor_audit(
+        fullspace_retained_bytes=648750388,
+        trace_retained_bytes=122023588,
+    )
+    signed_negative_args, signed_negative_kwargs = _task037_g2_qualification_case(
+        factor_audit=signed_negative_audit,
+        factor_enabled=True,
+    )
+    signed_negative = watchdog._qualify(**signed_negative_kwargs)
+
+    assert signed_negative["pass"]
+    assert signed_negative_audit["retained_payload_route"]["reduction_fraction"] == (
+        pytest.approx(-4.316598197391147)
+    )
+    assert signed_negative_audit["retained_payload_route"]["gate_pass"] is False
+    assert signed_negative_audit["retained_payload_route"]["status"] == (
+        "close_fullspace_ilu_only_route"
+    )
+    assert watchdog._task037_extra_g2_status(
+        signed_negative_args, signed_negative
+    ) == "task037_extra_g2_slab14_factor_inventory_pass"
 
 
 def test_task037_extra_g2_factor_static_inventory_tamper_not_pass():

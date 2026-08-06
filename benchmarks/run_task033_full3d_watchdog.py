@@ -3552,6 +3552,13 @@ def _task037_g2_factor_inventory_checks(
     def positive_integer(value: Any) -> bool:
         return isinstance(value, int) and not isinstance(value, bool) and value > 0
 
+    def finite_signed(value: Any) -> bool:
+        return bool(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+        )
+
     matrix_rows_are_valid = all(
         positive_integer(matrix.get(name))
         for name in ("full_rows", "interior_rows", "trace_rows")
@@ -3669,7 +3676,7 @@ def _task037_g2_factor_inventory_checks(
         ),
         "task037_g2_factor_route_reduction_raw": (
             raw_reduction is not None
-            and _finite_number_le(route.get("reduction_fraction"), math.inf)
+            and finite_signed(route.get("reduction_fraction"))
             and math.isclose(
                 float(route.get("reduction_fraction")),
                 raw_reduction,
