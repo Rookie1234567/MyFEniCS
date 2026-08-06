@@ -14,6 +14,9 @@ from mpi4py import MPI
 from petsc4py import PETSc
 from scipy.linalg import lu_factor, lu_solve, qr, svd
 
+from .hcurl_canonical_vector import CanonicalPacket, canonical_packet
+from .hybrid_fem_modal_schur_direct import _factor_local, _local_factor_inventory
+
 
 def _require_research_opt_in(research_opt_in: bool) -> None:
     if research_opt_in is not True:
@@ -419,6 +422,462 @@ class PrescribedInterfaceSolution:
     retained_residual_norm: float
     retained_residual_relative: float
     factor_released: bool
+
+
+class HomogeneousEndcapExtender:
+    """Research-only sparse homogeneous extension for one Hybrid endcap.
+
+    The local system and strong-trace map are borrowed. Setup extracts the
+    sparse retained block A_RR and creates one reusable offline factor. Each
+    application forms g = R*c, computes the retained RHS from A*g, solves
+    A_RR*u_R = -(A*g)_R, and returns the full local augmented vector. No
+    dense matrix or normal equation is formed.
+    """
+
+    def __init__(
+        self,
+        *,
+        system: Any,
+        interface_map: Any,
+        retained_rows_by_rank: tuple[np.ndarray, ...],
+        retained_matrix: PETSc.Mat,
+        factor: PETSc.KSP,
+        factor_setup_seconds: float,
+        factor_inventory: dict[str, Any],
+    ) -> None:
+        self.system = system
+        self.interface_map = interface_map
+        self.retained_rows_by_rank = retained_rows_by_rank
+        self.retained_matrix = retained_matrix
+        self.factor = factor
+        self.factor_setup_seconds = float(factor_setup_seconds)
+        self.factor_inventory = factor_inventory
+        self.factor_setup_count = 1
+        self.apply_count = 0
+        self.factor_released = False
+        self._destroyed = False
+
+    @classmethod
+    def from_system(
+        cls,
+        system: Any,
+        interface_map: Any,
+        *,
+        research_opt_in: bool = False,
+    ) -> HomogeneousEndcapExtender:
+        _require_research_opt_in(research_opt_in)
+        matrix = system.A
+        if matrix.getSize()[0] != matrix.getSize()[1]:
+            raise ValueError("homogeneous extension requires a square local matrix")
+        global_size = int(matrix.getSize()[0])
+        right = interface_map.right_prolongation
+        if right.getSize()[0] != global_size:
+            raise ValueError("strong-trace prolongation row size differs from A")
+        interface_rows = np.asarray(
+            tuple(int(row) for row in interface_map.interface_rows),
+            dtype=np.int64,
+        )
+        if len(interface_rows) == 0 or len(set(interface_rows)) != len(interface_rows):
+            raise ValueError("interface rows must be non-empty and unique")
+        if np.any(interface_rows < 0) or np.any(interface_rows >= global_size):
+            raise ValueError("interface row lies outside the local matrix")
+        comm = matrix.getComm()
+        comm4py = comm.tompi4py()
+        rank = comm4py.rank
+        first, last = map(int, matrix.getOwnershipRange())
+        retained_by_rank = tuple(
+            np.asarray(
+                tuple(sorted(int(row) for row in rows)),
+                dtype=PETSc.IntType,
+            )
+            for rows in interface_map.retained_rows_by_rank
+        )
+        if len(retained_by_rank) != comm4py.size:
+            raise ValueError("retained row map does not match communicator size")
+        retained_local = np.asarray(
+            tuple(sorted(int(row) for row in retained_by_rank[rank])),
+            dtype=PETSc.IntType,
+        )
+        if np.any(retained_local < first) or np.any(retained_local >= last):
+            raise ValueError("retained rows are outside PETSc row ownership")
+        retained_union = {int(row) for rows in retained_by_rank for row in rows}
+        interface_set = set(map(int, interface_rows))
+        if retained_union & interface_set:
+            raise ValueError("retained and interface rows overlap")
+        if len(retained_union) + len(interface_set) != global_size:
+            raise ValueError("retained/interface rows do not close the local system")
+        retained_is = PETSc.IS().createGeneral(retained_local, comm=comm)
+        retained_matrix = None
+        factor = None
+        try:
+            retained_matrix = matrix.createSubMatrix(retained_is, retained_is)
+            if retained_matrix.getSize()[0] != len(retained_union):
+                raise RuntimeError("A_RR has the wrong global row count")
+            if retained_matrix.getLocalSize()[0] != len(retained_local):
+                raise RuntimeError("A_RR has the wrong local row count")
+            factor, setup_seconds = _factor_local(retained_matrix)
+            inventory = _local_factor_inventory(factor)
+            return cls(
+                system=system,
+                interface_map=interface_map,
+                retained_rows_by_rank=retained_by_rank,
+                retained_matrix=retained_matrix,
+                factor=factor,
+                factor_setup_seconds=setup_seconds,
+                factor_inventory=inventory,
+            )
+        except Exception:
+            if factor is not None:
+                factor.destroy()
+            if retained_matrix is not None:
+                retained_matrix.destroy()
+            raise
+        finally:
+            retained_is.destroy()
+
+    def _require_live(self) -> None:
+        if self._destroyed:
+            raise RuntimeError("homogeneous endcap extender has been destroyed")
+
+    def _coefficient_vector(self, coefficients: Any) -> tuple[PETSc.Vec, bool]:
+        right = self.interface_map.right_prolongation
+        if isinstance(coefficients, PETSc.Vec):
+            if coefficients.getSize() != right.getSize()[1]:
+                raise ValueError("modal coefficient vector has the wrong size")
+            return coefficients, False
+        values = _as_complex_array(coefficients, ndim=1)
+        if values.size != right.getSize()[1]:
+            raise ValueError("modal coefficient array has the wrong size")
+        vector = right.createVecRight()
+        first, last = map(int, vector.getOwnershipRange())
+        if last > first:
+            vector.getArray()[:] = values[first:last]
+        vector.assemble()
+        return vector, True
+
+    def apply(
+        self,
+        coefficients: Any,
+        *,
+        research_opt_in: bool = False,
+    ) -> tuple[PETSc.Vec, dict[str, Any]]:
+        _require_research_opt_in(research_opt_in)
+        self._require_live()
+        coefficient_vector, owns_coefficients = self._coefficient_vector(coefficients)
+        trace = self.interface_map.right_prolongation.createVecLeft()
+        trace_action = self.system.A.createVecLeft()
+        retained_rhs = self.retained_matrix.createVecRight()
+        retained_solution = retained_rhs.duplicate()
+        full = None
+        full_action = None
+        try:
+            self.interface_map.right_prolongation.mult(
+                coefficient_vector,
+                trace,
+            )
+            self.system.A.mult(trace, trace_action)
+            rank = self.system.A.getComm().tompi4py().rank
+            retained_rows = np.asarray(
+                self.retained_rows_by_rank[rank],
+                dtype=PETSc.IntType,
+            )
+            first, last = map(int, self.system.A.getOwnershipRange())
+            if len(retained_rows) and (
+                np.any(retained_rows < first) or np.any(retained_rows >= last)
+            ):
+                raise RuntimeError("retained rows are outside A ownership")
+            local_trace_action = np.asarray(
+                trace_action.getArray(readonly=True),
+                dtype=np.complex128,
+            )
+            retained_rhs.getArray()[:] = -local_trace_action[retained_rows - first]
+            retained_rhs.assemble()
+            self.factor.solve(retained_rhs, retained_solution)
+            if int(self.factor.getConvergedReason()) <= 0:
+                raise RuntimeError("offline A_RR factor solve did not converge")
+
+            full = trace.duplicate()
+            trace.copy(full)
+            full_local = full.getArray()
+            retained_values = np.asarray(
+                retained_solution.getArray(readonly=True),
+                dtype=PETSc.ScalarType,
+            )
+            full_local[retained_rows - first] = retained_values
+            full.assemble()
+            full_action = self.system.A.createVecLeft()
+            self.system.A.mult(full, full_action)
+            action_local = np.asarray(
+                full_action.getArray(readonly=True),
+                dtype=np.complex128,
+            )
+            retained_residual_squared = float(
+                np.sum(np.abs(action_local[retained_rows - first]) ** 2)
+            )
+            retained_residual_norm = float(
+                np.sqrt(
+                    self.system.A.getComm()
+                    .tompi4py()
+                    .allreduce(
+                        retained_residual_squared,
+                        op=MPI.SUM,
+                    )
+                )
+            )
+            rhs_norm = float(retained_rhs.norm())
+            interface_rows = np.asarray(
+                tuple(
+                    row
+                    for row in self.interface_map.interface_rows
+                    if first <= int(row) < last
+                ),
+                dtype=PETSc.IntType,
+            )
+            trace_local = np.asarray(trace.getArray(readonly=True))
+            full_interface = np.asarray(full.getArray(readonly=True))
+            interface_error_squared = float(
+                np.sum(
+                    np.abs(
+                        full_interface[interface_rows - first]
+                        - trace_local[interface_rows - first]
+                    )
+                    ** 2
+                )
+            )
+            interface_scale_squared = float(
+                np.sum(np.abs(trace_local[interface_rows - first]) ** 2)
+            )
+            comm = self.system.A.getComm().tompi4py()
+            interface_relative = float(
+                np.sqrt(comm.allreduce(interface_error_squared, op=MPI.SUM))
+                / max(
+                    np.sqrt(comm.allreduce(interface_scale_squared, op=MPI.SUM)),
+                    np.finfo(float).tiny,
+                )
+            )
+            self.apply_count += 1
+            return full, {
+                "research_only": True,
+                "component_status": "E1c_component_pass",
+                "ordinary_default_changed": False,
+                "homogeneous_extension": True,
+                "normal_equations_used": False,
+                "interface_rows": int(len(self.interface_map.interface_rows)),
+                "retained_rows": int(self.retained_matrix.getSize()[0]),
+                "retained_residual_norm": retained_residual_norm,
+                "retained_residual_relative": retained_residual_norm
+                / max(rhs_norm, np.finfo(float).tiny),
+                "interface_relative_mismatch": interface_relative,
+                "factor_setup_count": int(self.factor_setup_count),
+                "factor_apply_count": int(self.apply_count),
+                "factor_reused": bool(self.apply_count > 1),
+                "factor_released": bool(self.factor_released),
+                "factor_setup_seconds": self.factor_setup_seconds,
+                "factor_inventory": self.factor_inventory,
+            }
+        except Exception:
+            if full is not None:
+                full.destroy()
+            raise
+        finally:
+            if owns_coefficients:
+                coefficient_vector.destroy()
+            trace.destroy()
+            trace_action.destroy()
+            retained_rhs.destroy()
+            retained_solution.destroy()
+            if full_action is not None:
+                full_action.destroy()
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.factor.destroy()
+        self.retained_matrix.destroy()
+        self.factor_released = True
+        self._destroyed = True
+
+
+def _stitch_packet_map(
+    packets: Iterable[CanonicalPacket],
+    *,
+    label: str,
+) -> dict[Any, complex]:
+    rows = tuple(canonical_packet(key, value) for key, value in packets)
+    mapping: dict[Any, complex] = {}
+    for key, value in rows:
+        if key in mapping:
+            raise ValueError(f"{label} contains duplicate canonical keys")
+        mapping[key] = value
+    return mapping
+
+
+def _canonical_packet_region(
+    key: Any,
+    *,
+    bottom_plane: int,
+    top_plane: int,
+) -> str:
+    points = tuple(key[2])
+    if not points:
+        raise ValueError("canonical packet key has no physical entity points")
+    z_values = tuple(int(point[2]) for point in points)
+    minimum = min(z_values)
+    maximum = max(z_values)
+    if maximum <= bottom_plane and minimum < bottom_plane:
+        return "bottom"
+    if minimum >= top_plane and maximum > top_plane:
+        return "top"
+    if minimum >= bottom_plane and maximum <= top_plane:
+        return "middle"
+    raise ValueError("canonical entity crosses an endcap interface plane")
+
+
+def stitch_canonical_active_trace_packets(
+    middle_packets: Iterable[CanonicalPacket],
+    bottom_packets: Iterable[CanonicalPacket],
+    top_packets: Iterable[CanonicalPacket],
+    *,
+    bottom_interface_z: float,
+    top_interface_z: float,
+    geometry_tolerance: float,
+    interface_relative_tolerance: float = 1.0e-10,
+    research_opt_in: bool = False,
+) -> tuple[tuple[CanonicalPacket, ...], dict[str, Any]]:
+    """Stitch middle and endcap packets by physical entity coordinates.
+
+    The middle packet is the complete target column. Bottom/top packets
+    replace only their outer regions; interface-plane values are audited
+    against the middle packet and are never overwritten.
+    """
+
+    _require_research_opt_in(research_opt_in)
+    tolerance = float(geometry_tolerance)
+    if not np.isfinite(tolerance) or tolerance <= 0.0:
+        raise ValueError("geometry_tolerance must be finite and strictly positive")
+    bottom_z = float(bottom_interface_z)
+    top_z = float(top_interface_z)
+    if not np.isfinite(bottom_z) or not np.isfinite(top_z) or not bottom_z < top_z:
+        raise ValueError("endcap interface planes must be finite and ordered")
+    mismatch_tolerance = float(interface_relative_tolerance)
+    if not np.isfinite(mismatch_tolerance) or mismatch_tolerance <= 0.0:
+        raise ValueError("interface_relative_tolerance must be finite and positive")
+    bottom_plane = int(np.rint(bottom_z / tolerance))
+    top_plane = int(np.rint(top_z / tolerance))
+    if not bottom_plane < top_plane:
+        raise ValueError("quantized interface planes must be distinct")
+
+    middle = _stitch_packet_map(middle_packets, label="middle packets")
+    bottom = _stitch_packet_map(bottom_packets, label="bottom packets")
+    top = _stitch_packet_map(top_packets, label="top packets")
+    if not middle:
+        raise ValueError("middle packet column must be non-empty")
+    base_regions = {
+        key: _canonical_packet_region(
+            key,
+            bottom_plane=bottom_plane,
+            top_plane=top_plane,
+        )
+        for key in middle
+    }
+    base_keys = set(middle)
+    bottom_interface_keys = {
+        key
+        for key in middle
+        if base_regions[key] == "middle"
+        and all(int(point[2]) == bottom_plane for point in key[2])
+    }
+    top_interface_keys = {
+        key
+        for key in middle
+        if base_regions[key] == "middle"
+        and all(int(point[2]) == top_plane for point in key[2])
+    }
+    if not bottom_interface_keys or not top_interface_keys:
+        raise ValueError(
+            "canonical stitch requires non-empty bottom and top interface keys"
+        )
+    expected_bottom = {
+        key for key, region in base_regions.items() if region == "bottom"
+    } | bottom_interface_keys
+    expected_top = {
+        key for key, region in base_regions.items() if region == "top"
+    } | top_interface_keys
+
+    def validate_local(
+        local: dict[Any, complex],
+        expected: set[Any],
+        label: str,
+        interface_keys: set[Any],
+    ) -> float:
+        extra = set(local) - expected
+        missing = expected - set(local)
+        if extra or missing:
+            raise ValueError(
+                f"{label} canonical coverage failed: "
+                f"missing={len(missing)}, extra={len(extra)}"
+            )
+        if not interface_keys:
+            return 0.0
+        local_values = np.asarray(
+            [local[key] for key in sorted(interface_keys, key=repr)],
+            dtype=np.complex128,
+        )
+        middle_values = np.asarray(
+            [middle[key] for key in sorted(interface_keys, key=repr)],
+            dtype=np.complex128,
+        )
+        mismatch = float(np.linalg.norm(local_values - middle_values)) / max(
+            float(np.linalg.norm(local_values)),
+            float(np.linalg.norm(middle_values)),
+            np.finfo(float).tiny,
+        )
+        if mismatch > mismatch_tolerance:
+            raise ValueError(
+                f"{label} interface mismatch exceeds tolerance: {mismatch:.3e}"
+            )
+        return mismatch
+
+    bottom_mismatch = validate_local(
+        bottom,
+        expected_bottom,
+        "bottom",
+        bottom_interface_keys,
+    )
+    top_mismatch = validate_local(
+        top,
+        expected_top,
+        "top",
+        top_interface_keys,
+    )
+    stitched = dict(middle)
+    for key in expected_bottom - bottom_interface_keys:
+        stitched[key] = bottom[key]
+    for key in expected_top - top_interface_keys:
+        stitched[key] = top[key]
+    output = tuple(
+        canonical_packet(key, stitched[key]) for key in sorted(base_keys, key=repr)
+    )
+    return output, {
+        "research_only": True,
+        "component_status": "E1c_component_pass",
+        "ordinary_default_changed": False,
+        "full_e1_qualified": False,
+        "interface_source": "middle_only",
+        "geometry_tolerance": tolerance,
+        "interface_relative_tolerance": mismatch_tolerance,
+        "missing_key_count": 0,
+        "extra_key_count": 0,
+        "duplicate_key_count": 0,
+        "bottom_region_key_count": int(len(expected_bottom - bottom_interface_keys)),
+        "top_region_key_count": int(len(expected_top - top_interface_keys)),
+        "bottom_interface_key_count": int(len(bottom_interface_keys)),
+        "top_interface_key_count": int(len(top_interface_keys)),
+        "bottom_interface_relative_mismatch": bottom_mismatch,
+        "top_interface_relative_mismatch": top_mismatch,
+        "interface_relative_mismatch": max(bottom_mismatch, top_mismatch),
+        "output_packet_count": int(len(output)),
+    }
 
 
 def solve_homogeneous_prescribed_interface(
