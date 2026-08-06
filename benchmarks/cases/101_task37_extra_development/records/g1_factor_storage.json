@@ -1,0 +1,314 @@
+{
+  "record_kind": "task037-extra-g1-factor-storage",
+  "record_version": 1,
+  "source": {
+    "branch": "codex/20260806-task37-iterative-extra-development",
+    "verified_clean_sha": "bb5b4da51761ea38e852e45ced7a41b3eeae95bd"
+  },
+  "overall": {
+    "status": "closed_negative_capability_stop",
+    "next_allowed_lane": "G2.2",
+    "factor_reuse_promotion": false,
+    "mixed_precision_promotion": false
+  },
+  "g1_1_exact_factor_reuse": {
+    "status": "capability_stop_unverifiable_factor_ordering_and_values",
+    "screen": {
+      "run_directory": "benchmarks/artifacts/101_task37_extra_development/g1_exact_reuse_mpi1_screen20_bb5b4da",
+      "scope": [
+        "p6/h10/S",
+        "assembly_time_static_condensed",
+        "M3a overlap0.125 partition",
+        "M2c never-materialized",
+        "MPI1",
+        "screen20",
+        "poll=0.25s",
+        "warning=10GiB",
+        "terminate=14GiB",
+        "timeout=1800s",
+        "no-swap",
+        "no task037-extra-g0-diagnostics",
+        "no residual snapshots"
+      ],
+      "watchdog_status": "task037_m3a_overlap0125_partition_screen_pass",
+      "return_code": 0,
+      "solver_iterations": 20,
+      "solver_reason": "DIVERGED_MAX_IT(-3)",
+      "reported_relative_residual": {
+        "i0": 1.0,
+        "i10": 0.14446444295860714,
+        "i20": 0.04474243612765121
+      },
+      "true_condensed_relative_residual": {
+        "i0": 1.0,
+        "i10": 0.14446444295860594,
+        "i20": 0.04474243612765
+      },
+      "official_rta": false,
+      "postprocess_skipped": true,
+      "global_A_materialized": false,
+      "global_F_materialized": false,
+      "zero_swap": true,
+      "memory_authority_gib": 4.256050109863281
+    },
+    "factor_inventory": {
+      "factor_count": 16,
+      "numeric_local_matrix_unique_classes": 7,
+      "numeric_local_matrix_duplicate_count": 9,
+      "necessary_prefix_unique_classes": 15,
+      "necessary_prefix_candidate_count": 1,
+      "candidate_subdomains": [
+        7,
+        8
+      ],
+      "candidate_hashes": {
+        "row_ids_sha256": "428e8c62f51e4f0a27903ec2e21412843245fa7de65655ffcdfad1c18c166d7b",
+        "shifted_matrix_sha256": "e0ff9108c190efc854669f3e9f361dcd526496652905167137660e7560fde2d7",
+        "necessary_prefix_sha256": "5dff0b6fe82aab46ff8681fe2a3aa0c87014213a7e9cffd666249b8dfdfb8611"
+      },
+      "qualified_count": 0,
+      "qualification_status": "not_evaluated_pending_necessary_prefix_candidates",
+      "deferred_checks": {
+        "diagonal_shift_identity": "not_evaluated_pending_necessary_prefix_candidates",
+        "material_cell_class_identity": "not_evaluated_pending_necessary_prefix_candidates",
+        "factor_ordering": "not_evaluated_pending_necessary_prefix_candidates",
+        "factor_values_or_deterministic_factor_fingerprint": "not_evaluated_pending_necessary_prefix_candidates"
+      },
+      "global_factor_rows": 127656,
+      "global_stored_factor_nnz": 91415952,
+      "factor_sharing": "not_implemented",
+      "measured_bytes_saved": 0
+    },
+    "factor_api_probe": {
+      "kind": "tiny PETSc SeqAIJ+ILU(0), no PDE",
+      "launcher": "exec_command",
+      "sandbox_permissions": "require_escalated",
+      "qualified_activation": "source scripts/activate_myfenics_wsl.sh",
+      "python_mode": "inline_stdin_heredoc",
+      "script_file": null,
+      "command_not_persisted": true,
+      "matrix_definition": {
+        "comm": "PETSc.COMM_SELF",
+        "size": [
+          4,
+          4
+        ],
+        "input_dtype": "PETSc default real scalar values",
+        "row_entries": [
+          {
+            "row": 0,
+            "columns": [
+              0
+            ],
+            "values": [
+              [
+                4.0,
+                0.0
+              ]
+            ]
+          },
+          {
+            "row": 1,
+            "columns": [
+              1,
+              0
+            ],
+            "values": [
+              [
+                5.0,
+                0.0
+              ],
+              [
+                -1.0,
+                0.0
+              ]
+            ]
+          },
+          {
+            "row": 2,
+            "columns": [
+              2,
+              1
+            ],
+            "values": [
+              [
+                6.0,
+                0.0
+              ],
+              [
+                -1.0,
+                0.0
+              ]
+            ]
+          },
+          {
+            "row": 3,
+            "columns": [
+              3,
+              2
+            ],
+            "values": [
+              [
+                7.0,
+                0.0
+              ],
+              [
+                -1.0,
+                0.0
+              ]
+            ]
+          }
+        ]
+      },
+      "pc": {
+        "ksp_type": "preonly",
+        "pc_type": "ilu",
+        "factor_levels": 0,
+        "factor_ordering": "rcm",
+        "setup_completed": true
+      },
+      "factor_type": "seqaij",
+      "factor_size": [
+        4,
+        4
+      ],
+      "ordering_requested": "rcm",
+      "pc_get_factor_ordering": "unavailable",
+      "factor_get_ordering": "failed_error_73_not_for_factored_matrix",
+      "factor_value_apis": {
+        "getValuesCSR": "failed_error_73_not_for_factored_matrix",
+        "getRow": "failed_error_73_not_for_factored_matrix",
+        "getValue": "failed_error_73_not_for_factored_matrix",
+        "getValues": "failed_error_73_not_for_factored_matrix",
+        "retrieveValues": "failed_error_73_not_for_factored_matrix",
+        "convert_seqaij": "failed_error_73_not_for_factored_matrix",
+        "getDenseArray": "unsupported",
+        "getRowIJ": "empty_structure_not_reliable"
+      },
+      "capability_conclusion": "actual_factor_ordering_and_values_are_not_stably_observable"
+    }
+  },
+  "g1_2_mixed_precision": {
+    "status": "capability_stop_global_petsc_scalar_abi",
+    "probe": {
+      "execution": "require_escalated qualified activation",
+      "launcher": "exec_command",
+      "sandbox_permissions": "require_escalated",
+      "qualified_activation": "source scripts/activate_myfenics_wsl.sh",
+      "python_mode": "inline_stdin_heredoc",
+      "script_file": null,
+      "command_not_persisted": true,
+      "independent_artifact": false,
+      "artifact_sha256": null,
+      "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "python": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "petsc_scalar_dtype": "<c16",
+      "petsc_int_type": "<class 'numpy.int32'>",
+      "petsc_int_dtype": "<i4",
+      "input_numpy_dtype": "<c8",
+      "matrix_definition": {
+        "comm": "PETSc.COMM_SELF",
+        "size": [
+          2,
+          2
+        ],
+        "row_entries": [
+          {
+            "row": 0,
+            "columns": [
+              0,
+              1
+            ],
+            "values": [
+              [
+                1.0,
+                2.0
+              ],
+              [
+                -0.5,
+                0.25
+              ]
+            ]
+          },
+          {
+            "row": 1,
+            "columns": [
+              0,
+              1
+            ],
+            "values": [
+              [
+                3.0,
+                -1.0
+              ],
+              [
+                0.125,
+                0.0
+              ]
+            ]
+          }
+        ]
+      },
+      "pc": {
+        "ksp_type": "preonly",
+        "pc_type": "ilu",
+        "factor_levels": 0,
+        "factor_ordering": "rcm",
+        "setup_completed": true,
+        "factor_values_read": false
+      },
+      "matrix_type": "seqaij",
+      "matrix_size": [
+        2,
+        2
+      ],
+      "matrix_csr_indptr_dtype": "<i4",
+      "matrix_csr_indices_dtype": "<i4",
+      "matrix_csr_values_dtype": "<c16",
+      "ilu_factor": {
+        "matrix_type": "seqaij",
+        "size": [
+          2,
+          2
+        ],
+        "global_scalar_dtype": "<c16",
+        "factor_values_read": false
+      }
+    },
+    "one_slab_mixed_oracle": false,
+    "global_screen_20_100": false,
+    "payload_reduction": "not_measured_not_applicable",
+    "fine_operator": "unchanged",
+    "rhs": "unchanged",
+    "outer_solution": "unchanged",
+    "true_residual": "unchanged",
+    "rta": "not_run"
+  },
+  "raw_artifacts": {
+    "core_audit": {
+      "path": "benchmarks/artifacts/101_task37_extra_development/g1_exact_reuse_mpi1_screen20_bb5b4da/task037_f3_core_audit.json",
+      "sha256": "0a3cc1e66d3801afe4a84e9b32a6ac45603313c167e8d653c0f1c192d276bdec"
+    },
+    "watchdog": {
+      "path": "benchmarks/artifacts/101_task37_extra_development/g1_exact_reuse_mpi1_screen20_bb5b4da/watchdog_summary.json",
+      "sha256": "afd31279f394d23193cdf7729b7373cc4cef32d50535ad0531ec62d698195b2e"
+    },
+    "run_summary": {
+      "path": "benchmarks/artifacts/101_task37_extra_development/g1_exact_reuse_mpi1_screen20_bb5b4da/run_summary.json",
+      "sha256": "9d424cf0ad3e37bb2c64a789f8f2a5eb29e7541278928b91cea7fb7e0cd78acd"
+    },
+    "progress": {
+      "path": "benchmarks/artifacts/101_task37_extra_development/g1_exact_reuse_mpi1_screen20_bb5b4da/progress_3d.jsonl",
+      "sha256": "28d5045400b23794ed2731ac281af57239ad8c9995ebb922c5124e1b4a66ce11"
+    },
+    "memory_timeline": {
+      "path": "benchmarks/artifacts/101_task37_extra_development/g1_exact_reuse_mpi1_screen20_bb5b4da/memory_timeline.csv",
+      "sha256": "6218ed647333e63c80dc9117420b1bfd5ffc11084b5f9cae0b1d7661cf2093fa"
+    },
+    "stdout": {
+      "path": "benchmarks/artifacts/101_task37_extra_development/g1_exact_reuse_mpi1_screen20_bb5b4da/worker_stdout.txt",
+      "sha256": "f0e12554e5d33a2cd2615b671bd6c5fd851e4c7147958f35803ff373e23368c6"
+    }
+  }
+}
