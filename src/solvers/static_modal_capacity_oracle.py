@@ -350,7 +350,7 @@ def qualify_e2_capacity_audit(audit: dict[str, Any]) -> dict[str, Any]:
         checks[f"{name}_rank"] = isinstance(rank, int) and rank > 0
         checks[f"{name}_condition"] = isinstance(
             condition, (int, float)
-        ) and np.isfinite(condition)
+        ) and bool(np.isfinite(condition))
         checks[f"{name}_singular_values"] = bool(singular) and all(
             np.isfinite(float(value)) for value in singular
         )

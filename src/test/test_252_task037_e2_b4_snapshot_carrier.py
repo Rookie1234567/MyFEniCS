@@ -1,5 +1,6 @@
 import copy
 import inspect
+import json
 from types import SimpleNamespace
 
 import numpy as np
@@ -474,6 +475,7 @@ def _positive_capacity_audit():
 def test_e2_capacity_checker_separates_implementation_and_capacity_results():
     positive = _positive_capacity_audit()
     result = qualify_e2_capacity_audit(positive)
+    json.dumps(result)
     assert result["pass"] is True
     assert result["classification"] == "M120_TRIAL_SPACE_HAS_COARSE_CAPACITY"
 
