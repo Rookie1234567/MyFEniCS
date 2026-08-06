@@ -689,6 +689,63 @@ class HomogeneousEndcapExtender:
             if full_action is not None:
                 full_action.destroy()
 
+    def extract_active_fe_prefix(
+        self,
+        augmented: PETSc.Vec,
+        *,
+        research_opt_in: bool = False,
+    ) -> PETSc.Vec:
+        """Extract the static-condensed active-FE prefix without gathering."""
+
+        _require_research_opt_in(research_opt_in)
+        self._require_live()
+        condensed_binding = getattr(self.system, "static_condensation", None)
+        if condensed_binding is None:
+            raise RuntimeError(
+                "active-FE prefix extraction requires static condensation"
+            )
+        condensed = getattr(condensed_binding, "condensed", None)
+        if condensed is None:
+            raise RuntimeError(
+                "static condensation binding has no condensed active system"
+            )
+        active_rows = int(condensed.active_rows)
+        if active_rows != int(self.system.n_fe):
+            raise RuntimeError(
+                "system.n_fe differs from the condensed active-FE row count"
+            )
+        if augmented.getSize() != int(self.system.global_size):
+            raise ValueError("augmented vector size differs from the local system")
+        if augmented.getComm().tompi4py().Get_size() != condensed.comm.size:
+            raise ValueError("augmented vector communicator differs from condensation")
+        active = condensed.create_active_vector()
+        augmented_first, augmented_last = map(
+            int,
+            augmented.getOwnershipRange(),
+        )
+        active_first, active_last = map(int, active.getOwnershipRange())
+        expected_last = min(augmented_last, active_rows)
+        if (
+            augmented_first != active_first
+            or expected_last != active_last
+            or augmented_first > active_rows
+        ):
+            active.destroy()
+            raise RuntimeError(
+                "augmented and active-FE ownership ranges do not share the prefix"
+            )
+        local_count = active_last - active_first
+        augmented_values = np.asarray(
+            augmented.getArray(readonly=True),
+            dtype=PETSc.ScalarType,
+        )
+        if local_count < 0 or local_count > len(augmented_values):
+            active.destroy()
+            raise RuntimeError("augmented vector has an invalid active-FE prefix")
+        active.getArray()[:] = augmented_values[:local_count]
+        active.assemble()
+        return active
+
     def destroy(self) -> None:
         if self._destroyed:
             return

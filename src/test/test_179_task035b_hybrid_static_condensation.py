@@ -16,6 +16,7 @@ from src.common.config_3d import (
 from src.coupling.hybrid_internal_modes import (
     build_hybrid_internal_mode_coupling,
 )
+from src.geometry.tetra_mesh_audit import mesh_coordinate_tolerance
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
@@ -32,6 +33,13 @@ from src.solvers.hybrid_fem_modal_schur_direct import (
 from src.solvers.hybrid_local_dtn import (
     assemble_hybrid_local_dtn_system,
 )
+from src.solvers.hybrid_strong_trace_direct import (
+    build_hybrid_strong_trace_interface_map,
+)
+from src.solvers.hcurl_canonical_vector_dolfinx import (
+    extract_canonical_active_trace_packets,
+)
+from src.solvers.static_modal_coarse_basis import HomogeneousEndcapExtender
 
 
 def _synthetic_mode(
@@ -81,9 +89,7 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
         cls.standard_cfg = base
         cls.static_cfg = replace(
             base,
-            stage4_full3d_assembly_backend=(
-                ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
-            ),
+            stage4_full3d_assembly_backend=(ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND),
         )
         cls.cross_section = build_matching_cross_section(base, "stage4_xy")
         cls.spaces = build_cross_section_spaces(
@@ -91,10 +97,7 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
             transverse_degree=2,
         )
         target = np.sqrt(
-            (base.k0 * complex(base.n_air)) ** 2
-            - base.kx**2
-            - base.ky**2
-            + 0.0j
+            (base.k0 * complex(base.n_air)) ** 2 - base.kx**2 - base.ky**2 + 0.0j
         )
         cls.mode_vectors: list[PETSc.Vec] = []
         cls.positive = SimpleNamespace(
@@ -124,8 +127,7 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
             ]
         )
         cls.standard_systems = tuple(
-            assemble_hybrid_local_dtn_system(base, side)
-            for side in ("bottom", "top")
+            assemble_hybrid_local_dtn_system(base, side) for side in ("bottom", "top")
         )
         cls.static_systems = tuple(
             assemble_hybrid_local_dtn_system(cls.static_cfg, side)
@@ -222,12 +224,8 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
             self.assertEqual(block.positive_interior_correction.shape, (2, 2))
             self.assertEqual(block.negative_interior_correction.shape, (2, 2))
             self.assertEqual(block.modal_rhs_correction.shape, (2,))
-            self.assertTrue(
-                block.tangential_surface_trace_only_verified
-            )
-            self.assertFalse(
-                block.interior_modal_pairwise_schur_evaluated
-            )
+            self.assertTrue(block.tangential_surface_trace_only_verified)
+            self.assertFalse(block.interior_modal_pairwise_schur_evaluated)
             self.assertEqual(
                 float(np.linalg.norm(block.positive_interior_correction)),
                 0.0,
@@ -281,9 +279,7 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
             1.0e-10,
         )
         self.assertLess(
-            static["fe_modal_traction_equilibrium"][
-                "bottom_relative_residual"
-            ],
+            static["fe_modal_traction_equilibrium"]["bottom_relative_residual"],
             1.0e-10,
         )
         self.assertLess(
@@ -304,9 +300,7 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
                 system.V.mesh,
             )
             self.assertLess(
-                recovered.full_operator_residual[
-                    "linear_system_relative_residual"
-                ],
+                recovered.full_operator_residual["linear_system_relative_residual"],
                 1.0e-9,
             )
             self.assertLess(
@@ -320,17 +314,11 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
                 system.static_condensation.metadata.cell_interior_rows,
             )
             self.assertFalse(
-                recovered.streaming_audit[
-                    "full_surface_mode_matrix_retained"
-                ]
+                recovered.streaming_audit["full_surface_mode_matrix_retained"]
             )
-            self.assertFalse(
-                recovered.streaming_audit["full_global_matrix_allocated"]
-            )
+            self.assertFalse(recovered.streaming_audit["full_global_matrix_allocated"])
             self.assertEqual(
-                recovered.streaming_audit[
-                    "internal_mode_surface_vectors_reassembled"
-                ],
+                recovered.streaming_audit["internal_mode_surface_vectors_reassembled"],
                 4,
             )
 
@@ -346,11 +334,7 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
         )
         try:
             scale = max(
-                float(
-                    np.linalg.norm(
-                        self.static_solution.modal_amplitudes
-                    )
-                ),
+                float(np.linalg.norm(self.static_solution.modal_amplitudes)),
                 1.0e-30,
             )
             self.assertLess(
@@ -375,6 +359,258 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
         finally:
             solution.destroy()
             schur.destroy()
+
+    def test_static_endcap_homogeneous_extension_gate_c(self) -> None:
+        static_systems = self.static_systems
+        static_coupling = self.static_coupling
+        interface_maps = tuple(
+            build_hybrid_strong_trace_interface_map(
+                system,
+                static_coupling,
+                research_opt_in=True,
+            )
+            for system in static_systems
+        )
+        extenders = tuple(
+            HomogeneousEndcapExtender.from_system(
+                system,
+                interface_map,
+                research_opt_in=True,
+            )
+            for system, interface_map in zip(
+                static_systems,
+                interface_maps,
+                strict=True,
+            )
+        )
+        mode_count = static_coupling.mode_count_per_direction
+        negative_map = np.asarray(
+            static_coupling.negative_trace_to_positive,
+            dtype=np.complex128,
+        )
+        unit = np.zeros(mode_count, dtype=np.complex128)
+        unit[0] = 1.0 + 0.0j
+        forward_factors = np.asarray(
+            static_coupling.propagation.forward.factors,
+            dtype=np.complex128,
+        )
+        backward_factors = np.asarray(
+            static_coupling.propagation.backward.factors,
+            dtype=np.complex128,
+        )
+        cases = (
+            ("forward", "bottom", unit),
+            ("forward", "top", forward_factors[0] * unit),
+            ("backward", "bottom", backward_factors[0] * negative_map[:, 0]),
+            ("backward", "top", negative_map[:, 0]),
+        )
+        shared_tolerance = max(
+            mesh_coordinate_tolerance(system.V.mesh) for system in static_systems
+        )
+        audits = []
+
+        def modal_vector(interface_map, coefficients):
+            vector = interface_map.right_prolongation.createVecRight()
+            first, last = map(int, vector.getOwnershipRange())
+            vector.getArray()[:] = coefficients[first:last]
+            vector.assemble()
+            return vector
+
+        def direct_active_prefix(system, vector):
+            condensed = system.static_condensation.condensed
+            active = condensed.create_active_vector()
+            vector_first, vector_last = map(
+                int,
+                vector.getOwnershipRange(),
+            )
+            active_first, active_last = map(
+                int,
+                active.getOwnershipRange(),
+            )
+            self.assertEqual(vector_first, active_first)
+            self.assertEqual(
+                active_last,
+                min(vector_last, int(system.n_fe)),
+            )
+            local_count = active_last - active_first
+            values = np.asarray(vector.getArray(readonly=True))
+            self.assertGreaterEqual(local_count, 0)
+            self.assertLessEqual(local_count, len(values))
+            active.getArray()[:] = values[:local_count]
+            active.assemble()
+            return active
+
+        def packet_map(packets):
+            return {key: complex(value) for key, value in packets}
+
+        def interface_map_for_packets(packets, system):
+            plane = int(np.rint(system.local_mesh.interface_z_nm / shared_tolerance))
+            return {
+                key: value
+                for key, value in packet_map(packets).items()
+                if all(int(point[2]) == plane for point in key[2])
+            }
+
+        def outer_norm(packets, system):
+            plane = int(np.rint(system.local_mesh.interface_z_nm / shared_tolerance))
+            values = [
+                value
+                for key, value in packet_map(packets).items()
+                if (
+                    max(int(point[2]) for point in key[2]) < plane
+                    if system.side == "bottom"
+                    else min(int(point[2]) for point in key[2]) > plane
+                )
+            ]
+            return float(np.linalg.norm(np.asarray(values, dtype=np.complex128)))
+
+        def relative_packet_error(left, right):
+            left_map = packet_map(left)
+            right_map = packet_map(right)
+            self.assertTrue(left_map)
+            self.assertEqual(set(left_map), set(right_map))
+            keys = sorted(left_map, key=repr)
+            left_values = np.asarray(
+                [left_map[key] for key in keys],
+                dtype=np.complex128,
+            )
+            right_values = np.asarray(
+                [right_map[key] for key in keys],
+                dtype=np.complex128,
+            )
+            return float(
+                np.linalg.norm(left_values - right_values)
+                / max(
+                    np.linalg.norm(left_values),
+                    np.linalg.norm(right_values),
+                    np.finfo(float).tiny,
+                )
+            )
+
+        try:
+            for direction, side, coefficients in cases:
+                side_index = 0 if side == "bottom" else 1
+                system = static_systems[side_index]
+                interface_map = interface_maps[side_index]
+                extender = extenders[side_index]
+                full, audit = extender.apply(
+                    coefficients,
+                    research_opt_in=True,
+                )
+                observed_active = None
+                expected_active = None
+                modal = None
+                trace = None
+                try:
+                    self.assertTrue(
+                        np.all(
+                            np.isfinite(
+                                np.asarray(
+                                    full.getArray(readonly=True),
+                                    dtype=np.complex128,
+                                )
+                            )
+                        )
+                    )
+                    observed_active = extender.extract_active_fe_prefix(
+                        full,
+                        research_opt_in=True,
+                    )
+                    observed_packets, _observed_audit = (
+                        extract_canonical_active_trace_packets(
+                            system.static_condensation.condensed,
+                            system.V,
+                            system.floquet_data,
+                            observed_active,
+                            geometry_tolerance=shared_tolerance,
+                        )
+                    )
+                    modal = modal_vector(interface_map, coefficients)
+                    trace = interface_map.right_prolongation.createVecLeft()
+                    interface_map.right_prolongation.mult(modal, trace)
+                    expected_active = direct_active_prefix(system, trace)
+                    expected_packets, _expected_audit = (
+                        extract_canonical_active_trace_packets(
+                            system.static_condensation.condensed,
+                            system.V,
+                            system.floquet_data,
+                            expected_active,
+                            geometry_tolerance=shared_tolerance,
+                        )
+                    )
+                    observed_interface = interface_map_for_packets(
+                        observed_packets,
+                        system,
+                    )
+                    expected_interface = interface_map_for_packets(
+                        expected_packets,
+                        system,
+                    )
+                    self.assertTrue(observed_interface)
+                    self.assertEqual(
+                        set(observed_interface),
+                        set(expected_interface),
+                    )
+                    interface_error = relative_packet_error(
+                        tuple(observed_interface.items()),
+                        tuple(expected_interface.items()),
+                    )
+                    endcap_norm = outer_norm(observed_packets, system)
+                    self.assertLessEqual(audit["retained_residual_relative"], 1.0e-10)
+                    self.assertLessEqual(audit["interface_relative_mismatch"], 1.0e-10)
+                    self.assertLessEqual(interface_error, 1.0e-10)
+                    self.assertGreater(endcap_norm, 0.0)
+                    self.assertTrue(
+                        np.all(
+                            np.isfinite(
+                                np.asarray(
+                                    [value for _key, value in observed_packets],
+                                    dtype=np.complex128,
+                                )
+                            )
+                        )
+                    )
+                    self.assertFalse(audit["normal_equations_used"])
+                    audits.append(
+                        {
+                            "direction": direction,
+                            "side": side,
+                            "retained_residual_relative": audit[
+                                "retained_residual_relative"
+                            ],
+                            "interface_relative_mismatch": audit[
+                                "interface_relative_mismatch"
+                            ],
+                            "canonical_interface_relative_error": interface_error,
+                            "outer_packet_norm": endcap_norm,
+                            "factor_setup_count": audit["factor_setup_count"],
+                            "factor_apply_count": audit["factor_apply_count"],
+                        }
+                    )
+                finally:
+                    if expected_active is not None:
+                        expected_active.destroy()
+                    if observed_active is not None:
+                        observed_active.destroy()
+                    if trace is not None:
+                        trace.destroy()
+                    if modal is not None:
+                        modal.destroy()
+                    full.destroy()
+
+            for extender in extenders:
+                self.assertEqual(extender.factor_setup_count, 1)
+                self.assertEqual(extender.apply_count, 2)
+                extender.destroy()
+                self.assertTrue(extender.factor_released)
+            for audit in audits:
+                audit["factor_released"] = True
+            print("E1C_HYBRID_ENDCAP_AUDIT", audits)
+        finally:
+            for extender in extenders:
+                extender.destroy()
+            for interface_map in interface_maps:
+                interface_map.destroy()
 
 
 if __name__ == "__main__":
