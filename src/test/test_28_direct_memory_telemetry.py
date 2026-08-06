@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -31,6 +32,7 @@ from src.solvers.common_3d_solve import (
     DirectSolveFailure,
     _petsc_factor_inventory,
     _petsc_matrix_stats,
+    _log_matrix_stats,
 )
 from src.solvers.common_3d_utils import (
     _cgroup_memory_fields,
@@ -236,6 +238,50 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         finally:
             matrix.destroy()
 
+    def test_matrix_python_stats_are_metadata_only(self) -> None:
+        matrix = PETSc.Mat().createPython(
+            ((2, 2), (2, 2)),
+            context=SimpleNamespace(),
+            comm=PETSc.COMM_SELF,
+        )
+        matrix.setUp()
+        logs = []
+        try:
+            stats = _petsc_matrix_stats(matrix)
+            json.dumps(stats)
+            _log_matrix_stats(stats, logs.append)
+            self.assertEqual(stats["matrix_type"], PETSc.Mat.Type.PYTHON)
+            self.assertTrue(stats["matrix_free"])
+            self.assertEqual((stats["matrix_rows"], stats["matrix_cols"]), (2, 2))
+            self.assertEqual(
+                (stats["matrix_local_rows"], stats["matrix_local_cols"]),
+                (2, 2),
+            )
+            self.assertEqual(stats["matrix_row_ownership_range"], [0, 2])
+            self.assertEqual(stats["matrix_column_ownership_range"], [0, 2])
+            self.assertEqual(stats["matrix_row_block_size"], 1)
+            self.assertEqual(stats["matrix_column_block_size"], 1)
+            for key in (
+                "matrix_nnz_used",
+                "matrix_nnz_allocated",
+                "matrix_nnz_unneeded",
+                "matrix_mallocs",
+                "matrix_average_nnz_per_row",
+                "matrix_maximum_nnz_per_row",
+                "matrix_average_allocated_nnz_per_row",
+                "matrix_memory_bytes",
+                "matrix_memory_mb",
+                "matrix_memory_estimate_bytes",
+                "matrix_memory_estimate_mb",
+                "matrix_norm_frobenius",
+                "matrix_norm_infinity",
+                "matrix_petsc_info",
+                "matrix_petsc_info_global_sum",
+            ):
+                self.assertEqual(stats[key], "not_applicable")
+            self.assertIn("average nnz per row = not_applicable", logs)
+        finally:
+            matrix.destroy()
 
     def test_factorization_only_stops_after_ksp_setup(self) -> None:
         matrix = PETSc.Mat().createAIJ([2, 2], nnz=1, comm=PETSc.COMM_SELF)

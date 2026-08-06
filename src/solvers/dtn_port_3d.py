@@ -4224,22 +4224,9 @@ def _solve_stage4_dtn_port_total_field_impl(
             )
         old_b_aug.destroy()
         augmented_matrix_stats_after_finalize = {
-            "matrix_type": "python_action_only",
-            "matrix_rows": int(n_fe + n_aux),
-            "matrix_cols": int(n_fe + n_aux),
-            "matrix_nnz_used": None,
-            "matrix_nnz_allocated": None,
-            "matrix_average_nnz_per_row": None,
-            "matrix_average_allocated_nnz_per_row": None,
-            "matrix_memory_bytes": None,
-            "matrix_memory_mb": None,
-            "matrix_memory_estimate_bytes": None,
-            "matrix_memory_estimate_mb": None,
-            "matrix_norm_frobenius": None,
-            "matrix_norm_infinity": None,
+            **_petsc_matrix_stats(A_aug, assemble=False),
             "global_A_materialized": False,
             "global_F_materialized": False,
-            "matrix_stats_measurement_status": "not_run_action_only",
         }
     else:
         A_aug.assemble()
@@ -4319,6 +4306,12 @@ def _solve_stage4_dtn_port_total_field_impl(
             "matrix_free_dtn_component_only": component_only,
             "matrix_free_dtn_probe": bool(matrix_free_dtn_probe),
             "matrix_free_dtn_probe_audit": dtn_action_probe_audit,
+            "global_A_materialized": False
+            if component_only
+            else not never_materialized_port,
+            "global_F_materialized": False
+            if component_only
+            else not never_materialized_port,
             "ordinary_default_changed": False,
             **assembly_backend_fields,
             "num_auxiliary_dofs": int(n_aux),

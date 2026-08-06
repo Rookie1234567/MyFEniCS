@@ -385,14 +385,14 @@ def _ksp_reason_name(reason: int) -> str:
 
 
 def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
-    if assemble:
+    matrix_type = A.getType()
+    matrix_free = matrix_type in (
+        PETSc.Mat.Type.PYTHON,
+        PETSc.Mat.Type.SHELL,
+    )
+    if assemble and not matrix_free:
         A.assemble()
     rows, cols = A.getSize()
-    info = A.getInfo()
-    try:
-        global_info = A.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
-    except Exception:
-        global_info = {}
     try:
         local_rows, local_cols = A.getLocalSize()
     except Exception:
@@ -409,6 +409,51 @@ def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
         row_block_size, column_block_size = A.getBlockSizes()
     except Exception:
         row_block_size = column_block_size = None
+    if matrix_free:
+        not_applicable = "not_applicable"
+        return {
+            "matrix_rows": int(rows),
+            "matrix_cols": int(cols),
+            "matrix_nnz_used": not_applicable,
+            "matrix_nnz_allocated": not_applicable,
+            "matrix_nnz_unneeded": not_applicable,
+            "matrix_mallocs": not_applicable,
+            "matrix_type": matrix_type,
+            "matrix_free": True,
+            "matrix_local_rows": None if local_rows is None else int(local_rows),
+            "matrix_local_cols": None if local_cols is None else int(local_cols),
+            "matrix_row_ownership_range": [
+                None if row_ownership[0] is None else int(row_ownership[0]),
+                None if row_ownership[1] is None else int(row_ownership[1]),
+            ],
+            "matrix_column_ownership_range": [
+                None if column_ownership[0] is None else int(column_ownership[0]),
+                None if column_ownership[1] is None else int(column_ownership[1]),
+            ],
+            "matrix_row_block_size": (
+                None if row_block_size is None else int(row_block_size)
+            ),
+            "matrix_column_block_size": (
+                None if column_block_size is None else int(column_block_size)
+            ),
+            "matrix_average_nnz_per_row": not_applicable,
+            "matrix_maximum_nnz_per_row": not_applicable,
+            "matrix_average_allocated_nnz_per_row": not_applicable,
+            "matrix_memory_bytes": not_applicable,
+            "matrix_memory_mb": not_applicable,
+            "matrix_memory_estimate_bytes": not_applicable,
+            "matrix_memory_estimate_mb": not_applicable,
+            "matrix_norm_frobenius": not_applicable,
+            "matrix_norm_infinity": not_applicable,
+            "matrix_petsc_info": not_applicable,
+            "matrix_petsc_info_global_sum": not_applicable,
+            "matrix_stats_measurement_status": "metadata_only_matrix_free",
+        }
+    info = A.getInfo()
+    try:
+        global_info = A.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
+    except Exception:
+        global_info = {}
     matrix_norm_frobenius = _petsc_object_norm(A, ("NORM_FROBENIUS", "FROBENIUS"))
     matrix_norm_infinity = _petsc_object_norm(A, ("NORM_INFINITY", "INFINITY"))
     maximum_nnz_per_row = None
@@ -445,7 +490,7 @@ def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
         "matrix_nnz_allocated": float(nnz_allocated) if nnz_allocated is not None else None,
         "matrix_nnz_unneeded": (float(info["nz_unneeded"]) if info.get("nz_unneeded") is not None else None),
         "matrix_mallocs": (float(info["mallocs"]) if info.get("mallocs") is not None else None),
-        "matrix_type": A.getType(),
+        "matrix_type": matrix_type,
         "matrix_local_rows": None if local_rows is None else int(local_rows),
         "matrix_local_cols": None if local_cols is None else int(local_cols),
         "matrix_row_ownership_range": [
@@ -637,10 +682,16 @@ def _log_matrix_stats(matrix_stats: dict[str, Any], log) -> None:
     log(f"matrix cols = {matrix_stats['matrix_cols']}")
     log(f"matrix nnz used = {matrix_stats['matrix_nnz_used']}")
     log(f"matrix nnz allocated = {matrix_stats['matrix_nnz_allocated']}")
-    if matrix_stats["matrix_average_nnz_per_row"] is not None:
-        log(f"average nnz per row = {matrix_stats['matrix_average_nnz_per_row']:.2f}")
-    if matrix_stats["matrix_average_allocated_nnz_per_row"] is not None:
-        log(f"average allocated nnz per row = {matrix_stats['matrix_average_allocated_nnz_per_row']:.2f}")
+    average_nnz = matrix_stats["matrix_average_nnz_per_row"]
+    if isinstance(average_nnz, (int, float)):
+        log(f"average nnz per row = {average_nnz:.2f}")
+    elif average_nnz is not None:
+        log(f"average nnz per row = {average_nnz}")
+    average_allocated_nnz = matrix_stats["matrix_average_allocated_nnz_per_row"]
+    if isinstance(average_allocated_nnz, (int, float)):
+        log(f"average allocated nnz per row = {average_allocated_nnz:.2f}")
+    elif average_allocated_nnz is not None:
+        log(f"average allocated nnz per row = {average_allocated_nnz}")
     log(f"PETSc matrix memory bytes = {matrix_stats['matrix_memory_bytes']}")
     log(f"PETSc matrix memory MB = {matrix_stats['matrix_memory_mb']}")
     log(f"estimated AIJ matrix memory bytes = {matrix_stats['matrix_memory_estimate_bytes']}")
