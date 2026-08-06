@@ -58,7 +58,7 @@ def test_serial_owner_local_slab_contractions_keep_global_and_local_actions_dist
     shift.assemble()
     residual = base_operator.createVecRight()
     residual.setValues(
-        range(4), np.asarray([1.0 + 1.0j, 2.0 - 1.0j, 1.5, 3.0j])
+        range(4), np.asarray([0.0, 0.0, 0.0, 3.0j])
     )
     residual.assemble()
     rows = (
@@ -135,10 +135,18 @@ def test_serial_owner_local_slab_contractions_keep_global_and_local_actions_dist
             "b4_fixed_gmres4_unweighted_local_one_solve_rho",
         } == set(local_metrics[0])
         for metric in local_metrics:
-            assert all(np.isfinite(value) for value in metric.values())
-            assert metric["local_residual_norm"] > 0.0
-            assert metric["current_trace_ilu_unweighted_local_one_solve_rho"] < 1.0e-11
-            assert metric["b4_fixed_gmres4_unweighted_local_one_solve_rho"] < 1.0e-11
+            assert np.isfinite(metric["local_residual_norm"])
+            if metric["slab"] == 0:
+                assert (
+                    metric["current_trace_ilu_unweighted_local_one_solve_rho"]
+                    is None
+                    and metric["b4_fixed_gmres4_unweighted_local_one_solve_rho"]
+                    is None
+                )
+            else:
+                assert metric["local_residual_norm"] > 0.0
+                assert metric["current_trace_ilu_unweighted_local_one_solve_rho"] < 1.0e-11
+                assert metric["b4_fixed_gmres4_unweighted_local_one_solve_rho"] < 1.0e-11
 
         current = result["global_current_trace_ilu_one_additive_apply"]
         b4_global = result["global_b4_partition_weighted_one_apply"]

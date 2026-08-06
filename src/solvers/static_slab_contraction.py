@@ -95,7 +95,7 @@ def measure_owner_local_slab_contractions(
     )
     embedded_correction = shifted_local_operator.createVecRight()
     local_action = shifted_local_operator.createVecLeft()
-    local_metrics: list[dict[str, float | int]] = []
+    local_metrics: list[dict[str, float | int | None]] = []
     try:
         for slab, owner in enumerate(plan.slab_owners):
             rows = global_slab_rows[slab]
@@ -149,17 +149,22 @@ def measure_owner_local_slab_contractions(
             b4_post_norm = float(
                 np.sqrt(comm.allreduce(b4_post_sq, op=MPI.SUM))
             )
-            denominator = max(residual_norm, np.finfo(float).tiny)
+            ilu_rho = (
+                None
+                if residual_norm == 0.0
+                else ilu_post_norm / residual_norm
+            )
+            b4_rho = (
+                None
+                if residual_norm == 0.0
+                else b4_post_norm / residual_norm
+            )
             local_metrics.append(
                 {
                     "slab": int(slab),
                     "local_residual_norm": residual_norm,
-                    "current_trace_ilu_unweighted_local_one_solve_rho": (
-                        ilu_post_norm / denominator
-                    ),
-                    "b4_fixed_gmres4_unweighted_local_one_solve_rho": (
-                        b4_post_norm / denominator
-                    ),
+                    "current_trace_ilu_unweighted_local_one_solve_rho": ilu_rho,
+                    "b4_fixed_gmres4_unweighted_local_one_solve_rho": b4_rho,
                 }
             )
     finally:

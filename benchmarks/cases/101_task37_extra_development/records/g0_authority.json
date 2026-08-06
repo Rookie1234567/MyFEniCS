@@ -1,0 +1,212 @@
+{
+  "record_kind": "task037_extra_g0_authority",
+  "record_version": 1,
+  "source": {
+    "branch": "codex/20260806-task37-iterative-extra-development",
+    "full_source_sha": "568f1ac189f98227541722b1de66cd7804e0cc80"
+  },
+  "scope": {
+    "profile": "never_materialized_owner_local_overlap0125_partition",
+    "degree": 6,
+    "h_nm": 10.0,
+    "polarization_kind": "s",
+    "mpi_size": 1,
+    "screen_iterations": 20,
+    "overlap_fraction": 0.125,
+    "interpolation": "partition",
+    "global_A_materialized": false,
+    "global_F_materialized": false,
+    "official_rta": false
+  },
+  "qualification": {
+    "watchdog_status": "task037_m3a_overlap0125_partition_screen_pass",
+    "watchdog_return_code": 0,
+    "pass": true,
+    "failures": [],
+    "warning_triggered": false,
+    "terminated_for_memory": false,
+    "terminated_for_timeout": false,
+    "terminated_for_authority_unreadable": false,
+    "no_swap": true,
+    "solver_case_status": "external_solver_not_converged",
+    "solver_converged": false,
+    "solver_reason": -3,
+    "solver_reason_name": "DIVERGED_MAX_IT",
+    "solver_iterations": 20,
+    "postprocess_skipped": true,
+    "official_result": false
+  },
+  "raw_evidence": {
+    "run_directory": "benchmarks/artifacts/101_task37_extra_development",
+    "sha256": {
+      "watchdog_summary.json": "5631271bb7663013fae11a3ea051b04ee1aecffb08b77e06b8f0105b0809621f",
+      "run_summary.json": "cd9ca8e1315477697c0d4ee1d5c076a13279b9bfa17e149160fbe63d0ab7606e",
+      "task037_f3_core_audit.json": "7128e818eb0d3f924418a93f29e62eb7bb9165feaf24b30fa604b27943b7b0a1",
+      "memory_timeline.csv": "295ac8f6ecd1ad783d591fb80a160bdbc090988c57b4d05b93acf6e54a46bc24",
+      "progress_3d.jsonl": "95d488ae8fb4933776547250ffb091dd1ca8bf393e8dbedd749955b162603563",
+      "worker_stdout.txt": "b5543bea5e6a7895e61528b72623350470f4585ea91884d416a55b7990f1f8f0",
+      "task037_f3_residual_history.jsonl": "75f0bc3ebec3648b60fdfc55daa9afd036b81cf6d5fe0ef1f7051a83e0f24940"
+    }
+  },
+  "snapshots": {
+    "retained_iterations": [0, 20],
+    "missing_iterations": [],
+    "identity": "active_trace_residual_global_row",
+    "ordering": "ascending global active row ID; rank ownership is not part of identity",
+    "repartition_invariant_global_numbering": "not_claimed",
+    "by_iteration": {
+      "0": {
+        "manifest_path": "benchmarks/artifacts/101_task37_extra_development/task037_f3_g0_residual_snapshots/task037_g0_residual_iter0000_manifest.json",
+        "manifest_file_sha256": "cbb62dad67b29e911e9391a802c21b7c6c7947156b0f3b7f6419f5604f2ac6b0",
+        "canonical_sha256": "f9440f315522999d87db815b9e619eaa826b5eae052e8403aef9c04bcfc1af7e",
+        "shard_path": "benchmarks/artifacts/101_task37_extra_development/task037_f3_g0_residual_snapshots/task037_g0_residual_iter0000_rank0000.npz",
+        "shard_file_sha256": "7adea21b5b1d9106e92685f013df103f027faf7b9c21d207832e5c6802bfa93d",
+        "iteration": 0,
+        "profile": "never_materialized_owner_local_overlap0125_partition",
+        "norm_2": 13.19739941836905,
+        "value_dtype": "complex128",
+        "real_imag_dtype": "float64",
+        "true_relative_residual": 1.0,
+        "reported_relative_residual": 1.0,
+        "global_active_row_count": 51192
+      },
+      "20": {
+        "manifest_path": "benchmarks/artifacts/101_task37_extra_development/task037_f3_g0_residual_snapshots/task037_g0_residual_iter0020_manifest.json",
+        "manifest_file_sha256": "ed53c09adb33297099839922177b9267875ee65e2adc2fbd8bfd0c96de611f5b",
+        "canonical_sha256": "cb9fa32dd8c3c26db69a9d5a62577d66225eefb5e39a8bfdf6efb8c76e614ee6",
+        "shard_path": "benchmarks/artifacts/101_task37_extra_development/task037_f3_g0_residual_snapshots/task037_g0_residual_iter0020_rank0000.npz",
+        "shard_file_sha256": "4b22bde2440127eec23cce791b2a67db3736c8cb5a18e273f19aff0a5ba62e98",
+        "iteration": 20,
+        "profile": "never_materialized_owner_local_overlap0125_partition",
+        "norm_2": 0.5904838005274639,
+        "value_dtype": "complex128",
+        "real_imag_dtype": "float64",
+        "true_relative_residual": 0.04474243612765,
+        "reported_relative_residual": 0.04474243612765121,
+        "global_active_row_count": 51192
+      }
+    }
+  },
+  "residual": {
+    "semantics": "condensed active-trace dual/load residual r=b-Ax; not a physical field coefficient",
+    "reported_history": [[0, 1.0], [1, 0.7159589080955939], [2, 0.600167245806736], [3, 0.48547672544762166], [4, 0.37689932194501063], [5, 0.29874802710749954], [6, 0.24830224988719485], [7, 0.21063632681697753], [8, 0.18683611218992896], [9, 0.1632952811084293], [10, 0.14446444295860714], [11, 0.12607518142084387], [12, 0.1115678063180111], [13, 0.09991241345282945], [14, 0.08877406596675294], [15, 0.07895020854913669], [16, 0.07030351624003207], [17, 0.06250526454619348], [18, 0.055278059125432405], [19, 0.04980398050950334], [20, 0.04474243612765121]],
+    "true_samples": [[0, 1.0], [10, 0.14446444295860594], [20, 0.04474243612765]]
+  },
+  "resources": {
+    "warning_gib": 10.0,
+    "terminate_gib": 14.0,
+    "poll_interval_seconds": 0.25,
+    "process_tree_rss_peak_mb": 6410.21875,
+    "process_tree_rss_peak_gib": 6.259979248046875,
+    "worker_rss_peak_mb": 5112.47265625,
+    "worker_pss_peak_mb": 5061.1181640625,
+    "worker_uss_peak_mb": 5016.58984375,
+    "process_tree_swap_peak_mb": 0.0,
+    "worker_smaps_swap_peak_mb": 0.0,
+    "container_cgroup_historical_peak_mb": 13279.546875,
+    "container_cgroup_is_formal_authority": false
+  },
+  "factor_inventory": {
+    "global_direct_factor_count": 0,
+    "global_schur_matrix_materialized": false,
+    "global_A_materialized": false,
+    "global_F_materialized": false,
+    "factor_only_storage": true,
+    "global_factor_rows": 127656,
+    "global_factor_nnz": 91415952,
+    "global_stored_factor_nnz": 91415952,
+    "factor_csr_payload_estimate_bytes": 1828829728,
+    "unique_factor_classes": 7,
+    "exact_duplicate_factor_count": 9
+  },
+  "contraction": {
+    "formal_audit_frozen_before_diagnostic": {
+      "operator_apply_count": 140,
+      "coarse": {
+        "apply_count": 20,
+        "apply_elapsed_s": 31.65686892461963,
+        "smoother_elapsed_s": 28.980643914081156,
+        "coarse_elapsed_s": 0.031093786703422666
+      },
+      "smoother_apply_count": 120,
+      "global_factor_rows": 127656,
+      "global_stored_factor_nnz": 91415952
+    },
+    "diagnostic_wall_seconds": 34.65908507502172,
+    "stationary_one_apply_oracle_only": true,
+    "by_iteration": {
+      "0": {
+        "local_slab": {
+          "slab_order": "0..15",
+          "local_residual_norm": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 13.197399418369043, 13.197399418369043],
+          "ilu_rho": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, 2.4220271891634813, 2.537670031910435],
+          "b4_rho": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0.9440411915945912, 0.9429969722161038]
+        },
+        "global_rho": {
+          "global_current_trace_ilu_one_additive_apply": 2.445965881188012,
+          "global_b4_partition_weighted_one_apply": 0.9556993251952722,
+          "global_fixed_two_step_smoother": 1.3728527291782708,
+          "global_m3a_two_step_wave_coarse_post_smooth": 1.1568847294563473
+        },
+        "ilu_ablation": {
+          "rho": [2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 2.445965881188012, 1.7391671771049666, 1.44644564498972],
+          "damage": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.7067987040830455, -0.999520236198292]
+        }
+      },
+      "20": {
+        "local_slab": {
+          "slab_order": "0..15",
+          "local_residual_norm": [0.10586824230789237, 0.14932399978284908, 0.16414059813172402, 0.15663624940465684, 0.15304032481510138, 0.16307530842059187, 0.1560405881123861, 0.1607961295546476, 0.1607961295546476, 0.17173883546573313, 0.2023647000958505, 0.21508911630375094, 0.2608346491154152, 0.3575414046731364, 0.4272314396194324, 0.3449682525526264],
+          "ilu_rho": [0.8153643500988512, 1.2686953948611748, 1.1086268146222058, 1.2050558621531455, 1.1363134477527808, 1.247711710628995, 1.3052296518145134, 1.255303108369151, 1.255303108369151, 1.1658927664198708, 1.1824423877335868, 1.1371347577553759, 0.9402844908220253, 0.9082591874178787, 1.2604899530937426, 0.811908743870638],
+          "b4_rho": [0.862548187259523, 0.8683287563108448, 0.8675420337186592, 0.8621283281129313, 0.8627049549588025, 0.8512896925857695, 0.8424175851604383, 0.8449141015237168, 0.8449141015237168, 0.8231635886270363, 0.8358590409994763, 0.8239758432186565, 0.7762980193279913, 0.7360770299396727, 0.7558186834062683, 0.7579123379948646]
+        },
+        "global_rho": {
+          "global_current_trace_ilu_one_additive_apply": 1.3887891254775173,
+          "global_b4_partition_weighted_one_apply": 0.7836817168192864,
+          "global_fixed_two_step_smoother": 1.0634552099589953,
+          "global_m3a_two_step_wave_coarse_post_smooth": 1.175270315066409
+        },
+        "ilu_ablation": {
+          "rho": [1.39332800923453, 1.3832855561002155, 1.39175205448801, 1.3844749044533624, 1.3859929421779291, 1.3864920387558073, 1.3880272785510008, 1.3752121054131052, 1.3752121054131052, 1.384075386222269, 1.3909561457424162, 1.391104968854834, 1.3952462989276815, 1.4271213631919628, 1.2391839224873167, 1.4073354515773409],
+          "damage": [0.004538883757012613, -0.005503569377301787, 0.0029629290104926653, -0.004314221024154907, -0.0027961832995881952, -0.002297086721710029, -0.0007618469265164851, -0.013577020064412082, -0.013577020064412082, -0.004713739255248317, 0.0021670202648989, 0.0023158433773167175, 0.0064571734501641664, 0.038332237714445494, -0.14960520299020064, 0.01854632609982354]
+        }
+      }
+    },
+    "primary_slab": {
+      "slab": 14,
+      "basis": "largest iter20 local residual; not a universal selector",
+      "local_residual_norm": 0.4272314396194324,
+      "ilu_rho": 1.2604899530937426,
+      "b4_rho": 0.7558186834062683,
+      "ablation_damage": -0.14960520299020064
+    },
+    "control_slab": {
+      "slab": 5,
+      "basis": "lower-median residual among central repeated-factor slabs",
+      "factor_fingerprint": "e0ff9108c190efc854669f3e9f361dcd526496652905167137660e7560fde2d7",
+      "local_residual_norm": 0.16307530842059187,
+      "ilu_rho": 1.247711710628995,
+      "b4_rho": 0.8512896925857695,
+      "upper_median_comparator_slab": 2
+    },
+    "largest_positive_ablation_damage": {
+      "slab": 13,
+      "damage": 0.038332237714445494
+    }
+  },
+  "legacy_zero_rho_provenance": {
+    "raw_artifact_iter0_zero_rho_entries": 28,
+    "formal_record_zero_local_rho": "null/not_applicable",
+    "note": "Raw PDE artifact predates this semantic fix and wrote 0.0 for zero local residuals; compact record does not interpret those values as perfect contraction."
+  },
+  "pending": {
+    "B2_i2500_raw_vector": "not_available_without_prohibitive_rerun",
+    "M3a_i100_raw_vector": "not_available",
+    "M3a_late_raw_vector": "not_available",
+    "B4_i20_raw_vector": "not_available",
+    "B4_i100_raw_vector": "not_available",
+    "B4_i200_raw_vector": "not_available",
+    "note": "No scalar residual was used to fabricate an unavailable raw vector."
+  },
+  "readiness": "G2.2_one_slab_full_space_identity_preparation_only"
+}
