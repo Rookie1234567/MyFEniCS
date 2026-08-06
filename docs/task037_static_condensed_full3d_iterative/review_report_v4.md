@@ -57,20 +57,20 @@ Candidate E modal-assisted coarse  = 尚未运行
 
 M3a 求解的是精确 p6/h10 静态凝聚方程。对第 $j$ 个 slab，局部矩阵近似分解为
 
-$$
+```math
 A_j \approx L_j U_j,
-$$
+```
 
 并构造加权 Schwarz 预条件器
 
-$$
+```math
 M_{\mathrm{M3a}}^{-1} r
 =
 \sum_{j=1}^{16}
 R_j^T W_j U_j^{-1}L_j^{-1}R_j r
 +
 Q_{75}r.
-$$
+```
 
 它是当前唯一完成以下全部 Gate 的方法：
 
@@ -83,9 +83,9 @@ $$
 
 代价是长期保留
 
-$$
+```math
 91{,}415{,}952
-$$
+```
 
 个 p6 局部 factor NNZ。MPI1 峰值仍为 4.600 GiB，因此 M3a 不能按当前形式机械扩展到 0.7 nm。
 
@@ -97,7 +97,7 @@ $$
 
 Candidate A 使用
 
-$$
+```math
 M_A^{-1}
 =
 D_6^{-1}
@@ -105,7 +105,7 @@ D_6^{-1}
 P_{2\to6}A_2^{-1}P_{2\to6}^H
 +
 \text{post-diagonal correction}.
-$$
+```
 
 100 步残差仍为 0.9625。结论：全局 p2 与对角修正无法覆盖 p6 静态凝聚系统的中高阶误差。禁止重新扫描 omega、shift 或 pre/post 次数。
 
@@ -113,10 +113,10 @@ $$
 
 每个 slab 不保存矩阵或因子，而以固定步数局部 Krylov 近似
 
-$$
+```math
 z_j \approx \operatorname{GMRES}_k(A_{6,j},r_j),
 \qquad k=2,4.
-$$
+```
 
 B4 是 factor-free 中最好的既有候选，但 200 步残差仍为 0.1406，后期进入平台。禁止继续测试裸 B6/B8/B12。
 
@@ -124,9 +124,9 @@ B4 是 factor-free 中最好的既有候选，但 200 步残差仍为 0.1406，�
 
 原计划只在人工 slab 接口施加 impedance shift，但实际 audit 得到
 
-$$
+```math
 N_{\mathrm{interface}}=N_{\mathrm{active}}=51{,}192.
-$$
+```
 
 因此该实现没有真正分离人工接口；主要新增机制只是 one-hot RAS。它比 B4 更差。当前 C 关闭，但这不等于真正的几何 optimized Schwarz 已被理论否定。
 
@@ -134,13 +134,13 @@ $$
 
 Candidate D 试图在局部 p6 Krylov 中使用局部 p2 auxiliary：
 
-$$
+```math
 B_{2,j}^{-1}
 =
 P_j A_{2,j}^{-1}P_j^H
 +
 D_{6,j}^{-1}.
-$$
+```
 
 其代数投影误差约为 $3.45\times10^{-16}$，p6 factor inventory 为零，但 high/mixed contraction improvement 分别只有 0.929 和 0.906，小于 1。该候选是数值负结果，不得重开调参。
 
@@ -150,24 +150,24 @@ $$
 
 完整 p6 单元局部空间为
 
-$$
+```math
 882=432\ \text{trace}+450\ \text{interior}.
-$$
+```
 
 R7 路线保留 exact-sequence 嵌入的 108 个 p4-core interior modes，只消去 342 个 p5/p6 complement modes。局部、全局 retained action 与 compiled-form assembly-time 组件均达到 $10^{-14}$ 至 $10^{-15}$ 级一致性。
 
 在真实 two-cell public DtN/recovery 测试中：
 
-$$
+```math
 \frac{\|r_{\mathrm{full}}\|}{\|b\|}
 =4.27\times10^{-11},
-$$
+```
 
 但 eliminated-complement norm 为
 
-$$
+```math
 5.00\times10^{-10},
-$$
+```
 
 而 exact-equivalence Gate 为 $10^{-11}$，因此停止。
 
@@ -204,9 +204,9 @@ production/full PDE                  = not qualified
 
 Candidate F 研究三层局部 p-multigrid：
 
-$$
+```math
 p6\rightarrow p4\rightarrow p2.
-$$
+```
 
 真实 exact-sequence transfer 已经通过：
 
@@ -237,17 +237,17 @@ np.asarray(rows, dtype=PETSc.IntType)
 
 构造
 
-$$
+```math
 A_{4,j}=P_{46,j}^H A_{6,j}P_{46,j}
-$$
+```
 
 并暂时用 exact complex128 p4 solve 测试空间容量。对与 Candidate D 相同的 low/high/mixed sources，计算
 
-$$
+```math
 \rho_j
 =
 \frac{\|r_j-A_{6,j}z_j\|}{\|r_j\|}.
-$$
+```
 
 只有 high 与 mixed 相对 B4 的 improvement 都不小于 1.5，才允许开发正式 factor-free p6→p4→p2 V-cycle。
 
@@ -265,11 +265,11 @@ P4_INTERMEDIATE_SPACE_NOT_EFFECTIVE
 
 当前小型 synthetic component 已验证
 
-$$
+```math
 A_{\mathrm{cond}}x
 =
 Fx-C H^{-1}Dx
-$$
+```
 
 可以在不物化完整 $C/D$ 的情况下施加，且 auxiliary recovery 误差达到 $10^{-12}$ 量级。但还没有正式 80-mode p6/h10 identity。
 
@@ -286,11 +286,11 @@ $$
 
 Gate：
 
-$$
+```math
 \frac{\|A_{\mathrm{MF}}x-A_{\mathrm{block}}x\|}
 {\|A_{\mathrm{block}}x\|}
 \le10^{-11}.
-$$
+```
 
 该工作独立于 Candidate F 是否成功，必须完成，但不因它单独运行新的 full PDE。
 
@@ -302,25 +302,25 @@ Task36 否定的是用 M120 作为完整 direct Hybrid 接口空间；它没有�
 
 保留右模态 $Z_m$ 和左/伴随模态 $W_m$，构造非 Hermitian coarse operator
 
-$$
+```math
 E_m=W_m^H A_6 Z_m,
-$$
+```
 
 以及 correction
 
-$$
+```math
 Q_mr=Z_mE_m^{-1}W_m^H r.
-$$
+```
 
 与最佳 factor-free/local PC 组合：
 
-$$
+```math
 M_E^{-1}r
 =
 M_0^{-1}r
 +
 Q_m\left(r-A_6M_0^{-1}r\right).
-$$
+```
 
 其优势是：完整 p6 fine operator 与 Krylov space 始终保留，端部近场、traction complement 与 Task36 中 M120 遗漏的方向仍由 Full3D 空间修正；模态只消除长程传播慢误差。
 
@@ -377,9 +377,11 @@ V4-6  写 response_v4.md，提交 compact evidence，并停止
 GitHub Markdown 的正式数学格式统一为：
 
 - 行内公式：`$...$`；
-- 独立公式块：上下各一行 `$$`；
+- 独立公式块：使用 GitHub fenced math block；此前上下各一行 `$$` 的约定由 Task37 专用规则覆盖；
 - 禁止在普通 Markdown 正文中继续使用 `\(...\)` 与 `\[...\]`；
 - fenced code block 内的反斜杠示例保持原样；
 - 所有 Task37 与 Case100 Markdown 文档必须通过自动检查，不得残留正文中的旧 delimiter。
+
+原因是 dollar block 内独占一行的等号可能触发 GFM Setext heading；普通 fenced code、tilde fence 和 inline code span 仍必须逐字节保留。
 
 本审阅同时提供 `scripts/fix_task37_markdown_math.py`，用于一次性修复和 `--check` 验证。批量修复必须作为独立 docs-only commit 执行，不得与数值源码改动混在同一提交中。

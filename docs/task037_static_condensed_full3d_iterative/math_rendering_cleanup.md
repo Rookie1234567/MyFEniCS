@@ -5,8 +5,10 @@
 GitHub Markdown 统一使用：
 
 - 行内公式：`$...$`；
-- 独立公式块：单独成行的 `$$`；
+- 独立公式块：GitHub fenced math block；此前单独成行的 `$$` 约定由本 Task37 专用规则覆盖；
 - 普通正文中不再使用 `\(...\)` 或 `\[...\]`。
+
+由于 dollar block 内独占一行的等号可能被 GFM 解释为 Setext heading，独立 display 均迁移为 math fenced block；普通 fenced code、tilde fence 和 inline code span 不修改。
 
 清理范围仅限：
 

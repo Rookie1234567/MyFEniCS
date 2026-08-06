@@ -428,15 +428,15 @@ d. **只有 full residual 和物理 Gate 通过才输出 official result。**
 
 数学上，预条件器只改变收敛路径：
 
-$$
+```math
 A M_k^{-1} y = b,\qquad x=M_k^{-1}y.
-$$
+```
 
 只要每一步 `A*x` 使用精确 p6 operator，最终检查：
 
-$$
+```math
 \frac{\|Ax-b\|}{\|b\|}
-$$
+```
 
 并达到冻结 Gate，那么 low-order、mixed-precision 或 approximate PC 不会把最终方程偷偷换成另一个物理模型。
 
@@ -516,15 +516,15 @@ DtN C/D/H actions
 
 fine action直接为：
 
-$$
+```math
 F x = \sum_K C_K^H S_K C_K x.
-$$
+```
 
 DtN仍使用：
 
-$$
+```math
 Sx = Fx-C H^{-1}Dx.
-$$
+```
 
 ### M1 的关键实现
 
@@ -532,7 +532,9 @@ $$
 2. active RHS由 cell-local condensation contribution直接 scatter-add；
 3. C/D/H单独、稀疏、流式构造；
 4. coarse matrix通过 matrix-free action形成：
-   $$A_c=R_c^H S R_c;$$
+   ```math
+   A_c=R_c^H S R_c;
+   ```
 5. 不创建 augmented AIJ 作为 intermediate；
 6. action资格化仍对比当前 assembled F0/F3 oracle。
 
@@ -556,10 +558,10 @@ global F -> createSubMatrices -> local factors
 
 真正 scalable 的做法是，对每个 slab owner直接累计：
 
-$$
+```math
 A_i = R_i F R_i^T
     = \sum_K R_i C_K^H S_K C_K R_i^T.
-$$
+```
 
 实现要求：
 
@@ -627,7 +629,7 @@ p6/h10 exact static-condensed operator
 
 预条件器改为：
 
-$$
+```math
 M^{-1}
 =
 M_{\mathrm{high\text{-}order\ patch}}^{-1}
@@ -635,7 +637,7 @@ M_{\mathrm{high\text{-}order\ patch}}^{-1}
 P_{2\to6} A_2^{-1} P_{2\to6}^H
 +
 R_w A_w^{-1}R_w^H.
-$$
+```
 
 其中：
 
@@ -651,7 +653,9 @@ $$
 - transfer orientation/Floquet/adjoint error `<=1e-11`；
 - exact-sequence/gradient compatibility明确；
 - p2 coarse action为真实：
-  $$A_2=P^HSP;$$
+  ```math
+  A_2=P^HSP;
+  ```
 - p6 true residual通过；
 - 12+12 channels通过；
 - 不形成 p6 local ILU factors，或将其限制为小型 high-order patches；
@@ -770,11 +774,11 @@ fixed linear PC + GMRES/GCRODR candidate
 
 对至少三个确定性复向量和一个随机种子，检查：
 
-$$
+```math
 \frac{\|A_{candidate}x-A_{assembled}x\|}
 {\|A_{assembled}x\|}
 \le 10^{-11}.
-$$
+```
 
 范围包括：
 

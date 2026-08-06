@@ -215,7 +215,7 @@ Task037 direct authority v1
 静态凝聚先在每个 p6 Nédélec 单元内部消去 cell-interior DoFs，只保留 Floquet 消元后的
 独立 edge/face trace rows。加入 auxiliary DtN 后，增广系统写成：
 
-$$
+```math
 \begin{bmatrix}
 F & C\\
 D & H
@@ -227,7 +227,7 @@ u\\a
 \begin{bmatrix}
 f\\g
 \end{bmatrix}.
-$$
+```
 
 其中：
 
@@ -239,19 +239,19 @@ $$
 
 外层迭代必须求精确 condensed system：
 
-$$
+```math
 S u = b_c,
 \qquad
 S = F-CH^{-1}D,
 \qquad
 b_c=f-CH^{-1}g.
-$$
+```
 
 收敛后恢复：
 
-$$
+```math
 a=H^{-1}(g-Du),
-$$
+```
 
 再使用 assembly-time static-condensation recovery 恢复 p6 cell-interior 场。
 
@@ -579,9 +579,9 @@ p2 H(curl) auxiliary space on the same frozen h10 mesh
 
 构造：
 
-$$
+```math
 P_{2\rightarrow6,\Gamma}:V_{p2}\rightarrow V_{p6,\Gamma}^{active}.
-$$
+```
 
 要求：
 
@@ -591,7 +591,9 @@ $$
 - 无零列、无重复列；
 - transfer adjoint/action误差 `<=1e-11`；
 - p2 coarse operator使用真实 fine action：
-  $$A_c=P^HSP;$$
+  ```math
+  A_c=P^HSP;
+  ```
 - coarse rank/condition 明确；
 - MPI2/4 identity；
 - 不形成 p6 global direct factor；
@@ -634,10 +636,10 @@ F4 最多允许：
 
 实现 fine FE action：
 
-$$
+```math
 y=F_{MF}x
  =\sum_K C_K^H S_K C_K x,
-$$
+```
 
 其中 $C_K$ 是 local full trace 到 active Floquet trace 的稀疏 expansion，$S_K$ 为单元静态
 Schur action。
@@ -650,7 +652,9 @@ Schur action。
 - owner/ghost/scatter-add 正确；
 - complex non-Hermitian action；
 - deterministic vectors上：
-  $$\|F_{MF}x-F_{assembled}x\|/\|F_{assembled}x\|\le1e-11;$$
+  ```math
+  \|F_{MF}x-F_{assembled}x\|/\|F_{assembled}x\|\le1e-11;
+  ```
 - serial、MPI2、MPI4 均通过；
 - 与 exact DtN condensed shell 组合后 action 仍 `<=1e-11`。
 
