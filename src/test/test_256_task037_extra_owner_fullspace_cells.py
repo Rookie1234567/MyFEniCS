@@ -14,6 +14,10 @@ from src.solvers.hcurl_assembly_time_condensation import (
 from src.solvers.physical_slab_two_level import (
     build_owner_local_slab_plan,
     collect_owner_local_fullspace_slab_cells,
+    extract_owner_local_slab_vector,
+)
+from src.solvers.static_condensed_iterative import (
+    _task037_g2_owner_vector_sha256,
 )
 from src.solvers.static_factor_reuse import _canonical_global_row_ids_fingerprint
 from src.solvers.static_fullspace_slab_oracle import (
@@ -37,11 +41,13 @@ def _cell_id_sequence_sha256(values) -> str:
     return digest.hexdigest()
 
 
-def _fixed_vectors(size: int) -> tuple[np.ndarray, ...]:
-    indices = np.arange(size, dtype=np.float64)
+def _fixed_vectors(owner_rows: np.ndarray) -> tuple[np.ndarray, ...]:
+    indices = np.asarray(owner_rows, dtype=np.float64)
+    scale = max(float(indices.size), 1.0)
+    phase = (indices + 1.0) / scale
     return tuple(
-        np.sin((index + 1.0) * 0.19 * indices + 0.07 * index)
-        + 1j * np.cos((index + 1.0) * 0.11 * indices - 0.13 * index)
+        np.sin((index + 1.0) * 0.19 * phase + 0.07 * index)
+        + 1j * np.cos((index + 1.0) * 0.11 * phase - 0.13 * index)
         for index in range(3)
     )
 
@@ -122,6 +128,23 @@ def test_collect_owner_local_fullspace_cells_serial_or_mpi2():
         assert audit["owner_active_row_hash"] == (
             _canonical_global_row_ids_fingerprint(owner_rows)
         )
+        residual = condensed.create_active_vector()
+        residual_start, residual_end = residual.getOwnershipRange()
+        residual_rows = np.arange(residual_start, residual_end, dtype=np.float64)
+        residual.getArray()[:] = (
+            0.75
+            + 0.125 * residual_rows
+            + 1j * (0.5 - 0.0625 * residual_rows)
+        )
+        residual.assemble()
+        routed_residual, route_audit = extract_owner_local_slab_vector(
+            residual,
+            plan,
+            slab,
+        )
+        assert all(packet == route_audit for packet in comm.allgather(route_audit))
+        assert route_audit["owner_rank"] == owner
+        assert route_audit["owner_local_row_count"] == int(owner_rows.size)
         if comm.rank == owner:
             assert len(cells) == len(expected_ids)
             assert len({id(cell.block) for cell in cells}) == len(expected_classes)
@@ -137,18 +160,51 @@ def test_collect_owner_local_fullspace_cells_serial_or_mpi2():
             )
             assert audit["sparse_expansion_nnz"] == nnz
             assert audit["sparse_expansion_bytes"] == bytes_used
+            expected_residual = (
+                0.75
+                + 0.125 * owner_rows.astype(np.float64)
+                + 1j * (0.5 - 0.0625 * owner_rows.astype(np.float64))
+            )
+            assert routed_residual is not None
+            np.testing.assert_allclose(routed_residual, expected_residual)
+            residual_hash = _task037_g2_owner_vector_sha256(
+                owner_rows,
+                routed_residual,
+                domain="task037.g2.iter20-real-residual.v1",
+            )
+            changed_rows = owner_rows.copy()
+            changed_rows[0] += 1
+            assert residual_hash != _task037_g2_owner_vector_sha256(
+                changed_rows,
+                routed_residual,
+                domain="task037.g2.iter20-real-residual.v1",
+            )
+            changed_values = routed_residual.copy()
+            changed_values[0] += 1.0 + 2.0j
+            assert residual_hash != _task037_g2_owner_vector_sha256(
+                owner_rows,
+                changed_values,
+                domain="task037.g2.iter20-real-residual.v1",
+            )
+            assert residual_hash != _task037_g2_owner_vector_sha256(
+                owner_rows,
+                routed_residual,
+                domain="task037.g2.current-local-shift.v1",
+            )
             result = measure_fullspace_slab_identity(
                 cells,
-                _fixed_vectors(int(owner_rows.size)),
+                (*_fixed_vectors(owner_rows), routed_residual),
                 active_size=int(owner_rows.size),
             )
-            assert result["vector_count"] == 3
+            assert result["vector_count"] == 4
             assert result["finite"] is True
             assert result["deterministic"] is True
             local_error = float(result["max_relative_error"])
         else:
             assert cells == ()
+            assert routed_residual is None
             local_error = 0.0
         assert comm.allreduce(local_error, op=MPI.MAX) <= 1.0e-10
+        residual.destroy()
     finally:
         condensed.destroy()

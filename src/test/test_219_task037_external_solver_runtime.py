@@ -21,6 +21,7 @@ def test_stage4b_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         assert kwargs["static_retain_local_schur_for_matrix_free"] is True
         assert kwargs["matrix_free_dtn"] is True
         assert kwargs["matrix_free_dtn_probe"] is True
+        assert kwargs["task037_extra_g2_slab14_identity"] is True
         return {"stage4b": True}
 
     monkeypatch.setattr(stage4b, "run_prepared_3d_case_flow", flow)
@@ -31,6 +32,7 @@ def test_stage4b_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         static_retain_local_schur_for_matrix_free=True,
         matrix_free_dtn=True,
         matrix_free_dtn_probe=True,
+        task037_extra_g2_slab14_identity=True,
     ) == {"stage4b": True}
 
 
@@ -43,6 +45,7 @@ def test_public_dtn_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         assert kwargs["static_retain_local_schur_for_matrix_free"] is True
         assert kwargs["matrix_free_dtn"] is True
         assert kwargs["matrix_free_dtn_probe"] is True
+        assert kwargs["task037_extra_g2_slab14_identity"] is True
         return result
 
     monkeypatch.setattr(
@@ -64,6 +67,7 @@ def test_public_dtn_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         static_retain_local_schur_for_matrix_free=True,
         matrix_free_dtn=True,
         matrix_free_dtn_probe=True,
+        task037_extra_g2_slab14_identity=True,
     )
     assert returned is result
 
@@ -74,6 +78,7 @@ def test_e0_matrix_free_dtn_flags_default_off(monkeypatch, tmp_path):
     def flow(*_args, **kwargs):
         assert kwargs["matrix_free_dtn"] is False
         assert kwargs["matrix_free_dtn_probe"] is False
+        assert kwargs["task037_extra_g2_slab14_identity"] is False
         return {"default": True}
 
     monkeypatch.setattr(stage4b, "run_prepared_3d_case_flow", flow)
@@ -85,6 +90,7 @@ def test_e0_matrix_free_dtn_flags_default_off(monkeypatch, tmp_path):
     def implementation(**kwargs):
         assert kwargs["matrix_free_dtn"] is False
         assert kwargs["matrix_free_dtn_probe"] is False
+        assert kwargs["task037_extra_g2_slab14_identity"] is False
         return {"default": True}
 
     monkeypatch.setattr(

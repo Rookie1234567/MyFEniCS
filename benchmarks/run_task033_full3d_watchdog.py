@@ -656,6 +656,15 @@ def _task037_m3a_status(
     return f"task037_m3a_overlap0125_partition_{phase}_{result}"
 
 
+def _task037_extra_g2_status(
+    args: argparse.Namespace, qualification: Mapping[str, Any]
+) -> str | None:
+    if not getattr(args, "task037_extra_g2_slab14_identity", False):
+        return None
+    result = "pass" if qualification["pass"] else "not_pass"
+    return f"task037_extra_g2_slab14_identity_{result}"
+
+
 def _task037_m4_factor_free_status(
     args: argparse.Namespace, qualification: Mapping[str, Any]
 ) -> str | None:
@@ -746,6 +755,7 @@ def _task037_f3_assembled_fgmres_port(
     optimized_schwarz: bool = False,
     overlap0125_partition: bool = False,
     task037_extra_g0_diagnostics: bool = False,
+    task037_extra_g2_slab14_identity: bool = False,
     verified_clean_sha: str | None = None,
 ):
     from src.solvers.static_condensed_iterative import (
@@ -838,6 +848,9 @@ def _task037_f3_assembled_fgmres_port(
                 residual_observer=observe,
                 residual_snapshot_observer=g0_snapshot_observer,
                 task037_extra_g0_diagnostics=task037_extra_g0_diagnostics,
+                task037_extra_g2_slab14_identity=(
+                    task037_extra_g2_slab14_identity
+                ),
                 lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
         elif never_materialized:
@@ -1326,6 +1339,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_extra_g0_diagnostics": bool(
             getattr(args, "task037_extra_g0_diagnostics", False)
         ),
+        "task037_extra_g2_slab14_identity": bool(
+            getattr(args, "task037_extra_g2_slab14_identity", False)
+        ),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -1504,6 +1520,9 @@ def _worker(args: argparse.Namespace) -> int:
             task037_extra_g0_diagnostics=getattr(
                 args, "task037_extra_g0_diagnostics", False
             ),
+            task037_extra_g2_slab14_identity=getattr(
+                args, "task037_extra_g2_slab14_identity", False
+            ),
             verified_clean_sha=getattr(args, "verified_clean_sha", None),
         )
         if args.task037_m2c_never_materialized:
@@ -1597,6 +1616,9 @@ def _worker(args: argparse.Namespace) -> int:
         matrix_free_dtn=e0_gate,
         matrix_free_dtn_probe=e0_gate,
         canonical_vector_export=args.task037_canonical_vector_export,
+        task037_extra_g2_slab14_identity=getattr(
+            args, "task037_extra_g2_slab14_identity", False
+        ),
     )
     return 0
 
@@ -1693,6 +1715,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--task037-extra-g0-diagnostics",
         action="store_true",
         help="Run the opt-in Task037-extra G0 diagnostics on M3a screen-20 only.",
+    )
+    parser.add_argument(
+        "--task037-extra-g2-slab14-identity",
+        action="store_true",
+        help=(
+            "Run the opt-in Task037-extra G2 slab14 identity on the exact "
+            "M3a MPI1 screen-20 scope."
+        ),
     )
     parser.add_argument(
         "--task035d-case097-gate",
@@ -2086,6 +2116,47 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037-extra-g0-diagnostics is restricted to the verified "
             "p6/h10 S MPI1 M3a overlap-0.125 screen-20 no-swap scope."
+        )
+    if args.task037_extra_g2_slab14_identity and not (
+        args.task035c_p6_h10_gate
+        and args.degree == 6
+        and math.isclose(args.h_nm, 10.0)
+        and args.polarization_kind == "s"
+        and args.run_kind == "full-solve"
+        and args.mpi_size == 1
+        and args.profile == "default"
+        and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+        and not args.allow_swap
+        and valid_hex_digest(args.verified_clean_sha, 40)
+        and (
+            args.worker
+            or (
+                math.isclose(args.poll_interval, 0.25)
+                and args.warning_gib == 10.0
+                and args.terminate_gib == 14.0
+                and args.timeout_seconds == 1800.0
+            )
+        )
+        and args.task037_f3_screen == 20
+        and not args.task037_f3_full
+        and args.task037_m2c_never_materialized
+        and args.task037_m3a_overlap0125_partition
+        and not args.task037_extra_g0_diagnostics
+        and not args.task037_f5b_released_profile
+        and not args.task037_f0_vector_observer
+        and args.task037_f1_direct_trace_oracle is None
+        and not args.task037_e0_matrix_free_dtn_gate
+        and not args.task037_m4_p2_auxiliary
+        and not args.task037_m4_factor_free_slab
+        and not args.task037_m4_optimized_schwarz
+        and not args.task037_m4_b2_long_full
+        and not args.task037_canonical_vector_export
+        and not args.task037_m0_lifecycle_audit
+    ):
+        parser.error(
+            "--task037-extra-g2-slab14-identity is restricted to the verified "
+            "p6/h10 S MPI1 M3a overlap-0.125 screen-20 no-swap scope and "
+            "conflicts with G0 diagnostics."
         )
     if (
         args.task037_m4_p2_auxiliary
@@ -3716,6 +3787,159 @@ def _qualify(
                     ),
                 }
             )
+            if getattr(args, "task037_extra_g2_slab14_identity", False):
+                g2_identity = core_audit.get(
+                    "task037_extra_g2_slab14_identity"
+                )
+                g2_identity = (
+                    g2_identity if isinstance(g2_identity, dict) else {}
+                )
+                g2_basis = g2_identity.get("primary_selection_basis")
+                g2_basis = g2_basis if isinstance(g2_basis, dict) else {}
+                g2_materialization = g2_identity.get("materialization")
+                g2_materialization = (
+                    g2_materialization
+                    if isinstance(g2_materialization, dict)
+                    else {}
+                )
+                g2_collector = g2_identity.get("collector")
+                g2_collector = (
+                    g2_collector if isinstance(g2_collector, dict) else {}
+                )
+                g2_shift = g2_identity.get("current_local_shift")
+                g2_shift = g2_shift if isinstance(g2_shift, dict) else {}
+                g2_deterministic = g2_identity.get("deterministic_vectors")
+                g2_deterministic = (
+                    g2_deterministic
+                    if isinstance(g2_deterministic, dict)
+                    else {}
+                )
+                g2_iter20 = g2_identity.get("iter20_real_residual")
+                g2_iter20 = g2_iter20 if isinstance(g2_iter20, dict) else {}
+                g2_deterministic_measurement = g2_deterministic.get(
+                    "measurement"
+                )
+                g2_deterministic_measurement = (
+                    g2_deterministic_measurement
+                    if isinstance(g2_deterministic_measurement, dict)
+                    else {}
+                )
+                g2_iter20_measurement = g2_iter20.get("measurement")
+                g2_iter20_measurement = (
+                    g2_iter20_measurement
+                    if isinstance(g2_iter20_measurement, dict)
+                    else {}
+                )
+                g2_shift_route = g2_shift.get("route")
+                g2_shift_route = (
+                    g2_shift_route if isinstance(g2_shift_route, dict) else {}
+                )
+                g2_iter20_route = g2_iter20.get("route")
+                g2_iter20_route = (
+                    g2_iter20_route
+                    if isinstance(g2_iter20_route, dict)
+                    else {}
+                )
+                collector_row_count = g2_collector.get(
+                    "owner_active_row_count"
+                )
+                g2_identity_tolerance = 1.0e-10
+                checks.update(
+                    {
+                        "task037_g2_identity_present": bool(g2_identity),
+                        "task037_g2_primary_slab_14": (
+                            g2_basis.get("primary_slab") == 14
+                        ),
+                        "task037_g2_status_pass": (
+                            g2_identity.get("status") == "pass"
+                        ),
+                        "task037_g2_no_missing_iterations": (
+                            g2_identity.get("missing_iterations") == []
+                        ),
+                        "task037_g2_deterministic_count_3": (
+                            g2_deterministic.get("count") == 3
+                        ),
+                        "task037_g2_deterministic_gate_pass": (
+                            g2_deterministic.get("gate_pass") is True
+                        ),
+                        "task037_g2_deterministic_raw_measurement": (
+                            g2_deterministic_measurement.get("vector_count") == 3
+                            and g2_deterministic_measurement.get("finite") is True
+                            and g2_deterministic_measurement.get(
+                                "deterministic"
+                            )
+                            is True
+                            and _finite_number_le(
+                                g2_deterministic_measurement.get(
+                                    "max_relative_error"
+                                ),
+                                g2_identity_tolerance,
+                            )
+                        ),
+                        "task037_g2_iter20_iteration_20": (
+                            g2_iter20.get("iteration") == 20
+                        ),
+                        "task037_g2_iter20_gate_pass": (
+                            g2_iter20.get("gate_pass") is True
+                        ),
+                        "task037_g2_iter20_raw_measurement": (
+                            g2_iter20_measurement.get("vector_count") == 1
+                            and g2_iter20_measurement.get("finite") is True
+                            and g2_iter20_measurement.get("deterministic") is True
+                            and _finite_number_le(
+                                g2_iter20_measurement.get("max_relative_error"),
+                                g2_identity_tolerance,
+                            )
+                        ),
+                        "task037_g2_overall_gate_pass": (
+                            g2_identity.get("gate_pass") is True
+                        ),
+                        "task037_g2_materialization_action_only": (
+                            g2_materialization.get(
+                                "condensed_trace_matrix_materialized"
+                            )
+                            is False
+                            and g2_materialization.get("action_only_request")
+                            is True
+                            and g2_materialization.get("blocks_F_present")
+                            is False
+                        ),
+                        "task037_g2_collector_owner_rows": (
+                            isinstance(collector_row_count, int)
+                            and collector_row_count > 0
+                            and valid_hex_digest(
+                                g2_collector.get("owner_active_row_hash"),
+                                64,
+                            )
+                        ),
+                        "task037_g2_shift_row_count_matches": (
+                            g2_shift.get("count") == collector_row_count
+                            and g2_shift.get("owner_row_count")
+                            == collector_row_count
+                        ),
+                        "task037_g2_shift_provenance": (
+                            g2_shift.get("finite") is True
+                            and valid_hex_digest(g2_shift.get("sha256"), 64)
+                            and g2_shift_route.get("owner_local_row_count")
+                            == collector_row_count
+                        ),
+                        "task037_g2_iter20_provenance": (
+                            g2_iter20.get("owner_row_count")
+                            == collector_row_count
+                            and isinstance(
+                                g2_iter20.get("local_residual_norm2"),
+                                (int, float),
+                            )
+                            and math.isfinite(
+                                float(g2_iter20.get("local_residual_norm2"))
+                            )
+                            and float(g2_iter20["local_residual_norm2"]) > 0.0
+                            and valid_hex_digest(g2_iter20.get("sha256"), 64)
+                            and g2_iter20_route.get("owner_local_row_count")
+                            == collector_row_count
+                        ),
+                    }
+                )
         elif m2c_profile:
             partition = core_audit.get("partition_audit") or {}
             smoother = core_audit.get("smoother_diagnostics") or {}
@@ -4170,6 +4394,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-m3a-overlap0125-partition")
     if getattr(args, "task037_extra_g0_diagnostics", False):
         command.append("--task037-extra-g0-diagnostics")
+    if getattr(args, "task037_extra_g2_slab14_identity", False):
+        command.append("--task037-extra-g2-slab14-identity")
     if args.task037_m4_p2_auxiliary:
         command.append("--task037-m4-p2-auxiliary")
     if args.task037_m4_factor_free_slab:
@@ -4870,6 +5096,7 @@ def _run_parent(args: argparse.Namespace) -> int:
     if not source_stable:
         qualification["failures"].append("source_stable_and_clean_after")
         qualification["pass"] = False
+    g2_status = _task037_extra_g2_status(args, qualification)
     m3a_status = _task037_m3a_status(args, qualification)
     m4_b2_long_full_status = _task037_m4_b2_long_full_status(args, qualification)
     m4_factor_free_status = _task037_m4_factor_free_status(args, qualification)
@@ -4891,6 +5118,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         if qualification["pass"] and args.task037_m4_p2_auxiliary
         else f"task037_m4_p2_auxiliary_{args.task037_f3_screen}_screen_not_pass"
         if args.task037_m4_p2_auxiliary
+        else g2_status
+        if g2_status is not None
         else m3a_status
         if m3a_status is not None
         else "task037_m2c_never_materialized_screen_pass"

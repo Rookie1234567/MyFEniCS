@@ -276,6 +276,127 @@ def _m3a_audit(screen_iterations=20):
     return audit
 
 
+def _task037_g2_identity_audit(
+    *,
+    status="pass",
+    missing_iterations=None,
+    deterministic_gate=True,
+    iter20_gate=True,
+    overall_gate=True,
+    deterministic_error=0.0,
+    iter20_error=0.0,
+):
+    return {
+        "primary_selection_basis": {"primary_slab": 14},
+        "materialization": {
+            "condensed_trace_matrix_materialized": False,
+            "action_only_request": True,
+            "blocks_F_present": False,
+        },
+        "collector": {
+            "owner_active_row_count": 3,
+            "owner_active_row_hash": "a" * 64,
+        },
+        "current_local_shift": {
+            "count": 3,
+            "owner_row_count": 3,
+            "finite": True,
+            "sha256": "b" * 64,
+            "route": {"owner_local_row_count": 3},
+        },
+        "deterministic_vectors": {
+            "count": 3,
+            "gate_pass": deterministic_gate,
+            "measurement": {
+                "vector_count": 3,
+                "finite": True,
+                "deterministic": True,
+                "max_relative_error": deterministic_error,
+            },
+        },
+        "iter20_real_residual": {
+            "iteration": 20,
+            "gate_pass": iter20_gate,
+            "owner_row_count": 3,
+            "local_residual_norm2": 1.0,
+            "finite": True,
+            "sha256": "c" * 64,
+            "route": {"owner_local_row_count": 3},
+            "measurement": {
+                "vector_count": 1,
+                "finite": True,
+                "deterministic": True,
+                "max_relative_error": iter20_error,
+            },
+        },
+        "missing_iterations": (
+            [] if missing_iterations is None else missing_iterations
+        ),
+        "gate_pass": overall_gate,
+        "status": status,
+    }
+
+
+def _task037_g2_qualification_case(
+    *,
+    identity_audit=None,
+):
+    args = SimpleNamespace(
+        task037_f3_screen=20,
+        task037_f3_full=False,
+        task037_f5b_released_profile=False,
+        task037_m2c_never_materialized=True,
+        task037_m3a_overlap0125_partition=True,
+        task037_extra_g2_slab14_identity=True,
+        task037_m4_p2_auxiliary=False,
+        task037_m4_factor_free_slab=False,
+        task037_m4_b2_long_full=False,
+        task037_m4_optimized_schwarz=False,
+        task037_canonical_vector_export=False,
+        run_kind="full-solve",
+        allow_swap=False,
+        polarization_kind="s",
+        mpi_size=1,
+        task035d_case097_gate=False,
+    )
+    audit = _m3a_audit()
+    audit["task037_extra_g2_slab14_identity"] = (
+        _task037_g2_identity_audit()
+        if identity_audit is None
+        else identity_audit
+    )
+    summary = {
+        "matrix_stats": {"matrix_rows": 1, "matrix_nnz_used": None},
+        "polarization_kind": "s",
+        "external_linear_solver_port": True,
+        "external_no_global_factor": True,
+        "ksp_converged_reason": -3,
+        "linear_system_relative_residual": 0.1,
+        "official_result": False,
+        "postprocess_skipped": True,
+        "external_solver_profile": audit["solver_profile"],
+        "external_assembled_matrix_released_before_solve": False,
+        "cell_static_condensation": {
+            "action_only_setup": True,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+        },
+    }
+    return args, {
+        "args": args,
+        "solver_summary": summary,
+        "events": [],
+        "return_code": 0,
+        "terminated_for_memory": False,
+        "terminated_for_timeout": False,
+        "terminated_for_authority_unreadable": False,
+        "no_swap": True,
+        "observed_worker_rank_count": 1,
+        "resource_summary": {"memory_authority_gib": 10.30},
+        "task037_f3_core_audit": audit,
+    }
+
+
 def test_parser_scope_and_worker_command(tmp_path):
     base = [
         "--degree",
@@ -1514,6 +1635,39 @@ def test_m3a_partition_profile_and_memory_gates():
     assert not watchdog._qualify(**full_kwargs)["pass"]
 
 
+def test_task037_extra_g2_identity_qualification_positive():
+    args, kwargs = _task037_g2_qualification_case()
+    qualification = watchdog._qualify(**kwargs)
+
+    assert qualification["pass"]
+    assert qualification["checks"]["task037_g2_identity_present"]
+    assert watchdog._task037_extra_g2_status(args, qualification) == (
+        "task037_extra_g2_slab14_identity_pass"
+    )
+
+
+def test_task037_extra_g2_identity_qualification_missing_iter20_not_pass():
+    identity_audit = _task037_g2_identity_audit(
+        status="missing_iter20",
+        missing_iterations=[20],
+        iter20_gate=False,
+        overall_gate=False,
+        iter20_error=1.0e-9,
+    )
+    args, kwargs = _task037_g2_qualification_case(
+        identity_audit=identity_audit,
+    )
+    qualification = watchdog._qualify(**kwargs)
+
+    assert not qualification["pass"]
+    assert "task037_g2_no_missing_iterations" in qualification["failures"]
+    assert "task037_g2_iter20_gate_pass" in qualification["failures"]
+    assert "task037_g2_iter20_raw_measurement" in qualification["failures"]
+    assert watchdog._task037_extra_g2_status(args, qualification) == (
+        "task037_extra_g2_slab14_identity_not_pass"
+    )
+
+
 def test_ordinary_full_solve_rules_remain_strict():
     args = SimpleNamespace(
         task037_f3_screen=None,
@@ -1644,6 +1798,128 @@ def test_task037_extra_g0_flag_reaches_only_m3a_wrapper(tmp_path, monkeypatch):
     ordinary_solve(request)
     assert "task037_extra_g0_diagnostics" not in ordinary_captured[0]
     assert "residual_snapshot_observer" not in ordinary_captured[0]
+
+
+def test_task037_extra_g2_flag_reaches_only_m3a_wrapper(tmp_path, monkeypatch):
+    class Comm:
+        rank = 0
+
+        def tompi4py(self):
+            return self
+
+    request = SimpleNamespace(operator=SimpleNamespace(getComm=lambda: Comm()))
+    captured = []
+    ordinary_captured = []
+
+    def fake_m3a_core(_request, **kwargs):
+        captured.append(kwargs)
+        return object(), {
+            "solver_profile": "never_materialized_owner_local_overlap0125_partition"
+        }
+
+    def fake_ordinary_core(_request, **kwargs):
+        ordinary_captured.append(kwargs)
+        return object(), {"solver_profile": "never_materialized_owner_local"}
+
+    monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative."
+        "solve_never_materialized_overlap0125_partition_fgmres",
+        fake_m3a_core,
+    )
+    monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative."
+        "solve_never_materialized_static_condensed_fgmres",
+        fake_ordinary_core,
+    )
+
+    for enabled in (True, False):
+        solve = watchdog._task037_f3_assembled_fgmres_port(
+            tmp_path,
+            20,
+            never_materialized=True,
+            overlap0125_partition=True,
+            task037_extra_g2_slab14_identity=enabled,
+            verified_clean_sha="b" * 40,
+        )
+        solve(request)
+
+    assert [kwargs["task037_extra_g2_slab14_identity"] for kwargs in captured] == [
+        True,
+        False,
+    ]
+    ordinary_solve = watchdog._task037_f3_assembled_fgmres_port(
+        tmp_path,
+        20,
+        never_materialized=True,
+        verified_clean_sha="b" * 40,
+    )
+    ordinary_solve(request)
+    assert "task037_extra_g2_slab14_identity" not in ordinary_captured[0]
+
+
+def test_task037_extra_g2_parser_is_exact_screen20_mpi1_scope(tmp_path):
+    authority = (
+        "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/"
+        "global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json"
+    )
+    base = [
+        "--degree",
+        "6",
+        "--h-nm",
+        "10",
+        "--polarization-kind",
+        "s",
+        "--run-kind",
+        "full-solve",
+        "--mpi-size",
+        "1",
+        "--profile",
+        "default",
+        "--stage4-full3d-assembly-backend",
+        "assembly_time_static_condensed",
+        "--task035c-p6-h10-gate",
+        "--task035c-p6-preflight-authority",
+        authority,
+        "--task035c-p6-preflight-sha256",
+        "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+        "--verified-clean-sha",
+        "c" * 40,
+        "--run-dir",
+        str(tmp_path),
+        "--task037-f3-screen",
+        "20",
+        "--warning-gib",
+        "10",
+        "--terminate-gib",
+        "14",
+        "--timeout-seconds",
+        "1800",
+        "--task037-m2c-never-materialized",
+        "--task037-m3a-overlap0125-partition",
+        "--task037-extra-g2-slab14-identity",
+    ]
+    args = watchdog._parse_args(base)
+    assert args.task037_extra_g2_slab14_identity is True
+    command = watchdog._worker_command(args, tmp_path)
+    assert command.count("--task037-extra-g2-slab14-identity") == 1
+    worker_args = watchdog._parse_args(command[command.index("--worker") :])
+    assert worker_args.task037_extra_g2_slab14_identity is True
+    contract = watchdog._worker_launch_contract(args)
+    assert contract["task037_extra_g2_slab14_identity"] is True
+    assert contract["verified_clean_sha"] == "c" * 40
+
+    for invalid in (
+        base[: base.index("--mpi-size") + 1]
+        + ["2"]
+        + base[base.index("--mpi-size") + 2 :],
+        base[: base.index("--task037-f3-screen") + 1]
+        + ["100"]
+        + base[base.index("--task037-f3-screen") + 2 :],
+        [item for item in base if item != "--task037-m3a-overlap0125-partition"],
+        base + ["--task037-extra-g0-diagnostics"],
+    ):
+        with pytest.raises(SystemExit):
+            watchdog._parse_args(invalid)
 
 
 def test_task037_extra_g0_parser_is_exact_screen20_mpi1_scope(tmp_path):

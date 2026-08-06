@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from time import perf_counter
 from typing import Any, Callable, Literal
 
@@ -28,7 +29,10 @@ from .physical_slab_two_level import (
     build_owner_local_slab_diagonal,
     build_owner_local_slab_plan,
     build_trace_aware_physical_slab_partition,
+    collect_owner_local_fullspace_slab_cells,
+    extract_owner_local_slab_vector,
 )
+from .static_fullspace_slab_oracle import measure_fullspace_slab_identity
 from .static_local_schur_action import create_static_local_schur_action
 from .static_p2_auxiliary_pc import build_p2_auxiliary_setup
 
@@ -77,6 +81,50 @@ def _relative_residual(
     return float(work.norm()) / max(rhs_norm, _TINY)
 
 
+_TASK037_G2_SLAB = 14
+_TASK037_G2_IDENTITY_TOLERANCE = 1.0e-10
+_TASK037_G2_DETERMINISTIC_VECTOR_LABELS = (
+    "canonical_affine_phase",
+    "canonical_complex_affine_phase",
+    "canonical_sinusoidal_phase",
+)
+
+
+def _task037_g2_deterministic_vectors(owner_rows: np.ndarray) -> tuple[np.ndarray, ...]:
+    rows = np.asarray(owner_rows, dtype=np.float64)
+    scale = max(float(rows.size), 1.0)
+    phase = (rows + 1.0) / scale
+    return (
+        np.asarray(1.0 + 0.125j * phase, dtype=np.complex128),
+        np.asarray(
+            1.0 + 0.25 * phase + 1j * (0.5 - 0.125 * phase),
+            dtype=np.complex128,
+        ),
+        np.asarray(
+            np.sin(2.0 * np.pi * phase)
+            + 1j * np.cos(2.0 * np.pi * phase),
+            dtype=np.complex128,
+        ),
+    )
+
+
+def _task037_g2_owner_vector_sha256(
+    owner_rows: np.ndarray,
+    values: np.ndarray,
+    *,
+    domain: str,
+) -> str:
+    rows = np.ascontiguousarray(owner_rows, dtype="<i8")
+    vector = np.ascontiguousarray(values, dtype="<c16")
+    digest = hashlib.sha256()
+    digest.update(domain.encode("ascii"))
+    digest.update(b"|owner_rows=<i8|values=<c16|order=C\0")
+    digest.update(np.asarray([rows.size], dtype="<u8").tobytes())
+    digest.update(rows.tobytes(order="C"))
+    digest.update(vector.tobytes(order="C"))
+    return digest.hexdigest()
+
+
 def _solve_static_condensed_fgmres_core(
     request: Stage4ExternalLinearSolverRequest
     | Stage4NeverMaterializedLinearSolverRequest,
@@ -87,6 +135,7 @@ def _solve_static_condensed_fgmres_core(
     residual_snapshot_observer: Callable[[int, PETSc.Vec, float, float], None]
     | None = None,
     task037_extra_g0_diagnostics: bool = False,
+    task037_extra_g2_slab14_identity: bool = False,
     solver_profile: Literal[
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
@@ -125,6 +174,16 @@ def _solve_static_condensed_fgmres_core(
     )
     if task037_extra_g0_diagnostics and not m3a_profile:
         raise ValueError("Task037-extra G0 diagnostics require the M3a profile")
+    if task037_extra_g2_slab14_identity and (
+        not action_only or not m3a_profile
+    ):
+        raise ValueError(
+            "Task037-extra G2 slab14 identity requires the M3a action-only profile"
+        )
+    if task037_extra_g2_slab14_identity and task037_extra_g0_diagnostics:
+        raise ValueError(
+            "Task037-extra G2 slab14 identity conflicts with G0 diagnostics"
+        )
     p2_auxiliary_profile = solver_profile in {
         "never_materialized_p2_auxiliary",
         "never_materialized_p2_factor_free_slab_auxiliary",
@@ -220,6 +279,7 @@ def _solve_static_condensed_fgmres_core(
 
     owned: list[Any] = []
     g0_residual_snapshots: dict[int, PETSc.Vec] = {}
+    g2_identity_state: dict[str, Any] | None = None
     try:
         if action_only:
             blocks = request.blocks
@@ -470,6 +530,98 @@ def _solve_static_condensed_fgmres_core(
             )
             diagonal.destroy()
             owned.remove(diagonal)
+        if task037_extra_g2_slab14_identity:
+            slab = _TASK037_G2_SLAB
+            g2_cells, collector_audit = collect_owner_local_fullspace_slab_cells(
+                request.static_condensed_system,
+                owner_plan,
+                request.function_space.mesh,
+                slab,
+            )
+            slab_owner = int(owner_plan.slab_owners[slab])
+            owner_rows = np.asarray(
+                owner_plan.owner_rows[slab],
+                dtype=PETSc.IntType,
+            )
+            local_shift, shift_route_audit = extract_owner_local_slab_vector(
+                shift,
+                owner_plan,
+                slab,
+            )
+            deterministic_measurement = None
+            shift_identity = None
+            if comm.rank == slab_owner:
+                assert local_shift is not None
+                deterministic_vectors = _task037_g2_deterministic_vectors(owner_rows)
+                deterministic_measurement = measure_fullspace_slab_identity(
+                    g2_cells,
+                    deterministic_vectors,
+                    active_size=int(owner_rows.size),
+                    trace_shift=local_shift,
+                )
+                shift_identity = {
+                    "count": int(local_shift.size),
+                    "owner_row_count": int(owner_rows.size),
+                    "local_shift_norm2": float(np.linalg.norm(local_shift)),
+                    "nonzero_count": int(np.count_nonzero(local_shift)),
+                    "finite": bool(np.isfinite(local_shift).all()),
+                    "sha256": _task037_g2_owner_vector_sha256(
+                        owner_rows,
+                        local_shift,
+                        domain="task037.g2.current-local-shift.v1",
+                    ),
+                    "route": shift_route_audit,
+                }
+            deterministic_measurement = comm.bcast(
+                deterministic_measurement,
+                root=slab_owner,
+            )
+            shift_identity = comm.bcast(shift_identity, root=slab_owner)
+            g2_setup_audit = {
+                "primary_selection_basis": {
+                    "primary_slab": slab,
+                    "control_slab": 5,
+                    "ablation_comparator_slab": 13,
+                    "basis": (
+                        "G0 frozen primary: largest iter20 local residual; "
+                        "slab5 is lower-median control; slab13 is the "
+                        "largest-positive-ablation comparator"
+                    ),
+                },
+                "materialization": {
+                    "condensed_trace_matrix_materialized": bool(
+                        request.static_condensed_system.matrix is not None
+                    ),
+                    "action_only_request": bool(action_only),
+                    "blocks_F_present": bool(blocks.F is not None),
+                },
+                "collector": dict(collector_audit),
+                "current_local_shift": shift_identity,
+                "deterministic_vectors": {
+                    "labels": list(_TASK037_G2_DETERMINISTIC_VECTOR_LABELS),
+                    "count": 3,
+                    "measurement": deterministic_measurement,
+                    "gate_pass": bool(
+                        deterministic_measurement["finite"]
+                        and deterministic_measurement["deterministic"]
+                        and deterministic_measurement["max_relative_error"]
+                        <= _TASK037_G2_IDENTITY_TOLERANCE
+                    ),
+                },
+                "iter20_real_residual": None,
+                "relative_error_tolerance": _TASK037_G2_IDENTITY_TOLERANCE,
+                "missing_iterations": [20],
+                "gate_pass": False,
+                "status": "pending_iter20",
+            }
+            g2_identity_state = {
+                "cells": g2_cells,
+                "owner": slab_owner,
+                "owner_rows": owner_rows,
+                "owner_rows_size": int(owner_rows.size),
+                "shift": local_shift,
+                "audit": g2_setup_audit,
+            }
         if not p2_auxiliary_profile:
             live_state["shift"] = True
             shifted_context = _ShiftedFineAction(fine_action, shift)
@@ -587,6 +739,81 @@ def _solve_static_condensed_fgmres_core(
             ):
                 g0_residual_snapshots[int(iteration)] = residual_work.copy()
                 owned.append(g0_residual_snapshots[int(iteration)])
+            if (
+                g2_identity_state is not None
+                and int(iteration) == 20
+                and g2_identity_state["audit"]["iter20_real_residual"] is None
+            ):
+                residual_local, residual_route_audit = (
+                    extract_owner_local_slab_vector(
+                        residual_work,
+                        owner_plan,
+                        _TASK037_G2_SLAB,
+                    )
+                )
+                residual_measurement = None
+                residual_identity = None
+                owner = int(g2_identity_state["owner"])
+                if comm.rank == owner:
+                    assert residual_local is not None
+                    residual_measurement = measure_fullspace_slab_identity(
+                        g2_identity_state["cells"],
+                        (residual_local,),
+                        active_size=int(g2_identity_state["owner_rows_size"]),
+                        trace_shift=g2_identity_state["shift"],
+                    )
+                    residual_identity = {
+                        "owner_row_count": int(residual_local.size),
+                        "local_residual_norm2": float(
+                            np.linalg.norm(residual_local)
+                        ),
+                        "sha256": _task037_g2_owner_vector_sha256(
+                            g2_identity_state["owner_rows"],
+                            residual_local,
+                            domain="task037.g2.iter20-real-residual.v1",
+                        ),
+                    }
+                residual_measurement = comm.bcast(
+                    residual_measurement,
+                    root=owner,
+                )
+                residual_identity = comm.bcast(residual_identity, root=owner)
+                residual_audit = {
+                    "iteration": 20,
+                    "true_relative_residual": float(true_value),
+                    "source": "core_residual_work_b_minus_Ax",
+                    "route": residual_route_audit,
+                    **residual_identity,
+                    "measurement": residual_measurement,
+                    "finite": bool(residual_measurement["finite"]),
+                    "deterministic": bool(
+                        residual_measurement["deterministic"]
+                    ),
+                    "max_relative_error": float(
+                        residual_measurement["max_relative_error"]
+                    ),
+                    "gate_pass": bool(
+                        residual_measurement["finite"]
+                        and residual_measurement["deterministic"]
+                        and residual_measurement["max_relative_error"]
+                        <= _TASK037_G2_IDENTITY_TOLERANCE
+                    ),
+                }
+                g2_identity_state["audit"]["iter20_real_residual"] = (
+                    residual_audit
+                )
+                g2_identity_state["audit"]["missing_iterations"] = []
+                g2_identity_state["audit"]["gate_pass"] = bool(
+                    g2_identity_state["audit"]["deterministic_vectors"][
+                        "gate_pass"
+                    ]
+                    and residual_audit["gate_pass"]
+                )
+                g2_identity_state["audit"]["status"] = (
+                    "pass"
+                    if g2_identity_state["audit"]["gate_pass"]
+                    else "identity_gate_failed"
+                )
             if residual_snapshot_observer is None:
                 return
             residual_snapshot_observer(
@@ -848,6 +1075,14 @@ def _solve_static_condensed_fgmres_core(
             "factor_csr_payload_estimate_bytes": factor_csr_payload_estimate_bytes,
             "no_global_factor_inventory": factor_inventory,
         }
+        if g2_identity_state is not None:
+            if g2_identity_state["audit"]["iter20_real_residual"] is None:
+                g2_identity_state["audit"]["status"] = "missing_iter20"
+                g2_identity_state["audit"]["gate_pass"] = False
+                g2_identity_state["audit"]["missing_iterations"] = [20]
+            audit["task037_extra_g2_slab14_identity"] = dict(
+                g2_identity_state["audit"]
+            )
         if p2_auxiliary_profile:
             audit["p2_auxiliary_audit"] = p2_auxiliary_audit
         if task037_extra_g0_diagnostics:
@@ -1025,6 +1260,7 @@ def solve_never_materialized_overlap0125_partition_fgmres(
     residual_snapshot_observer: Callable[[int, PETSc.Vec, float, float], None]
     | None = None,
     task037_extra_g0_diagnostics: bool = False,
+    task037_extra_g2_slab14_identity: bool = False,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the opt-in overlap-0.125 partition-weighted slab profile."""
@@ -1035,6 +1271,7 @@ def solve_never_materialized_overlap0125_partition_fgmres(
         residual_observer=residual_observer,
         residual_snapshot_observer=residual_snapshot_observer,
         task037_extra_g0_diagnostics=task037_extra_g0_diagnostics,
+        task037_extra_g2_slab14_identity=task037_extra_g2_slab14_identity,
         solver_profile="never_materialized_owner_local_overlap0125_partition",
         lifecycle_observer=lifecycle_observer,
     )

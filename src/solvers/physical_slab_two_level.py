@@ -1199,24 +1199,24 @@ def build_owner_local_slab_diagonal(
     }
 
 
-def extract_owner_local_slab_diagonal(
-    diagonal: PETSc.Vec,
+def extract_owner_local_slab_vector(
+    vector: PETSc.Vec,
     plan: OwnerLocalSlabPlan,
     slab: int,
 ) -> tuple[np.ndarray | None, dict[str, int]]:
-    """Route only one slab owner's diagonal rows, never a full diagonal."""
+    """Route one slab owner's vector rows without forming a global array."""
 
     comm = plan.comm
     owner = plan.slab_owners[slab]
-    ranges = tuple(comm.allgather(tuple(map(int, diagonal.getOwnershipRange()))))
+    ranges = tuple(comm.allgather(tuple(map(int, vector.getOwnershipRange()))))
     requests = [np.empty(0, dtype=PETSc.IntType) for _ in range(comm.size)]
     if comm.rank == owner:
         rows = plan.owner_rows[slab]
         for rank, (start, end) in enumerate(ranges):
             requests[rank] = rows[(rows >= start) & (rows < end)].copy()
     incoming = comm.alltoall(requests)
-    local_start, _local_end = diagonal.getOwnershipRange()
-    local_values = diagonal.getArray(readonly=True)
+    local_start, _local_end = vector.getOwnershipRange()
+    local_values = vector.getArray(readonly=True)
     responses = [np.empty(0, dtype=PETSc.ScalarType) for _ in range(comm.size)]
     for source, request in enumerate(incoming):
         if request.size:
@@ -1238,6 +1238,16 @@ def extract_owner_local_slab_diagonal(
         "owner_rank": int(owner),
         "owner_local_row_count": int(plan.slab_row_counts[slab]),
     }
+
+
+def extract_owner_local_slab_diagonal(
+    diagonal: PETSc.Vec,
+    plan: OwnerLocalSlabPlan,
+    slab: int,
+) -> tuple[np.ndarray | None, dict[str, int]]:
+    """Route only one slab owner's diagonal rows, never a full diagonal."""
+
+    return extract_owner_local_slab_vector(diagonal, plan, slab)
 
 
 def owner_local_slab_diagonal_shift(
