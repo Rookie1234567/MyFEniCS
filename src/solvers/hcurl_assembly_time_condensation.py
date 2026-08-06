@@ -32,6 +32,8 @@ from petsc4py import PETSc
 from scipy import sparse
 from scipy.linalg import lu_factor, lu_solve
 
+from .static_fullspace_slab_oracle import FullSpaceSlabBlockRecord
+
 
 def _idx(values) -> np.ndarray:
     if isinstance(values, np.ndarray):
@@ -95,6 +97,9 @@ class AssemblyTimeCondensedSystem:
     owned_active_rows: int
     owned_appended_rows: int
     retained_local_schur_by_class: Mapping[tuple[Any, ...], np.ndarray] | None = None
+    retained_fullspace_slab_blocks_by_class: Mapping[
+        tuple[Any, ...], FullSpaceSlabBlockRecord
+    ] | None = None
     _destroyed: bool = field(default=False, init=False, repr=False)
 
     def create_active_vector(self) -> PETSc.Vec:
@@ -1182,6 +1187,7 @@ def build_unconstrained_assembly_time_condensation(
     retain_local_schur_for_matrix_free: bool = False,
     materialize_global_matrix: bool = True,
     retained_p4_core_research: bool = False,
+    retain_fullspace_slab_blocks_for_research: bool = False,
     geometry_tolerance: float = 1.0e-11,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
@@ -1192,6 +1198,9 @@ def build_unconstrained_assembly_time_condensation(
 
     ``retain_local_schur_for_matrix_free`` retains one readonly Schur array
     per local class for a later owner-computes action.
+
+    ``retain_fullspace_slab_blocks_for_research`` retains one readonly full
+    block record per oriented class for a later slab identity audit.
     """
 
     if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
@@ -1200,6 +1209,13 @@ def build_unconstrained_assembly_time_condensation(
         raise ValueError("appended_global_rows must be non-negative")
     materialize_global_matrix = bool(materialize_global_matrix)
     retained_p4_core_research = bool(retained_p4_core_research)
+    retain_fullspace_slab_blocks_for_research = bool(
+        retain_fullspace_slab_blocks_for_research
+    )
+    if retained_p4_core_research and retain_fullspace_slab_blocks_for_research:
+        raise ValueError(
+            "p4-core research cannot retain fullspace slab blocks"
+        )
     if retained_p4_core_research and appended_global_rows:
         raise ValueError(
             "retained p4-core research does not accept appended rows"
@@ -1451,6 +1467,9 @@ def build_unconstrained_assembly_time_condensation(
             full_rows=full_rows,
         )
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    fullspace_block_cache: dict[
+        tuple[Any, ...], FullSpaceSlabBlockRecord
+    ] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
     lu_cache: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]] = {}
     rhs_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
@@ -1505,6 +1524,14 @@ def build_unconstrained_assembly_time_condensation(
             schur = A_tt + A_ti @ interior_from_trace
             local_schur_seconds += perf_counter() - schur_started
             schur_cache[class_key] = schur
+            if retain_fullspace_slab_blocks_for_research:
+                fullspace_block_cache[class_key] = FullSpaceSlabBlockRecord(
+                    a_ii=A_ii,
+                    a_it=A_it,
+                    a_ti=A_ti,
+                    a_tt=A_tt,
+                    schur=schur,
+                )
             recovery_cache[class_key] = interior_from_trace
             lu_cache[class_key] = interior_lu
             interior_identity = np.eye(
@@ -1586,6 +1613,30 @@ def build_unconstrained_assembly_time_condensation(
         retained_bytes_local = 0
         retained_class_count_sum = 0
         retained_bytes_sum = 0
+    if retain_fullspace_slab_blocks_for_research:
+        fullspace_block_class_count_local = len(fullspace_block_cache)
+        fullspace_block_bytes_local = sum(
+            int(array.nbytes)
+            for block in fullspace_block_cache.values()
+            for array in (
+                block.a_ii,
+                block.a_it,
+                block.a_ti,
+                block.a_tt,
+                block.schur,
+            )
+        )
+        fullspace_block_class_count_sum = int(
+            comm.allreduce(fullspace_block_class_count_local, op=MPI.SUM)
+        )
+        fullspace_block_bytes_sum = int(
+            comm.allreduce(fullspace_block_bytes_local, op=MPI.SUM)
+        )
+    else:
+        fullspace_block_class_count_local = 0
+        fullspace_block_bytes_local = 0
+        fullspace_block_class_count_sum = 0
+        fullspace_block_bytes_sum = 0
     return AssemblyTimeCondensedSystem(
         matrix=condensed,
         owned_trace_original_dofs=owned_trace,
@@ -1607,6 +1658,11 @@ def build_unconstrained_assembly_time_condensation(
         retained_local_schur_by_class=(
             MappingProxyType(schur_cache)
             if retain_local_schur_for_matrix_free
+            else None
+        ),
+        retained_fullspace_slab_blocks_by_class=(
+            MappingProxyType(fullspace_block_cache)
+            if retain_fullspace_slab_blocks_for_research
             else None
         ),
         comm=comm,
@@ -1661,6 +1717,21 @@ def build_unconstrained_assembly_time_condensation(
             "retained_local_schur_class_count_sum": retained_class_count_sum,
             "retained_local_schur_bytes_local": retained_bytes_local,
             "retained_local_schur_bytes_sum": retained_bytes_sum,
+            "retained_fullspace_slab_blocks_enabled": bool(
+                retain_fullspace_slab_blocks_for_research
+            ),
+            "retained_fullspace_slab_blocks_class_count_local": (
+                fullspace_block_class_count_local
+            ),
+            "retained_fullspace_slab_blocks_class_count_sum": (
+                fullspace_block_class_count_sum
+            ),
+            "retained_fullspace_slab_blocks_bytes_local": (
+                fullspace_block_bytes_local
+            ),
+            "retained_fullspace_slab_blocks_bytes_sum": (
+                fullspace_block_bytes_sum
+            ),
             **raw_cache_audit,
             "oriented_schur_class_count_sum": oriented_class_count,
             "cell_kernel_evaluation_fraction": float(
