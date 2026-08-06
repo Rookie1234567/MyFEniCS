@@ -293,7 +293,9 @@ def test_shifted_schur_contractions_payload_route_and_missing_iter20():
         {"retained_payload_lower_bound_bytes": 750},
     )
     assert passing_route["gate_pass"] is True
-    assert passing_route["status"] == "pass_fullspace_ilu_only_route"
+    assert passing_route["status"] == (
+        "retained_payload_gate_pass_route_not_closed"
+    )
     closing_route = core._task037_g2_factor_payload_route(
         {"retained_payload_lower_bound_bytes": 1000},
         {"retained_payload_lower_bound_bytes": 751},
@@ -312,7 +314,7 @@ def test_shifted_schur_contractions_payload_route_and_missing_iter20():
     assert core._task037_g2_factor_status(
         passing_route,
         factor_measurement,
-    )["status"] == "pass_fullspace_ilu_only_route"
+    )["status"] == "retained_payload_gate_pass_route_not_closed"
     factor_measurement["fullspace_ilu"]["correction_finite"] = False
     assert core._task037_g2_factor_status(
         passing_route,

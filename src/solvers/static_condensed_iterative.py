@@ -170,7 +170,7 @@ def _task037_g2_factor_payload_route(
         "reduction_fraction": float(reduction_fraction),
         "gate_pass": gate_pass,
         "status": (
-            "pass_fullspace_ilu_only_route"
+            "retained_payload_gate_pass_route_not_closed"
             if gate_pass
             else "close_fullspace_ilu_only_route"
         ),
@@ -1300,6 +1300,8 @@ def _solve_static_condensed_fgmres_core(
                 "global_A_materialized": False,
                 "global_F_materialized": False,
                 "official_result_unaffected": True,
+                "inventory_only": True,
+                "used_in_outer_preconditioner": False,
                 "matrix_audit": dict(g2_factor_state["matrix_audit"]),
                 "fullspace_factor_inventory": fullspace_inventory,
                 "current_trace_factor_inventory": trace_inventory,
