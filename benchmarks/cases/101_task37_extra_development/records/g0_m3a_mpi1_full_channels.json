@@ -1,0 +1,319 @@
+{
+  "record_kind": "task037_extra_g0_posthoc_full_channels",
+  "authority_path": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_m3a_overlap0125_partition_full_v1.json",
+  "authority_sha256": "43c749aa9f25282308c607de73a890acbabaf9af1e5f366a0c9eb5aee10f6019",
+  "authority_sha256_expected": "43c749aa9f25282308c607de73a890acbabaf9af1e5f366a0c9eb5aee10f6019",
+  "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+  "current_raw_path": "benchmarks/artifacts/101_task37_extra_development/g0_m3a_mpi1_full_77d39cbe/dtn_port_diffraction_orders_3d.json",
+  "current_raw_sha256": "6238bc19b06952f5ea0a009ab59eaafc847dc50b5f0efc869584e6bb3cbc9caa",
+  "channels_checked": 12,
+  "power_pass_count": 12,
+  "amplitude_pass_count": 12,
+  "power_pass_12_of_12": true,
+  "amplitude_pass_12_of_12": true,
+  "overall_pass": true,
+  "status": "posthoc_recomputed_12_of_12",
+  "failures": [],
+  "channels": [
+    {
+      "label": "T(-7,0)_s",
+      "side": "bottom",
+      "m": -7,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 2.1586938039525714e-09,
+      "amplitude_tolerance": 1.2165650664394503e-05,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 2.3622913488394653e-06,
+      "current_amplitude": [
+        0.0009812562863651493,
+        -8.750221032219319e-05
+      ],
+      "reference_power": 2.3620104492343318e-06,
+      "reference_amplitude": [
+        0.0009812210508325166,
+        -8.723749960417161e-05
+      ],
+      "power_abs_diff": 2.8089960513355113e-10,
+      "amplitude_abs_diff": 2.670455148385946e-07
+    },
+    {
+      "label": "T(-5,0)_s",
+      "side": "bottom",
+      "m": -5,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 3.891272584918786e-10,
+      "amplitude_tolerance": 1.28064572388584e-06,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 2.1193911058664348e-07,
+      "current_amplitude": [
+        0.0001340359032481126,
+        0.00014701447427955874
+      ],
+      "reference_power": 2.119208257107722e-07,
+      "reference_amplitude": [
+        0.00013403269660640743,
+        0.00014700578427998944
+      ],
+      "power_abs_diff": 1.8284875871287502e-11,
+      "amplitude_abs_diff": 9.26275572061567e-09
+    },
+    {
+      "label": "T(-4,0)_s",
+      "side": "bottom",
+      "m": -4,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 5.251002536670234e-10,
+      "amplitude_tolerance": 2.541657906333072e-06,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 4.372734878374782e-07,
+      "current_amplitude": [
+        -0.00026212821344463315,
+        8.742885614009631e-05
+      ],
+      "reference_power": 4.3728889718873036e-07,
+      "reference_amplitude": [
+        -0.0002621322075251311,
+        8.743226903699873e-05
+      ],
+      "power_abs_diff": 1.5409351252167246e-11,
+      "amplitude_abs_diff": 5.253622016331527e-09
+    },
+    {
+      "label": "T(-2,0)_s",
+      "side": "bottom",
+      "m": -2,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 4.651045293875445e-09,
+      "amplitude_tolerance": 4.580806193893276e-06,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 2.959921590733079e-06,
+      "current_amplitude": [
+        -0.0006970132076228584,
+        0.00029794381353895073
+      ],
+      "reference_power": 2.9598413950937576e-06,
+      "reference_amplitude": [
+        -0.000697002780553906,
+        0.0002979420807189974
+      ],
+      "power_abs_diff": 8.019563932146727e-11,
+      "amplitude_abs_diff": 1.057007246564359e-08
+    },
+    {
+      "label": "T(-1,0)_s",
+      "side": "bottom",
+      "m": -1,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 1.1144136652304436e-07,
+      "amplitude_tolerance": 1.2728990676557803e-05,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 2.1783374296095706e-05,
+      "current_amplitude": [
+        0.00209112062340735,
+        -0.0010233674438531767
+      ],
+      "reference_power": 2.1781673985633478e-05,
+      "reference_amplitude": [
+        0.002091013385309328,
+        -0.001023379862841268
+      ],
+      "power_abs_diff": 1.700310462227555e-09,
+      "amplitude_abs_diff": 1.0795480967814913e-07
+    },
+    {
+      "label": "T(0,0)_s",
+      "side": "bottom",
+      "m": 0,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 0.00021757657401122454,
+      "amplitude_tolerance": 0.006779628645197135,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 0.6026738722429641,
+      "current_amplitude": [
+        0.6313787012048896,
+        0.473020983785666
+      ],
+      "reference_power": 0.602673872346967,
+      "reference_amplitude": [
+        0.631378703348196,
+        0.47302098103835544
+      ],
+      "power_abs_diff": 1.040029173893231e-10,
+      "amplitude_abs_diff": 3.4844623186292626e-09
+    },
+    {
+      "label": "R(-7,0)_s",
+      "side": "top",
+      "m": -7,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 1.2494442957486303e-09,
+      "amplitude_tolerance": 7.995038740979746e-07,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 6.267082202192698e-07,
+      "current_amplitude": [
+        -0.0005053386424686008,
+        -2.635071437403526e-05
+      ],
+      "reference_power": 6.263542422002542e-07,
+      "reference_amplitude": [
+        -0.0005052091112381259,
+        -2.6088861699973378e-05
+      ],
+      "power_abs_diff": 3.5397801901552305e-10,
+      "amplitude_abs_diff": 2.921389439662418e-07
+    },
+    {
+      "label": "R(-5,0)_s",
+      "side": "top",
+      "m": -5,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 1.1943015599631952e-09,
+      "amplitude_tolerance": 1.113206415872461e-06,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 7.457454012889846e-08,
+      "current_amplitude": [
+        -9.818186067586885e-05,
+        -6.53515418017498e-05
+      ],
+      "reference_power": 7.457300537578877e-08,
+      "reference_amplitude": [
+        -9.81780791887592e-05,
+        -6.535503246597065e-05
+      ],
+      "power_abs_diff": 1.5347531096915848e-12,
+      "amplitude_abs_diff": 5.1462978405028276e-09
+    },
+    {
+      "label": "R(-4,0)_s",
+      "side": "top",
+      "m": -4,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 1.086491588133722e-09,
+      "amplitude_tolerance": 1.8815249525164472e-06,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 2.675215890845888e-07,
+      "current_amplitude": [
+        0.00021022000703617612,
+        -4.9740347996530906e-05
+      ],
+      "reference_power": 2.6752396096185967e-07,
+      "reference_amplitude": [
+        0.00021022333612240508,
+        -4.9730436130400444e-05
+      ],
+      "power_abs_diff": 2.37187727088338e-12,
+      "amplitude_abs_diff": 1.0455998532329251e-08
+    },
+    {
+      "label": "R(-2,0)_s",
+      "side": "top",
+      "m": -2,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 1.2422824425350593e-09,
+      "amplitude_tolerance": 3.1864912826411788e-06,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 1.4776534136308726e-06,
+      "current_amplitude": [
+        0.0004942349208785404,
+        -0.00020549016355466697
+      ],
+      "reference_power": 1.4776908513138024e-06,
+      "reference_amplitude": [
+        0.0004942316170633655,
+        -0.00020551576976420865
+      ],
+      "power_abs_diff": 3.743768292980242e-11,
+      "amplitude_abs_diff": 2.581846551989152e-08
+    },
+    {
+      "label": "R(-1,0)_s",
+      "side": "top",
+      "m": -1,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 5.111835340427464e-08,
+      "amplitude_tolerance": 7.413384075620187e-06,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 6.668580162448424e-06,
+      "current_amplitude": [
+        -0.0010325989599206256,
+        0.0007678622311392102
+      ],
+      "reference_power": 6.669309654154914e-06,
+      "reference_amplitude": [
+        -0.0010327077159078778,
+        0.000767833921754617
+      ],
+      "power_abs_diff": 7.294917064900515e-10,
+      "amplitude_abs_diff": 1.1238009618806311e-07
+    },
+    {
+      "label": "R(0,0)_s",
+      "side": "top",
+      "m": 0,
+      "n": 0,
+      "polarization": "s",
+      "match_count": 1,
+      "reference_role": "direct_authority_embedded_in_historical_m3a_record",
+      "power_tolerance": 3.195286914614711e-05,
+      "amplitude_tolerance": 0.0008330266538614554,
+      "power_pass": true,
+      "amplitude_pass": true,
+      "current_power_ratio": 0.0007537610006767568,
+      "current_amplitude": [
+        -0.025252301470749295,
+        0.01077414827757402
+      ],
+      "reference_power": 0.0007537612200679581,
+      "reference_amplitude": [
+        -0.025252304353610845,
+        0.010774151702132584
+      ],
+      "power_abs_diff": 2.1939120138647628e-10,
+      "amplitude_abs_diff": 4.476437431085625e-09
+    }
+  ]
+}
