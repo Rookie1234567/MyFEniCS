@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Normalize Task37 Markdown math delimiters for GitHub rendering.
 
-GitHub renders inline math with ``$...$`` and display math with delimiter lines
-containing ``$$``. A number of Task37 documents were written with LaTeX-style
-``\\(...\\)`` and ``\\[...\\]`` delimiters, which are not rendered consistently
-by GitHub Markdown.
+GitHub renders inline math with ``$...$`` and display math in ``math`` fences.
+A number of Task37 documents were written with LaTeX-style ``\\(...\\)`` and
+``\\[...\\]`` delimiters, which are not rendered consistently by GitHub
+Markdown.
 
 The script intentionally limits its scope to Task37 documentation and the
 matching Case100 Markdown evidence. Fenced code blocks are never modified.
@@ -32,6 +32,13 @@ DOCUMENT_ROOTS = (
 FENCE_PATTERN = re.compile(r"^\s*(```+|~~~+)")
 DISPLAY_OPEN_PATTERN = re.compile(r"^(?P<indent>\s*)\\\[\s*$")
 DISPLAY_CLOSE_PATTERN = re.compile(r"^(?P<indent>\s*)\\\]\s*$")
+STANDALONE_LATEX_DISPLAY_PATTERN = re.compile(
+    r"^(?P<indent>\s*)\\\[(?P<body>.+?)\\\]\s*$"
+)
+DOLLAR_DISPLAY_LINE_PATTERN = re.compile(r"^(?P<indent>\s*)\$\$\s*$")
+STANDALONE_DOLLAR_DISPLAY_PATTERN = re.compile(
+    r"^(?P<indent>\s*)\$\$(?P<body>.+?)\$\$\s*$"
+)
 SAME_LINE_DISPLAY_PATTERN = re.compile(r"\\\[(?P<body>.+?)\\\]")
 INLINE_CODE_SPLIT_PATTERN = re.compile(r"(`+[^`]*`+)")
 
@@ -68,10 +75,25 @@ def transform_markdown(text: str) -> str:
     output: list[str] = []
     in_fence = False
     fence_marker: str | None = None
+    display_kind: str | None = None
 
     for raw_line in text.splitlines(keepends=True):
         line = raw_line.rstrip("\r\n")
         newline = raw_line[len(line) :]
+
+        if display_kind is not None:
+            close_match = (
+                DISPLAY_CLOSE_PATTERN.match(line)
+                if display_kind == "latex"
+                else DOLLAR_DISPLAY_LINE_PATTERN.match(line)
+            )
+            if close_match:
+                output.append(f"{close_match.group('indent')}```" + (newline or "\n"))
+                display_kind = None
+            else:
+                output.append(raw_line)
+            continue
+
         fence_match = FENCE_PATTERN.match(line)
         if fence_match:
             marker = fence_match.group(1)
@@ -89,17 +111,51 @@ def transform_markdown(text: str) -> str:
             output.append(raw_line)
             continue
 
+        standalone_latex = STANDALONE_LATEX_DISPLAY_PATTERN.match(line)
+        if standalone_latex:
+            indent = standalone_latex.group("indent")
+            line_end = newline or "\n"
+            output.extend(
+                (
+                    f"{indent}```math{line_end}",
+                    f"{indent}{standalone_latex.group('body').strip()}{line_end}",
+                    f"{indent}```{line_end}",
+                )
+            )
+            continue
+
+        standalone_dollar = STANDALONE_DOLLAR_DISPLAY_PATTERN.match(line)
+        if standalone_dollar:
+            indent = standalone_dollar.group("indent")
+            line_end = newline or "\n"
+            output.extend(
+                (
+                    f"{indent}```math{line_end}",
+                    f"{indent}{standalone_dollar.group('body').strip()}{line_end}",
+                    f"{indent}```{line_end}",
+                )
+            )
+            continue
+
         open_match = DISPLAY_OPEN_PATTERN.match(line)
         if open_match:
-            output.append(f"{open_match.group('indent')}$$" + newline)
+            output.append(f"{open_match.group('indent')}```math" + (newline or "\n"))
+            display_kind = "latex"
             continue
 
-        close_match = DISPLAY_CLOSE_PATTERN.match(line)
-        if close_match:
-            output.append(f"{close_match.group('indent')}$$" + newline)
+        dollar_open = DOLLAR_DISPLAY_LINE_PATTERN.match(line)
+        if dollar_open:
+            output.append(f"{dollar_open.group('indent')}```math" + (newline or "\n"))
+            display_kind = "dollar"
             continue
+
+        if DISPLAY_CLOSE_PATTERN.match(line):
+            raise MarkdownMathError("unmatched \\] display delimiter")
 
         output.append(_transform_inline_outside_code(line) + newline)
+
+    if display_kind is not None:
+        raise MarkdownMathError(f"unclosed {display_kind} display block")
 
     return "".join(output)
 
@@ -127,7 +183,11 @@ def _unsupported_tokens(text: str) -> list[tuple[int, str]]:
 
         text_parts = INLINE_CODE_SPLIT_PATTERN.split(line)
         prose = "".join(text_parts[0::2])
-        if any(token in prose for token in (r"\[", r"\]", r"\(", r"\)")):
+        if (
+            any(token in prose for token in (r"\[", r"\]", r"\(", r"\)"))
+            or DOLLAR_DISPLAY_LINE_PATTERN.match(prose)
+            or STANDALONE_DOLLAR_DISPLAY_PATTERN.match(prose)
+        ):
             failures.append((line_number, line))
 
     return failures
@@ -156,10 +216,16 @@ def main() -> int:
 
     changed: list[Path] = []
     validation_failures: list[str] = []
+    normalized_documents: list[tuple[Path, str, str]] = []
 
     for path in files:
         original = path.read_text(encoding="utf-8")
-        normalized = transform_markdown(original)
+        try:
+            normalized = transform_markdown(original)
+        except MarkdownMathError as error:
+            relative = path.relative_to(REPOSITORY_ROOT)
+            validation_failures.append(f"{relative}: {error}")
+            continue
         failures = _unsupported_tokens(normalized)
         if failures:
             relative = path.relative_to(REPOSITORY_ROOT)
@@ -167,10 +233,9 @@ def main() -> int:
             validation_failures.append(f"{relative}: lines {details}")
             continue
 
+        normalized_documents.append((path, original, normalized))
         if normalized != original:
             changed.append(path)
-            if not arguments.check:
-                path.write_text(normalized, encoding="utf-8")
 
     if validation_failures:
         print("Unsupported math delimiters remain:", file=sys.stderr)
@@ -183,6 +248,11 @@ def main() -> int:
         for path in changed:
             print(f"  {path.relative_to(REPOSITORY_ROOT)}", file=sys.stderr)
         return 1
+
+    if not arguments.check:
+        for path, _original, normalized in normalized_documents:
+            if path in changed:
+                path.write_text(normalized, encoding="utf-8")
 
     action = "would normalize" if arguments.check else "normalized"
     print(f"{action} {len(changed)} Markdown file(s)")
