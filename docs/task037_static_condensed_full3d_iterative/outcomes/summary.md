@@ -1,5 +1,17 @@
 # Task037 结果总览
 
+## B2 MPI1 长尾补充（受控停止）
+
+| 项目 | 结果 |
+|---|---|
+| 固定路径 | MPI1、p6/h10、13.5 nm、S、16 slabs、overlap `0.125`、partition weighting、local Krylov `2`、p2 auxiliary、75D coarse、right FGMRES restart `90` |
+| 停止点 | `i=2500`；true residual `0.15630768102286852`；相对 `i=2400` 改善 `0.18786028698736587%`，满足 `<=0.5%` 用户停止门槛 |
+| 分类 | `controlled_stop_by_user_i2500_improvement_gate`；未达到 `rtol=1e-6`，不是 positive convergence 或数值崩溃 |
+| 存储审计 | p6 retained matrix/factor/NNZ `0/0/0`；global A/F `false/false` |
+| 资源口径 | setup 阶段 rank historical RSS upper bound `0.6462516784667969 GiB`；非最终 solve/整棵进程树峰值；PSS/USS/final peak not generated |
+
+完整残差与原始文件绑定见 [B2 长尾 outcome](b2_factor_free_mpi1_long_tail_controlled_stop.md) 和 [compact record](../../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_b2_factor_free_mpi1_long_tail_v1.json)。
+
 ## Review V3 p4-core部分凝聚收口
 
 本节记录 V3 R7 的当前终点；下方 V2、V1/M3a 内容保留为历史。静态凝聚的通俗含义是先在每个单元内消去内部未知量，只把较小的 trace 系统交给全局求解器。完整 p6 单元局部块是 `882=432` 个 trace slots 加 `450` 个 interior；本轮没有另投影到较小的有限元空间，而是在这一本地代数中保留真实 exact-sequence 嵌入的 `108` 个 p4 core 行，消去 `342` 个 p5/p6 complement 行。这里的 432 是局部 trace slots，不是正式全局系统总行数。

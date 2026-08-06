@@ -1,0 +1,160 @@
+{
+  "schema_version": "task037-b2-factor-free-mpi1-long-tail-v1",
+  "record_id": "task37_b2_factor_free_mpi1_long_tail_v1",
+  "status": "controlled_stop",
+  "classification": "controlled_stop_by_user_i2500_improvement_gate",
+  "source": {
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "verified_clean_sha": "7aa77ed3f38dc036df77166d74b9d9d18ff0dbf6",
+    "worktree_at_launch": "clean",
+    "artifact": "benchmarks/artifacts/task037/b2_factor_free_mpi1_long_full_p6_h10_7aa77ed3",
+    "upstream_equal_at_launch": true,
+    "ahead_behind": [0, 0],
+    "ordinary_defaults_changed": false
+  },
+  "identity": {
+    "degree": 6,
+    "h_nm": 10.0,
+    "wavelength_nm": 13.5,
+    "polarization": "S",
+    "theta_normal_deg": 80.0,
+    "phi_deg": 0.0,
+    "mpi_size": 1,
+    "backend": "assembly_time_static_condensed",
+    "cells": 252,
+    "slabs": 16,
+    "overlap_fraction": 0.125,
+    "partition_weighting": "partition",
+    "local_krylov_steps": 2,
+    "inner_pc": "none",
+    "p2_auxiliary": {
+      "exact_sequence": true,
+      "factor": "one_distributed_MUMPS"
+    },
+    "coarse_dimension": 75,
+    "outer_fgmres": {
+      "side": "right",
+      "restart": 90,
+      "rtol": 1e-06,
+      "atol": 0.0
+    },
+    "canonical_export": true,
+    "p6_retained": {
+      "matrix_count": 0,
+      "factor_count": 0,
+      "factor_nnz": 0
+    },
+    "p6_global_A_materialized": false,
+    "p6_global_F_materialized": false
+  },
+  "parent_command": "python -m benchmarks.run_task033_full3d_watchdog --degree 6 --h-nm 10 --polarization-kind s --run-kind full-solve --mpi-size 1 --profile default --stage4-full3d-assembly-backend assembly_time_static_condensed --task035c-p6-h10-gate --task035c-p6-preflight-authority benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json --task035c-p6-preflight-sha256 96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8 --verified-clean-sha 7aa77ed3f38dc036df77166d74b9d9d18ff0dbf6 --task037-f3-full --task037-m2c-never-materialized --task037-m4-p2-auxiliary --task037-m4-factor-free-slab --task037-m4-factor-free-local-steps 2 --task037-m4-b2-long-full --task037-canonical-vector-export --poll-interval 0.25 --warning-gib 10 --terminate-gib 14 --timeout-seconds 604800 --run-dir benchmarks/artifacts/task037/b2_factor_free_mpi1_long_full_p6_h10_7aa77ed3",
+  "termination": {
+    "mechanism": "Ctrl-C",
+    "session_id": 3735,
+    "parent_session_return_code": 1,
+    "orphan_processes": 0,
+    "crash": false,
+    "resource_oom": false,
+    "classification": "controlled_stop_by_user_i2500_improvement_gate"
+  },
+  "solver": {
+    "iterations_completed": 2500,
+    "converged": false,
+    "official_result": false,
+    "reported_relative_residual_i2400": 0.15660187375232726,
+    "condensed_true_residual_i2400": 0.15660187375232723,
+    "reported_relative_residual_i2500": 0.15630768102286882,
+    "condensed_true_residual_i2500": 0.15630768102286852,
+    "absolute_drop": 0.00029419272945871433,
+    "relative_improvement": 0.0018786028698736588,
+    "max_recorded_iteration": 2500,
+    "iteration_2600_present": false,
+    "improvement_i2400_to_i2500_percent": 0.18786028698736587,
+    "residual_gate": {
+      "limit_percent": 0.5,
+      "observed_percent": 0.18786028698736587,
+      "stop_rule": "improvement <= 0.5 percent"
+    }
+  },
+  "outputs": {
+    "final_ksp_reason": "not_generated",
+    "official_rta": "not_generated",
+    "canonical_vector": "not_generated",
+    "full_fe_recovery": "not_generated",
+    "official": false
+  },
+  "residual_history": [
+    {"iteration": 0, "reported_relative_residual": 1.0, "condensed_true_residual": 1.0},
+    {"iteration": 10, "reported_relative_residual": 0.47868045163341444, "condensed_true_residual": 0.47868045163343281},
+    {"iteration": 20, "reported_relative_residual": 0.4293594862213914, "condensed_true_residual": 0.42935948622140951},
+    {"iteration": 100, "reported_relative_residual": 0.26146490762657354, "condensed_true_residual": 0.26146490762657393},
+    {"iteration": 200, "reported_relative_residual": 0.21018023180263032, "condensed_true_residual": 0.21018023180262965},
+    {"iteration": 300, "reported_relative_residual": 0.19618883359925818, "condensed_true_residual": 0.19618883359925857},
+    {"iteration": 400, "reported_relative_residual": 0.19190535949591242, "condensed_true_residual": 0.1919053594959122},
+    {"iteration": 500, "reported_relative_residual": 0.18921505123607335, "condensed_true_residual": 0.1892150512360726},
+    {"iteration": 600, "reported_relative_residual": 0.18729792917509558, "condensed_true_residual": 0.18729792917509708},
+    {"iteration": 700, "reported_relative_residual": 0.18571125199082208, "condensed_true_residual": 0.18571125199082278},
+    {"iteration": 800, "reported_relative_residual": 0.18292185134403108, "condensed_true_residual": 0.18292185134403083},
+    {"iteration": 900, "reported_relative_residual": 0.17840140040862232, "condensed_true_residual": 0.17840140040862232},
+    {"iteration": 1000, "reported_relative_residual": 0.17634971041470154, "condensed_true_residual": 0.17634971041470165},
+    {"iteration": 1100, "reported_relative_residual": 0.1745442797853203, "condensed_true_residual": 0.1745442797853195},
+    {"iteration": 1200, "reported_relative_residual": 0.1720313463453937, "condensed_true_residual": 0.17203134634539313},
+    {"iteration": 1300, "reported_relative_residual": 0.16980728409601523, "condensed_true_residual": 0.16980728409601495},
+    {"iteration": 1400, "reported_relative_residual": 0.16833743843826884, "condensed_true_residual": 0.16833743843826909},
+    {"iteration": 1500, "reported_relative_residual": 0.1662908175907153, "condensed_true_residual": 0.16629081759071568},
+    {"iteration": 1600, "reported_relative_residual": 0.16376503041757032, "condensed_true_residual": 0.16376503041756993},
+    {"iteration": 1700, "reported_relative_residual": 0.16251021869425375, "condensed_true_residual": 0.1625102186942539},
+    {"iteration": 1800, "reported_relative_residual": 0.16106820746152978, "condensed_true_residual": 0.16106820746152978},
+    {"iteration": 1900, "reported_relative_residual": 0.15997850338490638, "condensed_true_residual": 0.15997850338490563},
+    {"iteration": 2000, "reported_relative_residual": 0.15914911358132283, "condensed_true_residual": 0.15914911358132228},
+    {"iteration": 2100, "reported_relative_residual": 0.15858872457053275, "condensed_true_residual": 0.15858872457053289},
+    {"iteration": 2200, "reported_relative_residual": 0.15789115346822225, "condensed_true_residual": 0.15789115346822155},
+    {"iteration": 2300, "reported_relative_residual": 0.15734491550577387, "condensed_true_residual": 0.15734491550577293},
+    {"iteration": 2400, "reported_relative_residual": 0.15660187375232726, "condensed_true_residual": 0.15660187375232723},
+    {"iteration": 2500, "reported_relative_residual": 0.15630768102286882, "condensed_true_residual": 0.15630768102286852}
+  ],
+  "resources": {
+    "swap_used_mb": 0,
+    "setup_stage": "stage4_dtn_augmented_matrix_finalized",
+    "setup_wall_seconds": 318.10704500298016,
+    "setup_last_rank_historical_rss_mib": 661.76171875,
+    "setup_last_rank_current_rss_mib": 662.01171875,
+    "setup_last_rank_historical_rss_gib": 0.6462516784667969,
+    "setup_last_rank_historical_rss_semantics": "historical RSS upper-bound at setup finalization; not process-tree peak",
+    "pss_gib": "not_generated",
+    "uss_gib": "not_generated",
+    "final_process_tree_peak_gib": "not_generated",
+    "full_wall_seconds": "not_generated",
+    "normal_watchdog_summary": "not_generated"
+  },
+  "timings": {
+    "time_to_iteration_2500_seconds": {
+      "value": 22974.670897739,
+      "kind": "derived",
+      "not_measured_wall": true
+    }
+  },
+  "raw_evidence": {
+    "artifact_root": "benchmarks/artifacts/task037/b2_factor_free_mpi1_long_full_p6_h10_7aa77ed3",
+    "files": {
+      "parent_launch_descriptor.json": {
+        "size_bytes": 1458,
+        "sha256": "c9d867bdf507352eec4b6db3e56a13f604bc6123edeae1793b4490eb71d8cf19"
+      },
+      "task037_f3_residual_history.jsonl": {
+        "size_bytes": 3273,
+        "sha256": "4a36766628b5d06a7d482f17767db669afb1f140373ffe598118ede722a867bd"
+      },
+      "progress_3d.jsonl": {
+        "size_bytes": 29215,
+        "sha256": "65c5f87846107d767d45b794df73fd15a03b5804ef29827b61d6d07367463ccb"
+      },
+      "worker_stdout.txt": {
+        "size_bytes": 3111,
+        "sha256": "30f0b6c6bc0943bc5b5a3581a031e17e1a366e09db668c48577692eb4be30188"
+      }
+    }
+  },
+  "production_qualified": false,
+  "scope_conclusion": "Only the current B2 factor-free PC is insufficient for the observed long tail; this controlled stop is not a crash and does not qualify the iterative solver."
+}

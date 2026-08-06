@@ -196,3 +196,38 @@ F0_IMPLEMENTATION_GATE_FAILED_PETSC_INDEX_DTYPE
 F1、MPI8 screen20/100/200、PDE 均为 `not_run_by_f0_gate`；没有调参、阈值变更或重跑。MaxRSS 只属于该 serial test 进程，不是 p4 容量或正式 PDE 内存证据。
 
 四个实现/测试文件是 unqualified research draft，ordinary defaults 未改变；不得 selective merge，也不得称为 production-qualified。F0 失败后本轮停止在 implementation Gate，等待新的明确修复授权。
+
+## B2 MPI1 长尾补充（受控停止）
+
+本补充绑定正式运行 source `7aa77ed3f38dc036df77166d74b9d9d18ff0dbf6`、分支
+`codex/20260803-task37-matrix-free-iterative-development` 与同一 qualified
+Linux/PETSc `complex128/int32` 环境。冻结路径为 13.5 nm、p6/h10、S、theta
+normal `80°`（10° grazing）、phi `0°`、252 cells、MPI1、16 slabs、overlap
+`0.125`、partition weighting、local Krylov fixed `2`、p2 exact-sequence
+auxiliary + one distributed MUMPS factor、75D wave coarse、right FGMRES restart
+`90`、canonical export；p6 retained matrix/factor/NNZ=`0/0/0`，global A/F=
+`false/false`。
+
+唯一正式 parent 命令在已 activation 的同一 shell 中执行一次，原始 artifact 保存在
+`/home/Projects/MyFEniCS/benchmarks/artifacts/task037/b2_factor_free_mpi1_long_full_p6_h10_7aa77ed3`；完整命令、全量残差历史、文件 SHA256/size 见 [B2 长尾 outcome](outcomes/b2_factor_free_mpi1_long_tail_controlled_stop.md) 与 [compact record](../../benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_b2_factor_free_mpi1_long_tail_v1.json)。
+
+`condensed_true_residual` 从 `i=0` 的 `1.0` 下降到 `i=2500` 的
+`0.15630768102286852`；`i=2400` 为 `0.15660187375232723`，绝对下降
+`0.00029419272945871433`，相对改善 `0.0018786028698736588` =
+`0.18786028698736587%`，满足用户 `<=0.5%` 停止门槛。原 persistent session
+`3735` 由 Ctrl-C 安全停止，return `1`，session 关闭且无 orphan；分类为
+`controlled_stop_by_user_i2500_improvement_gate`。这不是 positive convergence，
+也不是数值崩溃；没有运行到 `i=2600`。
+
+最后可见 progress 是 setup 阶段
+`stage4_dtn_augmented_matrix_finalized`，setup wall `318.10704500298016 s`，rank
+historical RSS upper bound `661.76171875 MiB`（`0.6462516784667969 GiB`），rank
+current RSS `662.01171875 MiB`，swap `0`。该 RSS 是 setup 阶段历史上界，不是最终
+solve/整棵进程树峰值；PSS、USS、final process-tree RSS、normal watchdog summary、
+positive KSP reason、official R/T/A、canonical vector 和 full-FE recovery 均
+`not_generated`，`official_result=false`。derived time-to-i2500 为
+`22974.670897739 s`，不冒充 whole-run final wall。
+
+因此，factor-free 存储机制仍有 setup 证据，但当前 B2 预条件器长尾明显，在该用户
+停止门槛下无法产出可用解；不得称为 production-qualified，也不据此断言数学上永不
+收敛。
