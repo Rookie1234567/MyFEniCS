@@ -1,0 +1,221 @@
+{
+  "schema_version": "task037-candidate-f-f0-postfix-scientific-negative-v1",
+  "identity": {
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "source_sha": "1e641c5c23f3d87c8d72b5ad622921681fe556a8",
+    "tested_head": "1e641c5c23f3d87c8d72b5ad622921681fe556a8",
+    "tested_upstream": "1e641c5c23f3d87c8d72b5ad622921681fe556a8",
+    "ahead_behind": "0/0",
+    "worktree_at_test": "clean",
+    "qualified_activation": true,
+    "python": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "petsc_scalar": "complex128",
+    "petsc_int": "int32",
+    "serial": true,
+    "mpi_size": 1,
+    "ordinary_defaults_changed": false,
+    "production_qualified": false,
+    "commits": {
+      "markdown_math_cleanup": {
+        "sha": "fbb99bf90b2beee2d0d614815314d3502408af00",
+        "files": 3,
+        "insertions": 153,
+        "deletions": 153,
+        "checks": "fix script=0; --check=0; git diff --check=0"
+      },
+      "petsc_index_dtype_fix": {
+        "sha": "1e641c5c23f3d87c8d72b5ad622921681fe556a8",
+        "changes": "test246 import PETSc; p6_rows dtype=PETSc.IntType",
+        "static_checks": "ruff check=pass; ruff format --check=pass; compileall=pass; git diff --check=pass"
+      }
+    }
+  },
+  "status": {
+    "review": "V4",
+    "hard_stop": "V4-1_to_V4-6_ordered_execution_stop_on_any_failed_gate",
+    "record_status": "controlled_scientific_negative",
+    "classification": "P4_INTERMEDIATE_SPACE_NOT_EFFECTIVE",
+    "implementation_failure": false,
+    "scientific_gate": "failed",
+    "static_checks": "passed"
+  },
+  "metrics": {
+    "f0": {
+      "data_class": "measured",
+      "command": "python -m pytest -q -s -x src/test/test_246_task037_p4_capacity_oracle.py::test_f0_degree_pairs_preserve_floquet_orientation_identity src/test/test_246_task037_p4_capacity_oracle.py::test_f0_p4_capacity_oracle_and_d0_comparison",
+      "exit_code": 1,
+      "pytest_summary": "1 passed, 1 failed",
+      "pytest_reported_wall_seconds": 20.84,
+      "wall_seconds": 21.22,
+      "max_rss_kb": 287300,
+      "swap": 0,
+      "reruns": 0,
+      "memory_interpretation": "serial tiny F0 process only; not formal solver peak"
+    },
+    "transfer_identity": {
+      "data_class": "measured",
+      "status": "pass",
+      "composition_error": 3.512063090206927e-15,
+      "p24_interpolation_error": 8.326653945790752e-16,
+      "p46_interpolation_error": 6.595217588690049e-15,
+      "p24_adjoint_error": 1.1106734086056049e-15,
+      "p46_adjoint_error": 2.6080775955612308e-15,
+      "p24_orientation_nonzero_count": 21,
+      "p46_orientation_nonzero_count": 21,
+      "p24_active_rows": 2712,
+      "p46_active_rows": 6372,
+      "floquet_phase_x": "(0.8541859931542107-0.5199675846619236j)",
+      "floquet_phase_y": "(0.818001826003227+0.5752156227497531j)"
+    },
+    "capacity_action": {
+      "data_class": "measured",
+      "status": "pass",
+      "transfer46_adjoint_error": 3.441690023284426e-16,
+      "transfer24_adjoint_error": 4.945975109804328e-16,
+      "projected4_error": 7.327741312843947e-16,
+      "projected2_error": 3.3442374965785637e-16,
+      "high_complement_absolute": 9.203541846744294e-17,
+      "p4_repeat_error": 0.0
+    },
+    "residuals": {
+      "rho_values": {
+        "data_class": "measured",
+        "low": {
+          "rho_B4": 0.24599945418880292,
+          "rho_F": 1.7392087353510792,
+          "rho_D0_frozen": 0.2540230551088513
+        },
+        "high": {
+          "rho_B4": 0.2465189643617165,
+          "rho_F": 1.3350076891675904,
+          "rho_D0_frozen": 0.26531876351572775
+        },
+        "mixed": {
+          "rho_B4": 0.2461297192181731,
+          "rho_F": 1.517457339175566,
+          "rho_D0_frozen": 0.2715867504171219
+        }
+      },
+      "improvements": {
+        "data_class": "derived",
+        "definition": "rho_B4 / rho_F; above 1 means lower residual",
+        "low": 0.14144331798054424,
+        "high": 0.1846573367045002,
+        "mixed": 0.1621987734771478,
+        "rho_F_all_greater_than_one": true,
+        "interpretation": "p4 correction enlarges residual for low, high, and mixed sources"
+      }
+    },
+    "inventory": {
+      "data_class": "measured",
+      "p6_slab_rows": 432,
+      "p4_trace_factor_rows": 192,
+      "p2_trace_factor_rows": 48,
+      "p4_matrix_shape": [192, 192],
+      "p4_matrix_nnz": 36864,
+      "p4_factor_nnz": 36864,
+      "p4_lu_payload_bytes": 590592,
+      "p4_matrix_payload_bytes": 589824,
+      "p46_transfer_nnz": 291,
+      "p24_transfer_nnz": 96,
+      "transfer_payload_bytes": 1474560,
+      "retained_oracle_payload_bytes": 2698752,
+      "construction_workspace_lower_bound_bytes": 147456,
+      "p6_slab_matrix_materialized": false,
+      "p6_slab_matrix_count": 0,
+      "p6_slab_matrix_nnz": 0,
+      "p6_factor_count": 0,
+      "p6_factor_nnz": 0,
+      "global_p6_matrix_materialized": false,
+      "global_p6_factor_materialized": false,
+      "operator_kind": "P46H_restricted_p6_action_P46",
+      "correction_kind": "P46_A4_inverse_P46H_plus_D6_inverse",
+      "frozen_D0_factor_count": 2,
+      "frozen_D0_factor_nnz": 4608
+    },
+    "science_gate": {
+      "data_class": "derived",
+      "required_high_improvement": 1.5,
+      "required_mixed_improvement": 1.5,
+      "actual_high_improvement": 0.1846573367045002,
+      "actual_mixed_improvement": 0.1621987734771478,
+      "classification": "P4_INTERMEDIATE_SPACE_NOT_EFFECTIVE",
+      "status": "fail"
+    }
+  },
+  "artifacts": {
+    "base_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/v4_candidate_f_f0_1e641c5c",
+    "stdout.log": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/v4_candidate_f_f0_1e641c5c/stdout.log",
+      "sha256": "b9dfcafcced810876b273bd89738e1e37551d53ee64806ca74448ed3e3b3eced",
+      "size_bytes": 10530
+    },
+    "stderr.log": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/v4_candidate_f_f0_1e641c5c/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    "time_v.txt": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/v4_candidate_f_f0_1e641c5c/time_v.txt",
+      "sha256": "930b92e780b4f079c540dc83ec25e88e0ec29b7b4c2f6ec7c568f1dcfe27006b",
+      "size_bytes": 998
+    },
+    "exit_code.txt": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/v4_candidate_f_f0_1e641c5c/exit_code.txt",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "size_bytes": 2
+    }
+  },
+  "stages": {
+    "v4_1": {
+      "data_class": "measured",
+      "status": "completed_scientific_negative"
+    },
+    "v4_2": {
+      "data_class": "not_run",
+      "status": "not_run_after_f0_failure",
+      "reason": "user stop rule overrides Review V4 independent-must-run arrangement"
+    },
+    "v4_3": {
+      "data_class": "not_run",
+      "status": "not_run_after_f0_failure",
+      "reason": "user stop rule overrides Review V4 independent-must-run arrangement"
+    },
+    "v4_4": {
+      "data_class": "not_run",
+      "status": "not_run_after_f0_failure",
+      "reason": "not_authorized_by_F0_failure and user stop rule"
+    },
+    "v4_5": {
+      "data_class": "not_run",
+      "status": "not_run_after_f0_failure",
+      "reason": "user stop rule prevents starting the later numerical lane"
+    },
+    "v4_6": {
+      "data_class": "derived",
+      "status": "completed_docs_only_closeout",
+      "scope": "compact evidence record and response_v4"
+    },
+    "candidate_f_f1": {
+      "data_class": "not_run",
+      "status": "not_run_by_f0_failure"
+    },
+    "candidate_f_p3_p5_scan": {
+      "data_class": "not_run",
+      "status": "not_run_by_f0_failure"
+    },
+    "candidate_f_parameter_tuning": {
+      "data_class": "not_run",
+      "status": "not_run_by_user_stop_rule"
+    },
+    "candidate_e": {
+      "data_class": "not_run",
+      "status": "not_run_after_f0_failure",
+      "reason": "Review V4 trigger condition was met, but the higher-priority stop-on-any-failed-Gate rule blocked execution"
+    },
+    "full_pytest": {
+      "data_class": "not_run",
+      "status": "not_run"
+    }
+  }
+}
