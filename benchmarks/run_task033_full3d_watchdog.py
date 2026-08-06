@@ -2437,6 +2437,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                     if args.task037_m4_b2_long_full
                     else 7200.0
                     if args.task037_f3_full
+                    else 3600.0
+                    if args.task037_e2_modal_capacity_gate
                     else 1800.0
                 )
             )

@@ -300,8 +300,10 @@ def test_e2_cli_parser_admits_only_the_frozen_screen(tmp_path):
         for item in argv
         if item != "--task037-e2-b4-snapshot-carrier"
     ] + ["--task037-e2-modal-capacity-gate"]
+    capacity_argv[capacity_argv.index("--timeout-seconds") + 1] = "3600"
     capacity = watchdog._parse_args(capacity_argv)
     assert capacity.task037_e2_modal_capacity_gate is True
+    assert capacity.timeout_seconds == 3600.0
     try:
         watchdog._parse_args([*capacity_argv, "--task037-e2-b4-snapshot-carrier"])
     except SystemExit:
