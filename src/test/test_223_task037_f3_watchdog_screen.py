@@ -337,9 +337,117 @@ def _task037_g2_identity_audit(
     }
 
 
+def _task037_g2_factor_audit(*, fullspace_retained_bytes=700):
+    trace_retained_bytes = 1000
+    reduction = (
+        trace_retained_bytes - fullspace_retained_bytes
+    ) / trace_retained_bytes
+    route_status = (
+        "retained_payload_gate_pass_route_not_closed"
+        if reduction >= 0.25
+        else "close_fullspace_ilu_only_route"
+    )
+    matrix_audit = {
+        "full_rows": 8,
+        "interior_rows": 5,
+        "trace_rows": 3,
+        "trace_offset": 5,
+        "matrix_nnz": 40,
+        "matrix_csr_payload_bytes": 400,
+        "matrix_fingerprint": "d" * 64,
+        "matrix_assembly_seconds": 1.0,
+    }
+    fullspace = {
+        "solver": "ilu",
+        "factor_ordering": "rcm",
+        "ilu_level": 0,
+        "full_rows": 8,
+        "interior_rows": 5,
+        "trace_rows": 3,
+        "matrix_nnz": 40,
+        "matrix_csr_payload_bytes": 400,
+        "matrix_fingerprint": "d" * 64,
+        "factor_nnz": 30,
+        "factor_csr_payload_bytes": fullspace_retained_bytes - 100,
+        "work_vector_payload_bytes": 100,
+        "retained_payload_lower_bound_bytes": fullspace_retained_bytes,
+        "setup_seconds": 2.0,
+        "apply_seconds": 0.1,
+        "setup_matrix_lifetime": "released after factor extraction",
+        "factor_lifetime": "owned by this oracle until destroy",
+    }
+    trace = {
+        "rows": 3,
+        "matrix_nnz": 20,
+        "factor_nnz": 10,
+        "factor_csr_payload_lower_bound_bytes": 900,
+        "work_vector_payload_bytes": 100,
+        "retained_payload_lower_bound_bytes": trace_retained_bytes,
+        "factor_only_storage": True,
+    }
+    iter20 = {
+        "trace_rhs": {
+            "owner_row_count": 3,
+            "norm2": 1.0,
+            "finite": True,
+            "sha256": "e" * 64,
+            "trace_rhs_vs_extracted_relative_error": 0.0,
+            "trace_rhs_exact": True,
+        },
+        "current_trace_ilu": {
+            "input_norm": 1.0,
+            "post_norm": 0.4,
+            "rho": 0.4,
+            "finite": True,
+            "correction_norm2": 0.6,
+            "correction_sha256": "f" * 64,
+        },
+        "fullspace_ilu": {
+            "input_norm": 1.0,
+            "post_norm": 0.3,
+            "rho": 0.3,
+            "finite": True,
+            "correction_norm2": 0.7,
+            "correction_sha256": "a" * 64,
+            "deterministic": True,
+            "correction_finite": True,
+            "apply_count": 2,
+            "apply_seconds": 0.1,
+        },
+        "contraction_comparison": {
+            "full_minus_trace_rho": -0.1,
+            "full_to_trace_rho_ratio": 0.75,
+        },
+    }
+    return {
+        "primary_slab": 14,
+        "inventory_only": True,
+        "used_in_outer_preconditioner": False,
+        "global_A_materialized": False,
+        "global_F_materialized": False,
+        "official_result_unaffected": True,
+        "matrix_audit": matrix_audit,
+        "fullspace_factor_inventory": fullspace,
+        "current_trace_factor_inventory": trace,
+        "retained_payload_route": {
+            "trace_retained_payload_lower_bound_bytes": trace_retained_bytes,
+            "fullspace_retained_payload_lower_bound_bytes": fullspace_retained_bytes,
+            "reduction_fraction": reduction,
+            "gate_pass": reduction >= 0.25,
+            "status": route_status,
+        },
+        "iter20": iter20,
+        "iter20_gate_pass": True,
+        "missing_iterations": [],
+        "status": route_status,
+    }
+
+
 def _task037_g2_qualification_case(
     *,
     identity_audit=None,
+    factor_audit=None,
+    factor_enabled=False,
 ):
     args = SimpleNamespace(
         task037_f3_screen=20,
@@ -348,6 +456,7 @@ def _task037_g2_qualification_case(
         task037_m2c_never_materialized=True,
         task037_m3a_overlap0125_partition=True,
         task037_extra_g2_slab14_identity=True,
+        task037_extra_g2_slab14_factor_inventory=factor_enabled,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
         task037_m4_b2_long_full=False,
@@ -360,11 +469,27 @@ def _task037_g2_qualification_case(
         task035d_case097_gate=False,
     )
     audit = _m3a_audit()
-    audit["task037_extra_g2_slab14_identity"] = (
+    identity_audit = (
         _task037_g2_identity_audit()
         if identity_audit is None
         else identity_audit
     )
+    audit["task037_extra_g2_slab14_identity"] = identity_audit
+    if factor_enabled:
+        factor_audit = (
+            _task037_g2_factor_audit()
+            if factor_audit is None
+            else factor_audit
+        )
+        identity_iter20 = identity_audit.get("iter20_real_residual")
+        if (
+            isinstance(identity_iter20, dict)
+            and "factor_measurement" not in identity_iter20
+        ):
+            identity_iter20["factor_measurement"] = json.loads(
+                json.dumps(factor_audit["iter20"])
+            )
+        audit["task037_extra_g2_slab14_factor_inventory"] = factor_audit
     summary = {
         "matrix_stats": {"matrix_rows": 1, "matrix_nnz_used": None},
         "polarization_kind": "s",
@@ -382,17 +507,40 @@ def _task037_g2_qualification_case(
             "global_F_materialized": False,
         },
     }
+    factor_events = [
+        {
+            "stage": stage,
+            "status": "end",
+            "task037_g2_factor_inventory_lifecycle": True,
+        }
+        for stage in (
+            "g2_fullspace_matrix_assembly_started",
+            "g2_fullspace_matrix_assembly_ready",
+            "g2_fullspace_factor_setup_started",
+            "g2_fullspace_factor_setup_ready",
+        )
+    ]
+    factor_stage_peaks = [
+        {"stage": stage}
+        for stage in (
+            "g2_fullspace_matrix_assembly_started",
+            "g2_fullspace_factor_setup_started",
+        )
+    ]
     return args, {
         "args": args,
         "solver_summary": summary,
-        "events": [],
+        "events": factor_events if factor_enabled else [],
         "return_code": 0,
         "terminated_for_memory": False,
         "terminated_for_timeout": False,
         "terminated_for_authority_unreadable": False,
         "no_swap": True,
         "observed_worker_rank_count": 1,
-        "resource_summary": {"memory_authority_gib": 10.30},
+        "resource_summary": {
+            "memory_authority_gib": 10.30,
+            "stage_peaks": factor_stage_peaks if factor_enabled else [],
+        },
         "task037_f3_core_audit": audit,
     }
 
@@ -1646,6 +1794,132 @@ def test_task037_extra_g2_identity_qualification_positive():
     )
 
 
+def test_task037_extra_g2_factor_status_has_priority():
+    args, kwargs = _task037_g2_qualification_case(factor_enabled=True)
+    qualification = watchdog._qualify(**kwargs)
+
+    assert watchdog._task037_extra_g2_status(args, qualification) == (
+        "task037_extra_g2_slab14_factor_inventory_pass"
+    )
+    failed = {**qualification, "pass": False}
+    assert watchdog._task037_extra_g2_status(args, failed) == (
+        "task037_extra_g2_slab14_factor_inventory_not_pass"
+    )
+
+
+def test_task037_extra_g2_factor_static_inventory_positive_and_route_negative():
+    args, kwargs = _task037_g2_qualification_case(factor_enabled=True)
+    qualification = watchdog._qualify(**kwargs)
+
+    assert qualification["pass"]
+    assert qualification["checks"]["task037_g2_factor_route_gate_raw"]
+    assert watchdog._task037_extra_g2_status(args, qualification) == (
+        "task037_extra_g2_slab14_factor_inventory_pass"
+    )
+
+    negative_audit = _task037_g2_factor_audit(fullspace_retained_bytes=800)
+    negative_args, negative_kwargs = _task037_g2_qualification_case(
+        factor_audit=negative_audit,
+        factor_enabled=True,
+    )
+    negative = watchdog._qualify(**negative_kwargs)
+
+    assert negative["pass"]
+    assert negative["checks"]["task037_g2_factor_route_gate_raw"]
+    assert negative_audit["retained_payload_route"]["gate_pass"] is False
+    assert negative["checks"]["task037_g2_factor_route_status_raw"]
+    assert watchdog._task037_extra_g2_status(negative_args, negative) == (
+        "task037_extra_g2_slab14_factor_inventory_pass"
+    )
+
+
+def test_task037_extra_g2_factor_static_inventory_tamper_not_pass():
+    factor_audit = _task037_g2_factor_audit()
+    factor_audit["matrix_audit"]["matrix_fingerprint"] = "e" * 64
+    _, kwargs = _task037_g2_qualification_case(
+        factor_audit=factor_audit,
+        factor_enabled=True,
+    )
+    qualification = watchdog._qualify(**kwargs)
+
+    assert not qualification["pass"]
+    assert not qualification["checks"][
+        "task037_g2_factor_matrix_inventory_consistent"
+    ]
+
+    timing_audit = _task037_g2_factor_audit()
+    timing_audit["fullspace_factor_inventory"]["setup_seconds"] = -1.0
+    _, timing_kwargs = _task037_g2_qualification_case(
+        factor_audit=timing_audit,
+        factor_enabled=True,
+    )
+    timing_qualification = watchdog._qualify(**timing_kwargs)
+    assert not timing_qualification["pass"]
+    assert not timing_qualification["checks"]["task037_g2_factor_timings"]
+
+
+def test_task037_extra_g2_factor_non_mapping_subblock_not_pass():
+    factor_audit = _task037_g2_factor_audit()
+    factor_audit["current_trace_factor_inventory"] = []
+    _, kwargs = _task037_g2_qualification_case(
+        factor_audit=factor_audit,
+        factor_enabled=True,
+    )
+    qualification = watchdog._qualify(**kwargs)
+
+    assert not qualification["pass"]
+    assert not qualification["checks"]["task037_g2_factor_inventory_mappings"]
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    (
+        "trace_rhs_exact",
+        "trace_rhs_relative_error",
+        "rho_arithmetic",
+        "apply_count",
+        "correction_hash",
+        "top_status",
+        "missing_iterations",
+        "identity_copy",
+        "lifecycle_event",
+        "stage_peak",
+    ),
+)
+def test_task037_extra_g2_factor_iter20_and_lifecycle_tamper_not_pass(tamper):
+    _, kwargs = _task037_g2_qualification_case(factor_enabled=True)
+    factor_audit = kwargs["task037_f3_core_audit"][
+        "task037_extra_g2_slab14_factor_inventory"
+    ]
+    if tamper == "trace_rhs_exact":
+        factor_audit["iter20"]["trace_rhs"]["trace_rhs_exact"] = False
+    elif tamper == "trace_rhs_relative_error":
+        factor_audit["iter20"]["trace_rhs"][
+            "trace_rhs_vs_extracted_relative_error"
+        ] = 1.0e-9
+    elif tamper == "rho_arithmetic":
+        factor_audit["iter20"]["current_trace_ilu"]["rho"] = 0.5
+    elif tamper == "apply_count":
+        factor_audit["iter20"]["fullspace_ilu"]["apply_count"] = 1
+    elif tamper == "correction_hash":
+        factor_audit["iter20"]["fullspace_ilu"]["correction_sha256"] = "bad"
+    elif tamper == "top_status":
+        factor_audit["status"] = "close_fullspace_ilu_only_route"
+    elif tamper == "missing_iterations":
+        factor_audit["missing_iterations"] = [20]
+    elif tamper == "identity_copy":
+        kwargs["task037_f3_core_audit"]["task037_extra_g2_slab14_identity"][
+            "iter20_real_residual"
+        ]["factor_measurement"]["trace_rhs"]["norm2"] = 2.0
+    elif tamper == "lifecycle_event":
+        kwargs["events"] = kwargs["events"][:-1]
+    elif tamper == "stage_peak":
+        kwargs["resource_summary"]["stage_peaks"] = []
+
+    qualification = watchdog._qualify(**kwargs)
+    assert not qualification["pass"], tamper
+
+
 def test_task037_extra_g2_identity_qualification_missing_iter20_not_pass():
     identity_audit = _task037_g2_identity_audit(
         status="missing_iter20",
@@ -1839,6 +2113,7 @@ def test_task037_extra_g2_flag_reaches_only_m3a_wrapper(tmp_path, monkeypatch):
             never_materialized=True,
             overlap0125_partition=True,
             task037_extra_g2_slab14_identity=enabled,
+            task037_extra_g2_slab14_factor_inventory=enabled,
             verified_clean_sha="b" * 40,
         )
         solve(request)
@@ -1847,6 +2122,9 @@ def test_task037_extra_g2_flag_reaches_only_m3a_wrapper(tmp_path, monkeypatch):
         True,
         False,
     ]
+    assert [
+        kwargs["task037_extra_g2_slab14_factor_inventory"] for kwargs in captured
+    ] == [True, False]
     ordinary_solve = watchdog._task037_f3_assembled_fgmres_port(
         tmp_path,
         20,
@@ -1855,6 +2133,97 @@ def test_task037_extra_g2_flag_reaches_only_m3a_wrapper(tmp_path, monkeypatch):
     )
     ordinary_solve(request)
     assert "task037_extra_g2_slab14_identity" not in ordinary_captured[0]
+    assert "task037_extra_g2_slab14_factor_inventory" not in ordinary_captured[0]
+
+
+def test_task037_extra_g2_factor_lifecycle_uses_raw_progress_stages(
+    tmp_path, monkeypatch
+):
+    class Comm:
+        rank = 0
+
+        def tompi4py(self):
+            return self
+
+        def gather(self, payload, root=0):
+            assert root == 0
+            return [payload]
+
+    request = SimpleNamespace(operator=SimpleNamespace(getComm=lambda: Comm()))
+    progress_events = []
+
+    def write_progress(_run_dir, _comm, **kwargs):
+        progress_events.append(kwargs)
+
+    def fake_m3a_core(_request, **kwargs):
+        observer = kwargs["lifecycle_observer"]
+        assert observer is not None
+        for event in (
+            "g2_fullspace_matrix_assembly_started",
+            "g2_fullspace_matrix_assembly_ready",
+            "g2_fullspace_factor_setup_started",
+            "g2_fullspace_factor_setup_ready",
+        ):
+            observer(event, {"event": event})
+        return object(), {
+            "solver_profile": "never_materialized_owner_local_overlap0125_partition"
+        }
+
+    monkeypatch.setattr(watchdog, "_write_progress_event", write_progress)
+    monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative."
+        "solve_never_materialized_overlap0125_partition_fgmres",
+        fake_m3a_core,
+    )
+    solve = watchdog._task037_f3_assembled_fgmres_port(
+        tmp_path,
+        20,
+        never_materialized=True,
+        overlap0125_partition=True,
+        lifecycle_enabled=True,
+        task037_extra_g2_slab14_identity=True,
+        task037_extra_g2_slab14_factor_inventory=True,
+        verified_clean_sha="b" * 40,
+    )
+    solve(request)
+
+    assert [item["stage"] for item in progress_events] == [
+        "g2_fullspace_matrix_assembly_started",
+        "g2_fullspace_matrix_assembly_ready",
+        "g2_fullspace_factor_setup_started",
+        "g2_fullspace_factor_setup_ready",
+    ]
+    assert all(
+        item["extra"]["task037_g2_factor_inventory_lifecycle"] is True
+        for item in progress_events
+    )
+    assert all(
+        "task037_m0_lifecycle" not in item["extra"]
+        and "m0_event" not in item["extra"]
+        and "task037_m0_rank_ledgers_by_rank" not in item["extra"]
+        for item in progress_events
+    )
+
+    progress_events.clear()
+    ordinary_solve = watchdog._task037_f3_assembled_fgmres_port(
+        tmp_path,
+        20,
+        never_materialized=True,
+        overlap0125_partition=True,
+        lifecycle_enabled=True,
+        task037_extra_g2_slab14_identity=True,
+        task037_extra_g2_slab14_factor_inventory=False,
+        verified_clean_sha="b" * 40,
+    )
+    ordinary_solve(request)
+    assert progress_events[0]["stage"] == "m0_g2_fullspace_matrix_assembly_started"
+    assert progress_events[0]["extra"]["task037_m0_lifecycle"] is True
+    assert progress_events[0]["extra"]["m0_event"] == (
+        "g2_fullspace_matrix_assembly_started"
+    )
+    assert progress_events[0]["extra"]["task037_m0_rank_ledgers_by_rank"] == [
+        {"event": "g2_fullspace_matrix_assembly_started"}
+    ]
 
 
 def test_task037_extra_g2_parser_is_exact_screen20_mpi1_scope(tmp_path):
@@ -1906,7 +2275,32 @@ def test_task037_extra_g2_parser_is_exact_screen20_mpi1_scope(tmp_path):
     assert worker_args.task037_extra_g2_slab14_identity is True
     contract = watchdog._worker_launch_contract(args)
     assert contract["task037_extra_g2_slab14_identity"] is True
+    assert contract["task037_extra_g2_slab14_factor_inventory"] is False
     assert contract["verified_clean_sha"] == "c" * 40
+
+    factor_args = watchdog._parse_args(
+        base + ["--task037-extra-g2-slab14-factor-inventory"]
+    )
+    assert factor_args.task037_extra_g2_slab14_identity is True
+    assert factor_args.task037_extra_g2_slab14_factor_inventory is True
+    factor_command = watchdog._worker_command(factor_args, tmp_path)
+    assert factor_command.count("--task037-extra-g2-slab14-identity") == 1
+    assert factor_command.count("--task037-extra-g2-slab14-factor-inventory") == 1
+    factor_worker_args = watchdog._parse_args(
+        factor_command[factor_command.index("--worker") :]
+    )
+    assert factor_worker_args.task037_extra_g2_slab14_identity is True
+    assert factor_worker_args.task037_extra_g2_slab14_factor_inventory is True
+    factor_contract = watchdog._worker_launch_contract(factor_args)
+    assert factor_contract["task037_extra_g2_slab14_factor_inventory"] is True
+
+    factor_only = [
+        item
+        for item in base
+        if item != "--task037-extra-g2-slab14-identity"
+    ] + ["--task037-extra-g2-slab14-factor-inventory"]
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(factor_only)
 
     for invalid in (
         base[: base.index("--mpi-size") + 1]

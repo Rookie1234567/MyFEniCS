@@ -659,6 +659,9 @@ def _task037_m3a_status(
 def _task037_extra_g2_status(
     args: argparse.Namespace, qualification: Mapping[str, Any]
 ) -> str | None:
+    if getattr(args, "task037_extra_g2_slab14_factor_inventory", False):
+        result = "pass" if qualification["pass"] else "not_pass"
+        return f"task037_extra_g2_slab14_factor_inventory_{result}"
     if not getattr(args, "task037_extra_g2_slab14_identity", False):
         return None
     result = "pass" if qualification["pass"] else "not_pass"
@@ -756,6 +759,7 @@ def _task037_f3_assembled_fgmres_port(
     overlap0125_partition: bool = False,
     task037_extra_g0_diagnostics: bool = False,
     task037_extra_g2_slab14_identity: bool = False,
+    task037_extra_g2_slab14_factor_inventory: bool = False,
     verified_clean_sha: str | None = None,
 ):
     from src.solvers.static_condensed_iterative import (
@@ -785,19 +789,30 @@ def _task037_f3_assembled_fgmres_port(
 
         def observe_lifecycle(event, payload):
             ledgers_by_rank = comm.gather(payload, root=0)
-            _write_progress_event(
-                run_dir,
-                comm,
-                stage=f"m0_{event}",
-                status="end",
-                extra={
+            factor_lifecycle = task037_extra_g2_slab14_factor_inventory
+            if factor_lifecycle:
+                progress_extra = {
+                    "task037_g2_factor_rank_ledgers_by_rank": (
+                        ledgers_by_rank if comm.rank == 0 else None
+                    ),
+                    **payload,
+                    "task037_g2_factor_inventory_lifecycle": True,
+                }
+            else:
+                progress_extra = {
                     "task037_m0_lifecycle": True,
                     "m0_event": event,
                     "task037_m0_rank_ledgers_by_rank": (
                         ledgers_by_rank if comm.rank == 0 else None
                     ),
                     **payload,
-                },
+                }
+            _write_progress_event(
+                run_dir,
+                comm,
+                stage=event if factor_lifecycle else f"m0_{event}",
+                status="end",
+                extra=progress_extra,
             )
 
         g0_snapshot_observer = (
@@ -850,6 +865,9 @@ def _task037_f3_assembled_fgmres_port(
                 task037_extra_g0_diagnostics=task037_extra_g0_diagnostics,
                 task037_extra_g2_slab14_identity=(
                     task037_extra_g2_slab14_identity
+                ),
+                task037_extra_g2_slab14_factor_inventory=(
+                    task037_extra_g2_slab14_factor_inventory
                 ),
                 lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
@@ -1342,6 +1360,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_extra_g2_slab14_identity": bool(
             getattr(args, "task037_extra_g2_slab14_identity", False)
         ),
+        "task037_extra_g2_slab14_factor_inventory": bool(
+            getattr(args, "task037_extra_g2_slab14_factor_inventory", False)
+        ),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -1510,7 +1531,10 @@ def _worker(args: argparse.Namespace) -> int:
                 if args.task037_f5b_released_profile
                 else "assembled"
             ),
-            lifecycle_enabled=args.task037_m0_lifecycle_audit,
+            lifecycle_enabled=(
+                args.task037_m0_lifecycle_audit
+                or getattr(args, "task037_extra_g2_slab14_factor_inventory", False)
+            ),
             never_materialized=args.task037_m2c_never_materialized,
             p2_auxiliary=args.task037_m4_p2_auxiliary,
             factor_free_slab=args.task037_m4_factor_free_slab,
@@ -1522,6 +1546,9 @@ def _worker(args: argparse.Namespace) -> int:
             ),
             task037_extra_g2_slab14_identity=getattr(
                 args, "task037_extra_g2_slab14_identity", False
+            ),
+            task037_extra_g2_slab14_factor_inventory=getattr(
+                args, "task037_extra_g2_slab14_factor_inventory", False
             ),
             verified_clean_sha=getattr(args, "verified_clean_sha", None),
         )
@@ -1618,6 +1645,9 @@ def _worker(args: argparse.Namespace) -> int:
         canonical_vector_export=args.task037_canonical_vector_export,
         task037_extra_g2_slab14_identity=getattr(
             args, "task037_extra_g2_slab14_identity", False
+        ),
+        task037_extra_g2_slab14_factor_inventory=getattr(
+            args, "task037_extra_g2_slab14_factor_inventory", False
         ),
     )
     return 0
@@ -1722,6 +1752,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "Run the opt-in Task037-extra G2 slab14 identity on the exact "
             "M3a MPI1 screen-20 scope."
+        ),
+    )
+    parser.add_argument(
+        "--task037-extra-g2-slab14-factor-inventory",
+        action="store_true",
+        help=(
+            "Run the opt-in Task037-extra G2 slab14 factor inventory; "
+            "requires the exact slab14 identity flag."
         ),
     )
     parser.add_argument(
@@ -2157,6 +2195,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "--task037-extra-g2-slab14-identity is restricted to the verified "
             "p6/h10 S MPI1 M3a overlap-0.125 screen-20 no-swap scope and "
             "conflicts with G0 diagnostics."
+        )
+    if args.task037_extra_g2_slab14_factor_inventory and not (
+        args.task037_extra_g2_slab14_identity
+    ):
+        parser.error(
+            "--task037-extra-g2-slab14-factor-inventory requires "
+            "--task037-extra-g2-slab14-identity."
         )
     if (
         args.task037_m4_p2_auxiliary
@@ -3486,6 +3531,360 @@ def _solve_stage_seen(events: list[dict[str, Any]]) -> bool:
     )
 
 
+def _task037_g2_factor_inventory_checks(
+    factor_audit: Any,
+    collector_row_count: Any,
+) -> dict[str, bool]:
+    audit = factor_audit if isinstance(factor_audit, Mapping) else {}
+    matrix_raw = audit.get("matrix_audit")
+    fullspace_raw = audit.get("fullspace_factor_inventory")
+    trace_raw = audit.get("current_trace_factor_inventory")
+    route_raw = audit.get("retained_payload_route")
+    matrix = matrix_raw
+    matrix = matrix if isinstance(matrix, Mapping) else {}
+    fullspace = fullspace_raw
+    fullspace = fullspace if isinstance(fullspace, Mapping) else {}
+    trace = trace_raw
+    trace = trace if isinstance(trace, Mapping) else {}
+    route = route_raw
+    route = route if isinstance(route, Mapping) else {}
+
+    def positive_integer(value: Any) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+    matrix_rows_are_valid = all(
+        positive_integer(matrix.get(name))
+        for name in ("full_rows", "interior_rows", "trace_rows")
+    )
+    full_rows_are_valid = all(
+        positive_integer(fullspace.get(name))
+        for name in ("full_rows", "interior_rows", "trace_rows")
+    )
+    trace_rows_are_valid = positive_integer(trace.get("rows"))
+    matrix_full_rows = (
+        matrix_rows_are_valid
+        and fullspace.get("full_rows") == matrix.get("full_rows")
+        and fullspace.get("interior_rows") == matrix.get("interior_rows")
+        and fullspace.get("trace_rows") == matrix.get("trace_rows")
+        and matrix.get("full_rows")
+        == matrix.get("interior_rows") + matrix.get("trace_rows")
+        and matrix.get("trace_offset") == matrix.get("interior_rows")
+    )
+    matrix_inventory_consistent = (
+        full_rows_are_valid
+        and fullspace.get("matrix_nnz") == matrix.get("matrix_nnz")
+        and fullspace.get("matrix_csr_payload_bytes")
+        == matrix.get("matrix_csr_payload_bytes")
+        and fullspace.get("matrix_fingerprint") == matrix.get("matrix_fingerprint")
+    )
+    matrix_counts_and_payloads = (
+        positive_integer(matrix.get("matrix_nnz"))
+        and positive_integer(matrix.get("matrix_csr_payload_bytes"))
+        and positive_integer(fullspace.get("factor_nnz"))
+        and positive_integer(fullspace.get("factor_csr_payload_bytes"))
+        and positive_integer(fullspace.get("work_vector_payload_bytes"))
+        and positive_integer(fullspace.get("retained_payload_lower_bound_bytes"))
+        and positive_integer(trace.get("matrix_nnz"))
+        and positive_integer(trace.get("factor_nnz"))
+        and positive_integer(trace.get("factor_csr_payload_lower_bound_bytes"))
+        and positive_integer(trace.get("work_vector_payload_bytes"))
+        and positive_integer(trace.get("retained_payload_lower_bound_bytes"))
+    )
+    full_payload_closed = (
+        fullspace.get("factor_csr_payload_bytes")
+        + fullspace.get("work_vector_payload_bytes")
+        == fullspace.get("retained_payload_lower_bound_bytes")
+        if matrix_counts_and_payloads
+        else False
+    )
+    trace_payload_closed = (
+        trace.get("factor_csr_payload_lower_bound_bytes")
+        + trace.get("work_vector_payload_bytes")
+        == trace.get("retained_payload_lower_bound_bytes")
+        if matrix_counts_and_payloads
+        else False
+    )
+    trace_bytes = trace.get("retained_payload_lower_bound_bytes")
+    fullspace_bytes = fullspace.get("retained_payload_lower_bound_bytes")
+    raw_reduction = (
+        (float(trace_bytes) - float(fullspace_bytes)) / float(trace_bytes)
+        if positive_integer(trace_bytes) and positive_integer(fullspace_bytes)
+        else None
+    )
+    raw_route_gate = raw_reduction is not None and raw_reduction >= 0.25
+    expected_route_status = (
+        "retained_payload_gate_pass_route_not_closed"
+        if raw_route_gate
+        else "close_fullspace_ilu_only_route"
+    )
+    return {
+        "task037_g2_factor_inventory_present": isinstance(
+            factor_audit, Mapping
+        ),
+        "task037_g2_factor_identity_fields": (
+            audit.get("primary_slab") == 14
+            and audit.get("inventory_only") is True
+            and audit.get("used_in_outer_preconditioner") is False
+            and audit.get("global_A_materialized") is False
+            and audit.get("global_F_materialized") is False
+            and audit.get("official_result_unaffected") is True
+        ),
+        "task037_g2_factor_inventory_mappings": all(
+            isinstance(value, Mapping)
+            for value in (matrix_raw, fullspace_raw, trace_raw, route_raw)
+        ),
+        "task037_g2_factor_matrix_full_rows": matrix_full_rows,
+        "task037_g2_factor_matrix_inventory_consistent": matrix_inventory_consistent,
+        "task037_g2_factor_trace_rows_match_identity": (
+            trace_rows_are_valid
+            and trace.get("rows") == matrix.get("trace_rows")
+            and trace.get("rows") == collector_row_count
+        ),
+        "task037_g2_factor_matrix_counts_and_payloads": matrix_counts_and_payloads,
+        "task037_g2_factor_matrix_fingerprint": valid_hex_digest(
+            matrix.get("matrix_fingerprint"), 64
+        ),
+        "task037_g2_factor_timings": (
+            _finite_number_le(matrix.get("matrix_assembly_seconds"), math.inf)
+            and _finite_number_le(fullspace.get("setup_seconds"), math.inf)
+            and _finite_number_le(fullspace.get("apply_seconds"), math.inf)
+        ),
+        "task037_g2_factor_full_ilu_setup": (
+            fullspace.get("solver") == "ilu"
+            and fullspace.get("factor_ordering") == "rcm"
+            and fullspace.get("ilu_level") == 0
+            and fullspace.get("setup_matrix_lifetime")
+            == "released after factor extraction"
+            and fullspace.get("factor_lifetime")
+            == "owned by this oracle until destroy"
+        ),
+        "task037_g2_factor_full_payload_closed": full_payload_closed,
+        "task037_g2_factor_trace_payload_closed": (
+            trace_payload_closed and trace.get("factor_only_storage") is True
+        ),
+        "task037_g2_factor_route_bytes_closed": (
+            route.get("trace_retained_payload_lower_bound_bytes") == trace_bytes
+            and route.get("fullspace_retained_payload_lower_bound_bytes")
+            == fullspace_bytes
+        ),
+        "task037_g2_factor_route_reduction_raw": (
+            raw_reduction is not None
+            and _finite_number_le(route.get("reduction_fraction"), math.inf)
+            and math.isclose(
+                float(route.get("reduction_fraction")),
+                raw_reduction,
+                rel_tol=1.0e-12,
+                abs_tol=1.0e-12,
+            )
+        ),
+        "task037_g2_factor_route_gate_raw": (
+            route.get("gate_pass") is raw_route_gate
+        ),
+        "task037_g2_factor_route_status_raw": (
+            route.get("status") == expected_route_status
+        ),
+    }
+
+
+def _task037_g2_factor_iter20_checks(
+    factor_audit: Any,
+    identity_audit: Any,
+    collector_row_count: Any,
+) -> dict[str, bool]:
+    factor = factor_audit if isinstance(factor_audit, Mapping) else {}
+    identity = identity_audit if isinstance(identity_audit, Mapping) else {}
+    factor_iter20_raw = factor.get("iter20")
+    identity_iter20_raw = identity.get("iter20_real_residual")
+    factor_iter20 = (
+        factor_iter20_raw if isinstance(factor_iter20_raw, Mapping) else {}
+    )
+    identity_iter20 = (
+        identity_iter20_raw
+        if isinstance(identity_iter20_raw, Mapping)
+        else {}
+    )
+    identity_factor_raw = identity_iter20.get("factor_measurement")
+    identity_factor = (
+        identity_factor_raw
+        if isinstance(identity_factor_raw, Mapping)
+        else {}
+    )
+    trace_rhs_raw = factor_iter20.get("trace_rhs")
+    current_raw = factor_iter20.get("current_trace_ilu")
+    full_raw = factor_iter20.get("fullspace_ilu")
+    comparison_raw = factor_iter20.get("contraction_comparison")
+    trace_rhs = trace_rhs_raw if isinstance(trace_rhs_raw, Mapping) else {}
+    current = current_raw if isinstance(current_raw, Mapping) else {}
+    full = full_raw if isinstance(full_raw, Mapping) else {}
+    comparison = (
+        comparison_raw if isinstance(comparison_raw, Mapping) else {}
+    )
+    full_inventory = factor.get("fullspace_factor_inventory")
+    full_inventory = (
+        full_inventory if isinstance(full_inventory, Mapping) else {}
+    )
+    route = factor.get("retained_payload_route")
+    route = route if isinstance(route, Mapping) else {}
+
+    def finite(value: Any) -> bool:
+        return bool(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+        )
+
+    def nonnegative(value: Any) -> bool:
+        return finite(value) and float(value) >= 0.0
+
+    def positive(value: Any) -> bool:
+        return nonnegative(value) and float(value) > 0.0
+
+    def close(left: Any, right: Any) -> bool:
+        return (
+            finite(left)
+            and finite(right)
+            and math.isclose(
+                float(left),
+                float(right),
+                rel_tol=1.0e-12,
+                abs_tol=1.0e-12,
+            )
+        )
+
+    trace_norm = trace_rhs.get("norm2")
+    identity_norm = identity_iter20.get("local_residual_norm2")
+    trace_row_count = trace_rhs.get("owner_row_count")
+    identity_row_count = identity_iter20.get("owner_row_count")
+    trace_rhs_identity = (
+        isinstance(factor_iter20_raw, Mapping)
+        and isinstance(identity_factor_raw, Mapping)
+        and factor_iter20_raw == identity_factor_raw
+        and trace_row_count == collector_row_count
+        and identity_row_count == collector_row_count
+        and positive(trace_norm)
+        and positive(identity_norm)
+        and close(trace_norm, identity_norm)
+        and trace_rhs.get("finite") is True
+        and valid_hex_digest(trace_rhs.get("sha256"), 64)
+        and trace_rhs.get("trace_rhs_exact") is True
+        and finite(trace_rhs.get("trace_rhs_vs_extracted_relative_error"))
+        and float(trace_rhs["trace_rhs_vs_extracted_relative_error"]) == 0.0
+    )
+
+    def contraction_fields(measurement: Mapping[str, Any]) -> bool:
+        return (
+            positive(measurement.get("input_norm"))
+            and nonnegative(measurement.get("post_norm"))
+            and nonnegative(measurement.get("rho"))
+            and measurement.get("finite") is True
+            and nonnegative(measurement.get("correction_norm2"))
+            and valid_hex_digest(measurement.get("correction_sha256"), 64)
+        )
+
+    current_fields = isinstance(current_raw, Mapping) and contraction_fields(
+        current
+    )
+    full_fields = isinstance(full_raw, Mapping) and contraction_fields(full)
+    current_input_identity = (
+        current_fields and close(current.get("input_norm"), trace_norm)
+        and close(current.get("input_norm"), identity_norm)
+    )
+    full_input_identity = (
+        full_fields and close(full.get("input_norm"), trace_norm)
+        and close(full.get("input_norm"), identity_norm)
+    )
+    current_rho_raw = (
+        current_fields
+        and close(
+            current.get("rho"),
+            float(current["post_norm"]) / float(current["input_norm"]),
+        )
+    )
+    full_rho_raw = (
+        full_fields
+        and close(
+            full.get("rho"),
+            float(full["post_norm"]) / float(full["input_norm"]),
+        )
+    )
+    full_apply_seconds = full.get("apply_seconds")
+    full_inventory_apply_seconds = full_inventory.get("apply_seconds")
+    full_apply_contract = (
+        full.get("deterministic") is True
+        and full.get("correction_finite") is True
+        and full.get("apply_count") == 2
+        and nonnegative(full_apply_seconds)
+        and nonnegative(full_inventory_apply_seconds)
+        and close(full_apply_seconds, full_inventory_apply_seconds)
+    )
+    current_rho_positive = current_fields and positive(current.get("rho"))
+    raw_difference = (
+        float(full["rho"]) - float(current["rho"])
+        if full_fields and current_fields
+        else None
+    )
+    raw_ratio = (
+        float(full["rho"]) / float(current["rho"])
+        if full_fields and current_rho_positive
+        else None
+    )
+    comparison_contract = (
+        isinstance(comparison_raw, Mapping)
+        and raw_difference is not None
+        and raw_ratio is not None
+        and finite(comparison.get("full_minus_trace_rho"))
+        and finite(comparison.get("full_to_trace_rho_ratio"))
+        and close(comparison.get("full_minus_trace_rho"), raw_difference)
+        and close(comparison.get("full_to_trace_rho_ratio"), raw_ratio)
+    )
+    raw_iter20_gate = all(
+        (
+            trace_rhs_identity,
+            current_fields,
+            full_fields,
+            current_input_identity,
+            full_input_identity,
+            current_rho_raw,
+            full_rho_raw,
+            full_apply_contract,
+            current_rho_positive,
+            comparison_contract,
+        )
+    )
+    expected_status = (
+        route.get("status")
+        if raw_iter20_gate
+        else "close_fullspace_ilu_only_route"
+    )
+    return {
+        "task037_g2_factor_iter20_mapping": isinstance(
+            factor_iter20_raw, Mapping
+        ),
+        "task037_g2_factor_iter20_identity_copy": (
+            isinstance(identity_factor_raw, Mapping)
+            and isinstance(factor_iter20_raw, Mapping)
+            and factor_iter20_raw == identity_factor_raw
+        ),
+        "task037_g2_factor_iter20_trace_rhs_identity": trace_rhs_identity,
+        "task037_g2_factor_iter20_current_fields": current_fields,
+        "task037_g2_factor_iter20_fullspace_fields": full_fields,
+        "task037_g2_factor_iter20_current_input_identity": current_input_identity,
+        "task037_g2_factor_iter20_fullspace_input_identity": full_input_identity,
+        "task037_g2_factor_iter20_current_rho_raw": current_rho_raw,
+        "task037_g2_factor_iter20_fullspace_rho_raw": full_rho_raw,
+        "task037_g2_factor_iter20_full_apply_contract": full_apply_contract,
+        "task037_g2_factor_iter20_comparison_raw": comparison_contract,
+        "task037_g2_factor_iter20_gate_raw": raw_iter20_gate,
+        "task037_g2_factor_iter20_gate_pass_raw": (
+            factor.get("iter20_gate_pass") is raw_iter20_gate
+        ),
+        "task037_g2_factor_no_missing_iterations": (
+            factor.get("missing_iterations") == []
+        ),
+        "task037_g2_factor_status_raw": factor.get("status") == expected_status,
+    }
+
+
 def _qualify(
     *,
     args: argparse.Namespace,
@@ -3940,6 +4339,81 @@ def _qualify(
                         ),
                     }
                 )
+                if getattr(
+                    args, "task037_extra_g2_slab14_factor_inventory", False
+                ):
+                    factor_audit = core_audit.get(
+                        "task037_extra_g2_slab14_factor_inventory"
+                    )
+                    checks.update(
+                        _task037_g2_factor_inventory_checks(
+                            factor_audit,
+                            collector_row_count,
+                        )
+                    )
+                    checks.update(
+                        _task037_g2_factor_iter20_checks(
+                            factor_audit,
+                            g2_identity,
+                            collector_row_count,
+                        )
+                    )
+                    required_factor_stages = {
+                        "g2_fullspace_matrix_assembly_started",
+                        "g2_fullspace_matrix_assembly_ready",
+                        "g2_fullspace_factor_setup_started",
+                        "g2_fullspace_factor_setup_ready",
+                    }
+                    factor_lifecycle_events = [
+                        event
+                        for event in events
+                        if isinstance(event, Mapping)
+                        and event.get("stage") in required_factor_stages
+                    ]
+                    m0_progress_keys = {
+                        "task037_m0_lifecycle",
+                        "m0_event",
+                        "task037_m0_rank_ledgers_by_rank",
+                    }
+                    factor_stage_peaks = (
+                        resource_summary.get("stage_peaks")
+                        if isinstance(resource_summary, Mapping)
+                        else None
+                    )
+                    factor_stage_peak_names = {
+                        item.get("stage")
+                        for item in factor_stage_peaks
+                        if isinstance(item, Mapping)
+                    } if isinstance(factor_stage_peaks, list) else set()
+                    checks.update(
+                        {
+                            "task037_g2_factor_lifecycle_stages": (
+                                {
+                                    event.get("stage")
+                                    for event in factor_lifecycle_events
+                                }
+                                == required_factor_stages
+                            ),
+                            "task037_g2_factor_lifecycle_fields": (
+                                len(factor_lifecycle_events) >= 4
+                                and all(
+                                    event.get(
+                                        "task037_g2_factor_inventory_lifecycle"
+                                    )
+                                    is True
+                                    and not m0_progress_keys.intersection(event)
+                                    for event in factor_lifecycle_events
+                                )
+                            ),
+                            "task037_g2_factor_resource_stage_peaks": (
+                                {
+                                    "g2_fullspace_matrix_assembly_started",
+                                    "g2_fullspace_factor_setup_started",
+                                }
+                                <= factor_stage_peak_names
+                            ),
+                        }
+                    )
         elif m2c_profile:
             partition = core_audit.get("partition_audit") or {}
             smoother = core_audit.get("smoother_diagnostics") or {}
@@ -4396,6 +4870,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-extra-g0-diagnostics")
     if getattr(args, "task037_extra_g2_slab14_identity", False):
         command.append("--task037-extra-g2-slab14-identity")
+    if getattr(args, "task037_extra_g2_slab14_factor_inventory", False):
+        command.append("--task037-extra-g2-slab14-factor-inventory")
     if args.task037_m4_p2_auxiliary:
         command.append("--task037-m4-p2-auxiliary")
     if args.task037_m4_factor_free_slab:
@@ -5213,6 +5689,12 @@ def _run_parent(args: argparse.Namespace) -> int:
         "task035d_nested_p_launch_gate": task035d_nested_p_gate,
         "task035d_selective_face_launch_gate": (task035d_selective_face_gate),
         "task037_m4_b2_long_full": bool(args.task037_m4_b2_long_full),
+        "task037_extra_g2_slab14_identity": bool(
+            getattr(args, "task037_extra_g2_slab14_identity", False)
+        ),
+        "task037_extra_g2_slab14_factor_inventory": bool(
+            getattr(args, "task037_extra_g2_slab14_factor_inventory", False)
+        ),
         "task035d_candidate_id": (
             args.task035d_candidate_id if args.task035d_case097_gate else None
         ),

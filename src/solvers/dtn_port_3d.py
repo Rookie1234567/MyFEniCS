@@ -2971,6 +2971,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     retained_p4_core_research: bool = False,
     canonical_vector_export: bool = False,
     task037_extra_g2_slab14_identity: bool = False,
+    task037_extra_g2_slab14_factor_inventory: bool = False,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
@@ -5494,6 +5495,7 @@ def solve_stage4_dtn_port_total_field(
     retained_p4_core_research: bool = False,
     canonical_vector_export: bool = False,
     task037_extra_g2_slab14_identity: bool = False,
+    task037_extra_g2_slab14_factor_inventory: bool = False,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
 
@@ -5514,6 +5516,7 @@ def solve_stage4_dtn_port_total_field(
             bool(retained_p4_core_research),
             bool(canonical_vector_export),
             bool(task037_extra_g2_slab14_identity),
+            bool(task037_extra_g2_slab14_factor_inventory),
         )
     )
     if len(set(observer_flags)) != 1:
@@ -5548,6 +5551,9 @@ def solve_stage4_dtn_port_total_field(
             retained_p4_core_research=retained_p4_core_research,
             canonical_vector_export=canonical_vector_export,
             task037_extra_g2_slab14_identity=task037_extra_g2_slab14_identity,
+            task037_extra_g2_slab14_factor_inventory=(
+                task037_extra_g2_slab14_factor_inventory
+            ),
             _recovery_cleanup_sink=recovered_cleanup,
         )
     except BaseException:

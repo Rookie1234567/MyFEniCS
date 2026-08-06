@@ -776,6 +776,7 @@ def run_prepared_3d_case_flow(
     matrix_free_dtn_probe: bool = False,
     canonical_vector_export: bool = False,
     task037_extra_g2_slab14_identity: bool = False,
+    task037_extra_g2_slab14_factor_inventory: bool = False,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -807,6 +808,7 @@ def run_prepared_3d_case_flow(
             bool(matrix_free_dtn),
             bool(matrix_free_dtn_probe),
             bool(task037_extra_g2_slab14_identity),
+            bool(task037_extra_g2_slab14_factor_inventory),
         )
     )
     if len(set(live_observer_flags)) != 1:
@@ -1304,6 +1306,9 @@ def run_prepared_3d_case_flow(
                 matrix_free_dtn_probe=matrix_free_dtn_probe,
                 canonical_vector_export=canonical_vector_export,
                 task037_extra_g2_slab14_identity=task037_extra_g2_slab14_identity,
+                task037_extra_g2_slab14_factor_inventory=(
+                    task037_extra_g2_slab14_factor_inventory
+                ),
             )
         except DirectSolveFailure as failure:
             _finish_timed_stage(
