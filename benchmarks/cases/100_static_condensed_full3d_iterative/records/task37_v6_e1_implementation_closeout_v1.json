@@ -8,9 +8,18 @@
   "research_only": true,
   "ordinary_defaults_unchanged": true,
   "selective_merge": {
-    "recommendation": "do_not_merge",
-    "qualification": "not_qualified",
-    "reason": "The 7263da79 ownership patch passed lightweight checks but the only repair formal failed before the first column."
+    "e0_telemetry_component": {
+      "source_sha": "bde08508778c8107901d5cb6a86128651cf44058",
+      "recommendation": "selective-review candidate",
+      "qualification": "component-qualified; pending final integration review",
+      "reason": "The repaired 80-mode matrix-free telemetry/component formal passed; this does not qualify Candidate E."
+    },
+    "e1_research_and_candidate_e": {
+      "source_shas": ["ba0e260498e98ebd982465ebff697e4c89615db9", "7263da792dccc174055df983298d543a48be417f"],
+      "recommendation": "do_not_merge",
+      "qualification": "research-only/unqualified",
+      "reason": "The diagnostic and ownership patch do not have a completed E1 implementation Gate."
+    }
   },
   "scope_and_stop": {
     "frozen_setup": "p6/h10, S, 13.5 nm, 80 degree incidence, phi=0, assembly_time_static_condensed, exact M120 contract",
@@ -28,8 +37,8 @@
     "temporary_independent_clean_clone": "/tmp/task037-e1-diagnostic-tlvcVB",
     "repair_source_sha": "7263da792dccc174055df983298d543a48be417f",
     "repair_parent_sha": "ba0e260498e98ebd982465ebff697e4c89615db9",
-    "repair_commit_pushed": false,
-    "main_repository_untouched": true,
+    "repair_commit_pushed_at_record_creation": false,
+    "main_repository_untouched_by_closeout_turn": true,
     "main_repository_state": "4a0f33297fc4d0c909b15613eb6e12d2513e798e, 0/0, two pre-existing modified Python files"
   },
   "abi": {
@@ -174,9 +183,10 @@
     "candidate_E": "closed_at_E1_implementation_gate"
   },
   "publication": {
-    "status": "checkpoint_pending_review",
+    "status": "record_creation_snapshot_checkpoint_not_pushed",
     "carrier_sha": null,
     "carrier_sha_policy": "report_out_of_band_to_avoid_self_reference",
-    "push": "not_run"
+    "push_status_at_record_creation": "not_run",
+    "final_push_status": "reported_out_of_band_after_review"
   }
 }

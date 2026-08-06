@@ -16,7 +16,7 @@
 
 Candidate E 的结论是 M120_GLOBAL_MODAL_BASIS_IMPLEMENTATION_FAILED，不是 M120_MODAL_COARSE_INSUFFICIENT_ON_FROZEN_LATE_RESIDUALS。因此没有证明 M120 coarse 没有容量，也没有开始 E2。
 
-Selective merge 仍为 do_not_merge / not_qualified。7263 的代码修复是 research-only；轻量测试通过不能把它提升为 production path。
+Selective merge 分组如下：bde08508 E0 telemetry/component 是 component-qualified、待最终集成审阅的 selective-review candidate；ba0e/7263 诊断与 Candidate E 是 do_not_merge / research-only / unqualified。轻量测试通过不能把后者提升为 production path。
 
 ## 2. 冻结范围、身份与 ABI
 
@@ -152,4 +152,68 @@ Review V6 冻结 near-degenerate grouping、1e-6 threshold、mode ordering，并
 
 本轮没有运行 E2 B4 residual carrier、ideal capacity oracle、E3 coarse PC、E4 funnel 或 E5 full solve。没有 MPI2/4 formal、没有 full pytest、没有 0.7 nm PDE。Candidate E 按 frozen implementation failure 停止；不得继续在 Task037 内发明 Candidate G/H。
 
-本 checkpoint 只包含 response 与 compact evidence record，repair commit 未 push。publication carrier SHA 不写入自身，避免自引用；本轮等待主审快速 review 后再决定是否发布。
+本 record 的 publication 字段是 record-creation snapshot：当前 checkpoint 未 push；最终 carrier SHA 与 push 后 clean 状态按发布边界 out-of-band 报告，不写入自身以避免自引用。本轮等待主审快速 review。
+
+## 附录：E0 首次 Error56 历史证据
+
+以下内容原样保留初始 E0 formal 的失败链。它是历史实现失败；修复后的 bde08508 E0 PASS 不能删除或改写这段历史。
+
+~~~text
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/Projects/MyFEniCS/benchmarks/run_task033_full3d_watchdog.py", line 5024, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/Projects/MyFEniCS/benchmarks/run_task033_full3d_watchdog.py", line 5019, in main
+    return _worker(args)
+           ^^^^^^^^^^^^^
+  File "/home/Projects/MyFEniCS/benchmarks/run_task033_full3d_watchdog.py", line 1513, in _worker
+    run_stage4b_block_grating_3d_case(
+  File "/home/Projects/MyFEniCS/src/solvers/solve_maxwell_3d_stage_4b_block_grating.py", line 44, in run_stage4b_block_grating_3d_case
+    return run_prepared_3d_case_flow(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/Projects/MyFEniCS/src/solvers/common_3d_case_flow.py", line 1483, in run_prepared_3d_case_flow
+    else _petsc_matrix_stats(system_A)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/Projects/MyFEniCS/src/solvers/common_3d_solve.py", line 391, in _petsc_matrix_stats
+    info = A.getInfo()
+           ^^^^^^^^^^^
+  File "petsc4py/PETSc/Mat.pyx", line 805, in petsc4py.PETSc.Mat.getInfo
+petsc4py.PETSc.Error: error code 56
+[0] MatGetInfo() at ./src/mat/interface/matrix.c:3006
+[0] No support for this operation for this object type
+[0] No method getinfo for Mat of type python
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpiexec detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[3818,1],0]
+  Exit code:    1
+--------------------------------------------------------------------------
+~~~
+
+旧 E0 formal 的逐 Gate 边界如下；在 probe audit 生成前退出的项目必须保持 NOT_OBSERVED，不能由修复后 PASS 倒填：
+
+| Gate | 状态 | 数据分类 | 边界 |
+|---|---|---|---|
+| qualified ABI/authority/source | PASS | measured | activation、ABI、SHA、clean source 已通过 |
+| 80-mode preparation | PASS | measured | 80；top/bottom 40/40；active rows 51192；FE DoFs 173802 |
+| 完整 mode key/beta/polarization/power/Rayleigh identity | NOT_OBSERVED | not_observed | probe audit 未生成 |
+| 3 deterministic seeds + physical active RHS | NOT_OBSERVED | not_observed | 4 source labels 未生成 |
+| forward action <=1e-11 | NOT_OBSERVED | not_observed | 最大误差未生成 |
+| auxiliary recovery <=1e-11 | NOT_OBSERVED | not_observed | 最大误差未生成 |
+| physical RHS identity <=1e-12 | NOT_OBSERVED | not_observed | 误差未生成 |
+| primary matrix-free / explicit C,D = 0/0 | NOT_OBSERVED | not_observed | audit materialization 未生成 |
+| oracle explicit C,D = 1/1 | NOT_OBSERVED | not_observed | audit materialization 未生成 |
+| primary/oracle profile 分离 | NOT_OBSERVED | not_observed | audit 未生成 |
+| component-only/probe/ordinary-default summary | NOT_OBSERVED | not_observed | run summary 未生成 |
+| factorization/KSP-specific solve event absence | NOT_OBSERVED | not_observed | 仅原始日志未见 KSP-specific event，completed Gate 未产生 |
+| KSP iterations = 0 | NOT_OBSERVED | not_observed | completed solver summary 未生成 |
+| official result/postprocess | NOT_OBSERVED | not_observed | completed solver summary 未生成 |
+| no swap、非内存/非 timeout 停止 | PASS | measured | no_swap=true，termination flags 均 false |
+| E0 overall | FAIL | derived | MATRIX_FREE_DTN_FORMAL_80MODE_GATE_FAILED |
