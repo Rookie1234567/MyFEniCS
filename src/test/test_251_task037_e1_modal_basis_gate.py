@@ -1,13 +1,21 @@
+import json
 import inspect
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
 from mpi4py import MPI
+from petsc4py import PETSc
 
 import benchmarks.run_task033_full3d_watchdog as watchdog
+import src.solvers.static_modal_coarse_gate as modal_gate
+from src.solvers.condensed_dtn import (
+    PetscCondensedBlocks,
+    create_matrix_free_condensed_operator,
+)
 from src.solvers.static_modal_coarse_gate import (
     OwnerLocalBasis,
+    _call_e2_live_callback,
     _diagnose_interface_packets,
     load_owner_local_basis_shard,
     qualify_e1_modal_basis_audit,
@@ -34,6 +42,24 @@ def _e1_args():
         mpi_size=8,
         polarization_kind="s",
     )
+
+
+def _aij(values):
+    values = np.asarray(values, dtype=PETSc.ScalarType)
+    rows, columns = values.shape
+    matrix = PETSc.Mat().createAIJ(
+        size=(rows, columns),
+        nnz=max(columns, 1),
+        comm=MPI.COMM_SELF,
+    )
+    matrix.setUp()
+    matrix.setValues(
+        np.arange(rows, dtype=PETSc.IntType),
+        np.arange(columns, dtype=PETSc.IntType),
+        values,
+    )
+    matrix.assemble()
+    return matrix
 
 
 def _e1_summary(**overrides):
@@ -135,6 +161,140 @@ def test_research_only_shard_manifest_round_trip(tmp_path):
         assert loaded["sha256"] == shard["sha256"]
     finally:
         basis.destroy()
+
+
+def test_e1_uses_full_condensed_action_and_optional_live_callback():
+    f_values = np.asarray(
+        [
+            [2.0 + 0.2j, 0.3 - 0.1j],
+            [0.15 + 0.05j, 1.4 - 0.25j],
+        ]
+    )
+    c_values = np.asarray([[0.8 + 0.3j], [0.25 - 0.15j]])
+    d_values = np.asarray([[0.4 - 0.2j, -0.35 + 0.1j]])
+    h_values = np.asarray([[1.7 + 0.45j]])
+    f_matrix = _aij(f_values)
+    c_matrix = _aij(c_values)
+    d_matrix = _aij(d_values)
+    h_matrix = _aij(h_values)
+    b_fe = f_matrix.createVecLeft()
+    b_aux = h_matrix.createVecLeft()
+    blocks = PetscCondensedBlocks(
+        f_matrix,
+        c_matrix,
+        d_matrix,
+        h_matrix,
+        b_fe,
+        b_aux,
+        2,
+        1,
+    )
+    a6 = None
+    z_basis = None
+    y_basis = None
+    f_basis = None
+    try:
+        a6, _a6_context = create_matrix_free_condensed_operator(
+            blocks,
+            fine_operator=f_matrix,
+        )
+        z_values = np.asarray(
+            [
+                [1.0 + 0.2j, -0.3 + 0.4j],
+                [0.5 - 0.1j, 1.2 + 0.0j],
+            ]
+        )
+        z_basis = OwnerLocalBasis.from_local_array(
+            z_values,
+            global_rows=2,
+            comm=MPI.COMM_SELF,
+            label="Z",
+            research_opt_in=True,
+        )
+        y_basis = z_basis.apply(a6, label="Y", research_opt_in=True)
+        f_basis = z_basis.apply(f_matrix, label="FZ", research_opt_in=True)
+        expected_a6 = f_values - c_values @ np.linalg.solve(h_values, d_values)
+        np.testing.assert_allclose(
+            y_basis.local_matrix(),
+            expected_a6 @ z_values,
+            rtol=0.0,
+            atol=1.0e-12,
+        )
+        assert np.linalg.norm(y_basis.local_matrix() - f_basis.local_matrix()) > 1.0e-8
+
+        calls = []
+        _call_e2_live_callback(None, z_basis, y_basis, a6)
+        assert calls == []
+
+        def callback(z_seen, y_seen, operator_seen):
+            calls.append((z_seen, y_seen, operator_seen))
+            assert z_seen._destroyed is False
+            assert y_seen._destroyed is False
+            assert operator_seen.getSize() == (2, 2)
+
+        _call_e2_live_callback(callback, z_basis, y_basis, a6)
+        assert len(calls) == 1
+        signature = inspect.signature(modal_gate.run_e1_modal_basis_gate)
+        assert signature.parameters["e2_live_callback"].default is None
+        source = inspect.getsource(modal_gate._run_e1_modal_basis_gate)
+        assert "if gate_pass:" in source
+        assert "_call_e2_live_callback" in source
+    finally:
+        if f_basis is not None:
+            f_basis.destroy()
+        if y_basis is not None:
+            y_basis.destroy()
+        if z_basis is not None:
+            z_basis.destroy()
+        if a6 is not None:
+            a6.destroy()
+        blocks.destroy()
+
+
+def test_e2_callback_failure_preserves_completed_e1_audit(tmp_path, monkeypatch):
+    audit_path = tmp_path / "task037_e1_modal_basis_audit.json"
+    failure_writes = []
+    run_source = inspect.getsource(modal_gate._run_e1_modal_basis_gate)
+
+    def callback(_z_basis, _y_basis, _a6_operator):
+        raise RuntimeError("synthetic E2 failure")
+
+    def fake_run(_request, *, run_dir, source_sha, e2_live_callback=None):
+        del source_sha
+        run_dir.mkdir(parents=True, exist_ok=True)
+        audit_path.write_text(
+            json.dumps(
+                {
+                    "classification": "M120_GLOBAL_MODAL_BASIS_GATE_PASSED",
+                    "gate_pass": True,
+                }
+            ),
+            encoding="utf-8",
+        )
+        try:
+            e2_live_callback(None, None, None)
+        except Exception as error:
+            raise modal_gate._E2LiveCallbackError(
+                "E2 live callback failed after E1 audit completion"
+            ) from error
+
+    monkeypatch.setattr(modal_gate, "_run_e1_modal_basis_gate", fake_run)
+    monkeypatch.setattr(
+        modal_gate,
+        "_write_e1_failure_audit",
+        lambda *args, **kwargs: failure_writes.append((args, kwargs)),
+    )
+    with pytest.raises(modal_gate._E2LiveCallbackError):
+        modal_gate.run_e1_modal_basis_gate(
+            SimpleNamespace(),
+            run_dir=tmp_path,
+            source_sha="a" * 40,
+            research_opt_in=True,
+            e2_live_callback=callback,
+        )
+    assert json.loads(audit_path.read_text(encoding="utf-8"))["gate_pass"] is True
+    assert failure_writes == []
+    assert run_source.index("_write_json") < run_source.index("_call_e2_live_callback")
 
 
 def test_e1_checker_positive_and_failure_classifications():

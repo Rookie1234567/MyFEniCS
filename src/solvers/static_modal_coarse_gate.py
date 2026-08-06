@@ -13,7 +13,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from dolfinx import fem
 import numpy as np
@@ -44,6 +44,7 @@ from .hcurl_canonical_vector_dolfinx import (
     extract_canonical_active_trace_packets,
     reconstruct_canonical_active_trace_vector,
 )
+from .condensed_dtn import create_matrix_free_condensed_operator
 from ..geometry.tetra_mesh_audit import mesh_coordinate_tolerance
 from .hybrid_local_dtn import assemble_hybrid_local_dtn_system
 from .hybrid_strong_trace_direct import build_hybrid_strong_trace_interface_map
@@ -71,6 +72,10 @@ E1_BOTTOM_INTERFACE_NM = 10.0
 E1_TOP_INTERFACE_NM = 110.0
 E1_PROPAGATION_MODEL = "full3d_uniform_cg"
 E1_TRACTION_MODEL = "scalar_cg_discrete_derivative"
+
+
+class _E2LiveCallbackError(RuntimeError):
+    """Keep an E2 callback failure separate from the completed E1 audit."""
 
 
 @dataclass
@@ -192,6 +197,18 @@ def audit_owner_local_basis(
             research_opt_in=True,
         )
     )
+
+
+def _call_e2_live_callback(
+    callback: Callable[[OwnerLocalBasis, OwnerLocalBasis, PETSc.Mat], None] | None,
+    z_basis: OwnerLocalBasis,
+    y_basis: OwnerLocalBasis,
+    a6_operator: PETSc.Mat,
+) -> None:
+    """Pass borrowed E2 live objects once without transferring ownership."""
+
+    if callback is not None:
+        callback(z_basis, y_basis, a6_operator)
 
 
 def save_owner_local_basis_shard(
@@ -1189,11 +1206,16 @@ def _run_e1_modal_basis_gate(
     *,
     run_dir: Path,
     source_sha: str,
+    e2_live_callback: (
+        Callable[[OwnerLocalBasis, OwnerLocalBasis, PETSc.Mat], None] | None
+    ) = None,
 ) -> dict[str, Any]:
     comm = request.b.getComm().tompi4py()
     resources, mode_audit = _build_e1_resources(request)
     z_basis = None
     y_basis = None
+    a6_operator = None
+    _a6_context = None
     pending_columns: list[PETSc.Vec] = []
     source = None
     transverse = None
@@ -1321,8 +1343,12 @@ def _run_e1_modal_basis_gate(
             },
         }
         release_audit = resources.release_endcap_stage()
+        a6_operator, _a6_context = create_matrix_free_condensed_operator(
+            request.blocks,
+            fine_operator=request.fine_operator,
+        )
         y_basis = z_basis.apply(
-            request.fine_operator,
+            a6_operator,
             label="Y",
             research_opt_in=True,
         )
@@ -1345,7 +1371,7 @@ def _run_e1_modal_basis_gate(
         )
         expected_action = request.fine_operator.createVecLeft()
         try:
-            request.fine_operator.mult(z_combined, expected_action)
+            a6_operator.mult(z_combined, expected_action)
             random_action_error = _relative_vector_error(
                 y_combined,
                 expected_action,
@@ -1531,7 +1557,8 @@ def _run_e1_modal_basis_gate(
                 "global_F_materialized": False,
                 "p6_retained_factor_count": 0,
                 "p6_retained_factor_nnz": 0,
-                "fine_action": "request.fine_operator",
+                "action_operator": "matrix_free_condensed_F_minus_C_Hinv_D",
+                "dtn_included": True,
             },
             "factor_inventory": factor_inventory,
             "resources_released_before_action": release_audit,
@@ -1553,8 +1580,23 @@ def _run_e1_modal_basis_gate(
             run_dir.mkdir(parents=True, exist_ok=True)
             _write_json(run_dir / "task037_e1_modal_basis_audit.json", audit)
         comm.barrier()
+        if gate_pass:
+            try:
+                _call_e2_live_callback(
+                    e2_live_callback,
+                    z_basis,
+                    y_basis,
+                    a6_operator,
+                )
+            except Exception as error:
+                raise _E2LiveCallbackError(
+                    "E2 live callback failed after E1 audit completion"
+                ) from error
         return audit
     finally:
+        if a6_operator is not None:
+            a6_operator.destroy()
+            a6_operator = None
         if y_basis is not None:
             y_basis.destroy()
         if z_basis is not None:
@@ -1597,7 +1639,8 @@ def _write_e1_failure_audit(
                         "global_F_materialized": False,
                         "p6_retained_factor_count": 0,
                         "p6_retained_factor_nnz": 0,
-                        "fine_action": "request.fine_operator",
+                        "action_operator": "matrix_free_condensed_F_minus_C_Hinv_D",
+                        "dtn_included": True,
                     },
                     "official_result": False,
                     "ksp_iterations": 0,
@@ -1613,8 +1656,15 @@ def run_e1_modal_basis_gate(
     run_dir: str | Path,
     source_sha: str,
     research_opt_in: bool = False,
+    e2_live_callback: (
+        Callable[[OwnerLocalBasis, OwnerLocalBasis, PETSc.Mat], None] | None
+    ) = None,
 ) -> Any:
-    """Construct, audit, release, and return the zero E1 component snapshot."""
+    """Construct, audit, and return the zero E1 component snapshot.
+
+    The optional E2 callback receives borrowed Z, Y=A6 Z, and A6 exactly once
+    after the E1 Gate passes; it must not retain or destroy them.
+    """
 
     _require_research_opt_in(research_opt_in)
     run_dir = Path(run_dir)
@@ -1623,6 +1673,7 @@ def run_e1_modal_basis_gate(
             request,
             run_dir=run_dir,
             source_sha=source_sha,
+            e2_live_callback=e2_live_callback,
         )
         from .dtn_port_3d import Stage4ExternalLinearSolverSnapshot
 
@@ -1647,6 +1698,8 @@ def run_e1_modal_basis_gate(
             assembled_matrix_released_before_solve=False,
             reduced_residual_norm=None,
         )
+    except _E2LiveCallbackError:
+        raise
     except Exception as error:
         _write_e1_failure_audit(
             request,
