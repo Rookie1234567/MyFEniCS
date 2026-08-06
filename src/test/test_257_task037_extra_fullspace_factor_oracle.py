@@ -162,7 +162,7 @@ def test_streamed_matrix_matches_independent_cell_formula_and_layout():
         trace_shift=shift,
     )
     repeated_matrix, repeated_audit = assemble_fullspace_slab_matrix(
-        cells,
+        tuple(reversed(cells)),
         active_size=4,
         trace_shift=shift,
     )
@@ -172,10 +172,13 @@ def test_streamed_matrix_matches_independent_cell_formula_and_layout():
         assert audit["interior_rows"] == 3
         assert audit["trace_rows"] == 4
         assert audit["trace_offset"] == 3
+        assert audit["cell_canonical_ids"] == [0, 1]
         assert audit["cell_interior_offsets"] == [0, 1]
         assert audit["trace_shift_applied"] is True
         assert audit["matrix_nnz"] > 0
         assert audit["matrix_csr_payload_bytes"] > 0
+        assert repeated_audit["cell_canonical_ids"] == [0, 1]
+        assert repeated_audit["cell_interior_offsets"] == [0, 1]
         assert audit["matrix_fingerprint"] == repeated_audit["matrix_fingerprint"]
         _assert_matrix_action(matrix, expected)
         _assert_matrix_action(repeated_matrix, expected)
@@ -216,6 +219,7 @@ def test_exact_lu_trace_correction_matches_independent_schur_and_ilu_inventory()
         assert inventory["setup_matrix_lifetime"] == "released after factor extraction"
     finally:
         exact.destroy()
+        exact.destroy()
 
     ilu_matrix, ilu_audit = assemble_fullspace_slab_matrix(
         cells,
@@ -234,6 +238,14 @@ def test_exact_lu_trace_correction_matches_independent_schur_and_ilu_inventory()
         assert inventory["ilu_level"] == 0
         assert inventory["factor_nnz"] > 0
         assert inventory["factor_csr_payload_bytes"] > 0
+        assert inventory["work_vector_payload_bytes"] == 2 * 7 * np.dtype(
+            PETSc.ScalarType
+        ).itemsize
+        assert inventory["retained_payload_lower_bound_bytes"] == (
+            inventory["factor_csr_payload_bytes"]
+            + inventory["work_vector_payload_bytes"]
+        )
         assert inventory["apply_count"] == 2
     finally:
+        ilu.destroy()
         ilu.destroy()

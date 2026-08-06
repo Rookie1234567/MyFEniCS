@@ -186,7 +186,7 @@ def assemble_fullspace_slab_matrix(
 class FullSpaceSlabFactorOracle:
     """Own one factor matrix and work vectors after setup matrix release.
 
-    Construction consumes the supplied setup matrix and releases it after the
+    The constructor consumes and destroys the supplied setup matrix after the
     factor has been retained with its independent PETSc reference.
     """
 
@@ -199,7 +199,6 @@ class FullSpaceSlabFactorOracle:
     ) -> None:
         if solver not in {"ilu", "lu"}:
             raise ValueError("solver must be ilu or lu")
-        self._assembly_audit = dict(assembly_audit)
         self._destroyed = False
         self._apply_count = 0
         self._apply_seconds = 0.0
@@ -234,6 +233,7 @@ class FullSpaceSlabFactorOracle:
             factor_nnz * (scalar_bytes + index_bytes)
             + (self._full_rows + 1) * index_bytes
         )
+        work_vector_payload_bytes = int(2 * self._full_rows * scalar_bytes)
         self._inventory_base = {
             "solver": solver,
             "factor_ordering": "rcm",
@@ -251,6 +251,14 @@ class FullSpaceSlabFactorOracle:
             "factor_csr_payload_semantics": (
                 "CSR structural payload lower bound from factor NNZ and PETSc index/scalar widths; "
                 "factored Mat values are not read"
+            ),
+            "work_vector_payload_bytes": work_vector_payload_bytes,
+            "retained_payload_lower_bound_bytes": (
+                factor_payload_bytes + work_vector_payload_bytes
+            ),
+            "retained_payload_semantics": (
+                "factor CSR structural lower bound plus two full-length PETSc Vec value arrays; "
+                "excludes PETSc object allocator and permutation overhead"
             ),
             "setup_seconds": float(setup_seconds),
             "setup_matrix_lifetime": "released after factor extraction",
