@@ -1,0 +1,182 @@
+{
+  "schema_version": "task037.v6.e1.implementation.closeout.v1",
+  "task": "Task037",
+  "candidate": "E",
+  "candidate_name": "Candidate E / M120 modal-assisted Full3D coarse",
+  "classification": "M120_GLOBAL_MODAL_BASIS_IMPLEMENTATION_FAILED",
+  "status": "controlled_stop",
+  "research_only": true,
+  "ordinary_defaults_unchanged": true,
+  "selective_merge": {
+    "recommendation": "do_not_merge",
+    "qualification": "not_qualified",
+    "reason": "The 7263da79 ownership patch passed lightweight checks but the only repair formal failed before the first column."
+  },
+  "scope_and_stop": {
+    "frozen_setup": "p6/h10, S, 13.5 nm, 80 degree incidence, phi=0, assembly_time_static_condensed, exact M120 contract",
+    "e0": "repaired formal PASS",
+    "e1": "implementation failure before first column in the repair formal",
+    "e2_capacity": "not_run",
+    "e3_e5": "not_run",
+    "remediation": "DEFERRED_ARCHITECTURE_REQUIRED_joint_subspace_rotation",
+    "remediation_status": "not_authorized; near-degenerate grouping and thresholds remain frozen",
+    "capacity_conclusion": "not_observed; this is not an M120 coarse capacity negative"
+  },
+  "identity": {
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "remote_task37_ref_at_checkpoint": "4a0f33297fc4d0c909b15613eb6e12d2513e798e",
+    "temporary_independent_clean_clone": "/tmp/task037-e1-diagnostic-tlvcVB",
+    "repair_source_sha": "7263da792dccc174055df983298d543a48be417f",
+    "repair_parent_sha": "ba0e260498e98ebd982465ebff697e4c89615db9",
+    "repair_commit_pushed": false,
+    "main_repository_untouched": true,
+    "main_repository_state": "4a0f33297fc4d0c909b15613eb6e12d2513e798e, 0/0, two pre-existing modified Python files"
+  },
+  "abi": {
+    "qualified_activation": 1,
+    "sys_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "sys_prefix": "/home/Projects/MyFEniCS/.venv",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "mpi_abi": "Linux petsc4py/slepc4py/dolfinx/mpi4py stack"
+  },
+  "evidence": {
+    "e0_repaired_formal": {
+      "data_class": "measured",
+      "source_sha": "bde08508778c8107901d5cb6a86128651cf44058",
+      "mpi_size": 1,
+      "status": "pass",
+      "case_status": "diagnostic_assemble_only",
+      "selected_modes": 80,
+      "top_bottom_modes": [40, 40],
+      "active_rows": 51192,
+      "finite_element_dofs": 173802,
+      "source_labels": ["seed_17037", "seed_27037", "seed_37037", "physical_active_rhs"],
+      "forward_action_relative_error_max": 1.2367630350859273e-15,
+      "auxiliary_recovery_relative_error_max": 1.1141146096537195e-15,
+      "physical_rhs_identity_relative_error": 0.0,
+      "materialization": {
+        "primary": {"matrix_free_dtn": true, "explicit_c_matrix_count": 0, "explicit_d_matrix_count": 0},
+        "oracle": {"matrix_free_dtn": false, "explicit_c_matrix_count": 1, "explicit_d_matrix_count": 1},
+        "profiles_separate": true,
+        "global_A_materialized": false,
+        "global_F_materialized": false
+      },
+      "solver": {
+        "factorization_or_solve": false,
+        "ksp_iterations": 0,
+        "official_result": false,
+        "postprocess_skipped": true,
+        "matrix_stats": {"type": "python", "rows": 51272, "cols": 51272, "matrix_free": true, "non_applicable_fields": "not_applicable"}
+      },
+      "resources": {"elapsed_seconds": 298.23167246207595, "max_process_tree_rss_mb": 675.4453125, "max_process_tree_swap_mb": 0.0, "no_swap": true}
+    },
+    "e1_original_formal": {
+      "data_class": "measured",
+      "source_sha": "4a0f33297fc4d0c909b15613eb6e12d2513e798e",
+      "mpi_size": 8,
+      "status": "implementation_failure",
+      "classification": "M120_GLOBAL_MODAL_BASIS_IMPLEMENTATION_FAILED",
+      "column_count": null,
+      "exception": "ValueError: top interface mismatch exceeds tolerance: 3.158e-01",
+      "materialization": {"global_A_materialized": false, "global_F_materialized": false, "p6_retained_factor_count": 0, "p6_retained_factor_nnz": 0},
+      "ksp_iterations": 0,
+      "official_result": false,
+      "resources": {"timeline_last_elapsed_seconds": 411.69451796798967, "max_process_tree_rss_mb": 11573.484375, "max_process_tree_swap_mb": 0.0, "warning_triggered": true, "no_swap": true, "terminated_for_memory": false, "terminated_for_timeout": false}
+    },
+    "e1_ba0e_first_column_diagnostic": {
+      "data_class": "measured",
+      "source_sha": "ba0e260498e98ebd982465ebff697e4c89615db9",
+      "mpi_size": 8,
+      "status": "diagnostic_controlled_failure",
+      "column": "forward j=0",
+      "bottom": {"expected_common_missing": [1350, 1350, 0], "local_norm": 1.443671302489733, "middle_norm": 1.4436713024897332, "absolute_l2": 8.716787533297764e-15, "relative_l2": 6.037930876831123e-15},
+      "top": {"expected_common_missing": [1350, 1350, 0], "local_norm": 1.2200752308042857, "middle_norm": 1.1391621129064402, "absolute_l2": 0.4369133201684706, "relative_l2": 0.3581035899568693, "best_global_complex_scalar": [1.0000000000000102, 4.1570100046689895e-17], "relative_after_scalar": 0.3581035899568693},
+      "top_dimension_relative_l2": {"edge": 0.41578485549225014, "face": 0.340070411606694},
+      "factor": {"stable": [-0.11634979868607903, 0.8370724185654409], "pointwise_expected": [-0.11634979868607903, 0.8370724185654409], "relative_difference": 0.0, "magnitude": 0.8451198196571228, "log_magnitude": -0.1682768632666114, "roundoff_growth_clipped": false},
+      "identifiability": {"scale": 1.2200752308042857, "norms_near_underflow": false, "numerically_identifiable": true},
+      "classification": "non_scalar_cross_mesh_trace_shape_mismatch; not propagation-factor, global-scalar, roundoff, edge-only, or face-only"
+    },
+    "e1_7263_repair_formal": {
+      "data_class": "measured",
+      "source_sha": "7263da792dccc174055df983298d543a48be417f",
+      "mpi_size": 8,
+      "status": "implementation_failure_before_first_column",
+      "classification": "M120_GLOBAL_MODAL_BASIS_IMPLEMENTATION_FAILED",
+      "column_count": null,
+      "exception": "NearDegenerateBlockPartitionSplitError: near_degenerate_block_partition_split: identity_row_norm=2.154747e-06, identity_max_entry=1.773428e-06, cross_block_max=1.773428e-06, limit=1.000000e-06, indices=[50, 53], group_ids=[17, 18], relative_beta_distance=1.580086e-06",
+      "raw_audit": {"global_active_rows": 51192, "n_aux": 80, "global_A_materialized": false, "global_F_materialized": false, "p6_retained_factor_count": 0, "p6_retained_factor_nnz": 0, "ksp_iterations": 0, "official_result": false, "ordinary_default_changed": false},
+      "resources": {"timeline_last_elapsed_seconds": 154.10333659802563, "max_process_tree_rss_mb": 6624.3515625, "max_process_tree_swap_mb": 0.0, "warning_triggered": false, "no_swap": true, "terminated_for_memory": false, "terminated_for_timeout": false},
+      "top_interface_retest": "not_observed"
+    }
+  },
+  "commands": {
+    "e0": "python -m benchmarks.run_task033_full3d_watchdog --degree 6 --h-nm 10 --polarization-kind s --run-kind full-solve --mpi-size 1 --profile default --stage4-full3d-assembly-backend assembly_time_static_condensed --task035c-p6-h10-gate --task035c-p6-preflight-authority benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json --task035c-p6-preflight-sha256 96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8 --verified-clean-sha bde08508778c8107901d5cb6a86128651cf44058 --task037-e0-matrix-free-dtn-gate --poll-interval 0.25 --warning-gib 10 --terminate-gib 14 --timeout-seconds 3600 --run-dir benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_bde08508/mpi1",
+    "e1_original": "python -m benchmarks.run_task033_full3d_watchdog --degree 6 --h-nm 10 --polarization-kind s --run-kind full-solve --mpi-size 8 --profile default --stage4-full3d-assembly-backend assembly_time_static_condensed --task035c-p6-h10-gate --task035c-p6-preflight-authority benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json --task035c-p6-preflight-sha256 96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8 --verified-clean-sha 4a0f33297fc4d0c909b15613eb6e12d2513e798e --task037-e1-modal-basis-gate --poll-interval 0.25 --warning-gib 10 --terminate-gib 14 --timeout-seconds 7200 --run-dir benchmarks/artifacts/task037/e1_v6_modal_basis_4a0f3329/mpi8",
+    "e1_ba0e_diagnostic": "python -m benchmarks.run_task033_full3d_watchdog --degree 6 --h-nm 10 --polarization-kind s --run-kind full-solve --mpi-size 8 --profile default --stage4-full3d-assembly-backend assembly_time_static_condensed --task035c-p6-h10-gate --task035c-p6-preflight-authority benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json --task035c-p6-preflight-sha256 96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8 --verified-clean-sha ba0e260498e98ebd982465ebff697e4c89615db9 --task037-e1-modal-basis-gate --poll-interval 0.25 --warning-gib 10 --terminate-gib 14 --timeout-seconds 3600 --run-dir /home/Projects/MyFEniCS/benchmarks/artifacts/task037/e1_v6_first_column_diagnostic_ba0e2604/mpi8",
+    "e1_7263_repair": "python -m benchmarks.run_task033_full3d_watchdog --degree 6 --h-nm 10 --polarization-kind s --run-kind full-solve --mpi-size 8 --profile default --stage4-full3d-assembly-backend assembly_time_static_condensed --task035c-p6-h10-gate --task035c-p6-preflight-authority benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json --task035c-p6-preflight-sha256 96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8 --verified-clean-sha 7263da792dccc174055df983298d543a48be417f --task037-e1-modal-basis-gate --poll-interval 0.25 --warning-gib 10 --terminate-gib 14 --timeout-seconds 3600 --run-dir /home/Projects/MyFEniCS/benchmarks/artifacts/task037/e1_v6_first_column_fix_7263da79/mpi8"
+  },
+  "raw_artifacts": {
+    "e0_repaired": {
+      "absolute_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e0_v6_matrix_free_dtn_bde08508/mpi1",
+      "files": {
+        "parent_launch_descriptor.json": [1493, "6e90a4ad18fb557aa120cee70c5236f5b8621f925ae60070010174b1356ec8e9"],
+        "progress_3d.jsonl": [32252, "ebc7043c5e319aae58722f77b55fceba8a0302c5f5c199fbdcb9780450cf3f47"],
+        "run_summary.json": [56328, "58fc64368f1196ffd0a0d86aed472d6aab9601ee2b50d412786f969d7654e821"],
+        "watchdog_summary.json": [116482, "fa2753f94c310dd12be03ae4a8e8f2aa40d8d75d22fb3c3f85db86bc59d73ea1"],
+        "worker_stdout.txt": [4870, "8e4b27c4108441728c358b50d6dda7929729db5b25f0631326ca428d4f93ed37"],
+        "memory_timeline.csv": [997337, "6dade49c82e81eadfe1e38c720545c0a1d155d3e6948969448fba3d14e21f4c1"]
+      }
+    },
+    "e1_original": {
+      "absolute_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e1_v6_modal_basis_4a0f3329/mpi8",
+      "files": {
+        "parent_launch_descriptor.json": [1525, "72ad698ebbe9250be7e082d0af844d4ef92752c2d87692db1b21137284eea590"],
+        "progress_3d.jsonl": [35312, "19682760eccb7901858cd4e72b0996a25457f312cb1013edc6c2df63ba38e406"],
+        "task037_e1_modal_basis_audit.json": [782, "ea7cb254086955a75464bd190719abc2333d8400791742e71a693ea4243a4eef"],
+        "watchdog_summary.json": [24584, "093c39a8966b996d9ace3501ea732cd95319819dce59ae8b051e1081dd40789c"],
+        "worker_stdout.txt": [25514, "2c00503ed15ca62195afa2eac7dc10e53bef30b7356c9596736cc86c46958fce"],
+        "memory_timeline.csv": [6461116, "b0cd323471e509b7655822960e6643449263ccc36e4ee8b424334456c66e1bca"]
+      }
+    },
+    "e1_ba0e_diagnostic": {
+      "absolute_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e1_v6_first_column_diagnostic_ba0e2604/mpi8",
+      "files": {
+        "parent_launch_descriptor.json": [1537, "5b7e6d5fcbffe7948d02eed979bb8ef25d7b202a014b87fa6094df1c7d5f1bab"],
+        "progress_3d.jsonl": [35198, "0573bd46ae6d6a0f769774cefe459360708d9bc17db6f6161a2bf7702b525ad6"],
+        "task037_e1_first_column_diagnostic.json": [34515, "8c12921c469592b2337e3951c97278aded02afafd3706158bf4c59ab56f20575"],
+        "task037_e1_modal_basis_audit.json": [782, "55200788d5b3a1793dc2b08f6b6aa290e84928481ba6e2e0591c0025e07cfa67"],
+        "watchdog_summary.json": [25471, "ba1180078fb70c1b01c6bf82adfb2845f1d8f510093817e9ee27625e95016053"],
+        "worker_stdout.txt": [26642, "93033f18dde4c53dae163c41a96dbcfc20fc717945b61bc20f2e7cef18bac3f8"],
+        "memory_timeline.csv": [6371290, "3ff7ddbe4ec11fbfcae11abf4f8fc57e779b96fa368f09056c95bb3a58e48d257"]
+      }
+    },
+    "e1_7263_repair": {
+      "absolute_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037/e1_v6_first_column_fix_7263da79/mpi8",
+      "files": {
+        "parent_launch_descriptor.json": [1530, "60267930979aaf72d1356e2140564d96c9acb425d8b258b631cd832035547844"],
+        "progress_3d.jsonl": [35234, "e0b2b99422bfb3784eac25be2b2fd501ba940b352bc3e3b7fd34854a2d1c49c2"],
+        "task037_e1_modal_basis_audit.json": [986, "a74c487f77eb18dc7ef938b3bd9625326037b1956403e1771d3418b4e082a251"],
+        "watchdog_summary.json": [25017, "97179c66077cce0158b8255d9a76b4a26c39a19a5ca2a89a6807b6ab571a7672"],
+        "worker_stdout.txt": [27274, "4ec1466749d30c34845ed0051ebc8e9c91af7eca991e937f0d1571cab8ea22e0"],
+        "memory_timeline.csv": [2450810, "534ba8d5192b038ea4b32310e106322d056aac3c2a16367bb5789e4988dbc366"]
+      }
+    }
+  },
+  "stage_status": {
+    "E0": "completed_pass",
+    "E1": "completed_controlled_failure",
+    "E2": "not_run",
+    "E3": "not_run",
+    "E4": "not_run",
+    "E5": "not_run",
+    "E6": "completed_closeout",
+    "candidate_E": "closed_at_E1_implementation_gate"
+  },
+  "publication": {
+    "status": "checkpoint_pending_review",
+    "carrier_sha": null,
+    "carrier_sha_policy": "report_out_of_band_to_avoid_self_reference",
+    "push": "not_run"
+  }
+}
