@@ -1865,7 +1865,7 @@ def run_prepared_3d_case_flow(
         "external_rta_gate_pass": external_rta_gate_pass,
         "external_solver_profile": None
         if dtn_solver_info is None
-        else dtn_solver_info.get("external_solver_profile"),
+        else dtn_solver_info.get("solver_profile"),
         "global_A_materialized": None
         if dtn_solver_info is None
         else dtn_solver_info.get("global_A_materialized"),

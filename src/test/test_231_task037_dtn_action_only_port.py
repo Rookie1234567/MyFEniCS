@@ -303,6 +303,7 @@ def test_tiny_dtn_port_uses_never_materialized_action_path(monkeypatch, tmp_path
     assert result["postprocess_skipped"] is False
     assert result["external_linear_solver_port"] is True
     assert result["external_rta_gate_pass"] is True
+    assert result["external_solver_profile"] == "task037_m1c_never_materialized_dtn"
     assert result["matrix_free_dtn_probe"] is None
     assert result["matrix_free_dtn_probe_audit"] is None
     assert result["ordinary_default_changed"] is None
